@@ -1,0 +1,25 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+	"outDir": "./dist/out-tsc",
+	"resolveJsonModule": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["dom", "es2018", "esnext.array"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",	
+    "paths": {
+      "@gauzy/api-interface": ["libs/api-interface/src/index.ts"]
+    }
+  },
+  "exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
+}

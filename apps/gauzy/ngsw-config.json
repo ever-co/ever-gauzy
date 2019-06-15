@@ -1,0 +1,28 @@
+{
+    "$schema": "../../node_modules/@angular/service-worker/config/schema.json",
+    "index": "/index.html",
+    "assetGroups": [
+      {
+        "name": "app",
+        "installMode": "prefetch",
+        "resources": {
+          "files": ["/favicon.ico", "/index.html", "/silent-refresh.html", "/*.css", "/*.js"],
+          "urls": []
+        }
+      }      
+    ],
+    "dataGroups": [
+      {
+        "name": "gauzy-api",
+        "version": 1,
+        "urls": ["http://localhost:3000/api/**"],
+        "cacheConfig": {
+          "strategy": "freshness",
+          "maxSize": 100,
+          "maxAge": "12h",
+          "timeout": "2s"
+        }
+      }     
+    ]
+  }
+  

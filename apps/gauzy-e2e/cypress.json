@@ -1,0 +1,11 @@
+{
+  "fileServerFolder": "../../dist/out-tsc/apps/gauzy-e2e",
+  "fixturesFolder": "../../dist/out-tsc/apps/gauzy-e2e/src/fixtures",
+  "integrationFolder": "../../dist/out-tsc/apps/gauzy-e2e/src/integration",
+  "pluginsFile": "../../dist/out-tsc/apps/gauzy-e2e/src/plugins/index.js",
+  "supportFile": false,
+  "video": true,
+  "videosFolder": "../../dist/out-tsc/apps/gauzy-e2e/videos",
+  "screenshotsFolder": "../../dist/out-tsc/apps/gauzy-e2e/screenshots",
+  "chromeWebSecurity": false
+}

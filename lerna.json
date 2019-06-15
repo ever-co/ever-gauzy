@@ -1,0 +1,16 @@
+{
+  "lerna": "3.13.0",
+  "npmClient": "yarn",
+  "version": "independent",
+  "packages": ["libs/*", "apps/*"],
+  "useWorkspaces": true,
+  "command": {
+    "exec": {
+      "scope": ["@ngx-starter-kit/*"]
+    },
+    "clean": {
+      "yes": true
+    }
+  },
+  "npmClientArgs": ["--no-package-lock"]
+}
