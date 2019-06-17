@@ -4,9 +4,6 @@
     "outDir": "../../dist/out-tsc",
     "types": []
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/test-setup.ts", "src/**/*.spec.ts"],
-  "angularCompilerOptions": {
-    "enableIvy": true
-  }
+  "include": ["src/**/*.ts", "**/*.d.ts", "../../node_modules/@nebular/**/*.ts",],
+  "exclude": ["src/test-setup.ts", "src/**/*.spec.ts", "../../node_modules/@nebular/**/*.spec.ts"]
 }

@@ -3,7 +3,14 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false
+  production: false,
+
+  COMPANY_NAME: 'Ever Co. LTD',
+  COMPANY_SITE_LINK: 'https://ever.co/',
+  COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
+  COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/evercoapp',
+  COMPANY_TWITTER_LINK: 'https://twitter.com/evercoapp',
+  COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
 };
 
 /*
