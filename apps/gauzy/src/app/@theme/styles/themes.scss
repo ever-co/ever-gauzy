@@ -4,7 +4,7 @@
 @import '~@nebular/theme/styles/themes';
 
 // which themes you what to enable (empty to enable all)
-$nb-enabled-themes: (default);
+//$nb-enabled-themes: (default, dark, cos);
 
 $nb-themes: nb-register-theme((
   // app wise variables for each theme
@@ -16,6 +16,8 @@ $nb-themes: nb-register-theme((
   font-family-primary: Roboto,
   font-family-secondary: Exo,
 
+  card-height-tiny: 13.5rem,
+  select-min-width: 6rem,
 
   //
   //switcher-background: #ebeff5,
@@ -29,10 +31,9 @@ $nb-themes: nb-register-theme((
   //
   //list-item-border-width: 1px,
   //
-  //slide-out-container-width: 30%,
-  //slide-out-background: linear-gradient(270deg, #f7fafb 0%, #ecf2f5 100%),
-  //slide-out-shadow-color: 0 4px 14px 0 #a2d2c8,
-  //slide-out-shadow-color-rtl: 0 4px 14px 0 #a2d2c8,
+  slide-out-background: linear-gradient(270deg, #edf1f7 0%, #e4e9f2 100%),
+  slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
+  slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
   //
   //chart-panel-summary-box-shadow: none,
   //chart-panel-summary-background-color: #ecf2f5,
@@ -45,6 +46,9 @@ $nb-themes: nb-register-theme((
 ), default, default);
 
 $nb-themes: nb-register-theme((
+
+  card-height-tiny: 13.5rem,
+  select-min-width: 6rem,
   // app wise variables for each theme
   //sidebar-header-gap: 2rem,
   //sidebar-header-height: initial,
@@ -65,10 +69,9 @@ $nb-themes: nb-register-theme((
   //
   //list-item-border-width: 1px,
   //
-  //slide-out-container-width: 30%,
-  //slide-out-background: radial-gradient(circle, #302c6e 0%, #423f8c 100%),
-  //slide-out-shadow-color: 2px 0 3px rgba(19, 19, 94, 0.9),
-  //slide-out-shadow-color-rtl: -2px 0 3px rgba(19, 19, 94, 0.9),
+  slide-out-background: radial-gradient(circle, #5a37b8 0%, #7b51db 100%),
+  slide-out-shadow-color: 2px 0 3px #29157a,
+  slide-out-shadow-color-rtl: -2px 0 3px #29157a,
   //
   //chart-panel-summary-box-shadow: none,
   //chart-panel-summary-background-color: rgba(0, 0, 0, 0.1),
@@ -81,6 +84,9 @@ $nb-themes: nb-register-theme((
 ), cosmic, cosmic);
 
 $nb-themes: nb-register-theme((
+
+  card-height-tiny: 13.5rem,
+  select-min-width: 6rem,
   // app wise variables for each theme
   //sidebar-header-gap: 2rem,
   //sidebar-header-height: initial,
@@ -101,10 +107,9 @@ $nb-themes: nb-register-theme((
   //
   //list-item-border-width: 1px,
   //
-  //slide-out-container-width: 30%,
-  //slide-out-background: 	linear-gradient(270deg, #f7fafb 0%, #ecf2f5 100%),
-  //slide-out-shadow-color: 0 4px 14px 0 #a2d2c8,
-  //slide-out-shadow-color-rtl: 0 4px 14px 0 #a2d2c8,
+  slide-out-background: linear-gradient(270deg, #edf1f7 0%, #e4e9f2 100%),
+  slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
+  slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
   //
   //chart-panel-summary-box-shadow: none,
   //chart-panel-summary-background-color: #f7fafb,
@@ -115,3 +120,12 @@ $nb-themes: nb-register-theme((
   //
   //progress-bar-background: linear-gradient(90deg, #ff9f6f 0%, #ff8b97 100%),
 ), corporate, corporate);
+
+$nb-themes: nb-register-theme((
+  card-height-tiny: 13.5rem,
+  select-min-width: 6rem,
+
+  slide-out-background: linear-gradient(270deg, #edf1f7 0%, #e4e9f2 100%),
+  slide-out-shadow-color: 0 4px 14px 0 #8f9bb3,
+  slide-out-shadow-color-rtl: 0 4px 14px 0 #8f9bb3,
+), dark, dark);

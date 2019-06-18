@@ -5,11 +5,10 @@
     </a>
 
     <div class="logo" (click)="navigateHome()">
-      <span>Ever</span><span class="ever-simbol">®</span>
-      <span>Gauzy</span>
+      <span>Gauzy</span><span class="gauzy-simbol">™</span>
     </div>
   </div>
-  <nb-select disabled [(selected)]="currentTheme" (selectedChange)="toggleTheme()" status="primary">
+  <nb-select [(selected)]="currentTheme" (selectedChange)="toggleTheme()" status="primary">
     <nb-option *ngFor="let theme of themes" [value]="theme.value"> {{ theme.name }}</nb-option>
   </nb-select>
 </div>
