@@ -18,7 +18,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",	
     "paths": {
-      "@gauzy/api-interface": ["libs/api-interface/src/index.ts"]
+      "@gauzy/api-interface": ["libs/api-interface/src/index.ts"],
+      "@env-api/environment": ["apps/api/src/environments/environment.ts"]
     }
   },
   "exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
