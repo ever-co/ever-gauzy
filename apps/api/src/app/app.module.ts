@@ -15,7 +15,7 @@ import { CoreModule } from './core';
   imports: [
     RouterModule.forRoutes([
       {
-        path: '/api',
+        path: '',
         children: [
           { path: '/user', module: UserModule },
           { path: '/role', module: RoleModule },
