@@ -19,6 +19,7 @@
     "baseUrl": ".",	
     "paths": {
       "@gauzy/api-interface": ["libs/api-interface/src/index.ts"],
+      "@gauzy/models": ["libs/models/src/index.ts"],
       "@env-api/environment": ["apps/api/src/environments/environment.ts"]
     }
   },
