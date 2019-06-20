@@ -7,8 +7,11 @@ import { User } from '../user';
 import { Employee } from '../employee';
 import { Role } from '../role';
 import { Organization } from '../organization';
+import { Income } from '../income';
+import { Expense } from '../expense';
+import { EmployeeSettings } from '../employee-settings';
 
-const entities = [User, Employee, Role, Organization];
+const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
 
 @Module({
     imports: [

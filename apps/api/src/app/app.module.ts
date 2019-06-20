@@ -7,6 +7,9 @@ import { UserModule } from './user';
 import { EmployeeModule } from './employee';
 import { RoleModule } from './role';
 import { OrganizationModule } from './organization';
+import { IncomeModule } from './income';
+import { ExpenseModule } from './expense';
+import { EmployeeSettingsModule } from './employee-settings';
 
 @Module({
   imports: [
@@ -14,7 +17,10 @@ import { OrganizationModule } from './organization';
     UserModule,
     EmployeeModule,
     RoleModule,
-    OrganizationModule
+    OrganizationModule,
+    IncomeModule,
+    ExpenseModule,
+    EmployeeSettingsModule
   ],
   controllers: [AppController],
   providers: [AppService]

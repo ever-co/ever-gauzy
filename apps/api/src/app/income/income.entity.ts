@@ -1,30 +1,30 @@
 import {
+    Column,
     CreateDateColumn,
     Entity,
+    Index,
     UpdateDateColumn,
-    Column,
     JoinColumn,
-    OneToOne,
     RelationId,
     ManyToOne,
 } from 'typeorm';
 import { ApiModelProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDate } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Employee as IEmployee } from '@gauzy/models';
-import { IsDate, IsOptional } from 'class-validator';
-import { User } from '../user';
+import { Income as IIncome } from '@gauzy/models';
+import { Employee } from '../employee';
 import { Organization } from '../organization';
 
-@Entity('employee')
-export class Employee extends Base implements IEmployee {
-    @ApiModelProperty({ type: User })
-    @OneToOne(type => User, { nullable: false, onDelete: 'CASCADE' })
+@Entity('income')
+export class Income extends Base implements IIncome {
+    @ApiModelProperty({ type: Employee })
+    @ManyToOne(type => Employee, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn()
-    user: User;
+    employee: Employee;
 
     @ApiModelProperty({ type: String, readOnly: true })
-    @RelationId((employee: Employee) => employee.user)
-    readonly userId: string;
+    @RelationId((income: Income) => income.employee)
+    readonly employeeId: string;
 
     @ApiModelProperty({ type: Organization })
     @ManyToOne(type => Organization, { nullable: false, onDelete: 'CASCADE' })
@@ -32,8 +32,28 @@ export class Employee extends Base implements IEmployee {
     organization: Organization;
 
     @ApiModelProperty({ type: String, readOnly: true })
-    @RelationId((employee: Employee) => employee.organization)
+    @RelationId((income: Income) => income.organization)
     readonly orgId: string;
+
+    @ApiModelProperty({ type: Number })
+    @IsNumber()
+    @IsNotEmpty()
+    @Index()
+    @Column()
+    amount: number;
+
+    @ApiModelProperty({ type: String })
+    @Index()
+    @IsOptional()
+    @Column({ nullable: true })
+    clientId?: string;
+
+    @ApiModelProperty({ type: String })
+    @IsString()
+    @IsNotEmpty()
+    @Index()
+    @Column()
+    clientName: string;
 
     @ApiModelProperty({ type: Date })
     @IsDate()

@@ -1,12 +1,15 @@
-import { User } from '..';
+import { Employee } from './employee.model';
 import { Organization } from './organization.model';
 
-export interface Employee {
+export interface Income {
     id?: string;
-    user: User;
-    userId: string;
+    employee: Employee;
+    employeeId: string;
     organization: Organization;
     orgId: string;
+    amount: number;
+    clientId?: string;
+    clientName: string;
     valueDate?: Date;
     readonly createdAt?: Date;
     readonly updatedAt?: Date;
