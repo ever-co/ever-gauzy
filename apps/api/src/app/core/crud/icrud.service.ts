@@ -1,3 +1,7 @@
+// Code from https://github.com/xmlking/ngx-starter-kit. 
+// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
+// Copyright (c) 2018 Sumanth Chinthagunta
+
 import { DeepPartial, DeleteResult, FindConditions, FindManyOptions, FindOneOptions, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from './pagination';

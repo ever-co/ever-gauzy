@@ -1,3 +1,7 @@
+// Code from https://github.com/xmlking/ngx-starter-kit. 
+// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
+// Copyright (c) 2018 Sumanth Chinthagunta
+
 import { Get, Post, Put, Delete, Body, Param, HttpStatus, HttpCode } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Base } from '../entities/base';
