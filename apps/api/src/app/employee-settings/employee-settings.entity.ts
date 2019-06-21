@@ -4,28 +4,22 @@ import {
     Entity,
     Index,
     UpdateDateColumn,
-    RelationId,
-    ManyToOne,
-    JoinColumn,
 } from 'typeorm';
 import { ApiModelProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsNumber, Min, Max, IsDate, IsOptional } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { EmployeeSettings as IEmployeeSettings } from '@gauzy/models';
-import { Employee } from '../employee';
 
 @Entity('employee_settings')
 export class EmployeeSettings extends Base implements IEmployeeSettings {
-    @ApiModelProperty({ type: Employee })
-    @ManyToOne(type => Employee, { nullable: false, onDelete: 'CASCADE' })
-    @JoinColumn()
-    employee: Employee;
+    @ApiModelProperty({ type: String })
+    @IsString()
+    @IsNotEmpty()
+    @Index()
+    @Column()
+    employeeId: string;
 
-    @ApiModelProperty({ type: String, readOnly: true })
-    @RelationId((employeeSettings: EmployeeSettings) => employeeSettings.employee)
-    readonly employeeId: string;
-
-    @ApiModelProperty({ type: Number, minimum: 1, maximum: 12})
+    @ApiModelProperty({ type: Number, minimum: 1, maximum: 12 })
     @IsNumber()
     @IsNotEmpty()
     @Min(1)
@@ -33,7 +27,7 @@ export class EmployeeSettings extends Base implements IEmployeeSettings {
     @Column()
     month: number;
 
-    @ApiModelProperty({ type: Number, minimum: 1})
+    @ApiModelProperty({ type: Number, minimum: 1 })
     @IsNumber()
     @IsNotEmpty()
     @Min(0)
@@ -47,7 +41,7 @@ export class EmployeeSettings extends Base implements IEmployeeSettings {
     @Column()
     settingType: string;
 
-    @ApiModelProperty({ type: Number})
+    @ApiModelProperty({ type: Number })
     @IsNumber()
     @IsNotEmpty()
     @Column()

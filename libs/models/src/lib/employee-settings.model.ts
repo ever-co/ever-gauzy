@@ -2,7 +2,6 @@ import { Employee } from './employee.model';
 
 export interface EmployeeSettings {
     id?: string;
-    employee: Employee;
     employeeId: string;
     month: number;
     year: number;
