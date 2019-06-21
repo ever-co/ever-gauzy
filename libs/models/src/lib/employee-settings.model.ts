@@ -1,13 +1,10 @@
-import { Employee } from './employee.model';
+import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
-export interface EmployeeSettings {
-    id?: string;
+export interface EmployeeSettings extends IBaseEntityModel {
     employeeId: string;
     month: number;
     year: number;
     settingType: string;
     value: number;
     valueDate?: Date;
-    readonly createdAt?: Date;
-    readonly updatedAt?: Date;
 }

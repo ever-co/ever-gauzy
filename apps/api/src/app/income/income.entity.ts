@@ -1,9 +1,7 @@
 import {
     Column,
-    CreateDateColumn,
     Entity,
     Index,
-    UpdateDateColumn,
     JoinColumn,
     RelationId,
     ManyToOne,
@@ -60,12 +58,4 @@ export class Income extends Base implements IIncome {
     @IsOptional()
     @Column({ nullable: true })
     valueDate?: Date;
-
-    @ApiModelProperty({ type: 'string', format: 'date-time', example: '2018-11-21T06:20:32.232Z' })
-    @CreateDateColumn({ type: 'timestamptz' })
-    createdAt?: Date;
-
-    @ApiModelProperty({ type: 'string', format: 'date-time', example: '2018-11-21T06:20:32.232Z' })
-    @UpdateDateColumn({ type: 'timestamptz' })
-    updatedAt?: Date;
 }

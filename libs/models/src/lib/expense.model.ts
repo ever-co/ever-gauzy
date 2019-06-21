@@ -1,8 +1,8 @@
 import { Employee } from './employee.model';
 import { Organization } from './organization.model';
+import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
-export interface Expense {
-    id?: string;
+export interface Expense extends IBaseEntityModel {
     employee: Employee;
     employeeId: string;
     organization: Organization;
@@ -14,6 +14,4 @@ export interface Expense {
     categoryId?: string;
     notes?: string;
     valueDate?: Date;
-    readonly createdAt?: Date;
-    readonly updatedAt?: Date;
 }

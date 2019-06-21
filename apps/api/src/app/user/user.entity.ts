@@ -4,10 +4,8 @@
 
 import {
   Column,
-  CreateDateColumn,
   Entity,
   Index,
-  UpdateDateColumn,
   ManyToOne,
   RelationId,
   JoinColumn,
@@ -58,12 +56,4 @@ export class User extends Base implements IUser {
   @ApiModelProperty({ type: String, readOnly: true })
   @RelationId((user: User) => user.role)
   readonly roleId?: string;
-
-  @ApiModelProperty({ type: 'string', format: 'date-time', example: '2018-11-21T06:20:32.232Z' })
-  @CreateDateColumn({ type: 'timestamptz' })
-  createdAt?: Date;
-
-  @ApiModelProperty({ type: 'string', format: 'date-time', example: '2018-11-21T06:20:32.232Z' })
-  @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt?: Date;
 }
