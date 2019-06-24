@@ -1,4 +1,6 @@
 # Gauzy
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
+
 
 Gauzy™ - Fair Profits Sharing
 
@@ -77,3 +79,7 @@ Gauzy™ is a trademark of Ever Co. LTD.
 All other brand and product names are trademarks, registered trademarks or service marks of their respective holders.
 
 #### Copyright © 2019, Ever Co. LTD. All rights reserved.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_large)
