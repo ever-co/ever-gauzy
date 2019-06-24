@@ -23,6 +23,16 @@ import { Component } from '@angular/core';
       <nb-layout-footer fixed>
         <ngx-footer></ngx-footer>
       </nb-layout-footer>
+      <nb-sidebar
+      class="settings-sidebar"
+      tag="settings-sidebar"
+      state="collapsed"
+      fixed
+      [end]="true"
+      >
+      <ngx-theme-settings></ngx-theme-settings>
+    </nb-sidebar>
+
     </nb-layout>
   `,
 })

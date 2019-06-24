@@ -37,6 +37,7 @@ import {
 import { DEFAULT_THEME } from './styles/theme.default';
 import { COSMIC_THEME } from './styles/theme.cosmic';
 import { CORPORATE_THEME } from './styles/theme.corporate';
+import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
 
 const NB_MODULES = [
   NbLayoutModule,
@@ -60,6 +61,7 @@ const COMPONENTS = [
   OneColumnLayoutComponent,
   ThreeColumnsLayoutComponent,
   TwoColumnsLayoutComponent,
+  ThemeSettingsComponent
 ];
 const PIPES = [
   CapitalizePipe,

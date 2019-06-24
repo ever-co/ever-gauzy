@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { NbMenuService, NbSidebarService, NbThemeService } from '@nebular/theme';
+import { NbMenuService, NbSidebarService } from '@nebular/theme';
 
 import { LayoutService } from '../../../@core/utils';
 
@@ -14,32 +14,10 @@ export class HeaderComponent implements OnInit {
 
   user: any;
 
-  themes = [
-    {
-      value: 'default',
-      name: 'Light',
-    },
-    {
-      value: 'dark',
-      name: 'Dark',
-    },
-    {
-      value: 'cosmic',
-      name: 'Cosmic',
-    },
-    {
-      value: 'corporate',
-      name: 'Corporate',
-    },
-  ];
-
-  currentTheme = 'default';
-
   userMenu = [ { title: 'Profile' }, { title: 'Log out' } ];
 
   constructor(private sidebarService: NbSidebarService,
               private menuService: NbMenuService,
-              private themeService: NbThemeService,
               private layoutService: LayoutService) {
   }
 
@@ -49,16 +27,17 @@ export class HeaderComponent implements OnInit {
     }
   }
 
-  toggleTheme() {
-    this.themeService.changeTheme(this.currentTheme);
-  }
-
   toggleSidebar(): boolean {
     this.sidebarService.toggle(true, 'menu-sidebar');
     this.layoutService.changeLayoutSize();
 
     return false;
   }
+
+  toggleSettings(): boolean {
+		this.sidebarService.toggle(false, 'settings-sidebar');
+		return false;
+	}
 
   navigateHome() {
     this.menuService.navigateHome();
