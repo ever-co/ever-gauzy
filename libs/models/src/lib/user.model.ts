@@ -6,10 +6,10 @@ import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface User extends IBaseEntityModel {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
-  username: string;
+  username?: string;
   role?: Role;
   roleId?: string;
 }

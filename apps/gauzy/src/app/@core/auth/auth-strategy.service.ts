@@ -1,11 +1,13 @@
 import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute } from '@angular/router';
+import 'rxjs/add/observable/of';
 
 import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
+import { HttpClient } from '@angular/common/http';
 
 
 @Injectable()
@@ -60,6 +62,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	constructor(
 		private route: ActivatedRoute,
+		private http: HttpClient
 	) {
 		super();
 	}
@@ -179,17 +182,58 @@ export class AuthStrategy extends NbAuthStrategy {
 		terms: boolean;
 	}): Observable<NbAuthResult> {
 		const { email, fullName, password, confirmPassword, terms } = args;
-        return
-		// if (password !== confirmPassword) {
-		// 	return Observable.of(
-		// 		new NbAuthResult(false, null, null, [
-		// 			"The passwords don't match."
-		// 		])
-		// 	);
-		// }
+        
+		if (password !== confirmPassword) {
+			return Observable.of(
+				new NbAuthResult(false, null, null, [
+					"The passwords don't match."
+				])
+			);
+		}
 
-		// const letter = fullName.charAt(0).toUpperCase();
-		// const pictureUrl = getDummyImage(300, 300, letter);
+		const data = {
+			email,
+			password
+		}
+
+		return this.http.post('/api/auth/register', data).pipe(
+			map((res) => {
+			
+				// const { data, errors } = res;
+				// console.log(data);
+				
+
+				// TODO
+				// if (errors) {
+				// 	return new NbAuthResult(
+				// 		false,
+				// 		res,
+				// 		AuthStrategy.config.register.redirect.failure,
+				// 		errors.map((err) => JSON.stringify(err))
+				// 	);
+				// }
+
+				return new NbAuthResult(
+					true,
+					res,
+					AuthStrategy.config.register.redirect.success,
+					[],
+					AuthStrategy.config.register.defaultMessages
+				);
+			}),
+			catchError((err) => {
+				console.error(err);
+
+				return of(
+					new NbAuthResult(
+						false,
+						err,
+						AuthStrategy.config.register.defaultErrors,
+						[AuthStrategy.config.logout.defaultErrors]
+					)
+				);
+			})
+		);
 
 		// const mutation = gql`
 		// 	mutation Register(

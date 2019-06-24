@@ -10,6 +10,7 @@ import { IncomeModule } from './income';
 import { ExpenseModule } from './expense';
 import { EmployeeSettingsModule } from './employee-settings';
 import { CoreModule } from './core';
+import { AuthModule } from './auth';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CoreModule } from './core';
       {
         path: '',
         children: [
+          { path: '/auth', module: AuthModule },
           { path: '/user', module: UserModule },
           { path: '/role', module: RoleModule },
           { path: '/employee', module: EmployeeModule },
@@ -28,6 +30,7 @@ import { CoreModule } from './core';
       },
     ]),
     CoreModule,
+    AuthModule,
     UserModule,
     EmployeeModule,
     RoleModule,
