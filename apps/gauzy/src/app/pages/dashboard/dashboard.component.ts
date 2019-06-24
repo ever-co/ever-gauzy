@@ -53,14 +53,14 @@ export class DashboardComponent implements OnInit {
       name: 'Ever4'
     }
   ];
-  selectedEmployeeId: string = 'all';
+  selectedEmployeeId = 'all';
   selectedCompanyId: string;
   uselessCancer: string[];
   monthCellComponent = NbCalendarMonthCellComponent;
   loadCalendar = false;
   date = new Date();
   min = new Date(this.date.getFullYear() - 9, 6, 15);
-  max = this.date;
+  max = new Date();
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
@@ -131,9 +131,6 @@ export class DashboardComponent implements OnInit {
     const date = new Date();
     date.setMonth(date.getMonth() - 1);
     return date;
-  }
-  handleYearChange(event) {
-    console.log(event);
   }
 
   selectEmployee(event) {

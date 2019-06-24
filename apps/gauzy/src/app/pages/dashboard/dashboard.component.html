@@ -41,7 +41,6 @@
         <nb-card class="calendar" *ngIf="loadCalendar">
           <nb-calendar-year-picker
             [(year)]="date"
-            (yearChange)="handleYearChange($event)"
             [max]="max"
           >
           </nb-calendar-year-picker>
