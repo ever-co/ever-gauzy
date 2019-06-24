@@ -20,6 +20,9 @@ import {
   NbSidebarModule,
   NbToastrModule,
   NbWindowModule,
+  NbCalendarModule,
+  NbCalendarKitModule,
+  NbDatepicker,
 } from '@nebular/theme';
 
 @NgModule({
@@ -29,9 +32,9 @@ import {
     BrowserAnimationsModule,
     HttpClientModule,
     AppRoutingModule,
-
+    NbCalendarModule,
+    NbCalendarKitModule,
     ThemeModule.forRoot(),
-
     NbSidebarModule.forRoot(),
     NbMenuModule.forRoot(),
     NbDatepickerModule.forRoot(),

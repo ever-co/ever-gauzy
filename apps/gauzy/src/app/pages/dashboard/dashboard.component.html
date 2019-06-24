@@ -1,10 +1,60 @@
 <nb-card>
-    <nb-card-header>
-        <h4>Welcome to Gauzy!</h4>
-    </nb-card-header>
-    <nb-card-body>
-        <p>
-            Message: {{ hello$ | async | json }}
-        </p>
-    </nb-card-body>
+  <nb-card-header>
+    <h4>Welcome to Gauzy!</h4>
+    <div class="input-row">
+      <ng-select
+        [items]="people"
+        bindValue="id"
+        bindName="firstName"
+        [(ngModel)]="selectedEmployeeId"
+        (change)="selectEmployee($event)"
+        placeholder="All Employees"
+        [searchFn]="searchEmployee"
+      >
+        <ng-template ng-option-tmp let-item="item" let-index="index">
+          <img [src]="item.avatar" width="40" height="40" />
+          {{ getFullName(item.firstName, item.lastName) }}
+        </ng-template>
+        <ng-template ng-label-tmp let-item="item">
+          <img height="25" width="25" [src]="item.avatar" />
+          {{ getShortenedName(item.firstName, item.lastName) }}
+        </ng-template>
+      </ng-select>
+
+      <ng-select
+        [items]="companies"
+        bindLabel="name"
+        autofocus
+        bindValue="id"
+        [(ngModel)]="selectedCompanyId"
+        [searchable]="false"
+        placeHolder="Select Company"
+      >
+      </ng-select>
+
+      <div class="month-picker" id="dashboard-calendar">
+        <input
+          [value]="formatDateMMMMyy(date)"
+          nbInput
+          (focus)="loadCalendar = true"
+        />
+        <nb-card class="calendar" *ngIf="loadCalendar">
+          <nb-calendar-year-picker
+            [(year)]="date"
+            (yearChange)="handleYearChange($event)"
+            [max]="max"
+          >
+          </nb-calendar-year-picker>
+          <nb-calendar-month-picker
+            [(month)]="date"
+            [max]="max"
+            (monthChange)="handleMonthChange($event)"
+          ></nb-calendar-month-picker>
+        </nb-card>
+      </div>
+    </div>
+  </nb-card-header>
+  <nb-card-body>
+    <p>Message: {{ hello$ | async | json }}</p>
+  </nb-card-body>
 </nb-card>

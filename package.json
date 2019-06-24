@@ -103,6 +103,7 @@
     "@nestjs/common": "^6.3.1",
     "@nestjs/core": "^6.3.1",
     "@nestjs/platform-express": "^6.3.1",
+    "@ng-select/ng-select": "^2.20.0",
     "@swimlane/ngx-charts": "^12.0.1",
     "angular-tree-component": "^8.4.0",
     "angular2-chartjs": "^0.5.1",
