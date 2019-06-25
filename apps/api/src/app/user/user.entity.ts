@@ -35,7 +35,7 @@ export class User extends Base implements IUser {
   @ApiModelProperty({ type: String, minLength: 3, maxLength: 100 })
   @IsEmail()
   @IsNotEmpty()
-  @Index()
+  @Index({ unique: true })
   @Column()
   email: string;
 

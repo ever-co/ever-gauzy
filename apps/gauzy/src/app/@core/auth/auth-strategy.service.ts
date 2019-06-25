@@ -95,83 +95,58 @@ export class AuthStrategy extends NbAuthStrategy {
 
 		// TODO implement remember me feature
 		const rememberMe = !!args.rememberMe;
-        return
-		// const Login = gql`
-		// 	mutation Login($email: String!, $password: String!) {
-		// 		adminLogin(email: $email, password: $password) {
-		// 			token
-		// 			admin {
-		// 				_id
-		// 				id
-		// 				email
-		// 				name
-		// 				pictureUrl
-		// 			}
-		// 		}
-		// 	}
-		// `;
 
-		// return this.apollo
-		// 	.mutate({
-		// 		mutation: Login,
-		// 		variables: {
-		// 			email,
-		// 			password
-		// 		},
-		// 		errorPolicy: 'all'
-		// 	})
-		// 	.pipe(
-		// 		map(
-		// 			(res: {
-		// 				data: { adminLogin: IAdminLoginResponse };
-		// 				errors;
-		// 			}) => {
-		// 				const { data, errors } = res;
-		// 				const isSuccessful = !!data.adminLogin;
+        const loginInput = {
+			findObj: {
+				email
+			},
+			password
+		}
 
-		// 				if (errors) {
-		// 					return new NbAuthResult(
-		// 						false,
-		// 						res,
-		// 						AdminAuthStrategy.config.login.redirect.failure,
-		// 						errors.map((err) => JSON.stringify(err))
-		// 					);
-		// 				}
+		return this.http.post('/api/auth/login', loginInput).pipe(
+				map(
+					(res: {
+						user, // TODO { adminLogin: IAdminLoginResponse };
+						token;
+					}) => {
+						const { user, token } = res;
 
-		// 				if (!isSuccessful) {
-		// 					return new NbAuthResult(
-		// 						false,
-		// 						res,
-		// 						AdminAuthStrategy.config.login.redirect.failure,
-		// 						AdminAuthStrategy.config.login.defaultErrors
-		// 					);
-		// 				}
+						if (!user) {
+							return new NbAuthResult(
+								false,
+								res,
+								false,
+								AuthStrategy.config.login.defaultErrors
+							);
+						}
 
-		// 				this.store.adminId = data.adminLogin.admin.id;
-		// 				this.store.token = data.adminLogin.token;
+						// TODO use global "Store" class
+						localStorage.setItem('userId', user.id)
+						localStorage.setItem('token', token)
 
-		// 				return new NbAuthResult(
-		// 					isSuccessful,
-		// 					res,
-		// 					AdminAuthStrategy.config.login.redirect.success,
-		// 					[],
-		// 					AdminAuthStrategy.config.logout.defaultMessages
-		// 				);
-		// 			}
-		// 		),
-		// 		catchError((err) => {
-		// 			console.error(err);
+						return new NbAuthResult(
+							true,
+							res,
+							AuthStrategy.config.login.redirect.success,
+							[],
+							AuthStrategy.config.logout.defaultMessages
+						);
+					}
+				),
+				catchError((err) => {
+					console.error(err);
 
-		// 			return of(
-		// 				new NbAuthResult(
-		// 					false,
-		// 					err,
-		// 					AdminAuthStrategy.config.login.defaultErrors,
-		// 					[AdminAuthStrategy.config.logout.defaultErrors]
-		// 				)
-		// 			);
-		// 		})
-		// 	);
+					return of(
+						new NbAuthResult(
+							false,
+							err,
+							false,
+							AuthStrategy.config.login.defaultErrors,
+							[AuthStrategy.config.logout.defaultErrors]
+						)
+					);
+				})
+			);
 	}
 
 	register(args: {

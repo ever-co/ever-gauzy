@@ -12,6 +12,7 @@ export const environment: IEnvironment = {
   },
 
   USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
+  JWT_SECRET: 'secretKey',
 
   database: {
     type: 'postgres',

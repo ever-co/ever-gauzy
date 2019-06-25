@@ -24,6 +24,7 @@ export interface IEnvironment {
   env?: Env;
 
   USER_PASSWORD_BCRYPT_SALT_ROUNDS?: number;
+  JWT_SECRET?: string,
 
   database: TypeOrmModuleOptions;
 }

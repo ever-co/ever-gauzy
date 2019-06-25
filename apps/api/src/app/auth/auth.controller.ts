@@ -17,9 +17,16 @@ export class AuthController  {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input, The response body may contain clues as to what went wrong',
   })
+
   @HttpCode(HttpStatus.CREATED)
   @Post('/register')
-  async create(@Body() entity, ...options: any[]){
+  async create(@Body() entity, ...options: any[]): Promise<User> {
     return this.authService.register(entity)
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('/login')
+  async login(@Body() {findObj, password}, ...options: any[]): Promise<{ user: User; token: string } | null>  {
+    return this.authService.login(findObj, password)
   }
 }
