@@ -191,28 +191,15 @@ export class AuthStrategy extends NbAuthStrategy {
 			);
 		}
 
-		const data = {
-			email,
+		const registerInput = {
+			user: {
+				email
+			},
 			password
 		}
 
-		return this.http.post('/api/auth/register', data).pipe(
+		return this.http.post('/api/auth/register', registerInput).pipe(
 			map((res) => {
-			
-				// const { data, errors } = res;
-				// console.log(data);
-				
-
-				// TODO
-				// if (errors) {
-				// 	return new NbAuthResult(
-				// 		false,
-				// 		res,
-				// 		AuthStrategy.config.register.redirect.failure,
-				// 		errors.map((err) => JSON.stringify(err))
-				// 	);
-				// }
-
 				return new NbAuthResult(
 					true,
 					res,
@@ -228,6 +215,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					new NbAuthResult(
 						false,
 						err,
+						false,
 						AuthStrategy.config.register.defaultErrors,
 						[AuthStrategy.config.logout.defaultErrors]
 					)

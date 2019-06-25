@@ -11,6 +11,8 @@ export const environment: IEnvironment = {
     LOG_LEVEL: 'debug'
   },
 
+  USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
+
   database: {
     type: 'postgres',
     host: 'localhost',

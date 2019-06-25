@@ -12,4 +12,5 @@ export interface User extends IBaseEntityModel {
   username?: string;
   role?: Role;
   roleId?: string;
+  hash?: string;
 }

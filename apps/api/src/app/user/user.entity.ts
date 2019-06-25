@@ -56,4 +56,9 @@ export class User extends Base implements IUser {
   @ApiModelProperty({ type: String, readOnly: true })
   @RelationId((user: User) => user.role)
   readonly roleId?: string;
+
+  @ApiModelProperty({ type: String })
+  @IsString()
+  @Column()
+  hash?: string;
 }
