@@ -95,7 +95,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		// TODO implement remember me feature
 		const rememberMe = !!args.rememberMe;
 
-        const loginInput = {
+		const loginInput = {
 			findObj: {
 				email
 			},
@@ -103,50 +103,54 @@ export class AuthStrategy extends NbAuthStrategy {
 		}
 
 		return this.http.post('/api/auth/login', loginInput).pipe(
-				map(
-					(res: {
-						user?: IUser, // TODO { adminLogin: IAdminLoginResponse };
-						token?: string;
-					}) => {
-						debugger
-						const { user, token } = res;
+			map(
+				(res: {
+					user?: IUser, // TODO { adminLogin: IAdminLoginResponse };
+					token?: string;
+				}) => {
+					let user, token;
 
-						if (!user) {
-							return new NbAuthResult(
-								false,
-								res,
-								false,
-								AuthStrategy.config.login.defaultErrors
-							);
-						}
+					if (res) {
+						user = res.user;
+						token = res.token;
+					}
 
-						// TODO use global "Store" class
-						localStorage.setItem('userId', user.id)
-						localStorage.setItem('token', token)
-
+					if (!user) {
 						return new NbAuthResult(
-							true,
+							false,
 							res,
-							AuthStrategy.config.login.redirect.success,
-							[],
-							AuthStrategy.config.login.defaultMessages
+							false,
+							AuthStrategy.config.login.defaultErrors
 						);
 					}
-				),
-				catchError((err) => {
-					console.error(err);
 
-					return of(
-						new NbAuthResult(
-							false,
-							err,
-							false,
-							AuthStrategy.config.login.defaultErrors,
-							[AuthStrategy.config.login.defaultErrors]
-						)
+					// TODO use global "Store" class
+					localStorage.setItem('userId', user.id)
+					localStorage.setItem('token', token)
+
+					return new NbAuthResult(
+						true,
+						res,
+						AuthStrategy.config.login.redirect.success,
+						[],
+						AuthStrategy.config.login.defaultMessages
 					);
-				})
-			);
+				}
+			),
+			catchError((err) => {
+				console.error(err);
+
+				return of(
+					new NbAuthResult(
+						false,
+						err,
+						false,
+						AuthStrategy.config.login.defaultErrors,
+						[AuthStrategy.config.login.defaultErrors]
+					)
+				);
+			})
+		);
 	}
 
 	register(args: {
@@ -157,7 +161,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		terms: boolean;
 	}): Observable<NbAuthResult> {
 		const { email, fullName, password, confirmPassword, terms } = args;
-        
+
 		if (password !== confirmPassword) {
 			return Observable.of(
 				new NbAuthResult(false, null, null, [
@@ -184,7 +188,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				);
 			}),
 			catchError((err) => {
-				console.error(err);
+				console.warn(err);
 
 				return of(
 					new NbAuthResult(
@@ -288,7 +292,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
-        return
+		return
 		// this.store.clear();
 
 		// this.store.serverConnection = '200';
