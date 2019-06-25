@@ -2,10 +2,9 @@ import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute } from '@angular/router';
 import 'rxjs/add/observable/of';
-
 import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-
+import { User as IUser } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { HttpClient } from '@angular/common/http';
 
@@ -106,9 +105,10 @@ export class AuthStrategy extends NbAuthStrategy {
 		return this.http.post('/api/auth/login', loginInput).pipe(
 				map(
 					(res: {
-						user, // TODO { adminLogin: IAdminLoginResponse };
-						token;
+						user?: IUser, // TODO { adminLogin: IAdminLoginResponse };
+						token?: string;
 					}) => {
+						debugger
 						const { user, token } = res;
 
 						if (!user) {
@@ -129,7 +129,7 @@ export class AuthStrategy extends NbAuthStrategy {
 							res,
 							AuthStrategy.config.login.redirect.success,
 							[],
-							AuthStrategy.config.logout.defaultMessages
+							AuthStrategy.config.login.defaultMessages
 						);
 					}
 				),
@@ -142,7 +142,7 @@ export class AuthStrategy extends NbAuthStrategy {
 							err,
 							false,
 							AuthStrategy.config.login.defaultErrors,
-							[AuthStrategy.config.logout.defaultErrors]
+							[AuthStrategy.config.login.defaultErrors]
 						)
 					);
 				})
@@ -192,7 +192,7 @@ export class AuthStrategy extends NbAuthStrategy {
 						err,
 						false,
 						AuthStrategy.config.register.defaultErrors,
-						[AuthStrategy.config.logout.defaultErrors]
+						[AuthStrategy.config.register.defaultErrors]
 					)
 				);
 			})
