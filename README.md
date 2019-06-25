@@ -10,6 +10,7 @@ Gauzy™ - Fair Profits Sharing
 
 - Intall [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
 - Install NPM packages with `yarn install`
+- Seed Database with `yarn api:seedData`
 - Run API with `yarn start:api` (by default runs on http://localhost:3000/api)
 - Run Gauzy front-end with `yarn start`
 - Open http://localhost:4200 in your browser

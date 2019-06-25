@@ -12,7 +12,8 @@
     "typeorm:preserve": "yarn typeorm:sync -- -f=ormconfig && yarn typeorm:seeds -- -f=ormconfig",
     "start": "ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/main.ts",
     "build": "ng build api",
-    "build:prod": "ng build api --prod"
+    "build:prod": "ng build api --prod",
+    "seedData": "ts-node -r tsconfig-paths/register --project tsconfig.app.json src/app/core/seeds/index.ts"
   },
   "dependencies": {
     "@nestjs/common": "^6.3.1",

@@ -25,5 +25,10 @@ export const environment: IEnvironment = {
     logging: true,
     synchronize: true,
     uuidExtension: 'pgcrypto',
+  },
+
+  defaultAdmin: {
+    email: 'admin@ever.co',
+    password: "admin"
   }
 };
