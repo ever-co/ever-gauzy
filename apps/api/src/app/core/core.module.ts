@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { NestModule, Module } from '@nestjs/common';
+import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
 import { environment as env } from '@env-api/environment';
@@ -14,6 +14,7 @@ import { Organization } from '../organization';
 import { Income } from '../income';
 import { Expense } from '../expense';
 import { EmployeeSettings } from '../employee-settings';
+import { RequestContextMiddleware } from './context';
 
 const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
 
@@ -34,6 +35,7 @@ const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeS
     providers: [],
   })
   export class CoreModule implements NestModule {
-    configure(): void {
+    configure(consumer: MiddlewareConsumer) {
+      consumer.apply(RequestContextMiddleware).forRoutes('*');
     }
   }

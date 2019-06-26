@@ -1,5 +1,5 @@
 
-import { Controller, Post, HttpStatus, HttpCode, Body } from '@nestjs/common';
+import { Controller, Post, HttpStatus, HttpCode, Body, Get } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
@@ -15,14 +15,20 @@ export class AuthController {
 
   }
 
+  @ApiOperation({ title: 'Is authenticated' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST })
+  @Get('/authenticated')
+  async authenticated(_, __, context: any): Promise<boolean> {
+    return this.authService.isAuthenticated();
+  }
+
   @ApiOperation({ title: 'Create new record' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'The record has been successfully created.' /*, type: T*/ })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid input, The response body may contain clues as to what went wrong',
   })
-
-  @HttpCode(HttpStatus.CREATED)
   @Post('/register')
   async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {
     return this.commandBus.execute(

@@ -8,6 +8,8 @@ import { environment as env } from '@env-api/environment'
 import * as jwt from 'jsonwebtoken';
 import { JsonWebTokenError } from 'jsonwebtoken';
 import { IUserRegistrationInput } from './user-registration-input';
+import { RoleService, RolesEnum } from '../role';
+import { RequestContext } from '../core/context';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +17,7 @@ export class AuthService {
 
 	constructor(
 		private readonly userService: UserService,
+		private readonly roleService: RoleService
 	) {
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
@@ -34,7 +37,7 @@ export class AuthService {
 		}
 
 		const token = jwt.sign(
-			{ id: user.id }, // TODO role: this.role },
+			{ id: user.id },
 			env.JWT_SECRET,
 			{}
 		); // Never expires
@@ -48,6 +51,12 @@ export class AuthService {
 	}
 
 	async register(input: IUserRegistrationInput): Promise<User> {
+		const userCreateObj = input.user;
+
+		if (!userCreateObj.role) {
+			userCreateObj.role = await this.roleService.findOne({ name: RolesEnum.DATA_ENTRY });
+		}
+
 		const user = this.userService.create({
 			...input.user,
 			...(input.password
@@ -60,5 +69,23 @@ export class AuthService {
 		});
 
 		return user;
+	}
+
+	async isAuthenticated(): Promise<boolean> {
+		const token = RequestContext.currentToken();
+
+		try {
+			const { id } = jwt.verify(token, env.JWT_SECRET) as {
+				id: string;
+			};
+
+			return this.userService.checkIfExists(id);
+		} catch (err) {
+			if (err instanceof JsonWebTokenError) {
+				return false;
+			} else {
+				throw err;
+			}
+		}
 	}
 }

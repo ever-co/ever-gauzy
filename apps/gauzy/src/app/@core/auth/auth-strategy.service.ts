@@ -105,7 +105,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		return this.http.post('/api/auth/login', loginInput).pipe(
 			map(
 				(res: {
-					user?: IUser, // TODO { adminLogin: IAdminLoginResponse };
+					user?: IUser,
 					token?: string;
 				}) => {
 					let user, token;
