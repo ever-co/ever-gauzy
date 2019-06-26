@@ -21,3 +21,6 @@
   // loading progress bar
   @include ngx-pace-theme();
 };
+
+// install ng-select default theme
+@import "~@ng-select/ng-select/themes/default.theme.css";
