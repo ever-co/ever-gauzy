@@ -1,0 +1,23 @@
+.input-row {
+    display: flex;
+    max-height: 40px;
+    ng-select{
+        width: 300px;
+        margin-right:10px;
+    }
+}
+
+.calendar-picker {
+    position: relative;
+    max-height: 40px;
+    .calendar { 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: absolute;
+        z-index: 9999;
+        nb-calendar-year-picker, nb-calendar-month-picker{
+            z-index: 1;
+        }
+    }
+} 

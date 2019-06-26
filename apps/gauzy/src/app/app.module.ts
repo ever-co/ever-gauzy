@@ -20,6 +20,9 @@ import {
   NbSidebarModule,
   NbToastrModule,
   NbWindowModule,
+  NbCalendarModule,
+  NbCalendarKitModule,
+  NbDatepicker,
 } from '@nebular/theme';
 import { TokenInterceptor } from './@core/auth/token.interceptor';
 
@@ -30,9 +33,9 @@ import { TokenInterceptor } from './@core/auth/token.interceptor';
     BrowserAnimationsModule,
     HttpClientModule,
     AppRoutingModule,
-
+    NbCalendarModule,
+    NbCalendarKitModule,
     ThemeModule.forRoot(),
-
     NbSidebarModule.forRoot(),
     NbMenuModule.forRoot(),
     NbDatepickerModule.forRoot(),
