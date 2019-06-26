@@ -1,14 +1,18 @@
 
-import { Controller, Get, Post, HttpStatus, HttpCode, Body } from '@nestjs/common';
-import {  ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, HttpStatus, HttpCode, Body } from '@nestjs/common';
+import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { DeepPartial } from 'typeorm/common/DeepPartial';
+import { User as IUser } from '../user/user.entity';
+import { CommandBus } from '@nestjs/cqrs';
+import { AuthRegisterCommand } from './commands';
+import { IUserRegistrationInput } from './user-registration-input';
 
 @ApiUseTags('Auth')
 @Controller()
-export class AuthController  {
-  constructor(private readonly authService: AuthService) {
-  
+export class AuthController {
+  constructor(private readonly authService: AuthService,
+    private readonly commandBus: CommandBus) {
+
   }
 
   @ApiOperation({ title: 'Create new record' })
@@ -20,13 +24,15 @@ export class AuthController  {
 
   @HttpCode(HttpStatus.CREATED)
   @Post('/register')
-  async create(@Body() entity, ...options: any[]): Promise<User> {
-    return this.authService.register(entity)
+  async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {
+    return this.commandBus.execute(
+      new AuthRegisterCommand(entity)
+    );
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('/login')
-  async login(@Body() {findObj, password}, ...options: any[]): Promise<{ user: User; token: string } | null>  {
+  async login(@Body() { findObj, password }, ...options: any[]): Promise<{ user: IUser; token: string } | null> {
     return this.authService.login(findObj, password)
   }
 }
