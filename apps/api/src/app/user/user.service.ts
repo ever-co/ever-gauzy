@@ -13,4 +13,9 @@ export class UserService extends CrudService<User> {
   constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {
     super(userRepository);
   }
+
+  async checkIfExists(id: string): Promise<boolean> {
+    const count = await this.repository.createQueryBuilder('user').where("user.id = :id", { id }).getCount();
+    return count > 0;
+  }
 }

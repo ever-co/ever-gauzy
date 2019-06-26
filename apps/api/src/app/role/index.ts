@@ -1,3 +1,3 @@
 export { RoleModule } from './role.module';
-export { Role } from './role.entity';
+export { Role, RolesEnum } from './role.entity';
 export { RoleService } from './role.service';

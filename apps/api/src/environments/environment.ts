@@ -11,6 +11,9 @@ export const environment: IEnvironment = {
     LOG_LEVEL: 'debug'
   },
 
+  USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
+  JWT_SECRET: 'secretKey',
+
   database: {
     type: 'postgres',
     host: 'localhost',
@@ -22,5 +25,10 @@ export const environment: IEnvironment = {
     logging: true,
     synchronize: true,
     uuidExtension: 'pgcrypto',
+  },
+
+  defaultAdmin: {
+    email: 'admin@ever.co',
+    password: "admin"
   }
 };

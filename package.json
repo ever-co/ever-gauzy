@@ -9,6 +9,7 @@
     "start": "yarn start:gauzy",
     "start:gauzy": "ng serve gauzy",
     "start:api": "ng serve api",
+    "api:seedData": "yarn --cwd ./apps/api seedData",
     "bootstrap": "yarn lerna bootstrap",
     "prebuild": "rimraf dist coverage",
     "build": "ng build",
