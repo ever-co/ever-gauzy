@@ -1,11 +1,12 @@
 
-import { Controller, Post, HttpStatus, HttpCode, Body, Get } from '@nestjs/common';
+import { Controller, Post, HttpStatus, HttpCode, Body, Get, Req } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthRegisterCommand } from './commands';
 import { IUserRegistrationInput } from './user-registration-input';
+import { RequestContext } from '../core/context';
 
 @ApiUseTags('Auth')
 @Controller()
@@ -19,8 +20,10 @@ export class AuthController {
   @ApiResponse({ status: HttpStatus.OK })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST })
   @Get('/authenticated')
-  async authenticated(_, __, context: any): Promise<boolean> {
-    return this.authService.isAuthenticated();
+  async authenticated(): Promise<boolean> {
+    const token = RequestContext.currentToken();
+    
+    return this.authService.isAuthenticated(token);
   }
 
   @ApiOperation({ title: 'Create new record' })

@@ -8,23 +8,15 @@ import { Role, RolesEnum } from '../../role';
 export const createRoles = async (connection: Connection): Promise<Role[]> => {
   const roles: Role[] = [];
 
-  const roleAdmin = new Role();
-  roleAdmin.name = RolesEnum.ADMIN;
+  const rolesName = Object.values(RolesEnum);
 
-  await connection.createQueryBuilder().insert().into(Role).values(roleAdmin).execute();
-  roles.push(roleAdmin);
+  for (const name of rolesName) {
+    const role = new Role();
+    role.name = name;
 
-  const roleDataEntry = new Role();
-  roleDataEntry.name = RolesEnum.DATA_ENTRY;
-
-  await connection.createQueryBuilder().insert().into(Role).values(roleDataEntry).execute();
-  roles.push(roleDataEntry);
-
-  const roleEmployee = new Role();
-  roleEmployee.name = RolesEnum.EMPLOYEE;
-
-  await connection.createQueryBuilder().insert().into(Role).values(roleEmployee).execute();
-  roles.push(roleEmployee);
+    await connection.createQueryBuilder().insert().into(Role).values(role).execute();
+    roles.push(role);
+  }
 
   return roles;
 };

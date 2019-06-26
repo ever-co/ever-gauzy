@@ -9,8 +9,6 @@ export class AuthRegisterHandler implements ICommandHandler<AuthRegisterCommand>
     ) { }
 
     public async execute(command: AuthRegisterCommand): Promise<void> {
-        console.log('command:AuthRegisterCommand', command);
-
         const { input } = command;
 
         await this.authService.register(input);

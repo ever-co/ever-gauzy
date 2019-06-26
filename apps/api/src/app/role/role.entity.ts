@@ -11,7 +11,7 @@ import { Role as IRole } from '@gauzy/models';
 export enum RolesEnum {
     ADMIN = 'ADMIN',
     DATA_ENTRY = 'DATA_ENTRY',
-    EMPLOYEE = 'EMPLOYEE',
+    EMPLOYEE = 'EMPLOYEE'
 }
 
 @Entity('role')

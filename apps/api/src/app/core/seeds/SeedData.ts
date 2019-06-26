@@ -4,7 +4,7 @@
 
 import { Connection, createConnection, getRepository, ConnectionOptions } from 'typeorm';
 import { createRoles } from './CreateRoles';
-import {  seedDefaultUsers } from './CreateUsers';
+import { seedDefaultUsers } from './CreateUsers';
 import chalk from 'chalk';
 import { environment as env } from '@env-api/environment'
 import { Role } from '../../role';
@@ -17,21 +17,20 @@ import { EmployeeSettings } from '../../employee-settings/employee-settings.enti
 
 const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
 
-
 export class SeedData {
   connection: Connection;
   log = console.log;
 
-  constructor() {}
+  constructor() { }
 
   async createConnection() {
     try {
       this.log(chalk.green('🏃‍CONNECTING TO DATABASE...'));
-      this.connection =  await createConnection(
+      this.connection = await createConnection(
         {
           ...env.database,
           entities,
-      } as ConnectionOptions
+        } as ConnectionOptions
       );
     }
     catch (error) {
@@ -86,10 +85,10 @@ export class SeedData {
     const entities = [];
     try {
       (await (await this.connection).entityMetadatas).forEach(
-        entity => entities.push({name: entity.name, tableName: entity.tableName})
+        entity => entities.push({ name: entity.name, tableName: entity.tableName })
       );
       return entities;
-    } catch(error) {
+    } catch (error) {
       this.handleError(error, 'Unable to retrieve database metadata');
     }
   };

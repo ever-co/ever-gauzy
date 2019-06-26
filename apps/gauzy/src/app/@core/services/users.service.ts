@@ -10,7 +10,7 @@ export class UsersService {
         private http: HttpClient
     ) { }
 
-    getUserById(id: string): Promise<any> {
-        return this.http.get(`/api/user/${id}`).pipe(first()).toPromise()
+    getUserById(id: string): Promise<User> {
+        return this.http.get<User>(`/api/user/${id}`).pipe(first()).toPromise()
     }
 }

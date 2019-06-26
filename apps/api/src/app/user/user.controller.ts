@@ -21,7 +21,6 @@ export class UserController extends CrudController<User> {
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
   @Get(':id')
   async findById(@Param('id', UUIDValidationPipe) id: string): Promise<User> {
-    console.log('in findById', id);
     return this.userService.findOne(id);
   }
 }

@@ -9,7 +9,6 @@ import * as jwt from 'jsonwebtoken';
 import { JsonWebTokenError } from 'jsonwebtoken';
 import { IUserRegistrationInput } from './user-registration-input';
 import { RoleService, RolesEnum } from '../role';
-import { RequestContext } from '../core/context';
 
 @Injectable()
 export class AuthService {
@@ -71,9 +70,7 @@ export class AuthService {
 		return user;
 	}
 
-	async isAuthenticated(): Promise<boolean> {
-		const token = RequestContext.currentToken();
-
+	async isAuthenticated(token): Promise<boolean> {
 		try {
 			const { id } = jwt.verify(token, env.JWT_SECRET) as {
 				id: string;
