@@ -4,16 +4,17 @@
   "description": "Gauzy API",
   "license": "AGPL-3.0",
   "scripts": {
-    "typeorm": "ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json node_modules/.bin/typeorm",
-    "typeorm:sync": "typeorm schema:sync",
-    "typeorm:seeds": "typeorm migration:run",
-    "typeorm:flush": "typeorm migration:revert",
-    "typeorm:create": "typeorm migration:create",
+    "typeorm": "yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json node_modules/.bin/typeorm",
+    "typeorm:sync": "yarn typeorm schema:sync",
+    "typeorm:seeds": "yarn typeorm migration:run",
+    "typeorm:flush": "yarn typeorm migration:revert",
+    "typeorm:create": "yarn typeorm migration:create",
     "typeorm:preserve": "yarn typeorm:sync -- -f=ormconfig && yarn typeorm:seeds -- -f=ormconfig",
-    "start": "ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/main.ts",
-    "build": "ng build api",
-    "build:prod": "ng build api --prod",
-    "seedData": "ts-node -r tsconfig-paths/register --project tsconfig.app.json src/app/core/seeds/index.ts"
+    "start": "yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/main.ts",
+    "build": "yarn ng build api",
+    "build:prod": "yarn ng build api --prod",
+    "seedData": "yarn ts-node -r tsconfig-paths/register --project tsconfig.app.json src/app/core/seeds/index.ts",
+    "seedData:prod": "yarn ts-node -r tsconfig-paths/register --project tsconfig.app.json src/app/core/seeds/index.ts -c=production"
   },
   "dependencies": {
     "@nestjs/common": "^6.3.1",

@@ -7,9 +7,13 @@
   "scripts": {
     "ng": "ng",
     "start": "yarn start:gauzy",
+    "start:prod": "yarn start:gauzy:prod",
     "start:gauzy": "ng serve gauzy",
+    "start:gauzy:prod": "ng serve gauzy --host 0.0.0.0 --disable-host-check -c=production",
     "start:api": "ng serve api",
+    "start:api:prod": "ng serve api --host 0.0.0.0 --disable-host-check -c=production",
     "api:seedData": "yarn --cwd ./apps/api seedData",
+    "api:seedData:prod": "yarn --cwd ./apps/api seedData:prod",
     "bootstrap": "yarn lerna bootstrap",
     "prebuild": "rimraf dist coverage",
     "build": "ng build",

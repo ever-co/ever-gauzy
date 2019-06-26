@@ -93,7 +93,8 @@
           },
           "configurations": {
             "production": {
-              "browserTarget": "gauzy:build:production"
+              "browserTarget": "gauzy:build:production",
+              "proxyConfig": "apps/gauzy/proxy.prod.conf.json"
             }
           }
         },

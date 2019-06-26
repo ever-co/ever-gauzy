@@ -1,0 +1,28 @@
+dist
+tmp
+.github
+.npmrc
+.travis.yml
+greenkeeper.json
+docker-compose.yml
+*.md
+.deploy
+.git/
+.gitignore
+node_modules
+
+# IDEs and editors
+.idea
+.vscode
+.project
+.classpath
+*.launch
+.settings/
+
+# e2e
+e2e/*.js
+e2e/*.map
+
+#System Files
+.DS_Store
+Thumbs.db

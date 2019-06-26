@@ -18,7 +18,12 @@ export class ConfigService {
     for (const [key, value] of Object.entries(environment.env)) {
       process.env[key] = value;
     }
-    console.log('is prod? ', environment.production);
+    
+    this.logger.log('Is Production: ' + environment.production);
+
+    if (packageJson) {
+      this.logger.log('Package.json version: ' + packageJson.version)
+    }
   }
 
   get(key: keyof IEnvironment): IEnvironment[keyof IEnvironment] {
@@ -27,8 +32,11 @@ export class ConfigService {
 
   getVersion(): string {
     if (!process.env.APP_VERSION) {
-      process.env.APP_VERSION = packageJson.version;
+      if (packageJson && packageJson.version) {
+        process.env.APP_VERSION = packageJson.version;
+      }
     }
+    
     return process.env.APP_VERSION;
   }
 

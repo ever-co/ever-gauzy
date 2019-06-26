@@ -1767,6 +1767,13 @@
   resolved "https://registry.yarnpkg.com/@nestjsx/util/-/util-4.0.0.tgz#ece42abf33fb4bab250777f76d95916ef8abca82"
   integrity sha512-FmeIFav565Gnk1GP9tnz8oB8kUq/5cptIgac9qESkbJLWJrigIB8qeFSWPoXwW/p76Dk9B7LlTXN22K8J23LBA==
 
+"@ng-select/ng-select@^2.20.0":
+  version "2.20.1"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-2.20.1.tgz#e94c9e6940946936daefd11f732890016341c59b"
+  integrity sha512-1bAxbFOTIn7SrpdeGvuAdeEFrKauGWIsNKPdizifWbnUSKVKGbTqHPLtQClIilGGg2uUBcs7IfkQ6yu+RIlCsQ==
+  dependencies:
+    tslib "^1.9.0"
+
 "@ngtools/json-schema@^1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@ngtools/json-schema/-/json-schema-1.1.0.tgz#c3a0c544d62392acc2813a42c8a0dc6f58f86922"

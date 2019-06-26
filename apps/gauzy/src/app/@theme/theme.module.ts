@@ -28,6 +28,7 @@ import {
   RoundPipe,
   TimingPipe,
   NumberWithCommasPipe,
+  EvaIconsPipe
 } from './pipes';
 import {
   OneColumnLayoutComponent,
@@ -54,6 +55,7 @@ const NB_MODULES = [
   NbIconModule,
   NbEvaIconsModule,
 ];
+
 const COMPONENTS = [
   HeaderComponent,
   FooterComponent,
@@ -64,12 +66,14 @@ const COMPONENTS = [
   TwoColumnsLayoutComponent,
   ThemeSettingsComponent
 ];
+
 const PIPES = [
   CapitalizePipe,
   PluralPipe,
   RoundPipe,
   TimingPipe,
   NumberWithCommasPipe,
+  EvaIconsPipe
 ];
 
 @NgModule({

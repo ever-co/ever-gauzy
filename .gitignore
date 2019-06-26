@@ -7,7 +7,7 @@
 
 # dependencies
 /node_modules
-
+/apps/api/node_modules
 # IDEs and editors
 /.idea
 .project
