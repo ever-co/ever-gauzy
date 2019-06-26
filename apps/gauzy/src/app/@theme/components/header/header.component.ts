@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NbMenuService, NbSidebarService } from '@nebular/theme';
 
 import { LayoutService } from '../../../@core/utils';
+import { UsersService } from '../../../@core/services/users.service';
 
 @Component({
   selector: 'ngx-header',
@@ -14,17 +15,20 @@ export class HeaderComponent implements OnInit {
 
   user: any;
 
-  userMenu = [ { title: 'Profile' }, { title: 'Log out' } ];
+  userMenu = [
+    { title: 'Profile' },
+    { title: 'Log out', link: '/auth/logout' }
+  ];
 
   constructor(private sidebarService: NbSidebarService,
-              private menuService: NbMenuService,
-              private layoutService: LayoutService) {
+    private menuService: NbMenuService,
+    private layoutService: LayoutService,
+    private usersService: UsersService,
+  ) {
   }
 
   ngOnInit() {
-    this.user = {
-      name: 'Admin'
-    }
+    this.loadUserData();
   }
 
   toggleSidebar(): boolean {
@@ -35,12 +39,18 @@ export class HeaderComponent implements OnInit {
   }
 
   toggleSettings(): boolean {
-		this.sidebarService.toggle(false, 'settings-sidebar');
-		return false;
-	}
+    this.sidebarService.toggle(false, 'settings-sidebar');
+    return false;
+  }
 
   navigateHome() {
     this.menuService.navigateHome();
     return false;
+  }
+
+  private async loadUserData() {
+    // TODO use global "Store" class
+    const id = localStorage.getItem('userId');
+    this.user = await this.usersService.getUserById(id);
   }
 }

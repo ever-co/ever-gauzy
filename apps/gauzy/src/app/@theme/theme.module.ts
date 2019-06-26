@@ -38,6 +38,7 @@ import { DEFAULT_THEME } from './styles/theme.default';
 import { COSMIC_THEME } from './styles/theme.cosmic';
 import { CORPORATE_THEME } from './styles/theme.corporate';
 import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
+import { UsersService } from '../@core/services/users.service';
 
 const NB_MODULES = [
   NbLayoutModule,
@@ -75,6 +76,7 @@ const PIPES = [
   imports: [CommonModule, ...NB_MODULES],
   exports: [CommonModule, ...PIPES, ...COMPONENTS],
   declarations: [...COMPONENTS, ...PIPES],
+  providers: [UsersService]
 })
 export class ThemeModule {
   static forRoot(): ModuleWithProviders {

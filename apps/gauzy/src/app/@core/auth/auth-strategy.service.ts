@@ -70,21 +70,6 @@ export class AuthStrategy extends NbAuthStrategy {
 		return [AuthStrategy, options];
 	}
 
-	getByEmail(email: string) {
-		// return this.apollo
-		// 	.query({
-		// 		query: gql`
-		// 			query GetAdminByEmail($email: String!) {
-		// 				adminByEmail(email: $email) {
-		// 					_id
-		// 				}
-		// 			}
-		// 		`,
-		// 		variables: { email }
-		// 	})
-		// 	.pipe(map((res) => res.data['adminByEmail']));
-	}
-
 	authenticate(args: {
 		email: string;
 		password: string;
@@ -138,7 +123,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 			),
 			catchError((err) => {
-				console.error(err);
+				console.log(err);
 
 				return of(
 					new NbAuthResult(
@@ -188,7 +173,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				);
 			}),
 			catchError((err) => {
-				console.warn(err);
+				console.log(err);
 
 				return of(
 					new NbAuthResult(
@@ -201,78 +186,6 @@ export class AuthStrategy extends NbAuthStrategy {
 				);
 			})
 		);
-
-		// const mutation = gql`
-		// 	mutation Register(
-		// 		$email: String!
-		// 		$fullName: String!
-		// 		$pictureUrl: String!
-		// 		$password: String!
-		// 	) {
-		// 		registerAdmin(
-		// 			registerInput: {
-		// 				admin: {
-		// 					email: $email
-		// 					name: $fullName
-		// 					pictureUrl: $pictureUrl
-		// 				}
-		// 				password: $password
-		// 			}
-		// 		) {
-		// 			_id
-		// 			id
-		// 			email
-		// 			pictureUrl
-		// 		}
-		// 	}
-		// `;
-
-		// return this.apollo
-		// 	.mutate({
-		// 		mutation,
-		// 		variables: {
-		// 			email,
-		// 			fullName,
-		// 			password,
-		// 			pictureUrl
-		// 		},
-		// 		errorPolicy: 'all'
-		// 	})
-		// 	.pipe(
-		// 		map((res: { data: { registerAdmin: Admin }; errors }) => {
-		// 			const { data, errors } = res;
-		// 			const admin = data.registerAdmin;
-
-		// 			if (errors) {
-		// 				return new NbAuthResult(
-		// 					false,
-		// 					res,
-		// 					AdminAuthStrategy.config.register.redirect.failure,
-		// 					errors.map((err) => JSON.stringify(err))
-		// 				);
-		// 			}
-
-		// 			return new NbAuthResult(
-		// 				true,
-		// 				res,
-		// 				AdminAuthStrategy.config.register.redirect.success,
-		// 				[],
-		// 				AdminAuthStrategy.config.register.defaultMessages
-		// 			);
-		// 		}),
-		// 		catchError((err) => {
-		// 			console.error(err);
-
-		// 			return of(
-		// 				new NbAuthResult(
-		// 					false,
-		// 					err,
-		// 					AdminAuthStrategy.config.register.defaultErrors,
-		// 					[AdminAuthStrategy.config.logout.defaultErrors]
-		// 				)
-		// 			);
-		// 		})
-		// 	);
 	}
 
 	logout(): Observable<NbAuthResult> {
@@ -292,19 +205,15 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
-		return
-		// this.store.clear();
+		// TODO use global "Store" class
+		localStorage.clear()
 
-		// this.store.serverConnection = '200';
-
-		// await this.apollo.getClient().resetStore();
-
-		// return new NbAuthResult(
-		// 	true,
-		// 	null,
-		// 	AdminAuthStrategy.config.logout.redirect.success,
-		// 	[],
-		// 	AdminAuthStrategy.config.logout.defaultMessages
-		// );
+		return new NbAuthResult(
+			true,
+			null,
+			AuthStrategy.config.logout.redirect.success,
+			[],
+			AuthStrategy.config.logout.defaultMessages
+		);
 	}
 }
