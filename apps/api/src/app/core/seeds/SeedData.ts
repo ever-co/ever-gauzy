@@ -7,7 +7,7 @@ import chalk from 'chalk';
 import { environment as env } from '@env-api/environment'
 import { Role, createRoles } from '../../role';
 import { User, createUsers } from '../../user';
-import { Employee } from '../../employee';
+import { Employee, createEmployees } from '../../employee';
 import { Organization, createOrganizations } from '../../organization';
 import { Income } from '../../income';
 import { Expense } from '../../expense';
@@ -68,6 +68,12 @@ export class SeedData {
       const roles: Role[] = await createRoles(this.connection);
       const { adminUsers, defaultUsers, randomUsers } = await createUsers(this.connection, roles);
       const { defaultOrganization, randomOrganizations } = await createOrganizations(this.connection);
+
+      const a = await createEmployees(
+        this.connection,
+        { org: defaultOrganization, users: defaultUsers },
+        { orgs: randomOrganizations, users: randomUsers },
+      );
 
       this.log(chalk.green(`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`));
     } catch (error) {
