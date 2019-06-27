@@ -2,7 +2,7 @@ import { DashboardComponent } from './dashboard.component';
 import { NgModule } from '@angular/core';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { ThemeModule } from '../../@theme/theme.module';
-import { NbCardModule, NbCalendarModule, NbCalendarKitModule, NbButtonModule, NbInputModule, NbDatepickerModule } from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 
@@ -13,14 +13,11 @@ import { FormsModule } from '@angular/forms';
         NbCardModule,
         NgSelectModule,
         FormsModule,
-        NbCalendarModule,
-        NbCalendarKitModule,
         NbButtonModule,
         NbInputModule,
-        NbDatepickerModule
     ],
     declarations: [
         DashboardComponent
     ]
-  })
-  export class DashboardModule { }
+})
+export class DashboardModule { }

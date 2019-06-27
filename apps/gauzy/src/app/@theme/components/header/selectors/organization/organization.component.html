@@ -1,0 +1,5 @@
+<div *ngIf="(allOrganizations$ | async) as res">
+    <ng-select [items]="res.items" bindLabel="name" autofocus bindValue="id" [(ngModel)]="selectedOrganizationId"
+        [searchable]="false" placeholder="Select Company">
+    </ng-select>
+</div>

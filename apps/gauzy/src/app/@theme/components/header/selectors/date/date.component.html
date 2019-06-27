@@ -1,0 +1,9 @@
+<div class="calendar-picker" id="dashboard-calendar">
+    <input [value]="formatDateMMMMyy(date)" nbInput (focus)="loadCalendar = true" />
+    <nb-card class="calendar" *ngIf="loadCalendar">
+        <nb-calendar-year-picker [(year)]="date" [max]="max">
+        </nb-calendar-year-picker>
+        <nb-calendar-month-picker [(month)]="date" [max]="max" (monthChange)="handleMonthChange($event)">
+        </nb-calendar-month-picker>
+    </nb-card>
+</div>

@@ -11,12 +11,26 @@
 </div>
 
 <div class="header-container">
-  <nb-actions size="small" [class.right]="position === 'normal'" [class.left]="position === 'inverse'">
-    <nb-action icon="settings-2-outline" class="toggle-layout" (click)="toggleSettings()"></nb-action>
+  <nb-actions size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
+
+    <nb-action>
+      <ea-employee-selector class="header-selector"></ea-employee-selector>
+    </nb-action>
+
+    <nb-action>
+      <ea-date-selector></ea-date-selector>
+    </nb-action>
+
+    <nb-action>
+      <ea-organization-selector class="header-selector"></ea-organization-selector>
+    </nb-action>
 
     <nb-action *nbIsGranted="['view', 'user']">
       <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.picture"></nb-user>
     </nb-action>
+
+    <nb-action icon="settings-2-outline" class="toggle-layout" (click)="toggleSettings()"></nb-action>
+
     <!-- <nb-action class="control-item" icon="bell-outline"></nb-action>
     <nb-action class="control-item" icon="email-outline"></nb-action>
     <nb-action class="control-item">

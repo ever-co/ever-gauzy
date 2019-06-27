@@ -28,6 +28,10 @@
     height: auto;
     display: flex;
     align-content: center;
+
+    .header-selector {
+      width: 300px;
+    }
   }
 
   nb-user {

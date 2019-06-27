@@ -6,3 +6,4 @@ export { Income } from './lib/income.model';
 export { Expense } from './lib/expense.model';
 export { EmployeeSettings } from './lib/employee-settings.model';
 export { BaseEntityModel } from './lib/base-entity.model';
+export { DefaultUser } from './lib/default-user.model';

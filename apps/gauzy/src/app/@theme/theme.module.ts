@@ -40,6 +40,7 @@ import { COSMIC_THEME } from './styles/theme.cosmic';
 import { CORPORATE_THEME } from './styles/theme.corporate';
 import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
 import { UsersService } from '../@core/services/users.service';
+import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 
 const NB_MODULES = [
   NbLayoutModule,
@@ -77,7 +78,7 @@ const PIPES = [
 ];
 
 @NgModule({
-  imports: [CommonModule, ...NB_MODULES],
+  imports: [CommonModule, ...NB_MODULES, HeaderSelectorsModule],
   exports: [CommonModule, ...PIPES, ...COMPONENTS],
   declarations: [...COMPONENTS, ...PIPES],
   providers: [UsersService]

@@ -27,8 +27,49 @@ export const environment: IEnvironment = {
     uuidExtension: 'pgcrypto',
   },
 
-  defaultAdmin: {
+  defaultOrganizationsName: 'Ever Technologies LTD',
+
+  defaultAdmins: [{
     email: 'admin@ever.co',
     password: "admin"
-  }
+  }],
+
+  defaultEmployees: [
+    {
+      email: 'alish@ever.co',
+      password: '123456',
+      firstName: 'Alish',
+      lastName: 'Meklyov',
+    },
+    {
+      email: 'blagovest@ever.co',
+      password: '123456',
+      firstName: 'Blagovest',
+      lastName: 'Gerov',
+    },
+    {
+      email: 'elvis@ever.co',
+      password: '123456',
+      firstName: 'Elvis',
+      lastName: 'Arabadjiiski',
+    },
+    {
+      email: 'emil@ever.co',
+      password: '123456',
+      firstName: 'Emil',
+      lastName: 'Momchilov',
+    },
+    {
+      email: 'boyan@ever.co',
+      password: '123456',
+      firstName: 'Boyan',
+      lastName: 'Stanchev',
+    },
+    {
+      email: 'hristo@ever.co',
+      password: '123456',
+      firstName: 'Hristo',
+      lastName: 'Hristov',
+    }
+  ]
 };
