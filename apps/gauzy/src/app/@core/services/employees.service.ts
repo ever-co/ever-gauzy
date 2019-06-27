@@ -10,7 +10,7 @@ export class EmployeesService {
         private http: HttpClient
     ) { }
 
-    getAll(): Promise<{ items: Employee[], total: number }> {
-        return this.http.get<{ items: Employee[], total: number }>(`/api/employee`).pipe(first()).toPromise()
+    getAll(relations?: string[]): Promise<{ items: Employee[], total: number }> {
+        return this.http.get<{ items: Employee[], total: number }>(`/api/employee`, {params: {relations}}).pipe(first()).toPromise()
     }
 }

@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Get } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
 import { Employee } from './employee.entity';
@@ -16,7 +16,11 @@ export class EmployeeController extends CrudController<Employee> {
     @ApiResponse({ status: HttpStatus.OK, description: 'Found employees', type: Employee })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
     @Get()
-    async findAllEmployees(): Promise<IPagination<Employee>> {
-        return this.employeeService.findAll();
+    async findAllEmployees(@Query('relations') relations): Promise<IPagination<Employee>> {
+        if (relations !== 'null' && relations !== 'undefined') {
+            relations = [].concat(...[relations])
+        }
+
+        return this.employeeService.findAll({ relations });
     }
 }

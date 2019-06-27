@@ -1,38 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 
 @Component({
     selector: 'ea-employee-selector',
     templateUrl: './employee.component.html',
 })
-export class EmployeeSelectorComponent {
-    people = [
-        {
-            id: 'all',
-            firstName: 'Employees',
-            avatar: 'https://files.slack.com/files-pri/T0BBDDG2G-FKDK1Q2LB/all.jpg'
-        },
-        {
-            id: 'd9203kr3kf3wf3d3d3',
-            firstName: 'Emil',
-            lastName: 'Momchilov',
-            avatar: 'https://www.w3schools.com/howto/img_avatar.png'
-        },
-        {
-            id: '232d2domd039023',
-            firstName: 'Someone',
-            lastName: 'Someoneton',
-            avatar: 'https://www.w3schools.com/howto/img_avatar.png'
-        },
-        {
-            id: '8d932h9d823hf2',
-            firstName: 'Boyan',
-            lastName: 'Stanchev',
-            avatar: 'https://www.w3schools.com/howto/img_avatar.png'
-        }
-    ];
+export class EmployeeSelectorComponent implements OnInit{
+    people = []; 
+    selectedEmployeeId;
 
-    selectedEmployeeId = 'all';
+    constructor(
+        private employeesService: EmployeesService
+    ) {}
 
+     ngOnInit(): void {
+       this.loadPople();
+    }
 
     searchEmployee(term: string, item: any) {
         if (item.firstName && item.lastName) {
@@ -65,5 +48,10 @@ export class EmployeeSelectorComponent {
         return firstName && lastName
             ? firstName + ' ' + lastName
             : firstName || lastName;
+    }
+
+    private async loadPople() {
+        const res = await this.employeesService.getAll(['user']);
+        this.people = res.items.map((e) => e.user);
     }
 }
