@@ -1,0 +1,11 @@
+<ng-select [items]="people" bindValue="id" bindName="firstName" [(ngModel)]="selectedEmployeeId"
+    (change)="selectEmployee($event)" placeholder="All Employees" [searchFn]="searchEmployee">
+    <ng-template ng-option-tmp let-item="item" let-index="index">
+        <img [src]="item.avatar" width="40" height="40" />
+        {{ getFullName(item.firstName, item.lastName) }}
+    </ng-template>
+    <ng-template ng-label-tmp let-item="item">
+        <img height="25" width="25" [src]="item.avatar" />
+        {{ getShortenedName(item.firstName, item.lastName) }}
+    </ng-template>
+</ng-select>
