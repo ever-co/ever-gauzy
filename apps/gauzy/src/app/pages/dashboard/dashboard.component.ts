@@ -7,9 +7,6 @@ import { HttpClient } from '@angular/common/http';
   selector: 'ea-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
-  host: {
-    '(document:click)': 'clickOutside($event)'
-  }
 })
 export class DashboardComponent {
   hello$ = this.http.get<Message>('/api/hello');

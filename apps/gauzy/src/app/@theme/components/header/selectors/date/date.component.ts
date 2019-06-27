@@ -5,6 +5,9 @@ import { NbCalendarMonthCellComponent } from '@nebular/theme';
     selector: 'ea-date-selector',
     templateUrl: './date.component.html',
     styleUrls: ['./date.component.scss'],
+    host: {
+        '(document:click)': 'clickOutside($event)'
+    }
 })
 export class DateSelectorComponent implements OnInit {
     uselessCancer: string[];
@@ -18,7 +21,7 @@ export class DateSelectorComponent implements OnInit {
         //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
         //Add 'implements OnInit' to the class.
         this.date.setMonth(this.date.getMonth() - 1);
-      }
+    }
 
     handleMonthChange(event) {
         this.loadCalendar = false;
