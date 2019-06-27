@@ -1,6 +1,6 @@
 import { Connection } from "typeorm";
-import { Organization } from '../../organization';
 import { environment as env } from '@env-api/environment'
+import { Organization } from './organization.entity';
 
 export const createOrganizations = async (
     connection: Connection
@@ -13,7 +13,13 @@ export const createOrganizations = async (
         const organization = new Organization();
         organization.name = name;
 
-        await connection.createQueryBuilder().insert().into(Organization).values(organization).execute();
+        await connection
+            .createQueryBuilder()
+            .insert()
+            .into(Organization)
+            .values(organization)
+            .execute();
+
         organizations.push(organization);
     }
 

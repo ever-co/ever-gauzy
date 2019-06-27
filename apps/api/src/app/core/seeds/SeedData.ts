@@ -3,20 +3,17 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import { Connection, createConnection, getRepository, ConnectionOptions } from 'typeorm';
-import { createRoles } from './CreateRoles';
-import { createUsers } from './CreateUsers';
 import chalk from 'chalk';
 import { environment as env } from '@env-api/environment'
-import { Role } from '../../role';
-import { User } from '../../user';
+import { Role, createRoles } from '../../role';
+import { User, createUsers } from '../../user';
 import { Employee } from '../../employee';
-import { Organization } from '../../organization';
+import { Organization, createOrganizations } from '../../organization';
 import { Income } from '../../income';
 import { Expense } from '../../expense';
 import { EmployeeSettings } from '../../employee-settings/employee-settings.entity';
-import { createOrganizations } from './CreateOrganizations';
 
-const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
+const allEntities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
 
 export class SeedData {
   connection: Connection;
@@ -30,7 +27,7 @@ export class SeedData {
       this.connection = await createConnection(
         {
           ...env.database,
-          entities,
+          entities: allEntities,
         } as ConnectionOptions
       );
     }
@@ -69,13 +66,8 @@ export class SeedData {
       this.log(chalk.green(`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''} DATABASE...`));
 
       const roles: Role[] = await createRoles(this.connection);
-      // create default users;
-      const users: User[] = await createUsers(this.connection, roles);
-
+      const {adminUsers, defaultUsers, randomUsers} = await createUsers(this.connection, roles);
       const organizations: Organization[] = await createOrganizations(this.connection);
-
-      console.log(organizations);
-
 
       this.log(chalk.green(`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`));
     } catch (error) {

@@ -3,6 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { DefaultUser } from '@gauzy/models';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -28,10 +29,9 @@ export interface IEnvironment {
 
   database: TypeOrmModuleOptions;
 
-  defaultAdmin: {
-    email: string,
-    password: string
-  },
+  defaultAdmins: DefaultUser[],
+
+  defaultEmployees?: DefaultUser[],
 
   dummyOrganizationsNames?: string[]
 }
