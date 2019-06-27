@@ -27,11 +27,7 @@ export const environment: IEnvironment = {
     uuidExtension: 'pgcrypto',
   },
 
-  dummyOrganizationsNames: [
-    'Ever',
-    'Ever-2',
-    'Ever-co'
-  ],
+  defaultOrganizationsName: 'Ever Technologies LTD',
 
   defaultAdmins: [{
     email: 'admin@ever.co',

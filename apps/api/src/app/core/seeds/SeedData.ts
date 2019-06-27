@@ -66,8 +66,8 @@ export class SeedData {
       this.log(chalk.green(`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''} DATABASE...`));
 
       const roles: Role[] = await createRoles(this.connection);
-      const {adminUsers, defaultUsers, randomUsers} = await createUsers(this.connection, roles);
-      const organizations: Organization[] = await createOrganizations(this.connection);
+      const { adminUsers, defaultUsers, randomUsers } = await createUsers(this.connection, roles);
+      const { defaultOrganization, randomOrganizations } = await createOrganizations(this.connection);
 
       this.log(chalk.green(`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`));
     } catch (error) {

@@ -33,5 +33,5 @@ export interface IEnvironment {
 
   defaultEmployees?: DefaultUser[],
 
-  dummyOrganizationsNames?: string[]
+  defaultOrganizationsName?: string
 }
