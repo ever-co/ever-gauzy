@@ -8,9 +8,9 @@ import { Role, RolesEnum } from '../../role';
 export const createRoles = async (connection: Connection): Promise<Role[]> => {
   const roles: Role[] = [];
 
-  const rolesName = Object.values(RolesEnum);
+  const rolesNames = Object.values(RolesEnum);
 
-  for (const name of rolesName) {
+  for (const name of rolesNames) {
     const role = new Role();
     role.name = name;
 

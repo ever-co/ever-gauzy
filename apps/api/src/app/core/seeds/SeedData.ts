@@ -4,7 +4,7 @@
 
 import { Connection, createConnection, getRepository, ConnectionOptions } from 'typeorm';
 import { createRoles } from './CreateRoles';
-import { seedDefaultUsers } from './CreateUsers';
+import { createUsers } from './CreateUsers';
 import chalk from 'chalk';
 import { environment as env } from '@env-api/environment'
 import { Role } from '../../role';
@@ -14,6 +14,7 @@ import { Organization } from '../../organization';
 import { Income } from '../../income';
 import { Expense } from '../../expense';
 import { EmployeeSettings } from '../../employee-settings/employee-settings.entity';
+import { createOrganizations } from './CreateOrganizations';
 
 const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
 
@@ -69,8 +70,12 @@ export class SeedData {
 
       const roles: Role[] = await createRoles(this.connection);
       // create default users;
-      const users: User[] = await seedDefaultUsers(this.connection, roles);
-      // Only seed database with fake messages if dev or testing env.
+      const users: User[] = await createUsers(this.connection, roles);
+
+      const organizations: Organization[] = await createOrganizations(this.connection);
+
+      console.log(organizations);
+
 
       this.log(chalk.green(`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`));
     } catch (error) {

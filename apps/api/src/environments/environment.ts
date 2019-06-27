@@ -30,5 +30,11 @@ export const environment: IEnvironment = {
   defaultAdmin: {
     email: 'admin@ever.co',
     password: "admin"
-  }
+  },
+
+  dummyOrganizationsNames: [
+    'Ever',
+    'Ever-2',
+    'Ever-co'
+  ]
 };

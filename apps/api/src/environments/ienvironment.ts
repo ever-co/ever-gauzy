@@ -27,9 +27,11 @@ export interface IEnvironment {
   JWT_SECRET?: string,
 
   database: TypeOrmModuleOptions;
-  
+
   defaultAdmin: {
     email: string,
     password: string
-  }
+  },
+
+  dummyOrganizationsNames?: string[]
 }
