@@ -70,7 +70,7 @@
               },
               "extractCss": true,
               "namedChunks": false,
-              "ngswConfigPath": "apps/gauzy/ngsw-config.json",
+              "ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
               "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
@@ -208,6 +208,30 @@
           "options": {
             "jestConfig": "apps/api/jest.config.js",
             "tsConfig": "apps/api/tsconfig.spec.json"
+          }
+        },
+        "seed": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/api",
+            "main": "apps/api/src/app/core/seeds/index.ts",
+            "showCircularDependencies": false,
+            "sourceMap": true,
+            "tsConfig": "apps/api/tsconfig.app.json"            
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "sourceMap": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/api/src/environments/environment.ts",
+                  "with": "apps/api/src/environments/environment.prod.ts"
+                }
+              ]
+            }
           }
         }
       }

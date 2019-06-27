@@ -22,8 +22,8 @@ RUN npm install pm2 -g --unsafe-perm
 RUN mkdir -p /usr/src/app
 
 # Provides cached layer for node_modules and bower_components
-ADD package.json /tmp/package.json
-ADD apps/api/package.json /tmp/apps/api/package.json
+COPY package.json /tmp/package.json
+COPY apps/api/package.json /tmp/apps/api/package.json
 # COPY .snyk /tmp/.snyk
 COPY yarn.lock /tmp/yarn.lock
 RUN cd /tmp/ && yarn install
@@ -40,4 +40,5 @@ EXPOSE 3000
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.5.0/wait /wait
 RUN chmod +x /wait
 
-CMD /wait && yarn run api:seedData && yarn run start:api:prod
+CMD /wait && yarn run seed
+CMD /wait && yarn run start:api

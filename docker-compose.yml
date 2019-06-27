@@ -7,7 +7,7 @@ services:
     container_name: production_nginx
     volumes:
       - .deploy/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - .deploy/nginx/error.log:/etc/nginx/error.log
+      - .deploy/nginx/log/:/etc/nginx/logs
       - .deploy/nginx/cache/:/etc/nginx/cache
       - /etc/letsencrypt/:/etc/letsencrypt/
     ports:
@@ -89,4 +89,5 @@ volumes:
   certificates:
 
 networks:
-  overlay:  
+  overlay:
+    driver: bridge

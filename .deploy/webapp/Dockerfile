@@ -22,7 +22,7 @@ RUN npm install pm2 -g --unsafe-perm
 RUN mkdir -p /usr/src/app
 
 # Provides cached layer for node_modules and bower_components
-ADD package.json /tmp/package.json
+COPY package.json /tmp/package.json
 # COPY .snyk /tmp/.snyk
 COPY yarn.lock /tmp/yarn.lock
 RUN cd /tmp/ && yarn install
