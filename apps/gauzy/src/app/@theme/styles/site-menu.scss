@@ -1,0 +1,13 @@
+nb-menu {
+    height: 93%;
+
+    .menu-items {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+
+       .menu-item.menu-group{
+           margin-top: auto;
+       }
+    }
+}

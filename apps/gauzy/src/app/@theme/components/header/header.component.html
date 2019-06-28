@@ -14,20 +14,20 @@
   <nb-actions size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
 
     <nb-action>
-      <ea-employee-selector class="header-selector"></ea-employee-selector>
+      <ga-employee-selector class="header-selector"></ga-employee-selector>
     </nb-action>
 
     <nb-action>
-      <ea-date-selector></ea-date-selector>
+      <ga-date-selector></ga-date-selector>
     </nb-action>
 
     <nb-action>
-      <ea-organization-selector class="header-selector"></ea-organization-selector>
+      <ga-organization-selector class="header-selector"></ga-organization-selector>
     </nb-action>
 
-    <nb-action *nbIsGranted="['view', 'user']">
+    <!-- <nb-action *nbIsGranted="['view', 'user']">
       <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.picture"></nb-user>
-    </nb-action>
+    </nb-action> -->
 
     <nb-action icon="settings-2-outline" class="toggle-layout" (click)="toggleSettings()"></nb-action>
 

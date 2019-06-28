@@ -19,6 +19,11 @@ const routes: Routes = [{
         .then(m => m.DashboardModule),
     },
     {
+      path: 'income',
+      loadChildren: () => import('./income/income.module')
+        .then(m => m.IncomeModule),
+    },
+    {
       path: '**',
       component: NotFoundComponent,
     },

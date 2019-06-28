@@ -4,7 +4,6 @@ import { HttpClient } from '@angular/common/http';
 
 
 @Component({
-  selector: 'ea-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })

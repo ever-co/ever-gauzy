@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbCalendarMonthCellComponent } from '@nebular/theme';
 
 @Component({
-    selector: 'ea-date-selector',
+    selector: 'ga-date-selector',
     templateUrl: './date.component.html',
     styleUrls: ['./date.component.scss'],
     host: {

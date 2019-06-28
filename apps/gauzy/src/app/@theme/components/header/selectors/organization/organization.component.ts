@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
-import { Organization } from '@gauzy/models';
 import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
 
 @Component({
-  selector: 'ea-organization-selector',
+  selector: 'ga-organization-selector',
   templateUrl: './organization.component.html',
 })
 export class OrganizationSelectorComponent {
