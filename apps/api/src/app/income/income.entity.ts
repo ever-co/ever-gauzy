@@ -6,7 +6,7 @@ import {
     RelationId,
     ManyToOne,
 } from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDate } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Income as IIncome } from '@gauzy/models';
@@ -40,7 +40,7 @@ export class Income extends Base implements IIncome {
     @Column()
     amount: number;
 
-    @ApiModelProperty({ type: String })
+    @ApiModelPropertyOptional({ type: String })
     @Index()
     @IsOptional()
     @Column({ nullable: true })
@@ -53,7 +53,7 @@ export class Income extends Base implements IIncome {
     @Column()
     clientName: string;
 
-    @ApiModelProperty({ type: Date })
+    @ApiModelPropertyOptional({ type: Date })
     @IsDate()
     @IsOptional()
     @Column({ nullable: true })

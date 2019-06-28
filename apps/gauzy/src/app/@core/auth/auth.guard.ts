@@ -5,27 +5,22 @@ import {
     Router,
     RouterStateSnapshot
 } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
-
+import { AuthService } from '../services/auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
     constructor(
         private readonly router: Router,
-        private http: HttpClient
+        private authService: AuthService,
     ) { }
-
-    async isAuthenticated() {
-        return await this.http.get('/api/auth/authenticated').pipe(first()).toPromise();
-
-    }
 
     async canActivate(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ) {
-        if (await this.isAuthenticated()) {
+        const isAuthenticated = await this.authService.isAuthenticated();
+
+        if (isAuthenticated) {
             // logged in so return true
             return true;
         }

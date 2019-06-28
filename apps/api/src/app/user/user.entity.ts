@@ -10,7 +10,7 @@ import {
   RelationId,
   JoinColumn,
 } from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { IsAscii, IsEmail, IsNotEmpty, IsString, MaxLength, MinLength, IsOptional } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { User as IUser } from '@gauzy/models';
@@ -18,14 +18,14 @@ import { Role } from '../role';
 
 @Entity('user')
 export class User extends Base implements IUser {
-  @ApiModelProperty({ type: String })
+  @ApiModelPropertyOptional({ type: String })
   @IsString()
   @Index()
   @IsOptional()
   @Column({ nullable: true })
   firstName?: string;
 
-  @ApiModelProperty({ type: String })
+  @ApiModelPropertyOptional({ type: String })
   @IsString()
   @Index()
   @IsOptional()
@@ -39,7 +39,7 @@ export class User extends Base implements IUser {
   @Column()
   email: string;
 
-  @ApiModelProperty({ type: String, minLength: 3, maxLength: 20 })
+  @ApiModelPropertyOptional({ type: String, minLength: 3, maxLength: 20 })
   @IsAscii()
   @MinLength(3)
   @MaxLength(20)
@@ -48,7 +48,7 @@ export class User extends Base implements IUser {
   @Column({ nullable: true })
   username?: string;
 
-  @ApiModelProperty({ type: Role })
+  @ApiModelPropertyOptional({ type: Role })
   @ManyToOne(type => Role, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn()
   role?: Role;
@@ -61,4 +61,9 @@ export class User extends Base implements IUser {
   @IsString()
   @Column()
   hash?: string;
+
+  @ApiModelPropertyOptional({ type: String, maxLength: 500 })
+  @IsOptional()
+  @Column({ length: 500, nullable: true })
+  imageUrl?: string;
 }

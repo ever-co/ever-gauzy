@@ -1,5 +1,5 @@
 
-import { Controller, Post, HttpStatus, HttpCode, Body, Get, Req } from '@nestjs/common';
+import { Controller, Post, HttpStatus, HttpCode, Body, Get, Req, Query } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
@@ -7,6 +7,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { AuthRegisterCommand } from './commands';
 import { IUserRegistrationInput } from './user-registration-input';
 import { RequestContext } from '../core/context';
+import { RolesEnum } from '@gauzy/models';
+import { getDummyImage, getUserDummyImage } from '../core';
 
 @ApiUseTags('Auth')
 @Controller()
@@ -22,8 +24,18 @@ export class AuthController {
   @Get('/authenticated')
   async authenticated(): Promise<boolean> {
     const token = RequestContext.currentToken();
-    
+
     return this.authService.isAuthenticated(token);
+  }
+
+  @ApiOperation({ title: 'Has role?' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST })
+  @Get('/role')
+  async hasRole(@Query('roles') roles: string[]): Promise<boolean> {
+    const token = RequestContext.currentToken();
+
+    return this.authService.hasRole(token, roles);
   }
 
   @ApiOperation({ title: 'Create new record' })
@@ -33,7 +45,10 @@ export class AuthController {
     description: 'Invalid input, The response body may contain clues as to what went wrong',
   })
   @Post('/register')
-  async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {
+  async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {    
+    if (!entity.user.imageUrl) {
+      entity.user.imageUrl = getUserDummyImage(entity.user);
+    }
     return this.commandBus.execute(
       new AuthRegisterCommand(entity)
     );

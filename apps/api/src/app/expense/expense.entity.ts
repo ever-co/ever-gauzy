@@ -6,7 +6,7 @@ import {
     RelationId,
     JoinColumn,
 } from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDate } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Expense as IExpense } from '@gauzy/models';
@@ -47,7 +47,7 @@ export class Expense extends Base implements IExpense {
     @Column()
     vendorName: string;
 
-    @ApiModelProperty({ type: String })
+    @ApiModelPropertyOptional({ type: String })
     @Index()
     @IsOptional()
     @Column({ nullable: true })
@@ -60,19 +60,19 @@ export class Expense extends Base implements IExpense {
     @Column()
     categoryName: string;
 
-    @ApiModelProperty({ type: String })
+    @ApiModelPropertyOptional({ type: String })
     @Index()
     @IsOptional()
     @Column({ nullable: true })
     categoryId?: string;
 
-    @ApiModelProperty({ type: String })
+    @ApiModelPropertyOptional({ type: String })
     @Index()
     @IsOptional()
     @Column({ nullable: true })
     notes?: string;
 
-    @ApiModelProperty({ type: Date })
+    @ApiModelPropertyOptional({ type: Date })
     @IsDate()
     @IsOptional()
     @Column({ nullable: true })

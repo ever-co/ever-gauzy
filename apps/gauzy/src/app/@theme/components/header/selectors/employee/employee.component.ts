@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 
 @Component({
-    selector: 'ea-employee-selector',
+    selector: 'ga-employee-selector',
     templateUrl: './employee.component.html',
 })
 export class EmployeeSelectorComponent implements OnInit{

@@ -16,7 +16,7 @@ export class OrganizationController extends CrudController<Organization> {
     @ApiResponse({ status: HttpStatus.OK, description: 'Found organizations', type: Organization })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
     @Get()
-    async findAllEmployees(): Promise<IPagination<Organization>> {
+    async findAll(): Promise<IPagination<Organization>> {
         return this.organizationService.findAll();
     }
 }

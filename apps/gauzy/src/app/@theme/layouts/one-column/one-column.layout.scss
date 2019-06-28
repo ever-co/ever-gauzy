@@ -5,9 +5,27 @@
 @include nb-install-component() {
   .menu-sidebar ::ng-deep .scrollable {
     padding-top: nb-theme(layout-padding-top);
+    display: flex;
+    flex-direction: column;
+ 
+    padding-bottom: 1.4rem !important;
+    
   }
 
   .settings-sidebar.expanded {
     width: 10.5rem !important;
+  }
+
+  nb-user {
+    cursor: pointer;
+  }
+  
+  .user-container {
+    margin-top: auto;
+    border-top: 1px solid nb-theme(divider-color);
+    padding-top: 1.4rem;
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    padding-left: 8px;
   }
 }

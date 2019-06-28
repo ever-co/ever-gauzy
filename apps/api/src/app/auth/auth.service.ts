@@ -8,7 +8,6 @@ import { environment as env } from '@env-api/environment'
 import * as jwt from 'jsonwebtoken';
 import { JsonWebTokenError } from 'jsonwebtoken';
 import { IUserRegistrationInput } from './user-registration-input';
-import { RoleService, RolesEnum } from '../role';
 
 @Injectable()
 export class AuthService {
@@ -16,7 +15,6 @@ export class AuthService {
 
 	constructor(
 		private readonly userService: UserService,
-		private readonly roleService: RoleService
 	) {
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
@@ -29,14 +27,14 @@ export class AuthService {
 		findObj: any,
 		password: string
 	): Promise<{ user: User; token: string } | null> {
-		const user = await this.userService.findOne(findObj)
+		const user = await this.userService.findOne(findObj, { relations: ['role'] })
 
 		if (!user || !(await bcrypt.compare(password, user.hash))) {
 			return null;
 		}
 
 		const token = jwt.sign(
-			{ id: user.id },
+			{ id: user.id, role: user.role ? user.role.name : '' },
 			env.JWT_SECRET,
 			{}
 		); // Never expires
@@ -50,12 +48,6 @@ export class AuthService {
 	}
 
 	async register(input: IUserRegistrationInput): Promise<User> {
-		const userCreateObj = input.user;
-
-		if (!userCreateObj.role) {
-			userCreateObj.role = await this.roleService.findOne({ name: RolesEnum.DATA_ENTRY });
-		}
-
 		const user = this.userService.create({
 			...input.user,
 			...(input.password
@@ -70,13 +62,30 @@ export class AuthService {
 		return user;
 	}
 
-	async isAuthenticated(token): Promise<boolean> {
+	async isAuthenticated(token: string): Promise<boolean> {
 		try {
 			const { id } = jwt.verify(token, env.JWT_SECRET) as {
 				id: string;
 			};
 
 			return this.userService.checkIfExists(id);
+		} catch (err) {
+			if (err instanceof JsonWebTokenError) {
+				return false;
+			} else {
+				throw err;
+			}
+		}
+	}
+
+	async hasRole(token: string, roles: string[] = []): Promise<boolean> {
+		try {
+			const { id, role } = jwt.verify(token, env.JWT_SECRET) as {
+				id: string;
+				role: string;
+			};
+
+			return role ? roles.includes(role) : false;
 		} catch (err) {
 			if (err instanceof JsonWebTokenError) {
 				return false;

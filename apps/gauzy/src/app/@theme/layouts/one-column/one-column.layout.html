@@ -1,0 +1,24 @@
+<nb-layout windowMode>
+    <nb-layout-header fixed>
+        <ngx-header></ngx-header>
+    </nb-layout-header>
+
+    <nb-sidebar class="menu-sidebar" tag="menu-sidebar" responsive>
+        <ng-content select="nb-menu"></ng-content>
+        <div class="user-container">
+            <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.picture"></nb-user>
+        </div>
+    </nb-sidebar>
+
+    <nb-layout-column>
+        <ng-content select="router-outlet"></ng-content>
+    </nb-layout-column>
+
+    <nb-layout-footer fixed>
+        <ngx-footer></ngx-footer>
+    </nb-layout-footer>
+    <nb-sidebar class="settings-sidebar" tag="settings-sidebar" state="collapsed" fixed [end]="true">
+        <ngx-theme-settings></ngx-theme-settings>
+    </nb-sidebar>
+
+</nb-layout>

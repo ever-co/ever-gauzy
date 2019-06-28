@@ -6,7 +6,7 @@ import {
     RelationId,
     ManyToOne,
 } from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
 import { Employee as IEmployee } from '@gauzy/models';
 import { IsDate, IsOptional } from 'class-validator';
@@ -33,7 +33,7 @@ export class Employee extends Base implements IEmployee {
     @RelationId((employee: Employee) => employee.organization)
     readonly orgId: string;
 
-    @ApiModelProperty({ type: Date })
+    @ApiModelPropertyOptional({ type: Date })
     @IsDate()
     @IsOptional()
     @Column({ nullable: true })

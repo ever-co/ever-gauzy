@@ -7,7 +7,7 @@ import { Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
 
 @Component({
-  selector: 'ea-app',
+  selector: 'ga-app',
   template: '<router-outlet></router-outlet>',
 })
 export class AppComponent implements OnInit {
