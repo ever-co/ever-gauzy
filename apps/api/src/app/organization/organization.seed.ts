@@ -8,7 +8,9 @@ export const createOrganizations = async (
     connection: Connection
 ): Promise<{ defaultOrganization: Organization, randomOrganizations: Organization[] }> => {
     const defaultOrganization = new Organization()
-    defaultOrganization.name = env.defaultOrganizationsName;
+    const name = env.defaultOrganizationsName;
+    defaultOrganization.name = name;
+    defaultOrganization.imageUrl = getDummyImage(330, 300, name.charAt(0).toUpperCase());
     await insertOrganization(connection, defaultOrganization);
 
     const randomOrganizations: Organization[] = [];

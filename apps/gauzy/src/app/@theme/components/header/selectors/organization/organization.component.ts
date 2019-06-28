@@ -7,7 +7,7 @@ import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organiza
 })
 export class OrganizationSelectorComponent {
   allOrganizations$ = this.organizationsService.getAll();
-  
+
   selectedOrganizationId: string;
 
   constructor(private organizationsService: OrganizationsService) { }

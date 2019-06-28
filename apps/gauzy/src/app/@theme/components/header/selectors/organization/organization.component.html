@@ -1,5 +1,13 @@
 <div *ngIf="(allOrganizations$ | async) as res">
     <ng-select [items]="res.items" bindLabel="name" autofocus bindValue="id" [(ngModel)]="selectedOrganizationId"
-        [searchable]="false" placeholder="Select Company">
+        placeholder="Select Company">
+        <ng-template ng-option-tmp let-item="item" let-index="index">
+            <img *ngIf='item.imageUrl' [src]="item.imageUrl" width="40" height="40" />
+            {{ item.name }}
+        </ng-template>
+        <ng-template ng-label-tmp let-item="item">
+            <img *ngIf='item.imageUrl' height="25" width="25" [src]="item.imageUrl" />
+            {{ item.name }}
+        </ng-template>
     </ng-select>
 </div>
