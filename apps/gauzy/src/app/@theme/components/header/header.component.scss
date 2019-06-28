@@ -23,14 +23,6 @@
     }
   }
 
-  .gauzy-simbol {
-    font-size: 1.1rem !important;
-    margin-right: 5px;
-    margin-left: 1px;
-    margin-top: 1px;
-    font-weight: bold;
-  }
-
   ::ng-deep nb-search button {
     padding: 0!important;
   }
@@ -51,12 +43,24 @@
     }
 
     .logo {
-      padding: 0 1.25rem;
-      font-size: 1.75rem;
+
+      font-family: 'Crimson Text', serif;
+      font-size: 1.85rem;
+      padding: 0 1.25rem;      
+      margin-top: 5px;
       @include nb-ltr(border-left, 1px solid nb-theme(divider-color));
       @include nb-rtl(border-right, 1px solid nb-theme(divider-color));
       white-space: nowrap;
       text-decoration: none;
+
+      .gauzy-simbol {
+        font-size: 0.6rem !important;    
+        margin-left: 76px;
+        margin-top: -25px;
+        font-weight: bold;
+        position: absolute;
+      }
+
     }
   }
 
