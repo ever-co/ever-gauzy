@@ -9,6 +9,7 @@ import * as faker from 'faker';
 import { DefaultUser, RolesEnum } from '@gauzy/models';
 import { Role } from '../role';
 import { User } from './user.entity';
+import { getDummyImage, getUserDummyImage } from '../core';
 
 export const seedAdminUsers = async (
   connection: Connection,
@@ -63,10 +64,16 @@ export const createUsers = async (
 
 const generateDefaultUser = async (defaultUser: DefaultUser, role: Role): Promise<User> => {
   const user = new User();
-  user.email = defaultUser.email;
-  user.firstName = defaultUser.firstName;
-  user.lastName = defaultUser.lastName;
+
+  const firstName = defaultUser.firstName;
+  const lastName = defaultUser.lastName;
+  const email = defaultUser.email;
+
+  user.email = email;
+  user.firstName = firstName;
+  user.lastName = lastName;
   user.role = role;
+  user.imageUrl = getUserDummyImage(user);
   user.hash = await bcrypt.hash(defaultUser.password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
 
   return user;
@@ -85,6 +92,7 @@ const generateRandomUser = async (role: Role): Promise<User> => {
   user.username = username;
   user.email = email;
   user.role = role;
+  user.imageUrl = getUserDummyImage(user);
   user.hash = await bcrypt.hash('123456', env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
 
   return user;

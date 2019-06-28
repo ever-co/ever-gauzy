@@ -156,6 +156,8 @@ export class AuthStrategy extends NbAuthStrategy {
 
 		const registerInput = {
 			user: {
+				firstName: fullName ? fullName.split(' ').slice(0, -1).join(' ') : null,
+				lastName: fullName ? fullName.split(' ').slice(-1).join(' ') : null,
 				email
 			},
 			password

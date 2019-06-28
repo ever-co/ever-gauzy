@@ -3,7 +3,7 @@ import {
     Entity,
     Index,
 } from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsNumber, Min, Max, IsDate, IsOptional } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { EmployeeSettings as IEmployeeSettings } from '@gauzy/models';
@@ -45,7 +45,7 @@ export class EmployeeSettings extends Base implements IEmployeeSettings {
     @Column()
     value: number;
 
-    @ApiModelProperty({ type: Date })
+    @ApiModelPropertyOptional({ type: Date })
     @IsDate()
     @IsOptional()
     @Column({ nullable: true })

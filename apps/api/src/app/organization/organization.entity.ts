@@ -3,7 +3,7 @@ import {
     Entity,
     Index,
 } from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsDate, IsOptional } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Organization as IOrganization } from '@gauzy/models';
@@ -17,7 +17,12 @@ export class Organization extends Base implements IOrganization {
     @Column()
     name: string;
 
-    @ApiModelProperty({ type: Date })
+    @ApiModelPropertyOptional({ type: String, maxLength: 500 })
+    @IsOptional()
+    @Column({ length: 500, nullable: true })
+    imageUrl?: string;
+
+    @ApiModelPropertyOptional({ type: Date })
     @IsDate()
     @IsOptional()
     @Column({ nullable: true })

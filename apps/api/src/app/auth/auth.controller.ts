@@ -8,6 +8,7 @@ import { AuthRegisterCommand } from './commands';
 import { IUserRegistrationInput } from './user-registration-input';
 import { RequestContext } from '../core/context';
 import { RolesEnum } from '@gauzy/models';
+import { getDummyImage, getUserDummyImage } from '../core';
 
 @ApiUseTags('Auth')
 @Controller()
@@ -44,7 +45,10 @@ export class AuthController {
     description: 'Invalid input, The response body may contain clues as to what went wrong',
   })
   @Post('/register')
-  async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {
+  async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {    
+    if (!entity.user.imageUrl) {
+      entity.user.imageUrl = getUserDummyImage(entity.user);
+    }
     return this.commandBus.execute(
       new AuthRegisterCommand(entity)
     );
