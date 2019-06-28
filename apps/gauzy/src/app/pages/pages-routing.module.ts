@@ -24,6 +24,21 @@ const routes: Routes = [{
         .then(m => m.IncomeModule),
     },
     {
+      path: 'expenses',
+      loadChildren: () => import('./expenses/expenses.module')
+        .then(m => m.ExpensesModule),
+    },
+    {
+      path: 'employees',
+      loadChildren: () => import('./employees/employees.module')
+        .then(m => m.EmployeesModule),
+    },
+    {
+      path: 'organizations',
+      loadChildren: () => import('./organizations/organizations.module')
+        .then(m => m.OrganizationsModule),
+    },
+    {
       path: '**',
       component: NotFoundComponent,
     },
