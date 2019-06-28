@@ -3,7 +3,8 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import { Connection } from "typeorm";
-import { Role, RolesEnum } from './role.entity';
+import { Role } from './role.entity';
+import { RolesEnum } from '@gauzy/models';
 
 export const createRoles = async (connection: Connection): Promise<Role[]> => {
     const roles: Role[] = [];

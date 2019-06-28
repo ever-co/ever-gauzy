@@ -6,26 +6,26 @@ import {
     RouterStateSnapshot
 } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { first } from 'rxjs/operators';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
+export class RoleGuard implements CanActivate {
     constructor(
         private readonly router: Router,
-        private authService: AuthService,
+        private readonly authService: AuthService
     ) { }
 
     async canActivate(
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ) {
-        const isAuthenticated = await this.authService.isAuthenticated();
+        const expectedRole = route.data.expectedRole;
+        const hasRole = await this.authService.hasRole(expectedRole).pipe(first()).toPromise();
 
-        if (isAuthenticated) {
-            // logged in so return true
+        if (hasRole) {
             return true;
         }
 
-        // not logged in so redirect to login page with the return url
         this.router.navigate(['/auth/login'], {
             queryParams: { returnUrl: state.url }
         });

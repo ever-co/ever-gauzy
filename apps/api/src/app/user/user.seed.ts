@@ -6,8 +6,8 @@ import { Connection } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { environment as env } from '@env-api/environment'
 import * as faker from 'faker';
-import { DefaultUser } from '@gauzy/models';
-import { Role, RolesEnum } from '../role';
+import { DefaultUser, RolesEnum } from '@gauzy/models';
+import { Role } from '../role';
 import { User } from './user.entity';
 
 export const seedAdminUsers = async (

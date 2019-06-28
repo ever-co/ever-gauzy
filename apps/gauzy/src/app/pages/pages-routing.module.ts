@@ -3,6 +3,8 @@ import { NgModule } from '@angular/core';
 
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
+import { RoleGuard } from '../@core/role/role.guard';
+import { RolesEnum } from '@gauzy/models';
 
 const routes: Routes = [{
   path: '',
@@ -32,11 +34,19 @@ const routes: Routes = [{
       path: 'employees',
       loadChildren: () => import('./employees/employees.module')
         .then(m => m.EmployeesModule),
+      canActivate: [RoleGuard],
+      data: {
+        expectedRole: RolesEnum.ADMIN
+      }
     },
     {
       path: 'organizations',
       loadChildren: () => import('./organizations/organizations.module')
         .then(m => m.OrganizationsModule),
+      canActivate: [RoleGuard],
+      data: {
+        expectedRole: RolesEnum.ADMIN
+      }
     },
     {
       path: '**',

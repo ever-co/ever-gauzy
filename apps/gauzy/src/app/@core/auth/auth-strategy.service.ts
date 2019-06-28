@@ -4,10 +4,9 @@ import { ActivatedRoute } from '@angular/router';
 import 'rxjs/add/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { User as IUser } from '@gauzy/models';
+import { User } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
-import { HttpClient } from '@angular/common/http';
-
+import { AuthService } from '../services/auth.service';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -61,7 +60,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	constructor(
 		private route: ActivatedRoute,
-		private http: HttpClient
+		private authService: AuthService,
 	) {
 		super();
 	}
@@ -87,10 +86,10 @@ export class AuthStrategy extends NbAuthStrategy {
 			password
 		}
 
-		return this.http.post('/api/auth/login', loginInput).pipe(
+		return this.authService.login(loginInput).pipe(
 			map(
 				(res: {
-					user?: IUser,
+					user?: User,
 					token?: string;
 				}) => {
 					let user, token;
@@ -162,7 +161,7 @@ export class AuthStrategy extends NbAuthStrategy {
 			password
 		}
 
-		return this.http.post('/api/auth/register', registerInput).pipe(
+		return this.authService.register(registerInput).pipe(
 			map((res) => {
 				return new NbAuthResult(
 					true,

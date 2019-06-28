@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { environment } from '../../../environments/environment';
 import { AuthGuard } from './auth.guard';
 import { AuthStrategy } from './auth-strategy.service';
+import { AuthService } from '../services/auth.service';
 
 const socialLinks = [
 	{
@@ -34,7 +35,8 @@ const socialLinks = [
 		}).providers,
 
 		AuthGuard,
-		AuthStrategy
+		AuthStrategy,
+		AuthService
 	]
 })
 export class AuthModule {}
