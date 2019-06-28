@@ -8,7 +8,7 @@ Gauzy™ - Fair Profits Sharing
 - **Stock Options** solving **fair sharing of profits _in the future_**.
 - **Gauzy** solving **fair sharing of profits _today_**.
 
-# Quick Start
+## Quick Start
 
 - Intall [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
 - Install NPM packages with `yarn install`
@@ -19,16 +19,20 @@ Gauzy™ - Fair Profits Sharing
 Note: during the first API start, DB will be automatically seed with initial data if no users found. 
 You can run seed any moment manually (e.g. if you changed entities schemas) with `yarn run seed` command to re-initialize DB (warning: unsafe for production!).
 
-# Credits
+## Technology Stack
 
-This application uses Open Source components and 3rd party libraries, which are licensed under their own respective Open-Source licenses. You can find the links to source code of their open source projects along with license information below. We acknowledge and are grateful to these developers for their contributions to open source.
+-   [TypeScript](https://www.typescriptlang.org)
+-   [Node.js](https://nodejs.org)
+-   [Nx](https://nx.dev)
+-   [Angular 8](https://angular.io)
+-   [Nest](https://github.com/nestjs/nest)
+-   [RxJS](http://reactivex.io/rxjs)
+-   [TypeORM](https://github.com/typeorm/typeorm)
+-   [Ngx-admin](https://github.com/akveo/ngx-admin)
 
-We are using:
-- [Nx](https://nx.dev), a set of Angular CLI power-ups for modern development.
-- [ngx-starter-kit](https://github.com/xmlking/ngx-starter-kit), Angular NestJS Starter Kit, released under [MIT](https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE) & `Copyright (c) 2018 Sumanth Chinthagunta`
-- [ngx-admin](https://github.com/akveo/ngx-admin), Angular Dashboard template, released under [MIT](https://github.com/akveo/ngx-admin/blob/master/LICENSE) & `Copyright (c) 2017 akveo.com`
+#### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses and other details.
 
-## How to use Nx
+### How to use Nx
 
 Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) about Nx usage
 
