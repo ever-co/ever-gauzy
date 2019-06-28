@@ -12,10 +12,12 @@ Gauzy™ - Fair Profits Sharing
 
 - Intall [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
 - Install NPM packages with `yarn install`
-- Seed Database with `yarn run seed`
 - Run API with `yarn start:api` (by default runs on http://localhost:3000/api)
 - Run Gauzy front-end with `yarn start`
 - Open http://localhost:4200 in your browser
+
+Note: during the first API start, DB will be automatically seed with initial data if no users found. 
+You can run seed any moment manually (e.g. if you changed entities schemas) with `yarn run seed` command to re-initialize DB (warning: unsafe for production!).
 
 # Credits
 

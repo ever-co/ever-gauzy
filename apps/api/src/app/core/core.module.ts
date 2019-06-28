@@ -6,7 +6,6 @@ import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
 import { environment as env } from '@env-api/environment';
-
 import { User } from '../user';
 import { Employee } from '../employee';
 import { Role } from '../role';
@@ -34,7 +33,7 @@ const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeS
     controllers: [],
     providers: [],
   })
-  export class CoreModule implements NestModule {
+  export class CoreModule implements NestModule {    
     configure(consumer: MiddlewareConsumer) {
       consumer.apply(RequestContextMiddleware).forRoutes('*');
     }

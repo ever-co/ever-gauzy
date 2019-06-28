@@ -11,6 +11,7 @@ import { ExpenseModule } from './expense';
 import { EmployeeSettingsModule } from './employee-settings';
 import { CoreModule } from './core';
 import { AuthModule } from './auth';
+import { SeedDataService } from './core/seeds/SeedDataService';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AuthModule } from './auth';
     EmployeeSettingsModule
   ],
   controllers: [AppController],
-  providers: [AppService]
+  providers: [AppService, SeedDataService]
 })
-export class AppModule {}
+export class AppModule {    
+}

@@ -22,6 +22,10 @@ import { IPagination } from './pagination';
 export abstract class CrudService<T extends Base> implements ICrudService<T> {
   protected constructor(protected readonly repository: Repository<T>) {}
 
+  public async count(filter?: FindManyOptions<T>): Promise<number> {
+    return await this.repository.count(filter);
+  }
+
   public async findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>> {
     const total = await this.repository.count(filter);
     const items = await this.repository.find(filter);

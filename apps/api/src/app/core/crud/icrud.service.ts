@@ -7,6 +7,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { IPagination } from './pagination';
 
 export interface ICrudService<T> {
+  count(filter?: FindManyOptions<T>): Promise<number>;
   findAll(filter?: FindManyOptions<T>): Promise<IPagination<T>>;
   findOne(id: string | number | FindOneOptions<T> | FindConditions<T>, options?: FindOneOptions<T>): Promise<T>;
   create(entity: DeepPartial<T>, ...options: any[]): Promise<T>;

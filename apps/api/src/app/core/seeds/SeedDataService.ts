@@ -2,7 +2,8 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Connection, createConnection, getRepository, ConnectionOptions } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { Connection, createConnection, getRepository, ConnectionOptions, getConnection } from 'typeorm';
 import chalk from 'chalk';
 import { environment as env } from '@env-api/environment'
 import { Role, createRoles } from '../../role';
@@ -15,7 +16,8 @@ import { EmployeeSettings } from '../../employee-settings/employee-settings.enti
 
 const allEntities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
 
-export class SeedData {
+@Injectable()
+export class SeedDataService {
   connection: Connection;
   log = console.log;
 
@@ -24,12 +26,18 @@ export class SeedData {
   async createConnection() {
     try {
       this.log(chalk.green('🏃‍CONNECTING TO DATABASE...'));
-      this.connection = await createConnection(
-        {
-          ...env.database,
-          entities: allEntities,
-        } as ConnectionOptions
-      );
+
+      this.connection = await getConnection();
+
+      if (!this.connection.isConnected)
+      {
+        this.connection = await createConnection(
+          {
+            ...env.database,
+            entities: allEntities,
+          } as ConnectionOptions
+        );
+      }
     }
     catch (error) {
       this.handleError(error, 'Unable to connect to database');
@@ -51,7 +59,7 @@ export class SeedData {
       // Seed data with mock / fake data
       await this.seedData();
 
-      process.exit(0);
+      console.log('Database Seed completed');      
     }
     catch (error) {
       this.handleError(error);
@@ -122,7 +130,6 @@ export class SeedData {
 
   private handleError(error: Error, message?: string): void {
     this.log(chalk.bgRed(`🛑 ERROR: ${!!message ? message : 'Unable to seed database'}`));
-    throw new Error(`🛑  ${error}`);
-    process.exit(1);
+    throw new Error(`🛑  ${error}`);    
   }
 }

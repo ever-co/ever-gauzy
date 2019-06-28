@@ -39,4 +39,4 @@ EXPOSE 4200
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.5.0/wait /wait
 RUN chmod +x /wait
 
-CMD /wait && yarn run start:gauzy:prod
+CMD /wait && yarn start:gauzy:prod
