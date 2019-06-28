@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap');
+
 // themes - our custom or/and out of the box themes
 @import 'themes';
 
@@ -10,6 +12,11 @@
 // loading progress bar theme
 @import './pace.theme';
 
+@import './overrides';
+
+// install ng-select default theme
+@import "~@ng-select/ng-select/themes/default.theme.css";
+
 // install the framework and custom global styles
 @include nb-install() {
 
@@ -20,7 +27,6 @@
 
   // loading progress bar
   @include ngx-pace-theme();
-};
 
-// install ng-select default theme
-@import "~@ng-select/ng-select/themes/default.theme.css";
+  @include nb-overrides();
+};

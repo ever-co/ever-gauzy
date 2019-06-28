@@ -28,16 +28,17 @@ import {
   RoundPipe,
   TimingPipe,
   NumberWithCommasPipe,
-  EvaIconsPipe
 } from './pipes';
 import {
   OneColumnLayoutComponent,
   ThreeColumnsLayoutComponent,
   TwoColumnsLayoutComponent,
 } from './layouts';
+import { WindowModeBlockScrollService } from './services/window-mode-block-scroll.service';
 import { DEFAULT_THEME } from './styles/theme.default';
 import { COSMIC_THEME } from './styles/theme.cosmic';
 import { CORPORATE_THEME } from './styles/theme.corporate';
+import { DARK_THEME } from './styles/theme.dark';
 import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
 import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
@@ -56,7 +57,6 @@ const NB_MODULES = [
   NbIconModule,
   NbEvaIconsModule,
 ];
-
 const COMPONENTS = [
   HeaderComponent,
   FooterComponent,
@@ -67,14 +67,12 @@ const COMPONENTS = [
   TwoColumnsLayoutComponent,
   ThemeSettingsComponent
 ];
-
 const PIPES = [
   CapitalizePipe,
   PluralPipe,
   RoundPipe,
   TimingPipe,
   NumberWithCommasPipe,
-  EvaIconsPipe
 ];
 
 @NgModule({
@@ -92,8 +90,9 @@ export class ThemeModule {
           {
             name: 'default',
           },
-          [ DEFAULT_THEME, COSMIC_THEME, CORPORATE_THEME ],
+          [ DEFAULT_THEME, COSMIC_THEME, CORPORATE_THEME, DARK_THEME ],
         ).providers,
+        WindowModeBlockScrollService,
       ],
     };
   }
