@@ -3,28 +3,28 @@
 @import '~bootstrap/scss/mixins/breakpoints';
 
 @include nb-install-component() {
-	width: 100%;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-	.socials {
-		font-size: 2rem;
+  .socials {
+    font-size: 2rem;
 
-		a {
-			padding: 0.4rem;
-			color: #a4abb3;
-			transition: color ease-out 0.1s;
+    a {
+      padding: 0.4rem;
+      color: nb-theme(text-hint-color);
+      transition: color ease-out 0.1s;
 
-			&:hover {
-				color: #2a2a2a;
-			}
-		}
-	}
+      &:hover {
+        color: nb-theme(text-basic-color);
+      }
+    }
+  }
 
-	@include media-breakpoint-down(is) {
-		.socials {
-			font-size: 1.5rem;
-		}
-	}
+  @include media-breakpoint-down(is) {
+    .socials {
+      font-size: 1.5rem;
+    }
+  }
 }

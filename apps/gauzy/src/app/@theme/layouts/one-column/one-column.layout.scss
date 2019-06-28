@@ -3,43 +3,11 @@
 @import '~@nebular/theme/styles/global/breakpoints';
 
 @include nb-install-component() {
-  nb-layout-column.small {
-    flex: 0.15 !important;
+  .menu-sidebar ::ng-deep .scrollable {
+    padding-top: nb-theme(layout-padding-top);
   }
 
-  nb-sidebar.settings-sidebar {
-    $sidebar-width: 8.5rem;
-
-    transition: width 0.3s ease;
-    width: $sidebar-width;
-    overflow: hidden;
-
-    &.collapsed {
-      width: 0;
-
-      ::ng-deep .main-container {
-        width: 0;
-
-        .scrollable {
-          width: $sidebar-width;
-          padding: 1.25rem;
-        }
-      }
-    }
-
-    ::ng-deep .main-container {
-      width: $sidebar-width;
-      background: nb-theme(color-bg);
-      transition: width 0.3s ease;
-      overflow: hidden;
-
-      .scrollable {
-        width: $sidebar-width;
-      }
-
-      @include nb-for-theme(cosmic) {
-        background: nb-theme(layout-bg);
-      }
-    }
+  .settings-sidebar.expanded {
+    width: 10.5rem !important;
   }
 }
