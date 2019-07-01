@@ -1,6 +1,19 @@
 import { User } from '@gauzy/models';
+import { Subject, Observable } from 'rxjs';
 
 export class Store {
+    private _selectedOrganizationId: string;
+    selectedOrganizationId$: Subject<string> = new Subject();
+
+    get selectedOrganizationId(): string {
+        return this._selectedOrganizationId;
+    }
+
+    set selectedOrganizationId(id: string) {
+        this._selectedOrganizationId = id;
+        this.selectedOrganizationId$.next(id);
+    }
+
     get token(): string | null {
         return localStorage.getItem('token') || null;
     }
