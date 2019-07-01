@@ -31,9 +31,7 @@ export class EmployeeSelectorComponent implements OnInit{
     }
 
     selectEmployee(event) {
-        if (event === undefined) {
-            this.selectedEmployeeId = 'all';
-        }
+       
     }
 
     getShortenedName(firstName, lastName) {

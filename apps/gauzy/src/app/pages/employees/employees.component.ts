@@ -53,11 +53,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     add() {
-
+        console.warn('TODO implement add Employee');
     }
 
     edit() {
-
+        console.warn('TODO go to edit employee page');
     }
 
     private async loadPage(id: string) {
@@ -72,6 +72,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             return {
                 fullName: `${i.user.firstName} ${i.user.lastName}`,
                 email: i.user.email,
+                // TODO laod real bonus
                 bonus: 0,
             };
         });
@@ -99,6 +100,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     width: '15%'
                 },
             },
+            pager: {
+                display: true,
+                perPage: 8
+            }
         }
     }
 

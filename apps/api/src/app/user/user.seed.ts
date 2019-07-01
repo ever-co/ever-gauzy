@@ -52,8 +52,8 @@ export const createUsers = async (
     defaultUsers.push(user);
   }
 
-  // Generate 30 random users
-  for (let i = 0; i < 30; i++) {
+  // Generate 50 random users
+  for (let i = 0; i < 50; i++) {
     user = await generateRandomUser(employeeRole);
     await insertUser(connection, user);
     randomUsers.push(user);
