@@ -4,11 +4,12 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { first, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
+import { EmployeesService } from '../../@core/services/employees.service';
 
 interface EmployeeViewModel {
     fullName: string;
     email: string;
-    bonus: number;
+    bonus?: number;
 }
 
 @Component({
@@ -25,6 +26,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
     constructor(
         private organizationsService: OrganizationsService,
+        private employeesService: EmployeesService,
         private store: Store
     ) { }
 
@@ -63,6 +65,18 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .getById(id)
             .pipe(first())
             .toPromise()
+
+        const { items } = await this.employeesService.getAll(['user'], { organization: { id } });
+
+        const employeesVm: EmployeeViewModel[] = items.map((i) => {
+            return {
+                fullName: `${i.user.firstName} ${i.user.lastName}`,
+                email: i.user.email,
+                bonus: 0,
+            };
+        });
+
+        this.sourceSmartTable.load(employeesVm);
 
         this.organizationName = name;
     }

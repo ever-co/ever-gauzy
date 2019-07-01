@@ -16,11 +16,9 @@ export class EmployeeController extends CrudController<Employee> {
     @ApiResponse({ status: HttpStatus.OK, description: 'Found employees', type: Employee })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
     @Get()
-    async findAllEmployees(@Query('relations') relations): Promise<IPagination<Employee>> {
-        if (relations !== 'null' && relations !== 'undefined') {
-            relations = [].concat(...[relations])
-        }
-
-        return this.employeeService.findAll({ relations });
+    async findAllEmployees(@Query('data') data: string): Promise<IPagination<Employee>> {
+        const {relations, findInput} = JSON.parse(data);
+    
+        return this.employeeService.findAll({ where: findInput,  relations });
     }
 }
