@@ -5,6 +5,7 @@ import { UsersService } from '../../../@core/services/users.service';
 
 
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
   selector: 'ngx-one-column-layout',
@@ -26,7 +27,8 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
     @Inject(PLATFORM_ID) private platformId,
     private windowModeBlockScrollService: WindowModeBlockScrollService,
     private usersService: UsersService,
-  ) {}
+    private store: Store
+  ) { }
 
   ngOnInit() {
     this.loadUserData();
@@ -39,8 +41,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
   }
 
   private async loadUserData() {
-    // TODO use global "Store" class
-    const id = localStorage.getItem('userId');
+    const id = this.store.userId;
     this.user = await this.usersService.getUserById(id);
   }
 }

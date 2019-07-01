@@ -7,6 +7,7 @@ import { Injectable } from '@angular/core';
 import { User } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
+import { Store } from '../services/store.service';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -61,6 +62,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	constructor(
 		private route: ActivatedRoute,
 		private authService: AuthService,
+		private store: Store
 	) {
 		super();
 	}
@@ -108,9 +110,8 @@ export class AuthStrategy extends NbAuthStrategy {
 						);
 					}
 
-					// TODO use global "Store" class
-					localStorage.setItem('userId', user.id)
-					localStorage.setItem('token', token)
+					this.store.userId = user.id;
+					this.store.token = token;
 
 					return new NbAuthResult(
 						true,
@@ -206,8 +207,7 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
-		// TODO use global "Store" class
-		localStorage.clear()
+		this.store.clear();
 
 		return new NbAuthResult(
 			true,
