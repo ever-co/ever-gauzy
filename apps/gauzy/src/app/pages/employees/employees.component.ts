@@ -5,6 +5,8 @@ import { first, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { EmployeesService } from '../../@core/services/employees.service';
+import { NbDialogService } from '@nebular/theme';
+import { BasicInfoFormComponent } from '../../@shared/user/forms/basic-info/basic-info-form.component';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -27,6 +29,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     constructor(
         private organizationsService: OrganizationsService,
         private employeesService: EmployeesService,
+        private dialogService: NbDialogService,
         private store: Store
     ) { }
 
@@ -53,7 +56,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     add() {
-        console.warn('TODO implement add Employee');
+        this.dialogService.open(BasicInfoFormComponent)
     }
 
     edit() {
