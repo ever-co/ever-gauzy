@@ -5,3 +5,9 @@ export interface Organization extends IBaseEntityModel {
     valueDate?: Date;
     imageUrl?: string;
 }
+
+export interface OrganizationFindInput extends IBaseEntityModel {
+    name?: string;
+    valueDate?: Date;
+    imageUrl?: string;
+}

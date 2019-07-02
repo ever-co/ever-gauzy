@@ -1,6 +1,6 @@
-<div *ngIf="(allOrganizations$ | async) as res">
-    <ng-select [items]="res.items" bindLabel="name" autofocus bindValue="id" [(ngModel)]="selectedOrganizationId"
-        placeholder="Select Company">
+<div *ngIf="organizations">
+    <ng-select [clearable]="false" [items]="organizations" bindLabel="name" autofocus bindValue="id"
+    (change)="selectOrganiztion($event)"  [(ngModel)]="selectedOrganizationId" placeholder="Select Company">
         <ng-template ng-option-tmp let-item="item" let-index="index">
             <img *ngIf='item.imageUrl' [src]="item.imageUrl" width="40" height="40" />
             {{ item.name }}

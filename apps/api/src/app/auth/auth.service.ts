@@ -7,7 +7,7 @@ import { environment as env } from '@env-api/environment'
 // have to combine the two imports
 import * as jwt from 'jsonwebtoken';
 import { JsonWebTokenError } from 'jsonwebtoken';
-import { IUserRegistrationInput } from './user-registration-input';
+import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 
 @Injectable()
 export class AuthService {

@@ -13,5 +13,21 @@ export interface User extends IBaseEntityModel {
   role?: Role;
   roleId?: string;
   hash?: string;
-  imageUrl?: string; 
+  imageUrl?: string;
+}
+
+export interface UserFindInput extends IBaseEntityModel {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  username?: string;
+  role?: Role;
+  roleId?: string;
+  hash?: string;
+  imageUrl?: string;
+}
+
+export interface UserRegistrationInput {
+	user: User;
+	password?: string;
 }

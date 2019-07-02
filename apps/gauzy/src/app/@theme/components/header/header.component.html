@@ -5,7 +5,8 @@
     </a>
 
     <div class="logo" (click)="navigateHome()">
-      <span>Gauzy</span><div class="gauzy-simbol">™</div>
+      <span>Gauzy</span>
+      <div class="gauzy-simbol">™</div>
     </div>
   </div>
 </div>
@@ -13,11 +14,11 @@
 <div class="header-container">
   <nb-actions size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
 
-    <nb-action>
+    <nb-action *ngIf='showEmployeesSelector'>
       <ga-employee-selector class="header-selector"></ga-employee-selector>
     </nb-action>
 
-    <nb-action>
+    <nb-action *ngIf='showDateSelector'>
       <ga-date-selector></ga-date-selector>
     </nb-action>
 
