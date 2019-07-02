@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
-import { RolesEnum } from '@gauzy/models';
+import { RolesEnum, Employee } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
@@ -27,8 +27,8 @@ export class EmployeeMutationComponent implements OnInit {
         console.warn("EmployeeMutationComponent");
     }
 
-    closeDialog() {
-        this.dialogRef.close()
+    closeDialog(employee: Employee = null) {
+        this.dialogRef.close(employee)
     }
 
     async add() {
@@ -37,7 +37,7 @@ export class EmployeeMutationComponent implements OnInit {
             const organization = await this.organizationsService.getById(this.store.selectedOrganizationId).pipe(first()).toPromise();
             const employee = await this.employeesService.create({user, organization}).pipe(first()).toPromise();
 
-            this.closeDialog();
+            this.closeDialog(employee);
             
         } catch (err) {
             alert(err.error.detail.toString().replace(/[{()}]/g, ''));

@@ -55,15 +55,22 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         }
     }
 
-    add() {
-        this.dialogService.open(EmployeeMutationComponent)
+    async add() {
+        const dialog = this.dialogService.open(EmployeeMutationComponent)
+
+        const data = await dialog.onClose.pipe(first()).toPromise();
+
+        if (data) {
+            this.loadPage();
+        }
+       
     }
 
     edit() {
         console.warn('TODO go to edit employee page');
     }
 
-    private async loadPage(id: string) {
+    private async loadPage(id: string = this.store.selectedOrganizationId) {
         const { name } = await this.organizationsService
             .getById(id)
             .pipe(first())
