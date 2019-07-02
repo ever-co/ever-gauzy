@@ -7,6 +7,6 @@
         <ga-user-basic-info-form #userBasicInfo></ga-user-basic-info-form>
     </nb-card-body>
     <nb-card-footer class="text-right">
-        <button [disabled]="userBasicInfo.form.invalid" status="success" nbButton>Add</button>
+        <button [disabled]="userBasicInfo.form.invalid" status="success" (click)="add()" nbButton>Add</button>
     </nb-card-footer>
 </nb-card>

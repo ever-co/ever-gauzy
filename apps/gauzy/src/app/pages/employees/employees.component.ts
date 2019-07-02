@@ -69,7 +69,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .pipe(first())
             .toPromise()
 
-        const { items } = await this.employeesService.getAll(['user'], { organization: { id } });
+        const { items } = await this.employeesService.getAll(['user'], { organization: { id } }).pipe(first()).toPromise();
 
         const employeesVm: EmployeeViewModel[] = items.map((i) => {
             return {

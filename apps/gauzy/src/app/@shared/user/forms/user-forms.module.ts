@@ -3,6 +3,8 @@ import { NgModule } from '@angular/core';
 import { BasicInfoFormComponent } from './basic-info/basic-info-form.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NbInputModule, NbCardModule } from '@nebular/theme';
+import { AuthService } from '../../../@core/services/auth.service';
+import { RoleService } from '../../../@core/services/role.service';
 
 @NgModule({
     imports: [
@@ -10,10 +12,14 @@ import { NbInputModule, NbCardModule } from '@nebular/theme';
         FormsModule,
         ReactiveFormsModule,
         NbInputModule,
-        NbCardModule
+        NbCardModule,
     ],
     exports: [BasicInfoFormComponent],
     declarations: [BasicInfoFormComponent],
-    entryComponents: [BasicInfoFormComponent]
+    entryComponents: [BasicInfoFormComponent],
+    providers: [
+        AuthService,
+        RoleService
+    ]
 })
 export class UserFormsModule { }

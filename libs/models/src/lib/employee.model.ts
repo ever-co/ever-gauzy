@@ -16,3 +16,8 @@ export interface EmployeeFindInput extends IBaseEntityModel {
     user?: UserFindInput;
     valueDate?: Date;
 }
+
+export interface EmployeeCreateInput {
+    user: User;
+    organization: Organization;
+}

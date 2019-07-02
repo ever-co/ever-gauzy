@@ -26,3 +26,8 @@ export interface UserFindInput extends IBaseEntityModel {
   hash?: string;
   imageUrl?: string;
 }
+
+export interface UserRegistrationInput {
+	user: User;
+	password?: string;
+}

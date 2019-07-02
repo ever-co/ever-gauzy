@@ -5,18 +5,15 @@ import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthRegisterCommand } from './commands';
-import { IUserRegistrationInput } from './user-registration-input';
 import { RequestContext } from '../core/context';
-import { RolesEnum } from '@gauzy/models';
-import { getDummyImage, getUserDummyImage } from '../core';
+import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import { getUserDummyImage } from '../core';
 
 @ApiUseTags('Auth')
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService,
-    private readonly commandBus: CommandBus) {
-
-  }
+    private readonly commandBus: CommandBus) { }
 
   @ApiOperation({ title: 'Is authenticated' })
   @ApiResponse({ status: HttpStatus.OK })
@@ -45,7 +42,7 @@ export class AuthController {
     description: 'Invalid input, The response body may contain clues as to what went wrong',
   })
   @Post('/register')
-  async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {    
+  async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {
     if (!entity.user.imageUrl) {
       entity.user.imageUrl = getUserDummyImage(entity.user);
     }
