@@ -3,5 +3,30 @@
     <h4>Income</h4>
   </nb-card-header>
   <nb-card-body>
+    <div class="row mb-3">
+      <div class="col">
+        <input nbInput placeholder="Pick Date" [nbDatepicker]="formpicker" />
+        <nb-datepicker #formpicker></nb-datepicker>
+      </div>
+      <div class="col">
+        <input type="text" nbInput placeholder="Income Type" />
+      </div>
+      <div class="col">
+        <input type="number" step="0.1" nbInput placeholder="Value" />
+      </div>
+      <div class="col">
+        <button nbButton status="success" (click)="add()" class="mr-2">
+          <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
+        </button>
+      </div>
+    </div>
+
+    <ng2-smart-table
+      class="income-table"
+      [settings]="smartTableSettings"
+      [source]="sourceSmartTable"
+      (userRowSelect)="selectEmployeeTmp($event)"
+    >
+    </ng2-smart-table>
   </nb-card-body>
 </nb-card>

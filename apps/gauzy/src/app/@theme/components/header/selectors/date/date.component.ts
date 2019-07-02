@@ -10,7 +10,6 @@ import { NbCalendarMonthCellComponent } from '@nebular/theme';
     }
 })
 export class DateSelectorComponent implements OnInit {
-    uselessCancer: string[];
     monthCellComponent = NbCalendarMonthCellComponent;
     loadCalendar = false;
     date = new Date();
