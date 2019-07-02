@@ -14,15 +14,15 @@
   <nb-actions size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
 
     <nb-action>
-      <ga-employee-selector class="header-selector"></ga-employee-selector>
+      <ga-employee-selector class="header-selector employee-selector"></ga-employee-selector>
     </nb-action>
 
     <nb-action>
-      <ga-date-selector></ga-date-selector>
+      <ga-date-selector class="date-selector"></ga-date-selector>
     </nb-action>
 
     <nb-action>
-      <ga-organization-selector class="header-selector"></ga-organization-selector>
+      <ga-organization-selector class="header-selector organization-selector"></ga-organization-selector>
     </nb-action>
 
     <!-- <nb-action *nbIsGranted="['view', 'user']">

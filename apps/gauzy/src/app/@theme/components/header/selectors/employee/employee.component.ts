@@ -4,9 +4,16 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 @Component({
     selector: 'ga-employee-selector',
     templateUrl: './employee.component.html',
+    styleUrls: ['./employee.component.scss'],
 })
 export class EmployeeSelectorComponent implements OnInit{
-    people = []; 
+    people = [];
+    allEmployees = {
+        id: "all",
+        firstName: "Employees",
+        lastName: "",
+        imageUrl: "https://i.imgur.com/XwA2T62.jpg"
+    }
     selectedEmployeeId;
 
     constructor(
@@ -31,9 +38,10 @@ export class EmployeeSelectorComponent implements OnInit{
     }
 
     selectEmployee(event) {
-        if (event === undefined) {
-            this.selectedEmployeeId = 'all';
+        if (!event) {
+            this.selectedEmployeeId = "all"
         }
+        console.log(event);
     }
 
     getShortenedName(firstName, lastName) {
@@ -52,6 +60,7 @@ export class EmployeeSelectorComponent implements OnInit{
 
     private async loadPople() {
         const res = await this.employeesService.getAll(['user']);
-        this.people = res.items.map((e) => e.user);
+        this.people = [this.allEmployees, ...res.items.map((e) => e.user)];
+        this.selectedEmployeeId = this.people[0].id;
     }
 }

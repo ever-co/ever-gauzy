@@ -4,6 +4,8 @@ import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organiza
 @Component({
   selector: 'ga-organization-selector',
   templateUrl: './organization.component.html',
+  styleUrls: ['./organization.component.scss'],
+
 })
 export class OrganizationSelectorComponent {
   allOrganizations$ = this.organizationsService.getAll();
