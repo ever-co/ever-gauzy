@@ -31,4 +31,66 @@
   @include ngx-pace-theme();
 
   @include nb-overrides();
+
+  //override ng-select colors
+.ng-select.ng-select-opened>.ng-select-container {
+  background: nb-theme(background-basic-color-1);
+  border-color: nb-theme(border-basic-color-1)
+}
+
+.ng-select .ng-select-container {
+  background: nb-theme(background-basic-color-1);
+  color: nb-theme(text-basic-color);
+}
+
+.ng-select .ng-clear-wrapper {
+  color: nb-theme(text-basic-color);
+}
+
+.ng-select .ng-clear-wrapper:hover .ng-clear {
+  color: nb-theme(text-basic-color);
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-optgroup  {
+  color: nb-theme(text-basic-color);
+}
+
+.ng-select .ng-select-container {
+  background-color: nb-theme(background-basic-color-1);
+  border: 1px solid nb-theme(border-basic-color-1);
+}
+
+.ng-select.ng-select-focused>.ng-select-container {
+  border-color: nb-theme(text-primary-focus-color);
+  box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
+}
+.ng-select.ng-select-disabled>.ng-select-container {
+  background: nb-theme(background-basic-color-1);
+  color: nb-theme(text-basic-color);
+}
+
+.ng-select .ng-select-container .ng-value-container .ng-placeholder {
+  color: nb-theme(color-basic-300);
+}
+
+.ng-select .ng-select-container:hover {
+border: 1px solid  nb-theme(text-primary-hover-color);
+}
+
+.ng-select.ng-select-opened>.ng-select-container {
+  box-shadow: nb-theme(shadow);
+}
+
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option  {
+  background: nb-theme(background-basic-color-1);
+  color: nb-theme(text-basic-color);
+}
+
+.ng-dropdown-panel {
+  border-color: nb-theme(text-primary-focus-color);
+  box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
+}
+
 };
+
+
