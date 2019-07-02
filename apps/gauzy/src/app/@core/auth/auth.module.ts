@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { AuthGuard } from './auth.guard';
 import { AuthStrategy } from './auth-strategy.service';
 import { AuthService } from '../services/auth.service';
+import { Store } from '../services/store.service';
 
 const socialLinks = [
 	{
@@ -36,7 +37,8 @@ const socialLinks = [
 
 		AuthGuard,
 		AuthStrategy,
-		AuthService
+		AuthService,
+		Store
 	]
 })
 export class AuthModule {}

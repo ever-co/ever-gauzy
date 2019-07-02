@@ -1,9 +1,10 @@
-import { Controller, HttpStatus, Get } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Param } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
 import { Organization } from './organization.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
+import { UUIDValidationPipe } from '../shared';
 
 @ApiUseTags('Organization')
 @Controller()
@@ -18,5 +19,13 @@ export class OrganizationController extends CrudController<Organization> {
     @Get()
     async findAll(): Promise<IPagination<Organization>> {
         return this.organizationService.findAll();
+    }
+
+    @ApiOperation({ title: 'Find Organization by id.' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Found one record', type: Organization })
+    @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+    @Get(':id')
+    async findById(@Param('id', UUIDValidationPipe) id: string): Promise<Organization> {
+        return this.organizationService.findOne(id);
     }
 }

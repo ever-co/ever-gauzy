@@ -1,27 +1,31 @@
 import { Component, OnInit } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
+import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'ga-employee-selector',
     templateUrl: './employee.component.html',
     styleUrls: ['./employee.component.scss'],
 })
+
 export class EmployeeSelectorComponent implements OnInit{
     people = [];
+
     allEmployees = {
         id: "all",
         firstName: "Employees",
         lastName: "",
         imageUrl: "https://i.imgur.com/XwA2T62.jpg"
     }
+
     selectedEmployeeId;
 
     constructor(
         private employeesService: EmployeesService
-    ) {}
+    ) { }
 
-     ngOnInit(): void {
-       this.loadPople();
+    ngOnInit(): void {
+        this.loadPople();
     }
 
     searchEmployee(term: string, item: any) {
@@ -41,7 +45,6 @@ export class EmployeeSelectorComponent implements OnInit{
         if (!event) {
             this.selectedEmployeeId = "all"
         }
-        console.log(event);
     }
 
     getShortenedName(firstName, lastName) {
@@ -59,7 +62,7 @@ export class EmployeeSelectorComponent implements OnInit{
     }
 
     private async loadPople() {
-        const res = await this.employeesService.getAll(['user']);
+        const res = await this.employeesService.getAll(['user']).pipe(first()).toPromise();
         this.people = [this.allEmployees, ...res.items.map((e) => e.user)];
         this.selectedEmployeeId = this.people[0].id;
     }

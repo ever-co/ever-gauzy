@@ -1,0 +1,54 @@
+import { Component } from '@angular/core';
+import { Validators, FormBuilder } from '@angular/forms';
+import { User, RolesEnum } from '@gauzy/models';
+import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
+import { first } from 'rxjs/operators';
+import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
+
+@Component({
+    selector: 'ga-user-basic-info-form',
+    templateUrl: 'basic-info-form.component.html',
+})
+export class BasicInfoFormComponent {
+    readonly form = this.fb.group({
+        username: [''],
+        firstName: [''],
+        lastName: [''],
+        email: ['', Validators.compose([Validators.required, Validators.email])],
+        imageUrl: ['', Validators.compose([Validators.pattern(new RegExp(`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`, 'g'))])],
+        password: ['', Validators.compose([Validators.required, Validators.minLength(4)])]
+    });
+
+    username = this.form.get('username');
+    firstName = this.form.get('firstName');
+    lastName = this.form.get('lastName');
+    email = this.form.get('email');
+    imageUrl = this.form.get('imageUrl');
+    password = this.form.get('password');
+    off: string;
+
+    constructor(
+        private readonly fb: FormBuilder,
+        private readonly authService: AuthService,
+        private readonly roleService: RoleService
+    ) { }
+
+    async registerUser(roleName: RolesEnum): Promise<User> {
+        if (this.form.valid) {
+            const role = await this.roleService.getRoleByName({ name: roleName }).pipe(first()).toPromise();
+            return this.authService.register({
+                user: {
+                    firstName: this.firstName.value,
+                    lastName: this.lastName.value,
+                    email: this.email.value,
+                    username: this.username.value || null,
+                    imageUrl: this.imageUrl.value,
+                    role
+                },
+                password: this.password.value
+            }).pipe(first()).toPromise();
+        }
+
+        return;
+    }
+}

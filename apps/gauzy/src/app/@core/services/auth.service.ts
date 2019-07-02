@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { User, RolesEnum } from '@gauzy/models';
+import { User, RolesEnum, UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { Observable } from 'rxjs';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class AuthService {
         return this.http.post<{ user?: User, token?: string }>('/api/auth/login', loginInput);
     }
 
-    register(registerInput): Observable<User> {
+    register(registerInput: IUserRegistrationInput): Observable<User> {
         return this.http.post<User>('/api/auth/register', registerInput);
     }
 
