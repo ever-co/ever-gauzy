@@ -6,8 +6,7 @@ import { EmployeesRoutingModule } from './employees-routing.module';
 import { EmployeesComponent } from './employees.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-
+import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation/employee-mutation.module';
 
 @NgModule({
     imports: [
@@ -20,7 +19,7 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
         NbIconModule,
         Ng2SmartTableModule,
         NbDialogModule.forChild(),
-        UserFormsModule
+        EmployeeMutationModule
     ],
     declarations: [
         EmployeesComponent

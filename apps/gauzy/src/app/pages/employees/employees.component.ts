@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { NbDialogService } from '@nebular/theme';
-import { BasicInfoFormComponent } from '../../@shared/user/forms/basic-info/basic-info-form.component';
+import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -56,7 +56,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     add() {
-        this.dialogService.open(BasicInfoFormComponent)
+        this.dialogService.open(EmployeeMutationComponent)
     }
 
     edit() {

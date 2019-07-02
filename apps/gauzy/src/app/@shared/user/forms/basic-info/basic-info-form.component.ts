@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit, Input } from '@angular/core';
-import { FormGroup, Validators, FormBuilder } from '@angular/forms';
+import { Validators, FormBuilder } from '@angular/forms';
 
 @Component({
     selector: 'ga-user-basic-info-form',
@@ -10,9 +10,9 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
         username: [''],
         firstName: [''],
         lastName: [''],
-        email: ['', Validators.required, Validators.email],
-        imageUrl: [''],
-        password: ['']
+        email: ['', Validators.compose( [Validators.required, Validators.email])],
+        imageUrl: ['', Validators.compose( [Validators.pattern(new RegExp(`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`, 'g'))])],
+        password: ['', Validators.compose([Validators.required, Validators.minLength(4)])]
     });
 
     username = this.form.get('username');
@@ -21,6 +21,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
     email = this.form.get('email');
     imageUrl = this.form.get('imageUrl');
     password = this.form.get('password');
+    off: string;
 
     constructor(
         private readonly fb: FormBuilder

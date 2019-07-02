@@ -1,8 +1,80 @@
-<form class="row offset-3 col-6" [formGroup]="form" *ngIf="form">
-    <input type="text" class="form-control col-6" placeholder="First Name" formControlName="firstName" />
-    <input type="text" class="form-control col-6" placeholder="Last Name" formControlName="lastName" />
-    <input type="text" class="form-control col-6" placeholder="Username" formControlName="username" />
-    <input type="text" class="form-control col-6" placeholder="email" formControlName="email" />
-    <input type="text" class="form-control col-6" placeholder="Image" formControlName="imageUrl" />
-    <input type="text" class="form-control col-6" placeholder="password" formControlName="password" />
+<form [formGroup]="form" *ngIf="form">
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="inputFirstName" class="label">First Name (optional)</label>
+                <input nbInput type="text" id="inputFirstName" fullWidth placeholder="First Name"
+                    formControlName="firstName" [ngClass]="{
+                        'status-danger':
+                        firstName.invalid && (firstName.dirty || firstName.touched),
+                        'status-success':
+                        firstName.valid && (firstName.dirty || firstName.touched)
+                    }" [autocomplete]="off" />
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="inputLastName" class="label">Last Name (optional)</label>
+                <input nbInput type="text" id="inputLastName" fullWidth placeholder="Last Name"
+                    formControlName="lastName" [ngClass]="{
+                        'status-danger':
+                        lastName.invalid && (lastName.dirty || lastName.touched),
+                        'status-success':
+                        lastName.valid && (lastName.dirty || lastName.touched)
+                    }" />
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="inputUsername" class="label">Username (optional)</label>
+                <input nbInput type="text" id="inputUsername" fullWidth placeholder="Username"
+                    formControlName="username" [ngClass]="{
+                        'status-danger':
+                        username.invalid && (username.dirty || username.touched),
+                        'status-success':
+                        username.valid && (username.dirty || username.touched)
+                    }" />
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="inputEmail" class="label">Email</label>
+                <input nbInput type="email" id="inputEmail" fullWidth placeholder="Email" formControlName="email"
+                    [ngClass]="{
+                    'status-danger':
+                    email.invalid && (email.dirty || email.touched),
+                    'status-success':
+                    email.valid && (email.dirty || email.touched)
+                }" />
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="inputImageUrl" class="label">ImageUrl (optional)</label>
+                <input nbInput type="text" id="inputImageUrl" fullWidth placeholder="Image" formControlName="imageUrl"
+                    [ngClass]="{
+						'status-danger':
+                        imageUrl.invalid && (imageUrl.dirty || imageUrl.touched),
+						'status-success':
+                        imageUrl.valid && (imageUrl.dirty || imageUrl.touched)
+                    }" />
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label for="inputPassword" class="label">Password</label>
+                <input nbInput type="text" id="inputPassword" fullWidth placeholder="password"
+                    formControlName="password" [ngClass]="{
+						'status-danger':
+                        password.invalid && (password.dirty || password.touched),
+						'status-success':
+                        password.valid && (password.dirty || password.touched)
+					}" />
+            </div>
+        </div>
+    </div>
 </form>
