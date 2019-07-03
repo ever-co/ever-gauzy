@@ -12,3 +12,11 @@ export interface Income extends IBaseEntityModel {
     clientName: string;
     valueDate?: Date;
 }
+
+export interface IncomeCreateInput {
+    amount: number;
+    clientName: string;
+    clientId: number;
+    valueDate: Date;
+    employeeId: string;
+}

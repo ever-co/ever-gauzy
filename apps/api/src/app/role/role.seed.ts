@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
-import { Connection } from "typeorm";
+import { Connection } from 'typeorm';
 import { Role } from './role.entity';
 import { RolesEnum } from '@gauzy/models';
 

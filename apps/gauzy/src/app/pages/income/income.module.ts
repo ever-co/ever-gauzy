@@ -7,10 +7,11 @@ import {
   NbDatepickerModule,
   NbIconModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { IncomeService } from '../../@core/services/income.service';
 
 @NgModule({
   imports: [
@@ -18,12 +19,14 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
     ThemeModule,
     NbCardModule,
     FormsModule,
+    ReactiveFormsModule,
     NbButtonModule,
     NbInputModule,
     NbDatepickerModule,
     NbIconModule,
     Ng2SmartTableModule
   ],
-  declarations: [IncomeComponent]
+  declarations: [IncomeComponent],
+  providers: [IncomeService]
 })
-export class IncomeModule {}
+export class IncomeModule { }
