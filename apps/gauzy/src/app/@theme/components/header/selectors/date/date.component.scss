@@ -1,6 +1,9 @@
 .calendar-picker {
     position: relative;
     max-height: 40px;
+    input {
+        width: 100%;
+    }
     .calendar { 
         display: flex;
         flex-direction: column;

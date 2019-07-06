@@ -15,15 +15,15 @@
   <nb-actions size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
 
     <nb-action *ngIf='showEmployeesSelector'>
-      <ga-employee-selector class="header-selector"></ga-employee-selector>
+      <ga-employee-selector class="header-selector employee-selector"></ga-employee-selector>
     </nb-action>
 
     <nb-action *ngIf='showDateSelector'>
-      <ga-date-selector></ga-date-selector>
+      <ga-date-selector class="date-selector"></ga-date-selector>
     </nb-action>
 
-    <nb-action *ngIf="showOrganizationsSelector">
-      <ga-organization-selector class="header-selector"></ga-organization-selector>
+    <nb-action *ngIf="showOrganizationsSelector">      
+      <ga-organization-selector class="header-selector organization-selector"></ga-organization-selector>
     </nb-action>
 
     <!-- <nb-action *nbIsGranted="['view', 'user']">

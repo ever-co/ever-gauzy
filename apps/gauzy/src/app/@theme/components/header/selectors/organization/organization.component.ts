@@ -8,6 +8,8 @@ import { takeUntil, first } from 'rxjs/operators';
 @Component({
   selector: 'ga-organization-selector',
   templateUrl: './organization.component.html',
+  styleUrls: ['./organization.component.scss'],
+
 })
 export class OrganizationSelectorComponent implements OnInit, OnDestroy {
   organizations: Organization[]
