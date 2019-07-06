@@ -5,8 +5,20 @@ export class Store {
     private _selectedOrganizationId: string;
     selectedOrganizationId$: Subject<string> = new Subject();
 
+    private _selectedEmployeeId: string;
+    selectedEmployeeId$: Subject<string> = new Subject();
+
     get selectedOrganizationId(): string {
         return this._selectedOrganizationId;
+    }
+
+    set selectedEmployeeId(id: string) {
+        this._selectedEmployeeId = id;
+        this.selectedEmployeeId$.next(id);
+    }
+
+    get selectedEmployeeId(): string {
+        return this._selectedEmployeeId;
     }
 
     set selectedOrganizationId(id: string) {

@@ -33,7 +33,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         private store: Store
     ) { }
 
-    ngOnInit(): void {
+    ngOnInit() {
         const selectedId = this.store.selectedOrganizationId;
 
         if (selectedId) {

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 import { first } from 'rxjs/operators';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
     selector: 'ga-employee-selector',
@@ -21,7 +22,8 @@ export class EmployeeSelectorComponent implements OnInit{
     selectedEmployeeId;
 
     constructor(
-        private employeesService: EmployeesService
+        private employeesService: EmployeesService,
+        private store: Store
     ) { }
 
     ngOnInit(): void {
@@ -41,9 +43,9 @@ export class EmployeeSelectorComponent implements OnInit{
         }
     }
 
-    selectEmployee(event) {
-        if (!event) {
-            this.selectedEmployeeId = "all"
+    selectEmployee({ id }) {
+        if (id) {
+            this.store.selectedEmployeeId = id;
         }
     }
 
