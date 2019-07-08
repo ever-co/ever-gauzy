@@ -19,8 +19,6 @@ export class EmployeeSelectorComponent implements OnInit{
         imageUrl: "https://i.imgur.com/XwA2T62.jpg"
     }
 
-    selectedEmployeeId;
-
     constructor(
         private employeesService: EmployeesService,
         private store: Store
@@ -49,7 +47,7 @@ export class EmployeeSelectorComponent implements OnInit{
         }
     }
 
-    getShortenedName(firstName, lastName) {
+    getShortenedName(firstName: string, lastName: string) {
         if (firstName && lastName) {
             return firstName + ' ' + lastName[0] + '.';
         } else {
@@ -57,7 +55,7 @@ export class EmployeeSelectorComponent implements OnInit{
         }
     }
 
-    getFullName(firstName, lastName) {
+    getFullName(firstName: string, lastName: string) {
         return firstName && lastName
             ? firstName + ' ' + lastName
             : firstName || lastName;
@@ -65,7 +63,15 @@ export class EmployeeSelectorComponent implements OnInit{
 
     private async loadPople() {
         const res = await this.employeesService.getAll(['user']).pipe(first()).toPromise();
-        this.people = [this.allEmployees, ...res.items.map((e) => e.user)];
-        this.selectedEmployeeId = this.people[0].id;
+        this.people = res.items.map((e) => {
+            return {
+                id: e.id,
+                firstName: e.user.firstName,
+                lastName: e.user.lastName,
+                imageUrl: e.user.imageUrl
+            }
+        });
+
+		this.selectedEmployeeId = this.people[0].id;
     }
 }
