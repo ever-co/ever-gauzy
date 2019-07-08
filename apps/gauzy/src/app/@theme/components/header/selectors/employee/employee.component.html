@@ -1,4 +1,4 @@
-<ng-select [items]="people" bindValue="id" bindName="firstName" [(ngModel)]="selectedEmployeeId"
+<ng-select [items]="people" bindValue="id" bindName="firstName"
     (change)="selectEmployee($event)" placeholder="All Employees" [searchFn]="searchEmployee">
     <ng-template ng-option-tmp let-item="item" let-index="index">
         <img *ngIf='item.imageUrl' [src]="item.imageUrl" width="40" height="40" />

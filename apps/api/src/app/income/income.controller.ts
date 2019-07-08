@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Post, Body } from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IncomeService } from './income.service';
 import { Income } from './income.entity';
@@ -6,6 +6,7 @@ import { CrudController } from '../core/crud/crud.controller';
 import { IncomeCreateInput as IIncomeCreateInput } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { IncomeCreateCommand } from './commands/income.create.command';
+import { IPagination } from '../core';
 
 @ApiUseTags('Income')
 @Controller()
@@ -15,6 +16,16 @@ export class IncomeController extends CrudController<Income> {
     super(incomeService);
   }
 
+  @ApiOperation({ title: 'Find all income.' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Found income', type: Income })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+  @Get()
+  async findAllEmployees(@Query('data') data: string): Promise<IPagination<Income>> {
+    const { relations, findInput } = JSON.parse(data);
+
+    return this.incomeService.findAll({ where: findInput, relations });
+  }
+
   @ApiOperation({ title: 'Create new record' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'The record has been successfully created.' /*, type: T*/ })
   @ApiResponse({
@@ -22,8 +33,7 @@ export class IncomeController extends CrudController<Income> {
     description: 'Invalid input, The response body may contain clues as to what went wrong',
   })
   @Post('/create')
-  async create1(@Body() entity: IIncomeCreateInput, ...options: any[]): Promise<Income> {
-    console.log(entity)
+  async create(@Body() entity: IIncomeCreateInput, ...options: any[]): Promise<Income> {
     return this.commandBus.execute(
       new IncomeCreateCommand(entity)
     );
