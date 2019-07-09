@@ -44,10 +44,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe((id) => this.loadPage(id));
 
-        this._loadSettingsSmartTable();
+        this._loadSmartTableSettings();
     }
 
     selectEmployeeTmp(ev) {
+        console.log(ev)
         if (ev.isSelected) {
             this.selectedEmployee = ev.data;
         } else {
@@ -92,7 +93,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         this.organizationName = name;
     }
 
-    private _loadSettingsSmartTable() {
+    private _loadSmartTableSettings() {
         this.settingsSmartTable = {
             actions: false,
             columns: {

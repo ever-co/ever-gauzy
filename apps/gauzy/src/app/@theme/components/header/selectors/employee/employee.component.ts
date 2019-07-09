@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'ga-employee-selector',
@@ -9,15 +10,11 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
     styleUrls: ['./employee.component.scss'],
 })
 
-export class EmployeeSelectorComponent implements OnInit{
+export class EmployeeSelectorComponent implements OnInit, OnDestroy {
     people = [];
+    selecteEmployeeId: string;
 
-    allEmployees = {
-        id: "all",
-        firstName: "Employees",
-        lastName: "",
-        imageUrl: "https://i.imgur.com/XwA2T62.jpg"
-    }
+    private _ngDestroy$ = new Subject<void>();
 
     constructor(
         private employeesService: EmployeesService,
@@ -25,7 +22,8 @@ export class EmployeeSelectorComponent implements OnInit{
     ) { }
 
     ngOnInit(): void {
-        this.loadPople();
+        this._loadPople();
+        this._loadEmployeeId();
     }
 
     searchEmployee(term: string, item: any) {
@@ -41,10 +39,8 @@ export class EmployeeSelectorComponent implements OnInit{
         }
     }
 
-    selectEmployee({ id }) {
-        if (id) {
-            this.store.selectedEmployeeId = id;
-        }
+    selectEmployee(value: { id: string }) {
+        value ? this.store.selectedEmployeeId = value.id : this.store.selectedEmployeeId = null;
     }
 
     getShortenedName(firstName: string, lastName: string) {
@@ -61,17 +57,40 @@ export class EmployeeSelectorComponent implements OnInit{
             : firstName || lastName;
     }
 
-    private async loadPople() {
+    private _loadEmployeeId() {
+        this.store.selectedEmployeeId$
+          .pipe(takeUntil(this._ngDestroy$))
+          .subscribe((id: string) => {
+            this.selecteEmployeeId = id;
+          })
+      }
+
+    private async _loadPople() {
         const res = await this.employeesService.getAll(['user']).pipe(first()).toPromise();
-        this.people = res.items.map((e) => {
+
+        this.people = [{
+            id: null,
+            firstName: "All Employees",
+            lastName: "",
+            imageUrl: "https://i.imgur.com/XwA2T62.jpg"
+        }, ...res.items.map((e) => {
             return {
                 id: e.id,
                 firstName: e.user.firstName,
                 lastName: e.user.lastName,
                 imageUrl: e.user.imageUrl
             }
-        });
+        })];
 
-		this.selectedEmployeeId = this.people[0].id;
+        if (res.items.length > 0 && !this.store.selectedEmployeeId) {
+            this.store.selectedEmployeeId = res.items[0].id
+        }
+
+        this.selectEmployee({ id: this.people[0].id })
     }
+
+    ngOnDestroy() {
+        this._ngDestroy$.next();
+        this._ngDestroy$.complete();
+      }
 }

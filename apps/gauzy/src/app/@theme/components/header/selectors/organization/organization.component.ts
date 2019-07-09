@@ -12,7 +12,7 @@ import { takeUntil, first } from 'rxjs/operators';
 
 })
 export class OrganizationSelectorComponent implements OnInit, OnDestroy {
-  organizations: Organization[]
+  organizations: Organization[];
   selectedOrganizationId: string;
 
   private _ngDestroy$ = new Subject<void>();
@@ -22,7 +22,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
     private store: Store
   ) { }
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.loadOrganizationsId();
     this.loadOrganizations();
   }
