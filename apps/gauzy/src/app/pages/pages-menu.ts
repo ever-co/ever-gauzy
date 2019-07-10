@@ -17,6 +17,16 @@ export const DEFAULT_MENU_ITEMS: NbMenuItem[] = [
     icon: 'minus-circle-outline',
     link: '/pages/expenses',
   },
+  {
+    title: "Help",
+    icon: 'question-mark-circle-outline',
+    link: '/pages/help'
+  },
+  {
+    title: "About",
+    icon: 'droplet-outline',
+    link: '/pages/about'
+  }
 ];
 
 export const ADMIN_MENU_ITEMS: NbMenuItem[] = [
