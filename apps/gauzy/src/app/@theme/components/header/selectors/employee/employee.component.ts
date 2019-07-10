@@ -72,6 +72,6 @@ export class EmployeeSelectorComponent implements OnInit{
             }
         });
 
-		this.selectedEmployeeId = this.people[0].id;
+		// this.selectedEmployeeId = this.people[0].id;
     }
 }
