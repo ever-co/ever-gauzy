@@ -12,6 +12,7 @@ import { NbCalendarMonthCellComponent } from '@nebular/theme';
 export class DateSelectorComponent implements OnInit {
     monthCellComponent = NbCalendarMonthCellComponent;
     loadCalendar = false;
+    dateValue: any;
     date = new Date();
     min = new Date(this.date.getFullYear() - 9, 6, 15);
     max = new Date();
@@ -54,6 +55,10 @@ export class DateSelectorComponent implements OnInit {
         return date;
     }
 
+    clear() {
+        this.date = new Date();
+    }
+    
     clickOutside(event) {
         if (!document.getElementById('dashboard-calendar').contains(event.target)) {
             this.loadCalendar = false;

@@ -14,4 +14,11 @@
             z-index: 1;
         }
     }
+    .date-reset{
+        position: absolute;
+        top: 25%;
+        transform: scale(1.5);
+        right: 13px;
+        cursor: pointer;
+    }
 } 

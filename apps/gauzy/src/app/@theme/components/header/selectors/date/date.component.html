@@ -1,5 +1,6 @@
 <div class="calendar-picker" id="dashboard-calendar">
     <input [value]="formatDateMMMMyy(date)" nbInput (focus)="loadCalendar = true" />
+    <span class="date-reset ng-clear-wrapper ng-star-inserted" title="Clear all" (click)="clear()"><span aria-hidden="true" class="ng-clear">×</span></span>
     <nb-card class="calendar" *ngIf="loadCalendar">
         <nb-calendar-year-picker [(year)]="date" [max]="max">
         </nb-calendar-year-picker>
