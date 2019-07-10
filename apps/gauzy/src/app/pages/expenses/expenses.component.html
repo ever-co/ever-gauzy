@@ -3,5 +3,21 @@
     <h4>Expenses</h4>
   </nb-card-header>
   <nb-card-body>
+    <div class="mb-3">
+      <button nbButton status="success" class="mr-2" (click)="openAddExpenseDialog()">
+        <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
+      </button>
+
+      <button nbButton status="info">
+        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
+      </button>
+    </div>
+
+    <ng2-smart-table
+        class="income-table"
+        [settings]="smartTableSettings"
+        [source]="smartTableSource"
+      >
+      </ng2-smart-table>
   </nb-card-body>
 </nb-card>
