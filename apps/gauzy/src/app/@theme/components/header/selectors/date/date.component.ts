@@ -12,6 +12,7 @@ import { NbCalendarMonthCellComponent } from '@nebular/theme';
 export class DateSelectorComponent implements OnInit {
     monthCellComponent = NbCalendarMonthCellComponent;
     loadCalendar = false;
+    dateInputValue: any;
     date = new Date();
     min = new Date(this.date.getFullYear() - 9, 6, 15);
     max = new Date();
@@ -20,10 +21,12 @@ export class DateSelectorComponent implements OnInit {
         //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
         //Add 'implements OnInit' to the class.
         this.date.setMonth(this.date.getMonth() - 1);
+        this.dateInputValue = this.formatDateMMMMyy(this.date);
     }
 
-    handleMonthChange(event) {
-        this.loadCalendar = false;
+    handleDateChange(event) {
+        this.date = event;
+        this.dateInputValue = this.formatDateMMMMyy(this.date);
     }
 
     formatDateMMMMyy(date) {
@@ -54,6 +57,11 @@ export class DateSelectorComponent implements OnInit {
         return date;
     }
 
+    clear() {
+        this.dateInputValue = '';
+        this.date = this.getDefaultDate();
+    }
+    
     clickOutside(event) {
         if (!document.getElementById('dashboard-calendar').contains(event.target)) {
             this.loadCalendar = false;

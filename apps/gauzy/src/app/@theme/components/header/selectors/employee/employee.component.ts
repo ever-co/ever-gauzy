@@ -12,7 +12,7 @@ import { Subject } from 'rxjs';
 
 export class EmployeeSelectorComponent implements OnInit, OnDestroy {
     people = [];
-    selecteEmployeeId: string;
+    selectedEmployeeId: string;
 
     private _ngDestroy$ = new Subject<void>();
 
@@ -61,7 +61,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         this.store.selectedEmployeeId$
           .pipe(takeUntil(this._ngDestroy$))
           .subscribe((id: string) => {
-            this.selecteEmployeeId = id;
+            this.selectedEmployeeId = id;
           })
       }
 
@@ -83,10 +83,11 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         })];
 
         if (res.items.length > 0 && !this.store.selectedEmployeeId) {
-            this.store.selectedEmployeeId = res.items[0].id
+            this.store.selectedEmployeeId = res.items[0].id;
         }
 
-        this.selectEmployee({ id: this.people[0].id })
+        this.selectEmployee({ id: this.people[0].id });
+        this.selectedEmployeeId = this.people[0].id;
     }
 
     ngOnDestroy() {
