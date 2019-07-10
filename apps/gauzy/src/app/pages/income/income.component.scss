@@ -1,4 +1,16 @@
 @import '../../../app/@theme/styles/styles.scss';
 
 @include nb-install-component() {
+    .add-button {
+        height: 40px;
+        padding: 0;
+        width: 84px;
+        display: flex;
+        align-items: center;
+    }
+
+    .btn-container {
+        display: flex;
+    }
 }
+
