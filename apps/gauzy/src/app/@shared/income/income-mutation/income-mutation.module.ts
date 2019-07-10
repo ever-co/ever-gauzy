@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { IncomeMutationComponent } from './income-mutation.component';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
+import { IncomeService } from '../../../@core/services/income.service';
 
 @NgModule({
     imports: [
@@ -10,7 +11,6 @@ import { NbCardModule, NbButtonModule } from '@nebular/theme';
     exports: [IncomeMutationComponent],
     declarations: [IncomeMutationComponent],
     entryComponents: [IncomeMutationComponent],
-    providers: [
-    ]
+    providers: [IncomeService]
 })
 export class IncomeMutationModule { }

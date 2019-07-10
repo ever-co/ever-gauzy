@@ -8,7 +8,7 @@
     </span>
   </nb-card-body>
   <nb-card-footer>
-    <button class="mr-3" status="info" nbButton>Cancel</button>
-    <button status="danger" nbButton>OK</button>
+    <button (click)="dialogRef.close()" class="mr-3" status="info" nbButton>Cancel</button>
+    <button (click)="dialogRef.close('ok')" status="danger" nbButton>OK</button>
   </nb-card-footer>
 </nb-card>

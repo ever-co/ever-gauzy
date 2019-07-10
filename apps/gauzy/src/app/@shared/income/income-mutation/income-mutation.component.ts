@@ -1,15 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { NbDialogRef } from '@nebular/theme';
 
 @Component({
   selector: 'ga-income-mutation',
   templateUrl: './income-mutation.component.html',
   styleUrls: ['./income-mutation.component.scss']
 })
-export class IncomeMutationComponent implements OnInit {
+export class IncomeMutationComponent {
 
-  constructor() { }
-
-  ngOnInit() {
-  }
-
+  constructor(protected dialogRef: NbDialogRef<IncomeMutationComponent>) { }
 }

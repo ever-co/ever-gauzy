@@ -28,4 +28,8 @@ export class IncomeService {
   update(id: string, updateInput: IIncomeUpdateInput) {
     return this.http.put(`/api/income/${id}`, updateInput);
   }
+
+  delete(id: string) {
+    return this.http.delete(`/api/income/${id}`);
+  }
 }

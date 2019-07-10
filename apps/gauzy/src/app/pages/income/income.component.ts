@@ -11,9 +11,18 @@ import { NbDialogService } from '@nebular/theme';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 
 interface IncomeViewModel {
+    id: string,
     valueDate: string,
     clientName: string,
+    clientId: string,
     amount: number
+}
+
+interface SelectedRowModel {
+    data: IncomeViewModel,
+    isSelected: boolean,
+    selected: IncomeViewModel[],
+    source: LocalDataSource
 }
 
 @Component({
@@ -62,7 +71,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
     selectedEmployeeId: string;
     smartTableSource = new LocalDataSource();
 
-    selectedIncome;
+    selectedIncome: SelectedRowModel;
 
     get valueDate() {
         return this.form.get('valueDate').value;
@@ -135,7 +144,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
             });
     }
 
-    selectIncome(ev) {
+    selectIncome(ev: SelectedRowModel) {
         this.selectedIncome = ev;
         this.selectedIncome.isSelected ? this._populateFormForEdit() : this._clearForm();
     }
@@ -177,7 +186,25 @@ export class IncomeComponent implements OnInit, OnDestroy {
     }
 
     async deleteIncome() {
-        this.dialogService.open(IncomeMutationComponent);
+        this.dialogService.open(IncomeMutationComponent)
+            .onClose
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(async result => {
+                if (result) {
+                    try {
+                        await this.incomeService
+                            .delete(this.selectedIncome.data.id)
+                            .pipe(first())
+                            .toPromise();
+
+                        this._loadEmployeeIncomeData();
+                        this._clearForm();
+                        this.selectedIncome = null;
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            });
     }
 
     private async _loadEmployeeIncomeData(id = this.selectedEmployeeId) {
@@ -206,7 +233,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
         const dateArr = this.selectedIncome.data.valueDate.split('.');
 
-        this.valueDate = new Date(dateArr[2], +dateArr[1] - 1, dateArr[0]);
+        this.valueDate = new Date(+dateArr[2], +dateArr[1] - 1, +dateArr[0]);
     }
 
     private _clearForm() {
