@@ -2,7 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "rootDir": ".",
-    "sourceMap": true,
+    "sourceMap": false,
     "declaration": false,
     "moduleResolution": "node",
 	"outDir": "./dist/out-tsc",
