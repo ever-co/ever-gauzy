@@ -77,4 +77,13 @@
             </div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="form-group">
+                <label for="startedWork" class="label">Started Work</label>
+                <input [nbDatepicker]="datepicker" nbInput fullWidth placeholder="Started work on" formControlName="startedWorkOn">
+                <nb-datepicker #datepicker></nb-datepicker>
+            </div>
+        </div>
+    </div>
 </form>

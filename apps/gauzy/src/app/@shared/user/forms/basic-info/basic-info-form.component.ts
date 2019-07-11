@@ -16,7 +16,8 @@ export class BasicInfoFormComponent {
         lastName: [''],
         email: ['', Validators.compose([Validators.required, Validators.email])],
         imageUrl: ['', Validators.compose([Validators.pattern(new RegExp(`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`, 'g'))])],
-        password: ['', Validators.compose([Validators.required, Validators.minLength(4)])]
+        password: ['', Validators.compose([Validators.required, Validators.minLength(4)])],
+        startedWorkOn: ['', Validators.compose([Validators.required])]
     });
 
     username = this.form.get('username');
@@ -26,6 +27,7 @@ export class BasicInfoFormComponent {
     imageUrl = this.form.get('imageUrl');
     password = this.form.get('password');
     off: string;
+    startedWorkOn = this.form.get('startedWorkOn');
 
     constructor(
         private readonly fb: FormBuilder,
@@ -43,7 +45,8 @@ export class BasicInfoFormComponent {
                     email: this.email.value,
                     username: this.username.value || null,
                     imageUrl: this.imageUrl.value,
-                    role
+                    role,
+                    startedWorkOn: this.startedWorkOn.value
                 },
                 password: this.password.value
             }).pipe(first()).toPromise();
