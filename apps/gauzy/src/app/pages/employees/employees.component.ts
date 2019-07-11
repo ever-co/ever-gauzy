@@ -7,11 +7,13 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { NbDialogService } from '@nebular/theme';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
+import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 
 interface EmployeeViewModel {
     fullName: string;
     email: string;
     bonus?: number;
+    id: string;
 }
 
 @Component({
@@ -48,7 +50,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     selectEmployeeTmp(ev) {
-        console.log(ev)
         if (ev.isSelected) {
             this.selectedEmployee = ev.data;
         } else {
@@ -71,6 +72,17 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         console.warn('TODO go to edit employee page');
     }
 
+    async delete() {
+        await this.employeesService.setEmployeeAsInactive(this.selectedEmployee.id);
+        this.loadPage();
+    }
+
+    async endWork() {
+        const dialog = this.dialogService.open(EmployeeEndWorkComponent);
+
+        const data = await dialog.onClose.pipe(first()).toPromise();
+    }
+
     private async loadPage(id: string = this.store.selectedOrganizationId) {
         const { name } = await this.organizationsService
             .getById(id)
@@ -78,13 +90,14 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .toPromise()
 
         const { items } = await this.employeesService.getAll(['user'], { organization: { id } }).pipe(first()).toPromise();
-
-        const employeesVm: EmployeeViewModel[] = items.map((i) => {
+        const employeesVm: EmployeeViewModel[] = items.filter(i => i.isActive).map((i) => {
             return {
                 fullName: `${i.user.firstName} ${i.user.lastName}`,
                 email: i.user.email,
+                id: i.id,
+                isActive: i.isActive,
                 // TODO laod real bonus
-                bonus: 0,
+                bonus: Math.floor(1000*Math.random()) + 10,
             };
         });
 

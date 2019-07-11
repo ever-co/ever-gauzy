@@ -38,4 +38,7 @@ export class Employee extends Base implements IEmployee {
     @IsOptional()
     @Column({ nullable: true })
     valueDate?: Date;
+    @ApiModelPropertyOptional({ type: Boolean })
+    @Column({ nullable: true })
+    isActive: boolean;
 }

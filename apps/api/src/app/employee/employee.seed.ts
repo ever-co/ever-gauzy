@@ -66,6 +66,7 @@ const createRandomEmployees = async (connection: Connection,
                 employee = new Employee();
                 employee.organization = orgs;
                 employee.user = randomUsers.pop();
+                employee.isActive = true;
 
                 if (employee.user) {
                     await insertEmployee(connection, employee);

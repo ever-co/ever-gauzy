@@ -9,6 +9,7 @@ export interface Employee extends IBaseEntityModel {
     organization: Organization;
     orgId: string;
     valueDate?: Date;
+    isActive: boolean;
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {

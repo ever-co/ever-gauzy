@@ -7,6 +7,7 @@ import { EmployeesComponent } from './employees.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation/employee-mutation.module';
+import { EmployeeEndWorkModule } from '../../@shared/employee/employee-end-work-popup/employee-end-work.module';
 
 @NgModule({
     imports: [
@@ -19,7 +20,8 @@ import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation
         NbIconModule,
         Ng2SmartTableModule,
         NbDialogModule.forChild(),
-        EmployeeMutationModule
+        EmployeeMutationModule,
+        EmployeeEndWorkModule
     ],
     declarations: [
         EmployeesComponent
