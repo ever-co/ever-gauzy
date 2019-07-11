@@ -2,6 +2,7 @@ export * from './lib/user.model';
 export * from './lib/employee.model';
 export * from './lib/organization.model';
 export * from './lib/income.model';
+export * from './lib/user-organization.model';
 export { Role, RolesEnum } from './lib/role.model';
 export { Expense } from './lib/expense.model';
 export { EmployeeSettings } from './lib/employee-settings.model';
