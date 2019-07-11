@@ -19,6 +19,8 @@ export class EmployeeSelectorComponent implements OnInit{
         imageUrl: "https://i.imgur.com/XwA2T62.jpg"
     }
 
+    selectedEmployeeId: string;
+
     constructor(
         private employeesService: EmployeesService,
         private store: Store

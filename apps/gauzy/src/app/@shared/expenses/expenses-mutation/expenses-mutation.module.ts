@@ -1,18 +1,21 @@
 import { ThemeModule } from '../../../@theme/theme.module';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
-import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
-import { UserFormsModule } from '../../user/forms/user-forms.module';
+import { NbCardModule, NbButtonModule, NbIconModule, NbInputModule, NbDatepickerModule } from '@nebular/theme';
 import { ExpensesMutationComponent } from './expenses-mutation.component';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @NgModule({
     imports: [
         ThemeModule,
-        FormsModule,
         NbCardModule,
-        UserFormsModule,
         NbButtonModule,
-        NbIconModule
+        NbIconModule,
+        NgSelectModule,
+        ReactiveFormsModule,
+        NbInputModule,
+        FormsModule,
+        NbDatepickerModule
     ],
     exports: [ExpensesMutationComponent],
     declarations: [ExpensesMutationComponent],

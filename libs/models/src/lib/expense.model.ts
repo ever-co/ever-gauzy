@@ -15,3 +15,15 @@ export interface Expense extends IBaseEntityModel {
     notes?: string;
     valueDate?: Date;
 }
+
+export interface ExpenseCreateInput {
+    employeeId: string;
+    orgId: string;
+    amount: number;
+    vendorName: string;
+    vendorId: string;
+    categoryName: string;
+    categoryId: string;
+    notes?: string;
+    valueDate: Date;
+}

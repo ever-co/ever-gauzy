@@ -6,6 +6,7 @@ import { NbDialogService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
+import { ExpensesService } from '../../@core/services/expenses.service';
 
 @Component({
     templateUrl: './expenses.component.html',
@@ -14,6 +15,9 @@ import { Subject } from 'rxjs';
 
 export class ExpensesComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
+
+    selectedEmployeeId: string;
+    selectedOrganizationId: string;
 
     hasRole: boolean;
 
@@ -30,13 +34,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 title: 'Vendor',
                 type: 'string'
             },
-            amount: {
-                title: 'Value',
-                type: 'number',
-            },
             categoryName: {
                 title: 'Category',
                 type: 'string'
+            },
+            amount: {
+                title: 'Value',
+                type: 'number',
             },
             notes: {
                 title: 'Notes',
@@ -49,11 +53,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         }
     };
 
-
-
     constructor(private authService: AuthService,
-                private dialogService: NbDialogService,
-                private store: Store) { }
+        private dialogService: NbDialogService,
+        private store: Store,
+        private expenseService: ExpensesService) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -63,15 +66,30 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
         this.store.selectedOrganizationId$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(id => console.log(id));
+            .subscribe(id => this.selectedOrganizationId = id);
 
-        this.store.selectedEmployeeId$ 
+        this.store.selectedEmployeeId$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(id => console.log(id));
+            .subscribe(id => this.selectedEmployeeId = id);
     }
 
-    openAddExpenseDialog() {
-        this.dialogService.open(ExpensesMutationComponent);
+    openExpenseDialog() {
+        this.dialogService.open(ExpensesMutationComponent)
+            .onClose
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(async formData => {
+                if (formData) {
+                    try {
+                        await this.expenseService
+                            .create(Object.assign(formData, {
+                                employeeId: this.selectedEmployeeId,
+                                orgId: this.selectedOrganizationId
+                            }))
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            });
     }
 
     ngOnDestroy() {

@@ -4,7 +4,13 @@
   </nb-card-header>
   <nb-card-body>
     <div class="mb-3">
-      <button nbButton status="success" class="mr-2" (click)="openAddExpenseDialog()">
+      <button
+        nbButton
+        status="success"
+        class="mr-2"
+        (click)="openExpenseDialog()"
+        [disabled]="!selectedEmployeeId || !selectedOrganizationId"
+      >
         <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
       </button>
 
@@ -14,10 +20,10 @@
     </div>
 
     <ng2-smart-table
-        class="income-table"
-        [settings]="smartTableSettings"
-        [source]="smartTableSource"
-      >
-      </ng2-smart-table>
+      class="income-table"
+      [settings]="smartTableSettings"
+      [source]="smartTableSource"
+    >
+    </ng2-smart-table>
   </nb-card-body>
 </nb-card>

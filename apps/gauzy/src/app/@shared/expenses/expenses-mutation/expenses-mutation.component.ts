@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
+import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 
 @Component({
     selector: 'ga-expenses-mutation',
@@ -7,7 +8,13 @@ import { NbDialogRef } from '@nebular/theme';
     styleUrls: ['./expenses-mutation.component.scss']
 })
 export class ExpensesMutationComponent implements OnInit, OnDestroy {
-    
+    readonly form: FormGroup = this.fb.group({
+        amount: ['', Validators.required],
+        vendor: [null, Validators.required],
+        category: [null, Validators.required],
+        notes: [''],
+        valueDate: [new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0), Validators.required]
+    });
 
     fakeVendors = [
         {
@@ -72,13 +79,15 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
     ];
 
     constructor(protected dialogRef: NbDialogRef<ExpensesMutationComponent>,
-                ) { }
+                private fb: FormBuilder) { }
 
     ngOnInit() {
-        // TODO: subscribe to selectedEmployee & selectedOrganization
-        
+        // TODO: here we'll get all the categories and vendors for ng-select menus
     }
 
+    addExpense() {
+        this.dialogRef.close(this.form.value);
+    }
 
     ngOnDestroy() {
         
