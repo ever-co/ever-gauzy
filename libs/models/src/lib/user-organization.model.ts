@@ -13,3 +13,10 @@ export interface UserOrganizationFindInput extends IBaseEntityModel {
     isDefault?: boolean;
     isActive?: boolean;
 }
+
+export interface UserOrganizationCreateInput {
+    userId: string;
+    orgId: string;
+    isDefault?: boolean;
+    isActive?: boolean;
+}
