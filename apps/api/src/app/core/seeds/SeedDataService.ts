@@ -13,6 +13,7 @@ import { Organization, createOrganizations } from '../../organization';
 import { Income } from '../../income';
 import { Expense } from '../../expense';
 import { EmployeeSettings } from '../../employee-settings/employee-settings.entity';
+import { createUsersOrganizations } from '../../user-organization';
 
 const allEntities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
 
@@ -77,10 +78,16 @@ export class SeedDataService {
       const { adminUsers, defaultUsers, randomUsers } = await createUsers(this.connection, roles);
       const { defaultOrganization, randomOrganizations } = await createOrganizations(this.connection);
 
-      const a = await createEmployees(
+      const employees = await createEmployees(
         this.connection,
-        { org: defaultOrganization, users: defaultUsers },
-        { orgs: randomOrganizations, users: randomUsers },
+        { org: defaultOrganization, users: [...defaultUsers] },
+        { orgs: randomOrganizations, users: [...randomUsers] },
+      );
+
+      const usersOrganizations = await createUsersOrganizations(
+        this.connection,
+        { org: defaultOrganization, users: [...defaultUsers, ...adminUsers] },
+        { orgs: randomOrganizations, users: [...randomUsers] },
       );
 
       this.log(chalk.green(`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`));

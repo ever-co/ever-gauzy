@@ -14,8 +14,9 @@ import { Income } from '../income';
 import { Expense } from '../expense';
 import { EmployeeSettings } from '../employee-settings';
 import { RequestContextMiddleware } from './context';
+import { UserOrganization } from '../user-organization';
 
-const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
+const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings, UserOrganization];
 
 @Module({
     imports: [

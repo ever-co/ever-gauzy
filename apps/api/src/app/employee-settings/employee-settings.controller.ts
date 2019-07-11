@@ -7,7 +7,7 @@ import { CrudController } from '../core/crud/crud.controller';
 @ApiUseTags('EmployeeSettings')
 @Controller()
 export class EmployeeSettingsController extends CrudController<EmployeeSettings> {
-    constructor(private readonly mployeeSettingsService: EmployeeSettingsService) {
-        super(mployeeSettingsService);
+    constructor(private readonly employeeSettingsService: EmployeeSettingsService) {
+        super(employeeSettingsService);
     }
 }

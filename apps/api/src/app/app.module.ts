@@ -12,6 +12,7 @@ import { EmployeeSettingsModule } from './employee-settings';
 import { CoreModule } from './core';
 import { AuthModule } from './auth';
 import { SeedDataService } from './core/seeds/SeedDataService';
+import { UserOrganizationModule } from './user-organization';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { SeedDataService } from './core/seeds/SeedDataService';
           { path: '/income', module: IncomeModule },
           { path: '/expense', module: ExpenseModule },
           { path: '/employee-settings', module: EmployeeSettingsModule },
+          { path: '/user-organization', module: UserOrganizationModule }
         ],
       },
     ]),
@@ -38,7 +40,8 @@ import { SeedDataService } from './core/seeds/SeedDataService';
     OrganizationModule,
     IncomeModule,
     ExpenseModule,
-    EmployeeSettingsModule
+    EmployeeSettingsModule,
+    UserOrganizationModule
   ],
   controllers: [AppController],
   providers: [AppService, SeedDataService]
