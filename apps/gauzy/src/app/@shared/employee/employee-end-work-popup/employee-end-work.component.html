@@ -4,9 +4,17 @@
         <nb-icon class="ml-auto mt-1 close" icon="close-outline" (click)="closeDialog()"></nb-icon>
     </nb-card-header>
     <nb-card-body>
-        
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <input [nbDatepicker]="datepicker" nbInput fullWidth>
+                    <nb-datepicker #datepicker></nb-datepicker>
+                </div>
+            </div>
+        </div>
+
     </nb-card-body>
     <nb-card-footer class="text-right">
-        <button [disabled]="userBasicInfo.form.invalid" status="success" (click)="add()" nbButton>Accept</button>
+        <button status="success" (click)="add()" nbButton>Accept</button>
     </nb-card-footer>
 </nb-card>
