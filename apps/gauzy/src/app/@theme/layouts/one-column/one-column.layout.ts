@@ -6,6 +6,8 @@ import { UsersService } from '../../../@core/services/users.service';
 
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { Store } from '../../../@core/services/store.service';
+import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
+import { first } from 'rxjs/operators';
 
 @Component({
   selector: 'ngx-one-column-layout',
@@ -27,6 +29,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
     @Inject(PLATFORM_ID) private platformId,
     private windowModeBlockScrollService: WindowModeBlockScrollService,
     private usersService: UsersService,
+    private usersOrganizationsService: UsersOrganizationsService,
     private store: Store
   ) { }
 
@@ -43,5 +46,8 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
   private async loadUserData() {
     const id = this.store.userId;
     this.user = await this.usersService.getUserById(id);
+    
+    const { orgId } = await this.usersOrganizationsService.findOne({ userId: id }).pipe(first()).toPromise();
+    this.store.selectedOrganizationId = orgId;
   }
 }

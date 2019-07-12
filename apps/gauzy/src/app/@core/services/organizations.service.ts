@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
 import { Organization } from '@gauzy/models';
 import { Observable } from 'rxjs';
 

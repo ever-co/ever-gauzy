@@ -42,6 +42,7 @@ import { DARK_THEME } from './styles/theme.dark';
 import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
 import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
+import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
 
 const NB_MODULES = [
   NbLayoutModule,
@@ -79,7 +80,7 @@ const PIPES = [
   imports: [CommonModule, ...NB_MODULES, HeaderSelectorsModule],
   exports: [CommonModule, ...PIPES, ...COMPONENTS],
   declarations: [...COMPONENTS, ...PIPES],
-  providers: [UsersService]
+  providers: [UsersService, UsersOrganizationsService]
 })
 export class ThemeModule {
   static forRoot(): ModuleWithProviders {
