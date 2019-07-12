@@ -6,10 +6,8 @@
     <nb-card-body>
         <div class="row">
             <div class="col-sm-12">
-                <div class="form-group">
-                    <input [nbDatepicker]="datepicker" nbInput fullWidth>
-                    <nb-datepicker #datepicker></nb-datepicker>
-                </div>
+                <input [nbDatepicker]="datepicker" nbInput fullWidth [(ngModel)]="endWorkValue">
+                <nb-datepicker #datepicker></nb-datepicker>
             </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import { RolesEnum, Employee } from '@gauzy/models';
@@ -15,6 +15,8 @@ import { first } from 'rxjs/operators';
 export class EmployeeEndWorkComponent implements OnInit {
     @ViewChild('userBasicInfo', { static: false })
     userBasicInfo: BasicInfoFormComponent;
+    
+    endWorkValue: Date;
 
     constructor(
         protected dialogRef: NbDialogRef<EmployeeEndWorkComponent>,
@@ -25,22 +27,15 @@ export class EmployeeEndWorkComponent implements OnInit {
 
     ngOnInit(): void {
         console.warn("EmployeeEndWorkComponent");
+        console.log(this.dialogRef);
     }
 
-    closeDialog(employee: Employee = null) {
-        this.dialogRef.close(employee)
+    closeDialog() {
+        console.log(this.endWorkValue);
+        this.dialogRef.close(this.endWorkValue);
     }
 
-    async add() {
-        try {
-            const user = await this.userBasicInfo.registerUser(RolesEnum.EMPLOYEE);
-            const organization = await this.organizationsService.getById(this.store.selectedOrganizationId).pipe(first()).toPromise();
-            const employee = await this.employeesService.create({user, organization}).pipe(first()).toPromise();
-
-            this.closeDialog(employee);
-            
-        } catch (err) {
-            alert(err.error.detail.toString().replace(/[{()}]/g, ''));
-        }
+    add() {
+        this.closeDialog();
     }
 }

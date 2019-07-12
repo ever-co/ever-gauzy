@@ -13,6 +13,7 @@ interface EmployeeViewModel {
     fullName: string;
     email: string;
     bonus?: number;
+    endWork?: any;
     id: string;
 }
 
@@ -78,9 +79,13 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     async endWork() {
-        const dialog = this.dialogService.open(EmployeeEndWorkComponent);
+        const dialog = this.dialogService.open(EmployeeEndWorkComponent, { context: this.selectedEmployee.endWork });
 
         const data = await dialog.onClose.pipe(first()).toPromise();
+        if (data) {
+            await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data);
+            this.loadPage();
+        }
     }
 
     private async loadPage(id: string = this.store.selectedOrganizationId) {
@@ -96,6 +101,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 email: i.user.email,
                 id: i.id,
                 isActive: i.isActive,
+                endWork: i.endWork ? new Date(i.endWork).toUTCString() : 'Indefinite',
                 // TODO laod real bonus
                 bonus: Math.floor(1000*Math.random()) + 10,
             };
@@ -123,6 +129,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     type: 'number',
                     width: '15%'
                 },
+                endWork: {
+                    title: 'End Work',
+                    type: 'string'
+                }
             },
             pager: {
                 display: true,

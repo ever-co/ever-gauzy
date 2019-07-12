@@ -26,6 +26,10 @@ export class EmployeesService {
         return this.http.put<Employee>(`/api/employee/${id}`, { isActive: false }).pipe(first()).toPromise();
     }
 
+    setEmployeeEndWork(id: string, date: Date): Promise<Employee> {
+        return this.http.put<Employee>(`/api/employee/${id}`, { endWork: date }).pipe(first()).toPromise();
+    }
+
     create(createInput: IEmployeeCreateInput): Observable<Employee> {
         return this.http.post<Employee>('/api/employee/create', createInput);
     }
