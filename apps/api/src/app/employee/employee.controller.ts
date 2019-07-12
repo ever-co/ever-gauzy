@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Get, Query, Post, Body } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, Param } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
 import { Employee } from './employee.entity';
@@ -26,6 +26,14 @@ export class EmployeeController extends CrudController<Employee> {
         const { relations, findInput } = JSON.parse(data);
 
         return this.employeeService.findAll({ where: findInput, relations });
+    }
+
+    @ApiOperation({ title: 'Find User by id.' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Found one record', type: Employee })
+    @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+    @Get(':id')
+    async findById(@Param('id') id: string): Promise<Employee> {
+        return this.employeeService.findOne(id);
     }
 
     @ApiOperation({ title: 'Create new record' })
