@@ -1,0 +1,109 @@
+<nb-card class="main">
+  <nb-card-header class="d-flex">
+    <h5>Add Expense</h5>
+    <nb-icon
+      class="ml-auto mt-1 close"
+      (click)="dialogRef.close()"
+      icon="close-outline"
+    ></nb-icon>
+  </nb-card-header>
+  <nb-card-body class="body">
+    <form [formGroup]="form" *ngIf="form">
+      <div class="row">
+        <div class="col-sm-6">
+          <input
+            formControlName="valueDate"
+            nbInput
+            placeholder="Pick Date"
+            [nbDatepicker]="formpicker"
+            [ngClass]="{
+              'status-danger':
+                valueDate?.invalid && (valueDate.dirty || valueDate.touched),
+              'status-success':
+                valueDate?.valid && (valueDate.dirty || valueDate.touched)
+            }"
+          />
+          <nb-datepicker #formpicker></nb-datepicker>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="form-group">
+            <ng-select
+              [items]="fakeVendors"
+              bindLabel="vendorName"
+              [searchable]="false"
+              formControlName="vendor"
+              placeholder="All Vendors"
+            >
+            </ng-select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-6">
+          <div class="form-group">
+            <input
+              nbInput
+              type="number"
+              step="1"
+              fullWidth
+              placeholder="Amount"
+              formControlName="amount"
+              [ngClass]="{
+                'status-danger':
+                  amount?.invalid && (amount.dirty || amount.touched),
+                'status-success':
+                  amount?.valid && (amount.dirty || amount.touched)
+              }"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="col-sm-6">
+          <div class="form-group">
+            <ng-select
+              [items]="fakeCategories"
+              bindLabel="categoryName"
+              [searchable]="false"
+              formControlName="category"
+              placeholder="All Categories"
+            >
+            </ng-select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <textarea
+              nbInput
+              fullWidth
+              placeholder="Notes"
+              formControlName="notes"
+              class="notes"
+              [ngClass]="{
+                'status-danger':
+                  notes?.invalid && (notes.dirty || notes.touched),
+                'status-success': notes?.valid && (notes.dirty || notes.touched)
+              }"
+            >
+            </textarea>
+          </div>
+        </div>
+      </div>
+    </form>
+  </nb-card-body>
+  <nb-card-footer class="text-right">
+    <button
+      [disabled]="form.invalid"
+      (click)="addOrEditExpense()"
+      status="success"
+      nbButton
+    >
+      {{ expense ? 'Edit' : 'Add' }}
+    </button>
+  </nb-card-footer>
+</nb-card>
