@@ -8,6 +8,8 @@ import { environment } from 'apps/gauzy/src/environments/environment';
 })
 export class FooterComponent {
 	companyName: string;
+	companySite: string;
+	companyLink: string;
 	companySiteLink: string;
 	companyGithubLink: string;
 	companyFacebookLink: string;
@@ -16,6 +18,8 @@ export class FooterComponent {
 
 	constructor() {
 		this.companyName = environment.COMPANY_NAME;
+		this.companySite = environment.COMPANY_SITE;
+		this.companyLink = environment.COMPANY_LINK;
 		this.companySiteLink = environment.COMPANY_SITE_LINK;
 		this.companyGithubLink = environment.COMPANY_GITHUB_LINK;
 		this.companyFacebookLink = environment.COMPANY_FACEBOOK_LINK;

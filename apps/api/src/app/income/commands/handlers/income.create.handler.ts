@@ -21,6 +21,7 @@ export class IncomeCreateHandler implements ICommandHandler<IncomeCreateCommand>
         const organization = await this.organizationService.findOne(employee.orgId);
 
         income.clientName = input.clientName;
+        income.clientId = input.clientId;
         income.employee = employee;
         income.organization = organization;
         income.amount = input.amount;

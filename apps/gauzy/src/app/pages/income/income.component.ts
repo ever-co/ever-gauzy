@@ -7,11 +7,22 @@ import { Store } from '../../@core/services/store.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { FormBuilder, Validators } from '@angular/forms';
 import { LocalDataSource } from 'ng2-smart-table';
+import { NbDialogService } from '@nebular/theme';
+import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 
 interface IncomeViewModel {
-    date: string,
+    id: string,
+    valueDate: string,
     clientName: string,
+    clientId: string,
     amount: number
+}
+
+interface SelectedRowModel {
+    data: IncomeViewModel,
+    isSelected: boolean,
+    selected: IncomeViewModel[],
+    source: LocalDataSource
 }
 
 @Component({
@@ -21,8 +32,9 @@ interface IncomeViewModel {
 
 export class IncomeComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
+
     readonly form = this.fb.group({
-        date: [new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0), Validators.required],
+        valueDate: [new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0), Validators.required],
         amount: ['', Validators.required],
         employeeId: ['', Validators.required],
         client: ['', Validators.required]
@@ -59,12 +71,14 @@ export class IncomeComponent implements OnInit, OnDestroy {
     selectedEmployeeId: string;
     smartTableSource = new LocalDataSource();
 
-    get date() {
-        return this.form.get('date').value;
+    selectedIncome: SelectedRowModel;
+
+    get valueDate() {
+        return this.form.get('valueDate').value;
     }
 
-    set date(value) {
-        this.form.get('date').setValue(value);
+    set valueDate(value) {
+        this.form.get('valueDate').setValue(value);
     }
 
     get amount() {
@@ -85,10 +99,11 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
     smartTableSettings = {
         actions: false,
+        mode: 'external',
         editable: true,
         noDataMessage: 'No data for the currently selected employee.',
         columns: {
-            date: {
+            valueDate: {
                 title: 'Date',
                 type: 'string'
             },
@@ -109,9 +124,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
     };
 
     constructor(private authService: AuthService,
-                private store: Store,
-                private incomeService: IncomeService,
-                private fb: FormBuilder) { }
+        private store: Store,
+        private incomeService: IncomeService,
+        private dialogService: NbDialogService,
+        private fb: FormBuilder) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -128,10 +144,15 @@ export class IncomeComponent implements OnInit, OnDestroy {
             });
     }
 
+    selectIncome(ev: SelectedRowModel) {
+        this.selectedIncome = ev;
+        this.selectedIncome.isSelected ? this._populateFormForEdit() : this._clearForm();
+    }
+
     async addIncome() {
         try {
             await this.incomeService.create({
-                valueDate: this.date,
+                valueDate: this.valueDate,
                 amount: this.amount,
                 clientName: this.clientName,
                 clientId: this.clientId,
@@ -140,6 +161,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
             this.amount = '';
             this.form.get('client').setValue('');
+            this.form.get('valueDate').setValue(new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0));
 
             this._loadEmployeeIncomeData();
         } catch (error) {
@@ -147,18 +169,77 @@ export class IncomeComponent implements OnInit, OnDestroy {
         }
     }
 
+    async editIncome() {
+        try {
+            await this.incomeService.update(this.selectedIncome.data.id, {
+                valueDate: this.valueDate,
+                amount: this.amount,
+                clientName: this.clientName,
+                clientId: this.clientId
+            }).pipe(first()).toPromise();
+
+            this._loadEmployeeIncomeData();
+            this._clearForm();
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    async deleteIncome() {
+        this.dialogService.open(IncomeMutationComponent)
+            .onClose
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(async result => {
+                if (result) {
+                    try {
+                        await this.incomeService
+                            .delete(this.selectedIncome.data.id)
+                            .pipe(first())
+                            .toPromise();
+
+                        this._loadEmployeeIncomeData();
+                        this._clearForm();
+                        this.selectedIncome = null;
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            });
+    }
+
     private async _loadEmployeeIncomeData(id = this.selectedEmployeeId) {
         const { items } = await this.incomeService.getAll(['employee'], { employee: { id } }).pipe(first()).toPromise();
 
         const incomeVM: IncomeViewModel[] = items.map(i => {
             return {
-                date: new Date(i.valueDate).toLocaleDateString(),
+                id: i.id,
+                valueDate: new Date(i.valueDate).toLocaleDateString('uk'),
                 clientName: i.clientName,
+                clientId: i.clientId,
                 amount: i.amount
             }
         })
 
         this.smartTableSource.load(incomeVM);
+    }
+
+    private _populateFormForEdit() {
+        this.amount = this.selectedIncome.data.amount;
+
+        this.form.get('client').setValue({
+            clientName: this.selectedIncome.data.clientName,
+            clientId: this.selectedIncome.data.clientId
+        });
+
+        const dateArr = this.selectedIncome.data.valueDate.split('.');
+
+        this.valueDate = new Date(+dateArr[2], +dateArr[1] - 1, +dateArr[0]);
+    }
+
+    private _clearForm() {
+        this.amount = '';
+        this.form.get('client').setValue('');
+        this.form.get('valueDate').setValue(new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0));
     }
 
     ngOnDestroy() {

@@ -9,6 +9,7 @@ import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
 import { AuthService } from '../@core/services/auth.service';
 import { RoleGuard } from '../@core/role/role.guard';
 
+
 @NgModule({
   imports: [
     PagesRoutingModule,
@@ -17,7 +18,7 @@ import { RoleGuard } from '../@core/role/role.guard';
     MiscellaneousModule,
   ],
   declarations: [
-    PagesComponent,
+    PagesComponent
   ],
   providers: [
     AuthService,

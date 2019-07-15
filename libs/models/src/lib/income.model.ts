@@ -21,6 +21,14 @@ export interface IncomeCreateInput {
     employeeId: string;
 }
 
+export interface IncomeUpdateInput {
+    amount?: number;
+    clientName?: string;
+    clientId?: string;
+    valueDate?: Date;
+    employeeId?: string;
+}
+
 export interface IncomeFindInput extends IBaseEntityModel {
     employee?: EmployeeFindInput;
     organization?: OrganizationFindInput;

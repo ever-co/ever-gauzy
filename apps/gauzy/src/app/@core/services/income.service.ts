@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Income } from '@gauzy/models';
 import {
+  Income,
   IncomeCreateInput as IIncomeCreateInput,
-  IncomeFindInput as IIncomeFindInput
+  IncomeFindInput as IIncomeFindInput,
+  IncomeUpdateInput as IIncomeUpdateInput
 } from '@gauzy/models';
 
 @Injectable()
@@ -22,5 +23,13 @@ export class IncomeService {
     return this.http.get<{ items: Income[], total: number }>(`/api/income`, {
       params: { data }
     });
+  }
+
+  update(id: string, updateInput: IIncomeUpdateInput) {
+    return this.http.put(`/api/income/${id}`, updateInput);
+  }
+
+  delete(id: string) {
+    return this.http.delete(`/api/income/${id}`);
   }
 }

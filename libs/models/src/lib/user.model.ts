@@ -14,6 +14,7 @@ export interface User extends IBaseEntityModel {
   roleId?: string;
   hash?: string;
   imageUrl?: string;
+  startedWorkOn?: string;
 }
 
 export interface UserFindInput extends IBaseEntityModel {

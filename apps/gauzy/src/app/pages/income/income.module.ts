@@ -5,7 +5,8 @@ import {
   NbButtonModule,
   NbInputModule,
   NbDatepickerModule,
-  NbIconModule
+  NbIconModule,
+  NbDialogModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IncomeComponent } from './income.component';
@@ -13,6 +14,7 @@ import { IncomeRoutingModule } from './income-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { IncomeService } from '../../@core/services/income.service';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';
 
 @NgModule({
   imports: [
@@ -26,7 +28,9 @@ import { NgSelectModule } from '@ng-select/ng-select';
     NbDatepickerModule,
     NbIconModule,
     Ng2SmartTableModule,
-    NgSelectModule
+    NgSelectModule,
+    NbDialogModule.forChild(),
+    IncomeMutationModule
   ],
   declarations: [IncomeComponent],
   providers: [IncomeService]

@@ -54,14 +54,9 @@
     <div class="row">
         <div class="col-sm-6">
             <div class="form-group">
-                <label for="inputImageUrl" class="label">ImageUrl (optional)</label>
-                <input nbInput type="text" id="inputImageUrl" fullWidth placeholder="Image" formControlName="imageUrl"
-                    [ngClass]="{
-						'status-danger':
-                        imageUrl.invalid && (imageUrl.dirty || imageUrl.touched),
-						'status-success':
-                        imageUrl.valid && (imageUrl.dirty || imageUrl.touched)
-                    }" />
+                <label for="startedWork" class="label">Date when started work</label>
+                <input [nbDatepicker]="datepicker" nbInput fullWidth placeholder="Started work on" formControlName="startedWorkOn">
+                <nb-datepicker #datepicker></nb-datepicker>
             </div>
         </div>
         <div class="col-sm-6">
@@ -74,6 +69,20 @@
 						'status-success':
                         password.valid && (password.dirty || password.touched)
 					}" />
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="form-group">
+                <label for="inputImageUrl" class="label">Image URL (optional)</label>
+                <input nbInput type="text" id="inputImageUrl" fullWidth placeholder="Image" formControlName="imageUrl"
+                [ngClass]="{
+                    'status-danger':
+                    imageUrl.invalid && (imageUrl.dirty || imageUrl.touched),
+                    'status-success':
+                    imageUrl.valid && (imageUrl.dirty || imageUrl.touched)
+                }" />
             </div>
         </div>
     </div>

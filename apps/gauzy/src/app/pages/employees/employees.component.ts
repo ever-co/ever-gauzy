@@ -7,11 +7,14 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { NbDialogService } from '@nebular/theme';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
+import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 
 interface EmployeeViewModel {
     fullName: string;
     email: string;
     bonus?: number;
+    endWork?: any;
+    id: string;
 }
 
 @Component({
@@ -44,7 +47,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe((id) => this.loadPage(id));
 
-        this._loadSettingsSmartTable();
+        this._loadSmartTableSettings();
     }
 
     selectEmployeeTmp(ev) {
@@ -70,6 +73,21 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         console.warn('TODO go to edit employee page');
     }
 
+    async delete() {
+        await this.employeesService.setEmployeeAsInactive(this.selectedEmployee.id);
+        this.loadPage();
+    }
+
+    async endWork() {
+        const dialog = this.dialogService.open(EmployeeEndWorkComponent, { context: this.selectedEmployee.endWork });
+
+        const data = await dialog.onClose.pipe(first()).toPromise();
+        if (data) {
+            await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data);
+            this.loadPage();
+        }
+    }
+
     private async loadPage(id: string = this.store.selectedOrganizationId) {
         const { name } = await this.organizationsService
             .getById(id)
@@ -77,13 +95,15 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .toPromise()
 
         const { items } = await this.employeesService.getAll(['user'], { organization: { id } }).pipe(first()).toPromise();
-
-        const employeesVm: EmployeeViewModel[] = items.map((i) => {
+        const employeesVm: EmployeeViewModel[] = items.filter(i => i.isActive).map((i) => {
             return {
                 fullName: `${i.user.firstName} ${i.user.lastName}`,
                 email: i.user.email,
+                id: i.id,
+                isActive: i.isActive,
+                endWork: i.endWork ? new Date(i.endWork).toUTCString() : 'Indefinite',
                 // TODO laod real bonus
-                bonus: 0,
+                bonus: Math.floor(1000*Math.random()) + 10,
             };
         });
 
@@ -92,7 +112,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         this.organizationName = name;
     }
 
-    private _loadSettingsSmartTable() {
+    private _loadSmartTableSettings() {
         this.settingsSmartTable = {
             actions: false,
             columns: {
@@ -109,6 +129,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     type: 'number',
                     width: '15%'
                 },
+                endWork: {
+                    title: 'End Work',
+                    type: 'string'
+                }
             },
             pager: {
                 display: true,

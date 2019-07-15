@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card class="income-component">
   <nb-card-header>
     <h4>Income</h4>
   </nb-card-header>
@@ -8,13 +8,15 @@
         <div class="row mb-3">
           <div class="col">
             <input
-              formControlName="date"
+              formControlName="valueDate"
               nbInput
               placeholder="Pick Date"
               [nbDatepicker]="formpicker"
               [ngClass]="{
-                'status-danger': date.invalid && (date.dirty || date.touched),
-                'status-success': date.valid && (date.dirty || date.touched)
+                'status-danger':
+                  valueDate.invalid && (valueDate.dirty || valueDate.touched),
+                'status-success':
+                  valueDate.valid && (valueDate.dirty || valueDate.touched)
               }"
             />
             <nb-datepicker #formpicker></nb-datepicker>
@@ -33,27 +35,55 @@
             <input
               formControlName="amount"
               type="number"
-              step="0.1"
+              step="1"
               nbInput
               placeholder="Value"
               [ngClass]="{
                 'status-danger':
-                  amount.invalid && (amount.dirty || amount.touched),
+                  amount?.invalid && (amount.dirty || amount.touched),
                 'status-success':
-                  amount.valid && (amount.dirty || amount.touched)
+                  amount?.valid && (amount.dirty || amount.touched)
               }"
             />
           </div>
           <div class="col">
-            <button
-              [disabled]="form.invalid"
-              nbButton
-              status="success"
-              (click)="addIncome()"
-              class="mr-2"
-            >
-              <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
-            </button>
+            <div class="btn-container">
+
+              <button
+                [hidden]="selectedIncome ? selectedIncome.isSelected : false"
+                [disabled]="form.invalid"
+                nbButton
+                status="success"
+                (click)="addIncome()"
+                class="mr-2 add-button"
+              >
+                <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
+              </button>
+
+              <button
+                *ngIf="selectedIncome ? selectedIncome.isSelected : false"
+                (click)="editIncome()"
+                [disabled]="form.invalid"
+                nbButton
+                status="success"
+                size="small"
+                class="add-button"
+              >
+                Edit
+              </button>
+
+              <button
+                *ngIf="selectedIncome ? selectedIncome.isSelected : false"
+                (click)="deleteIncome()"
+                nbButton
+                status="danger"
+                size="small"
+                class="add-button"
+              >
+                Delete
+              </button>
+
+            </div>
           </div>
         </div>
       </form>
@@ -61,6 +91,7 @@
       <!-- (userRowSelect)="selectEmployeeTmp($event)" -->
       <ng2-smart-table
         class="income-table"
+        (userRowSelect)="selectIncome($event)"
         [settings]="smartTableSettings"
         [source]="smartTableSource"
       >

@@ -51,6 +51,7 @@
 }
 
 .ng-select .ng-select-container {
+  height: 40px;
   background-color: nb-theme(background-basic-color-2);
   border: 1px solid nb-theme(border-basic-color-3);
   color: nb-theme(text-basic-color);
@@ -84,6 +85,15 @@ border: 1px solid  nb-theme(text-primary-hover-color);
   box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
 }
 
+  tr {
+    background-color: nb-theme(background-basic-color-1) !important;
+  }
+
+ ng2-smart-table tbody tr {
+   &:hover, &.selected {
+    background-color: nb-theme(background-basic-color-3) !important;
+   }
+  }
 };
 
 
