@@ -9,10 +9,12 @@ import { Subject } from 'rxjs';
 import { ExpensesService } from '../../@core/services/expenses.service';
 import { LocalDataSource } from 'ng2-smart-table';
 
-interface ExpenseViewModel {
+export interface ExpenseViewModel {
     id: string,
-    date: string,
+    valueDate: string,
+    vendorId: string,
     vendorName: string,
+    categoryId: string,
     categoryName: string,
     amount: number,
     notes: string
@@ -47,7 +49,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         editable: true,
         noDataMessage: 'No data for the currently selected Employee & Organization.',
         columns: {
-            date: {
+            valueDate: {
                 title: 'Date',
                 type: 'string'
             },
@@ -99,7 +101,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(id => {
                 this.selectedEmployeeId = id;
-                
+
                 if (this.selectedOrganizationId) {
                     this._loadTableData();
                 }
@@ -134,12 +136,37 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             });
     }
 
-    selectExpense(ev: SelectedRowModel) {
-        this.selectedExpense = ev;
+    openEditExpenseDialog() {
+        this.dialogService.open(ExpensesMutationComponent, {
+            context: {
+                expense: this.selectedExpense.data
+            }
+        })
+            .onClose
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(async formData => {
+                if (formData) {
+                    try {
+                        await this.expenseService.update(formData.id, {
+                            amount: formData.amount,
+                            categoryId: formData.category.categoryId,
+                            categoryName: formData.category.categoryName,
+                            vendorId: formData.vendor.vendorId,
+                            vendorName: formData.vendor.vendorName,
+                            valueDate: formData.valueDate,
+                            notes: formData.notes
+                        });
+
+                        this._loadTableData();
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            });
     }
 
-    openEditExpenseDialog() {
-        this.dialogService.open(ExpensesMutationComponent);
+    selectExpense(ev: SelectedRowModel) {
+        this.selectedExpense = ev;
     }
 
     private async _loadTableData() {
@@ -154,8 +181,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             const expenseVM: ExpenseViewModel[] = items.map(i => {
                 return {
                     id: i.id,
-                    date: new Date(i.valueDate).toLocaleDateString(),
+                    valueDate: new Date(i.valueDate).toLocaleDateString(),
+                    vendorId: i.vendorId,
                     vendorName: i.vendorName,
+                    categoryId: i.categoryId,
                     categoryName: i.categoryName,
                     amount: i.amount,
                     notes: i.notes

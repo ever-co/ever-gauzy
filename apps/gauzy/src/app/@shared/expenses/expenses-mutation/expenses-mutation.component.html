@@ -1,7 +1,11 @@
 <nb-card class="main">
   <nb-card-header class="d-flex">
     <h5>Add Expense</h5>
-    <nb-icon class="ml-auto mt-1 close" (click)="dialogRef.close()" icon="close-outline"></nb-icon>
+    <nb-icon
+      class="ml-auto mt-1 close"
+      (click)="dialogRef.close()"
+      icon="close-outline"
+    ></nb-icon>
   </nb-card-header>
   <nb-card-body class="body">
     <form [formGroup]="form" *ngIf="form">
@@ -79,13 +83,12 @@
               fullWidth
               placeholder="Notes"
               formControlName="notes"
+              class="notes"
               [ngClass]="{
                 'status-danger':
                   notes?.invalid && (notes.dirty || notes.touched),
                 'status-success': notes?.valid && (notes.dirty || notes.touched)
               }"
-              cols="20"
-              rows="5"
             >
             </textarea>
           </div>
@@ -94,6 +97,13 @@
     </form>
   </nb-card-body>
   <nb-card-footer class="text-right">
-    <button [disabled]="form.invalid" (click)="addExpense()" status="success" nbButton>Add</button>
+    <button
+      [disabled]="form.invalid"
+      (click)="addOrEditExpense()"
+      status="success"
+      nbButton
+    >
+      {{ expense ? 'Edit' : 'Add' }}
+    </button>
   </nb-card-footer>
 </nb-card>

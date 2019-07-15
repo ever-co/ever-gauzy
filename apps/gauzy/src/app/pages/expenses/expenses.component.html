@@ -14,7 +14,12 @@
         <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
       </button>
 
-      <button nbButton status="info" [disabled]="selectedExpense ? !selectedExpense.isSelected : true">
+      <button
+        nbButton
+        status="info"
+        [disabled]="selectedExpense ? !selectedExpense.isSelected : true"
+        (click)="openEditExpenseDialog()"
+      >
         <nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
       </button>
     </div>

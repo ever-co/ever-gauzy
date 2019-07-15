@@ -30,7 +30,6 @@ export class ExpenseCreateHandler implements ICommandHandler<ExpenseCreateComman
         expense.employee = employee;
         expense.organization = organization;
 
-
         return await this.expenseService.create(expense);
     }
 }

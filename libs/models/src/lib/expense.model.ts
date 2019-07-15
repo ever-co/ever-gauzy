@@ -41,3 +41,15 @@ export interface ExpenseFindInput extends IBaseEntityModel {
     notes?: string;
     valueDate?: Date;
 }
+
+export interface ExpenseUpdateInput {
+    employeeId?: string;
+    orgId?: string;
+    amount?: number;
+    vendorName?: string;
+    vendorId?: string;
+    categoryName?: string;
+    categoryId?: string;
+    notes?: string;
+    valueDate?: Date;
+}

@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 
 @Component({
     selector: 'ga-expenses-mutation',
@@ -8,13 +9,9 @@ import { FormBuilder, Validators, FormGroup } from '@angular/forms';
     styleUrls: ['./expenses-mutation.component.scss']
 })
 export class ExpensesMutationComponent implements OnInit, OnDestroy {
-    readonly form: FormGroup = this.fb.group({
-        amount: ['', Validators.required],
-        vendor: [null, Validators.required],
-        category: [null, Validators.required],
-        notes: [''],
-        valueDate: [new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0), Validators.required]
-    });
+    form: FormGroup;
+
+    expense: ExpenseViewModel;
 
     fakeVendors = [
         {
@@ -82,11 +79,39 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
                 private fb: FormBuilder) { }
 
     ngOnInit() {
+        this._initializeForm();
         // TODO: here we'll get all the categories and vendors for ng-select menus
     }
 
-    addExpense() {
+    addOrEditExpense() {
         this.dialogRef.close(this.form.value);
+    }
+
+    private _initializeForm() {
+        if (this.expense) {
+            this.form = this.fb.group({
+                id: [this.expense.id],
+                amount: [this.expense.amount, Validators.required],
+                vendor: [{
+                    vendorId: this.expense.vendorId,
+                    vendorName: this.expense.vendorName
+                }, Validators.required],
+                category: [{
+                    categoryId: this.expense.categoryId,
+                    categoryName: this.expense.categoryName
+                }, Validators.required],
+                notes: [this.expense.notes],
+                valueDate: [new Date(this.expense.valueDate), Validators.required]
+            });
+        } else {
+            this.form = this.fb.group({
+                amount: ['', Validators.required],
+                vendor: [null, Validators.required],
+                category: [null, Validators.required],
+                notes: [''],
+                valueDate: [new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0), Validators.required]
+            });
+        }
     }
 
     ngOnDestroy() {
