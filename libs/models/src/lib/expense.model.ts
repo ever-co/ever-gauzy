@@ -1,5 +1,5 @@
-import { Employee } from './employee.model';
-import { Organization } from './organization.model';
+import { Employee, EmployeeFindInput } from './employee.model';
+import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface Expense extends IBaseEntityModel {
@@ -26,4 +26,18 @@ export interface ExpenseCreateInput {
     categoryId: string;
     notes?: string;
     valueDate: Date;
+}
+
+export interface ExpenseFindInput extends IBaseEntityModel {
+    employee?: EmployeeFindInput;
+    organization?: OrganizationFindInput;
+    vendorName?: string;
+    vendorId?: string;
+    categoryName?: string;
+    categoryId?: string;
+    amount?: number;
+    clientId?: string;
+    clientName?: string;
+    notes?: string;
+    valueDate?: Date;
 }

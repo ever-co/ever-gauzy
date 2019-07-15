@@ -21,10 +21,10 @@ export class ExpenseCreateHandler implements ICommandHandler<ExpenseCreateComman
         const organization = await this.organizationService.findOne(employee.orgId);
         
         expense.amount = input.amount;
-        expense.categoryId = input['category']['categoryId'];     // TODO: fix me!
-        expense.categoryName = input['category']['categoryName']; // TODO: fix me!
-        expense.vendorId = input['vendor']['vendorId'];           // TODO: fix me!
-        expense.vendorName = input['vendor']['vendorName'];       // TODO: fix me!
+        expense.categoryId = input.categoryId;    
+        expense.categoryName = input.categoryName;
+        expense.vendorId = input.vendorId;        
+        expense.vendorName = input.vendorName;    
         expense.notes = input.notes;
         expense.valueDate = input.valueDate;
         expense.employee = employee;
