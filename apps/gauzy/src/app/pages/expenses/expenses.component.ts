@@ -165,6 +165,25 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             });
     }
 
+    async deleteExpense() {
+        this.dialogService.open(ExpensesMutationComponent) // TODO: Use shared delete confirm component!
+            .onClose
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(async result => {
+                if (result) {
+                    try {
+                        await this.expenseService
+                            .delete(this.selectedExpense.data.id);
+
+                        this._loadTableData();
+                        this.selectedExpense = null;
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            });
+    }
+
     selectExpense(ev: SelectedRowModel) {
         this.selectedExpense = ev;
     }

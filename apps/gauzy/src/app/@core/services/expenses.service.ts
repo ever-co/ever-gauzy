@@ -21,6 +21,7 @@ export class ExpensesService {
 
     getAll(relations?: string[], findInput?: IExpenseFindInput): Promise<{ items: Expense[], total: number }> {
         const data = JSON.stringify({ relations, findInput });
+
         return this.http.get<{ items: Expense[], total: number }>(`/api/expense`, {
             params: { data }
         }).pipe(first()).toPromise();
@@ -28,5 +29,9 @@ export class ExpensesService {
 
     update(id: string, updateInput: IExpenseUpdateInput): Promise<any> {
         return this.http.put(`/api/expense/${id}`, updateInput).pipe(first()).toPromise();
+    }
+
+    delete(id: string): Promise<any> {
+        return this.http.delete(`/api/expense/${id}`).pipe(first()).toPromise();
     }
 }
