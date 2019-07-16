@@ -16,8 +16,6 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
     private _ngDestroy$ = new Subject<void>();
 
-    selectedEmployeeId: string;
-
     constructor(
         private employeesService: EmployeesService,
         private store: Store

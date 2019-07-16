@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NbCalendarMonthCellComponent } from '@nebular/theme';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
     selector: 'ga-date-selector',
@@ -17,14 +18,15 @@ export class DateSelectorComponent implements OnInit {
     min = new Date(this.date.getFullYear() - 9, 6, 15);
     max = new Date();
 
-    ngOnInit(): void {
-        //Called after the constructor, initializing input properties, and the first call to ngOnChanges.
-        //Add 'implements OnInit' to the class.
+    constructor(private store: Store) {}
+
+    ngOnInit() {
         this.date.setMonth(this.date.getMonth() - 1);
         this.dateInputValue = this.formatDateMMMMyy(this.date);
     }
 
     handleDateChange(event) {
+        this.store.selectedDate = event;
         this.date = event;
         this.dateInputValue = this.formatDateMMMMyy(this.date);
     }

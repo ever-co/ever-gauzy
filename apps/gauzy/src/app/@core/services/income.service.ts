@@ -18,8 +18,9 @@ export class IncomeService {
     return this.http.post<Income>('/api/income/create', createInput);
   }
 
-  getAll(relations?: string[], findInput?: IIncomeFindInput): Observable<{ items: Income[], total: number }> {
-    const data = JSON.stringify({ relations, findInput });
+  getAll(relations?: string[], findInput?: IIncomeFindInput, filterDate?: Date): Observable<{ items: Income[], total: number }> {
+    const data = JSON.stringify({ relations, findInput, filterDate });
+
     return this.http.get<{ items: Income[], total: number }>(`/api/income`, {
       params: { data }
     });

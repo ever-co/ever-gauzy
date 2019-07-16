@@ -20,10 +20,10 @@ export class IncomeController extends CrudController<Income> {
   @ApiResponse({ status: HttpStatus.OK, description: 'Found income', type: Income })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
   @Get()
-  async findAllEmployees(@Query('data') data: string): Promise<IPagination<Income>> {
-    const { relations, findInput } = JSON.parse(data);
+  async findAllIncome(@Query('data') data: string): Promise<IPagination<Income>> {
+    const { relations, findInput, filterDate } = JSON.parse(data);
 
-    return this.incomeService.findAll({ where: findInput, relations });
+    return this.incomeService.findAll({ where: findInput, relations }, new Date(filterDate));
   }
 
   @ApiOperation({ title: 'Create new record' })

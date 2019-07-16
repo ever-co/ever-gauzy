@@ -5,6 +5,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
+import { IncomeService } from '../../@core/services/income.service';
 
 @NgModule({
     imports: [
@@ -18,6 +19,7 @@ import { FormsModule } from '@angular/forms';
     ],
     declarations: [
         DashboardComponent
-    ]
+    ],
+    providers: [IncomeService]
 })
 export class DashboardModule { }

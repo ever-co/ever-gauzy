@@ -1,5 +1,5 @@
 import { User } from '@gauzy/models';
-import { Subject, Observable } from 'rxjs';
+import { Subject } from 'rxjs';
 
 export class Store {
     private _selectedOrganizationId: string;
@@ -7,6 +7,9 @@ export class Store {
 
     private _selectedEmployeeId: string;
     selectedEmployeeId$: Subject<string> = new Subject();
+
+    private _selectedDate: Date;
+    selectedDate$: Subject<Date> = new Subject();
 
     get selectedOrganizationId(): string {
         return this._selectedOrganizationId;
@@ -48,6 +51,15 @@ export class Store {
         } else {
             localStorage.setItem('_userId', id);
         }
+    }
+
+    get selectedDate() {
+        return this._selectedDate;
+    }
+
+    set selectedDate(date: Date) { // DATE?
+        this._selectedDate = date;
+        this.selectedDate$.next(date);
     }
 
     clear() {
