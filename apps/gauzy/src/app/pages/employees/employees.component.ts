@@ -8,6 +8,7 @@ import { EmployeesService } from '../../@core/services/employees.service';
 import { NbDialogService } from '@nebular/theme';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -66,7 +67,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         if (data) {
             this.loadPage();
         }
-       
+
     }
 
     edit() {
@@ -74,8 +75,20 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     async delete() {
-        await this.employeesService.setEmployeeAsInactive(this.selectedEmployee.id);
-        this.loadPage();
+
+        this.dialogService.open(DeleteConfirmationComponent, {
+            context: { recordType: 'Employee' }
+        })
+            .onClose
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(async result => {
+                if (result) {
+                    await this.employeesService.setEmployeeAsInactive(this.selectedEmployee.id);
+                    this.loadPage();
+                }
+            });
+
+
     }
 
     async endWork() {
@@ -95,6 +108,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .toPromise()
 
         const { items } = await this.employeesService.getAll(['user'], { organization: { id } }).pipe(first()).toPromise();
+
         const employeesVm: EmployeeViewModel[] = items.filter(i => i.isActive).map((i) => {
             return {
                 fullName: `${i.user.firstName} ${i.user.lastName}`,
@@ -103,9 +117,12 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 isActive: i.isActive,
                 endWork: i.endWork ? new Date(i.endWork).toUTCString() : 'Indefinite',
                 // TODO laod real bonus
-                bonus: Math.floor(1000*Math.random()) + 10,
+                bonus: Math.floor(1000 * Math.random()) + 10,
             };
         });
+
+        console.log('items \r\n', items)
+        console.log('filtered items \r\n', items.filter(i => i.isActive))
 
         this.sourceSmartTable.load(employeesVm);
 

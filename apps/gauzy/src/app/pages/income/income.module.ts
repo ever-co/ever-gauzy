@@ -14,7 +14,7 @@ import { IncomeRoutingModule } from './income-routing.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { IncomeService } from '../../@core/services/income.service';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';
+import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 
 @NgModule({
   imports: [
@@ -30,7 +30,7 @@ import { IncomeMutationModule } from '../../@shared/income/income-mutation/incom
     Ng2SmartTableModule,
     NgSelectModule,
     NbDialogModule.forChild(),
-    IncomeMutationModule
+    UserFormsModule
   ],
   declarations: [IncomeComponent],
   providers: [IncomeService]
