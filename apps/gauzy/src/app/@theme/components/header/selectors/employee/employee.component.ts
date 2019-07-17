@@ -39,8 +39,14 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         }
     }
 
-    selectEmployee(value: { id: string }) {
-        value ? this.store.selectedEmployeeId = value.id : this.store.selectedEmployeeId = null;
+    selectEmployee(value: { id: string, firstName?: string, lastName?: string }) {
+        if (value) {
+            this.store.selectedEmployeeId = value.id;
+            this.store.selectedEmployeeName = this.getFullName(value.firstName, value.lastName);
+        } else {
+            this.store.selectedEmployeeId = null;
+            this.store.selectedEmployeeName = null;
+        }
     }
 
     getShortenedName(firstName: string, lastName: string) {
@@ -86,7 +92,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
             this.store.selectedEmployeeId = res.items[0].id;
         }
 
-        this.selectEmployee({ id: this.people[0].id });
+        this.selectEmployee(this.people[0]);
         this.selectedEmployeeId = this.people[0].id;
     }
 

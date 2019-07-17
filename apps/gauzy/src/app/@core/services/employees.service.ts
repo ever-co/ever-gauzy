@@ -19,7 +19,7 @@ export class EmployeesService {
     }
 
     getEmployeeById(id: string) {
-        return this.http.get<Employee>(`/api/employee/${id}`).pipe(first()).toPromise()
+        return this.http.get<Employee>(`/api/employee/${id}`).pipe(first()).toPromise();
     }
 
     setEmployeeAsInactive(id: string): Promise<Employee> {

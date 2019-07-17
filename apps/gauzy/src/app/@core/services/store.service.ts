@@ -1,15 +1,18 @@
 import { User } from '@gauzy/models';
-import { Subject } from 'rxjs';
+import { Subject, BehaviorSubject } from 'rxjs';
 
 export class Store {
     private _selectedOrganizationId: string;
-    selectedOrganizationId$: Subject<string> = new Subject();
+    selectedOrganizationId$: BehaviorSubject<string> = new BehaviorSubject(); // TODO: FIX THIS!
 
     private _selectedEmployeeId: string;
     selectedEmployeeId$: Subject<string> = new Subject();
 
     private _selectedDate: Date;
     selectedDate$: Subject<Date> = new Subject();
+
+    private _selectedEmployeeName: string;
+    selectedEmployeeName$: Subject<string> = new Subject();
 
     get selectedOrganizationId(): string {
         return this._selectedOrganizationId;
@@ -27,6 +30,15 @@ export class Store {
     set selectedOrganizationId(id: string) {
         this._selectedOrganizationId = id;
         this.selectedOrganizationId$.next(id);
+    }
+
+    get selectedEmployeeName() {
+        return this._selectedEmployeeName;
+    }
+
+    set selectedEmployeeName(name: string) {
+        this._selectedEmployeeName = name;
+        this.selectedEmployeeName$.next(name);
     }
 
     get token(): string | null {

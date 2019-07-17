@@ -11,24 +11,22 @@ export class IncomeService extends CrudService<Income> {
     super(incomeRepository);
   }
 
-  public async findAll(filter?: FindManyOptions<Income>, filterDate?: Date): Promise<IPagination<Income>> {
+  public async findAll(filter?: FindManyOptions<Income>, filterDate?: string): Promise<IPagination<Income>> {
     const total = await this.repository.count(filter);
     let items = await this.repository.find(filter);
 
-    
-
-    const month = filterDate.getMonth() + 1;
-    const year = filterDate.getFullYear();
-
     if (filterDate) {
+      const dateObject = new Date(filterDate)
+
+      const month = dateObject.getMonth() + 1;
+      const year = dateObject.getFullYear();
+
       items = items.filter(i => {
         const currentItemMonth = i.valueDate.getMonth() + 1;
         const currentItemYear = i.valueDate.getFullYear();
         return (currentItemMonth === month) && (currentItemYear === year);
       });
     }
-
-    console.log(filterDate)
 
     return { items, total };
   }

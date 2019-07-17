@@ -23,7 +23,7 @@ export class IncomeController extends CrudController<Income> {
   async findAllIncome(@Query('data') data: string): Promise<IPagination<Income>> {
     const { relations, findInput, filterDate } = JSON.parse(data);
 
-    return this.incomeService.findAll({ where: findInput, relations }, new Date(filterDate));
+    return this.incomeService.findAll({ where: findInput, relations }, filterDate);
   }
 
   @ApiOperation({ title: 'Create new record' })

@@ -1,11 +1,30 @@
 <nb-card>
   <nb-card-header>
-    <h4>Dashboard</h4>
+    <h4 *ngIf="selectedEmployeeName; else noName">{{ selectedEmployeeName }}</h4>
+    <ng-template #noName>
+      <h4>Employee Statistics</h4>
+    </ng-template>
   </nb-card-header>
   <nb-card-body>
-    <h6>Total Gross Revenue: Some Number</h6>
-    <h6>Total Expenses: Some Number</h6>
-    <h6>Difference between gross revenue and expenses: Some Number</h6>
-    <h6>Bonus: Some Number</h6>
+    <div *ngIf="hasRole; else noRole">
+      <div *ngIf="selectedDate && selectedEmployeeId; else notSelected">
+        <h6 class="clickable" (click)="openHistoryDialog('INCOME')">
+          Total Gross Revenue: {{ totalIncome }}
+        </h6>
+        <h6 class="clickable" (click)="openHistoryDialog('EXPENSE')">
+          Total Expenses: {{ totalExpense }}
+        </h6>
+        <h6>Profit: {{ difference }}</h6>
+        <h6>Bonus: {{ bonus }}</h6>
+      </div>
+    </div>
+
+    <ng-template #notSelected>
+      <span>Please select a month and employee from the menu above</span>
+    </ng-template>
+
+    <ng-template #noRole>
+      <span>Insert text for not authenticated users</span>
+    </ng-template>
   </nb-card-body>
 </nb-card>

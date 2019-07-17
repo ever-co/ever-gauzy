@@ -21,9 +21,9 @@ export class ExpenseController extends CrudController<Expense> {
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
     @Get()
     async findAllEmployees(@Query('data') data: string): Promise<IPagination<Expense>> {
-        const { relations, findInput } = JSON.parse(data);
+        const { relations, findInput, filterDate } = JSON.parse(data);
 
-        return this.expenseService.findAll({ where: findInput, relations });
+        return this.expenseService.findAll({ where: findInput, relations }, filterDate);
     }
 
     @ApiOperation({ title: 'Create new record' })

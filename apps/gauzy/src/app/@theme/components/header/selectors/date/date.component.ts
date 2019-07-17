@@ -22,6 +22,7 @@ export class DateSelectorComponent implements OnInit {
 
     ngOnInit() {
         this.date.setMonth(this.date.getMonth() - 1);
+        this.store.selectedDate = this.date;
         this.dateInputValue = this.formatDateMMMMyy(this.date);
     }
 

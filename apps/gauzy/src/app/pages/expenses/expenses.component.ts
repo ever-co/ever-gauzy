@@ -33,18 +33,7 @@ interface SelectedRowModel {
 })
 
 export class ExpensesComponent implements OnInit, OnDestroy {
-    private _ngDestroy$ = new Subject<void>();
-
-    selectedEmployeeId: string;
-    selectedOrganizationId: string;
-
-    hasRole: boolean;
-
-    smartTableSource = new LocalDataSource();
-
-    selectedExpense: SelectedRowModel;
-
-    smartTableSettings = {
+    static smartTableSettings = {
         actions: false,
         editable: true,
         noDataMessage: 'No data for the currently selected Employee & Organization.',
@@ -75,6 +64,21 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             perPage: 8
         }
     };
+
+    private _ngDestroy$ = new Subject<void>();
+
+    selectedEmployeeId: string;
+    selectedOrganizationId: string;
+
+    hasRole: boolean;
+
+    smartTableSource = new LocalDataSource();
+
+    selectedExpense: SelectedRowModel;
+
+    get smartTableSettings() {
+        return ExpensesComponent.smartTableSettings;
+    }
 
     constructor(private authService: AuthService,
         private dialogService: NbDialogService,
