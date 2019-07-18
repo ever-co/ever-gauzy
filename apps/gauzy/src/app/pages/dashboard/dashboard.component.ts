@@ -8,7 +8,6 @@ import { AuthService } from '../../@core/services/auth.service';
 import { RolesEnum, Income, Expense } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { RecordsHistoryComponent, HistoryType } from '../../@shared/dashboard/records-history/records-history.component';
-import { EmployeesService } from '../../@core/services/employees.service';
 
 @Component({
     templateUrl: './dashboard.component.html',
@@ -33,7 +32,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     constructor(private incomeService: IncomeService,
                 private expenseService: ExpensesService,
                 private authService: AuthService,
-                private employeeService: EmployeesService,
                 private store: Store,
                 private dialogService: NbDialogService) { }
 
@@ -57,7 +55,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.store.selectedDate$
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(date => {
-                console.log(date)
                 this.selectedDate = date;
 
                 if (this.selectedEmployeeId) {
@@ -65,8 +62,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
                     this._loadEmployeeTotalExpense();
                 }
             });
-
-        console.log(this.selectedDate)
 
         this.store.selectedEmployeeName$
             .pipe(takeUntil(this._ngDestroy$))

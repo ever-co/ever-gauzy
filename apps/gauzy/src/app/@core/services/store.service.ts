@@ -1,18 +1,18 @@
 import { User } from '@gauzy/models';
-import { Subject, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 export class Store {
     private _selectedOrganizationId: string;
-    selectedOrganizationId$: BehaviorSubject<string> = new BehaviorSubject(); // TODO: FIX THIS!
+    selectedOrganizationId$: BehaviorSubject<string> = new BehaviorSubject(this.selectedEmployeeName);
 
     private _selectedEmployeeId: string;
-    selectedEmployeeId$: Subject<string> = new Subject();
+    selectedEmployeeId$: BehaviorSubject<string> = new BehaviorSubject(this.selectedEmployeeId);
 
     private _selectedDate: Date;
-    selectedDate$: Subject<Date> = new Subject();
+    selectedDate$: BehaviorSubject<Date> = new BehaviorSubject(this.selectedDate);
 
     private _selectedEmployeeName: string;
-    selectedEmployeeName$: Subject<string> = new Subject();
+    selectedEmployeeName$: BehaviorSubject<string> = new BehaviorSubject(this.selectedEmployeeName);
 
     get selectedOrganizationId(): string {
         return this._selectedOrganizationId;
