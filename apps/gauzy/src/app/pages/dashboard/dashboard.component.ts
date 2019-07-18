@@ -92,10 +92,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             .toPromise();
 
         this.incomeData = items;
-
         this.totalIncome = items.reduce((a, b) => a + b.amount, 0);
-        this.difference = this.totalIncome - this.totalExpense;
-        this.bonus = (this.difference * 75) / 100;
     }
 
     private async _loadEmployeeTotalExpense() {
@@ -106,7 +103,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 }, this.selectedDate);
 
         this.expenseData = items;
-
+        
         this.totalExpense = items.reduce((a, b) => a + b.amount, 0);
         this.difference = this.totalIncome - this.totalExpense;
         this.bonus = (this.difference * 75) / 100;

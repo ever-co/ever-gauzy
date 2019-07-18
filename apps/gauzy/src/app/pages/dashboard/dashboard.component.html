@@ -1,6 +1,15 @@
 <nb-card>
-  <nb-card-header>
-    <h4 *ngIf="selectedEmployeeName; else noName">{{ selectedEmployeeName }}</h4>
+  <nb-card-header class="header">
+    
+
+    <h4
+      *ngIf="
+        selectedEmployeeName && selectedDate && selectedEmployeeId;
+        else noName
+      " 
+    >
+      {{ selectedEmployeeName }} - {{ selectedDate | date: 'LLLL y' }}
+    </h4>
     <ng-template #noName>
       <h4>Employee Statistics</h4>
     </ng-template>
@@ -8,11 +17,26 @@
   <nb-card-body>
     <div *ngIf="hasRole; else noRole">
       <div *ngIf="selectedDate && selectedEmployeeId; else notSelected">
-        <h6 class="clickable" (click)="openHistoryDialog('INCOME')">
-          Total Gross Revenue: {{ totalIncome }}
+        <h6
+          class="clickable"
+          (click)="openHistoryDialog('INCOME')"
+        >
+          <span>Total Gross Revenue: {{ totalIncome }}</span>
+          <nb-icon
+            class="ml-2"
+            icon="link-2-outline"
+            nbTooltip="Open Records History"
+            nbTooltipTrigger="hover"
+          ></nb-icon>
         </h6>
         <h6 class="clickable" (click)="openHistoryDialog('EXPENSE')">
-          Total Expenses: {{ totalExpense }}
+          <span>Total Expenses: {{ totalExpense }}</span>
+          <nb-icon
+            class="ml-2"
+            icon="link-2-outline"
+            nbTooltip="Open Records History"
+            nbTooltipTrigger="hover"
+          ></nb-icon>
         </h6>
         <h6>Profit: {{ difference }}</h6>
         <h6>Bonus: {{ bonus }}</h6>

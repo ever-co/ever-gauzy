@@ -91,7 +91,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         if (res.items.length > 0 && !this.store.selectedEmployeeId) {
             this.store.selectedEmployeeId = res.items[0].id;
         }
-
+        debugger
         this.selectEmployee(this.people[0]);
         this.selectedEmployeeId = this.people[0].id;
     }

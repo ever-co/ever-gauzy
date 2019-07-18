@@ -7,7 +7,9 @@ import {
     NbButtonModule,
     NbInputModule,
     NbDialogModule,
-    NbTreeGridModule
+    NbTreeGridModule,
+    NbIconModule,
+    NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
@@ -27,7 +29,9 @@ import { RecordsHistoryModule } from '../../@shared/dashboard/records-history/re
         NbInputModule,
         RecordsHistoryModule,
         NbDialogModule.forChild(),
-        NbTreeGridModule 
+        NbTreeGridModule,
+        NbIconModule,
+        NbTooltipModule
     ],
     declarations: [
         DashboardComponent
