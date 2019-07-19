@@ -1,14 +1,14 @@
 <nb-card>
   <nb-card-header class="header">
-    
+
 
     <h4
       *ngIf="
-        selectedEmployeeName && selectedDate && selectedEmployeeId;
+        selectedDate && selectedEmployee && selectedEmployee.id;
         else noName
       " 
     >
-      {{ selectedEmployeeName }} - {{ selectedDate | date: 'LLLL y' }}
+      {{ selectedEmployee.firstName }} {{ selectedEmployee.lastName }} - {{ selectedDate | date: 'LLLL y' }}
     </h4>
     <ng-template #noName>
       <h4>Employee Statistics</h4>
@@ -16,7 +16,7 @@
   </nb-card-header>
   <nb-card-body>
     <div *ngIf="hasRole; else noRole">
-      <div *ngIf="selectedDate && selectedEmployeeId; else notSelected">
+      <div *ngIf="selectedDate && selectedEmployee && selectedEmployee.id; else notSelected">
         <h6
           class="clickable"
           (click)="openHistoryDialog('INCOME')"

@@ -1,44 +1,33 @@
 import { User } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
+import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 
 export class Store {
     private _selectedOrganizationId: string;
-    selectedOrganizationId$: BehaviorSubject<string> = new BehaviorSubject(this.selectedEmployeeName);
+    selectedOrganizationId$: BehaviorSubject<string> = new BehaviorSubject(this.selectedOrganizationId);
 
-    private _selectedEmployeeId: string;
-    selectedEmployeeId$: BehaviorSubject<string> = new BehaviorSubject(this.selectedEmployeeId);
+    private _selectedEmployee: SelectedEmployee;
+    selectedEmployee$: BehaviorSubject<SelectedEmployee> = new BehaviorSubject(this.selectedEmployee);
 
     private _selectedDate: Date;
     selectedDate$: BehaviorSubject<Date> = new BehaviorSubject(this.selectedDate);
-
-    private _selectedEmployeeName: string;
-    selectedEmployeeName$: BehaviorSubject<string> = new BehaviorSubject(this.selectedEmployeeName);
 
     get selectedOrganizationId(): string {
         return this._selectedOrganizationId;
     }
 
-    set selectedEmployeeId(id: string) {
-        this._selectedEmployeeId = id;
-        this.selectedEmployeeId$.next(id);
+    set selectedEmployee(employee: SelectedEmployee) {
+        this._selectedEmployee = employee;
+        this.selectedEmployee$.next(employee);
     }
 
-    get selectedEmployeeId(): string {
-        return this._selectedEmployeeId;
+    get selectedEmployee(): SelectedEmployee {
+        return this._selectedEmployee;
     }
 
     set selectedOrganizationId(id: string) {
         this._selectedOrganizationId = id;
         this.selectedOrganizationId$.next(id);
-    }
-
-    get selectedEmployeeName() {
-        return this._selectedEmployeeName;
-    }
-
-    set selectedEmployeeName(name: string) {
-        this._selectedEmployeeName = name;
-        this.selectedEmployeeName$.next(name);
     }
 
     get token(): string | null {

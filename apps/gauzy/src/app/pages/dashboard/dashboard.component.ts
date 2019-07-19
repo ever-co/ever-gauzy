@@ -8,6 +8,7 @@ import { AuthService } from '../../@core/services/auth.service';
 import { RolesEnum, Income, Expense } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { RecordsHistoryComponent, HistoryType } from '../../@shared/dashboard/records-history/records-history.component';
+import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
     templateUrl: './dashboard.component.html',
@@ -18,8 +19,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     hasRole: boolean;
 
     selectedDate: Date;
-    selectedEmployeeId: string;
-    selectedEmployeeName: string;
+    selectedEmployee: SelectedEmployee;
 
     totalIncome = 0;
     totalExpense = 0;
@@ -41,10 +41,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
             .pipe(first())
             .toPromise();
 
-        this.store.selectedEmployeeId$
+        this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(id => {
-                this.selectedEmployeeId = id;
+            .subscribe(emp => {
+                if (emp) {
+                    this.selectedEmployee = emp;
+                }
 
                 if (this.selectedDate) {
                     this._loadEmployeeTotalIncome();
@@ -57,17 +59,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
             .subscribe(date => {
                 this.selectedDate = date;
 
-                if (this.selectedEmployeeId) {
+                if (this.selectedEmployee) {
                     this._loadEmployeeTotalIncome();
                     this._loadEmployeeTotalExpense();
-                }
-            });
-
-        this.store.selectedEmployeeName$
-            .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(name => {
-                if (this.selectedDate) {
-                    this.selectedEmployeeName = name;
                 }
             });
     }
@@ -85,7 +79,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const { items } = await this.incomeService
             .getAll(['employee'], {
                 employee: {
-                    id: this.selectedEmployeeId
+                    id: this.selectedEmployee.id
                 }
             }, this.selectedDate)
             .pipe(first())
@@ -99,7 +93,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const { items } = await this.expenseService
             .getAll(['employee'],
                 {
-                    employee: { id: this.selectedEmployeeId }
+                    employee: { id: this.selectedEmployee.id }
                 }, this.selectedDate);
 
         this.expenseData = items;

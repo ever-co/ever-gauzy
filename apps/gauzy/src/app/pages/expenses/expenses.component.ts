@@ -101,10 +101,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 }
             });
 
-        this.store.selectedEmployeeId$
+        this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(id => {
-                this.selectedEmployeeId = id;
+            .subscribe(employee => {
+                this.selectedEmployeeId = employee.id;
 
                 if (this.selectedOrganizationId) {
                     this._loadTableData();

@@ -139,12 +139,12 @@ export class IncomeComponent implements OnInit, OnDestroy {
             .pipe(first())
             .toPromise()
 
-        this.store.selectedEmployeeId$
+        this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(id => {
-                this.selectedEmployeeId = id;
-                this._loadEmployeeIncomeData(id);
-                this.form.get('employeeId').setValue(id);
+            .subscribe(employee => {
+                this.selectedEmployeeId = employee.id;
+                this._loadEmployeeIncomeData(employee.id);
+                this.form.get('employeeId').setValue(employee.id);
             });
     }
 
