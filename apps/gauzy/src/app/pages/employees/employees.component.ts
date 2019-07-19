@@ -121,9 +121,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             };
         });
 
-        console.log('items \r\n', items)
-        console.log('filtered items \r\n', items.filter(i => i.isActive))
-
         this.sourceSmartTable.load(employeesVm);
 
         this.organizationName = name;
