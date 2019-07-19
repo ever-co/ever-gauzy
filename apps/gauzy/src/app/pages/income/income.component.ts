@@ -8,7 +8,7 @@ import { IncomeService } from '../../@core/services/income.service';
 import { FormBuilder, Validators } from '@angular/forms';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
-import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 export interface IncomeViewModel {
     id: string,
@@ -161,7 +161,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
                 clientName: this.clientName,
                 clientId: this.clientId,
                 employeeId: this.selectedEmployeeId
-            }).pipe(first()).toPromise();
+            });
 
             this.amount = '';
             this.form.get('client').setValue('');
@@ -180,7 +180,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
                 amount: this.amount,
                 clientName: this.clientName,
                 clientId: this.clientId
-            }).pipe(first()).toPromise();
+            });
 
             this._loadEmployeeIncomeData();
             this._clearForm();
@@ -190,16 +190,16 @@ export class IncomeComponent implements OnInit, OnDestroy {
     }
 
     async deleteIncome() {
-        this.dialogService.open(IncomeMutationComponent)
+        this.dialogService.open(DeleteConfirmationComponent, {
+            context: { recordType: 'Income' }
+        })
             .onClose
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(async result => {
                 if (result) {
                     try {
                         await this.incomeService
-                            .delete(this.selectedIncome.data.id)
-                            .pipe(first())
-                            .toPromise();
+                            .delete(this.selectedIncome.data.id);
 
                         this._loadEmployeeIncomeData();
                         this._clearForm();
@@ -212,7 +212,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
     }
 
     private async _loadEmployeeIncomeData(id = this.selectedEmployeeId) {
-        const { items } = await this.incomeService.getAll(['employee'], { employee: { id } }).pipe(first()).toPromise();
+        const { items } = await this.incomeService.getAll(['employee'], { employee: { id } });
 
         const incomeVM: IncomeViewModel[] = items.map(i => {
             return {

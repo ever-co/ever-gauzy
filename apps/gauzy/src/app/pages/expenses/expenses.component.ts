@@ -8,6 +8,7 @@ import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { ExpensesService } from '../../@core/services/expenses.service';
 import { LocalDataSource } from 'ng2-smart-table';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 export interface ExpenseViewModel {
     id: string,
@@ -170,7 +171,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     }
 
     async deleteExpense() {
-        this.dialogService.open(ExpensesMutationComponent) // TODO: Use shared delete confirm component!
+        this.dialogService.open(DeleteConfirmationComponent, {
+            context: { recordType: 'Expense' }
+        })
             .onClose
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(async result => {
