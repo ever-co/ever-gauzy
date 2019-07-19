@@ -46,7 +46,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
   private async loadUserData() {
     const id = this.store.userId;
     this.user = await this.usersService.getUserById(id);
-    
+
     const { orgId } = await this.usersOrganizationsService.findOne({ userId: id }).pipe(first()).toPromise();
     this.store.selectedOrganizationId = orgId;
   }

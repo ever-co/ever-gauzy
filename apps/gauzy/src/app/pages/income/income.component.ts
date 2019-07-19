@@ -10,7 +10,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
-interface IncomeViewModel {
+export interface IncomeViewModel {
     id: string,
     valueDate: string,
     clientName: string,
@@ -31,6 +31,32 @@ interface SelectedRowModel {
 })
 
 export class IncomeComponent implements OnInit, OnDestroy {
+    static smartTableSettings = {
+        actions: false,
+        mode: 'external',
+        editable: true,
+        noDataMessage: 'No data for the currently selected employee.',
+        columns: {
+            valueDate: {
+                title: 'Date',
+                type: 'string'
+            },
+            clientName: {
+                title: 'Client Name',
+                type: 'string'
+            },
+            amount: {
+                title: 'Value',
+                type: 'number',
+                width: '15%'
+            }
+        },
+        pager: {
+            display: true,
+            perPage: 8
+        }
+    };
+
     private _ngDestroy$ = new Subject<void>();
 
     readonly form = this.fb.group({
@@ -97,37 +123,15 @@ export class IncomeComponent implements OnInit, OnDestroy {
         return this.form.get('client').value.clientId;
     }
 
-    smartTableSettings = {
-        actions: false,
-        mode: 'external',
-        editable: true,
-        noDataMessage: 'No data for the currently selected employee.',
-        columns: {
-            valueDate: {
-                title: 'Date',
-                type: 'string'
-            },
-            clientName: {
-                title: 'Client Name',
-                type: 'string'
-            },
-            amount: {
-                title: 'Value',
-                type: 'number',
-                width: '15%'
-            }
-        },
-        pager: {
-            display: true,
-            perPage: 8
-        }
-    };
+    get smartTableSettings() {
+        return IncomeComponent.smartTableSettings;
+    }
 
     constructor(private authService: AuthService,
-        private store: Store,
-        private incomeService: IncomeService,
-        private dialogService: NbDialogService,
-        private fb: FormBuilder) { }
+                private store: Store,
+                private incomeService: IncomeService,
+                private dialogService: NbDialogService,
+                private fb: FormBuilder) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -135,12 +139,12 @@ export class IncomeComponent implements OnInit, OnDestroy {
             .pipe(first())
             .toPromise()
 
-        this.store.selectedEmployeeId$
+        this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(id => {
-                this.selectedEmployeeId = id;
-                this._loadEmployeeIncomeData(id);
-                this.form.get('employeeId').setValue(id);
+            .subscribe(employee => {
+                this.selectedEmployeeId = employee.id;
+                this._loadEmployeeIncomeData(employee.id);
+                this.form.get('employeeId').setValue(employee.id);
             });
     }
 

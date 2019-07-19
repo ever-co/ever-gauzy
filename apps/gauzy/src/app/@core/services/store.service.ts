@@ -1,24 +1,28 @@
 import { User } from '@gauzy/models';
-import { Subject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
+import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 
 export class Store {
     private _selectedOrganizationId: string;
-    selectedOrganizationId$: Subject<string> = new Subject();
+    selectedOrganizationId$: BehaviorSubject<string> = new BehaviorSubject(this.selectedOrganizationId);
 
-    private _selectedEmployeeId: string;
-    selectedEmployeeId$: Subject<string> = new Subject();
+    private _selectedEmployee: SelectedEmployee;
+    selectedEmployee$: BehaviorSubject<SelectedEmployee> = new BehaviorSubject(this.selectedEmployee);
+
+    private _selectedDate: Date;
+    selectedDate$: BehaviorSubject<Date> = new BehaviorSubject(this.selectedDate);
 
     get selectedOrganizationId(): string {
         return this._selectedOrganizationId;
     }
 
-    set selectedEmployeeId(id: string) {
-        this._selectedEmployeeId = id;
-        this.selectedEmployeeId$.next(id);
+    set selectedEmployee(employee: SelectedEmployee) {
+        this._selectedEmployee = employee;
+        this.selectedEmployee$.next(employee);
     }
 
-    get selectedEmployeeId(): string {
-        return this._selectedEmployeeId;
+    get selectedEmployee(): SelectedEmployee {
+        return this._selectedEmployee;
     }
 
     set selectedOrganizationId(id: string) {
@@ -48,6 +52,15 @@ export class Store {
         } else {
             localStorage.setItem('_userId', id);
         }
+    }
+
+    get selectedDate() {
+        return this._selectedDate;
+    }
+
+    set selectedDate(date: Date) { // DATE?
+        this._selectedDate = date;
+        this.selectedDate$.next(date);
     }
 
     clear() {

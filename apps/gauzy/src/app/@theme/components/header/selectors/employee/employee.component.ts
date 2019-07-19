@@ -4,6 +4,13 @@ import { first, takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 
+export interface SelectedEmployee {
+    id: string;
+    firstName: string;
+    lastName: string;
+    imageUrl: string;
+}
+
 @Component({
     selector: 'ga-employee-selector',
     templateUrl: './employee.component.html',
@@ -11,8 +18,8 @@ import { Subject } from 'rxjs';
 })
 
 export class EmployeeSelectorComponent implements OnInit, OnDestroy {
-    people = [];
-    selectedEmployeeId: string;
+    people: SelectedEmployee[] = [];
+    selectedEmployee: SelectedEmployee;
 
     private _ngDestroy$ = new Subject<void>();
 
@@ -21,7 +28,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         private store: Store
     ) { }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this._loadPople();
         this._loadEmployeeId();
     }
@@ -39,8 +46,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         }
     }
 
-    selectEmployee(value: { id: string }) {
-        value ? this.store.selectedEmployeeId = value.id : this.store.selectedEmployeeId = null;
+    selectEmployee(value: SelectedEmployee) {
+        if (value) {
+            this.store.selectedEmployee = value;
+        } else {
+            this.store.selectedEmployee = null;
+        }
     }
 
     getShortenedName(firstName: string, lastName: string) {
@@ -58,11 +69,11 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
     }
 
     private _loadEmployeeId() {
-        this.store.selectedEmployeeId$
+        this.store.selectedEmployee$
           .pipe(takeUntil(this._ngDestroy$))
-          .subscribe((id: string) => {
-            this.selectedEmployeeId = id;
-          })
+          .subscribe(emp => {
+            this.selectedEmployee = emp;
+          });
       }
 
     private async _loadPople() {
@@ -71,8 +82,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         this.people = [{
             id: null,
             firstName: "All Employees",
-            lastName: "",
-            imageUrl: "https://i.imgur.com/XwA2T62.jpg"
+            lastName: '',
+            imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
         }, ...res.items.map((e) => {
             return {
                 id: e.id,
@@ -82,12 +93,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
             }
         })];
 
-        if (res.items.length > 0 && !this.store.selectedEmployeeId) {
-            this.store.selectedEmployeeId = res.items[0].id;
+        if (res.items.length > 0 && !this.store.selectedEmployee) {
+            this.store.selectedEmployee = this.people[0];
         }
-
-        this.selectEmployee({ id: this.people[0].id });
-        this.selectedEmployeeId = this.people[0].id;
+        
+        this.selectEmployee(this.people[0]);
+        this.selectedEmployee = this.people[0];
     }
 
     ngOnDestroy() {

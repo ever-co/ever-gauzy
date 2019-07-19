@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {  UserOrganizationFindInput, UserOrganization } from '@gauzy/models';
+import { UserOrganizationFindInput, UserOrganization } from '@gauzy/models';
 import { Observable } from 'rxjs';
 
 @Injectable()

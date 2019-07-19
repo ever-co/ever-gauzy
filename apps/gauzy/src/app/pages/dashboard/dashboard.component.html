@@ -1,9 +1,101 @@
 <nb-card>
-  <nb-card-header>
-    <h4>Welcome to Gauzy!</h4>
+  <nb-card-header class="header">
+    <div class="header-container" *ngIf="selectedDate && selectedEmployee && selectedEmployee.id; else noName">
+        <div class="employee-info">
+          <img class="employee-image" [src]="selectedEmployee.imageUrl" alt="Employee Avatar">
 
+          <div class="employee-details">
+              <span class="employee-name">{{ selectedEmployee.firstName }} {{ selectedEmployee.lastName }}</span>
+              <div class="employee-position">Developer</div>
+          </div>
+          
+        </div>
+
+        <div class="employee-details">{{ selectedDate | date: 'LLLL y' }}</div>
+    </div>
+
+    <ng-template #noName>
+        <h4>Employee Statistics</h4>
+    </ng-template>
   </nb-card-header>
-  <nb-card-body>
-    <p>Message: {{ hello$ | async | json }}</p>
+
+  <nb-card-body class="body">
+    <div  *ngIf="hasRole; else noRole">
+      <div *ngIf="selectedDate && selectedEmployee && selectedEmployee.id; else notSelected">
+
+        <div
+          class="info-block open"
+          (click)="openHistoryDialog('INCOME')"
+        >
+
+          <div class="info-text">Total Gross Revenue</div>
+          
+          <div class="info-value">
+            <span>{{ totalIncome }}</span>
+            <nb-icon
+              class="ml-2"
+              icon="link-2-outline"
+              nbTooltip="Open Records History"
+              nbTooltipTrigger="hover"
+            >
+            </nb-icon>
+          </div>
+          
+
+        </div>
+
+        <div
+          class="info-block open"
+          (click)="openHistoryDialog('EXPENSE')"
+        >
+
+          <div class="info-text">Total Expenses</div>
+
+          <div class="info-value">
+            <span>{{ totalExpense }}</span>
+            <nb-icon
+              nbTooltip="Open Records History"
+              nbTooltipTrigger="hover"
+              class="ml-2"
+              icon="link-2-outline"
+            >
+            </nb-icon>
+          </div>
+          
+        </div>
+
+        <div class="info-block">
+          <div class="info-text">Profit</div>
+          <div class="info-value">
+              <span>{{ difference }}</span>
+              <nb-icon
+                style="visibility: hidden"
+                nbTooltip="Open Records History"
+                nbTooltipTrigger="hover"
+                class="ml-2"
+                icon="link-2-outline"
+              >
+              </nb-icon>
+            </div>
+        </div>
+        
+        <div class="bonus">
+          <div class="bonus-value">
+            <div>Bonus</div>
+            <div>
+                {{ bonus }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #notSelected>
+      <span>Please select a month and employee from the menu above</span>
+    </ng-template>
+
+    <ng-template #noRole>
+      <span>Insert text for not authenticated users</span>
+    </ng-template>
   </nb-card-body>
 </nb-card>

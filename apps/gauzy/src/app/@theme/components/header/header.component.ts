@@ -25,7 +25,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private router: Router
   ) { }
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.showSelectors(this.router.url);
 
     this.router.events
@@ -66,6 +66,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (url.endsWith('/income')) {
       this.showOrganizationsSelector = false;
       this.showDateSelector = false;
+    }
+
+    if (url.endsWith('/dashboard')) {
+      this.showOrganizationsSelector = false;
     }
   }
 

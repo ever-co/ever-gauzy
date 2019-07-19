@@ -19,8 +19,8 @@ export class ExpensesService {
         return this.http.post<Expense>('/api/expense/create', createInput).pipe(first()).toPromise();
     }
 
-    getAll(relations?: string[], findInput?: IExpenseFindInput): Promise<{ items: Expense[], total: number }> {
-        const data = JSON.stringify({ relations, findInput });
+    getAll(relations?: string[], findInput?: IExpenseFindInput, filterDate?: Date): Promise<{ items: Expense[], total: number }> {
+        const data = JSON.stringify({ relations, findInput, filterDate });
 
         return this.http.get<{ items: Expense[], total: number }>(`/api/expense`, {
             params: { data }
