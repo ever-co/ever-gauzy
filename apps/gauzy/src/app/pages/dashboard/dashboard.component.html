@@ -1,45 +1,92 @@
 <nb-card>
   <nb-card-header class="header">
+    <div class="header-container" *ngIf="selectedDate && selectedEmployee && selectedEmployee.id; else noName">
+        <div class="employee-info">
+          <img class="employee-image" [src]="selectedEmployee.imageUrl" alt="Employee Avatar">
 
+          <div class="employee-details">
+              <span class="employee-name">{{ selectedEmployee.firstName }} {{ selectedEmployee.lastName }}</span>
+              <div class="employee-position">Developer</div>
+          </div>
+          
+        </div>
 
-    <h4
-      *ngIf="
-        selectedDate && selectedEmployee && selectedEmployee.id;
-        else noName
-      " 
-    >
-      {{ selectedEmployee.firstName }} {{ selectedEmployee.lastName }} - {{ selectedDate | date: 'LLLL y' }}
-    </h4>
+        <div class="employee-details">{{ selectedDate | date: 'LLLL y' }}</div>
+    </div>
+
     <ng-template #noName>
-      <h4>Employee Statistics</h4>
+        <h4>Employee Statistics</h4>
     </ng-template>
   </nb-card-header>
-  <nb-card-body>
-    <div *ngIf="hasRole; else noRole">
+
+  <nb-card-body class="body">
+    <div  *ngIf="hasRole; else noRole">
       <div *ngIf="selectedDate && selectedEmployee && selectedEmployee.id; else notSelected">
-        <h6
-          class="clickable"
+
+        <div
+          class="info-block open"
           (click)="openHistoryDialog('INCOME')"
         >
-          <span>Total Gross Revenue: {{ totalIncome }}</span>
-          <nb-icon
-            class="ml-2"
-            icon="link-2-outline"
-            nbTooltip="Open Records History"
-            nbTooltipTrigger="hover"
-          ></nb-icon>
-        </h6>
-        <h6 class="clickable" (click)="openHistoryDialog('EXPENSE')">
-          <span>Total Expenses: {{ totalExpense }}</span>
-          <nb-icon
-            class="ml-2"
-            icon="link-2-outline"
-            nbTooltip="Open Records History"
-            nbTooltipTrigger="hover"
-          ></nb-icon>
-        </h6>
-        <h6>Profit: {{ difference }}</h6>
-        <h6>Bonus: {{ bonus }}</h6>
+
+          <div class="info-text">Total Gross Revenue</div>
+          
+          <div class="info-value">
+            <span>{{ totalIncome }}</span>
+            <nb-icon
+              class="ml-2"
+              icon="link-2-outline"
+              nbTooltip="Open Records History"
+              nbTooltipTrigger="hover"
+            >
+            </nb-icon>
+          </div>
+          
+
+        </div>
+
+        <div
+          class="info-block open"
+          (click)="openHistoryDialog('EXPENSE')"
+        >
+
+          <div class="info-text">Total Expenses</div>
+
+          <div class="info-value">
+            <span>{{ totalExpense }}</span>
+            <nb-icon
+              nbTooltip="Open Records History"
+              nbTooltipTrigger="hover"
+              class="ml-2"
+              icon="link-2-outline"
+            >
+            </nb-icon>
+          </div>
+          
+        </div>
+
+        <div class="info-block">
+          <div class="info-text">Profit</div>
+          <div class="info-value">
+              <span>{{ difference }}</span>
+              <nb-icon
+                style="visibility: hidden"
+                nbTooltip="Open Records History"
+                nbTooltipTrigger="hover"
+                class="ml-2"
+                icon="link-2-outline"
+              >
+              </nb-icon>
+            </div>
+        </div>
+        
+        <div class="bonus">
+          <div class="bonus-value">
+            <div>Bonus</div>
+            <div>
+                {{ bonus }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
