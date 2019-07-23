@@ -81,9 +81,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 employee: {
                     id: this.selectedEmployee.id
                 }
-            }, this.selectedDate)
-            .pipe(first())
-            .toPromise();
+            }, this.selectedDate);
 
         this.incomeData = items;
         this.totalIncome = items.reduce((a, b) => a + b.amount, 0);
