@@ -9,6 +9,7 @@ import { NbDialogService } from '@nebular/theme';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -116,8 +117,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 id: i.id,
                 isActive: i.isActive,
                 endWork: i.endWork ? new Date(i.endWork).toUTCString() : 'Indefinite',
-                // TODO laod real bonus
+                // TODO laod real bonus and bonusDate
                 bonus: Math.floor(1000 * Math.random()) + 10,
+                bonusDate: Date.now()
             };
         });
 
@@ -140,8 +142,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 },
                 bonus: {
                     title: 'Bonus',
-                    type: 'number',
-                    width: '15%'
+                    type: 'custom',
+                    width: '15%',
+                    filter: false,
+                    class: 'text-center',
+                    renderComponent: EmployeeBonusComponent
                 },
                 endWork: {
                     title: 'End Work',
