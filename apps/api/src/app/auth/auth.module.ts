@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RoleService, Role } from '../role';
+import { GoogleStrategy } from './google.strategy';
 
 @Module({
     imports: [
@@ -14,7 +15,7 @@ import { RoleService, Role } from '../role';
         CqrsModule,
     ],
     controllers: [AuthController],
-    providers: [AuthService, UserService, RoleService, ...CommandHandlers],
+    providers: [AuthService, UserService, RoleService, ...CommandHandlers, GoogleStrategy],
     exports: [AuthService],
 })
 export class AuthModule { }
