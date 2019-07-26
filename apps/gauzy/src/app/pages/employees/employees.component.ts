@@ -10,6 +10,7 @@ import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutat
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
+import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -117,6 +118,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 id: i.id,
                 isActive: i.isActive,
                 endWork: i.endWork ? new Date(i.endWork).toUTCString() : 'Indefinite',
+                imageUrl: i.user.imageUrl,
                 // TODO laod real bonus and bonusDate
                 bonus: Math.floor(1000 * Math.random()) + 10,
                 bonusDate: Date.now()
@@ -134,7 +136,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             columns: {
                 fullName: {
                     title: 'Full Name',
-                    type: 'string',
+                    type: 'custom',
+                    renderComponent: EmployeeFullNameComponent,
+                    class: 'align-row'
                 },
                 email: {
                     title: 'Email',
