@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-theme-settings',
@@ -28,11 +29,25 @@ export class ThemeSettingsComponent {
 
 	currentTheme = 'default';
 
+	languages = { en: 'English', bg: 'Bulgarian', he: 'Hebrew', ru: 'Russian' };
+
 	constructor(
-		private themeService: NbThemeService
-	) { }
+		private themeService: NbThemeService,
+		public translate: TranslateService
+	) {
+		translate.addLangs(['en', 'bg', 'he', 'ru']);
+		translate.setDefaultLang('en');
+
+		const browserLang = translate.getBrowserLang();
+		translate.use(browserLang.match(/en|bg|he|ru/) ? browserLang : 'en');
+	 }
 
 	toggleTheme() {
 		this.themeService.changeTheme(this.currentTheme);
 	}
+	switchLanguage(language: string) {
+
+		this.translate.use(language);
+	}
+
 }

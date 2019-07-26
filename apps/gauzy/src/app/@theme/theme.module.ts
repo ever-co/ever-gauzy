@@ -44,6 +44,15 @@ import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
 
+import {HttpClient} from '@angular/common/http';
+import {TranslateModule, TranslateLoader} from '@ngx-translate/core';
+import {TranslateHttpLoader} from '@ngx-translate/http-loader';
+
+export function HttpLoaderFactory(http: HttpClient) {
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
+
+
 const NB_MODULES = [
   NbLayoutModule,
   NbMenuModule,
@@ -57,6 +66,13 @@ const NB_MODULES = [
   NbSelectModule,
   NbIconModule,
   NbEvaIconsModule,
+  TranslateModule.forChild({
+    loader: {
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient]
+    }
+})
 ];
 const COMPONENTS = [
   HeaderComponent,
