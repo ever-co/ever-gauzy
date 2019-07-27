@@ -9,10 +9,12 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation/employee-mutation.module';
 import { EmployeeEndWorkModule } from '../../@shared/employee/employee-end-work-popup/employee-end-work.module';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
+import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
 
 const COMPONENTS = [
     EmployeesComponent,
-    EmployeeBonusComponent
+    EmployeeBonusComponent,
+    EmployeeFullNameComponent
 ];
 
 @NgModule({
@@ -33,7 +35,8 @@ const COMPONENTS = [
         ...COMPONENTS
     ],
     entryComponents: [
-        EmployeeBonusComponent
+        EmployeeBonusComponent,
+        EmployeeFullNameComponent
     ],
     providers: [
         OrganizationsService
