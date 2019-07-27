@@ -1,17 +1,18 @@
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Provider, InternalServerErrorException } from '@nestjs/common';
 import { User, UserService } from '../user';
 import * as bcrypt from 'bcrypt';
 import { environment as env } from '@env-api/environment'
 
 // have to combine the two imports
 import * as jwt from 'jsonwebtoken';
-import { JsonWebTokenError } from 'jsonwebtoken';
+import { JsonWebTokenError, sign } from 'jsonwebtoken';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 
 @Injectable()
 export class AuthService {
 	saltRounds: number;
+	private readonly JWT_SECRET_KEY = '+RudOJ3WWsw/+g0DZNkjvHjoNUJGXUlpJ7iRjKFZ7zRoFJsrMqiBB5FGyj14GqG1acUm3lr0mVfkkzQqD89zSYzZLTh+atvQ6UcGKZShqSFFLkYqqpR0s+4UG2QawsDqaB81I9mkJkGJallAQ/odkxKGcBpV3qSQPBrupE4UhtrCDsRi3yu+jiBkmyBC9uJCB2/qw8iaKttKxhv9Y/YW98hY7ewrE5Pr1pkg7OJOe3NdEr8/Y4az0g4Pj/pqp33vR1uMAoAt33vciKtSgg9OdX5SgP5PAh6IDfJkfT2622NjVQwUXmSI0gVdETiYR1YLzfe45jm+HPkeP37Q/RSj+Q=='
 
 	constructor(
 		private readonly userService: UserService,
@@ -94,4 +95,32 @@ export class AuthService {
 			}
 		}
 	}
+
+	async validateOAuthLogin(thirdPartyId: string, provider: Provider): Promise<string>
+    {
+        try 
+        {
+            // You can add some registration logic here, 
+            // to register the user using their thirdPartyId (in this case their googleId)
+            // let user: IUser = await this.usersService.findOneByThirdPartyId(thirdPartyId, provider);
+            
+            // if (!user)
+				// user = await this.usersService.registerOAuthUser(thirdPartyId, provider);
+				console.log(thirdPartyId);
+				
+				//await this.userService.register(thirdPartyId, provider);
+            const payload = {
+                thirdPartyId,
+                provider
+            }
+
+            const jwt: string = sign(payload, this.JWT_SECRET_KEY, { expiresIn: 3600 });
+            return jwt;
+        }
+        catch (err)
+        {
+            throw new InternalServerErrorException('validateOAuthLogin', err.message);
+        }
+    }
+
 }
