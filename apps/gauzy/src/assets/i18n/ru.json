@@ -1,0 +1,6 @@
+{
+    "DASHBOARD_PAGE":{
+        "EMPLOYEE_STATISTICS": "Статистика сотрудников",
+        "SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше"
+    }
+}

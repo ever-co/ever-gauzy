@@ -13,7 +13,7 @@
     "start:api": "yarn ng serve api",
     "start:api:prod": "yarn ng serve api --host 0.0.0.0 --disable-host-check -c=production",
     "seed": "yarn --cwd ./apps/api run seed",
-    "seed:prod": "yarn --cwd ./apps/api run seed:prod",    
+    "seed:prod": "yarn --cwd ./apps/api run seed:prod",
     "bootstrap": "yarn lerna bootstrap",
     "prebuild": "rimraf dist coverage",
     "build": "yarn ng build",
@@ -109,6 +109,8 @@
     "@nestjs/core": "^6.3.2",
     "@nestjs/platform-express": "^6.3.2",
     "@ng-select/ng-select": "^2.20.2",
+    "@ngx-translate/core": "^11.0.1",
+    "@ngx-translate/http-loader": "^4.0.0",
     "@swimlane/ngx-charts": "^12.0.1",
     "angular-tree-component": "^8.4.0",
     "angular2-chartjs": "^0.5.1",
@@ -204,7 +206,7 @@
     "tsconfig-paths": "^3.8.0",
     "tslint": "^5.18.0",
     "tslint-language-service": "^0.9.9",
-    "webpack-bundle-analyzer": "^3.3.2",
-    "typescript": "3.4.5"
+    "typescript": "3.4.5",
+    "webpack-bundle-analyzer": "^3.3.2"
   }
 }

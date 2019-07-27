@@ -26,6 +26,15 @@ import {
 } from '@nebular/theme';
 import { TokenInterceptor } from './@core/auth/token.interceptor';
 
+import {HttpClient} from '@angular/common/http';
+import {TranslateModule, TranslateLoader} from '@ngx-translate/core';
+import {TranslateHttpLoader} from '@ngx-translate/http-loader';
+
+export function HttpLoaderFactory(http: HttpClient) {
+  return new TranslateHttpLoader(http);
+}
+
+
 @NgModule({
   declarations: [AppComponent],
   imports: [
@@ -46,6 +55,13 @@ import { TokenInterceptor } from './@core/auth/token.interceptor';
       messageGoogleMapKey: 'AIzaSyA_wNuCzia92MAmdLRzmqitRGvCF7wCZPY',
     }),
     CoreModule.forRoot(),
+    TranslateModule.forRoot({
+      loader: {
+          provide: TranslateLoader,
+          useFactory: HttpLoaderFactory,
+          deps: [HttpClient]
+      }
+  })
   ],
   bootstrap: [AppComponent],
   providers: [
