@@ -46,9 +46,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         }
     }
 
-    selectEmployee(value: SelectedEmployee) {
-        if (value) {
-            this.store.selectedEmployee = value;
+    selectEmployee(employee: SelectedEmployee) {
+        if (employee) {
+            this.store.selectedEmployee = employee;
         } else {
             this.store.selectedEmployee = null;
         }
@@ -70,11 +70,11 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
     private _loadEmployeeId() {
         this.store.selectedEmployee$
-          .pipe(takeUntil(this._ngDestroy$))
-          .subscribe(emp => {
-            this.selectedEmployee = emp;
-          });
-      }
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(emp => {
+                this.selectedEmployee = emp;
+            });
+    }
 
     private async _loadPople() {
         const res = await this.employeesService.getAll(['user']).pipe(first()).toPromise();
@@ -92,17 +92,21 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
                 imageUrl: e.user.imageUrl
             }
         })];
-
+        
         if (res.items.length > 0 && !this.store.selectedEmployee) {
+            
             this.store.selectedEmployee = this.people[0];
         }
         
-        this.selectEmployee(this.people[0]);
-        this.selectedEmployee = this.people[0];
+        if (!this.selectedEmployee) { // This is so selected employee doesn't get reset when it's already set from somewhere else
+            this.selectEmployee(this.people[0]);
+            this.selectedEmployee = this.people[0];
+        }
+        
     }
 
     ngOnDestroy() {
         this._ngDestroy$.next();
         this._ngDestroy$.complete();
-      }
+    }
 }

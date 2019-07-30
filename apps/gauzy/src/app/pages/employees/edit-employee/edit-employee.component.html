@@ -1,0 +1,85 @@
+<nb-card class="employee-edit">
+  <nb-card-header class="header">
+    <div
+      class="header-container"
+      *ngIf="
+        selectedDate && selectedEmployeeFromHeader && selectedEmployeeFromHeader.id;
+        else noName
+      "
+    >
+      <div class="employee-info">
+        <img
+          class="employee-image"
+          [src]="selectedEmployee.user.imageUrl"
+          alt="Employee Avatar"
+        />
+
+        <div class="employee-details">
+          <span class="employee-name"
+            >{{ selectedEmployee.user.firstName }}
+            {{ selectedEmployee.user.lastName }}</span
+          >
+          <div class="employee-position">Developer</div>
+        </div>
+      </div>
+
+      <div class="employee-info">
+        <div class="employee-details">
+          <div class="transparent">Username: <strong>{{ selectedEmployee.user.username }}</strong></div>
+          <div class="transparent">
+            Email: <strong>{{ selectedEmployee.user.email }}</strong>
+          </div>
+        </div>
+        <div class="employee-details edit-icon">
+          <nb-icon
+            class="ml-2 open"
+            icon="edit-outline"
+            (click)="editEmployee()"
+          >
+          </nb-icon>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noName>
+      <h6>Please select employee from the menu above.</h6>
+    </ng-template>
+  </nb-card-header>
+  <nb-card-body class="body" *ngIf="selectedDate && selectedEmployeeFromHeader && selectedEmployeeFromHeader.id">
+    <div class="body-header">
+      <div>
+        <span class="setting-name">
+          Month Settings
+        </span>
+      </div>
+      <div>
+        <button nbButton status="success">
+          <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div class="setting-block">
+        <div class="block-content">
+          <div class="block-info">
+            <span>Salary</span>
+            <span>September</span>
+            <span>2019</span>
+          </div>
+          <div class="block-value">
+            <span class="block-amount">$ 1000</span>
+            <span class="block-actions open">
+              <nb-icon
+                nbTooltip="Settings"
+                nbTooltipTrigger="hover"
+                icon="settings-2-outline"
+              >
+              </nb-icon>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

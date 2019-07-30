@@ -1,0 +1,48 @@
+<nb-card>
+  <nb-card-body>
+    <div class="navigate">
+      <nb-icon icon="arrow-back-outline"> </nb-icon>
+      <span>BACK</span>
+    </div>
+
+    <div class="content">
+      <div class="employee-photo">
+        <img src="https://dummyimage.com/330x300/ffaf26/ffffff.jpg&text=B" alt="Profile Photo">
+      </div>
+
+      <div style="width: 100%">
+        <form [formGroup]="form">
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="label" for="usernameInput">Username</label>
+                <input id="usernameInput" type="text" nbInput formControlName="username">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="emailInput" class="label">Email</label>
+                <input id="emailInput" type="text" nbInput formControlName="email">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="label" for="departmentInput">Department</label>
+                <input id="departmentInput" type="text" nbInput formControlName="department">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="emailInput" class="label">Email</label>
+                <input id="emailInput" type="text" nbInput formControlName="email">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </nb-card-body>
+</nb-card>

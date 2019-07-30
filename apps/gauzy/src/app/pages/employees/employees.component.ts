@@ -11,6 +11,7 @@ import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-wo
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
+import { Router } from '@angular/router';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -36,7 +37,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         private organizationsService: OrganizationsService,
         private employeesService: EmployeesService,
         private dialogService: NbDialogService,
-        private store: Store
+        private store: Store,
+        private router: Router
     ) { }
 
     ngOnInit() {
@@ -53,7 +55,12 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         this._loadSmartTableSettings();
     }
 
-    selectEmployeeTmp(ev) {
+    selectEmployeeTmp(ev: {
+        data: EmployeeViewModel,
+        isSelected: boolean,
+        selected: EmployeeViewModel[],
+        source: LocalDataSource
+    }) {
         if (ev.isSelected) {
             this.selectedEmployee = ev.data;
         } else {
@@ -69,11 +76,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         if (data) {
             this.loadPage();
         }
-
     }
 
     edit() {
-        console.warn('TODO go to edit employee page');
+        this.router.navigate(['/pages/employees/edit/' + this.selectedEmployee.id]);
     }
 
     async delete() {

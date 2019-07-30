@@ -18,22 +18,22 @@
         <nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
       </button>
       <button
-      nbButton
-      [disabled]="!selectedEmployee"
-      (click)="delete()"
-      status="danger"
-      class="mr-2"
-    >
-      <nb-icon class="mr-1" icon="trash-2-outline"></nb-icon>Delete
-    </button>
-    <button
-      nbButton
-      [disabled]="!selectedEmployee"
-      (click)="endWork()"
-      status="warning"
-    >
-      <nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>End Work
-    </button>
+        nbButton
+        [disabled]="!selectedEmployee"
+        (click)="delete()"
+        status="danger"
+        class="mr-2"
+      >
+        <nb-icon class="mr-1" icon="trash-2-outline"></nb-icon>Delete
+      </button>
+      <button
+        nbButton
+        [disabled]="!selectedEmployee"
+        (click)="endWork()"
+        status="warning"
+      >
+        <nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>End Work
+      </button>
     </div>
     <ng2-smart-table
       class="employees-table"

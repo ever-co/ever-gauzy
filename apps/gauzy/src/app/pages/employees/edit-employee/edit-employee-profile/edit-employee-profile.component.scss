@@ -1,0 +1,31 @@
+nb-card-body {
+  padding: 50px 70px;
+
+  .navigate {
+    display: flex;
+    margin-bottom: 35px;
+
+    span {
+      margin-left: 7px;
+      font-size: 14px;
+      color: #2a2c39;
+    }
+  }
+
+  .content {
+    display: flex;
+  }
+
+  .employee-photo {
+    height: 670px;
+    padding-right: 70px;
+    margin-right: 70px;
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+
+    img {
+      width: 180px;
+      height: 180px;
+      border-radius: 13px;
+    }
+  }
+}

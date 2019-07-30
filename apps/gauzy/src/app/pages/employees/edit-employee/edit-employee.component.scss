@@ -1,0 +1,74 @@
+.edit-icon {
+  margin-left: 30px;
+}
+
+.setting-name {
+  font-size: 24px;
+  color: #2a2c39;
+  font-weight: bold;
+}
+
+.body-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+}
+
+.setting-block {
+  &:hover {
+    box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+    transform: translateY(-1px);
+  }
+
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  width: 100%;
+  height: 84px;
+  border-radius: 4px;
+  padding: 29px;
+  background-color: #f6f9fc;
+}
+
+.transparent {
+  opacity: 0.7;
+}
+
+.block-content {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+
+  .block-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 30%;
+
+    span {
+      color: #18213a;
+      font-size: 16px;
+    }
+  }
+
+  .block-value {
+    display: flex;
+    justify-content: space-between;
+    width: 15%;
+    align-items: center;
+
+    .block-amount {
+      border-right: 1px solid;
+      width: 50%;
+      color: #0091ff;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .block-actions {
+      width: 30%;
+      margin-left: 24px;
+    }
+  }
+}
