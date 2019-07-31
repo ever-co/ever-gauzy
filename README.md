@@ -50,8 +50,9 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 -   Ruslan Konviser ([Evereq](https://github.com/evereq))
 
-#### Developers
+#### Developers (alphabetical order)
 
+-   Aleksandar Tasev ([AlexTasev](https://github.com/AlexTasev))
 -   Alish Meklyov ([Alish](https://github.com/AlishMekliov931))
 -   Blagovest Gerov ([BlagovestGerov](https://github.com/BlagovestGerov))
 -   Boyan Stanchev ([boyanstanchev](https://github.com/boyanstanchev))
