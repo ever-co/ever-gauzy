@@ -1,9 +1,8 @@
 <ng-select
   [items]="people"
-  bindValue="id"
   bindName="firstName"
   (change)="selectEmployee($event)"
-  [(ngModel)]="selectedEmployeeId"
+  [(ngModel)]="selectedEmployee"
   placeholder="All Employees"
   [searchFn]="searchEmployee"
 >

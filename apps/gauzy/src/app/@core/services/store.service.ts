@@ -1,5 +1,5 @@
 import { User } from '@gauzy/models';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 
 export class Store {
@@ -58,7 +58,7 @@ export class Store {
         return this._selectedDate;
     }
 
-    set selectedDate(date: Date) { // DATE?
+    set selectedDate(date: Date) {
         this._selectedDate = date;
         this.selectedDate$.next(date);
     }

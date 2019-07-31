@@ -33,12 +33,12 @@
     }
 }
 
+.open {
+    cursor: pointer;
+}
+
 .body {
     padding: 36px;
-
-    .open {
-        cursor: pointer;
-    }
 
     .info-block {
         &:hover {

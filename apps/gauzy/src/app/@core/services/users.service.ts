@@ -13,4 +13,8 @@ export class UsersService {
     getUserById(id: string): Promise<User> {
         return this.http.get<User>(`/api/user/${id}`).pipe(first()).toPromise()
     }
+
+    update() { // TODO: Implement me!
+
+    }
 }
