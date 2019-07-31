@@ -12,6 +12,8 @@ import { EmployeeBonusComponent } from './table-components/employee-bonus/employ
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-profile/edit-employee-profile.component';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { EmployeeSettingMutationModule } from '../../@shared/employee/employee-setting-mutation/employee-setting-mutation.module';
 
 const COMPONENTS = [
     EmployeesComponent,
@@ -35,7 +37,9 @@ const COMPONENTS = [
         NbDialogModule.forChild(),
         EmployeeMutationModule,
         EmployeeEndWorkModule,
-        NbTooltipModule
+        NbTooltipModule,
+        NgSelectModule,
+        EmployeeSettingMutationModule
     ],
     declarations: [
         ...COMPONENTS,

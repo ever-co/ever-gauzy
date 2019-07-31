@@ -3,7 +3,9 @@
     <div
       class="header-container"
       *ngIf="
-        selectedDate && selectedEmployeeFromHeader && selectedEmployeeFromHeader.id;
+        selectedDate &&
+          selectedEmployeeFromHeader &&
+          selectedEmployeeFromHeader.id;
         else noName
       "
     >
@@ -25,16 +27,27 @@
 
       <div class="employee-info">
         <div class="employee-details">
-          <div class="transparent">Username: <strong>{{ selectedEmployee.user.username }}</strong></div>
+          <div class="transparent">
+            Username: <strong>{{ selectedEmployee.user.username }}</strong>
+          </div>
           <div class="transparent">
             Email: <strong>{{ selectedEmployee.user.email }}</strong>
           </div>
         </div>
         <div class="employee-details edit-icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+          >
+            <circle cx="18" cy="18" r="18" fill="#0091FF" fill-rule="evenodd" />
+          </svg>
           <nb-icon
             class="ml-2 open"
             icon="edit-outline"
             (click)="editEmployee()"
+            [options]="{ color: 'white' }"
           >
           </nb-icon>
         </div>
@@ -45,7 +58,14 @@
       <h6>Please select employee from the menu above.</h6>
     </ng-template>
   </nb-card-header>
-  <nb-card-body class="body" *ngIf="selectedDate && selectedEmployeeFromHeader && selectedEmployeeFromHeader.id">
+  <nb-card-body
+    class="body"
+    *ngIf="
+      selectedDate &&
+      selectedEmployeeFromHeader &&
+      selectedEmployeeFromHeader.id
+    "
+  >
     <div class="body-header">
       <div>
         <span class="setting-name">
@@ -53,7 +73,7 @@
         </span>
       </div>
       <div>
-        <button nbButton status="success">
+        <button (click)="addEmployeeSetting()" nbButton status="success">
           <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
         </button>
       </div>

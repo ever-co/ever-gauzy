@@ -6,6 +6,8 @@ import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
 import { Employee } from '@gauzy/models';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { NbDialogService } from '@nebular/theme';
+import { EmployeeSettingMutationComponent } from '../../../@shared/employee/employee-setting-mutation/employee-setting-mutation.component';
 
 @Component({
     selector: 'ngx-edit-employee',
@@ -21,7 +23,8 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     constructor(private route: ActivatedRoute,
         private router: Router,
         private employeeService: EmployeesService,
-        private store: Store) { }
+        private store: Store,
+        private dialogService: NbDialogService) { }
 
     async ngOnInit() {
         this.store.selectedDate$
@@ -34,6 +37,8 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(async params => {
                 const id = params.id;
+
+                // TODO: Load all employee_settings from DB!
 
                 const { items } = await this.employeeService.getAll(['user'], { id }).pipe(first()).toPromise();
 
@@ -59,6 +64,10 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 
     editEmployee() {
         this.router.navigate(['/pages/employees/edit/' + this.selectedEmployee.id + '/profile']);
+    }
+
+    addEmployeeSetting() {
+        this.dialogService.open(EmployeeSettingMutationComponent);
     }
 
     ngOnDestroy() {

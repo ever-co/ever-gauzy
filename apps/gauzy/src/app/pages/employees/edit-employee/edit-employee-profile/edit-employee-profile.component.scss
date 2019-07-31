@@ -4,6 +4,7 @@ nb-card-body {
   .navigate {
     display: flex;
     margin-bottom: 35px;
+    cursor: pointer;
 
     span {
       margin-left: 7px;
@@ -21,11 +22,43 @@ nb-card-body {
     padding-right: 70px;
     margin-right: 70px;
     border-right: 1px solid rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: inline-block;
+    transition: transform 150ms ease-in-out;
 
     img {
       width: 180px;
       height: 180px;
       border-radius: 13px;
+    }
+
+    input {
+      width: 68px;
+      height: 68px;
+      opacity: 0;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    svg, input {
+      position: absolute;
+      top: calc((180px - 68px) / 2);
+      left: calc((180px - 68px) / 2);
+    }
+  }
+
+  .employee-form {
+    width: 60%;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 30px;
+
+    :last-child {
+      margin-left: 40px;
     }
   }
 }
