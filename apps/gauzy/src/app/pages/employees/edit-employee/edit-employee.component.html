@@ -79,25 +79,25 @@
       </div>
     </div>
 
-    <div>
-      <div class="setting-block">
-        <div class="block-content">
-          <div class="block-info">
-            <span>Salary</span>
-            <span>September</span>
-            <span>2019</span>
+    <div *ngFor="let setting of selectedEmployeeSettings" class="setting-block">
+      <div class="block-content">
+        <div class="block-info">
+          <div class="row">
+            <div class="col">{{ setting.settingType }}</div>
+            <div class="col">{{ getMonthString(setting.month) }}</div>
+            <div class="col">{{ setting.year }}</div>
           </div>
-          <div class="block-value">
-            <span class="block-amount">$ 1000</span>
-            <span class="block-actions open">
-              <nb-icon
-                nbTooltip="Settings"
-                nbTooltipTrigger="hover"
-                icon="settings-2-outline"
-              >
-              </nb-icon>
-            </span>
-          </div>
+        </div>
+        <div class="block-value">
+          <span class="block-amount">$ {{ setting.value }}</span>
+          <span class="block-actions open">
+            <nb-icon
+              nbTooltip="Settings"
+              nbTooltipTrigger="hover"
+              icon="settings-2-outline"
+            >
+            </nb-icon>
+          </span>
         </div>
       </div>
     </div>

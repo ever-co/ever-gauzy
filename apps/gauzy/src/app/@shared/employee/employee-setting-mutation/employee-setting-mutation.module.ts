@@ -1,8 +1,9 @@
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
-import { NbCardModule, NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbIconModule, NbInputModule, NbDatepickerModule } from '@nebular/theme';
 import { EmployeeSettingMutationComponent } from './employee-setting-mutation.component';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @NgModule({
     imports: [
@@ -12,7 +13,9 @@ import { EmployeeSettingMutationComponent } from './employee-setting-mutation.co
         NbCardModule,
         NbButtonModule,
         NbIconModule,
-        NbInputModule
+        NbInputModule,
+        NbDatepickerModule,
+        NgSelectModule
     ],
     exports: [EmployeeSettingMutationComponent],
     declarations: [EmployeeSettingMutationComponent],

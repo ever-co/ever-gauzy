@@ -11,6 +11,8 @@
           type="file"
           accept=".jpg, .png"
           (change)="handlePhotoUpload($event)"
+          (mouseenter)="hoverState = true"
+          (mouseleave)="hoverState = false"
         />
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -18,6 +20,7 @@
           width="68"
           height="68"
           viewBox="0 0 68 68"
+          [ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
         >
           <defs>
             <path
@@ -31,10 +34,14 @@
             <use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
           </g>
         </svg>
+        <div [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }">
+        </div>
         <img
           *ngIf="profilePhoto"
           [src]="profilePhoto"
           alt="Profile Photo"
+          (mouseenter)="hoverState = true"
+          (mouseleave)="hoverState = false"
         />
       </div>
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Location } from '@angular/common';
@@ -17,6 +17,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
     paramSubscription: Subscription;
     profilePhoto: string;
+
+    hoverState: boolean;
 
     fakeDepartments = [
         {
@@ -70,7 +72,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
                     .getAll(['user'], { id })
                     .pipe(first()).toPromise();
                 this._initializeForm(items[0]);
-            })
+            });
     }
 
     goBack() {

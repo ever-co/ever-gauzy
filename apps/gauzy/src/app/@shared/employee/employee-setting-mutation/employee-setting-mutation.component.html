@@ -3,8 +3,56 @@
     Add Month Setting
   </nb-card-header>
   <nb-card-body>
-    <form >
+    <form [formGroup]="form" *ngIf="form">
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label class="label" for="valueDateInput">Setting Type</label>
+            <ng-select
+              id="positionInput"
+              [items]="settingTypes"
+              [searchable]="false"
+              placeholder="Setting Type"
+              formControlName="settingType"
+            >
+            </ng-select>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="valueInput" class="label">Value</label>
+            <input
+              fullWidth
+              id="valueInput"
+              type="number"
+              step="0.1"
+              nbInput
+              formControlName="value"
+            />
+          </div>
+        </div>
+      </div>
 
+      <div class="actions">
+        <button
+          type="button"
+          (click)="dialogRef.close()"
+          nbButton
+          outline
+          status="warning"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="submitForm()"
+          [disabled]="form.invalid"
+          type="submit"
+          nbButton
+          status="success"
+        >
+          Save
+        </button>
+      </div>
     </form>
   </nb-card-body>
 </nb-card>

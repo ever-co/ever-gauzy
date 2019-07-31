@@ -54,7 +54,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 30%;
+    width: 55%;
+
+    .row {
+      width: 100%;
+    }
 
     span {
       color: #18213a;
