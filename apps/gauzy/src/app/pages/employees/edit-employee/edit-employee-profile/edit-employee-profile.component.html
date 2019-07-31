@@ -34,8 +34,7 @@
             <use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
           </g>
         </svg>
-        <div [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }">
-        </div>
+        <div [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
         <img
           *ngIf="profilePhoto"
           [src]="profilePhoto"
@@ -66,7 +65,7 @@
                 <input
                   fullWidth
                   id="emailInput"
-                  type="text"
+                  type="email"
                   nbInput
                   formControlName="email"
                 />
@@ -84,7 +83,6 @@
                   bindLabel="departmentName"
                   [searchable]="false"
                   placeholder="All Departments"
-                  formControlName="department"
                 >
                 </ng-select>
               </div>
@@ -98,7 +96,6 @@
                   bindLabel="positionName"
                   [searchable]="false"
                   placeholder="All Positions"
-                  formControlName="position"
                 >
                 </ng-select>
               </div>
@@ -133,10 +130,14 @@
           </div>
 
           <div class="actions">
-            <button (click)="goBack()" nbButton outline status="warning">
-              Cancel
+            <button
+              [disabled]="form.invalid"
+              (click)="sumbitForm()"
+              nbButton
+              status="success"
+            >
+              Save
             </button>
-            <button nbButton status="success">Save</button>
           </div>
         </form>
       </div>

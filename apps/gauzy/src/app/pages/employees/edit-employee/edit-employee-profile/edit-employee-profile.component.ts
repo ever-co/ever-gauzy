@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Location } from '@angular/common';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 import { first, takeUntil } from 'rxjs/operators';
 import { Employee } from '@gauzy/models';
 import { Subject, Subscription } from 'rxjs';
+import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
 
 @Component({
     selector: 'ngx-edit-employee-profile',
@@ -17,9 +18,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
     paramSubscription: Subscription;
     profilePhoto: string;
-
     hoverState: boolean;
-
     fakeDepartments = [
         {
             departmentName: 'Accounting',
@@ -38,7 +37,6 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
             departmentId: (Math.floor(Math.random() * 101) + 1).toString()
         }
     ];
-
     fakePositions = [
         {
             positionName: 'Developer',
@@ -61,7 +59,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
     constructor(private route: ActivatedRoute,
         private fb: FormBuilder,
         private location: Location,
-        private employeeService: EmployeesService) { }
+        private employeeService: EmployeesService,
+        private userService: UsersService) { }
 
     ngOnInit() {
         this.route.params
@@ -84,14 +83,18 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
         console.log('Not implemented yet! \r\n', file);
     }
 
+    sumbitForm() {
+        if (this.form.valid) {
+            this.userService.update() // TODO: Implement me!
+        }
+    }
+
     private _initializeForm(employee: Employee) {
         this.form = this.fb.group({
-            username: [employee.user.username],
-            email: [employee.user.email],
-            department: [null],
-            position: [null],
-            firstName: [employee.user.firstName],
-            lastName: [employee.user.lastName]
+            username: [employee.user.username, Validators.required],
+            email: [employee.user.email, Validators.required],
+            firstName: [employee.user.firstName, Validators.required],
+            lastName: [employee.user.lastName, Validators.required]
         });
 
         this.profilePhoto = employee.user.imageUrl;

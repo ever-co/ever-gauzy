@@ -23,11 +23,11 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     selectedEmployeeSettings: EmployeeSettings[];
 
     constructor(private route: ActivatedRoute,
-                private router: Router,
-                private employeeService: EmployeesService,
-                private store: Store,
-                private dialogService: NbDialogService,
-                private employeeSettingService: EmployeeSettingsService) { }
+        private router: Router,
+        private employeeService: EmployeesService,
+        private store: Store,
+        private dialogService: NbDialogService,
+        private employeeSettingService: EmployeeSettingsService) { }
 
     async ngOnInit() {
         this.store.selectedDate$
@@ -75,39 +75,40 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         this.router.navigate(['/pages/employees/edit/' + this.selectedEmployee.id + '/profile']);
     }
 
-    addEmployeeSetting() {
-        this.dialogService.open(EmployeeSettingMutationComponent)
+    async addEmployeeSetting() {
+        const result = await this.dialogService
+            .open(EmployeeSettingMutationComponent)
             .onClose
-            .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(async result => {
-                if (result) {
-                    await this.employeeSettingService.create({
-                        employeeId: this.selectedEmployee.id,
-                        settingType: result.settingType,
-                        value: result.value,
-                        year: this.selectedDate.getFullYear(),
-                        month: this.selectedDate.getMonth() + 1
-                    });
+            .pipe(first())
+            .toPromise()
 
-                    this._loadEmployeeSettings();
-                }
+        if (result) {
+            await this.employeeSettingService.create({
+                employeeId: this.selectedEmployee.id,
+                settingType: result.settingType,
+                value: result.value,
+                year: this.selectedDate.getFullYear(),
+                month: this.selectedDate.getMonth() + 1
             });
+
+            this._loadEmployeeSettings();
+        }
     }
 
     getMonthString(month: number) {
         const months = [
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December"
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December'
         ];
 
         return months[month - 1];
