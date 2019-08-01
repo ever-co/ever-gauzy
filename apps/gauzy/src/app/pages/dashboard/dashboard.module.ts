@@ -17,16 +17,17 @@ import { IncomeService } from '../../@core/services/income.service';
 import { ExpensesService } from '../../@core/services/expenses.service';
 import { AuthService } from '../../@core/services/auth.service';
 import { RecordsHistoryModule } from '../../@shared/dashboard/records-history/records-history.module';
-
-import {HttpClient} from '@angular/common/http';
-import {TranslateModule, TranslateLoader} from '@ngx-translate/core';
-import {TranslateHttpLoader} from '@ngx-translate/http-loader';
+import { ChartModule } from 'angular2-chartjs';
+import { HttpClient } from '@angular/common/http';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { EmployeeChartComponent } from './employee-chart/employee-chart.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+    return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-  
+
 @NgModule({
     imports: [
         DashboardRoutingModule,
@@ -47,10 +48,12 @@ export function HttpLoaderFactory(http: HttpClient) {
                 useFactory: HttpLoaderFactory,
                 deps: [HttpClient]
             }
-        })
+        }),
+        ChartModule
     ],
     declarations: [
-        DashboardComponent
+        DashboardComponent,
+        EmployeeChartComponent
     ],
     providers: [IncomeService, ExpensesService, AuthService]
 })
