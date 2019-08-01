@@ -20,7 +20,7 @@
   </nb-card-header>
 
   <nb-card-body class="body">
-    <div  *ngIf="hasRole; else noRole">
+    <div class="half-content" *ngIf="hasRole; else noRole">
       <div *ngIf="selectedDate && selectedEmployee && selectedEmployee.id; else notSelected">
 
         <div
@@ -88,6 +88,10 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div *ngIf="selectedDate && selectedEmployee && selectedEmployee.id" class="half-content">
+      <ngx-employee-chart ></ngx-employee-chart>
     </div>
 
     <ng-template #notSelected>
