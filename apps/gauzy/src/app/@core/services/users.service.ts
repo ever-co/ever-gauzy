@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { User } from '@gauzy/models';
+import { User, UserFindInput } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class UsersService {
         return this.http.get<User>(`/api/user/${id}`).pipe(first()).toPromise()
     }
 
-    update() { // TODO: Implement me!
-
+    update(userId: string, updateInput: UserFindInput) {
+        return this.http.put(`/api/user/${userId}`, updateInput).pipe(first()).toPromise();
     }
 }

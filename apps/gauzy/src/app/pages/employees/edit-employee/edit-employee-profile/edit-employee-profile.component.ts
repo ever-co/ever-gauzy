@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Location } from '@angular/common';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
@@ -55,6 +55,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
             positionId: (Math.floor(Math.random() * 101) + 1).toString()
         },
     ];
+    routeParams: Params;
+    selectedEmployee: Employee;
 
     constructor(private route: ActivatedRoute,
         private fb: FormBuilder,
@@ -65,12 +67,9 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.route.params
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(async params => {
-                const { id } = params;
-                const { items } = await this.employeeService
-                    .getAll(['user'], { id })
-                    .pipe(first()).toPromise();
-                this._initializeForm(items[0]);
+            .subscribe(params => {
+                this.routeParams = params;
+                this._loadEmployeeData();
             });
     }
 
@@ -83,13 +82,19 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
         console.log('Not implemented yet! \r\n', file);
     }
 
-    sumbitForm() {
+    async submitForm() {
         if (this.form.valid) {
-            this.userService.update() // TODO: Implement me!
+            try {
+                this.userService.update(this.selectedEmployee.user.id, this.form.value);
+                this._loadEmployeeData();
+            } catch (error) {
+                console.error(error)
+            }
         }
     }
 
     private _initializeForm(employee: Employee) {
+        // TODO: Implement Departments and Positions!
         this.form = this.fb.group({
             username: [employee.user.username, Validators.required],
             email: [employee.user.email, Validators.required],
@@ -98,6 +103,16 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
         });
 
         this.profilePhoto = employee.user.imageUrl;
+    }
+
+    private async _loadEmployeeData() {
+        const { id } = this.routeParams;
+        const { items } = await this.employeeService
+            .getAll(['user'], { id })
+            .pipe(first()).toPromise();
+
+        this.selectedEmployee = items[0];
+        this._initializeForm(items[0]);
     }
 
     ngOnDestroy() {
