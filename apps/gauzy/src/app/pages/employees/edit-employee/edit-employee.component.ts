@@ -21,6 +21,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     selectedDate: Date;
     selectedEmployeeFromHeader: SelectedEmployee;
     selectedEmployeeSettings: EmployeeSettings[];
+    selectedRowIndexToShow: number;
 
     constructor(private route: ActivatedRoute,
         private router: Router,
@@ -112,6 +113,18 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         ];
 
         return months[month - 1];
+    }
+
+    showMenu(index: number) {
+        this.selectedRowIndexToShow = index;
+    }
+
+    editSetting(index: number) {
+        console.log(index)
+    }
+
+    deleteSetting(index: number) {
+        console.log(index)
     }
 
     private async _loadEmployeeSettings() {

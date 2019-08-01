@@ -36,9 +36,31 @@
   margin-bottom: 20px;
   width: 100%;
   height: 84px;
-  border-radius: 4px;
-  padding: 29px;
   background-color: #f6f9fc;
+  border-radius: 4px 0 0 4px;
+
+  .block-settings {
+    display: flex;
+    align-items: center;
+    background-color: #333;
+    justify-content: space-evenly;
+    overflow: hidden;
+    transition: width 0.2s ease-in;
+
+    .single-setting {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 30px;
+      cursor: pointer;
+
+      span {
+        color: #d7d9de;
+        font-size: 10px;
+        opacity: 0.6;
+      }
+    }
+  }
 }
 
 .transparent {
@@ -71,6 +93,10 @@
     justify-content: space-between;
     width: 15%;
     align-items: center;
+
+    .hide-menu {
+      cursor: pointer;
+    }
 
     .block-amount {
       border-right: 1px solid;
