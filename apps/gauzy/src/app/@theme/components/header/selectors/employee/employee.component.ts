@@ -50,7 +50,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
         if (employee) {
             this.store.selectedEmployee = employee;
         } else {
-            this.store.selectedEmployee = null;
+            this.store.selectedEmployee = {
+                id: null,
+                firstName: "All Employees",
+                lastName: '',
+                imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
+            };
         }
     }
 
