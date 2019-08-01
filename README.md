@@ -8,6 +8,22 @@ Gauzy™ - Fair Profits Sharing
 - **Stock Options** solving **fair sharing of profits _in the future_**.
 - **Gauzy** solving **fair sharing of profits _today_**.
 
+## Why project named "Gauzy"?
+
+> Because we believe in full transparency ("Gauzy" - "Transparent") and for our growing IT company we need to invent some process, which will make profits sharing simple and fair!
+
+Ruslan, 20 May 2019
+
+## Who (will) use Gauzy, How and Why?
+
+Gauzy created for IT Service companies (agencies), where engineering department employee recieve monthly bonuses based on company profits generated from employee work for company clients. We believe it's a better way to distrubute profits fairly with employees compared to yearly bonuses and it should dramatically increase employees motivation and decrease retention!
+
+Alternatives analysis:
+* In most cases, revenue sharing does not target software developers (but target sales people instead) or provide benefits only on liquidity event (e.g. company sold or close) or give “shares” (with some vesting period). In all such cases, employee got "delayed" benefits, sometimes for years! Instead, we want some solution which works on a monthly basis!
+* Some solutions such as _yearly_ bonuses are good and simple, but they value usually related very little to employee performance (who is doing such evaluation and how?), which is very hard to evaluate fairly over a year of work period. More so, it's common to pay some fixed bonuses (e.g. a monthly salary value paid once a year). More so, in modern engineering it is possible to gain significant skills growth over shorter periods than one year and having monthly recalculated bonuses will provide employees with faster income increase... That should motivate employees to learn new (or upgrade existed) skills as quickly as possible to be able to get bigger bonuses next month, not year! (e.g. “if I learn new skill/tool/platform/framework now, I will be able to get $X more per hour from our company clients and so my bonus will be bigger next month!”). So, there is going to be a direct correlation between employee skills changes and bonus value paid on montly basis!
+
+#### We believe Gauzy Platform will make our own agency more transparent & fair to our own employees (and customers too). For now, we consider Gauzy as an our internal *experiment*, which we hope other companies will join if it proves itself to be at least some sort of success! ;) 
+
 ## Quick Start
 
 - Intall [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
