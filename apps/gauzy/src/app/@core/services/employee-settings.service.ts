@@ -27,4 +27,12 @@ export class EmployeeSettingsService {
             params: { data }
         }).pipe(first()).toPromise();
     }
+
+    delete(id: string): Promise<any> {
+        return this.http.delete(`/api/employee-settings/${id}`).pipe(first()).toPromise();
+    }
+
+    update(id: string, updateInput: EmployeeSettings): Promise<any> {
+        return this.http.put(`/api/employee-settings/${id}`, updateInput).pipe(first()).toPromise();
+    }
 }

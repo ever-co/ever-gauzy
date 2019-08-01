@@ -9,6 +9,7 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 import { NbDialogService } from '@nebular/theme';
 import { EmployeeSettingMutationComponent } from '../../../@shared/employee/employee-setting-mutation/employee-setting-mutation.component';
 import { EmployeeSettingsService } from '../../../@core/services/employee-settings.service';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
     selector: 'ngx-edit-employee',
@@ -119,12 +120,54 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         this.selectedRowIndexToShow = index;
     }
 
-    editSetting(index: number) {
-        console.log(index)
+    async editSetting(index: number) {
+        const result = await this.dialogService
+            .open(EmployeeSettingMutationComponent, {
+                context: {
+                    employeeSetting: this.selectedEmployeeSettings[index]
+                }
+            })
+            .onClose
+            .pipe(first())
+            .toPromise();
+
+        if (result) {
+            try {
+                const id = this.selectedEmployeeSettings[index].id;
+                await this.employeeSettingService.update(id, result);
+                this.selectedRowIndexToShow = null;
+                this._loadEmployeeSettings();
+
+                setTimeout(() => { // Wait the menu animation to finish, than update
+                    this._loadEmployeeSettings();
+                }, 300);
+            } catch (error) {
+                console.error(error);
+            }
+        }
     }
 
-    deleteSetting(index: number) {
-        console.log(index)
+    async deleteSetting(index: number) {
+        const result = await this.dialogService.open(DeleteConfirmationComponent, {
+            context: { recordType: 'Employee Setting' }
+        })
+            .onClose
+            .pipe(first())
+            .toPromise();
+
+        if (result) {
+            try {
+                const id = this.selectedEmployeeSettings[index].id;
+                await this.employeeSettingService.delete(id);
+                this.selectedRowIndexToShow = null;
+
+                setTimeout(() => { // Wait the menu animation to finish, than delete
+                    this._loadEmployeeSettings();
+                }, 100);
+            } catch (error) {
+                console.error(error);
+            }
+        }
     }
 
     private async _loadEmployeeSettings() {

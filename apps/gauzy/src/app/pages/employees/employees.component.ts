@@ -83,7 +83,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     async delete() {
-
         this.dialogService.open(DeleteConfirmationComponent, {
             context: { recordType: 'Employee' }
         })
@@ -95,8 +94,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     this.loadPage();
                 }
             });
-
-
     }
 
     async endWork() {

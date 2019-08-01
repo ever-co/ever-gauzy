@@ -126,9 +126,8 @@
             />
           </svg>
 
-          <span class="block-actions open">
+          <span *ngIf="selectedRowIndexToShow !== i" class="block-actions open">
             <nb-icon
-              [hidden]="selectedRowIndexToShow === i"
               icon="settings-2-outline"
               (click)="showMenu(i)"
             >
@@ -143,23 +142,18 @@
         <div class="single-setting" (click)="editSetting(i)">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            xmlns:xlink="http://www.w3.org/1999/xlink"
             width="19"
             height="19"
             viewBox="0 0 19 19"
           >
-            <defs>
-              <path id="a" d="M0 0h23v23H0z" />
-            </defs>
-            <g fill="none" fill-rule="evenodd" transform="translate(-2 -4)">
-              <mask id="b" fill="#fff">
-                <use xlink:href="#a" />
-              </mask>
-              <path
-                fill="#9698A6"
-                d="M20.691 8.268a1.058 1.058 0 0 0 0-1.494l-2.465-2.465a1.058 1.058 0 0 0-1.494 0L14.8 6.24l3.96 3.959 1.931-1.932zM2 19.04V23h3.959L17.64 11.319l-3.959-3.96L2 19.042z"
-                mask="url(#b)"
-              />
+            <g data-name="Layer 2">
+              <g data-name="edit-2">
+                <rect width="24" height="24" opacity="0" />
+                <path d="M19 20H5a1 1 0 0 0 0 2h14a1 1 0 0 0 0-2z" />
+                <path
+                  d="M5 18h.09l4.17-.38a2 2 0 0 0 1.21-.57l9-9a1.92 1.92 0 0 0-.07-2.71L16.66 2.6A2 2 0 0 0 14 2.53l-9 9a2 2 0 0 0-.57 1.21L4 16.91a1 1 0 0 0 .29.8A1 1 0 0 0 5 18zM15.27 4L18 6.73l-2 1.95L13.32 6zm-8.9 8.91L12 7.32l2.7 2.7-5.6 5.6-3 .28z"
+                />
+              </g>
             </g>
           </svg>
           <span>Edit</span>
