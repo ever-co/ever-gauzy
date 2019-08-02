@@ -41,8 +41,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
             .pipe(first())
             .toPromise();
 
-        console.log(this.hasRole)
-
         this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(emp => {
