@@ -36,9 +36,35 @@
   margin-bottom: 20px;
   width: 100%;
   height: 84px;
-  border-radius: 4px;
-  padding: 29px;
   background-color: #f6f9fc;
+  border-radius: 4px 0 0 4px;
+
+  .block-settings {
+    display: flex;
+    align-items: center;
+    background-color: #333;
+    justify-content: space-evenly;
+    overflow: hidden;
+    transition: width 0.2s ease-in;
+
+    .single-setting {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 30px;
+      cursor: pointer;
+
+      svg {
+        fill: rgb(127, 127, 127);
+      }
+
+      span {
+        color: #d7d9de;
+        font-size: 10px;
+        opacity: 0.6;
+      }
+    }
+  }
 }
 
 .transparent {
@@ -49,12 +75,14 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
+  padding-right: 28px;
 
   .block-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 55%;
+    width: 560px;
+    padding-left: 30px;
 
     .row {
       width: 100%;
@@ -69,19 +97,32 @@
   .block-value {
     display: flex;
     justify-content: space-between;
-    width: 15%;
+    width: 130px;
     align-items: center;
+
+    .hide-menu {
+      cursor: pointer;
+    }
+
+    svg {
+      width: 24px;
+      height: fit-content;
+    }
 
     .block-amount {
       border-right: 1px solid;
-      width: 50%;
+      text-align: center;
+      width: 130px;
       color: #0091ff;
       font-weight: bold;
       font-size: 16px;
+      display: flex;
+      align-items: center;
+      padding-right: 24px;
     }
 
     .block-actions {
-      width: 30%;
+      width: 43%;
       margin-left: 24px;
     }
   }

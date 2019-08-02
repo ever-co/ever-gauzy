@@ -4,7 +4,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
 
 export interface Employee extends IBaseEntityModel {
-    endWork: any;
+    endWork?: any;
     user: User;
     userId: string;
     organization: Organization;

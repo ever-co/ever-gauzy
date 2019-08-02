@@ -12,6 +12,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
 import { Router } from '@angular/router';
+import { monthNames } from '../../@core/utils/date';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -83,7 +84,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     async delete() {
-
         this.dialogService.open(DeleteConfirmationComponent, {
             context: { recordType: 'Employee' }
         })
@@ -95,8 +95,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     this.loadPage();
                 }
             });
-
-
     }
 
     async endWork() {
@@ -123,7 +121,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 email: i.user.email,
                 id: i.id,
                 isActive: i.isActive,
-                endWork: i.endWork ? new Date(i.endWork).toUTCString() : 'Indefinite',
+                endWork: i.endWork ? new Date(i.endWork).toUTCString() : '',
                 imageUrl: i.user.imageUrl,
                 // TODO laod real bonus and bonusDate
                 bonus: Math.floor(1000 * Math.random()) + 10,
@@ -137,6 +135,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     private _loadSmartTableSettings() {
+        const dateNow = new Date();
+
         this.settingsSmartTable = {
             actions: false,
             columns: {
@@ -151,9 +151,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     type: 'email',
                 },
                 bonus: {
-                    title: 'Bonus',
+                    title: `Bonus in ${monthNames[dateNow.getMonth() - 1]} ${dateNow.getFullYear()}`,
                     type: 'custom',
-                    width: '15%',
                     filter: false,
                     class: 'text-center',
                     renderComponent: EmployeeBonusComponent

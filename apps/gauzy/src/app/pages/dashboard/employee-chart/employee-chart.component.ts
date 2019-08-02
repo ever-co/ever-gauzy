@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
+import { monthNames } from '../../../@core/utils/date';
 
 @Component({
     selector: 'ngx-employee-chart',

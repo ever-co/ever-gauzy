@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
+import { EmployeeSettings } from '@gauzy/models';
 
 @Component({
     selector: 'ngx-employee-setting-mutation',
@@ -10,22 +11,25 @@ import { NbDialogRef } from '@nebular/theme';
 export class EmployeeSettingMutationComponent implements OnInit {
     protected form: FormGroup;
     settingTypes = ['Salary', 'Salary Taxes', 'Extra Bonus'];
+    employeeSetting?: EmployeeSettings;
 
     constructor(private fb: FormBuilder,
-                protected dialogRef: NbDialogRef<EmployeeSettingMutationComponent>) { }
+        protected dialogRef: NbDialogRef<EmployeeSettingMutationComponent>) { }
 
     ngOnInit() {
-        this._initializeForm();
+        this.employeeSetting ? this._initializeForm(this.employeeSetting) : this._initializeForm();
     }
 
     submitForm() {
-        this.dialogRef.close(this.form.value);
+        if (this.form.valid) {
+            this.dialogRef.close(this.form.value);
+        }
     }
 
-    private _initializeForm() {
+    private _initializeForm(employeeSetting?: EmployeeSettings) {
         this.form = this.fb.group({
-            settingType: ['', Validators.required],
-            value: ['', Validators.required]
+            settingType: [employeeSetting ? employeeSetting.settingType : '', Validators.required],
+            value: [employeeSetting ? employeeSetting.value : '', Validators.required]
         });
     }
 }
