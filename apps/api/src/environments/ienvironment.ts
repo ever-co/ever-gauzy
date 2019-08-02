@@ -3,7 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { DefaultUser } from '@gauzy/models';
+import { DefaultUser, CurrenciesEnum } from '@gauzy/models';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -33,5 +33,8 @@ export interface IEnvironment {
 
   defaultEmployees?: DefaultUser[],
 
-  defaultOrganizationsName?: string
+  defaultOrganization?: {
+    name: string
+    currency: CurrenciesEnum
+  }
 }

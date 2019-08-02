@@ -4,9 +4,9 @@ import {
     Index,
 } from 'typeorm';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsDate, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsDate, IsOptional, IsEnum } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Organization as IOrganization } from '@gauzy/models';
+import { Organization as IOrganization, CurrenciesEnum } from '@gauzy/models';
 
 @Entity('organization')
 export class Organization extends Base implements IOrganization {
@@ -21,6 +21,13 @@ export class Organization extends Base implements IOrganization {
     @IsOptional()
     @Column({ length: 500, nullable: true })
     imageUrl?: string;
+
+    @ApiModelProperty({ type: String, enum: CurrenciesEnum })
+    @IsEnum(CurrenciesEnum)
+    @IsNotEmpty()
+    @Index()
+    @Column()
+    currency: string;
 
     @ApiModelPropertyOptional({ type: Date })
     @IsDate()
