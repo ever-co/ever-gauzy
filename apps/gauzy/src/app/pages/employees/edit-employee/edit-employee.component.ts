@@ -10,6 +10,7 @@ import { NbDialogService } from '@nebular/theme';
 import { EmployeeSettingMutationComponent } from '../../../@shared/employee/employee-setting-mutation/employee-setting-mutation.component';
 import { EmployeeSettingsService } from '../../../@core/services/employee-settings.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { monthNames } from '../../../@core/utils/date';
 
 @Component({
     selector: 'ngx-edit-employee',
@@ -98,20 +99,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     }
 
     getMonthString(month: number) {
-        const months = [
-            'January',
-            'February',
-            'March',
-            'April',
-            'May',
-            'June',
-            'July',
-            'August',
-            'September',
-            'October',
-            'November',
-            'December'
-        ];
+        const months = monthNames
 
         return months[month - 1];
     }

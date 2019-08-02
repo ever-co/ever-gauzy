@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NbCalendarMonthCellComponent } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { monthNames } from '../../../../../@core/utils/date'
 
 @Component({
     selector: 'ga-date-selector',
@@ -18,7 +19,7 @@ export class DateSelectorComponent implements OnInit {
     min = new Date(this.date.getFullYear() - 9, 6, 15);
     max = new Date();
 
-    constructor(private store: Store) {}
+    constructor(private store: Store) { }
 
     ngOnInit() {
         this.date.setMonth(this.date.getMonth() - 1);
@@ -33,21 +34,6 @@ export class DateSelectorComponent implements OnInit {
     }
 
     formatDateMMMMyy(date) {
-        const monthNames = [
-            'January',
-            'February',
-            'March',
-            'April',
-            'May',
-            'June',
-            'July',
-            'August',
-            'September',
-            'October',
-            'November',
-            'December'
-        ];
-
         const monthIndex = date.getMonth();
         const year = date.getFullYear();
 
@@ -64,7 +50,7 @@ export class DateSelectorComponent implements OnInit {
         this.dateInputValue = '';
         this.date = this.getDefaultDate();
     }
-    
+
     clickOutside(event) {
         if (!document.getElementById('dashboard-calendar').contains(event.target)) {
             this.loadCalendar = false;

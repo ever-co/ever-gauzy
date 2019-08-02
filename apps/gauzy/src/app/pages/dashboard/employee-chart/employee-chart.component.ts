@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
+import { monthNames } from '../../../@core/utils/date';
 
 @Component({
     selector: 'ngx-employee-chart',
@@ -23,76 +24,63 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
             const chartjs: any = config.variables.chartjs;
 
             this.data = {
-                labels: [
-                    'January',
-                    'February',
-                    'March',
-                    'April',
-                    'May',
-                    'June',
-                    'July',
-                    'August',
-                    'September',
-                    'October',
-                    'November',
-                    'December'
-                ],
+                labels: [...monthNames],
                 datasets: [
-                {
-                    label: 'Revenue',
-                    backgroundColor: colors.infoLight,
-                    borderWidth: 1,
-                    data: [
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                    ],
-                },
-                {
-                    label: 'Expenses',
-                    backgroundColor: colors.successLight,
-                    data: [
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                    ],
-                },
-                {
-                    label: 'Profit',
-                    backgroundColor: colors.warningLight,
-                    data: [
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                        this.random(),
-                    ],
-                },
+                    {
+                        label: 'Revenue',
+                        backgroundColor: colors.infoLight,
+                        borderWidth: 1,
+                        data: [
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                        ],
+                    },
+                    {
+                        label: 'Expenses',
+                        backgroundColor: colors.successLight,
+                        data: [
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                        ],
+                    },
+                    {
+                        label: 'Profit',
+                        backgroundColor: colors.warningLight,
+                        data: [
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                            this.random(),
+                        ],
+                    },
                 ],
             };
 
