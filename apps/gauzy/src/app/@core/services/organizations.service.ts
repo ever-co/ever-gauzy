@@ -14,7 +14,7 @@ export class OrganizationsService {
         return this.http.get<{ items: Organization[], total: number }>(`/api/organization`);
     }
 
-    getById(id: string): Observable<Organization> {
+    getById(id: string = ''): Observable<Organization> {
         return this.http.get<Organization>(`/api/organization/${id}`);
     }
 }
