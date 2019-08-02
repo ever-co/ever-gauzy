@@ -2,6 +2,7 @@
 // `ng build ---prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 import { IEnvironment } from './ienvironment';
+import { CurrenciesEnum } from '@gauzy/models';
 
 export const environment: IEnvironment = {
   production: false,
@@ -27,7 +28,10 @@ export const environment: IEnvironment = {
     uuidExtension: 'pgcrypto',
   },
 
-  defaultOrganizationsName: 'Ever Technologies LTD',
+  defaultOrganization: {
+    name: 'Ever Technologies LTD',
+    currency: CurrenciesEnum.BGN
+  },
 
   defaultAdmins: [{
     email: 'admin@ever.co',

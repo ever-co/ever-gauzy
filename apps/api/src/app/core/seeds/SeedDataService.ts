@@ -30,8 +30,7 @@ export class SeedDataService {
 
       this.connection = await getConnection();
 
-      if (!this.connection.isConnected)
-      {
+      if (!this.connection.isConnected) {
         this.connection = await createConnection(
           {
             ...env.database,
@@ -60,7 +59,7 @@ export class SeedDataService {
       // Seed data with mock / fake data
       await this.seedData();
 
-      console.log('Database Seed completed');      
+      console.log('Database Seed completed');
     }
     catch (error) {
       this.handleError(error);
@@ -137,6 +136,6 @@ export class SeedDataService {
 
   private handleError(error: Error, message?: string): void {
     this.log(chalk.bgRed(`🛑 ERROR: ${!!message ? message : 'Unable to seed database'}`));
-    throw new Error(`🛑  ${error}`);    
+    throw new Error(`🛑  ${error}`);
   }
 }
