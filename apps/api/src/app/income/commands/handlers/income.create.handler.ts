@@ -27,6 +27,10 @@ export class IncomeCreateHandler implements ICommandHandler<IncomeCreateCommand>
         income.amount = input.amount;
         income.valueDate = input.valueDate;
 
+        if (!income.currency) {
+            income.currency = organization.currency
+        }
+
         return await this.incomeService.create(income);
     }
 }

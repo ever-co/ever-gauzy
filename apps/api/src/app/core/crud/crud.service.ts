@@ -20,7 +20,7 @@ import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 
 export abstract class CrudService<T extends Base> implements ICrudService<T> {
-  protected constructor(protected readonly repository: Repository<T>) {}
+  protected constructor(protected readonly repository: Repository<T>) { }
 
   public async count(filter?: FindManyOptions<T>): Promise<number> {
     return await this.repository.count(filter);
