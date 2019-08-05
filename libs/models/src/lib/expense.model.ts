@@ -14,6 +14,7 @@ export interface Expense extends IBaseEntityModel {
     categoryId?: string;
     notes?: string;
     valueDate?: Date;
+    currency: string;
 }
 
 export interface ExpenseCreateInput {
@@ -26,6 +27,7 @@ export interface ExpenseCreateInput {
     categoryId: string;
     notes?: string;
     valueDate: Date;
+    currency?: string;
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {
@@ -40,6 +42,7 @@ export interface ExpenseFindInput extends IBaseEntityModel {
     clientName?: string;
     notes?: string;
     valueDate?: Date;
+    currency?: string;
 }
 
 export interface ExpenseUpdateInput {
@@ -52,4 +55,5 @@ export interface ExpenseUpdateInput {
     categoryId?: string;
     notes?: string;
     valueDate?: Date;
+    currency?: string;
 }

@@ -7,9 +7,9 @@ import {
     JoinColumn,
 } from 'typeorm';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDate } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDate, IsEnum } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Expense as IExpense } from '@gauzy/models';
+import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
 import { Organization } from '../organization';
 import { Employee } from '../employee';
 
@@ -71,6 +71,13 @@ export class Expense extends Base implements IExpense {
     @IsOptional()
     @Column({ nullable: true })
     notes?: string;
+
+    @ApiModelProperty({ type: String, enum: CurrenciesEnum })
+    @IsEnum(CurrenciesEnum)
+    @IsNotEmpty()
+    @Index()
+    @Column()
+    currency: string;
 
     @ApiModelPropertyOptional({ type: Date })
     @IsDate()

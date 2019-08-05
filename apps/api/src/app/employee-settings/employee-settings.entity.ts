@@ -4,9 +4,9 @@ import {
     Index,
 } from 'typeorm';
 import { ApiModelProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, Min, Max, IsDate, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, Min, Max, IsDate, IsOptional, IsEnum } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { EmployeeSettings as IEmployeeSettings } from '@gauzy/models';
+import { EmployeeSettings as IEmployeeSettings, CurrenciesEnum } from '@gauzy/models';
 
 @Entity('employee_settings')
 export class EmployeeSettings extends Base implements IEmployeeSettings {
@@ -44,4 +44,11 @@ export class EmployeeSettings extends Base implements IEmployeeSettings {
     @IsNotEmpty()
     @Column()
     value: number;
+
+    @ApiModelProperty({ type: String, enum: CurrenciesEnum })
+    @IsEnum(CurrenciesEnum)
+    @IsNotEmpty()
+    @Index()
+    @Column()
+    currency: string;
 }

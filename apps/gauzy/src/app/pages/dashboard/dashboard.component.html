@@ -1,37 +1,52 @@
 <nb-card>
   <nb-card-header class="header">
-    <div class="header-container" *ngIf="selectedDate && selectedEmployee && selectedEmployee.id; else noName">
-        <div class="employee-info">
-          <img class="employee-image" [src]="selectedEmployee.imageUrl" alt="Employee Avatar">
+    <div
+      class="header-container"
+      *ngIf="
+        selectedDate && selectedEmployee && selectedEmployee.id;
+        else noName
+      "
+    >
+      <div class="employee-info">
+        <img
+          class="employee-image"
+          [src]="selectedEmployee.imageUrl"
+          alt="Employee Avatar"
+        />
 
-          <div class="employee-details">
-              <span class="employee-name">{{ selectedEmployee.firstName }} {{ selectedEmployee.lastName }}</span>
-              <div class="employee-position">Developer</div>
-          </div>
-          
+        <div class="employee-details">
+          <span class="employee-name"
+            >{{ selectedEmployee.firstName }}
+            {{ selectedEmployee.lastName }}</span
+          >
+          <div class="employee-position">Developer</div>
         </div>
+      </div>
 
-        <div class="employee-details">{{ selectedDate | date: 'LLLL y' }}</div>
+      <div class="employee-details">{{ selectedDate | date: 'LLLL y' }}</div>
     </div>
 
     <ng-template #noName>
-        <h4>{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}</h4>
+      <h4>{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}</h4>
     </ng-template>
   </nb-card-header>
 
   <nb-card-body class="body">
     <div class="half-content" *ngIf="hasRole; else noRole">
-      <div *ngIf="selectedDate && selectedEmployee && selectedEmployee.id; else notSelected">
-
-        <div
-          class="info-block open"
-          (click)="openHistoryDialog('INCOME')"
-        >
-
+      <div
+        *ngIf="
+          selectedDate && selectedEmployee && selectedEmployee.id;
+          else notSelected
+        "
+      >
+        <div class="info-block open" (click)="openHistoryDialog('INCOME')">
           <div class="info-text">Total Gross Revenue</div>
-          
+
           <div class="info-value">
-            <span>{{ totalIncome }}</span>
+            <span *ngIf="incomeCurrency">{{
+              totalIncome | currency: incomeCurrency
+            }}</span>
+            <span *ngIf="!incomeCurrency">{{ totalIncome }}</span>
             <nb-icon
               class="ml-2"
               icon="link-2-outline"
@@ -40,19 +55,16 @@
             >
             </nb-icon>
           </div>
-          
-
         </div>
 
-        <div
-          class="info-block open"
-          (click)="openHistoryDialog('EXPENSE')"
-        >
-
+        <div class="info-block open" (click)="openHistoryDialog('EXPENSE')">
           <div class="info-text">Total Expenses</div>
 
           <div class="info-value">
-            <span>{{ totalExpense }}</span>
+            <span *ngIf="expenseCurrency">{{
+              totalExpense | currency: expenseCurrency
+            }}</span>
+            <span *ngIf="!expenseCurrency">{{ totalExpense }}</span>
             <nb-icon
               nbTooltip="Open Records History"
               nbTooltipTrigger="hover"
@@ -61,41 +73,51 @@
             >
             </nb-icon>
           </div>
-          
         </div>
 
         <div class="info-block">
           <div class="info-text">Profit</div>
           <div class="info-value">
-              <span>{{ difference }}</span>
-              <nb-icon
-                style="visibility: hidden"
-                nbTooltip="Open Records History"
-                nbTooltipTrigger="hover"
-                class="ml-2"
-                icon="link-2-outline"
-              >
-              </nb-icon>
-            </div>
+            <span *ngIf="defaultCurrency">{{
+              difference | currency: defaultCurrency
+            }}</span>
+            <span *ngIf="!defaultCurrency">{{ difference }}</span>
+            <nb-icon
+              style="visibility: hidden"
+              nbTooltip="Open Records History"
+              nbTooltipTrigger="hover"
+              class="ml-2"
+              icon="link-2-outline"
+            >
+            </nb-icon>
+          </div>
         </div>
-        
+
         <div class="bonus">
           <div class="bonus-value">
             <div>Bonus</div>
-            <div>
-                {{ bonus }}
+            <div *ngIf="defaultCurrency">
+              {{ bonus | currency: defaultCurrency }}
+            </div>
+            <div *ngIf="!defaultCurrency">
+              {{ bonus }}
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div *ngIf="selectedDate && selectedEmployee && selectedEmployee.id" class="half-content">
+    <div
+      *ngIf="selectedDate && selectedEmployee && selectedEmployee.id"
+      class="half-content"
+    >
       <ngx-employee-chart></ngx-employee-chart>
     </div>
 
     <ng-template #notSelected>
-      <span>{{ 'DASHBOARD_PAGE.SELECT_A_MONTH_AND_EMPLOYEE' | translate }}</span>
+      <span>{{
+        'DASHBOARD_PAGE.SELECT_A_MONTH_AND_EMPLOYEE' | translate
+      }}</span>
     </ng-template>
 
     <ng-template #noRole>
