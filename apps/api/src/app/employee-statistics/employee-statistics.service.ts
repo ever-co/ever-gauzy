@@ -5,7 +5,7 @@ import { ExpenseService } from '../expense';
 
 @Injectable()
 export class EmployeeStatisticsService {
-    private _monthLiterals = [
+    private _monthNames = [
         'January',
         'February',
         'March',
@@ -82,6 +82,16 @@ export class EmployeeStatisticsService {
             }
         });
 
+        const sortedProfitStatistics: Object[] = [];
+
+
+
+        // this.expenseStatistics.forEach((expenseStat, index) => {
+        //     const profit = this.incomeStatistics[index] - expenseStat;
+        //     this.profitStatistics.push(profit);
+        //     this.bonusStatistics.push((profit * 75) / 100);
+        // });
+
         return {
             sortedEmployeeExpenses,
             sortedEmployeeIncome
@@ -89,6 +99,6 @@ export class EmployeeStatisticsService {
     }
 
     private _formatDate(valueDate: Date) {
-        return `${this._monthLiterals[valueDate.getMonth()]} '${valueDate.getFullYear() - 2000}`;
+        return `${this._monthNames[valueDate.getMonth()]} '${valueDate.getFullYear() - 2000}`;
     }
 }

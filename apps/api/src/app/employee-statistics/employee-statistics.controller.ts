@@ -13,6 +13,5 @@ export class EmployeeStatisticsController {
     async findAllByEmloyeeId(@Param('id') id: string, @Query('data') data?: string): Promise<any> { // add model
         const { findInput } = JSON.parse(data);
         return this.employeeStatisticsService.getStatisticsByEmployeeId(id, findInput);
-
     }
 }
