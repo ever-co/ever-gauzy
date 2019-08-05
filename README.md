@@ -38,7 +38,8 @@ Total Bonus = % from Net Income (e.g. equal to Net Income * 0.6 for 60% bonus to
 
 ## Quick Start
 
-- Intall [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
+- Install and run latest [PostgreSQL](https://www.postgresql.org) (optionally, other DB can be configured manually). 
+- Install [Yarn](https://github.com/yarnpkg/yarn) (if you don't have it) with `npm i -g yarn`
 - Install NPM packages with `yarn install`
 - Run API with `yarn start:api` (by default runs on http://localhost:3000/api)
 - Run Gauzy front-end with `yarn start`
@@ -57,6 +58,9 @@ You can run seed any moment manually (e.g. if you changed entities schemas) with
 -   [RxJS](http://reactivex.io/rxjs)
 -   [TypeORM](https://github.com/typeorm/typeorm)
 -   [Ngx-admin](https://github.com/akveo/ngx-admin)
+-   [PostgreSQL](https://www.postgresql.org)
+
+Note: thanks to TypeORM, Gauzy will support lots of DBs: MySql, MariaDb, PostgreSQL, CockroachDb, sqlite, MS SQL, Oracle, MongoDb and others, with minimal changes. 
 
 #### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses and other details.
 
