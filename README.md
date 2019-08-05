@@ -2,7 +2,7 @@
 
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
 
-Gauzy™ - Fair Profits Sharing
+Gauzy™ - Fair Profits Sharing Open-Source Platform
 
 - **Open-Source Software** solving **fair sharing of technology**.
 - **Stock Options** solving **fair sharing of profits _in the future_**.
