@@ -6,10 +6,12 @@ export interface EmployeeSettings extends IBaseEntityModel {
     year: number;
     settingType: string;
     value: number;
+    currency: string;
 }
 
 export interface EmployeeSettingsFindInput extends IBaseEntityModel {
     employeeId?: string;
     month?: number;
     year?: number;
+    currency?: string;
 }

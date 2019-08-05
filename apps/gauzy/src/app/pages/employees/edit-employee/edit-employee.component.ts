@@ -11,6 +11,7 @@ import { EmployeeSettingMutationComponent } from '../../../@shared/employee/empl
 import { EmployeeSettingsService } from '../../../@core/services/employee-settings.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { monthNames } from '../../../@core/utils/date';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
 
 @Component({
     selector: 'ngx-edit-employee',
@@ -28,6 +29,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     constructor(private route: ActivatedRoute,
         private router: Router,
         private employeeService: EmployeesService,
+        private organizationsService: OrganizationsService,
         private store: Store,
         private dialogService: NbDialogService,
         private employeeSettingService: EmployeeSettingsService) { }
@@ -79,6 +81,12 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     }
 
     async addEmployeeSetting() {
+        // TODO get currency from the page dropdown
+        const { currency } = await this.organizationsService
+            .getById(this.store.selectedOrganizationId)
+            .pipe(first())
+            .toPromise()
+
         const result = await this.dialogService
             .open(EmployeeSettingMutationComponent)
             .onClose
@@ -91,7 +99,8 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
                 settingType: result.settingType,
                 value: result.value,
                 year: this.selectedDate.getFullYear(),
-                month: this.selectedDate.getMonth() + 1
+                month: this.selectedDate.getMonth() + 1,
+                currency
             });
 
             this._loadEmployeeSettings();
