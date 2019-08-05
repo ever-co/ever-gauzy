@@ -24,32 +24,13 @@ export class EmployeeStatisticsService {
         private expenseService: ExpenseService) { }
 
     async getStatisticsByEmployeeId(employeeId: string, findInput?: EmployeeSettingsFindInput) {
-        const allEmployeeIncome = await this.incomeService.findAll({
+        const mappedEmployeeIncome = (await this.incomeService.findAll({
             where: {
                 employee: {
                     id: employeeId
                 }
             }
-        });
-
-        const mappedEmployeeIncome = allEmployeeIncome.items.map(e => {
-            const obj = {};
-            const formattedDate = this._formatDate(e.valueDate);;
-
-            obj[formattedDate] = e.amount;
-
-            return obj;
-        });
-
-        const allEmployeeExpense = await this.expenseService.findAll({
-            where: {
-                employee: {
-                    id: employeeId
-                }
-            }
-        });
-
-        const mappedEmployeeExpenses = allEmployeeExpense.items.map(e => {
+        })).items.map(e => {
             const obj = {};
             const formattedDate = this._formatDate(e.valueDate);
 
@@ -58,30 +39,49 @@ export class EmployeeStatisticsService {
             return obj;
         });
 
-        const sortedEmployeeExpenses = [];
+        const mappedEmployeeExpenses = (await this.expenseService.findAll({
+            where: {
+                employee: {
+                    id: employeeId
+                }
+            }
+        })).items.map(e => {
+            const obj = {};
+            const formattedDate = this._formatDate(e.valueDate);
+
+            obj[formattedDate] = e.amount;
+
+            return obj;
+        });
+
+        const sortedEmployeeExpenses: Object[] = [];
 
         mappedEmployeeExpenses.forEach(obj => {
+            // tslint:disable-next-line: forin
             for (const key in obj) {
-                if (sortedEmployeeExpenses[key]) {
-                    sortedEmployeeExpenses[key] += obj[key];
+                const foundObject = sortedEmployeeExpenses.find(o => o.hasOwnProperty(key));
+                if (foundObject) {
+                    foundObject[key] += obj[key];
                 } else {
-                    sortedEmployeeExpenses[key] = obj[key];
+                    sortedEmployeeExpenses.push(obj);
                 }
             }
         });
 
-        const sortedEmployeeIncome = [];
+        const sortedEmployeeIncome: Object[] = [];
 
         mappedEmployeeIncome.forEach(obj => {
+            // tslint:disable-next-line: forin
             for (const key in obj) {
-                if (sortedEmployeeIncome[key]) {
-                    sortedEmployeeIncome[key] += obj[key];
+                const foundObject = sortedEmployeeIncome.find(o => o.hasOwnProperty(key));
+                if (foundObject) {
+                    foundObject[key] += obj[key];
                 } else {
-                    sortedEmployeeIncome[key] = obj[key];
+                    sortedEmployeeIncome.push(obj);
                 }
             }
         });
-        
+
         return {
             sortedEmployeeExpenses,
             sortedEmployeeIncome
