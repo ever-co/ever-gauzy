@@ -9,6 +9,7 @@ import { RolesEnum, Income, Expense } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import { RecordsHistoryComponent, HistoryType } from '../../@shared/dashboard/records-history/records-history.component';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
+import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
 
 @Component({
     templateUrl: './dashboard.component.html',
@@ -26,6 +27,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     difference = 0;
     bonus = 0;
 
+    avarageBonus: number;
+
     incomeData: Income[];
     expenseData: Expense[];
 
@@ -37,7 +40,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         private expenseService: ExpensesService,
         private authService: AuthService,
         private store: Store,
-        private dialogService: NbDialogService) { }
+        private dialogService: NbDialogService,
+        private employeeStatisticsService: EmployeeStatisticsService) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -71,6 +75,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
                     this._loadEmployeeTotalExpense();
                 }
             });
+
+        this.employeeStatisticsService.avarageBonus$
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(bonus => this.avarageBonus = bonus);
     }
 
     openHistoryDialog(type: HistoryType) {

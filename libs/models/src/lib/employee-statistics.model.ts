@@ -1,8 +1,10 @@
 export interface EmployeeStatisticsFindInput {
-    startDate: Date,
-    endDate: Date
+    valueDate: Date
 }
 
 export interface EmployeeStatistics {
-    
+    expenseStatistics: number[],
+    incomeStatistics: number[],
+    profitStatistics: number[],
+    bonusStatistics: number[]
 }

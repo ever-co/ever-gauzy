@@ -17,155 +17,130 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
     data: any;
     options: any;
-    private _monthLiterals = [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December'
-    ];
+    incomeStatistics: number[];
+    expenseStatistics: number[];
+    profitStatistics: number[];
+    bonusStatistics: number[];
 
     constructor(private themeService: NbThemeService,
         private employeeStatisticsService: EmployeeStatisticsService,
         private store: Store) { }
 
     async ngOnInit() {
-        this._getLast12months();
-
         this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(async emp => {
-                if (emp) {
+                if (emp.id) {
                     try {
-                        const result = await this.employeeStatisticsService
+                        const statistics = await this.employeeStatisticsService
                             .getStatisticsByEmployeeId(emp.id);
 
-                        console.log(result)
+                        this.incomeStatistics = statistics.incomeStatistics;
+                        this.expenseStatistics = statistics.expenseStatistics;
+                        this.profitStatistics = statistics.profitStatistics;
+                        this.bonusStatistics = statistics.bonusStatistics;
+                        
+                        const avarageBonus = this.bonusStatistics.filter(Number).reduce((a, b) => a + b, 0) / this.bonusStatistics.filter(Number).length;
+                        this.employeeStatisticsService.avarageBonus$.next(Math.floor(avarageBonus));
+
+                        this.themeService.getJsTheme()
+                            .pipe(takeUntil(this._ngDestroy$))
+                            .subscribe(config => {
+                                const colors: any = config.variables;
+                                const chartjs: any = config.variables.chartjs;
+
+                                this.data = {
+                                    labels: this._getMonthsWithStatistics(),
+                                    datasets: [
+                                        {
+                                            label: 'Revenue',
+                                            backgroundColor: colors.infoLight,
+                                            borderWidth: 1,
+                                            data: this.incomeStatistics
+                                        },
+                                        {
+                                            label: 'Expenses',
+                                            backgroundColor: colors.successLight,
+                                            data: this.expenseStatistics
+                                        },
+                                        {
+                                            label: 'Profit',
+                                            backgroundColor: colors.warningLight,
+                                            data: this.profitStatistics,
+                                        },
+                                        {
+                                            label: 'Bonus',
+                                            backgroundColor: '#CA521A',
+                                            data: this.bonusStatistics,
+                                        },
+                                    ],
+                                };
+
+                                this.options = {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    elements: {
+                                        rectangle: {
+                                            borderWidth: 2,
+                                        },
+                                    },
+                                    scales: {
+                                        xAxes: [
+                                            {
+                                                gridLines: {
+                                                    display: true,
+                                                    color: chartjs.axisLineColor,
+                                                },
+                                                ticks: {
+                                                    fontColor: chartjs.textColor,
+                                                },
+                                            },
+                                        ],
+                                        yAxes: [
+                                            {
+                                                gridLines: {
+                                                    display: false,
+                                                    color: chartjs.axisLineColor,
+                                                },
+                                                ticks: {
+                                                    fontColor: chartjs.textColor,
+                                                },
+                                            },
+                                        ],
+                                    },
+                                    legend: {
+                                        position: 'right',
+                                        labels: {
+                                            fontColor: chartjs.textColor,
+                                        },
+                                    },
+                                };
+                            });
                     } catch (error) {
                         console.error(error)
                     }
                 }
             });
-
-
-
-
-        this.themeService.getJsTheme().subscribe(config => {
-            const colors: any = config.variables;
-            const chartjs: any = config.variables.chartjs;
-
-            this.data = {
-                labels: this._getLast12months(),
-                datasets: [
-                    {
-                        label: 'Revenue',
-                        backgroundColor: colors.infoLight,
-                        borderWidth: 1,
-                        data: [
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                        ],
-                    },
-                    {
-                        label: 'Expenses',
-                        backgroundColor: colors.successLight,
-                        data: [
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                        ],
-                    },
-                    {
-                        label: 'Profit',
-                        backgroundColor: colors.warningLight,
-                        data: [
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                            this._random(),
-                        ],
-                    },
-                ],
-            };
-
-            this.options = {
-                responsive: true,
-                maintainAspectRatio: false,
-                elements: {
-                    rectangle: {
-                        borderWidth: 2,
-                    },
-                },
-                scales: {
-                    xAxes: [
-                        {
-                            gridLines: {
-                                display: true,
-                                color: chartjs.axisLineColor,
-                            },
-                            ticks: {
-                                fontColor: chartjs.textColor,
-                            },
-                        },
-                    ],
-                    yAxes: [
-                        {
-                            gridLines: {
-                                display: false,
-                                color: chartjs.axisLineColor,
-                            },
-                            ticks: {
-                                fontColor: chartjs.textColor,
-                            },
-                        },
-                    ],
-                },
-                legend: {
-                    position: 'right',
-                    labels: {
-                        fontColor: chartjs.textColor,
-                    },
-                },
-            };
-        });
     }
 
-    private _random() {
-        return Math.round(Math.random() * 100);
+    private _filterArrayZeroesToMatchWithMonths() {
+        this.expenseStatistics = this.expenseStatistics.filter(Number);
+        this.incomeStatistics = this.incomeStatistics.filter(Number);
+        this.profitStatistics = this.profitStatistics.filter(Number);
+        this.bonusStatistics = this.bonusStatistics.filter(Number);
+    }
+
+    private _getMonthsWithStatistics() {
+        const monthsWithStatistics = [];
+
+        this._getLast12months().forEach((month, index) => {
+            if (this.expenseStatistics[index] !== 0 || this.incomeStatistics[index] !== 0) {
+                monthsWithStatistics.push(month);
+            }
+        });
+
+        this._filterArrayZeroesToMatchWithMonths();
+        return monthsWithStatistics;
     }
 
     private _getLast12months() {
@@ -177,9 +152,9 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 
         for (let i = start; i <= end; i++) {
             if (i > 11) {
-                monthsNeeded.push(this._monthLiterals[i - 12] + ` '${currentYear}`);
+                monthsNeeded.push(monthNames[i - 12] + ` '${currentYear}`);
             } else {
-                monthsNeeded.push(this._monthLiterals[i] + ` '${currentYear - 1}`);
+                monthsNeeded.push(monthNames[i] + ` '${currentYear - 1}`);
             }
         }
 

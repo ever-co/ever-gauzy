@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { EmployeeSettingsFindInput } from '@gauzy/models';
+import { EmployeeStatisticsFindInput, EmployeeStatistics } from '@gauzy/models';
 import { IncomeService } from '../income';
 import { ExpenseService } from '../expense';
 
 @Injectable()
 export class EmployeeStatisticsService {
-    private _monthLiterals = [
+    private _monthNames = [
         'January',
         'February',
         'March',
@@ -23,33 +23,14 @@ export class EmployeeStatisticsService {
     constructor(private incomeService: IncomeService,
         private expenseService: ExpenseService) { }
 
-    async getStatisticsByEmployeeId(employeeId: string, findInput?: EmployeeSettingsFindInput) {
-        const allEmployeeIncome = await this.incomeService.findAll({
+    async getStatisticsByEmployeeId(employeeId: string, findInput?: EmployeeStatisticsFindInput): Promise<EmployeeStatistics> {
+        const mappedEmployeeIncome = (await this.incomeService.findAll({
             where: {
                 employee: {
                     id: employeeId
                 }
             }
-        });
-
-        const mappedEmployeeIncome = allEmployeeIncome.items.map(e => {
-            const obj = {};
-            const formattedDate = this._formatDate(e.valueDate);;
-
-            obj[formattedDate] = e.amount;
-
-            return obj;
-        });
-
-        const allEmployeeExpense = await this.expenseService.findAll({
-            where: {
-                employee: {
-                    id: employeeId
-                }
-            }
-        });
-
-        const mappedEmployeeExpenses = allEmployeeExpense.items.map(e => {
+        }, findInput ? findInput.valueDate.toString() : null)).items.map(e => {
             const obj = {};
             const formattedDate = this._formatDate(e.valueDate);
 
@@ -58,37 +39,105 @@ export class EmployeeStatisticsService {
             return obj;
         });
 
-        const sortedEmployeeExpenses = [];
+        const mappedEmployeeExpenses = (await this.expenseService.findAll({
+            where: {
+                employee: {
+                    id: employeeId
+                }
+            }
+        }, findInput ? findInput.valueDate.toString() : null)).items.map(e => {
+            const obj = {};
+            const formattedDate = this._formatDate(e.valueDate);
+
+            obj[formattedDate] = e.amount;
+
+            return obj;
+        });
+
+        const sortedEmployeeExpenses: Object[] = [];
 
         mappedEmployeeExpenses.forEach(obj => {
+            // tslint:disable-next-line: forin
             for (const key in obj) {
-                if (sortedEmployeeExpenses[key]) {
-                    sortedEmployeeExpenses[key] += obj[key];
+                const foundObject = sortedEmployeeExpenses.find(o => o.hasOwnProperty(key));
+                if (foundObject) {
+                    foundObject[key] += obj[key];
                 } else {
-                    sortedEmployeeExpenses[key] = obj[key];
+                    sortedEmployeeExpenses.push(obj);
                 }
             }
         });
 
-        const sortedEmployeeIncome = [];
+        const sortedEmployeeIncome: Object[] = [];
 
         mappedEmployeeIncome.forEach(obj => {
+            // tslint:disable-next-line: forin
             for (const key in obj) {
-                if (sortedEmployeeIncome[key]) {
-                    sortedEmployeeIncome[key] += obj[key];
+                const foundObject = sortedEmployeeIncome.find(o => o.hasOwnProperty(key));
+                if (foundObject) {
+                    foundObject[key] += obj[key];
                 } else {
-                    sortedEmployeeIncome[key] = obj[key];
+                    sortedEmployeeIncome.push(obj);
                 }
             }
         });
+
+        let incomeStatistics = [];
+        let expenseStatistics = [];
+
+        this._getLast12months().forEach(month => {
+            const incomeStatForTheMonth = sortedEmployeeIncome.find(incomeStat => incomeStat.hasOwnProperty(month));
+
+            incomeStatForTheMonth ? incomeStatistics.push(incomeStatForTheMonth[month]) : incomeStatistics.push(0);
+
+            const expenseStatForTheMonth = sortedEmployeeExpenses.find(expenseStat => expenseStat.hasOwnProperty(month));
+
+            expenseStatForTheMonth ? expenseStatistics.push(expenseStatForTheMonth[month]) : expenseStatistics.push(0);
+        });
+
+        let profitStatistics = [];
+        let bonusStatistics = [];
+
+        expenseStatistics.forEach((expenseStat, index) => {
+            const profit = incomeStatistics[index] - expenseStat;
+            profitStatistics.push(profit);
+            bonusStatistics.push((profit * 75) / 100);
+        });
+
+        if (findInput && findInput.valueDate) {
+            expenseStatistics = expenseStatistics.filter(Number)
+            incomeStatistics = incomeStatistics.filter(Number)
+            profitStatistics = profitStatistics.filter(Number)
+            bonusStatistics = bonusStatistics.filter(Number)
+        }
         
         return {
-            sortedEmployeeExpenses,
-            sortedEmployeeIncome
+            expenseStatistics,
+            incomeStatistics,
+            profitStatistics,
+            bonusStatistics
         }
     }
 
-    private _formatDate(valueDate: Date) {
-        return `${this._monthLiterals[valueDate.getMonth()]} '${valueDate.getFullYear() - 2000}`;
+    private _getLast12months() {
+        const start = (new Date(Date.now())).getMonth() + 1;
+        const end = start + 11;
+        const currentYear = (new Date(Date.now())).getFullYear() - 2000;
+
+        const monthsNeeded = [];
+
+        for (let i = start; i <= end; i++) {
+            if (i > 11) {
+                monthsNeeded.push(this._monthNames[i - 12] + ` '${currentYear}`);
+            } else {
+                monthsNeeded.push(this._monthNames[i] + ` '${currentYear - 1}`);
+            }
+        }
+
+        return monthsNeeded.reverse();
+    }
+
+    private _formatDate(date: Date) {
+        return `${this._monthNames[date.getMonth()]} '${date.getFullYear() - 2000}`;
     }
 }
