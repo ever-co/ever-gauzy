@@ -1,6 +1,7 @@
 import { Controller, HttpStatus, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeStatisticsService } from './employee-statistics.service';
+import { EmployeeStatistics } from '@gauzy/models';
 
 @Controller()
 export class EmployeeStatisticsController {
@@ -10,7 +11,7 @@ export class EmployeeStatisticsController {
     @ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
     @Get(':id')
-    async findAllByEmloyeeId(@Param('id') id: string, @Query('data') data?: string): Promise<any> { // add model
+    async findAllByEmloyeeId(@Param('id') id: string, @Query('data') data?: string): Promise<EmployeeStatistics> {
         const { findInput } = JSON.parse(data);
         return this.employeeStatisticsService.getStatisticsByEmployeeId(id, findInput);
     }

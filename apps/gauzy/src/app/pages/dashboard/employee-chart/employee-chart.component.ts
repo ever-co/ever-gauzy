@@ -17,10 +17,10 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
     data: any;
     options: any;
-    incomeStatistics: number[] = [];
-    expenseStatistics: number[] = [];
-    profitStatistics: number[] = [];
-    bonusStatistics: number[] = [];
+    incomeStatistics: number[];
+    expenseStatistics: number[];
+    profitStatistics: number[];
+    bonusStatistics: number[];
 
     constructor(private themeService: NbThemeService,
         private employeeStatisticsService: EmployeeStatisticsService,
@@ -32,46 +32,27 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
             .subscribe(async emp => {
                 if (emp.id) {
                     try {
-                        this.profitStatistics = [];
-                        this.bonusStatistics = [];
-                        this.incomeStatistics = [];
-                        this.expenseStatistics = [];
-
                         const statistics = await this.employeeStatisticsService
-                            .getStatisticsByEmployeeId(emp.id);
-                        console.log(statistics) // REMOVE ME
+                            .getStatisticsByEmployeeId(emp.id, {valueDate: new Date()});
 
-                        const incomeStatistics = statistics.sortedEmployeeIncome;
-                        const expenseStatistics = statistics.sortedEmployeeExpenses;
+                        console.log(statistics)
 
-                        this._getLast12months().forEach(month => {
-                            const incomeStatForTheMonth = incomeStatistics.find(incomeStat => incomeStat.hasOwnProperty(month));
-
-                            incomeStatForTheMonth ? this.incomeStatistics.push(incomeStatForTheMonth[month]) : this.incomeStatistics.push(0);
-
-                            const expenseStatForTheMonth = expenseStatistics.find(expenseStat => expenseStat.hasOwnProperty(month));
-
-                            expenseStatForTheMonth ? this.expenseStatistics.push(expenseStatForTheMonth[month]) : this.expenseStatistics.push(0);
-                        });
-
-                        this.expenseStatistics.forEach((expenseStat, index) => {
-                            const profit = this.incomeStatistics[index] - expenseStat;
-                            this.profitStatistics.push(profit);
-                            this.bonusStatistics.push((profit * 75) / 100);
-                        });
-
-                        const avarageBonus = this.bonusStatistics.filter(Number).reduce((a, b) => a + b, 0) / this.bonusStatistics.length;
+                        this.incomeStatistics = statistics.incomeStatistics;
+                        this.expenseStatistics = statistics.expenseStatistics;
+                        this.profitStatistics = statistics.profitStatistics;
+                        this.bonusStatistics = statistics.bonusStatistics;
+                        
+                        const avarageBonus = this.bonusStatistics.filter(Number).reduce((a, b) => a + b, 0) / this.bonusStatistics.filter(Number).length;
                         this.employeeStatisticsService.avarageBonus$.next(Math.floor(avarageBonus));
 
                         this.themeService.getJsTheme()
                             .pipe(takeUntil(this._ngDestroy$))
                             .subscribe(config => {
                                 const colors: any = config.variables;
-                                console.log(colors)
                                 const chartjs: any = config.variables.chartjs;
 
                                 this.data = {
-                                    labels: this._getLast12months(),
+                                    labels: this._getMonthsWithStatistics(),
                                     datasets: [
                                         {
                                             label: 'Revenue',
@@ -96,10 +77,6 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
                                         },
                                     ],
                                 };
-
-                                console.log(this.expenseStatistics)
-                                console.log(this.incomeStatistics)
-                                console.log(this.bonusStatistics)
 
                                 this.options = {
                                     responsive: true,
@@ -148,6 +125,13 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
             });
     }
 
+    private _filterArrayZeroesToMatchWithMonths() {
+        this.expenseStatistics = this.expenseStatistics.filter(Number);
+        this.incomeStatistics = this.incomeStatistics.filter(Number);
+        this.profitStatistics = this.profitStatistics.filter(Number);
+        this.bonusStatistics = this.bonusStatistics.filter(Number);
+    }
+
     private _getMonthsWithStatistics() {
         const monthsWithStatistics = [];
 
@@ -157,6 +141,7 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
             }
         });
 
+        this._filterArrayZeroesToMatchWithMonths();
         return monthsWithStatistics;
     }
 
