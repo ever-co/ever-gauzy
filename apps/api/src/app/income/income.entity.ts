@@ -7,9 +7,9 @@ import {
     ManyToOne,
 } from 'typeorm';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDate } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDate, IsEnum } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Income as IIncome } from '@gauzy/models';
+import { Income as IIncome, CurrenciesEnum } from '@gauzy/models';
 import { Employee } from '../employee';
 import { Organization } from '../organization';
 
@@ -52,6 +52,13 @@ export class Income extends Base implements IIncome {
     @Index()
     @Column()
     clientName: string;
+
+    @ApiModelProperty({ type: String, enum: CurrenciesEnum })
+    @IsEnum(CurrenciesEnum)
+    @IsNotEmpty()
+    @Index()
+    @Column()
+    currency: string;
 
     @ApiModelPropertyOptional({ type: Date })
     @IsDate()

@@ -1,0 +1,3 @@
+files:
+  - source: /apps/gauzy/src/assets/i18n/en.json
+    translation: /apps/gauzy/src/assets/i18n/%two_letters_code%.json

@@ -10,6 +10,7 @@ export interface Income extends IBaseEntityModel {
     amount: number;
     clientId?: string;
     clientName: string;
+    currency: string;
     valueDate?: Date;
 }
 
@@ -18,6 +19,7 @@ export interface IncomeCreateInput {
     clientName: string;
     clientId: string;
     valueDate: Date;
+    currency?: string;
     employeeId: string;
 }
 
@@ -27,6 +29,7 @@ export interface IncomeUpdateInput {
     clientId?: string;
     valueDate?: Date;
     employeeId?: string;
+    currency?: string;
 }
 
 export interface IncomeFindInput extends IBaseEntityModel {
@@ -36,4 +39,5 @@ export interface IncomeFindInput extends IBaseEntityModel {
     clientId?: string;
     clientName?: string;
     valueDate?: Date;
+    currency?: string;
 }

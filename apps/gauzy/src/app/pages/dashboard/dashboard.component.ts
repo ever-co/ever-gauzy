@@ -32,6 +32,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     incomeData: Income[];
     expenseData: Expense[];
 
+    incomeCurrency: string;
+    expenseCurrency: string;
+    defaultCurrency: string;
+
     constructor(private incomeService: IncomeService,
         private expenseService: ExpensesService,
         private authService: AuthService,
@@ -48,6 +52,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(emp => {
+                this.expenseCurrency = null;
+                this.incomeCurrency = null;
+                this.defaultCurrency = null;
                 if (emp) {
                     this.selectedEmployee = emp;
                 }
@@ -85,19 +92,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     private async _loadEmployeeTotalIncome() {
         const { items } = await this.incomeService
-            .getAll(['employee'], {
+            .getAll(['employee', 'organization'], {
                 employee: {
                     id: this.selectedEmployee.id
                 }
             }, this.selectedDate);
 
         this.incomeData = items;
+
         this.totalIncome = items.reduce((a, b) => a + b.amount, 0);
+
+        if (items.length && this.totalIncome !== 0) {
+            const firstItem = items[0];
+
+            this.incomeCurrency = firstItem.currency;
+            this.defaultCurrency = firstItem.organization.currency;
+        }
     }
 
     private async _loadEmployeeTotalExpense() {
         const { items } = await this.expenseService
-            .getAll(['employee'],
+            .getAll(['employee', 'organization'],
                 {
                     employee: { id: this.selectedEmployee.id }
                 }, this.selectedDate);
@@ -107,6 +122,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.totalExpense = items.reduce((a, b) => a + b.amount, 0);
         this.difference = this.totalIncome - this.totalExpense;
         this.bonus = (this.difference * 75) / 100;
+
+        if (items.length && this.totalExpense !== 0) {
+            const firstItem = items[0];
+
+            this.expenseCurrency = firstItem.currency;
+            this.defaultCurrency = firstItem.organization.currency;
+        }
     }
 
     ngOnDestroy() {

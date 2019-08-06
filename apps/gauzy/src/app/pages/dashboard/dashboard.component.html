@@ -46,7 +46,10 @@
           <div class="info-text">Total Gross Revenue</div>
 
           <div class="info-value">
-            <span>{{ totalIncome }}</span>
+            <span *ngIf="incomeCurrency">{{
+              totalIncome | currency: incomeCurrency
+            }}</span>
+            <span *ngIf="!incomeCurrency">{{ totalIncome }}</span>
             <nb-icon
               class="ml-2"
               icon="link-2-outline"
@@ -61,7 +64,10 @@
           <div class="info-text">Total Expenses</div>
 
           <div class="info-value">
-            <span>{{ totalExpense }}</span>
+            <span *ngIf="expenseCurrency">{{
+              totalExpense | currency: expenseCurrency
+            }}</span>
+            <span *ngIf="!expenseCurrency">{{ totalExpense }}</span>
             <nb-icon
               nbTooltip="Open Records History"
               nbTooltipTrigger="hover"
@@ -75,7 +81,10 @@
         <div class="info-block">
           <div class="info-text">Profit</div>
           <div class="info-value">
-            <span>{{ difference }}</span>
+            <span *ngIf="defaultCurrency">{{
+              difference | currency: defaultCurrency
+            }}</span>
+            <span *ngIf="!defaultCurrency">{{ difference }}</span>
             <nb-icon
               style="visibility: hidden"
               nbTooltip="Open Records History"
@@ -90,7 +99,10 @@
         <div class="bonus">
           <div class="bonus-value">
             <div>Bonus</div>
-            <div>
+            <div *ngIf="defaultCurrency">
+              {{ bonus | currency: defaultCurrency }}
+            </div>
+            <div *ngIf="!defaultCurrency">
               {{ bonus }}
             </div>
           </div>

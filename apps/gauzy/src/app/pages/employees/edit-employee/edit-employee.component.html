@@ -98,7 +98,7 @@
                 selectedRowIndexToShow === i ? 'none' : '1px solid'
             }"
             class="block-amount"
-            >$ {{ setting.value }}
+            >{{ setting.value | currency: setting.currency }}
           </span>
 
           <svg
@@ -127,11 +127,7 @@
           </svg>
 
           <span *ngIf="selectedRowIndexToShow !== i" class="block-actions open">
-            <nb-icon
-              icon="settings-2-outline"
-              (click)="showMenu(i)"
-            >
-            </nb-icon>
+            <nb-icon icon="settings-2-outline" (click)="showMenu(i)"> </nb-icon>
           </span>
         </div>
       </div>
