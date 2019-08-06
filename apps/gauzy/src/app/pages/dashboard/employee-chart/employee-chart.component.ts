@@ -33,9 +33,7 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
                 if (emp.id) {
                     try {
                         const statistics = await this.employeeStatisticsService
-                            .getStatisticsByEmployeeId(emp.id, {valueDate: new Date()});
-
-                        console.log(statistics)
+                            .getStatisticsByEmployeeId(emp.id);
 
                         this.incomeStatistics = statistics.incomeStatistics;
                         this.expenseStatistics = statistics.expenseStatistics;
