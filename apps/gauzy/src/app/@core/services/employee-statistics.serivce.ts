@@ -11,6 +11,13 @@ export class EmployeeStatisticsService {
     constructor(private http: HttpClient) { }
     avarageBonus$ = new Subject<number>();
 
+    /**
+    * Gets the statistics for the selected employee for the last 12 months. 
+    * If date is provided in findInput it will return only for the month selected.
+    * @param employeeId The id of the employee.
+    * @param findInput Object containing valueDate.
+    * @returns Promise<EmployeeStatistics>
+    */
     getStatisticsByEmployeeId(employeeId: string, findInput?: EmployeeStatisticsFindInput): Promise<EmployeeStatistics> {
         const data = JSON.stringify({ findInput });
 
