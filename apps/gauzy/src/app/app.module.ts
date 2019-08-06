@@ -21,8 +21,7 @@ import {
   NbToastrModule,
   NbWindowModule,
   NbCalendarModule,
-  NbCalendarKitModule,
-  NbDatepicker,
+  NbCalendarKitModule
 } from '@nebular/theme';
 import { TokenInterceptor } from './@core/auth/token.interceptor';
 
