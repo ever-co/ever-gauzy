@@ -26,6 +26,7 @@ export class IncomeCreateHandler implements ICommandHandler<IncomeCreateCommand>
         income.organization = organization;
         income.amount = input.amount;
         income.valueDate = input.valueDate;
+        income.notes = input.notes;
 
         if (!income.currency) {
             income.currency = organization.currency
