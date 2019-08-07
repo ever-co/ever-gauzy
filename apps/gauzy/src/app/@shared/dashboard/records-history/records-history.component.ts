@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IncomeViewModel, IncomeComponent } from '../../../pages/income/income.component';
+import { IncomeComponent } from '../../../pages/income/income.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { ExpensesComponent } from '../../../pages/expenses/expenses.component';
 
@@ -23,7 +23,7 @@ export class RecordsHistoryComponent implements OnInit {
     constructor() { }
 
     ngOnInit() {
-        let viewModel: IncomeViewModel[];
+        let viewModel;
 
         switch (this.type) {
             case HistoryType.INCOME:

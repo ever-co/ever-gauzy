@@ -65,4 +65,10 @@ export class Income extends Base implements IIncome {
     @IsOptional()
     @Column({ nullable: true })
     valueDate?: Date;
+
+    @ApiModelPropertyOptional({ type: String })
+    @Index()
+    @IsOptional()
+    @Column({ nullable: true })
+    notes?: string;
 }
