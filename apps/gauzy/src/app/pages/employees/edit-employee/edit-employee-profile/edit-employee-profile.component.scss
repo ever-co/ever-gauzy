@@ -23,20 +23,21 @@ nb-card-body {
     margin-right: 70px;
     border-right: 1px solid rgba(0, 0, 0, 0.1);
     position: relative;
-    display: inline-block;
+    display: flex;
+    justify-content: center;
     transition: transform 150ms ease-in-out;
 
     div {
       pointer-events: none;
       background: black;
       position: absolute;
-      width: 180px;
+      
       height: 180px;
       border-radius: 13px;
     }
 
     img {
-      width: 180px;
+      max-width: 180px;
       height: 180px;
       border-radius: 13px;
     }
@@ -56,7 +57,7 @@ nb-card-body {
       opacity: 0.3;
       position: absolute;
       top: calc((180px - 68px) / 2);
-      left: calc((180px - 68px) / 2);
+      margin: auto;
     }
   }
 

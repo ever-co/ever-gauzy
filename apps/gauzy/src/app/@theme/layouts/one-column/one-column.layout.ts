@@ -21,7 +21,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
     user: any;
 
     userMenu = [
-        { title: 'Profile', link: 'pages/auth/profile' },
+        { title: 'Profile', link: '/pages/auth/profile' },
         { title: 'Log out', link: '/auth/logout' }
     ];
 

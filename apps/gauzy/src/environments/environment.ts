@@ -1,18 +1,27 @@
+import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
+
 // This file can be replaced during build by using the `fileReplacements` array.
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false,
-  
-  COMPANY_NAME: 'Ever Co. LTD',
-  COMPANY_SITE: 'Gauzy',
-  COMPANY_LINK: 'https://ever.co/',
-  COMPANY_SITE_LINK: 'https://gauzy.co',
-  COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
-  COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/gauzyplatform',
-  COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
-  COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.'
+    production: false,
+
+    COMPANY_NAME: 'Ever Co. LTD',
+    COMPANY_SITE: 'Gauzy',
+    COMPANY_LINK: 'https://ever.co/',
+    COMPANY_SITE_LINK: 'https://gauzy.co',
+    COMPANY_GITHUB_LINK: 'https://github.com/ever-co',
+    COMPANY_FACEBOOK_LINK: 'https://www.facebook.com/gauzyplatform',
+    COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
+    COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
+    
+};
+
+export const cloudinaryConfiguration: CloudinaryConfiguration = {
+    cloud_name: 'dv6ezkfxg',
+    api_key: '256868982483961',
+    api_secret: '-6Ww86MFBwgvV7hhwnVwwht16N0'
 };
 
 /*

@@ -8,6 +8,9 @@
           (change)="handlePhotoUpload($event)"
           (mouseenter)="hoverState = true"
           (mouseleave)="hoverState = false"
+          #fileInput
+          ng2FileSelect
+          [uploader]="uploader"
         />
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -29,10 +32,12 @@
             <use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
           </g>
         </svg>
-        <div [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
+        <div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }">
+        </div>
+
         <img
-          *ngIf="profilePhoto"
-          [src]="profilePhoto"
+          *ngIf="form"
+          [src]="form.get('imageUrl').value"
           alt="Profile Photo"
           (mouseenter)="hoverState = true"
           (mouseleave)="hoverState = false"
