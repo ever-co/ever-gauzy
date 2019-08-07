@@ -918,6 +918,11 @@
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
 
+"@cloudinary/angular-5.x@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@cloudinary/angular-5.x/-/angular-5.x-1.0.3.tgz#e44eac345338a8f9f3f7be1b1280e137f5d68e5f"
+  integrity sha512-8HfwTPp8yBOzV0m57bmyyKjN8kCgfaFWAZ+Vmnx/70t6lq8kKGLeQyuT+DQsj+zz7EzlWSlV2qxBEGU7teQ43g==
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.3.tgz#099139eaec7ebf07a27c1786a3ff64f39464d2ef"
@@ -5613,6 +5618,11 @@ cloneable-readable@^1.0.0:
     inherits "^2.0.1"
     process-nextick-args "^2.0.0"
     readable-stream "^2.3.5"
+
+cloudinary-core@^2.7.3:
+  version "2.7.3"
+  resolved "https://registry.yarnpkg.com/cloudinary-core/-/cloudinary-core-2.7.3.tgz#20c091f412e4970e5518ea0d7f06f4f3013b609b"
+  integrity sha512-orF0sjYsiDkE9pl82RNXFwjgKynSIpNNdtLT8GEIxEYZLKlxW/JliArILqzyZdsdkuF0R2foFxxPnZvtymfWpQ==
 
 cls-hooked@^4.2.2:
   version "4.2.2"
@@ -13337,6 +13347,11 @@ ng2-completer@^3.0.2:
   integrity sha512-mmtFFZTqVQQ5akVUnH4mUEbpYfTCElY7IhDTlKLNfGAND5EzsO6N/5q0lPoV16295Hzj1p/uC7QJEiMVDg2KyA==
   dependencies:
     rxjs-compat "^6.2.2"
+
+ng2-file-upload@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/ng2-file-upload/-/ng2-file-upload-1.3.0.tgz#d90f8f568f62383462175f8bdfa0096b131f277a"
+  integrity sha512-Pudxik6LWYsT8hNiEW7RfjgGWAnvfQywxwJYMdt1snTUe+KnlRc/QqPv3QEQW6plXTanuLkYz/TbqilSfSHOsw==
 
 ng2-smart-table@^1.5.0:
   version "1.5.0"
