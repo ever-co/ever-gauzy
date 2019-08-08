@@ -71,11 +71,14 @@
   opacity: 0.7;
 }
 
+.settings-body {
+  padding: 35px;
+}
+
 .block-content {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  padding-right: 28px;
 
   .block-info {
     display: flex;
@@ -97,8 +100,10 @@
   .block-value {
     display: flex;
     justify-content: space-between;
-    width: 130px;
+    width: 204px;
+
     align-items: center;
+    padding-right: 30px;
 
     .hide-menu {
       cursor: pointer;
@@ -119,11 +124,6 @@
       display: flex;
       align-items: center;
       padding-right: 24px;
-    }
-
-    .block-actions {
-      width: 43%;
-      margin-left: 24px;
     }
   }
 }

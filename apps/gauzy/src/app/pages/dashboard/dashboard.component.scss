@@ -1,8 +1,3 @@
-nb-card-body {
-    display: flex;
-    justify-content: space-between;
-}
-
 .header {
     padding: 30px;
 
@@ -44,6 +39,8 @@ nb-card-body {
 
 .body {
     padding: 36px;
+    display: flex;
+    justify-content: space-between;
 
     .half-content {
         width: 49%;

@@ -14,10 +14,9 @@ import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
     styleUrls: ['./edit-employee-profile.component.scss']
 })
 export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
-    protected form: FormGroup;
+    form: FormGroup;
     private _ngDestroy$ = new Subject<void>();
     paramSubscription: Subscription;
-    profilePhoto: string;
     hoverState: boolean;
     fakeDepartments = [
         {
@@ -77,9 +76,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
         this.location.back();
     }
 
-    handlePhotoUpload(ev: Event) {
-        const file = (<HTMLInputElement>ev.target).files[0];
-        console.log('Not implemented yet! \r\n', file);
+    handleImageUploadError(error: any) {
+        console.error(error);
     }
 
     async submitForm() {
@@ -93,18 +91,6 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
         }
     }
 
-    private _initializeForm(employee: Employee) {
-        // TODO: Implement Departments and Positions!
-        this.form = this.fb.group({
-            username: [employee.user.username, Validators.required],
-            email: [employee.user.email, Validators.required],
-            firstName: [employee.user.firstName, Validators.required],
-            lastName: [employee.user.lastName, Validators.required]
-        });
-
-        this.profilePhoto = employee.user.imageUrl;
-    }
-
     private async _loadEmployeeData() {
         const { id } = this.routeParams;
         const { items } = await this.employeeService
@@ -113,6 +99,17 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 
         this.selectedEmployee = items[0];
         this._initializeForm(items[0]);
+    }
+
+    private _initializeForm(employee: Employee) {
+        // TODO: Implement Departments and Positions!
+        this.form = this.fb.group({
+            username: [employee.user.username, Validators.required],
+            email: [employee.user.email, Validators.required],
+            firstName: [employee.user.firstName, Validators.required],
+            lastName: [employee.user.lastName, Validators.required],
+            imageUrl: [employee.user.imageUrl, Validators.required]
+        });
     }
 
     ngOnDestroy() {

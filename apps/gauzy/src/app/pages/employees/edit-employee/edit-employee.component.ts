@@ -16,7 +16,10 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 @Component({
     selector: 'ngx-edit-employee',
     templateUrl: './edit-employee.component.html',
-    styleUrls: ['./edit-employee.component.scss', '../../dashboard/dashboard.component.scss']
+    styleUrls: [
+        './edit-employee.component.scss',
+        '../../dashboard/dashboard.component.scss'
+    ]
 })
 export class EditEmployeeComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
@@ -27,12 +30,12 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     selectedRowIndexToShow: number;
 
     constructor(private route: ActivatedRoute,
-        private router: Router,
-        private employeeService: EmployeesService,
-        private organizationsService: OrganizationsService,
-        private store: Store,
-        private dialogService: NbDialogService,
-        private employeeSettingService: EmployeeSettingsService) { }
+                private router: Router,
+                private employeeService: EmployeesService,
+                private organizationsService: OrganizationsService,
+                private store: Store,
+                private dialogService: NbDialogService,
+                private employeeSettingService: EmployeeSettingsService) { }
 
     async ngOnInit() {
         this.store.selectedDate$
