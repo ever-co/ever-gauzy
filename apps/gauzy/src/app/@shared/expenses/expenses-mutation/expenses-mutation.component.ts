@@ -109,7 +109,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
                 vendor: [null, Validators.required],
                 category: [null, Validators.required],
                 notes: [''],
-                valueDate: [new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0), Validators.required]
+                valueDate: [new Date(), Validators.required]
             });
         }
     }
