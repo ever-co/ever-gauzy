@@ -92,7 +92,7 @@ export class IncomeMutationComponent implements OnInit {
             });
         } else {
             this.form = this.fb.group({
-                valueDate: [new Date((new Date()).getFullYear(), (new Date()).getMonth() + 1, 0), Validators.required],
+                valueDate: [new Date(), Validators.required],
                 amount: ['', Validators.required],
                 client: [null, Validators.required],
                 notes: ''
