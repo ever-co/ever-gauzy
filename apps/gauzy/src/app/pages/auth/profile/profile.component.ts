@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UsersService } from '../../../@core/services/users.service';
 import { Store } from '../../../@core/services/store.service';
 import { User } from '@gauzy/models';
-import { FileUploader, FileUploaderOptions, ParsedResponseHeaders } from 'ng2-file-upload';
+import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { Cloudinary } from '@cloudinary/angular-5.x';
 
 @Component({
@@ -25,13 +25,16 @@ export class ProfileComponent implements OnInit {
 
     async ngOnInit() {
         this._loadUploaderSettings();
-        const user = await this.userService.getUserById(this.store.userId);
-        this._initializeForm(user);
+        try {
+            const user = await this.userService.getUserById(this.store.userId);
+            this._initializeForm(user);
+        } catch (error) {
+            console.error(error)
+        }
+
     }
 
-    handlePhotoUpload(ev: Event) {
-        const file = (<HTMLInputElement>ev.target).files[0];
-
+    handlePhotoUpload() {
         if (this.uploader.queue.length > 0) {
             this.uploader.queue[this.uploader.queue.length - 1].upload();
         }
@@ -82,6 +85,7 @@ export class ProfileComponent implements OnInit {
 
         this.uploader.onErrorItem = (item: any, response: string, status: number) => {
             const error = JSON.parse(response);
+            console.error(error);
         };
     }
 
