@@ -3,7 +3,7 @@
     <h4>Income</h4>
   </nb-card-header>
   <nb-card-body>
-    <div class="btn-container">
+    <div *ngIf="hasRole" class="btn-container">
       <button
         nbButton
         status="success"

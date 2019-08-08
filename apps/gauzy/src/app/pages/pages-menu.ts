@@ -41,7 +41,7 @@ export const ADMIN_MENU_ITEMS: NbMenuItem[] = [
   },
   {
     title: 'Organizations',
-    // icon: '',
+    icon: 'globe-outline',
     link: '/pages/organizations',
   },
   {
