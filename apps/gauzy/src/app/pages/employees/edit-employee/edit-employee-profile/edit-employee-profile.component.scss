@@ -17,7 +17,7 @@ nb-card-body {
     display: flex;
   }
 
-  .employee-photo {
+  .employee-container {
     height: 670px;
     padding-right: 70px;
     margin-right: 70px;
@@ -27,37 +27,43 @@ nb-card-body {
     justify-content: center;
     transition: transform 150ms ease-in-out;
 
-    div {
-      pointer-events: none;
-      background: black;
-      position: absolute;
-      
-      height: 180px;
-      border-radius: 13px;
-    }
+    .employee-photo {
+      width: fit-content;
+      height: fit-content;
+      position: relative;
 
-    img {
-      max-width: 180px;
-      height: 180px;
-      border-radius: 13px;
-    }
+      div {
+        pointer-events: none;
+        background: black;
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        border-radius: 13px;
+      }
 
-    input {
-      width: 180px;
-      height: 180px;
-      opacity: 0;
-      position: absolute;
-      z-index: 3;
-      cursor: pointer;
-    }
+      img {
+        width: 180px;
+        height: auto;
+        border-radius: 13px;
+      }
 
-    svg {
-      z-index: 2;
-      transition: opacity 0.2s ease-in;
-      opacity: 0.3;
-      position: absolute;
-      top: calc((180px - 68px) / 2);
-      margin: auto;
+      input {
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        position: absolute;
+        z-index: 3;
+        cursor: pointer;
+      }
+
+      svg {
+        z-index: 2;
+        transition: opacity 0.2s ease-in;
+        opacity: 0.3;
+        position: absolute;
+        top: calc(50% - 68px / 2);
+        left: calc(50% - 68px / 2);
+      }
     }
   }
 
