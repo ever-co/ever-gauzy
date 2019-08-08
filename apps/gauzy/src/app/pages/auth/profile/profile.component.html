@@ -3,16 +3,11 @@
     <div class="content">
       <div class="employee-container">
         <div class="employee-photo">
-          <input
-            type="file"
-            accept=".jpg, .png"
-            (change)="handlePhotoUpload()"
-            (mouseenter)="hoverState = true"
-            (mouseleave)="hoverState = false"
-            #fileInput
-            ng2FileSelect
-            [uploader]="uploader"
-          />
+          <ngx-image-uploader
+            (changeHoverState)="hoverState = $event"
+            (uploadedImageUrl)="form.get('imageUrl').setValue($event)"
+            (uploadImageError)="handleImageUploadError($event)"
+          ></ngx-image-uploader>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             xmlns:xlink="http://www.w3.org/1999/xlink"
