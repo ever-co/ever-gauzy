@@ -5,7 +5,7 @@ import { first, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { EmployeesService } from '../../@core/services/employees.service';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -39,7 +39,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         private employeesService: EmployeesService,
         private dialogService: NbDialogService,
         private store: Store,
-        private router: Router
+        private router: Router,
+        private toastrService: NbToastrService
     ) { }
 
     ngOnInit() {
@@ -91,18 +92,32 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(async result => {
                 if (result) {
-                    await this.employeesService.setEmployeeAsInactive(this.selectedEmployee.id);
-                    this.loadPage();
+                    try {
+                        await this.employeesService.setEmployeeAsInactive(this.selectedEmployee.id);
+                        this.toastrService.info('Employee set as inactive.', 'Success');
+                        this.loadPage();
+                    } catch (error) {
+                        this.toastrService.danger(error.error.message || error.message, 'Error');
+                    }
                 }
             });
     }
 
     async endWork() {
-        const dialog = this.dialogService.open(EmployeeEndWorkComponent, { context: this.selectedEmployee.endWork });
+        const dialog = this.dialogService.open(EmployeeEndWorkComponent,{
+            context: this.selectedEmployee.endWork
+        });
 
         const data = await dialog.onClose.pipe(first()).toPromise();
+
         if (data) {
-            await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data);
+            try {
+                await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data);
+                this.toastrService.info('Employee set as inactive.', 'Success');
+            } catch (error) {
+                this.toastrService.danger(error.error.message || error.message, 'Error');
+            }
+            
             this.loadPage();
         }
     }
@@ -123,7 +138,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 isActive: i.isActive,
                 endWork: i.endWork ? new Date(i.endWork).toUTCString() : '',
                 imageUrl: i.user.imageUrl,
-                // TODO laod real bonus and bonusDate
+                // TODO: laod real bonus and bonusDate
                 bonus: Math.floor(1000 * Math.random()) + 10,
                 bonusDate: Date.now()
             };
@@ -151,7 +166,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     type: 'email',
                 },
                 bonus: {
-                    title: `Bonus in ${monthNames[dateNow.getMonth() - 1]} ${dateNow.getFullYear()}`,
+                    title: `Bonus for ${monthNames[dateNow.getMonth() - 1]} ${dateNow.getFullYear()}`,
                     type: 'custom',
                     filter: false,
                     class: 'text-center',

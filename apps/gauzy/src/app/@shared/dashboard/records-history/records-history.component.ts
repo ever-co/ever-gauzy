@@ -30,10 +30,11 @@ export class RecordsHistoryComponent implements OnInit {
                 viewModel = this.recordsData.map(i => {
                     return {
                         id: i.id,
-                        valueDate: new Date(i.valueDate).toLocaleDateString('uk'),
+                        valueDate: i.valueDate,
                         clientName: i.clientName,
                         clientId: i.clientId,
-                        amount: i.amount
+                        amount: i.amount,
+                        notes: i.notes
                     }
                 });
 
@@ -43,7 +44,7 @@ export class RecordsHistoryComponent implements OnInit {
                 viewModel = this.recordsData.map(i => {
                     return {
                         id: i.id,
-                        valueDate: new Date(i.valueDate).toLocaleDateString(),
+                        valueDate: i.valueDate,
                         vendorId: i.vendorId,
                         vendorName: i.vendorName,
                         categoryId: i.categoryId,

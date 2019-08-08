@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { UsersService } from '../../../@core/services/users.service';
 import { Store } from '../../../@core/services/store.service';
 import { User } from '@gauzy/models';
+import { NbToastrService } from '@nebular/theme';
 
 @Component({
     selector: 'ngx-profile',
@@ -17,16 +18,17 @@ export class ProfileComponent implements OnInit {
 
     constructor(private fb: FormBuilder,
                 private userService: UsersService,
-                private store: Store) { }
+                private store: Store,
+                private toastrService: NbToastrService) { }
 
     async ngOnInit() {
         try {
             const user = await this.userService.getUserById(this.store.userId);
+            
             this._initializeForm(user);
         } catch (error) {
-            console.error(error)
-        }
-
+            this.toastrService.danger(error.error.message || error.message, 'Error');
+        }      
     }
 
     handleImageUploadError(error: any) {
@@ -36,8 +38,9 @@ export class ProfileComponent implements OnInit {
     async submitForm() {
         try {
             await this.userService.update(this.store.userId, this.form.value);
+            this.toastrService.info('Your profile has been updated successfully.', 'Success');
         } catch (error) {
-            console.error(error)
+            this.toastrService.danger(error.error.message || error.message, 'Error');
         }
     }
 

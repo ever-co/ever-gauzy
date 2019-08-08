@@ -9,7 +9,6 @@ import {
   NbResetPasswordComponent,
 } from '@nebular/auth';
 import { AuthGuard } from './@core/auth/auth.guard';
-import { ProfileComponent } from './pages/auth/profile/profile.component';
 
 const routes: Routes = [
   {

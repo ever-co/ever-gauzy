@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { NbMenuModule } from '@nebular/theme';
+import { NbMenuModule, NbToastrModule } from '@nebular/theme';
 
 import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
@@ -16,6 +16,7 @@ import { RoleGuard } from '../@core/role/role.guard';
     ThemeModule,
     NbMenuModule,
     MiscellaneousModule,
+    NbToastrModule.forRoot(),
   ],
   declarations: [
     PagesComponent

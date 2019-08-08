@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { ExpensesService } from '../../@core/services/expenses.service';
 import { AuthService } from '../../@core/services/auth.service';
 import { RolesEnum, Income, Expense } from '@gauzy/models';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { RecordsHistoryComponent, HistoryType } from '../../@shared/dashboard/records-history/records-history.component';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
@@ -18,6 +18,7 @@ import { EmployeeStatisticsService } from '../../@core/services/employee-statist
 export class DashboardComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
     hasRole: boolean;
+    loading = true;
 
     selectedDate: Date;
     selectedEmployee: SelectedEmployee;
@@ -62,6 +63,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 if (this.selectedDate) {
                     this._loadEmployeeTotalIncome();
                     this._loadEmployeeTotalExpense();
+                    this.loading = false;
                 }
             });
 
@@ -73,6 +75,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 if (this.selectedEmployee) {
                     this._loadEmployeeTotalIncome();
                     this._loadEmployeeTotalExpense();
+                    this.loading = false;
                 }
             });
 

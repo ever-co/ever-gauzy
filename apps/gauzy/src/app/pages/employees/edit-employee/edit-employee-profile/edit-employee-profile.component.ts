@@ -7,6 +7,7 @@ import { first, takeUntil } from 'rxjs/operators';
 import { Employee } from '@gauzy/models';
 import { Subject, Subscription } from 'rxjs';
 import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
+import { NbToastrService } from '@nebular/theme';
 
 @Component({
     selector: 'ngx-edit-employee-profile',
@@ -61,7 +62,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
         private fb: FormBuilder,
         private location: Location,
         private employeeService: EmployeesService,
-        private userService: UsersService) { }
+        private userService: UsersService,
+        private toastrService: NbToastrService) { }
 
     ngOnInit() {
         this.route.params
@@ -77,16 +79,18 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
     }
 
     handleImageUploadError(error: any) {
-        console.error(error);
+        this.toastrService.danger(error);
     }
 
     async submitForm() {
         if (this.form.valid) {
             try {
                 this.userService.update(this.selectedEmployee.user.id, this.form.value);
+
+                this.toastrService.info('Employee profile updated.', 'Success');
                 this._loadEmployeeData();
             } catch (error) {
-                console.error(error)
+                this.toastrService.danger(error.error.message || error.message, 'Error');
             }
         }
     }

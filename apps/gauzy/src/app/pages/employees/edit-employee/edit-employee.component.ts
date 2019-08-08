@@ -6,7 +6,7 @@ import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
 import { Employee, EmployeeSettings } from '@gauzy/models';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeeSettingMutationComponent } from '../../../@shared/employee/employee-setting-mutation/employee-setting-mutation.component';
 import { EmployeeSettingsService } from '../../../@core/services/employee-settings.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -35,7 +35,8 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
                 private organizationsService: OrganizationsService,
                 private store: Store,
                 private dialogService: NbDialogService,
-                private employeeSettingService: EmployeeSettingsService) { }
+                private employeeSettingService: EmployeeSettingsService,
+                private toastrService: NbToastrService) { }
 
     async ngOnInit() {
         this.store.selectedDate$
@@ -90,26 +91,31 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
             .getById(this.store.selectedOrganizationId).pipe(first()).toPromise();
 
         if (organization) {
-            currency = organization.currency
+            currency = organization.currency;
         }
 
         const result = await this.dialogService
             .open(EmployeeSettingMutationComponent)
             .onClose
             .pipe(first())
-            .toPromise()
+            .toPromise();
 
         if (result) {
-            await this.employeeSettingService.create({
-                employeeId: this.selectedEmployee.id,
-                settingType: result.settingType,
-                value: result.value,
-                year: this.selectedDate.getFullYear(),
-                month: this.selectedDate.getMonth() + 1,
-                currency
-            });
-
-            this._loadEmployeeSettings();
+            try {
+                await this.employeeSettingService.create({
+                    employeeId: this.selectedEmployee.id,
+                    settingType: result.settingType,
+                    value: result.value,
+                    year: this.selectedDate.getFullYear(),
+                    month: this.selectedDate.getMonth() + 1,
+                    currency
+                });
+                
+                this.toastrService.info('Employee setting set.', 'Success');
+                this._loadEmployeeSettings();
+            } catch (error) {
+                this.toastrService.danger(error.error.message || error.message, 'Error');
+            }
         }
     }
 
@@ -141,11 +147,12 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
                 this.selectedRowIndexToShow = null;
                 this._loadEmployeeSettings();
 
-                setTimeout(() => { // Wait the menu animation to finish, than update
+                this.toastrService.info('Employee setting edited.', 'Success');
+                setTimeout(() => {
                     this._loadEmployeeSettings();
                 }, 300);
             } catch (error) {
-                console.error(error);
+                this.toastrService.danger(error.error.message || error.message, 'Error');
             }
         }
     }
@@ -164,11 +171,12 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
                 await this.employeeSettingService.delete(id);
                 this.selectedRowIndexToShow = null;
 
-                setTimeout(() => { // Wait the menu animation to finish, than delete
+                this.toastrService.info('Employee setting deleted.', 'Success');
+                setTimeout(() => {
                     this._loadEmployeeSettings();
                 }, 100);
             } catch (error) {
-                console.error(error);
+                this.toastrService.danger(error.error.message || error.message, 'Error');
             }
         }
     }

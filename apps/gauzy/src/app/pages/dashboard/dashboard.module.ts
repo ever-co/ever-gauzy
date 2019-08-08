@@ -9,7 +9,8 @@ import {
     NbDialogModule,
     NbTreeGridModule,
     NbIconModule,
-    NbTooltipModule
+    NbTooltipModule,
+    NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
@@ -49,7 +50,8 @@ export function HttpLoaderFactory(http: HttpClient) {
                 deps: [HttpClient]
             }
         }),
-        ChartModule
+        ChartModule,
+        NbSpinnerModule
     ],
     declarations: [
         DashboardComponent,
