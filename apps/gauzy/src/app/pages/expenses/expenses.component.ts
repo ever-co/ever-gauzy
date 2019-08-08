@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
 import { RolesEnum } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
@@ -84,7 +84,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     constructor(private authService: AuthService,
         private dialogService: NbDialogService,
         private store: Store,
-        private expenseService: ExpensesService) { }
+        private expenseService: ExpensesService,
+        private toastrService: NbToastrService) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -105,10 +106,12 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(employee => {
-                this.selectedEmployeeId = employee.id;
+                if (employee && employee.id) {
+                    this.selectedEmployeeId = employee.id;
 
-                if (this.selectedOrganizationId) {
-                    this._loadTableData();
+                    if (this.selectedOrganizationId) {
+                        this._loadTableData();
+                    }
                 }
             });
     }
@@ -133,9 +136,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                                 notes: formData.notes
                             });
 
+                        this.toastrService.info('Expense added.', 'Success');
                         this._loadTableData();
                     } catch (error) {
-                        console.log(error)
+                        this.toastrService.danger(error.error.message || error.message, 'Error');
                     }
                 }
             });
@@ -162,9 +166,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                             notes: formData.notes
                         });
 
+                        this.toastrService.info('Expense edited.', 'Success');
                         this._loadTableData();
                     } catch (error) {
-                        console.log(error)
+                        this.toastrService.danger(error.error.message || error.message, 'Error');
                     }
                 }
             });
@@ -182,10 +187,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                         await this.expenseService
                             .delete(this.selectedExpense.data.id);
 
+                        this.toastrService.info('Expense deleted.', 'Success');
                         this._loadTableData();
                         this.selectedExpense = null;
                     } catch (error) {
-                        console.log(error)
+                        this.toastrService.danger(error.error.message || error.message, 'Error');
                     }
                 }
             });

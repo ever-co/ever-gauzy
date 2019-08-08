@@ -5,9 +5,8 @@ import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { IncomeService } from '../../@core/services/income.service';
-import { FormBuilder, Validators } from '@angular/forms';
 import { LocalDataSource } from 'ng2-smart-table';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent } from './table-components/date-view/date-view.component';
@@ -73,7 +72,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
         private store: Store,
         private incomeService: IncomeService,
         private dialogService: NbDialogService,
-        private fb: FormBuilder) { }
+        private toastrService: NbToastrService) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -108,9 +107,11 @@ export class IncomeComponent implements OnInit, OnDestroy {
                     notes: result.notes
                 });
 
+                this.toastrService.info('Income added.', 'Success');
+
                 this._loadEmployeeIncomeData();
             } catch (error) {
-                console.log(error);
+                this.toastrService.danger(error.error.message || error.message, 'Error');
             }
         }
     }
@@ -134,11 +135,12 @@ export class IncomeComponent implements OnInit, OnDestroy {
                                 valueDate: result.valueDate,
                                 notes: result.notes
                             });
-
+                        
+                        this.toastrService.info('Income edited.', 'Success');
                         this._loadEmployeeIncomeData();
                         this.selectedIncome = null;
                     } catch (error) {
-                        console.log(error)
+                        this.toastrService.danger(error.error.message || error.message, 'Error');
                     }
                 }
             });
@@ -156,10 +158,11 @@ export class IncomeComponent implements OnInit, OnDestroy {
                         await this.incomeService
                             .delete(this.selectedIncome.data.id);
 
+                        this.toastrService.info('Income deleted.', 'Success');
                         this._loadEmployeeIncomeData();
                         this.selectedIncome = null;
                     } catch (error) {
-                        console.log(error)
+                        this.toastrService.danger(error.error.message || error.message, 'Error');
                     }
                 }
             });

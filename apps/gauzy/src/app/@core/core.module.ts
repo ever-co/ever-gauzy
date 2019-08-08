@@ -10,6 +10,7 @@ import {
   LayoutService
 } from './utils';
 import { AuthModule } from './auth/auth.module';
+import { NbSpinnerModule } from '@nebular/theme';
 
 const DATA_SERVICES = [
 ];
@@ -51,7 +52,7 @@ export const NB_CORE_PROVIDERS = [
     AuthModule
   ],
   exports: [
-    NbAuthModule,
+    NbAuthModule
   ],
   declarations: [],
 })
