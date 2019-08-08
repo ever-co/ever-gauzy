@@ -14,6 +14,7 @@ import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-profile/edit-employee-profile.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeSettingMutationModule } from '../../@shared/employee/employee-setting-mutation/employee-setting-mutation.module';
+import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
 
 const COMPONENTS = [
     EmployeesComponent,
@@ -39,7 +40,8 @@ const COMPONENTS = [
         EmployeeEndWorkModule,
         NbTooltipModule,
         NgSelectModule,
-        EmployeeSettingMutationModule
+        EmployeeSettingMutationModule,
+        ImageUpladerModule
     ],
     declarations: [
         ...COMPONENTS,
