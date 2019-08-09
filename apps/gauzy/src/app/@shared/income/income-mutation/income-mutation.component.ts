@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { Income } from '@gauzy/models';
+import { Income, OrganizationSelectInput } from '@gauzy/models';
+import { CurrenciesEnum } from '@gauzy/models';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { Store } from '../../../@core/services/store.service';
+import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'ngx-income-mutation',
@@ -10,6 +14,7 @@ import { Income } from '@gauzy/models';
 })
 export class IncomeMutationComponent implements OnInit {
     income?: Income;
+    currencies = Object.values(CurrenciesEnum);
 
     form: FormGroup;
 
@@ -56,6 +61,10 @@ export class IncomeMutationComponent implements OnInit {
         this.form.get('amount').setValue(value);
     }
 
+    get currency() {
+        return this.form.get('currency');
+    }
+
     get clientName() {
         return this.form.get('client').value.clientName;
     }
@@ -65,8 +74,10 @@ export class IncomeMutationComponent implements OnInit {
     }
 
     constructor(private fb: FormBuilder,
-        protected dialogRef: NbDialogRef<IncomeMutationComponent>) {
-
+        protected dialogRef: NbDialogRef<IncomeMutationComponent>,
+        private organizationsService: OrganizationsService,
+        private store: Store
+    ) {
     }
 
     ngOnInit() {
@@ -88,15 +99,31 @@ export class IncomeMutationComponent implements OnInit {
                     clientId: this.income.clientId,
                     clientName: this.income.clientName
                 }, Validators.required],
-                notes: this.income.notes
+                notes: this.income.notes,
+                currency: this.income.currency
             });
         } else {
             this.form = this.fb.group({
                 valueDate: [new Date(), Validators.required],
                 amount: ['', Validators.required],
                 client: [null, Validators.required],
-                notes: ''
+                notes: '',
+                currency: ''
             });
+
+            this._loadDefaultCurrency();
+        }
+    }
+
+    private async _loadDefaultCurrency() {
+        const orgData = await this.organizationsService
+            .getById(
+                this.store.selectedOrganizationId,
+                [OrganizationSelectInput.currency]
+            ).pipe(first()).toPromise();
+
+        if (orgData && this.currency && !this.currency.value) {
+            this.currency.setValue(orgData.currency);
         }
     }
 }

@@ -18,6 +18,7 @@ export interface ExpenseViewModel {
     vendorName: string,
     categoryId: string,
     categoryName: string,
+    currency: string,
     amount: number,
     notes: string
 }
@@ -85,10 +86,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     }
 
     constructor(private authService: AuthService,
-                private dialogService: NbDialogService,
-                private store: Store,
-                private expenseService: ExpensesService,
-                private toastrService: NbToastrService) { }
+        private dialogService: NbDialogService,
+        private store: Store,
+        private expenseService: ExpensesService,
+        private toastrService: NbToastrService) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -130,7 +131,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                                 vendorId: formData.vendor.vendorId,
                                 vendorName: formData.vendor.vendorName,
                                 valueDate: formData.valueDate,
-                                notes: formData.notes
+                                notes: formData.notes,
+                                currency: formData.currency
                             });
 
                         this.toastrService.info('Expense added.', 'Success');
@@ -160,7 +162,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                             vendorId: formData.vendor.vendorId,
                             vendorName: formData.vendor.vendorName,
                             valueDate: formData.valueDate,
-                            notes: formData.notes
+                            notes: formData.notes,
+                            currency: formData.currency
                         });
 
                         this.toastrService.info('Expense edited.', 'Success');
@@ -207,7 +210,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     }
                 }, this.selectedDate);
 
-            
+
             const expenseVM: ExpenseViewModel[] = items.map(i => {
                 return {
                     id: i.id,
@@ -217,7 +220,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     categoryId: i.categoryId,
                     categoryName: i.categoryName,
                     amount: i.amount,
-                    notes: i.notes
+                    notes: i.notes,
+                    currency: i.currency
                 }
             });
 

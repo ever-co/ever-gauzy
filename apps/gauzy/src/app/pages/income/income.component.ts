@@ -115,7 +115,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
                     clientId: result.client.clientId,
                     valueDate: result.valueDate,
                     employeeId: this.selectedEmployeeId,
-                    notes: result.notes
+                    notes: result.notes,
+                    currency: result.currency
                 });
 
                 this.toastrService.info('Income added.', 'Success');
@@ -144,9 +145,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
                                 clientName: result.client.clientName,
                                 clientId: result.client.clientId,
                                 valueDate: result.valueDate,
-                                notes: result.notes
+                                notes: result.notes,
+                                currency: result.currency
                             });
-                        
+
                         this.toastrService.info('Income edited.', 'Success');
                         this._loadEmployeeIncomeData();
                         this.selectedIncome = null;

@@ -24,8 +24,14 @@ export class OrganizationController extends CrudController<Organization> {
     @ApiOperation({ title: 'Find Organization by id.' })
     @ApiResponse({ status: HttpStatus.OK, description: 'Found one record', type: Organization })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
-    @Get(':id')
-    async findById(@Param('id', UUIDValidationPipe) id: string): Promise<Organization> {
-        return this.organizationService.findOne(id);
+    @Get(':id/:select')
+    async findOneById(@Param('id', UUIDValidationPipe) id: string, @Param('select') select: string): Promise<Organization> {
+        const findObj = {};
+        
+        if (select) {
+            findObj['select'] = JSON.parse(select);
+        }
+
+        return this.organizationService.findOne(id, findObj);
     }
 }
