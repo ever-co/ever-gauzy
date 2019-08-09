@@ -68,10 +68,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.showDateSelector = false;
         }
 
-        if (url.endsWith('/dashboard')) {
-            this.showOrganizationsSelector = false;
-        }
-
         const regex = RegExp('/pages/employees/edit/.*/profile', 'i');
 
         if (regex.test(url)) {
