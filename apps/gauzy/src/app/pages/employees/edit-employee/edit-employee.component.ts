@@ -30,13 +30,13 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     selectedRowIndexToShow: number;
 
     constructor(private route: ActivatedRoute,
-                private router: Router,
-                private employeeService: EmployeesService,
-                private organizationsService: OrganizationsService,
-                private store: Store,
-                private dialogService: NbDialogService,
-                private employeeSettingService: EmployeeSettingsService,
-                private toastrService: NbToastrService) { }
+        private router: Router,
+        private employeeService: EmployeesService,
+        private organizationsService: OrganizationsService,
+        private store: Store,
+        private dialogService: NbDialogService,
+        private employeeSettingService: EmployeeSettingsService,
+        private toastrService: NbToastrService) { }
 
     async ngOnInit() {
         this.store.selectedDate$
@@ -108,9 +108,9 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
                     value: result.value,
                     year: this.selectedDate.getFullYear(),
                     month: this.selectedDate.getMonth() + 1,
-                    currency
+                    currency: result.currency
                 });
-                
+
                 this.toastrService.info('Employee setting set.', 'Success');
                 this._loadEmployeeSettings();
             } catch (error) {
