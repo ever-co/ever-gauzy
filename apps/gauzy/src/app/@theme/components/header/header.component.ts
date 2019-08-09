@@ -63,11 +63,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.showDateSelector = false;
         }
 
-        if (url.endsWith('/income')) {
-            this.showOrganizationsSelector = false;
-            this.showDateSelector = false;
-        }
-
         const regex = RegExp('/pages/employees/edit/.*/profile', 'i');
 
         if (regex.test(url)) {

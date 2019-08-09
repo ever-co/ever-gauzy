@@ -126,7 +126,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         const { name } = await this.organizationsService
             .getById(id)
             .pipe(first())
-            .toPromise()
+            .toPromise();
 
         const { items } = await this.employeesService.getAll(['user'], { organization: { id } }).pipe(first()).toPromise();
 

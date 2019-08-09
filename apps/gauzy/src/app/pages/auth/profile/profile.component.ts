@@ -35,7 +35,7 @@ export class ProfileComponent implements OnInit {
     }
 
     handleImageUploadError(error: any) {
-        console.error(error);
+        this.toastrService.danger(error.error.message || error.message, 'Error');
     }
 
     async submitForm() {

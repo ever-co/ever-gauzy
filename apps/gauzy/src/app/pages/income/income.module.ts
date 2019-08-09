@@ -16,7 +16,7 @@ import { IncomeService } from '../../@core/services/income.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';
-import { DateViewComponent } from './table-components/date-view/date-view.component';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 @NgModule({
     imports: [
@@ -33,12 +33,12 @@ import { DateViewComponent } from './table-components/date-view/date-view.compon
         NgSelectModule,
         NbDialogModule.forChild(),
         UserFormsModule,
-        IncomeMutationModule
+        IncomeMutationModule,
+        TableComponentsModule
     ],
     entryComponents: [
-        DateViewComponent
     ],
-    declarations: [IncomeComponent, DateViewComponent],
+    declarations: [IncomeComponent],
     providers: [IncomeService]
 })
 export class IncomeModule { }

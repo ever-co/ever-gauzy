@@ -9,7 +9,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
-import { DateViewComponent } from './table-components/date-view/date-view.component';
+import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 
 interface SelectedRowModel {
     data: Income,
@@ -60,6 +60,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
     hasRole: boolean;
     selectedEmployeeId: string;
+    selectedDate: Date;
     smartTableSource = new LocalDataSource();
 
     selectedIncome: SelectedRowModel;
@@ -79,6 +80,16 @@ export class IncomeComponent implements OnInit, OnDestroy {
             .hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
             .pipe(first())
             .toPromise()
+
+        this.store.selectedDate$
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(date => {
+                this.selectedDate = date;
+
+                if (this.selectedEmployeeId) {
+                    this._loadEmployeeIncomeData(this.selectedEmployeeId);
+                }
+            });
 
         this.store.selectedEmployee$
             .pipe(takeUntil(this._ngDestroy$))
@@ -169,7 +180,11 @@ export class IncomeComponent implements OnInit, OnDestroy {
     }
 
     private async _loadEmployeeIncomeData(id = this.selectedEmployeeId) {
-        const { items } = await this.incomeService.getAll(['employee'], { employee: { id } });
+        const { items } = await this.incomeService.getAll(['employee'], {
+            employee: {
+                id
+            }
+        }, this.selectedDate);
 
         this.smartTableSource.load(items);
     }

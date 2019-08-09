@@ -9,10 +9,11 @@ import { Subject } from 'rxjs';
 import { ExpensesService } from '../../@core/services/expenses.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 
 export interface ExpenseViewModel {
     id: string,
-    valueDate: string,
+    valueDate: Date,
     vendorId: string,
     vendorName: string,
     categoryId: string,
@@ -41,7 +42,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         columns: {
             valueDate: {
                 title: 'Date',
-                type: 'string'
+                type: 'custom',
+                width: '20%',
+                renderComponent: DateViewComponent
             },
             vendorName: {
                 title: 'Vendor',
@@ -69,7 +72,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
 
     selectedEmployeeId: string;
-    selectedOrganizationId: string;
+    selectedDate: Date;
 
     hasRole: boolean;
 
@@ -82,10 +85,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     }
 
     constructor(private authService: AuthService,
-        private dialogService: NbDialogService,
-        private store: Store,
-        private expenseService: ExpensesService,
-        private toastrService: NbToastrService) { }
+                private dialogService: NbDialogService,
+                private store: Store,
+                private expenseService: ExpensesService,
+                private toastrService: NbToastrService) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -93,14 +96,12 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             .pipe(first())
             .toPromise();
 
-        this.store.selectedOrganizationId$
+        this.store.selectedDate$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe(id => {
-                this.selectedOrganizationId = id;
+            .subscribe(date => {
+                this.selectedDate = date;
 
-                if (this.selectedEmployeeId) {
-                    this._loadTableData();
-                }
+                this._loadTableData();
             });
 
         this.store.selectedEmployee$
@@ -108,10 +109,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             .subscribe(employee => {
                 if (employee && employee.id) {
                     this.selectedEmployeeId = employee.id;
-
-                    if (this.selectedOrganizationId) {
-                        this._loadTableData();
-                    }
+                    this._loadTableData();
                 }
             });
     }
@@ -126,7 +124,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                         await this.expenseService
                             .create({
                                 employeeId: this.selectedEmployeeId,
-                                orgId: this.selectedOrganizationId,
                                 amount: formData.amount,
                                 categoryId: formData.category.categoryId,
                                 categoryName: formData.category.categoryName,
@@ -204,16 +201,17 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     private async _loadTableData() {
         try {
             const { items } = await this.expenseService
-                .getAll(['employee', 'organization'],
-                    {
-                        employee: { id: this.selectedEmployeeId },
-                        organization: { id: this.selectedOrganizationId }
-                    });
+                .getAll(['employee'], {
+                    employee: {
+                        id: this.selectedEmployeeId
+                    }
+                }, this.selectedDate);
 
+            
             const expenseVM: ExpenseViewModel[] = items.map(i => {
                 return {
                     id: i.id,
-                    valueDate: new Date(i.valueDate).toLocaleDateString(),
+                    valueDate: i.valueDate,
                     vendorId: i.vendorId,
                     vendorName: i.vendorName,
                     categoryId: i.categoryId,
@@ -225,7 +223,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
             this.smartTableSource.load(expenseVM);
         } catch (error) {
-            console.log(error)
+            this.toastrService.danger(error.error.message || error.message, 'Error');
         }
     }
 

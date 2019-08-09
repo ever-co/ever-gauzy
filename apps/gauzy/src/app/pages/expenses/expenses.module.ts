@@ -7,6 +7,7 @@ import { ExpensesComponent } from './expenses.component';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ExpensesMutationModule } from '../../@shared/expenses/expenses-mutation/expenses-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 @NgModule({
     imports: [
@@ -20,7 +21,8 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
         Ng2SmartTableModule,
         NbDialogModule.forChild(),
         ExpensesMutationModule,
-        UserFormsModule
+        UserFormsModule,
+        TableComponentsModule
     ],
     declarations: [
         ExpensesComponent

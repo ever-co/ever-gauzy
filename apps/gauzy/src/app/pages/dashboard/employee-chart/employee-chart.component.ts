@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
-import { NbThemeService } from '@nebular/theme';
+import { NbThemeService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
 import { Store } from '../../../@core/services/store.service';
@@ -24,7 +24,8 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 
     constructor(private themeService: NbThemeService,
         private employeeStatisticsService: EmployeeStatisticsService,
-        private store: Store) { }
+        private store: Store,
+        private toastrService: NbToastrService) { }
 
     async ngOnInit() {
         this.store.selectedEmployee$
@@ -117,7 +118,7 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
                                 };
                             });
                     } catch (error) {
-                        console.error(error)
+                        this.toastrService.danger(error.error.message || error.message, 'Error');
                     }
                 }
             });

@@ -19,7 +19,6 @@ export interface Expense extends IBaseEntityModel {
 
 export interface ExpenseCreateInput {
     employeeId: string;
-    orgId: string;
     amount: number;
     vendorName: string;
     vendorId: string;
