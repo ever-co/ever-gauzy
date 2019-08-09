@@ -29,6 +29,7 @@ export class ExpenseCreateHandler implements ICommandHandler<ExpenseCreateComman
         expense.valueDate = input.valueDate;
         expense.employee = employee;
         expense.organization = organization;
+        expense.currency = input.currency;
 
         if (!expense.currency) {
             expense.currency = organization.currency

@@ -2,6 +2,10 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
+import { CurrenciesEnum, OrganizationSelectInput } from '@gauzy/models';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { Store } from '../../../@core/services/store.service';
+import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'ga-expenses-mutation',
@@ -12,6 +16,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
     form: FormGroup;
 
     expense: ExpenseViewModel;
+    currencies = Object.values(CurrenciesEnum);
 
     fakeVendors = [
         {
@@ -75,8 +80,15 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
         }
     ];
 
-    constructor(protected dialogRef: NbDialogRef<ExpensesMutationComponent>,
-                private fb: FormBuilder) { }
+    constructor(
+        protected dialogRef: NbDialogRef<ExpensesMutationComponent>,
+        private fb: FormBuilder,
+        private organizationsService: OrganizationsService,
+        private store: Store) { }
+
+    get currency() {
+        return this.form.get('currency');
+    }
 
     ngOnInit() {
         this._initializeForm();
@@ -101,6 +113,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
                     categoryName: this.expense.categoryName
                 }, Validators.required],
                 notes: [this.expense.notes],
+                currency: [this.expense.currency],
                 valueDate: [new Date(this.expense.valueDate), Validators.required]
             });
         } else {
@@ -109,12 +122,27 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
                 vendor: [null, Validators.required],
                 category: [null, Validators.required],
                 notes: [''],
+                currency: [''],
                 valueDate: [new Date(), Validators.required]
             });
+
+            this._loadDefaultCurrency();
         }
     }
 
     ngOnDestroy() {
-        
+
+    }
+
+    private async _loadDefaultCurrency() {
+        const orgData = await this.organizationsService
+            .getById(
+                this.store.selectedOrganizationId,
+                [OrganizationSelectInput.currency]
+            ).pipe(first()).toPromise();
+
+        if (orgData && this.currency && !this.currency.value) {
+            this.currency.setValue(orgData.currency);
+        }
     }
 }
