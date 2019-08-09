@@ -61,6 +61,19 @@
             />
           </div>
         </div>
+        <div class="col-sm-6">
+          <nb-select
+            class="d-block"
+            placeholder="Select Showcase"
+            formControlName="currency"
+          >
+            <nb-option
+              *ngFor="let currency of currencies"
+              value="{{ currency }}"
+              >{{ currency }}</nb-option
+            >
+          </nb-select>
+        </div>
       </div>
 
       <div class="row">

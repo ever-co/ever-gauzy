@@ -14,6 +14,16 @@ export interface OrganizationFindInput extends IBaseEntityModel {
     currency?: string;
 }
 
+export enum OrganizationSelectInput {
+    id = 'id',
+    name = 'name',
+    valueDate = 'valueDate',
+    imageUrl = 'imageUrl',
+    currency = 'currency',
+    createdAt = 'createdAt',
+    updatedAt = 'updatedAt',
+}
+
 export enum CurrenciesEnum {
     USD = 'USD',
     BGN = 'BGN',
