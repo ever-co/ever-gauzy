@@ -86,7 +86,6 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
         if (this.form.valid) {
             try {
                 this.userService.update(this.selectedEmployee.user.id, this.form.value);
-
                 this.toastrService.info('Employee profile updated.', 'Success');
                 this._loadEmployeeData();
             } catch (error) {
@@ -108,7 +107,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
     private _initializeForm(employee: Employee) {
         // TODO: Implement Departments and Positions!
         this.form = this.fb.group({
-            username: [employee.user.username, Validators.required],
+            username: [employee.user.username],
             email: [employee.user.email, Validators.required],
             firstName: [employee.user.firstName, Validators.required],
             lastName: [employee.user.lastName, Validators.required],
