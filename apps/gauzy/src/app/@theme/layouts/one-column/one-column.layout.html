@@ -6,7 +6,7 @@
     <nb-sidebar class="menu-sidebar" tag="menu-sidebar" responsive>
         <ng-content select="nb-menu"></ng-content>
         <div class="user-container">
-            <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.picture"></nb-user>
+            <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.imageUrl"></nb-user>
         </div>
     </nb-sidebar>
 

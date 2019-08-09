@@ -4,7 +4,8 @@ import {
     NbCardModule,
     NbButtonModule,
     NbInputModule,
-    NbIconModule
+    NbIconModule,
+    NbBadgeModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -14,6 +15,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AuthRoutingModule } from './auth-routing.module';
 import { ProfileComponent } from './profile/profile.component';
 import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
+import { RoleService } from '../../@core/services/role.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
     return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -37,11 +39,12 @@ export function HttpLoaderFactory(http: HttpClient) {
                 deps: [HttpClient]
             }
         }),
-        ImageUpladerModule
+        ImageUpladerModule,
+        NbBadgeModule
     ],
     declarations: [
         ProfileComponent
     ],
-    providers: []
+    providers: [RoleService]
 })
 export class AuthModule { }

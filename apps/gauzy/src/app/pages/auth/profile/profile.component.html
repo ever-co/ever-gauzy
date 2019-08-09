@@ -41,6 +41,12 @@
             (mouseleave)="hoverState = false"
           />
         </div>
+        <nb-badge
+          status="danger"
+          style="position: relative; margin-top: 20px;"
+          [text]="roleName"
+          position="bottom-left"
+        ></nb-badge>
       </div>
 
       <div class="employee-form">
@@ -70,6 +76,21 @@
                 />
               </div>
             </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="label" for="emailInput">Email</label>
+                <input
+                  fullWidth
+                  id="emailInput"
+                  type="email"
+                  nbInput
+                  formControlName="email"
+                />
+              </div>
+            </div>
+            <div class="col"></div>
           </div>
 
           <div class="actions">
