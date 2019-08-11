@@ -103,8 +103,13 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 ## Contact Us
 
--   For business inquiries: <mailto:ever@ever.co>
+-   [Spectrum Community](https://spectrum.chat/gauzy)
+-   [Gitter Chat](https://gitter.im/ever-co/gauzy)
+-   [CodeMentor](https://www.codementor.io/evereq)
+-   For business inquiries: <mailto:gauzy@ever.co>
 -   Please report security vulnerabilities to <mailto:security@ever.co>
+-   [Gauzy Platform @ Twitter](https://twitter.com/gauzyplatform)
+-   [Gauzy Platform @ Facebook](https://www.facebook.com/gauzyplatform)
 
 ## Security
 
