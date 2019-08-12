@@ -1,18 +1,18 @@
 <nb-card>
     <nb-card-header class="d-flex">
-        <h5>End Work</h5>
+        <h5>End Work for {{employeeFullName}} </h5>
         <nb-icon class="ml-auto mt-1 close" icon="close-outline" (click)="closeDialog()"></nb-icon>
     </nb-card-header>
     <nb-card-body>
         <div class="row">
             <div class="col-sm-12">
-                <input [nbDatepicker]="datepicker" nbInput fullWidth [(ngModel)]="endWorkValue">
+                <input [nbDatepicker]="datepicker" nbInput fullWidth [(ngModel)]="endWorkValue" placeholder="Date (optionally)">
                 <nb-datepicker #datepicker></nb-datepicker>
             </div>
         </div>
 
     </nb-card-body>
     <nb-card-footer class="text-right">
-        <button status="success" (click)="add()" nbButton>Accept</button>
+        <button status="success" (click)="add()" nbButton>End Work</button>
     </nb-card-footer>
 </nb-card>
