@@ -104,8 +104,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     async endWork() {
-        const dialog = this.dialogService.open(EmployeeEndWorkComponent,{
-            context: this.selectedEmployee.endWork
+        const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
+            context: { endWorkValue: this.selectedEmployee.endWork, employeeFullName: this.selectedEmployee.fullName }
         });
 
         const data = await dialog.onClose.pipe(first()).toPromise();
@@ -117,7 +117,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }
-            
+
             this.loadPage();
         }
     }
@@ -136,7 +136,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 email: i.user.email,
                 id: i.id,
                 isActive: i.isActive,
-                endWork: i.endWork ? new Date(i.endWork).toUTCString() : '',
+                endWork: i.endWork ? new Date(i.endWork) : '',
+                formatedDate: i.endWork ? new Date(i.endWork).getDate() + ' ' + monthNames[new Date(i.endWork).getMonth()] + ' ' + new Date(i.endWork).getFullYear() : '',
                 imageUrl: i.user.imageUrl,
                 // TODO: laod real bonus and bonusDate
                 bonus: Math.floor(1000 * Math.random()) + 10,
@@ -172,8 +173,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     class: 'text-center',
                     renderComponent: EmployeeBonusComponent
                 },
-                endWork: {
-                    title: 'End Work',
+                formatedDate: {
+                    title: 'Work Status',
                     type: 'string'
                 }
             },

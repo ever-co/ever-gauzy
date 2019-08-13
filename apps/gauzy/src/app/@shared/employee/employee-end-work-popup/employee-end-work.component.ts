@@ -17,6 +17,7 @@ export class EmployeeEndWorkComponent implements OnInit {
     userBasicInfo: BasicInfoFormComponent;
     
     endWorkValue: Date;
+    employeeFullName: string;
 
     constructor(
         protected dialogRef: NbDialogRef<EmployeeEndWorkComponent>,
