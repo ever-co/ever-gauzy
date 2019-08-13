@@ -10,7 +10,7 @@ import { NbDialogRef } from '@nebular/theme';
             </nb-card-header>
             <nb-card-body>
               <span>
-              Are you sure you want to delete {{employeeFullName}} employee record?
+              Are you sure you want to delete {{recordType}} record?
               </span>
             </nb-card-body>
             <nb-card-footer>
@@ -28,8 +28,6 @@ import { NbDialogRef } from '@nebular/theme';
 })
 export class DeleteConfirmationComponent {
     recordType: string;
-    employeeFullName: string;
-
     constructor(protected dialogRef: NbDialogRef<DeleteConfirmationComponent>) { }
 
     close() {
