@@ -86,7 +86,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
     async delete() {
         this.dialogService.open(DeleteConfirmationComponent, {
-            context: { recordType: 'Employee' }
+            context: { recordType: this.selectedEmployee.fullName + ' employee' }
         })
             .onClose
             .pipe(takeUntil(this._ngDestroy$))
