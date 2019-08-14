@@ -1,42 +1,25 @@
-import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
-import { RolesEnum, Employee } from '@gauzy/models';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
-import { Store } from '../../../@core/services/store.service';
-import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'ga-employee-end-work',
     templateUrl: 'employee-end-work.component.html',
     styleUrls: ['employee-end-work.component.scss'],
 })
-export class EmployeeEndWorkComponent implements OnInit {
-    @ViewChild('userBasicInfo', { static: false })
-    userBasicInfo: BasicInfoFormComponent;
-    
+export class EmployeeEndWorkComponent {
+    backToWork: boolean;
     endWorkValue: Date;
     employeeFullName: string;
 
     constructor(
-        protected dialogRef: NbDialogRef<EmployeeEndWorkComponent>,
-        protected organizationsService: OrganizationsService,
-        protected employeesService: EmployeesService,
-        protected store: Store
+        protected dialogRef: NbDialogRef<EmployeeEndWorkComponent>
     ) { }
 
-    ngOnInit(): void {
-        console.warn("EmployeeEndWorkComponent");
-        console.log(this.dialogRef);
-    }
-
     closeDialog() {
-        console.log(this.endWorkValue);
-        this.dialogRef.close(this.endWorkValue);
+        this.dialogRef.close();
     }
 
-    add() {
-        this.closeDialog();
+    endWork() {
+        this.dialogRef.close(this.endWorkValue || new Date());
     }
 }
