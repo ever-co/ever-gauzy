@@ -1,10 +1,8 @@
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
-import { NbCardModule, NbButtonModule, NbIconModule, NbDatepickerModule } from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbIconModule, NbDatepickerModule, NbInputModule } from '@nebular/theme';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
 import { EmployeeEndWorkComponent } from './employee-end-work.component';
 
 @NgModule({
@@ -15,14 +13,13 @@ import { EmployeeEndWorkComponent } from './employee-end-work.component';
         UserFormsModule,
         NbButtonModule,
         NbIconModule,
-        NbDatepickerModule
+        NbDatepickerModule,
+        NbInputModule
     ],
     exports: [EmployeeEndWorkComponent],
     declarations: [EmployeeEndWorkComponent],
     entryComponents: [EmployeeEndWorkComponent],
     providers: [
-        OrganizationsService,
-        EmployeesService
     ]
 })
 export class EmployeeEndWorkModule { }

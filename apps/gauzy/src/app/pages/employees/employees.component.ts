@@ -105,7 +105,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
     async endWork() {
         const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
-            context: { endWorkValue: this.selectedEmployee.endWork, employeeFullName: this.selectedEmployee.fullName }
+            context: {
+                endWorkValue: this.selectedEmployee.endWork,
+                employeeFullName: this.selectedEmployee.fullName
+            }
         });
 
         const data = await dialog.onClose.pipe(first()).toPromise();
@@ -114,6 +117,28 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             try {
                 await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data);
                 this.toastrService.info('Employee set as inactive.', 'Success');
+            } catch (error) {
+                this.toastrService.danger(error.error.message || error.message, 'Error');
+            }
+
+            this.loadPage();
+        }
+    }
+
+    async backToWork() {
+        const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
+            context: {
+                backToWork: true,
+                employeeFullName: this.selectedEmployee.fullName
+            }
+        });
+
+        const data = await dialog.onClose.pipe(first()).toPromise();
+        
+        if (data) {
+            try {
+                await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, null);
+                this.toastrService.info('Employee set as active.', 'Success');
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }

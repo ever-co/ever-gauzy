@@ -29,10 +29,10 @@
       <button
         nbButton
         [disabled]="!selectedEmployee"
-        (click)="endWork()"
+        (click)="selectedEmployee.endWork ? backToWork() : endWork()"
         status="warning"
       >
-        <nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>End Work
+        <nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>{{selectedEmployee && selectedEmployee.endWork ? 'Back to Work' : 'End Work'}}
       </button>
     </div>
     <ng2-smart-table
