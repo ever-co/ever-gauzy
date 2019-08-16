@@ -31,6 +31,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     settingsSmartTable: object;
     sourceSmartTable = new LocalDataSource();
     selectedEmployee: EmployeeViewModel;
+    selectedOrganizationId: string;
 
     private _ngDestroy$ = new Subject<void>();
 
@@ -44,15 +45,12 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     ) { }
 
     ngOnInit() {
-        const selectedId = this.store.selectedOrganizationId;
-
-        if (selectedId) {
-            this.loadPage(selectedId);
-        }
-
-        this.store.selectedOrganizationId$
+        this.store.selectedOrganization$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe((id) => this.loadPage(id));
+            .subscribe(organization => {
+                this.selectedOrganizationId = organization.id;
+                this.loadPage();
+            });
 
         this._loadSmartTableSettings();
     }
@@ -147,13 +145,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         }
     }
 
-    private async loadPage(id: string = this.store.selectedOrganizationId) {
-        const { name } = await this.organizationsService
-            .getById(id)
-            .pipe(first())
-            .toPromise();
+    private async loadPage() {
+        const { name } = this.store.selectedOrganization;
 
-        const { items } = await this.employeesService.getAll(['user'], { organization: { id } }).pipe(first()).toPromise();
+        const { items } = await this.employeesService.getAll(['user'], { organization: { id: this.selectedOrganizationId } }).pipe(first()).toPromise();
 
         const employeesVm: EmployeeViewModel[] = items.filter(i => i.isActive).map((i) => {
             return {

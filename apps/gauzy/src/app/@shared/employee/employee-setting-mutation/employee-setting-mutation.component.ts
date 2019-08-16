@@ -50,7 +50,7 @@ export class EmployeeSettingMutationComponent implements OnInit {
     private async _loadDefaultCurrency() {
         const orgData = await this.organizationsService
             .getById(
-                this.store.selectedOrganizationId,
+                this.store.selectedOrganization.id,
                 [OrganizationSelectInput.currency]
             ).pipe(first()).toPromise();
 

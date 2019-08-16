@@ -87,8 +87,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     async addEmployeeSetting() {
         // TODO get currency from the page dropdown
         let currency;
-        const organization = await this.organizationsService
-            .getById(this.store.selectedOrganizationId).pipe(first()).toPromise();
+        const organization = this.store.selectedOrganization;
 
         if (organization) {
             currency = organization.currency;

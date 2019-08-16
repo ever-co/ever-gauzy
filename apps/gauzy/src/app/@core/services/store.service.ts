@@ -1,10 +1,10 @@
-import { User } from '@gauzy/models';
+import { User, Organization } from '@gauzy/models';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 
 export class Store {
-    private _selectedOrganizationId: string;
-    selectedOrganizationId$: BehaviorSubject<string> = new BehaviorSubject(this.selectedOrganizationId);
+    private _selectedOrganization: Organization;
+    selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(this.selectedOrganization);
 
     private _selectedEmployee: SelectedEmployee;
     selectedEmployee$: BehaviorSubject<SelectedEmployee> = new BehaviorSubject(this.selectedEmployee);
@@ -12,8 +12,8 @@ export class Store {
     private _selectedDate: Date;
     selectedDate$: BehaviorSubject<Date> = new BehaviorSubject(this.selectedDate);
 
-    get selectedOrganizationId(): string {
-        return this._selectedOrganizationId;
+    get selectedOrganization(): Organization {
+        return this._selectedOrganization;
     }
 
     set selectedEmployee(employee: SelectedEmployee) {
@@ -25,9 +25,9 @@ export class Store {
         return this._selectedEmployee;
     }
 
-    set selectedOrganizationId(id: string) {
-        this._selectedOrganizationId = id;
-        this.selectedOrganizationId$.next(id);
+    set selectedOrganization(organization: Organization) {
+        this.selectedOrganization$.next(organization);
+        this._selectedOrganization = organization;
     }
 
     get token(): string | null {
