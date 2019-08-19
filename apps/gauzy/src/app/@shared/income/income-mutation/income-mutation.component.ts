@@ -79,6 +79,10 @@ export class IncomeMutationComponent implements OnInit {
         }
     }
 
+    close() {
+        this.dialogRef.close();
+    }
+
     private _initializeForm() {
         if (this.income) {
             this.form = this.fb.group({

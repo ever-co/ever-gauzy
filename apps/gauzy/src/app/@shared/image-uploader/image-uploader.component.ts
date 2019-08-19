@@ -68,6 +68,10 @@ export class ImageUploaderComponent implements OnInit {
 
         this.uploader = new FileUploader(uploaderOptions);
 
+        this._attachListeners();
+    }
+
+    private _attachListeners() {
         this.uploader.onBuildItemForm = (fileItem: any, form: FormData): any => {
             form.append('upload_preset', 'ml_default');
             form.append('context', `photo=${fileItem.file.name}`);

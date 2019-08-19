@@ -1,7 +1,37 @@
 <nb-card>
-    <nb-card-header>
-        <h4>Organizations</h4>
-    </nb-card-header>
-    <nb-card-body>
-    </nb-card-body>
+  <nb-card-header>
+    <h4>Organizations</h4>
+  </nb-card-header>
+  <nb-card-body>
+    <div class="mb-3">
+      <button nbButton status="success" (click)="addOrganization()" class="mr-2">
+        <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
+      </button>
+
+      <button
+        nbButton
+        [disabled]="!selectedOrganization"
+        (click)="editOrganization()"
+        status="info"
+        class="mr-2"
+      >
+        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
+      </button>
+      <button
+        nbButton
+        [disabled]="!selectedOrganization"
+        (click)="deleteOrganization()"
+        status="danger"
+        class="mr-2"
+      >
+        <nb-icon class="mr-1" icon="trash-2-outline"></nb-icon>Delete
+      </button>
+    </div>
+    <ng2-smart-table
+      [settings]="settingsSmartTable"
+      [source]="smartTableSource"
+      (userRowSelect)="selectOrganization($event)"
+    >
+    </ng2-smart-table>
+  </nb-card-body>
 </nb-card>

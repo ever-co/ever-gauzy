@@ -123,10 +123,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     private async loadPage(id: string = this.store.selectedOrganizationId) {
-        const { name } = await this.organizationsService
-            .getById(id)
-            .pipe(first())
-            .toPromise();
+        const { name } = await this.organizationsService.getById(id);
 
         const { items } = await this.employeesService.getAll(['user'], { organization: { id } }).pipe(first()).toPromise();
 

@@ -1,0 +1,19 @@
+.content {
+    width: 670px !important;
+    height: 415px !important;
+
+    form {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 420px;
+    }
+
+    .actions {
+        margin-top: 0;
+    }
+}
+
+.employee-container {
+    height: 420px !important;
+}
