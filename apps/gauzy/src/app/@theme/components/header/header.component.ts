@@ -43,7 +43,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.menuService.onItemClick()
               .pipe(filter(({ tag }) => tag === 'create-context-menu'))
               .subscribe((e)=> {
-                console.log(e.item.link);
                 this.router.navigate([e.item.link], {
                     queryParams: {
                         openAddDialog: true
