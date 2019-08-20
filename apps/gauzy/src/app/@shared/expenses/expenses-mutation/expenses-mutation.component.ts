@@ -55,6 +55,18 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         },
         {
+            categoryName: 'Electricity',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Internet',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Water Supply',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
             categoryName: 'Office Supplies',
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         },
@@ -67,7 +79,23 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         },
         {
+            categoryName: 'Insurance Premiums',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
             categoryName: 'Courses',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Subscriptions',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Repairs',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Depreciable Assets',
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         },
         {
@@ -76,6 +104,18 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
         },
         {
             categoryName: 'Office Hardware',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Courier Services',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Business Trips',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Team Buildings',
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         }
     ];
