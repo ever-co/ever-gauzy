@@ -116,11 +116,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 }
             });
 
-        this.route.queryParamMap.subscribe(params => {
-            if (params.get('openAddDialog')) {
-                this.openAddExpenseDialog();
-            }
-        });
+        this.route.queryParamMap
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(params => {
+                if (params.get('openAddDialog')) {
+                    this.openAddExpenseDialog();
+                }
+            });
     }
 
     openAddExpenseDialog() {

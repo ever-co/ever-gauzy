@@ -42,6 +42,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
             this.menuService.onItemClick()
               .pipe(filter(({ tag }) => tag === 'create-context-menu'))
+              .pipe(takeUntil(this._ngDestroy$))
               .subscribe((e)=> {
                 this.router.navigate([e.item.link], {
                     queryParams: {

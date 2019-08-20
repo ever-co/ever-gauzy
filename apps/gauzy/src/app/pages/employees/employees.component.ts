@@ -56,11 +56,14 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .subscribe((id) => this.loadPage(id));
 
         this._loadSmartTableSettings();
-        this.route.queryParamMap.subscribe(params => {
-            if (params.get('openAddDialog')) {
-                this.add();
-            }
-        });
+
+        this.route.queryParamMap
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(params => {
+                if (params.get('openAddDialog')) {
+                    this.add();
+                }
+            });
     }
 
     selectEmployeeTmp(ev: {
@@ -140,7 +143,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         });
 
         const data = await dialog.onClose.pipe(first()).toPromise();
-        
+
         if (data) {
             try {
                 await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, null);

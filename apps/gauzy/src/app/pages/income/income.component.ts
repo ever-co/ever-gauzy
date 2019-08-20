@@ -102,11 +102,13 @@ export class IncomeComponent implements OnInit, OnDestroy {
                 }
             });
 
-        this.route.queryParamMap.subscribe(params => {
-            if (params.get('openAddDialog')) {
-                this.addIncome();
-            }
-        });
+        this.route.queryParamMap
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(params => {
+                if (params.get('openAddDialog')) {
+                    this.addIncome();
+                }
+            });
     }
 
     selectIncome(ev: SelectedRowModel) {
