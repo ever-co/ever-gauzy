@@ -11,7 +11,7 @@ import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-wo
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { monthNames } from '../../@core/utils/date';
 
 interface EmployeeViewModel {
@@ -40,7 +40,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         private dialogService: NbDialogService,
         private store: Store,
         private router: Router,
-        private toastrService: NbToastrService
+        private toastrService: NbToastrService,
+        private route: ActivatedRoute
     ) { }
 
     ngOnInit() {
@@ -55,6 +56,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             .subscribe((id) => this.loadPage(id));
 
         this._loadSmartTableSettings();
+        this.route.queryParamMap.subscribe(params => {
+            if (params.get('openAddDialog')) {
+                this.add();
+            }
+        });
     }
 
     selectEmployeeTmp(ev: {

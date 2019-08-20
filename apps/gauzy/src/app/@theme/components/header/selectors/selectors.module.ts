@@ -12,7 +12,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 const COMPONENTS = [
     OrganizationSelectorComponent,
     DateSelectorComponent,
-    EmployeeSelectorComponent
+    EmployeeSelectorComponent,
 ];
 
 @NgModule({

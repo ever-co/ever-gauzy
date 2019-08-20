@@ -16,13 +16,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     showEmployeesSelector = true;
     showDateSelector = true;
     showOrganizationsSelector = true;
+    createContextMenu = [
+        { title: 'Expense', link: 'pages/expenses' },
+        { title: 'Income',  link: 'pages/income' },
+        { title: 'Employee' , link: 'pages/employees'}
+      ];
 
     private _ngDestroy$ = new Subject<void>();
 
     constructor(private sidebarService: NbSidebarService,
         private menuService: NbMenuService,
         private layoutService: LayoutService,
-        private router: Router
+        private router: Router,
     ) { }
 
     ngOnInit() {
@@ -34,7 +39,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
             .subscribe((e) => {
                 this.showSelectors(e['url']);
             });
+
+            this.menuService.onItemClick()
+              .pipe(filter(({ tag }) => tag === 'create-context-menu'))
+              .subscribe((e)=> {
+                console.log(e.item.link);
+                this.router.navigate([e.item.link], {
+                    queryParams: {
+                        openAddDialog: true
+                    }
+                })
+              });
     }
+
 
     toggleSidebar(): boolean {
         this.sidebarService.toggle(true, 'menu-sidebar');
