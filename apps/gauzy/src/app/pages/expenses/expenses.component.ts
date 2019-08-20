@@ -10,6 +10,7 @@ import { ExpensesService } from '../../@core/services/expenses.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
+import { ActivatedRoute } from '@angular/router';
 
 export interface ExpenseViewModel {
     id: string,
@@ -89,7 +90,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         private dialogService: NbDialogService,
         private store: Store,
         private expenseService: ExpensesService,
-        private toastrService: NbToastrService) { }
+        private toastrService: NbToastrService,
+        private route: ActivatedRoute) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -111,6 +113,14 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 if (employee && employee.id) {
                     this.selectedEmployeeId = employee.id;
                     this._loadTableData();
+                }
+            });
+
+        this.route.queryParamMap
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(params => {
+                if (params.get('openAddDialog')) {
+                    this.openAddExpenseDialog();
                 }
             });
     }

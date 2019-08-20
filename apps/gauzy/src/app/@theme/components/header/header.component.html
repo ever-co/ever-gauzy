@@ -20,6 +20,10 @@
     [class.left]="position === 'normal'"
     [class.right]="position === 'inverse'"
   >
+  <nb-action>
+    <button nbButton status="success" [nbContextMenu]="createContextMenu" nbContextMenuTag="create-context-menu">+ Create</button>
+  </nb-action>
+
     <nb-action *ngIf="showEmployeesSelector">
       <ga-employee-selector
         class="header-selector employee-selector"

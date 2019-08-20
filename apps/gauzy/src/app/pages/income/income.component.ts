@@ -10,6 +10,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
+import { ActivatedRoute } from '@angular/router';
 
 interface SelectedRowModel {
     data: Income,
@@ -73,7 +74,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
         private store: Store,
         private incomeService: IncomeService,
         private dialogService: NbDialogService,
-        private toastrService: NbToastrService) { }
+        private toastrService: NbToastrService,
+        private route: ActivatedRoute) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -97,6 +99,14 @@ export class IncomeComponent implements OnInit, OnDestroy {
                 if (employee && employee.id) {
                     this.selectedEmployeeId = employee.id;
                     this._loadEmployeeIncomeData(employee.id);
+                }
+            });
+
+        this.route.queryParamMap
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(params => {
+                if (params.get('openAddDialog')) {
+                    this.addIncome();
                 }
             });
     }
