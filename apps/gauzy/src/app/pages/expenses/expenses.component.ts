@@ -46,7 +46,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 title: 'Date',
                 type: 'custom',
                 width: '20%',
-                renderComponent: DateViewComponent
+                renderComponent: DateViewComponent,
+                filter: false
             },
             vendorName: {
                 title: 'Vendor',
@@ -59,6 +60,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             amount: {
                 title: 'Value',
                 type: 'number',
+                filter: false
             },
             notes: {
                 title: 'Notes',

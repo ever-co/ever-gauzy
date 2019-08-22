@@ -35,7 +35,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
                 title: 'Date',
                 type: 'custom',
                 width: '20%',
-                renderComponent: DateViewComponent
+                renderComponent: DateViewComponent,
+                filter: false
             },
             clientName: {
                 title: 'Client Name',
@@ -44,7 +45,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
             amount: {
                 title: 'Value',
                 type: 'number',
-                width: '15%'
+                width: '15%',
+                filter: false
             },
             notes: {
                 title: 'Notes',
