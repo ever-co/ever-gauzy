@@ -17,10 +17,30 @@ export class HeaderComponent implements OnInit, OnDestroy {
     showDateSelector = true;
     showOrganizationsSelector = true;
     createContextMenu = [
-        { title: 'Expense', link: 'pages/expenses' },
-        { title: 'Income',  link: 'pages/income' },
-        { title: 'Employee' , link: 'pages/employees'}
-      ];
+        {
+            title: 'Expense',
+            link: 'pages/expenses'
+        },
+        { 
+            title: 'Income', 
+            link: 'pages/income' 
+        },
+        { 
+            title: 'Employee', 
+            link: 'pages/employees' 
+        }
+    ];
+    supportContextMenu = [
+        {
+            title: 'Support Chat'
+        },
+        {
+            title: 'FAQ'
+        },
+        {
+            title: 'Help'
+        }
+    ]
 
     private _ngDestroy$ = new Subject<void>();
 
@@ -40,16 +60,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
                 this.showSelectors(e['url']);
             });
 
-            this.menuService.onItemClick()
-              .pipe(filter(({ tag }) => tag === 'create-context-menu'))
-              .pipe(takeUntil(this._ngDestroy$))
-              .subscribe((e)=> {
+        this.menuService.onItemClick()
+            .pipe(filter(({ tag }) => tag === 'create-context-menu'))
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe((e) => {
                 this.router.navigate([e.item.link], {
                     queryParams: {
                         openAddDialog: true
                     }
                 })
-              });
+            });
     }
 
 
