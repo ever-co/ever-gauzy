@@ -1,6 +1,14 @@
 {
     "DASHBOARD_PAGE": {
         "EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
-        "SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה"
+        "SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
+        "DEVELOPER": {
+            "DEVELOPER": "מפתח",
+            "AVERAGE_BONUS": "בונוס ממוצע",
+            "TOTAL_INCOME": "הכנסה כוללת",
+            "TOTAL_EXPENSES": "סך ההוצאות",
+            "PROFIT": "רווח",
+            "BONUS": "בונוס"
+        }
     }
 }

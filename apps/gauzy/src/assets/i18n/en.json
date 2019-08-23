@@ -1,6 +1,14 @@
 {
     "DASHBOARD_PAGE": {
         "EMPLOYEE_STATISTICS": "Employee Statistics",
-        "SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above"
+        "SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
+        "DEVELOPER": {
+            "DEVELOPER": "Developer",
+            "AVERAGE_BONUS": "Average Bonus",
+            "TOTAL_INCOME": "Total Income",
+            "TOTAL_EXPENSES": "Total Expenses",
+            "PROFIT": "Profit",
+            "BONUS": "Bonus"
+        }
     }
 }
