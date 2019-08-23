@@ -100,15 +100,23 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.showDateSelector = false;
         }
 
-        const regex = RegExp('/pages/employees/edit/.*/profile', 'i');
+        const profileRegex = RegExp('/pages/employees/edit/.*/profile', 'i');
 
-        if (regex.test(url)) {
+        if (profileRegex.test(url)) {
             this.showEmployeesSelector = false;
             this.showDateSelector = false;
             this.showOrganizationsSelector = false;
         }
 
         if (url.endsWith('/pages/auth/profile')) {
+            this.showEmployeesSelector = false;
+            this.showDateSelector = false;
+            this.showOrganizationsSelector = false;
+        }
+
+        const organizationRegex = RegExp('/pages/organizations.*', 'i')
+
+        if (organizationRegex.test(url)) {
             this.showEmployeesSelector = false;
             this.showDateSelector = false;
             this.showOrganizationsSelector = false;

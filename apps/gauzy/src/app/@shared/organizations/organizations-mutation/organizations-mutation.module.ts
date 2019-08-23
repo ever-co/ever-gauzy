@@ -5,6 +5,7 @@ import { NbCardModule, NbButtonModule, NbIconModule, NbInputModule, NbDatepicker
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrganizationsMutationComponent } from './organizations-mutation.component';
 import { ImageUpladerModule } from '../../image-uploader/image-uploader.module';
+import { RemoveLodashPipe } from './remove-lodash.pipe';
 
 @NgModule({
     imports: [
@@ -21,9 +22,8 @@ import { ImageUpladerModule } from '../../image-uploader/image-uploader.module';
         NbSelectModule,
         NbToastrModule.forRoot(),
     ],
-    declarations: [OrganizationsMutationComponent],
+    declarations: [OrganizationsMutationComponent, RemoveLodashPipe],
     entryComponents: [OrganizationsMutationComponent],
-    providers: [
-    ]
+    providers: []
 })
 export class OrganizationsMutationModule { }

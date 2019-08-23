@@ -20,6 +20,7 @@ export interface OrganizationCreateInput {
     valueDate?: Date;
     imageUrl: string;
     currency: CurrenciesEnum;
+    defaultValueDateType: DefaultValueDateTypeEnum;
 }
 
 export enum OrganizationSelectInput {

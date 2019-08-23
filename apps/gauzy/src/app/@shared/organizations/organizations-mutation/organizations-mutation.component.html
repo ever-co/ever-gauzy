@@ -35,7 +35,7 @@
 
           <img
             *ngIf="form"
-            src="https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text=Select%Image"
+            [src]="form.get('imageUrl').value"
             alt="Organization Photo"
             (mouseenter)="hoverState = true"
             (mouseleave)="hoverState = false"
@@ -61,7 +61,7 @@
               </div>
               <div class="col">
                 <div class="form-group">
-                  <label class="label" for="nameInput">Currency</label>
+                  <label class="label">Currency</label>
                   <nb-select
                     class="d-block"
                     size="medium"
@@ -77,6 +77,30 @@
                   </nb-select>
                 </div>
               </div>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <div class="form-group">
+                    <label class="label">Default Date Type</label>
+                    <nb-select
+                      class="d-block"
+                      size="medium"
+                      formControlName="defaultValueDateType"
+                      placeholder="All Date Types"
+                    >
+                      <nb-option
+                        *ngFor="let type of defaultValueDateTypes"
+                        [value]="type"
+                      >
+                        {{ type | removeLodash | titlecase }} 
+                      </nb-option>
+                    </nb-select>
+                  </div>
+                </div>
+              </div>
+              <div class="col"></div>
             </div>
           </div>
 

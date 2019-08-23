@@ -49,6 +49,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         this.store.selectedOrganization$
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(organization => {
+                console.log(organization)
                 this.selectedOrganizationId = organization.id;
                 this.loadPage();
             });

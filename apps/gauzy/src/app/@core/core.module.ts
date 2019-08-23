@@ -10,7 +10,6 @@ import {
   LayoutService
 } from './utils';
 import { AuthModule } from './auth/auth.module';
-import { NbSpinnerModule } from '@nebular/theme';
 
 const DATA_SERVICES = [
 ];

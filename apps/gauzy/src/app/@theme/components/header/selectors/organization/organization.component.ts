@@ -44,7 +44,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
     this.organizations = items;
   }
 
-  private loadOrganizationsId(): void {
+  private loadOrganizationsId() {
     this.store.selectedOrganization$
       .pipe(takeUntil(this._ngDestroy$))
       .subscribe((organization: Organization) => {

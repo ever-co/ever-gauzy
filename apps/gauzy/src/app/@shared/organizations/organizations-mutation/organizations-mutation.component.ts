@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { CurrenciesEnum, Organization } from '@gauzy/models';
+import { CurrenciesEnum, Organization, DefaultValueDateTypeEnum } from '@gauzy/models';
 
 @Component({
     selector: 'ngx-organizations-mutation',
@@ -15,7 +15,8 @@ export class OrganizationsMutationComponent implements OnInit {
     form: FormGroup;
     organization?: Organization;
     hoverState: boolean;
-    currencies: string[] = Object.values(CurrenciesEnum)
+    currencies: string[] = Object.values(CurrenciesEnum);
+    defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 
     constructor(private fb: FormBuilder,
         protected dialogRef: NbDialogRef<OrganizationsMutationComponent>,
@@ -38,13 +39,15 @@ export class OrganizationsMutationComponent implements OnInit {
             this.form = this.fb.group({
                 currency: [this.organization.currency, Validators.required],
                 name: [this.organization.name, Validators.required],
-                imageUrl: [this.organization.imageUrl, Validators.required]
+                imageUrl: [this.organization.imageUrl, Validators.required],
+                defaultValueDateType: [this.organization.defaultValueDateType, Validators.required]
             });
         } else {
             this.form = this.fb.group({
                 currency: ['', Validators.required],
                 name: ['', Validators.required],
-                imageUrl: ['someimage.jpeg', Validators.required] // TODO: fix that when the internet is here!
+                imageUrl: ['https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text=Select%20Image', Validators.required], // TODO: fix that when the internet is here!
+                defaultValueDateType: ['', Validators.required]
             });
         }
     }
