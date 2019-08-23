@@ -5,6 +5,7 @@ export interface Organization extends IBaseEntityModel {
     valueDate?: Date;
     imageUrl?: string;
     currency: string;
+    defaultValueDateType: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -28,4 +29,10 @@ export enum CurrenciesEnum {
     USD = 'USD',
     BGN = 'BGN',
     ILS = 'ILS'
+}
+
+export enum DefaultValueDateTypeEnum {
+    TODAY = 'TODAY',
+    END_OF_MONTH = 'END_OF_MONTH',
+    START_OF_MONTH = 'START_OF_MONTH'
 }

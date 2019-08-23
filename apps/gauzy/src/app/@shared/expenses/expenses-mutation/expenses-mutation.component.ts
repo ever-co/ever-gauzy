@@ -12,7 +12,7 @@ import { first } from 'rxjs/operators';
     templateUrl: './expenses-mutation.component.html',
     styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent implements OnInit, OnDestroy {
+export class ExpensesMutationComponent implements OnInit {
     form: FormGroup;
 
     expense: ExpenseViewModel;
@@ -170,14 +170,10 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnDestroy() {
-
-    }
-
     private async _loadDefaultCurrency() {
         const orgData = await this.organizationsService
             .getById(
-                this.store.selectedOrganizationId,
+                this.store.selectedOrganization.id,
                 [OrganizationSelectInput.currency]
             ).pipe(first()).toPromise();
 
