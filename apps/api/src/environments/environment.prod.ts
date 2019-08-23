@@ -1,7 +1,7 @@
 import { IEnvironment } from './ienvironment';
 
 export const environment : IEnvironment = {
-  production: true,  
+  production: true,
   envName: 'prod',
   env: {
     LOG_LEVEL: 'debug'
@@ -22,6 +22,7 @@ export const environment : IEnvironment = {
   },
   defaultAdmins: [{
     email: 'admin@ever.co',
-    password: "admin"
+    password: "admin",
+    avatar: 'assets/images/avatars/ruslan.jpg'
   }]
 };

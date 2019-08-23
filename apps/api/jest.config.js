@@ -1,4 +1,3 @@
-//
 module.exports = {
   name: 'api',
   preset: '../../jest.config.js',

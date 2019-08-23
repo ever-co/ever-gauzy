@@ -1,10 +1,10 @@
-// Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit. 
+// Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
 import { Connection } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { environment as env } from '@env-api/environment'
+import { environment as env } from '@env-api/environment';
 import * as faker from 'faker';
 import { DefaultUser, RolesEnum } from '@gauzy/models';
 import { Role } from '../role';
@@ -13,7 +13,7 @@ import { getDummyImage, getUserDummyImage } from '../core';
 
 export const seedAdminUsers = async (
   connection: Connection,
-  roles: Role[],
+  roles: Role[]
 ): Promise<User[]> => {
   const admins: User[] = [];
   let adminUser: User;
@@ -33,8 +33,12 @@ export const seedAdminUsers = async (
 
 export const createUsers = async (
   connection: Connection,
-  roles: Role[],
-): Promise<{ adminUsers: User[], defaultUsers: User[], randomUsers: User[] }> => {
+  roles: Role[]
+): Promise<{
+  adminUsers: User[];
+  defaultUsers: User[];
+  randomUsers: User[];
+}> => {
   const defaultUsers: User[] = [];
   const randomUsers: User[] = [];
   let user: User;
@@ -42,7 +46,9 @@ export const createUsers = async (
   const adminUsers: User[] = await seedAdminUsers(connection, roles);
   // users = [...adminUsers];
 
-  const employeeRole = roles.filter(role => role.name === RolesEnum.EMPLOYEE)[0];
+  const employeeRole = roles.filter(
+    role => role.name === RolesEnum.EMPLOYEE
+  )[0];
   const defaultEmployees = env.defaultEmployees || [];
 
   // Generate default users
@@ -62,19 +68,22 @@ export const createUsers = async (
   return { adminUsers, defaultUsers, randomUsers };
 };
 
-const generateDefaultUser = async (defaultUser: DefaultUser, role: Role): Promise<User> => {
+const generateDefaultUser = async (
+  defaultUser: DefaultUser,
+  role: Role
+): Promise<User> => {
   const user = new User();
-
-  const firstName = defaultUser.firstName;
-  const lastName = defaultUser.lastName;
-  const email = defaultUser.email;
+  const { firstName, lastName, email, avatar } = defaultUser;
 
   user.email = email;
   user.firstName = firstName;
   user.lastName = lastName;
   user.role = role;
-  user.imageUrl = getUserDummyImage(user);
-  user.hash = await bcrypt.hash(defaultUser.password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
+  user.imageUrl = avatar;
+  user.hash = await bcrypt.hash(
+    defaultUser.password,
+    env.USER_PASSWORD_BCRYPT_SALT_ROUNDS
+  );
 
   return user;
 };
@@ -85,6 +94,7 @@ const generateRandomUser = async (role: Role): Promise<User> => {
   const lastName = faker.name.lastName(gender);
   const username = faker.internet.userName(firstName, lastName);
   const email = faker.internet.email(firstName, lastName);
+  const avatar = faker.images.avatar();
 
   const user = new User();
   user.firstName = firstName;
@@ -92,17 +102,20 @@ const generateRandomUser = async (role: Role): Promise<User> => {
   user.username = username;
   user.email = email;
   user.role = role;
-  user.imageUrl = getUserDummyImage(user);
+  user.imageUrl = avatar;
   user.hash = await bcrypt.hash('123456', env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
 
   return user;
 };
 
-const insertUser = async (connection: Connection, user: User): Promise<void> => {
+const insertUser = async (
+  connection: Connection,
+  user: User
+): Promise<void> => {
   await connection
     .createQueryBuilder()
     .insert()
     .into(User)
     .values(user)
     .execute();
-}
+};
