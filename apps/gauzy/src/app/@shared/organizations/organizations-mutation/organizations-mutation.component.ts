@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { CurrenciesEnum, Organization, DefaultValueDateTypeEnum } from '@gauzy/models';
+import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 
 @Component({
     selector: 'ngx-organizations-mutation',
@@ -18,16 +19,26 @@ export class OrganizationsMutationComponent implements OnInit {
     currencies: string[] = Object.values(CurrenciesEnum);
     defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 
+    departments = [];
+
     constructor(private fb: FormBuilder,
         protected dialogRef: NbDialogRef<OrganizationsMutationComponent>,
-        private toastrService: NbToastrService) { }
+        private toastrService: NbToastrService,
+        private orgDepartmentService: OrganizationDepartmentsService) { }
 
-    ngOnInit() {
+    async ngOnInit() {
         this._initializedForm();
+        console.log(await this.orgDepartmentService.getAll())
     }
 
     addOrEditOrganization() {
         this.dialogRef.close(this.form.value);
+    }
+
+    inputHandler(val: string) {
+        if (val) {
+            this.departments.push(val);
+        }
     }
 
     handleImageUploadError(error) {

@@ -8,12 +8,10 @@ export interface OrganizationDepartment extends IBaseEntityModel {
 
 export interface OrganizationDepartmentFindInput extends IBaseEntityModel {
     name?: string;
-    valueDate?: Date;
-    imageUrl?: string;
+    organizationid?: string;
 }
 
 export interface OrganizationDepartmentCreateInput {
     name: string;
-    valueDate?: Date;
-    imageUrl: string;
+    organizationid?: string;
 }
