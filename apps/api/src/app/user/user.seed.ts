@@ -73,13 +73,16 @@ const generateDefaultUser = async (
   role: Role
 ): Promise<User> => {
   const user = new User();
-  const { firstName, lastName, email, avatar } = defaultUser;
+  const { firstName, lastName, email, imageUrl } = defaultUser;
 
   user.email = email;
   user.firstName = firstName;
   user.lastName = lastName;
   user.role = role;
-  user.imageUrl = avatar;
+
+  user.imageUrl = getUserDummyImage(user);
+  user.imageUrl = imageUrl;
+
   user.hash = await bcrypt.hash(
     defaultUser.password,
     env.USER_PASSWORD_BCRYPT_SALT_ROUNDS
@@ -94,7 +97,7 @@ const generateRandomUser = async (role: Role): Promise<User> => {
   const lastName = faker.name.lastName(gender);
   const username = faker.internet.userName(firstName, lastName);
   const email = faker.internet.email(firstName, lastName);
-  const avatar = faker.images.avatar();
+  const avatar = faker.image.avatar();
 
   const user = new User();
   user.firstName = firstName;

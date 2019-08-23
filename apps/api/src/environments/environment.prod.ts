@@ -23,6 +23,6 @@ export const environment : IEnvironment = {
   defaultAdmins: [{
     email: 'admin@ever.co',
     password: "admin",
-    avatar: 'assets/images/avatars/ruslan.jpg'
+    imageUrl: 'assets/images/avatars/ruslan.jpg'
   }]
 };

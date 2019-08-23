@@ -38,7 +38,7 @@ export const environment: IEnvironment = {
     {
       email: 'admin@ever.co',
       password: 'admin',
-      avatar: 'assets/images/avatars/ruslan.jpg'
+      imageUrl: 'assets/images/avatars/ruslan.jpg'
     }
   ],
 
@@ -48,49 +48,49 @@ export const environment: IEnvironment = {
       password: '123456',
       firstName: 'Alish',
       lastName: 'Meklyov',
-      avatar: 'assets/images/avatars/alish.jpg'
+      imageUrl: 'assets/images/avatars/alish.jpg'
     },
     {
       email: 'blagovest@ever.co',
       password: '123456',
       firstName: 'Blagovest',
       lastName: 'Gerov',
-      avatar: 'assets/images/avatars/blagovest.jpg'
+      imageUrl: 'assets/images/avatars/blagovest.jpg'
     },
     {
       email: 'elvis@ever.co',
       password: '123456',
       firstName: 'Elvis',
       lastName: 'Arabadjiiski',
-      avatar: 'assets/images/avatars/elvis.jpg'
+      imageUrl: 'assets/images/avatars/elvis.jpg'
     },
     {
       email: 'emil@ever.co',
       password: '123456',
       firstName: 'Emil',
       lastName: 'Momchilov',
-      avatar: 'assets/images/avatars/emil.jpg'
+      imageUrl: 'assets/images/avatars/emil.jpg'
     },
     {
       email: 'boyan@ever.co',
       password: '123456',
       firstName: 'Boyan',
       lastName: 'Stanchev',
-      avatar: 'assets/images/avatars/boyan.jpg'
+      imageUrl: 'assets/images/avatars/boyan.jpg'
     },
     {
       email: 'hristo@ever.co',
       password: '123456',
       firstName: 'Hristo',
       lastName: 'Hristov',
-      avatar: 'assets/images/avatars/hristo.jpg'
+      imageUrl: 'assets/images/avatars/hristo.jpg'
     },
     {
       email: 'milena@ever.co',
       password: '123456',
       firstName: 'Milena',
       lastName: 'Dimova',
-      avatar: 'assets/images/avatars/milena.jpg'
+      imageUrl: 'assets/images/avatars/milena.jpg'
     }
   ]
 };
