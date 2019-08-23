@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Organization, OrganizationSelectInput } from '@gauzy/models';
+import { Organization, OrganizationSelectInput, OrganizationCreateInput } from '@gauzy/models';
 import { Observable } from 'rxjs';
+import { first } from 'rxjs/operators';
 
 @Injectable()
 export class OrganizationsService {
