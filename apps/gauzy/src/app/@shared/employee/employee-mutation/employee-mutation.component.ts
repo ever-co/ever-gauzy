@@ -34,11 +34,10 @@ export class EmployeeMutationComponent implements OnInit {
     async add() {
         try {
             const user = await this.userBasicInfo.registerUser(RolesEnum.EMPLOYEE);
-            const organization = await this.organizationsService.getById(this.store.selectedOrganizationId);
+            const organization = this.store.selectedOrganization;
             const employee = await this.employeesService.create({user, organization}).pipe(first()).toPromise();
 
             this.closeDialog(employee);
-            
         } catch (err) {
             alert(err.error.detail.toString().replace(/[{()}]/g, ''));
         }

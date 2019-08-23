@@ -13,7 +13,7 @@ import { takeUntil, first } from 'rxjs/operators';
 })
 export class OrganizationSelectorComponent implements OnInit, OnDestroy {
   organizations: Organization[];
-  selectedOrganizationId: string;
+  selectedOrganization: Organization;
 
   private _ngDestroy$ = new Subject<void>();
 
@@ -27,28 +27,28 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
     this.loadOrganizations();
   }
 
-  selectOrganiztion({ id }) {
-    if (id) {
-      this.store.selectedOrganizationId = id
+  selectOrganiztion(organization: Organization) {
+    if (organization) {
+      this.store.selectedOrganization = organization;
     }
   }
 
   private async loadOrganizations(): Promise<void> {
     const { items = [] } = await this.organizationsService.getAll();
 
-    if (items.length > 0 && !this.store.selectedOrganizationId) {
+    if (items.length > 0 && !this.store.selectedOrganization) {
       // set first organizations as default
-      this.store.selectedOrganizationId = items[0].id
+      this.store.selectedOrganization = items[0];
     }
-
+    
     this.organizations = items;
   }
 
   private loadOrganizationsId(): void {
-    this.store.selectedOrganizationId$
+    this.store.selectedOrganization$
       .pipe(takeUntil(this._ngDestroy$))
-      .subscribe((id: string) => {
-        this.selectedOrganizationId = id;
+      .subscribe((organization: Organization) => {
+        this.selectedOrganization = organization;
       })
   }
 

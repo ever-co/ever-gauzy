@@ -6,7 +6,7 @@ import {
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsDate, IsOptional, IsEnum } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Organization as IOrganization, CurrenciesEnum } from '@gauzy/models';
+import { Organization as IOrganization, CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
 
 @Entity('organization')
 export class Organization extends Base implements IOrganization {
@@ -34,4 +34,11 @@ export class Organization extends Base implements IOrganization {
     @IsOptional()
     @Column({ nullable: true })
     valueDate?: Date;
+
+    @ApiModelProperty({ type: String, enum: DefaultValueDateTypeEnum })
+    @IsEnum(DefaultValueDateTypeEnum)
+    @IsNotEmpty()
+    @Index()
+    @Column()
+    defaultValueDateType : string;
 }

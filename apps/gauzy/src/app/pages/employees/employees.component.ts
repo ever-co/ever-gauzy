@@ -11,7 +11,7 @@ import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-wo
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { monthNames } from '../../@core/utils/date';
 
 interface EmployeeViewModel {
@@ -31,6 +31,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     settingsSmartTable: object;
     sourceSmartTable = new LocalDataSource();
     selectedEmployee: EmployeeViewModel;
+    selectedOrganizationId: string;
 
     private _ngDestroy$ = new Subject<void>();
 
@@ -40,21 +41,27 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         private dialogService: NbDialogService,
         private store: Store,
         private router: Router,
-        private toastrService: NbToastrService
+        private toastrService: NbToastrService,
+        private route: ActivatedRoute
     ) { }
 
     ngOnInit() {
-        const selectedId = this.store.selectedOrganizationId;
-
-        if (selectedId) {
-            this.loadPage(selectedId);
-        }
-
-        this.store.selectedOrganizationId$
+        this.store.selectedOrganization$
             .pipe(takeUntil(this._ngDestroy$))
-            .subscribe((id) => this.loadPage(id));
+            .subscribe(organization => {
+                this.selectedOrganizationId = organization.id;
+                this.loadPage();
+            });
 
         this._loadSmartTableSettings();
+
+        this.route.queryParamMap
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(params => {
+                if (params.get('openAddDialog')) {
+                    this.add();
+                }
+            });
     }
 
     selectEmployeeTmp(ev: {
@@ -86,7 +93,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
     async delete() {
         this.dialogService.open(DeleteConfirmationComponent, {
-            context: { recordType: 'Employee' }
+            context: { recordType: this.selectedEmployee.fullName + ' employee' }
         })
             .onClose
             .pipe(takeUntil(this._ngDestroy$))
@@ -104,8 +111,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     }
 
     async endWork() {
-        const dialog = this.dialogService.open(EmployeeEndWorkComponent,{
-            context: this.selectedEmployee.endWork
+        const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
+            context: {
+                endWorkValue: this.selectedEmployee.endWork,
+                employeeFullName: this.selectedEmployee.fullName
+            }
         });
 
         const data = await dialog.onClose.pipe(first()).toPromise();
@@ -117,15 +127,37 @@ export class EmployeesComponent implements OnInit, OnDestroy {
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }
-            
+
             this.loadPage();
         }
     }
 
-    private async loadPage(id: string = this.store.selectedOrganizationId) {
-        const { name } = await this.organizationsService.getById(id);
+    async backToWork() {
+        const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
+            context: {
+                backToWork: true,
+                employeeFullName: this.selectedEmployee.fullName
+            }
+        });
 
-        const { items } = await this.employeesService.getAll(['user'], { organization: { id } }).pipe(first()).toPromise();
+        const data = await dialog.onClose.pipe(first()).toPromise();
+
+        if (data) {
+            try {
+                await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, null);
+                this.toastrService.info('Employee set as active.', 'Success');
+            } catch (error) {
+                this.toastrService.danger(error.error.message || error.message, 'Error');
+            }
+
+            this.loadPage();
+        }
+    }
+
+    private async loadPage() {
+        const { name } = this.store.selectedOrganization;
+
+        const { items } = await this.employeesService.getAll(['user'], { organization: { id: this.selectedOrganizationId } }).pipe(first()).toPromise();
 
         const employeesVm: EmployeeViewModel[] = items.filter(i => i.isActive).map((i) => {
             return {
@@ -133,7 +165,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 email: i.user.email,
                 id: i.id,
                 isActive: i.isActive,
-                endWork: i.endWork ? new Date(i.endWork).toUTCString() : '',
+                endWork: i.endWork ? new Date(i.endWork) : '',
+                formatedDate: i.endWork ? new Date(i.endWork).getDate() + ' ' + monthNames[new Date(i.endWork).getMonth()] + ' ' + new Date(i.endWork).getFullYear() : '',
                 imageUrl: i.user.imageUrl,
                 // TODO: laod real bonus and bonusDate
                 bonus: Math.floor(1000 * Math.random()) + 10,
@@ -169,8 +202,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     class: 'text-center',
                     renderComponent: EmployeeBonusComponent
                 },
-                endWork: {
-                    title: 'End Work',
+                formatedDate: {
+                    title: 'Work Status',
                     type: 'string'
                 }
             },

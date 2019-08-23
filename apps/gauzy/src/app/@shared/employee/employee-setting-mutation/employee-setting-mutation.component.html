@@ -5,7 +5,7 @@
   <nb-card-body>
     <form [formGroup]="form" *ngIf="form">
       <div class="row">
-        <div class="col">
+        <div class="col-6">
           <div class="form-group">
             <label class="label" for="valueDateInput">Setting Type</label>
             <ng-select
@@ -18,10 +18,12 @@
             </ng-select>
           </div>
         </div>
-        <div class="col">
+      </div>
+      <div class="row">
+        <div class="col-6">
           <div class="form-group">
-            <label for="valueInput" class="label">Value</label>
             <input
+              placeholder="Value"
               fullWidth
               id="valueInput"
               type="number"
@@ -30,6 +32,19 @@
               formControlName="value"
             />
           </div>
+        </div>
+        <div class="col-sm-6">
+          <nb-select
+            class="d-block"
+            placeholder="Select Showcase"
+            formControlName="currency"
+          >
+            <nb-option
+              *ngFor="let currency of currencies"
+              value="{{ currency }}"
+              >{{ currency }}</nb-option
+            >
+          </nb-select>
         </div>
       </div>
 

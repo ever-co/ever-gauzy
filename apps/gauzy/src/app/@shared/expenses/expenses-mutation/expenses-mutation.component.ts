@@ -2,16 +2,21 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
+import { CurrenciesEnum, OrganizationSelectInput } from '@gauzy/models';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { Store } from '../../../@core/services/store.service';
+import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'ga-expenses-mutation',
     templateUrl: './expenses-mutation.component.html',
     styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent implements OnInit, OnDestroy {
+export class ExpensesMutationComponent implements OnInit {
     form: FormGroup;
 
     expense: ExpenseViewModel;
+    currencies = Object.values(CurrenciesEnum);
 
     fakeVendors = [
         {
@@ -50,6 +55,18 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         },
         {
+            categoryName: 'Electricity',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Internet',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Water Supply',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
             categoryName: 'Office Supplies',
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         },
@@ -62,7 +79,23 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         },
         {
+            categoryName: 'Insurance Premiums',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
             categoryName: 'Courses',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Subscriptions',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Repairs',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Depreciable Assets',
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         },
         {
@@ -72,11 +105,30 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
         {
             categoryName: 'Office Hardware',
             categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Courier Services',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Business Trips',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
+        },
+        {
+            categoryName: 'Team Buildings',
+            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
         }
     ];
 
-    constructor(protected dialogRef: NbDialogRef<ExpensesMutationComponent>,
-                private fb: FormBuilder) { }
+    constructor(
+        protected dialogRef: NbDialogRef<ExpensesMutationComponent>,
+        private fb: FormBuilder,
+        private organizationsService: OrganizationsService,
+        private store: Store) { }
+
+    get currency() {
+        return this.form.get('currency');
+    }
 
     ngOnInit() {
         this._initializeForm();
@@ -101,6 +153,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
                     categoryName: this.expense.categoryName
                 }, Validators.required],
                 notes: [this.expense.notes],
+                currency: [this.expense.currency],
                 valueDate: [new Date(this.expense.valueDate), Validators.required]
             });
         } else {
@@ -109,12 +162,23 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
                 vendor: [null, Validators.required],
                 category: [null, Validators.required],
                 notes: [''],
+                currency: [''],
                 valueDate: [new Date(), Validators.required]
             });
+
+            this._loadDefaultCurrency();
         }
     }
 
-    ngOnDestroy() {
-        
+    private async _loadDefaultCurrency() {
+        const orgData = await this.organizationsService
+            .getById(
+                this.store.selectedOrganization.id,
+                [OrganizationSelectInput.currency]
+            ).pipe(first()).toPromise();
+
+        if (orgData && this.currency && !this.currency.value) {
+            this.currency.setValue(orgData.currency);
+        }
     }
 }

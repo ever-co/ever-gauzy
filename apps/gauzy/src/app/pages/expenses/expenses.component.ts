@@ -10,6 +10,7 @@ import { ExpensesService } from '../../@core/services/expenses.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
+import { ActivatedRoute } from '@angular/router';
 
 export interface ExpenseViewModel {
     id: string,
@@ -18,6 +19,7 @@ export interface ExpenseViewModel {
     vendorName: string,
     categoryId: string,
     categoryName: string,
+    currency: string,
     amount: number,
     notes: string
 }
@@ -44,7 +46,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 title: 'Date',
                 type: 'custom',
                 width: '20%',
-                renderComponent: DateViewComponent
+                renderComponent: DateViewComponent,
+                filter: false
             },
             vendorName: {
                 title: 'Vendor',
@@ -57,6 +60,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             amount: {
                 title: 'Value',
                 type: 'number',
+                filter: false
             },
             notes: {
                 title: 'Notes',
@@ -85,10 +89,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     }
 
     constructor(private authService: AuthService,
-                private dialogService: NbDialogService,
-                private store: Store,
-                private expenseService: ExpensesService,
-                private toastrService: NbToastrService) { }
+        private dialogService: NbDialogService,
+        private store: Store,
+        private expenseService: ExpensesService,
+        private toastrService: NbToastrService,
+        private route: ActivatedRoute) { }
 
     async ngOnInit() {
         this.hasRole = await this.authService
@@ -112,6 +117,14 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     this._loadTableData();
                 }
             });
+
+        this.route.queryParamMap
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(params => {
+                if (params.get('openAddDialog')) {
+                    this.openAddExpenseDialog();
+                }
+            });
     }
 
     openAddExpenseDialog() {
@@ -130,7 +143,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                                 vendorId: formData.vendor.vendorId,
                                 vendorName: formData.vendor.vendorName,
                                 valueDate: formData.valueDate,
-                                notes: formData.notes
+                                notes: formData.notes,
+                                currency: formData.currency
                             });
 
                         this.toastrService.info('Expense added.', 'Success');
@@ -160,7 +174,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                             vendorId: formData.vendor.vendorId,
                             vendorName: formData.vendor.vendorName,
                             valueDate: formData.valueDate,
-                            notes: formData.notes
+                            notes: formData.notes,
+                            currency: formData.currency
                         });
 
                         this.toastrService.info('Expense edited.', 'Success');
@@ -207,7 +222,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     }
                 }, this.selectedDate);
 
-            
+
             const expenseVM: ExpenseViewModel[] = items.map(i => {
                 return {
                     id: i.id,
@@ -217,7 +232,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     categoryId: i.categoryId,
                     categoryName: i.categoryName,
                     amount: i.amount,
-                    notes: i.notes
+                    notes: i.notes,
+                    currency: i.currency
                 }
             });
 

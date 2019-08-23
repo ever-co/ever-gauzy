@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Organization, OrganizationCreateInput } from '@gauzy/models';
-import { first } from 'rxjs/operators';
+import { Organization, OrganizationSelectInput } from '@gauzy/models';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class OrganizationsService {
@@ -25,8 +25,7 @@ export class OrganizationsService {
     getAll(): Promise<{ items: Organization[], total: number }> {
         return this.http.get<{ items: Organization[], total: number }>(`/api/organization`).pipe(first()).toPromise();
     }
-
-    getById(id: string): Promise<Organization> {
-        return this.http.get<Organization>(`/api/organization/${id}`).pipe(first()).toPromise();
+    getById(id: string = '', select?: OrganizationSelectInput[]): Observable<Organization> {
+        return this.http.get<Organization>(`/api/organization/${id}/${JSON.stringify(select || '')}`);
     }
 }
