@@ -25,7 +25,7 @@ export const environment: IEnvironment = {
     keepConnectionAlive: true,
     logging: true,
     synchronize: true,
-    uuidExtension: 'pgcrypto',
+    uuidExtension: 'pgcrypto'
   },
 
   defaultOrganization: {
@@ -34,10 +34,13 @@ export const environment: IEnvironment = {
     defaultValueDateType: DefaultValueDateTypeEnum.TODAY
   },
 
-  defaultAdmins: [{
-    email: 'admin@ever.co',
-    password: "admin"
-  }],
+  defaultAdmins: [
+    {
+      email: 'admin@ever.co',
+      password: 'admin',
+      imageUrl: 'assets/images/avatars/ruslan.jpg'
+    }
+  ],
 
   defaultEmployees: [
     {
@@ -45,36 +48,49 @@ export const environment: IEnvironment = {
       password: '123456',
       firstName: 'Alish',
       lastName: 'Meklyov',
+      imageUrl: 'assets/images/avatars/alish.jpg'
     },
     {
       email: 'blagovest@ever.co',
       password: '123456',
       firstName: 'Blagovest',
       lastName: 'Gerov',
+      imageUrl: 'assets/images/avatars/blagovest.jpg'
     },
     {
       email: 'elvis@ever.co',
       password: '123456',
       firstName: 'Elvis',
       lastName: 'Arabadjiiski',
+      imageUrl: 'assets/images/avatars/elvis.jpg'
     },
     {
       email: 'emil@ever.co',
       password: '123456',
       firstName: 'Emil',
       lastName: 'Momchilov',
+      imageUrl: 'assets/images/avatars/emil.jpg'
     },
     {
       email: 'boyan@ever.co',
       password: '123456',
       firstName: 'Boyan',
       lastName: 'Stanchev',
+      imageUrl: 'assets/images/avatars/boyan.jpg'
     },
     {
       email: 'hristo@ever.co',
       password: '123456',
       firstName: 'Hristo',
       lastName: 'Hristov',
+      imageUrl: 'assets/images/avatars/hristo.jpg'
+    },
+    {
+      email: 'milena@ever.co',
+      password: '123456',
+      firstName: 'Milena',
+      lastName: 'Dimova',
+      imageUrl: 'assets/images/avatars/milena.jpg'
     }
   ]
 };

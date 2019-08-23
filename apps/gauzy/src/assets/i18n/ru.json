@@ -1,6 +1,14 @@
 {
     "DASHBOARD_PAGE": {
         "EMPLOYEE_STATISTICS": "Статистика сотрудников",
-        "SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше"
+        "SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
+        "DEVELOPER": {
+            "DEVELOPER": "Разработчик",
+            "AVERAGE_BONUS": "Общая прибыль",
+            "TOTAL_INCOME": "Общая прибыль",
+            "TOTAL_EXPENSES": "Суммарные расходы",
+            "PROFIT": "Прибыль",
+            "BONUS": "Бонус"
+        }
     }
 }
