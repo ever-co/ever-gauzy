@@ -12,7 +12,14 @@ export interface OrganizationFindInput extends IBaseEntityModel {
     name?: string;
     valueDate?: Date;
     imageUrl?: string;
-    currency?: string;
+    currency?: CurrenciesEnum;
+}
+
+export interface OrganizationCreateInput {
+    name: string;
+    valueDate?: Date;
+    imageUrl: string;
+    currency: CurrenciesEnum;
 }
 
 export enum OrganizationSelectInput {
