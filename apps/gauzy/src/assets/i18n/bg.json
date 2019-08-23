@@ -1,6 +1,14 @@
 {
     "DASHBOARD_PAGE": {
         "EMPLOYEE_STATISTICS": "Статистика на служителите",
-        "SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе"
+        "SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
+        "DEVELOPER": {
+            "DEVELOPER": "Разработчик",
+            "AVERAGE_BONUS": "Среден бонус",
+            "TOTAL_INCOME": "Общ доход",
+            "TOTAL_EXPENSES": "Общи разходи",
+            "PROFIT": "Печалба",
+            "BONUS": "Бонус"
+        }
     }
 }
