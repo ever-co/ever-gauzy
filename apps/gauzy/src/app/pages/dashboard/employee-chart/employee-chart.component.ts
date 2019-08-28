@@ -47,31 +47,32 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
                         this.themeService.getJsTheme()
                             .pipe(takeUntil(this._ngDestroy$))
                             .subscribe(config => {
-                                const colors: any = config.variables;
+                               // const colors: any = config.variables;
                                 const chartjs: any = config.variables.chartjs;
-
+                                const bonusColors = this.bonusStatistics.map( val => val < 0 ? 'red' : '#0091ff');
+                                const profitColors = this.profitStatistics.map(val => val < 0 ? '#ff7b00' : '#66de0b')
                                 this.data = {
                                     labels: this._getMonthsWithStatistics(),
                                     datasets: [
                                         {
                                             label: 'Revenue',
-                                            backgroundColor: colors.infoLight,
+                                            backgroundColor: '#089c17',
                                             borderWidth: 1,
                                             data: this.incomeStatistics
                                         },
                                         {
                                             label: 'Expenses',
-                                            backgroundColor: colors.successLight,
+                                            backgroundColor: '#dbc300',
                                             data: this.expenseStatistics
                                         },
                                         {
                                             label: 'Profit',
-                                            backgroundColor: colors.warningLight,
+                                            backgroundColor: profitColors,
                                             data: this.profitStatistics,
                                         },
                                         {
                                             label: 'Bonus',
-                                            backgroundColor: '#CA521A',
+                                            backgroundColor: bonusColors,
                                             data: this.bonusStatistics,
                                         },
                                     ],
