@@ -101,6 +101,11 @@ export class IncomeComponent implements OnInit, OnDestroy {
                 if (employee && employee.id) {
                     this.selectedEmployeeId = employee.id;
                     this._loadEmployeeIncomeData(employee.id);
+                } else {
+                    this.incomeService.getAll()
+                        .then(data => {
+                            this.smartTableSource.load(data.items);
+                        })
                 }
             });
 
