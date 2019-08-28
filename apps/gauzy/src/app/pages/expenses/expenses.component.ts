@@ -115,6 +115,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 if (employee && employee.id) {
                     this.selectedEmployeeId = employee.id;
                     this._loadTableData();
+                } else {
+                    this.expenseService.getAll()
+                        .then(data => {
+                            this.smartTableSource.load(data.items);
+                        })
                 }
             });
 
@@ -125,6 +130,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     this.openAddExpenseDialog();
                 }
             });
+
+
     }
 
     openAddExpenseDialog() {
