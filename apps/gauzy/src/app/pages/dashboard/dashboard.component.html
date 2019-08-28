@@ -99,12 +99,15 @@
         <div class="bonus">
           <div class="bonus-value">
             <div>{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}</div>
-            <div *ngIf="defaultCurrency">
+            <div *ngIf="defaultCurrency" [ngClass]="{'negative-bonus-color': bonus < 0}">
               {{ bonus | currency: defaultCurrency }}
             </div>
-            <div *ngIf="!defaultCurrency">
+            <div *ngIf="!defaultCurrency" ng-las[ngClass]="{'negative-bonus-color': bonus < 0}">
               {{ bonus }}
             </div>
+          </div>
+          <div class="bonus-disclaimer">
+            Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments
           </div>
         </div>
 

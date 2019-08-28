@@ -85,11 +85,10 @@
 
     .bonus {
         display: flex;
-        flex-direction: row-reverse;
-        padding: 29px;
+        flex-direction: column;
+        align-items: flex-end;
         width: 100%;
-        height: 84px;
-
+        
         .bonus-value {
             margin-right: 39px;
 
@@ -105,6 +104,18 @@
                 font-weight: bold;
                 color: #0091ff;
             }
+
+            .negative-bonus-color {
+                color: red;
+            }
+            
+        }
+
+        .bonus-disclaimer { 
+            margin-top: 15px;
+            margin-right: 39px;
+            font-size: 0.7rem;
+            width: 215px;
         }
     }
 }
