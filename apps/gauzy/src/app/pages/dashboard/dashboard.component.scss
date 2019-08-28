@@ -7,7 +7,7 @@
 
         .employee-info {
             display: flex;
-    
+
             .employee-image {
                 max-width: 70px;
                 max-height: 70px;
@@ -61,10 +61,27 @@
         padding: 29px;
         background-color: #f6f9fc;
 
-        .info-text, .info-value {
+        .info-text,
+        .info-value {
             display: flex;
             font-size: 18px;
             color: #333333;
+
+            .profit-positive-color {
+                color: #66de0b;
+            }
+
+            .profit-negative-color {
+                color: #ff7b00;
+            }
+
+            .expense-color {
+                color: #dbc300;
+            }
+
+            .income-color {
+                color: #089c17;
+            }
         }
 
         .info-text {
@@ -88,7 +105,7 @@
         flex-direction: column;
         align-items: flex-end;
         width: 100%;
-        
+
         .bonus-value {
             margin-right: 39px;
 
@@ -98,7 +115,7 @@
                 margin-bottom: 15px;
                 margin-right: 3px;
             }
-    
+
             :last-child {
                 font-size: 46px;
                 font-weight: bold;
@@ -108,10 +125,10 @@
             .negative-bonus-color {
                 color: red;
             }
-            
+
         }
 
-        .bonus-disclaimer { 
+        .bonus-disclaimer {
             margin-top: 15px;
             margin-right: 39px;
             font-size: 0.7rem;
