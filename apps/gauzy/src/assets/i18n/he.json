@@ -10,5 +10,17 @@
             "PROFIT": "רווח",
             "BONUS": "בונוס"
         }
+    },
+    "INCOME_PAGE": {
+        "INCOME": "הכנסה",
+        "ADD": "הוסף",
+        "EDIT": "ערוך",
+        "DELETE": "מחק",
+        "SM_TABLE": {
+            "DATE": "תאריך",
+            "CLIENT_NAME": "שם הלקוח",
+            "VALUE": "ערך",
+            "NOTES": "הערות"
+        }
     }
 }

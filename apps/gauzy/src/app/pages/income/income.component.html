@@ -1,6 +1,6 @@
 <nb-card class="income-component">
   <nb-card-header>
-    <h4>Income</h4>
+    <h4>{{ 'INCOME_PAGE.INCOME' | translate }}</h4>
   </nb-card-header>
   <nb-card-body>
     <div *ngIf="hasRole" class="btn-container">
@@ -10,7 +10,7 @@
         (click)="addIncome()"
         [disabled]="!selectedEmployeeId"
       >
-        <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
+        <nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'INCOME_PAGE.ADD' | translate }}
       </button>
 
       <button
@@ -19,7 +19,7 @@
         [disabled]="selectedIncome ? !selectedIncome.isSelected : true"
         (click)="editIncome()"
       >
-        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
+        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'INCOME_PAGE.EDIT' | translate }}
       </button>
 
       <button
@@ -28,7 +28,7 @@
         [disabled]="selectedIncome ? !selectedIncome.isSelected : true"
         (click)="deleteIncome()"
       >
-        <nb-icon class="mr-1" icon="archive-outline"></nb-icon>Delete
+        <nb-icon class="mr-1" icon="archive-outline"></nb-icon>{{ 'INCOME_PAGE.DELETE' | translate }}
       </button>
     </div>
 
