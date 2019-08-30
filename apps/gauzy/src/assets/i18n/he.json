@@ -20,7 +20,8 @@
             "DATE": "תאריך",
             "CLIENT_NAME": "שם הלקוח",
             "VALUE": "ערך",
-            "NOTES": "הערות"
+            "NOTES": "הערות",
+            "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
         }
     }
 }

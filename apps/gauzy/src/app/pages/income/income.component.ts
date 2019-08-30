@@ -25,7 +25,7 @@ interface SelectedRowModel {
   styleUrls: ['./income.component.scss']
 })
 export class IncomeComponent implements OnInit, OnDestroy {
-  protected smartTableSettings: object;
+  // protected smartTableSettings: object;
 
   constructor(
     private authService: AuthService,
@@ -36,8 +36,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private translateService: TranslateService
   ) {
-    this.loadSettingsSmartTable();
-    this._applyTranslationOnSmartTable();
+    // this.loadSettingsSmartTable();
+    // this._applyTranslationOnSmartTable();
   }
 
   async ngOnInit() {
@@ -78,56 +78,93 @@ export class IncomeComponent implements OnInit, OnDestroy {
       });
   }
 
-  private loadSettingsSmartTable() {
-    this.smartTableSettings = {
-      actions: false,
-      mode: 'external',
-      editable: true,
-      noDataMessage: 'No data for the currently selected employee.',
-      columns: {
+  static smartTableSettings = {
+    actions: false,
+    mode: 'external',
+    editable: true,
+    noDataMessage: 'No data for the currently selected employee.',
+    columns: {
         valueDate: {
-          title: this.getTranslation('INCOME_PAGE.SM_TABLE.DATE'),
-          type: 'custom',
-          width: '20%',
-          renderComponent: DateViewComponent,
-          filter: false
+            title: 'Date',
+            type: 'custom',
+            width: '20%',
+            renderComponent: DateViewComponent,
+            filter: false
         },
         clientName: {
-          title: this.getTranslation('INCOME_PAGE.SM_TABLE.CLIENT_NAME'),
-          type: 'string'
+            title: 'Client Name',
+            type: 'string'
         },
         amount: {
-          title: this.getTranslation('INCOME_PAGE.SM_TABLE.VALUE'),
-          type: 'number',
-          width: '15%',
-          filter: false
+            title: 'Value',
+            type: 'number',
+            width: '15%',
+            filter: false
         },
         notes: {
-          title: this.getTranslation('INCOME_PAGE.SM_TABLE.NOTES'),
-          type: 'string'
+            title: 'Notes',
+            type: 'string'
         }
       },
       pager: {
         display: true,
         perPage: 8
       }
-    };
-  }
+    }
+  // private loadSettingsSmartTable() {
+  //   this.smartTableSettings = {
+  //     actions: false,
+  //     mode: 'external',
+  //     editable: true,
+  //     noDataMessage: 'No data for the currently selected employee.',
+  //     columns: {
+  //       valueDate: {
+  //         title: this.getTranslation('INCOME_PAGE.SM_TABLE.DATE'),
+  //         type: 'custom',
+  //         width: '20%',
+  //         renderComponent: DateViewComponent,
+  //         filter: false
+  //       },
+  //       clientName: {
+  //         title: this.getTranslation('INCOME_PAGE.SM_TABLE.CLIENT_NAME'),
+  //         type: 'string'
+  //       },
+  //       amount: {
+  //         title: this.getTranslation('INCOME_PAGE.SM_TABLE.VALUE'),
+  //         type: 'number',
+  //         width: '15%',
+  //         filter: false
+  //       },
+  //       notes: {
+  //         title: this.getTranslation('INCOME_PAGE.SM_TABLE.NOTES'),
+  //         type: 'string'
+  //       }
+  //     },
+  //     pager: {
+  //       display: true,
+  //       perPage: 8
+  //     }
+  //   };
+  // }
 
-  getTranslation(prefix: string) {
-    let result = '';
-    this.translateService.get(prefix).subscribe(res => {
-      result = res;
-    });
-    console.log(result);
+  // getTranslation(prefix: string) {
+  //   let result = '';
+  //   this.translateService.get(prefix).subscribe(res => {
+  //     result = res;
+  //   });
+  //   console.log(result);
 
-    return result;
-  }
+  //   return result;
+  // }
 
-  private _applyTranslationOnSmartTable() {
-    this.translateService.onLangChange.subscribe(() => {
-      this.loadSettingsSmartTable();
-    });
+  // private _applyTranslationOnSmartTable() {
+  //   this.translateService.onLangChange.subscribe(() => {
+  //     this.loadSettingsSmartTable();
+  //   });
+  // }
+
+  get smartTableSettings() {
+    return IncomeComponent.smartTableSettings;
   }
 
   private _ngDestroy$ = new Subject<void>();

@@ -20,7 +20,8 @@
             "DATE": "Дата",
             "CLIENT_NAME": "Имя клиента",
             "VALUE": "Стоимость",
-            "NOTES": "Заметки"
+            "NOTES": "Заметки",
+            "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Нет данных для выбранного сотрудника."
         }
     }
 }

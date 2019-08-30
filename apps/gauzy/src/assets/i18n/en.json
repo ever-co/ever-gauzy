@@ -20,7 +20,16 @@
             "DATE": "Date",
             "CLIENT_NAME": "Client Name",
             "VALUE": "Value",
-            "NOTES": "Notes"
+            "NOTES": "Notes",
+            "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "No data for the currently selected employee."
+        },
+        "ADD_INCOME_POP_UP":{
+            "ADD_INCOME": "Add Income",
+            "ALL_CLIENTS": "All Clients",
+            "AMOUNT":"Amount",
+            "NOTES":"Notes",
+            "EDIT": "Edit",
+            "ADD": "Add"
         }
     }
 }

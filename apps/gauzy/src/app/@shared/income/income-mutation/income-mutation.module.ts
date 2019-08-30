@@ -7,6 +7,14 @@ import { IncomeMutationComponent } from './income-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HttpClient } from '@angular/common/http';
+
+export function HttpLoaderFactory(http: HttpClient) {
+    return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
+
 @NgModule({
     imports: [
         ThemeModule,
@@ -18,7 +26,14 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
         NgSelectModule,
         NbDatepickerModule,
         NbInputModule,
-        NbSelectModule
+        NbSelectModule,
+        TranslateModule.forChild({
+            loader: {
+                provide: TranslateLoader,
+                useFactory: HttpLoaderFactory,
+                deps: [HttpClient]
+            }
+        }),
     ],
     declarations: [IncomeMutationComponent],
     entryComponents: [IncomeMutationComponent],

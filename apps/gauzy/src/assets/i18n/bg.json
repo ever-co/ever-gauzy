@@ -20,7 +20,16 @@
             "DATE": "Дата",
             "CLIENT_NAME": "Клиентско име",
             "VALUE": "Стойност",
-            "NOTES": "Бележки"
+            "NOTES": "Бележки",
+            "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Няма данни за текущо избрания служител."
+        },
+        "ADD_INCOME_POP_UP":{
+            "ADD_INCOME": "Добавете доход",
+            "ALL_CLIENTS": "Всички клиенти",
+            "AMOUNT":"Количество",
+            "NOTES":"Бележки",
+            "EDIT": "Редактиране",
+            "ADD": "Добави"
         }
     }
 }

@@ -1,6 +1,6 @@
 <nb-card class="main">
   <nb-card-header class="d-flex">
-    <h5>Add Income</h5>
+    <h5>{{ 'INCOME_PAGE.ADD_INCOME_POP_UP.ADD_INCOME' | translate }}</h5>
     <nb-icon
       class="ml-auto mt-1 close"
       (click)="close()"
@@ -33,7 +33,7 @@
               bindLabel="clientName"
               [searchable]="false"
               formControlName="client"
-              placeholder="All Clients"
+              placeholder="{{ 'INCOME_PAGE.ADD_INCOME_POP_UP.ALL_CLIENTS' | translate }}"
             >
             </ng-select>
           </div>
@@ -48,7 +48,7 @@
               type="number"
               step="1"
               fullWidth
-              placeholder="Amount"
+              placeholder="{{ 'INCOME_PAGE.ADD_INCOME_POP_UP.AMOUNT' | translate }}"
               formControlName="amount"
               [ngClass]="{
                 'status-danger':
@@ -81,7 +81,7 @@
             <textarea
               nbInput
               fullWidth
-              placeholder="Notes"
+              placeholder="{{ 'INCOME_PAGE.ADD_INCOME_POP_UP.NOTES' | translate }}"
               formControlName="notes"
               class="notes"
               [ngClass]="{
