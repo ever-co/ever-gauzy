@@ -102,7 +102,7 @@
             <div *ngIf="defaultCurrency" [ngClass]="{'negative-bonus-color': bonus < 0}">
               {{ bonus | currency: defaultCurrency }}
             </div>
-            <div *ngIf="!defaultCurrency" ng-las[ngClass]="{'negative-bonus-color': bonus < 0}">
+            <div *ngIf="!defaultCurrency" [ngClass]="{'negative-bonus-color': bonus < 0}">
               {{ bonus }}
             </div>
           </div>
