@@ -84,6 +84,25 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
     private async _loadPople() {
         const res = await this.employeesService.getAll(['user']).pipe(first()).toPromise();
 
+
+        this.store.selectedOrganization$.subscribe((o) => {
+            if (o) {
+                this.people = [{
+                    id: null,
+                    firstName: "All Employees",
+                    lastName: '',
+                    imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
+                }, ...res.items.filter((e) => e.orgId === o.id).map((e) => {
+                    return {
+                        id: e.id,
+                        firstName: e.user.firstName,
+                        lastName: e.user.lastName,
+                        imageUrl: e.user.imageUrl
+                    }
+                })];
+            }
+        })
+
         this.people = [{
             id: null,
             firstName: "All Employees",

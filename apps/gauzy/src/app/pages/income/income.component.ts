@@ -84,33 +84,33 @@ export class IncomeComponent implements OnInit, OnDestroy {
     editable: true,
     noDataMessage: 'No data for the currently selected employee.',
     columns: {
-        valueDate: {
-            title: 'Date',
-            type: 'custom',
-            width: '20%',
-            renderComponent: DateViewComponent,
-            filter: false
-        },
-        clientName: {
-            title: 'Client Name',
-            type: 'string'
-        },
-        amount: {
-            title: 'Value',
-            type: 'number',
-            width: '15%',
-            filter: false
-        },
-        notes: {
-            title: 'Notes',
-            type: 'string'
-        }
+      valueDate: {
+        title: 'Date',
+        type: 'custom',
+        width: '20%',
+        renderComponent: DateViewComponent,
+        filter: false
       },
-      pager: {
-        display: true,
-        perPage: 8
+      clientName: {
+        title: 'Client Name',
+        type: 'string'
+      },
+      amount: {
+        title: 'Value',
+        type: 'number',
+        width: '15%',
+        filter: false
+      },
+      notes: {
+        title: 'Notes',
+        type: 'string'
       }
+    },
+    pager: {
+      display: true,
+      perPage: 8
     }
+  }
   // private loadSettingsSmartTable() {
   //   this.smartTableSettings = {
   //     actions: false,
