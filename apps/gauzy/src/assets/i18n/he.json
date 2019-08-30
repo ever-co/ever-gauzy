@@ -10,5 +10,17 @@
             "PROFIT": "Profit",
             "BONUS": "Bonus"
         }
+    },
+    "INCOME_PAGE": {
+        "INCOME": "Income",
+        "ADD": "Add",
+        "EDIT": "Edit",
+        "DELETE": "Delete",
+        "SM_TABLE": {
+            "DATE": "Date",
+            "CLIENT_NAME": "Client Name",
+            "VALUE": "Value",
+            "NOTES": "Notes"
+        }
     }
 }
