@@ -104,7 +104,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
     }
 
     async deleteOrganization() {
-        const result = this.dialogService.open(DeleteConfirmationComponent, {
+        const result = await this.dialogService.open(DeleteConfirmationComponent, {
             context: {
                 recordType: 'Organization'
             }
@@ -117,6 +117,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
             try {
                 await this.organizationsService.delete(this.selectedOrganization.id);
                 this.toastrService.info('Organization deleted.', 'Success');
+                this._loadSmartTable();
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }

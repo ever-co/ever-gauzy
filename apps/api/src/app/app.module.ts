@@ -14,6 +14,7 @@ import { AuthModule } from './auth';
 import { SeedDataService } from './core/seeds/SeedDataService';
 import { UserOrganizationModule } from './user-organization';
 import { EmployeeStatisticsModule } from './employee-statistics';
+import { OrganizationDepartmentModule } from './organization-department';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { EmployeeStatisticsModule } from './employee-statistics';
           { path: '/employee-settings', module: EmployeeSettingsModule },
           { path: '/employee-statistics', module: EmployeeStatisticsModule },
           { path: '/user-organization', module: UserOrganizationModule },
+          { path: '/organization-department', module: OrganizationDepartmentModule },
         ],
       },
     ]),
@@ -44,7 +46,8 @@ import { EmployeeStatisticsModule } from './employee-statistics';
     OrganizationModule,
     IncomeModule,
     ExpenseModule,
-    UserOrganizationModule
+    UserOrganizationModule,
+    OrganizationDepartmentModule
   ],
   controllers: [AppController],
   providers: [AppService, SeedDataService]
