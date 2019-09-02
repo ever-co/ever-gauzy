@@ -5,7 +5,7 @@ import { ExpensesComponent } from '../../../pages/expenses/expenses.component';
 
 export enum HistoryType {
     INCOME = 'INCOME',
-    EXPENSE = 'EXPENSE'
+    EXPENSES = 'EXPENSES'
 }
 
 @Component({
@@ -40,7 +40,7 @@ export class RecordsHistoryComponent implements OnInit {
 
                 this.smartTableSettings = IncomeComponent.smartTableSettings;
                 break;
-            case HistoryType.EXPENSE:
+            case HistoryType.EXPENSES:
                 viewModel = this.recordsData.map(i => {
                     return {
                         id: i.id,
