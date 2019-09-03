@@ -324,6 +324,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    delete IncomeComponent.smartTableSettings.columns['employee']
     this._ngDestroy$.next();
     this._ngDestroy$.complete();
   }

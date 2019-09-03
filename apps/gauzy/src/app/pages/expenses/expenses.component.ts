@@ -293,6 +293,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        delete ExpensesComponent.smartTableSettings.columns['employee']
         this._ngDestroy$.next();
         this._ngDestroy$.complete();
     }
