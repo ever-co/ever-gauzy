@@ -53,6 +53,12 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
         if (this.selectedEmployeeId) {
           this._loadEmployeeIncomeData(this.selectedEmployeeId);
+        } else {
+          const selectedOrg = this.store.selectedOrganization;
+
+          if (selectedOrg && selectedOrg.id) {
+            this._loadEmployeeIncomeData(null, selectedOrg.id);
+          }
         }
       });
 
@@ -63,11 +69,19 @@ export class IncomeComponent implements OnInit, OnDestroy {
           this.selectedEmployeeId = employee.id;
           this._loadEmployeeIncomeData(employee.id);
         } else {
-          this.incomeService.getAll().then(data => {
-            this.smartTableSource.load(data.items);
-          });
+          const selectedOrg = this.store.selectedOrganization;
+          if (selectedOrg) {
+            this._loadEmployeeIncomeData(null, selectedOrg.id);
+          }
         }
       });
+
+    this.store.selectedOrganization$
+      .pipe(takeUntil(this._ngDestroy$))
+      .subscribe(org => {
+        this.store.selectedEmployee = null;
+        this._loadEmployeeIncomeData(null, org.id);
+      })
 
     this.route.queryParamMap
       .pipe(takeUntil(this._ngDestroy$))
@@ -266,14 +280,26 @@ export class IncomeComponent implements OnInit, OnDestroy {
       });
   }
 
-  private async _loadEmployeeIncomeData(id = this.selectedEmployeeId) {
+  private async _loadEmployeeIncomeData(employeId = this.selectedEmployeeId, orgId?: string) {
+    let findObj;
+
+    if (orgId) {
+      findObj = {
+        organization: {
+          id: orgId
+        }
+      }
+    } else {
+      findObj = {
+        employee: {
+          id: employeId
+        }
+      }
+    }
+
     const { items } = await this.incomeService.getAll(
       ['employee'],
-      {
-        employee: {
-          id
-        }
-      },
+      findObj,
       this.selectedDate
     );
 
