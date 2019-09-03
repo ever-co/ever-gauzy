@@ -35,6 +35,7 @@
     </div>
 
     <ng2-smart-table
+      *ngIf="showTable"
       class="income-table"
       [settings]="smartTableSettings"
       [source]="smartTableSource"

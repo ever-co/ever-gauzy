@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum, Income } from '@gauzy/models';
+import { RolesEnum, Income, Employee } from '@gauzy/models';
 import { Subject, Observable, forkJoin } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
@@ -94,6 +94,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
       });
   }
 
+  // tslint:disable-next-line: member-ordering
   static smartTableSettings = {
     actions: false,
     mode: 'external',
@@ -191,6 +192,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
   smartTableSource = new LocalDataSource();
 
   selectedIncome: SelectedRowModel;
+  showTable: boolean;
 
   selectIncome(ev: SelectedRowModel) {
     this.selectedIncome = ev;
@@ -284,11 +286,24 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
   private async _loadEmployeeIncomeData(employeId = this.selectedEmployeeId, orgId?: string) {
     let findObj;
+    this.showTable = false;
 
     if (orgId) {
       findObj = {
         organization: {
           id: orgId
+        }
+      }
+
+      IncomeComponent.smartTableSettings.columns['employee'] = {
+        title: 'Employee',
+        type: 'string',
+        valuePrepareFunction: (_, income: Income) => {
+          const user = income.employee.user;
+
+          if (user) {
+            return `${user.firstName} ${user.lastName}`
+          }
         }
       }
     } else {
@@ -297,15 +312,18 @@ export class IncomeComponent implements OnInit, OnDestroy {
           id: employeId
         }
       }
+
+      delete IncomeComponent.smartTableSettings.columns['employee']
     }
 
     const { items } = await this.incomeService.getAll(
-      ['employee'],
+      ['employee', 'employee.user'],
       findObj,
       this.selectedDate
     );
 
     this.smartTableSource.load(items);
+    this.showTable = true;
   }
 
   ngOnDestroy() {
