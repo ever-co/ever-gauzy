@@ -73,8 +73,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         }
     };
 
-    private _ngDestroy$ = new Subject<void>();
-
     selectedEmployeeId: string;
     selectedDate: Date;
 
@@ -84,6 +82,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
     selectedExpense: SelectedRowModel;
     showTable: boolean;
+
+    private _ngDestroy$ = new Subject<void>();
+    private _selectedOrganizationId: string;
 
     get smartTableSettings() {
         return ExpensesComponent.smartTableSettings;
@@ -110,10 +111,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 if (this.selectedEmployeeId) {
                     this._loadTableData();
                 } else {
-                    const selectedOrg = this.store.selectedOrganization;
-
-                    if (selectedOrg && selectedOrg.id) {
-                        this._loadTableData(selectedOrg.id);
+                    if (this._selectedOrganizationId) {
+                        this._loadTableData(this._selectedOrganizationId);
                     }
                 }
             });
@@ -125,9 +124,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     this.selectedEmployeeId = employee.id;
                     this._loadTableData();
                 } else {
-                    const selectedOrg = this.store.selectedOrganization;
-                    if (selectedOrg && selectedOrg.id) {
-                        this._loadTableData(selectedOrg.id);
+                    if (this._selectedOrganizationId) {
+                        this._loadTableData(this._selectedOrganizationId);
                     }
                 }
             });
@@ -136,8 +134,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(org => {
                 if (org) {
+                    this._selectedOrganizationId = org.id
                     this.store.selectedEmployee = null;
-                    this._loadTableData(org.id);
                 }
             })
 

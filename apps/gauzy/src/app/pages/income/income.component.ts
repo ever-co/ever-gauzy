@@ -26,6 +26,16 @@ interface SelectedRowModel {
 })
 export class IncomeComponent implements OnInit, OnDestroy {
   // protected smartTableSettings: object;
+  hasRole: boolean;
+  selectedEmployeeId: string;
+  selectedDate: Date;
+  smartTableSource = new LocalDataSource();
+
+  selectedIncome: SelectedRowModel;
+  showTable: boolean;
+
+  private _ngDestroy$ = new Subject<void>();
+  private _selectedOrganizationId: string;
 
   constructor(
     private authService: AuthService,
@@ -54,10 +64,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
         if (this.selectedEmployeeId) {
           this._loadEmployeeIncomeData(this.selectedEmployeeId);
         } else {
-          const selectedOrg = this.store.selectedOrganization;
-
-          if (selectedOrg && selectedOrg.id) {
-            this._loadEmployeeIncomeData(null, selectedOrg.id);
+          if (this._selectedOrganizationId) {
+            this._loadEmployeeIncomeData(null, this._selectedOrganizationId);
           }
         }
       });
@@ -69,9 +77,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
           this.selectedEmployeeId = employee.id;
           this._loadEmployeeIncomeData(employee.id);
         } else {
-          const selectedOrg = this.store.selectedOrganization;
-          if (selectedOrg && selectedOrg.id) {
-            this._loadEmployeeIncomeData(null, selectedOrg.id);
+          if (this._selectedOrganizationId) {
+            this._loadEmployeeIncomeData(null, this._selectedOrganizationId);
           }
         }
       });
@@ -80,8 +87,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this._ngDestroy$))
       .subscribe(org => {
         if (org) {
+          this._selectedOrganizationId = org.id
           this.store.selectedEmployee = null;
-          this._loadEmployeeIncomeData(null, org.id);
         }
       })
 
@@ -183,16 +190,6 @@ export class IncomeComponent implements OnInit, OnDestroy {
   get smartTableSettings() {
     return IncomeComponent.smartTableSettings;
   }
-
-  private _ngDestroy$ = new Subject<void>();
-
-  hasRole: boolean;
-  selectedEmployeeId: string;
-  selectedDate: Date;
-  smartTableSource = new LocalDataSource();
-
-  selectedIncome: SelectedRowModel;
-  showTable: boolean;
 
   selectIncome(ev: SelectedRowModel) {
     this.selectedIncome = ev;
