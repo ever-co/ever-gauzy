@@ -47,16 +47,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
     }
 
     selectEmployee(employee: SelectedEmployee) {
-        if (employee) {
-            this.store.selectedEmployee = employee;
-        } else {
-            this.store.selectedEmployee = {
-                id: null,
-                firstName: "All Employees",
-                lastName: '',
-                imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
-            };
-        }
+        this.store.selectedEmployee = employee;
     }
 
     getShortenedName(firstName: string, lastName: string) {
@@ -116,17 +107,17 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
                 imageUrl: e.user.imageUrl
             }
         })];
-        
+
         if (res.items.length > 0 && !this.store.selectedEmployee) {
-            
+
             this.store.selectedEmployee = this.people[0];
         }
-        
+
         if (!this.selectedEmployee) { // This is so selected employee doesn't get reset when it's already set from somewhere else
             this.selectEmployee(this.people[0]);
             this.selectedEmployee = this.people[0];
         }
-        
+
     }
 
     ngOnDestroy() {

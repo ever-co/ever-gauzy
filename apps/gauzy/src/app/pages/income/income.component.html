@@ -10,7 +10,8 @@
         (click)="addIncome()"
         [disabled]="!selectedEmployeeId"
       >
-        <nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'INCOME_PAGE.ADD' | translate }}
+        <nb-icon class="mr-1" icon="plus-outline"></nb-icon
+        >{{ 'INCOME_PAGE.ADD' | translate }}
       </button>
 
       <button
@@ -19,7 +20,8 @@
         [disabled]="selectedIncome ? !selectedIncome.isSelected : true"
         (click)="editIncome()"
       >
-        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'INCOME_PAGE.EDIT' | translate }}
+        <nb-icon class="mr-1" icon="edit-outline"></nb-icon
+        >{{ 'INCOME_PAGE.EDIT' | translate }}
       </button>
 
       <button
@@ -28,11 +30,13 @@
         [disabled]="selectedIncome ? !selectedIncome.isSelected : true"
         (click)="deleteIncome()"
       >
-        <nb-icon class="mr-1" icon="archive-outline"></nb-icon>{{ 'INCOME_PAGE.DELETE' | translate }}
+        <nb-icon class="mr-1" icon="archive-outline"></nb-icon
+        >{{ 'INCOME_PAGE.DELETE' | translate }}
       </button>
     </div>
 
     <ng2-smart-table
+      *ngIf="showTable"
       class="income-table"
       (userRowSelect)="selectIncome($event)"
       [settings]="smartTableSettings"

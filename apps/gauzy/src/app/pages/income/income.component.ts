@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum, Income } from '@gauzy/models';
+import { RolesEnum, Income, Employee } from '@gauzy/models';
 import { Subject, Observable, forkJoin } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
@@ -26,6 +26,16 @@ interface SelectedRowModel {
 })
 export class IncomeComponent implements OnInit, OnDestroy {
   // protected smartTableSettings: object;
+  hasRole: boolean;
+  selectedEmployeeId: string;
+  selectedDate: Date;
+  smartTableSource = new LocalDataSource();
+
+  selectedIncome: SelectedRowModel;
+  showTable: boolean;
+
+  private _ngDestroy$ = new Subject<void>();
+  private _selectedOrganizationId: string;
 
   constructor(
     private authService: AuthService,
@@ -53,6 +63,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
         if (this.selectedEmployeeId) {
           this._loadEmployeeIncomeData(this.selectedEmployeeId);
+        } else {
+          if (this._selectedOrganizationId) {
+            this._loadEmployeeIncomeData(null, this._selectedOrganizationId);
+          }
         }
       });
 
@@ -63,11 +77,20 @@ export class IncomeComponent implements OnInit, OnDestroy {
           this.selectedEmployeeId = employee.id;
           this._loadEmployeeIncomeData(employee.id);
         } else {
-          this.incomeService.getAll().then(data => {
-            this.smartTableSource.load(data.items);
-          });
+          if (this._selectedOrganizationId) {
+            this._loadEmployeeIncomeData(null, this._selectedOrganizationId);
+          }
         }
       });
+
+    this.store.selectedOrganization$
+      .pipe(takeUntil(this._ngDestroy$))
+      .subscribe(org => {
+        if (org) {
+          this._selectedOrganizationId = org.id
+          this.store.selectedEmployee = null;
+        }
+      })
 
     this.route.queryParamMap
       .pipe(takeUntil(this._ngDestroy$))
@@ -78,6 +101,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
       });
   }
 
+  // tslint:disable-next-line: member-ordering
   static smartTableSettings = {
     actions: false,
     mode: 'external',
@@ -166,15 +190,6 @@ export class IncomeComponent implements OnInit, OnDestroy {
   get smartTableSettings() {
     return IncomeComponent.smartTableSettings;
   }
-
-  private _ngDestroy$ = new Subject<void>();
-
-  hasRole: boolean;
-  selectedEmployeeId: string;
-  selectedDate: Date;
-  smartTableSource = new LocalDataSource();
-
-  selectedIncome: SelectedRowModel;
 
   selectIncome(ev: SelectedRowModel) {
     this.selectedIncome = ev;
@@ -266,21 +281,50 @@ export class IncomeComponent implements OnInit, OnDestroy {
       });
   }
 
-  private async _loadEmployeeIncomeData(id = this.selectedEmployeeId) {
-    const { items } = await this.incomeService.getAll(
-      ['employee'],
-      {
-        employee: {
-          id
+  private async _loadEmployeeIncomeData(employeId = this.selectedEmployeeId, orgId?: string) {
+    let findObj;
+    this.showTable = false;
+
+    if (orgId) {
+      findObj = {
+        organization: {
+          id: orgId
         }
-      },
+      }
+
+      IncomeComponent.smartTableSettings.columns['employee'] = {
+        title: 'Employee',
+        type: 'string',
+        valuePrepareFunction: (_, income: Income) => {
+          const user = income.employee.user;
+
+          if (user) {
+            return `${user.firstName} ${user.lastName}`
+          }
+        }
+      }
+    } else {
+      findObj = {
+        employee: {
+          id: employeId
+        }
+      }
+
+      delete IncomeComponent.smartTableSettings.columns['employee']
+    }
+
+    const { items } = await this.incomeService.getAll(
+      ['employee', 'employee.user'],
+      findObj,
       this.selectedDate
     );
 
     this.smartTableSource.load(items);
+    this.showTable = true;
   }
 
   ngOnDestroy() {
+    delete IncomeComponent.smartTableSettings.columns['employee']
     this._ngDestroy$.next();
     this._ngDestroy$.complete();
   }

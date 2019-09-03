@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum } from '@gauzy/models';
+import { RolesEnum, Expense } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
@@ -73,8 +73,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         }
     };
 
-    private _ngDestroy$ = new Subject<void>();
-
     selectedEmployeeId: string;
     selectedDate: Date;
 
@@ -83,6 +81,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     smartTableSource = new LocalDataSource();
 
     selectedExpense: SelectedRowModel;
+    showTable: boolean;
+
+    private _ngDestroy$ = new Subject<void>();
+    private _selectedOrganizationId: string;
 
     get smartTableSettings() {
         return ExpensesComponent.smartTableSettings;
@@ -106,7 +108,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             .subscribe(date => {
                 this.selectedDate = date;
 
-                this._loadTableData();
+                if (this.selectedEmployeeId) {
+                    this._loadTableData();
+                } else {
+                    if (this._selectedOrganizationId) {
+                        this._loadTableData(this._selectedOrganizationId);
+                    }
+                }
             });
 
         this.store.selectedEmployee$
@@ -116,12 +124,20 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     this.selectedEmployeeId = employee.id;
                     this._loadTableData();
                 } else {
-                    this.expenseService.getAll()
-                        .then(data => {
-                            this.smartTableSource.load(data.items);
-                        })
+                    if (this._selectedOrganizationId) {
+                        this._loadTableData(this._selectedOrganizationId);
+                    }
                 }
             });
+
+        this.store.selectedOrganization$
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(org => {
+                if (org) {
+                    this._selectedOrganizationId = org.id
+                    this.store.selectedEmployee = null;
+                }
+            })
 
         this.route.queryParamMap
             .pipe(takeUntil(this._ngDestroy$))
@@ -130,8 +146,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     this.openAddExpenseDialog();
                 }
             });
-
-
     }
 
     openAddExpenseDialog() {
@@ -220,15 +234,41 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         this.selectedExpense = ev;
     }
 
-    private async _loadTableData() {
+    private async _loadTableData(orgId?: string) {
+        let findObj;
+        this.showTable = false;
+
+        if (orgId) {
+            findObj = {
+                organization: {
+                    id: orgId
+                }
+            }
+
+            ExpensesComponent.smartTableSettings.columns['employee'] = {
+                title: 'Employee',
+                type: 'string',
+                valuePrepareFunction: (_, expense: Expense) => {
+                    const user = expense.employee.user;
+
+                    if (user) {
+                        return `${user.firstName} ${user.lastName}`
+                    }
+                }
+            }
+        } else {
+            findObj = {
+                employee: {
+                    id: this.selectedEmployeeId
+                }
+            }
+
+            delete ExpensesComponent.smartTableSettings.columns['employee']
+        }
+
         try {
             const { items } = await this.expenseService
-                .getAll(['employee'], {
-                    employee: {
-                        id: this.selectedEmployeeId
-                    }
-                }, this.selectedDate);
-
+                .getAll(['employee', 'employee.user'], findObj, this.selectedDate);
 
             const expenseVM: ExpenseViewModel[] = items.map(i => {
                 return {
@@ -240,17 +280,20 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     categoryName: i.categoryName,
                     amount: i.amount,
                     notes: i.notes,
-                    currency: i.currency
+                    currency: i.currency,
+                    employee: i.employee
                 }
             });
 
             this.smartTableSource.load(expenseVM);
+            this.showTable = true;
         } catch (error) {
             this.toastrService.danger(error.error.message || error.message, 'Error');
         }
     }
 
     ngOnDestroy() {
+        delete ExpensesComponent.smartTableSettings.columns['employee']
         this._ngDestroy$.next();
         this._ngDestroy$.complete();
     }
