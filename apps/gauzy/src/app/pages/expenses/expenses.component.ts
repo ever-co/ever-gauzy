@@ -106,7 +106,15 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             .subscribe(date => {
                 this.selectedDate = date;
 
-                this._loadTableData();
+                if (this.selectedEmployeeId) {
+                    this._loadTableData();
+                } else {
+                    const selectedOrg = this.store.selectedOrganization;
+
+                    if (selectedOrg && selectedOrg.id) {
+                        this._loadTableData(selectedOrg.id);
+                    }
+                }
             });
 
         this.store.selectedEmployee$
@@ -116,12 +124,21 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     this.selectedEmployeeId = employee.id;
                     this._loadTableData();
                 } else {
-                    this.expenseService.getAll()
-                        .then(data => {
-                            this.smartTableSource.load(data.items);
-                        })
+                    const selectedOrg = this.store.selectedOrganization;
+                    if (selectedOrg && selectedOrg.id) {
+                        this._loadTableData(selectedOrg.id);
+                    }
                 }
             });
+
+        this.store.selectedOrganization$
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(org => {
+                if (org) {
+                    this.store.selectedEmployee = null;
+                    this._loadTableData(org.id);
+                }
+            })
 
         this.route.queryParamMap
             .pipe(takeUntil(this._ngDestroy$))
@@ -130,8 +147,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     this.openAddExpenseDialog();
                 }
             });
-
-
     }
 
     openAddExpenseDialog() {
@@ -220,14 +235,27 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         this.selectedExpense = ev;
     }
 
-    private async _loadTableData() {
+    private async _loadTableData(orgId?: string) {
+        let findObj;
+
+        if (orgId) {
+            findObj = {
+                organization: {
+                    id: orgId
+                }
+            }
+        } else {
+            findObj = {
+                employee: {
+                    id: this.selectedEmployeeId
+                }
+
+            }
+        }
+
         try {
             const { items } = await this.expenseService
-                .getAll(['employee'], {
-                    employee: {
-                        id: this.selectedEmployeeId
-                    }
-                }, this.selectedDate);
+                .getAll(['employee'], findObj, this.selectedDate);
 
 
             const expenseVM: ExpenseViewModel[] = items.map(i => {

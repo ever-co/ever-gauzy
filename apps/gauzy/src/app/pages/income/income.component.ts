@@ -70,7 +70,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
           this._loadEmployeeIncomeData(employee.id);
         } else {
           const selectedOrg = this.store.selectedOrganization;
-          if (selectedOrg) {
+          if (selectedOrg && selectedOrg.id) {
             this._loadEmployeeIncomeData(null, selectedOrg.id);
           }
         }
@@ -79,8 +79,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
     this.store.selectedOrganization$
       .pipe(takeUntil(this._ngDestroy$))
       .subscribe(org => {
-        this.store.selectedEmployee = null;
-        this._loadEmployeeIncomeData(null, org.id);
+        if (org) {
+          this.store.selectedEmployee = null;
+          this._loadEmployeeIncomeData(null, org.id);
+        }
       })
 
     this.route.queryParamMap
