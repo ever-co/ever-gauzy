@@ -17,6 +17,7 @@ import { RequestContextMiddleware } from './context';
 import { UserOrganization } from '../user-organization';
 import { OrganizationDepartment } from '../organization-department';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense';
+import { EmployeeRecurringExpense } from '../employee-recurring-expense';
 
 const entities = [
   User,
@@ -28,7 +29,8 @@ const entities = [
   EmployeeSettings,
   UserOrganization,
   OrganizationDepartment,
-  OrganizationRecurringExpense
+  OrganizationRecurringExpense,
+  EmployeeRecurringExpense
 ];
 
 @Module({

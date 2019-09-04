@@ -73,20 +73,24 @@
         </span>
       </div>
       <div>
-        <button (click)="addEmployeeSetting()" nbButton status="success">
+        <button
+          (click)="addEmployeeRecurringExpense()"
+          nbButton
+          status="success"
+        >
           <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
         </button>
       </div>
     </div>
 
     <div
-      *ngFor="let setting of selectedEmployeeSettings; let i = index"
+      *ngFor="let setting of selectedEmployeeRecurringExpense; let i = index"
       class="setting-block"
     >
       <div class="block-content">
         <div class="block-info">
           <div class="row">
-            <div class="col">{{ setting.settingType }}</div>
+            <div class="col">{{ setting.categoryName }}</div>
             <div class="col">{{ getMonthString(setting.month) }}</div>
             <div class="col">{{ setting.year }}</div>
           </div>
@@ -135,7 +139,7 @@
         class="block-settings"
         [ngStyle]="{ width: selectedRowIndexToShow === i ? '150px' : '0' }"
       >
-        <div class="single-setting" (click)="editSetting(i)">
+        <div class="single-setting" (click)="editEmployeeRecurringExpense(i)">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="19"
@@ -155,7 +159,7 @@
           <span>Edit</span>
         </div>
 
-        <div class="single-setting" (click)="deleteSetting(i)">
+        <div class="single-setting" (click)="deleteEmployeeRecurringExpense(i)">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="19"

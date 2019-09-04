@@ -1,19 +1,19 @@
 <nb-card>
   <nb-card-header>
-    Add Month Setting
+    Add employee recurring expense
   </nb-card-header>
   <nb-card-body>
     <form [formGroup]="form" *ngIf="form">
       <div class="row">
         <div class="col-6">
           <div class="form-group">
-            <label class="label" for="valueDateInput">Setting Type</label>
+            <label class="label" for="valueDateInput">Category Name</label>
             <ng-select
               id="positionInput"
-              [items]="settingTypes"
+              [items]="categoryNames"
               [searchable]="false"
-              placeholder="Setting Type"
-              formControlName="settingType"
+              placeholder="Category Name"
+              formControlName="categoryName"
             >
             </ng-select>
           </div>

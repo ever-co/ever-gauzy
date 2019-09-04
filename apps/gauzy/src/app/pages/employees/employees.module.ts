@@ -13,7 +13,7 @@ import { EmployeeFullNameComponent } from './table-components/employee-fullname/
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-profile/edit-employee-profile.component';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { EmployeeSettingMutationModule } from '../../@shared/employee/employee-setting-mutation/employee-setting-mutation.module';
+import { EmployeeRecurringExpenseMutationModule } from '../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.module';
 import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
 
 const COMPONENTS = [
@@ -25,7 +25,7 @@ const COMPONENTS = [
 ];
 
 @NgModule({
-    imports: [ 
+    imports: [
         EmployeesRoutingModule,
         ThemeModule,
         NbCardModule,
@@ -40,7 +40,7 @@ const COMPONENTS = [
         EmployeeEndWorkModule,
         NbTooltipModule,
         NgSelectModule,
-        EmployeeSettingMutationModule,
+        EmployeeRecurringExpenseMutationModule,
         ImageUpladerModule
     ],
     declarations: [
