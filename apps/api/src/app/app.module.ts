@@ -15,6 +15,7 @@ import { SeedDataService } from './core/seeds/SeedDataService';
 import { UserOrganizationModule } from './user-organization';
 import { EmployeeStatisticsModule } from './employee-statistics';
 import { OrganizationDepartmentModule } from './organization-department';
+import { OrganizationRecurringExpenseModule } from './organization-recurring-expense';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { OrganizationDepartmentModule } from './organization-department';
           { path: '/employee-statistics', module: EmployeeStatisticsModule },
           { path: '/user-organization', module: UserOrganizationModule },
           { path: '/organization-department', module: OrganizationDepartmentModule },
+          { path: '/organization-recurring-expense', module: OrganizationRecurringExpenseModule },
         ],
       },
     ]),
@@ -47,10 +49,11 @@ import { OrganizationDepartmentModule } from './organization-department';
     IncomeModule,
     ExpenseModule,
     UserOrganizationModule,
-    OrganizationDepartmentModule
+    OrganizationDepartmentModule,
+    OrganizationRecurringExpenseModule
   ],
   controllers: [AppController],
   providers: [AppService, SeedDataService]
 })
-export class AppModule {    
+export class AppModule {
 }
