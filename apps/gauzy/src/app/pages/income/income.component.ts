@@ -45,7 +45,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
     private toastrService: NbToastrService,
     private route: ActivatedRoute,
     private translateService: TranslateService
-  ) {}
+  ) { }
 
   async ngOnInit() {
     this.hasRole = await this.authService
@@ -75,6 +75,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
           this._loadEmployeeIncomeData(employee.id);
         } else {
           if (this._selectedOrganizationId) {
+            this.selectedEmployeeId = null;
             this._loadEmployeeIncomeData(null, this._selectedOrganizationId);
           }
         }
