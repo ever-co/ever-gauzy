@@ -18,8 +18,6 @@ export class OrganizationsMutationComponent implements OnInit {
     currencies: string[] = Object.values(CurrenciesEnum);
     defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
 
-    departments = [];
-
     constructor(private fb: FormBuilder,
         protected dialogRef: NbDialogRef<OrganizationsMutationComponent>,
         private toastrService: NbToastrService,
@@ -30,14 +28,8 @@ export class OrganizationsMutationComponent implements OnInit {
         console.log(await this.orgDepartmentService.getAll(['organization']))
     }
 
-    addOrEditOrganization() {
+    addOrganization() {
         this.dialogRef.close(this.form.value);
-    }
-
-    departmentsInputHandler(val: string) {
-        if (val) {
-            this.departments.push(val);
-        }
     }
 
     handleImageUploadError(error) {

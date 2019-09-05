@@ -8,6 +8,7 @@ import { OrganizationsLogoComponent } from './table-components/organizations-log
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { Router } from '@angular/router';
 
 interface SelectedRow {
     data: Organization,
@@ -51,7 +52,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 
     constructor(private organizationsService: OrganizationsService,
         private toastrService: NbToastrService,
-        private dialogService: NbDialogService) { }
+        private dialogService: NbDialogService,
+        private router: Router) { }
 
     ngOnInit() {
         this._loadSmartTable();
@@ -66,7 +68,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
     }
 
     async addOrganization() {
-        const result = await this.dialogService.open(OrganizationsMutationComponent)
+        const result = await this.dialogService
+            .open(OrganizationsMutationComponent)
             .onClose
             .pipe(first())
             .toPromise();
@@ -83,7 +86,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
     }
 
     async editOrganization() {
-        // TODO: redirect to edit organization
+        this.router.navigate(['/pages/organizations/edit/' + this.selectedOrganization.id]);
     }
 
     async deleteOrganization() {

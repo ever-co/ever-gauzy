@@ -1,4 +1,5 @@
 <nb-card>
+  <nb-card-header> </nb-card-header>
   <nb-card-body>
     <div class="content">
       <div class="employee-container">
@@ -99,21 +100,55 @@
                 </div>
               </div>
               <div class="col">
-                <!-- <div class="form-group">
+                <div class="form-group" (mouseleave)="showDepartmentsList = false">
                   <label class="label">Departments</label>
                   <input
                     nbInput
                     type="text"
                     placeholder="Add Departments"
                     (change)="departmentsInputHandler($event)"
+                    (focus)="showDepartmentsList = true"
                   />
-                  <div *ngIf="departments.length > 0">
+                  <nb-list
+                    *ngIf="departments.length > 0 && showDepartmentsList"
+                    [ngClass]="{
+                      'department-list-active': showDepartmentsList
+                    }"
+                  >
+                    <nb-list-item
+                      *ngFor="let dep of departments; let i = index"
+                    >
+                      <div>
+                        <span>{{ dep }}</span>
+                        <nb-icon
+                          class="ml-auto mt-1 close"
+                          (click)="deleteDepartmentFromList(i)"
+                          icon="close-outline"
+                        ></nb-icon>
+                      </div>
+                    </nb-list-item>
+                  </nb-list>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label class="label">Positions</label>
+                  <input
+                    nbInput
+                    type="text"
+                    placeholder="Add Positions"
+                    (change)="positionsInputHandler($event)"
+                  />
+                  <div *ngIf="positions.length > 0">
                     <nb-list>
                       <nb-list-item
-                        *ngFor="let dep of departments; let i = index"
+                        *ngFor="let pos of positions; let i = index"
                       >
                         <div>
-                          <span>{{ dep }}</span>
+                          <span>{{ pos }}</span>
                           <nb-icon
                             class="ml-auto mt-1 close"
                             (click)="deleteDepartmentFromList(i)"
@@ -123,55 +158,25 @@
                       </nb-list-item>
                     </nb-list>
                   </div>
-                </div> -->
-              </div>
-            </div>
-
-            <!-- <div class="row">
-              <div class="col">
-                <div class="form-group">
-                    <label class="label">Positions</label>
-                    <input
-                      nbInput
-                      type="text"
-                      placeholder="Add Positions"
-                      (change)="positionsInputHandler($event)"
-                    />
-                    <div *ngIf="positions.length > 0">
-                      <nb-list>
-                        <nb-list-item
-                          *ngFor="let pos of positions; let i = index"
-                        >
-                          <div>
-                            <span>{{ pos }}</span>
-                            <nb-icon
-                              class="ml-auto mt-1 close"
-                              (click)="deleteDepartmentFromList(i)"
-                              icon="close-outline"
-                            ></nb-icon>
-                          </div>
-                        </nb-list-item>
-                      </nb-list>
-                    </div>
                 </div>
               </div>
               <div class="col"></div>
-            </div> -->
-
+            </div>
           </div>
 
           <div class="actions">
             <button
               [disabled]="form.invalid"
-              (click)="addOrganization()"
+              (click)="updateOrganizationSettings()"
               nbButton
               status="success"
             >
-              Add
+              Save
             </button>
           </div>
         </form>
       </div>
     </div>
   </nb-card-body>
+  <nb-card-footer> </nb-card-footer>
 </nb-card>

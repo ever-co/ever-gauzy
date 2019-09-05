@@ -15,8 +15,8 @@ import { NbToastrService } from '@nebular/theme';
     styleUrls: ['./edit-employee-profile.component.scss']
 })
 export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
-    form: FormGroup;
     private _ngDestroy$ = new Subject<void>();
+    form: FormGroup;
     paramSubscription: Subscription;
     hoverState: boolean;
     fakeDepartments = [
