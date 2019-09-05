@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../@core/services/store.service';
-import { OrganizationsService } from '../../@core/services/organizations.service';
 import { first, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -36,7 +35,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
     private _ngDestroy$ = new Subject<void>();
 
     constructor(
-        private organizationsService: OrganizationsService,
         private employeesService: EmployeesService,
         private dialogService: NbDialogService,
         private store: Store,
@@ -49,7 +47,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         this.store.selectedOrganization$
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(organization => {
-                console.log(organization)
                 this.selectedOrganizationId = organization.id;
                 this.loadPage();
             });

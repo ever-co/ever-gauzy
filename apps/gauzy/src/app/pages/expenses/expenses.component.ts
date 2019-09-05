@@ -135,7 +135,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             .subscribe(org => {
                 if (org) {
                     this._selectedOrganizationId = org.id
-                    this.store.selectedEmployee = null;
                 }
             })
 
