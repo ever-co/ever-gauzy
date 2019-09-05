@@ -27,6 +27,7 @@ export interface ExpenseCreateInput {
     notes?: string;
     valueDate: Date;
     currency?: string;
+    orgId?: string
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {

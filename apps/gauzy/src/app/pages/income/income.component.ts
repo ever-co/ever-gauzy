@@ -154,14 +154,15 @@ export class IncomeComponent implements OnInit, OnDestroy {
           clientId: result.client.clientId,
           valueDate: result.valueDate,
           employeeId: result.employee.id,
+          orgId: this.store.selectedOrganization.id,
           notes: result.notes,
           currency: result.currency
         });
 
         this.toastrService.info('Income added.', 'Success');
 
-        this.store.selectedEmployee = result.employee;
         this._loadEmployeeIncomeData();
+        this.store.selectedEmployee = result.employee.id ? result.employee : null;
       } catch (error) {
         this.toastrService.danger(
           error.error.message || error.message,
@@ -243,7 +244,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
         title: 'Employee',
         type: 'string',
         valuePrepareFunction: (_, income: Income) => {
-          const user = income.employee.user;
+          const user = income.employee ? income.employee.user : null;
 
           if (user) {
             return `${user.firstName} ${user.lastName}`

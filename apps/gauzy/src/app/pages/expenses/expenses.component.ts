@@ -158,6 +158,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                         await this.expenseService
                             .create({
                                 employeeId: formData.employee.id,
+                                orgId: this.store.selectedOrganization.id,
                                 amount: formData.amount,
                                 categoryId: formData.category.categoryId,
                                 categoryName: formData.category.categoryName,
@@ -169,8 +170,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                             });
 
                         this.toastrService.info('Expense added.', 'Success');
-                        this.store.selectedEmployee = formData.employee;
+
                         this._loadTableData();
+                        this.store.selectedEmployee = formData.employee.id ? formData.employee : null;
                     } catch (error) {
                         this.toastrService.danger(error.error.message || error.message, 'Error');
                     }
@@ -250,7 +252,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                 title: 'Employee',
                 type: 'string',
                 valuePrepareFunction: (_, expense: Expense) => {
-                    const user = expense.employee.user;
+                    const user = expense.employee ? expense.employee.user : null;
 
                     if (user) {
                         return `${user.firstName} ${user.lastName}`

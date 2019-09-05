@@ -18,7 +18,7 @@ export class ExpenseCreateHandler implements ICommandHandler<ExpenseCreateComman
 
         const expense = new Expense();
         const employee = input.employeeId ? await this.employeeService.findOne(input.employeeId) : null;
-        const organization = await this.organizationService.findOne(employee.orgId);
+        const organization = await this.organizationService.findOne(input.orgId);
 
         expense.amount = input.amount;
         expense.categoryId = input.categoryId;

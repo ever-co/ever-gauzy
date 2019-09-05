@@ -23,6 +23,7 @@ export interface IncomeCreateInput {
     currency?: string;
     employeeId?: string;
     notes?: string;
+    orgId?: string;
 }
 
 export interface IncomeUpdateInput {
