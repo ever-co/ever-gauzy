@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
-import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbSelectModule } from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbSelectModule, NbListModule } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
@@ -9,6 +9,9 @@ import { OrganizationsFullnameComponent } from './table-components/organizations
 import { OrganizationsLogoComponent } from './table-components/organizations-logo/organizations-logo.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
+import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
+import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
 
 @NgModule({
     imports: [
@@ -23,7 +26,11 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
         NbIconModule,
         NbDialogModule.forChild(),
         OrganizationsMutationModule,
-        UserFormsModule
+        UserFormsModule,
+        ImageUpladerModule,
+        NbSelectModule,
+        RemoveLodashModule,
+        NbListModule
     ],
     entryComponents: [
         OrganizationsFullnameComponent,
@@ -32,7 +39,8 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
     declarations: [
         OrganizationsComponent,
         OrganizationsFullnameComponent,
-        OrganizationsLogoComponent
+        OrganizationsLogoComponent,
+        EditOrganizationComponent
     ]
 })
 export class OrganizationsModule { }
