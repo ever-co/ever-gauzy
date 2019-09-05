@@ -1,15 +1,23 @@
 .main {
-    height: 500px;
+  height: 500px;
 
-    .body {
-        width: 505px;
-    }
+  .body {
+    width: 505px;
+  }
 
-    .close {
-        cursor: pointer;
-    }
+  .close {
+    cursor: pointer;
+  }
 
-    .notes {
-        height: 198px;
-    }
+  .notes {
+    height: 198px;
+  }
+
+  nb-card-header .employees {
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 1px solid #edf1f7;
+
+    width: 220px;
+  }
 }

@@ -153,13 +153,14 @@ export class IncomeComponent implements OnInit, OnDestroy {
           clientName: result.client.clientName,
           clientId: result.client.clientId,
           valueDate: result.valueDate,
-          employeeId: this.selectedEmployeeId,
+          employeeId: result.employee.id,
           notes: result.notes,
           currency: result.currency
         });
 
         this.toastrService.info('Income added.', 'Success');
 
+        this.store.selectedEmployee = result.employee;
         this._loadEmployeeIncomeData();
       } catch (error) {
         this.toastrService.danger(
