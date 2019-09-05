@@ -157,7 +157,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                     try {
                         await this.expenseService
                             .create({
-                                employeeId: this.selectedEmployeeId,
+                                employeeId: formData.employee.id,
                                 amount: formData.amount,
                                 categoryId: formData.category.categoryId,
                                 categoryName: formData.category.categoryName,
@@ -169,6 +169,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
                             });
 
                         this.toastrService.info('Expense added.', 'Success');
+                        this.store.selectedEmployee = formData.employee;
                         this._loadTableData();
                     } catch (error) {
                         this.toastrService.danger(error.error.message || error.message, 'Error');
