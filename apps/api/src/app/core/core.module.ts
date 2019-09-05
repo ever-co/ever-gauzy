@@ -16,27 +16,41 @@ import { EmployeeSettings } from '../employee-settings';
 import { RequestContextMiddleware } from './context';
 import { UserOrganization } from '../user-organization';
 import { OrganizationDepartment } from '../organization-department';
+import { OrganizationRecurringExpense } from '../organization-recurring-expense';
+import { EmployeeRecurringExpense } from '../employee-recurring-expense';
 
-const entities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings, UserOrganization, OrganizationDepartment];
+const entities = [
+  User,
+  Employee,
+  Role,
+  Organization,
+  Income,
+  Expense,
+  EmployeeSettings,
+  UserOrganization,
+  OrganizationDepartment,
+  OrganizationRecurringExpense,
+  EmployeeRecurringExpense
+];
 
 @Module({
-    imports: [
-      TypeOrmModule.forRootAsync({
-        imports: [ConfigModule],
-        useFactory: (config: ConfigService): TypeOrmModuleOptions => ({
-          ...env.database,
-          entities,
-          // subscribers,
-          // migrations,
-        }),
-        inject: [ConfigService],
+  imports: [
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService): TypeOrmModuleOptions => ({
+        ...env.database,
+        entities,
+        // subscribers,
+        // migrations,
       }),
-    ],
-    controllers: [],
-    providers: [],
-  })
-  export class CoreModule implements NestModule {    
-    configure(consumer: MiddlewareConsumer) {
-      consumer.apply(RequestContextMiddleware).forRoutes('*');
-    }
+      inject: [ConfigService],
+    }),
+  ],
+  controllers: [],
+  providers: [],
+})
+export class CoreModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestContextMiddleware).forRoutes('*');
   }
+}
