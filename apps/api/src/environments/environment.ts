@@ -31,7 +31,8 @@ export const environment: IEnvironment = {
   defaultOrganization: {
     name: 'Ever Technologies LTD',
     currency: CurrenciesEnum.BGN,
-    defaultValueDateType: DefaultValueDateTypeEnum.TODAY
+    defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+    imageUrl: 'assets/images/logos/ever-large.jpg'
   },
 
   defaultAdmins: [
