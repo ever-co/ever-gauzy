@@ -1,12 +1,12 @@
 .content {
     width: 800px !important;
-    height: 550px !important;
+    height: 220px !important;
 
     form {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 550px;
+        height: 240px;
     }
 
     .actions {
@@ -15,11 +15,5 @@
 }
 
 .employee-container {
-    height: 550px !important;
-}
-
-
-nb-list-item {
-    line-height: 10px;
-    border-bottom: none;
+    height: 220px !important;
 }

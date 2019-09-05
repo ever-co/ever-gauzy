@@ -1,24 +1,24 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { EmployeeSettings, CurrenciesEnum, OrganizationSelectInput } from '@gauzy/models';
+import { CurrenciesEnum, OrganizationSelectInput, EmployeeRecurringExpense } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 
 @Component({
-    selector: 'ngx-employee-setting-mutation',
-    templateUrl: './employee-setting-mutation.component.html',
-    styleUrls: ['./employee-setting-mutation.component.scss']
+    selector: 'ngx-employee-recurring-expense-mutation',
+    templateUrl: './employee-recurring-expense-mutation.component.html',
+    styleUrls: ['./employee-recurring-expense-mutation.component.scss']
 })
-export class EmployeeSettingMutationComponent implements OnInit {
+export class EmployeeRecurringExpenseMutationComponent implements OnInit {
     protected form: FormGroup;
-    settingTypes = ['Salary', 'Salary Taxes', 'Extra Bonus'];
-    employeeSetting?: EmployeeSettings;
+    categoryNames = ['Salary', 'Salary Taxes', 'Extra Bonus'];
+    employeeRecurringExpense?: EmployeeRecurringExpense;
     currencies = Object.values(CurrenciesEnum);
 
     constructor(private fb: FormBuilder,
-        protected dialogRef: NbDialogRef<EmployeeSettingMutationComponent>,
+        protected dialogRef: NbDialogRef<EmployeeRecurringExpenseMutationComponent>,
         private organizationsService: OrganizationsService,
         private store: Store
     ) { }
@@ -28,7 +28,7 @@ export class EmployeeSettingMutationComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.employeeSetting ? this._initializeForm(this.employeeSetting) : this._initializeForm();
+        this.employeeRecurringExpense ? this._initializeForm(this.employeeRecurringExpense) : this._initializeForm();
     }
 
     submitForm() {
@@ -37,11 +37,11 @@ export class EmployeeSettingMutationComponent implements OnInit {
         }
     }
 
-    private _initializeForm(employeeSetting?: EmployeeSettings) {
+    private _initializeForm(employeeRecurringExpense?: EmployeeRecurringExpense) {
         this.form = this.fb.group({
-            settingType: [employeeSetting ? employeeSetting.settingType : '', Validators.required],
-            value: [employeeSetting ? employeeSetting.value : '', Validators.required],
-            currency: [employeeSetting ? employeeSetting.currency : '', Validators.required]
+            categoryName: [employeeRecurringExpense ? employeeRecurringExpense.categoryName : '', Validators.required],
+            value: [employeeRecurringExpense ? employeeRecurringExpense.value : '', Validators.required],
+            currency: [employeeRecurringExpense ? employeeRecurringExpense.currency : '', Validators.required]
         });
 
         this._loadDefaultCurrency();

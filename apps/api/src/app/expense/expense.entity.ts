@@ -16,13 +16,14 @@ import { Employee } from '../employee';
 @Entity('expense')
 export class Expense extends Base implements IExpense {
     @ApiModelProperty({ type: Employee })
-    @ManyToOne(type => Employee, { nullable: false, onDelete: 'CASCADE' })
+    @ManyToOne(type => Employee, { nullable: true, onDelete: 'CASCADE' })
     @JoinColumn()
-    employee: Employee;
+    employee?: Employee;
 
     @ApiModelProperty({ type: String, readOnly: true })
     @RelationId((expense: Expense) => expense.employee)
-    readonly employeeId: string;
+    @Column({ nullable: true })
+    readonly employeeId?: string;
 
     @ApiModelProperty({ type: Organization })
     @ManyToOne(type => Organization, { nullable: false, onDelete: 'CASCADE' })

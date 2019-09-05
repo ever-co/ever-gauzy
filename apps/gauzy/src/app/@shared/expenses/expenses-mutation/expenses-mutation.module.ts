@@ -5,6 +5,7 @@ import { NbCardModule, NbButtonModule, NbIconModule, NbInputModule, NbDatepicker
 import { ExpensesMutationComponent } from './expenses-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 
 @NgModule({
     imports: [
@@ -17,7 +18,8 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
         NbInputModule,
         FormsModule,
         NbDatepickerModule,
-        NbSelectModule
+        NbSelectModule,
+        EmployeeSelectorsModule
     ],
     exports: [ExpensesMutationComponent],
     declarations: [ExpensesMutationComponent],

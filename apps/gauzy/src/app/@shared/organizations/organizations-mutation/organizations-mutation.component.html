@@ -99,34 +99,75 @@
                 </div>
               </div>
               <div class="col">
-                <div class="form-group">
+                <!-- <div class="form-group">
                   <label class="label">Departments</label>
                   <input
-                    nbInput 
+                    nbInput
                     type="text"
                     placeholder="Add Departments"
-                    (change)="departmentsInputHandler($event.target.value)"
-                  >
-                  <div class="">
+                    (change)="departmentsInputHandler($event)"
+                  />
+                  <div *ngIf="departments.length > 0">
                     <nb-list>
-                      <nb-list-item *ngFor="let dep of departments">
-                        {{ dep }}
+                      <nb-list-item
+                        *ngFor="let dep of departments; let i = index"
+                      >
+                        <div>
+                          <span>{{ dep }}</span>
+                          <nb-icon
+                            class="ml-auto mt-1 close"
+                            (click)="deleteDepartmentFromList(i)"
+                            icon="close-outline"
+                          ></nb-icon>
+                        </div>
                       </nb-list-item>
                     </nb-list>
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
+
+            <!-- <div class="row">
+              <div class="col">
+                <div class="form-group">
+                    <label class="label">Positions</label>
+                    <input
+                      nbInput
+                      type="text"
+                      placeholder="Add Positions"
+                      (change)="positionsInputHandler($event)"
+                    />
+                    <div *ngIf="positions.length > 0">
+                      <nb-list>
+                        <nb-list-item
+                          *ngFor="let pos of positions; let i = index"
+                        >
+                          <div>
+                            <span>{{ pos }}</span>
+                            <nb-icon
+                              class="ml-auto mt-1 close"
+                              (click)="deleteDepartmentFromList(i)"
+                              icon="close-outline"
+                            ></nb-icon>
+                          </div>
+                        </nb-list-item>
+                      </nb-list>
+                    </div>
+                </div>
+              </div>
+              <div class="col"></div>
+            </div> -->
+
           </div>
 
           <div class="actions">
             <button
               [disabled]="form.invalid"
-              (click)="addOrEditOrganization()"
+              (click)="addOrganization()"
               nbButton
               status="success"
             >
-              {{ organization ? 'Edit' : 'Add' }}
+              Add
             </button>
           </div>
         </form>

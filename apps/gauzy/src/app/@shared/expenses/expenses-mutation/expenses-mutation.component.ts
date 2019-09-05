@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
@@ -6,6 +6,7 @@ import { CurrenciesEnum, OrganizationSelectInput } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
+import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
     selector: 'ga-expenses-mutation',
@@ -13,6 +14,9 @@ import { first } from 'rxjs/operators';
     styleUrls: ['./expenses-mutation.component.scss']
 })
 export class ExpensesMutationComponent implements OnInit {
+    @ViewChild("employeeSelector", { static: false })
+    employeeSelector: EmployeeSelectorComponent;
+
     form: FormGroup;
 
     expense: ExpenseViewModel;
@@ -136,7 +140,7 @@ export class ExpensesMutationComponent implements OnInit {
     }
 
     addOrEditExpense() {
-        this.dialogRef.close(this.form.value);
+        this.dialogRef.close(Object.assign({ employee: this.employeeSelector.selectedEmployee }, this.form.value));
     }
 
     private _initializeForm() {
