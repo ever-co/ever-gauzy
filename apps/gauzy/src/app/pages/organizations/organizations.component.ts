@@ -83,24 +83,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
     }
 
     async editOrganization() {
-        const result = await this.dialogService.open(OrganizationsMutationComponent, {
-            context: {
-                organization: this.selectedOrganization
-            }
-        })
-            .onClose
-            .pipe(first())
-            .toPromise();
-
-        if (result) {
-            try {
-                await this.organizationsService.update(this.selectedOrganization.id, result);
-                this.toastrService.info('Organization edited.', 'Success');
-                this._loadSmartTable();
-            } catch (error) {
-                this.toastrService.danger(error.error.message || error.message, 'Error');
-            }
-        }
+        // TODO: redirect to edit organization
     }
 
     async deleteOrganization() {

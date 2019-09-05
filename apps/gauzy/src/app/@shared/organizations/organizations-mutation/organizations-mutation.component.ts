@@ -14,7 +14,6 @@ import { OrganizationDepartmentsService } from '../../../@core/services/organiza
 })
 export class OrganizationsMutationComponent implements OnInit {
     form: FormGroup;
-    organization?: Organization;
     hoverState: boolean;
     currencies: string[] = Object.values(CurrenciesEnum);
     defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
@@ -28,14 +27,14 @@ export class OrganizationsMutationComponent implements OnInit {
 
     async ngOnInit() {
         this._initializedForm();
-        console.log(await this.orgDepartmentService.getAll())
+        console.log(await this.orgDepartmentService.getAll(['organization']))
     }
 
     addOrEditOrganization() {
         this.dialogRef.close(this.form.value);
     }
 
-    inputHandler(val: string) {
+    departmentsInputHandler(val: string) {
         if (val) {
             this.departments.push(val);
         }
@@ -46,20 +45,11 @@ export class OrganizationsMutationComponent implements OnInit {
     }
 
     private _initializedForm() {
-        if (this.organization) {
-            this.form = this.fb.group({
-                currency: [this.organization.currency, Validators.required],
-                name: [this.organization.name, Validators.required],
-                imageUrl: [this.organization.imageUrl, Validators.required],
-                defaultValueDateType: [this.organization.defaultValueDateType, Validators.required]
-            });
-        } else {
-            this.form = this.fb.group({
-                currency: ['', Validators.required],
-                name: ['', Validators.required],
-                imageUrl: ['https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text=Select%20Image', Validators.required], // TODO: fix that when the internet is here!
-                defaultValueDateType: ['', Validators.required]
-            });
-        }
+        this.form = this.fb.group({
+            currency: ['', Validators.required],
+            name: ['', Validators.required],
+            imageUrl: ['https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text=Select%20Image', Validators.required], // TODO: fix that when the internet is here!
+            defaultValueDateType: ['', Validators.required]
+        });
     }
 }
