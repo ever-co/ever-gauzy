@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
-import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbTooltipModule } from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbTooltipModule, NbBadgeModule, NbSelectModule } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EmployeesRoutingModule } from './employees-routing.module';
 import { EmployeesComponent } from './employees.component';
@@ -15,11 +15,13 @@ import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-prof
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeRecurringExpenseMutationModule } from '../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.module';
 import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
+import { EmployeeWorkStatus } from './table-components/employee-work-status/employee-work-status';
 
 const COMPONENTS = [
     EmployeesComponent,
     EmployeeBonusComponent,
     EmployeeFullNameComponent,
+    EmployeeWorkStatus,
     EditEmployeeComponent,
     EditEmployeeProfileComponent
 ];
@@ -41,14 +43,16 @@ const COMPONENTS = [
         NbTooltipModule,
         NgSelectModule,
         EmployeeRecurringExpenseMutationModule,
-        ImageUpladerModule
+        ImageUpladerModule,
+        NbBadgeModule        
     ],
     declarations: [
         ...COMPONENTS,
     ],
     entryComponents: [
         EmployeeBonusComponent,
-        EmployeeFullNameComponent
+        EmployeeFullNameComponent,
+        EmployeeWorkStatus
     ],
     providers: [
         OrganizationsService

@@ -12,6 +12,7 @@ import { EmployeeBonusComponent } from './table-components/employee-bonus/employ
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
 import { Router, ActivatedRoute } from '@angular/router';
 import { monthNames } from '../../@core/utils/date';
+import { EmployeeWorkStatus } from './table-components/employee-work-status/employee-work-status';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -164,9 +165,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 id: i.id,
                 isActive: i.isActive,
                 endWork: i.endWork ? new Date(i.endWork) : '',
-                workStatus: i.endWork
-                    ? 'Work Ended on ' + new Date(i.endWork).getDate() + ' ' + monthNames[new Date(i.endWork).getMonth()] + ' ' + new Date(i.endWork).getFullYear()
-                    : 'Active',
+                workStatus: i.endWork 
+                ? new Date(i.endWork).getDate() + ' ' + monthNames[new Date(i.endWork).getMonth()] + ' ' + new Date(i.endWork).getFullYear()
+                : '',
                 imageUrl: i.user.imageUrl,
                 // TODO: laod real bonus and bonusDate
                 bonus: Math.floor(1000 * Math.random()) + 10,
@@ -204,7 +205,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 },
                 workStatus: {
                     title: 'Work Status',
-                    type: 'string'
+                    type: 'custom',
+                    class: 'text-center',
+                    renderComponent: EmployeeWorkStatus,
+                    filter: false
                 }
             },
             pager: {
