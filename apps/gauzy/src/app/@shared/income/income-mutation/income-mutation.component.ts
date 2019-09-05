@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { Income, OrganizationSelectInput } from '@gauzy/models';
@@ -6,6 +6,7 @@ import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
+import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
     selector: 'ngx-income-mutation',
@@ -13,6 +14,9 @@ import { first } from 'rxjs/operators';
     styleUrls: ['./income-mutation.component.scss']
 })
 export class IncomeMutationComponent implements OnInit {
+    @ViewChild("employeeSelector", { static: false })
+    employeeSelector: EmployeeSelectorComponent;
+
     income?: Income;
     currencies = Object.values(CurrenciesEnum);
 
@@ -86,7 +90,7 @@ export class IncomeMutationComponent implements OnInit {
 
     addOrEditExpense() {
         if (this.form.valid) {
-            this.dialogRef.close(this.form.value);
+            this.dialogRef.close(Object.assign({ employee: this.employeeSelector.selectedEmployee }, this.form.value));
         }
     }
 

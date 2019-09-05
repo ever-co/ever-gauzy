@@ -45,7 +45,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
     private toastrService: NbToastrService,
     private route: ActivatedRoute,
     private translateService: TranslateService
-  ) {}
+  ) { }
 
   async ngOnInit() {
     this.hasRole = await this.authService
@@ -75,6 +75,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
           this._loadEmployeeIncomeData(employee.id);
         } else {
           if (this._selectedOrganizationId) {
+            this.selectedEmployeeId = null;
             this._loadEmployeeIncomeData(null, this._selectedOrganizationId);
           }
         }
@@ -152,7 +153,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
           clientName: result.client.clientName,
           clientId: result.client.clientId,
           valueDate: result.valueDate,
-          employeeId: this.selectedEmployeeId,
+          employeeId: result.employee.id,
+          orgId: this.store.selectedOrganization.id,
           notes: result.notes,
           currency: result.currency
         });
@@ -160,6 +162,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
         this.toastrService.info('Income added.', 'Success');
 
         this._loadEmployeeIncomeData();
+        this.store.selectedEmployee = result.employee.id ? result.employee : null;
       } catch (error) {
         this.toastrService.danger(
           error.error.message || error.message,
@@ -241,7 +244,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
         title: 'Employee',
         type: 'string',
         valuePrepareFunction: (_, income: Income) => {
-          const user = income.employee.user;
+          const user = income.employee ? income.employee.user : null;
 
           if (user) {
             return `${user.firstName} ${user.lastName}`

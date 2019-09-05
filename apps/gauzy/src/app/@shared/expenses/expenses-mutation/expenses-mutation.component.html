@@ -1,6 +1,12 @@
 <nb-card class="main">
   <nb-card-header class="d-flex">
     <h5>Add Expense</h5>
+    <ga-employee-selector
+      #employeeSelector
+      [disabled]="expense"
+      [skipGlobalChange]="true"
+      class="employees"
+    ></ga-employee-selector>
     <!-- TODO: FIX dialogRef.close() -->
     <nb-icon
       class="ml-auto mt-1 close"

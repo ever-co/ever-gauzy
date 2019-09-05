@@ -44,12 +44,13 @@ import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
 
-import {HttpClient} from '@angular/common/http';
-import {TranslateModule, TranslateLoader} from '@ngx-translate/core';
-import {TranslateHttpLoader} from '@ngx-translate/http-loader';
+import { HttpClient } from '@angular/common/http';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
-	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 
@@ -66,13 +67,15 @@ const NB_MODULES = [
   NbSelectModule,
   NbIconModule,
   NbEvaIconsModule,
+  HeaderSelectorsModule,
+  EmployeeSelectorsModule,
   TranslateModule.forChild({
     loader: {
-        provide: TranslateLoader,
-        useFactory: HttpLoaderFactory,
-        deps: [HttpClient]
+      provide: TranslateLoader,
+      useFactory: HttpLoaderFactory,
+      deps: [HttpClient]
     }
-})
+  })
 ];
 const COMPONENTS = [
   HeaderComponent,
@@ -93,7 +96,7 @@ const PIPES = [
 ];
 
 @NgModule({
-  imports: [CommonModule, ...NB_MODULES, HeaderSelectorsModule],
+  imports: [CommonModule, ...NB_MODULES],
   exports: [CommonModule, ...PIPES, ...COMPONENTS],
   declarations: [...COMPONENTS, ...PIPES],
   providers: [UsersService, UsersOrganizationsService]
@@ -107,7 +110,7 @@ export class ThemeModule {
           {
             name: 'default',
           },
-          [ DEFAULT_THEME, COSMIC_THEME, CORPORATE_THEME, DARK_THEME ],
+          [DEFAULT_THEME, COSMIC_THEME, CORPORATE_THEME, DARK_THEME],
         ).providers,
         WindowModeBlockScrollService,
       ],

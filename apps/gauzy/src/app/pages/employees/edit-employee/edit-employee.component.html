@@ -69,7 +69,7 @@
     <div class="body-header">
       <div>
         <span class="setting-name">
-          Month Settings
+          Recurring Monthly Expenses
         </span>
       </div>
       <div>
@@ -83,6 +83,14 @@
       </div>
     </div>
 
+    <div class="sub-header block-content">
+      <div class="row block-info">
+        <div class="col">Category Name</div>
+        <div class="col">Date</div>
+        <div class="col">Expense Value</div>
+      </div>
+    </div>
+
     <div
       *ngFor="let setting of selectedEmployeeRecurringExpense; let i = index"
       class="setting-block"
@@ -91,20 +99,17 @@
         <div class="block-info">
           <div class="row">
             <div class="col">{{ setting.categoryName }}</div>
-            <div class="col">{{ getMonthString(setting.month) }}</div>
-            <div class="col">{{ setting.year }}</div>
+            <div class="col">
+              {{ getMonthString(setting.month) }} {{ setting.year }}
+            </div>
+            <div class="col">
+              <span class="block-amount"
+                >{{ setting.value | currency: setting.currency }}
+              </span>
+            </div>
           </div>
         </div>
         <div class="block-value">
-          <span
-            [ngStyle]="{
-              'border-right':
-                selectedRowIndexToShow === i ? 'none' : '1px solid'
-            }"
-            class="block-amount"
-            >{{ setting.value | currency: setting.currency }}
-          </span>
-
           <svg
             class="hide-menu"
             *ngIf="selectedRowIndexToShow === i"
@@ -129,7 +134,7 @@
               xlink:href="#a"
             />
           </svg>
-
+          <small *ngIf="selectedRowIndexToShow === i">Close</small>
           <span *ngIf="selectedRowIndexToShow !== i" class="block-actions open">
             <nb-icon icon="settings-2-outline" (click)="showMenu(i)"> </nb-icon>
           </span>

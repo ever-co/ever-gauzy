@@ -3,8 +3,8 @@ import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface Expense extends IBaseEntityModel {
-    employee: Employee;
-    employeeId: string;
+    employee?: Employee;
+    employeeId?: string;
     organization: Organization;
     orgId: string;
     amount: number;
@@ -18,7 +18,7 @@ export interface Expense extends IBaseEntityModel {
 }
 
 export interface ExpenseCreateInput {
-    employeeId: string;
+    employeeId?: string;
     amount: number;
     vendorName: string;
     vendorId: string;
@@ -27,6 +27,7 @@ export interface ExpenseCreateInput {
     notes?: string;
     valueDate: Date;
     currency?: string;
+    orgId?: string
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {
