@@ -12,7 +12,7 @@ import { EmployeeBonusComponent } from './table-components/employee-bonus/employ
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
 import { Router, ActivatedRoute } from '@angular/router';
 import { monthNames } from '../../@core/utils/date';
-import { EmployeeWorkStatus } from './table-components/employee-work-status/employee-work-status';
+import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -207,7 +207,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                     title: 'Work Status',
                     type: 'custom',
                     class: 'text-center',
-                    renderComponent: EmployeeWorkStatus,
+                    renderComponent: EmployeeWorkStatusComponent,
                     filter: false
                 }
             },

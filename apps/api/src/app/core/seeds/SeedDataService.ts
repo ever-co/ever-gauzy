@@ -14,10 +14,10 @@ import { Income } from '../../income';
 import { createIncomes } from '../../income/income.seed';
 import { Expense } from '../../expense';
 import { createExpenses } from '../../expense/expense.seed';
-import { EmployeeSettings } from '../../employee-settings/employee-settings.entity';
+import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
 import { createUsersOrganizations } from '../../user-organization';
 
-const allEntities = [User, Employee, Role, Organization, Income, Expense, EmployeeSettings];
+const allEntities = [User, Employee, Role, Organization, Income, Expense, EmployeeSetting];
 
 @Injectable()
 export class SeedDataService {

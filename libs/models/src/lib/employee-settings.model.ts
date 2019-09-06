@@ -1,6 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
-export interface EmployeeSettings extends IBaseEntityModel {
+export interface EmployeeSetting extends IBaseEntityModel {
     employeeId: string;
     month: number;
     year: number;
@@ -9,7 +9,7 @@ export interface EmployeeSettings extends IBaseEntityModel {
     currency: string;
 }
 
-export interface EmployeeSettingsFindInput extends IBaseEntityModel {
+export interface EmployeeSettingFindInput extends IBaseEntityModel {
     employeeId?: string;
     month?: number;
     year?: number;

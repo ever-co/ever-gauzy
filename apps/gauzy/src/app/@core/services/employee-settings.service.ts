@@ -1,38 +1,38 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EmployeeSettings, EmployeeSettingsFindInput, } from '@gauzy/models';
+import { EmployeeSetting, EmployeeSettingFindInput, } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable({
     providedIn: 'root'
 })
-export class EmployeeSettingsService {
+export class EmployeeSettingService {
 
     constructor(private http: HttpClient) { }
 
-    create(createInput: EmployeeSettings): Promise<any> {
-        return this.http.post<EmployeeSettings>('/api/employee-settings', createInput).pipe(first()).toPromise();
+    create(createInput: EmployeeSetting): Promise<any> {
+        return this.http.post<EmployeeSetting>('/api/employee-setting', createInput).pipe(first()).toPromise();
     }
 
-    getAll(relations?: string[], findInput?: EmployeeSettingsFindInput): Promise<{
-        items: EmployeeSettings[],
+    getAll(relations?: string[], findInput?: EmployeeSettingFindInput): Promise<{
+        items: EmployeeSetting[],
         total: number
     }> {
         const data = JSON.stringify({ relations, findInput });
 
         return this.http.get<{
-            items: EmployeeSettings[],
+            items: EmployeeSetting[],
             total: number
-        }>('/api/employee-settings', {
+        }>('/api/employee-setting', {
             params: { data }
         }).pipe(first()).toPromise();
     }
 
     delete(id: string): Promise<any> {
-        return this.http.delete(`/api/employee-settings/${id}`).pipe(first()).toPromise();
+        return this.http.delete(`/api/employee-setting/${id}`).pipe(first()).toPromise();
     }
 
-    update(id: string, updateInput: EmployeeSettings): Promise<any> {
-        return this.http.put(`/api/employee-settings/${id}`, updateInput).pipe(first()).toPromise();
+    update(id: string, updateInput: EmployeeSetting): Promise<any> {
+        return this.http.put(`/api/employee-setting/${id}`, updateInput).pipe(first()).toPromise();
     }
 }

@@ -12,7 +12,7 @@ import { Role } from '../role';
 import { Organization } from '../organization';
 import { Income } from '../income';
 import { Expense } from '../expense';
-import { EmployeeSettings } from '../employee-settings';
+import { EmployeeSetting } from '../employee-setting';
 import { RequestContextMiddleware } from './context';
 import { UserOrganization } from '../user-organization';
 import { OrganizationDepartment } from '../organization-department';
@@ -26,7 +26,7 @@ const entities = [
   Organization,
   Income,
   Expense,
-  EmployeeSettings,
+  EmployeeSetting,
   UserOrganization,
   OrganizationDepartment,
   OrganizationRecurringExpense,

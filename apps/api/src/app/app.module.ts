@@ -8,7 +8,7 @@ import { RoleModule } from './role';
 import { OrganizationModule } from './organization';
 import { IncomeModule } from './income';
 import { ExpenseModule } from './expense';
-import { EmployeeSettingsModule } from './employee-settings';
+import { EmployeeSettingModule } from './employee-setting';
 import { CoreModule } from './core';
 import { AuthModule } from './auth';
 import { SeedDataService } from './core/seeds/SeedDataService';
@@ -31,7 +31,7 @@ import { EmployeeRecurringExpenseModule } from './employee-recurring-expense';
           { path: '/income', module: IncomeModule },
           { path: '/expense', module: ExpenseModule },
           { path: '/employee', module: EmployeeModule },
-          { path: '/employee-settings', module: EmployeeSettingsModule },
+          { path: '/employee-settings', module: EmployeeSettingModule },
           { path: '/employee-statistics', module: EmployeeStatisticsModule },
           { path: '/user-organization', module: UserOrganizationModule },
           { path: '/organization-department', module: OrganizationDepartmentModule },
@@ -44,7 +44,7 @@ import { EmployeeRecurringExpenseModule } from './employee-recurring-expense';
     AuthModule,
     UserModule,
     EmployeeModule,
-    EmployeeSettingsModule,
+    EmployeeSettingModule,
     EmployeeStatisticsModule,
     RoleModule,
     OrganizationModule,

@@ -15,13 +15,13 @@ import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-prof
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeRecurringExpenseMutationModule } from '../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.module';
 import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
-import { EmployeeWorkStatus } from './table-components/employee-work-status/employee-work-status';
+import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 
 const COMPONENTS = [
     EmployeesComponent,
     EmployeeBonusComponent,
     EmployeeFullNameComponent,
-    EmployeeWorkStatus,
+    EmployeeWorkStatusComponent,
     EditEmployeeComponent,
     EditEmployeeProfileComponent
 ];
@@ -52,7 +52,7 @@ const COMPONENTS = [
     entryComponents: [
         EmployeeBonusComponent,
         EmployeeFullNameComponent,
-        EmployeeWorkStatus
+        EmployeeWorkStatusComponent
     ],
     providers: [
         OrganizationsService
