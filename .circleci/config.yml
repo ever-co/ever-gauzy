@@ -51,8 +51,86 @@ jobs:
                   root: /tmp/workspace/monorepo-root
                   paths:
                       - '*'
+    build-api:
+        <<: *defaults
+        working_directory: /tmp/workspace/api
+        docker:
+            - image: circleci/node:12.4.0
+        steps:
+            - checkout
+            - run:
+                  name: 'Installing latest Yarn'
+                  command: |
+                      # remove default yarn
+                      sudo rm -rf $(dirname $(which yarn))/yarn*
+                      # download latest
+                      rm -rf ~/.yarn
+                      curl -o- -L https://yarnpkg.com/install.sh | bash
+                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV           
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  keys:
+                      - yarn-packages-api-{{ checksum "yarn.lock" }}
+            - run:
+                  name: Install Dependencies
+                  command: yarn install
+            - run:
+                  name: Run Bootstrap
+                  command: yarn bootstrap
+            - run:
+                  name: Run Build
+                  command: yarn build:api                  
+            - save_cache:
+                  name: Save Yarn Package Cache
+                  key: yarn-packages-api-{{ checksum "yarn.lock" }}
+                  paths:
+                      - ~/.cache/yarn
+            - persist_to_workspace:
+                  root: /tmp/workspace/api
+                  paths:
+                      - '*'                      
+    build-web:
+        <<: *defaults
+        working_directory: /tmp/workspace/web
+        docker:
+            - image: circleci/node:12.4.0
+        steps:
+            - checkout
+            - run:
+                  name: 'Installing latest Yarn'
+                  command: |
+                      # remove default yarn
+                      sudo rm -rf $(dirname $(which yarn))/yarn*
+                      # download latest
+                      rm -rf ~/.yarn
+                      curl -o- -L https://yarnpkg.com/install.sh | bash
+                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV           
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  keys:
+                      - yarn-packages-web-{{ checksum "yarn.lock" }}
+            - run:
+                  name: Install Dependencies
+                  command: yarn install
+            - run:
+                  name: Run Bootstrap
+                  command: yarn bootstrap
+            - run:
+                  name: Run Build
+                  command: yarn build
+            - save_cache:
+                  name: Save Yarn Package Cache
+                  key: yarn-packages-web-{{ checksum "yarn.lock" }}
+                  paths:
+                      - ~/.cache/yarn
+            - persist_to_workspace:
+                  root: /tmp/workspace/web
+                  paths:
+                      - '*'                                            
 workflows:
     version: 2
     build_and_test:
         jobs:
             - build-monorepo-root
+            - build-api
+            - build-web
