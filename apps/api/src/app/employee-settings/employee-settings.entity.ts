@@ -8,7 +8,7 @@ import { IsNotEmpty, IsString, IsNumber, Min, Max, IsDate, IsOptional, IsEnum } 
 import { Base } from '../core/entities/base';
 import { EmployeeSettings as IEmployeeSettings, CurrenciesEnum } from '@gauzy/models';
 
-@Entity('employee_settings')
+@Entity('employee_setting')
 export class EmployeeSettings extends Base implements IEmployeeSettings {
     @ApiModelProperty({ type: String })
     @IsString()
