@@ -18,6 +18,8 @@
     "prebuild": "rimraf dist coverage",
     "build": "yarn ng build",
     "build:prod": "yarn ng build gauzy -c=production",
+    "build:api": "yarn ng build api",
+    "build:api:prod": "yarn ng build api -c=production",
     "bundle-report": "yarn ng build -c=production --stats-json && webpack-bundle-analyzer dist/apps/gauzy/stats.json",
     "test": "yarn ng test",
     "lint": "yarn nx lint && yarn ng lint",
