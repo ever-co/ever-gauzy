@@ -1,7 +1,13 @@
 {
     "cSpell.words": [
+        "AGPL",
+        "cqrs",
         "nestjs",
+        "nestjsx",
+        "ormconfig",
         "toastr",
-        "typeorm"
-    ]
+        "typeorm",
+        "websockets"
+    ],
+    "vsicons.presets.angular": true
 }

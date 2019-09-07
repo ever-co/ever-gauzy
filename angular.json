@@ -1,5 +1,13 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "cli": {    
+    "warnings": {
+      "typescriptMismatch": false,
+      "versionMismatch": false
+    },
+    "defaultCollection": "@nrwl/angular",
+    "packageManager": "yarn"
+  },
   "version": 1,
   "newProjectRoot": "",
   "projects": {
@@ -87,7 +95,7 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
+          "options": {		  
             "browserTarget": "gauzy:build",
             "proxyConfig": "apps/gauzy/proxy.conf.json"
           },
@@ -261,15 +269,7 @@
         }
       }
     }
-  },
-  "cli": {
-    "warnings": {
-      "typescriptMismatch": false,
-      "versionMismatch": false
-    },
-    "defaultCollection": "@nrwl/angular",
-    "packageManager": "yarn"
-  },
+  },  
   "schematics": {
     "@nrwl/angular:application": {
       "unitTestRunner": "jest",

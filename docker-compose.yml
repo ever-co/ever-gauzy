@@ -26,9 +26,9 @@ services:
     container_name: db
     restart: always
     environment:
-      POSTGRES_PASSWORD: root
-      POSTGRES_USER: postgres
       POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root            
     healthcheck:
       test: ['CMD-SHELL', 'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1']      
     volumes:
@@ -47,6 +47,10 @@ services:
     environment:
       NODE_ENV: production
       WAIT_HOSTS: db:5432
+      POSTGRES_HOST: db
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root      
     restart: on-failure
     depends_on:
       - db      

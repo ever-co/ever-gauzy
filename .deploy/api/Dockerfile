@@ -31,6 +31,9 @@ RUN cp -a /tmp/node_modules /usr/src/app/
 RUN cd /usr/src/app
 
 WORKDIR /usr/src/app
+ARG NODE_OPTIONS="--max-old-space-size=2048"
+ENV NODE_OPTIONS $NODE_OPTIONS
+ENV NODE_ENV production
 
 # Bundle app source
 ADD . /usr/src/app
@@ -40,4 +43,4 @@ EXPOSE 3000
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.5.0/wait /wait
 RUN chmod +x /wait
 
-CMD /wait && yarn start:api
+CMD /wait && yarn start:api:prod

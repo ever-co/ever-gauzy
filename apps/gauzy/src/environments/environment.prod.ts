@@ -12,8 +12,6 @@ export const environment = {
   CLOUDINARY_API_KEY: '256868982483961'
 };
 
-
-
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
   cloud_name: environment.CLOUDINARY_CLOUD_NAME,
   api_key: environment.CLOUDINARY_API_KEY
