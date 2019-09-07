@@ -1,10 +1,14 @@
 {
     "cSpell.words": [
         "AGPL",
+        "adminer",
         "cqrs",
+        "healthcheck",
         "nestjs",
         "nestjsx",
         "ormconfig",
+        "pgsql",
+        "postgres",
         "toastr",
         "typeorm",
         "websockets"
