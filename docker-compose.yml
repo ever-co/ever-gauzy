@@ -22,7 +22,7 @@ services:
       - overlay
 
   db:
-    image: postgres:alpine
+    image: postgres:11-alpine
     container_name: db
     restart: always
     environment:
@@ -38,6 +38,21 @@ services:
     networks:
       - overlay
   
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    depends_on:
+      - db
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: pgsql
+      ADMINER_DEFAULT_DB_HOST: db
+      ADMINER_DEFAULT_DB_NAME: adminer
+    ports:
+      - 9000:8080
+    networks:
+      - overlay  
+
   api:
     container_name: api
     image: gauzy-api:latest

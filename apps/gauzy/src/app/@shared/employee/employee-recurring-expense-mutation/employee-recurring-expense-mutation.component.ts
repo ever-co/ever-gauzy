@@ -12,7 +12,7 @@ import { first } from 'rxjs/operators';
     styleUrls: ['./employee-recurring-expense-mutation.component.scss']
 })
 export class EmployeeRecurringExpenseMutationComponent implements OnInit {
-    protected form: FormGroup;
+    public form: FormGroup;
     categoryNames = ['Salary', 'Salary Taxes', 'Extra Bonus'];
     employeeRecurringExpense?: EmployeeRecurringExpense;
     currencies = Object.values(CurrenciesEnum);

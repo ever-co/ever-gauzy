@@ -64,6 +64,10 @@ export class EditOrganizationComponent implements OnInit {
 
     }
 
+    handleImageUploadError() {
+        
+    }
+
     private async _loadOrganization(id: string) {
         try {
             this.organization = await this.organizationService.getById(id).pipe(first()).toPromise();

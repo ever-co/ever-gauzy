@@ -125,7 +125,7 @@ export class ExpensesMutationComponent implements OnInit {
     ];
 
     constructor(
-        protected dialogRef: NbDialogRef<ExpensesMutationComponent>,
+        public dialogRef: NbDialogRef<ExpensesMutationComponent>,
         private fb: FormBuilder,
         private organizationsService: OrganizationsService,
         private store: Store) { }
