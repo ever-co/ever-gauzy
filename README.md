@@ -16,7 +16,7 @@ Ruslan, 20 May 2019
 
 ## Who (will) use Gauzy and Why?
 
-Gauzy created for IT Service companies (agencies), where the engineering department employee receives monthly bonuses based on company profits generated from employee work for company clients. We believe it's a better way to distribute profits fairly with employees compared to other solutions and it should dramatically increase employees motivation and decrease retention!
+Gauzy created for IT Service companies (agencies), where the engineering department employee receives monthly bonuses based on company profits generated from employee work for company clients. We believe it's a better way to distribute profits fairly with employees compared to other solutions and it should dramatically increase employees' motivation and decrease turnover!
 
 Alternatives analysis:
 * In most cases, revenue (income) sharing does not target software developers (but target sales people instead) or provide benefits only on some event (e.g. “shares” used only when company sold, employee leaves or after some vesting period). In all such cases, employee got "delayed" benefits, sometimes for years! Instead, we want some solution which works on a monthly basis!
