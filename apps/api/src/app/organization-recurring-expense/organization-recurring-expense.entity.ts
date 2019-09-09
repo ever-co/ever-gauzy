@@ -17,6 +17,21 @@ export class OrganizationRecurringExpense extends Base implements IOrganizationR
     @Column()
     orgId: string;
 
+    @ApiModelProperty({ type: Number, minimum: 1, maximum: 12 })
+    @IsNumber()
+    @IsNotEmpty()
+    @Min(1)
+    @Max(12)
+    @Column()
+    month: number;
+
+    @ApiModelProperty({ type: Number, minimum: 1 })
+    @IsNumber()
+    @IsNotEmpty()
+    @Min(0)
+    @Column()
+    year: number;
+
     @ApiModelProperty({ type: String })
     @IsString()
     @IsNotEmpty()
