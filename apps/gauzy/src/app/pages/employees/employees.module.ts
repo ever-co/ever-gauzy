@@ -9,7 +9,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation/employee-mutation.module';
 import { EmployeeEndWorkModule } from '../../@shared/employee/employee-end-work-popup/employee-end-work.module';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
-import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
+import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-profile/edit-employee-profile.component';
 import { NgSelectModule } from '@ng-select/ng-select';
