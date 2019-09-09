@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { OrganizationsComponent } from './organizations.component';
+import { EditOrganizationSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-settings.component';
 import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 
 const routes: Routes = [
@@ -11,6 +12,10 @@ const routes: Routes = [
     {
         path: 'edit/:id',
         component: EditOrganizationComponent
+    },
+    {
+        path: 'edit/:id/settings',
+        component: EditOrganizationSettingsComponent
     }
 ];
 

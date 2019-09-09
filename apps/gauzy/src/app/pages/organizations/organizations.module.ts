@@ -9,10 +9,11 @@ import { OrganizationsFullnameComponent } from './table-components/organizations
 import { OrganizationsLogoComponent } from './table-components/organizations-logo/organizations-logo.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
+import { EditOrganizationSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-settings.component';
 import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
 import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
 import { OrganizationListComponent } from './edit-organization/organization-list/organization-list.component';
+import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 
 @NgModule({
     imports: [
@@ -41,6 +42,7 @@ import { OrganizationListComponent } from './edit-organization/organization-list
         OrganizationsComponent,
         OrganizationsFullnameComponent,
         OrganizationsLogoComponent,
+        EditOrganizationSettingsComponent,
         EditOrganizationComponent,
         OrganizationListComponent
     ]
