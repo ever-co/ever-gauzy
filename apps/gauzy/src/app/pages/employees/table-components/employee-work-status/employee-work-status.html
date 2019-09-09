@@ -1,0 +1,11 @@
+<div class="text-centerd d-block" *ngIf="rowData.workStatus; else active">
+  <div class="badge-danger">Work Ended</div>
+  {{ rowData.workStatus }}
+</div>
+<ng-template #active>
+  <div class="text-centerd d-block">
+    <div class="badge-success">
+        Active
+    </div>
+  </div>
+</ng-template>
