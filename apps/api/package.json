@@ -44,6 +44,7 @@
     "nodemailer": "^6.2.1",
     "nodemon": "^1.19.1",
     "passport": "^0.4.0",
+    "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.0",
     "pg": "^7.11.0",
     "reflect-metadata": "^0.1.13",
