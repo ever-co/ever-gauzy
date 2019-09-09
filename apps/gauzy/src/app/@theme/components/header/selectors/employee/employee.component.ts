@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -18,6 +18,11 @@ export interface SelectedEmployee {
 })
 
 export class EmployeeSelectorComponent implements OnInit, OnDestroy {
+    @Input()
+    skipGlobalChange: boolean;
+    @Input()
+    disabled: boolean;
+
     people: SelectedEmployee[] = [];
     selectedEmployee: SelectedEmployee;
 
@@ -47,7 +52,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
     }
 
     selectEmployee(employee: SelectedEmployee) {
-        this.store.selectedEmployee = employee;
+        if (!this.skipGlobalChange) {
+            this.store.selectedEmployee = employee;
+        }
     }
 
     getShortenedName(firstName: string, lastName: string) {
@@ -73,42 +80,34 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
     }
 
     private async _loadPople() {
-        const res = await this.employeesService.getAll(['user']).pipe(first()).toPromise();
+        const { items } = await this.employeesService.getAll(['user']).pipe(first()).toPromise();
 
+        const load = (loadItems) => {
+            this.people = [{
+                id: null,
+                firstName: "All Employees",
+                lastName: '',
+                imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
+            }, ...loadItems.map((e) => {
+                return {
+                    id: e.id,
+                    firstName: e.user.firstName,
+                    lastName: e.user.lastName,
+                    imageUrl: e.user.imageUrl
+                }
+            })];
+        }
 
         this.store.selectedOrganization$.subscribe((o) => {
             if (o) {
-                this.people = [{
-                    id: null,
-                    firstName: "All Employees",
-                    lastName: '',
-                    imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
-                }, ...res.items.filter((e) => e.orgId === o.id).map((e) => {
-                    return {
-                        id: e.id,
-                        firstName: e.user.firstName,
-                        lastName: e.user.lastName,
-                        imageUrl: e.user.imageUrl
-                    }
-                })];
+                load(items.filter((e) => e.orgId === o.id));
             }
         })
 
-        this.people = [{
-            id: null,
-            firstName: "All Employees",
-            lastName: '',
-            imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
-        }, ...res.items.map((e) => {
-            return {
-                id: e.id,
-                firstName: e.user.firstName,
-                lastName: e.user.lastName,
-                imageUrl: e.user.imageUrl
-            }
-        })];
+        const selectedOrg = this.store.selectedOrganization;
+        load(selectedOrg ? items.filter((e) => e.orgId === selectedOrg.id) : items);
 
-        if (res.items.length > 0 && !this.store.selectedEmployee) {
+        if (items.length > 0 && !this.store.selectedEmployee) {
 
             this.store.selectedEmployee = this.people[0];
         }
@@ -117,7 +116,6 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
             this.selectEmployee(this.people[0]);
             this.selectedEmployee = this.people[0];
         }
-
     }
 
     ngOnDestroy() {

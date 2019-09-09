@@ -1,9 +1,13 @@
-// Modified code from https://github.com/xmlking/ngx-starter-kit. 
+// Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { DefaultUser, CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import {
+  DefaultUser,
+  CurrenciesEnum,
+  DefaultValueDateTypeEnum
+} from '@gauzy/models';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -25,17 +29,18 @@ export interface IEnvironment {
   env?: Env;
 
   USER_PASSWORD_BCRYPT_SALT_ROUNDS?: number;
-  JWT_SECRET?: string,
+  JWT_SECRET?: string;
 
   database: TypeOrmModuleOptions;
 
-  defaultAdmins: DefaultUser[],
+  defaultAdmins: DefaultUser[];
 
-  defaultEmployees?: DefaultUser[],
+  defaultEmployees?: DefaultUser[];
 
   defaultOrganization?: {
-    name: string,
-    currency: CurrenciesEnum,
-    defaultValueDateType: DefaultValueDateTypeEnum
-  }
+    name: string;
+    currency: CurrenciesEnum;
+    defaultValueDateType: DefaultValueDateTypeEnum;
+    imageUrl: string;
+  };
 }

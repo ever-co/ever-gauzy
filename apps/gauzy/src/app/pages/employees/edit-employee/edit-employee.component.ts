@@ -4,14 +4,14 @@ import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
-import { Employee, EmployeeSettings } from '@gauzy/models';
+import { Employee, EmployeeRecurringExpense } from '@gauzy/models';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { EmployeeSettingMutationComponent } from '../../../@shared/employee/employee-setting-mutation/employee-setting-mutation.component';
-import { EmployeeSettingsService } from '../../../@core/services/employee-settings.service';
+import { EmployeeRecurringExpenseMutationComponent } from '../../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { monthNames } from '../../../@core/utils/date';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
 
 @Component({
     selector: 'ngx-edit-employee',
@@ -26,7 +26,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
     selectedEmployee: Employee;
     selectedDate: Date;
     selectedEmployeeFromHeader: SelectedEmployee;
-    selectedEmployeeSettings: EmployeeSettings[];
+    selectedEmployeeRecurringExpense: EmployeeRecurringExpense[];
     selectedRowIndexToShow: number;
 
     constructor(private route: ActivatedRoute,
@@ -35,7 +35,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         private organizationsService: OrganizationsService,
         private store: Store,
         private dialogService: NbDialogService,
-        private employeeSettingService: EmployeeSettingsService,
+        private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
         private toastrService: NbToastrService) { }
 
     async ngOnInit() {
@@ -45,7 +45,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
                 this.selectedDate = date;
 
                 if (this.selectedEmployeeFromHeader) {
-                    this._loadEmployeeSettings();
+                    this._loadEmployeeRecurringExpense();
                 }
             });
 
@@ -66,7 +66,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
                 };
 
                 if (this.selectedDate) {
-                    this._loadEmployeeSettings();
+                    this._loadEmployeeRecurringExpense();
                 }
 
                 this.store.selectedEmployee$
@@ -84,7 +84,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         this.router.navigate(['/pages/employees/edit/' + this.selectedEmployee.id + '/profile']);
     }
 
-    async addEmployeeSetting() {
+    async addEmployeeRecurringExpense() {
         // TODO get currency from the page dropdown
         let currency;
         const organization = this.store.selectedOrganization;
@@ -94,24 +94,25 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         }
 
         const result = await this.dialogService
-            .open(EmployeeSettingMutationComponent)
+            .open(EmployeeRecurringExpenseMutationComponent)
             .onClose
             .pipe(first())
             .toPromise();
 
         if (result) {
             try {
-                await this.employeeSettingService.create({
+                await this.employeeRecurringExpenseService.create({
                     employeeId: this.selectedEmployee.id,
-                    settingType: result.settingType,
+                    // TODO
+                    categoryName: result.categoryName,
                     value: result.value,
                     year: this.selectedDate.getFullYear(),
                     month: this.selectedDate.getMonth() + 1,
                     currency: result.currency
                 });
 
-                this.toastrService.info('Employee setting set.', 'Success');
-                this._loadEmployeeSettings();
+                this.toastrService.info('Employee recurring expense set.', 'Success');
+                this._loadEmployeeRecurringExpense();
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }
@@ -128,11 +129,12 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         this.selectedRowIndexToShow = index;
     }
 
-    async editSetting(index: number) {
+    async editEmployeeRecurringExpense(index: number) {
         const result = await this.dialogService
-            .open(EmployeeSettingMutationComponent, {
+            .open(EmployeeRecurringExpenseMutationComponent, {
+                // TODO
                 context: {
-                    employeeSetting: this.selectedEmployeeSettings[index]
+                    employeeRecurringExpense: this.selectedEmployeeRecurringExpense[index]
                 }
             })
             .onClose
@@ -141,14 +143,14 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 
         if (result) {
             try {
-                const id = this.selectedEmployeeSettings[index].id;
-                await this.employeeSettingService.update(id, result);
+                const id = this.selectedEmployeeRecurringExpense[index].id;
+                await this.employeeRecurringExpenseService.update(id, result);
                 this.selectedRowIndexToShow = null;
-                this._loadEmployeeSettings();
+                this._loadEmployeeRecurringExpense();
 
-                this.toastrService.info('Employee setting edited.', 'Success');
+                this.toastrService.info('Employee recurring expense edited.', 'Success');
                 setTimeout(() => {
-                    this._loadEmployeeSettings();
+                    this._loadEmployeeRecurringExpense();
                 }, 300);
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
@@ -156,9 +158,9 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         }
     }
 
-    async deleteSetting(index: number) {
+    async deleteEmployeeRecurringExpense(index: number) {
         const result = await this.dialogService.open(DeleteConfirmationComponent, {
-            context: { recordType: 'Employee Setting' }
+            context: { recordType: 'Employee recurring expense' }
         })
             .onClose
             .pipe(first())
@@ -166,13 +168,13 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 
         if (result) {
             try {
-                const id = this.selectedEmployeeSettings[index].id;
-                await this.employeeSettingService.delete(id);
+                const id = this.selectedEmployeeRecurringExpense[index].id;
+                await this.employeeRecurringExpenseService.delete(id);
                 this.selectedRowIndexToShow = null;
 
-                this.toastrService.info('Employee setting deleted.', 'Success');
+                this.toastrService.info('Employee recurring expense deleted.', 'Success');
                 setTimeout(() => {
-                    this._loadEmployeeSettings();
+                    this._loadEmployeeRecurringExpense();
                 }, 100);
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
@@ -180,8 +182,8 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
         }
     }
 
-    private async _loadEmployeeSettings() {
-        this.selectedEmployeeSettings = (await this.employeeSettingService.getAll([], {
+    private async _loadEmployeeRecurringExpense() {
+        this.selectedEmployeeRecurringExpense = (await this.employeeRecurringExpenseService.getAll([], {
             employeeId: this.selectedEmployee.id,
             year: this.selectedDate.getFullYear(),
             month: this.selectedDate.getMonth() + 1

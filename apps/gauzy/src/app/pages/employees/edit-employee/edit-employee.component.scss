@@ -75,6 +75,11 @@
   padding: 35px;
 }
 
+.sub-header {
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
 .block-content {
   display: flex;
   justify-content: space-between;
@@ -95,6 +100,17 @@
       color: #18213a;
       font-size: 16px;
     }
+
+    .block-amount {
+      text-align: center;
+      width: 130px;
+      color: #0091ff;
+      font-weight: bold;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      padding-right: 24px;
+    }
   }
 
   .block-value {
@@ -105,25 +121,18 @@
     align-items: center;
     padding-right: 30px;
 
-    .hide-menu {
+    .hide-menu,
+    .block-actions.open {
       cursor: pointer;
+      margin-left: auto;
     }
 
+    small {
+      cursor: pointer;
+    }
     svg {
       width: 24px;
       height: fit-content;
-    }
-
-    .block-amount {
-      border-right: 1px solid;
-      text-align: center;
-      width: 130px;
-      color: #0091ff;
-      font-weight: bold;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      padding-right: 24px;
     }
   }
 }

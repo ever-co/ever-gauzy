@@ -49,6 +49,7 @@ export class DateSelectorComponent implements OnInit {
     clear() {
         this.dateInputValue = '';
         this.date = this.getDefaultDate();
+        this.store.selectedDate = null;
     }
 
     clickOutside(event) {

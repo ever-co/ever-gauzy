@@ -4,12 +4,7 @@
   </nb-card-header>
   <nb-card-body>
     <div *ngIf="hasRole" class="btn-container">
-      <button
-        nbButton
-        status="success"
-        (click)="addIncome()"
-        [disabled]="!selectedEmployeeId"
-      >
+      <button nbButton status="success" (click)="addIncome()">
         <nb-icon class="mr-1" icon="plus-outline"></nb-icon
         >{{ 'INCOME_PAGE.ADD' | translate }}
       </button>
