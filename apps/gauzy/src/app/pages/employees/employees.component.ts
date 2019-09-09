@@ -9,7 +9,7 @@ import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutat
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
-import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname';
+import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
