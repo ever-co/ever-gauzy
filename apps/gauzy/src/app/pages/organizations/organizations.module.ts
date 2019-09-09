@@ -12,6 +12,7 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
 import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
+import { OrganizationListComponent } from './edit-organization/organization-list/organization-list.component';
 
 @NgModule({
     imports: [
@@ -40,7 +41,8 @@ import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.mo
         OrganizationsComponent,
         OrganizationsFullnameComponent,
         OrganizationsLogoComponent,
-        EditOrganizationComponent
+        EditOrganizationComponent,
+        OrganizationListComponent
     ]
 })
 export class OrganizationsModule { }

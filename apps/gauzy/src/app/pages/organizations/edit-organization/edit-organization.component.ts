@@ -6,7 +6,12 @@ import { Organization, CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/m
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { NbToastrService } from '@nebular/theme';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { trigger, transition, style, animate } from '@angular/animations';
+
+export enum ListsInputType {
+    DEPARTMENTS = 'DEPARTMENTS',
+    POSITIONS = 'POSITIONS',
+    VENDORS = 'VENDORS'
+}
 
 @Component({
     selector: 'ngx-edit-organization',
@@ -21,12 +26,12 @@ export class EditOrganizationComponent implements OnInit {
     organization: Organization;
     form: FormGroup;
     hoverState: boolean;
-    showDepartmentsList: boolean;
     currencies: string[] = Object.values(CurrenciesEnum);
     defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
     departments: string[] = [];
     positions: string[] = [];
-    
+    vendors: string[] = [];
+
     constructor(private route: ActivatedRoute,
                 private organizationService: OrganizationsService,
                 private toastrService: NbToastrService,
@@ -38,26 +43,6 @@ export class EditOrganizationComponent implements OnInit {
             .subscribe(params => {
                 this._loadOrganization(params.id);
             });
-    }
-
-    departmentsInputHandler(event: any) {
-        const val = event.target.value;
-        if (val) {
-            this.departments.unshift(val);
-            event.target.value = '';
-        }
-    }
-
-    positionsInputHandler(event: any) {
-        const val = event.target.value;
-        if (val) {
-            this.departments.unshift(val);
-            event.target.value = '';
-        }
-    }
-
-    deleteDepartmentFromList(index: number) {
-        this.departments.splice(index, 1);
     }
 
     updateOrganizationSettings() {
