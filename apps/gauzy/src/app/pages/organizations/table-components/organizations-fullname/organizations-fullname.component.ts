@@ -4,10 +4,7 @@ import { Component, Input } from '@angular/core';
     selector: 'ngx-organizations-fullname',
     template: `
         <div>{{ value }}</div>
-    `,
-    styles: [`
-
-    `]
+    `
 })
 export class OrganizationsFullnameComponent{
     @Input()

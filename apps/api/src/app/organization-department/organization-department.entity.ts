@@ -11,7 +11,7 @@ import { Base } from '../core/entities/base';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationDepartment as IOrganizationDepartment } from '@gauzy/models'
 
-@Entity('organization-department')
+@Entity('organization_department')
 export class OrganizationDepartment extends Base implements IOrganizationDepartment {
     @ApiModelProperty({ type: String })
     @IsString()

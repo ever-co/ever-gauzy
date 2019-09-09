@@ -68,6 +68,7 @@
                     size="medium"
                     formControlName="currency"
                     placeholder="All Currencies"
+                    fullWidth="true"
                   >
                     <nb-option
                       *ngFor="let currency of currencies"
@@ -89,6 +90,7 @@
                     size="medium"
                     formControlName="defaultValueDateType"
                     placeholder="All Date Types"
+                    fullWidth
                   >
                     <nb-option
                       *ngFor="let type of defaultValueDateTypes"
@@ -99,68 +101,36 @@
                   </nb-select>
                 </div>
               </div>
-              <div class="col">
-                <div class="form-group" (mouseleave)="showDepartmentsList = false">
-                  <label class="label">Departments</label>
-                  <input
-                    nbInput
-                    type="text"
-                    placeholder="Add Departments"
-                    (change)="departmentsInputHandler($event)"
-                    (focus)="showDepartmentsList = true"
-                  />
-                  <nb-list
-                    *ngIf="departments.length > 0 && showDepartmentsList"
-                    [ngClass]="{
-                      'department-list-active': showDepartmentsList
-                    }"
-                  >
-                    <nb-list-item
-                      *ngFor="let dep of departments; let i = index"
-                    >
-                      <div>
-                        <span>{{ dep }}</span>
-                        <nb-icon
-                          class="ml-auto mt-1 close"
-                          (click)="deleteDepartmentFromList(i)"
-                          icon="close-outline"
-                        ></nb-icon>
-                      </div>
-                    </nb-list-item>
-                  </nb-list>
-                </div>
-              </div>
+
+              <ngx-organization-list
+                class="col"
+                [list]="departments"
+                [listType]="'DEPARTMENTS'"
+                (listChanged)="departments = $event"
+              >
+              </ngx-organization-list>
             </div>
 
             <div class="row">
-              <div class="col">
-                <div class="form-group">
-                  <label class="label">Positions</label>
-                  <input
-                    nbInput
-                    type="text"
-                    placeholder="Add Positions"
-                    (change)="positionsInputHandler($event)"
-                  />
-                  <div *ngIf="positions.length > 0">
-                    <nb-list>
-                      <nb-list-item
-                        *ngFor="let pos of positions; let i = index"
-                      >
-                        <div>
-                          <span>{{ pos }}</span>
-                          <nb-icon
-                            class="ml-auto mt-1 close"
-                            (click)="deleteDepartmentFromList(i)"
-                            icon="close-outline"
-                          ></nb-icon>
-                        </div>
-                      </nb-list-item>
-                    </nb-list>
-                  </div>
-                </div>
-              </div>
-              <div class="col"></div>
+              <ngx-organization-list
+                class="col"
+                [list]="positions"
+                [listType]="'POSITIONS'"
+                (listChanged)="positions = $event"
+              >
+              </ngx-organization-list>
+
+              <ngx-organization-list
+                class="col"
+                [list]="vendors"
+                [listType]="'VENDORS'"
+                (listChanged)="vendors = $event"
+              >
+              </ngx-organization-list>
+            </div>
+
+            <div class="row">
+              
             </div>
           </div>
 
