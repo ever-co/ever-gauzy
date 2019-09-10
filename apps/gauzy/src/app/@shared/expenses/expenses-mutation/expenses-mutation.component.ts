@@ -167,7 +167,7 @@ export class ExpensesMutationComponent implements OnInit {
                 category: [null, Validators.required],
                 notes: [''],
                 currency: [''],
-                valueDate: [new Date(), Validators.required]
+                valueDate: [this.store.getDateFromOrganizationSettings(), Validators.required]
             });
 
             this._loadDefaultCurrency();
