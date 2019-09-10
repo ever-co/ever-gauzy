@@ -1,0 +1,115 @@
+<nb-card>
+  <nb-card-header> </nb-card-header>
+  <nb-card-body>
+    <div class="navigate" (click)="goBack()">
+      <nb-icon icon="arrow-back-outline"></nb-icon>
+      <span>BACK</span>
+    </div>
+    <div class="content">
+      <div class="employee-container">
+        <div class="employee-photo">
+          <ngx-image-uploader
+            (changeHoverState)="hoverState = $event"
+            (uploadedImageUrl)="updateImageUrl($event)"
+            (uploadImageError)="handleImageUploadError($event)"
+          ></ngx-image-uploader>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            width="68"
+            height="68"
+            viewBox="0 0 68 68"
+            [ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+          >
+            <defs>
+              <path
+                id="a"
+                d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+              />
+            </defs>
+            <g fill="none" fill-rule="evenodd">
+              <circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+              <circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+              <use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
+            </g>
+          </svg>
+          <div
+            class="image-overlay"
+            [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
+          ></div>
+
+          <img
+            *ngIf="imageUrl"
+            [src]="imageUrl"
+            alt="Organization Photo"
+            (mouseenter)="hoverState = true"
+            (mouseleave)="hoverState = false"
+          />
+        </div>
+      </div>
+
+      <div *ngIf="organization" class="org-settings">
+        <nb-tabset (changeTab)="tabChange($event)" fullWidth>
+          <nb-tab [active]="activeTabName === 'main'" tabTitle="Main">
+            <ga-edit-org-main
+              #main
+              [organization]="organization"
+            ></ga-edit-org-main>
+          </nb-tab>
+
+          <nb-tab
+            [active]="activeTabName === 'departments'"
+            tabTitle="Departments"
+          >
+            <ngx-organization-list
+              class="col"
+              [list]="departments"
+              [listType]="'DEPARTMENTS'"
+              (listChanged)="departments = $event"
+            >
+            </ngx-organization-list>
+          </nb-tab>
+
+          <nb-tab [active]="activeTabName === 'clients'" tabTitle="Clients">
+            <p>List of <strong>Clients</strong>.</p>
+          </nb-tab>
+
+          <nb-tab [active]="activeTabName === 'positions'" tabTitle="Positions">
+            <ngx-organization-list
+              class="col"
+              [list]="positions"
+              [listType]="'POSITIONS'"
+              (listChanged)="positions = $event"
+            >
+            </ngx-organization-list>
+          </nb-tab>
+
+          <nb-tab [active]="activeTabName === 'vendors'" tabTitle="Vendors">
+            <ngx-organization-list
+              class="col"
+              [list]="vendors"
+              [listType]="'VENDORS'"
+              (listChanged)="vendors = $event"
+            >
+            </ngx-organization-list>
+          </nb-tab>
+          <nb-tab [active]="activeTabName === 'projects'" tabTitle="Projects">
+            <p>List of <strong>Projects</strong>.</p>
+          </nb-tab>
+        </nb-tabset>
+
+        <div class="actions">
+          <button
+            [disabled]="main.form.invalid"
+            (click)="updateOrganizationSettings()"
+            nbButton
+            status="success"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </nb-card-body>
+  <nb-card-footer> </nb-card-footer>
+</nb-card>

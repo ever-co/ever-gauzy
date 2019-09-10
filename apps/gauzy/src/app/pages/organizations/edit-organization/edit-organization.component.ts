@@ -1,73 +1,81 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { takeUntil, first } from 'rxjs/operators';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { Organization, CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import { takeUntil, first } from 'rxjs/operators';
+import { Store } from '../../../@core/services/store.service';
+import { Organization } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { NbToastrService } from '@nebular/theme';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { EmployeesService } from '../../../@core/services';
 
-export enum ListsInputType {
-    DEPARTMENTS = 'DEPARTMENTS',
-    POSITIONS = 'POSITIONS',
-    VENDORS = 'VENDORS'
-}
 
 @Component({
-    selector: 'ngx-edit-organization',
     templateUrl: './edit-organization.component.html',
     styleUrls: [
         './edit-organization.component.scss',
-        '../../employees/edit-employee/edit-employee-profile/edit-employee-profile.component.scss'
+        '../../dashboard/dashboard.component.scss'
     ]
 })
-export class EditOrganizationComponent implements OnInit {
-    private _ngOnDestroy$ = new Subject();
-    organization: Organization;
-    form: FormGroup;
-    hoverState: boolean;
-    currencies: string[] = Object.values(CurrenciesEnum);
-    defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
-    departments: string[] = [];
-    positions: string[] = [];
-    vendors: string[] = [];
+export class EditOrganizationComponent implements OnInit, OnDestroy {
+    private _ngDestroy$ = new Subject<void>();
+    selectedOrg: Organization;
+    selectedDate: Date;
+    selectedOrgFromHeader: Organization;
+    employeesCount: number;
 
     constructor(private route: ActivatedRoute,
-                private organizationService: OrganizationsService,
-                private toastrService: NbToastrService,
-                private fb: FormBuilder) { }
+        private router: Router,
+        private organizationsService: OrganizationsService,
+        private employeesService: EmployeesService,
+        private store: Store,
+    ) { }
 
-    ngOnInit() {
+    async ngOnInit() {
+        this.selectedDate = this.store.selectedDate;
+
+        this.store.selectedDate$
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(date => {
+                this.selectedDate = date;
+            });
+
         this.route.params
-            .pipe(takeUntil(this._ngOnDestroy$))
-            .subscribe(params => {
-                this._loadOrganization(params.id);
+            .pipe(takeUntil(this._ngDestroy$))
+            .subscribe(async params => {
+                const id = params.id;
+
+                this.selectedOrg = await this.organizationsService.getById(id).pipe(first()).toPromise();
+                this.selectedOrgFromHeader = this.selectedOrg;
+                this.loadEmployeesCount();
+                this.store.selectedOrganization = this.selectedOrg;
+
+                this.store.selectedOrganization$
+                    .pipe(takeUntil(this._ngDestroy$))
+                    .subscribe(org => {
+                        this.selectedOrgFromHeader = org;
+                        if (org && org.id) {
+                            this.router.navigate(['/pages/organizations/edit/' + org.id]);
+                        }
+                    });
             });
     }
 
-    updateOrganizationSettings() {
-
+    editOrg() {
+        this.router.navigate(['/pages/organizations/edit/' + this.selectedOrg.id + '/settings']);
     }
 
-    handleImageUploadError() {
-        
+    addOrgRecurringExpense() {
+        console.warn("TODO add expense");
     }
 
-    private async _loadOrganization(id: string) {
-        try {
-            this.organization = await this.organizationService.getById(id).pipe(first()).toPromise();
-            this._initializedForm();
-        } catch (error) {
-            this.toastrService.danger(error.error.message || error.message, 'Error');
-        }
+    ngOnDestroy() {
+        this._ngDestroy$.next();
+        this._ngDestroy$.complete();
     }
 
-    private _initializedForm() {
-        this.form = this.fb.group({
-            currency: [this.organization.currency, Validators.required],
-            name: [this.organization.name, Validators.required],
-            imageUrl: [this.organization.imageUrl, Validators.required],
-            defaultValueDateType: [this.organization.defaultValueDateType, Validators.required]
-        });
+    private async loadEmployeesCount() {
+        const { total } = await this.employeesService.getAll(
+            [], { organization: { id: this.selectedOrg.id } }).pipe(first()).toPromise();
+
+        this.employeesCount = total;
     }
 }
