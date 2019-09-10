@@ -7,6 +7,7 @@ import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
 export const environment = {
     production: false,
 
+    API_BASE_URL: 'http://localhost:3000',
     COMPANY_NAME: 'Ever Co. LTD',
     COMPANY_SITE: 'Gauzy',
     COMPANY_LINK: 'https://ever.co/',

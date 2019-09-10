@@ -3,6 +3,7 @@ import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
 export const environment = {
   production: true,
 
+  API_BASE_URL: 'http://localhost:3000',
   COMPANY_NAME: 'Ever Co. LTD',
   COMPANY_SITE: 'Gauzy',
   COMPANY_LINK: 'https://ever.co/',
@@ -12,7 +13,9 @@ export const environment = {
   COMPANY_TWITTER_LINK: 'https://twitter.com/gauzyplatform',
   COMPANY_LINKEDIN_LINK: 'https://www.linkedin.com/company/ever-co.',
   CLOUDINARY_CLOUD_NAME: 'dv6ezkfxg',
-  CLOUDINARY_API_KEY: '256868982483961'
+  CLOUDINARY_API_KEY: '256868982483961',
+  GOOGLE_AUTH_LINK: 'http://localhost:3000/api/auth/google',
+  LINKEDIN_AUTH_LINK: '#'
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
