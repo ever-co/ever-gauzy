@@ -1,4 +1,4 @@
-// Modified code from https://github.com/xmlking/ngx-starter-kit. 
+// Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
@@ -23,6 +23,13 @@ export class User extends Base implements IUser {
   @Index()
   @IsOptional()
   @Column({ nullable: true })
+  thirdPartyId?: string;
+
+  @ApiModelPropertyOptional({ type: String })
+  @IsString()
+  @Index()
+  @IsOptional()
+  @Column({ nullable: true })
   firstName?: string;
 
   @ApiModelPropertyOptional({ type: String })
@@ -36,8 +43,9 @@ export class User extends Base implements IUser {
   @IsEmail()
   @IsNotEmpty()
   @Index({ unique: true })
-  @Column()
-  email: string;
+  @IsOptional()
+  @Column({ nullable: true })
+  email?: string;
 
   @ApiModelPropertyOptional({ type: String, minLength: 3, maxLength: 20 })
   @IsAscii()
@@ -60,6 +68,8 @@ export class User extends Base implements IUser {
   @ApiModelProperty({ type: String })
   @IsString()
   @Column()
+  @IsOptional()
+  @Column({ nullable: true })
   hash?: string;
 
   @ApiModelPropertyOptional({ type: String, maxLength: 500 })

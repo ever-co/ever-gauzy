@@ -6,16 +6,17 @@ import {
   NbLogoutComponent,
   NbRegisterComponent,
   NbRequestPasswordComponent,
-  NbResetPasswordComponent,
+  NbResetPasswordComponent
 } from '@nebular/auth';
 import { AuthGuard } from './@core/auth/auth.guard';
+import { LoginGoogleComponent } from './auth/loginGoogle/login-google.component';
+import { LoginGoogleModule } from './auth/loginGoogle/login-google.module';
 
 const routes: Routes = [
   {
     path: 'pages',
-    loadChildren: () => import('./pages/pages.module')
-      .then(m => m.PagesModule),
-      canActivate: [ AuthGuard ]
+    loadChildren: () => import('./pages/pages.module').then(m => m.PagesModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'auth',
@@ -23,41 +24,41 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        component: NbLoginComponent,
+        component: NbLoginComponent
       },
       {
         path: 'login',
-        component: NbLoginComponent,
+        component: NbLoginComponent
       },
       {
         path: 'register',
-        component: NbRegisterComponent,
+        component: NbRegisterComponent
       },
       {
         path: 'logout',
-        component: NbLogoutComponent,
+        component: NbLogoutComponent
       },
       {
         path: 'request-password',
-        component: NbRequestPasswordComponent,
+        component: NbRequestPasswordComponent
       },
       {
         path: 'reset-password',
-        component: NbResetPasswordComponent,
+        component: NbResetPasswordComponent
       }
-    ],
+    ]
   },
+  { path: 'google/success', component: LoginGoogleComponent },
   { path: '', redirectTo: 'pages', pathMatch: 'full' },
   { path: '**', redirectTo: 'pages' },
 ];
 
 const config: ExtraOptions = {
-  useHash: true,
+  useHash: true
 };
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, config)],
-  exports: [RouterModule],
+  imports: [RouterModule.forRoot(routes, config), LoginGoogleModule],
+  exports: [RouterModule]
 })
-export class AppRoutingModule {
-}
+export class AppRoutingModule {}
