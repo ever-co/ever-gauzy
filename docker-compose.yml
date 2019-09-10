@@ -62,10 +62,10 @@ services:
     environment:
       NODE_ENV: production
       WAIT_HOSTS: db:5432
-      POSTGRES_HOST: db
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root      
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASS: root
     restart: on-failure
     depends_on:
       - db      

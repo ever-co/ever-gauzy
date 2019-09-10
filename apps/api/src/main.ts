@@ -12,7 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const options = new DocumentBuilder()
-    .setTitle('Gauzy controllers')
+    .setTitle('Gauzy API')
     .setVersion('1.0')
     .setBasePath('api/')
     .build();
