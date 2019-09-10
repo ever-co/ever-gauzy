@@ -7,7 +7,6 @@ import { UsersService } from '../../../@core/services/users.service';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { Store } from '../../../@core/services/store.service';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
-import { first } from 'rxjs/operators';
 
 @Component({
     selector: 'ngx-one-column-layout',
@@ -47,8 +46,10 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
         const id = this.store.userId;
         this.user = await this.usersService.getUserById(id);
 
-        const { orgId } = await this.usersOrganizationsService.findOne({ userId: id }).pipe(first()).toPromise();
-        
+        // We did not doing nothing with the result?
+        // Also if user still did not have organization?
+        // const { orgId } = await this.usersOrganizationsService.findOne({ userId: id }).pipe(first()).toPromise();
+
         // TODO: Fix me!
         // this.store.selectedOrganizationId = orgId;
     }

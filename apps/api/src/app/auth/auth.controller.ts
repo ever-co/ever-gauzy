@@ -1,5 +1,15 @@
-
-import { Controller, Post, HttpStatus, HttpCode, Body, Get, Req, Query, UseGuards, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  HttpStatus,
+  HttpCode,
+  Body,
+  Get,
+  Req,
+  Query,
+  UseGuards,
+  Res
+} from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
@@ -13,8 +23,10 @@ import { AuthGuard } from '@nestjs/passport';
 @ApiUseTags('Auth')
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService,
-    private readonly commandBus: CommandBus) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly commandBus: CommandBus
+  ) {}
 
   @ApiOperation({ title: 'Is authenticated' })
   @ApiResponse({ status: HttpStatus.OK })
@@ -37,41 +49,56 @@ export class AuthController {
   }
 
   @ApiOperation({ title: 'Create new record' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'The record has been successfully created.' /*, type: T*/ })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'The record has been successfully created.' /*, type: T*/
+  })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input, The response body may contain clues as to what went wrong',
+    description:
+      'Invalid input, The response body may contain clues as to what went wrong'
   })
   @Post('/register')
-  async create(@Body() entity: IUserRegistrationInput, ...options: any[]): Promise<IUser> {
+  async create(
+    @Body() entity: IUserRegistrationInput,
+    ...options: any[]
+  ): Promise<IUser> {
     if (!entity.user.imageUrl) {
       entity.user.imageUrl = getUserDummyImage(entity.user);
     }
-    return this.commandBus.execute(
-      new AuthRegisterCommand(entity)
-    );
+    return this.commandBus.execute(new AuthRegisterCommand(entity));
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('/login')
-  async login(@Body() { findObj, password }, ...options: any[]): Promise<{ user: IUser; token: string } | null> {
-    return this.authService.login(findObj, password)
+  async login(
+    @Body() { findObj, password },
+    ...options: any[]
+  ): Promise<{ user: IUser; token: string } | null> {
+    return this.authService.login(findObj, password);
   }
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  googleLogin()
-  {
-  }
+  googleLogin() {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  googleLoginCallback(@Req() req, @Res() res)
-  {
-      const jwt: string = req.user.jwt;
-      if (jwt)
-          res.redirect('http://localhost:4200/login/succes/' + jwt);
-      else 
-          res.redirect('http://localhost:4200/login/failure');
+  googleLoginCallback(@Req() req, @Res() res) {
+    const { jwt, userId } = req.user;
+
+    if (jwt) {
+      res.redirect(
+        `http://localhost:4200/#/google/success?jwt=${jwt}&userId=${userId}`
+      );
+    } else {
+      res.redirect('http://localhost:4200');
+    }
+  }
+
+  @Get('protected')
+  @UseGuards(AuthGuard('jwt'))
+  protectedResource() {
+    return 'JWT is working!';
   }
 }

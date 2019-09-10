@@ -12,7 +12,6 @@ export class UsersOrganizationsService {
 
     findOne(findInput?: UserOrganizationFindInput): Observable<UserOrganization> {
         const findInputStr = JSON.stringify(findInput);
-
         return this.http.get<UserOrganization>(`/api/user-organization`, {
             params: { findInputStr }
         });
