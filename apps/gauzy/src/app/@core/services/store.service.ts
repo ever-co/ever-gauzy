@@ -1,4 +1,4 @@
-import { User, Organization } from '@gauzy/models';
+import { User, Organization, DefaultValueDateTypeEnum } from '@gauzy/models';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 
@@ -71,6 +71,18 @@ export class Store {
     set selectedDate(date: Date) {
         this._selectedDate = date;
         this.selectedDate$.next(date);
+    }
+
+    getDateFromOrganizationSettings() {
+        const dateObj = this._selectedDate;
+        
+        if (this.selectedOrganization.defaultValueDateType === DefaultValueDateTypeEnum.TODAY) {
+            return dateObj
+        } else if (this.selectedOrganization.defaultValueDateType === DefaultValueDateTypeEnum.END_OF_MONTH) {
+            return new Date(dateObj.getFullYear(), dateObj.getMonth(), 0);
+        } else if (this.selectedOrganization.defaultValueDateType === DefaultValueDateTypeEnum.START_OF_MONTH) {
+            return new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+        }
     }
 
     clear() {
