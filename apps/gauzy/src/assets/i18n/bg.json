@@ -25,6 +25,7 @@
         },
         "ADD_INCOME_POP_UP":{
             "ADD_INCOME": "Добавете доход",
+            "EDIT_INCOME": "Редактиране доход",
             "ALL_CLIENTS": "Всички клиенти",
             "AMOUNT":"Количество",
             "NOTES":"Бележки",

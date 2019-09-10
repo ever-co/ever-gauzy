@@ -122,7 +122,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         if (data) {
             try {
                 await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data);
-                this.toastrService.info('Employee set as inactive.', 'Success');
+                this.toastrService.info(this.selectedEmployee.fullName + ' set as inactive.', 'Success');
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }
@@ -144,7 +144,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         if (data) {
             try {
                 await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, null);
-                this.toastrService.info('Employee set as active.', 'Success');
+                this.toastrService.info(this.selectedEmployee.fullName + ' set as active.', 'Success');
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }

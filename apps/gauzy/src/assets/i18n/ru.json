@@ -22,6 +22,15 @@
             "VALUE": "Стоимость",
             "NOTES": "Заметки",
             "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Нет данных для выбранного сотрудника."
+        },
+        "ADD_INCOME_POP_UP":{
+            "ADD_INCOME": "Добавить доход",
+            "EDIT_INCOME": "Изменить доход",
+            "ALL_CLIENTS": "Все клиенты",
+            "AMOUNT":"Количество",
+            "NOTES":"Заметки",
+            "EDIT": "Редактировать",
+            "ADD": "Добавлять"
         }
     }
 }

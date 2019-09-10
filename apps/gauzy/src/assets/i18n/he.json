@@ -22,6 +22,15 @@
             "VALUE": "ערך",
             "NOTES": "הערות",
             "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
+        },
+        "ADD_INCOME_POP_UP":{
+            "ADD_INCOME": "הוסף הכנסה",
+            "EDIT_INCOME": "ערוך הכנסה",
+            "ALL_CLIENTS": "כל הלקוחות",
+            "AMOUNT":"כמות",
+            "NOTES":"הערות",
+            "EDIT": "ערוך",
+            "ADD": "הוסף"
         }
     }
 }

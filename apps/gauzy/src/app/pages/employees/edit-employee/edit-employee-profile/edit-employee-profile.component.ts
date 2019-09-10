@@ -86,7 +86,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
         if (this.form.valid) {
             try {
                 this.userService.update(this.selectedEmployee.user.id, this.form.value);
-                this.toastrService.info('Employee profile updated.', 'Success');
+                this.toastrService.info(this.selectedEmployee.user.username + ' profile updated.', 'Success');
                 this._loadEmployeeData();
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');

@@ -25,6 +25,7 @@
         },
         "ADD_INCOME_POP_UP":{
             "ADD_INCOME": "Add Income",
+            "EDIT_INCOME": "Edit Income",
             "ALL_CLIENTS": "All Clients",
             "AMOUNT":"Amount",
             "NOTES":"Notes",
