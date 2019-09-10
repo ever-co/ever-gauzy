@@ -75,14 +75,21 @@ export class Store {
 
     getDateFromOrganizationSettings() {
         const dateObj = this._selectedDate;
-        
-        if (this.selectedOrganization.defaultValueDateType === DefaultValueDateTypeEnum.TODAY) {
-            return dateObj
-        } else if (this.selectedOrganization.defaultValueDateType === DefaultValueDateTypeEnum.END_OF_MONTH) {
-            return new Date(dateObj.getFullYear(), dateObj.getMonth(), 0);
-        } else if (this.selectedOrganization.defaultValueDateType === DefaultValueDateTypeEnum.START_OF_MONTH) {
-            return new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
-        }
+
+        switch (this.selectedOrganization.defaultValueDateType) {
+            case DefaultValueDateTypeEnum.TODAY: {
+                return new Date(Date.now());
+            }
+            case DefaultValueDateTypeEnum.END_OF_MONTH: {
+                return new Date(dateObj.getFullYear(), dateObj.getMonth(), 0);
+            }
+            case DefaultValueDateTypeEnum.START_OF_MONTH: {
+                return new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+            }
+            default: {
+                return new Date(Date.now());
+            }
+        };
     }
 
     clear() {
