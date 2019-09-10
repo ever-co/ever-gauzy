@@ -9,7 +9,7 @@ export interface User extends IBaseEntityModel {
   thirdPartyId?: string;
   firstName?: string;
   lastName?: string;
-  email: string;
+  email?: string;
   username?: string;
   role?: Role;
   roleId?: string;
