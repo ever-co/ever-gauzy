@@ -10,7 +10,7 @@
         <div class="employee-photo">
           <ngx-image-uploader
             (changeHoverState)="hoverState = $event"
-            (uploadedImageUrl)="form.get('imageUrl').setValue($event)"
+            (uploadedImageUrl)="updateImageUrl($event)"
             (uploadImageError)="handleImageUploadError($event)"
           ></ngx-image-uploader>
           <svg
@@ -39,8 +39,8 @@
           ></div>
 
           <img
-            *ngIf="form"
-            [src]="form.get('imageUrl').value"
+            *ngIf="imageUrl"
+            [src]="imageUrl"
             alt="Organization Photo"
             (mouseenter)="hoverState = true"
             (mouseleave)="hoverState = false"
@@ -48,105 +48,63 @@
         </div>
       </div>
 
-      <div class="employee-form">
-        <form [formGroup]="form" *ngIf="form">
-          <div class="fields">
-            <div class="row">
-              <div class="col">
-                <div class="form-group">
-                  <label class="label" for="nameInput">Name</label>
-                  <input
-                    fullWidth
-                    id="nameInput"
-                    type="text"
-                    nbInput
-                    formControlName="name"
-                  />
-                </div>
-              </div>
-              <div class="col">
-                <div class="form-group">
-                  <label class="label">Currency</label>
-                  <nb-select
-                    class="d-block"
-                    size="medium"
-                    formControlName="currency"
-                    placeholder="All Currencies"
-                    fullWidth="true"
-                  >
-                    <nb-option
-                      *ngFor="let currency of currencies"
-                      [value]="currency"
-                    >
-                      {{ currency }}
-                    </nb-option>
-                  </nb-select>
-                </div>
-              </div>
-            </div>
+      <div *ngIf="organization" class="org-settings">
+        <nb-tabset fullWidth>
+          <nb-tab tabTitle="Main">
+            <ga-edit-org-main
+              #main
+              [organization]="organization"
+            ></ga-edit-org-main>
+          </nb-tab>
 
-            <div class="row">
-              <div class="col">
-                <div class="form-group">
-                  <label class="label">Default Date Type</label>
-                  <nb-select
-                    class="d-block"
-                    size="medium"
-                    formControlName="defaultValueDateType"
-                    placeholder="All Date Types"
-                    fullWidth
-                  >
-                    <nb-option
-                      *ngFor="let type of defaultValueDateTypes"
-                      [value]="type"
-                    >
-                      {{ type | removeLodash | titlecase }}
-                    </nb-option>
-                  </nb-select>
-                </div>
-              </div>
-
-              <ngx-organization-list
-                class="col"
-                [list]="departments"
-                [listType]="'DEPARTMENTS'"
-                (listChanged)="departments = $event"
-              >
-              </ngx-organization-list>
-            </div>
-
-            <div class="row">
-              <ngx-organization-list
-                class="col"
-                [list]="positions"
-                [listType]="'POSITIONS'"
-                (listChanged)="positions = $event"
-              >
-              </ngx-organization-list>
-
-              <ngx-organization-list
-                class="col"
-                [list]="vendors"
-                [listType]="'VENDORS'"
-                (listChanged)="vendors = $event"
-              >
-              </ngx-organization-list>
-            </div>
-
-            <div class="row"></div>
-          </div>
-
-          <div class="actions">
-            <button
-              [disabled]="form.invalid"
-              (click)="updateOrganizationSettings()"
-              nbButton
-              status="success"
+          <nb-tab tabTitle="Departments">
+            <ngx-organization-list
+              class="col"
+              [list]="departments"
+              [listType]="'DEPARTMENTS'"
+              (listChanged)="departments = $event"
             >
-              Save
-            </button>
-          </div>
-        </form>
+            </ngx-organization-list>
+          </nb-tab>
+
+          <nb-tab tabTitle="Clients">
+            <p>List of <strong>Clients</strong>.</p>
+          </nb-tab>
+
+          <nb-tab tabTitle="Positions">
+            <ngx-organization-list
+              class="col"
+              [list]="positions"
+              [listType]="'POSITIONS'"
+              (listChanged)="positions = $event"
+            >
+            </ngx-organization-list>
+          </nb-tab>
+
+          <nb-tab tabTitle="Vendors">
+            <ngx-organization-list
+              class="col"
+              [list]="vendors"
+              [listType]="'VENDORS'"
+              (listChanged)="vendors = $event"
+            >
+            </ngx-organization-list>
+          </nb-tab>
+          <nb-tab tabTitle="Projects">
+            <p>List of <strong>Projects</strong>.</p>
+          </nb-tab>
+        </nb-tabset>
+
+        <div class="actions">
+          <!-- [disabled]="form.invalid" -->
+          <button
+            (click)="updateOrganizationSettings()"
+            nbButton
+            status="success"
+          >
+            Save
+          </button>
+        </div>
       </div>
     </div>
   </nb-card-body>

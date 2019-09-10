@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Organization, CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import { Organization } from '@gauzy/models';
 import { OrganizationsService } from '../../../../@core/services/organizations.service';
 import { NbToastrService } from '@nebular/theme';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Location } from '@angular/common';
+import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 
 export enum ListsInputType {
     DEPARTMENTS = 'DEPARTMENTS',
@@ -23,21 +23,23 @@ export enum ListsInputType {
     ]
 })
 export class EditOrganizationSettingsComponent implements OnInit {
-    private _ngOnDestroy$ = new Subject();
+    @ViewChild('main', { static: false })
+    main: EditOrganizationMainComponent;
+
+    imageUrl: string;
+
     organization: Organization;
-    form: FormGroup;
     hoverState: boolean;
-    currencies: string[] = Object.values(CurrenciesEnum);
-    defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
     departments: string[] = [];
     positions: string[] = [];
     vendors: string[] = [];
 
+    private _ngOnDestroy$ = new Subject();
+
     constructor(private route: ActivatedRoute,
         private organizationService: OrganizationsService,
         private toastrService: NbToastrService,
-        private location: Location,
-        private fb: FormBuilder) { }
+        private location: Location) { }
 
     ngOnInit() {
         this.route.params
@@ -51,29 +53,30 @@ export class EditOrganizationSettingsComponent implements OnInit {
         this.location.back();
     }
 
-    updateOrganizationSettings() {
+    async updateOrganizationSettings() {
+        this.organizationService.update(this.organization.id, {
+            imageUrl: this.imageUrl,
+            ...this.main.mainUpdateObj
+        })
 
+        this.goBack();
     }
 
     handleImageUploadError() {
 
     }
 
+    updateImageUrl(url: string) {
+        this.imageUrl = url;
+    }
+
     private async _loadOrganization(id: string) {
         try {
             this.organization = await this.organizationService.getById(id).pipe(first()).toPromise();
-            this._initializedForm();
+            this.imageUrl = this.organization.imageUrl;
+
         } catch (error) {
             this.toastrService.danger(error.error.message || error.message, 'Error');
         }
-    }
-
-    private _initializedForm() {
-        this.form = this.fb.group({
-            currency: [this.organization.currency, Validators.required],
-            name: [this.organization.name, Validators.required],
-            imageUrl: [this.organization.imageUrl, Validators.required],
-            defaultValueDateType: [this.organization.defaultValueDateType, Validators.required]
-        });
     }
 }
