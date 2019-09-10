@@ -82,7 +82,7 @@ export class EditOrganizationSettingsComponent implements OnInit {
         this.goBack();
     }
 
-    handleImageUploadError() {
+    handleImageUploadError(event: any) {
 
     }
 
