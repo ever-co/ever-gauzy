@@ -49,15 +49,18 @@
       </div>
 
       <div *ngIf="organization" class="org-settings">
-        <nb-tabset fullWidth>
-          <nb-tab tabTitle="Main">
+        <nb-tabset (changeTab)="tabChange($event)" fullWidth>
+          <nb-tab [active]="activeTabName === 'main'" tabTitle="Main">
             <ga-edit-org-main
               #main
               [organization]="organization"
             ></ga-edit-org-main>
           </nb-tab>
 
-          <nb-tab tabTitle="Departments">
+          <nb-tab
+            [active]="activeTabName === 'departments'"
+            tabTitle="Departments"
+          >
             <ngx-organization-list
               class="col"
               [list]="departments"
@@ -67,11 +70,11 @@
             </ngx-organization-list>
           </nb-tab>
 
-          <nb-tab tabTitle="Clients">
+          <nb-tab [active]="activeTabName === 'clients'" tabTitle="Clients">
             <p>List of <strong>Clients</strong>.</p>
           </nb-tab>
 
-          <nb-tab tabTitle="Positions">
+          <nb-tab [active]="activeTabName === 'positions'" tabTitle="Positions">
             <ngx-organization-list
               class="col"
               [list]="positions"
@@ -81,7 +84,7 @@
             </ngx-organization-list>
           </nb-tab>
 
-          <nb-tab tabTitle="Vendors">
+          <nb-tab [active]="activeTabName === 'vendors'" tabTitle="Vendors">
             <ngx-organization-list
               class="col"
               [list]="vendors"
@@ -90,14 +93,14 @@
             >
             </ngx-organization-list>
           </nb-tab>
-          <nb-tab tabTitle="Projects">
+          <nb-tab [active]="activeTabName === 'projects'" tabTitle="Projects">
             <p>List of <strong>Projects</strong>.</p>
           </nb-tab>
         </nb-tabset>
 
         <div class="actions">
-          <!-- [disabled]="form.invalid" -->
           <button
+            [disabled]="main.form.invalid"
             (click)="updateOrganizationSettings()"
             nbButton
             status="success"

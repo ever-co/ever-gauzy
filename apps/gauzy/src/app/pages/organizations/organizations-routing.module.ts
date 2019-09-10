@@ -16,6 +16,10 @@ const routes: Routes = [
     {
         path: 'edit/:id/settings',
         component: EditOrganizationSettingsComponent
+    },
+    {
+        path: 'edit/:id/settings/:tab',
+        component: EditOrganizationSettingsComponent
     }
 ];
 

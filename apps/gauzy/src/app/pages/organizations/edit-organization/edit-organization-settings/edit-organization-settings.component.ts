@@ -34,6 +34,7 @@ export class EditOrganizationSettingsComponent implements OnInit {
     positions: string[] = [];
     vendors: string[] = [];
 
+    private _activeTabName = "Main";
     private _ngOnDestroy$ = new Subject();
 
     constructor(private route: ActivatedRoute,
@@ -41,16 +42,35 @@ export class EditOrganizationSettingsComponent implements OnInit {
         private toastrService: NbToastrService,
         private location: Location) { }
 
+    get activeTabName() {
+        return this._activeTabName.toLowerCase();
+    }
+
+    tabChange(e) {
+        this._activeTabName = e.tabTitle.toLowerCase();
+        const currentURL = window.location.href;
+
+        if (!currentURL.endsWith("/settings") || this._activeTabName.toLowerCase() !== "main") {
+            window.location.href = currentURL.substring(0, currentURL.indexOf('/settings') + 9) + `/${this._activeTabName}`;
+        }
+    }
+
     ngOnInit() {
         this.route.params
             .pipe(takeUntil(this._ngOnDestroy$))
             .subscribe(params => {
+                const tabName = params.tab;
+                if (tabName) {
+                    this._activeTabName = tabName;
+                }
+
                 this._loadOrganization(params.id);
             });
     }
 
     goBack() {
-        this.location.back();
+        const currentURL = window.location.href;
+        window.location.href = currentURL.substring(0, currentURL.indexOf('/settings'));
     }
 
     async updateOrganizationSettings() {
