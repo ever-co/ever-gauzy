@@ -20,6 +20,10 @@ import { OrganizationRecurringExpense } from '../organization-recurring-expense'
 import { EmployeeRecurringExpense } from '../employee-recurring-expense';
 import { TerminusModule, TypeOrmHealthIndicator, DNSHealthIndicator } from '@nestjs/terminus';
 import { getTerminusOptions } from './health/terminus-options.service';
+import { OrganizationClients } from '../organization-clients';
+import { OrganizationPositions } from '../organization-positions';
+import { OrganizationVendors } from '../organization-vendors';
+import { OrganizationProjects } from '../organization-projects';
 
 const entities = [
   User,
@@ -31,6 +35,10 @@ const entities = [
   EmployeeSetting,
   UserOrganization,
   OrganizationDepartment,
+  OrganizationClients,
+  OrganizationPositions,
+  OrganizationProjects,
+  OrganizationVendors,
   OrganizationRecurringExpense,
   EmployeeRecurringExpense
 ];

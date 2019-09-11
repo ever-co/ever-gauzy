@@ -17,6 +17,10 @@ import { EmployeeStatisticsModule } from './employee-statistics';
 import { OrganizationDepartmentModule } from './organization-department';
 import { OrganizationRecurringExpenseModule } from './organization-recurring-expense';
 import { EmployeeRecurringExpenseModule } from './employee-recurring-expense';
+import { OrganizationClients } from './organization-clients';
+import { OrganizationPositions } from './organization-positions';
+import { OrganizationProjects } from './organization-projects';
+import { OrganizationVendors } from './organization-vendors';
 
 @Module({
   imports: [
@@ -35,6 +39,10 @@ import { EmployeeRecurringExpenseModule } from './employee-recurring-expense';
           { path: '/employee-statistics', module: EmployeeStatisticsModule },
           { path: '/user-organization', module: UserOrganizationModule },
           { path: '/organization-department', module: OrganizationDepartmentModule },
+          { path: '/organization-clients', module: OrganizationClients },
+          { path: '/organization-positions', module: OrganizationPositions },
+          { path: '/organization-projects', module: OrganizationProjects },
+          { path: '/organization-vendors', module: OrganizationVendors },
           { path: '/organization-recurring-expense', module: OrganizationRecurringExpenseModule },
           { path: '/employee-recurring-expense', module: EmployeeRecurringExpenseModule },
         ],
@@ -53,6 +61,10 @@ import { EmployeeRecurringExpenseModule } from './employee-recurring-expense';
     UserOrganizationModule,
     OrganizationDepartmentModule,
     OrganizationRecurringExpenseModule,
+    OrganizationClients,
+    OrganizationPositions,
+    OrganizationProjects,
+    OrganizationVendors,
     EmployeeRecurringExpenseModule
   ],
   controllers: [AppController],
