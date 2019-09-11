@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ListsInputType } from '../edit-organization.component';
+import { ListsInputType } from '../edit-organization-settings/edit-organization-settings.component';
 
 @Component({
     selector: 'ngx-organization-list',

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
-import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbSelectModule, NbListModule } from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbSelectModule, NbListModule, NbTabsetModule } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
@@ -9,10 +9,12 @@ import { OrganizationsFullnameComponent } from './table-components/organizations
 import { OrganizationsLogoComponent } from './table-components/organizations-logo/organizations-logo.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
+import { EditOrganizationSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-settings.component';
 import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
 import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
 import { OrganizationListComponent } from './edit-organization/organization-list/organization-list.component';
+import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
+import { EditOrganizationMainComponent } from './edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component';
 
 @NgModule({
     imports: [
@@ -31,7 +33,8 @@ import { OrganizationListComponent } from './edit-organization/organization-list
         ImageUpladerModule,
         NbSelectModule,
         RemoveLodashModule,
-        NbListModule
+        NbListModule,
+        NbTabsetModule
     ],
     entryComponents: [
         OrganizationsFullnameComponent,
@@ -41,8 +44,10 @@ import { OrganizationListComponent } from './edit-organization/organization-list
         OrganizationsComponent,
         OrganizationsFullnameComponent,
         OrganizationsLogoComponent,
+        EditOrganizationSettingsComponent,
         EditOrganizationComponent,
-        OrganizationListComponent
+        OrganizationListComponent,
+        EditOrganizationMainComponent
     ]
 })
 export class OrganizationsModule { }

@@ -1,138 +1,142 @@
 .header {
-    padding: 30px;
+  padding: 30px;
 
-    .header-container {
-        display: flex;
-        justify-content: space-between;
-
-        .employee-info {
-            display: flex;
-
-            .employee-image {
-                max-width: 70px;
-                max-height: 70px;
-                border-radius: 13px;
-                margin-right: 24px;
-            }
-        }
-
-        .employee-details {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-
-            .employee-name {
-                font-weight: bold;
-                font-size: 18px;
-            }
-
-            .employee-position {
-                font-size: 14px;
-            }
-        }
-    }
-}
-
-.open {
-    cursor: pointer;
-}
-
-.body {
-    padding: 36px;
+  .header-container {
     display: flex;
     justify-content: space-between;
 
-    .half-content {
-        width: 49%;
+    .employee-info,
+    .org-info {
+      display: flex;
+
+      .employee-image,
+      .org-image {
+        max-width: 70px;
+        max-height: 70px;
+        border-radius: 13px;
+        margin-right: 24px;
+      }
     }
 
-    .info-block {
-        &:hover {
-            box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
-            transform: translateY(-1px);
-        }
+    .employee-details,
+    .org-details {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
 
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-        width: 100%;
-        height: 84px;
-        border-radius: 4px;
-        padding: 29px;
-        background-color: #f6f9fc;
+      .employee-name,
+      .org-name {
+        font-weight: bold;
+        font-size: 18px;
+      }
 
-        .info-text,
-        .info-value {
-            display: flex;
-            font-size: 18px;
-            color: #333333;
+      .employee-position,
+      .org-position {
+        font-size: 14px;
+      }
+    }
+  }
+}
 
-            .profit-positive-color {
-                color: #66de0b;
-            }
+.open {
+  cursor: pointer;
+}
 
-            .profit-negative-color {
-                color: #ff7b00;
-            }
+.body {
+  padding: 36px;
+  display: flex;
+  justify-content: space-between;
 
-            .expense-color {
-                color: #dbc300;
-            }
+  .half-content {
+    width: 49%;
+  }
 
-            .income-color {
-                color: #089c17;
-            }
-        }
-
-        .info-text {
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .info-value {
-            flex-direction: row;
-            align-items: center;
-
-            span {
-                font-size: 24px;
-                margin-right: 12px;
-            }
-        }
+  .info-block {
+    &:hover {
+      box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+      transform: translateY(-1px);
     }
 
-    .bonus {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    width: 100%;
+    height: 84px;
+    border-radius: 4px;
+    padding: 29px;
+    background-color: #f6f9fc;
 
-        .bonus-value {
-            margin-right: 39px;
+    .info-text,
+    .info-value {
+      display: flex;
+      font-size: 18px;
+      color: #333333;
 
-            :first-child {
-                text-align: right;
-                font-size: 16px;
-                margin-bottom: 15px;
-                margin-right: 3px;
-            }
+      .profit-positive-color {
+        color: #66de0b;
+      }
 
-            :last-child {
-                font-size: 46px;
-                font-weight: bold;
-                color: #0091ff;
-            }
+      .profit-negative-color {
+        color: #ff7b00;
+      }
 
-            .negative-bonus-color {
-                color: red;
-            }
+      .expense-color {
+        color: #dbc300;
+      }
 
-        }
-
-        .bonus-disclaimer {
-            margin-top: 15px;
-            margin-right: 39px;
-            font-size: 0.7rem;
-            width: 215px;
-        }
+      .income-color {
+        color: #089c17;
+      }
     }
+
+    .info-text {
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .info-value {
+      flex-direction: row;
+      align-items: center;
+
+      span {
+        font-size: 24px;
+        margin-right: 12px;
+      }
+    }
+  }
+
+  .bonus {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 100%;
+
+    .bonus-value {
+      margin-right: 39px;
+
+      :first-child {
+        text-align: right;
+        font-size: 16px;
+        margin-bottom: 15px;
+        margin-right: 3px;
+      }
+
+      :last-child {
+        font-size: 46px;
+        font-weight: bold;
+        color: #0091ff;
+      }
+
+      .negative-bonus-color {
+        color: red;
+      }
+    }
+
+    .bonus-disclaimer {
+      margin-top: 15px;
+      margin-right: 39px;
+      font-size: 0.7rem;
+      width: 215px;
+    }
+  }
 }

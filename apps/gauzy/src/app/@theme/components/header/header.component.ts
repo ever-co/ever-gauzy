@@ -21,13 +21,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
             title: 'Expense',
             link: 'pages/expenses'
         },
-        { 
-            title: 'Income', 
-            link: 'pages/income' 
+        {
+            title: 'Income',
+            link: 'pages/income'
         },
-        { 
-            title: 'Employee', 
-            link: 'pages/employees' 
+        {
+            title: 'Employee',
+            link: 'pages/employees'
         }
     ];
     supportContextMenu = [
@@ -101,8 +101,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
         }
 
         const profileRegex = RegExp('/pages/employees/edit/.*/profile', 'i');
+        const organizationRegex = RegExp('/pages/organizations/edit/.*/settings', 'i')
 
-        if (profileRegex.test(url)) {
+
+        if (profileRegex.test(url) || organizationRegex.test(url)) {
             this.showEmployeesSelector = false;
             this.showDateSelector = false;
             this.showOrganizationsSelector = false;
@@ -114,12 +116,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.showOrganizationsSelector = false;
         }
 
-        const organizationRegex = RegExp('/pages/organizations.*', 'i')
 
-        if (organizationRegex.test(url)) {
+        if (url.endsWith('/organizations')) {
             this.showEmployeesSelector = false;
             this.showDateSelector = false;
             this.showOrganizationsSelector = false;
+        }
+
+        const organizationEditRegex = RegExp('/pages/organizations/edit/[A-Za-z0-9\-]+$', 'i')
+
+        if (organizationEditRegex.test(url)) {
+            this.showEmployeesSelector = false;
+            this.showDateSelector = true;
+            this.showOrganizationsSelector = true;
         }
     }
 

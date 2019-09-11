@@ -1,0 +1,56 @@
+<form [formGroup]="form" *ngIf="form">
+  <div class="fields">
+    <div class="row">
+      <div class="col">
+        <div class="form-group">
+          <label class="label" for="nameInput">Name</label>
+          <input
+            fullWidth
+            id="nameInput"
+            type="text"
+            nbInput
+            formControlName="name"
+          />
+        </div>
+      </div>
+      <div class="col">
+        <div class="form-group">
+          <label class="label">Currency</label>
+          <nb-select
+            class="d-block"
+            size="medium"
+            formControlName="currency"
+            placeholder="All Currencies"
+            fullWidth="true"
+          >
+            <nb-option *ngFor="let currency of currencies" [value]="currency">
+              {{ currency }}
+            </nb-option>
+          </nb-select>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        <div class="form-group">
+          <label class="label">Default Date Type</label>
+          <nb-select
+            class="d-block"
+            size="medium"
+            formControlName="defaultValueDateType"
+            placeholder="All Date Types"
+            fullWidth
+          >
+            <nb-option
+              *ngFor="let type of defaultValueDateTypes"
+              [value]="type"
+            >
+              {{ type | removeLodash | titlecase }}
+            </nb-option>
+          </nb-select>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>

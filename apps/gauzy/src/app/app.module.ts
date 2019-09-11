@@ -33,6 +33,7 @@ import * as cloudinary from 'cloudinary-core';
 import { CloudinaryModule } from '@cloudinary/angular-5.x';
 import { cloudinaryConfiguration } from '../environments/environment';
 import { FileUploadModule } from 'ng2-file-upload';
+import { APIInterceptor } from './@core/api.interceptor';
 
 export function HttpLoaderFactory(http: HttpClient) {
     return new TranslateHttpLoader(http);
@@ -72,6 +73,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     bootstrap: [AppComponent],
     providers: [
         { provide: APP_BASE_HREF, useValue: '/' },
+        { 
+            provide: HTTP_INTERCEPTORS,
+            useClass: APIInterceptor, 
+            multi: true
+        },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: TokenInterceptor,

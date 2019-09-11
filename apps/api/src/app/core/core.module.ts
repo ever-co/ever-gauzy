@@ -18,6 +18,8 @@ import { UserOrganization } from '../user-organization';
 import { OrganizationDepartment } from '../organization-department';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense';
 import { EmployeeRecurringExpense } from '../employee-recurring-expense';
+import { TerminusModule, TypeOrmHealthIndicator, DNSHealthIndicator } from '@nestjs/terminus';
+import { getTerminusOptions } from './health/terminus-options.service';
 
 const entities = [
   User,
@@ -45,6 +47,13 @@ const entities = [
       }),
       inject: [ConfigService],
     }),
+    /*
+    TerminusModule.forRootAsync({
+      // Inject the TypeOrmHealthIndicator provided by nestjs/terminus
+      inject: [TypeOrmHealthIndicator, DNSHealthIndicator],
+      useFactory: (db, dns) => getTerminusOptions(db, dns)
+    })
+    */
   ],
   controllers: [],
   providers: [],

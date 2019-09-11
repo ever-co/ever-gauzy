@@ -1,8 +1,25 @@
 // This file can be replaced during build by using the `fileReplacements` array.
 // `ng build ---prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
+require("dotenv").config();
 import { IEnvironment } from './ienvironment';
 import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+
+const databaseConfig: TypeOrmModuleOptions = {
+  type: 'postgres', // TODO: process process.env.DB_TYPE value (we need to create different options obj depending on it)
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
+  database: process.env.DB_NAME || 'postgres',
+  username: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASS || 'root',
+  keepConnectionAlive: true,
+  logging: true,
+  synchronize: true,
+  uuidExtension: 'pgcrypto'
+};
+
+console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
 
 export const environment: IEnvironment = {
   production: false,
@@ -15,18 +32,7 @@ export const environment: IEnvironment = {
   USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
   JWT_SECRET: 'secretKey',
 
-  database: {
-    type: 'postgres',
-    host: 'localhost',
-    port: 5432,
-    database: 'postgres',
-    username: 'postgres',
-    password: 'root',
-    keepConnectionAlive: true,
-    logging: true,
-    synchronize: true,
-    uuidExtension: 'pgcrypto'
-  },
+  database: databaseConfig,
 
   defaultOrganization: {
     name: 'Ever Technologies LTD',
