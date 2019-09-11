@@ -80,7 +80,9 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  googleLogin() {}
+  googleLogin() {
+    console.log("googleLogin");
+  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
@@ -100,5 +102,52 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   protectedResource() {
     return 'JWT is working!';
+  }
+
+
+  @Get('facebook')
+  @UseGuards(AuthGuard('facebook'))
+  facebookLogin() {
+    // Return 401 for some reason
+    console.log("facebookLogin");
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'facebook/uri'
+  })
+  @Get('facebook/uri')
+  async requestFacebookRedirectUrl(@Req() req): Promise<any> {
+    console.log('requestFacebookRedirectUrl');
+    return 'requestFacebookRedirectUri';
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'facebook/signin'
+  })
+  @Post('facebook/signin')
+  async facebookSignIn(@Req() req, @Body() facebookSignInDto: any): Promise<any> {
+    // Logger.log(req.get('origin'), AuthController.name + ':facebookSignIn#origin');
+    // return this.authService.facebookSignIn(
+    //   facebookSignInDto.code,
+    //   req.get('origin') || this.coreConfig.protocol + '://' + req.get('host')
+    // );
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'facebook/token'
+  })
+  @Post('facebook/token')
+  async requestJsonWebTokenAfterFacebookSignIn(
+    @Req() req,
+    @Body() facebookTokenDto: any
+  ): Promise<any> {
+    // const token = await this.authService.createToken(req);
+    // return {token}
   }
 }
