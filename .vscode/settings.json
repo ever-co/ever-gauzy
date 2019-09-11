@@ -4,6 +4,7 @@
         "adminer",
         "compodoc",
         "cqrs",
+        "envalid",
         "fastify",
         "healthcheck",
         "microservices",

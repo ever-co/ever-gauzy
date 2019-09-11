@@ -2,26 +2,31 @@
   "compileOnSave": false,
   "compilerOptions": {
     "rootDir": ".",
-    "sourceMap": false,
+    "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
-	"outDir": "./dist/out-tsc",
-	"resolveJsonModule": true,
+    "outDir": "./dist/out-tsc",
+    "resolveJsonModule": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "es2015",
-    "module": "esnext",
+    "module": "commonjs",
     "typeRoots": ["node_modules/@types"],
     "lib": ["dom", "es2018", "esnext.array"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "baseUrl": ".",	
+    "baseUrl": ".",
     "paths": {
       "@gauzy/api-interface": ["libs/api-interface/src/index.ts"],
       "@gauzy/models": ["libs/models/src/index.ts"],
       "@env-api/environment": ["apps/api/src/environments/environment.ts"]
-    }
+    },
+    "preserveConstEnums": true,
+    "allowSyntheticDefaultImports": true,
+    "noUnusedLocals": false,
+    "noImplicitAny": false,
+    "esModuleInterop": false    
   },
   "exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
 }
