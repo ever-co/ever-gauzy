@@ -39,5 +39,10 @@
   },
   "EXPENSES_PAGE": {
     "EXPENSES": "Expenses"
+  },
+  "EMPLOYEES_PAGE": {
+    "EMPLOYEES": "Manage Employees for ",
+    "END_WORK": "End Work",
+    "BACK_TO_WORK": "Back to Work"
   }
 }

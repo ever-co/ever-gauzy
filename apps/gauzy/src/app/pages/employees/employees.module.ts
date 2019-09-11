@@ -16,6 +16,13 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeRecurringExpenseMutationModule } from '../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.module';
 import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
+export function HttpLoaderFactory(http: HttpClient) {
+    return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
 
 const COMPONENTS = [
     EmployeesComponent,
@@ -44,7 +51,14 @@ const COMPONENTS = [
         NgSelectModule,
         EmployeeRecurringExpenseMutationModule,
         ImageUpladerModule,
-        NbBadgeModule        
+        NbBadgeModule,
+        TranslateModule.forChild({
+            loader: {
+                provide: TranslateLoader,
+                useFactory: HttpLoaderFactory,
+                deps: [HttpClient]
+            }
+        }),    
     ],
     declarations: [
         ...COMPONENTS,
