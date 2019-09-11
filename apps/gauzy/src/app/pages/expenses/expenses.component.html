@@ -1,6 +1,6 @@
 <nb-card>
   <nb-card-header>
-    <h4>Expenses</h4>
+    <h4>{{ 'EXPENSES_PAGE.EXPENSES' | translate }}</h4>
   </nb-card-header>
   <nb-card-body>
     <div *ngIf="hasRole" class="mb-3">
@@ -10,7 +10,8 @@
         class="mr-2"
         (click)="openAddExpenseDialog()"
       >
-        <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
+        <nb-icon class="mr-1" icon="plus-outline"></nb-icon
+        >{{ 'BUTTONS.ADD' | translate }}
       </button>
 
       <button
@@ -20,7 +21,8 @@
         [disabled]="selectedExpense ? !selectedExpense.isSelected : true"
         (click)="openEditExpenseDialog()"
       >
-        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
+        <nb-icon class="mr-1" icon="edit-outline"></nb-icon
+        >{{ 'BUTTONS.EDIT' | translate }}
       </button>
 
       <button
@@ -29,7 +31,8 @@
         [disabled]="selectedExpense ? !selectedExpense.isSelected : true"
         (click)="deleteExpense()"
       >
-        <nb-icon class="mr-1" icon="archive-outline"></nb-icon>Delete
+        <nb-icon class="mr-1" icon="archive-outline"></nb-icon
+        >{{ 'BUTTONS.DELETE' | translate }}
       </button>
     </div>
 

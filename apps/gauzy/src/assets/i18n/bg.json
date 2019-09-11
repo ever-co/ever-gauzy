@@ -1,4 +1,16 @@
 {
+    "BUTTONS": {
+        "ADD": "Добави",
+        "EDIT": "Редактиране",
+        "DELETE": "Изтрий"
+    },
+    "SM_TABLE": {
+        "DATE": "Дата",
+        "CLIENT_NAME": "Клиентско име",
+        "VALUE": "Стойност",
+        "NOTES": "Бележки",
+        "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Няма данни за текущо избрания служител."
+    },
     "DASHBOARD_PAGE": {
         "EMPLOYEE_STATISTICS": "Статистика на служителите",
         "SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
@@ -15,16 +27,6 @@
     },
     "INCOME_PAGE": {
         "INCOME": "Доход",
-        "ADD": "Добави",
-        "EDIT": "Редактиране",
-        "DELETE": "Изтрий",
-        "SM_TABLE": {
-            "DATE": "Дата",
-            "CLIENT_NAME": "Клиентско име",
-            "VALUE": "Стойност",
-            "NOTES": "Бележки",
-            "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Няма данни за текущо избрания служител."
-        },
         "ADD_INCOME_POP_UP":{
             "ADD_INCOME": "Добавете доход",
             "EDIT_INCOME": "Редактиране доход",
@@ -34,5 +36,8 @@
             "EDIT": "Редактиране",
             "ADD": "Добави"
         }
+    },
+    "EXPENSES_PAGE": {
+        "EXPENSES": "Разходи"
     }
 }
