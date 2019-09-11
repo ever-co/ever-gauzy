@@ -8,6 +8,8 @@
             "TOTAL_INCOME": "Total Income",
             "TOTAL_EXPENSES": "Total Expenses",
             "PROFIT": "Profit",
+            "PROFIT_CALC": "Profit = Total Income - Total Expenses",
+            "NOTE": "Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments",
             "BONUS": "Bonus"
         }
     },
