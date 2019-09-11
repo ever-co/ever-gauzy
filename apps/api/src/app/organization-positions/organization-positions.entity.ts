@@ -9,10 +9,10 @@ import { ApiModelProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Organization } from '../organization/organization.entity';
-import { OrganizationDepartment as IOrganizationDepartment } from '@gauzy/models'
+import { OrganizationPositions as IOrganizationPositions } from '@gauzy/models'
 
-@Entity('organization_department')
-export class OrganizationDepartment extends Base implements IOrganizationDepartment {
+@Entity('organization_positions')
+export class OrganizationPositions extends Base implements IOrganizationPositions {
     @ApiModelProperty({ type: String })
     @IsString()
     @IsNotEmpty()
