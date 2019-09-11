@@ -1,27 +1,56 @@
 {
-    "DASHBOARD_PAGE": {
-        "EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
-        "SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
-        "DEVELOPER": {
-            "DEVELOPER": "מפתח",
-            "AVERAGE_BONUS": "בונוס ממוצע",
-            "TOTAL_INCOME": "הכנסה כוללת",
-            "TOTAL_EXPENSES": "סך ההוצאות",
-            "PROFIT": "רווח",
-            "BONUS": "בונוס"
-        }
-    },
-    "INCOME_PAGE": {
-        "INCOME": "הכנסה",
-        "ADD": "הוסף",
-        "EDIT": "ערוך",
-        "DELETE": "מחק",
-        "SM_TABLE": {
-            "DATE": "תאריך",
-            "CLIENT_NAME": "שם הלקוח",
-            "VALUE": "ערך",
-            "NOTES": "הערות",
-            "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
-        }
+  "BUTTONS": {
+    "ADD": "הוסף",
+    "EDIT": "ערוך",
+    "DELETE": "מחק"
+  },
+  "SM_TABLE": {
+    "DATE": "תאריך",
+    "CLIENT_NAME": "שם הלקוח",
+    "VALUE": "ערך",
+    "NOTES": "הערות",
+    "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
+  },
+  "DASHBOARD_PAGE": {
+    "EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+    "SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
+    "DEVELOPER": {
+      "DEVELOPER": "מפתח",
+      "AVERAGE_BONUS": "בונוס ממוצע",
+      "TOTAL_INCOME": "הכנסה כוללת",
+      "TOTAL_EXPENSES": "סך ההוצאות",
+      "PROFIT": "רווח",
+      "PROFIT_CALC": "רווח = סך ההכנסה - סך כל ההוצאות",
+      "NOTE": "הערה: יש לנכות את הבונוסים השליליים בחודשים הקרובים מהבונוסים החיוביים לפני תשלומי הבונוס הסופיים",
+      "BONUS": "בונוס"
     }
+  },
+  "INCOME_PAGE": {
+    "INCOME": "הכנסה",
+
+    "SM_TABLE": {
+      "DATE": "תאריך",
+      "CLIENT_NAME": "שם הלקוח",
+      "VALUE": "ערך",
+      "NOTES": "הערות",
+      "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
+    },
+    "ADD_INCOME_POP_UP": {
+      "ADD_INCOME": "הוסף הכנסה",
+      "EDIT_INCOME": "ערוך הכנסה",
+      "ALL_CLIENTS": "כל הלקוחות",
+      "AMOUNT": "כמות",
+      "NOTES": "הערות",
+      "EDIT": "ערוך",
+      "ADD": "הוסף"
+    }
+  },
+  "EXPENSES_PAGE": {
+    "EXPENSES": "הוצאות"
+  },
+  "EMPLOYEES_PAGE": {
+    "EMPLOYEES": "Manage Employees for ",
+    "END_WORK": "End Work",
+    "BACK_TO_WORK": "Back to Work"
+  }
 }

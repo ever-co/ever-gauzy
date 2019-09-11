@@ -8,6 +8,13 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ExpensesMutationModule } from '../../@shared/expenses/expenses-mutation/expenses-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
+export function HttpLoaderFactory(http: HttpClient) {
+    return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
 
 @NgModule({
     imports: [
@@ -22,7 +29,14 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
         NbDialogModule.forChild(),
         ExpensesMutationModule,
         UserFormsModule,
-        TableComponentsModule
+        TableComponentsModule,
+        TranslateModule.forChild({
+            loader: {
+                provide: TranslateLoader,
+                useFactory: HttpLoaderFactory,
+                deps: [HttpClient]
+            }
+        }),
     ],
     declarations: [
         ExpensesComponent

@@ -13,6 +13,7 @@ import { EmployeeFullNameComponent } from './table-components/employee-fullname/
 import { Router, ActivatedRoute } from '@angular/router';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
+import { TranslateService } from '@ngx-translate/core';
 
 interface EmployeeViewModel {
     fullName: string;
@@ -41,15 +42,18 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         private store: Store,
         private router: Router,
         private toastrService: NbToastrService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private translateService: TranslateService
     ) { }
 
     ngOnInit() {
         this.store.selectedOrganization$
             .pipe(takeUntil(this._ngDestroy$))
             .subscribe(organization => {
-                this.selectedOrganizationId = organization.id;
-                this.loadPage();
+                if (organization) {
+                    this.selectedOrganizationId = organization.id;
+                    this.loadPage();
+                }
             });
 
         this._loadSmartTableSettings();
@@ -122,11 +126,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         if (data) {
             try {
                 await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data);
-                this.toastrService.info('Employee set as inactive.', 'Success');
+                this.toastrService.info(this.selectedEmployee.fullName + ' set as inactive.', 'Success');
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }
-
+            this.selectedEmployee = null;
             this.loadPage();
         }
     }
@@ -144,19 +148,19 @@ export class EmployeesComponent implements OnInit, OnDestroy {
         if (data) {
             try {
                 await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, null);
-                this.toastrService.info('Employee set as active.', 'Success');
+                this.toastrService.info(this.selectedEmployee.fullName + ' set as active.', 'Success');
             } catch (error) {
                 this.toastrService.danger(error.error.message || error.message, 'Error');
             }
-
+            this.selectedEmployee = null;
             this.loadPage();
         }
     }
 
     private async loadPage() {
-        const { name } = this.store.selectedOrganization;
 
         const { items } = await this.employeesService.getAll(['user'], { organization: { id: this.selectedOrganizationId } }).pipe(first()).toPromise();
+        const { name } = this.store.selectedOrganization;
 
         const employeesVm: EmployeeViewModel[] = items.filter(i => i.isActive).map((i) => {
             return {
@@ -165,9 +169,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
                 id: i.id,
                 isActive: i.isActive,
                 endWork: i.endWork ? new Date(i.endWork) : '',
-                workStatus: i.endWork 
-                ? new Date(i.endWork).getDate() + ' ' + monthNames[new Date(i.endWork).getMonth()] + ' ' + new Date(i.endWork).getFullYear()
-                : '',
+                workStatus: i.endWork
+                    ? new Date(i.endWork).getDate() + ' ' + monthNames[new Date(i.endWork).getMonth()] + ' ' + new Date(i.endWork).getFullYear()
+                    : '',
                 imageUrl: i.user.imageUrl,
                 // TODO: laod real bonus and bonusDate
                 bonus: Math.floor(1000 * Math.random()) + 10,

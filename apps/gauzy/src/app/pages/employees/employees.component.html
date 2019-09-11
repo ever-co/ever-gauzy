@@ -1,11 +1,12 @@
 <nb-card>
   <nb-card-header>
-    <h4>Manage Employees for {{ organizationName }}</h4>
+    <h4>{{ 'EMPLOYEES_PAGE.EMPLOYEES' | translate }} {{ organizationName }}</h4>
   </nb-card-header>
   <nb-card-body>
     <div class="mb-3">
       <button nbButton status="success" (click)="add()" class="mr-2">
-        <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
+        <nb-icon class="mr-1" icon="plus-outline"></nb-icon
+        >{{ 'BUTTONS.ADD' | translate }}
       </button>
 
       <button
@@ -15,7 +16,8 @@
         status="info"
         class="mr-2"
       >
-        <nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
+        <nb-icon class="mr-1" icon="edit-outline"></nb-icon
+        >{{ 'BUTTONS.EDIT' | translate }}
       </button>
       <button
         nbButton
@@ -24,7 +26,8 @@
         status="danger"
         class="mr-2"
       >
-        <nb-icon class="mr-1" icon="trash-2-outline"></nb-icon>Delete
+        <nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+        >{{ 'BUTTONS.DELETE' | translate }}
       </button>
       <button
         nbButton
@@ -32,7 +35,12 @@
         (click)="selectedEmployee.endWork ? backToWork() : endWork()"
         status="warning"
       >
-        <nb-icon class="mr-1" icon="person-delete-outline"></nb-icon>{{selectedEmployee && selectedEmployee.endWork ? 'Back to Work' : 'End Work'}}
+        <nb-icon
+          class="mr-1"
+          icon="person-delete-outline"
+        >
+        </nb-icon>
+        {{ (selectedEmployee && selectedEmployee.endWork ? 'EMPLOYEES_PAGE.BACK_TO_WORK' : 'EMPLOYEES_PAGE.END_WORK')| translate }}
       </button>
     </div>
     <ng2-smart-table

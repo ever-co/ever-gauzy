@@ -11,6 +11,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface ExpenseViewModel {
     id: string,
@@ -95,7 +96,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         private store: Store,
         private expenseService: ExpensesService,
         private toastrService: NbToastrService,
-        private route: ActivatedRoute) { }
+        private route: ActivatedRoute,
+        private translateService: TranslateService) { }
+
 
     async ngOnInit() {
         this.hasRole = await this.authService
