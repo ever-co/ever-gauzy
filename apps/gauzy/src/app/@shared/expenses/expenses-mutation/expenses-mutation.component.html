@@ -1,6 +1,10 @@
 <nb-card class="main">
   <nb-card-header class="d-flex">
-    <h5>{{expense ? "Edit Expense" : "Add Expense"}}</h5>
+    <h5>
+      {{
+        (expense ? 'POP_UPS.EDIT_EXPENSE' : 'POP_UPS.ADD_EXPENSE') | translate
+      }}
+    </h5>
     <ga-employee-selector
       #employeeSelector
       [hidden]="expense"
@@ -21,7 +25,7 @@
           <input
             formControlName="valueDate"
             nbInput
-            placeholder="Pick Date"
+            placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
             [nbDatepicker]="formpicker"
             [ngClass]="{
               'status-danger':
@@ -40,7 +44,7 @@
               bindLabel="vendorName"
               [searchable]="false"
               formControlName="vendor"
-              placeholder="All Vendors"
+              placeholder="{{ 'POP_UPS.ALL_CLIENTS' | translate }}"
             >
             </ng-select>
           </div>
@@ -55,7 +59,7 @@
               type="number"
               step="1"
               fullWidth
-              placeholder="Amount"
+              placeholder="{{ 'POP_UPS.AMOUNT' | translate }}"
               formControlName="amount"
               [ngClass]="{
                 'status-danger':
@@ -89,7 +93,7 @@
               bindLabel="categoryName"
               [searchable]="false"
               formControlName="category"
-              placeholder="All Categories"
+              placeholder="{{ 'POP_UPS.ALL_CATEGORIES' | translate }}"
             >
             </ng-select>
           </div>
@@ -102,7 +106,7 @@
             <textarea
               nbInput
               fullWidth
-              placeholder="Notes"
+              placeholder="{{ 'POP_UPS.NOTES' | translate }}"
               formControlName="notes"
               class="notes"
               [ngClass]="{
@@ -124,7 +128,7 @@
       status="success"
       nbButton
     >
-      {{ expense ? 'Edit' : 'Add' }}
+      {{ (expense ? 'BUTTONS.EDIT' : 'BUTTONS.ADD') | translate }}
     </button>
   </nb-card-footer>
 </nb-card>

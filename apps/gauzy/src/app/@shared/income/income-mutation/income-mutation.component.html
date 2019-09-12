@@ -1,11 +1,7 @@
 <nb-card class="main">
   <nb-card-header class="d-flex">
     <h5>
-      {{
-        (income
-          ? 'INCOME_PAGE.ADD_INCOME_POP_UP.EDIT_INCOME'
-          : 'INCOME_PAGE.ADD_INCOME_POP_UP.ADD_INCOME') | translate
-      }}
+      {{ (income ? 'POP_UPS.EDIT_INCOME' : 'POP_UPS.ADD_INCOME') | translate }}
     </h5>
     <ga-employee-selector
       #employeeSelector
@@ -28,7 +24,7 @@
           <input
             formControlName="valueDate"
             nbInput
-            placeholder="Pick Date"
+            placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
             [nbDatepicker]="formpicker"
             [ngClass]="{
               'status-danger':
@@ -47,9 +43,7 @@
               bindLabel="clientName"
               [searchable]="false"
               formControlName="client"
-              placeholder="{{
-                'INCOME_PAGE.ADD_INCOME_POP_UP.ALL_CLIENTS' | translate
-              }}"
+              placeholder="{{ 'POP_UPS.ALL_CLIENTS' | translate }}"
             >
             </ng-select>
           </div>
@@ -64,9 +58,7 @@
               type="number"
               step="1"
               fullWidth
-              placeholder="{{
-                'INCOME_PAGE.ADD_INCOME_POP_UP.AMOUNT' | translate
-              }}"
+              placeholder="{{ 'POP_UPS.AMOUNT' | translate }}"
               formControlName="amount"
               [ngClass]="{
                 'status-danger':
@@ -99,9 +91,7 @@
             <textarea
               nbInput
               fullWidth
-              placeholder="{{
-                'INCOME_PAGE.ADD_INCOME_POP_UP.NOTES' | translate
-              }}"
+              placeholder="{{ 'POP_UPS.NOTES' | translate }}"
               formControlName="notes"
               class="notes"
               [ngClass]="{
@@ -123,7 +113,7 @@
       status="success"
       nbButton
     >
-      {{ income ? 'Edit' : 'Add' }}
+      {{ (income ? 'BUTTONS.EDIT' : 'BUTTONS.ADD') | translate }}
     </button>
   </nb-card-footer>
 </nb-card>

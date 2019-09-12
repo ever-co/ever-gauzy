@@ -6,6 +6,13 @@ import { ExpensesMutationComponent } from './expenses-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HttpClient } from '@angular/common/http';
+
+export function HttpLoaderFactory(http: HttpClient) {
+    return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
 
 @NgModule({
     imports: [
@@ -19,7 +26,14 @@ import { EmployeeSelectorsModule } from '../../../@theme/components/header/selec
         FormsModule,
         NbDatepickerModule,
         NbSelectModule,
-        EmployeeSelectorsModule
+        EmployeeSelectorsModule,
+        TranslateModule.forChild({
+            loader: {
+                provide: TranslateLoader,
+                useFactory: HttpLoaderFactory,
+                deps: [HttpClient]
+            }
+        }),
     ],
     exports: [ExpensesMutationComponent],
     declarations: [ExpensesMutationComponent],
