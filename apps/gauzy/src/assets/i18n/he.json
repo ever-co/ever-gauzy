@@ -11,6 +11,19 @@
     "NOTES": "הערות",
     "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
   },
+  "POP_UPS": {
+    "ADD_INCOME": "הוסף הכנסה",
+    "ADD_EXPENSE": "הוסף הוצאה",
+    "EDIT_INCOME": "ערוך הכנסה",
+    "EDIT_EXPENSE": "ערוך הוצאות",
+    "PICK_DATE": "תבחר תאריך",
+    "ALL_CLIENTS": "כל הלקוחות",
+    "ALL_CATEGORIES": "כל הקטגוריות",
+    "AMOUNT": "כמות",
+    "NOTES": "הערות",
+    "EDIT": "ערוך",
+    "ADD": "הוסף"
+  },
   "DASHBOARD_PAGE": {
     "EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
     "SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
@@ -26,31 +39,17 @@
     }
   },
   "INCOME_PAGE": {
-    "INCOME": "הכנסה",
-
-    "SM_TABLE": {
-      "DATE": "תאריך",
-      "CLIENT_NAME": "שם הלקוח",
-      "VALUE": "ערך",
-      "NOTES": "הערות",
-      "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
-    },
-    "ADD_INCOME_POP_UP": {
-      "ADD_INCOME": "הוסף הכנסה",
-      "EDIT_INCOME": "ערוך הכנסה",
-      "ALL_CLIENTS": "כל הלקוחות",
-      "AMOUNT": "כמות",
-      "NOTES": "הערות",
-      "EDIT": "ערוך",
-      "ADD": "הוסף"
-    }
+    "INCOME": "הכנסה"
   },
   "EXPENSES_PAGE": {
     "EXPENSES": "הוצאות"
   },
   "EMPLOYEES_PAGE": {
-    "EMPLOYEES": "Manage Employees for ",
-    "END_WORK": "End Work",
-    "BACK_TO_WORK": "Back to Work"
+    "EMPLOYEES": "נהל עובדים עבור ",
+    "END_WORK": "סיום עבודה",
+    "BACK_TO_WORK": "לחזור לעבודה"
+  },
+  "ORGANIZATIONS_PAGE": {
+    "ORGANIZATIONS": "ארגונים"
   }
 }

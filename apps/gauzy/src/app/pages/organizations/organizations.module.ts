@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { ThemeModule, HttpLoaderFactory } from '../../@theme/theme.module';
 import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbSelectModule, NbListModule, NbTabsetModule } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
@@ -15,6 +15,8 @@ import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.mo
 import { OrganizationListComponent } from './edit-organization/organization-list/organization-list.component';
 import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 import { EditOrganizationMainComponent } from './edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
 
 @NgModule({
     imports: [
@@ -34,7 +36,14 @@ import { EditOrganizationMainComponent } from './edit-organization/edit-organiza
         NbSelectModule,
         RemoveLodashModule,
         NbListModule,
-        NbTabsetModule
+        NbTabsetModule,
+        TranslateModule.forChild({
+            loader: {
+                provide: TranslateLoader,
+                useFactory: HttpLoaderFactory,
+                deps: [HttpClient]
+            }
+        }),
     ],
     entryComponents: [
         OrganizationsFullnameComponent,

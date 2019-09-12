@@ -9,6 +9,7 @@ import { OrganizationsMutationComponent } from '../../@shared/organizations/orga
 import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 interface SelectedRow {
     data: Organization,
@@ -53,7 +54,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
     constructor(private organizationsService: OrganizationsService,
         private toastrService: NbToastrService,
         private dialogService: NbDialogService,
-        private router: Router) { }
+        private router: Router,
+        private translateService: TranslateService) { }
 
     ngOnInit() {
         this._loadSmartTable();

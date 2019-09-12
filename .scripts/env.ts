@@ -6,12 +6,15 @@ import { cleanEnv, num, str, bool } from 'envalid';
 
 export type Env = Readonly<{
 	production: boolean;
+
+	API_BASE_URL: string;
 }>;
 
 export const env: Env = cleanEnv(
 	process.env,
 	{
-		production: bool({ default: false })		
+		production: bool({ default: false }),
+		API_BASE_URL: str({ default: 'http://localhost:3000' })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
