@@ -5,10 +5,10 @@ import {
   HttpCode,
   Body,
   Get,
+  Res,
   Req,
   Query,
-  UseGuards,
-  Res
+  UseGuards
 } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -88,17 +88,36 @@ export class AuthController {
     const { jwt, userId } = req.user;
 
     if (jwt) {
-      res.redirect(
+      return res.redirect(
         `http://localhost:4200/#/google/success?jwt=${jwt}&userId=${userId}`
       );
     } else {
-      res.redirect('http://localhost:4200');
+      return res.redirect('http://localhost:4200');
     }
   }
 
-  @Get('protected')
-  @UseGuards(AuthGuard('jwt'))
-  protectedResource() {
-    return 'JWT is working!';
+  @Get('facebook')
+  async requestFacebookRedirectUrl(@Res() res) {
+    const { redirectUri } = await this.authService.requestFacebookRedirectUri();
+    return res.redirect(redirectUri);
+  }
+
+  @Get('facebook/callback')
+  async facebookCallback(@Req() req, @Res() res): Promise<any> {
+    const { code } = req.query;
+    return await this.authService.facebookSignIn(code, res);
+  }
+
+  @Post('facebook/token')
+  requestJsonWebTokenAfterFacebookSignIn(@Req() req, @Res() res) {
+    const { jwt, userId } = req.user;
+
+    if (jwt) {
+      return res.redirect(
+        `http://localhost:4200/#/google/success?jwt=${jwt}&userId=${userId}`
+      );
+    } else {
+      return res.redirect('http://localhost:4200');
+    }
   }
 }

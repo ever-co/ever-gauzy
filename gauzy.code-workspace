@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "apps"
+		},
+		{
+			"path": "libs"
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "./node_modules/typescript/lib",
+		"debug.node.autoAttach": "on",
+		"search.usePCRE2": true,
+		"git.ignoreLimitWarning": true
+	}
+}

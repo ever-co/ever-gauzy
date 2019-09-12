@@ -1,17 +1,15 @@
-import {
-  Injectable,
-  /*Provider, */ InternalServerErrorException
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { User, UserService } from '../user';
 import * as bcrypt from 'bcrypt';
-import { environment as env } from '@env-api/environment';
+import { environment as env, environment } from '@env-api/environment';
 
-// have to combine the two imports
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import { get, post, Response } from 'request';
 
 export enum Provider {
-  GOOGLE = 'google'
+  GOOGLE = 'google',
+  FACEBOOK = 'facebook'
 }
 
 @Injectable()
@@ -145,5 +143,78 @@ export class AuthService {
     );
     return success;
   }
-}
 
+  async createToken(user: { id: string }): Promise<{ token: string }> {
+    const token: string = sign({ id: user.id }, env.JWT_SECRET, {});
+    return { token };
+  }
+
+  async requestFacebookRedirectUri(): Promise<{ redirectUri: string }> {
+    const {
+      clientId,
+      oauthRedirectUri,
+      state,
+      loginDialogUri
+    } = env.facebookConfig;
+
+    const queryParams: string[] = [
+      `client_id=${clientId}`,
+      `redirect_uri=${oauthRedirectUri}`,
+      `state=${state}`
+    ];
+
+    const redirectUri = `${loginDialogUri}?${queryParams.join('&')}`;
+
+    return { redirectUri };
+  }
+
+  async facebookSignIn(code: string, responseRedirectUse: any): Promise<any> {
+    const {
+      clientId,
+      oauthRedirectUri,
+      clientSecret,
+      accessTokenUri
+    } = env.facebookConfig;
+
+    const queryParams: string[] = [
+      `client_id=${clientId}`,
+      `redirect_uri=${oauthRedirectUri}`,
+      `client_secret=${clientSecret}`,
+      `code=${code}`
+    ];
+
+    const uri = `${accessTokenUri}?${queryParams.join('&')}`;
+    get(uri, (error: Error, res: Response, body: any) => {
+      if (error) {
+        console.error(error);
+        throw error;
+      } else if (body.error) {
+        console.error(body.error);
+        throw body.error;
+      }
+
+      const { access_token } = JSON.parse(body);
+      const { host, port } = environment;
+
+      post(
+        {
+          url: `${host}:${port}/api/auth/facebook/token`,
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          form: { access_token }
+        },
+        async (error: Error, res: Response, body: any) => {
+          if (error) {
+            console.error(error);
+            throw error;
+          } else if (body.error) {
+            console.error(body.error);
+            throw body.error;
+          }
+
+          const redirectSuccessUrl = body.replace('Found. Redirecting to ', '');
+          return responseRedirectUse.redirect(redirectSuccessUrl);
+        }
+      );
+    });
+  }
+}
