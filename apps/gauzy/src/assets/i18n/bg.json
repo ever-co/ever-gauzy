@@ -44,5 +44,8 @@
     "EMPLOYEES": "Управление на служителите в ",
     "END_WORK": "Край на работа",
     "BACK_TO_WORK": "Обратно на работа"
+  },
+  "ORGANIZATIONS_PAGE": {
+    "ORGANIZATIONS": "Организации"
   }
 }

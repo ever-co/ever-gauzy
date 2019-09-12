@@ -49,8 +49,11 @@
     "EXPENSES": "הוצאות"
   },
   "EMPLOYEES_PAGE": {
-    "EMPLOYEES": "Manage Employees for ",
-    "END_WORK": "End Work",
-    "BACK_TO_WORK": "Back to Work"
+    "EMPLOYEES": "נהל עובדים עבור ",
+    "END_WORK": "סיום עבודה",
+    "BACK_TO_WORK": "לחזור לעבודה"
+  },
+  "ORGANIZATIONS_PAGE": {
+    "ORGANIZATIONS": "ארגונים"
   }
 }

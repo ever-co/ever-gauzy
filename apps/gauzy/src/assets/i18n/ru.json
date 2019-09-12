@@ -47,5 +47,8 @@
     "EMPLOYEES": "Управление сотрудниками для",
     "END_WORK": "Конец работы",
     "BACK_TO_WORK": "Вернуться к работе"
+  },
+  "ORGANIZATIONS_PAGE": {
+    "ORGANIZATIONS": "Организации"
   }
 }
