@@ -15,6 +15,7 @@ export const environment = {
   CLOUDINARY_CLOUD_NAME: 'dv6ezkfxg',
   CLOUDINARY_API_KEY: '256868982483961',
   GOOGLE_AUTH_LINK: 'http://localhost:3000/api/auth/google',
+  FACEBOOK_AUTH_LINK: 'http://localhost:3000/api/auth/facebook',
   LINKEDIN_AUTH_LINK: '#'
 };
 

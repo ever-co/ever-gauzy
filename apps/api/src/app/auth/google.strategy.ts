@@ -5,6 +5,7 @@ import { AuthService, Provider } from './auth.service';
 import { User } from '../user';
 import { RoleService } from '../role';
 import { RolesEnum } from '@gauzy/models';
+import { environment as env } from '@env-api/environment';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -13,13 +14,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     private readonly _roleService: RoleService
   ) {
     super({
-      clientID:
-        '1061129983046-pt4tnjteh9h1phfqapqkkea03iq0s351.apps.googleusercontent.com',
-      clientSecret: 'liU5ihpwoqnsmXJNxNjFp1yP',
-      callbackURL: 'http://localhost:3000/api/auth/google/callback',
+      clientID: env.googleConfig.clientId,
+      clientSecret: env.googleConfig.clientSecret,
+      callbackURL: `${env.host}:${env.port}/api/auth/google/callback`,
       passReqToCallback: true,
       scope: ['profile']
     });
+    console.log("env.googleConfig");
+    console.log(env.googleConfig);
+    console.log('${env.host}:${env.port}/api/auth/google/callback');
+    console.log(`${env.host}:${env.port}/api/auth/google/callback`);
   }
 
   async validate(

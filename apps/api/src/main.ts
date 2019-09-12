@@ -10,8 +10,8 @@ async function bootstrap() {
   app.enableCors();
 
   // TODO: enable csurf
-  // As explained on the csurf middleware page https://github.com/expressjs/csurf#csurf, 
-  // the csurf module requires either a session middleware or cookie-parser to be initialized first. 
+  // As explained on the csurf middleware page https://github.com/expressjs/csurf#csurf,
+  // the csurf module requires either a session middleware or cookie-parser to be initialized first.
   // app.use(csurf());
 
   app.use(helmet());
@@ -21,7 +21,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .setBasePath('api/')
     .build();
-    
+
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('swg', app, document);
 

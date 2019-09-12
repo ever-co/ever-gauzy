@@ -8,6 +8,8 @@ import {
   CurrenciesEnum,
   DefaultValueDateTypeEnum
 } from '@gauzy/models';
+import { IFacebookConfig } from './IFacebookConfig';
+import { IGoogleConfig } from './IGoogleConfig';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -23,6 +25,9 @@ export interface Env {
  * Server Environment
  */
 export interface IEnvironment {
+  port: number | string;
+  host: string;
+
   production: boolean;
   envName: string;
 
@@ -32,6 +37,9 @@ export interface IEnvironment {
   JWT_SECRET?: string;
 
   database: TypeOrmModuleOptions;
+
+  facebookConfig: IFacebookConfig;
+  googleConfig: IGoogleConfig;
 
   defaultAdmins: DefaultUser[];
 
@@ -44,3 +52,4 @@ export interface IEnvironment {
     imageUrl: string;
   };
 }
+

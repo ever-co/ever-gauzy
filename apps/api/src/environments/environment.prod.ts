@@ -1,4 +1,4 @@
-require("dotenv").config();
+require('dotenv').config();
 import { IEnvironment } from './ienvironment';
 import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
@@ -13,37 +13,56 @@ const databaseConfig: TypeOrmModuleOptions = {
   keepConnectionAlive: true,
   logging: true,
   synchronize: true,
-  uuidExtension: 'pgcrypto',
+  uuidExtension: 'pgcrypto'
 };
 
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
 
-export const environment : IEnvironment = {
+export const environment: IEnvironment = {
+  port: null,
+  host: null,
+
   production: true,
   envName: 'prod',
-  
+
   env: {
     LOG_LEVEL: 'debug'
   },
-  
+
   USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
   JWT_SECRET: 'secretKey',
-  
+
   database: databaseConfig,
-  
+
+  facebookConfig: {
+    loginDialogUri: null,
+    accessTokenUri: null,
+    clientId: null,
+    clientSecret: null,
+    oauthRedirectUri: null,
+    state: null
+  },
+
+  googleConfig: {
+    clientId: null,
+    clientSecret: null
+  },
+
   defaultOrganization: {
     name: 'Ever Technologies LTD',
     currency: CurrenciesEnum.BGN,
     defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
     imageUrl: 'assets/images/logos/ever-large.jpg'
   },
-  
-  defaultAdmins: [{
-    email: 'admin@ever.co',
-    password: "admin",
-    imageUrl: 'assets/images/avatars/ruslan.jpg'
-  }],
-  
+
+  defaultAdmins: [
+    {
+      email: 'admin@ever.co',
+      password: 'admin',
+      imageUrl: 'assets/images/avatars/ruslan.jpg'
+    }
+  ],
+
   defaultEmployees: [
     {
       email: 'alish@ever.co',

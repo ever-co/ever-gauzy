@@ -1,7 +1,7 @@
 // This file can be replaced during build by using the `fileReplacements` array.
 // `ng build ---prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
-require("dotenv").config();
+require('dotenv').config();
 import { IEnvironment } from './ienvironment';
 import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
@@ -22,6 +22,9 @@ const databaseConfig: TypeOrmModuleOptions = {
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
 
 export const environment: IEnvironment = {
+  port: process.env.port || 3000,
+  host: process.env.host || 'http://localhost',
+
   production: false,
   envName: 'dev',
 
@@ -33,6 +36,21 @@ export const environment: IEnvironment = {
   JWT_SECRET: 'secretKey',
 
   database: databaseConfig,
+
+
+  facebookConfig: {
+    loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
+    accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
+    clientId: '368093470753138',
+    clientSecret: '82b1629c96502b1d5d9ccca9dabe2900',
+    oauthRedirectUri: 'http://localhost:3000/api/auth/facebook/callback',
+    state: '{fbstate}'
+  },
+
+  googleConfig: {
+    clientId:'061129983046-pt4tnjteh9h1phfqapqkkea03iq0s351.apps.googleusercontent.com',
+    clientSecret:'liU5ihpwoqnsmXJNxNjFp1yP'
+  },
 
   defaultOrganization: {
     name: 'Ever Technologies LTD',

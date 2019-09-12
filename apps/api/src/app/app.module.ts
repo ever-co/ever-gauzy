@@ -22,6 +22,8 @@ import { OrganizationPositions } from './organization-positions';
 import { OrganizationProjects } from './organization-projects';
 import { OrganizationVendors } from './organization-vendors';
 
+
+
 @Module({
   imports: [
     RouterModule.forRoutes([
@@ -38,15 +40,24 @@ import { OrganizationVendors } from './organization-vendors';
           { path: '/employee-settings', module: EmployeeSettingModule },
           { path: '/employee-statistics', module: EmployeeStatisticsModule },
           { path: '/user-organization', module: UserOrganizationModule },
-          { path: '/organization-department', module: OrganizationDepartmentModule },
+          {
+            path: '/organization-department',
+            module: OrganizationDepartmentModule
+          },
           { path: '/organization-clients', module: OrganizationClients },
           { path: '/organization-positions', module: OrganizationPositions },
           { path: '/organization-projects', module: OrganizationProjects },
           { path: '/organization-vendors', module: OrganizationVendors },
-          { path: '/organization-recurring-expense', module: OrganizationRecurringExpenseModule },
-          { path: '/employee-recurring-expense', module: EmployeeRecurringExpenseModule },
-        ],
-      },
+          {
+            path: '/organization-recurring-expense',
+            module: OrganizationRecurringExpenseModule
+          },
+          {
+            path: '/employee-recurring-expense',
+            module: EmployeeRecurringExpenseModule
+          }
+        ]
+      }
     ]),
     CoreModule,
     AuthModule,
@@ -70,5 +81,5 @@ import { OrganizationVendors } from './organization-vendors';
   controllers: [AppController],
   providers: [AppService, SeedDataService]
 })
-export class AppModule {
+export class AppModule  {
 }

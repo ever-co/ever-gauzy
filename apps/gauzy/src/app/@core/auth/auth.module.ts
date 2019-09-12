@@ -26,7 +26,7 @@ const socialLinks = [
     icon: 'twitter-outline'
   },
   {
-    url: environment.COMPANY_FACEBOOK_LINK,
+    url: environment.FACEBOOK_AUTH_LINK,
     target: '_blank',
     icon: 'facebook-outline'
   }
