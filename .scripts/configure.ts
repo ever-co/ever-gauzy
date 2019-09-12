@@ -33,6 +33,7 @@ export const environment: Environment = {
   CLOUDINARY_CLOUD_NAME: 'dv6ezkfxg',
   CLOUDINARY_API_KEY: '256868982483961',
   GOOGLE_AUTH_LINK: 'http://localhost:3000/api/auth/google',
+  FACEBOOK_AUTH_LINK: 'http://localhost:3000/api/auth/facebook',
   LINKEDIN_AUTH_LINK: '#'
 };
 
@@ -64,15 +65,21 @@ const envFileDestOther: string = !isProd
 	? 'environment.prod.ts'
 	: 'environment.ts';
 
-writeFile(`./apps/gauzy/src/environments/${envFileDest}`, envFileContent, function(err) {
-	if (err) {
-		console.log(err);
-	} else {
-		console.log(`Generated Angular environment file: ${envFileDest}`);
+writeFile(
+	`./apps/gauzy/src/environments/${envFileDest}`,
+	envFileContent,
+	function(err) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log(`Generated Angular environment file: ${envFileDest}`);
+		}
 	}
-});
+);
 
-writeFile(`./apps/gauzy/src/environments/${envFileDestOther}`, '', function(err) {
+writeFile(`./apps/gauzy/src/environments/${envFileDestOther}`, '', function(
+	err
+) {
 	if (err) {
 		console.log(err);
 	} else {
