@@ -11,6 +11,19 @@
     "NOTES": "Заметки",
     "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Нет данных для выбранного сотрудника."
   },
+  "POP_UPS": {
+    "ADD_INCOME": "Добавить доход",
+    "ADD_EXPENSE": "Добавить расходы",
+    "EDIT_INCOME": "Изменить доход",
+    "EDIT_EXPENSE": "Изменить Расход",
+    "PICK_DATE": "Выбрать дату",
+    "ALL_CLIENTS": "Все клиенты",
+    "ALL_CATEGORIES": "Все категории",
+    "AMOUNT": "Количество",
+    "NOTES": "Заметки",
+    "EDIT": "Редактировать",
+    "ADD": "Добавлять"
+  },
   "DASHBOARD_PAGE": {
     "EMPLOYEE_STATISTICS": "Статистика сотрудников",
     "SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
@@ -26,16 +39,7 @@
     }
   },
   "INCOME_PAGE": {
-    "INCOME": "Доход",
-    "ADD_INCOME_POP_UP": {
-      "ADD_INCOME": "Добавить доход",
-      "EDIT_INCOME": "Изменить доход",
-      "ALL_CLIENTS": "Все клиенты",
-      "AMOUNT": "Количество",
-      "NOTES": "Заметки",
-      "EDIT": "Редактировать",
-      "ADD": "Добавлять"
-    }
+    "INCOME": "Доход"
   },
   "EXPENSES_PAGE": {
     "EXPENSES": "Расходы",

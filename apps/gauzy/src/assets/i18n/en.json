@@ -11,6 +11,19 @@
     "NOTES": "Notes",
     "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "No data for the currently selected employee."
   },
+  "POP_UPS": {
+    "ADD_INCOME": "Add Income",
+    "ADD_EXPENSE": "Add Expense",
+    "EDIT_INCOME": "Edit Income",
+    "EDIT_EXPENSE": "Edit Expense",
+    "PICK_DATE": "Pick a Date",
+    "ALL_CLIENTS": "All Clients",
+    "ALL_CATEGORIES": "All Categories",
+    "AMOUNT": "Amount",
+    "NOTES": "Notes",
+    "EDIT": "Edit",
+    "ADD": "Add"
+  },
   "DASHBOARD_PAGE": {
     "EMPLOYEE_STATISTICS": "Employee Statistics",
     "SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
@@ -26,16 +39,7 @@
     }
   },
   "INCOME_PAGE": {
-    "INCOME": "Income",
-    "ADD_INCOME_POP_UP": {
-      "ADD_INCOME": "Add Income",
-      "EDIT_INCOME": "Edit Income",
-      "ALL_CLIENTS": "All Clients",
-      "AMOUNT": "Amount",
-      "NOTES": "Notes",
-      "EDIT": "Edit",
-      "ADD": "Add"
-    }
+    "INCOME": "Income"
   },
   "EXPENSES_PAGE": {
     "EXPENSES": "Expenses"
