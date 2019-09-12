@@ -11,6 +11,19 @@
     "NOTES": "Бележки",
     "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Няма данни за текущо избрания служител."
   },
+  "POP_UPS": {
+    "ADD_INCOME": "Добаветe доход",
+    "ADD_EXPENSE": "Добавете разход",
+    "EDIT_INCOME": "Редактиране доход",
+    "EDIT_EXPENSE": "Редактиране разход",
+    "PICK_DATE": "Изберете дата",
+    "ALL_CLIENTS": "Всички клиенти",
+    "ALL_CATEGORIES": "Всички категории",
+    "AMOUNT": "Сума",
+    "NOTES": "Бележки",
+    "EDIT": "Редактиране",
+    "ADD": "Добави"
+  },
   "DASHBOARD_PAGE": {
     "EMPLOYEE_STATISTICS": "Статистика на служителите",
     "SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
@@ -26,16 +39,7 @@
     }
   },
   "INCOME_PAGE": {
-    "INCOME": "Доход",
-    "ADD_INCOME_POP_UP": {
-      "ADD_INCOME": "Добавете доход",
-      "EDIT_INCOME": "Редактиране доход",
-      "ALL_CLIENTS": "Всички клиенти",
-      "AMOUNT": "Количество",
-      "NOTES": "Бележки",
-      "EDIT": "Редактиране",
-      "ADD": "Добави"
-    }
+    "INCOME": "Доход"
   },
   "EXPENSES_PAGE": {
     "EXPENSES": "Разходи"
@@ -44,5 +48,8 @@
     "EMPLOYEES": "Управление на служителите в ",
     "END_WORK": "Край на работа",
     "BACK_TO_WORK": "Обратно на работа"
+  },
+  "ORGANIZATIONS_PAGE": {
+    "ORGANIZATIONS": "Организации"
   }
 }
