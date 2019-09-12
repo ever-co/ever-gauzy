@@ -4,114 +4,115 @@ import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 const databaseConfig: TypeOrmModuleOptions = {
-  type: 'postgres', // TODO: process process.env.DB_TYPE value (we need to create different options obj depending on it)
-  host: process.env.DB_HOST || 'db',
-  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
-  database: process.env.DB_NAME || 'postgres',
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASS || 'root',
-  keepConnectionAlive: true,
-  logging: true,
-  synchronize: true,
-  uuidExtension: 'pgcrypto'
+	type: 'postgres', // TODO: process process.env.DB_TYPE value (we need to create different options obj depending on it)
+	host: process.env.DB_HOST || 'db',
+	port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
+	database: process.env.DB_NAME || 'postgres',
+	username: process.env.DB_USER || 'postgres',
+	password: process.env.DB_PASS || 'root',
+	keepConnectionAlive: true,
+	logging: true,
+	synchronize: true,
+	uuidExtension: 'pgcrypto'
 };
 
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
 
 export const environment: IEnvironment = {
-  port: null,
-  host: null,
+	// TODO: port & host used in FB / Google Auth, but we probably should detect that some other way instead of have it as env settings!
+	port: process.env.port || 3000,
+	host: process.env.host || 'http://localhost',
 
-  production: true,
-  envName: 'prod',
+	production: true,
+	envName: 'prod',
 
-  env: {
-    LOG_LEVEL: 'debug'
-  },
+	env: {
+		LOG_LEVEL: 'debug'
+	},
 
-  USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
-  JWT_SECRET: 'secretKey',
+	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
+	JWT_SECRET: 'secretKey',
 
-  database: databaseConfig,
+	database: databaseConfig,
 
-  facebookConfig: {
-    loginDialogUri: null,
-    accessTokenUri: null,
-    clientId: null,
-    clientSecret: null,
-    oauthRedirectUri: null,
-    state: null
-  },
+	facebookConfig: {
+		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
+		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
+		clientId: process.env.FacebookClientId,
+		clientSecret: process.env.FacebookClientSecret,
+		oauthRedirectUri: `${process.env.host}:${process.env.port}/api/auth/facebook/callback`,
+		state: '{fbstate}'
+	},
 
-  googleConfig: {
-    clientId: null,
-    clientSecret: null
-  },
+	googleConfig: {
+		clientId: process.env.GoogleClientId,
+		clientSecret: process.env.GoogleClientSecret
+	},
 
-  defaultOrganization: {
-    name: 'Ever Technologies LTD',
-    currency: CurrenciesEnum.BGN,
-    defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-    imageUrl: 'assets/images/logos/ever-large.jpg'
-  },
+	defaultOrganization: {
+		name: 'Ever Technologies LTD',
+		currency: CurrenciesEnum.BGN,
+		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+		imageUrl: 'assets/images/logos/ever-large.jpg'
+	},
 
-  defaultAdmins: [
-    {
-      email: 'admin@ever.co',
-      password: 'admin',
-      imageUrl: 'assets/images/avatars/ruslan.jpg'
-    }
-  ],
+	defaultAdmins: [
+		{
+			email: 'admin@ever.co',
+			password: 'admin',
+			imageUrl: 'assets/images/avatars/ruslan.jpg'
+		}
+	],
 
-  defaultEmployees: [
-    {
-      email: 'alish@ever.co',
-      password: '123456',
-      firstName: 'Alish',
-      lastName: 'Meklyov',
-      imageUrl: 'assets/images/avatars/alish.jpg'
-    },
-    {
-      email: 'blagovest@ever.co',
-      password: '123456',
-      firstName: 'Blagovest',
-      lastName: 'Gerov',
-      imageUrl: 'assets/images/avatars/blagovest.jpg'
-    },
-    {
-      email: 'elvis@ever.co',
-      password: '123456',
-      firstName: 'Elvis',
-      lastName: 'Arabadjiiski',
-      imageUrl: 'assets/images/avatars/elvis.jpg'
-    },
-    {
-      email: 'emil@ever.co',
-      password: '123456',
-      firstName: 'Emil',
-      lastName: 'Momchilov',
-      imageUrl: 'assets/images/avatars/emil.jpg'
-    },
-    {
-      email: 'boyan@ever.co',
-      password: '123456',
-      firstName: 'Boyan',
-      lastName: 'Stanchev',
-      imageUrl: 'assets/images/avatars/boyan.jpg'
-    },
-    {
-      email: 'hristo@ever.co',
-      password: '123456',
-      firstName: 'Hristo',
-      lastName: 'Hristov',
-      imageUrl: 'assets/images/avatars/hristo.jpg'
-    },
-    {
-      email: 'milena@ever.co',
-      password: '123456',
-      firstName: 'Milena',
-      lastName: 'Dimova',
-      imageUrl: 'assets/images/avatars/milena.jpg'
-    }
-  ]
+	defaultEmployees: [
+		{
+			email: 'alish@ever.co',
+			password: '123456',
+			firstName: 'Alish',
+			lastName: 'Meklyov',
+			imageUrl: 'assets/images/avatars/alish.jpg'
+		},
+		{
+			email: 'blagovest@ever.co',
+			password: '123456',
+			firstName: 'Blagovest',
+			lastName: 'Gerov',
+			imageUrl: 'assets/images/avatars/blagovest.jpg'
+		},
+		{
+			email: 'elvis@ever.co',
+			password: '123456',
+			firstName: 'Elvis',
+			lastName: 'Arabadjiiski',
+			imageUrl: 'assets/images/avatars/elvis.jpg'
+		},
+		{
+			email: 'emil@ever.co',
+			password: '123456',
+			firstName: 'Emil',
+			lastName: 'Momchilov',
+			imageUrl: 'assets/images/avatars/emil.jpg'
+		},
+		{
+			email: 'boyan@ever.co',
+			password: '123456',
+			firstName: 'Boyan',
+			lastName: 'Stanchev',
+			imageUrl: 'assets/images/avatars/boyan.jpg'
+		},
+		{
+			email: 'hristo@ever.co',
+			password: '123456',
+			firstName: 'Hristo',
+			lastName: 'Hristov',
+			imageUrl: 'assets/images/avatars/hristo.jpg'
+		},
+		{
+			email: 'milena@ever.co',
+			password: '123456',
+			firstName: 'Milena',
+			lastName: 'Dimova',
+			imageUrl: 'assets/images/avatars/milena.jpg'
+		}
+	]
 };
