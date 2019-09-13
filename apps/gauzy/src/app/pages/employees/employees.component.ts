@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
 import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
 import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
+import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -39,6 +40,13 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
 	private _ngDestroy$ = new Subject<void>();
 
+	incomeStatistics: number[];
+	expenseStatistics: number[];
+	profitStatistics: number[];
+	bonusStatistics: number[];
+	averageBonus: number;
+	statistics: any;
+
 	constructor(
 		private employeesService: EmployeesService,
 		private dialogService: NbDialogService,
@@ -46,7 +54,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
-		private translateService: TranslateService
+		private translateService: TranslateService,
+		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
 	ngOnInit() {
@@ -68,6 +77,30 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					this.add();
 				}
 			});
+	}
+
+	async getEmployeeStatistics(id) {
+		this.statistics = await this.employeeStatisticsService.getStatisticsByEmployeeId(
+			id
+		);
+
+		this.incomeStatistics = this.statistics.incomeStatistics;
+		this.expenseStatistics = this.statistics.expenseStatistics;
+		this.profitStatistics = this.statistics.profitStatistics;
+		this.bonusStatistics = this.statistics.bonusStatistics;
+
+		if (
+			this.bonusStatistics.filter(Number).reduce((a, b) => a + b, 0) !== 0
+		) {
+			this.averageBonus =
+				this.bonusStatistics.filter(Number).reduce((a, b) => a + b, 0) /
+				this.bonusStatistics.filter(Number).length;
+		} else {
+			this.averageBonus = 0;
+		}
+		this.employeeStatisticsService.avarageBonus$.next(
+			Math.floor(this.averageBonus)
+		);
 	}
 
 	selectEmployeeTmp(ev: {
