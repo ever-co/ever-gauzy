@@ -1,12 +1,23 @@
 <nb-card>
-    <nb-card-header class="d-flex">
-        <h5>Add Employee</h5>
-        <nb-icon class="ml-auto mt-1 close" icon="close-outline" (click)="closeDialog()"></nb-icon>
-    </nb-card-header>
-    <nb-card-body>
-        <ga-user-basic-info-form #userBasicInfo></ga-user-basic-info-form>
-    </nb-card-body>
-    <nb-card-footer class="text-right">
-        <button [disabled]="userBasicInfo.form.invalid" status="success" (click)="add()" nbButton>Add</button>
-    </nb-card-footer>
+	<nb-card-header class="d-flex">
+		<h5>{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEE' | translate }}</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<ga-user-basic-info-form #userBasicInfo></ga-user-basic-info-form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			[disabled]="userBasicInfo.form.invalid"
+			status="success"
+			(click)="add()"
+			nbButton
+		>
+			Add
+		</button>
+	</nb-card-footer>
 </nb-card>
