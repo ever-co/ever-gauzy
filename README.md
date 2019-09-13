@@ -62,6 +62,12 @@ Total Bonus = % from Net Income (e.g. equal to Net Income * 0.6 for 60% bonus to
 Note: during the first API start, DB will be automatically seed with initial data if no users found. 
 You can run seed any moment manually (e.g. if you changed entities schemas) with `yarn run seed` command to re-initialize DB (warning: unsafe for production!).
 
+### Production
+
+- Check [Gauzy Pulumi](https://github.com/ever-co/gauzy-pulumi) project, it will make Clouds deployments possible with a single command (`pulumi up`)
+
+Note: it's WIP, currently supports AWS Fargate Clusters (for web app and backend api), Application Load Balancers and Serverless PostgreSQL DB deployments.
+
 ## Technology Stack
 
 -   [TypeScript](https://www.typescriptlang.org)
