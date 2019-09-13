@@ -1,6 +1,15 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
-import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbTooltipModule, NbBadgeModule, NbSelectModule } from '@nebular/theme';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbInputModule,
+	NbIconModule,
+	NbDialogModule,
+	NbTooltipModule,
+	NbBadgeModule,
+	NbSelectModule
+} from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EmployeesRoutingModule } from './employees-routing.module';
 import { EmployeesComponent } from './employees.component';
@@ -19,57 +28,62 @@ import { EmployeeWorkStatusComponent } from './table-components/employee-work-st
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
+import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
+import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
-    return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 const COMPONENTS = [
-    EmployeesComponent,
-    EmployeeBonusComponent,
-    EmployeeFullNameComponent,
-    EmployeeWorkStatusComponent,
-    EditEmployeeComponent,
-    EditEmployeeProfileComponent
+	EmployeesComponent,
+	EmployeeBonusComponent,
+	EmployeeAverageIncomeComponent,
+	EmployeeAverageExpensesComponent,
+	EmployeeAverageBonusComponent,
+	EmployeeFullNameComponent,
+	EmployeeWorkStatusComponent,
+	EditEmployeeComponent,
+	EditEmployeeProfileComponent
 ];
 
 @NgModule({
-    imports: [
-        EmployeesRoutingModule,
-        ThemeModule,
-        NbCardModule,
-        FormsModule,
-        ReactiveFormsModule,
-        NbButtonModule,
-        NbInputModule,
-        NbIconModule,
-        Ng2SmartTableModule,
-        NbDialogModule.forChild(),
-        EmployeeMutationModule,
-        EmployeeEndWorkModule,
-        NbTooltipModule,
-        NgSelectModule,
-        EmployeeRecurringExpenseMutationModule,
-        ImageUpladerModule,
-        NbBadgeModule,
-        TranslateModule.forChild({
-            loader: {
-                provide: TranslateLoader,
-                useFactory: HttpLoaderFactory,
-                deps: [HttpClient]
-            }
-        }),    
-    ],
-    declarations: [
-        ...COMPONENTS,
-    ],
-    entryComponents: [
-        EmployeeBonusComponent,
-        EmployeeFullNameComponent,
-        EmployeeWorkStatusComponent
-    ],
-    providers: [
-        OrganizationsService
-    ]
+	imports: [
+		EmployeesRoutingModule,
+		ThemeModule,
+		NbCardModule,
+		FormsModule,
+		ReactiveFormsModule,
+		NbButtonModule,
+		NbInputModule,
+		NbIconModule,
+		Ng2SmartTableModule,
+		NbDialogModule.forChild(),
+		EmployeeMutationModule,
+		EmployeeEndWorkModule,
+		NbTooltipModule,
+		NgSelectModule,
+		EmployeeRecurringExpenseMutationModule,
+		ImageUpladerModule,
+		NbBadgeModule,
+		TranslateModule.forChild({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		})
+	],
+	declarations: [...COMPONENTS],
+	entryComponents: [
+		EmployeeBonusComponent,
+		EmployeeAverageIncomeComponent,
+		EmployeeAverageExpensesComponent,
+		EmployeeAverageBonusComponent,
+		EmployeeFullNameComponent,
+		EmployeeWorkStatusComponent
+	],
+	providers: [OrganizationsService]
 })
-export class EmployeesModule { }
+export class EmployeesModule {}
