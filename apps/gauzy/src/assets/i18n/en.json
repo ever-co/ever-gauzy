@@ -1,55 +1,80 @@
 {
-  "BUTTONS": {
-    "ADD": "Add",
-    "EDIT": "Edit",
-    "DELETE": "Delete"
-  },
-  "SM_TABLE": {
-    "DATE": "Date",
-    "CLIENT_NAME": "Client Name",
-    "VALUE": "Value",
-    "NOTES": "Notes",
-    "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "No data for the currently selected employee."
-  },
-  "POP_UPS": {
-    "ADD_INCOME": "Add Income",
-    "ADD_EXPENSE": "Add Expense",
-    "EDIT_INCOME": "Edit Income",
-    "EDIT_EXPENSE": "Edit Expense",
-    "PICK_DATE": "Pick a Date",
-    "ALL_CLIENTS": "All Clients",
-    "ALL_CATEGORIES": "All Categories",
-    "AMOUNT": "Amount",
-    "NOTES": "Notes",
-    "EDIT": "Edit",
-    "ADD": "Add"
-  },
-  "DASHBOARD_PAGE": {
-    "EMPLOYEE_STATISTICS": "Employee Statistics",
-    "SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
-    "DEVELOPER": {
-      "DEVELOPER": "Developer",
-      "AVERAGE_BONUS": "Average Bonus",
-      "TOTAL_INCOME": "Total Income",
-      "TOTAL_EXPENSES": "Total Expenses",
-      "PROFIT": "Profit",
-      "PROFIT_CALC": "Profit = Total Income - Total Expenses",
-      "NOTE": "Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments",
-      "BONUS": "Bonus"
-    }
-  },
-  "INCOME_PAGE": {
-    "INCOME": "Income"
-  },
-  "EXPENSES_PAGE": {
-    "EXPENSES": "Expenses"
-  },
-  "EMPLOYEES_PAGE": {
-    "EMPLOYEES": "Manage Employees for ",
-    "END_WORK": "End Work",
-    "BACK_TO_WORK": "Back to Work"
-  },
-  "ORGANIZATIONS_PAGE": {
-    "ORGANIZATIONS": "Organizations"
-  }
+	"BUTTONS": {
+		"ADD": "Add",
+		"EDIT": "Edit",
+		"DELETE": "Delete",
+		"OK": "Ok",
+		"CANCEL": "Cancel"
+	},
+	"SM_TABLE": {
+		"DATE": "Date",
+		"CLIENT_NAME": "Client Name",
+		"VALUE": "Value",
+		"NOTES": "Notes",
+		"NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "No data for the currently selected employee."
+	},
+	"FORM": {
+		"USERNAME": "Username",
+		"EMAIL": "Email",
+		"PASSWORD": "Password",
+		"CONFIRM": "Confirm",
+		"LABELS": {
+			"FIRST_NAME": "First Name (optional)",
+			"LAST_NAME": "Last Name (optional)",
+			"START_DATE": "Date when started work",
+			"IMAGE_URL": "Image URL (optional)"
+		},
+		"PLACEHOLDERS": {
+			"FIRST_NAME": "First Name",
+			"LAST_NAME": "Last Name",
+			"START_DATE": "Date",
+			"IMAGE_URL": "Image"
+		},
+		"DELETE_CONFIRMATION": {
+			"SURE": "Are you sure you want to delete",
+			"RECORD": "record"
+		}
+	},
+	"POP_UPS": {
+		"ADD_INCOME": "Add Income",
+		"ADD_EXPENSE": "Add Expense",
+		"EDIT_INCOME": "Edit Income",
+		"EDIT_EXPENSE": "Edit Expense",
+		"PICK_DATE": "Pick a Date",
+		"ALL_CLIENTS": "All Clients",
+		"ALL_CATEGORIES": "All Categories",
+		"AMOUNT": "Amount",
+		"NOTES": "Notes",
+		"EDIT": "Edit",
+		"ADD": "Add"
+	},
+	"DASHBOARD_PAGE": {
+		"EMPLOYEE_STATISTICS": "Employee Statistics",
+		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
+		"DEVELOPER": {
+			"DEVELOPER": "Developer",
+			"AVERAGE_BONUS": "Average Bonus",
+			"TOTAL_INCOME": "Total Income",
+			"TOTAL_EXPENSES": "Total Expenses",
+			"PROFIT": "Profit",
+			"PROFIT_CALC": "Profit = Total Income - Total Expenses",
+			"NOTE": "Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments",
+			"BONUS": "Bonus"
+		}
+	},
+	"INCOME_PAGE": {
+		"INCOME": "Income"
+	},
+	"EXPENSES_PAGE": {
+		"EXPENSES": "Expenses"
+	},
+	"EMPLOYEES_PAGE": {
+		"HEADER": "Manage Employees for ",
+		"ADD_EMPLOYEE": "Add Employee",
+		"END_WORK": "End Work",
+		"BACK_TO_WORK": "Back to Work"
+	},
+	"ORGANIZATIONS_PAGE": {
+		"ORGANIZATIONS": "Organizations"
+	}
 }
