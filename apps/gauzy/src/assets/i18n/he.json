@@ -1,55 +1,72 @@
 {
-  "BUTTONS": {
-    "ADD": "הוסף",
-    "EDIT": "ערוך",
-    "DELETE": "מחק"
-  },
-  "SM_TABLE": {
-    "DATE": "תאריך",
-    "CLIENT_NAME": "שם הלקוח",
-    "VALUE": "ערך",
-    "NOTES": "הערות",
-    "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
-  },
-  "POP_UPS": {
-    "ADD_INCOME": "הוסף הכנסה",
-    "ADD_EXPENSE": "הוסף הוצאה",
-    "EDIT_INCOME": "ערוך הכנסה",
-    "EDIT_EXPENSE": "ערוך הוצאות",
-    "PICK_DATE": "תבחר תאריך",
-    "ALL_CLIENTS": "כל הלקוחות",
-    "ALL_CATEGORIES": "כל הקטגוריות",
-    "AMOUNT": "כמות",
-    "NOTES": "הערות",
-    "EDIT": "ערוך",
-    "ADD": "הוסף"
-  },
-  "DASHBOARD_PAGE": {
-    "EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
-    "SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
-    "DEVELOPER": {
-      "DEVELOPER": "מפתח",
-      "AVERAGE_BONUS": "בונוס ממוצע",
-      "TOTAL_INCOME": "הכנסה כוללת",
-      "TOTAL_EXPENSES": "סך ההוצאות",
-      "PROFIT": "רווח",
-      "PROFIT_CALC": "רווח = סך ההכנסה - סך כל ההוצאות",
-      "NOTE": "הערה: יש לנכות את הבונוסים השליליים בחודשים הקרובים מהבונוסים החיוביים לפני תשלומי הבונוס הסופיים",
-      "BONUS": "בונוס"
-    }
-  },
-  "INCOME_PAGE": {
-    "INCOME": "הכנסה"
-  },
-  "EXPENSES_PAGE": {
-    "EXPENSES": "הוצאות"
-  },
-  "EMPLOYEES_PAGE": {
-    "EMPLOYEES": "נהל עובדים עבור ",
-    "END_WORK": "סיום עבודה",
-    "BACK_TO_WORK": "לחזור לעבודה"
-  },
-  "ORGANIZATIONS_PAGE": {
-    "ORGANIZATIONS": "ארגונים"
-  }
+	"BUTTONS": {
+		"ADD": "הוסף",
+		"EDIT": "ערוך",
+		"DELETE": "מחק"
+	},
+	"SM_TABLE": {
+		"DATE": "תאריך",
+		"CLIENT_NAME": "שם הלקוח",
+		"VALUE": "ערך",
+		"NOTES": "הערות",
+		"NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
+	},
+	"FORM": {
+		"USERNAME": "שם משתמש",
+		"EMAIL": "דוא\"ל",
+		"PASSWORD": "סיסמה",
+		"LABELS": {
+			"FIRST_NAME": "שם פרטי",
+			"LAST_NAME": "שם משפחה",
+			"START_DATE": "תאריך התחלת העבודה",
+			"IMAGE_URL": "תמונה URL"
+		},
+		"PLACEHOLDERS": {
+			"FIRST_NAME": "שם פרטי",
+			"LAST_NAME": "שם משפחה",
+			"START_DATE": "תאריך",
+			"IMAGE_URL": "תמונה"
+		}
+	},
+	"POP_UPS": {
+		"ADD_INCOME": "הוסף הכנסה",
+		"ADD_EXPENSE": "הוסף הוצאה",
+		"EDIT_INCOME": "ערוך הכנסה",
+		"EDIT_EXPENSE": "ערוך הוצאות",
+		"PICK_DATE": "תבחר תאריך",
+		"ALL_CLIENTS": "כל הלקוחות",
+		"ALL_CATEGORIES": "כל הקטגוריות",
+		"AMOUNT": "כמות",
+		"NOTES": "הערות",
+		"EDIT": "ערוך",
+		"ADD": "הוסף"
+	},
+	"DASHBOARD_PAGE": {
+		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
+		"DEVELOPER": {
+			"DEVELOPER": "מפתח",
+			"AVERAGE_BONUS": "בונוס ממוצע",
+			"TOTAL_INCOME": "הכנסה כוללת",
+			"TOTAL_EXPENSES": "סך ההוצאות",
+			"PROFIT": "רווח",
+			"PROFIT_CALC": "רווח = סך ההכנסה - סך כל ההוצאות",
+			"NOTE": "הערה: יש לנכות את הבונוסים השליליים בחודשים הקרובים מהבונוסים החיוביים לפני תשלומי הבונוס הסופיים",
+			"BONUS": "בונוס"
+		}
+	},
+	"INCOME_PAGE": {
+		"INCOME": "הכנסה"
+	},
+	"EXPENSES_PAGE": {
+		"EXPENSES": "הוצאות"
+	},
+	"EMPLOYEES_PAGE": {
+		"EMPLOYEES": "נהל עובדים עבור ",
+		"END_WORK": "סיום עבודה",
+		"BACK_TO_WORK": "לחזור לעבודה"
+	},
+	"ORGANIZATIONS_PAGE": {
+		"ORGANIZATIONS": "ארגונים"
+	}
 }

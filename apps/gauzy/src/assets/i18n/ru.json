@@ -1,58 +1,75 @@
 {
-  "BUTTONS": {
-    "ADD": "Добавлять",
-    "EDIT": "Редактировать",
-    "DELETE": "Удалять"
-  },
-  "SM_TABLE": {
-    "DATE": "Дата",
-    "CLIENT_NAME": "Имя клиента",
-    "VALUE": "Стоимость",
-    "NOTES": "Заметки",
-    "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Нет данных для выбранного сотрудника."
-  },
-  "POP_UPS": {
-    "ADD_INCOME": "Добавить доход",
-    "ADD_EXPENSE": "Добавить расходы",
-    "EDIT_INCOME": "Изменить доход",
-    "EDIT_EXPENSE": "Изменить Расход",
-    "PICK_DATE": "Выбрать дату",
-    "ALL_CLIENTS": "Все клиенты",
-    "ALL_CATEGORIES": "Все категории",
-    "AMOUNT": "Количество",
-    "NOTES": "Заметки",
-    "EDIT": "Редактировать",
-    "ADD": "Добавлять"
-  },
-  "DASHBOARD_PAGE": {
-    "EMPLOYEE_STATISTICS": "Статистика сотрудников",
-    "SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
-    "DEVELOPER": {
-      "DEVELOPER": "Разработчик",
-      "AVERAGE_BONUS": "Общая прибыль",
-      "TOTAL_INCOME": "Общая прибыль",
-      "TOTAL_EXPENSES": "Суммарные расходы",
-      "PROFIT": "Прибыль",
-      "PROFIT_CALC": "Прибыль = Общий доход - Общие расходы",
-      "NOTE": "Примечание: отрицательные бонусы должны быть вычтены в ближайшие месяцы из положительных бонусов до окончательной выплаты бонусов",
-      "BONUS": "Бонус"
-    }
-  },
-  "INCOME_PAGE": {
-    "INCOME": "Доход"
-  },
-  "EXPENSES_PAGE": {
-    "EXPENSES": "Расходы",
-    "ADD": "Добавлять",
-    "EDIT": "Редактировать",
-    "DELETE": "Удалять"
-  },
-  "EMPLOYEES_PAGE": {
-    "EMPLOYEES": "Управление сотрудниками для",
-    "END_WORK": "Конец работы",
-    "BACK_TO_WORK": "Вернуться к работе"
-  },
-  "ORGANIZATIONS_PAGE": {
-    "ORGANIZATIONS": "Организации"
-  }
+	"BUTTONS": {
+		"ADD": "Добавлять",
+		"EDIT": "Редактировать",
+		"DELETE": "Удалять"
+	},
+	"SM_TABLE": {
+		"DATE": "Дата",
+		"CLIENT_NAME": "Имя клиента",
+		"VALUE": "Стоимость",
+		"NOTES": "Заметки",
+		"NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Нет данных для выбранного сотрудника."
+	},
+	"FORM": {
+		"USERNAME": "Имя пользователя",
+		"EMAIL": "Эл. адрес",
+		"PASSWORD": "Пароль",
+		"LABELS": {
+			"FIRST_NAME": "Имя (по желанию)",
+			"LAST_NAME": "Фамилия (по желанию)",
+			"START_DATE": "Дата начала работы",
+			"IMAGE_URL": "Image URL (по желанию)"
+		},
+		"PLACEHOLDERS": {
+			"FIRST_NAME": "Имя",
+			"LAST_NAME": "Фамилия",
+			"START_DATE": "Дата",
+			"IMAGE_URL": "Изображение"
+		}
+	},
+	"POP_UPS": {
+		"ADD_INCOME": "Добавить доход",
+		"ADD_EXPENSE": "Добавить расходы",
+		"EDIT_INCOME": "Изменить доход",
+		"EDIT_EXPENSE": "Изменить Расход",
+		"PICK_DATE": "Выбрать дату",
+		"ALL_CLIENTS": "Все клиенты",
+		"ALL_CATEGORIES": "Все категории",
+		"AMOUNT": "Количество",
+		"NOTES": "Заметки",
+		"EDIT": "Редактировать",
+		"ADD": "Добавлять"
+	},
+	"DASHBOARD_PAGE": {
+		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
+		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
+		"DEVELOPER": {
+			"DEVELOPER": "Разработчик",
+			"AVERAGE_BONUS": "Общая прибыль",
+			"TOTAL_INCOME": "Общая прибыль",
+			"TOTAL_EXPENSES": "Суммарные расходы",
+			"PROFIT": "Прибыль",
+			"PROFIT_CALC": "Прибыль = Общий доход - Общие расходы",
+			"NOTE": "Примечание: отрицательные бонусы должны быть вычтены в ближайшие месяцы из положительных бонусов до окончательной выплаты бонусов",
+			"BONUS": "Бонус"
+		}
+	},
+	"INCOME_PAGE": {
+		"INCOME": "Доход"
+	},
+	"EXPENSES_PAGE": {
+		"EXPENSES": "Расходы",
+		"ADD": "Добавлять",
+		"EDIT": "Редактировать",
+		"DELETE": "Удалять"
+	},
+	"EMPLOYEES_PAGE": {
+		"EMPLOYEES": "Управление сотрудниками для",
+		"END_WORK": "Конец работы",
+		"BACK_TO_WORK": "Вернуться к работе"
+	},
+	"ORGANIZATIONS_PAGE": {
+		"ORGANIZATIONS": "Организации"
+	}
 }

@@ -1,55 +1,72 @@
 {
-  "BUTTONS": {
-    "ADD": "Добави",
-    "EDIT": "Редактиране",
-    "DELETE": "Изтрий"
-  },
-  "SM_TABLE": {
-    "DATE": "Дата",
-    "CLIENT_NAME": "Клиентско име",
-    "VALUE": "Стойност",
-    "NOTES": "Бележки",
-    "NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Няма данни за текущо избрания служител."
-  },
-  "POP_UPS": {
-    "ADD_INCOME": "Добаветe доход",
-    "ADD_EXPENSE": "Добавете разход",
-    "EDIT_INCOME": "Редактиране доход",
-    "EDIT_EXPENSE": "Редактиране разход",
-    "PICK_DATE": "Изберете дата",
-    "ALL_CLIENTS": "Всички клиенти",
-    "ALL_CATEGORIES": "Всички категории",
-    "AMOUNT": "Сума",
-    "NOTES": "Бележки",
-    "EDIT": "Редактиране",
-    "ADD": "Добави"
-  },
-  "DASHBOARD_PAGE": {
-    "EMPLOYEE_STATISTICS": "Статистика на служителите",
-    "SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
-    "DEVELOPER": {
-      "DEVELOPER": "Разработчик",
-      "AVERAGE_BONUS": "Среден бонус",
-      "TOTAL_INCOME": "Общ доход",
-      "TOTAL_EXPENSES": "Общи разходи",
-      "PROFIT": "Печалба",
-      "PROFIT_CALC": "Печалба = Общ доход - Общи разходи",
-      "NOTE": "Забележка: отрицателните бонуси трябва да се приспадат през следващите месеци от положителните бонуси преди окончателните плащания на бонуси",
-      "BONUS": "Бонус"
-    }
-  },
-  "INCOME_PAGE": {
-    "INCOME": "Доход"
-  },
-  "EXPENSES_PAGE": {
-    "EXPENSES": "Разходи"
-  },
-  "EMPLOYEES_PAGE": {
-    "EMPLOYEES": "Управление на служителите в ",
-    "END_WORK": "Край на работа",
-    "BACK_TO_WORK": "Обратно на работа"
-  },
-  "ORGANIZATIONS_PAGE": {
-    "ORGANIZATIONS": "Организации"
-  }
+	"BUTTONS": {
+		"ADD": "Добави",
+		"EDIT": "Редактиране",
+		"DELETE": "Изтрий"
+	},
+	"SM_TABLE": {
+		"DATE": "Дата",
+		"CLIENT_NAME": "Клиентско име",
+		"VALUE": "Стойност",
+		"NOTES": "Бележки",
+		"NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Няма данни за текущо избрания служител."
+	},
+	"FORM": {
+		"USERNAME": "Потребителско име",
+		"EMAIL": "Eлектронна поща",
+		"PASSWORD": "Парола",
+		"LABELS": {
+			"FIRST_NAME": "Име (незадължително)",
+			"LAST_NAME": "Фамилия (незадължително)",
+			"START_DATE": "Дата на започване на работа",
+			"IMAGE_URL": "Снимка URL (незадължително)"
+		},
+		"PLACEHOLDERS": {
+			"FIRST_NAME": "Име",
+			"LAST_NAME": "Фамилия",
+			"START_DATE": "Дата",
+			"IMAGE_URL": "Снимка"
+		}
+	},
+	"POP_UPS": {
+		"ADD_INCOME": "Добаветe доход",
+		"ADD_EXPENSE": "Добавете разход",
+		"EDIT_INCOME": "Редактиране доход",
+		"EDIT_EXPENSE": "Редактиране разход",
+		"PICK_DATE": "Изберете дата",
+		"ALL_CLIENTS": "Всички клиенти",
+		"ALL_CATEGORIES": "Всички категории",
+		"AMOUNT": "Сума",
+		"NOTES": "Бележки",
+		"EDIT": "Редактиране",
+		"ADD": "Добави"
+	},
+	"DASHBOARD_PAGE": {
+		"EMPLOYEE_STATISTICS": "Статистика на служителите",
+		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
+		"DEVELOPER": {
+			"DEVELOPER": "Разработчик",
+			"AVERAGE_BONUS": "Среден бонус",
+			"TOTAL_INCOME": "Общ доход",
+			"TOTAL_EXPENSES": "Общи разходи",
+			"PROFIT": "Печалба",
+			"PROFIT_CALC": "Печалба = Общ доход - Общи разходи",
+			"NOTE": "Забележка: отрицателните бонуси трябва да се приспадат през следващите месеци от положителните бонуси преди окончателните плащания на бонуси",
+			"BONUS": "Бонус"
+		}
+	},
+	"INCOME_PAGE": {
+		"INCOME": "Доход"
+	},
+	"EXPENSES_PAGE": {
+		"EXPENSES": "Разходи"
+	},
+	"EMPLOYEES_PAGE": {
+		"EMPLOYEES": "Управление на служителите в ",
+		"END_WORK": "Край на работа",
+		"BACK_TO_WORK": "Обратно на работа"
+	},
+	"ORGANIZATIONS_PAGE": {
+		"ORGANIZATIONS": "Организации"
+	}
 }
