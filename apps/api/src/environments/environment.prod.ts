@@ -38,15 +38,15 @@ export const environment: IEnvironment = {
 	facebookConfig: {
 		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
 		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
-		clientId: process.env.FacebookClientId,
-		clientSecret: process.env.FacebookClientSecret,
+		clientId: process.env.FacebookClientId || 'fakeclientid',
+		clientSecret: process.env.FacebookClientSecret || 'fakesecret',
 		oauthRedirectUri: `${process.env.host}:${process.env.port}/api/auth/facebook/callback`,
 		state: '{fbstate}'
 	},
 
 	googleConfig: {
-		clientId: process.env.GoogleClientId,
-		clientSecret: process.env.GoogleClientSecret
+		clientId: process.env.GoogleClientId || 'fakeclientid',
+		clientSecret: process.env.GoogleClientSecret || 'fakesecret'
 	},
 
 	defaultOrganization: {

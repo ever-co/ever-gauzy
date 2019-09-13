@@ -42,7 +42,7 @@ ADD . /usr/src/app
 
 EXPOSE 3000
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.5.0/wait /wait
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
 RUN chmod +x /wait
 
 CMD /wait && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn ng serve api --host 0.0.0.0 -c=production --prod
