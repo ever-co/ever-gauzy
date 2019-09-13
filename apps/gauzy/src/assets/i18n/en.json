@@ -2,7 +2,9 @@
 	"BUTTONS": {
 		"ADD": "Add",
 		"EDIT": "Edit",
-		"DELETE": "Delete"
+		"DELETE": "Delete",
+		"OK": "Ok",
+		"CANCEL": "Cancel"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -15,6 +17,7 @@
 		"USERNAME": "Username",
 		"EMAIL": "Email",
 		"PASSWORD": "Password",
+		"CONFIRM": "Confirm",
 		"LABELS": {
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
@@ -26,6 +29,10 @@
 			"LAST_NAME": "Last Name",
 			"START_DATE": "Date",
 			"IMAGE_URL": "Image"
+		},
+		"DELETE_CONFIRMATION": {
+			"SURE": "Are you sure you want to delete",
+			"RECORD": "record"
 		}
 	},
 	"POP_UPS": {

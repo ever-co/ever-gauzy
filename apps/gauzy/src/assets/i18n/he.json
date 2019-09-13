@@ -2,7 +2,9 @@
 	"BUTTONS": {
 		"ADD": "הוסף",
 		"EDIT": "ערוך",
-		"DELETE": "מחק"
+		"DELETE": "מחק",
+		"OK": "בסדר",
+		"CANCEL": "בטל"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -26,6 +28,10 @@
 			"LAST_NAME": "שם משפחה",
 			"START_DATE": "תאריך",
 			"IMAGE_URL": "תמונה"
+		},
+		"DELETE_CONFIRMATION": {
+			"SURE": "אתה בטוח שאתה רוצה למחוק",
+			"RECORD": "תקליט"
 		}
 	},
 	"POP_UPS": {

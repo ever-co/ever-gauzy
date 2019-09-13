@@ -2,7 +2,9 @@
 	"BUTTONS": {
 		"ADD": "Добавлять",
 		"EDIT": "Редактировать",
-		"DELETE": "Удалять"
+		"DELETE": "Удалять",
+		"OK": "Хорошо",
+		"CANCEL": "Отменить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -26,6 +28,10 @@
 			"LAST_NAME": "Фамилия",
 			"START_DATE": "Дата",
 			"IMAGE_URL": "Изображение"
+		},
+		"DELETE_CONFIRMATION": {
+			"SURE": "Вы уверены, что хотите удалить",
+			"RECORD": "запись"
 		}
 	},
 	"POP_UPS": {
