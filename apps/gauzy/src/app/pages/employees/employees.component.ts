@@ -249,21 +249,21 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 				averageIncome: {
 					title: ' Average Income',
 					type: 'custom',
-					filter: true,
+					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageIncomeComponent
 				},
 				averageExpenses: {
 					title: ' Average Expenses',
 					type: 'custom',
-					filter: true,
+					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageExpensesComponent
 				},
 				averageBonus: {
 					title: 'Average Bonus',
 					type: 'custom',
-					filter: true,
+					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageBonusComponent
 				},
