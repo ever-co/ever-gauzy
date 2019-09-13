@@ -247,30 +247,30 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					type: 'email'
 				},
 				averageIncome: {
-					title: ' Average Income',
+					title: 'Income (Average)',
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageIncomeComponent
 				},
 				averageExpenses: {
-					title: ' Average Expenses',
+					title: 'Expenses (Average)',
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageExpensesComponent
 				},
 				averageBonus: {
-					title: 'Average Bonus',
+					title: 'Bonus (Average)',
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageBonusComponent
 				},
 				bonus: {
-					title: `Bonus for ${
+					title: `Bonus (${
 						monthNames[dateNow.getMonth() - 1]
-					} ${dateNow.getFullYear()}`,
+					} ${dateNow.getFullYear()})`,
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
