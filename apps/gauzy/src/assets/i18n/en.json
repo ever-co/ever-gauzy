@@ -62,7 +62,8 @@
 		"EXPENSES": "Expenses"
 	},
 	"EMPLOYEES_PAGE": {
-		"EMPLOYEES": "Manage Employees for ",
+		"HEADER": "Manage Employees for ",
+		"ADD_EMPLOYEE": "Add Employee",
 		"END_WORK": "End Work",
 		"BACK_TO_WORK": "Back to Work"
 	},

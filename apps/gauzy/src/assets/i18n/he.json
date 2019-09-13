@@ -62,7 +62,8 @@
 		"EXPENSES": "הוצאות"
 	},
 	"EMPLOYEES_PAGE": {
-		"EMPLOYEES": "נהל עובדים עבור ",
+		"HEADER": "נהל עובדים עבור ",
+		"ADD_EMPLOYEE": "הוסף עובד",
 		"END_WORK": "סיום עבודה",
 		"BACK_TO_WORK": "לחזור לעבודה"
 	},
