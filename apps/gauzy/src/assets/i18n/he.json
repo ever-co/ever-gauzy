@@ -1,6 +1,7 @@
 {
 	"BUTTONS": {
 		"ADD": "הוסף",
+		"CREATE": "צור",
 		"EDIT": "ערוך",
 		"DELETE": "מחק",
 		"OK": "בסדר",
@@ -18,16 +19,23 @@
 		"EMAIL": "דוא\"ל",
 		"PASSWORD": "סיסמה",
 		"LABELS": {
+			"NAME": "שם",
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
 			"START_DATE": "תאריך התחלת העבודה",
-			"IMAGE_URL": "תמונה URL"
+			"IMAGE_URL": "תמונה URL",
+			"CURRENCY": "מטבע",
+			"DATE_TYPE": "סוג תאריך ברירת מחדל"
 		},
 		"PLACEHOLDERS": {
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
+			"COMPANY_NAME": "שם החברה",
 			"START_DATE": "תאריך",
-			"IMAGE_URL": "תמונה"
+			"PICK_DATE": "תבחר תאריך",
+			"IMAGE_URL": "תמונה",
+			"ALL_CURRENCIES": "כל המטבעות",
+			"DATE_TYPE": "כל סוגי התאריכים"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",

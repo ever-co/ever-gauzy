@@ -1,70 +1,70 @@
 <div
-  class="header-container"
-  [class.left]="position === 'normal'"
-  [class.right]="position === 'inverse'"
+	class="header-container"
+	[class.left]="position === 'normal'"
+	[class.right]="position === 'inverse'"
 >
-  <div class="logo-container">
-    <a (click)="toggleSidebar()" href="#" class="sidebar-toggle">
-      <nb-icon icon="menu-2-outline"></nb-icon>
-    </a>
+	<div class="logo-container">
+		<a (click)="toggleSidebar()" href="#" class="sidebar-toggle">
+			<nb-icon icon="menu-2-outline"></nb-icon>
+		</a>
 
-    <div class="logo" (click)="navigateHome()">
-      <img src="assets/images/logo_Gauzy.png" />
-    </div>
-  </div>
+		<div class="logo" (click)="navigateHome()">
+			<img src="assets/images/logo_Gauzy.png" />
+		</div>
+	</div>
 </div>
 
 <div class="header-container">
-  <nb-actions
-    size="small"
-    [class.left]="position === 'normal'"
-    [class.right]="position === 'inverse'"
-  >
-    <nb-action>
-      <button
-        nbButton
-        status="success"
-        [nbContextMenu]="createContextMenu"
-        nbContextMenuTag="create-context-menu"
-      >
-        + Create
-      </button>
-    </nb-action>
+	<nb-actions
+		size="small"
+		[class.left]="position === 'normal'"
+		[class.right]="position === 'inverse'"
+	>
+		<nb-action>
+			<button
+				nbButton
+				status="success"
+				[nbContextMenu]="createContextMenu"
+				nbContextMenuTag="create-context-menu"
+			>
+				+ {{ 'BUTTONS.CREATE' | translate }}
+			</button>
+		</nb-action>
 
-    <nb-action *ngIf="showEmployeesSelector">
-      <ga-employee-selector
-        class="header-selector employee-selector"
-      ></ga-employee-selector>
-    </nb-action>
+		<nb-action *ngIf="showEmployeesSelector">
+			<ga-employee-selector
+				class="header-selector employee-selector"
+			></ga-employee-selector>
+		</nb-action>
 
-    <nb-action *ngIf="showDateSelector">
-      <ga-date-selector class="date-selector"></ga-date-selector>
-    </nb-action>
+		<nb-action *ngIf="showDateSelector">
+			<ga-date-selector class="date-selector"></ga-date-selector>
+		</nb-action>
 
-    <nb-action *ngIf="showOrganizationsSelector">
-      <ga-organization-selector
-        class="header-selector organization-selector"
-      ></ga-organization-selector>
-    </nb-action>
+		<nb-action *ngIf="showOrganizationsSelector">
+			<ga-organization-selector
+				class="header-selector organization-selector"
+			></ga-organization-selector>
+		</nb-action>
 
-    <!-- <nb-action *nbIsGranted="['view', 'user']">
+		<!-- <nb-action *nbIsGranted="['view', 'user']">
       <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.picture"></nb-user>
     </nb-action> -->
-    <nb-action
-      icon="message-circle-outline"
-      class="toggle-layout"
-      [nbContextMenu]="supportContextMenu"
-    ></nb-action>
-    <nb-action
-      icon="settings-2-outline"
-      class="toggle-layout"
-      (click)="toggleSettings()"
-    ></nb-action>
+		<nb-action
+			icon="message-circle-outline"
+			class="toggle-layout"
+			[nbContextMenu]="supportContextMenu"
+		></nb-action>
+		<nb-action
+			icon="settings-2-outline"
+			class="toggle-layout"
+			(click)="toggleSettings()"
+		></nb-action>
 
-    <!-- <nb-action class="control-item" icon="bell-outline"></nb-action>
+		<!-- <nb-action class="control-item" icon="bell-outline"></nb-action>
     <nb-action class="control-item" icon="email-outline"></nb-action>
     <nb-action class="control-item">
       <nb-search type="rotate-layout"></nb-search>
     </nb-action> -->
-  </nb-actions>
+	</nb-actions>
 </div>
