@@ -4,8 +4,15 @@
 		[(ngModel)]="dateInputValue"
 		nbInput
 		(focus)="loadCalendar = true"
+		placeholder="{{ 'FORM.PLACEHOLDERS.PICK_DATE' | translate }}"
 	/>
-  <span *ngIf="dateInputValue" class="date-reset ng-clear-wrapper ng-star-inserted" title="Clear all" (click)="clear()"><span aria-hidden="true" class="ng-clear">×</span></span>
+	<span
+		*ngIf="dateInputValue"
+		class="date-reset ng-clear-wrapper ng-star-inserted"
+		title="Clear all"
+		(click)="clear()"
+		><span aria-hidden="true" class="ng-clear">×</span></span
+	>
 	<nb-card class="calendar" *ngIf="loadCalendar">
 		<nb-calendar-year-picker
 			[year]="date"

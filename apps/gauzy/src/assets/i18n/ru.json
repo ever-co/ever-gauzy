@@ -26,7 +26,9 @@
 		"PLACEHOLDERS": {
 			"FIRST_NAME": "Имя",
 			"LAST_NAME": "Фамилия",
+			"ALL_EMPLOYEES": "All Employees",
 			"START_DATE": "Дата",
+			"PICK_DATE": "Выбрать дату",
 			"IMAGE_URL": "Изображение"
 		},
 		"DELETE_CONFIRMATION": {

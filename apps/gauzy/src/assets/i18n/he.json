@@ -27,6 +27,7 @@
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
 			"START_DATE": "תאריך",
+			"PICK_DATE": "תבחר תאריך",
 			"IMAGE_URL": "תמונה"
 		},
 		"DELETE_CONFIRMATION": {

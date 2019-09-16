@@ -27,7 +27,9 @@
 		"PLACEHOLDERS": {
 			"FIRST_NAME": "First Name",
 			"LAST_NAME": "Last Name",
+			"ALL_EMPLOYEES": "All Employees",
 			"START_DATE": "Date",
+			"PICK_DATE": "Pick a Date",
 			"IMAGE_URL": "Image"
 		},
 		"DELETE_CONFIRMATION": {

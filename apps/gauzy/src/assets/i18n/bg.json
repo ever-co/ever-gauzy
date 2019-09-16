@@ -21,6 +21,7 @@
 		"LABELS": {
 			"FIRST_NAME": "Име (незадължително)",
 			"LAST_NAME": "Фамилия (незадължително)",
+			"ALL_EMPLOYEES": "Всички служители",
 			"START_DATE": "Дата на започване на работа",
 			"IMAGE_URL": "Снимка URL (незадължително)"
 		},
@@ -28,6 +29,7 @@
 			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия",
 			"START_DATE": "Дата",
+			"PICK_DATE": "Изберете дата",
 			"IMAGE_URL": "Снимка"
 		},
 		"DELETE_CONFIRMATION": {
