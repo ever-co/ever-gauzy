@@ -1,6 +1,7 @@
 {
 	"BUTTONS": {
 		"ADD": "Add",
+		"CREATE": "Create",
 		"EDIT": "Edit",
 		"DELETE": "Delete",
 		"OK": "Ok",
@@ -19,18 +20,24 @@
 		"PASSWORD": "Password",
 		"CONFIRM": "Confirm",
 		"LABELS": {
+			"NAME": "Name",
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
 			"START_DATE": "Date when started work",
-			"IMAGE_URL": "Image URL (optional)"
+			"IMAGE_URL": "Image URL (optional)",
+			"CURRENCY": "Currency",
+			"DATE_TYPE": "Default Date Type"
 		},
 		"PLACEHOLDERS": {
 			"FIRST_NAME": "First Name",
 			"LAST_NAME": "Last Name",
+			"COMPANY_NAME": "Company name",
 			"ALL_EMPLOYEES": "All Employees",
 			"START_DATE": "Date",
 			"PICK_DATE": "Pick a Date",
-			"IMAGE_URL": "Image"
+			"IMAGE_URL": "Image",
+			"ALL_CURRENCIES": "All Currencies",
+			"DATE_TYPE": "All Date Types"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",

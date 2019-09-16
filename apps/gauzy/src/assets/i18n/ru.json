@@ -1,6 +1,7 @@
 {
 	"BUTTONS": {
 		"ADD": "Добавлять",
+		"CREATE": "Создайте",
 		"EDIT": "Редактировать",
 		"DELETE": "Удалять",
 		"OK": "Хорошо",
@@ -18,18 +19,24 @@
 		"EMAIL": "Эл. адрес",
 		"PASSWORD": "Пароль",
 		"LABELS": {
+			"NAME": "Имя",
 			"FIRST_NAME": "Имя (по желанию)",
 			"LAST_NAME": "Фамилия (по желанию)",
 			"START_DATE": "Дата начала работы",
-			"IMAGE_URL": "Image URL (по желанию)"
+			"IMAGE_URL": "Image URL (по желанию)",
+			"CURRENCY": "Валюта",
+			"DATE_TYPE": "Тип даты по умолчанию"
 		},
 		"PLACEHOLDERS": {
 			"FIRST_NAME": "Имя",
 			"LAST_NAME": "Фамилия",
+			"COMPANY_NAME": "Название компании",
 			"ALL_EMPLOYEES": "All Employees",
 			"START_DATE": "Дата",
 			"PICK_DATE": "Выбрать дату",
-			"IMAGE_URL": "Изображение"
+			"IMAGE_URL": "Изображение",
+			"ALL_CURRENCIES": "Все валюты",
+			"DATE_TYPE": "Все типы дат"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Вы уверены, что хотите удалить",

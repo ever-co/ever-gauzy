@@ -1,6 +1,7 @@
 {
 	"BUTTONS": {
 		"ADD": "Добави",
+		"CREATE": "Създай",
 		"EDIT": "Редактиране",
 		"DELETE": "Изтрий",
 		"OK": "Да",
@@ -19,18 +20,24 @@
 		"PASSWORD": "Парола",
 		"CONFIRM": "Потвърждение",
 		"LABELS": {
+			"NAME": "Name",
 			"FIRST_NAME": "Име (незадължително)",
 			"LAST_NAME": "Фамилия (незадължително)",
 			"ALL_EMPLOYEES": "Всички служители",
 			"START_DATE": "Дата на започване на работа",
-			"IMAGE_URL": "Снимка URL (незадължително)"
+			"IMAGE_URL": "Снимка URL (незадължително)",
+			"CURRENCY": "Валута",
+			"DATE_TYPE": "Дата по подразбиране"
 		},
 		"PLACEHOLDERS": {
 			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия",
+			"COMPANY_NAME": "Име на компанията",
 			"START_DATE": "Дата",
 			"PICK_DATE": "Изберете дата",
-			"IMAGE_URL": "Снимка"
+			"IMAGE_URL": "Снимка",
+			"ALL_CURRENCIES": "Всички валути",
+			"DATE_TYPE": "Всички типове дати"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
