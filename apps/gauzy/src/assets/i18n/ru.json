@@ -87,7 +87,9 @@
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление сотрудниками для",
 		"ADD_EMPLOYEE": "Добавить сотрудника",
+		"ACTIVE": "Активный",
 		"END_WORK": "Конец работы",
+		"WORK_ENDED": "Работа завершена",
 		"BACK_TO_WORK": "Вернуться к работе",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "Разработчик",

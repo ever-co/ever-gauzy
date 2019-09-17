@@ -85,7 +85,9 @@
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Manage Employees for ",
 		"ADD_EMPLOYEE": "Add Employee",
+		"ACTIVE": "Active",
 		"END_WORK": "End Work",
+		"WORK_ENDED": "Work Ended",
 		"BACK_TO_WORK": "Back to Work",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "Developer",
