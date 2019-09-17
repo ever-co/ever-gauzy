@@ -5,6 +5,8 @@
 		"EDIT": "Редактиране",
 		"DELETE": "Изтрий",
 		"OK": "Да",
+		"SAVE": "Запази",
+		"BACK": "Обратно",
 		"CANCEL": "Отказ",
 		"CLOSE": "Затвори"
 	},
@@ -88,7 +90,9 @@
 			"RECURRING_EXPENSES": "Повтарящи се месечни разходи",
 			"CATEGORY_NAME": "Име на категория",
 			"DATE": "Дата",
-			"EXPENSE_VALUE": "Стойност на разход"
+			"EXPENSE_VALUE": "Стойност на разход",
+			"DEPARTMENT": "Отдел",
+			"POSITION": "Позиция"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
