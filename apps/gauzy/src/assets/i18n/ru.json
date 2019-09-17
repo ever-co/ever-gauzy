@@ -5,6 +5,8 @@
 		"EDIT": "Редактировать",
 		"DELETE": "Удалять",
 		"OK": "Хорошо",
+		"SAVE": "Save",
+		"BACK": "BACK",
 		"CANCEL": "Отменить",
 		"CLOSE": "Конец"
 	},
@@ -90,7 +92,9 @@
 			"RECURRING_EXPENSES": "Периодические ежемесячные расходы",
 			"CATEGORY_NAME": "Название категории",
 			"DATE": "Дата",
-			"EXPENSE_VALUE": "Стоимость расходов"
+			"EXPENSE_VALUE": "Стоимость расходов",
+			"DEPARTMENT": "Отдел",
+			"POSITION": "Позиция"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {

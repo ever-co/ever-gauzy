@@ -5,6 +5,8 @@
 		"EDIT": "ערוך",
 		"DELETE": "מחק",
 		"OK": "בסדר",
+		"SAVE": "Save",
+		"BACK": "BACK",
 		"CANCEL": "בטל",
 		"CLOSE": "סוֹף"
 	},
@@ -86,7 +88,9 @@
 			"RECURRING_EXPENSES": "הוצאות חודשיות חוזרות ונשנות",
 			"CATEGORY_NAME": "שם קטגוריה",
 			"DATE": "תאריך",
-			"EXPENSE_VALUE": "ערך הוצאה"
+			"EXPENSE_VALUE": "ערך הוצאה",
+			"DEPARTMENT": "המחלקה",
+			"POSITION": "עמדה"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
