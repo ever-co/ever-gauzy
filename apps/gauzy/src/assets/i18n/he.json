@@ -5,7 +5,8 @@
 		"EDIT": "ערוך",
 		"DELETE": "מחק",
 		"OK": "בסדר",
-		"CANCEL": "בטל"
+		"CANCEL": "בטל",
+		"CLOSE": "סוֹף"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -79,7 +80,14 @@
 		"HEADER": "נהל עובדים עבור ",
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"END_WORK": "סיום עבודה",
-		"BACK_TO_WORK": "לחזור לעבודה"
+		"BACK_TO_WORK": "לחזור לעבודה",
+		"EDIT_EMPLOYEE": {
+			"DEVELOPER": "מפתח",
+			"RECURRING_EXPENSES": "הוצאות חודשיות חוזרות ונשנות",
+			"CATEGORY_NAME": "שם קטגוריה",
+			"DATE": "תאריך",
+			"EXPENSE_VALUE": "ערך הוצאה"
+		}
 	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "ארגונים"

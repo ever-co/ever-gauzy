@@ -5,7 +5,8 @@
 		"EDIT": "Редактировать",
 		"DELETE": "Удалять",
 		"OK": "Хорошо",
-		"CANCEL": "Отменить"
+		"CANCEL": "Отменить",
+		"CLOSE": "Конец"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -83,7 +84,14 @@
 		"HEADER": "Управление сотрудниками для",
 		"ADD_EMPLOYEE": "Добавить сотрудника",
 		"END_WORK": "Конец работы",
-		"BACK_TO_WORK": "Вернуться к работе"
+		"BACK_TO_WORK": "Вернуться к работе",
+		"EDIT_EMPLOYEE": {
+			"DEVELOPER": "Разработчик",
+			"RECURRING_EXPENSES": "Периодические ежемесячные расходы",
+			"CATEGORY_NAME": "Название категории",
+			"DATE": "Дата",
+			"EXPENSE_VALUE": "Стоимость расходов"
+		}
 	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации"
