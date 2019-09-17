@@ -36,10 +36,12 @@
 			"LAST_NAME": "Last Name",
 			"COMPANY_NAME": "Company name",
 			"ALL_EMPLOYEES": "All Employees",
+			"ALL_CURRENCIES": "All Currencies",
+			"ALL_DEPARTMENTS": "All Departments",
+			"ALL_POSITIONS": "All Positions",
 			"START_DATE": "Date",
 			"PICK_DATE": "Pick a Date",
 			"IMAGE_URL": "Image",
-			"ALL_CURRENCIES": "All Currencies",
 			"DATE_TYPE": "All Date Types"
 		},
 		"DELETE_CONFIRMATION": {

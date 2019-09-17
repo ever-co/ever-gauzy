@@ -34,10 +34,13 @@
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
 			"COMPANY_NAME": "שם החברה",
+			"ALL_EMPLOYEES": "כל העובדים",
+			"ALL_CURRENCIES": "כל המטבעות",
+			"ALL_DEPARTMENTS": "כל המחלקות",
+			"ALL_POSITIONS": "כל העמדות",
 			"START_DATE": "תאריך",
 			"PICK_DATE": "תבחר תאריך",
 			"IMAGE_URL": "תמונה",
-			"ALL_CURRENCIES": "כל המטבעות",
 			"DATE_TYPE": "כל סוגי התאריכים"
 		},
 		"DELETE_CONFIRMATION": {

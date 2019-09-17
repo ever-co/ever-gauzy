@@ -113,7 +113,10 @@
 									[items]="fakeDepartments"
 									bindLabel="departmentName"
 									[searchable]="false"
-									placeholder="All Departments"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.ALL_DEPARTMENTS'
+											| translate
+									}}"
 								>
 								</ng-select>
 							</div>
@@ -129,7 +132,10 @@
 									[items]="fakePositions"
 									bindLabel="positionName"
 									[searchable]="false"
-									placeholder="All Positions"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.ALL_POSITIONS'
+											| translate
+									}}"
 								>
 								</ng-select>
 							</div>

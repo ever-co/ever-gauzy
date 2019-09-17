@@ -36,10 +36,13 @@
 			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия",
 			"COMPANY_NAME": "Име на компанията",
+			"ALL_EMPLOYEES": "Всички служители",
+			"ALL_CURRENCIES": "Всички валути",
+			"ALL_DEPARTMENTS": "Всички отдели",
+			"ALL_POSITIONS": "Всички позиции",
 			"START_DATE": "Дата",
 			"PICK_DATE": "Изберете дата",
 			"IMAGE_URL": "Снимка",
-			"ALL_CURRENCIES": "Всички валути",
 			"DATE_TYPE": "Всички типове дати"
 		},
 		"DELETE_CONFIRMATION": {
