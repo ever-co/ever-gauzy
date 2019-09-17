@@ -5,7 +5,8 @@
 		"EDIT": "Редактиране",
 		"DELETE": "Изтрий",
 		"OK": "Да",
-		"CANCEL": "Отказ"
+		"CANCEL": "Отказ",
+		"CLOSE": "Затвори"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -81,7 +82,14 @@
 		"HEADER": "Управление на служителите в ",
 		"ADD_EMPLOYEE": "Добавяне на служител",
 		"END_WORK": "Край на работа",
-		"BACK_TO_WORK": "Обратно на работа"
+		"BACK_TO_WORK": "Обратно на работа",
+		"EDIT_EMPLOYEE": {
+			"DEVELOPER": "Разработчик",
+			"RECURRING_EXPENSES": "Повтарящи се месечни разходи",
+			"CATEGORY_NAME": "Име на категория",
+			"DATE": "Дата",
+			"EXPENSE_VALUE": "Стойност на разход"
+		}
 	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации"
