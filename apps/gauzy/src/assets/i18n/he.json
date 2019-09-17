@@ -84,7 +84,9 @@
 	"EMPLOYEES_PAGE": {
 		"HEADER": "נהל עובדים עבור ",
 		"ADD_EMPLOYEE": "הוסף עובד",
+		"ACTIVE": "פעיל",
 		"END_WORK": "סיום עבודה",
+		"WORK_ENDED": "העבודה הסתיימה",
 		"BACK_TO_WORK": "לחזור לעבודה",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "מפתח",
