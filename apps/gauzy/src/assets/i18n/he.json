@@ -5,6 +5,8 @@
 		"EDIT": "Edit",
 		"DELETE": "Delete",
 		"OK": "Ok",
+		"SAVE": "Save",
+		"BACK": "BACK",
 		"CANCEL": "Cancel",
 		"CLOSE": "Close"
 	},
@@ -88,7 +90,9 @@
 			"RECURRING_EXPENSES": "Recurring Monthly Expenses",
 			"CATEGORY_NAME": "Category Name",
 			"DATE": "Date",
-			"EXPENSE_VALUE": "Expense Value"
+			"EXPENSE_VALUE": "Expense Value",
+			"DEPARTMENT": "Department",
+			"POSITION": "Position"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
