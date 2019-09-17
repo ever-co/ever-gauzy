@@ -57,6 +57,8 @@
 		"PICK_DATE": "Pick a Date",
 		"ALL_CLIENTS": "All Clients",
 		"ALL_CATEGORIES": "All Categories",
+		"BACK_TO_WORK": "back to work",
+		"END_WORK": "End Work for",
 		"AMOUNT": "Amount",
 		"NOTES": "Notes",
 		"EDIT": "Edit",
@@ -88,6 +90,7 @@
 		"ACTIVE": "Active",
 		"END_WORK": "End Work",
 		"WORK_ENDED": "Work Ended",
+		"RECURRING_EXPENSE": "Add employee recurring expense",
 		"BACK_TO_WORK": "Back to Work",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "Developer",
