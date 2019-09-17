@@ -1,74 +1,80 @@
 <nb-card>
-  <nb-card-header>
-    Add employee recurring expense
-  </nb-card-header>
-  <nb-card-body>
-    <form [formGroup]="form" *ngIf="form">
-      <div class="row">
-        <div class="col-6">
-          <div class="form-group">
-            <label class="label" for="valueDateInput">Category Name</label>
-            <ng-select
-              id="positionInput"
-              [items]="categoryNames"
-              [searchable]="false"
-              placeholder="Category Name"
-              formControlName="categoryName"
-            >
-            </ng-select>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-6">
-          <div class="form-group">
-            <input
-              placeholder="Value"
-              fullWidth
-              id="valueInput"
-              type="number"
-              step="0.1"
-              nbInput
-              formControlName="value"
-            />
-          </div>
-        </div>
-        <div class="col-sm-6">
-          <nb-select
-            class="d-block"
-            placeholder="Select Showcase"
-            formControlName="currency"
-          >
-            <nb-option
-              *ngFor="let currency of currencies"
-              value="{{ currency }}"
-              >{{ currency }}</nb-option
-            >
-          </nb-select>
-        </div>
-      </div>
+	<nb-card-header>
+		{{ 'EMPLOYEES_PAGE.RECURRING_EXPENSE' | translate }}
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="valueDateInput">{{
+							'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CATEGORY_NAME'
+								| translate
+						}}</label>
+						<ng-select
+							id="positionInput"
+							[items]="categoryNames"
+							[searchable]="false"
+							placeholder="{{
+								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CATEGORY_NAME'
+									| translate
+							}}"
+							formControlName="categoryName"
+						>
+						</ng-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<input
+							placeholder="{{ 'SM_TABLE.VALUE' | translate }}"
+							fullWidth
+							id="valueInput"
+							type="number"
+							step="0.1"
+							nbInput
+							formControlName="value"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<nb-select
+						class="d-block"
+						placeholder="Select Showcase"
+						formControlName="currency"
+					>
+						<nb-option
+							*ngFor="let currency of currencies"
+							value="{{ currency }}"
+							>{{ currency }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
 
-      <div class="actions">
-        <!-- TODO: FIX dialogRef.close() -->
-        <button
-          type="button"
-          (click)="dialogRef.close()"
-          nbButton
-          outline
-          status="warning"
-        >
-          Cancel
-        </button>
-        <button
-          (click)="submitForm()"
-          [disabled]="form.invalid"
-          type="submit"
-          nbButton
-          status="success"
-        >
-          Save
-        </button>
-      </div>
-    </form>
-  </nb-card-body>
+			<div class="actions">
+				<!-- TODO: FIX dialogRef.close() -->
+				<button
+					type="button"
+					(click)="dialogRef.close()"
+					nbButton
+					outline
+					status="warning"
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					(click)="submitForm()"
+					[disabled]="form.invalid"
+					type="submit"
+					nbButton
+					status="success"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</div>
+		</form>
+	</nb-card-body>
 </nb-card>

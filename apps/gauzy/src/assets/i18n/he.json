@@ -5,8 +5,8 @@
 		"EDIT": "ערוך",
 		"DELETE": "מחק",
 		"OK": "בסדר",
-		"SAVE": "Save",
-		"BACK": "BACK",
+		"SAVE": "לשמור",
+		"BACK": "חזור",
 		"CANCEL": "בטל",
 		"CLOSE": "סוֹף"
 	},
@@ -56,6 +56,8 @@
 		"PICK_DATE": "תבחר תאריך",
 		"ALL_CLIENTS": "כל הלקוחות",
 		"ALL_CATEGORIES": "כל הקטגוריות",
+		"BACK_TO_WORK": "לחזור לעבודה",
+		"END_WORK": "סיום העבודה עבור",
 		"AMOUNT": "כמות",
 		"NOTES": "הערות",
 		"EDIT": "ערוך",
@@ -87,6 +89,7 @@
 		"ACTIVE": "פעיל",
 		"END_WORK": "סיום עבודה",
 		"WORK_ENDED": "העבודה הסתיימה",
+		"RECURRING_EXPENSE": "הוסף הוצאה חוזרת של עובדים",
 		"BACK_TO_WORK": "לחזור לעבודה",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "מפתח",
