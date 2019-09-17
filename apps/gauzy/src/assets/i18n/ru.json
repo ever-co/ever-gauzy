@@ -5,7 +5,8 @@
 		"EDIT": "Edit",
 		"DELETE": "Delete",
 		"OK": "Ok",
-		"CANCEL": "Cancel"
+		"CANCEL": "Cancel",
+		"CLOSE": "Close"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -81,7 +82,14 @@
 		"HEADER": "Manage Employees for ",
 		"ADD_EMPLOYEE": "Add Employee",
 		"END_WORK": "End Work",
-		"BACK_TO_WORK": "Back to Work"
+		"BACK_TO_WORK": "Back to Work",
+		"EDIT_EMPLOYEE": {
+			"DEVELOPER": "Developer",
+			"RECURRING_EXPENSES": "Recurring Monthly Expenses",
+			"CATEGORY_NAME": "Category Name",
+			"DATE": "Date",
+			"EXPENSE_VALUE": "Expense Value"
+		}
 	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Organizations"
