@@ -1,112 +1,170 @@
 version: '3.1'
 
 services:
+    nginx:
+        image: nginx:latest
+        container_name: production_nginx
+        volumes:
+            - .deploy/nginx/nginx.conf:/etc/nginx/nginx.conf
+            - .deploy/nginx/log/:/etc/nginx/logs
+            - .deploy/nginx/cache/:/etc/nginx/cache
+            - /etc/letsencrypt/:/etc/letsencrypt/
+        ports:
+            - '8080:8080'
+        depends_on:
+            - api
+            - webapp
+        links:
+            - api
+            - webapp
+        networks:
+            - overlay
 
-  nginx: 
-    image: nginx:latest
-    container_name: production_nginx
-    volumes:
-      - .deploy/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - .deploy/nginx/log/:/etc/nginx/logs
-      - .deploy/nginx/cache/:/etc/nginx/cache
-      - /etc/letsencrypt/:/etc/letsencrypt/
-    ports:
-      - '8080:8080'
-    depends_on:
-      - api
-      - webapp
-    links:      
-      - api
-      - webapp
-    networks:
-      - overlay
+    db:
+        image: postgres:11-alpine
+        container_name: db
+        restart: always
+        environment:
+            POSTGRES_DB: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: root
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1',
+                ]
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        ports:
+            - '5432:5432'
+        networks:
+            - overlay
 
-  db:
-    image: postgres:11-alpine
-    container_name: db
-    restart: always
-    environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root            
-    healthcheck:
-      test: ['CMD-SHELL', 'psql postgres://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@localhost:5432/$${POSTGRES_DB} || exit 1']      
-    volumes:
-      - postgres_data:/var/lib/postgresql/data      
-    ports:
-      - "5432:5432"
-    networks:
-      - overlay
-  
-  adminer:
-    image: adminer
-    container_name: adminer
-    restart: always
-    depends_on:
-      - db
-    environment:
-      ADMINER_DEFAULT_DB_DRIVER: pgsql
-      ADMINER_DEFAULT_DB_HOST: db
-      ADMINER_DEFAULT_DB_NAME: adminer
-    ports:
-      - 9000:8080
-    networks:
-      - overlay  
+    pgweb:
+        image: sosedoff/pgweb
+        container_name: pgweb
+        restart: always
+        depends_on:
+            - db
+        links:
+            - db
+        environment:
+            POSTGRES_DB: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: root
+            DATABASE_URL: postgres://postgres:root@db:5432/postgres?sslmode=disable
+        ports:
+            - '8081:8081'
+        networks:
+            - overlay
 
-  api:
-    container_name: api
-    image: gauzy-api:latest
-    build:
-      context: .
-      dockerfile: .deploy/api/Dockerfile
-    environment:
-      NODE_ENV: production
-      WAIT_HOSTS: db:5432
-      DB_HOST: db
-      DB_NAME: postgres
-      DB_USER: postgres
-      DB_PASS: root
-    restart: on-failure
-    depends_on:
-      - db      
-    links:
-      - db
-    volumes:
-      - api:/usr/src/app
-    ports:
-      - 3000:3000
-    networks:
-      - overlay      
-      
-  webapp:
-    container_name: webapp
-    image: gauzy-webapp:latest
-    build:
-      context: .
-      dockerfile: .deploy/webapp/Dockerfile
-    environment:
-      NODE_ENV: production
-      WAIT_HOSTS: db:5432
-    restart: on-failure
-    links:      
-      - db
-      - api
-    depends_on:      
-      - db
-      - api
-    volumes:
-      - webapp:/usr/src/app      
-    ports:
-      - 4200:4200
-    networks:
-      - overlay      
+    franchise:
+        image: binakot/franchise
+        container_name: franchise
+        restart: always
+        depends_on:
+            - db
+        links:
+            - db
+        environment:
+            PGHOST: db
+            PGDATABASE: postgres
+            PGUSER: postgres
+            PGPASSWORD: root
+            PGPORT: 5432
+        ports:
+            - '8082:80'
+            - '14645:14645'
+        networks:
+            - overlay
 
-volumes:  
-  postgres_data:
-  webapp:
-  api:
-  certificates:
+    omnidb:
+        image: taivokasper/omnidb
+        container_name: omnidb
+        restart: always
+        depends_on:
+            - db
+        links:
+            - db
+        ports:
+            - '8083:8080'
+            - '25482:25482'
+        networks:
+            - overlay
+
+    adminer:
+        image: adminer
+        container_name: adminer
+        restart: always
+        depends_on:
+            - db
+        links:
+            - db
+        environment:
+            ADMINER_DEFAULT_DB_DRIVER: pgsql
+            ADMINER_DEFAULT_DB_HOST: db
+            ADMINER_DEFAULT_DB_NAME: postgres
+            ADMINER_DEFAULT_DB_PASSWORD: root
+        ports:
+            - '8084:8080'
+        networks:
+            - overlay
+
+    api:
+        container_name: api
+        image: gauzy-api:latest
+        build:
+            context: .
+            dockerfile: .deploy/api/Dockerfile
+        environment:
+            NODE_ENV: production
+            WAIT_HOSTS: db:5432
+            DB_HOST: db
+            DB_NAME: postgres
+            DB_USER: postgres
+            DB_PASS: root
+        restart: on-failure
+        depends_on:
+            - db
+        links:
+            - db
+        volumes:
+            - api:/usr/src/app
+        ports:
+            - 3000:3000
+        networks:
+            - overlay
+
+    webapp:
+        container_name: webapp
+        image: gauzy-webapp:latest
+        build:
+            context: .
+            dockerfile: .deploy/webapp/Dockerfile
+        environment:
+            NODE_ENV: production
+            WAIT_HOSTS: db:5432
+        restart: on-failure
+        links:
+            - db
+            - api
+        depends_on:
+            - db
+            - api
+        volumes:
+            - webapp:/usr/src/app
+        ports:
+            - 4200:4200
+        networks:
+            - overlay
+
+volumes:
+    postgres_data:
+    webapp:
+    api:
+    certificates:
 
 networks:
-  overlay:
-    driver: bridge
+    overlay:
+        driver: bridge

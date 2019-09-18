@@ -1,24 +1,26 @@
 {
-    "cSpell.words": [
-        "AGPL",
-        "Cloudinary",
-        "adminer",
-        "compodoc",
-        "cqrs",
-        "envalid",
-        "fastify",
-        "healthcheck",
-        "microservices",
-        "nestjs",
-        "nestjsx",
-        "nrwl",
-        "ormconfig",
-        "pgsql",
-        "postgres",
-        "prebuild",
-        "toastr",
-        "typeorm",
-        "websockets"
-    ],
-    "vsicons.presets.angular": true
+	"cSpell.words": [
+		"AGPL",
+		"Cloudinary",
+		"Fargate",
+		"adminer",
+		"compodoc",
+		"cqrs",
+		"envalid",
+		"fastify",
+		"healthcheck",
+		"microservices",
+		"nestjs",
+		"nestjsx",
+		"nrwl",
+		"ormconfig",
+		"pgsql",
+		"postgres",
+		"prebuild",
+		"pulumi",
+		"toastr",
+		"typeorm",
+		"websockets"
+	],
+	"vsicons.presets.angular": true
 }
