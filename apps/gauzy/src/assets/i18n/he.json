@@ -112,5 +112,9 @@
 		"POSITIONS": "עמדות",
 		"VENDORS": "ספקים",
 		"PROJECTS": "פרויקטים"
+	},
+	"FOOTER": {
+		"BY": "על ידי",
+		"RIGHTS_RECERVED": "כל הזכויות שמורות"
 	}
 }
