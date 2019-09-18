@@ -1,72 +1,86 @@
 <nb-card class="org-edit">
-  <nb-card-header class="header">
-    <div
-      class="header-container"
-      *ngIf="selectedDate && selectedOrgFromHeader; else noName"
-    >
-      <div class="org-info">
-        <img
-          class="org-image"
-          [src]="selectedOrg.imageUrl"
-          alt="Organization Avatar"
-        />
+	<nb-card-header class="header">
+		<div
+			class="header-container"
+			*ngIf="selectedDate && selectedOrgFromHeader; else noName"
+		>
+			<div class="org-info">
+				<img
+					class="org-image"
+					[src]="selectedOrg.imageUrl"
+					alt="Organization Avatar"
+				/>
 
-        <div class="org-details">
-          <span class="org-name">{{ selectedOrg.name }} </span>
-          <div class="org-position">{{ employeesCount }} Employees</div>
-        </div>
-      </div>
+				<div class="org-details">
+					<span class="org-name">{{ selectedOrg.name }} </span>
+					<div class="org-position">
+						{{ employeesCount }}
+						{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
+					</div>
+				</div>
+			</div>
 
-      <div class="org-info">
-        <div class="org-details edit-icon">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="36"
-            height="36"
-            viewBox="0 0 36 36"
-          >
-            <circle cx="18" cy="18" r="18" fill="#0091FF" fill-rule="evenodd" />
-          </svg>
-          <nb-icon
-            class="ml-2 open"
-            icon="edit-outline"
-            (click)="editOrg()"
-            [options]="{ color: 'white' }"
-          >
-          </nb-icon>
-        </div>
-      </div>
-    </div>
+			<div class="org-info">
+				<div class="org-details edit-icon">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="36"
+						height="36"
+						viewBox="0 0 36 36"
+					>
+						<circle
+							cx="18"
+							cy="18"
+							r="18"
+							fill="#0091FF"
+							fill-rule="evenodd"
+						/>
+					</svg>
+					<nb-icon
+						class="ml-2 open"
+						icon="edit-outline"
+						(click)="editOrg()"
+						[options]="{ color: 'white' }"
+					>
+					</nb-icon>
+				</div>
+			</div>
+		</div>
 
-    <ng-template #noName>
-      <h6>Please select organizations from the menu above.</h6>
-    </ng-template>
-  </nb-card-header>
-  <nb-card-body
-    class="settings-body"
-    *ngIf="selectedDate && selectedOrgFromHeader"
-  >
-    <div class="body-header">
-      <div>
-        <span class="setting-name">
-          Recurring Monthly Expenses
-        </span>
-      </div>
-      <div>
-        <button (click)="addOrgRecurringExpense()" nbButton status="success">
-          <nb-icon class="mr-1" icon="plus-outline"></nb-icon>Add
-        </button>
-      </div>
-    </div>
+		<ng-template #noName>
+			<h6>{{ 'POP_UPS.SELECT_ORGANZIATION' | translate }}</h6>
+		</ng-template>
+	</nb-card-header>
+	<nb-card-body
+		class="settings-body"
+		*ngIf="selectedDate && selectedOrgFromHeader"
+	>
+		<div class="body-header">
+			<div>
+				<span class="setting-name">
+					{{ 'POP_UPS.RECURRING_EXPENSES' | translate }}
+				</span>
+			</div>
+			<div>
+				<button
+					(click)="addOrgRecurringExpense()"
+					nbButton
+					status="success"
+				>
+					<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+					>{{ 'BUTTONS.ADD' | translate }}
+				</button>
+			</div>
+		</div>
 
-    <div class="sub-header block-content">
-      <div class="row block-info">
-        <div class="col">Category Name</div>
-        <div class="col">Date</div>
-        <div class="col">Expense Value</div>
-      </div>
-    </div>
+		<div class="sub-header block-content">
+			<div class="row block-info">
+				<div class="col">{{ 'POP_UPS.CATEGORY_NAME' | translate }}</div>
+				<div class="col">{{ 'POP_UPS.DATE' | translate }}</div>
+				<div class="col">{{ 'POP_UPS.EXPENSE_VALUE' | translate }}</div>
+			</div>
+		</div>
 
-    <!-- TODO Recurring table -->
-  </nb-card-body>
+		<!-- TODO Recurring table -->
+	</nb-card-body>
 </nb-card>

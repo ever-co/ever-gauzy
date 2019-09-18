@@ -1,6 +1,15 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule, HttpLoaderFactory } from '../../@theme/theme.module';
-import { NbCardModule, NbButtonModule, NbInputModule, NbIconModule, NbDialogModule, NbSelectModule, NbListModule, NbTabsetModule } from '@nebular/theme';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbInputModule,
+	NbIconModule,
+	NbDialogModule,
+	NbSelectModule,
+	NbListModule,
+	NbTabsetModule
+} from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
@@ -19,44 +28,45 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 
 @NgModule({
-    imports: [
-        OrganizationsRoutingModule,
-        ThemeModule,
-        NbCardModule,
-        FormsModule,
-        ReactiveFormsModule,
-        NbButtonModule,
-        NbInputModule,
-        Ng2SmartTableModule,
-        NbIconModule,
-        NbDialogModule.forChild(),
-        OrganizationsMutationModule,
-        UserFormsModule,
-        ImageUpladerModule,
-        NbSelectModule,
-        RemoveLodashModule,
-        NbListModule,
-        NbTabsetModule,
-        TranslateModule.forChild({
-            loader: {
-                provide: TranslateLoader,
-                useFactory: HttpLoaderFactory,
-                deps: [HttpClient]
-            }
-        }),
-    ],
-    entryComponents: [
-        OrganizationsFullnameComponent,
-        OrganizationsLogoComponent
-    ],
-    declarations: [
-        OrganizationsComponent,
-        OrganizationsFullnameComponent,
-        OrganizationsLogoComponent,
-        EditOrganizationSettingsComponent,
-        EditOrganizationComponent,
-        OrganizationListComponent,
-        EditOrganizationMainComponent
-    ]
+	imports: [
+		OrganizationsRoutingModule,
+		ThemeModule,
+		NbCardModule,
+		FormsModule,
+		ReactiveFormsModule,
+		NbButtonModule,
+		NbInputModule,
+		Ng2SmartTableModule,
+		NbIconModule,
+		NbDialogModule.forChild(),
+		OrganizationsMutationModule,
+		UserFormsModule,
+		ImageUpladerModule,
+		NbSelectModule,
+		RemoveLodashModule,
+		NbListModule,
+		NbTabsetModule,
+		TranslateModule.forChild({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		})
+	],
+	entryComponents: [
+		OrganizationsFullnameComponent,
+		OrganizationsLogoComponent,
+		EditOrganizationComponent
+	],
+	declarations: [
+		OrganizationsComponent,
+		OrganizationsFullnameComponent,
+		OrganizationsLogoComponent,
+		EditOrganizationSettingsComponent,
+		EditOrganizationComponent,
+		OrganizationListComponent,
+		EditOrganizationMainComponent
+	]
 })
-export class OrganizationsModule { }
+export class OrganizationsModule {}
