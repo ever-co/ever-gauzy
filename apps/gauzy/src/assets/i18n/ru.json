@@ -116,5 +116,9 @@
 		"POSITIONS": "Позиции",
 		"VENDORS": "Вендоры",
 		"PROJECTS": "Проектов"
+	},
+	"FOOTER": {
+		"BY": "по",
+		"RIGHTS_RECERVED": "Все права защищены."
 	}
 }

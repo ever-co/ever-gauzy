@@ -114,5 +114,9 @@
 		"POSITIONS": "Позиции",
 		"VENDORS": "Доставчици",
 		"PROJECTS": "Проекти"
+	},
+	"FOOTER": {
+		"BY": "от",
+		"RIGHTS_RECERVED": "Всички права запазени."
 	}
 }
