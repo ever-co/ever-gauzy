@@ -113,5 +113,9 @@
 		"POSITIONS": "Positions",
 		"VENDORS": "Vendors",
 		"PROJECTS": "Projects"
+	},
+	"FOOTER": {
+		"BY": "by",
+		"RIGHTS_RECERVED": "All rights reserved."
 	}
 }
