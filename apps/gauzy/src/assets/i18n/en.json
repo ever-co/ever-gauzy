@@ -54,9 +54,13 @@
 		"ADD_EXPENSE": "Add Expense",
 		"EDIT_INCOME": "Edit Income",
 		"EDIT_EXPENSE": "Edit Expense",
+		"DATE": "Date",
 		"PICK_DATE": "Pick a Date",
 		"ALL_CLIENTS": "All Clients",
 		"ALL_CATEGORIES": "All Categories",
+		"CATEGORY_NAME": "Category Name",
+		"EXPENSE_VALUE": "Expense Value",
+		"RECURRING_EXPENSES": "Recurring Monthly Expenses",
 		"BACK_TO_WORK": "back to work",
 		"END_WORK": "End Work for",
 		"AMOUNT": "Amount",
@@ -94,15 +98,19 @@
 		"BACK_TO_WORK": "Back to Work",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "Developer",
-			"RECURRING_EXPENSES": "Recurring Monthly Expenses",
-			"CATEGORY_NAME": "Category Name",
-			"DATE": "Date",
-			"EXPENSE_VALUE": "Expense Value",
 			"DEPARTMENT": "Department",
 			"POSITION": "Position"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
-		"ORGANIZATIONS": "Organizations"
+		"ORGANIZATIONS": "Organizations",
+		"EMPLOYEES": "Employees",
+		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
+		"MAIN": "Main",
+		"DEPARTMENTS": "Departments",
+		"CLIENTS": "Clients",
+		"POSITIONS": "Positions",
+		"VENDORS": "Vendors",
+		"PROJECTS": "Projects"
 	}
 }

@@ -53,9 +53,13 @@
 		"ADD_EXPENSE": "הוסף הוצאה",
 		"EDIT_INCOME": "ערוך הכנסה",
 		"EDIT_EXPENSE": "ערוך הוצאות",
+		"DATE": "תאריך",
 		"PICK_DATE": "תבחר תאריך",
 		"ALL_CLIENTS": "כל הלקוחות",
 		"ALL_CATEGORIES": "כל הקטגוריות",
+		"CATEGORY_NAME": "שם קטגוריה",
+		"EXPENSE_VALUE": "ערך הוצאה",
+		"RECURRING_EXPENSES": "הוצאות חודשיות חוזרות ונשנות",
 		"BACK_TO_WORK": "לחזור לעבודה",
 		"END_WORK": "סיום העבודה עבור",
 		"AMOUNT": "כמות",
@@ -93,15 +97,19 @@
 		"BACK_TO_WORK": "לחזור לעבודה",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "מפתח",
-			"RECURRING_EXPENSES": "הוצאות חודשיות חוזרות ונשנות",
-			"CATEGORY_NAME": "שם קטגוריה",
-			"DATE": "תאריך",
-			"EXPENSE_VALUE": "ערך הוצאה",
 			"DEPARTMENT": "המחלקה",
 			"POSITION": "עמדה"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
-		"ORGANIZATIONS": "ארגונים"
+		"ORGANIZATIONS": "ארגונים",
+		"EMPLOYEES": "עובדים",
+		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
+		"MAIN": "עיקרי",
+		"DEPARTMENTS": "מחלקות",
+		"CLIENTS": "לקוחות",
+		"POSITIONS": "עמדות",
+		"VENDORS": "ספקים",
+		"PROJECTS": "פרויקטים"
 	}
 }

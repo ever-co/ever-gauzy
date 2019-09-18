@@ -23,7 +23,7 @@
 		"PASSWORD": "Парола",
 		"CONFIRM": "Потвърждение",
 		"LABELS": {
-			"NAME": "Name",
+			"NAME": "Име",
 			"FIRST_NAME": "Име (незадължително)",
 			"LAST_NAME": "Фамилия (незадължително)",
 			"ALL_EMPLOYEES": "Всички служители",
@@ -55,9 +55,13 @@
 		"ADD_EXPENSE": "Добавете разход",
 		"EDIT_INCOME": "Редактиране доход",
 		"EDIT_EXPENSE": "Редактиране разход",
+		"DATE": "Дата",
 		"PICK_DATE": "Изберете дата",
 		"ALL_CLIENTS": "Всички клиенти",
 		"ALL_CATEGORIES": "Всички категории",
+		"CATEGORY_NAME": "Име на категория",
+		"EXPENSE_VALUE": "Стойност на разход",
+		"RECURRING_EXPENSES": "Повтарящи се месечни разходи",
 		"BACK_TO_WORK": "връщане на работа",
 		"END_WORK": "Прекратяване на работа за",
 		"AMOUNT": "Сума",
@@ -95,15 +99,19 @@
 		"BACK_TO_WORK": "Връщане на работа",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "Разработчик",
-			"RECURRING_EXPENSES": "Повтарящи се месечни разходи",
-			"CATEGORY_NAME": "Име на категория",
-			"DATE": "Дата",
-			"EXPENSE_VALUE": "Стойност на разход",
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
-		"ORGANIZATIONS": "Организации"
+		"ORGANIZATIONS": "Организации",
+		"EMPLOYEES": "Служители",
+		"SELECT_ORGANZIATION": "Моля изберете организация от менюто",
+		"MAIN": "Основни",
+		"DEPARTMENTS": "Отдели",
+		"CLIENTS": "Клиенти",
+		"POSITIONS": "Позиции",
+		"VENDORS": "Доставчици",
+		"PROJECTS": "Проекти"
 	}
 }

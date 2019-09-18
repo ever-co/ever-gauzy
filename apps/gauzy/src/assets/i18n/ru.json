@@ -53,8 +53,12 @@
 		"ADD_EXPENSE": "Добавить расходы",
 		"EDIT_INCOME": "Изменить доход",
 		"EDIT_EXPENSE": "Изменить Расход",
+		"DATE": "Дата",
 		"PICK_DATE": "Выбрать дату",
 		"ALL_CLIENTS": "Все клиенты",
+		"CATEGORY_NAME": "Название категории",
+		"EXPENSE_VALUE": "Стоимость расходов",
+		"RECURRING_EXPENSES": "Периодические ежемесячные расходы",
 		"ALL_CATEGORIES": "Все категории",
 		"BACK_TO_WORK": "вернуться к работе",
 		"END_WORK": "Конец Работы для",
@@ -96,15 +100,20 @@
 		"BACK_TO_WORK": "Вернуться к работе",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "Разработчик",
-			"RECURRING_EXPENSES": "Периодические ежемесячные расходы",
-			"CATEGORY_NAME": "Название категории",
-			"DATE": "Дата",
-			"EXPENSE_VALUE": "Стоимость расходов",
+
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
-		"ORGANIZATIONS": "Организации"
+		"ORGANIZATIONS": "Организации",
+		"EMPLOYEES": "Сотрудники",
+		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
+		"MAIN": "Главный",
+		"DEPARTMENTS": "Ведомства",
+		"CLIENTS": "Клиенты",
+		"POSITIONS": "Позиции",
+		"VENDORS": "Вендоры",
+		"PROJECTS": "Проектов"
 	}
 }
