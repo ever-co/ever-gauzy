@@ -31,6 +31,7 @@
 			"DATE_TYPE": "סוג תאריך ברירת מחדל"
 		},
 		"PLACEHOLDERS": {
+			"NAME": "שם",
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
 			"COMPANY_NAME": "שם החברה",
@@ -40,8 +41,8 @@
 			"ALL_POSITIONS": "כל העמדות",
 			"START_DATE": "תאריך",
 			"PICK_DATE": "תבחר תאריך",
-			"IMAGE_URL": "תמונה",
-			"DATE_TYPE": "כל סוגי התאריכים"
+			"DATE_TYPE": "כל סוגי התאריכים",
+			"IMAGE_URL": "תמונה"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",

@@ -32,6 +32,7 @@
 			"DATE_TYPE": "Default Date Type"
 		},
 		"PLACEHOLDERS": {
+			"NAME": "Name",
 			"FIRST_NAME": "First Name",
 			"LAST_NAME": "Last Name",
 			"COMPANY_NAME": "Company name",
@@ -41,8 +42,8 @@
 			"ALL_POSITIONS": "All Positions",
 			"START_DATE": "Date",
 			"PICK_DATE": "Pick a Date",
-			"IMAGE_URL": "Image",
-			"DATE_TYPE": "All Date Types"
+			"DATE_TYPE": "All Date Types",
+			"IMAGE_URL": "Image"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",

@@ -33,6 +33,7 @@
 			"DATE_TYPE": "Дата по подразбиране"
 		},
 		"PLACEHOLDERS": {
+			"NAME": "Име",
 			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия",
 			"COMPANY_NAME": "Име на компанията",
@@ -42,8 +43,8 @@
 			"ALL_POSITIONS": "Всички позиции",
 			"START_DATE": "Дата",
 			"PICK_DATE": "Изберете дата",
-			"IMAGE_URL": "Снимка",
-			"DATE_TYPE": "Всички типове дати"
+			"DATE_TYPE": "Всички типове дати",
+			"IMAGE_URL": "Снимка"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
