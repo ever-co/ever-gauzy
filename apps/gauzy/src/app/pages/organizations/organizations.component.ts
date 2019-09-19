@@ -50,7 +50,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 			},
 			status: {
 				title: 'Status',
-				type: 'custom',
+				type: 'boolean',
 				width: '200px'
 			}
 		},
@@ -145,6 +145,10 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 					.getAll([], { organization: { id: org.id } })
 					.pipe(first())
 					.toPromise();
+
+				const isActive = org.isActive;
+
+				isActive ? (org.status = 'Active') : (org.status = 'Archived');
 
 				const activeEmployees = data.items.filter((i) => i.isActive);
 				org.totalEmployees = activeEmployees.length;

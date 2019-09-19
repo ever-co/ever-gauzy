@@ -4,9 +4,11 @@ export interface Organization extends IBaseEntityModel {
 	name: string;
 	valueDate?: Date;
 	totalEmployees?: number;
+	status?: string;
 	imageUrl?: string;
 	currency: string;
 	defaultValueDateType: string;
+	isActive: boolean;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -14,6 +16,7 @@ export interface OrganizationFindInput extends IBaseEntityModel {
 	valueDate?: Date;
 	imageUrl?: string;
 	currency?: CurrenciesEnum;
+	isActive?: boolean;
 }
 
 export interface OrganizationCreateInput {
@@ -31,7 +34,8 @@ export enum OrganizationSelectInput {
 	imageUrl = 'imageUrl',
 	currency = 'currency',
 	createdAt = 'createdAt',
-	updatedAt = 'updatedAt'
+	updatedAt = 'updatedAt',
+	isActive = 'isActive'
 }
 
 export enum CurrenciesEnum {
