@@ -68,6 +68,18 @@
 		"EDIT": "ערוך",
 		"ADD": "הוסף"
 	},
+	"MENU": {
+		"DASHBOARD": "לוח מחוונים",
+		"INCOME": "הכנסה",
+		"EXPENSES": "הוצאות",
+		"HELP": "עזרה",
+		"ABOUT": "עלינו",
+		"ADMIN": "מנהל",
+		"EMPLOYEES": "עובדים",
+		"ORGANIZATIONS": "ארגונים",
+		"SETTINGS": "הגדרות",
+		"GENERAL": "כללי"
+	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",

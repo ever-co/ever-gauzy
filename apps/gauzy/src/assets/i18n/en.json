@@ -69,6 +69,18 @@
 		"EDIT": "Edit",
 		"ADD": "Add"
 	},
+	"MENU": {
+		"DASHBOARD": "Dashboard",
+		"INCOME": "Income",
+		"EXPENSES": "Expenses",
+		"HELP": "Help",
+		"ABOUT": "About",
+		"ADMIN": "Admin",
+		"EMPLOYEES": "Employees",
+		"ORGANIZATIONS": "Organizations",
+		"SETTINGS": "Settings",
+		"GENERAL": "General"
+	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
