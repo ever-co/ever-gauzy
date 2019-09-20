@@ -138,7 +138,9 @@
 							'ORGANIZATIONS_PAGE.PROJECTS' | translate
 						}}"
 					>
-						<p>List of <strong>Projects</strong>.</p>
+						<ga-edit-org-projects
+							[organizationId]="organization?.id"
+						></ga-edit-org-projects>
 					</nb-tab>
 				</nb-tabset>
 			</div>
