@@ -129,13 +129,10 @@
 							'ORGANIZATIONS_PAGE.VENDORS' | translate
 						}}"
 					>
-						<ngx-organization-list
-							class="col"
-							[list]="vendors"
-							[listType]="'VENDORS'"
-							(listChanged)="vendors = $event"
+						<ga-edit-org-vendors
+							[organizationId]="organization?.id"
 						>
-						</ngx-organization-list>
+						</ga-edit-org-vendors>
 					</nb-tab>
 					<nb-tab
 						[active]="activeTabName === 'projects'"

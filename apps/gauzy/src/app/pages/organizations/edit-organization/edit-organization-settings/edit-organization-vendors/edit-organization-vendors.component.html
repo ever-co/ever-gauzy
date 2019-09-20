@@ -15,13 +15,13 @@
 				class="col-8"
 				nbInput
 				type="text"
-				[placeholder]="'Add department'"
+				[placeholder]="'Add vendor'"
 				fullWidth
 			/>
 			<span class="col-2 pl-2 pr-1"
 				><button
 					class="w-100"
-					(click)="addDepartment(addInput.value)"
+					(click)="addVendor(addInput.value)"
 					nbButton
 					status="success"
 				>
@@ -41,12 +41,12 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-card *ngFor="let d of departments">
+		<nb-card *ngFor="let v of vendors">
 			<nb-card-body>
-				{{ d.name }}
+				{{ v.name }}
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="removeDepartment(d.id)"
+						(click)="removeVendor(v.id)"
 						class="d-inline pr-0"
 						icon="close"
 					></nb-action>

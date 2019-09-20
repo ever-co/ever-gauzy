@@ -27,6 +27,9 @@ import { HttpClient } from '@angular/common/http';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationDepartmentsComponent } from './edit-organization-departments/edit-organization-departments.component';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
+import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
+import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
+import { EditOrganizationPositionsComponent } from './edit-organization-positions/edit-organization-positions.component';
 
 @NgModule({
 	imports: [
@@ -55,12 +58,14 @@ import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/service
 		NbListModule,
 		NbTabsetModule
 	],
-	providers: [OrganizationDepartmentsService],
+	providers: [OrganizationDepartmentsService, OrganizationVendorsService],
 	declarations: [
 		EditOrganizationSettingsComponent,
 		EditOrganizationMainComponent,
 		OrganizationListComponent,
-		EditOrganizationDepartmentsComponent
+		EditOrganizationDepartmentsComponent,
+		EditOrganizationVendorsComponent,
+		EditOrganizationPositionsComponent
 	]
 })
 export class EditOrganizationSettingsModule {}
