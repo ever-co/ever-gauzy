@@ -114,13 +114,9 @@
 							'ORGANIZATIONS_PAGE.POSITIONS' | translate
 						}}"
 					>
-						<ngx-organization-list
-							class="col"
-							[list]="positions"
-							[listType]="'POSITIONS'"
-							(listChanged)="positions = $event"
-						>
-						</ngx-organization-list>
+						<ga-edit-org-positions
+							[organizationId]="organization?.id"
+						></ga-edit-org-positions>
 					</nb-tab>
 
 					<nb-tab

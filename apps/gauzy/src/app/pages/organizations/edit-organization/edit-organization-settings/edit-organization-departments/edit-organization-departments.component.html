@@ -40,7 +40,8 @@
 			>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body *ngIf="departments?.length">
+		<div class="ml-3 mb-4"><strong>Department name</strong></div>
 		<nb-card *ngFor="let d of departments">
 			<nb-card-body>
 				{{ d.name }}

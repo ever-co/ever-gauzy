@@ -30,6 +30,7 @@ import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/service
 import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { EditOrganizationPositionsComponent } from './edit-organization-positions/edit-organization-positions.component';
+import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 
 @NgModule({
 	imports: [
@@ -58,13 +59,18 @@ import { EditOrganizationPositionsComponent } from './edit-organization-position
 		NbListModule,
 		NbTabsetModule
 	],
-	providers: [OrganizationDepartmentsService, OrganizationVendorsService],
+	providers: [
+		OrganizationDepartmentsService,
+		OrganizationVendorsService,
+		OrganizationPositionsService
+	],
 	declarations: [
 		EditOrganizationSettingsComponent,
 		EditOrganizationMainComponent,
 		OrganizationListComponent,
 		EditOrganizationDepartmentsComponent,
 		EditOrganizationVendorsComponent,
+		EditOrganizationPositionsComponent,
 		EditOrganizationPositionsComponent
 	]
 })

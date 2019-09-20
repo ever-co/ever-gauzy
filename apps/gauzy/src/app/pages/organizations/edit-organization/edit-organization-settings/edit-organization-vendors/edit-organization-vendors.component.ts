@@ -39,7 +39,7 @@ export class EditOrganizationVendorsComponent implements OnInit {
 	}
 
 	private async loadVendors() {
-		const res = await this.organizationVendorsService.getAll(null, {
+		const res = await this.organizationVendorsService.getAll({
 			organizationId: this.organizationId
 		});
 		if (res) {

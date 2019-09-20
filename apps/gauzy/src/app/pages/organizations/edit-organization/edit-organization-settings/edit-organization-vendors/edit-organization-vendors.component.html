@@ -40,7 +40,9 @@
 			>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body *ngIf="vendors?.length">
+		<div class="ml-3 mb-4"><strong>Vendor name</strong></div>
+
 		<nb-card *ngFor="let v of vendors">
 			<nb-card-body>
 				{{ v.name }}
