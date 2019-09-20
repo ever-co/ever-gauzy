@@ -17,69 +17,87 @@ import { EmployeeStatisticsModule } from './employee-statistics';
 import { OrganizationDepartmentModule } from './organization-department';
 import { OrganizationRecurringExpenseModule } from './organization-recurring-expense';
 import { EmployeeRecurringExpenseModule } from './employee-recurring-expense';
-import { OrganizationClients } from './organization-clients';
-import { OrganizationPositions } from './organization-positions';
-import { OrganizationProjects } from './organization-projects';
-import { OrganizationVendors } from './organization-vendors';
-
-
+import { OrganizationClientsModule } from './organization-clients';
+import { OrganizationPositionsModule } from './organization-positions';
+import { OrganizationProjectsModule } from './organization-projects';
+import { OrganizationVendorsModule } from './organization-vendors';
 
 @Module({
-  imports: [
-    RouterModule.forRoutes([
-      {
-        path: '',
-        children: [
-          { path: '/auth', module: AuthModule },
-          { path: '/user', module: UserModule },
-          { path: '/role', module: RoleModule },
-          { path: '/organization', module: OrganizationModule },
-          { path: '/income', module: IncomeModule },
-          { path: '/expense', module: ExpenseModule },
-          { path: '/employee', module: EmployeeModule },
-          { path: '/employee-settings', module: EmployeeSettingModule },
-          { path: '/employee-statistics', module: EmployeeStatisticsModule },
-          { path: '/user-organization', module: UserOrganizationModule },
-          {
-            path: '/organization-department',
-            module: OrganizationDepartmentModule
-          },
-          { path: '/organization-clients', module: OrganizationClients },
-          { path: '/organization-positions', module: OrganizationPositions },
-          { path: '/organization-projects', module: OrganizationProjects },
-          { path: '/organization-vendors', module: OrganizationVendors },
-          {
-            path: '/organization-recurring-expense',
-            module: OrganizationRecurringExpenseModule
-          },
-          {
-            path: '/employee-recurring-expense',
-            module: EmployeeRecurringExpenseModule
-          }
-        ]
-      }
-    ]),
-    CoreModule,
-    AuthModule,
-    UserModule,
-    EmployeeModule,
-    EmployeeSettingModule,
-    EmployeeStatisticsModule,
-    RoleModule,
-    OrganizationModule,
-    IncomeModule,
-    ExpenseModule,
-    UserOrganizationModule,
-    OrganizationDepartmentModule,
-    OrganizationRecurringExpenseModule,
-    OrganizationClients,
-    OrganizationPositions,
-    OrganizationProjects,
-    OrganizationVendors,
-    EmployeeRecurringExpenseModule
-  ],
-  controllers: [AppController],
-  providers: [AppService, SeedDataService]
+	imports: [
+		RouterModule.forRoutes([
+			{
+				path: '',
+				children: [
+					{ path: '/auth', module: AuthModule },
+					{ path: '/user', module: UserModule },
+					{ path: '/role', module: RoleModule },
+					{ path: '/organization', module: OrganizationModule },
+					{ path: '/income', module: IncomeModule },
+					{ path: '/expense', module: ExpenseModule },
+					{ path: '/employee', module: EmployeeModule },
+					{
+						path: '/employee-settings',
+						module: EmployeeSettingModule
+					},
+					{
+						path: '/employee-statistics',
+						module: EmployeeStatisticsModule
+					},
+					{
+						path: '/user-organization',
+						module: UserOrganizationModule
+					},
+					{
+						path: '/organization-department',
+						module: OrganizationDepartmentModule
+					},
+					{
+						path: '/organization-clients',
+						module: OrganizationClientsModule
+					},
+					{
+						path: '/organization-positions',
+						module: OrganizationPositionsModule
+					},
+					{
+						path: '/organization-projects',
+						module: OrganizationProjectsModule
+					},
+					{
+						path: '/organization-vendors',
+						module: OrganizationVendorsModule
+					},
+					{
+						path: '/organization-recurring-expense',
+						module: OrganizationRecurringExpenseModule
+					},
+					{
+						path: '/employee-recurring-expense',
+						module: EmployeeRecurringExpenseModule
+					}
+				]
+			}
+		]),
+		CoreModule,
+		AuthModule,
+		UserModule,
+		EmployeeModule,
+		EmployeeSettingModule,
+		EmployeeStatisticsModule,
+		RoleModule,
+		OrganizationModule,
+		IncomeModule,
+		ExpenseModule,
+		UserOrganizationModule,
+		OrganizationDepartmentModule,
+		OrganizationRecurringExpenseModule,
+		OrganizationClientsModule,
+		OrganizationPositionsModule,
+		OrganizationProjectsModule,
+		OrganizationVendorsModule,
+		EmployeeRecurringExpenseModule
+	],
+	controllers: [AppController],
+	providers: [AppService, SeedDataService]
 })
-export class AppModule  {
-}
+export class AppModule {}

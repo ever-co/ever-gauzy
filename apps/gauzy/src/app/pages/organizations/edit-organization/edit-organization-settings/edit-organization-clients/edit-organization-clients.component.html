@@ -1,0 +1,145 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			*ngIf="!showAddCard"
+			(click)="showAddCard = !showAddCard"
+			nbButton
+			status="success"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<nb-card *ngIf="showAddCard">
+			<nb-card-header>Add new client</nb-card-header>
+			<nb-card-body>
+				<div class="form-group">
+					<button
+						class="mr-2"
+						(click)="
+							addClient({
+								organizationId: organizationId,
+								name: name.value,
+								primaryEmail: email.value,
+								primaryPhone: phone.value,
+								country: country.value,
+								city: city.value,
+								street: street.value
+							})
+						"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+					<button
+						(click)="showAddCard = !showAddCard"
+						nbButton
+						status="danger"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+				</div>
+				<form class="row">
+					<div class="form-group col-4">
+						<input
+							type="text"
+							#name
+							nbInput
+							fullWidth
+							placeholder="Name"
+						/>
+					</div>
+					<div class="form-group col-4">
+						<input
+							type="email"
+							#email
+							nbInput
+							fullWidth
+							placeholder="Primary Email"
+						/>
+					</div>
+					<div class="form-group col-4">
+						<input
+							type="text"
+							#phone
+							nbInput
+							fullWidth
+							placeholder="Primary Phone"
+						/>
+					</div>
+					<div class="form-group col-4">
+						<input
+							type="text"
+							#country
+							nbInput
+							fullWidth
+							placeholder="Country"
+						/>
+					</div>
+					<div class="form-group col-4">
+						<input
+							type="text"
+							#city
+							nbInput
+							fullWidth
+							placeholder="City"
+						/>
+					</div>
+					<div class="form-group col-4">
+						<input
+							#street
+							type="text"
+							nbInput
+							fullWidth
+							placeholder="Street"
+						/>
+					</div>
+					<div class="form-group col-4">
+						<nb-select multiple fullWidth placeholder="Projects">
+							<nb-option
+								#projects
+								*ngFor="let p of projects"
+								value="{{ p }}"
+								>{{ p.name }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</form>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-header>
+	<nb-card-body *ngIf="clients?.length">
+		<div class="ml-3 mr-3 mb-3 row">
+			<div class="col-1 d-inline">Name</div>
+			<div class="col-2 d-inline">Primary Email</div>
+			<div class="col-2 d-inline">Primary Phone</div>
+			<div class="col-1 d-inline">Country</div>
+			<div class="col-1 d-inline">City</div>
+			<div class="col-2 d-inline">Street</div>
+			<div class="col-2 d-inline">Projects</div>
+			<div class="col-1 d-inline"></div>
+		</div>
+		<nb-card *ngFor="let c of clients">
+			<nb-card-body class="d-flex">
+				<div class="col-1 d-inline">{{ c.name }}</div>
+				<div class="col-2 d-inline">{{ c.primaryEmail }}</div>
+				<div class="col-2 d-inline">{{ c.primaryPhone }}</div>
+				<div class="col-1 d-inline">{{ c.country }}</div>
+				<div class="col-1 d-inline">{{ c.city }}</div>
+				<div class="col-2 d-inline">{{ c.street }}</div>
+
+				<div class="col-2 d-inline-block">
+					<div *ngFor="let p of c.projects">{{ p.name }}</div>
+				</div>
+
+				<nb-actions class="float-right col-1" e="medium">
+					<nb-action
+						(click)="removeClient(c.id)"
+						class="d-inline pr-0"
+						icon="close"
+					></nb-action>
+				</nb-actions>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

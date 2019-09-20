@@ -31,7 +31,6 @@ export class OrganizationsMutationComponent implements OnInit {
 
 	async ngOnInit() {
 		this._initializedForm();
-		console.log(await this.orgDepartmentService.getAll(['organization']));
 	}
 
 	addOrganization() {

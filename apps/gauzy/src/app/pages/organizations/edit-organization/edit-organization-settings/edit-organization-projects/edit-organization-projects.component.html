@@ -1,0 +1,85 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			*ngIf="!showAddCard"
+			(click)="showAddCard = !showAddCard"
+			nbButton
+			status="success"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<nb-card *ngIf="showAddCard">
+			<nb-card-header>Add new project</nb-card-header>
+			<nb-card-body>
+				<div class="form-group">
+					<button
+						class="mr-2"
+						(click)="
+							addProject({
+								organizationId: organizationId,
+								name: name.value,
+								client: selectedClient
+							})
+						"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+					<button
+						(click)="showAddCard = !showAddCard"
+						nbButton
+						status="danger"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+				</div>
+				<form class="row">
+					<div class="form-group col-6">
+						<input
+							type="text"
+							#name
+							nbInput
+							fullWidth
+							placeholder="Name"
+						/>
+					</div>
+
+					<div class="form-group col-6">
+						<nb-select
+							(selectedChange)="onClientsSelected($event)"
+							fullWidth
+							placeholder="Clients"
+						>
+							<nb-option
+								*ngFor="let c of clients"
+								value="{{ c.id }}"
+								>{{ c.name }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</form>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-header>
+	<nb-card-body *ngIf="projects?.length">
+		<div class="ml-3 mr-3 mb-3 row">
+			<div class="col-2 d-inline">Name</div>
+			<div class="col d-inline">Client</div>
+		</div>
+		<nb-card *ngFor="let p of projects">
+			<nb-card-body>
+				<div class="col-1 d-inline">{{ p.name }}</div>
+				<div class="col-2 d-inline">{{ p.client?.name }}</div>
+				<nb-actions class="float-right" e="medium">
+					<nb-action
+						(click)="removeProject(p.id)"
+						class="d-inline pr-0"
+						icon="close"
+					></nb-action>
+				</nb-actions>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

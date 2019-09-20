@@ -74,6 +74,17 @@
 							#main
 							[organization]="organization"
 						></ga-edit-org-main>
+
+						<div class="actions">
+							<button
+								[disabled]="main.form.invalid"
+								(click)="updateOrganizationSettings()"
+								nbButton
+								status="success"
+							>
+								Save
+							</button>
+						</div>
 					</nb-tab>
 
 					<nb-tab
@@ -82,13 +93,10 @@
 							'ORGANIZATIONS_PAGE.DEPARTMENTS' | translate
 						}}"
 					>
-						<ngx-organization-list
-							class="col"
-							[list]="departments"
-							[listType]="'DEPARTMENTS'"
-							(listChanged)="departments = $event"
+						<ga-edit-org-departments
+							[organizationId]="organization?.id"
 						>
-						</ngx-organization-list>
+						</ga-edit-org-departments>
 					</nb-tab>
 
 					<nb-tab
@@ -97,7 +105,9 @@
 							'ORGANIZATIONS_PAGE.CLIENTS' | translate
 						}}"
 					>
-						<p>List of <strong>Clients</strong>.</p>
+						<ga-edit-org-clients
+							[organizationId]="organization?.id"
+						></ga-edit-org-clients>
 					</nb-tab>
 
 					<nb-tab
@@ -106,13 +116,9 @@
 							'ORGANIZATIONS_PAGE.POSITIONS' | translate
 						}}"
 					>
-						<ngx-organization-list
-							class="col"
-							[list]="positions"
-							[listType]="'POSITIONS'"
-							(listChanged)="positions = $event"
-						>
-						</ngx-organization-list>
+						<ga-edit-org-positions
+							[organizationId]="organization?.id"
+						></ga-edit-org-positions>
 					</nb-tab>
 
 					<nb-tab
@@ -121,13 +127,10 @@
 							'ORGANIZATIONS_PAGE.VENDORS' | translate
 						}}"
 					>
-						<ngx-organization-list
-							class="col"
-							[list]="vendors"
-							[listType]="'VENDORS'"
-							(listChanged)="vendors = $event"
+						<ga-edit-org-vendors
+							[organizationId]="organization?.id"
 						>
-						</ngx-organization-list>
+						</ga-edit-org-vendors>
 					</nb-tab>
 					<nb-tab
 						[active]="activeTabName === 'projects'"
@@ -135,20 +138,11 @@
 							'ORGANIZATIONS_PAGE.PROJECTS' | translate
 						}}"
 					>
-						<p>List of <strong>Projects</strong>.</p>
+						<ga-edit-org-projects
+							[organizationId]="organization?.id"
+						></ga-edit-org-projects>
 					</nb-tab>
 				</nb-tabset>
-
-				<div class="actions">
-					<button
-						[disabled]="main.form.invalid"
-						(click)="updateOrganizationSettings()"
-						nbButton
-						status="success"
-					>
-						Save
-					</button>
-				</div>
 			</div>
 		</div>
 	</nb-card-body>
