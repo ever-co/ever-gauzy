@@ -3,91 +3,91 @@
 @import '../../styles/themes';
 
 @include nb-install-component() {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
 
-  .logo-container {
-    display: flex;
-    align-items: center;
-    width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
-  }
+	.logo-container {
+		display: flex;
+		align-items: center;
+		width: calc(#{nb-theme(sidebar-width)} - #{nb-theme(header-padding)});
+	}
 
-  nb-action {
-    height: auto;
-    display: flex;
-    align-content: center;
+	nb-action {
+		height: auto;
+		display: flex;
+		align-content: center;
 
-    .header-selector {
-      width: 300px;
-    }
-  }
+		.header-selector {
+			width: 300px;
+		}
+	}
 
-  ::ng-deep nb-search button {
-    padding: 0 !important;
-  }
+	::ng-deep nb-search button {
+		padding: 0 !important;
+	}
 
-  .header-container {
-    display: flex;
-    align-items: center;
-    width: auto;
+	.header-container {
+		display: flex;
+		align-items: center;
+		width: auto;
 
-    .sidebar-toggle {
-      @include nb-ltr(padding-right, 1.25rem);
-      @include nb-rtl(padding-left, 1.25rem);
-      text-decoration: none;
-      color: nb-theme(text-hint-color);
-      nb-icon {
-        font-size: 1.75rem;
-      }
-    }
+		.sidebar-toggle {
+			@include nb-ltr(padding-right, 1.25rem);
+			@include nb-rtl(padding-left, 1.25rem);
+			text-decoration: none;
+			color: nb-theme(text-hint-color);
+			nb-icon {
+				font-size: 1.75rem;
+			}
+		}
 
-    .logo {
-      font-family: 'Crimson Text', serif;
-      cursor: pointer;
-      font-size: 1.85rem;
-      padding: 0 1.25rem;
-      margin-top: 5px;
-      @include nb-ltr(border-left, 1px solid nb-theme(divider-color));
-      @include nb-rtl(border-right, 1px solid nb-theme(divider-color));
-      white-space: nowrap;
-      text-decoration: none;
+		.logo {
+			font-family: 'Crimson Text', serif;
+			cursor: pointer;
+			font-size: 1.85rem;
+			padding: 0 1.25rem;
+			margin-top: 5px;
+			@include nb-ltr(border-left, 1px solid nb-theme(divider-color));
+			@include nb-rtl(border-right, 1px solid nb-theme(divider-color));
+			white-space: nowrap;
+			text-decoration: none;
 
-      .gauzy-simbol {
-        font-size: 0.6rem !important;
-        margin-left: 76px;
-        margin-top: -25px;
-        font-weight: bold;
-        position: absolute;
-      }
-    }
-  }
+			.gauzy-simbol {
+				font-size: 0.6rem !important;
+				margin-left: 76px;
+				margin-top: -25px;
+				font-weight: bold;
+				position: absolute;
+			}
+		}
+	}
 
-  @include media-breakpoint-down(sm) {
-    .control-item {
-      display: none;
-    }
-    .user-action {
-      border: none;
-      padding: 0;
-    }
-  }
+	@include media-breakpoint-down(sm) {
+		.control-item {
+			display: none;
+		}
+		.user-action {
+			border: none;
+			padding: 0;
+		}
+	}
 
-  @include media-breakpoint-down(is) {
-    nb-select {
-      display: none;
-    }
-  }
+	@include media-breakpoint-down(is) {
+		nb-select {
+			display: none;
+		}
+	}
 }
 
 .organization-selector {
-  max-width: 250px;
+	max-width: 250px;
 }
 
 .employee-selector {
-  max-width: 200px;
+	max-width: 200px;
 }
 
 .date-selector {
-  max-width: 180px;
+	max-width: 180px;
 }
