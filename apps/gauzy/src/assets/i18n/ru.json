@@ -68,6 +68,18 @@
 		"EDIT": "Редактировать",
 		"ADD": "Добавлять"
 	},
+	"MENU": {
+		"DASHBOARD": "Приборная доска",
+		"INCOME": "Доход",
+		"EXPENSES": "Затраты",
+		"HELP": "Помогите",
+		"ABOUT": "О нас",
+		"ADMIN": "Администратор",
+		"EMPLOYEES": "Сотрудники",
+		"ORGANIZATIONS": "Организации",
+		"SETTINGS": "Настройки",
+		"GENERAL": "Генеральная"
+	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",

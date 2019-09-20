@@ -19,42 +19,56 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	createContextMenu = [
 		{
 			title: 'Start Timer',
+			icon: 'clock-outline',
 			link: '#'
 		},
-		{
-			title: 'Expense',
-			link: 'pages/expenses'
-		},
+		{},
 		{
 			title: 'Income',
+			icon: 'plus-circle-outline',
 			link: 'pages/income'
 		},
 		{
+			title: 'Expense',
+			icon: 'minus-circle-outline',
+			link: 'pages/expenses'
+		},
+		{},
+		{
 			title: 'Invoice',
+			icon: 'archive-outline',
 			link: '#'
 		},
 		{
 			title: 'Proposal',
+			icon: 'paper-plane-outline',
 			link: '#'
 		},
 		{
 			title: 'Contract',
+			icon: 'file-text-outline',
 			link: '#'
 		},
+		{},
 		{
 			title: 'Task',
+			icon: 'calendar-outline',
 			link: '#'
 		},
 		{
 			title: 'Client',
+			icon: 'person-done-outline',
 			link: '#'
 		},
 		{
 			title: 'Project',
+			icon: 'color-palette-outline',
 			link: '#'
 		},
+		{},
 		{
 			title: 'Employee',
+			icon: 'people-outline',
 			link: 'pages/employees'
 		}
 	];

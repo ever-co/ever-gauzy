@@ -11,6 +11,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../@core/services';
+import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 
 interface SelectedRow {
 	data: Organization;
@@ -41,7 +42,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 			totalEmployees: {
 				title: 'Employees',
 				type: 'number',
-				width: '200px'
+				width: '200px',
+				filter: false
 			},
 			currency: {
 				title: 'Currency',
@@ -50,8 +52,9 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 			},
 			status: {
 				title: 'Status',
-				type: 'boolean',
-				width: '200px'
+				type: 'custom',
+				width: '200px',
+				renderComponent: OrganizationsStatusComponent
 			}
 		},
 		pager: {
@@ -145,10 +148,6 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 					.getAll([], { organization: { id: org.id } })
 					.pipe(first())
 					.toPromise();
-
-				const isActive = org.isActive;
-
-				isActive ? (org.status = 'Active') : (org.status = 'Archived');
 
 				const activeEmployees = data.items.filter((i) => i.isActive);
 				org.totalEmployees = activeEmployees.length;
