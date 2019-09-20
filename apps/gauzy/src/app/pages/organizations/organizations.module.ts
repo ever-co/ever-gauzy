@@ -16,6 +16,7 @@ import { OrganizationsComponent } from './organizations.component';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsLogoComponent } from './table-components/organizations-logo/organizations-logo.component';
+import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EditOrganizationSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-settings.component';
@@ -57,12 +58,14 @@ import { HttpClient } from '@angular/common/http';
 	entryComponents: [
 		OrganizationsFullnameComponent,
 		OrganizationsLogoComponent,
+		OrganizationsStatusComponent,
 		EditOrganizationComponent
 	],
 	declarations: [
 		OrganizationsComponent,
 		OrganizationsFullnameComponent,
 		OrganizationsLogoComponent,
+		OrganizationsStatusComponent,
 		EditOrganizationSettingsComponent,
 		EditOrganizationComponent,
 		OrganizationListComponent,
