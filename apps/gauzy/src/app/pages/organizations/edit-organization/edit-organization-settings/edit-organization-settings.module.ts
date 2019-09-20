@@ -31,6 +31,8 @@ import { EditOrganizationVendorsComponent } from './edit-organization-vendors/ed
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
 import { EditOrganizationPositionsComponent } from './edit-organization-positions/edit-organization-positions.component';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
+import { EditOrganizationClientsComponent } from './edit-organization-clients/edit-organization-clients.component';
+import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 
 @NgModule({
 	imports: [
@@ -62,7 +64,8 @@ import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/
 	providers: [
 		OrganizationDepartmentsService,
 		OrganizationVendorsService,
-		OrganizationPositionsService
+		OrganizationPositionsService,
+		OrganizationClientsService
 	],
 	declarations: [
 		EditOrganizationSettingsComponent,
@@ -71,7 +74,8 @@ import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/
 		EditOrganizationDepartmentsComponent,
 		EditOrganizationVendorsComponent,
 		EditOrganizationPositionsComponent,
-		EditOrganizationPositionsComponent
+		EditOrganizationPositionsComponent,
+		EditOrganizationClientsComponent
 	]
 })
 export class EditOrganizationSettingsModule {}

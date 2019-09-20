@@ -105,7 +105,9 @@
 							'ORGANIZATIONS_PAGE.CLIENTS' | translate
 						}}"
 					>
-						<p>List of <strong>Clients</strong>.</p>
+						<ga-edit-org-clients
+							[organizationId]="organization?.id"
+						></ga-edit-org-clients>
 					</nb-tab>
 
 					<nb-tab
