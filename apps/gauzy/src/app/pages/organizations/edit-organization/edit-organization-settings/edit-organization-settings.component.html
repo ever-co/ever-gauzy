@@ -74,6 +74,17 @@
 							#main
 							[organization]="organization"
 						></ga-edit-org-main>
+
+						<div class="actions">
+							<button
+								[disabled]="main.form.invalid"
+								(click)="updateOrganizationSettings()"
+								nbButton
+								status="success"
+							>
+								Save
+							</button>
+						</div>
 					</nb-tab>
 
 					<nb-tab
@@ -82,13 +93,10 @@
 							'ORGANIZATIONS_PAGE.DEPARTMENTS' | translate
 						}}"
 					>
-						<ngx-organization-list
-							class="col"
-							[list]="departments"
-							[listType]="'DEPARTMENTS'"
-							(listChanged)="departments = $event"
+						<ga-edit-org-departments
+							[organizationId]="organization?.id"
 						>
-						</ngx-organization-list>
+						</ga-edit-org-departments>
 					</nb-tab>
 
 					<nb-tab
@@ -138,17 +146,6 @@
 						<p>List of <strong>Projects</strong>.</p>
 					</nb-tab>
 				</nb-tabset>
-
-				<div class="actions">
-					<button
-						[disabled]="main.form.invalid"
-						(click)="updateOrganizationSettings()"
-						nbButton
-						status="success"
-					>
-						Save
-					</button>
-				</div>
 			</div>
 		</div>
 	</nb-card-body>
