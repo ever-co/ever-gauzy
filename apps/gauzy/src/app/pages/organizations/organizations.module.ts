@@ -25,9 +25,6 @@ import { EditOrganizationComponent } from './edit-organization/edit-organization
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EditOrganizationSettingsModule } from './edit-organization/edit-organization-settings/edit-organization-settings.module';
-import { EditOrganizationSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-settings.component';
-import { OrganizationListComponent } from './edit-organization/organization-list/organization-list.component';
-import { EditOrganizationMainComponent } from './edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component';
 
 @NgModule({
 	imports: [
@@ -68,10 +65,7 @@ import { EditOrganizationMainComponent } from './edit-organization/edit-organiza
 		OrganizationsFullnameComponent,
 		OrganizationsLogoComponent,
 		OrganizationsStatusComponent,
-		EditOrganizationSettingsComponent,
-		EditOrganizationComponent,
-		OrganizationListComponent,
-		EditOrganizationMainComponent
+		EditOrganizationComponent
 	]
 })
 export class OrganizationsModule {}
