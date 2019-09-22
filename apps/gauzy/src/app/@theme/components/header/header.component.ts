@@ -22,7 +22,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			icon: 'clock-outline',
 			link: '#'
 		},
-		{},
+		// TODO: divider
 		{
 			title: 'Income',
 			icon: 'plus-circle-outline',
@@ -33,7 +33,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			icon: 'minus-circle-outline',
 			link: 'pages/expenses'
 		},
-		{},
+		// TODO: divider
 		{
 			title: 'Invoice',
 			icon: 'archive-outline',
@@ -49,7 +49,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			icon: 'file-text-outline',
 			link: '#'
 		},
-		{},
+		// TODO: divider
 		{
 			title: 'Task',
 			icon: 'calendar-outline',
@@ -65,7 +65,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			icon: 'color-palette-outline',
 			link: '#'
 		},
-		{},
+		// TODO: divider
 		{
 			title: 'Employee',
 			icon: 'people-outline',

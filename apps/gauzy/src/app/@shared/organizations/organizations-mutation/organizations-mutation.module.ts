@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrganizationsMutationComponent } from './organizations-mutation.component';
-import { ImageUpladerModule } from '../../image-uploader/image-uploader.module';
+import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -35,7 +35,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbInputModule,
 		FormsModule,
 		NbDatepickerModule,
-		ImageUpladerModule,
+		ImageUploaderModule,
 		NbSelectModule,
 		NbToastrModule.forRoot(),
 		NbListModule,

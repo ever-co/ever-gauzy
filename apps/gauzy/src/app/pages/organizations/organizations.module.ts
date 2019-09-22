@@ -19,12 +19,15 @@ import { OrganizationsLogoComponent } from './table-components/organizations-log
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
+import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
 import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EditOrganizationSettingsModule } from './edit-organization/edit-organization-settings/edit-organization-settings.module';
+import { EditOrganizationSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-settings.component';
+import { OrganizationListComponent } from './edit-organization/organization-list/organization-list.component';
+import { EditOrganizationMainComponent } from './edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component';
 
 @NgModule({
 	imports: [
@@ -40,7 +43,7 @@ import { EditOrganizationSettingsModule } from './edit-organization/edit-organiz
 		NbDialogModule.forChild(),
 		OrganizationsMutationModule,
 		UserFormsModule,
-		ImageUpladerModule,
+		ImageUploaderModule,
 		NbSelectModule,
 		RemoveLodashModule,
 		NbListModule,

@@ -23,7 +23,7 @@ import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-profile/edit-employee-profile.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeRecurringExpenseMutationModule } from '../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.module';
-import { ImageUpladerModule } from '../../@shared/image-uploader/image-uploader.module';
+import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -65,7 +65,7 @@ const COMPONENTS = [
 		NbTooltipModule,
 		NgSelectModule,
 		EmployeeRecurringExpenseMutationModule,
-		ImageUpladerModule,
+		ImageUploaderModule,
 		NbBadgeModule,
 		TranslateModule.forChild({
 			loader: {

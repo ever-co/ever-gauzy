@@ -20,7 +20,7 @@ import {
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { OrganizationsMutationModule } from 'apps/gauzy/src/app/@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { UserFormsModule } from 'apps/gauzy/src/app/@shared/user/forms/user-forms.module';
-import { ImageUpladerModule } from 'apps/gauzy/src/app/@shared/image-uploader/image-uploader.module';
+import { ImageUploaderModule } from 'apps/gauzy/src/app/@shared/image-uploader/image-uploader.module';
 import { RemoveLodashModule } from 'apps/gauzy/src/app/@shared/remove-lodash/remove-lodash.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -56,7 +56,7 @@ import { EditOrganizationProjectsComponent } from './edit-organization-projects/
 		Ng2SmartTableModule,
 		OrganizationsMutationModule,
 		UserFormsModule,
-		ImageUpladerModule,
+		ImageUploaderModule,
 		NbSelectModule,
 		RemoveLodashModule,
 		NbListModule,
