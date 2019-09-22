@@ -5,17 +5,19 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
+import { Cloudinary } from '@cloudinary/angular-5.x';
 
 @Component({
-  selector: 'ga-app',
-  template: '<router-outlet></router-outlet>',
+	selector: 'ga-app',
+	template: '<router-outlet></router-outlet>'
 })
 export class AppComponent implements OnInit {
+	constructor(
+		private analytics: AnalyticsService,
+		private _cloudinary: Cloudinary
+	) {}
 
-  constructor(private analytics: AnalyticsService) {
-  }
-
-  ngOnInit(): void {
-    this.analytics.trackPageViews();
-  }
+	ngOnInit(): void {
+		this.analytics.trackPageViews();
+	}
 }

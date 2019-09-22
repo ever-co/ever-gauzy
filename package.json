@@ -138,7 +138,7 @@
 		"chart.piecelabel.js": "^0.15.0",
 		"ckeditor": "^4.12.0",
 		"classlist.js": "^1.1.20150312",
-		"cloudinary-core": "^2.7.3",
+		"cloudinary-core": "^2.7.4",
 		"core-js": "^3.2.1",
 		"d3": "4.13.0",
 		"d3-selection-multi": "1.0.1",
