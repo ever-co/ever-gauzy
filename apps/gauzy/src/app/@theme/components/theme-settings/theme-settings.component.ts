@@ -11,24 +11,23 @@ export class ThemeSettingsComponent {
 	themes = [
 		{
 			value: 'default',
-			name: 'Light',
+			name: 'Light'
 		},
 		{
 			value: 'dark',
-			name: 'Dark',
+			name: 'Dark'
 		},
 		{
 			value: 'cosmic',
-			name: 'Cosmic',
+			name: 'Cosmic'
 		},
 		{
 			value: 'corporate',
-			name: 'Corporate',
-		},
+			name: 'Corporate'
+		}
 	];
 
 	currentTheme = 'default';
-
 	languages = { en: 'English', bg: 'Bulgarian', he: 'Hebrew', ru: 'Russian' };
 
 	constructor(
@@ -40,14 +39,13 @@ export class ThemeSettingsComponent {
 
 		const browserLang = translate.getBrowserLang();
 		translate.use(browserLang.match(/en|bg|he|ru/) ? browserLang : 'en');
-	 }
+	}
 
 	toggleTheme() {
 		this.themeService.changeTheme(this.currentTheme);
 	}
-	switchLanguage(language: string) {
 
+	switchLanguage(language: string) {
 		this.translate.use(language);
 	}
-
 }
