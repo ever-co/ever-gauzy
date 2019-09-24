@@ -15,7 +15,6 @@ import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
-import { OrganizationsLogoComponent } from './table-components/organizations-logo/organizations-logo.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
@@ -25,6 +24,8 @@ import { EditOrganizationComponent } from './edit-organization/edit-organization
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EditOrganizationSettingsModule } from './edit-organization/edit-organization-settings/edit-organization-settings.module';
+import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
+import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
 
 @NgModule({
 	imports: [
@@ -56,16 +57,18 @@ import { EditOrganizationSettingsModule } from './edit-organization/edit-organiz
 	],
 	entryComponents: [
 		OrganizationsFullnameComponent,
-		OrganizationsLogoComponent,
 		OrganizationsStatusComponent,
-		EditOrganizationComponent
+		EditOrganizationComponent,
+		OrganizationsEmployeesComponent,
+		OrganizationsCurrencyComponent
 	],
 	declarations: [
 		OrganizationsComponent,
 		OrganizationsFullnameComponent,
-		OrganizationsLogoComponent,
 		OrganizationsStatusComponent,
-		EditOrganizationComponent
+		EditOrganizationComponent,
+		OrganizationsEmployeesComponent,
+		OrganizationsCurrencyComponent
 	]
 })
 export class OrganizationsModule {}
