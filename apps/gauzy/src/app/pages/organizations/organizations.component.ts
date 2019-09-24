@@ -4,7 +4,6 @@ import { OrganizationsFullnameComponent } from './table-components/organizations
 import { Organization } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { LocalDataSource } from 'ng2-smart-table';
-import { OrganizationsLogoComponent } from './table-components/organizations-logo/organizations-logo.component';
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -12,6 +11,8 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../@core/services';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
+import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
+import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
 
 interface SelectedRow {
 	data: Organization;
@@ -28,12 +29,6 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 	settingsSmartTable = {
 		actions: false,
 		columns: {
-			imageUrl: {
-				title: 'Logo',
-				type: 'custom',
-				width: '100px',
-				renderComponent: OrganizationsLogoComponent
-			},
 			name: {
 				title: 'Name',
 				type: 'custom',
@@ -41,19 +36,25 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 			},
 			totalEmployees: {
 				title: 'Employees',
-				type: 'number',
+				type: 'custom',
 				width: '200px',
-				filter: false
+				class: 'text-center',
+				filter: false,
+				renderComponent: OrganizationsEmployeesComponent
 			},
 			currency: {
 				title: 'Currency',
-				type: 'string',
-				width: '200px'
+				type: 'custom',
+				class: 'text-center',
+				width: '200px',
+				renderComponent: OrganizationsCurrencyComponent
 			},
 			status: {
 				title: 'Status',
 				type: 'custom',
+				class: 'text-center',
 				width: '200px',
+				filter: false,
 				renderComponent: OrganizationsStatusComponent
 			}
 		},

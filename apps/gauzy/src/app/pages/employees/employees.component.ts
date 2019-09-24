@@ -313,6 +313,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					title: 'Work Status',
 					type: 'custom',
 					class: 'text-center',
+					width: '200px',
 					renderComponent: EmployeeWorkStatusComponent,
 					filter: false
 				}

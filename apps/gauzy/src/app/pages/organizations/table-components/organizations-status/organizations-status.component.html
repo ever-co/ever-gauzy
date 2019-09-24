@@ -1,11 +1,11 @@
-<div class="text-centerd d-block" *ngIf="rowData.isActive; else archived">
-	<div class="badge-success ">
+<div class="text-center" *ngIf="rowData.isActive; else archived">
+	<div class="text-center  badge-success">
 		Active
 	</div>
 </div>
 <ng-template #archived>
-	<div class="text-centerd d-block">
-		<div class="badge-danger">
+	<div class="text-center">
+		<div class="badge-danger d-block">
 			Archived
 		</div>
 	</div>
