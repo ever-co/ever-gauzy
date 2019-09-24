@@ -8,9 +8,17 @@
 			<nb-icon icon="menu-2-outline"></nb-icon>
 		</a>
 
-		<div class="logo" (click)="navigateHome()">
+		<div
+			*ngIf="theme === 'default' || theme === 'corporate'; else whiteLogo"
+			class="logo"
+			(click)="navigateHome()"
+		>
 			<img src="assets/images/logo_Gauzy.png" />
 		</div>
+		<ng-template #whiteLogo>
+			<!-- TODO: Add actual logo, provided by the designer -->
+			<h4>Gauzy</h4>
+		</ng-template>
 	</div>
 </div>
 

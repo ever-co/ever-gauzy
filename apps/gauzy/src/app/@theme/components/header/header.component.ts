@@ -1,5 +1,9 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { NbMenuService, NbSidebarService } from '@nebular/theme';
+import { Component, Input, OnDestroy, OnInit, OnChanges } from '@angular/core';
+import {
+	NbMenuService,
+	NbSidebarService,
+	NbThemeService
+} from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';
 import { Router, NavigationEnd } from '@angular/router';
@@ -16,6 +20,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	showEmployeesSelector = true;
 	showDateSelector = true;
 	showOrganizationsSelector = true;
+	theme: string;
+
 	createContextMenu = [
 		{
 			title: 'Start Timer',
@@ -72,6 +78,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			link: 'pages/employees'
 		}
 	];
+
 	supportContextMenu = [
 		{
 			title: 'Support Chat'
@@ -90,6 +97,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		private sidebarService: NbSidebarService,
 		private menuService: NbMenuService,
 		private layoutService: LayoutService,
+		private themeService: NbThemeService,
 		private router: Router
 	) {}
 
@@ -113,6 +121,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
 						openAddDialog: true
 					}
 				});
+			});
+
+		this.themeService
+			.onThemeChange()
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((t) => {
+				this.theme = t.name;
 			});
 	}
 
