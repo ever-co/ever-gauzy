@@ -53,6 +53,7 @@ export class EditOrganizationProjectsComponent implements OnInit {
 		await this.organizationProjectsService.create(project);
 
 		this.showAddCard = !this.showAddCard;
+		this.selectedClient = null;
 		this.loadProjects();
 	}
 
