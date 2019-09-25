@@ -2,7 +2,7 @@
 	<nb-card-header>
 		<button
 			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
+			(click)="showAddCard = !showAddCard; this.loadClients()"
 			nbButton
 			status="success"
 		>
@@ -69,9 +69,9 @@
 			<div class="col d-inline">Client</div>
 		</div>
 		<nb-card *ngFor="let p of projects">
-			<nb-card-body>
-				<div class="col-1 d-inline">{{ p.name }}</div>
-				<div class="col-2 d-inline">{{ p.client?.name }}</div>
+			<nb-card-body class="row m-0">
+				<div class="col-2 d-inline">{{ p.name }}</div>
+				<div class="col d-inline">{{ p.client?.name }}</div>
 				<nb-actions class="float-right" e="medium">
 					<nb-action
 						(click)="removeProject(p.id)"

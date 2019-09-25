@@ -32,8 +32,11 @@ export class OrganizationProjectsController extends CrudController<
 	async findAllEmployees(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationProjects>> {
-		const { findInput } = JSON.parse(data);
+		const { relations, findInput } = JSON.parse(data);
 
-		return this.organizationProjectsService.findAll({ where: findInput });
+		return this.organizationProjectsService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 }

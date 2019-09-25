@@ -7,96 +7,122 @@ import { OrganizationsService } from '../../../../@core/services/organizations.s
 import { NbToastrService } from '@nebular/theme';
 import { Location } from '@angular/common';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 
 export enum ListsInputType {
-    DEPARTMENTS = 'DEPARTMENTS',
-    POSITIONS = 'POSITIONS',
-    VENDORS = 'VENDORS'
+	DEPARTMENTS = 'DEPARTMENTS',
+	POSITIONS = 'POSITIONS',
+	VENDORS = 'VENDORS'
 }
 
 @Component({
-    selector: 'ngx-edit-organization-settings',
-    templateUrl: './edit-organization-settings.component.html',
-    styleUrls: [
-        './edit-organization-settings.component.scss',
-        '../../../employees/edit-employee/edit-employee-profile/edit-employee-profile.component.scss'
-    ]
+	selector: 'ngx-edit-organization-settings',
+	templateUrl: './edit-organization-settings.component.html',
+	styleUrls: [
+		'./edit-organization-settings.component.scss',
+		'../../../employees/edit-employee/edit-employee-profile/edit-employee-profile.component.scss'
+	]
 })
 export class EditOrganizationSettingsComponent implements OnInit {
-    @ViewChild('main', { static: false })
-    main: EditOrganizationMainComponent;
+	@ViewChild('main', { static: false })
+	main: EditOrganizationMainComponent;
 
-    imageUrl: string;
+	imageUrl: string;
 
-    organization: Organization;
-    hoverState: boolean;
-    departments: string[] = [];
-    positions: string[] = [];
-    vendors: string[] = [];
+	organization: Organization;
+	hoverState: boolean;
+	departments: string[] = [];
+	positions: string[] = [];
+	vendors: string[] = [];
+	employeesCount: number;
 
-    private _activeTabName = "Main";
-    private _ngOnDestroy$ = new Subject();
+	private _activeTabName = 'Main';
+	private _ngOnDestroy$ = new Subject();
 
-    constructor(private route: ActivatedRoute,
-        private organizationService: OrganizationsService,
-        private toastrService: NbToastrService,
-        private location: Location) { }
+	constructor(
+		private route: ActivatedRoute,
+		private organizationService: OrganizationsService,
+		private toastrService: NbToastrService,
+		private employeesService: EmployeesService,
+		private location: Location
+	) {}
 
-    get activeTabName() {
-        return this._activeTabName.toLowerCase();
-    }
+	get activeTabName() {
+		return this._activeTabName.toLowerCase();
+	}
 
-    tabChange(e) {
-        this._activeTabName = e.tabTitle.toLowerCase();
-        const currentURL = window.location.href;
+	tabChange(e) {
+		this._activeTabName = e.tabTitle.toLowerCase();
+		const currentURL = window.location.href;
 
-        if (!currentURL.endsWith("/settings") || this._activeTabName.toLowerCase() !== "main") {
-            window.location.href = currentURL.substring(0, currentURL.indexOf('/settings') + 9) + `/${this._activeTabName}`;
-        }
-    }
+		if (
+			!currentURL.endsWith('/settings') ||
+			this._activeTabName.toLowerCase() !== 'main'
+		) {
+			window.location.href =
+				currentURL.substring(0, currentURL.indexOf('/settings') + 9) +
+				`/${this._activeTabName}`;
+		}
+	}
 
-    ngOnInit() {
-        this.route.params
-            .pipe(takeUntil(this._ngOnDestroy$))
-            .subscribe(params => {
-                const tabName = params.tab;
-                if (tabName) {
-                    this._activeTabName = tabName;
-                }
+	ngOnInit() {
+		this.route.params
+			.pipe(takeUntil(this._ngOnDestroy$))
+			.subscribe((params) => {
+				const tabName = params.tab;
+				if (tabName) {
+					this._activeTabName = tabName;
+				}
 
-                this._loadOrganization(params.id);
-            });
-    }
+				this._loadOrganization(params.id);
+			});
+	}
 
-    goBack() {
-        const currentURL = window.location.href;
-        window.location.href = currentURL.substring(0, currentURL.indexOf('/settings'));
-    }
+	goBack() {
+		const currentURL = window.location.href;
+		window.location.href = currentURL.substring(
+			0,
+			currentURL.indexOf('/settings')
+		);
+	}
 
-    async updateOrganizationSettings() {
-        this.organizationService.update(this.organization.id, {
-            imageUrl: this.imageUrl,
-            ...this.main.mainUpdateObj
-        })
+	async updateOrganizationSettings() {
+		this.organizationService.update(this.organization.id, {
+			imageUrl: this.imageUrl,
+			...this.main.mainUpdateObj
+		});
 
-        this.goBack();
-    }
+		this.goBack();
+	}
 
-    handleImageUploadError(event: any) {
+	handleImageUploadError(event: any) {}
 
-    }
+	updateImageUrl(url: string) {
+		this.imageUrl = url;
+	}
 
-    updateImageUrl(url: string) {
-        this.imageUrl = url;
-    }
+	private async _loadOrganization(id: string) {
+		try {
+			this.organization = await this.organizationService
+				.getById(id)
+				.pipe(first())
+				.toPromise();
+			this.imageUrl = this.organization.imageUrl;
+			this.loadEmployeesCount();
+		} catch (error) {
+			this.toastrService.danger(
+				error.error.message || error.message,
+				'Error'
+			);
+		}
+	}
 
-    private async _loadOrganization(id: string) {
-        try {
-            this.organization = await this.organizationService.getById(id).pipe(first()).toPromise();
-            this.imageUrl = this.organization.imageUrl;
+	private async loadEmployeesCount() {
+		const { total } = await this.employeesService
+			.getAll([], { organization: { id: this.organization.id } })
+			.pipe(first())
+			.toPromise();
 
-        } catch (error) {
-            this.toastrService.danger(error.error.message || error.message, 'Error');
-        }
-    }
+		this.employeesCount = total;
+	}
 }

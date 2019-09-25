@@ -29,7 +29,6 @@ export class EditOrganizationProjectsComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.loadProjects();
-		this.loadClients();
 	}
 
 	async removeProject(id: string) {
@@ -39,25 +38,27 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	}
 
 	async onClientsSelected(id) {
-		const res = await this.organizationClientsService.getAll({ id });
+		const res = await this.organizationClientsService.getAll(['projects'], {
+			id
+		});
 
 		if (res) {
 			this.selectedClient = res.items[0];
+		} else {
+			this.selectedClient = null;
 		}
 	}
 
 	private async addProject(project: OrganizationProjectsCreateInput) {
-		console.warn('TODO fix addProject');
-
-		return;
 		await this.organizationProjectsService.create(project);
 
 		this.showAddCard = !this.showAddCard;
+		this.selectedClient = null;
 		this.loadProjects();
 	}
 
 	private async loadProjects() {
-		const res = await this.organizationProjectsService.getAll({
+		const res = await this.organizationProjectsService.getAll(['client'], {
 			organizationId: this.organizationId
 		});
 		if (res) {
@@ -66,7 +67,7 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	}
 
 	private async loadClients() {
-		const res = await this.organizationClientsService.getAll({
+		const res = await this.organizationClientsService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});
 		if (res) {

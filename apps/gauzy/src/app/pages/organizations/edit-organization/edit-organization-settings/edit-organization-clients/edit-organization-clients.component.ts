@@ -21,6 +21,8 @@ export class EditOrganizationClientsComponent implements OnInit {
 
 	projects: OrganizationProjects[];
 
+	selectProjects: string[] = [];
+
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
 		private readonly organizationProjectsService: OrganizationProjectsService
@@ -28,25 +30,32 @@ export class EditOrganizationClientsComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.loadClients();
-		this.loadClients();
 	}
 
 	async removeClient(id: string) {
 		await this.organizationClientsService.delete(id);
 
 		this.loadClients();
-		this.loadProjects();
+	}
+
+	getSelectProjects(): OrganizationProjects[] {
+		return this.selectProjects.map((p) => JSON.parse(p));
+	}
+
+	getStringValue(e) {
+		return JSON.stringify(e);
 	}
 
 	private async addClient(client: OrganizationClientsCreateInput) {
 		await this.organizationClientsService.create(client);
 
 		this.showAddCard = !this.showAddCard;
+		this.selectProjects = [];
 		this.loadClients();
 	}
 
 	private async loadClients() {
-		const res = await this.organizationClientsService.getAll({
+		const res = await this.organizationClientsService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});
 		if (res) {
@@ -55,7 +64,11 @@ export class EditOrganizationClientsComponent implements OnInit {
 	}
 
 	private async loadProjects() {
-		const res = await this.organizationProjectsService.getAll();
+		const res = await this.organizationProjectsService.getAll(['client'], {
+			organizationId: this.organizationId,
+			client: null
+		});
+
 		if (res) {
 			this.projects = res.items;
 		}
