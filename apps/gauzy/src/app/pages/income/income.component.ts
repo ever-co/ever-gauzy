@@ -12,6 +12,7 @@ import { IncomeMutationComponent } from '../../@shared/income/income-mutation/in
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { ActivatedRoute } from '@angular/router';
 import { createWriteStream } from 'fs';
+import { TranslateService } from '@ngx-translate/core';
 
 interface SelectedRowModel {
 	data: Income;
@@ -25,7 +26,17 @@ interface SelectedRowModel {
 	styleUrls: ['./income.component.scss']
 })
 export class IncomeComponent implements OnInit, OnDestroy {
-	// protected smartTableSettings: object;
+	constructor(
+		private authService: AuthService,
+		private store: Store,
+		private incomeService: IncomeService,
+		private dialogService: NbDialogService,
+		private toastrService: NbToastrService,
+		private route: ActivatedRoute,
+		private translateService: TranslateService
+	) {}
+
+	smartTableSettings: object;
 	hasRole: boolean;
 	selectedEmployeeId: string;
 	selectedDate: Date;
@@ -37,16 +48,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
 
-	constructor(
-		private authService: AuthService,
-		private store: Store,
-		private incomeService: IncomeService,
-		private dialogService: NbDialogService,
-		private toastrService: NbToastrService,
-		private route: ActivatedRoute
-	) {}
-
 	async ngOnInit() {
+		this.loadSettingsSmartTable();
+		this._applyTranslationOnSmartTable();
+
 		this.hasRole = await this.authService
 			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
 			.pipe(first())
@@ -103,47 +108,59 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	// tslint:disable-next-line: member-ordering
-	static smartTableSettings = {
-		actions: false,
-		mode: 'external',
-		editable: true,
-		noDataMessage: 'No data for the currently selected employee.',
-		columns: {
-			valueDate: {
-				title: 'Date',
-				type: 'custom',
-				width: '20%',
-				renderComponent: DateViewComponent,
-				filter: false
+	loadSettingsSmartTable() {
+		this.smartTableSettings = {
+			actions: false,
+			mode: 'external',
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			columns: {
+				valueDate: {
+					title: this.getTranslation('SM_TABLE.DATE'),
+					type: 'custom',
+					width: '20%',
+					renderComponent: DateViewComponent,
+					filter: false
+				},
+				clientName: {
+					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
+					type: 'string'
+				},
+				amount: {
+					title: this.getTranslation('SM_TABLE.VALUE'),
+					type: 'number',
+					width: '15%',
+					filter: false
+				},
+				notes: {
+					title: this.getTranslation('SM_TABLE.NOTES'),
+					type: 'string'
+				}
 			},
-			clientName: {
-				title: 'Client Name',
-				type: 'string'
-			},
-			amount: {
-				title: 'Value',
-				type: 'number',
-				width: '15%',
-				filter: false
-			},
-			notes: {
-				title: 'Notes',
-				type: 'string'
+			pager: {
+				display: true,
+				perPage: 8
 			}
-		},
-		pager: {
-			display: true,
-			perPage: 8
-		}
-	};
-
-	get smartTableSettings() {
-		return IncomeComponent.smartTableSettings;
+		};
 	}
 
 	selectIncome(ev: SelectedRowModel) {
 		this.selectedIncome = ev;
+	}
+
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translateService.get(prefix).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSettingsSmartTable();
+		});
 	}
 
 	async addIncome() {
@@ -258,9 +275,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					id: orgId
 				}
 			};
-
-			IncomeComponent.smartTableSettings.columns['employee'] = {
-				title: 'Employee',
+			this.smartTableSettings['columns']['employee'] = {
+				title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 				type: 'string',
 				valuePrepareFunction: (_, income: Income) => {
 					const user = income.employee ? income.employee.user : null;
@@ -276,8 +292,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					id: employeId
 				}
 			};
-
-			delete IncomeComponent.smartTableSettings.columns['employee'];
+			delete this.smartTableSettings['columns']['employee'];
 		}
 
 		const { items } = await this.incomeService.getAll(
@@ -291,7 +306,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		delete IncomeComponent.smartTableSettings.columns['employee'];
+		delete this.smartTableSettings['columns']['employee'];
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}

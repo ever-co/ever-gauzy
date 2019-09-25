@@ -15,7 +15,8 @@
 		"CLIENT_NAME": "Client Name",
 		"VALUE": "Value",
 		"NOTES": "Notes",
-		"NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "No data for the currently selected employee."
+		"EMPLOYEE": "Employee",
+		"NO_DATA": "No data for the currently selected employee."
 	},
 	"FORM": {
 		"USERNAME": "Username",

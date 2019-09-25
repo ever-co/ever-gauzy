@@ -15,7 +15,8 @@
 		"CLIENT_NAME": "Клиентско име",
 		"VALUE": "Стойност",
 		"NOTES": "Бележки",
-		"NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Няма данни за текущо избрания служител."
+		"EMPLOYEE": "Служител",
+		"NO_DATA": "Няма данни за избрания служител."
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
