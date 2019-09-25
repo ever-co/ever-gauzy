@@ -46,7 +46,7 @@ export class EditOrganizationClientsComponent implements OnInit {
 	}
 
 	private async loadClients() {
-		const res = await this.organizationClientsService.getAll({
+		const res = await this.organizationClientsService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});
 		if (res) {
@@ -55,7 +55,7 @@ export class EditOrganizationClientsComponent implements OnInit {
 	}
 
 	private async loadProjects() {
-		const res = await this.organizationProjectsService.getAll();
+		const res = await this.organizationProjectsService.getAll(['client']);
 		if (res) {
 			this.projects = res.items;
 		}
