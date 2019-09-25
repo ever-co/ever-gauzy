@@ -2,7 +2,7 @@
 	<nb-card-header>
 		<button
 			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
+			(click)="showAddCard = !showAddCard; loadProjects()"
 			nbButton
 			status="success"
 		>
@@ -23,7 +23,8 @@
 								primaryPhone: phone.value,
 								country: country.value,
 								city: city.value,
-								street: street.value
+								street: street.value,
+								projects: getSelectProjects()
 							})
 						"
 						nbButton
@@ -95,11 +96,15 @@
 						/>
 					</div>
 					<div class="form-group col-4">
-						<nb-select multiple fullWidth placeholder="Projects">
+						<nb-select
+							[(selected)]="selectProjects"
+							multiple
+							fullWidth
+							placeholder="Projects"
+						>
 							<nb-option
-								#projects
 								*ngFor="let p of projects"
-								value="{{ p }}"
+								value="{{ getStringValue(p) }}"
 								>{{ p.name }}</nb-option
 							>
 						</nb-select>

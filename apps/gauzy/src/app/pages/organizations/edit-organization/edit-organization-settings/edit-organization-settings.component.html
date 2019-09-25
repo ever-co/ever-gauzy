@@ -65,7 +65,16 @@
 			</div>
 
 			<div *ngIf="organization" class="org-settings">
-				<nb-tabset (changeTab)="tabChange($event)" fullWidth>
+				<nb-tabset
+					(changeTab)="
+						tabChange($event);
+						clients.loadClients();
+						clients.showAddCard = false;
+						projects.loadProjects();
+						projects.showAddCard = false
+					"
+					fullWidth
+				>
 					<nb-tab
 						[active]="activeTabName === 'main'"
 						tabTitle="{{ 'ORGANIZATIONS_PAGE.MAIN' | translate }}"
@@ -106,6 +115,7 @@
 						}}"
 					>
 						<ga-edit-org-clients
+							#clients
 							[organizationId]="organization?.id"
 						></ga-edit-org-clients>
 					</nb-tab>
@@ -139,6 +149,7 @@
 						}}"
 					>
 						<ga-edit-org-projects
+							#projects
 							[organizationId]="organization?.id"
 						></ga-edit-org-projects>
 					</nb-tab>

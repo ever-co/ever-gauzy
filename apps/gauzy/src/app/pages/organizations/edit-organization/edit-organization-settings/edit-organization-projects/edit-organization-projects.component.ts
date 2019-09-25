@@ -29,7 +29,6 @@ export class EditOrganizationProjectsComponent implements OnInit {
 
 	ngOnInit(): void {
 		this.loadProjects();
-		this.loadClients();
 	}
 
 	async removeProject(id: string) {
