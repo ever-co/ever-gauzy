@@ -84,6 +84,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			id
 		);
 
+		console.log('this.statistics');
+
+		console.log(this.statistics);
+
 		this.incomeStatistics = this.statistics.incomeStatistics;
 		this.expenseStatistics = this.statistics.expenseStatistics;
 		this.profitStatistics = this.statistics.profitStatistics;
@@ -232,31 +236,65 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			.toPromise();
 		const { name } = this.store.selectedOrganization;
 
-		const employeesVm: EmployeeViewModel[] = items
-			.filter((i) => i.isActive)
-			.map((i) => {
-				return {
-					fullName: `${i.user.firstName} ${i.user.lastName}`,
-					email: i.user.email,
-					id: i.id,
-					isActive: i.isActive,
-					endWork: i.endWork ? new Date(i.endWork) : '',
-					workStatus: i.endWork
-						? new Date(i.endWork).getDate() +
+		let employeesVm = [];
+
+		for (const emp of items) {
+			if (emp.isActive) {
+				await this.getEmployeeStatistics(emp.id);
+
+				console.log(emp.id);
+				// console.log(this.averageBonus)
+				employeesVm.push({
+					fullName: `${emp.user.firstName} ${emp.user.lastName}`,
+					email: emp.user.email,
+					id: emp.id,
+					isActive: emp.isActive,
+					endWork: emp.endWork ? new Date(emp.endWork) : '',
+					workStatus: emp.endWork
+						? new Date(emp.endWork).getDate() +
 						  ' ' +
-						  monthNames[new Date(i.endWork).getMonth()] +
+						  monthNames[new Date(emp.endWork).getMonth()] +
 						  ' ' +
-						  new Date(i.endWork).getFullYear()
+						  new Date(emp.endWork).getFullYear()
 						: '',
-					imageUrl: i.user.imageUrl,
+					imageUrl: emp.user.imageUrl,
 					// TODO: laod real bonus and bonusDate
 					bonus: Math.floor(1000 * Math.random()) + 10,
 					averageIncome: Math.floor(1000 * Math.random()) + 10,
 					averageExpenses: Math.floor(1000 * Math.random()) + 10,
-					averageBonus: Math.floor(1000 * Math.random()) + 10,
+					averageBonus: this.averageBonus,
 					bonusDate: Date.now()
-				};
-			});
+				});
+			}
+		}
+		// const employeesVm: EmployeeViewModel[] = items
+		// .filter((i) => i.isActive)
+		// .map((i) => {
+
+		// 	console.log(i)
+		// 	return {
+		// 		fullName: `${i.user.firstName} ${i.user.lastName}`,
+		// 		email: i.user.email,
+		// 		id: i.id,
+		// 		isActive: i.isActive,
+		// 		endWork: i.endWork ? new Date(i.endWork) : '',
+		// 		workStatus: i.endWork
+		// 			? new Date(i.endWork).getDate() +
+		// 			  ' ' +
+		// 			  monthNames[new Date(i.endWork).getMonth()] +
+		// 			  ' ' +
+		// 			  new Date(i.endWork).getFullYear()
+		// 			: '',
+		// 		imageUrl: i.user.imageUrl,
+		// 		// TODO: laod real bonus and bonusDate
+		// 		bonus: Math.floor(1000 * Math.random()) + 10,
+		// 		// averageIncome: Math.floor(1000 * Math.random()) + 10,
+		// 		averageIncome: i.id,
+		// 		averageExpenses: Math.floor(1000 * Math.random()) + 10,
+		// 		averageBonus: Math.floor(1000 * Math.random()) + 10,
+		// 		bonusDate: Date.now()
+		// 	};
+		// });
 
 		this.sourceSmartTable.load(employeesVm);
 
