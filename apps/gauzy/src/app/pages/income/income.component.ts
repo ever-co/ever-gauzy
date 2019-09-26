@@ -11,7 +11,6 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { ActivatedRoute } from '@angular/router';
-import { createWriteStream } from 'fs';
 import { TranslateService } from '@ngx-translate/core';
 
 interface SelectedRowModel {

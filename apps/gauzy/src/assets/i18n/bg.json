@@ -13,6 +13,8 @@
 	"SM_TABLE": {
 		"DATE": "Дата",
 		"CLIENT_NAME": "Клиентско име",
+		"VENDOR": "Доставчик",
+		"CATEGORY": "Категория",
 		"VALUE": "Стойност",
 		"NOTES": "Бележки",
 		"EMPLOYEE": "Служител",

@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IncomeComponent } from '../../../pages/income/income.component';
 import { LocalDataSource } from 'ng2-smart-table';
-import { ExpensesComponent } from '../../../pages/expenses/expenses.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 
@@ -19,13 +17,14 @@ export class RecordsHistoryComponent implements OnInit {
 	type: HistoryType;
 	recordsData: any;
 	smartTableSource = new LocalDataSource();
+	translatedType: string;
 
 	smartTableSettings: Object;
 
 	constructor(private translateService: TranslateService) {}
 
 	ngOnInit() {
-		let viewModel;
+		let viewModel: any;
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
@@ -41,7 +40,11 @@ export class RecordsHistoryComponent implements OnInit {
 						notes: i.notes
 					};
 				});
+				this.translatedType = this.getTranslation(
+					'INCOME_PAGE.INCOME'
+				).toUpperCase();
 				break;
+
 			case HistoryType.EXPENSES:
 				viewModel = this.recordsData.map((i) => {
 					return {
@@ -55,6 +58,9 @@ export class RecordsHistoryComponent implements OnInit {
 						notes: i.notes
 					};
 				});
+				this.translatedType = this.getTranslation(
+					'EXPENSES_PAGE.EXPENSES'
+				).toUpperCase();
 				break;
 		}
 
@@ -112,11 +118,11 @@ export class RecordsHistoryComponent implements OnInit {
 							filter: false
 						},
 						vendorName: {
-							title: 'Vendor',
+							title: this.getTranslation('SM_TABLE.VENDOR'),
 							type: 'string'
 						},
 						categoryName: {
-							title: 'Category',
+							title: this.getTranslation('SM_TABLE.CATEGORY'),
 							type: 'string'
 						},
 						amount: {

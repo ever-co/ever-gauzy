@@ -13,9 +13,11 @@
 	"SM_TABLE": {
 		"DATE": "תאריך",
 		"CLIENT_NAME": "שם הלקוח",
+		"VENDOR": "ספק",
+		"CATEGORY": "קטגוריה",
 		"VALUE": "ערך",
 		"NOTES": "הערות",
-		"NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "אין נתונים עבור העובד שנבחר כעת"
+		"NO_DATA": "אין נתונים עבור העובד שנבחר כעת"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
