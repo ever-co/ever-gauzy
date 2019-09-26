@@ -30,6 +30,9 @@ RUN npm install cross-env -g \
     && npm install pm2 -g --unsafe-perm \
     && chmod +x /wait
 
+RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
+RUN mkdir /srv/gauzy/dist && chown node:node /srv/gauzy/dist
+
 USER node
 
 WORKDIR /srv/gauzy
@@ -45,4 +48,5 @@ COPY . .
 
 EXPOSE 3000
 
-CMD /wait && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn ng serve api --host 0.0.0.0 -c=production --prod
+CMD /wait \
+    && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn ng serve api --host 0.0.0.0 -c=production --prod

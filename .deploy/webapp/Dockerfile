@@ -11,14 +11,12 @@ RUN apk update \
     && npm config set python /usr/bin/python \
     && npm install yarn -g
 
-RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
-
-USER node
+RUN mkdir /srv/gauzy
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node package.json yarn.lock ./
-COPY --chown=node:node apps/api/package.json ./apps/api/package.json
+COPY package.json yarn.lock ./
+COPY apps/api/package.json ./apps/api/package.json
 # COPY .snyk /tmp/.snyk
 RUN yarn install
 
@@ -30,7 +28,8 @@ RUN npm install cross-env -g \
     && npm install pm2 -g --unsafe-perm \
     && chmod +x /wait
 
-USER node
+RUN mkdir /srv/gauzy
+RUN mkdir /srv/gauzy/dist
 
 WORKDIR /srv/gauzy
 
@@ -38,10 +37,12 @@ ARG NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_OPTIONS $NODE_OPTIONS
 ENV NODE_ENV production
 
-COPY --from=development --chown=root:root /srv/gauzy/node_modules ./node_modules
+COPY --from=development /srv/gauzy/node_modules ./node_modules
 
 COPY . .
 
 EXPOSE 4200
 
-CMD /wait && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn run config:prod && yarn ng serve gauzy --disable-host-check --host 0.0.0.0 -c=production --prod
+CMD /wait \
+    && cross-env NODE_ENV=production yarn run config:prod \
+    && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn ng serve gauzy --disable-host-check --host 0.0.0.0 -c=production --prod
