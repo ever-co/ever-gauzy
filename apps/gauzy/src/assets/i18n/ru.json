@@ -18,7 +18,14 @@
 		"VALUE": "Value",
 		"NOTES": "Notes",
 		"EMPLOYEE": "Employee",
-		"NO_DATA": "No data for the currently selected employee."
+		"NO_DATA": "No data for the currently selected employee.",
+		"FULL_NAME": "Full Name",
+		"EMAIL": "Email",
+		"INCOME": "Income (Average)",
+		"EXPENSES": "Expenses (Average)",
+		"BONUS": "Bonus",
+		"BONUS_AVG": "Bonus (Average)",
+		"WORK_STATUS": "Work Status"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -50,7 +57,9 @@
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",
-			"RECORD": "record"
+			"RECORD": "record",
+			"EMPLOYEE": "employee",
+			"EXPENSE": "Expense"
 		}
 	},
 	"POP_UPS": {
