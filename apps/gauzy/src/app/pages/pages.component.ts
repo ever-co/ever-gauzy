@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 
 import { AuthService } from '../@core/services/auth.service';
 import { RolesEnum } from '@gauzy/models';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ngx-pages',
@@ -16,14 +17,19 @@ import { TranslateService } from '@ngx-translate/core';
 		</ngx-one-column-layout>
 	`
 })
-export class PagesComponent {
+export class PagesComponent implements OnInit, OnDestroy {
 	menu: NbMenuItem[];
+	private _ngDestroy$ = new Subject<void>();
+	isAdmin: boolean;
 
 	constructor(
 		private authService: AuthService,
 		private translate: TranslateService
-	) {
+	) {}
+
+	ngOnInit() {
 		this.loadItems();
+		this.checkForAdmin();
 		this._applyTranslationOnSmartTable();
 	}
 
@@ -56,17 +62,16 @@ export class PagesComponent {
 				link: '/pages/about'
 			}
 		];
-
-		this.checkForAdmin();
 	}
 
 	async checkForAdmin() {
-		const isAdmin = await this.authService
+		this.isAdmin = await this.authService
 			.hasRole([RolesEnum.ADMIN])
 			.pipe(first())
+			.pipe(takeUntil(this._ngDestroy$))
 			.toPromise();
 
-		if (isAdmin) {
+		if (this.isAdmin) {
 			this.menu = [
 				...this.menu,
 				{
@@ -106,8 +111,16 @@ export class PagesComponent {
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.subscribe(() => {
-			this.loadItems();
-		});
+		this.translate.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.menu = [];
+				this.loadItems();
+			});
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }
