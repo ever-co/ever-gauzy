@@ -27,9 +27,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 		private translate: TranslateService
 	) {}
 
-	ngOnInit() {
+	async ngOnInit() {
+		await this.checkForAdmin();
 		this.loadItems();
-		this.checkForAdmin();
 		this._applyTranslationOnSmartTable();
 	}
 
@@ -62,14 +62,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 				link: '/pages/about'
 			}
 		];
-	}
-
-	async checkForAdmin() {
-		this.isAdmin = await this.authService
-			.hasRole([RolesEnum.ADMIN])
-			.pipe(first())
-			.pipe(takeUntil(this._ngDestroy$))
-			.toPromise();
 
 		if (this.isAdmin) {
 			this.menu = [
@@ -100,6 +92,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 				}
 			];
 		}
+	}
+
+	async checkForAdmin() {
+		this.isAdmin = await this.authService
+			.hasRole([RolesEnum.ADMIN])
+			.pipe(first())
+			.pipe(takeUntil(this._ngDestroy$))
+			.toPromise();
 	}
 
 	getTranslation(prefix: string) {
