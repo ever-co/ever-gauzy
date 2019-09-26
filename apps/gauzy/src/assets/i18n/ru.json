@@ -13,9 +13,11 @@
 	"SM_TABLE": {
 		"DATE": "Дата",
 		"CLIENT_NAME": "Имя клиента",
+		"VENDOR": "Продавец",
+		"CATEGORY": "Категория",
 		"VALUE": "Стоимость",
 		"NOTES": "Заметки",
-		"NO_DATA_FOR_THE_CURRENTLY_SELECTED_EMPLOYEE": "Нет данных для выбранного сотрудника."
+		"NO_DATA": "Нет данных для выбранного сотрудника."
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",

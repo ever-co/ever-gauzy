@@ -37,43 +37,7 @@ interface SelectedRowModel {
 	styleUrls: ['./expenses.component.scss']
 })
 export class ExpensesComponent implements OnInit, OnDestroy {
-	static smartTableSettings = {
-		actions: false,
-		editable: true,
-		noDataMessage:
-			'No data for the currently selected Employee & Organization.',
-		columns: {
-			valueDate: {
-				title: 'Date',
-				type: 'custom',
-				width: '20%',
-				renderComponent: DateViewComponent,
-				filter: false
-			},
-			vendorName: {
-				title: 'Vendor',
-				type: 'string'
-			},
-			categoryName: {
-				title: 'Category',
-				type: 'string'
-			},
-			amount: {
-				title: 'Value',
-				type: 'number',
-				filter: false
-			},
-			notes: {
-				title: 'Notes',
-				type: 'string'
-			}
-		},
-		pager: {
-			display: true,
-			perPage: 8
-		}
-	};
-
+	smartTableSettings: object;
 	selectedEmployeeId: string;
 	selectedDate: Date;
 
@@ -87,8 +51,39 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
 
-	get smartTableSettings() {
-		return ExpensesComponent.smartTableSettings;
+	loadSettingsSmartTable() {
+		this.smartTableSettings = {
+			actions: false,
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			columns: {
+				valueDate: {
+					title: this.getTranslation('SM_TABLE.DATE'),
+					type: 'custom',
+					width: '20%',
+					renderComponent: DateViewComponent,
+					filter: false
+				},
+				vendorName: {
+					title: this.getTranslation('SM_TABLE.VENDOR'),
+					type: 'string'
+				},
+				categoryName: {
+					title: this.getTranslation('SM_TABLE.CATEGORY'),
+					type: 'string'
+				},
+				amount: {
+					title: this.getTranslation('SM_TABLE.VALUE'),
+					type: 'number',
+					width: '15%',
+					filter: false
+				},
+				notes: {
+					title: this.getTranslation('SM_TABLE.NOTES'),
+					type: 'string'
+				}
+			}
+		};
 	}
 
 	constructor(
@@ -102,6 +97,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		this.loadSettingsSmartTable();
+		this._applyTranslationOnSmartTable();
+
 		this.hasRole = await this.authService
 			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
 			.pipe(first())
@@ -267,7 +265,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				}
 			};
 
-			ExpensesComponent.smartTableSettings.columns['employee'] = {
+			this.smartTableSettings['columns']['employee'] = {
 				title: 'Employee',
 				type: 'string',
 				valuePrepareFunction: (_, expense: Expense) => {
@@ -287,7 +285,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				}
 			};
 
-			delete ExpensesComponent.smartTableSettings.columns['employee'];
+			delete this.smartTableSettings['columns']['employee'];
 		}
 
 		try {
@@ -322,8 +320,23 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translateService.get(prefix).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSettingsSmartTable();
+		});
+	}
+
 	ngOnDestroy() {
-		delete ExpensesComponent.smartTableSettings.columns['employee'];
+		delete this.smartTableSettings['columns']['employee'];
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}
