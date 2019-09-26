@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.7'
 
 services:
     nginx:
@@ -130,9 +130,11 @@ services:
         links:
             - db
         volumes:
-            - api:/usr/src/app
+            - .:/srv/gauzy
+            - webapp_node_modules:/srv/gauzy/node_modules
+            - api_node_modules:/srv/gauzy/apps/api/node_modules
         ports:
-            - 3000:3000
+            - '3000:3000'
         networks:
             - overlay
 
@@ -153,16 +155,17 @@ services:
             - db
             - api
         volumes:
-            - webapp:/usr/src/app
+            - .:/srv/gauzy
+            - webapp_node_modules:/srv/gauzy/node_modules
         ports:
-            - 4200:4200
+            - '4200:4200'
         networks:
             - overlay
 
 volumes:
+    webapp_node_modules:
+    api_node_modules:
     postgres_data:
-    webapp:
-    api:
     certificates:
 
 networks:

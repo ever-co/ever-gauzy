@@ -11,9 +11,11 @@
 		"envalid",
 		"fastify",
 		"healthcheck",
+		"letsencrypt",
 		"microservices",
 		"nestjs",
 		"nestjsx",
+		"nginx",
 		"nrwl",
 		"ormconfig",
 		"pgsql",
@@ -23,6 +25,7 @@
 		"toastr",
 		"typeorm",
 		"uploader",
+		"webapp",
 		"websockets"
 	],
 	"vsicons.presets.angular": true

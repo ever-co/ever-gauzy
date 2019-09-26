@@ -1,15 +1,18 @@
 dist
 tmp
 .github
+.circle
 .npmrc
 .travis.yml
 greenkeeper.json
-docker-compose.yml
+docker-compose*.yml
 *.md
 .deploy
 .git/
 .gitignore
+
 node_modules
+apps/api/node_modules
 
 # IDEs and editors
 .idea

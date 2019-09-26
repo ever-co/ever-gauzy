@@ -1,47 +1,47 @@
 # Webapp
 
-FROM node:alpine
+FROM node:alpine AS development
 
-RUN apk update
+RUN apk update \
+    && apk add libexecinfo libexecinfo-dev \
+    && npm i -g npm \
+    && apk --no-cache add --virtual builds-deps build-base \
+    snappy g++ snappy-dev gcc libgcc libstdc++ linux-headers autoconf automake make nasm python git \
+    && npm install --quiet node-gyp -g \ 
+    && npm config set python /usr/bin/python \
+    && npm install yarn -g
 
-RUN npm i -g npm
+RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
 
-RUN apk add libexecinfo libexecinfo-dev
+USER node
 
-RUN apk --no-cache add --virtual builds-deps build-base \
-  snappy g++ snappy-dev gcc libgcc libstdc++ linux-headers autoconf automake make nasm python git && \
-  npm install --quiet node-gyp -g
+WORKDIR /srv/gauzy
 
-RUN npm config set python /usr/bin/python
-
-RUN npm install yarn -g
-
-RUN npm install cross-env -g
-
-RUN npm install pm2 -g --unsafe-perm
-
-# Make our app folder (empty for now)
-RUN mkdir -p /usr/src/app
-
-# Provides cached layer for node_modules and bower_components
-COPY package.json /tmp/package.json
+COPY --chown=node:node package.json yarn.lock ./
+COPY --chown=node:node apps/api/package.json ./apps/api/package.json
 # COPY .snyk /tmp/.snyk
-COPY yarn.lock /tmp/yarn.lock
-RUN cd /tmp/ && yarn install
-RUN cp -a /tmp/node_modules /usr/src/app/
-RUN cd /usr/src/app
+RUN yarn install
 
-WORKDIR /usr/src/app
+FROM node:alpine AS production
+
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
+
+RUN npm install cross-env -g \
+    && npm install pm2 -g --unsafe-perm \
+    && chmod +x /wait
+
+USER node
+
+WORKDIR /srv/gauzy
+
 ARG NODE_OPTIONS="--max-old-space-size=2048"
 ENV NODE_OPTIONS $NODE_OPTIONS
 ENV NODE_ENV production
 
-# Bundle app source
-ADD . /usr/src/app
+COPY --from=development --chown=root:root /srv/gauzy/node_modules ./node_modules
+
+COPY . .
 
 EXPOSE 4200
-
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
-RUN chmod +x /wait
 
 CMD /wait && cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=2048 yarn run config:prod && yarn ng serve gauzy --disable-host-check --host 0.0.0.0 -c=production --prod
