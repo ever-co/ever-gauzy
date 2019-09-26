@@ -227,7 +227,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 	async deleteExpense() {
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
-				context: { recordType: 'Expense' }
+				context: {
+					recordType: this.getTranslation(
+						'FORM.DELETE_CONFIRMATION.EXPENSE'
+					)
+				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {

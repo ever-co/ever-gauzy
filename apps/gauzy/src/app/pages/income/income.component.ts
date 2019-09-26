@@ -238,7 +238,9 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	async deleteIncome() {
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
-				context: { recordType: 'Income' }
+				context: {
+					recordType: this.getTranslation('INCOME_PAGE.INCOME')
+				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {

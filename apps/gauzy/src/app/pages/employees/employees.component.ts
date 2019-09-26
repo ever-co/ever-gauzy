@@ -54,7 +54,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
-		private translateService: TranslateService,
+		private translate: TranslateService,
 		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
@@ -69,6 +69,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			});
 
 		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 
 		this.route.queryParamMap
 			.pipe(takeUntil(this._ngDestroy$))
@@ -136,7 +137,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: this.selectedEmployee.fullName + ' employee'
+					recordType:
+						this.selectedEmployee.fullName +
+						' ' +
+						this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
 				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
@@ -270,38 +274,38 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			actions: false,
 			columns: {
 				fullName: {
-					title: 'Full Name',
+					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
 					renderComponent: EmployeeFullNameComponent,
 					class: 'align-row'
 				},
 				email: {
-					title: 'Email',
+					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email'
 				},
 				averageIncome: {
-					title: 'Income (Average)',
+					title: this.getTranslation('SM_TABLE.INCOME'),
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageIncomeComponent
 				},
 				averageExpenses: {
-					title: 'Expenses (Average)',
+					title: this.getTranslation('SM_TABLE.EXPENSES'),
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageExpensesComponent
 				},
 				averageBonus: {
-					title: 'Bonus (Average)',
+					title: this.getTranslation('SM_TABLE.BONUS_AVG'),
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
 					renderComponent: EmployeeAverageBonusComponent
 				},
 				bonus: {
-					title: `Bonus (${
+					title: `${this.getTranslation('SM_TABLE.BONUS')} (${
 						monthNames[dateNow.getMonth() - 1]
 					} ${dateNow.getFullYear()})`,
 					type: 'custom',
@@ -310,7 +314,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					renderComponent: EmployeeBonusComponent
 				},
 				workStatus: {
-					title: 'Work Status',
+					title: this.getTranslation('SM_TABLE.WORK_STATUS'),
 					type: 'custom',
 					class: 'text-center',
 					width: '200px',
@@ -323,6 +327,22 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 				perPage: 8
 			}
 		};
+	}
+
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translate.get(prefix).subscribe((res) => {
+			result = res;
+		});
+		return result;
+	}
+
+	private _applyTranslationOnSmartTable() {
+		this.translate.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this._loadSmartTableSettings();
+			});
 	}
 
 	ngOnDestroy() {
