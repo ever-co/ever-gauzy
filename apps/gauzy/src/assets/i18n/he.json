@@ -17,12 +17,20 @@
 		"CATEGORY": "קטגוריה",
 		"VALUE": "ערך",
 		"NOTES": "הערות",
-		"NO_DATA": "אין נתונים עבור העובד שנבחר כעת"
+		"NO_DATA": "אין נתונים עבור העובד שנבחר כעת",
+		"FULL_NAME": "שם מלא",
+		"EMAIL": "אימייל",
+		"INCOME": "הכנסה) ממוצע)",
+		"EXPENSES": "הכנסה) הוצאות)",
+		"BONUS": "בונוס",
+		"BONUS_AVG": "הכנסה) בונוס)",
+		"WORK_STATUS": "סטטוס עבודה"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
 		"EMAIL": "דוא\"ל",
 		"PASSWORD": "סיסמה",
+		"CONFIRM": "אשר",
 		"LABELS": {
 			"NAME": "שם",
 			"FIRST_NAME": "שם פרטי",
@@ -48,7 +56,9 @@
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
-			"RECORD": "תקליט"
+			"RECORD": "תקליט",
+			"EMPLOYEE": "עובד",
+			"EXPENSE": "הוצאה"
 		}
 	},
 	"POP_UPS": {
