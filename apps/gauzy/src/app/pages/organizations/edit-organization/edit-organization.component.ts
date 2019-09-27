@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
@@ -21,7 +21,10 @@ import { monthNames } from '../../../@core/utils/date';
 	]
 })
 export class EditOrganizationComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
+	@ViewChild('name', { static: false }) name;
+	@ViewChild('date', { static: false }) date;
+	@ViewChild('expenseValue', { static: false }) expenseValue;
+
 	selectedOrg: Organization;
 	selectedDate: Date;
 	selectedOrgFromHeader: Organization;
@@ -31,6 +34,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	currencies = Object.values(CurrenciesEnum);
 	selectedCurrency: string;
 	showAddCard: boolean;
+
+	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private route: ActivatedRoute,
@@ -86,8 +91,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	}
 
 	async addOrgRecurringExpense(expense: OrganizationRecurringExpense) {
-		// TODO
-		// await this.organizationRecurringExpenseService.create(expense);
+		await this.organizationRecurringExpenseService.create(expense);
 
 		this.showAddCard = !this.showAddCard;
 	}
@@ -110,6 +114,17 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	getDefaultDate() {
 		const month = ('0' + (this.selectedDate.getMonth() + 1)).slice(-2);
 		return `${this.selectedDate.getFullYear()}-${month}`;
+	}
+
+	getDateValue(value: string): { month: number; year: number } {
+		if (value) {
+			const res = value.split('-');
+
+			return {
+				year: +res[0],
+				month: +res[1]
+			};
+		}
 	}
 
 	private async loadEmployeesCount() {

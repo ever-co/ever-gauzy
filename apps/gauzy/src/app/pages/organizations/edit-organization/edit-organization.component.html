@@ -77,10 +77,12 @@
 						(click)="
 							addOrgRecurringExpense({
 								orgId: selectedOrg.id,
-								month: date,
-								year: date,
-								categoryName: name,
-								value: expenseValue,
+								month: getDateValue(date.nativeElement.value)
+									.month,
+								year: getDateValue(date.nativeElement.value)
+									.year,
+								categoryName: name.nativeElement.value,
+								value: expenseValue.nativeElement.value,
 								currency: selectedCurrency
 							})
 						"
