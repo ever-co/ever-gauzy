@@ -22,7 +22,7 @@ export const createIncomes = async (
 	defaultIncome.organization = defaultData.org;
 	defaultIncome.amount = 20;
 	defaultIncome.clientId = '15';
-	defaultIncome.clientName = 'Alex Tasev';
+	defaultIncome.clientName = 'Gauzy';
 	defaultIncome.currency = currencies[0];
 	defaultIncome.valueDate = new Date();
 	defaultIncome.notes = 'notes';
@@ -30,20 +30,28 @@ export const createIncomes = async (
 	await insertIncome(connection, defaultIncome);
 
 	const randomIncomes: Income[] = [];
+	const clientsArray = ['Nabo', 'Urvex', 'CUEAudio', 'Ever', 'Gauzy'];
+	const notesArray = [
+		'Great job!',
+		'Well done!',
+		'Nice!',
+		'Done',
+		'Great job!'
+	];
 
-	for (let index = 1; index <= 4; index++) {
+	for (let index = 0; index < 5; index++) {
 		const income = new Income();
 
 		income.employee = randomData.employees[index];
-		income.clientName = faker.random.words(2);
+		income.clientName = clientsArray[index];
 		income.organization = randomData.orgs[index];
-		income.amount = faker.random.number();
+		income.amount = faker.random.number({ min: 10, max: 9999 });
 		income.clientId = faker.random
 			.number({ min: 10, max: 9999 })
 			.toString();
 		income.currency = currencies[(index % currencies.length) + 1 - 1];
 		income.valueDate = faker.date.recent(15);
-		income.notes = faker.random.words(6);
+		income.notes = notesArray[index];
 
 		await insertIncome(connection, income);
 		randomIncomes.push(income);

@@ -86,6 +86,9 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							null,
 							this._selectedOrganizationId
 						);
+						this.incomeService.getAll().then((data) => {
+							this.smartTableSource.load(data.items);
+						});
 					}
 				}
 			});
