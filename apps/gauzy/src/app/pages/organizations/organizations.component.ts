@@ -26,47 +26,6 @@ interface SelectedRow {
 	styleUrls: ['./organizations.component.scss']
 })
 export class OrganizationsComponent implements OnInit, OnDestroy {
-	settingsSmartTable = {
-		actions: false,
-		columns: {
-			name: {
-				title: 'Name',
-				type: 'custom',
-				renderComponent: OrganizationsFullnameComponent
-			},
-			totalEmployees: {
-				title: 'Employees',
-				type: 'custom',
-				width: '200px',
-				class: 'text-center',
-				filter: false,
-				renderComponent: OrganizationsEmployeesComponent
-			},
-			currency: {
-				title: 'Currency',
-				type: 'custom',
-				class: 'text-center',
-				width: '200px',
-				renderComponent: OrganizationsCurrencyComponent
-			},
-			status: {
-				title: 'Status',
-				type: 'custom',
-				class: 'text-center',
-				width: '200px',
-				filter: false,
-				renderComponent: OrganizationsStatusComponent
-			}
-		},
-		pager: {
-			display: true,
-			perPage: 8
-		}
-	};
-
-	selectedOrganization: Organization;
-	smartTableSource = new LocalDataSource();
-
 	constructor(
 		private organizationsService: OrganizationsService,
 		private toastrService: NbToastrService,
@@ -76,8 +35,54 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		private translateService: TranslateService
 	) {}
 
+	settingsSmartTable: object;
+	selectedOrganization: Organization;
+	smartTableSource = new LocalDataSource();
+
+	loadSettingsSmartTable() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				name: {
+					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
+					type: 'custom',
+					renderComponent: OrganizationsFullnameComponent
+				},
+				totalEmployees: {
+					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
+					type: 'custom',
+					width: '200px',
+					class: 'text-center',
+					filter: false,
+					renderComponent: OrganizationsEmployeesComponent
+				},
+				currency: {
+					title: this.getTranslation('SM_TABLE.CURRENCY'),
+					type: 'custom',
+					class: 'text-center',
+					width: '200px',
+					renderComponent: OrganizationsCurrencyComponent
+				},
+				status: {
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'custom',
+					class: 'text-center',
+					width: '200px',
+					filter: false,
+					renderComponent: OrganizationsStatusComponent
+				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
+			}
+		};
+	}
+
 	ngOnInit() {
 		this._loadSmartTable();
+		this.loadSettingsSmartTable();
+		this._applyTranslationOnSmartTable();
 	}
 
 	selectOrganization(data: SelectedRow) {
@@ -86,6 +91,21 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		} else {
 			this.selectedOrganization = null;
 		}
+	}
+
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translateService.get(prefix).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSettingsSmartTable();
+		});
 	}
 
 	async addOrganization() {

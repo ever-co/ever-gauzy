@@ -15,9 +15,11 @@
 		"CLIENT_NAME": "Client Name",
 		"VENDOR": "Vendor",
 		"CATEGORY": "Category",
+		"CURRENCY": "Currency",
 		"VALUE": "Value",
 		"NOTES": "Notes",
 		"EMPLOYEE": "Employee",
+		"EMPLOYEES": "Employees",
 		"NO_DATA": "No data for the currently selected employee.",
 		"FULL_NAME": "Full Name",
 		"EMAIL": "Email",
@@ -25,6 +27,7 @@
 		"EXPENSES": "Expenses (Average)",
 		"BONUS": "Bonus",
 		"BONUS_AVG": "Bonus (Average)",
+		"STATUS": "Status",
 		"WORK_STATUS": "Work Status"
 	},
 	"FORM": {

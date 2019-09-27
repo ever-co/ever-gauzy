@@ -15,8 +15,11 @@
 		"CLIENT_NAME": "שם הלקוח",
 		"VENDOR": "ספק",
 		"CATEGORY": "קטגוריה",
+		"CURRENCY": "מטבע",
 		"VALUE": "ערך",
 		"NOTES": "הערות",
+		"EMPLOYEE": "עובד",
+		"EMPLOYEES": "עובדים",
 		"NO_DATA": "אין נתונים עבור העובד שנבחר כעת",
 		"FULL_NAME": "שם מלא",
 		"EMAIL": "אימייל",
@@ -24,6 +27,7 @@
 		"EXPENSES": "הכנסה) הוצאות)",
 		"BONUS": "בונוס",
 		"BONUS_AVG": "הכנסה) בונוס)",
+		"STATUS": "עבודה",
 		"WORK_STATUS": "סטטוס עבודה"
 	},
 	"FORM": {
