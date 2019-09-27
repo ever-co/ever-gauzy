@@ -129,6 +129,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
 						this._loadTableData(this._selectedOrganizationId);
+
+						this.expenseService.getAll().then((data) => {
+							this.smartTableSource.load(data.items);
+						});
 					}
 				}
 			});
