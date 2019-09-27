@@ -72,42 +72,14 @@
 						>{{ 'BUTTONS.ADD' | translate }}
 					</button>
 				</span>
-				<span *ngIf="showAddCard">
-					<button
-						(click)="
-							addOrgRecurringExpense({
-								orgId: selectedOrg.id,
-								month: getDateValue(date.nativeElement.value)
-									.month,
-								year: getDateValue(date.nativeElement.value)
-									.year,
-								categoryName: name.nativeElement.value,
-								value: expenseValue.nativeElement.value,
-								currency: selectedCurrency
-							})
-						"
-						class="mr-2"
-						nbButton
-						status="success"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-					<button
-						(click)="showAddCard = !showAddCard"
-						nbButton
-						status="danger"
-					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button>
-				</span>
 			</div>
 		</div>
 
-		<div *ngIf="showAddCard" class="setting-block">
+		<div *ngIf="showAddCard" class="setting-block mb-5">
 			<div class="block-content w-100">
 				<div class="block-info w-100">
 					<form class="row">
-						<div class="col-3">
+						<div class="col-2">
 							<input
 								type="text"
 								#name
@@ -126,7 +98,7 @@
 								placeholder="Date"
 							/>
 						</div>
-						<div class="col-3">
+						<div class="col-2">
 							<input
 								type="number"
 								#expenseValue
@@ -136,7 +108,7 @@
 							/>
 						</div>
 
-						<div class="col-3">
+						<div class="col-2">
 							<nb-select
 								class="d-block"
 								placeholder="Select Currency"
@@ -148,6 +120,38 @@
 									>{{ currency }}</nb-option
 								>
 							</nb-select>
+						</div>
+						<div class="col-3 row m-0">
+							<div class="pr-2 pl-0 col-6">
+								<button
+									(click)="
+										addOrgRecurringExpense({
+											orgId: selectedOrg.id,
+											month: getDateValue(date.value)
+												.month,
+											year: getDateValue(date.value).year,
+											categoryName: name.value,
+											value: expenseValue.value,
+											currency: selectedCurrency
+										})
+									"
+									class="w-100"
+									nbButton
+									status="success"
+								>
+									{{ 'BUTTONS.SAVE' | translate }}
+								</button>
+							</div>
+							<div class="pl-2 pr-0 col-6">
+								<button
+									class="w-100"
+									(click)="showAddCard = !showAddCard"
+									nbButton
+									status="danger"
+								>
+									{{ 'BUTTONS.CANCEL' | translate }}
+								</button>
+							</div>
 						</div>
 					</form>
 				</div>
@@ -252,8 +256,10 @@
 					<span>{{ 'BUTTONS.EDIT' | translate }}</span>
 				</div>
 
-				<!-- (click)="deleteEmployeeRecurringExpense(i)" -->
-				<div class="single-setting">
+				<div
+					(click)="deleteOrgRecurringExpense(i)"
+					class="single-setting"
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="19"

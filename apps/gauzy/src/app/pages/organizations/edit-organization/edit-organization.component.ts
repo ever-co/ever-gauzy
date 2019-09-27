@@ -12,6 +12,8 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationRecurringExpenseService } from '../../../@core/services/organization-recurring-expense.service';
 import { monthNames } from '../../../@core/utils/date';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -21,10 +23,6 @@ import { monthNames } from '../../../@core/utils/date';
 	]
 })
 export class EditOrganizationComponent implements OnInit, OnDestroy {
-	@ViewChild('name', { static: false }) name;
-	@ViewChild('date', { static: false }) date;
-	@ViewChild('expenseValue', { static: false }) expenseValue;
-
 	selectedOrg: Organization;
 	selectedDate: Date;
 	selectedOrgFromHeader: Organization;
@@ -43,7 +41,9 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 		private organizationsService: OrganizationsService,
 		private employeesService: EmployeesService,
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
-		private store: Store
+		private store: Store,
+		private dialogService: NbDialogService,
+		private toastrService: NbToastrService
 	) {}
 
 	async ngOnInit() {
@@ -91,9 +91,21 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	}
 
 	async addOrgRecurringExpense(expense: OrganizationRecurringExpense) {
-		await this.organizationRecurringExpenseService.create(expense);
+		try {
+			await this.organizationRecurringExpenseService.create(expense);
+			this.showAddCard = !this.showAddCard;
 
-		this.showAddCard = !this.showAddCard;
+			this.toastrService.info(
+				'Organization recurring expense set.',
+				'Success'
+			);
+			this._loadOrgRecurringExpense();
+		} catch (error) {
+			this.toastrService.danger(
+				error.error ? error.error.message : error.message,
+				'Error'
+			);
+		}
 	}
 
 	ngOnDestroy() {
@@ -127,6 +139,40 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	async deleteOrgRecurringExpense(i) {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: { recordType: 'Organization recurring expense' }
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			try {
+				const deleteExpense = this.selectedOrgRecurringExpense[i];
+				if (deleteExpense) {
+					await this.organizationRecurringExpenseService.delete(
+						deleteExpense.id
+					);
+				} else {
+					throw new Error('Recurring monthly expense not found');
+				}
+
+				this.selectedRowIndexToShow = null;
+				this.toastrService.info(
+					'Organization recurring expense deleted.',
+					'Success'
+				);
+				this._loadOrgRecurringExpense();
+			} catch (error) {
+				this.toastrService.danger(
+					error.error ? error.error.message : error.message,
+					'Error'
+				);
+			}
+		}
+	}
+
 	private async loadEmployeesCount() {
 		const { total } = await this.employeesService
 			.getAll([], { organization: { id: this.selectedOrg.id } })
@@ -146,8 +192,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 					month: this.selectedDate.getMonth() + 1
 				}
 			)).items;
-
-			console.error(this.selectedOrgRecurringExpense);
 		}
 	}
 }
