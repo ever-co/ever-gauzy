@@ -1,12 +1,12 @@
 <div class="text-center" *ngIf="rowData.isActive; else archived">
 	<div class="text-center  badge-success">
-		Active
+		{{ 'ORGANIZATIONS_PAGE.ACTIVE' | translate }}
 	</div>
 </div>
 <ng-template #archived>
 	<div class="text-center">
 		<div class="badge-danger d-block">
-			Archived
+			{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
 		</div>
 	</div>
 </ng-template>

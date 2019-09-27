@@ -139,7 +139,9 @@
 		"CLIENTS": "לקוחות",
 		"POSITIONS": "עמדות",
 		"VENDORS": "ספקים",
-		"PROJECTS": "פרויקטים"
+		"PROJECTS": "פרויקטים",
+		"ACTIVE": "פעיל",
+		"ARCHIVED": "נשמר בארכיון"
 	},
 	"FOOTER": {
 		"BY": "על ידי",

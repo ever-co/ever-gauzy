@@ -140,7 +140,9 @@
 		"CLIENTS": "Клиенти",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Доставчици",
-		"PROJECTS": "Проекти"
+		"PROJECTS": "Проекти",
+		"ACTIVE": "Активна",
+		"ARCHIVED": "Архивирана"
 	},
 	"FOOTER": {
 		"BY": "от",

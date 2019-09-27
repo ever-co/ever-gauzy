@@ -129,7 +129,6 @@
 		"BACK_TO_WORK": "Вернуться к работе",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "Разработчик",
-
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция"
 		}
@@ -143,7 +142,9 @@
 		"CLIENTS": "Клиенты",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Вендоры",
-		"PROJECTS": "Проектов"
+		"PROJECTS": "Проектов",
+		"ACTIVE": "Активная",
+		"ARCHIVED": "В архиве"
 	},
 	"FOOTER": {
 		"BY": "по",

@@ -139,7 +139,9 @@
 		"CLIENTS": "Clients",
 		"POSITIONS": "Positions",
 		"VENDORS": "Vendors",
-		"PROJECTS": "Projects"
+		"PROJECTS": "Projects",
+		"ACTIVE": "Active",
+		"ARCHIVED": "Archived"
 	},
 	"FOOTER": {
 		"BY": "by",
