@@ -11,6 +11,7 @@ Gauzy™ - Fair Profits Sharing Open-Source Platform
 Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your agency or studio.
 
 Feel free to test:
+
 - Gauzy Platform Demo at <https://demo.gauzy.co> (login with `admin@ever.co` and password: `admin`)
 - Gauzy Platform SaaS at <https://app.gauzy.co> (WIP, planned)
 
