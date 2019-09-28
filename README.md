@@ -106,6 +106,7 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 ## Contact Us
 
+-   [Slack Community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU)
 -   [Spectrum Community](https://spectrum.chat/gauzy)
 -   [Gitter Chat](https://gitter.im/ever-co/gauzy)
 -   [CodeMentor](https://www.codementor.io/evereq)
