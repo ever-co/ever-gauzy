@@ -14,6 +14,7 @@ Feel free to test:
 
 - Gauzy Platform Demo at <https://demo.gauzy.co> (login with `admin@ever.co` and password: `admin`)
 - Gauzy Platform SaaS at <https://app.gauzy.co> (WIP, planned)
+- Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev>
 
 ## Quick Start
 
