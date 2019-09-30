@@ -23,6 +23,10 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 	]
 })
 export class EditOrganizationComponent implements OnInit, OnDestroy {
+	name: string;
+	date: string;
+	expenseValue: number;
+
 	selectedOrg: Organization;
 	selectedDate: Date;
 	selectedOrgFromHeader: Organization;
@@ -32,6 +36,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	currencies = Object.values(CurrenciesEnum);
 	selectedCurrency: string;
 	showAddCard: boolean;
+	editExpenseId: string;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -92,14 +97,25 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 	async addOrgRecurringExpense(expense: OrganizationRecurringExpense) {
 		try {
-			await this.organizationRecurringExpenseService.create(expense);
+			if (this.editExpenseId) {
+				await this.organizationRecurringExpenseService.update(
+					this.editExpenseId,
+					expense
+				);
+			} else {
+				await this.organizationRecurringExpenseService.create(expense);
+			}
+
 			this.showAddCard = !this.showAddCard;
 
 			this.toastrService.info(
-				'Organization recurring expense set.',
+				`Organization recurring expense ${
+					this.editExpenseId ? 'updated' : 'set'
+				}.`,
 				'Success'
 			);
 			this._loadOrgRecurringExpense();
+			this.clearMutationCard();
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,
@@ -173,6 +189,19 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	showEditCard(i) {
+		const editExpense = this.selectedOrgRecurringExpense[i];
+		if (editExpense) {
+			this.name = editExpense.categoryName;
+			this.expenseValue = editExpense.value;
+			const month = ('0' + editExpense.month).slice(-2);
+			this.date = `${editExpense.year}-${month}`;
+			this.editExpenseId = editExpense.id;
+
+			this.showAddCard = true;
+		}
+	}
+
 	private async loadEmployeesCount() {
 		const { total } = await this.employeesService
 			.getAll([], { organization: { id: this.selectedOrg.id } })
@@ -193,5 +222,14 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 				}
 			)).items;
 		}
+	}
+
+	private clearMutationCard() {
+		this.name = null;
+		this.date = null;
+		this.expenseValue = null;
+
+		this.selectedRowIndexToShow = null;
+		this.editExpenseId = null;
 	}
 }

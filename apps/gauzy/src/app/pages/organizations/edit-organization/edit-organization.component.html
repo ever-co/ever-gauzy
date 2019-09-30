@@ -64,7 +64,9 @@
 			<div>
 				<span *ngIf="!showAddCard">
 					<button
-						(click)="showAddCard = !showAddCard"
+						(click)="
+							showAddCard = !showAddCard; date = getDefaultDate()
+						"
 						nbButton
 						status="success"
 					>
@@ -75,14 +77,14 @@
 			</div>
 		</div>
 
-		<div *ngIf="showAddCard" class="setting-block mb-5">
+		<div *ngIf="showAddCard" class="setting-block mutation-card mb-5">
 			<div class="block-content w-100">
 				<div class="block-info w-100">
-					<form class="row">
+					<div class="row">
 						<div class="col-2">
 							<input
 								type="text"
-								#name
+								[(ngModel)]="name"
 								nbInput
 								fullWidth
 								placeholder="Name"
@@ -91,8 +93,7 @@
 						<div class="col-3">
 							<input
 								type="month"
-								value="{{ getDefaultDate() }}"
-								#date
+								[(ngModel)]="date"
 								nbInput
 								fullWidth
 								placeholder="Date"
@@ -101,7 +102,7 @@
 						<div class="col-2">
 							<input
 								type="number"
-								#expenseValue
+								[(ngModel)]="expenseValue"
 								nbInput
 								fullWidth
 								placeholder="Value"
@@ -127,11 +128,10 @@
 									(click)="
 										addOrgRecurringExpense({
 											orgId: selectedOrg.id,
-											month: getDateValue(date.value)
-												.month,
-											year: getDateValue(date.value).year,
-											categoryName: name.value,
-											value: expenseValue.value,
+											month: getDateValue(date).month,
+											year: getDateValue(date).year,
+											categoryName: name,
+											value: expenseValue,
 											currency: selectedCurrency
 										})
 									"
@@ -145,7 +145,10 @@
 							<div class="pl-2 pr-0 col-6">
 								<button
 									class="w-100"
-									(click)="showAddCard = !showAddCard"
+									(click)="
+										showAddCard = !showAddCard;
+										clearMutationCard()
+									"
 									nbButton
 									status="danger"
 								>
@@ -153,7 +156,7 @@
 								</button>
 							</div>
 						</div>
-					</form>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -212,9 +215,11 @@
 							xlink:href="#a"
 						/>
 					</svg>
-					<small *ngIf="selectedRowIndexToShow === i">{{
-						'BUTTONS.CLOSE' | translate
-					}}</small>
+					<small
+						(click)="selectedRowIndexToShow = null"
+						*ngIf="selectedRowIndexToShow === i"
+						>{{ 'BUTTONS.CLOSE' | translate }}</small
+					>
 					<span
 						*ngIf="selectedRowIndexToShow !== i"
 						class="block-actions open"
@@ -233,8 +238,7 @@
 					width: selectedRowIndexToShow === i ? '150px' : '0'
 				}"
 			>
-				<!-- (click)="editEmployeeRecurringExpense(i)" -->
-				<div class="single-setting">
+				<div (click)="showEditCard(i)" class="single-setting">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="19"
