@@ -2,7 +2,9 @@ import { Component, Input, OnInit } from '@angular/core';
 import {
 	OrganizationProjects,
 	OrganizationClients,
-	OrganizationProjectsCreateInput
+	OrganizationProjectsCreateInput,
+	ProjectTypeEnum,
+	CurrenciesEnum
 } from '@gauzy/models';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
@@ -19,8 +21,12 @@ export class EditOrganizationProjectsComponent implements OnInit {
 
 	projects: OrganizationProjects[];
 	clients: OrganizationClients[];
+	types: string[] = Object.values(ProjectTypeEnum);
+	currencies: string[] = Object.values(CurrenciesEnum);
 
 	selectedClient: OrganizationClients;
+	selectedType: string;
+	selectedCurrency: string;
 
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
