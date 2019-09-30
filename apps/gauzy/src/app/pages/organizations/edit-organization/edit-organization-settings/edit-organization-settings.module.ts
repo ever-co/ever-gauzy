@@ -8,7 +8,8 @@ import {
 	NbSelectModule,
 	NbListModule,
 	NbTabsetModule,
-	NbActionsModule
+	NbActionsModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
@@ -60,7 +61,8 @@ import { EditOrganizationProjectsComponent } from './edit-organization-projects/
 		NbSelectModule,
 		RemoveLodashModule,
 		NbListModule,
-		NbTabsetModule
+		NbTabsetModule,
+		NbDatepickerModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

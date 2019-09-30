@@ -7,7 +7,7 @@ import {
 	ManyToMany
 } from 'typeorm';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsDate } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationProjects as IOrganizationProjects } from '@gauzy/models';
@@ -37,6 +37,30 @@ export class OrganizationProjects extends Base
 	})
 	@JoinColumn()
 	client?: OrganizationClients;
+
+	@ApiModelPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	startDate?: Date;
+
+	@ApiModelPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	endDate?: Date;
+
+	@ApiModelProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Column()
+	type: string;
+
+	@ApiModelProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Column()
+	currency: string;
 
 	@ApiModelPropertyOptional({ type: Employee, isArray: true })
 	@ManyToMany((type) => Employee, { nullable: true, onDelete: 'CASCADE' })

@@ -49,3 +49,9 @@ export enum DefaultValueDateTypeEnum {
 	END_OF_MONTH = 'END_OF_MONTH',
 	START_OF_MONTH = 'START_OF_MONTH'
 }
+
+export enum ProjectTypeEnum {
+	RATE = 'RATE',
+	FLAT_FEE = 'FLAT_FEE',
+	MILESTONES = 'MILESTONES'
+}
