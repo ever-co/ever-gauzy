@@ -8,6 +8,7 @@ import {
 } from '@gauzy/models';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-org-projects',
@@ -27,10 +28,14 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	selectedClient: OrganizationClients;
 	selectedType: string;
 	selectedCurrency: string;
+	startDateValue: Date;
+	endDateValue: Date;
+	defaultCurrency: string;
 
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
-		private readonly organizationProjectsService: OrganizationProjectsService
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private store: Store
 	) {}
 
 	ngOnInit(): void {
@@ -64,6 +69,10 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	}
 
 	private async loadProjects() {
+		this.defaultCurrency = this.store.selectedOrganization
+			? this.store.selectedOrganization.currency
+			: 'USD';
+
 		const res = await this.organizationProjectsService.getAll(['client'], {
 			organizationId: this.organizationId
 		});
