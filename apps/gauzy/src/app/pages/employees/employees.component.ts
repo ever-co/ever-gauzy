@@ -45,6 +45,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	profitStatistics: number[];
 	bonusStatistics: number[];
 	averageBonus: number;
+	averageExpense: number;
+	averageIncome: number;
 	statistics: any;
 
 	constructor(
@@ -95,6 +97,32 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		this.bonusStatistics = this.statistics.bonusStatistics;
 
 		if (
+			this.expenseStatistics.filter(Number).reduce((a, b) => a + b, 0) !==
+			0
+		) {
+			this.averageExpense =
+				this.expenseStatistics
+					.filter(Number)
+					.reduce((a, b) => a + b, 0) /
+				this.expenseStatistics.filter(Number).length;
+		} else {
+			this.averageExpense = 0;
+		}
+
+		if (
+			this.incomeStatistics.filter(Number).reduce((a, b) => a + b, 0) !==
+			0
+		) {
+			this.averageIncome =
+				this.incomeStatistics
+					.filter(Number)
+					.reduce((a, b) => a + b, 0) /
+				this.incomeStatistics.filter(Number).length;
+		} else {
+			this.averageIncome = 0;
+		}
+
+		if (
 			this.bonusStatistics.filter(Number).reduce((a, b) => a + b, 0) !== 0
 		) {
 			this.averageBonus =
@@ -103,9 +131,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		} else {
 			this.averageBonus = 0;
 		}
-		this.employeeStatisticsService.avarageBonus$.next(
-			Math.floor(this.averageBonus)
-		);
 	}
 
 	selectEmployeeTmp(ev: {
@@ -246,8 +271,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			if (emp.isActive) {
 				await this.getEmployeeStatistics(emp.id);
 
-				console.log(emp.id);
-				// console.log(this.averageBonus)
 				employeesVm.push({
 					fullName: `${emp.user.firstName} ${emp.user.lastName}`,
 					email: emp.user.email,
@@ -264,41 +287,13 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					imageUrl: emp.user.imageUrl,
 					// TODO: laod real bonus and bonusDate
 					bonus: Math.floor(1000 * Math.random()) + 10,
-					averageIncome: Math.floor(1000 * Math.random()) + 10,
-					averageExpenses: Math.floor(1000 * Math.random()) + 10,
+					averageIncome: Math.floor(this.averageIncome),
+					averageExpenses: Math.floor(this.averageExpense),
 					averageBonus: this.averageBonus,
 					bonusDate: Date.now()
 				});
 			}
 		}
-		// const employeesVm: EmployeeViewModel[] = items
-		// .filter((i) => i.isActive)
-		// .map((i) => {
-
-		// 	console.log(i)
-		// 	return {
-		// 		fullName: `${i.user.firstName} ${i.user.lastName}`,
-		// 		email: i.user.email,
-		// 		id: i.id,
-		// 		isActive: i.isActive,
-		// 		endWork: i.endWork ? new Date(i.endWork) : '',
-		// 		workStatus: i.endWork
-		// 			? new Date(i.endWork).getDate() +
-		// 			  ' ' +
-		// 			  monthNames[new Date(i.endWork).getMonth()] +
-		// 			  ' ' +
-		// 			  new Date(i.endWork).getFullYear()
-		// 			: '',
-		// 		imageUrl: i.user.imageUrl,
-		// 		// TODO: laod real bonus and bonusDate
-		// 		bonus: Math.floor(1000 * Math.random()) + 10,
-		// 		// averageIncome: Math.floor(1000 * Math.random()) + 10,
-		// 		averageIncome: i.id,
-		// 		averageExpenses: Math.floor(1000 * Math.random()) + 10,
-		// 		averageBonus: Math.floor(1000 * Math.random()) + 10,
-		// 		bonusDate: Date.now()
-		// 	};
-		// });
 
 		this.sourceSmartTable.load(employeesVm);
 
