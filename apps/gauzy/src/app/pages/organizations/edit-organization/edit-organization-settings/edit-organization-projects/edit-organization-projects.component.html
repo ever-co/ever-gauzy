@@ -124,24 +124,23 @@
 			<div class="col d-inline">Type</div>
 			<div class="col d-inline">Currency</div>
 		</div>
-		<nb-card *ngFor="let p of projects">
-			<nb-card-body class="row m-0">
-				<div class="col-2 d-inline">{{ p.name }}</div>
-				<div class="col d-inline">{{ p.client?.name }}</div>
-				<div class="col d-inline">{{ p.startDate | date }}</div>
-				<div class="col d-inline">{{ p.endDate | date }}</div>
-				<div class="col d-inline">
-					{{ p.type | removeLodash | titlecase }}
-				</div>
-				<div class="col d-inline">{{ p.currency }}</div>
-				<nb-actions class="float-right" e="medium">
-					<nb-action
-						(click)="removeProject(p.id)"
-						class="d-inline pr-0"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+		<br />
+		<div *ngFor="let p of projects" class="ml-3 mr-3 mb-3 row">
+			<div class="col-2 d-inline">{{ p.name }}</div>
+			<div class="col d-inline">{{ p.client?.name }}</div>
+			<div class="col d-inline">{{ p.startDate | date }}</div>
+			<div class="col d-inline">{{ p.endDate | date }}</div>
+			<div class="col d-inline text-left">
+				{{ p.type | removeLodash | titlecase }}
+			</div>
+			<div class="col d-inline text-center">{{ p.currency }}</div>
+			<nb-actions class="float-right" e="medium">
+				<nb-action
+					(click)="removeProject(p.id)"
+					class="d-inline pr-0"
+					icon="close"
+				></nb-action>
+			</nb-actions>
+		</div>
 	</nb-card-body>
 </nb-card>
