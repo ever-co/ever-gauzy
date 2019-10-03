@@ -28,6 +28,8 @@ export interface ViewDashboardExpenseHistory {
 	categoryName: string;
 	amount: number;
 	notes?: string;
+	recurring: boolean;
+	source: 'employee' | 'org';
 }
 
 @Component({
@@ -221,7 +223,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 				vendorName: e.vendorName,
 				categoryName: e.categoryName,
 				amount: e.amount,
-				notes: e.notes
+				notes: e.notes,
+				recurring: false,
+				source: 'employee'
 			}));
 		} else if (
 			data.employeeRecurringexpense &&
@@ -231,7 +235,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 				(e) => ({
 					valueDate: new Date(e.year, e.month),
 					categoryName: e.categoryName,
-					amount: e.value
+					amount: e.value,
+					recurring: true,
+					source: 'employee'
 				})
 			);
 		} else if (
@@ -241,7 +247,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			viewDashboardExpenseHistory = data.orgRecurringexpense.map((e) => ({
 				valueDate: new Date(e.year, e.month),
 				categoryName: e.categoryName,
-				amount: e.value
+				amount: e.value,
+				recurring: true,
+				source: 'org'
 			}));
 		}
 

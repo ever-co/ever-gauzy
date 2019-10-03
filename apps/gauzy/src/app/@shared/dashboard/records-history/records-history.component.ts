@@ -55,7 +55,9 @@ export class RecordsHistoryComponent implements OnInit {
 						categoryId: i.categoryId,
 						categoryName: i.categoryName,
 						amount: i.amount,
-						notes: i.notes
+						notes: i.notes,
+						recurring: i.recurring,
+						source: i.source
 					};
 				});
 				this.translatedType = this.getTranslation(
@@ -110,6 +112,20 @@ export class RecordsHistoryComponent implements OnInit {
 					editable: true,
 					noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
 					columns: {
+						source: {
+							title: 'Source',
+							type: 'html',
+							width: '8%',
+							valuePrepareFunction: (_, e) =>
+								`<div class='text-center'>
+								${
+									_ === 'org'
+										? '<i class="fas fa-building"></i>'
+										: '<i class="fas fa-user-alt"></i>'
+								}
+								</div>
+								`
+						},
 						valueDate: {
 							title: this.getTranslation('SM_TABLE.DATE'),
 							type: 'custom',
