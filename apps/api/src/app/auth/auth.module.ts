@@ -11,29 +11,27 @@ import { authenticate } from 'passport';
 import { FacebookStrategy } from './facebook.strategy';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Role]), CqrsModule],
-  controllers: [AuthController],
-  providers: [
-    AuthService,
-    UserService,
-    RoleService,
-    ...CommandHandlers,
-    GoogleStrategy,
-    FacebookStrategy
-  ],
-  exports: [AuthService]
+	imports: [TypeOrmModule.forFeature([User, Role]), CqrsModule],
+	controllers: [AuthController],
+	providers: [
+		AuthService,
+		UserService,
+		RoleService,
+		...CommandHandlers,
+		GoogleStrategy,
+		FacebookStrategy
+	],
+	exports: [AuthService]
 })
 export class AuthModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(
-        authenticate('facebook', {
-          session: false
-        })
-      )
-      .forRoutes('auth/facebook/token');
-  }
+	configure(consumer: MiddlewareConsumer) {
+		consumer
+			.apply(
+				authenticate('facebook', {
+					session: false,
+					scope: ['email']
+				})
+			)
+			.forRoutes('auth/facebook/token');
+	}
 }
-
-
-
