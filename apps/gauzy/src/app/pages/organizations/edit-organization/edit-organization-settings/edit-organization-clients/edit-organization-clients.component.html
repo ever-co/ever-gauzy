@@ -47,7 +47,9 @@
 							#name
 							nbInput
 							fullWidth
-							placeholder="Name"
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.EDIT.NAME' | translate
+							}}"
 						/>
 					</div>
 					<div class="form-group col-4">
@@ -56,7 +58,10 @@
 							#email
 							nbInput
 							fullWidth
-							placeholder="Primary Email"
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
+									| translate
+							}}"
 						/>
 					</div>
 					<div class="form-group col-4">
@@ -65,7 +70,9 @@
 							#phone
 							nbInput
 							fullWidth
-							placeholder="Primary Phone"
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
+							}}"
 						/>
 					</div>
 					<div class="form-group col-4">
@@ -74,7 +81,9 @@
 							#country
 							nbInput
 							fullWidth
-							placeholder="Country"
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate
+							}}"
 						/>
 					</div>
 					<div class="form-group col-4">
@@ -83,7 +92,9 @@
 							#city
 							nbInput
 							fullWidth
-							placeholder="City"
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.EDIT.CITY' | translate
+							}}"
 						/>
 					</div>
 					<div class="form-group col-4">
@@ -92,7 +103,9 @@
 							type="text"
 							nbInput
 							fullWidth
-							placeholder="Street"
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.EDIT.STREET' | translate
+							}}"
 						/>
 					</div>
 					<div class="form-group col-4">
@@ -100,7 +113,9 @@
 							[(selected)]="selectProjects"
 							multiple
 							fullWidth
-							placeholder="Projects"
+							placeholder="{{
+								'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
+							}}"
 						>
 							<nb-option
 								*ngFor="let p of projects"
@@ -115,13 +130,27 @@
 	</nb-card-header>
 	<nb-card-body *ngIf="clients?.length">
 		<div class="ml-3 mr-3 mb-3 row">
-			<div class="col-1 d-inline">Name</div>
-			<div class="col-2 d-inline">Primary Email</div>
-			<div class="col-2 d-inline">Primary Phone</div>
-			<div class="col-1 d-inline">Country</div>
-			<div class="col-1 d-inline">City</div>
-			<div class="col-2 d-inline">Street</div>
-			<div class="col-2 d-inline">Projects</div>
+			<div class="col-1 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.NAME' | translate }}
+			</div>
+			<div class="col-2 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate }}
+			</div>
+			<div class="col-2 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
+			</div>
+			<div class="col-1 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate }}
+			</div>
+			<div class="col-1 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.CITY' | translate }}
+			</div>
+			<div class="col-2 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.STREET' | translate }}
+			</div>
+			<div class="col-2 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
+			</div>
 			<div class="col-1 d-inline"></div>
 		</div>
 		<nb-card *ngFor="let c of clients">

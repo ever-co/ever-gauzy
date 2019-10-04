@@ -142,7 +142,17 @@
 		"VENDORS": "Vendors",
 		"PROJECTS": "Projects",
 		"ACTIVE": "Active",
-		"ARCHIVED": "Archived"
+		"ARCHIVED": "Archived",
+		"EDIT": {
+			"NEW_CLIENT": "Add new client",
+			"NAME": "Name",
+			"PRIMARY_EMAIL": "Primary Email",
+			"PHONE": "Primary Phone",
+			"COUNTRY": "Country",
+			"CITY": "City",
+			"STREET": "Street",
+			"PROJECTS": "Projects"
+		}
 	},
 	"FOOTER": {
 		"BY": "by",

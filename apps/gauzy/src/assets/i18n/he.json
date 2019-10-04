@@ -142,7 +142,17 @@
 		"VENDORS": "ספקים",
 		"PROJECTS": "פרויקטים",
 		"ACTIVE": "פעיל",
-		"ARCHIVED": "נשמר בארכיון"
+		"ARCHIVED": "נשמר בארכיון",
+		"EDIT": {
+			"NEW_CLIENT": "הוסף לקוח חדש",
+			"NAME": "שם",
+			"PRIMARY_EMAIL": "דוא\"ל עיקרי",
+			"PHONE": "מספר טלפון ראשי",
+			"COUNTRY": "מדינה",
+			"CITY": "עיר",
+			"STREET": "רחוב",
+			"PROJECTS": "פרויקטים"
+		}
 	},
 	"FOOTER": {
 		"BY": "על ידי",
