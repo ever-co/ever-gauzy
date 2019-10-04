@@ -73,6 +73,7 @@
 		"DATE": "Date",
 		"PICK_DATE": "Pick a Date",
 		"ALL_CLIENTS": "All Clients",
+		"ALL_VENDORS": "All Vendors",
 		"ALL_CATEGORIES": "All Categories",
 		"CATEGORY_NAME": "Category Name",
 		"EXPENSE_VALUE": "Expense Value",
