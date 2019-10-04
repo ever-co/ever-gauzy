@@ -56,7 +56,8 @@
 			"START_DATE": "Date",
 			"PICK_DATE": "Pick a Date",
 			"DATE_TYPE": "All Date Types",
-			"IMAGE_URL": "Image"
+			"IMAGE_URL": "Image",
+			"ADD_DEPARTMENT": "Add Department"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",
