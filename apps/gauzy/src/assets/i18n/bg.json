@@ -57,7 +57,8 @@
 			"START_DATE": "Дата",
 			"PICK_DATE": "Изберете дата",
 			"DATE_TYPE": "Всички типове дати",
-			"IMAGE_URL": "Снимка"
+			"IMAGE_URL": "Снимка",
+			"ADD_DEPARTMENT": "Добави Отдел"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",

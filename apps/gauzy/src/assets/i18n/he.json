@@ -56,7 +56,8 @@
 			"START_DATE": "תאריך",
 			"PICK_DATE": "תבחר תאריך",
 			"DATE_TYPE": "כל סוגי התאריכים",
-			"IMAGE_URL": "תמונה"
+			"IMAGE_URL": "תמונה",
+			"ADD_DEPARTMENT": "הוסף מחלקה"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",

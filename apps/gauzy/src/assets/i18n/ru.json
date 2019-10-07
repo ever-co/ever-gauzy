@@ -56,7 +56,8 @@
 			"START_DATE": "Дата",
 			"PICK_DATE": "Выбрать дату",
 			"DATE_TYPE": "Все типы дат",
-			"IMAGE_URL": "Изображение"
+			"IMAGE_URL": "Изображение",
+			"ADD_DEPARTMENT": "Добавить отдел"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Вы уверены, что хотите удалить",
