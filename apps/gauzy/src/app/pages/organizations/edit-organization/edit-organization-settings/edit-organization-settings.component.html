@@ -62,7 +62,10 @@
 						(mouseleave)="hoverState = false"
 					/>
 				</div>
-				<h6 class="text-center mt-2">{{ employeesCount }} Employees</h6>
+				<h6 class="text-center mt-2">
+					{{ employeesCount }}
+					{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
+				</h6>
 			</div>
 
 			<div *ngIf="organization" class="org-settings">
