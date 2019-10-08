@@ -43,7 +43,11 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="departments?.length">
-		<div class="ml-3 mb-4"><strong>Department name</strong></div>
+		<div class="ml-3 mb-4">
+			<strong>{{
+				'ORGANIZATIONS_PAGE.EDIT.DEPARTMENT_NAME' | translate
+			}}</strong>
+		</div>
 		<nb-card *ngFor="let d of departments">
 			<nb-card-body>
 				{{ d.name }}

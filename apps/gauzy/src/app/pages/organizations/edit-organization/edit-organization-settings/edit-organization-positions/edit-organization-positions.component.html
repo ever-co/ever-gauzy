@@ -15,7 +15,7 @@
 				class="col-8"
 				nbInput
 				type="text"
-				[placeholder]="'Add pstision'"
+				placeholder="{{ 'FORM.PLACEHOLDERS.ADD_POSITION' | translate }}"
 				fullWidth
 			/>
 			<span class="col-2 pl-2 pr-1"
@@ -41,7 +41,11 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="positions?.length">
-		<div class="ml-3 mb-4"><strong>Position name</strong></div>
+		<div class="ml-3 mb-4">
+			<strong>{{
+				'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
+			}}</strong>
+		</div>
 
 		<nb-card *ngFor="let p of positions">
 			<nb-card-body>
