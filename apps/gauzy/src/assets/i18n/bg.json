@@ -153,7 +153,8 @@
 			"COUNTRY": "Държава",
 			"CITY": "Град",
 			"STREET": "Улица",
-			"PROJECTS": "Проекти"
+			"PROJECTS": "Проекти",
+			"DEPARTMENT_NAME": "Име на отдела"
 		}
 	},
 	"FOOTER": {

@@ -152,7 +152,8 @@
 			"COUNTRY": "Country",
 			"CITY": "City",
 			"STREET": "Street",
-			"PROJECTS": "Projects"
+			"PROJECTS": "Projects",
+			"DEPARTMENT_NAME": "Department name"
 		}
 	},
 	"FOOTER": {

@@ -155,7 +155,8 @@
 			"COUNTRY": "Страна",
 			"CITY": "Город",
 			"STREET": "Улица",
-			"PROJECTS": "Проектов"
+			"PROJECTS": "Проектов",
+			"DEPARTMENT_NAME": "Название отдела"
 		}
 	},
 	"FOOTER": {

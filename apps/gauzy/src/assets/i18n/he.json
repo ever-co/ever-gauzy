@@ -152,7 +152,8 @@
 			"COUNTRY": "מדינה",
 			"CITY": "עיר",
 			"STREET": "רחוב",
-			"PROJECTS": "פרויקטים"
+			"PROJECTS": "פרויקטים",
+			"DEPARTMENT_NAME": "שם מחלקה"
 		}
 	},
 	"FOOTER": {
