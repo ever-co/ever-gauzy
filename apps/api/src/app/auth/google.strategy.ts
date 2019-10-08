@@ -18,7 +18,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 			clientSecret: env.googleConfig.clientSecret,
 			callbackURL: `${env.host}:${env.port}/api/auth/google/callback`,
 			passReqToCallback: true,
-			scope: ['profile']
+			scope: ['profile', 'email']
 		});
 	}
 
@@ -29,35 +29,15 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 		profile,
 		done: Function
 	) {
-		const { id, displayName, name, photos } = profile;
-		const { givenName, familyName } = name;
-		const imageUrl = photos[0].value;
-
-		// Get user default role
-		const employeeRole = await this._roleService.findOne({
-			name: RolesEnum.EMPLOYEE
-		});
-
-		const newUser: User = {
-			firstName: givenName,
-			lastName: familyName,
-			imageUrl: imageUrl,
-			thirdPartyId: id,
-			role: employeeRole,
-			username: displayName
-		};
+		const { emails } = profile;
 
 		try {
-			const { jwt, userId } = await this._authService.validateOAuthLogin(
-				id,
-				Provider.GOOGLE,
-				newUser
-			);
+			const {
+				success,
+				authData
+			} = await this._authService.validateOAuthLoginEmail(emails);
 
-			const user = {
-				jwt,
-				userId
-			};
+			const user = { success, authData };
 
 			done(null, user);
 		} catch (err) {

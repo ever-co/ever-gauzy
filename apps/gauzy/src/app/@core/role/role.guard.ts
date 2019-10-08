@@ -1,35 +1,45 @@
 import { Injectable } from '@angular/core';
 import {
-    ActivatedRouteSnapshot,
-    CanActivate,
-    Router,
-    RouterStateSnapshot
+	ActivatedRouteSnapshot,
+	CanActivate,
+	Router,
+	RouterStateSnapshot
 } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { first } from 'rxjs/operators';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
-    constructor(
-        private readonly router: Router,
-        private readonly authService: AuthService
-    ) { }
+	constructor(
+		private readonly router: Router,
+		private readonly authService: AuthService
+	) {}
 
-    async canActivate(
-        route: ActivatedRouteSnapshot,
-        state: RouterStateSnapshot
-    ) {
-        const expectedRole = route.data.expectedRole;
-        const hasRole = await this.authService.hasRole(expectedRole).pipe(first()).toPromise();
+	async canActivate(
+		route: ActivatedRouteSnapshot,
+		state: RouterStateSnapshot
+	) {
+		const expectedRole = route.data.expectedRole;
+		const hasRole = await this.authService
+			.hasRole(expectedRole)
+			.pipe(first())
+			.toPromise();
 
-        if (hasRole) {
-            return true;
-        }
+		// TODO remove but for now it will be useful for debugging before I've finish the authorization issue. https://github.com/ever-co/gauzy/issues/177
+		console.warn('RoleGuard');
+		console.warn('expectedRole');
+		console.warn(expectedRole);
+		console.warn('hasRole');
+		console.warn(hasRole);
 
-        this.router.navigate(['/auth/login'], {
-            queryParams: { returnUrl: state.url }
-        });
+		if (hasRole) {
+			return true;
+		}
 
-        return false;
-    }
+		this.router.navigate(['/auth/login'], {
+			queryParams: { returnUrl: state.url }
+		});
+
+		return false;
+	}
 }

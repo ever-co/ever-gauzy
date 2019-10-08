@@ -8,213 +8,219 @@ import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { get, post, Response } from 'request';
 
 export enum Provider {
-  GOOGLE = 'google',
-  FACEBOOK = 'facebook'
+	GOOGLE = 'google',
+	FACEBOOK = 'facebook'
 }
 
 @Injectable()
 export class AuthService {
-  saltRounds: number;
+	saltRounds: number;
 
-  constructor(private readonly userService: UserService) {
-    this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
-  }
+	constructor(private readonly userService: UserService) {
+		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
+	}
 
-  async getPasswordHash(password: string): Promise<string> {
-    return bcrypt.hash(password, this.saltRounds);
-  }
+	async getPasswordHash(password: string): Promise<string> {
+		return bcrypt.hash(password, this.saltRounds);
+	}
 
-  async login(
-    findObj: any,
-    password: string
-  ): Promise<{ user: User; token: string } | null> {
-    const user = await this.userService.findOne(findObj, {
-      relations: ['role']
-    });
+	async login(
+		findObj: any,
+		password: string
+	): Promise<{ user: User; token: string } | null> {
+		const user = await this.userService.findOne(findObj, {
+			relations: ['role']
+		});
 
-    if (!user || !(await bcrypt.compare(password, user.hash))) {
-      return null;
-    }
+		if (!user || !(await bcrypt.compare(password, user.hash))) {
+			return null;
+		}
 
-    const token = sign(
-      { id: user.id, role: user.role ? user.role.name : '' },
-      env.JWT_SECRET,
-      {}
-    ); // Never expires
+		const token = sign(
+			{ id: user.id, role: user.role ? user.role.name : '' },
+			env.JWT_SECRET,
+			{}
+		); // Never expires
 
-    delete user.hash;
+		delete user.hash;
 
-    return {
-      user,
-      token
-    };
-  }
+		return {
+			user,
+			token
+		};
+	}
 
-  async register(input: IUserRegistrationInput): Promise<User> {
-    const user = this.userService.create({
-      ...input.user,
-      ...(input.password
-        ? {
-            hash: await this.getPasswordHash(input.password)
-          }
-        : {})
-    });
+	async register(input: IUserRegistrationInput): Promise<User> {
+		const user = this.userService.create({
+			...input.user,
+			...(input.password
+				? {
+						hash: await this.getPasswordHash(input.password)
+				  }
+				: {})
+		});
 
-    return user;
-  }
+		return user;
+	}
 
-  async isAuthenticated(token: string): Promise<boolean> {
-    try {
-      const { id, thirdPartyId } = verify(token, env.JWT_SECRET) as {
-        id: string;
-        thirdPartyId: string;
-      };
+	async isAuthenticated(token: string): Promise<boolean> {
+		try {
+			const { id, thirdPartyId } = verify(token, env.JWT_SECRET) as {
+				id: string;
+				thirdPartyId: string;
+			};
 
-      let result: Promise<boolean>;
+			let result: Promise<boolean>;
 
-      if (thirdPartyId) {
-        result = this.userService.checkIfExistsThirdParty(thirdPartyId);
-      } else {
-        result = this.userService.checkIfExists(id);
-      }
+			if (thirdPartyId) {
+				result = this.userService.checkIfExistsThirdParty(thirdPartyId);
+			} else {
+				result = this.userService.checkIfExists(id);
+			}
 
-      return result;
-    } catch (err) {
-      if (err instanceof JsonWebTokenError) {
-        return false;
-      } else {
-        throw err;
-      }
-    }
-  }
+			return result;
+		} catch (err) {
+			if (err instanceof JsonWebTokenError) {
+				return false;
+			} else {
+				throw err;
+			}
+		}
+	}
 
-  async hasRole(token: string, roles: string[] = []): Promise<boolean> {
-    try {
-      const { id, role } = verify(token, env.JWT_SECRET) as {
-        id: string;
-        role: string;
-      };
+	async hasRole(token: string, roles: string[] = []): Promise<boolean> {
+		try {
+			const { id, role } = verify(token, env.JWT_SECRET) as {
+				id: string;
+				role: string;
+			};
 
-      return role ? roles.includes(role) : false;
-    } catch (err) {
-      if (err instanceof JsonWebTokenError) {
-        return false;
-      } else {
-        throw err;
-      }
-    }
-  }
+			console.log('hasRole');
+			console.log('{ id, role }');
+			console.log({ id, role });
+			console.log('roles');
+			console.log(roles);
 
-  async validateOAuthLogin(
-    thirdPartyId: string,
-    provider: Provider,
-    user: User
-  ): Promise<{ jwt: string; userId: string }> {
-    try {
-      const userExist = await this.isUserExist(thirdPartyId);
-      if (!userExist) {
-        await this.userService.createOne(user);
-      }
+			return role ? roles.includes(role) : false;
+		} catch (err) {
+			if (err instanceof JsonWebTokenError) {
+				return false;
+			} else {
+				throw err;
+			}
+		}
+	}
 
-      const userId = await this.getUserId(thirdPartyId);
-      const payload = { thirdPartyId, provider };
-      const jwt: string = sign(payload, env.JWT_SECRET, {});
+	async validateOAuthLoginEmail(
+		emails: Array<{ value: string; verified: boolean }>
+	): Promise<{
+		success: boolean;
+		authData: { jwt: string; userId: string };
+	}> {
+		let response = {
+			success: false,
+			authData: { jwt: null, userId: null }
+		};
 
-      return { jwt, userId };
-    } catch (err) {
-      throw new InternalServerErrorException('validateOAuthLogin', err.message);
-    }
-  }
+		try {
+			for (const { value } of emails) {
+				const userExist = await this.userService.checkIfExistsEmail(
+					value
+				);
+				if (userExist) {
+					const user = await this.userService.getUserByEmail(value);
+					const userId = user.id;
+					const userRole = user.role ? user.role.name : '';
+					const payload = { id: userId, role: userRole };
+					const jwt: string = sign(payload, env.JWT_SECRET, {});
+					response = { success: true, authData: { jwt, userId } };
+				}
+			}
+			return response;
+		} catch (err) {
+			throw new InternalServerErrorException(
+				'validateOAuthLoginEmail',
+				err.message
+			);
+		}
+	}
 
-  private async getUserId(userThirdPartyProviderId: string): Promise<string> {
-    const user = await this.userService.findOne({
-      thirdPartyId: userThirdPartyProviderId
-    });
-    const userId = user.id;
+	async createToken(user: { id: string }): Promise<{ token: string }> {
+		const token: string = sign({ id: user.id }, env.JWT_SECRET, {});
+		return { token };
+	}
 
-    return userId;
-  }
+	async requestFacebookRedirectUri(): Promise<{ redirectUri: string }> {
+		const {
+			clientId,
+			oauthRedirectUri,
+			state,
+			loginDialogUri
+		} = env.facebookConfig;
 
-  private async isUserExist(
-    userThirdPartyProviderId: string
-  ): Promise<boolean> {
-    const success = await this.userService.checkIfExistsThirdParty(
-      userThirdPartyProviderId
-    );
-    return success;
-  }
+		const queryParams: string[] = [
+			`client_id=${clientId}`,
+			`redirect_uri=${oauthRedirectUri}`,
+			`state=${state}`
+		];
 
-  async createToken(user: { id: string }): Promise<{ token: string }> {
-    const token: string = sign({ id: user.id }, env.JWT_SECRET, {});
-    return { token };
-  }
+		const redirectUri = `${loginDialogUri}?${queryParams.join('&')}`;
 
-  async requestFacebookRedirectUri(): Promise<{ redirectUri: string }> {
-    const {
-      clientId,
-      oauthRedirectUri,
-      state,
-      loginDialogUri
-    } = env.facebookConfig;
+		return { redirectUri };
+	}
 
-    const queryParams: string[] = [
-      `client_id=${clientId}`,
-      `redirect_uri=${oauthRedirectUri}`,
-      `state=${state}`
-    ];
+	async facebookSignIn(code: string, responseRedirectUse: any): Promise<any> {
+		const {
+			clientId,
+			oauthRedirectUri,
+			clientSecret,
+			accessTokenUri
+		} = env.facebookConfig;
 
-    const redirectUri = `${loginDialogUri}?${queryParams.join('&')}`;
+		const queryParams: string[] = [
+			`client_id=${clientId}`,
+			`redirect_uri=${oauthRedirectUri}`,
+			`client_secret=${clientSecret}`,
+			`code=${code}`
+		];
 
-    return { redirectUri };
-  }
+		const uri = `${accessTokenUri}?${queryParams.join('&')}`;
+		get(uri, (error: Error, res: Response, body: any) => {
+			if (error) {
+				console.error(error);
+				throw error;
+			} else if (body.error) {
+				console.error(body.error);
+				throw body.error;
+			}
 
-  async facebookSignIn(code: string, responseRedirectUse: any): Promise<any> {
-    const {
-      clientId,
-      oauthRedirectUri,
-      clientSecret,
-      accessTokenUri
-    } = env.facebookConfig;
+			const { access_token } = JSON.parse(body);
+			const { host, port } = environment;
 
-    const queryParams: string[] = [
-      `client_id=${clientId}`,
-      `redirect_uri=${oauthRedirectUri}`,
-      `client_secret=${clientSecret}`,
-      `code=${code}`
-    ];
+			post(
+				{
+					url: `${host}:${port}/api/auth/facebook/token`,
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded'
+					},
+					form: { access_token }
+				},
+				async (error: Error, res: Response, body: any) => {
+					if (error) {
+						console.error(error);
+						throw error;
+					} else if (body.error) {
+						console.error(body.error);
+						throw body.error;
+					}
 
-    const uri = `${accessTokenUri}?${queryParams.join('&')}`;
-    get(uri, (error: Error, res: Response, body: any) => {
-      if (error) {
-        console.error(error);
-        throw error;
-      } else if (body.error) {
-        console.error(body.error);
-        throw body.error;
-      }
-
-      const { access_token } = JSON.parse(body);
-      const { host, port } = environment;
-
-      post(
-        {
-          url: `${host}:${port}/api/auth/facebook/token`,
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          form: { access_token }
-        },
-        async (error: Error, res: Response, body: any) => {
-          if (error) {
-            console.error(error);
-            throw error;
-          } else if (body.error) {
-            console.error(body.error);
-            throw body.error;
-          }
-
-          const redirectSuccessUrl = body.replace('Found. Redirecting to ', '');
-          return responseRedirectUse.redirect(redirectSuccessUrl);
-        }
-      );
-    });
-  }
+					const redirectSuccessUrl = body.replace(
+						'Found. Redirecting to ',
+						''
+					);
+					return responseRedirectUse.redirect(redirectSuccessUrl);
+				}
+			);
+		});
+	}
 }

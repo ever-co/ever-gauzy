@@ -10,27 +10,49 @@ import { CrudService } from '../core/crud/crud.service';
 
 @Injectable()
 export class UserService extends CrudService<User> {
-  constructor(@InjectRepository(User) userRepository: Repository<User>) {
-    super(userRepository);
-  }
+	constructor(@InjectRepository(User) userRepository: Repository<User>) {
+		super(userRepository);
+	}
 
-  async checkIfExists(id: string): Promise<boolean> {
-    const count = await this.repository
-      .createQueryBuilder('user')
-      .where('user.id = :id', { id })
-      .getCount();
-    return count > 0;
-  }
+	async getUserByEmail(email: string): Promise<User> {
+		const user = await this.repository
+			.createQueryBuilder('user')
+			.where('user.email = :email', { email })
+			.getOne();
+		return user;
+	}
 
-  async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
-    const count = await this.repository
-      .createQueryBuilder('user')
-      .where('user.thirdPartyId = :thirdPartyId', { thirdPartyId })
-      .getCount();
-    return count > 0;
-  }
+	async getUserIdByEmail(email: string): Promise<string> {
+		const user = await this.getUserByEmail(email);
+		const userId = user.id;
+		return userId;
+	}
 
-  async createOne(user: User): Promise<InsertResult> {
-    return await this.repository.insert(user);
-  }
+	async checkIfExistsEmail(email: string): Promise<boolean> {
+		const count = await this.repository
+			.createQueryBuilder('user')
+			.where('user.email = :email', { email })
+			.getCount();
+		return count > 0;
+	}
+
+	async checkIfExists(id: string): Promise<boolean> {
+		const count = await this.repository
+			.createQueryBuilder('user')
+			.where('user.id = :id', { id })
+			.getCount();
+		return count > 0;
+	}
+
+	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
+		const count = await this.repository
+			.createQueryBuilder('user')
+			.where('user.thirdPartyId = :thirdPartyId', { thirdPartyId })
+			.getCount();
+		return count > 0;
+	}
+
+	async createOne(user: User): Promise<InsertResult> {
+		return await this.repository.insert(user);
+	}
 }
