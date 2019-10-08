@@ -57,7 +57,9 @@
 			"PICK_DATE": "תבחר תאריך",
 			"DATE_TYPE": "כל סוגי התאריכים",
 			"IMAGE_URL": "תמונה",
-			"ADD_DEPARTMENT": "הוסף מחלקה"
+			"ADD_DEPARTMENT": "הוסף מחלקה",
+			"ADD_POSITION": "הוסף ספיגה",
+			"ADD_VENDOR": "הוסף ספק"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
@@ -153,7 +155,8 @@
 			"CITY": "עיר",
 			"STREET": "רחוב",
 			"PROJECTS": "פרויקטים",
-			"DEPARTMENT_NAME": "שם מחלקה"
+			"DEPARTMENT_NAME": "שם מחלקה",
+			"POSITION_NAME": "שם המיקום"
 		}
 	},
 	"FOOTER": {

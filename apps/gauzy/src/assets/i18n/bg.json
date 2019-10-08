@@ -58,7 +58,9 @@
 			"PICK_DATE": "Изберете дата",
 			"DATE_TYPE": "Всички типове дати",
 			"IMAGE_URL": "Снимка",
-			"ADD_DEPARTMENT": "Добави Отдел"
+			"ADD_DEPARTMENT": "Добави Отдел",
+			"ADD_POSITION": "Добави позиция",
+			"ADD_VENDOR": "Добави доставчик"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
@@ -154,7 +156,8 @@
 			"CITY": "Град",
 			"STREET": "Улица",
 			"PROJECTS": "Проекти",
-			"DEPARTMENT_NAME": "Име на отдела"
+			"DEPARTMENT_NAME": "Име на отдела",
+			"POSITION_NAME": "Название на позиция"
 		}
 	},
 	"FOOTER": {

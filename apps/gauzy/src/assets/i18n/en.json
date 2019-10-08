@@ -57,7 +57,9 @@
 			"PICK_DATE": "Pick a Date",
 			"DATE_TYPE": "All Date Types",
 			"IMAGE_URL": "Image",
-			"ADD_DEPARTMENT": "Add Department"
+			"ADD_DEPARTMENT": "Add Department",
+			"ADD_POSITION": "Add pоstision",
+			"ADD_VENDOR": "Add vendor"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",
@@ -153,7 +155,8 @@
 			"CITY": "City",
 			"STREET": "Street",
 			"PROJECTS": "Projects",
-			"DEPARTMENT_NAME": "Department name"
+			"DEPARTMENT_NAME": "Department name",
+			"POSITION_NAME": "Position name"
 		}
 	},
 	"FOOTER": {
