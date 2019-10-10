@@ -50,16 +50,21 @@
 			"LAST_NAME": "Last Name",
 			"COMPANY_NAME": "Company name",
 			"ALL_EMPLOYEES": "All Employees",
+			"CURRENCY": "Currency",
 			"ALL_CURRENCIES": "All Currencies",
 			"ALL_DEPARTMENTS": "All Departments",
 			"ALL_POSITIONS": "All Positions",
 			"START_DATE": "Date",
 			"PICK_DATE": "Pick a Date",
 			"DATE_TYPE": "All Date Types",
+			"TYPE": "Type",
 			"IMAGE_URL": "Image",
 			"ADD_DEPARTMENT": "Add Department",
 			"ADD_POSITION": "Add pоstision",
-			"ADD_VENDOR": "Add vendor"
+			"ADD_VENDOR": "Add vendor",
+			"CLIENTS": "Clients",
+			"START_DATE_PROJECT": "Project Start Date (optional)",
+			"END_DATE_PROJECT": "Project End Date (optional)"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",
@@ -147,6 +152,7 @@
 		"ACTIVE": "Active",
 		"ARCHIVED": "Archived",
 		"EDIT": {
+			"CLIENT": "Client",
 			"NEW_CLIENT": "Add new client",
 			"NAME": "Name",
 			"PRIMARY_EMAIL": "Primary Email",
@@ -156,7 +162,12 @@
 			"STREET": "Street",
 			"PROJECTS": "Projects",
 			"DEPARTMENT_NAME": "Department name",
-			"POSITION_NAME": "Position name"
+			"POSITION_NAME": "Position name",
+			"NEW_PROJECT": "Add new project",
+			"START_DATE": "Start Date",
+			"END_DATE": "End Date",
+			"TYPE": "Type",
+			"CURRENCY": "Currency"
 		}
 	},
 	"FOOTER": {
