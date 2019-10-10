@@ -50,16 +50,21 @@
 			"LAST_NAME": "שם משפחה",
 			"COMPANY_NAME": "שם החברה",
 			"ALL_EMPLOYEES": "כל העובדים",
+			"CURRENCY": "מטבע",
 			"ALL_CURRENCIES": "כל המטבעות",
 			"ALL_DEPARTMENTS": "כל המחלקות",
 			"ALL_POSITIONS": "כל העמדות",
 			"START_DATE": "תאריך",
 			"PICK_DATE": "תבחר תאריך",
+			"TYPE": "סוג",
 			"DATE_TYPE": "כל סוגי התאריכים",
 			"IMAGE_URL": "תמונה",
 			"ADD_DEPARTMENT": "הוסף מחלקה",
 			"ADD_POSITION": "הוסף ספיגה",
-			"ADD_VENDOR": "הוסף ספק"
+			"ADD_VENDOR": "הוסף ספק",
+			"CLIENTS": "לקוחות",
+			"START_DATE_PROJECT": "תאריך התחלת הפרויקט",
+			"END_DATE_PROJECT": "תאריך סיום של הפרויקט"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
@@ -147,6 +152,7 @@
 		"ACTIVE": "פעיל",
 		"ARCHIVED": "נשמר בארכיון",
 		"EDIT": {
+			"CLIENT": "Client",
 			"NEW_CLIENT": "הוסף לקוח חדש",
 			"NAME": "שם",
 			"PRIMARY_EMAIL": "דוא\"ל עיקרי",
@@ -156,7 +162,12 @@
 			"STREET": "רחוב",
 			"PROJECTS": "פרויקטים",
 			"DEPARTMENT_NAME": "שם מחלקה",
-			"POSITION_NAME": "שם המיקום"
+			"POSITION_NAME": "שם המיקום",
+			"NEW_PROJECT": "הוסף פרויקט חדש",
+			"START_DATE": "תאריך התחלה",
+			"END_DATE": "תאריך סיום",
+			"TYPE": "סוג",
+			"CURRENCY": "מטבע"
 		}
 	},
 	"FOOTER": {

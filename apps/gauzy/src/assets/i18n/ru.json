@@ -50,16 +50,21 @@
 			"LAST_NAME": "Фамилия",
 			"COMPANY_NAME": "Название компании",
 			"ALL_EMPLOYEES": "Все работники",
+			"CURRENCY": "Валюта",
 			"ALL_CURRENCIES": "Все валюты",
 			"ALL_DEPARTMENTS": "Все отделы",
 			"ALL_POSITIONS": "Все позиции",
 			"START_DATE": "Дата",
 			"PICK_DATE": "Выбрать дату",
+			"TYPE": "Тип",
 			"DATE_TYPE": "Все типы дат",
 			"IMAGE_URL": "Изображение",
 			"ADD_DEPARTMENT": "Добавить отдел",
 			"ADD_POSITION": "Добавить позицию",
-			"ADD_VENDOR": "Добавить поставщика"
+			"ADD_VENDOR": "Добавить поставщика",
+			"CLIENTS": "Клиенты",
+			"START_DATE_PROJECT": "Дата начала (необязательно)",
+			"END_DATE_PROJECT": "Дата окончания (необязательно)"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Вы уверены, что хотите удалить",
@@ -150,6 +155,7 @@
 		"ACTIVE": "Активная",
 		"ARCHIVED": "В архиве",
 		"EDIT": {
+			"CLIENT": "Kлиент",
 			"NEW_CLIENT": "Добавить нового клиента",
 			"NAME": "Имя",
 			"PRIMARY_EMAIL": "Основной адрес э-почты",
@@ -159,7 +165,12 @@
 			"STREET": "Улица",
 			"PROJECTS": "Проектов",
 			"DEPARTMENT_NAME": "Название отдела",
-			"POSITION_NAME": "Название должности"
+			"POSITION_NAME": "Название должности",
+			"NEW_PROJECT": "Добавить новый проект",
+			"START_DATE": "Дата начала",
+			"END_DATE": "Дата окончания",
+			"TYPE": "Тип",
+			"CURRENCY": "Валюта"
 		}
 	},
 	"FOOTER": {

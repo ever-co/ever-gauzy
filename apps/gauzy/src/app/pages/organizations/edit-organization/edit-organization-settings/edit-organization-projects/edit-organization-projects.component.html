@@ -10,7 +10,9 @@
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 		<nb-card *ngIf="showAddCard">
-			<nb-card-header>Add new project</nb-card-header>
+			<nb-card-header>{{
+				'ORGANIZATIONS_PAGE.EDIT.NEW_PROJECT' | translate
+			}}</nb-card-header>
 			<nb-card-body>
 				<div class="form-group">
 					<button
@@ -48,14 +50,18 @@
 							#name
 							nbInput
 							fullWidth
-							placeholder="Name"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.NAME' | translate
+							}}"
 						/>
 					</div>
 					<div class="form-group col-4">
 						<nb-select
 							(selectedChange)="onClientsSelected($event)"
 							fullWidth
-							placeholder="Clients"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.CLIENTS' | translate
+							}}"
 						>
 							<nb-option
 								*ngFor="let c of clients"
@@ -67,7 +73,9 @@
 					<div class="form-group col-4">
 						<nb-select
 							fullWidth
-							placeholder="Type"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.TYPE' | translate
+							}}"
 							[(selected)]="selectedType"
 						>
 							<nb-option *ngFor="let t of types" value="{{ t }}">
@@ -78,7 +86,9 @@
 					<div class="form-group col-4">
 						<nb-select
 							fullWidth
-							placeholder="Currency"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.CURRENCY' | translate
+							}}"
 							[(selected)]="selectedCurrency"
 						>
 							<nb-option
@@ -96,7 +106,10 @@
 							fullWidth
 							[(ngModel)]="startDateValue"
 							[ngModelOptions]="{ standalone: true }"
-							placeholder="Project Start Date (optional)"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.START_DATE_PROJECT'
+									| translate
+							}}"
 						/>
 						<nb-datepicker #startDate></nb-datepicker>
 					</div>
@@ -107,7 +120,9 @@
 							fullWidth
 							[(ngModel)]="endDateValue"
 							[ngModelOptions]="{ standalone: true }"
-							placeholder="Project End Date (optional)"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
+							}}"
 						/>
 						<nb-datepicker #endDate></nb-datepicker>
 					</div>
@@ -117,12 +132,24 @@
 	</nb-card-header>
 	<nb-card-body *ngIf="projects?.length">
 		<div class="ml-3 mr-3 mb-3 row">
-			<div class="col-2 d-inline">Name</div>
-			<div class="col d-inline">Client</div>
-			<div class="col-2 d-inline">Start Date</div>
-			<div class="col d-inline">End Date</div>
-			<div class="col d-inline">Type</div>
-			<div class="col d-inline">Currency</div>
+			<div class="col-2 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.NAME' | translate }}
+			</div>
+			<div class="col d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.CLIENT' | translate }}
+			</div>
+			<div class="col-2 d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.START_DATE' | translate }}
+			</div>
+			<div class="col d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.END_DATE' | translate }}
+			</div>
+			<div class="col d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.TYPE' | translate }}
+			</div>
+			<div class="col d-inline">
+				{{ 'ORGANIZATIONS_PAGE.EDIT.CURRENCY' | translate }}
+			</div>
 		</div>
 		<br />
 		<div *ngFor="let p of projects" class="ml-3 mr-3 mb-3 row">
