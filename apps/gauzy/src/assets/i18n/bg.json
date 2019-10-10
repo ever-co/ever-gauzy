@@ -51,22 +51,27 @@
 			"LAST_NAME": "Фамилия",
 			"COMPANY_NAME": "Име на компанията",
 			"ALL_EMPLOYEES": "Всички служители",
+			"CURRENCY": "Валута",
 			"ALL_CURRENCIES": "Всички валути",
 			"ALL_DEPARTMENTS": "Всички отдели",
 			"ALL_POSITIONS": "Всички позиции",
 			"START_DATE": "Дата",
 			"PICK_DATE": "Изберете дата",
+			"TYPE": "Тип",
 			"DATE_TYPE": "Всички типове дати",
 			"IMAGE_URL": "Снимка",
 			"ADD_DEPARTMENT": "Добави Отдел",
 			"ADD_POSITION": "Добави позиция",
-			"ADD_VENDOR": "Добави доставчик"
+			"ADD_VENDOR": "Добави доставчик",
+			"CLIENTS": "Клиенти",
+			"START_DATE_PROJECT": "Начало на проекта (опция)",
+			"END_DATE_PROJECT": "Край на проекта (опция)"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
 			"EMPLOYEE": "служителски",
-			"EXPENSE": "Разходен"
+			"EXPENSE": "разходен"
 		}
 	},
 	"POP_UPS": {
@@ -148,6 +153,7 @@
 		"ACTIVE": "Активна",
 		"ARCHIVED": "Архивирана",
 		"EDIT": {
+			"CLIENT": "Клиент",
 			"NEW_CLIENT": "Добавяне на нов клиент",
 			"NAME": "Име",
 			"PRIMARY_EMAIL": "Основна Е-поща",
@@ -157,7 +163,12 @@
 			"STREET": "Улица",
 			"PROJECTS": "Проекти",
 			"DEPARTMENT_NAME": "Име на отдела",
-			"POSITION_NAME": "Название на позиция"
+			"POSITION_NAME": "Название на позиция",
+			"NEW_PROJECT": "Добавяне на нов проект",
+			"START_DATE": "Начална дата",
+			"END_DATE": "Крайна дата",
+			"TYPE": "Тип",
+			"CURRENCY": "Валута"
 		}
 	},
 	"FOOTER": {
