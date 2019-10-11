@@ -28,7 +28,13 @@
 		"BONUS": "Bonus",
 		"BONUS_AVG": "Bonus (Average)",
 		"STATUS": "Status",
-		"WORK_STATUS": "Work Status"
+		"WORK_STATUS": "Work Status",
+		"TODAY": "Today",
+		"END_OF_MONTH": "End Of Month",
+		"START_OF_MONTH": "Start Of Month",
+		"RATE": "Rate",
+		"FLAT_FEE": "Flat Fee",
+		"MILESTONES": "Milestones"
 	},
 	"FORM": {
 		"USERNAME": "Username",
