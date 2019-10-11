@@ -11,31 +11,49 @@ import { IPagination } from '../core';
 @ApiUseTags('Income')
 @Controller()
 export class IncomeController extends CrudController<Income> {
-  constructor(private readonly incomeService: IncomeService,
-    private readonly commandBus: CommandBus) {
-    super(incomeService);
-  }
+	constructor(
+		private readonly incomeService: IncomeService,
+		private readonly commandBus: CommandBus
+	) {
+		super(incomeService);
+	}
 
-  @ApiOperation({ title: 'Find all income.' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Found income', type: Income })
-  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
-  @Get()
-  async findAllIncome(@Query('data') data: string): Promise<IPagination<Income>> {
-    const { relations, findInput, filterDate } = JSON.parse(data);
+	@ApiOperation({ title: 'Find all income.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found income',
+		type: Income
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAllIncome(
+		@Query('data') data: string
+	): Promise<IPagination<Income>> {
+		const { relations, findInput, filterDate } = JSON.parse(data);
+		return this.incomeService.findAll(
+			{ where: findInput, relations },
+			filterDate
+		);
+	}
 
-    return this.incomeService.findAll({ where: findInput, relations }, filterDate);
-  }
-
-  @ApiOperation({ title: 'Create new record' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: 'The record has been successfully created.' /*, type: T*/ })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input, The response body may contain clues as to what went wrong',
-  })
-  @Post('/create')
-  async create(@Body() entity: IIncomeCreateInput, ...options: any[]): Promise<Income> {
-    return this.commandBus.execute(
-      new IncomeCreateCommand(entity)
-    );
-  }
+	@ApiOperation({ title: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('/create')
+	async create(
+		@Body() entity: IIncomeCreateInput,
+		...options: any[]
+	): Promise<Income> {
+		return this.commandBus.execute(new IncomeCreateCommand(entity));
+	}
 }

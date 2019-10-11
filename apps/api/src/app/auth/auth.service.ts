@@ -94,13 +94,6 @@ export class AuthService {
 				id: string;
 				role: string;
 			};
-
-			console.log('hasRole');
-			console.log('{ id, role }');
-			console.log({ id, role });
-			console.log('roles');
-			console.log(roles);
-
 			return role ? roles.includes(role) : false;
 		} catch (err) {
 			if (err instanceof JsonWebTokenError) {
