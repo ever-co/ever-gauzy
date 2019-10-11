@@ -67,17 +67,6 @@ export class ThemeSettingsComponent {
 		this.currentLang = translate.defaultLang;
 	}
 
-	get isRtl() {
-		return this.directionService.isRtl();
-	}
-
-	toggleFlow() {
-		const oppositeDirection = this.isRtl
-			? NbLayoutDirection.LTR
-			: NbLayoutDirection.RTL;
-		this.directionService.setDirection(oppositeDirection);
-	}
-
 	toggleTheme() {
 		this.themeService.changeTheme(this.currentTheme);
 	}
