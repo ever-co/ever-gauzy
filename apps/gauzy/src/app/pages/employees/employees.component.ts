@@ -93,10 +93,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			id
 		);
 
-		let dateNow = new Date().getMonth();
-
-		// This is а temporary a value. In the future we will send real selected month
-		let selectedData = dateNow;
+		let dateNow = new Date();
 
 		this.incomeStatistics = this.statistics.incomeStatistics;
 		this.expenseStatistics = this.statistics.expenseStatistics;
@@ -104,7 +101,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		this.bonusStatistics = this.statistics.bonusStatistics;
 
 		this.bonusForSelectedMonth = this.bonusStatistics[
-			Math.abs(dateNow - selectedData)
+			Math.abs(11 - dateNow.getMonth() - 1)
 		];
 
 		if (
