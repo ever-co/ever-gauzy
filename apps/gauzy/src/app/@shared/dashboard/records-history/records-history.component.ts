@@ -115,6 +115,8 @@ export class RecordsHistoryComponent implements OnInit {
 						source: {
 							title: 'Source',
 							type: 'html',
+							class: 'text-center',
+							filter: false,
 							width: '8%',
 							valuePrepareFunction: (_, e) =>
 								`<div class='text-center'>

@@ -17,11 +17,11 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	}
 
 	@ApiOperation({
-		title: 'Find all organization recurring expenses recurring expense.'
+		title: 'Find all organization recurring expenses.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found recurring expenses recurring expense',
+		description: 'Found organization recurring expense',
 		type: OrganizationRecurringExpense
 	})
 	@ApiResponse({
@@ -37,5 +37,31 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		return this.organizationRecurringExpenseService.findAll({
 			where: findInput
 		});
+	}
+
+	@ApiOperation({
+		title: 'Find all organization recurring expenses for given employee.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization recurring expense',
+		type: OrganizationRecurringExpense
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/employee')
+	async getForEmployee(
+		@Query('data') data: string
+	): Promise<IPagination<OrganizationRecurringExpense>> {
+		const { findInput } = JSON.parse(data);
+
+		const res = await this.organizationRecurringExpenseService.findAll({
+			where: findInput
+		});
+
+		// TODO get the count on employees in such org and divide values
+		return res;
 	}
 }

@@ -170,8 +170,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			}
 		)).items;
 
-		const orgRecurringexpense = (await this.organizationRecurringExpenseService.getAll(
-			[],
+		const orgRecurringexpense = (await this.organizationRecurringExpenseService.getForEmployee(
 			{
 				orgId: this.store.selectedOrganization.id,
 				year: this.selectedDate.getFullYear(),
