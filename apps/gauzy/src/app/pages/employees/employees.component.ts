@@ -49,6 +49,12 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	averageIncome: number;
 	statistics: any;
 
+	difference = 0;
+	bonus = 0;
+	totalIncome = 0;
+	totalExpense = 0;
+	bonusForSelectedMonth = 0;
+
 	constructor(
 		private employeesService: EmployeesService,
 		private dialogService: NbDialogService,
@@ -87,14 +93,19 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			id
 		);
 
-		console.log('this.statistics');
+		let dateNow = new Date().getMonth();
 
-		console.log(this.statistics);
+		// This is а temporary a value. In the future we will send real selected month
+		let selectedData = dateNow;
 
 		this.incomeStatistics = this.statistics.incomeStatistics;
 		this.expenseStatistics = this.statistics.expenseStatistics;
 		this.profitStatistics = this.statistics.profitStatistics;
 		this.bonusStatistics = this.statistics.bonusStatistics;
+
+		this.bonusForSelectedMonth = this.bonusStatistics[
+			Math.abs(dateNow - selectedData)
+		];
 
 		if (
 			this.expenseStatistics.filter(Number).reduce((a, b) => a + b, 0) !==
@@ -286,7 +297,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 						: '',
 					imageUrl: emp.user.imageUrl,
 					// TODO: laod real bonus and bonusDate
-					bonus: Math.floor(1000 * Math.random()) + 10,
+					bonus: this.bonusForSelectedMonth,
 					averageIncome: Math.floor(this.averageIncome),
 					averageExpenses: Math.floor(this.averageExpense),
 					averageBonus: this.averageBonus,
