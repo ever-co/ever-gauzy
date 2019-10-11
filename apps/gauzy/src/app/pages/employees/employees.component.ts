@@ -265,7 +265,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			.toPromise();
 		const { name } = this.store.selectedOrganization;
 
-		let employeesVm = [];
+		const employeesVm = [];
 
 		for (const emp of items) {
 			if (emp.isActive) {

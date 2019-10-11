@@ -48,8 +48,11 @@ export const environment: IEnvironment = {
 	},
 
 	googleConfig: {
-		clientId: process.env.GoogleClientId || 'fakeclientid',
-		clientSecret: process.env.GoogleClientSecret || 'fakesecret'
+		clientId:
+			process.env.GoogleClientId ||
+			'1061129983046-pt4tnjteh9h1phfqapqkkea03iq0s351.apps.googleusercontent.com',
+		clientSecret:
+			process.env.GoogleClientSecret || 'liU5ihpwoqnsmXJNxNjFp1yP'
 	},
 
 	defaultOrganization: {

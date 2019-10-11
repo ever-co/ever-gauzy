@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
-import { AuthService, Provider } from './auth.service';
-import { User } from '../user';
+import { AuthService } from './auth.service';
 import { RoleService } from '../role';
-import { RolesEnum } from '@gauzy/models';
 import { environment as env } from '@env-api/environment';
 
 @Injectable()

@@ -1,10 +1,10 @@
 import {
-    Entity,
-    Column,
-    JoinColumn,
-    OneToOne,
-    RelationId,
-    ManyToOne,
+	Entity,
+	Column,
+	JoinColumn,
+	OneToOne,
+	RelationId,
+	ManyToOne
 } from 'typeorm';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
@@ -15,37 +15,37 @@ import { Organization } from '../organization';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
-    @ApiModelProperty({ type: User })
-    @OneToOne(type => User, { nullable: false, onDelete: 'CASCADE' })
-    @JoinColumn()
-    user: User;
+	@ApiModelProperty({ type: User })
+	@OneToOne((type) => User, { nullable: false, onDelete: 'CASCADE' })
+	@JoinColumn()
+	user: User;
 
-    @ApiModelProperty({ type: String, readOnly: true })
-    @RelationId((employee: Employee) => employee.user)
-    readonly userId: string;
+	@ApiModelProperty({ type: String, readOnly: true })
+	@RelationId((employee: Employee) => employee.user)
+	readonly userId: string;
 
-    @ApiModelProperty({ type: Organization })
-    @ManyToOne(type => Organization, { nullable: false, onDelete: 'CASCADE' })
-    @JoinColumn()
-    organization: Organization;
+	@ApiModelProperty({ type: Organization })
+	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
+	@JoinColumn()
+	organization: Organization;
 
-    @ApiModelProperty({ type: String, readOnly: true })
-    @RelationId((employee: Employee) => employee.organization)
-    readonly orgId: string;
+	@ApiModelProperty({ type: String, readOnly: true })
+	@RelationId((employee: Employee) => employee.organization)
+	readonly orgId: string;
 
-    @ApiModelPropertyOptional({ type: Date })
-    @IsDate()
-    @IsOptional()
-    @Column({ nullable: true })
-    valueDate?: Date;
+	@ApiModelPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	valueDate?: Date;
 
-    @ApiModelPropertyOptional({ type: Boolean, default: true })
-    @Column({ nullable: true, default: true })
-    isActive: boolean;
-    
-    @ApiModelPropertyOptional({ type: Date })
-    @IsDate()
-    @IsOptional()
-    @Column({ nullable: true })
-    endWork?: Date;
+	@ApiModelPropertyOptional({ type: Boolean, default: true })
+	@Column({ nullable: true, default: true })
+	isActive: boolean;
+
+	@ApiModelPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	endWork?: Date;
 }

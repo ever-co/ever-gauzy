@@ -18,8 +18,6 @@ export class FacebookStrategy {
 
 	private init(): void {
 		const { clientId, clientSecret, oauthRedirectUri } = env.facebookConfig;
-		console.log('{ clientId, clientSecret, oauthRedirectUri }');
-		console.log({ clientId, clientSecret, oauthRedirectUri });
 		use(
 			'facebook',
 			new FacebookTokenStrategy(

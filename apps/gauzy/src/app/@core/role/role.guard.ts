@@ -25,13 +25,6 @@ export class RoleGuard implements CanActivate {
 			.pipe(first())
 			.toPromise();
 
-		// TODO remove but for now it will be useful for debugging before I've finish the authorization issue. https://github.com/ever-co/gauzy/issues/177
-		console.warn('RoleGuard');
-		console.warn('expectedRole');
-		console.warn(expectedRole);
-		console.warn('hasRole');
-		console.warn(hasRole);
-
 		if (hasRole) {
 			return true;
 		}

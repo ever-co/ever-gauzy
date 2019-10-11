@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './user';
+import { UserModule, UserService, User } from './user';
 import { EmployeeModule } from './employee';
 import { RoleModule } from './role';
 import { OrganizationModule } from './organization';
@@ -10,7 +10,7 @@ import { IncomeModule } from './income';
 import { ExpenseModule } from './expense';
 import { EmployeeSettingModule } from './employee-setting';
 import { CoreModule } from './core';
-import { AuthModule } from './auth';
+import { AuthModule, AuthService } from './auth';
 import { SeedDataService } from './core/seeds/SeedDataService';
 import { UserOrganizationModule } from './user-organization';
 import { EmployeeStatisticsModule } from './employee-statistics';
@@ -98,6 +98,7 @@ import { OrganizationVendorsModule } from './organization-vendors';
 		EmployeeRecurringExpenseModule
 	],
 	controllers: [AppController],
-	providers: [AppService, SeedDataService]
+	providers: [AppService, SeedDataService],
+	exports: []
 })
 export class AppModule {}
