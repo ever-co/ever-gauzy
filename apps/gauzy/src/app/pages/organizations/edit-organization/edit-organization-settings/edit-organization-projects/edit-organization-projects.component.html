@@ -64,9 +64,9 @@
 							}}"
 						>
 							<nb-option
-								*ngFor="let c of clients"
-								value="{{ c.id }}"
-								>{{ c.name }}</nb-option
+								*ngFor="let client of clients"
+								value="{{ client.id }}"
+								>{{ client.name }}</nb-option
 							>
 						</nb-select>
 					</div>
@@ -78,8 +78,11 @@
 							}}"
 							[(selected)]="selectedType"
 						>
-							<nb-option *ngFor="let t of types" value="{{ t }}">
-								{{ t | removeLodash | titlecase }}
+							<nb-option
+								*ngFor="let type of types"
+								[value]="type"
+							>
+								{{ 'SM_TABLE.' + type | translate }}
 							</nb-option>
 						</nb-select>
 					</div>
@@ -92,9 +95,9 @@
 							[(selected)]="selectedCurrency"
 						>
 							<nb-option
-								*ngFor="let c of currencies"
-								value="{{ c }}"
-								>{{ c }}
+								*ngFor="let currency of currencies"
+								value="{{ currency }}"
+								>{{ currency }}
 							</nb-option>
 						</nb-select>
 					</div>
@@ -152,18 +155,18 @@
 			</div>
 		</div>
 		<br />
-		<div *ngFor="let p of projects" class="ml-3 mr-3 mb-3 row">
-			<div class="col-2 d-inline">{{ p.name }}</div>
-			<div class="col d-inline">{{ p.client?.name }}</div>
-			<div class="col d-inline">{{ p.startDate | date }}</div>
-			<div class="col d-inline">{{ p.endDate | date }}</div>
+		<div *ngFor="let project of projects" class="ml-3 mr-3 mb-3 row">
+			<div class="col-2 d-inline">{{ project.name }}</div>
+			<div class="col d-inline">{{ project.client?.name }}</div>
+			<div class="col d-inline">{{ project.startDate | date }}</div>
+			<div class="col d-inline">{{ project.endDate | date }}</div>
 			<div class="col d-inline text-left">
-				{{ p.type | removeLodash | titlecase }}
+				{{ project.type | removeLodash | titlecase }}
 			</div>
-			<div class="col d-inline text-center">{{ p.currency }}</div>
+			<div class="col d-inline text-center">{{ project.currency }}</div>
 			<nb-actions class="float-right" e="medium">
 				<nb-action
-					(click)="removeProject(p.id)"
+					(click)="removeProject(project.id)"
 					class="d-inline pr-0"
 					icon="close"
 				></nb-action>
