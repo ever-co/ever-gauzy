@@ -1,5 +1,9 @@
 import { Component } from '@angular/core';
-import { NbThemeService } from '@nebular/theme';
+import {
+	NbThemeService,
+	NbLayoutDirectionService,
+	NbLayoutDirection
+} from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -27,25 +31,65 @@ export class ThemeSettingsComponent {
 		}
 	];
 
+	languages = [
+		{
+			value: 'en',
+			name: 'English'
+		},
+		{
+			value: 'bg',
+			name: 'Bulgarian'
+		},
+		{
+			value: 'he',
+			name: 'Hebrew'
+		},
+		{
+			value: 'ru',
+			name: 'Russian'
+		}
+	];
+
 	currentTheme = 'default';
-	languages = { en: 'English', bg: 'Bulgarian', he: 'Hebrew', ru: 'Russian' };
+	currentLang = 'en';
 
 	constructor(
 		private themeService: NbThemeService,
-		public translate: TranslateService
+		private translate: TranslateService,
+		private directionService: NbLayoutDirectionService
 	) {
 		translate.addLangs(['en', 'bg', 'he', 'ru']);
 		translate.setDefaultLang('en');
 
 		const browserLang = translate.getBrowserLang();
 		translate.use(browserLang.match(/en|bg|he|ru/) ? browserLang : 'en');
+
+		this.currentLang = translate.defaultLang;
+	}
+
+	get isRtl() {
+		return this.directionService.isRtl();
+	}
+
+	toggleFlow() {
+		const oppositeDirection = this.isRtl
+			? NbLayoutDirection.LTR
+			: NbLayoutDirection.RTL;
+		this.directionService.setDirection(oppositeDirection);
 	}
 
 	toggleTheme() {
 		this.themeService.changeTheme(this.currentTheme);
 	}
 
-	switchLanguage(language: string) {
-		this.translate.use(language);
+	switchLanguage() {
+		this.translate.use(this.currentLang);
+
+		if (this.currentLang === 'he') {
+			this.directionService.setDirection(NbLayoutDirection.RTL);
+		} else {
+			this.directionService.setDirection(NbLayoutDirection.LTR);
+		}
+		this.translate.use(this.currentLang);
 	}
 }
