@@ -129,9 +129,7 @@
 											"
 											[value]="type"
 										>
-											{{
-												type | removeLodash | titlecase
-											}}
+											{{ 'SM_TABLE.' + type | translate }}
 										</nb-option>
 									</nb-select>
 								</div>

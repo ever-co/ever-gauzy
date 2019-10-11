@@ -28,7 +28,13 @@
 		"BONUS": "בונוס",
 		"BONUS_AVG": "הכנסה) בונוס)",
 		"STATUS": "עבודה",
-		"WORK_STATUS": "סטטוס עבודה"
+		"WORK_STATUS": "סטטוס עבודה",
+		"TODAY": "היום",
+		"END_OF_MONTH": "סוף חודש",
+		"START_OF_MONTH": "תחילת החודש",
+		"RATE": "ציון",
+		"FLAT_FEE": "מחיר שטוח",
+		"MILESTONES": "אבני דרך"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
