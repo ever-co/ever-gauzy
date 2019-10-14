@@ -48,6 +48,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	averageExpense: number;
 	averageIncome: number;
 	statistics: any;
+	employeeName = 'Employee';
 
 	difference = 0;
 	bonus = 0;
@@ -95,7 +96,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			id
 		);
 
-		let dateNow = new Date();
+		const dateNow = new Date();
 
 		this.incomeStatistics = this.statistics.incomeStatistics;
 		this.expenseStatistics = this.statistics.expenseStatistics;
@@ -151,6 +152,13 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	}) {
 		if (ev.isSelected) {
 			this.selectedEmployee = ev.data;
+			const checkName = this.selectedEmployee.fullName;
+			this.employeeName = checkName
+				.trim()
+				.split(' ')
+				.join('')
+				? checkName
+				: 'Employee';
 		} else {
 			this.selectedEmployee = null;
 		}
@@ -162,6 +170,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		const data = await dialog.onClose.pipe(first()).toPromise();
 
 		if (data) {
+			this.toastrService.info(
+				this.employeeName + ' added to ' + data.organization.name,
+				'Success'
+			);
+
 			this.loadPage();
 		}
 	}
@@ -189,10 +202,12 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 						await this.employeesService.setEmployeeAsInactive(
 							this.selectedEmployee.id
 						);
+
 						this.toastrService.info(
-							'Employee set as inactive.',
+							this.employeeName + ' set as inactive.',
 							'Success'
 						);
+
 						this.loadPage();
 					} catch (error) {
 						this.toastrService.danger(
