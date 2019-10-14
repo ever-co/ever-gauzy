@@ -8,7 +8,8 @@ import {
 	NbDialogModule,
 	NbTooltipModule,
 	NbBadgeModule,
-	NbSelectModule
+	NbSelectModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EmployeesRoutingModule } from './employees-routing.module';
@@ -73,7 +74,8 @@ const COMPONENTS = [
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		NbSpinnerModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

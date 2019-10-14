@@ -1,12 +1,13 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import {
-    NbCardModule,
-    NbButtonModule,
-    NbInputModule,
-    NbDatepickerModule,
-    NbIconModule,
-    NbDialogModule
+	NbCardModule,
+	NbButtonModule,
+	NbInputModule,
+	NbDatepickerModule,
+	NbIconModule,
+	NbDialogModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IncomeComponent } from './income.component';
@@ -23,38 +24,37 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 
 export function HttpLoaderFactory(http: HttpClient) {
-    return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-
 @NgModule({
-    imports: [
-        IncomeRoutingModule,
-        ThemeModule,
-        NbCardModule,
-        FormsModule,
-        ReactiveFormsModule,
-        NbButtonModule,
-        NbInputModule,
-        NbDatepickerModule,
-        NbIconModule,
-        Ng2SmartTableModule,
-        NgSelectModule,
-        NbDialogModule.forChild(),
-        UserFormsModule,
-        IncomeMutationModule,
-        TableComponentsModule,
-        TranslateModule.forChild({
-            loader: {
-                provide: TranslateLoader,
-                useFactory: HttpLoaderFactory,
-                deps: [HttpClient]
-            }
-        }),
-    ],
-    entryComponents: [
-    ],
-    declarations: [IncomeComponent],
-    providers: [IncomeService]
+	imports: [
+		IncomeRoutingModule,
+		ThemeModule,
+		NbCardModule,
+		FormsModule,
+		ReactiveFormsModule,
+		NbButtonModule,
+		NbInputModule,
+		NbDatepickerModule,
+		NbIconModule,
+		Ng2SmartTableModule,
+		NgSelectModule,
+		NbDialogModule.forChild(),
+		UserFormsModule,
+		IncomeMutationModule,
+		TableComponentsModule,
+		TranslateModule.forChild({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
+		NbSpinnerModule
+	],
+	entryComponents: [],
+	declarations: [IncomeComponent],
+	providers: [IncomeService]
 })
-export class IncomeModule { }
+export class IncomeModule {}
