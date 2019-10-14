@@ -55,6 +55,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	totalExpense = 0;
 	bonusForSelectedMonth = 0;
 
+	loading = true;
+
 	constructor(
 		private employeesService: EmployeesService,
 		private dialogService: NbDialogService,
@@ -66,7 +68,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
-	ngOnInit() {
+	async ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -306,6 +308,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		this.sourceSmartTable.load(employeesVm);
 
 		this.organizationName = name;
+
+		this.loading = false;
 	}
 
 	private _loadSmartTableSettings() {

@@ -39,6 +39,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 	selectedOrganization: Organization;
 	smartTableSource = new LocalDataSource();
 
+	loading = true;
+
 	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -181,6 +183,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 				'Error'
 			);
 		}
+
+		this.loading = false;
 	}
 
 	ngOnDestroy() {}

@@ -47,6 +47,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
 	selectedExpense: SelectedRowModel;
 	showTable: boolean;
+	loading = true;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
@@ -152,7 +153,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					this.openAddExpenseDialog();
 				}
 			});
+
+		this.loading = false;
 	}
+
+	ngAfterViewInit() {}
 
 	openAddExpenseDialog() {
 		if (!this.store.selectedDate) {

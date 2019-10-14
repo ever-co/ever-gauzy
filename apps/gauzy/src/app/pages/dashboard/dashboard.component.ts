@@ -90,7 +90,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 				if (this.selectedDate) {
 					this._loadEmployeeTotalIncome();
 					this._loadEmployeeTotalExpense();
-					this.loading = false;
 				}
 			});
 
@@ -102,13 +101,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 				if (this.selectedEmployee) {
 					this._loadEmployeeTotalIncome();
 					this._loadEmployeeTotalExpense();
-					this.loading = false;
 				}
 			});
 
 		this.employeeStatisticsService.avarageBonus$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((bonus) => (this.avarageBonus = bonus));
+
+		this.loading = false;
 	}
 
 	openHistoryDialog(type: HistoryType) {
@@ -135,7 +135,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		);
 
 		this.incomeData = items;
-
 		this.totalIncome = items.reduce((a, b) => a + b.amount, 0);
 
 		if (items.length && this.totalIncome !== 0) {

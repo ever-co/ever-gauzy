@@ -43,6 +43,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
 	selectedIncome: SelectedRowModel;
 	showTable: boolean;
+	loading = true;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
@@ -108,6 +109,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					this.addIncome();
 				}
 			});
+
+		this.loading = false;
 	}
 
 	loadSettingsSmartTable() {

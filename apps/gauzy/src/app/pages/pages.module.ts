@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { NbMenuModule, NbToastrModule } from '@nebular/theme';
+import { NbMenuModule, NbToastrModule, NbSpinnerModule } from '@nebular/theme';
 
 import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
@@ -30,7 +30,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		NbSpinnerModule
 	],
 	declarations: [PagesComponent],
 	providers: [AuthService, RoleGuard]

@@ -8,7 +8,8 @@ import {
 	NbDialogModule,
 	NbSelectModule,
 	NbListModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
@@ -53,7 +54,8 @@ import { OrganizationsEmployeesComponent } from './table-components/organization
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		})
+		}),
+		NbSpinnerModule
 	],
 	entryComponents: [
 		OrganizationsFullnameComponent,
