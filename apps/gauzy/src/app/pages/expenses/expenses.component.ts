@@ -157,8 +157,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		this.loading = false;
 	}
 
-	ngAfterViewInit() {}
-
 	openAddExpenseDialog() {
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();

@@ -119,7 +119,10 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		if (result) {
 			try {
 				await this.organizationsService.create(result);
-				this.toastrService.info('Organization created.', 'Success');
+				this.toastrService.info(
+					result.name + ' organization created.',
+					'Success'
+				);
 				this._loadSmartTable();
 			} catch (error) {
 				this.toastrService.danger(
@@ -151,7 +154,10 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 				await this.organizationsService.delete(
 					this.selectedOrganization.id
 				);
-				this.toastrService.info('Organization deleted.', 'Success');
+				this.toastrService.info(
+					this.selectedOrganization.name + ' organization deleted.',
+					'Success'
+				);
 				this._loadSmartTable();
 			} catch (error) {
 				this.toastrService.danger(
