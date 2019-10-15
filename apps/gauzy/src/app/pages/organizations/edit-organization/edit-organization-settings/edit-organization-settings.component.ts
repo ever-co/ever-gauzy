@@ -92,6 +92,11 @@ export class EditOrganizationSettingsComponent implements OnInit {
 			...this.main.mainUpdateObj
 		});
 
+		this.toastrService.info(
+			this.organization.name + ' organization main info updeted.',
+			'Success'
+		);
+
 		this.goBack();
 	}
 

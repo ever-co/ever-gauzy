@@ -166,7 +166,7 @@
 			<div class="col d-inline text-center">{{ project.currency }}</div>
 			<nb-actions class="float-right" e="medium">
 				<nb-action
-					(click)="removeProject(project.id)"
+					(click)="removeProject(project.id, project.name)"
 					class="d-inline pr-0"
 					icon="close"
 				></nb-action>

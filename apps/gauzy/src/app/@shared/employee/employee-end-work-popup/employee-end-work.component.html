@@ -1,10 +1,12 @@
 <nb-card>
 	<nb-card-header class="d-flex">
 		<h5 *ngIf="backToWork">
-			{{ employeeFullName }} {{ 'POP_UPS.BACK_TO_WORK' | translate }}
+			{{ employeeFullName.trim() ? employeeFullName : 'Employee' }}
+			{{ 'POP_UPS.BACK_TO_WORK' | translate }}
 		</h5>
 		<h5 *ngIf="!backToWork">
-			{{ 'POP_UPS.END_WORK' | translate }} {{ employeeFullName }}
+			{{ 'POP_UPS.END_WORK' | translate }}
+			{{ employeeFullName.trim() ? employeeFullName : 'Employee' }}
 		</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"

@@ -237,7 +237,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					data
 				);
 				this.toastrService.info(
-					this.selectedEmployee.fullName + ' set as inactive.',
+					this.employeeName + ' set as inactive.',
 					'Success'
 				);
 			} catch (error) {
@@ -268,7 +268,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					null
 				);
 				this.toastrService.info(
-					this.selectedEmployee.fullName + ' set as active.',
+					this.employeeName + ' set as active.',
 					'Success'
 				);
 			} catch (error) {

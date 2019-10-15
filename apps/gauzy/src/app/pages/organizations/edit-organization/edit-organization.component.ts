@@ -109,7 +109,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			this.showAddCard = !this.showAddCard;
 
 			this.toastrService.info(
-				`Organization recurring expense ${
+				`${this.selectedOrg.name} organization recurring expense ${
 					this.editExpenseId ? 'updated' : 'set'
 				}.`,
 				'Success'
@@ -176,7 +176,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 				this.selectedRowIndexToShow = null;
 				this.toastrService.info(
-					'Organization recurring expense deleted.',
+					this.selectedOrg.name +
+						' organization recurring expense deleted.',
 					'Success'
 				);
 				this._loadOrgRecurringExpense();

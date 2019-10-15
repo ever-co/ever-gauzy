@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { NbToastrService } from '@nebular/theme';
 import { OrganizationPositions } from '@gauzy/models';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 
@@ -15,15 +16,21 @@ export class EditOrganizationPositionsComponent implements OnInit {
 	positions: OrganizationPositions[];
 
 	constructor(
-		private readonly organizationPositionsService: OrganizationPositionsService
+		private readonly organizationPositionsService: OrganizationPositionsService,
+		private readonly toastrService: NbToastrService
 	) {}
 
 	ngOnInit(): void {
 		this.loadPositions();
 	}
 
-	async removePosition(id: string) {
+	async removePosition(id: string, name: string) {
 		await this.organizationPositionsService.delete(id);
+
+		this.toastrService.info(
+			`Position ${name} successfully removed!`,
+			'Success'
+		);
 
 		this.loadPositions();
 	}
@@ -33,6 +40,11 @@ export class EditOrganizationPositionsComponent implements OnInit {
 			name,
 			organizationId: this.organizationId
 		});
+
+		this.toastrService.info(
+			`New position ${name} successfully added!`,
+			'Success'
+		);
 
 		this.showAddCard = !this.showAddCard;
 		this.loadPositions();
