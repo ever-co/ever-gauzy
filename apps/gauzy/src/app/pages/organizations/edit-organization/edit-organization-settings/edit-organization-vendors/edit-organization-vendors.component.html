@@ -48,7 +48,7 @@
 				{{ v.name }}
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="removeVendor(v.id)"
+						(click)="removeVendor(v.id, v.name)"
 						class="d-inline pr-0"
 						icon="close"
 					></nb-action>

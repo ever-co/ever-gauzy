@@ -52,7 +52,7 @@
 				{{ p.name }}
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="removePosition(p.id)"
+						(click)="removePosition(p.id, p.name)"
 						class="d-inline pr-0"
 						icon="close"
 					></nb-action>

@@ -53,7 +53,7 @@
 				{{ d.name }}
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="removeDepartment(d.id)"
+						(click)="removeDepartment(d.id, d.name)"
 						class="d-inline pr-0"
 						icon="close"
 					></nb-action>

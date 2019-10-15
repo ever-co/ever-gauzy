@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { NbToastrService } from '@nebular/theme';
 import {
 	OrganizationClients,
 	OrganizationClientsCreateInput,
@@ -25,15 +26,21 @@ export class EditOrganizationClientsComponent implements OnInit {
 
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
-		private readonly organizationProjectsService: OrganizationProjectsService
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly toastrService: NbToastrService
 	) {}
 
 	ngOnInit(): void {
 		this.loadClients();
 	}
 
-	async removeClient(id: string) {
+	async removeClient(id: string, name: string) {
 		await this.organizationClientsService.delete(id);
+
+		this.toastrService.info(
+			`Client ${name} successfuly removed!`,
+			'Success'
+		);
 
 		this.loadClients();
 	}
@@ -51,6 +58,12 @@ export class EditOrganizationClientsComponent implements OnInit {
 
 		this.showAddCard = !this.showAddCard;
 		this.selectProjects = [];
+
+		this.toastrService.info(
+			`New client ${client.name} successfuly added!`,
+			'Success'
+		);
+
 		this.loadClients();
 	}
 

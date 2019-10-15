@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { OrganizationDepartment } from '@gauzy/models';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
+import { NbToastrService } from '@nebular/theme';
 
 @Component({
 	selector: 'ga-edit-org-departments',
@@ -15,16 +16,20 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 	departments: OrganizationDepartment[];
 
 	constructor(
-		private readonly organizationDepartmentsService: OrganizationDepartmentsService
+		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
+		private readonly toastrService: NbToastrService
 	) {}
 
-	ngOnInit(): void {
+	ngOnInit() {
 		this.loadDepartments();
 	}
 
-	async removeDepartment(id: string) {
+	async removeDepartment(id: string, name: string) {
 		await this.organizationDepartmentsService.delete(id);
-
+		this.toastrService.info(
+			name + ' department successfuly deleted!',
+			'Success'
+		);
 		this.loadDepartments();
 	}
 
@@ -35,6 +40,10 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 		});
 
 		this.showAddCard = !this.showAddCard;
+		this.toastrService.info(
+			name + ' department successfuly added!',
+			'Success'
+		);
 		this.loadDepartments();
 	}
 
