@@ -152,13 +152,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	}) {
 		if (ev.isSelected) {
 			this.selectedEmployee = ev.data;
-			const checkName = this.selectedEmployee.fullName;
-			this.employeeName = checkName
-				.trim()
-				.split(' ')
-				.join('')
-				? checkName
-				: 'Employee';
+			const checkName = this.selectedEmployee.fullName.trim();
+			this.employeeName = checkName ? checkName : 'Employee';
 		} else {
 			this.selectedEmployee = null;
 		}
@@ -170,8 +165,14 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		const data = await dialog.onClose.pipe(first()).toPromise();
 
 		if (data) {
+			if (data.user.firstName || data.user.lastName) {
+				this.employeeName =
+					data.user.firstName + ' ' + data.user.lastName;
+			}
 			this.toastrService.info(
-				this.employeeName + ' added to ' + data.organization.name,
+				this.employeeName.trim() +
+					' added to ' +
+					data.organization.name,
 				'Success'
 			);
 
