@@ -28,7 +28,7 @@ export class EditOrganizationVendorsComponent implements OnInit {
 		await this.organizationVendorsService.delete(id);
 
 		this.toastrService.info(
-			`Vendor ${name} successfuly removed!`,
+			`Vendor ${name} successfully removed!`,
 			'Success'
 		);
 
@@ -42,7 +42,7 @@ export class EditOrganizationVendorsComponent implements OnInit {
 		});
 
 		this.toastrService.info(
-			`New vendor ${name} successfuly added!`,
+			`New vendor ${name} successfully added!`,
 			'Success'
 		);
 

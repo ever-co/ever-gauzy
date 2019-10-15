@@ -38,7 +38,7 @@ export class EditOrganizationClientsComponent implements OnInit {
 		await this.organizationClientsService.delete(id);
 
 		this.toastrService.info(
-			`Client ${name} successfuly removed!`,
+			`Client ${name} successfully removed!`,
 			'Success'
 		);
 
@@ -60,7 +60,7 @@ export class EditOrganizationClientsComponent implements OnInit {
 		this.selectProjects = [];
 
 		this.toastrService.info(
-			`New client ${client.name} successfuly added!`,
+			`New client ${client.name} successfully added!`,
 			'Success'
 		);
 

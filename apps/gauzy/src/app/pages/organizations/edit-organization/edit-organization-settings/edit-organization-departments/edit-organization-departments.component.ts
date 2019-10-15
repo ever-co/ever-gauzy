@@ -27,7 +27,7 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 	async removeDepartment(id: string, name: string) {
 		await this.organizationDepartmentsService.delete(id);
 		this.toastrService.info(
-			name + ' department successfuly deleted!',
+			name + ' Department successfully removed!',
 			'Success'
 		);
 		this.loadDepartments();
@@ -41,7 +41,7 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 
 		this.showAddCard = !this.showAddCard;
 		this.toastrService.info(
-			name + ' department successfuly added!',
+			name + ' Department successfully added!',
 			'Success'
 		);
 		this.loadDepartments();

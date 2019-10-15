@@ -28,7 +28,7 @@ export class EditOrganizationPositionsComponent implements OnInit {
 		await this.organizationPositionsService.delete(id);
 
 		this.toastrService.info(
-			`Position ${name} successfuly removed!`,
+			`Position ${name} successfully removed!`,
 			'Success'
 		);
 
@@ -42,7 +42,7 @@ export class EditOrganizationPositionsComponent implements OnInit {
 		});
 
 		this.toastrService.info(
-			`New position ${name} successfuly added!`,
+			`New position ${name} successfully added!`,
 			'Success'
 		);
 

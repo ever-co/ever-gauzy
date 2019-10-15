@@ -48,7 +48,7 @@ export class EditOrganizationProjectsComponent implements OnInit {
 		await this.organizationProjectsService.delete(id);
 
 		this.toastrService.info(
-			`Project ${name} successfuly removed!`,
+			`Project ${name} successfully removed!`,
 			'Success'
 		);
 
@@ -71,7 +71,7 @@ export class EditOrganizationProjectsComponent implements OnInit {
 		await this.organizationProjectsService.create(project);
 
 		this.toastrService.info(
-			`New project ${project.name} successfuly added!`,
+			`New project ${project.name} successfully added!`,
 			'Success'
 		);
 
