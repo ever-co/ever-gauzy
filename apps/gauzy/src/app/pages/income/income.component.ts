@@ -43,6 +43,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
 	selectedIncome: SelectedRowModel;
 	showTable: boolean;
+	employeeName: string;
 	loading = true;
 
 	private _ngDestroy$ = new Subject<void>();
@@ -190,7 +191,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					currency: result.currency
 				});
 
-				this.toastrService.info('Income added.', 'Success');
+				this.toastrService.info(
+					'Income added for ' + this.employeeName,
+					'Success'
+				);
 
 				this._loadEmployeeIncomeData();
 				this.store.selectedEmployee = result.employee.id
@@ -228,7 +232,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							}
 						);
 
-						this.toastrService.info('Income edited.', 'Success');
+						this.toastrService.info(
+							'Income edited for ' + this.employeeName,
+							'Success'
+						);
 						this._loadEmployeeIncomeData();
 						this.selectedIncome = null;
 					} catch (error) {
@@ -256,7 +263,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							this.selectedIncome.data.id
 						);
 
-						this.toastrService.info('Income deleted.', 'Success');
+						this.toastrService.info(
+							'Income deleted for ' + this.employeeName,
+							'Success'
+						);
 						this._loadEmployeeIncomeData();
 						this.selectedIncome = null;
 					} catch (error) {
@@ -307,7 +317,11 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			findObj,
 			this.selectedDate
 		);
-
+		this.employeeName = (
+			this.store.selectedEmployee.firstName +
+			' ' +
+			this.store.selectedEmployee.lastName
+		).trim();
 		this.smartTableSource.load(items);
 		this.showTable = true;
 	}
