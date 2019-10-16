@@ -9,180 +9,147 @@ import { first } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
-    selector: 'ga-expenses-mutation',
-    templateUrl: './expenses-mutation.component.html',
-    styleUrls: ['./expenses-mutation.component.scss']
+	selector: 'ga-expenses-mutation',
+	templateUrl: './expenses-mutation.component.html',
+	styleUrls: ['./expenses-mutation.component.scss']
 })
 export class ExpensesMutationComponent implements OnInit {
-    @ViewChild("employeeSelector", { static: false })
-    employeeSelector: EmployeeSelectorComponent;
+	@ViewChild('employeeSelector', { static: false })
+	employeeSelector: EmployeeSelectorComponent;
+	form: FormGroup;
+	expense: ExpenseViewModel;
+	fakeVendors: { vendorName: string; vendorId: string }[] = [];
+	fakeCategories: { categoryName: string; categoryId: string }[] = [];
+	currencies = Object.values(CurrenciesEnum);
 
-    form: FormGroup;
+	constructor(
+		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
+		private fb: FormBuilder,
+		private organizationsService: OrganizationsService,
+		private store: Store
+	) {}
 
-    expense: ExpenseViewModel;
-    currencies = Object.values(CurrenciesEnum);
+	get currency() {
+		return this.form.get('currency');
+	}
 
-    fakeVendors = [
-        {
-            vendorName: 'Microsoft',
-            vendorId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            vendorName: 'Google',
-            vendorId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            vendorName: 'CaffeeMania',
-            vendorId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            vendorName: 'CoShare',
-            vendorId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            vendorName: 'Cleaning Company',
-            vendorId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            vendorName: 'Udemy',
-            vendorId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            vendorName: 'MultiSport',
-            vendorId: (Math.floor(Math.random() * 101) + 1).toString()
-        }
-    ];
+	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
 
-    fakeCategories = [
-        {
-            categoryName: 'Rent',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Electricity',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Internet',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Water Supply',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Office Supplies',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Parking',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Employees Benefits',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Insurance Premiums',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Courses',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Subscriptions',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Repairs',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Depreciable Assets',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Software Products',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Office Hardware',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Courier Services',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Business Trips',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        },
-        {
-            categoryName: 'Team Buildings',
-            categoryId: (Math.floor(Math.random() * 101) + 1).toString()
-        }
-    ];
+	private getFakeData() {
+		const fakeVendorNames = [
+			'Microsoft',
+			'Google',
+			'CaffeeMania',
+			'CoShare',
+			'Cleaning Company',
+			'Udemy',
+			'MultiSport'
+		];
 
-    constructor(
-        public dialogRef: NbDialogRef<ExpensesMutationComponent>,
-        private fb: FormBuilder,
-        private organizationsService: OrganizationsService,
-        private store: Store) { }
+		fakeVendorNames.forEach((name) => {
+			this.fakeVendors.push({
+				vendorName: name,
+				vendorId: this.getFakeId()
+			});
+		});
 
-    get currency() {
-        return this.form.get('currency');
-    }
+		const fakeCategoryNames = [
+			'Rent',
+			'Electricity',
+			'Internet',
+			'Water Supply',
+			'Office Supplies',
+			'Parking',
+			'Employees Benefits',
+			'Insurance Premiums',
+			'Courses',
+			'Subscriptions',
+			'Repairs',
+			'Depreciable Assets',
+			'Software Products',
+			'Office Hardware',
+			'Courier Services',
+			'Business Trips',
+			'Team Buildings'
+		];
 
-    ngOnInit() {
-        this._initializeForm();
-        // TODO: here we'll get all the categories and vendors for ng-select menus
-    }
+		fakeCategoryNames.forEach((name) => {
+			this.fakeCategories.push({
+				categoryName: name,
+				categoryId: this.getFakeId()
+			});
+		});
+	}
 
-    addOrEditExpense() {
-        this.dialogRef.close(Object.assign({ employee: this.employeeSelector.selectedEmployee }, this.form.value));
-    }
+	ngOnInit() {
+		this.getFakeData();
+		this._initializeForm();
 
-    private _initializeForm() {
-        if (this.expense) {
-            this.form = this.fb.group({
-                id: [this.expense.id],
-                amount: [this.expense.amount, Validators.required],
-                vendor: [{
-                    vendorId: this.expense.vendorId,
-                    vendorName: this.expense.vendorName
-                }, Validators.required],
-                category: [{
-                    categoryId: this.expense.categoryId,
-                    categoryName: this.expense.categoryName
-                }, Validators.required],
-                notes: [this.expense.notes],
-                currency: [this.expense.currency],
-                valueDate: [new Date(this.expense.valueDate), Validators.required]
-            });
-        } else {
-            this.form = this.fb.group({
-                amount: ['', Validators.required],
-                vendor: [null, Validators.required],
-                category: [null, Validators.required],
-                notes: [''],
-                currency: [''],
-                valueDate: [this.store.getDateFromOrganizationSettings(), Validators.required]
-            });
+		// TODO: here we'll get all the categories and vendors for ng-select menus
+	}
 
-            this._loadDefaultCurrency();
-        }
-    }
+	addOrEditExpense() {
+		this.dialogRef.close(
+			Object.assign(
+				{ employee: this.employeeSelector.selectedEmployee },
+				this.form.value
+			)
+		);
+	}
 
-    private async _loadDefaultCurrency() {
-        const orgData = await this.organizationsService
-            .getById(
-                this.store.selectedOrganization.id,
-                [OrganizationSelectInput.currency]
-            ).pipe(first()).toPromise();
+	private _initializeForm() {
+		if (this.expense) {
+			this.form = this.fb.group({
+				id: [this.expense.id],
+				amount: [this.expense.amount, Validators.required],
+				vendor: [
+					{
+						vendorId: this.expense.vendorId,
+						vendorName: this.expense.vendorName
+					},
+					Validators.required
+				],
+				category: [
+					{
+						categoryId: this.expense.categoryId,
+						categoryName: this.expense.categoryName
+					},
+					Validators.required
+				],
+				notes: [this.expense.notes],
+				currency: [this.expense.currency],
+				valueDate: [
+					new Date(this.expense.valueDate),
+					Validators.required
+				]
+			});
+		} else {
+			this.form = this.fb.group({
+				amount: ['', Validators.required],
+				vendor: [null, Validators.required],
+				category: [null, Validators.required],
+				notes: [''],
+				currency: [''],
+				valueDate: [
+					this.store.getDateFromOrganizationSettings(),
+					Validators.required
+				]
+			});
 
-        if (orgData && this.currency && !this.currency.value) {
-            this.currency.setValue(orgData.currency);
-        }
-    }
+			this._loadDefaultCurrency();
+		}
+	}
+
+	private async _loadDefaultCurrency() {
+		const orgData = await this.organizationsService
+			.getById(this.store.selectedOrganization.id, [
+				OrganizationSelectInput.currency
+			])
+			.pipe(first())
+			.toPromise();
+
+		if (orgData && this.currency && !this.currency.value) {
+			this.currency.setValue(orgData.currency);
+		}
+	}
 }
