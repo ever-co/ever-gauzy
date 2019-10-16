@@ -121,7 +121,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 					isRecurring: true
 				});
 
-				this.toastrService.info(
+				this.toastrService.primary(
 					'Employee recurring expense set.',
 					'Success'
 				);
@@ -164,7 +164,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 				this.selectedRowIndexToShow = null;
 				this._loadEmployeeRecurringExpense();
 
-				this.toastrService.info(
+				this.toastrService.primary(
 					'Employee recurring expense edited.',
 					'Success'
 				);
@@ -194,7 +194,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 				await this.employeeRecurringExpenseService.delete(id);
 				this.selectedRowIndexToShow = null;
 
-				this.toastrService.info(
+				this.toastrService.primary(
 					'Employee recurring expense deleted.',
 					'Success'
 				);

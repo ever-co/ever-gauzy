@@ -37,7 +37,7 @@ export class EditOrganizationClientsComponent implements OnInit {
 	async removeClient(id: string, name: string) {
 		await this.organizationClientsService.delete(id);
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			`Client ${name} successfully removed!`,
 			'Success'
 		);
@@ -59,7 +59,7 @@ export class EditOrganizationClientsComponent implements OnInit {
 		this.showAddCard = !this.showAddCard;
 		this.selectProjects = [];
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			`New client ${client.name} successfully added!`,
 			'Success'
 		);

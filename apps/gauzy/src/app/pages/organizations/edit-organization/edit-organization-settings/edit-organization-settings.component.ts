@@ -92,7 +92,7 @@ export class EditOrganizationSettingsComponent implements OnInit {
 			...this.main.mainUpdateObj
 		});
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			this.organization.name + ' organization main info updeted.',
 			'Success'
 		);

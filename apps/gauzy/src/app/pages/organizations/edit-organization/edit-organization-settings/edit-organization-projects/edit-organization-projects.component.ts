@@ -47,7 +47,7 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	async removeProject(id: string, name: string) {
 		await this.organizationProjectsService.delete(id);
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			`Project ${name} successfully removed!`,
 			'Success'
 		);
@@ -70,7 +70,7 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	private async addProject(project: OrganizationProjectsCreateInput) {
 		await this.organizationProjectsService.create(project);
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			`New project ${project.name} successfully added!`,
 			'Success'
 		);

@@ -119,7 +119,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		if (result) {
 			try {
 				await this.organizationsService.create(result);
-				this.toastrService.info(
+				this.toastrService.primary(
 					result.name + ' organization created.',
 					'Success'
 				);
@@ -154,7 +154,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 				await this.organizationsService.delete(
 					this.selectedOrganization.id
 				);
-				this.toastrService.info(
+				this.toastrService.primary(
 					this.selectedOrganization.name + ' organization deleted.',
 					'Success'
 				);

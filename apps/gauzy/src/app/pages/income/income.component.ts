@@ -191,7 +191,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					currency: result.currency
 				});
 
-				this.toastrService.info(
+				this.toastrService.primary(
 					'Income added for ' + this.employeeName,
 					'Success'
 				);
@@ -232,7 +232,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							}
 						);
 
-						this.toastrService.info(
+						this.toastrService.primary(
 							'Income edited for ' + this.employeeName,
 							'Success'
 						);
@@ -263,7 +263,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							this.selectedIncome.data.id
 						);
 
-						this.toastrService.info(
+						this.toastrService.primary(
 							'Income deleted for ' + this.employeeName,
 							'Success'
 						);

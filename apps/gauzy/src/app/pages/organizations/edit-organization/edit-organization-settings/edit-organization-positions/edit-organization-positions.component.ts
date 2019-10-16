@@ -27,7 +27,7 @@ export class EditOrganizationPositionsComponent implements OnInit {
 	async removePosition(id: string, name: string) {
 		await this.organizationPositionsService.delete(id);
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			`Position ${name} successfully removed!`,
 			'Success'
 		);
@@ -41,7 +41,7 @@ export class EditOrganizationPositionsComponent implements OnInit {
 			organizationId: this.organizationId
 		});
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			`New position ${name} successfully added!`,
 			'Success'
 		);

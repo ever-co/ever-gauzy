@@ -27,7 +27,7 @@ export class EditOrganizationVendorsComponent implements OnInit {
 	async removeVendor(id: string, name: string) {
 		await this.organizationVendorsService.delete(id);
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			`Vendor ${name} successfully removed!`,
 			'Success'
 		);
@@ -41,7 +41,7 @@ export class EditOrganizationVendorsComponent implements OnInit {
 			organizationId: this.organizationId
 		});
 
-		this.toastrService.info(
+		this.toastrService.primary(
 			`New vendor ${name} successfully added!`,
 			'Success'
 		);

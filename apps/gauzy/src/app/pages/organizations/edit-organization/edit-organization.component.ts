@@ -108,7 +108,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 			this.showAddCard = !this.showAddCard;
 
-			this.toastrService.info(
+			this.toastrService.primary(
 				`${this.selectedOrg.name} organization recurring expense ${
 					this.editExpenseId ? 'updated' : 'set'
 				}.`,
@@ -175,7 +175,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 				}
 
 				this.selectedRowIndexToShow = null;
-				this.toastrService.info(
+				this.toastrService.primary(
 					this.selectedOrg.name +
 						' organization recurring expense deleted.',
 					'Success'

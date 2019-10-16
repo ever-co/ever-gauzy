@@ -182,7 +182,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							currency: formData.currency
 						});
 
-						this.toastrService.info(
+						this.toastrService.primary(
 							'Expense added for ' + this.employeeName,
 							'Success'
 						);
@@ -223,7 +223,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							currency: formData.currency
 						});
 
-						this.toastrService.info(
+						this.toastrService.primary(
 							'Expense edited for ' + this.employeeName,
 							'Success'
 						);
@@ -255,7 +255,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							this.selectedExpense.data.id
 						);
 
-						this.toastrService.info(
+						this.toastrService.primary(
 							'Expense deleted for ' + this.employeeName,
 							'Success'
 						);

@@ -169,7 +169,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 				this.employeeName =
 					data.user.firstName + ' ' + data.user.lastName;
 			}
-			this.toastrService.info(
+			this.toastrService.primary(
 				this.employeeName.trim() +
 					' added to ' +
 					data.organization.name,
@@ -204,7 +204,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 							this.selectedEmployee.id
 						);
 
-						this.toastrService.info(
+						this.toastrService.primary(
 							this.employeeName + ' set as inactive.',
 							'Success'
 						);
@@ -236,7 +236,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					this.selectedEmployee.id,
 					data
 				);
-				this.toastrService.info(
+				this.toastrService.primary(
 					this.employeeName + ' set as inactive.',
 					'Success'
 				);
@@ -267,7 +267,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					this.selectedEmployee.id,
 					null
 				);
-				this.toastrService.info(
+				this.toastrService.primary(
 					this.employeeName + ' set as active.',
 					'Success'
 				);
