@@ -47,6 +47,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
 	selectedExpense: SelectedRowModel;
 	showTable: boolean;
+	employeeName: string;
 	loading = true;
 
 	private _ngDestroy$ = new Subject<void>();
@@ -181,7 +182,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							currency: formData.currency
 						});
 
-						this.toastrService.info('Expense added.', 'Success');
+						this.toastrService.info(
+							'Expense added for ' + this.employeeName,
+							'Success'
+						);
 
 						this._loadTableData();
 						this.store.selectedEmployee = formData.employee.id
@@ -219,7 +223,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							currency: formData.currency
 						});
 
-						this.toastrService.info('Expense edited.', 'Success');
+						this.toastrService.info(
+							'Expense edited for ' + this.employeeName,
+							'Success'
+						);
 						this._loadTableData();
 					} catch (error) {
 						this.toastrService.danger(
@@ -248,7 +255,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							this.selectedExpense.data.id
 						);
 
-						this.toastrService.info('Expense deleted.', 'Success');
+						this.toastrService.info(
+							'Expense deleted for ' + this.employeeName,
+							'Success'
+						);
 						this._loadTableData();
 						this.selectedExpense = null;
 					} catch (error) {
@@ -329,6 +339,11 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				'Error'
 			);
 		}
+		this.employeeName = (
+			this.store.selectedEmployee.firstName +
+			' ' +
+			this.store.selectedEmployee.lastName
+		).trim();
 	}
 
 	getTranslation(prefix: string) {
