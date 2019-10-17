@@ -118,8 +118,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			this.clearMutationCard();
 		} catch (error) {
 			this.toastrService.danger(
-				error.error ? error.error.message : error.message,
-				'Error'
+				'Please fill all the required fields',
+				'Name, Value and Date are required'
 			);
 		}
 	}

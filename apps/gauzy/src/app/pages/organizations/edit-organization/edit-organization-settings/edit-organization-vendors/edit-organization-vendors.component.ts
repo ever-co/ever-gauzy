@@ -36,18 +36,25 @@ export class EditOrganizationVendorsComponent implements OnInit {
 	}
 
 	private async addVendor(name: string) {
-		await this.organizationVendorsService.create({
-			name,
-			organizationId: this.organizationId
-		});
+		if (name) {
+			await this.organizationVendorsService.create({
+				name,
+				organizationId: this.organizationId
+			});
 
-		this.toastrService.primary(
-			`New vendor ${name} successfully added!`,
-			'Success'
-		);
+			this.toastrService.primary(
+				`New vendor ${name} successfully added!`,
+				'Success'
+			);
 
-		this.showAddCard = !this.showAddCard;
-		this.loadVendors();
+			this.showAddCard = !this.showAddCard;
+			this.loadVendors();
+		} else {
+			this.toastrService.danger(
+				'Please add a Vendor name',
+				'Vendor name is required'
+			);
+		}
 	}
 
 	private async loadVendors() {

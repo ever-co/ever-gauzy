@@ -36,18 +36,25 @@ export class EditOrganizationPositionsComponent implements OnInit {
 	}
 
 	private async addPosition(name: string) {
-		await this.organizationPositionsService.create({
-			name,
-			organizationId: this.organizationId
-		});
+		if (name) {
+			await this.organizationPositionsService.create({
+				name,
+				organizationId: this.organizationId
+			});
 
-		this.toastrService.primary(
-			`New position ${name} successfully added!`,
-			'Success'
-		);
+			this.toastrService.primary(
+				`New position ${name} successfully added!`,
+				'Success'
+			);
 
-		this.showAddCard = !this.showAddCard;
-		this.loadPositions();
+			this.showAddCard = !this.showAddCard;
+			this.loadPositions();
+		} else {
+			this.toastrService.danger(
+				'Please add a Position name',
+				'Position name is required'
+			);
+		}
 	}
 
 	private async loadPositions() {

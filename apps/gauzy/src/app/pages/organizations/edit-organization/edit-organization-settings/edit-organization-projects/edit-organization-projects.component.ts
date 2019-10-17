@@ -68,16 +68,23 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	}
 
 	private async addProject(project: OrganizationProjectsCreateInput) {
-		await this.organizationProjectsService.create(project);
+		if (project.name) {
+			await this.organizationProjectsService.create(project);
 
-		this.toastrService.primary(
-			`New project ${project.name} successfully added!`,
-			'Success'
-		);
+			this.toastrService.primary(
+				`New project ${project.name} successfully added!`,
+				'Success'
+			);
 
-		this.showAddCard = !this.showAddCard;
-		this.selectedClient = null;
-		this.loadProjects();
+			this.showAddCard = !this.showAddCard;
+			this.selectedClient = null;
+			this.loadProjects();
+		} else {
+			this.toastrService.danger(
+				'Please fill in the name of your project',
+				'Invalid input'
+			);
+		}
 	}
 
 	private async loadProjects() {
