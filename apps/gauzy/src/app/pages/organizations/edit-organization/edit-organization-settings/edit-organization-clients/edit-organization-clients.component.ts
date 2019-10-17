@@ -54,17 +54,24 @@ export class EditOrganizationClientsComponent implements OnInit {
 	}
 
 	private async addClient(client: OrganizationClientsCreateInput) {
-		await this.organizationClientsService.create(client);
+		if (client.name && client.primaryEmail && client.primaryPhone) {
+			await this.organizationClientsService.create(client);
 
-		this.showAddCard = !this.showAddCard;
-		this.selectProjects = [];
+			this.showAddCard = !this.showAddCard;
+			this.selectProjects = [];
 
-		this.toastrService.primary(
-			`New client ${client.name} successfully added!`,
-			'Success'
-		);
+			this.toastrService.primary(
+				`New client ${client.name} successfully added!`,
+				'Success'
+			);
 
-		this.loadClients();
+			this.loadClients();
+		} else {
+			this.toastrService.danger(
+				'Please check the Name, Primary Email and Primary Phone of your client',
+				'Invalid input'
+			);
+		}
 	}
 
 	private async loadClients() {

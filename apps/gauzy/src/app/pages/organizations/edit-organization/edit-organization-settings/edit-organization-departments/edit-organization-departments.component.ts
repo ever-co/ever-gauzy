@@ -34,17 +34,24 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 	}
 
 	private async addDepartment(name: string) {
-		await this.organizationDepartmentsService.create({
-			name,
-			organizationId: this.organizationId
-		});
+		if (name) {
+			await this.organizationDepartmentsService.create({
+				name,
+				organizationId: this.organizationId
+			});
 
-		this.showAddCard = !this.showAddCard;
-		this.toastrService.primary(
-			name + ' Department successfully added!',
-			'Success'
-		);
-		this.loadDepartments();
+			this.showAddCard = !this.showAddCard;
+			this.toastrService.primary(
+				name + ' Department successfully added!',
+				'Success'
+			);
+			this.loadDepartments();
+		} else {
+			this.toastrService.danger(
+				'Please add a Department name',
+				'Department name is required'
+			);
+		}
 	}
 
 	private async loadDepartments() {
