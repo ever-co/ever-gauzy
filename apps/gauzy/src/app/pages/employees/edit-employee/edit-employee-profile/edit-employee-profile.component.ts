@@ -57,6 +57,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	];
 	routeParams: Params;
 	selectedEmployee: Employee;
+	employeeName = 'Employee';
 
 	constructor(
 		private route: ActivatedRoute,
@@ -92,7 +93,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 					this.form.value
 				);
 				this.toastrService.primary(
-					this.selectedEmployee.user.username + ' profile updated.',
+					this.employeeName + ' profile updated.',
 					'Success'
 				);
 				this._loadEmployeeData();
@@ -113,6 +114,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 			.toPromise();
 
 		this.selectedEmployee = items[0];
+		const checkUsername = this.selectedEmployee.user.username;
+		this.employeeName = checkUsername ? checkUsername : 'Employee';
 		this._initializeForm(items[0]);
 	}
 
