@@ -28,6 +28,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 	selectedEmployeeFromHeader: SelectedEmployee;
 	selectedEmployeeRecurringExpense: EmployeeRecurringExpense[];
 	selectedRowIndexToShow: number;
+	employeeName = 'Employee';
 
 	constructor(
 		private route: ActivatedRoute,
@@ -69,6 +70,9 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 					lastName: items[0].user.lastName,
 					imageUrl: items[0].user.imageUrl
 				};
+
+				const checkUsername = this.selectedEmployee.user.username;
+				this.employeeName = checkUsername ? checkUsername : 'Employee';
 
 				if (this.selectedDate) {
 					this._loadEmployeeRecurringExpense();
@@ -122,7 +126,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 				});
 
 				this.toastrService.primary(
-					'Employee recurring expense set.',
+					this.employeeName + ' recurring expense set.',
 					'Success'
 				);
 				this._loadEmployeeRecurringExpense();
@@ -165,7 +169,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 				this._loadEmployeeRecurringExpense();
 
 				this.toastrService.primary(
-					'Employee recurring expense edited.',
+					this.employeeName + ' recurring expense edited.',
 					'Success'
 				);
 				setTimeout(() => {
@@ -195,7 +199,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 				this.selectedRowIndexToShow = null;
 
 				this.toastrService.primary(
-					'Employee recurring expense deleted.',
+					this.employeeName + ' recurring expense deleted.',
 					'Success'
 				);
 				setTimeout(() => {
