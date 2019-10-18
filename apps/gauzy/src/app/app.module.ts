@@ -6,7 +6,7 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CoreModule } from './@core/core.module';
 import { ThemeModule } from './@theme/theme.module';
@@ -31,9 +31,14 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { Cloudinary as CloudinaryCore } from 'cloudinary-core';
 import { CloudinaryModule } from '@cloudinary/angular-5.x';
-import { cloudinaryConfiguration } from '../environments/environment';
+import {
+	cloudinaryConfiguration,
+	environment
+} from '../environments/environment';
 import { FileUploadModule } from 'ng2-file-upload';
 import { APIInterceptor } from './@core/api.interceptor';
+import { ServerConnectionService } from './@core/services/server-connection.service';
+import { Store } from './@core/services/store.service';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -85,7 +90,24 @@ export function HttpLoaderFactory(http: HttpClient) {
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
 			multi: true
+		},
+		ServerConnectionService,
+		{
+			provide: APP_INITIALIZER,
+			useFactory: serverConnectionFactory,
+			deps: [ServerConnectionService, Store],
+			multi: true
 		}
 	]
 })
 export class AppModule {}
+
+export function serverConnectionFactory(
+	provider: ServerConnectionService,
+	store: Store
+) {
+	console.log('environment.API_BASE_URL');
+	console.log(environment.API_BASE_URL);
+
+	return () => provider.load(environment.API_BASE_URL, store);
+}
