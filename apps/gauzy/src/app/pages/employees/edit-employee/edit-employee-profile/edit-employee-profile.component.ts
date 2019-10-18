@@ -19,42 +19,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	form: FormGroup;
 	paramSubscription: Subscription;
 	hoverState: boolean;
-	fakeDepartments = [
-		{
-			departmentName: 'Accounting',
-			departmentId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			departmentName: 'IT',
-			departmentId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			departmentName: 'Marketing',
-			departmentId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			departmentName: 'Human Resources',
-			departmentId: (Math.floor(Math.random() * 101) + 1).toString()
-		}
-	];
-	fakePositions = [
-		{
-			positionName: 'Developer',
-			positionId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			positionName: 'Project Manager',
-			positionId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			positionName: 'Accounting Employee',
-			positionId: (Math.floor(Math.random() * 101) + 1).toString()
-		},
-		{
-			positionName: 'Head of Human Resources',
-			positionId: (Math.floor(Math.random() * 101) + 1).toString()
-		}
-	];
+	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
+	fakePositions: { positionName: string; positionId: string }[] = [];
 	routeParams: Params;
 	selectedEmployee: Employee;
 	employeeName = 'Employee';
@@ -75,6 +41,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				this.routeParams = params;
 				this._loadEmployeeData();
 			});
+
+		this.getFakeData();
 	}
 
 	goBack() {
@@ -83,6 +51,38 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 
 	handleImageUploadError(error: any) {
 		this.toastrService.danger(error);
+	}
+
+	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
+
+	private getFakeData() {
+		const fakeDepartmentNames = [
+			'Accounting',
+			'IT',
+			'Marketing',
+			'Human Resources'
+		];
+
+		fakeDepartmentNames.forEach((name) => {
+			this.fakeDepartments.push({
+				departmentName: name,
+				departmentId: this.getFakeId()
+			});
+		});
+
+		const fakePositionNames = [
+			'Developer',
+			'Project Manager',
+			'Accounting Employee',
+			'Head of Human Resources'
+		];
+
+		fakePositionNames.forEach((name) => {
+			this.fakePositions.push({
+				positionName: name,
+				positionId: this.getFakeId()
+			});
+		});
 	}
 
 	async submitForm() {
