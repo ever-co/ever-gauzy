@@ -49,6 +49,10 @@ const routes: Routes = [
 			}
 		]
 	},
+	{
+		path: 'server-down',
+		loadChildren: './server-down/server-down.module#ServerDownModule'
+	},
 	{ path: 'sign-in/success', component: SignInSuccessComponent },
 	{ path: '', redirectTo: 'pages', pathMatch: 'full' },
 	{ path: '**', redirectTo: 'pages' }
