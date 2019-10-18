@@ -1,142 +1,143 @@
 .header {
-  padding: 30px;
+	padding: 30px;
 
-  .header-container {
-    display: flex;
-    justify-content: space-between;
+	.header-container {
+		display: flex;
+		justify-content: space-between;
 
-    .employee-info,
-    .org-info {
-      display: flex;
+		.employee-info,
+		.org-info {
+			display: flex;
 
-      .employee-image,
-      .org-image {
-        max-width: 70px;
-        max-height: 70px;
-        border-radius: 13px;
-        margin-right: 24px;
-      }
-    }
+			.employee-image,
+			.org-image {
+				max-width: 70px;
+				max-height: 70px;
+				border-radius: 13px;
+				margin-right: 24px;
+				margin-left: 24px;
+			}
+		}
 
-    .employee-details,
-    .org-details {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+		.employee-details,
+		.org-details {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
 
-      .employee-name,
-      .org-name {
-        font-weight: bold;
-        font-size: 18px;
-      }
+			.employee-name,
+			.org-name {
+				font-weight: bold;
+				font-size: 18px;
+			}
 
-      .employee-position,
-      .org-position {
-        font-size: 14px;
-      }
-    }
-  }
+			.employee-position,
+			.org-position {
+				font-size: 14px;
+			}
+		}
+	}
 }
 
 .open {
-  cursor: pointer;
+	cursor: pointer;
 }
 
 .body {
-  padding: 36px;
-  display: flex;
-  justify-content: space-between;
+	padding: 36px;
+	display: flex;
+	justify-content: space-between;
 
-  .half-content {
-    width: 49%;
-  }
+	.half-content {
+		width: 49%;
+	}
 
-  .info-block {
-    &:hover {
-      box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
-      transform: translateY(-1px);
-    }
+	.info-block {
+		&:hover {
+			box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+			transform: translateY(-1px);
+		}
 
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    width: 100%;
-    height: 84px;
-    border-radius: 4px;
-    padding: 29px;
-    background-color: #f6f9fc;
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 20px;
+		width: 100%;
+		height: 84px;
+		border-radius: 4px;
+		padding: 29px;
+		background-color: #f6f9fc;
 
-    .info-text,
-    .info-value {
-      display: flex;
-      font-size: 18px;
-      color: #333333;
+		.info-text,
+		.info-value {
+			display: flex;
+			font-size: 18px;
+			color: #333333;
 
-      .profit-positive-color {
-        color: #66de0b;
-      }
+			.profit-positive-color {
+				color: #66de0b;
+			}
 
-      .profit-negative-color {
-        color: #ff7b00;
-      }
+			.profit-negative-color {
+				color: #ff7b00;
+			}
 
-      .expense-color {
-        color: #dbc300;
-      }
+			.expense-color {
+				color: #dbc300;
+			}
 
-      .income-color {
-        color: #089c17;
-      }
-    }
+			.income-color {
+				color: #089c17;
+			}
+		}
 
-    .info-text {
-      flex-direction: column;
-      justify-content: center;
-    }
+		.info-text {
+			flex-direction: column;
+			justify-content: center;
+		}
 
-    .info-value {
-      flex-direction: row;
-      align-items: center;
+		.info-value {
+			flex-direction: row;
+			align-items: center;
 
-      span {
-        font-size: 24px;
-        margin-right: 12px;
-      }
-    }
-  }
+			span {
+				font-size: 24px;
+				margin-right: 12px;
+			}
+		}
+	}
 
-  .bonus {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    width: 100%;
+	.bonus {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		width: 100%;
 
-    .bonus-value {
-      margin-right: 39px;
+		.bonus-value {
+			margin-right: 39px;
 
-      :first-child {
-        text-align: right;
-        font-size: 16px;
-        margin-bottom: 15px;
-        margin-right: 3px;
-      }
+			:first-child {
+				text-align: right;
+				font-size: 16px;
+				margin-bottom: 15px;
+				margin-right: 3px;
+			}
 
-      :last-child {
-        font-size: 46px;
-        font-weight: bold;
-        color: #0091ff;
-      }
+			:last-child {
+				font-size: 46px;
+				font-weight: bold;
+				color: #0091ff;
+			}
 
-      .negative-bonus-color {
-        color: red;
-      }
-    }
+			.negative-bonus-color {
+				color: red;
+			}
+		}
 
-    .bonus-disclaimer {
-      margin-top: 15px;
-      margin-right: 39px;
-      font-size: 0.7rem;
-      width: 215px;
-    }
-  }
+		.bonus-disclaimer {
+			margin-top: 15px;
+			margin-right: 39px;
+			font-size: 0.7rem;
+			width: 215px;
+		}
+	}
 }

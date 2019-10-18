@@ -1,24 +1,26 @@
 .calendar-picker {
-    position: relative;
-    max-height: 40px;
-    input {
-        width: 100%;
-    }
-    .calendar { 
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: absolute;
-        z-index: 9999;
-        nb-calendar-year-picker, nb-calendar-month-picker{
-            z-index: 1;
-        }
-    }
-    .date-reset{
-        position: absolute;
-        top: 25%;
-        transform: scale(1.5);
-        right: 13px;
-        cursor: pointer;
-    }
-} 
+	position: relative;
+	max-height: 40px;
+	input {
+		width: 100%;
+		margin-right: 1rem;
+	}
+	.calendar {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		position: absolute;
+		z-index: 9999;
+		nb-calendar-year-picker,
+		nb-calendar-month-picker {
+			z-index: 1;
+		}
+	}
+	.date-reset {
+		position: absolute;
+		top: 33%;
+		transform: scale(1.5);
+		right: 20px;
+		cursor: pointer;
+	}
+}

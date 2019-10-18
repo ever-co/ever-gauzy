@@ -1,9 +1,11 @@
 ng-select {
-    .selector-template {
-        display: flex; align-items: center;
-        height: 100%;
-    }
-    img {
-        margin-right: 5px;
-    }
+	.selector-template {
+		display: flex;
+		align-items: center;
+		height: 100%;
+	}
+	img {
+		margin-right: 1rem;
+		margin-left: 1rem;
+	}
 }
