@@ -158,7 +158,7 @@
 		"ACTIVE": "פעיל",
 		"ARCHIVED": "נשמר בארכיון",
 		"EDIT": {
-			"CLIENT": "Client",
+			"CLIENT": "לקוחות",
 			"NEW_CLIENT": "הוסף לקוח חדש",
 			"NAME": "שם",
 			"PRIMARY_EMAIL": "דוא\"ל עיקרי",
