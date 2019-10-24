@@ -177,18 +177,18 @@
 		}
 	},
 	"CONTEXT_MENU": {
-		"TIMER": "Start Timer",
+		"TIMER": "הפעל טיימר",
 		"ADD_INCOME": "הוסף הכנסה",
 		"ADD_EXPENSE": "הוסף הוצאה",
-		"INVOICE": "Invoice",
-		"PROPOSAL": "Proposal",
-		"CONTRACT": "Contract",
-		"TASK": "Task",
-		"CLIENT": "לקוחות",
-		"PROJECT": "פרויקטים",
+		"INVOICE": "חשבונית",
+		"PROPOSAL": "הצעה",
+		"CONTRACT": "חוזה",
+		"TASK": "משימה",
+		"CLIENT": "לקוח",
+		"PROJECT": "פרויקט",
 		"ADD_EMPLOYEE": "הוסף עובד",
-		"CHAT": "Support Chat",
-		"FAQ": "FAQ",
+		"CHAT": "תמיכה בצ'אט",
+		"FAQ": "שאלות נפוצות",
 		"HELP": "עזרה"
 	},
 	"FOOTER": {
