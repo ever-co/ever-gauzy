@@ -177,19 +177,19 @@
 		}
 	},
 	"CONTEXT_MENU": {
-		"TIMER": "Start Timer",
-		"ADD_INCOME": "Add Income",
-		"ADD_EXPENSE": "Add Expense",
-		"INVOICE": "Invoice",
-		"PROPOSAL": "Proposal",
-		"CONTRACT": "Contract",
-		"TASK": "Task",
-		"CLIENT": "Client",
-		"PROJECT": "Project",
-		"ADD_EMPLOYEE": "Add Employee",
-		"CHAT": "Support Chat",
-		"FAQ": "FAQ",
-		"HELP": "Help"
+		"TIMER": "Старт таймер",
+		"ADD_INCOME": "Добави приход",
+		"ADD_EXPENSE": "Добави разход",
+		"INVOICE": "Фактура",
+		"PROPOSAL": "Предложение",
+		"CONTRACT": "Договор",
+		"TASK": "Задача",
+		"CLIENT": "Клиент",
+		"PROJECT": "Проект",
+		"ADD_EMPLOYEE": "Добави служител",
+		"CHAT": "Чат с нас",
+		"FAQ": "Въпроси и отговори",
+		"HELP": "Помощ"
 	},
 	"FOOTER": {
 		"BY": "от",
