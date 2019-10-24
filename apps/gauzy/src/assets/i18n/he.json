@@ -177,18 +177,18 @@
 		}
 	},
 	"CONTEXT_MENU": {
-		"TIMER": "Запустить таймер",
+		"TIMER": "Start Timer",
 		"ADD_INCOME": "הוסף הכנסה",
 		"ADD_EXPENSE": "הוסף הוצאה",
-		"INVOICE": "Счет",
-		"PROPOSAL": "Предложение",
-		"CONTRACT": "Контракт",
-		"TASK": "Задача",
+		"INVOICE": "Invoice",
+		"PROPOSAL": "Proposal",
+		"CONTRACT": "Contract",
+		"TASK": "Task",
 		"CLIENT": "לקוחות",
-		"PROJECT": "Проект",
+		"PROJECT": "פרויקטים",
 		"ADD_EMPLOYEE": "הוסף עובד",
-		"CHAT": "Чат поддержки",
-		"FAQ": "ЧаВо",
+		"CHAT": "Support Chat",
+		"FAQ": "FAQ",
 		"HELP": "עזרה"
 	},
 	"FOOTER": {
