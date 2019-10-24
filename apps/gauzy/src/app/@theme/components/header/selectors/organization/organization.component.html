@@ -1,27 +1,31 @@
 <div *ngIf="organizations">
-  <ng-select
-    [clearable]="false"
-    [items]="organizations"
-    bindLabel="name"
-    autofocus
-    (change)="selectOrganiztion($event)"
-    [(ngModel)]="selectedOrganization"
-    placeholder="Select Company"
-  >
-    <ng-template ng-option-tmp let-item="item" let-index="index">
-      <img *ngIf="item.imageUrl" [src]="item.imageUrl" width="40" height="40" />
-      {{ item.name }}
-    </ng-template>
-    <ng-template ng-label-tmp let-item="item">
-      <div class="selector-template">
-        <img
-          *ngIf="item.imageUrl"
-          height="25"
-          width="25"
-          [src]="item.imageUrl"
-        />
-        <span>{{ item.name }}</span>
-      </div>
-    </ng-template>
-  </ng-select>
+	<ng-select
+		[clearable]="false"
+		[items]="organizations"
+		bindLabel="name"
+		(change)="selectOrganiztion($event)"
+		[(ngModel)]="selectedOrganization"
+		placeholder="Select Company"
+	>
+		<ng-template ng-option-tmp let-item="item" let-index="index">
+			<img
+				*ngIf="item.imageUrl"
+				[src]="item.imageUrl"
+				width="40"
+				height="40"
+			/>
+			{{ item.name }}
+		</ng-template>
+		<ng-template ng-label-tmp let-item="item">
+			<div class="selector-template">
+				<img
+					*ngIf="item.imageUrl"
+					height="25"
+					width="25"
+					[src]="item.imageUrl"
+				/>
+				<span>{{ item.name }}</span>
+			</div>
+		</ng-template>
+	</ng-select>
 </div>
