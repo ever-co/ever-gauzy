@@ -75,8 +75,8 @@
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
-			"EMPLOYEE": "служителски",
-			"EXPENSE": "разходен"
+			"EMPLOYEE": "служители",
+			"EXPENSE": "Разходи"
 		}
 	},
 	"POP_UPS": {
@@ -148,7 +148,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
-		"SELECT_ORGANZIATION": "Моля изберете организация от менюто",
+		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
 		"CLIENTS": "Клиенти",
