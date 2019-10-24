@@ -75,8 +75,8 @@
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
-			"EMPLOYEE": "служители",
-			"EXPENSE": "Разходи"
+			"EMPLOYEE": "служителски",
+			"EXPENSE": "разходен"
 		}
 	},
 	"POP_UPS": {
@@ -148,7 +148,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
-		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
+		"SELECT_ORGANZIATION": "Моля изберете организация от менюто",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
 		"CLIENTS": "Клиенти",
@@ -175,6 +175,21 @@
 			"TYPE": "Тип",
 			"CURRENCY": "Валута"
 		}
+	},
+	"CONTEXT_MENU": {
+		"TIMER": "Start Timer",
+		"ADD_INCOME": "Add Income",
+		"ADD_EXPENSE": "Add Expense",
+		"INVOICE": "Invoice",
+		"PROPOSAL": "Proposal",
+		"CONTRACT": "Contract",
+		"TASK": "Task",
+		"CLIENT": "Client",
+		"PROJECT": "Project",
+		"ADD_EMPLOYEE": "Add Employee",
+		"CHAT": "Support Chat",
+		"FAQ": "FAQ",
+		"HELP": "Help"
 	},
 	"FOOTER": {
 		"BY": "от",
