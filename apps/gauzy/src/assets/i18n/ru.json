@@ -176,6 +176,21 @@
 			"CURRENCY": "Валюта"
 		}
 	},
+	"CONTEXT_MENU": {
+		"TIMER": "Start Timer",
+		"ADD_INCOME": "Add Income",
+		"ADD_EXPENSE": "Add Expense",
+		"INVOICE": "Invoice",
+		"PROPOSAL": "Proposal",
+		"CONTRACT": "Contract",
+		"TASK": "Task",
+		"CLIENT": "Client",
+		"PROJECT": "Project",
+		"ADD_EMPLOYEE": "Add Employee",
+		"CHAT": "Support Chat",
+		"FAQ": "FAQ",
+		"HELP": "Help"
+	},
 	"FOOTER": {
 		"BY": "по",
 		"RIGHTS_RECERVED": "Все права защищены."
