@@ -106,7 +106,8 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 ### Contributors
 
 -   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
--   View all of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors)
+
+View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
 
 ## Contact Us
 
