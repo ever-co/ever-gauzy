@@ -108,7 +108,5 @@ export function serverConnectionFactory(
 	provider: ServerConnectionService,
 	store: Store
 ) {
-	console.log('store.serverConnection');
-	console.log(store.serverConnection);
 	return () => provider.load(environment.API_BASE_URL, store);
 }
