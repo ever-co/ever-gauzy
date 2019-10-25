@@ -3,7 +3,7 @@
 		"ADD": "Добави",
 		"CREATE": "Създай",
 		"EDIT": "Редактиране",
-		"MANAGE": "Manage",
+		"MANAGE": "Управление",
 		"DELETE": "Изтрий",
 		"OK": "Да",
 		"SAVE": "Запази",
@@ -76,8 +76,8 @@
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
-			"EMPLOYEE": "служителски",
-			"EXPENSE": "разходен"
+			"EMPLOYEE": "служители",
+			"EXPENSE": "Разходи"
 		}
 	},
 	"POP_UPS": {
@@ -149,7 +149,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
-		"SELECT_ORGANZIATION": "Моля изберете организация от менюто",
+		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
 		"CLIENTS": "Клиенти",
@@ -178,19 +178,19 @@
 		}
 	},
 	"CONTEXT_MENU": {
-		"TIMER": "Start Timer",
-		"ADD_INCOME": "Add Income",
-		"ADD_EXPENSE": "Add Expense",
-		"INVOICE": "Invoice",
-		"PROPOSAL": "Proposal",
-		"CONTRACT": "Contract",
-		"TASK": "Task",
-		"CLIENT": "Client",
-		"PROJECT": "Project",
-		"ADD_EMPLOYEE": "Add Employee",
-		"CHAT": "Support Chat",
+		"TIMER": "Страртирай таймер",
+		"ADD_INCOME": "Добаветe доход",
+		"ADD_EXPENSE": "Добавете разход",
+		"INVOICE": "Фактура",
+		"PROPOSAL": "Предложение",
+		"CONTRACT": "Договор",
+		"TASK": "Задача",
+		"CLIENT": "Клиент",
+		"PROJECT": "Проект",
+		"ADD_EMPLOYEE": "Добавяне на служител",
+		"CHAT": "Чат за поддръжка",
 		"FAQ": "FAQ",
-		"HELP": "Help"
+		"HELP": "Помощ"
 	},
 	"FOOTER": {
 		"BY": "от",
