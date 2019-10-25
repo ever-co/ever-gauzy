@@ -39,6 +39,7 @@ import { FileUploadModule } from 'ng2-file-upload';
 import { APIInterceptor } from './@core/api.interceptor';
 import { ServerConnectionService } from './@core/services/server-connection.service';
 import { Store } from './@core/services/store.service';
+import { AppModuleGuard } from './app.module.guards';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -97,7 +98,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 			useFactory: serverConnectionFactory,
 			deps: [ServerConnectionService, Store],
 			multi: true
-		}
+		},
+		AppModuleGuard
 	]
 })
 export class AppModule {}
@@ -106,8 +108,5 @@ export function serverConnectionFactory(
 	provider: ServerConnectionService,
 	store: Store
 ) {
-	console.log('environment.API_BASE_URL');
-	console.log(environment.API_BASE_URL);
-
 	return () => provider.load(environment.API_BASE_URL, store);
 }

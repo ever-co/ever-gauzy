@@ -28,20 +28,5 @@ export class AppComponent implements OnInit {
 		this.analytics.trackPageViews();
 
 		const serverConnection = Number(this.store.serverConnection);
-
-		if (serverConnection === 0) {
-			console.log(serverConnection);
-			this.router.navigate(['/server-down']);
-			return false;
-		}
-		// try {
-		//     await this.httpClient
-		//         .get('http://localhost:3000')
-		//         .pipe(first())
-		//         .toPromise();
-		// } catch (error) {
-		// 	// store.serverConnection = error.status;
-		// 	console.log(error);
-		// }
 	}
 }
