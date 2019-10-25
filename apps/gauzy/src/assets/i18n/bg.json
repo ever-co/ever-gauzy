@@ -3,6 +3,7 @@
 		"ADD": "Добави",
 		"CREATE": "Създай",
 		"EDIT": "Редактиране",
+		"MANAGE": "Manage",
 		"DELETE": "Изтрий",
 		"OK": "Да",
 		"SAVE": "Запази",
@@ -75,8 +76,8 @@
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
-			"EMPLOYEE": "служителски",
-			"EXPENSE": "разходен"
+			"EMPLOYEE": "служители",
+			"EXPENSE": "Разходи"
 		}
 	},
 	"POP_UPS": {
@@ -177,18 +178,18 @@
 		}
 	},
 	"CONTEXT_MENU": {
-		"TIMER": "Старт таймер",
-		"ADD_INCOME": "Добави приход",
-		"ADD_EXPENSE": "Добави разход",
+		"TIMER": "Страртирай таймер",
+		"ADD_INCOME": "Добаветe доход",
+		"ADD_EXPENSE": "Добавете разход",
 		"INVOICE": "Фактура",
 		"PROPOSAL": "Предложение",
 		"CONTRACT": "Договор",
 		"TASK": "Задача",
 		"CLIENT": "Клиент",
 		"PROJECT": "Проект",
-		"ADD_EMPLOYEE": "Добави служител",
-		"CHAT": "Чат с нас",
-		"FAQ": "Въпроси и отговори",
+		"ADD_EMPLOYEE": "Добавяне на служител",
+		"CHAT": "Чат за поддръжка",
+		"FAQ": "FAQ",
 		"HELP": "Помощ"
 	},
 	"FOOTER": {
