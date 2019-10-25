@@ -8,6 +8,7 @@ export class ServerConnectionService {
 
 	load(endPoint: string, store: { serverConnection: string }) {
 		return new Promise(async (resolve, reject) => {
+			console.log(endPoint);
 			await this.checkServerConnection(endPoint, store);
 
 			resolve(true);
@@ -24,7 +25,6 @@ export class ServerConnectionService {
 				.pipe(first())
 				.toPromise();
 		} catch (error) {
-			console.log(error);
 			store.serverConnection = error.status;
 		}
 	}

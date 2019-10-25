@@ -21,13 +21,12 @@ export class ServerDownPage implements OnDestroy {
 		private translate: TranslateService,
 		private serverConnectionService: ServerConnectionService
 	) {
+		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
 		this.testConnection();
 	}
 
 	private async testConnection() {
 		this.interval = setInterval(async () => {
-			console.log('back location');
-
 			await this.serverConnectionService.checkServerConnection(
 				environment.API_BASE_URL,
 				this.store

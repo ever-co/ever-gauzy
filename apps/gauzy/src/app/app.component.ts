@@ -26,7 +26,5 @@ export class AppComponent implements OnInit {
 
 	async ngOnInit() {
 		this.analytics.trackPageViews();
-
-		const serverConnection = Number(this.store.serverConnection);
 	}
 }
