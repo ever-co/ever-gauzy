@@ -11,17 +11,19 @@ import {
 import { AuthGuard } from './@core/auth/auth.guard';
 import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
 import { SignInSuccessModule } from './auth/signin-success/signin-success-login-google.module';
+import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
 	{
 		path: 'pages',
 		loadChildren: () =>
 			import('./pages/pages.module').then((m) => m.PagesModule),
-		canActivate: [AuthGuard]
+		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
 		path: 'auth',
 		component: NbAuthComponent,
+		canActivate: [AppModuleGuard],
 		children: [
 			{
 				path: '',
@@ -48,6 +50,10 @@ const routes: Routes = [
 				component: NbResetPasswordComponent
 			}
 		]
+	},
+	{
+		path: 'server-down',
+		loadChildren: './server-down/server-down.module#ServerDownModule'
 	},
 	{ path: 'sign-in/success', component: SignInSuccessComponent },
 	{ path: '', redirectTo: 'pages', pathMatch: 'full' },

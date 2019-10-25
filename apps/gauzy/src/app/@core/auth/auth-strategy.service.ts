@@ -86,42 +86,37 @@ export class AuthStrategy extends NbAuthStrategy {
 				email
 			},
 			password
-		}
+		};
 
 		return this.authService.login(loginInput).pipe(
-			map(
-				(res: {
-					user?: User,
-					token?: string;
-				}) => {
-					let user, token;
+			map((res: { user?: User; token?: string }) => {
+				let user, token;
 
-					if (res) {
-						user = res.user;
-						token = res.token;
-					}
+				if (res) {
+					user = res.user;
+					token = res.token;
+				}
 
-					if (!user) {
-						return new NbAuthResult(
-							false,
-							res,
-							false,
-							AuthStrategy.config.login.defaultErrors
-						);
-					}
-
-					this.store.userId = user.id;
-					this.store.token = token;
-
+				if (!user) {
 					return new NbAuthResult(
-						true,
+						false,
 						res,
-						AuthStrategy.config.login.redirect.success,
-						[],
-						AuthStrategy.config.login.defaultMessages
+						false,
+						AuthStrategy.config.login.defaultErrors
 					);
 				}
-			),
+
+				this.store.userId = user.id;
+				this.store.token = token;
+
+				return new NbAuthResult(
+					true,
+					res,
+					AuthStrategy.config.login.redirect.success,
+					[],
+					AuthStrategy.config.login.defaultMessages
+				);
+			}),
 			catchError((err) => {
 				console.log(err);
 
@@ -157,12 +152,22 @@ export class AuthStrategy extends NbAuthStrategy {
 
 		const registerInput = {
 			user: {
-				firstName: fullName ? fullName.split(' ').slice(0, -1).join(' ') : null,
-				lastName: fullName ? fullName.split(' ').slice(-1).join(' ') : null,
+				firstName: fullName
+					? fullName
+							.split(' ')
+							.slice(0, -1)
+							.join(' ')
+					: null,
+				lastName: fullName
+					? fullName
+							.split(' ')
+							.slice(-1)
+							.join(' ')
+					: null,
 				email
 			},
 			password
-		}
+		};
 
 		return this.authService.register(registerInput).pipe(
 			map((res) => {
@@ -208,6 +213,8 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	private async _logout(): Promise<NbAuthResult> {
 		this.store.clear();
+
+		this.store.serverConnection = '200';
 
 		return new NbAuthResult(
 			true,
