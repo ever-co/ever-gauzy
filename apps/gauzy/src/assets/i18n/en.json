@@ -174,7 +174,8 @@
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
 			"TYPE": "Type",
-			"CURRENCY": "Currency"
+			"CURRENCY": "Currency",
+			"TEAMS": "Teams"
 		}
 	},
 	"CONTEXT_MENU": {

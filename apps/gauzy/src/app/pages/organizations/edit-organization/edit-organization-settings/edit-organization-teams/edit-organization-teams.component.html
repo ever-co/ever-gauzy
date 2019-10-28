@@ -1,0 +1,88 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			*ngIf="!showAddCard"
+			(click)="showAddCard = !showAddCard; this.loadTeams()"
+			nbButton
+			status="success"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<nb-card *ngIf="showAddCard">
+			<nb-card-header>Add New Team</nb-card-header>
+			<nb-card-body>
+				<div class="form-group">
+					<button
+						class="mr-2"
+						(click)="
+							addTeam({
+								organizationId: organizationId,
+								name: name.value,
+								members: members.value
+							})
+						"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+					<button
+						(click)="showAddCard = !showAddCard"
+						nbButton
+						status="danger"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+				</div>
+				<form class="row">
+					<div class="form-group col-4">
+						<input
+							type="text"
+							#name
+							nbInput
+							fullWidth
+							placeholder="Team Name"
+						/>
+					</div>
+					<div class="form-group col-4">
+						<nb-select
+							multiple
+							(selectedChange)="onMembersSelected([members])"
+							fullWidth
+							placeholder="Members"
+						>
+							<nb-option
+								*ngFor="let member of members"
+								value="{{ member.id }}"
+								>{{ member.name }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</form>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-header>
+	<nb-card-body *ngIf="teams?.length">
+		<div class="ml-3 mr-3 mb-3 row">
+			<div class="col-2 d-inline">
+				Team Name
+			</div>
+			<div class="col d-inline">
+				Team Members
+			</div>
+		</div>
+		<br />
+		<div *ngFor="let team of teams" class="ml-3 mr-3 mb-3 row">
+			<div class="col-2 d-inline">{{ team.name }}</div>
+			<div class="col d-inline">{{ team.members }}</div>
+			<nb-actions class="float-right" e="medium">
+				<nb-action
+					(click)="removeTeam(team.id, team.name)"
+					class="d-inline pr-0"
+					icon="close"
+				></nb-action>
+			</nb-actions>
+		</div>
+	</nb-card-body>
+</nb-card>

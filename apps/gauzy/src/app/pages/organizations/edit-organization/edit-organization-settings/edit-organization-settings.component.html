@@ -157,6 +157,16 @@
 							[organizationId]="organization?.id"
 						></ga-edit-org-projects>
 					</nb-tab>
+					<nb-tab
+						[active]="activeTabName === 'teams'"
+						tabTitle="{{
+							'ORGANIZATIONS_PAGE.EDIT.TEAMS' | translate
+						}}"
+					>
+						<ga-edit-org-teams>
+							#teams [organizationId]="organization?.id"
+						</ga-edit-org-teams>
+					</nb-tab>
 				</nb-tabset>
 			</div>
 		</div>
