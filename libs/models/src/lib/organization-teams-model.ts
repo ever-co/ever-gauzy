@@ -1,17 +1,16 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Organization } from './organization.model';
 
 export interface OrganizationTeams extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
 }
 
-export interface OrganizationTeamsFindInput extends IBaseEntityModel {
+export interface OrganizationTeamFindInput extends IBaseEntityModel {
 	name?: string;
 	organizationId?: string;
 }
 
-export interface OrganizationTeamsCreateInput {
+export interface OrganizationTeamCreateInput {
 	name: string;
 	organizationId: string;
 }

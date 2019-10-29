@@ -15,13 +15,7 @@
 				<div class="form-group">
 					<button
 						class="mr-2"
-						(click)="
-							addTeam({
-								organizationId: organizationId,
-								name: name.value,
-								members: members.value
-							})
-						"
+						(click)="addTeam()"
 						nbButton
 						status="success"
 					>
@@ -39,7 +33,8 @@
 					<div class="form-group col-4">
 						<input
 							type="text"
-							#name
+							[(ngModel)]="name"
+							[ngModelOptions]="{ standalone: true }"
 							nbInput
 							fullWidth
 							placeholder="Team Name"
@@ -48,7 +43,7 @@
 					<div class="form-group col-4">
 						<nb-select
 							multiple
-							(selectedChange)="onMembersSelected([members])"
+							(selectedChange)="onMembersSelected($event)"
 							fullWidth
 							placeholder="Add Team Members"
 						>

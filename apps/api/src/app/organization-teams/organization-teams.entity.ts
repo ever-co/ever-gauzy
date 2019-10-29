@@ -1,4 +1,12 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import {
+	Column,
+	Entity,
+	Index,
+	JoinColumn,
+	ManyToOne,
+	ManyToMany,
+	JoinTable
+} from 'typeorm';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsDate } from 'class-validator';
 import { Base } from '../core/entities/base';
@@ -20,8 +28,11 @@ export class OrganizationTeams extends Base implements IOrganizationTeams {
 	@Column()
 	organizationId: string;
 
-	@ApiModelPropertyOptional({ type: Employee, isArray: true })
-	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	teams?: Employee[];
+	@ManyToMany((type) => Employee)
+	@JoinTable({
+		name: 'organization_team_employee',
+		joinColumn: { name: 'organizationTeamId', referencedColumnName: 'id' },
+		inverseJoinColumn: { name: 'employeeId', referencedColumnName: 'id' }
+	})
+	employees: Employee[];
 }

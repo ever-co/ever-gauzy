@@ -2,10 +2,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NbToastrService } from '@nebular/theme';
 import {
 	OrganizationTeams,
-	OrganizationClientsCreateInput,
 	Organization,
 	Employee,
-	User
+	User,
+	OrganizationTeamCreateInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
@@ -22,13 +22,13 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 export class EditOrganizationTeamsComponent implements OnInit {
 	@Input()
 	selectedOrg: Organization;
+
 	organizationId: string;
-
+	name: string;
 	showAddCard: boolean;
-
 	teams: OrganizationTeams[];
 	employees: User[] = [];
-	members: Employee[] = [];
+	members: string[] = [];
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
@@ -54,17 +54,31 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		this.loadTeams();
 	}
 
-	private async addTeam(team: OrganizationClientsCreateInput) {
-		if (team.name) {
-			await this.organizationTeamsService.create(team);
+	onMembersSelected(members: string[]) {
+		this.members = members;
+	}
 
-			this.toastrService.primary(
-				`New team ${team.name} successfully added!`,
-				'Success'
-			);
+	private async addTeam() {
+		if (this.name && this.name.trim().length) {
+			const team = {
+				name: this.name,
+				organizationId: this.organizationId,
+				members: this.members
+			};
 
-			this.showAddCard = !this.showAddCard;
-			this.loadTeams();
+			try {
+				await this.organizationTeamsService.create(team);
+
+				this.toastrService.primary(
+					`New team ${team.name} successfully added!`,
+					'Success'
+				);
+
+				this.showAddCard = !this.showAddCard;
+				this.loadTeams();
+			} catch (error) {
+				console.error(error);
+			}
 		} else {
 			this.toastrService.danger(
 				'Please add a Team name',
@@ -76,20 +90,20 @@ export class EditOrganizationTeamsComponent implements OnInit {
 	private async loadEmployees() {
 		this.organizationId = this.store.selectedOrganization.id;
 		const { items } = await this.employeesService
-			.getAll([], { organization: { id: this.organizationId } })
+			.getAll(['user'], { organization: { id: this.organizationId } })
 			.pipe(first())
 			.toPromise();
 
-		for (const employee of items) {
-			const user = await this.userService.getUserById(employee.userId);
-			this.employees.push(user);
-		}
+		this.employees = items.map((emp) => emp.user);
 	}
 
 	private async loadTeams() {
-		const res = await this.organizationTeamsService.getAll({
+		const res = await this.organizationTeamsService.getAll(['employees'], {
 			organizationId: this.organizationId
 		});
+
+		console.log(res);
+
 		if (res) {
 			this.teams = res.items;
 		}

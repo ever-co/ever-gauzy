@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
 	OrganizationTeams,
-	OrganizationTeamsFindInput,
-	OrganizationTeamsCreateInput
+	OrganizationTeamFindInput,
+	OrganizationTeamCreateInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -21,7 +21,7 @@ export class OrganizationTeamsService {
 	// 5) Display all teams: show team name and members - avatar + full name for each member;
 
 	create(
-		createInput: OrganizationTeamsCreateInput
+		createInput: OrganizationTeamCreateInput
 	): Promise<OrganizationTeams> {
 		return this.http
 			.post<OrganizationTeams>('/api/organization-teams', createInput)
@@ -30,9 +30,10 @@ export class OrganizationTeamsService {
 	}
 
 	getAll(
-		findInput?: OrganizationTeamsFindInput
+		relations?: string[],
+		findInput?: OrganizationTeamFindInput
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
 			.get<{ items: OrganizationTeams[]; total: number }>(

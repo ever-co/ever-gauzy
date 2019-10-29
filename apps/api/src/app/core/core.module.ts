@@ -1,4 +1,4 @@
-// Modified code from https://github.com/xmlking/ngx-starter-kit. 
+// Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
@@ -18,56 +18,56 @@ import { UserOrganization } from '../user-organization';
 import { OrganizationDepartment } from '../organization-department';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense';
 import { EmployeeRecurringExpense } from '../employee-recurring-expense';
-import { TerminusModule, TypeOrmHealthIndicator, DNSHealthIndicator } from '@nestjs/terminus';
-import { getTerminusOptions } from './health/terminus-options.service';
 import { OrganizationClients } from '../organization-clients';
 import { OrganizationPositions } from '../organization-positions';
 import { OrganizationVendors } from '../organization-vendors';
 import { OrganizationProjects } from '../organization-projects';
+import { OrganizationTeams } from '../organization-teams';
 
 const entities = [
-  User,
-  Employee,
-  Role,
-  Organization,
-  Income,
-  Expense,
-  EmployeeSetting,
-  UserOrganization,
-  OrganizationDepartment,
-  OrganizationClients,
-  OrganizationPositions,
-  OrganizationProjects,
-  OrganizationVendors,
-  OrganizationRecurringExpense,
-  EmployeeRecurringExpense
+	User,
+	Employee,
+	Role,
+	Organization,
+	Income,
+	Expense,
+	EmployeeSetting,
+	UserOrganization,
+	OrganizationDepartment,
+	OrganizationClients,
+	OrganizationPositions,
+	OrganizationProjects,
+	OrganizationVendors,
+	OrganizationRecurringExpense,
+	EmployeeRecurringExpense,
+	OrganizationTeams
 ];
 
 @Module({
-  imports: [
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (config: ConfigService): TypeOrmModuleOptions => ({
-        ...env.database,
-        entities,
-        // subscribers,
-        // migrations,
-      }),
-      inject: [ConfigService],
-    }),
-    /*
+	imports: [
+		TypeOrmModule.forRootAsync({
+			imports: [ConfigModule],
+			useFactory: (config: ConfigService): TypeOrmModuleOptions => ({
+				...env.database,
+				entities
+				// subscribers,
+				// migrations,
+			}),
+			inject: [ConfigService]
+		})
+		/*
     TerminusModule.forRootAsync({
       // Inject the TypeOrmHealthIndicator provided by nestjs/terminus
       inject: [TypeOrmHealthIndicator, DNSHealthIndicator],
       useFactory: (db, dns) => getTerminusOptions(db, dns)
     })
     */
-  ],
-  controllers: [],
-  providers: [],
+	],
+	controllers: [],
+	providers: []
 })
 export class CoreModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RequestContextMiddleware).forRoutes('*');
-  }
+	configure(consumer: MiddlewareConsumer) {
+		consumer.apply(RequestContextMiddleware).forRoutes('*');
+	}
 }
