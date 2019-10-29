@@ -25,6 +25,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	theme: string;
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
+	showExtraActions = false;
+	largeBreakpoint = 1290;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -71,20 +73,38 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	}
 
 	toggleSidebar(): boolean {
-		this.sidebarService.toggle(true, 'menu-sidebar');
-		this.layoutService.changeLayoutSize();
-
+		if (this.showExtraActions) {
+			this.toggleExtraActions(false);
+			this.sidebarService.expand('menu-sidebar');
+		} else {
+			this.sidebarService.toggle(true, 'menu-sidebar');
+			this.layoutService.changeLayoutSize();
+		}
 		return false;
 	}
 
 	toggleSettings(): boolean {
-		this.sidebarService.toggle(false, 'settings-sidebar');
+		if (this.showExtraActions) {
+			this.toggleExtraActions(false);
+			this.sidebarService.expand('settings-sidebar');
+		} else {
+			this.sidebarService.toggle(false, 'settings-sidebar');
+		}
 		return false;
 	}
 
 	navigateHome() {
 		this.menuService.navigateHome();
 		return false;
+	}
+
+	getWindowWidth() {
+		return window.innerWidth;
+	}
+
+	toggleExtraActions(bool?: boolean) {
+		this.showExtraActions =
+			bool !== undefined ? bool : !this.showExtraActions;
 	}
 
 	loadItems() {
