@@ -4,11 +4,15 @@ import {
 	OrganizationTeams,
 	OrganizationClientsCreateInput,
 	Organization,
-	Employee
+	Employee,
+	User
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import {
+	EmployeesService,
+	UsersService
+} from 'apps/gauzy/src/app/@core/services';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
@@ -19,17 +23,19 @@ export class EditOrganizationTeamsComponent implements OnInit {
 	@Input()
 	selectedOrg: Organization;
 	organizationId: string;
-	store: Store;
 
 	showAddCard: boolean;
 
 	teams: OrganizationTeams[];
-	members: Employee[];
+	employees: User[] = [];
+	members: Employee[] = [];
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private employeesService: EmployeesService,
-		private readonly toastrService: NbToastrService
+		private userService: UsersService,
+		private readonly toastrService: NbToastrService,
+		private store: Store
 	) {}
 
 	ngOnInit(): void {
@@ -68,12 +74,16 @@ export class EditOrganizationTeamsComponent implements OnInit {
 	}
 
 	private async loadEmployees() {
-		this.organizationId = await this.store.selectedOrganization.id;
+		this.organizationId = this.store.selectedOrganization.id;
 		const { items } = await this.employeesService
 			.getAll([], { organization: { id: this.organizationId } })
 			.pipe(first())
 			.toPromise();
-		this.members = items;
+
+		for (const employee of items) {
+			const user = await this.userService.getUserById(employee.userId);
+			this.employees.push(user);
+		}
 	}
 
 	private async loadTeams() {

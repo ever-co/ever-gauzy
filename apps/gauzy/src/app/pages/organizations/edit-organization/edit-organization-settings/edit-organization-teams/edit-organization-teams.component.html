@@ -50,12 +50,21 @@
 							multiple
 							(selectedChange)="onMembersSelected([members])"
 							fullWidth
-							placeholder="Members"
+							placeholder="Add Team Members"
 						>
 							<nb-option
-								*ngFor="let member of members"
-								value="{{ member.id }}"
-								>{{ member.name }}</nb-option
+								*ngFor="let employee of employees"
+								value="{{ employee.id }}"
+							>
+								<img
+									src="{{ employee.imageUrl }}"
+									alt="Smiley face"
+									height="40"
+									width="40"
+									style="margin-right:10px"
+								/>
+								{{ employee.firstName }}
+								{{ employee.lastName }}</nb-option
 							>
 						</nb-select>
 					</div>
