@@ -85,7 +85,6 @@
 			</div>
 		</div>
 		<div class="row">
-			<!-- brand color -->
 			<div class="col-4">
 				<div class="form-group">
 					<label class="label">Brand Color</label>
@@ -105,28 +104,26 @@
 					class="brand-color-preview"
 					[ngStyle]="{ background: '#' + getHex() || '#fff' }"
 				>
-					<span>#{{ getHex() || 'fff' }}</span>
+					<span>#{{ getHex() }}</span>
 				</div>
 			</div>
 			<div class="col-6">
 				<div class="form-group">
-					<label class="label">{{
-						'FORM.LABELS.DATE_TYPE' | translate
-					}}</label>
+					<label class="label">
+						Date Format
+					</label>
 					<nb-select
 						class="d-block"
 						size="medium"
-						formControlName="defaultValueDateType"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.DATE_TYPE' | translate
-						}}"
+						formControlName="dateFormat"
+						placeholder="Choose Format"
 						fullWidth
 					>
 						<nb-option
-							*ngFor="let type of defaultValueDateTypes"
-							[value]="type"
+							*ngFor="let format of listOfDateFormats"
+							[value]="format"
 						>
-							{{ 'SM_TABLE.' + type | translate }}
+							{{ dateFormatPreview(format) }}
 						</nb-option>
 					</nb-select>
 				</div>

@@ -9,6 +9,7 @@ export interface Organization extends IBaseEntityModel {
 	currency: string;
 	defaultValueDateType: string;
 	defaultAlignmentType: string;
+	dateFormat: string;
 	brandColor: string;
 	isActive: boolean;
 }

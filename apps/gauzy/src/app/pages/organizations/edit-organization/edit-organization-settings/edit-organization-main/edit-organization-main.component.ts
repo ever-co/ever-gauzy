@@ -13,6 +13,8 @@ import {
 	AlignmentOptions
 } from '@gauzy/models';
 
+import * as moment from 'moment';
+
 @Component({
 	selector: 'ga-edit-org-main',
 	templateUrl: './edit-organization-main.component.html',
@@ -31,6 +33,17 @@ export class EditOrganizationMainComponent implements OnInit {
 			return type[0] + type.substr(1, type.length).toLowerCase();
 		}
 	);
+	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
+	listOfDateFormats = [
+		'M/D/YYYY',
+		'D/M/YYYY',
+		'DDDD/MMMM/YYYY',
+		'MMMM Do YYYY',
+		'dddd, MMMM Do YYYY',
+		'MMM D YYYY',
+		'YYYY-MM-DD',
+		'ddd, MMM D YYYY'
+	];
 
 	constructor(private fb: FormBuilder) {}
 
@@ -42,6 +55,9 @@ export class EditOrganizationMainComponent implements OnInit {
 		return this.form.value.brandColor;
 	}
 
+	dateFormatPreview(format: string) {
+		return moment().format(format);
+	}
 	forbiddenColorValidator(nameRe: RegExp): ValidatorFn {
 		return (control: AbstractControl): { [key: string]: any } | null => {
 			const forbidden = !nameRe.test(control.value);
@@ -66,7 +82,8 @@ export class EditOrganizationMainComponent implements OnInit {
 			brandColor: [
 				this.organization.brandColor,
 				this.forbiddenColorValidator(HEX_REGEX)
-			]
+			],
+			dateFormat: [this.organization.dateFormat]
 		});
 	}
 }
