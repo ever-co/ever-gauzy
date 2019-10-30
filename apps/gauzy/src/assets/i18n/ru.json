@@ -1,15 +1,15 @@
 {
 	"BUTTONS": {
-		"ADD": "Добавить",
-		"CREATE": "Создать",
+		"ADD": "Добавлять",
+		"CREATE": "Создайте",
 		"EDIT": "Редактировать",
-		"MANAGE": "Управление",
-		"DELETE": "Удалить",
-		"OK": "Ок",
+		"MANAGE": "Manage",
+		"DELETE": "Удалять",
+		"OK": "Хорошо",
 		"SAVE": "Сохранить",
 		"BACK": "Обратно",
 		"CANCEL": "Отменить",
-		"CLOSE": "Закрыть"
+		"CLOSE": "Конец"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -24,18 +24,18 @@
 		"NO_DATA": "Нет данных для выбранного сотрудника.",
 		"FULL_NAME": "Полное имя",
 		"EMAIL": "Электронная почта",
-		"INCOME": "Доход (средний)",
-		"EXPENSES": "Расходы (средние)",
+		"INCOME": "Доход (Средний)",
+		"EXPENSES": "Затраты (Средний)",
 		"BONUS": "Бонус",
-		"BONUS_AVG": "Бонус (средний)",
+		"BONUS_AVG": "Бонус (Средний)",
 		"STATUS": "Статус",
-		"WORK_STATUS": "Статус работы",
+		"WORK_STATUS": "Рабочий статус",
 		"TODAY": "Сегодня",
 		"END_OF_MONTH": "Конец месяца",
 		"START_OF_MONTH": "Начало месяца",
 		"RATE": "Ставка",
 		"FLAT_FEE": "Фиксированная плата",
-		"MILESTONES": "Этапы"
+		"MILESTONES": "Основные этапы"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
@@ -44,10 +44,10 @@
 		"CONFIRM": "Подтвердить",
 		"LABELS": {
 			"NAME": "Имя",
-			"FIRST_NAME": "Имя (необязательно)",
-			"LAST_NAME": "Фамилия (необязательно)",
+			"FIRST_NAME": "Имя (по желанию)",
+			"LAST_NAME": "Фамилия (по желанию)",
 			"START_DATE": "Дата начала работы",
-			"IMAGE_URL": "URL изображения (необязательно)",
+			"IMAGE_URL": "Image URL (по желанию)",
 			"CURRENCY": "Валюта",
 			"DATE_TYPE": "Тип даты по умолчанию"
 		},
@@ -56,17 +56,17 @@
 			"FIRST_NAME": "Имя",
 			"LAST_NAME": "Фамилия",
 			"COMPANY_NAME": "Название компании",
-			"ALL_EMPLOYEES": "Все сотрудники",
+			"ALL_EMPLOYEES": "Все работники",
 			"CURRENCY": "Валюта",
 			"ALL_CURRENCIES": "Все валюты",
-			"ALL_DEPARTMENTS": "Все департаменты",
+			"ALL_DEPARTMENTS": "Все отделы",
 			"ALL_POSITIONS": "Все позиции",
 			"START_DATE": "Дата",
 			"PICK_DATE": "Выбрать дату",
-			"DATE_TYPE": "Все типы даты",
+			"DATE_TYPE": "Все типы дат",
 			"TYPE": "Тип",
 			"IMAGE_URL": "Изображение",
-			"ADD_DEPARTMENT": "Добавить департамент",
+			"ADD_DEPARTMENT": "Добавить отдел",
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
 			"CLIENTS": "Клиенты",
@@ -118,11 +118,11 @@
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
 			"AVERAGE_BONUS": "Общая прибыль",
-			"TOTAL_INCOME": "Общий доход",
-			"TOTAL_EXPENSES": "Всего расходов",
+			"TOTAL_INCOME": "Общая прибыль",
+			"TOTAL_EXPENSES": "Суммарные расходы",
 			"PROFIT": "Прибыль",
 			"PROFIT_CALC": "Прибыль = Общий доход - Общие расходы",
-			"NOTE": "Примечание: отрицательные бонусы должны вычитаться в предстоящие месяцы из положительных бонусов до финальных бонусных платежей",
+			"NOTE": "Примечание: отрицательные бонусы должны быть вычтены в ближайшие месяцы из положительных бонусов до окончательной выплаты бонусов",
 			"BONUS": "Бонус"
 		}
 	},
@@ -130,7 +130,7 @@
 		"INCOME": "Доход"
 	},
 	"EXPENSES_PAGE": {
-		"EXPENSES": "Затраты"
+		"EXPENSES": "Расходы"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление сотрудниками для",
@@ -138,11 +138,11 @@
 		"ACTIVE": "Активный",
 		"END_WORK": "Конец работы",
 		"WORK_ENDED": "Работа завершена",
-		"RECURRING_EXPENSE": "Добавить повторяющиеся расходы сотрудника",
+		"RECURRING_EXPENSE": "Добавить текущие расходы сотрудника",
 		"BACK_TO_WORK": "Вернуться к работе",
 		"EDIT_EMPLOYEE": {
 			"DEVELOPER": "Разработчик",
-			"DEPARTMENT": "Департамент",
+			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция"
 		}
 	},
@@ -150,24 +150,24 @@
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
 		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
-		"MAIN": "Главная",
-		"DEPARTMENTS": "Департаменты",
+		"MAIN": "Главный",
+		"DEPARTMENTS": "Ведомства",
 		"CLIENTS": "Клиенты",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Вендоры",
-		"PROJECTS": "Проекты",
-		"ACTIVE": "Активно",
-		"ARCHIVED": "Архивирован",
+		"PROJECTS": "Проектов",
+		"ACTIVE": "Активная",
+		"ARCHIVED": "В архиве",
 		"EDIT": {
 			"CLIENT": "Kлиент",
-			"NEW_CLIENT": "Добавить клиента",
+			"NEW_CLIENT": "Добавить нового клиента",
 			"NAME": "Имя",
 			"PRIMARY_EMAIL": "Основной адрес э-почты",
 			"PHONE": "Основной телефон",
 			"COUNTRY": "Страна",
 			"CITY": "Город",
 			"STREET": "Улица",
-			"PROJECTS": "Проекты",
+			"PROJECTS": "Проектов",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
 			"NEW_PROJECT": "Добавить новый проект",
@@ -175,23 +175,23 @@
 			"END_DATE": "Дата окончания",
 			"TYPE": "Тип",
 			"CURRENCY": "Валюта",
-			"TEAMS": "Команды"
+			"TEAMS": "Teams"
 		}
 	},
 	"CONTEXT_MENU": {
-		"TIMER": "Запустить таймер",
-		"ADD_INCOME": "Добавить доход",
-		"ADD_EXPENSE": "Добавить расходы",
-		"INVOICE": "Счет",
-		"PROPOSAL": "Предложение",
-		"CONTRACT": "Контракт",
-		"TASK": "Задача",
-		"CLIENT": "Kлиент",
-		"PROJECT": "Проект",
-		"ADD_EMPLOYEE": "Добавить сотрудника",
-		"CHAT": "Чат поддержки",
-		"FAQ": "ЧаВо",
-		"HELP": "Помогите"
+		"TIMER": "Start Timer",
+		"ADD_INCOME": "Add Income",
+		"ADD_EXPENSE": "Add Expense",
+		"INVOICE": "Invoice",
+		"PROPOSAL": "Proposal",
+		"CONTRACT": "Contract",
+		"TASK": "Task",
+		"CLIENT": "Client",
+		"PROJECT": "Project",
+		"ADD_EMPLOYEE": "Add Employee",
+		"CHAT": "Support Chat",
+		"FAQ": "FAQ",
+		"HELP": "Help"
 	},
 	"FOOTER": {
 		"BY": "по",
