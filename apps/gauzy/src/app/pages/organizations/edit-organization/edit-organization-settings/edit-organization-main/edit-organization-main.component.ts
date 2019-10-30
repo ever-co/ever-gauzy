@@ -14,6 +14,7 @@ import {
 } from '@gauzy/models';
 
 import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
 
 @Component({
 	selector: 'ga-edit-org-main',
@@ -33,6 +34,7 @@ export class EditOrganizationMainComponent implements OnInit {
 			return type[0] + type.substr(1, type.length).toLowerCase();
 		}
 	);
+	listOfZones = timezone.tz.names();
 	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
 	listOfDateFormats = [
 		'M/D/YYYY',
@@ -55,6 +57,10 @@ export class EditOrganizationMainComponent implements OnInit {
 		return this.form.value.brandColor;
 	}
 
+	getTimeWithOffset(zone: string) {
+		return zone + ' ' + timezone.tz(zone).format('zz ZZ');
+	}
+
 	dateFormatPreview(format: string) {
 		return moment().format(format);
 	}
@@ -66,6 +72,14 @@ export class EditOrganizationMainComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		const defaultTimeZone = timezone.tz.guess();
+		const timeZonesList = timezone.tz.names();
+		console.log(timeZonesList);
+		console.log(
+			timezone()
+				.tz('Europe/Sofia')
+				.format('HH:mm ZZ')
+		);
 		this._initializedForm();
 	}
 
@@ -83,7 +97,8 @@ export class EditOrganizationMainComponent implements OnInit {
 				this.organization.brandColor,
 				this.forbiddenColorValidator(HEX_REGEX)
 			],
-			dateFormat: [this.organization.dateFormat]
+			dateFormat: [this.organization.dateFormat],
+			timeZone: [this.organization.timeZone]
 		});
 	}
 }

@@ -12,6 +12,7 @@ export interface Organization extends IBaseEntityModel {
 	dateFormat: string;
 	brandColor: string;
 	isActive: boolean;
+	timeZone: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {

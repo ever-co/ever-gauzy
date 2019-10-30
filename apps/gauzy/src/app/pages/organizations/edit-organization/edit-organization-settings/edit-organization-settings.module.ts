@@ -35,6 +35,7 @@ import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/
 import { EditOrganizationClientsComponent } from './edit-organization-clients/edit-organization-clients.component';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { EditOrganizationProjectsComponent } from './edit-organization-projects/edit-organization-projects.component';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @NgModule({
 	imports: [
@@ -46,6 +47,7 @@ import { EditOrganizationProjectsComponent } from './edit-organization-projects/
 		NbInputModule,
 		NbIconModule,
 		NbActionsModule,
+		NgSelectModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

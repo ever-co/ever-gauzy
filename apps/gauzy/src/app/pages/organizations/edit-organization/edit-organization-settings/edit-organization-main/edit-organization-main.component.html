@@ -132,48 +132,34 @@
 		<div class="row">
 			<div class="col-6">
 				<div class="form-group">
-					<label class="label">{{
-						'FORM.LABELS.DATE_TYPE' | translate
-					}}</label>
+					<label class="label">Choose Time Zone</label>
 					<nb-select
 						class="d-block"
 						size="medium"
 						formControlName="defaultValueDateType"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.DATE_TYPE' | translate
-						}}"
+						placeholder="Select Zone"
 						fullWidth
 					>
 						<nb-option
-							*ngFor="let type of defaultValueDateTypes"
-							[value]="type"
+							*ngFor="let zone of listOfZones"
+							[value]="zone"
 						>
-							{{ 'SM_TABLE.' + type | translate }}
+							{{ getTimeWithOffset(zone) }}
 						</nb-option>
 					</nb-select>
-				</div>
-			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{
-						'FORM.LABELS.DATE_TYPE' | translate
-					}}</label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						formControlName="defaultValueDateType"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.DATE_TYPE' | translate
-						}}"
-						fullWidth
-					>
-						<nb-option
-							*ngFor="let type of defaultValueDateTypes"
-							[value]="type"
-						>
-							{{ 'SM_TABLE.' + type | translate }}
-						</nb-option>
-					</nb-select>
+					<ng-select bindName="firstName" placeholder="All Employees">
+						<ng-template ng-label-tmp let-item="item">
+							<div class="selector-template">
+								<img
+									*ngIf="item.imageUrl"
+									height="25"
+									width="25"
+									[src]="item.imageUrl"
+								/>
+								<span>{{ 'S' }}</span>
+							</div>
+						</ng-template>
+					</ng-select>
 				</div>
 			</div>
 		</div>
