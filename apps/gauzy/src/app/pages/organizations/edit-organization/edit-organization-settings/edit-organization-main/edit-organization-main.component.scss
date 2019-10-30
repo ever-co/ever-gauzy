@@ -1,0 +1,16 @@
+.brand-color-preview {
+	width: 80px;
+	border: 2px solid black;
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transform: translateY(26px);
+	padding: 0.4375rem 1.125rem;
+	transition: 0.5s;
+	span {
+		color: white;
+		mix-blend-mode: difference;
+		transition: 0.5s;
+	}
+}

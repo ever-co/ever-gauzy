@@ -64,6 +64,121 @@
 					</nb-select>
 				</div>
 			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label"> Logo Alignment </label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="defaultAlignmentType"
+						placeholder="Align Logo To"
+						fullWidth
+					>
+						<nb-option
+							*ngFor="let type of defaultAlignmentTypes"
+							[value]="type.toUpperCase()"
+						>
+							{{ type }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<!-- brand color -->
+			<div class="col-4">
+				<div class="form-group">
+					<label class="label">Brand Color</label>
+					<input
+						fullWidth
+						id="brandColorInput"
+						type="text"
+						nbInput
+						formControlName="brandColor"
+						placeholder="Enter HEX code(1afb21)"
+						maxlength="6"
+					/>
+				</div>
+			</div>
+			<div class="col-2">
+				<div
+					class="brand-color-preview"
+					[ngStyle]="{ background: '#' + getHex() || '#fff' }"
+				>
+					<span>#{{ getHex() || 'fff' }}</span>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label">{{
+						'FORM.LABELS.DATE_TYPE' | translate
+					}}</label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="defaultValueDateType"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.DATE_TYPE' | translate
+						}}"
+						fullWidth
+					>
+						<nb-option
+							*ngFor="let type of defaultValueDateTypes"
+							[value]="type"
+						>
+							{{ 'SM_TABLE.' + type | translate }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label">{{
+						'FORM.LABELS.DATE_TYPE' | translate
+					}}</label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="defaultValueDateType"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.DATE_TYPE' | translate
+						}}"
+						fullWidth
+					>
+						<nb-option
+							*ngFor="let type of defaultValueDateTypes"
+							[value]="type"
+						>
+							{{ 'SM_TABLE.' + type | translate }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label">{{
+						'FORM.LABELS.DATE_TYPE' | translate
+					}}</label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="defaultValueDateType"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.DATE_TYPE' | translate
+						}}"
+						fullWidth
+					>
+						<nb-option
+							*ngFor="let type of defaultValueDateTypes"
+							[value]="type"
+						>
+							{{ 'SM_TABLE.' + type | translate }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
 		</div>
 	</div>
 </form>

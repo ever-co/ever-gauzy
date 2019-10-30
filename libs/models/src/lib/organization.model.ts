@@ -8,6 +8,8 @@ export interface Organization extends IBaseEntityModel {
 	imageUrl?: string;
 	currency: string;
 	defaultValueDateType: string;
+	defaultAlignmentType: string;
+	brandColor: string;
 	isActive: boolean;
 }
 
@@ -54,4 +56,10 @@ export enum ProjectTypeEnum {
 	RATE = 'RATE',
 	FLAT_FEE = 'FLAT_FEE',
 	MILESTONES = 'MILESTONES'
+}
+
+export enum AlignmentOptions {
+	LEFT = 'LEFT',
+	RIGHT = 'RIGHT',
+	CENTER = 'CENTER'
 }
