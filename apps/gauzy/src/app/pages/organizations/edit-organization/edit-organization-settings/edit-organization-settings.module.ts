@@ -35,6 +35,8 @@ import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/
 import { EditOrganizationClientsComponent } from './edit-organization-clients/edit-organization-clients.component';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { EditOrganizationProjectsComponent } from './edit-organization-projects/edit-organization-projects.component';
+import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
+import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 
 @NgModule({
 	imports: [
@@ -62,7 +64,8 @@ import { EditOrganizationProjectsComponent } from './edit-organization-projects/
 		RemoveLodashModule,
 		NbListModule,
 		NbTabsetModule,
-		NbDatepickerModule
+		NbDatepickerModule,
+		EmployeeSelectorsModule
 	],
 	providers: [
 		OrganizationDepartmentsService,
@@ -79,7 +82,8 @@ import { EditOrganizationProjectsComponent } from './edit-organization-projects/
 		EditOrganizationPositionsComponent,
 		EditOrganizationPositionsComponent,
 		EditOrganizationClientsComponent,
-		EditOrganizationProjectsComponent
+		EditOrganizationProjectsComponent,
+		EditOrganizationTeamsComponent
 	]
 })
 export class EditOrganizationSettingsModule {}
