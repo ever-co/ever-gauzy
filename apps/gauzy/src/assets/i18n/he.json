@@ -3,6 +3,7 @@
 		"ADD": "הוסף",
 		"CREATE": "צור",
 		"EDIT": "ערוך",
+		"MANAGE": "Управление",
 		"DELETE": "מחק",
 		"OK": "בסדר",
 		"SAVE": "לשמור",
@@ -173,22 +174,23 @@
 			"START_DATE": "תאריך התחלה",
 			"END_DATE": "תאריך סיום",
 			"TYPE": "סוג",
-			"CURRENCY": "מטבע"
+			"CURRENCY": "מטבע",
+			"TEAMS": "Teams"
 		}
 	},
 	"CONTEXT_MENU": {
-		"TIMER": "הפעל טיימר",
+		"TIMER": "Стартирай Таймер",
 		"ADD_INCOME": "הוסף הכנסה",
 		"ADD_EXPENSE": "הוסף הוצאה",
-		"INVOICE": "חשבונית",
-		"PROPOSAL": "הצעה",
-		"CONTRACT": "חוזה",
-		"TASK": "משימה",
-		"CLIENT": "לקוח",
-		"PROJECT": "פרויקט",
+		"INVOICE": "Фактура",
+		"PROPOSAL": "Предложение",
+		"CONTRACT": "Договор",
+		"TASK": "Задача",
+		"CLIENT": "לקוחות",
+		"PROJECT": "פרויקטים",
 		"ADD_EMPLOYEE": "הוסף עובד",
-		"CHAT": "תמיכה בצ'אט",
-		"FAQ": "שאלות נפוצות",
+		"CHAT": "Чат с нас",
+		"FAQ": "Въпроси и Отговори",
 		"HELP": "עזרה"
 	},
 	"FOOTER": {
