@@ -174,7 +174,8 @@
 			"START_DATE": "Начална дата",
 			"END_DATE": "Крайна дата",
 			"TYPE": "Тип",
-			"CURRENCY": "Валута"
+			"CURRENCY": "Валута",
+			"TEAMS": "Teams"
 		}
 	},
 	"CONTEXT_MENU": {
