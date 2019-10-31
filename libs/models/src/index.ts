@@ -11,6 +11,7 @@ export * from './lib/organization-clients.model';
 export * from './lib/organization-positions.model';
 export * from './lib/organization-projects.model';
 export * from './lib/organization-vendors.model';
+export * from './lib/organization-teams-model';
 export * from './lib/organization-recurring-expense';
 export * from './lib/employee-recurring-expense';
 export { Role, RolesEnum } from './lib/role.model';
