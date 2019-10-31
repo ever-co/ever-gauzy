@@ -133,7 +133,7 @@
 			<div class="col-6">
 				<div class="form-group">
 					<label class="label">Choose Time Zone</label>
-					<nb-select
+					<!-- <nb-select
 						class="d-block"
 						size="medium"
 						formControlName="defaultValueDateType"
@@ -146,18 +146,24 @@
 						>
 							{{ getTimeWithOffset(zone) }}
 						</nb-option>
-					</nb-select>
-					<ng-select bindName="firstName" placeholder="All Employees">
+					</nb-select> -->
+
+					<!-- TODO: Make this work with ng-select to allow for zone search -->
+					<ng-select
+						[(items)]="listOfZones"
+						placeholder="Choose Timezone"
+						[searchable]="true"
+						formControlName="timeZone"
+					>
+						<ng-template
+							ng-option-tmp
+							let-item="item"
+							let-index="index"
+						>
+							{{ getTimeWithOffset(item) }}
+						</ng-template>
 						<ng-template ng-label-tmp let-item="item">
-							<div class="selector-template">
-								<img
-									*ngIf="item.imageUrl"
-									height="25"
-									width="25"
-									[src]="item.imageUrl"
-								/>
-								<span>{{ 'S' }}</span>
-							</div>
+							{{ getTimeWithOffset(item) }}
 						</ng-template>
 					</ng-select>
 				</div>

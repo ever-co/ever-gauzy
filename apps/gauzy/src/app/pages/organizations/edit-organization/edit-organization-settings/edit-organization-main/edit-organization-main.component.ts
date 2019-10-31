@@ -34,7 +34,7 @@ export class EditOrganizationMainComponent implements OnInit {
 			return type[0] + type.substr(1, type.length).toLowerCase();
 		}
 	);
-	listOfZones = timezone.tz.names();
+	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
 	listOfDateFormats = [
 		'M/D/YYYY',
@@ -58,7 +58,14 @@ export class EditOrganizationMainComponent implements OnInit {
 	}
 
 	getTimeWithOffset(zone: string) {
-		return zone + ' ' + timezone.tz(zone).format('zz ZZ');
+		let cutZone = zone;
+		if (zone.includes('/')) {
+			cutZone = zone.split('/')[1];
+		}
+
+		const offset = timezone.tz(zone).format('zZ');
+
+		return '(' + offset + ') ' + cutZone;
 	}
 
 	dateFormatPreview(format: string) {
@@ -72,14 +79,6 @@ export class EditOrganizationMainComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		const defaultTimeZone = timezone.tz.guess();
-		const timeZonesList = timezone.tz.names();
-		console.log(timeZonesList);
-		console.log(
-			timezone()
-				.tz('Europe/Sofia')
-				.format('HH:mm ZZ')
-		);
 		this._initializedForm();
 	}
 
