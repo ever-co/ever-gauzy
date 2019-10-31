@@ -56,7 +56,7 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 				emp.user = await this.userRepository.findOne(emp.userId);
 			}
 
-			return await this.org.update(id, entity);
+			return await this.organizationTeamsRepository.update(id, entity);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}
