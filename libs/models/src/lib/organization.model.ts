@@ -7,12 +7,12 @@ export interface Organization extends IBaseEntityModel {
 	status?: string;
 	imageUrl?: string;
 	currency: string;
-	defaultValueDateType: string;
-	defaultAlignmentType: string;
-	dateFormat: string;
-	brandColor: string;
 	isActive: boolean;
-	timeZone: string;
+	defaultValueDateType: string;
+	defaultAlignmentType?: string;
+	dateFormat?: string;
+	brandColor?: string;
+	timeZone?: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
