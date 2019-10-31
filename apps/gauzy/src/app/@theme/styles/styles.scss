@@ -53,6 +53,9 @@
 		background-color: nb-theme(background-basic-color-2);
 		border: 1px solid nb-theme(border-basic-color-3);
 		color: nb-theme(text-basic-color);
+		transition-duration: 0.15s;
+		transition-property: border, background-color, color, box-shadow;
+		transition-timing-function: ease-in;
 	}
 
 	.ng-select.ng-select-focused .ng-select-container {
@@ -76,6 +79,28 @@
 	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
 		background: nb-theme(background-basic-color-1);
 		color: nb-theme(text-basic-color);
+		padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
+		transition-duration: 0.15s;
+		transition-property: border, background-color, color, box-shadow;
+		transition-timing-function: ease-in;
+		font-family: Open Sans, sans-serif;
+		font-weight: 600;
+		font-size: 0.8125rem;
+		line-height: 1.5rem;
+	}
+
+	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
+		color: nb-theme(text-primary-hover-color);
+	}
+
+	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
+		color: nb-theme(text-primary-active-color);
+		background: nb-theme(background-basic-color-1);
+	}
+
+	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
+		color: nb-theme(text-primary-active-color);
+		background: nb-theme(background-basic-color-1);
 	}
 	.ng-value-container .ng-input input {
 		color: nb-theme(text-basic-color);
@@ -83,6 +108,11 @@
 	.ng-dropdown-panel {
 		border-color: nb-theme(text-primary-focus-color);
 		box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
+		border: none;
+		border-bottom-left-radius: nb-theme(border-radius);
+		border-bottom-right-radius: nb-theme(border-radius);
+		box-shadow: nb-theme(shadow);
+		transform: translateY(1px);
 	}
 
 	tr {

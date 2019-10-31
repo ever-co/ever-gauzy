@@ -64,6 +64,94 @@
 					</nb-select>
 				</div>
 			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label"> Logo Alignment </label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="defaultAlignmentType"
+						placeholder="Align Logo To"
+						fullWidth
+					>
+						<nb-option
+							*ngFor="let type of defaultAlignmentTypes"
+							[value]="type.toUpperCase()"
+						>
+							{{ type }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-4">
+				<div class="form-group">
+					<label class="label">Brand Color</label>
+					<input
+						fullWidth
+						id="brandColorInput"
+						type="text"
+						nbInput
+						formControlName="brandColor"
+						placeholder="Enter HEX code(1afb21)"
+						maxlength="6"
+					/>
+				</div>
+			</div>
+			<div class="col-2">
+				<div
+					class="brand-color-preview"
+					[ngStyle]="{ background: '#' + getHex() || '#fff' }"
+				>
+					<span>#{{ getHex() }}</span>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label">
+						Date Format
+					</label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="dateFormat"
+						placeholder="Choose Format"
+						fullWidth
+					>
+						<nb-option
+							*ngFor="let format of listOfDateFormats"
+							[value]="format"
+						>
+							{{ dateFormatPreview(format) }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label">Choose Time Zone</label>
+					<ng-select
+						[(items)]="listOfZones"
+						placeholder="Choose Timezone"
+						[searchable]="true"
+						formControlName="timeZone"
+					>
+						<ng-template
+							ng-option-tmp
+							let-item="item"
+							let-index="index"
+						>
+							{{ getTimeWithOffset(item) }}
+						</ng-template>
+						<ng-template ng-label-tmp let-item="item">
+							{{ getTimeWithOffset(item) }}
+						</ng-template>
+					</ng-select>
+				</div>
+			</div>
 		</div>
 	</div>
 </form>
