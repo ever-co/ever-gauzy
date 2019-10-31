@@ -133,22 +133,6 @@
 			<div class="col-6">
 				<div class="form-group">
 					<label class="label">Choose Time Zone</label>
-					<!-- <nb-select
-						class="d-block"
-						size="medium"
-						formControlName="defaultValueDateType"
-						placeholder="Select Zone"
-						fullWidth
-					>
-						<nb-option
-							*ngFor="let zone of listOfZones"
-							[value]="zone"
-						>
-							{{ getTimeWithOffset(zone) }}
-						</nb-option>
-					</nb-select> -->
-
-					<!-- TODO: Make this work with ng-select to allow for zone search -->
 					<ng-select
 						[(items)]="listOfZones"
 						placeholder="Choose Timezone"
