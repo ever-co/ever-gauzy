@@ -1,83 +1,82 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import {
 	OrganizationTeams,
 	Organization,
 	Employee,
-	User,
 	OrganizationTeamCreateInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
-import {
-	EmployeesService,
-	UsersService
-} from 'apps/gauzy/src/app/@core/services';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ActivatedRoute } from '@angular/router';
+import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
 	selector: 'ga-edit-org-teams',
-	templateUrl: './edit-organization-teams.component.html'
+	templateUrl: './edit-organization-teams.component.html',
+	styleUrls: ['./edit-organization-teams.component.scss']
 })
 export class EditOrganizationTeamsComponent implements OnInit {
 	@Input()
 	selectedOrg: Organization;
 
 	organizationId: string;
-	name: string;
 	showAddCard: boolean;
 	teams: OrganizationTeams[];
-	employees: User[] = [];
-	members: string[] = [];
+	employees: Employee[] = [];
+	teamToEdit: OrganizationTeams;
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private employeesService: EmployeesService,
-		private userService: UsersService,
 		private readonly toastrService: NbToastrService,
-		private store: Store
+		private store: Store,
+		private route: ActivatedRoute,
+		private dialogService: NbDialogService
 	) {}
 
-	ngOnInit(): void {
+	ngOnInit() {
 		this.loadTeams();
 		this.loadEmployees();
 	}
 
-	async removeTeam(id: string, name: string) {
-		await this.organizationTeamsService.delete(id);
+	async addOrEditTeam(team: OrganizationTeamCreateInput) {
+		if (team.name && team.name.trim().length && team.members.length) {
+			if (this.teamToEdit) {
+				try {
+					console.log(team);
 
-		this.toastrService.primary(
-			`Team ${name} successfully removed!`,
-			'Success'
-		);
+					await this.organizationTeamsService.update(
+						this.teamToEdit.id,
+						team
+					);
 
-		this.loadTeams();
-	}
+					this.toastrService.primary(
+						`Team ${team.name} successfully updated!`,
+						'Success'
+					);
 
-	onMembersSelected(members: string[]) {
-		this.members = members;
-	}
+					this.loadTeams();
+				} catch (error) {
+					console.error(error);
+				}
 
-	private async addTeam() {
-		if (this.name && this.name.trim().length) {
-			const team = {
-				name: this.name,
-				organizationId: this.organizationId,
-				members: this.members
-			};
+				this.showAddCard = false;
+			} else {
+				try {
+					await this.organizationTeamsService.create(team);
 
-			try {
-				await this.organizationTeamsService.create(team);
+					this.toastrService.primary(
+						`New team ${team.name} successfully added!`,
+						'Success'
+					);
 
-				this.toastrService.primary(
-					`New team ${team.name} successfully added!`,
-					'Success'
-				);
-
-				this.showAddCard = !this.showAddCard;
-				this.loadTeams();
-			} catch (error) {
-				console.error(error);
+					this.loadTeams();
+				} catch (error) {
+					console.error(error);
+				}
 			}
 		} else {
 			this.toastrService.danger(
@@ -85,27 +84,73 @@ export class EditOrganizationTeamsComponent implements OnInit {
 				'Team name is required'
 			);
 		}
+
+		this.showAddCard = false;
+		this.teamToEdit = null;
+	}
+
+	async removeTeam(id: string, name: string) {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Team'
+				}
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			try {
+				await this.organizationTeamsService.delete(id);
+
+				this.toastrService.primary(
+					`Team ${name} successfully removed!`,
+					'Success'
+				);
+
+				this.loadTeams();
+			} catch (error) {
+				console.error(error);
+			}
+		}
+	}
+
+	editTeam(team: OrganizationTeams) {
+		this.showAddCard = !this.showAddCard;
+		this.teamToEdit = team;
+		this.showAddCard = true;
+		// TODO: Scroll the page to the top!
+	}
+
+	cancel() {
+		this.showAddCard = !this.showAddCard;
+		this.teamToEdit = null;
 	}
 
 	private async loadEmployees() {
-		this.organizationId = this.store.selectedOrganization.id;
+		const { id } = await this.route.params.pipe(first()).toPromise();
+
+		this.organizationId = this.store.selectedOrganization
+			? this.store.selectedOrganization.id
+			: id;
+
 		const { items } = await this.employeesService
 			.getAll(['user'], { organization: { id: this.organizationId } })
 			.pipe(first())
 			.toPromise();
 
-		this.employees = items.map((emp) => emp.user);
+		this.employees = items;
 	}
 
 	private async loadTeams() {
-		const res = await this.organizationTeamsService.getAll(['employees'], {
+		const teams = await this.organizationTeamsService.getAll(['members'], {
 			organizationId: this.organizationId
 		});
 
-		console.log(res);
-
-		if (res) {
-			this.teams = res.items;
+		if (teams) {
+			this.teams = teams.items.sort(
+				(a, b) => b.members.length - a.members.length
+			);
 		}
 	}
 }

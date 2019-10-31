@@ -24,7 +24,10 @@ export class OrganizationTeamsService {
 		createInput: OrganizationTeamCreateInput
 	): Promise<OrganizationTeams> {
 		return this.http
-			.post<OrganizationTeams>('/api/organization-teams', createInput)
+			.post<OrganizationTeams>(
+				'/api/organization-teams/create',
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
