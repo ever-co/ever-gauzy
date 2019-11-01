@@ -37,7 +37,13 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		private dialogService: NbDialogService
 	) {}
 
-	ngOnInit() {
+	async ngOnInit() {
+		const { id } = await this.route.params.pipe(first()).toPromise();
+
+		this.organizationId = this.store.selectedOrganization
+			? this.store.selectedOrganization.id
+			: id;
+
 		this.loadTeams();
 		this.loadEmployees();
 	}
@@ -46,8 +52,6 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		if (team.name && team.name.trim().length && team.members.length) {
 			if (this.teamToEdit) {
 				try {
-					console.log(team);
-
 					await this.organizationTeamsService.update(
 						this.teamToEdit.id,
 						team
@@ -128,12 +132,6 @@ export class EditOrganizationTeamsComponent implements OnInit {
 	}
 
 	private async loadEmployees() {
-		const { id } = await this.route.params.pipe(first()).toPromise();
-
-		this.organizationId = this.store.selectedOrganization
-			? this.store.selectedOrganization.id
-			: id;
-
 		const { items } = await this.employeesService
 			.getAll(['user'], { organization: { id: this.organizationId } })
 			.pipe(first())

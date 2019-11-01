@@ -20,7 +20,7 @@ export class OrganizationTeams extends Base implements IOrganizationTeams {
 	@Column()
 	organizationId: string;
 
-	@ManyToMany((type) => Employee, { eager: true, cascade: ['update'] })
+	@ManyToMany((type) => Employee, { cascade: ['update'] })
 	@JoinTable({
 		name: 'organization_team_employee'
 		// joinColumn: {

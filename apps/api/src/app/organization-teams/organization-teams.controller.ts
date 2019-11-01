@@ -89,9 +89,9 @@ export class OrganizationTeamsController extends CrudController<
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(
+	async updateOrganizationTeam(
 		@Param('id') id: string,
-		@Body() entity: IIOrganizationTeams,
+		@Body() entity: IOrganizationTeamCreateInput,
 		...options: any[]
 	): Promise<OrganizationTeams> {
 		return this.organizationTeamsService.updateOrgTeam(id, entity);

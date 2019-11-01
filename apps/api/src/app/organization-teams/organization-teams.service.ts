@@ -10,6 +10,7 @@ import { Employee } from '../employee';
 import { IPagination } from '../core';
 import { User } from '../user';
 import { OrganizationTeams } from './organization-teams.entity';
+import { getRepository } from 'typeorm';
 
 @Injectable()
 export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
@@ -47,26 +48,24 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 
 	async updateOrgTeam(
 		id: string,
-		entity: IOrganizationTeams
+		entity: IOrganizationTeamCreateInput
 	): Promise<OrganizationTeams> {
 		try {
-			const organizationTeam = await this.organizationTeamsRepository.findOne(
-				id
+			await this.organizationTeamsRepository.delete(id);
+
+			const organizationTeam = new OrganizationTeams();
+			organizationTeam.name = entity.name;
+			organizationTeam.organizationId = entity.organizationId;
+			const employees = await this.employeeRepository.findByIds(
+				entity.members,
+				{
+					relations: ['user']
+				}
 			);
 
-			for (const [i, member] of entity.members.entries()) {
-				entity.members[i] = await this.employeeRepository.findOne(
-					member.id
-				);
-			}
+			organizationTeam.members = employees;
 
-			organizationTeam.members = entity.members;
-
-			console.log('organizationTeam =>>>>', organizationTeam);
-
-			return await this.organizationTeamsRepository.save(
-				organizationTeam
-			);
+			return this.organizationTeamsRepository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}
