@@ -113,6 +113,18 @@
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни"
 	},
+	"SETTINGS_MENU": {
+		"THEMES": "Themes",
+		"LIGHT": "Light",
+		"DARK": "Dark",
+		"COSMIC": "Cosmic",
+		"CORPORATE": "Corporate",
+		"LANGUAGE": "Language",
+		"ENGLISH": "English",
+		"BULGARIAN": "Bulgarian",
+		"HEBREW": "Hebrew",
+		"RUSSIAN": "Russian"
+	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
