@@ -53,10 +53,6 @@ export class EditOrganizationMainComponent implements OnInit {
 		return this.form.getRawValue();
 	}
 
-	getHex() {
-		return this.form.value.brandColor;
-	}
-
 	getTimeWithOffset(zone: string) {
 		let cutZone = zone;
 		if (zone.includes('/')) {
@@ -71,19 +67,12 @@ export class EditOrganizationMainComponent implements OnInit {
 	dateFormatPreview(format: string) {
 		return moment().format(format);
 	}
-	forbiddenColorValidator(nameRe: RegExp): ValidatorFn {
-		return (control: AbstractControl): { [key: string]: any } | null => {
-			const forbidden = !nameRe.test(control.value);
-			return forbidden ? { badColor: { value: control.value } } : null;
-		};
-	}
 
 	ngOnInit(): void {
 		this._initializedForm();
 	}
 
 	private _initializedForm() {
-		const HEX_REGEX = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
 		this.form = this.fb.group({
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
@@ -92,10 +81,7 @@ export class EditOrganizationMainComponent implements OnInit {
 				Validators.required
 			],
 			defaultAlignmentType: [this.organization.defaultAlignmentType],
-			brandColor: [
-				this.organization.brandColor,
-				this.forbiddenColorValidator(HEX_REGEX)
-			],
+			brandColor: [this.organization.brandColor],
 			dateFormat: [this.organization.dateFormat],
 			timeZone: [this.organization.timeZone]
 		});

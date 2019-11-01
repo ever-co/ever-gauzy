@@ -85,26 +85,22 @@
 			</div>
 		</div>
 		<div class="row">
-			<div class="col-4">
+			<div class="col-6">
 				<div class="form-group">
 					<label class="label">Brand Color</label>
 					<input
 						fullWidth
 						id="brandColorInput"
-						type="text"
 						nbInput
 						formControlName="brandColor"
-						placeholder="Enter HEX code(1afb21)"
-						maxlength="6"
+						placeholder="Add Color"
+						[colorPicker]="form.get('brandColor').value"
+						[style.background]="form.get('brandColor').value"
+						[value]="form.get('brandColor').value"
+						(colorPickerChange)="
+							form.get('brandColor').setValue($event)
+						"
 					/>
-				</div>
-			</div>
-			<div class="col-2">
-				<div
-					class="brand-color-preview"
-					[ngStyle]="{ background: '#' + getHex() || '#fff' }"
-				>
-					<span>#{{ getHex() }}</span>
 				</div>
 			</div>
 			<div class="col-6">
