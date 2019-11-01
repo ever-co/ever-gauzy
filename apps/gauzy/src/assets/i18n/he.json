@@ -113,6 +113,18 @@
 		"SETTINGS": "הגדרות",
 		"GENERAL": "כללי"
 	},
+	"SETTINGS_MENU": {
+		"THEMES": "Themes",
+		"LIGHT": "Light",
+		"DARK": "Dark",
+		"COSMIC": "Cosmic",
+		"CORPORATE": "Corporate",
+		"LANGUAGE": "Language",
+		"ENGLISH": "English",
+		"BULGARIAN": "Bulgarian",
+		"HEBREW": "Hebrew",
+		"RUSSIAN": "Russian"
+	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
