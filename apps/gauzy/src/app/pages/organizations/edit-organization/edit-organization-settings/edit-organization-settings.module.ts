@@ -38,6 +38,7 @@ import { EditOrganizationProjectsComponent } from './edit-organization-projects/
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
+import { ColorPickerModule } from 'ngx-color-picker';
 
 @NgModule({
 	imports: [
@@ -50,6 +51,7 @@ import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/he
 		NbIconModule,
 		NbActionsModule,
 		NgSelectModule,
+		ColorPickerModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
