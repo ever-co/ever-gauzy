@@ -48,22 +48,25 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 	async updateOrgTeam(
 		id: string,
 		entity: IOrganizationTeams
-	): Promise<UpdateResult> {
+	): Promise<OrganizationTeams> {
 		try {
-			console.log('ID =>>>>', id);
+			const organizationTeam = await this.organizationTeamsRepository.findOne(
+				id
+			);
 
 			for (const [i, member] of entity.members.entries()) {
 				entity.members[i] = await this.employeeRepository.findOne(
-					member.id,
-					{
-						relations: ['user']
-					}
+					member.id
 				);
 			}
 
-			// console.log('ENTITY =>>>>', entity);
+			organizationTeam.members = entity.members;
 
-			return await this.organizationTeamsRepository.update(id, entity);
+			console.log('organizationTeam =>>>>', organizationTeam);
+
+			return await this.organizationTeamsRepository.save(
+				organizationTeam
+			);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

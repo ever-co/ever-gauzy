@@ -93,7 +93,7 @@ export class OrganizationTeamsController extends CrudController<
 		@Param('id') id: string,
 		@Body() entity: IIOrganizationTeams,
 		...options: any[]
-	): Promise<UpdateResult> {
+	): Promise<OrganizationTeams> {
 		return this.organizationTeamsService.updateOrgTeam(id, entity);
 	}
 }
