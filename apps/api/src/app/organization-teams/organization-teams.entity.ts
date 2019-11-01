@@ -21,12 +21,21 @@ export class OrganizationTeams extends Base implements IOrganizationTeams {
 	organizationId: string;
 
 	@ManyToMany((type) => Employee, (employee) => employee.teams, {
+		// , (employee) => employee.teams
 		cascade: true
 	})
 	@JoinTable({
 		name: 'organization_team_employee',
-		joinColumn: { name: 'organizationTeamId', referencedColumnName: 'id' },
-		inverseJoinColumn: { name: 'employeeId', referencedColumnName: 'id' }
+		joinColumn: {
+			name: 'organizationTeamId',
+			referencedColumnName: 'id'
+		}
 	})
 	members: Employee[];
+
+	// {
+	// 	name: 'organization_team_employee',
+	// 	joinColumn: { name: 'organizationTeamId', referencedColumnName: 'id' }, //
+	// 	inverseJoinColumn: { name: 'employeeId', referencedColumnName: 'id' }
+	// }
 }

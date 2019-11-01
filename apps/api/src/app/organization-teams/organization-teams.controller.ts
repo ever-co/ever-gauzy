@@ -18,6 +18,7 @@ import {
 	OrganizationTeams as IIOrganizationTeams
 } from '@gauzy/models';
 import { OrganizationTeams } from './organization-teams.entity';
+import { UpdateResult } from 'typeorm';
 
 @ApiUseTags('Organization-Teams')
 @Controller()
@@ -92,7 +93,7 @@ export class OrganizationTeamsController extends CrudController<
 		@Param('id') id: string,
 		@Body() entity: IIOrganizationTeams,
 		...options: any[]
-	): Promise<any> {
+	): Promise<UpdateResult> {
 		return this.organizationTeamsService.updateOrgTeam(id, entity);
 	}
 }

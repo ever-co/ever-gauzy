@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository, FindManyOptions, UpdateResult } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
@@ -45,16 +45,23 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 		return this.organizationTeamsRepository.save(organizationTeam);
 	}
 
-	async updateOrgTeam(id: string, entity: IOrganizationTeams) {
+	async updateOrgTeam(
+		id: string,
+		entity: IOrganizationTeams
+	): Promise<UpdateResult> {
 		try {
 			console.log('ID =>>>>', id);
-			console.log('ENTITY =>>>>', entity);
 
-			// FOREACH AND UPDATE ENTITY!
-
-			for (const emp of entity.members) {
-				emp.user = await this.userRepository.findOne(emp.userId);
+			for (const [i, member] of entity.members.entries()) {
+				entity.members[i] = await this.employeeRepository.findOne(
+					member.id,
+					{
+						relations: ['user']
+					}
+				);
 			}
+
+			// console.log('ENTITY =>>>>', entity);
 
 			return await this.organizationTeamsRepository.update(id, entity);
 		} catch (err /*: WriteError*/) {
