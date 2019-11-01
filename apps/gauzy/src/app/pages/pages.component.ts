@@ -52,6 +52,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 				link: '/pages/expenses'
 			},
 			{
+				title: this.getTranslation('MENU.PROPOSALS'),
+				icon: 'paper-plane-outline',
+				link: '/pages/proposals'
+			},
+			{
 				title: this.getTranslation('MENU.HELP'),
 				icon: 'question-mark-circle-outline',
 				link: '/pages/help'
