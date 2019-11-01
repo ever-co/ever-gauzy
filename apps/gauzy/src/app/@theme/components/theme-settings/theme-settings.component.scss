@@ -74,14 +74,18 @@
 		}
 	}
 
-	.settings-row select {
-		max-height: 40px;
-		padding: 0;
-		padding-left: 10px;
-		font-size: 0.9rem;
+	.title-uppercase {
+		text-transform: uppercase;
+
+		.settings-row select {
+			max-height: 40px;
+			padding: 0;
+			padding-left: 10px;
+			font-size: 0.9rem;
+		}
 	}
 
 	.language-select {
 		margin-right: 65px;
-	  }
+	}
 }
