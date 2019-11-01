@@ -21,6 +21,7 @@ import { SelectedEmployee } from '../../@theme/components/header/selectors/emplo
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
 import { EmployeeRecurringExpenseService } from '../../@core/services/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../../@core/services/organization-recurring-expense.service';
+import { ProfitHistoryComponent } from '../../@shared/dashboard/profit-history/profit-history.component';
 
 export interface ViewDashboardExpenseHistory {
 	valueDate?: Date;
@@ -119,6 +120,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
 					type === HistoryType.INCOME
 						? this.incomeData
 						: this.expenseData
+			}
+		});
+	}
+
+	openProfitDialog() {
+		this.dialogService.open(ProfitHistoryComponent, {
+			context: {
+				recordsData: {
+					income: this.incomeData as Income[],
+					expenses: this.expenseData
+				}
 			}
 		});
 	}
