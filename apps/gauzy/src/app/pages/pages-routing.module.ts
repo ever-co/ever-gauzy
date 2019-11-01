@@ -58,6 +58,21 @@ const routes: Routes = [
 				}
 			},
 			{
+				path: 'proposals',
+				loadChildren: () =>
+					import('./proposals/proposals.module').then(
+						(m) => m.ProposalsModule
+					),
+				canActivate: [RoleGuard],
+				data: {
+					expectedRole: [
+						// RolesEnum.DATA_ENTRY,
+						// RolesEnum.EMPLOYEE,
+						RolesEnum.ADMIN
+					]
+				}
+			},
+			{
 				path: 'help',
 				loadChildren: () =>
 					import('./help/help.module').then((m) => m.HelpModule),
