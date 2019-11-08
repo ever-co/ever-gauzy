@@ -1,13 +1,15 @@
-import { Component, Input, OnDestroy, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import {
 	NbMenuService,
 	NbSidebarService,
-	NbThemeService
+	NbThemeService,
+	NbMenuItem
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-header',
@@ -21,75 +23,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	showDateSelector = true;
 	showOrganizationsSelector = true;
 	theme: string;
-
-	createContextMenu = [
-		{
-			title: 'Start Timer',
-			icon: 'clock-outline',
-			link: '#'
-		},
-		// TODO: divider
-		{
-			title: 'Income',
-			icon: 'plus-circle-outline',
-			link: 'pages/income'
-		},
-		{
-			title: 'Expense',
-			icon: 'minus-circle-outline',
-			link: 'pages/expenses'
-		},
-		// TODO: divider
-		{
-			title: 'Invoice',
-			icon: 'archive-outline',
-			link: '#'
-		},
-		{
-			title: 'Proposal',
-			icon: 'paper-plane-outline',
-			link: '#'
-		},
-		{
-			title: 'Contract',
-			icon: 'file-text-outline',
-			link: '#'
-		},
-		// TODO: divider
-		{
-			title: 'Task',
-			icon: 'calendar-outline',
-			link: '#'
-		},
-		{
-			title: 'Client',
-			icon: 'person-done-outline',
-			link: '#'
-		},
-		{
-			title: 'Project',
-			icon: 'color-palette-outline',
-			link: '#'
-		},
-		// TODO: divider
-		{
-			title: 'Employee',
-			icon: 'people-outline',
-			link: 'pages/employees'
-		}
-	];
-
-	supportContextMenu = [
-		{
-			title: 'Support Chat'
-		},
-		{
-			title: 'FAQ'
-		},
-		{
-			title: 'Help'
-		}
-	];
+	createContextMenu: NbMenuItem[];
+	supportContextMenu: NbMenuItem[];
+	showExtraActions = false;
+	largeBreakpoint = 1290;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -98,7 +35,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		private menuService: NbMenuService,
 		private layoutService: LayoutService,
 		private themeService: NbThemeService,
-		private router: Router
+		private router: Router,
+		private translate: TranslateService
 	) {}
 
 	ngOnInit() {
@@ -129,23 +67,115 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			.subscribe((t) => {
 				this.theme = t.name;
 			});
+
+		this.loadItems();
+		this._applyTranslationOnSmartTable();
 	}
 
 	toggleSidebar(): boolean {
-		this.sidebarService.toggle(true, 'menu-sidebar');
-		this.layoutService.changeLayoutSize();
-
+		if (this.showExtraActions) {
+			this.toggleExtraActions(false);
+			this.sidebarService.expand('menu-sidebar');
+		} else {
+			this.sidebarService.toggle(true, 'menu-sidebar');
+			this.layoutService.changeLayoutSize();
+		}
 		return false;
 	}
 
 	toggleSettings(): boolean {
-		this.sidebarService.toggle(false, 'settings-sidebar');
+		if (this.showExtraActions) {
+			this.toggleExtraActions(false);
+			this.sidebarService.expand('settings-sidebar');
+		} else {
+			this.sidebarService.toggle(false, 'settings-sidebar');
+		}
 		return false;
 	}
 
 	navigateHome() {
 		this.menuService.navigateHome();
 		return false;
+	}
+
+	getWindowWidth() {
+		return window.innerWidth;
+	}
+
+	toggleExtraActions(bool?: boolean) {
+		this.showExtraActions =
+			bool !== undefined ? bool : !this.showExtraActions;
+	}
+
+	loadItems() {
+		this.createContextMenu = [
+			{
+				title: this.getTranslation('CONTEXT_MENU.TIMER'),
+				icon: 'clock-outline',
+				link: '#'
+			},
+			// TODO: divider
+			{
+				title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
+				icon: 'plus-circle-outline',
+				link: 'pages/income'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
+				icon: 'minus-circle-outline',
+				link: 'pages/expenses'
+			},
+			// TODO: divider
+			{
+				title: this.getTranslation('CONTEXT_MENU.INVOICE'),
+				icon: 'archive-outline',
+				link: '#'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
+				icon: 'paper-plane-outline',
+				link: '#'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
+				icon: 'file-text-outline',
+				link: '#'
+			},
+			// TODO: divider
+			{
+				title: this.getTranslation('CONTEXT_MENU.TASK'),
+				icon: 'calendar-outline',
+				link: '#'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.CLIENT'),
+				icon: 'person-done-outline',
+				link: '#'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
+				icon: 'color-palette-outline',
+				link: '#'
+			},
+			// TODO: divider
+			{
+				title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
+				icon: 'people-outline',
+				link: 'pages/employees'
+			}
+		];
+
+		this.supportContextMenu = [
+			{
+				title: this.getTranslation('CONTEXT_MENU.CHAT')
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.FAQ')
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.HELP')
+			}
+		];
 	}
 
 	private showSelectors(url: string) {
@@ -192,6 +222,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			this.showDateSelector = true;
 			this.showOrganizationsSelector = true;
 		}
+	}
+
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translate.get(prefix).subscribe((res) => {
+			result = res;
+		});
+		return result;
+	}
+
+	private _applyTranslationOnSmartTable() {
+		this.translate.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.createContextMenu = [];
+				this.supportContextMenu = [];
+				this.loadItems();
+			});
 	}
 
 	ngOnDestroy() {

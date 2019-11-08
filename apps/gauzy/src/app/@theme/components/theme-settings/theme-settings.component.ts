@@ -15,38 +15,38 @@ export class ThemeSettingsComponent {
 	themes = [
 		{
 			value: 'default',
-			name: 'Light'
+			name: 'SETTINGS_MENU.LIGHT'
 		},
 		{
 			value: 'dark',
-			name: 'Dark'
+			name: 'SETTINGS_MENU.DARK'
 		},
 		{
 			value: 'cosmic',
-			name: 'Cosmic'
+			name: 'SETTINGS_MENU.COSMIC'
 		},
 		{
 			value: 'corporate',
-			name: 'Corporate'
+			name: 'SETTINGS_MENU.CORPORATE'
 		}
 	];
 
 	languages = [
 		{
 			value: 'en',
-			name: 'English'
+			name: 'SETTINGS_MENU.ENGLISH'
 		},
 		{
 			value: 'bg',
-			name: 'Bulgarian'
+			name: 'SETTINGS_MENU.BULGARIAN'
 		},
 		{
 			value: 'he',
-			name: 'Hebrew'
+			name: 'SETTINGS_MENU.HEBREW'
 		},
 		{
 			value: 'ru',
-			name: 'Russian'
+			name: 'SETTINGS_MENU.RUSSIAN'
 		}
 	];
 

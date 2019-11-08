@@ -7,8 +7,12 @@ export interface Organization extends IBaseEntityModel {
 	status?: string;
 	imageUrl?: string;
 	currency: string;
-	defaultValueDateType: string;
 	isActive: boolean;
+	defaultValueDateType: string;
+	defaultAlignmentType?: string;
+	dateFormat?: string;
+	brandColor?: string;
+	timeZone?: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -54,4 +58,10 @@ export enum ProjectTypeEnum {
 	RATE = 'RATE',
 	FLAT_FEE = 'FLAT_FEE',
 	MILESTONES = 'MILESTONES'
+}
+
+export enum AlignmentOptions {
+	LEFT = 'LEFT',
+	RIGHT = 'RIGHT',
+	CENTER = 'CENTER'
 }

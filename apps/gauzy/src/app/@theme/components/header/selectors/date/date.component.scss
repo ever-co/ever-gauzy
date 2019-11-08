@@ -3,6 +3,7 @@
 	max-height: 40px;
 	input {
 		width: 100%;
+		max-width: 100% !important;
 		margin-right: 1rem;
 	}
 	.calendar {
@@ -18,7 +19,7 @@
 	}
 	.date-reset {
 		position: absolute;
-		top: 33%;
+		top: 28%;
 		transform: scale(1.5);
 		right: 20px;
 		cursor: pointer;

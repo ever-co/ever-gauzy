@@ -31,6 +31,7 @@
 		display: flex;
 		align-items: center;
 		width: auto;
+		z-index: 5;
 
 		.sidebar-toggle {
 			@include nb-ltr(padding-right, 1.25rem);
@@ -90,4 +91,38 @@
 
 .date-selector {
 	max-width: 180px;
+	min-width: 170px;
+}
+
+.extra-actions {
+	position: fixed;
+	left: 0px;
+	top: 4.75rem;
+	width: 100%;
+	height: calc(100vh - 4.75rem);
+	background: white;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	z-index: -1;
+	padding-top: 2.25rem;
+	padding-left: 2rem;
+	padding-right: 2rem;
+
+	div {
+		min-width: 300px;
+		width: 100%;
+		max-width: 500px;
+		margin-left: 10px;
+	}
+
+	.organization-selector,
+	.employee-selector,
+	.date-selector {
+		min-width: 300px;
+		width: 100%;
+		max-width: 500px;
+		padding-bottom: 20px;
+	}
 }

@@ -4,7 +4,9 @@ import {
 	JoinColumn,
 	OneToOne,
 	RelationId,
-	ManyToOne
+	ManyToOne,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
@@ -12,6 +14,7 @@ import { Employee as IEmployee } from '@gauzy/models';
 import { IsDate, IsOptional } from 'class-validator';
 import { User } from '../user';
 import { Organization } from '../organization';
+import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
@@ -48,4 +51,15 @@ export class Employee extends Base implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	endWork?: Date;
+
+	// @ManyToMany((type) => OrganizationTeams) // , orgTeams => orgTeams.members
+	// @JoinTable({
+	// 	name: 'organization_team_employee'
+	// })
+	// teams: OrganizationTeams[];
+	// {
+	// 	name: 'organization_team_employee',
+	// 	joinColumn: { name: 'organizationTeamId', referencedColumnName: 'id' }, //
+	// 	inverseJoinColumn: { name: 'employeeId', referencedColumnName: 'id' }
+	// }
 }

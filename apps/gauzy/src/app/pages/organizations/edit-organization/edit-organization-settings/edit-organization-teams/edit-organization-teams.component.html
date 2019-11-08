@@ -1,0 +1,76 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			*ngIf="!showAddCard"
+			(click)="showAddCard = !showAddCard; this.loadTeams()"
+			nbButton
+			status="success"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+
+		<ngx-edit-organization-teams-mutation
+			*ngIf="showAddCard"
+			[employees]="employees"
+			[organizationId]="organizationId"
+			[team]="teamToEdit"
+			(canceled)="cancel()"
+			(addOrEditTeam)="addOrEditTeam($event)"
+		></ngx-edit-organization-teams-mutation>
+	</nb-card-header>
+	<nb-card-body class="card-container" *ngIf="teams">
+		<nb-card
+			style="padding: 0 !important"
+			class="card-body"
+			*ngFor="let team of teams"
+		>
+			<nb-card-header style="padding: 0.5rem;">
+				<div class="header-container">
+					<div>{{ team.name }}</div>
+					<div class="members-count">
+						Members Count: {{ team.members.length }}
+					</div>
+				</div>
+			</nb-card-header>
+
+			<nb-card-body class="team-card" *ngIf="team.members">
+				<div>
+					<div
+						class="name-container"
+						*ngFor="let member of team.members"
+					>
+						<div class="image-container">
+							<img [src]="member.user.imageUrl" />
+						</div>
+						<span
+							>{{ member.user.firstName }}
+							{{ member.user.lastName }}
+						</span>
+					</div>
+				</div>
+
+				<div class="button-container">
+					<button
+						nbButton
+						status="info"
+						size="tiny"
+						(click)="editTeam(team)"
+					>
+						<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+						>{{ 'BUTTONS.EDIT' | translate }}
+					</button>
+					<button
+						size="tiny"
+						nbButton
+						(click)="removeTeam(team.id, team.name)"
+						status="danger"
+					>
+						<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+						>Delete
+					</button>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

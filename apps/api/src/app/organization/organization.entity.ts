@@ -51,4 +51,28 @@ export class Organization extends Base implements IOrganization {
 	@ApiModelProperty({ type: Boolean, default: true })
 	@Column({ default: true })
 	isActive: boolean;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	defaultAlignmentType?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	timeZone?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	brandColor?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	dateFormat?: string;
 }

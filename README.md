@@ -53,7 +53,7 @@ You can run seed any moment manually (e.g. if you changed entities schemas) with
 
 -   Check [Gauzy Pulumi](https://github.com/ever-co/gauzy-pulumi) project, it will make Clouds deployments possible with a single command (`pulumi up`)
 
-Note: it's WIP, currently supports AWS Fargate Clusters (for web app and backend api), Application Load Balancers and Serverless PostgreSQL DB deployments.
+Note: it's WIP, currently supports AWS EKS (Kubernetes) and Fargate Clusters (for web app and backend api), Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments.
 
 ## Technology Stack
 
@@ -101,12 +101,13 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 #### Designers & QA
 
--   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
 -   [Julia Konviser](https://www.linkedin.com/in/julia-konviser-8b917552) (Graphic Designer, QA)
 
 ### Contributors
 
--   View all of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors)
+-   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
+
+View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
 
 ## Contact Us
 

@@ -27,7 +27,7 @@
 		[class.left]="position === 'normal'"
 		[class.right]="position === 'inverse'"
 	>
-		<nb-action>
+		<nb-action *ngIf="getWindowWidth() > largeBreakpoint">
 			<button
 				nbButton
 				status="success"
@@ -38,17 +38,25 @@
 			</button>
 		</nb-action>
 
-		<nb-action *ngIf="showEmployeesSelector">
+		<nb-action
+			*ngIf="showEmployeesSelector && getWindowWidth() > largeBreakpoint"
+		>
 			<ga-employee-selector
 				class="header-selector employee-selector"
 			></ga-employee-selector>
 		</nb-action>
 
-		<nb-action *ngIf="showDateSelector">
+		<nb-action
+			*ngIf="showDateSelector && getWindowWidth() > largeBreakpoint"
+		>
 			<ga-date-selector class="date-selector"></ga-date-selector>
 		</nb-action>
 
-		<nb-action *ngIf="showOrganizationsSelector">
+		<nb-action
+			*ngIf="
+				showOrganizationsSelector && getWindowWidth() > largeBreakpoint
+			"
+		>
 			<ga-organization-selector
 				class="header-selector organization-selector"
 			></ga-organization-selector>
@@ -56,7 +64,13 @@
 
 		<!-- <nb-action *nbIsGranted="['view', 'user']">
       <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.picture"></nb-user>
-    </nb-action> -->
+	</nb-action> -->
+		<nb-action
+			*ngIf="getWindowWidth() < largeBreakpoint"
+			icon="options-2-outline"
+			class="toggle-layout"
+			(click)="toggleExtraActions()"
+		></nb-action>
 		<nb-action
 			icon="message-circle-outline"
 			class="toggle-layout"
@@ -74,4 +88,30 @@
       <nb-search type="rotate-layout"></nb-search>
     </nb-action> -->
 	</nb-actions>
+</div>
+
+<div
+	class="extra-actions"
+	*ngIf="showExtraActions && getWindowWidth() < largeBreakpoint"
+>
+	<div><h6>Select Employee</h6></div>
+
+	<ga-employee-selector
+		*ngIf="showEmployeesSelector"
+		class="header-selector employee-selector"
+	></ga-employee-selector>
+
+	<div><h6>Select A date</h6></div>
+
+	<ga-date-selector
+		*ngIf="showDateSelector"
+		class="date-selector"
+	></ga-date-selector>
+
+	<div><h6>Select An Organization</h6></div>
+
+	<ga-organization-selector
+		*ngIf="showOrganizationsSelector"
+		class="header-selector organization-selector"
+	></ga-organization-selector>
 </div>

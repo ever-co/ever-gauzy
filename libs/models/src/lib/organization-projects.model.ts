@@ -14,8 +14,8 @@ export interface OrganizationProjects extends IBaseEntityModel {
 	team?: Employee[];
 	startDate?: Date;
 	endDate?: Date;
-	type?: ProjectTypeEnum;
-	currency?: CurrenciesEnum;
+	type?: string;
+	currency?: string;
 }
 
 export interface OrganizationProjectsFindInput extends IBaseEntityModel {

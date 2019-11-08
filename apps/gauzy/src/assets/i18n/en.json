@@ -3,6 +3,7 @@
 		"ADD": "Add",
 		"CREATE": "Create",
 		"EDIT": "Edit",
+		"MANAGE": "Manage",
 		"DELETE": "Delete",
 		"OK": "Ok",
 		"SAVE": "Save",
@@ -103,6 +104,7 @@
 		"DASHBOARD": "Dashboard",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
+		"PROPOSALS": "Proposals",
 		"HELP": "Help",
 		"ABOUT": "About",
 		"ADMIN": "Admin",
@@ -110,6 +112,18 @@
 		"ORGANIZATIONS": "Organizations",
 		"SETTINGS": "Settings",
 		"GENERAL": "General"
+	},
+	"SETTINGS_MENU": {
+		"THEMES": "Themes",
+		"LIGHT": "Light",
+		"DARK": "Dark",
+		"COSMIC": "Cosmic",
+		"CORPORATE": "Corporate",
+		"LANGUAGE": "Language",
+		"ENGLISH": "English",
+		"BULGARIAN": "Bulgarian",
+		"HEBREW": "Hebrew",
+		"RUSSIAN": "Russian"
 	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
@@ -173,8 +187,24 @@
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
 			"TYPE": "Type",
-			"CURRENCY": "Currency"
+			"CURRENCY": "Currency",
+			"TEAMS": "Teams"
 		}
+	},
+	"CONTEXT_MENU": {
+		"TIMER": "Start Timer",
+		"ADD_INCOME": "Add Income",
+		"ADD_EXPENSE": "Add Expense",
+		"INVOICE": "Invoice",
+		"PROPOSAL": "Proposal",
+		"CONTRACT": "Contract",
+		"TASK": "Task",
+		"CLIENT": "Client",
+		"PROJECT": "Project",
+		"ADD_EMPLOYEE": "Add Employee",
+		"CHAT": "Support Chat",
+		"FAQ": "FAQ",
+		"HELP": "Help"
 	},
 	"FOOTER": {
 		"BY": "by",

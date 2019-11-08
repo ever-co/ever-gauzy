@@ -21,6 +21,7 @@ import { OrganizationClientsModule } from './organization-clients';
 import { OrganizationPositionsModule } from './organization-positions';
 import { OrganizationProjectsModule } from './organization-projects';
 import { OrganizationVendorsModule } from './organization-vendors';
+import { OrganizationTeamsModule } from './organization-teams';
 
 @Module({
 	imports: [
@@ -74,6 +75,10 @@ import { OrganizationVendorsModule } from './organization-vendors';
 					{
 						path: '/employee-recurring-expense',
 						module: EmployeeRecurringExpenseModule
+					},
+					{
+						path: '/organization-teams',
+						module: OrganizationTeamsModule
 					}
 				]
 			}
@@ -95,7 +100,8 @@ import { OrganizationVendorsModule } from './organization-vendors';
 		OrganizationPositionsModule,
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
-		EmployeeRecurringExpenseModule
+		EmployeeRecurringExpenseModule,
+		OrganizationTeamsModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

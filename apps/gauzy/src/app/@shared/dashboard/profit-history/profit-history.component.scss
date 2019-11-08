@@ -1,0 +1,12 @@
+.profit-history {
+	box-shadow: 0px 0px 16px 9px grey;
+	background: white;
+	padding: 15px;
+	.totals {
+		display: flex;
+		justify-content: space-between;
+	}
+	.margin-offset {
+		margin-left: 69px;
+	}
+}

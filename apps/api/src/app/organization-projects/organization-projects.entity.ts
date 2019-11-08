@@ -7,10 +7,19 @@ import {
 	ManyToMany
 } from 'typeorm';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsDate } from 'class-validator';
+import {
+	IsNotEmpty,
+	IsString,
+	IsOptional,
+	IsDate,
+	IsEnum
+} from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Organization } from '../organization/organization.entity';
-import { OrganizationProjects as IOrganizationProjects } from '@gauzy/models';
+import {
+	OrganizationProjects as IOrganizationProjects,
+	CurrenciesEnum
+} from '@gauzy/models';
 import { OrganizationClients } from '../organization-clients';
 import { Employee } from '../employee';
 
@@ -56,9 +65,10 @@ export class OrganizationProjects extends Base
 	@Column()
 	type: string;
 
-	@ApiModelProperty({ type: String })
-	@IsString()
+	@ApiModelProperty({ type: String, enum: CurrenciesEnum })
+	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
+	@Index()
 	@Column()
 	currency: string;
 

@@ -23,7 +23,8 @@ export const environment: Environment = {
 	CLOUDINARY_API_KEY: '256868982483961',
 	GOOGLE_AUTH_LINK: 'http://localhost:3000/api/auth/google',
 	FACEBOOK_AUTH_LINK: 'http://localhost:3000/api/auth/facebook',
-	LINKEDIN_AUTH_LINK: '#'
+	LINKEDIN_AUTH_LINK: '#',
+	NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg'
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {

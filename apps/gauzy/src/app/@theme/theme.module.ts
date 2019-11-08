@@ -1,39 +1,38 @@
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  NbActionsModule,
-  NbLayoutModule,
-  NbMenuModule,
-  NbSearchModule,
-  NbSidebarModule,
-  NbUserModule,
-  NbContextMenuModule,
-  NbButtonModule,
-  NbSelectModule,
-  NbIconModule,
-  NbThemeModule,
+	NbActionsModule,
+	NbLayoutModule,
+	NbMenuModule,
+	NbSearchModule,
+	NbSidebarModule,
+	NbUserModule,
+	NbContextMenuModule,
+	NbButtonModule,
+	NbSelectModule,
+	NbIconModule,
+	NbThemeModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
-
 import {
-  FooterComponent,
-  HeaderComponent,
-  SearchInputComponent,
-  TinyMCEComponent,
+	FooterComponent,
+	HeaderComponent,
+	SearchInputComponent,
+	TinyMCEComponent
 } from './components';
 import {
-  CapitalizePipe,
-  PluralPipe,
-  RoundPipe,
-  TimingPipe,
-  NumberWithCommasPipe,
-  EvaIconsPipe,
+	CapitalizePipe,
+	PluralPipe,
+	RoundPipe,
+	TimingPipe,
+	NumberWithCommasPipe,
+	EvaIconsPipe
 } from './pipes';
 import {
-  OneColumnLayoutComponent,
-  ThreeColumnsLayoutComponent,
-  TwoColumnsLayoutComponent,
+	OneColumnLayoutComponent,
+	ThreeColumnsLayoutComponent,
+	TwoColumnsLayoutComponent
 } from './layouts';
 import { WindowModeBlockScrollService } from './services/window-mode-block-scroll.service';
 import { DEFAULT_THEME } from './styles/theme.default';
@@ -51,71 +50,70 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
-  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-
 const NB_MODULES = [
-  NbLayoutModule,
-  NbMenuModule,
-  NbUserModule,
-  NbActionsModule,
-  NbSearchModule,
-  NbSidebarModule,
-  NbContextMenuModule,
-  NbSecurityModule,
-  NbButtonModule,
-  NbSelectModule,
-  NbIconModule,
-  NbEvaIconsModule,
-  HeaderSelectorsModule,
-  EmployeeSelectorsModule,
-  TranslateModule.forChild({
-    loader: {
-      provide: TranslateLoader,
-      useFactory: HttpLoaderFactory,
-      deps: [HttpClient]
-    }
-  })
+	NbLayoutModule,
+	NbMenuModule,
+	NbUserModule,
+	NbActionsModule,
+	NbSearchModule,
+	NbSidebarModule,
+	NbContextMenuModule,
+	NbSecurityModule,
+	NbButtonModule,
+	NbSelectModule,
+	NbIconModule,
+	NbEvaIconsModule,
+	HeaderSelectorsModule,
+	EmployeeSelectorsModule,
+	TranslateModule.forChild({
+		loader: {
+			provide: TranslateLoader,
+			useFactory: HttpLoaderFactory,
+			deps: [HttpClient]
+		}
+	})
 ];
 const COMPONENTS = [
-  HeaderComponent,
-  FooterComponent,
-  SearchInputComponent,
-  TinyMCEComponent,
-  OneColumnLayoutComponent,
-  ThreeColumnsLayoutComponent,
-  TwoColumnsLayoutComponent,
-  ThemeSettingsComponent
+	HeaderComponent,
+	FooterComponent,
+	SearchInputComponent,
+	TinyMCEComponent,
+	OneColumnLayoutComponent,
+	ThreeColumnsLayoutComponent,
+	TwoColumnsLayoutComponent,
+	ThemeSettingsComponent
 ];
 const PIPES = [
-  CapitalizePipe,
-  PluralPipe,
-  RoundPipe,
-  TimingPipe,
-  NumberWithCommasPipe,
-  EvaIconsPipe
+	CapitalizePipe,
+	PluralPipe,
+	RoundPipe,
+	TimingPipe,
+	NumberWithCommasPipe,
+	EvaIconsPipe
 ];
 
 @NgModule({
-  imports: [CommonModule, ...NB_MODULES],
-  exports: [CommonModule, ...PIPES, ...COMPONENTS],
-  declarations: [...COMPONENTS, ...PIPES],
-  providers: [UsersService, UsersOrganizationsService]
+	imports: [CommonModule, ...NB_MODULES],
+	exports: [CommonModule, ...PIPES, ...COMPONENTS],
+	declarations: [...COMPONENTS, ...PIPES],
+	providers: [UsersService, UsersOrganizationsService]
 })
 export class ThemeModule {
-  static forRoot(): ModuleWithProviders {
-    return <ModuleWithProviders>{
-      ngModule: ThemeModule,
-      providers: [
-        ...NbThemeModule.forRoot(
-          {
-            name: 'default',
-          },
-          [DEFAULT_THEME, COSMIC_THEME, CORPORATE_THEME, DARK_THEME],
-        ).providers,
-        WindowModeBlockScrollService,
-      ],
-    };
-  }
+	static forRoot(): ModuleWithProviders {
+		return <ModuleWithProviders>{
+			ngModule: ThemeModule,
+			providers: [
+				...NbThemeModule.forRoot(
+					{
+						name: 'default'
+					},
+					[DEFAULT_THEME, COSMIC_THEME, CORPORATE_THEME, DARK_THEME]
+				).providers,
+				WindowModeBlockScrollService
+			]
+		};
+	}
 }
