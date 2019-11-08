@@ -104,6 +104,7 @@
 		"DASHBOARD": "Dashboard",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
+		"PROPOSALS": "Proposals",
 		"HELP": "Help",
 		"ABOUT": "About",
 		"ADMIN": "Admin",
@@ -111,6 +112,18 @@
 		"ORGANIZATIONS": "Organizations",
 		"SETTINGS": "Settings",
 		"GENERAL": "General"
+	},
+	"SETTINGS_MENU": {
+		"THEMES": "Themes",
+		"LIGHT": "Light",
+		"DARK": "Dark",
+		"COSMIC": "Cosmic",
+		"CORPORATE": "Corporate",
+		"LANGUAGE": "Language",
+		"ENGLISH": "English",
+		"BULGARIAN": "Bulgarian",
+		"HEBREW": "Hebrew",
+		"RUSSIAN": "Russian"
 	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Employee Statistics",

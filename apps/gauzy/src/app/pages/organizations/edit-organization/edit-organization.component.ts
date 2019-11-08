@@ -213,7 +213,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadOrgRecurringExpense() {
-		if (this.selectedOrg) {
+		if (this.selectedOrg && this.selectedDate) {
 			this.selectedOrgRecurringExpense = (await this.organizationRecurringExpenseService.getAll(
 				[],
 				{

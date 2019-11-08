@@ -53,7 +53,7 @@ You can run seed any moment manually (e.g. if you changed entities schemas) with
 
 -   Check [Gauzy Pulumi](https://github.com/ever-co/gauzy-pulumi) project, it will make Clouds deployments possible with a single command (`pulumi up`)
 
-Note: it's WIP, currently supports AWS Fargate Clusters (for web app and backend api), Application Load Balancers and Serverless PostgreSQL DB deployments.
+Note: it's WIP, currently supports AWS EKS (Kubernetes) and Fargate Clusters (for web app and backend api), Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments.
 
 ## Technology Stack
 

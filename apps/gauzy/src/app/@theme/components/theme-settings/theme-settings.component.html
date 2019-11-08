@@ -1,28 +1,30 @@
 <div class="theme-settings">
-	<h6>THEMES</h6>
+	<h6 class="title-uppercase">{{ 'SETTINGS_MENU.THEMES' | translate }}</h6>
 	<div class="settings-row theme-button">
 		<nb-select
 			[(selected)]="currentTheme"
+			placeholder="{{ themes[0].name | translate }}"
 			(selectedChange)="toggleTheme()"
 			status="primary"
 		>
 			<nb-option *ngFor="let theme of themes" [value]="theme.value">
-				{{ theme.name }}</nb-option
+				{{ theme.name | translate }}</nb-option
 			>
 		</nb-select>
 	</div>
 </div>
 
 <div class="theme-settings">
-	<h6>LANGUAGE</h6>
+	<h6 class="title-uppercase">{{ 'SETTINGS_MENU.LANGUAGE' | translate }}</h6>
 	<div class="settings-row theme-button">
 		<nb-select
 			[(selected)]="currentLang"
+			placeholder="{{ languages[0].name | translate }}"
 			(selectedChange)="switchLanguage()"
 			status="primary"
 		>
 			<nb-option *ngFor="let lang of languages" [value]="lang.value">
-				{{ lang.name }}</nb-option
+				{{ lang.name | translate }}</nb-option
 			>
 		</nb-select>
 	</div>

@@ -1,0 +1,16 @@
+<div class="profit-history">
+	<h5>Profit Report</h5>
+	<div class="totals">
+		<div>
+			<span>Total Expenses: {{ expensesTotal }}</span>
+			<span class="margin-offset">Total Income: {{ incomeTotal }}</span>
+		</div>
+		<span> Total Profit: {{ incomeTotal - expensesTotal }}</span>
+	</div>
+	<ng2-smart-table
+		class="table"
+		[settings]="smartTableSettings"
+		[source]="smartTableSource"
+	>
+	</ng2-smart-table>
+</div>

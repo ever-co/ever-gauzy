@@ -35,9 +35,11 @@ import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/
 import { EditOrganizationClientsComponent } from './edit-organization-clients/edit-organization-clients.component';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { EditOrganizationProjectsComponent } from './edit-organization-projects/edit-organization-projects.component';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
+import { ColorPickerModule } from 'ngx-color-picker';
 
 @NgModule({
 	imports: [
@@ -49,6 +51,8 @@ import { EditOrganizationTeamsMutationComponent } from './edit-organization-team
 		NbInputModule,
 		NbIconModule,
 		NbActionsModule,
+		NgSelectModule,
+		ColorPickerModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
