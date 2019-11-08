@@ -1,14 +1,6 @@
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	ManyToMany,
-	JoinTable
-} from 'typeorm';
-import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsDate } from 'class-validator';
+import { Column, Entity, Index, ManyToMany, JoinTable } from 'typeorm';
+import { ApiModelProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { OrganizationTeams as IOrganizationTeams } from '@gauzy/models';
 import { Employee } from '../employee';
@@ -28,11 +20,19 @@ export class OrganizationTeams extends Base implements IOrganizationTeams {
 	@Column()
 	organizationId: string;
 
-	@ManyToMany((type) => Employee)
+	@ManyToMany((type) => Employee, { cascade: ['update'] })
 	@JoinTable({
-		name: 'organization_team_employee',
-		joinColumn: { name: 'organizationTeamId', referencedColumnName: 'id' },
-		inverseJoinColumn: { name: 'employeeId', referencedColumnName: 'id' }
+		name: 'organization_team_employee'
+		// joinColumn: {
+		// 	name: 'organizationTeamId',
+		// 	referencedColumnName: 'id'
+		// }
 	})
-	employees: Employee[];
+	members: Employee[];
+
+	// {
+	// 	name: 'organization_team_employee',
+	// 	joinColumn: { name: 'organizationTeamId', referencedColumnName: 'id' }, //
+	// 	inverseJoinColumn: { name: 'employeeId', referencedColumnName: 'id' }
+	// }
 }

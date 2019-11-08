@@ -52,14 +52,14 @@ export class Employee extends Base implements IEmployee {
 	@Column({ nullable: true })
 	endWork?: Date;
 
-	@ManyToMany((type) => OrganizationTeams)
-	@JoinTable({
-		name: 'organization_teams_members_employee',
-		joinColumn: { name: 'employeeId', referencedColumnName: 'id' },
-		inverseJoinColumn: {
-			name: 'organizationTeamId',
-			referencedColumnName: 'id'
-		}
-	})
-	teams: OrganizationTeams[];
+	// @ManyToMany((type) => OrganizationTeams) // , orgTeams => orgTeams.members
+	// @JoinTable({
+	// 	name: 'organization_team_employee'
+	// })
+	// teams: OrganizationTeams[];
+	// {
+	// 	name: 'organization_team_employee',
+	// 	joinColumn: { name: 'organizationTeamId', referencedColumnName: 'id' }, //
+	// 	inverseJoinColumn: { name: 'employeeId', referencedColumnName: 'id' }
+	// }
 }

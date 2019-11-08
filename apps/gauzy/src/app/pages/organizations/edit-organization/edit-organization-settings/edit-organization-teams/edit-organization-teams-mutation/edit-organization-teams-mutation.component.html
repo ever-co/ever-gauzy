@@ -1,0 +1,54 @@
+<nb-card>
+	<nb-card-header>Add New Team</nb-card-header>
+	<nb-card-body>
+		<div class="form-group">
+			<button
+				class="mr-2"
+				(click)="addOrEditTeams()"
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button (click)="cancel()" nbButton status="danger">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+		</div>
+		<form class="row">
+			<div class="form-group col-4">
+				<input
+					type="text"
+					[(ngModel)]="name"
+					[ngModelOptions]="{ standalone: true }"
+					nbInput
+					fullWidth
+					placeholder="Team Name"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<nb-select
+					multiple
+					[selected]="selectedEmployees"
+					(selectedChange)="onMembersSelected($event)"
+					fullWidth
+					placeholder="Add or Remove Team Members"
+				>
+					<nb-option
+						*ngFor="let employee of employees"
+						[value]="employee.id"
+					>
+						<img
+							src="{{ employee.user.imageUrl }}"
+							alt="Smiley face"
+							height="40"
+							width="40"
+							style="margin-right:10px"
+						/>
+						{{ employee.user.firstName }}
+						{{ employee.user.lastName }}</nb-option
+					>
+				</nb-select>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>
