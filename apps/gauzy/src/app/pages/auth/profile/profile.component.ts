@@ -11,6 +11,7 @@ import { User, UserFindInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-profile',
@@ -32,6 +33,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
 	password: AbstractControl;
 	repeatPassword: AbstractControl;
 
+	passwordErrorMsg: string;
+	repeatPasswordErrorMsg: string;
+
 	constructor(
 		private fb: FormBuilder,
 		private userService: UsersService,
@@ -48,12 +52,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
 			)).name;
 			this._initializeForm(user);
 			this.bindFormControls();
+			this.loadControls();
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,
 				'Error'
 			);
 		}
+	}
+
+	passwordDoNotMuch() {
+		return 'Password Do Not Much!';
 	}
 
 	handleImageUploadError(error: any) {
@@ -72,7 +81,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
 			hash: this.form.value['password']
 		};
 		try {
-			console.log(this.accountInfo);
 			await this.userService.update(this.store.userId, this.accountInfo);
 			this.toastrService.primary(
 				'Your profile has been updated successfully.',
@@ -99,9 +107,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
 					Validators.required,
 					(control: AbstractControl) => {
 						if (this.password) {
-							console.log('control');
-
-							console.log(control);
 							return control.value === this.password.value
 								? null
 								: { validUrl: true };
@@ -118,6 +123,27 @@ export class ProfileComponent implements OnInit, OnDestroy {
 		this.password = this.form.get('password');
 		this.repeatPassword = this.form.get('repeatPassword');
 	}
+
+	loadControls() {
+		this.validations.repeatPasswordControl();
+	}
+
+	private validations = {
+		repeatPasswordControl: () => {
+			this.repeatPassword.valueChanges
+				.pipe(takeUntil(this.ngDestroy$))
+				.subscribe((value) => {
+					this.repeatPasswordErrorMsg =
+						(this.repeatPassword.touched ||
+							this.repeatPassword.dirty) &&
+						this.repeatPassword.errors
+							? this.repeatPassword.errors.validUrl
+								? this.passwordDoNotMuch()
+								: Object.keys(this.repeatPassword.errors)[0]
+							: '';
+				});
+		}
+	};
 
 	ngOnDestroy(): void {
 		if (this.$password) {

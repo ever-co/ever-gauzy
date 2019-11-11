@@ -80,7 +80,6 @@ export abstract class CrudService<T extends Base> implements ICrudService<T> {
 				partialEntity['hash']
 			);
 			partialEntity['hash'] = hashPassword;
-			console.log(partialEntity);
 
 			return await this.repository.update(id, partialEntity);
 		} catch (err /*: WriteError*/) {

@@ -144,6 +144,12 @@
 									nbInput
 									formControlName="repeatPassword"
 								/>
+								<span *ngIf="repeatPasswordErrorMsg">
+									<strong class="text-danger">
+										Error:
+										{{ repeatPasswordErrorMsg }}</strong
+									></span
+								>
 							</div>
 						</div>
 						<div class="col"></div>
