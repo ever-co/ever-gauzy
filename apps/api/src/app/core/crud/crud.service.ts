@@ -19,16 +19,12 @@ import { Base } from '../entities/base';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import * as bcrypt from 'bcrypt';
-import { AuthService } from '../../auth';
 import { environment as env, environment } from '@env-api/environment';
 
 export abstract class CrudService<T extends Base> implements ICrudService<T> {
 	saltRounds: number;
 
-	protected constructor(
-		protected readonly repository: Repository<T>,
-		private authService: AuthService
-	) {
+	protected constructor(protected readonly repository: Repository<T>) {
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
 
