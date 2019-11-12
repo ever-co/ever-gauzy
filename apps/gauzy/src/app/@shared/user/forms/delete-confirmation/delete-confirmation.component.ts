@@ -16,15 +16,26 @@ import { NbDialogRef } from '@nebular/theme';
 				</span>
 			</nb-card-body>
 			<nb-card-footer>
-				<button (click)="close()" class="mr-3" status="info" nbButton>
+				<button
+					(click)="delete()"
+					class="mr-3"
+					status="danger"
+					nbButton
+				>
+					OK
+				</button>
+				<button (click)="close()" status="info" nbButton>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
-				<button (click)="delete()" status="danger" nbButton>OK</button>
 			</nb-card-footer>
 		</nb-card>
 	`,
 	styles: [
 		`
+			nb-card-body {
+				text-align: center;
+			}
+
 			.center {
 				align-items: center;
 				width: 300px;

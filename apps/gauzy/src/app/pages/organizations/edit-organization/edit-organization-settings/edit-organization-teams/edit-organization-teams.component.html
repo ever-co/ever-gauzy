@@ -9,84 +9,68 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<nb-card *ngIf="showAddCard">
-			<nb-card-header>Add New Team</nb-card-header>
-			<nb-card-body>
-				<div class="form-group">
-					<button
-						class="mr-2"
-						(click)="addTeam()"
-						nbButton
-						status="success"
+
+		<ngx-edit-organization-teams-mutation
+			*ngIf="showAddCard"
+			[employees]="employees"
+			[organizationId]="organizationId"
+			[team]="teamToEdit"
+			(canceled)="cancel()"
+			(addOrEditTeam)="addOrEditTeam($event)"
+		></ngx-edit-organization-teams-mutation>
+	</nb-card-header>
+	<nb-card-body class="card-container" *ngIf="teams">
+		<nb-card
+			style="padding: 0 !important"
+			class="card-body"
+			*ngFor="let team of teams"
+		>
+			<nb-card-header style="padding: 0.5rem;">
+				<div class="header-container">
+					<div>{{ team.name }}</div>
+					<div class="members-count">
+						Members Count: {{ team.members.length }}
+					</div>
+				</div>
+			</nb-card-header>
+
+			<nb-card-body class="team-card" *ngIf="team.members">
+				<div>
+					<div
+						class="name-container"
+						*ngFor="let member of team.members"
 					>
-						{{ 'BUTTONS.SAVE' | translate }}
+						<div class="image-container">
+							<img [src]="member.user.imageUrl" />
+						</div>
+						<span
+							>{{ member.user.firstName }}
+							{{ member.user.lastName }}
+						</span>
+					</div>
+				</div>
+
+				<div class="button-container">
+					<button
+						nbButton
+						status="info"
+						size="tiny"
+						(click)="editTeam(team)"
+					>
+						<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+						>{{ 'BUTTONS.EDIT' | translate }}
 					</button>
 					<button
-						(click)="showAddCard = !showAddCard"
+						size="tiny"
 						nbButton
+						(click)="removeTeam(team.id, team.name)"
 						status="danger"
 					>
-						{{ 'BUTTONS.CANCEL' | translate }}
+						<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+						>Delete
 					</button>
 				</div>
-				<form class="row">
-					<div class="form-group col-4">
-						<input
-							type="text"
-							[(ngModel)]="name"
-							[ngModelOptions]="{ standalone: true }"
-							nbInput
-							fullWidth
-							placeholder="Team Name"
-						/>
-					</div>
-					<div class="form-group col-4">
-						<nb-select
-							multiple
-							(selectedChange)="onMembersSelected($event)"
-							fullWidth
-							placeholder="Add Team Members"
-						>
-							<nb-option
-								*ngFor="let employee of employees"
-								value="{{ employee.id }}"
-							>
-								<img
-									src="{{ employee.imageUrl }}"
-									alt="Smiley face"
-									height="40"
-									width="40"
-									style="margin-right:10px"
-								/>
-								{{ employee.firstName }}
-								{{ employee.lastName }}</nb-option
-							>
-						</nb-select>
-					</div>
-				</form>
 			</nb-card-body>
 		</nb-card>
-	</nb-card-header>
-	<nb-card-body *ngIf="teams?.length">
-		<div class="ml-3 mr-3 mb-3 row">
-			<div class="col-2 d-inline">
-				Team Name
-			</div>
-			<div class="col d-inline">
-				Team Members
-			</div>
-		</div>
-		<br />
-		<div *ngFor="let team of teams" class="ml-3 mr-3 mb-3 row">
-			<div class="col-2 d-inline">{{ team.name }}</div>
-			<div class="col d-inline">{{ team.members }}</div>
-			<nb-actions class="float-right" e="medium">
-				<nb-action
-					(click)="removeTeam(team.id, team.name)"
-					class="d-inline pr-0"
-					icon="close"
-				></nb-action>
-			</nb-actions>
-		</div>
 	</nb-card-body>
 </nb-card>

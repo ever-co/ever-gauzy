@@ -1,1 +1,29 @@
-<p>proposals works!</p>
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<h4>Proposals Management Page</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3">
+			<button nbButton status="success" (click)="add()" class="mr-2">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				Register
+			</button>
+
+			<button nbButton (click)="edit()" status="info" class="mr-2">
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
+			</button>
+			<button nbButton (click)="delete()" status="danger" class="mr-2">
+				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon>Delete
+			</button>
+			<button
+				nbButton
+				(click)="changeStatus()"
+				status="warning"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
+				Accepted
+			</button>
+		</div>
+	</nb-card-body>
+</nb-card>
