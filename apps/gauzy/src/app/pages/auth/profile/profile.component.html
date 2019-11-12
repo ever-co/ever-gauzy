@@ -157,7 +157,7 @@
 
 					<div class="actions">
 						<button
-							[disabled]="form.invalid"
+							[disabled]="form.invalid || !matchPassword"
 							(click)="submitForm()"
 							nbButton
 							status="success"
