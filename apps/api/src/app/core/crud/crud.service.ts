@@ -18,8 +18,9 @@ import { of, throwError } from 'rxjs';
 import { Base } from '../entities/base';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
-import * as bcrypt from 'bcrypt';
+
 import { environment as env, environment } from '@env-api/environment';
+import * as bcrypt from 'bcrypt';
 
 export abstract class CrudService<T extends Base> implements ICrudService<T> {
 	saltRounds: number;
@@ -72,10 +73,12 @@ export abstract class CrudService<T extends Base> implements ICrudService<T> {
 			// method getPasswordHash is copied from AuthService
 			// try if can import somehow the service and use its method
 
-			const hashPassword = await this.getPasswordHash(
-				partialEntity['hash']
-			);
-			partialEntity['hash'] = hashPassword;
+			if (partialEntity['hash']) {
+				const hashPassword = await this.getPasswordHash(
+					partialEntity['hash']
+				);
+				partialEntity['hash'] = hashPassword;
+			}
 
 			return await this.repository.update(id, partialEntity);
 		} catch (err /*: WriteError*/) {

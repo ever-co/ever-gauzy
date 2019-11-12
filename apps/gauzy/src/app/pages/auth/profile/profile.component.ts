@@ -23,8 +23,6 @@ import { takeUntil } from 'rxjs/operators';
 export class ProfileComponent implements OnInit, OnDestroy {
 	private ngDestroy$ = new Subject<void>();
 
-	$password: any;
-
 	form: FormGroup;
 	hoverState: boolean;
 	roleName: string;
@@ -35,6 +33,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
 	passwordErrorMsg: string;
 	repeatPasswordErrorMsg: string;
+
+	matchPassword: boolean = true;
 
 	constructor(
 		private fb: FormBuilder,
@@ -73,13 +73,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
-		this.accountInfo = {
-			email: this.form.value['email'],
-			firstName: this.form.value['firstName'],
-			imageUrl: this.form.value['imageUrl'],
-			lastName: this.form.value['lastName'],
-			hash: this.form.value['password']
-		};
+		if (this.form.value['password']) {
+			this.accountInfo = {
+				email: this.form.value['email'],
+				firstName: this.form.value['firstName'],
+				imageUrl: this.form.value['imageUrl'],
+				lastName: this.form.value['lastName'],
+				hash: this.form.value['password']
+			};
+		} else {
+			this.accountInfo = {
+				email: this.form.value['email'],
+				firstName: this.form.value['firstName'],
+				imageUrl: this.form.value['imageUrl'],
+				lastName: this.form.value['lastName']
+			};
+		}
+		console.log(this.accountInfo);
+
 		try {
 			await this.userService.update(this.store.userId, this.accountInfo);
 			this.toastrService.primary(
@@ -100,11 +111,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
 			lastName: [user.lastName],
 			email: [user.email, Validators.required],
 			imageUrl: [user.imageUrl, Validators.required],
-			password: ['', [Validators.required, Validators.minLength(4)]],
+			password: [''],
 			repeatPassword: [
 				'',
 				[
-					Validators.required,
 					(control: AbstractControl) => {
 						if (this.password) {
 							return control.value === this.password.value
@@ -125,14 +135,32 @@ export class ProfileComponent implements OnInit, OnDestroy {
 	}
 
 	loadControls() {
+		this.validations.passwordControl();
 		this.validations.repeatPasswordControl();
 	}
 
 	private validations = {
+		passwordControl: () => {
+			this.password.valueChanges
+				.pipe(takeUntil(this.ngDestroy$))
+				.subscribe((value) => {
+					if (this.password.value === this.repeatPassword.value) {
+						this.matchPassword = true;
+					} else {
+						this.matchPassword = false;
+					}
+				});
+		},
 		repeatPasswordControl: () => {
 			this.repeatPassword.valueChanges
 				.pipe(takeUntil(this.ngDestroy$))
 				.subscribe((value) => {
+					if (this.password.value === this.repeatPassword.value) {
+						this.matchPassword = true;
+					} else {
+						this.matchPassword = false;
+					}
+
 					this.repeatPasswordErrorMsg =
 						(this.repeatPassword.touched ||
 							this.repeatPassword.dirty) &&
@@ -146,9 +174,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
 	};
 
 	ngOnDestroy(): void {
-		if (this.$password) {
-			this.$password.unsubscribe();
-		}
 		this.ngDestroy$.next();
 		this.ngDestroy$.complete();
 	}
