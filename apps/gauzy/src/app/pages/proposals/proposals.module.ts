@@ -5,12 +5,14 @@ import {
 	NbButtonModule,
 	NbInputModule,
 	NbIconModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalsRoutingModule } from './proposals-routing.module';
 import { ProposalRegisterComponent } from './register/proposal-register.component';
+import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 
 @NgModule({
 	imports: [
@@ -22,7 +24,9 @@ import { ProposalRegisterComponent } from './register/proposal-register.componen
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		NbDatepickerModule,
+		EmployeeSelectorsModule
 	],
 	entryComponents: [ProposalRegisterComponent],
 	declarations: [ProposalsComponent, ProposalRegisterComponent]
