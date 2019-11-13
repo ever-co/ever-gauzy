@@ -15,7 +15,6 @@ import {
 	IsEnum
 } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Organization } from '../organization/organization.entity';
 import {
 	OrganizationProjects as IOrganizationProjects,
 	CurrenciesEnum
