@@ -6,7 +6,7 @@
 	</nb-card-header>
 
 	<nb-card-body>
-		<form [formGroup]="form">
+		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="col-sm-4">
 					<div class="form-group">
@@ -20,7 +20,6 @@
 						</ga-employee-selector>
 					</div>
 				</div>
-
 				<div class="col-sm-4">
 					<div class="form-group">
 						<label class="label">Job Post URL</label>
@@ -34,7 +33,6 @@
 						/>
 					</div>
 				</div>
-
 				<div class="col-sm-4">
 					<div class="form-group">
 						<label class="label">Pick a Date</label>
@@ -48,7 +46,6 @@
 						<nb-datepicker #formpicker></nb-datepicker>
 					</div>
 				</div>
-
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">Job Post Content</label>
@@ -66,7 +63,6 @@
 						</button>
 					</div>
 				</div>
-
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">Proposal Content</label>
@@ -88,7 +84,13 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button class="register-btn" status="success" nbButton>
+		<button
+			[disabled]="form.invalid"
+			(click)="registerProposal()"
+			class="register-btn"
+			status="success"
+			nbButton
+		>
 			Register Proposal
 		</button>
 	</nb-card-footer>

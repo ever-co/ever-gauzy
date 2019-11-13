@@ -13,6 +13,7 @@ import { ProposalsComponent } from './proposals.component';
 import { ProposalsRoutingModule } from './proposals-routing.module';
 import { ProposalRegisterComponent } from './register/proposal-register.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
+import { ProposalsService } from '../../@core/services/proposals.service';
 
 @NgModule({
 	imports: [
@@ -23,12 +24,14 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
+		NbDatepickerModule,
 		NbIconModule,
 		NbSpinnerModule,
 		NbDatepickerModule,
 		EmployeeSelectorsModule
 	],
 	entryComponents: [ProposalRegisterComponent],
-	declarations: [ProposalsComponent, ProposalRegisterComponent]
+	declarations: [ProposalsComponent, ProposalRegisterComponent],
+	providers: [ProposalsService]
 })
 export class ProposalsModule {}
