@@ -15,3 +15,11 @@ export interface ProposalCreateInput {
 	jobPostContent?: string;
 	proposalContent?: string;
 }
+
+export interface ProposalFindInput extends IBaseEntityModel {
+	employeeId?: string;
+	jobPostUrl?: string;
+	valueDate?: Date;
+	jobPostContent?: string;
+	proposalContent?: string;
+}
