@@ -14,6 +14,8 @@ import { ProposalsRoutingModule } from './proposals-routing.module';
 import { ProposalRegisterComponent } from './register/proposal-register.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ProposalsService } from '../../@core/services/proposals.service';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 @NgModule({
 	imports: [
@@ -28,7 +30,9 @@ import { ProposalsService } from '../../@core/services/proposals.service';
 		NbIconModule,
 		NbSpinnerModule,
 		NbDatepickerModule,
-		EmployeeSelectorsModule
+		EmployeeSelectorsModule,
+		Ng2SmartTableModule,
+		TableComponentsModule
 	],
 	entryComponents: [ProposalRegisterComponent],
 	declarations: [ProposalsComponent, ProposalRegisterComponent],
