@@ -31,6 +31,7 @@ export class ProposalController extends CrudController<Proposal> {
 		@Query('data') data: string
 	): Promise<IPagination<IProposal>> {
 		const { relations, findInput, filterDate } = JSON.parse(data);
+
 		return this.proposalService.getAllProposals(
 			{ where: findInput, relations },
 			filterDate

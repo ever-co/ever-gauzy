@@ -2,6 +2,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface Proposal extends IBaseEntityModel {
 	employeeId?: string;
+	organizationId?: string;
 	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
@@ -10,6 +11,7 @@ export interface Proposal extends IBaseEntityModel {
 
 export interface ProposalCreateInput {
 	employeeId?: string;
+	organizationId?: string;
 	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
@@ -18,6 +20,7 @@ export interface ProposalCreateInput {
 
 export interface ProposalFindInput extends IBaseEntityModel {
 	employeeId?: string;
+	organizationId?: string;
 	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
