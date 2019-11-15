@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
-import { RolesEnum, Proposal } from '@gauzy/models';
+import { Proposal } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -54,22 +54,21 @@ export class ProposalsComponent implements OnInit {
 	employeeName: string;
 	loading = true;
 
-	// private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
 
 	ngOnInit() {
+		this.loadSettingsSmartTable();
+
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employee) => {
 				if (employee && employee.id) {
 					this.selectedEmployeeId = employee.id;
 					this._loadTableData();
-
-					this._loadTableData();
 				} else {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
-						this._loadTableData();
+						this._loadTableData(this._selectedOrganizationId);
 
 						this.proposalsService.getAll().then((data) => {
 							this.smartTableSource.load(data.items);
@@ -79,9 +78,6 @@ export class ProposalsComponent implements OnInit {
 
 				this.loading = false;
 			});
-
-		this.loadSettingsSmartTable();
-		this._loadTableData();
 	}
 
 	add() {
@@ -125,7 +121,7 @@ export class ProposalsComponent implements OnInit {
 			}
 		};
 
-		if (this.selectedEmployeeId) {
+		if (!this.selectedEmployeeId) {
 			this.smartTableSettings['columns'] = {
 				...this.smartTableSettings['columns'],
 				author: {
@@ -140,11 +136,27 @@ export class ProposalsComponent implements OnInit {
 		this.selectedProposal = ev;
 	}
 
-	private async _loadTableData() {
+	private async _loadTableData(orgId?: string) {
 		this.showTable = false;
-		try {
-			const { items } = await this.proposalsService.getAll(['employee']);
+		let items: Proposal[];
+		if (this.selectedEmployeeId) {
+			const response = await this.proposalsService.getAll(
+				['employee', 'organization'],
+				{
+					employeeId: this.selectedEmployeeId,
+					organizationId: this._selectedOrganizationId
+				}
+			);
+			items = response.items;
+		} else {
+			const response = await this.proposalsService.getAll(
+				['organization'],
+				{ organizationId: orgId }
+			);
+			items = response.items;
+		}
 
+		try {
 			const proposalVM: ProposalViewModel[] = items.map((i) => {
 				return {
 					id: i.id,
@@ -158,10 +170,7 @@ export class ProposalsComponent implements OnInit {
 			this.smartTableSource.load(proposalVM);
 			this.showTable = true;
 		} catch (error) {
-			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
-			);
+			this.toastrService.danger(error.message || error.message, 'Error');
 		}
 	}
 }
