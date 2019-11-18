@@ -61,4 +61,8 @@ export class Proposal extends Base implements IProposal {
 	@IsOptional()
 	@Column()
 	proposalContent?: string;
+
+	@ApiModelPropertyOptional({ type: Boolean, default: false })
+	@Column({ nullable: true, default: false })
+	status: boolean;
 }

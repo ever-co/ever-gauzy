@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
@@ -13,10 +13,13 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 export interface ProposalViewModel {
 	id: string;
 	employeeId?: string;
+	organizationId?: string;
 	valueDate: Date;
 	jobPostUrl?: string;
 	jobPostContent?: string;
 	proposalContent?: string;
+	status?: string;
+	author?: string;
 }
 
 interface SelectedRowModel {
@@ -31,7 +34,7 @@ interface SelectedRowModel {
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent implements OnInit {
+export class ProposalsComponent implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private router: Router,
@@ -44,7 +47,7 @@ export class ProposalsComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	smartTableSettings: object;
-	selectedEmployeeId: string;
+	selectedEmployeeId = '';
 	selectedDate: Date;
 
 	smartTableSource = new LocalDataSource();
@@ -59,6 +62,14 @@ export class ProposalsComponent implements OnInit {
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				if (org) {
+					this._selectedOrganizationId = org.id;
+				}
+			});
+
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employee) => {
@@ -69,10 +80,6 @@ export class ProposalsComponent implements OnInit {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
 						this._loadTableData(this._selectedOrganizationId);
-
-						this.proposalsService.getAll().then((data) => {
-							this.smartTableSource.load(data.items);
-						});
 					}
 				}
 
@@ -121,7 +128,7 @@ export class ProposalsComponent implements OnInit {
 			}
 		};
 
-		if (!this.selectedEmployeeId) {
+		if (!this.selectedEmployeeId.length) {
 			this.smartTableSettings['columns'] = {
 				...this.smartTableSettings['columns'],
 				author: {
@@ -147,12 +154,14 @@ export class ProposalsComponent implements OnInit {
 					organizationId: this._selectedOrganizationId
 				}
 			);
+			delete this.smartTableSettings['columns']['author'];
 			items = response.items;
 		} else {
 			const response = await this.proposalsService.getAll(
-				['organization'],
+				['organization', 'employee', 'employee.user'],
 				{ organizationId: orgId }
 			);
+
 			items = response.items;
 		}
 
@@ -163,14 +172,25 @@ export class ProposalsComponent implements OnInit {
 					valueDate: i.valueDate,
 					jobPostUrl: i.jobPostUrl,
 					jobPostContent: i.jobPostContent,
-					proposalContent: i.proposalContent
+					proposalContent: i.proposalContent,
+					status: i.status ? 'Accepted' : 'Sent',
+					author: i.employee.user
+						? i.employee.user.firstName +
+						  ' ' +
+						  i.employee.user.lastName
+						: ''
 				};
 			});
-
 			this.smartTableSource.load(proposalVM);
 			this.showTable = true;
 		} catch (error) {
 			this.toastrService.danger(error.message || error.message, 'Error');
 		}
+	}
+
+	ngOnDestroy() {
+		delete this.smartTableSettings['columns']['author'];
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }
