@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
-import { Proposal } from '@gauzy/models';
+import { Proposal, ProposalStatusEnum } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -27,6 +27,7 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 	proposal?: Proposal;
 	form: FormGroup;
 	employeeName: string;
+	statuses: string[] = Object.values(ProposalStatusEnum);
 	loading = true;
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
@@ -61,7 +62,8 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 					jobPostUrl: result.jobPostUrl,
 					valueDate: result.valueDate,
 					jobPostContent: result.jobPostContent,
-					proposalContent: result.proposalContent
+					proposalContent: result.proposalContent,
+					status: this.statuses[0]
 				});
 
 				this.toastrService.primary(

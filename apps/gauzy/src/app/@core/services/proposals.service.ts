@@ -32,4 +32,11 @@ export class ProposalsService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	delete(id: string): Promise<any> {
+		return this.http
+			.delete(`/api/proposal/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
 }
