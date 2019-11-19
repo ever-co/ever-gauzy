@@ -9,10 +9,26 @@
 				Register
 			</button>
 
-			<button nbButton (click)="edit()" status="info" class="mr-2">
+			<button
+				nbButton
+				(click)="edit()"
+				status="info"
+				class="mr-2"
+				[disabled]="
+					selectedProposal ? !selectedProposal.isSelected : true
+				"
+			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
 			</button>
-			<button nbButton (click)="delete()" status="danger" class="mr-2">
+			<button
+				nbButton
+				(click)="delete()"
+				status="danger"
+				class="mr-2"
+				[disabled]="
+					selectedProposal ? !selectedProposal.isSelected : true
+				"
+			>
 				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon>Delete
 			</button>
 			<button
@@ -20,6 +36,9 @@
 				(click)="changeStatus()"
 				status="warning"
 				class="mr-2"
+				[disabled]="
+					selectedProposal ? !selectedProposal.isSelected : true
+				"
 			>
 				<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
 				Accepted
@@ -31,6 +50,7 @@
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
 			(userRowSelect)="selectProposal($event)"
+			style="cursor: pointer;"
 		>
 		</ng2-smart-table>
 	</nb-card-body>
