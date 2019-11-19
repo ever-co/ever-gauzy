@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbSpinnerModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbDialogModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProposalsComponent } from './proposals.component';
@@ -16,6 +17,9 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 
 @NgModule({
 	imports: [
@@ -27,15 +31,22 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 		NbButtonModule,
 		NbInputModule,
 		NbDatepickerModule,
+		NbDialogModule.forChild(),
+		TableComponentsModule,
 		NbIconModule,
 		NbSpinnerModule,
 		NbDatepickerModule,
 		EmployeeSelectorsModule,
 		Ng2SmartTableModule,
-		TableComponentsModule
+		TableComponentsModule,
+		UserFormsModule
 	],
-	entryComponents: [ProposalRegisterComponent],
-	declarations: [ProposalsComponent, ProposalRegisterComponent],
+	entryComponents: [ProposalRegisterComponent, ProposalStatusComponent],
+	declarations: [
+		ProposalsComponent,
+		ProposalRegisterComponent,
+		ProposalStatusComponent
+	],
 	providers: [ProposalsService]
 })
 export class ProposalsModule {}

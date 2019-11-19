@@ -9,6 +9,8 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 
 export interface ProposalViewModel {
 	id: string;
@@ -40,6 +42,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private proposalsService: ProposalsService,
 		private toastrService: NbToastrService,
+		private dialogService: NbDialogService,
 		private route: ActivatedRoute,
 		private translateService: TranslateService
 	) {}
@@ -97,7 +100,34 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 	}
 
 	delete() {
-		// TODO: Implement delete logic
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Proposal'
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.proposalsService.delete(
+							this.selectedProposal.data.id
+						);
+
+						this.toastrService.primary(
+							'Proposal deleted for successfuly',
+							'Success'
+						);
+						this._loadTableData();
+						this.selectedProposal = null;
+					} catch (error) {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					}
+				}
+			});
 	}
 
 	changeStatus() {
@@ -118,12 +148,13 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 					filter: false
 				},
 				jobPostUrl: {
-					title: 'View Proposal',
-					type: 'string'
+					title: 'View Job Post',
+					type: 'html'
 				},
 				status: {
 					title: 'Status',
-					type: 'string'
+					type: 'custom',
+					renderComponent: ProposalStatusComponent
 				}
 			}
 		};
@@ -170,10 +201,13 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 				return {
 					id: i.id,
 					valueDate: i.valueDate,
-					jobPostUrl: i.jobPostUrl,
+					jobPostUrl:
+						'<a href="' +
+						i.jobPostUrl +
+						'" target="_blank">Link to Job Post</a>',
 					jobPostContent: i.jobPostContent,
 					proposalContent: i.proposalContent,
-					status: i.status ? 'Accepted' : 'Sent',
+					status: i.status,
 					author: i.employee.user
 						? i.employee.user.firstName +
 						  ' ' +
@@ -181,6 +215,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						: ''
 				};
 			});
+
 			this.smartTableSource.load(proposalVM);
 			this.showTable = true;
 		} catch (error) {

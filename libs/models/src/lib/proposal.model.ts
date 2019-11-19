@@ -11,7 +11,7 @@ export interface Proposal extends IBaseEntityModel {
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
-	status?: boolean;
+	status?: string;
 }
 
 export interface ProposalCreateInput {
@@ -21,6 +21,7 @@ export interface ProposalCreateInput {
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
+	status?: string;
 }
 
 export interface ProposalFindInput extends IBaseEntityModel {
@@ -32,5 +33,10 @@ export interface ProposalFindInput extends IBaseEntityModel {
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
-	status?: boolean;
+	status?: string;
+}
+
+export enum ProposalStatusEnum {
+	SENT = 'SENT',
+	ACCEPTED = 'ACCEPTED'
 }
