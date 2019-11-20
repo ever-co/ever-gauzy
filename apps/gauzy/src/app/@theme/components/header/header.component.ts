@@ -134,7 +134,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
 				icon: 'paper-plane-outline',
-				link: '#'
+				link: 'pages/proposals/register'
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),

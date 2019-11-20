@@ -8,6 +8,7 @@ import { NbToastrService } from '@nebular/theme';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ga-proposal-register',
@@ -18,6 +19,7 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 	constructor(
 		private fb: FormBuilder,
 		private store: Store,
+		private router: Router,
 		private proposalsService: ProposalsService,
 		private toastrService: NbToastrService
 	) {}
@@ -70,6 +72,8 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 					'New proposal registered',
 					'Success'
 				);
+
+				this.router.navigate(['/pages/proposals']);
 			} catch (error) {
 				this.toastrService.danger(
 					error.message || error.message,

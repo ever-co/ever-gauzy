@@ -11,14 +11,14 @@
 
 			<button
 				nbButton
-				(click)="edit()"
+				(click)="details()"
 				status="info"
 				class="mr-2"
 				[disabled]="
 					selectedProposal ? !selectedProposal.isSelected : true
 				"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>Details
 			</button>
 			<button
 				nbButton
