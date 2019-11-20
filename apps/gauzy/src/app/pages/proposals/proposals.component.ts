@@ -94,9 +94,11 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		this.router.navigate(['/pages/proposals/register']);
 	}
 
-	edit() {
-		this.router.navigate(['/pages/proposals/edit/:id']);
-		// TODO: Implement edit logic
+	details() {
+		this.store.selectedProposal = this.selectedProposal.data;
+		this.router.navigate([
+			`/pages/proposals/details/${this.selectedProposal.data.id}`
+		]);
 	}
 
 	delete() {
@@ -149,11 +151,15 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 				},
 				jobPostUrl: {
 					title: 'View Job Post',
-					type: 'html'
+					type: 'html',
+					filter: false
 				},
 				status: {
 					title: 'Status',
 					type: 'custom',
+					width: '10rem',
+					class: 'text-center',
+					filter: false,
 					renderComponent: ProposalStatusComponent
 				}
 			}

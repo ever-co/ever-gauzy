@@ -12,14 +12,14 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalsRoutingModule } from './proposals-routing.module';
-import { ProposalRegisterComponent } from './register/proposal-register.component';
+import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
 
 @NgModule({
 	imports: [
@@ -45,7 +45,8 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 	declarations: [
 		ProposalsComponent,
 		ProposalRegisterComponent,
-		ProposalStatusComponent
+		ProposalStatusComponent,
+		ProposalDetailsComponent
 	],
 	providers: [ProposalsService]
 })

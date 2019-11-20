@@ -1,13 +1,14 @@
 import { User, Organization, DefaultValueDateTypeEnum } from '@gauzy/models';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
+import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 
 export class Store {
 	private _selectedOrganization: Organization;
+	private _selectedProposal: ProposalViewModel;
 	selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(
 		this.selectedOrganization
 	);
-
 	private _selectedEmployee: SelectedEmployee;
 	selectedEmployee$: BehaviorSubject<SelectedEmployee> = new BehaviorSubject(
 		this.selectedEmployee
@@ -77,6 +78,14 @@ export class Store {
 	set selectedDate(date: Date) {
 		this._selectedDate = date;
 		this.selectedDate$.next(date);
+	}
+
+	get selectedProposal(): ProposalViewModel {
+		return this._selectedProposal;
+	}
+
+	set selectedProposal(proposal: ProposalViewModel) {
+		this._selectedProposal = proposal;
 	}
 
 	getDateFromOrganizationSettings() {
