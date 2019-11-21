@@ -38,7 +38,6 @@ import { ProposalDetailsComponent } from './proposal-details/proposal-details.co
 		NbDatepickerModule,
 		EmployeeSelectorsModule,
 		Ng2SmartTableModule,
-		TableComponentsModule,
 		UserFormsModule
 	],
 	entryComponents: [ProposalRegisterComponent, ProposalStatusComponent],
