@@ -1,2 +1,39 @@
-<div>{{ proposal.id }}</div>
-<div>{{ proposal.jobPostContent }}</div>
+<nb-card>
+	<nb-card-header>
+		<h4>Proposal Details</h4>
+		<button nbButton (click)="edit()" status="info" class="mr-2">
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
+		</button>
+	</nb-card-header>
+
+	<nb-card-body class="card-container">
+		<div class="wrapper-top">
+			<nb-card class="prop-card">
+				<h6>Author</h6>
+				<p>{{ author }}</p>
+			</nb-card>
+			<nb-card class="prop-card">
+				<h6>Job Post URL</h6>
+				<p [innerHTML]="jobPost"></p>
+			</nb-card>
+			<nb-card class="prop-card">
+				<h6>Proposal Sent On</h6>
+				{{ proposal.valueDate | date: 'shortDate' }}
+			</nb-card>
+			<nb-card class="prop-card">
+				<h6>Status</h6>
+				<ga-propsal-status [rowData]="proposal"></ga-propsal-status>
+			</nb-card>
+		</div>
+		<div class="wrapper-bottom">
+			<nb-card class="prop-card">
+				<h6>Job Post Content</h6>
+				<p>{{ proposal.jobPostContent }}</p>
+			</nb-card>
+			<nb-card class="prop-card">
+				<h6>Proposal Content</h6>
+				<p>{{ proposal.proposalContent }}</p>
+			</nb-card>
+		</div>
+	</nb-card-body>
+</nb-card>

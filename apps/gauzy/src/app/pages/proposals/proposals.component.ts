@@ -95,7 +95,6 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 	}
 
 	details() {
-		this.store.selectedProposal = this.selectedProposal.data;
 		this.router.navigate([
 			`/pages/proposals/details/${this.selectedProposal.data.id}`
 		]);
@@ -117,7 +116,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							'Proposal deleted for successfuly',
+							'Proposal deleted successfuly',
 							'Success'
 						);
 						this._loadTableData();
@@ -145,9 +144,14 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 				valueDate: {
 					title: 'Proposal Registered on',
 					type: 'custom',
-					width: '20%',
+					width: '25%',
 					renderComponent: DateViewComponent,
 					filter: false
+				},
+				jobTitle: {
+					title: 'Job Title',
+					type: 'string',
+					width: '25%'
 				},
 				jobPostUrl: {
 					title: 'View Job Post',
@@ -170,7 +174,8 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 				...this.smartTableSettings['columns'],
 				author: {
 					title: 'Author',
-					type: 'string'
+					type: 'string',
+					width: '25%'
 				}
 			};
 		}
@@ -178,6 +183,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 
 	selectProposal(ev: SelectedRowModel) {
 		this.selectedProposal = ev;
+		this.store.selectedProposal = this.selectedProposal.data;
 	}
 
 	private async _loadTableData(orgId?: string) {
@@ -203,24 +209,31 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		}
 
 		try {
-			const proposalVM: ProposalViewModel[] = items.map((i) => {
-				return {
-					id: i.id,
-					valueDate: i.valueDate,
-					jobPostUrl:
-						'<a href="' +
-						i.jobPostUrl +
-						'" target="_blank">Link to Job Post</a>',
-					jobPostContent: i.jobPostContent,
-					proposalContent: i.proposalContent,
-					status: i.status,
-					author: i.employee.user
-						? i.employee.user.firstName +
-						  ' ' +
-						  i.employee.user.lastName
-						: ''
-				};
-			});
+			const proposalVM: ProposalViewModel[] = items
+				.sort(
+					(a, b) =>
+						new Date(b.valueDate).getTime() -
+						new Date(a.valueDate).getTime()
+				)
+				.map((i) => {
+					return {
+						id: i.id,
+						valueDate: i.valueDate,
+						jobPostUrl:
+							'<a href="' +
+							i.jobPostUrl +
+							'" target="_blank">Link to Job Post</a>',
+						jobTitle: i.jobPostContent.substr(0, 30) + '...',
+						jobPostContent: i.jobPostContent,
+						proposalContent: i.proposalContent,
+						status: i.status,
+						author: i.employee.user
+							? i.employee.user.firstName +
+							  ' ' +
+							  i.employee.user.lastName
+							: ''
+					};
+				});
 
 			this.smartTableSource.load(proposalVM);
 			this.showTable = true;
