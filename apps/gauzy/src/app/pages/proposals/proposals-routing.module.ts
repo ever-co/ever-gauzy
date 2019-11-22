@@ -3,6 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
+import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 
 const routes: Routes = [
 	{
@@ -16,6 +17,10 @@ const routes: Routes = [
 	{
 		path: 'details/:id',
 		component: ProposalDetailsComponent
+	},
+	{
+		path: 'edit/:id',
+		component: ProposalEditComponent
 	}
 ];
 

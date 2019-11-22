@@ -17,8 +17,10 @@ export class ProposalDetailsComponent implements OnInit {
 	) {}
 
 	proposal: ProposalViewModel;
-	jobPost: SafeHtml;
+	jobPostLink: SafeHtml;
 	author: string;
+	jobPostContentArr: string[];
+	proposalContentArr: string[];
 
 	ngOnInit() {
 		this.proposal = this.store.selectedProposal;
@@ -27,8 +29,8 @@ export class ProposalDetailsComponent implements OnInit {
 			this.router.navigate([`/pages/proposals`]);
 		}
 
-		this.jobPost = this.sanitizer.bypassSecurityTrustHtml(
-			this.proposal.jobPostUrl
+		this.jobPostLink = this.sanitizer.bypassSecurityTrustHtml(
+			this.proposal.jobPostLink
 		);
 
 		if (!this.proposal.author) {
@@ -39,6 +41,10 @@ export class ProposalDetailsComponent implements OnInit {
 		} else {
 			this.author = this.proposal.author;
 		}
+
+		console.log(this.proposal.jobPostContent);
+		this.jobPostContentArr = this.proposal.jobPostContent.split('\n');
+		this.proposalContentArr = this.proposal.proposalContent.split('\n');
 	}
 
 	edit() {

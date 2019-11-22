@@ -18,6 +18,14 @@ nb-card-header {
 		align-items: center;
 		padding: 2em;
 	}
+
+	@media (max-width: 1120px) {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	@media (max-width: 600px) {
+		display: block;
+	}
 }
 
 .wrapper-bottom {
@@ -34,5 +42,9 @@ nb-card-header {
 
 	p {
 		padding: 0 2em;
+	}
+
+	@media (max-width: 900px) {
+		display: block;
 	}
 }

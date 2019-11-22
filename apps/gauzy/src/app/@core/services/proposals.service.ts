@@ -18,6 +18,20 @@ export class ProposalsService {
 			.toPromise();
 	}
 
+	update(id: string, updateInput: IProposalCreateInput): Promise<any> {
+		return this.http
+			.put(`/api/proposal/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	delete(id: string): Promise<any> {
+		return this.http
+			.delete(`/api/proposal/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAll(
 		relations?: string[],
 		findInput?: IProposalFindInput,
@@ -29,13 +43,6 @@ export class ProposalsService {
 			.get<{ items: Proposal[]; total: number }>(`/api/proposal`, {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
-	}
-
-	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/proposal/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

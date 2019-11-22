@@ -20,6 +20,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
+import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 
 @NgModule({
 	imports: [
@@ -45,7 +46,8 @@ import { ProposalDetailsComponent } from './proposal-details/proposal-details.co
 		ProposalsComponent,
 		ProposalRegisterComponent,
 		ProposalStatusComponent,
-		ProposalDetailsComponent
+		ProposalDetailsComponent,
+		ProposalEditComponent
 	],
 	providers: [ProposalsService]
 })

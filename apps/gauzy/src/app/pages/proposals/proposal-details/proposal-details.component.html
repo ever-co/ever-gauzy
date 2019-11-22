@@ -14,7 +14,7 @@
 			</nb-card>
 			<nb-card class="prop-card">
 				<h6>Job Post URL</h6>
-				<p [innerHTML]="jobPost"></p>
+				<p [innerHTML]="jobPostLink"></p>
 			</nb-card>
 			<nb-card class="prop-card">
 				<h6>Proposal Sent On</h6>
@@ -28,11 +28,15 @@
 		<div class="wrapper-bottom">
 			<nb-card class="prop-card">
 				<h6>Job Post Content</h6>
-				<p>{{ proposal.jobPostContent }}</p>
+				<div *ngFor="let paragraph of jobPostContentArr">
+					<p>{{ paragraph }}</p>
+				</div>
 			</nb-card>
 			<nb-card class="prop-card">
 				<h6>Proposal Content</h6>
-				<p>{{ proposal.proposalContent }}</p>
+				<div *ngFor="let paragraph of proposalContentArr">
+					<p>{{ paragraph }}</p>
+				</div>
 			</nb-card>
 		</div>
 	</nb-card-body>

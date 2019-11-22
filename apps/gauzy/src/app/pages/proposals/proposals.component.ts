@@ -18,6 +18,7 @@ export interface ProposalViewModel {
 	organizationId?: string;
 	valueDate: Date;
 	jobPostUrl?: string;
+	jobPostLink?: string;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: string;
@@ -153,7 +154,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 					type: 'string',
 					width: '25%'
 				},
-				jobPostUrl: {
+				jobPostLink: {
 					title: 'View Job Post',
 					type: 'html',
 					filter: false
@@ -219,10 +220,11 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 					return {
 						id: i.id,
 						valueDate: i.valueDate,
-						jobPostUrl:
+						jobPostLink:
 							'<a href="' +
 							i.jobPostUrl +
 							'" target="_blank">Link to Job Post</a>',
+						jobPostUrl: i.jobPostUrl,
 						jobTitle: i.jobPostContent.substr(0, 30) + '...',
 						jobPostContent: i.jobPostContent,
 						proposalContent: i.proposalContent,
