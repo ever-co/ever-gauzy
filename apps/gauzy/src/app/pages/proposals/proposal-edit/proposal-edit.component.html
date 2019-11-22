@@ -1,0 +1,83 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h3>
+			Edit Proposal
+		</h3>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label">Author</label>
+						<div>{{ proposal.author }}</div>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label">Job Post URL</label>
+						<input
+							nbInput
+							fullWidth
+							type="text"
+							placeholder="Job Post URL"
+							formControlName="jobPostUrl"
+							autocomplete="on"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label">Proposal Sent On</label>
+						<div>{{ proposal.valueDate | date: 'shortDate' }}</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">Job Post Content</label>
+						<textarea
+							nbInput
+							fullWidth
+							rows="12"
+							type="text"
+							placeholder="Job Post Content"
+							formControlName="jobPostContent"
+							autocomplete="on"
+						></textarea>
+						<button class="upload-btn" nbButton status="primary">
+							Upload
+						</button>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">Proposal Content</label>
+						<textarea
+							nbInput
+							rows="12"
+							fullWidth
+							type="text"
+							placeholder="Proposal Content"
+							formControlName="proposalContent"
+							autocomplete="on"
+						></textarea>
+						<button class="upload-btn" nbButton status="primary">
+							Upload
+						</button>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="editProposal()"
+			class="edit-btn"
+			status="success"
+			nbButton
+		>
+			Edit Proposal
+		</button>
+	</nb-card-footer>
+</nb-card>
