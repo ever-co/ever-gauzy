@@ -15,6 +15,7 @@ import { IncomeService } from '../../../@core/services/income.service';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
+import { ActionConfirmationComponent } from './action-confirmation/action-confirmation.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -37,9 +38,21 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	exports: [BasicInfoFormComponent, DeleteConfirmationComponent],
-	declarations: [BasicInfoFormComponent, DeleteConfirmationComponent],
-	entryComponents: [BasicInfoFormComponent, DeleteConfirmationComponent],
+	exports: [
+		BasicInfoFormComponent,
+		DeleteConfirmationComponent,
+		ActionConfirmationComponent
+	],
+	declarations: [
+		BasicInfoFormComponent,
+		DeleteConfirmationComponent,
+		ActionConfirmationComponent
+	],
+	entryComponents: [
+		BasicInfoFormComponent,
+		DeleteConfirmationComponent,
+		ActionConfirmationComponent
+	],
 	providers: [AuthService, RoleService, IncomeService]
 })
 export class UserFormsModule {}

@@ -11,6 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
+import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
 
 export interface ProposalViewModel {
 	id: string;
@@ -57,6 +58,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 	smartTableSource = new LocalDataSource();
 
 	selectedProposal: SelectedRowModel;
+	proposalStatus: string;
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
@@ -132,8 +134,72 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	changeStatus() {
-		// TODO: Implement change status logic
+	switchToAccepted() {
+		this.dialogService
+			.open(ActionConfirmationComponent, {
+				context: {
+					recordType: 'status'
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.proposalsService.update(
+							this.selectedProposal.data.id,
+							{
+								status: 'ACCEPTED'
+							}
+						);
+
+						this.toastrService.primary(
+							'Proposal status updated to Accepted',
+							'Success'
+						);
+						this.selectedProposal = null;
+						this._loadTableData();
+					} catch (error) {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					}
+				}
+			});
+	}
+
+	switchToSent() {
+		this.dialogService
+			.open(ActionConfirmationComponent, {
+				context: {
+					recordType: 'status'
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.proposalsService.update(
+							this.selectedProposal.data.id,
+							{
+								status: 'SENT'
+							}
+						);
+
+						this.toastrService.primary(
+							'Proposal status updated to Sent',
+							'Success'
+						);
+						this.selectedProposal = null;
+						this._loadTableData();
+					} catch (error) {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					}
+				}
+			});
 	}
 
 	loadSettingsSmartTable() {
@@ -185,6 +251,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 	selectProposal(ev: SelectedRowModel) {
 		this.selectedProposal = ev;
 		this.store.selectedProposal = this.selectedProposal.data;
+		this.proposalStatus = this.selectedProposal.data.status;
 	}
 
 	private async _loadTableData(orgId?: string) {

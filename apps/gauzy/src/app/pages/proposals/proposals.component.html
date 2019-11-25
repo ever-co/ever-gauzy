@@ -33,7 +33,11 @@
 			</button>
 			<button
 				nbButton
-				(click)="changeStatus()"
+				(click)="
+					proposalStatus == 'SENT'
+						? switchToAccepted()
+						: switchToSent()
+				"
 				status="warning"
 				class="mr-2"
 				[disabled]="
@@ -41,7 +45,7 @@
 				"
 			>
 				<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-				Accepted
+				{{ proposalStatus == 'ACCEPTED' ? 'Sent' : 'Accepted' }}
 			</button>
 		</div>
 		<ng2-smart-table
