@@ -61,12 +61,30 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 	proposalStatus: string;
 	showTable: boolean;
 	employeeName: string;
+	totalProposals: number;
+	countAccepted = 0;
+	successRate: string;
+	chartData: { value: number; name: string }[] = [];
 	loading = true;
 
 	private _selectedOrganizationId: string;
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
+
+		this.store.selectedDate$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((date) => {
+				this.selectedDate = date;
+
+				if (this.selectedEmployeeId) {
+					this._loadTableData();
+				} else {
+					if (this._selectedOrganizationId) {
+						this._loadTableData(this._selectedOrganizationId);
+					}
+				}
+			});
 
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -263,18 +281,24 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 				{
 					employeeId: this.selectedEmployeeId,
 					organizationId: this._selectedOrganizationId
-				}
+				},
+				this.selectedDate
 			);
 			delete this.smartTableSettings['columns']['author'];
 			items = response.items;
+			this.totalProposals = response.total;
 		} else {
 			const response = await this.proposalsService.getAll(
 				['organization', 'employee', 'employee.user'],
-				{ organizationId: orgId }
+				{ organizationId: orgId },
+				this.selectedDate
 			);
 
 			items = response.items;
+			this.totalProposals = response.total;
 		}
+
+		this.countAccepted = 0;
 
 		try {
 			const proposalVM: ProposalViewModel[] = items
@@ -284,6 +308,10 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						new Date(a.valueDate).getTime()
 				)
 				.map((i) => {
+					if (i.status === 'ACCEPTED') {
+						this.countAccepted++;
+					}
+
 					return {
 						id: i.id,
 						valueDate: i.valueDate,
@@ -304,8 +332,28 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 					};
 				});
 
+			if (this.totalProposals) {
+				this.successRate =
+					((this.countAccepted / this.totalProposals) * 100).toFixed(
+						0
+					) + ' %';
+			} else {
+				this.successRate = '0 %';
+			}
+
 			this.smartTableSource.load(proposalVM);
 			this.showTable = true;
+
+			this.chartData.push(
+				{
+					name: 'Accepted Proposals',
+					value: this.countAccepted
+				},
+				{
+					name: 'Total Proposals',
+					value: this.totalProposals
+				}
+			);
 		} catch (error) {
 			this.toastrService.danger(error.message || error.message, 'Error');
 		}

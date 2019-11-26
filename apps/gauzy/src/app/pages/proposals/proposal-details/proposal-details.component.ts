@@ -42,7 +42,6 @@ export class ProposalDetailsComponent implements OnInit {
 			this.author = this.proposal.author;
 		}
 
-		console.log(this.proposal.jobPostContent);
 		this.jobPostContentArr = this.proposal.jobPostContent.split('\n');
 		this.proposalContentArr = this.proposal.proposalContent.split('\n');
 	}
