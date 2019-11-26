@@ -15,8 +15,7 @@ import { monthNames } from '../../../@core/utils/date';
 			[data]="data"
 			[options]="options"
 		></chart>
-	`,
-	styleUrls: ['./employee-chart.component.scss']
+	`
 })
 export class EmployeeChartComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();

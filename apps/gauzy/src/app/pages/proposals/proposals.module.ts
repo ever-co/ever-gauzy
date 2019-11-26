@@ -21,6 +21,8 @@ import { ProposalStatusComponent } from './table-components/proposal-status/prop
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
+import { ProposalsPieChartComponent } from './proposals-pie-chart/proposals-pie-chart.component';
+import { ChartModule } from 'angular2-chartjs';
 
 @NgModule({
 	imports: [
@@ -39,7 +41,8 @@ import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 		NbDatepickerModule,
 		EmployeeSelectorsModule,
 		Ng2SmartTableModule,
-		UserFormsModule
+		UserFormsModule,
+		ChartModule
 	],
 	entryComponents: [ProposalRegisterComponent, ProposalStatusComponent],
 	declarations: [
@@ -47,7 +50,8 @@ import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 		ProposalRegisterComponent,
 		ProposalStatusComponent,
 		ProposalDetailsComponent,
-		ProposalEditComponent
+		ProposalEditComponent,
+		ProposalsPieChartComponent
 	],
 	providers: [ProposalsService]
 })

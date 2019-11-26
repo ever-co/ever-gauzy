@@ -3,12 +3,33 @@
 		<h4>Proposals Management Page</h4>
 	</nb-card-header>
 	<nb-card-body>
+		<nb-card class="p-3">
+			<h6>Statistics</h6>
+			<div>
+				<span>Accepted Proposals: </span
+				><span>{{ countAccepted }}</span>
+			</div>
+			<div>
+				<span>Total Proposals: </span>
+				<span>{{ totalProposals }}</span>
+			</div>
+			<div>
+				<span>Success Rate: </span>
+				<span
+					><b>{{ successRate }}</b>
+				</span>
+			</div>
+			<!-- <ngx-proposals-pie-chart
+				*ngIf="chartData.length"
+				[values]="chartData"
+			></ngx-proposals-pie-chart> -->
+		</nb-card>
+
 		<div class="mb-3">
 			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 				Register
 			</button>
-
 			<button
 				nbButton
 				(click)="details()"
