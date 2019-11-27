@@ -49,7 +49,8 @@
 			"START_DATE": "Дата на започване на работа",
 			"IMAGE_URL": "Снимка URL (незадължително)",
 			"CURRENCY": "Валута",
-			"DATE_TYPE": "Дата по подразбиране"
+			"DATE_TYPE": "Дата по подразбиране",
+			"ADD_TEAM": "Добавяне на нов отбор"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -71,7 +72,10 @@
 			"ADD_VENDOR": "Добави доставчик",
 			"CLIENTS": "Клиенти",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
-			"END_DATE_PROJECT": "Край на проекта (опция)"
+			"END_DATE_PROJECT": "Край на проекта (опция)",
+			"TEAM_NAME": "Име на отбора",
+			"ADD_REMOVE_MEMBERS": "Добавяне или премахване на членове",
+			"MEMBERS_COUNT": "Брой членове"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
@@ -104,7 +108,7 @@
 		"DASHBOARD": "Табло",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
-		"PROPOSALS": "Proposals",
+		"PROPOSALS": "Предложения",
 		"HELP": "Помощ",
 		"ABOUT": "За нас",
 		"ADMIN": "Администратор",
@@ -114,9 +118,9 @@
 		"GENERAL": "Основни"
 	},
 	"SETTINGS_MENU": {
-		"THEMES": "Themes",
-		"LIGHT": "Light",
-		"DARK": "Dark",
+		"THEMES": "Теми",
+		"LIGHT": "Светла",
+		"DARK": "Тъмна",
 		"COSMIC": "Cosmic",
 		"CORPORATE": "Corporate",
 		"LANGUAGE": "Language",
