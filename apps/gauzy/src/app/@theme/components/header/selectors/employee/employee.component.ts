@@ -124,6 +124,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
 			this.selectedEmployee = this.people[0];
+			this.store.selectedEmployee.id = null;
 		}
 	}
 

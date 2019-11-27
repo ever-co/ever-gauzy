@@ -1,5 +1,5 @@
 <nb-card>
-	<nb-card-header>Add New Team</nb-card-header>
+	<nb-card-header>{{ 'FORM.LABELS.ADD_TEAM' | translate }}</nb-card-header>
 	<nb-card-body>
 		<div class="form-group">
 			<button
@@ -22,7 +22,9 @@
 					[ngModelOptions]="{ standalone: true }"
 					nbInput
 					fullWidth
-					placeholder="Team Name"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.TEAM_NAME' | translate
+					}}"
 				/>
 			</div>
 			<div class="form-group col-4">
@@ -31,7 +33,9 @@
 					[selected]="selectedEmployees"
 					(selectedChange)="onMembersSelected($event)"
 					fullWidth
-					placeholder="Add or Remove Team Members"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate
+					}}"
 				>
 					<nb-option
 						*ngFor="let employee of employees"
