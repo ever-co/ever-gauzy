@@ -49,7 +49,8 @@
 			"START_DATE": "Date when started work",
 			"IMAGE_URL": "Image URL (optional)",
 			"CURRENCY": "Currency",
-			"DATE_TYPE": "Default Date Type"
+			"DATE_TYPE": "Default Date Type",
+			"ADD_TEAM": "Add New Team"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -71,7 +72,10 @@
 			"ADD_VENDOR": "Add vendor",
 			"CLIENTS": "Clients",
 			"START_DATE_PROJECT": "Project Start Date (optional)",
-			"END_DATE_PROJECT": "Project End Date (optional)"
+			"END_DATE_PROJECT": "Project End Date (optional)",
+			"TEAM_NAME": "Team Name",
+			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
+			"MEMBERS_COUNT": "Members count"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",

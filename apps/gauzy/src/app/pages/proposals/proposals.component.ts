@@ -344,16 +344,15 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 			this.smartTableSource.load(proposalVM);
 			this.showTable = true;
 
-			this.chartData.push(
-				{
-					name: 'Accepted Proposals',
-					value: this.countAccepted
-				},
-				{
-					name: 'Total Proposals',
-					value: this.totalProposals
-				}
-			);
+			this.chartData[0] = {
+				name: 'Accepted Proposals',
+				value: this.countAccepted
+			};
+
+			this.chartData[1] = {
+				name: 'Total Proposals',
+				value: this.totalProposals
+			};
 		} catch (error) {
 			this.toastrService.danger(error.message || error.message, 'Error');
 		}

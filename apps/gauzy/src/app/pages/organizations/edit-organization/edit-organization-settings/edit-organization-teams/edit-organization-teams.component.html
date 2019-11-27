@@ -6,7 +6,7 @@
 			nbButton
 			status="success"
 		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			<nb-icon class="mr-2" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 
@@ -29,7 +29,8 @@
 				<div class="header-container">
 					<div>{{ team.name }}</div>
 					<div class="members-count">
-						Members Count: {{ team.members.length }}
+						{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
+						{{ team.members.length }}
 					</div>
 				</div>
 			</nb-card-header>
@@ -53,6 +54,7 @@
 				<div class="button-container">
 					<button
 						nbButton
+						class="mr-2"
 						status="info"
 						size="tiny"
 						(click)="editTeam(team)"
@@ -62,12 +64,13 @@
 					</button>
 					<button
 						size="tiny"
+						class="mr-2"
 						nbButton
 						(click)="removeTeam(team.id, team.name)"
 						status="danger"
 					>
-						<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-						>Delete
+						<nb-icon class="mr-2" icon="trash-2-outline"></nb-icon
+						>{{ 'BUTTONS.DELETE' | translate }}
 					</button>
 				</div>
 			</nb-card-body>
