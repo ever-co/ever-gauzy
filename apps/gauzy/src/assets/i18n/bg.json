@@ -123,11 +123,11 @@
 		"DARK": "Тъмна",
 		"COSMIC": "Cosmic",
 		"CORPORATE": "Corporate",
-		"LANGUAGE": "Language",
+		"LANGUAGE": "Език (Language)",
 		"ENGLISH": "English",
-		"BULGARIAN": "Bulgarian",
-		"HEBREW": "Hebrew",
-		"RUSSIAN": "Russian"
+		"BULGARIAN": "Български",
+		"HEBREW": "Иврит",
+		"RUSSIAN": "Руски"
 	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
@@ -192,7 +192,7 @@
 			"END_DATE": "Крайна дата",
 			"TYPE": "Тип",
 			"CURRENCY": "Валута",
-			"TEAMS": "Teams"
+			"TEAMS": "Отбори"
 		}
 	},
 	"CONTEXT_MENU": {
