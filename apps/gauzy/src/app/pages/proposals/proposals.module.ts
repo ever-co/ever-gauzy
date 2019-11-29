@@ -23,6 +23,13 @@ import { ProposalDetailsComponent } from './proposal-details/proposal-details.co
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 import { ProposalsPieChartComponent } from './proposals-pie-chart/proposals-pie-chart.component';
 import { ChartModule } from 'angular2-chartjs';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
+export function HttpLoaderFactory(http: HttpClient) {
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
 
 @NgModule({
 	imports: [
@@ -42,7 +49,14 @@ import { ChartModule } from 'angular2-chartjs';
 		EmployeeSelectorsModule,
 		Ng2SmartTableModule,
 		UserFormsModule,
-		ChartModule
+		ChartModule,
+		TranslateModule.forChild({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		})
 	],
 	entryComponents: [ProposalRegisterComponent, ProposalStatusComponent],
 	declarations: [

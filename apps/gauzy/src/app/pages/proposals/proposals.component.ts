@@ -45,7 +45,6 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		private proposalsService: ProposalsService,
 		private toastrService: NbToastrService,
 		private dialogService: NbDialogService,
-		private route: ActivatedRoute,
 		private translateService: TranslateService
 	) {}
 
@@ -71,6 +70,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
+		this._applyTranslationOnSmartTable();
 
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -227,24 +227,24 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 			noDataMessage: 'No data',
 			columns: {
 				valueDate: {
-					title: 'Proposal Registered on',
+					title: this.getTranslation('SM_TABLE.PROPOSAL_REGISTERED'),
 					type: 'custom',
 					width: '25%',
 					renderComponent: DateViewComponent,
 					filter: false
 				},
 				jobTitle: {
-					title: 'Job Title',
+					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
 					type: 'string',
 					width: '25%'
 				},
 				jobPostLink: {
-					title: 'View Job Post',
+					title: this.getTranslation('SM_TABLE.VIEW_JOB_POST'),
 					type: 'html',
 					filter: false
 				},
 				status: {
-					title: 'Status',
+					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '10rem',
 					class: 'text-center',
@@ -258,7 +258,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 			this.smartTableSettings['columns'] = {
 				...this.smartTableSettings['columns'],
 				author: {
-					title: 'Author',
+					title: this.getTranslation('SM_TABLE.AUTHOR'),
 					type: 'string',
 					width: '25%'
 				}
@@ -318,7 +318,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						jobPostLink:
 							'<a href="' +
 							i.jobPostUrl +
-							'" target="_blank">Link to Job Post</a>',
+							'" target="_blank">http://...</nb-icon></a>',
 						jobPostUrl: i.jobPostUrl,
 						jobTitle: i.jobPostContent.substr(0, 30) + '...',
 						jobPostContent: i.jobPostContent,
@@ -356,6 +356,21 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		} catch (error) {
 			this.toastrService.danger(error.message || error.message, 'Error');
 		}
+	}
+
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translateService.get(prefix).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSettingsSmartTable();
+		});
 	}
 
 	ngOnDestroy() {
