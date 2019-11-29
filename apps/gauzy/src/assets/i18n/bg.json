@@ -2,12 +2,16 @@
 	"BUTTONS": {
 		"ADD": "Добавяне",
 		"CREATE": "Създаване",
+		"REGISTER": "Регистриране",
 		"EDIT": "Редактиране",
 		"MANAGE": "Управление",
+		"DETAILS": "Детайли",
 		"DELETE": "Изтриване",
 		"OK": "Да",
 		"SAVE": "Запази",
 		"BACK": "Обратно",
+		"SENT": "Изпратено",
+		"ACCEPTED": "Прието",
 		"CANCEL": "Отказ",
 		"CLOSE": "Затваряне"
 	},
@@ -35,7 +39,12 @@
 		"START_OF_MONTH": "В началото на месеца",
 		"RATE": "Почасово",
 		"FLAT_FEE": "Фиксирана тарифа",
-		"MILESTONES": "Поетапно"
+		"MILESTONES": "Поетапно",
+		"PROPOSAL_REGISTERED": "Предложението е регистрирано на",
+		"JOB_TITLE": "Заглавие на публикацията",
+		"VIEW_JOB_POST": "Преглед на публикация",
+		"LINK_TO_JOBPOST": "Връзка към публикацията",
+		"AUTHOR": "Автор"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -194,6 +203,13 @@
 			"CURRENCY": "Валута",
 			"TEAMS": "Отбори"
 		}
+	},
+	"PROPOSALS_PAGE": {
+		"HEADER": "Предложения - управление",
+		"STATISTICS": "Статистика",
+		"ACCEPTED_PROPOSALS": "Приети предложения",
+		"TOTAL_PROPOSALS": "Общо предложения",
+		"SUCCESS_RATE": "Успеваемост"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Страртирай таймер",

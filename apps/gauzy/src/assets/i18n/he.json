@@ -2,12 +2,16 @@
 	"BUTTONS": {
 		"ADD": "הוסף",
 		"CREATE": "צור",
+		"REGISTER": "Register",
 		"EDIT": "ערוך",
 		"MANAGE": "Управление",
+		"DETAILS": "Details",
 		"DELETE": "מחק",
 		"OK": "בסדר",
 		"SAVE": "לשמור",
 		"BACK": "חזור",
+		"SENT": "Sent",
+		"ACCEPTED": "Accepted",
 		"CANCEL": "בטל",
 		"CLOSE": "סוֹף"
 	},
@@ -35,7 +39,12 @@
 		"START_OF_MONTH": "תחילת החודש",
 		"RATE": "ציון",
 		"FLAT_FEE": "מחיר שטוח",
-		"MILESTONES": "אבני דרך"
+		"MILESTONES": "אבני דרך",
+		"PROPOSAL_REGISTERED": "Proposal Registered on",
+		"JOB_TITLE": "Job Title",
+		"VIEW_JOB_POST": "View Job Post",
+		"LINK_TO_JOBPOST": "Link to Job Post",
+		"AUTHOR": "Author"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
@@ -194,6 +203,13 @@
 			"CURRENCY": "מטבע",
 			"TEAMS": "Teams"
 		}
+	},
+	"PROPOSALS_PAGE": {
+		"HEADER": "Proposals Management Page",
+		"STATISTICS": "Statistics",
+		"ACCEPTED_PROPOSALS": "Accepted Proposals",
+		"TOTAL_PROPOSALS": "Total Proposals",
+		"SUCCESS_RATE": "Success Rate"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Стартирай Таймер",
