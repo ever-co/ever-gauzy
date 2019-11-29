@@ -1,20 +1,25 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<h4>Proposals Management Page</h4>
+		<h4>{{ 'PROPOSALS_PAGE.HEADER' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<nb-card class="p-3">
-			<h6>Statistics</h6>
+			<h6>{{ 'PROPOSALS_PAGE.STATISTICS' | translate }}</h6>
 			<div>
-				<span>Accepted Proposals: </span
+				<span
+					>{{
+						'PROPOSALS_PAGE.ACCEPTED_PROPOSALS' | translate
+					}}: </span
 				><span>{{ countAccepted }}</span>
 			</div>
 			<div>
-				<span>Total Proposals: </span>
+				<span
+					>{{ 'PROPOSALS_PAGE.TOTAL_PROPOSALS' | translate }}:
+				</span>
 				<span>{{ totalProposals }}</span>
 			</div>
 			<div>
-				<span>Success Rate: </span>
+				<span>{{ 'PROPOSALS_PAGE.SUCCESS_RATE' | translate }}: </span>
 				<span
 					><b>{{ successRate }}</b>
 				</span>
@@ -28,7 +33,7 @@
 		<div class="mb-3">
 			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				Register
+				{{ 'BUTTONS.REGISTER' | translate }}
 			</button>
 			<button
 				nbButton
@@ -39,7 +44,8 @@
 					selectedProposal ? !selectedProposal.isSelected : true
 				"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>Details
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.DETAILS' | translate }}
 			</button>
 			<button
 				nbButton
@@ -50,9 +56,11 @@
 					selectedProposal ? !selectedProposal.isSelected : true
 				"
 			>
-				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon>Delete
+				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+				>{{ 'BUTTONS.DELETE' | translate }}
 			</button>
 			<button
+				*ngIf="proposalStatus"
 				nbButton
 				(click)="
 					proposalStatus == 'SENT'
@@ -66,7 +74,12 @@
 				"
 			>
 				<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-				{{ proposalStatus == 'ACCEPTED' ? 'Sent' : 'Accepted' }}
+				<span *ngIf="proposalStatus == 'ACCEPTED'">{{
+					'BUTTONS.SENT' | translate
+				}}</span>
+				<span *ngIf="proposalStatus == 'SENT'">{{
+					'BUTTONS.ACCEPTED' | translate
+				}}</span>
 			</button>
 		</div>
 		<ng2-smart-table
