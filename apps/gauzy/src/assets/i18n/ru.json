@@ -2,12 +2,16 @@
 	"BUTTONS": {
 		"ADD": "Добавить",
 		"CREATE": "Создать",
+		"REGISTER": "Регистрация",
 		"EDIT": "Редактировать",
 		"MANAGE": "Управление",
+		"DETAILS": "Детали",
 		"DELETE": "Удалить",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
 		"BACK": "Обратно",
+		"SENT": "Отправлено",
+		"ACCEPTED": "Принято",
 		"CANCEL": "Отменить",
 		"CLOSE": "Закрыть"
 	},
@@ -35,7 +39,12 @@
 		"START_OF_MONTH": "Начало месяца",
 		"RATE": "Ставка",
 		"FLAT_FEE": "Фиксированная плата",
-		"MILESTONES": "Этапы"
+		"MILESTONES": "Этапы",
+		"PROPOSAL_REGISTERED": "Предложение зарегистрировано на",
+		"JOB_TITLE": "Заголовок работы",
+		"VIEW_JOB_POST": "Посмотреть Вакансию",
+		"LINK_TO_JOBPOST": "Ссылка на вакансию",
+		"AUTHOR": "Автор"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
@@ -194,6 +203,13 @@
 			"CURRENCY": "Валюта",
 			"TEAMS": "Команды"
 		}
+	},
+	"PROPOSALS_PAGE": {
+		"HEADER": "Страница управления предложениями",
+		"STATISTICS": "Статистика",
+		"ACCEPTED_PROPOSALS": "Принятые предложения",
+		"TOTAL_PROPOSALS": "Всего предложений",
+		"SUCCESS_RATE": "Скорость успеха"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Запустить таймер",
