@@ -143,6 +143,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			},
 			// TODO: divider
 			{
+				title: this.getTranslation('CONTEXT_MENU.TEAM'),
+				icon: 'people-outline',
+				link: 'pages/organizations'
+			},
+			{
 				title: this.getTranslation('CONTEXT_MENU.TASK'),
 				icon: 'calendar-outline',
 				link: '#'

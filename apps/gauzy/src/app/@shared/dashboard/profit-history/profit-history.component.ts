@@ -54,6 +54,14 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 			editable: true,
 			noDataMessage: 'No Data',
 			columns: {
+				valueDate: {
+					title: 'Date',
+					type: 'custom',
+					width: '20%',
+					sortDirection: 'desc',
+					renderComponent: DateViewComponent,
+					filter: false
+				},
 				expense: {
 					title: 'Expenses',
 					type: 'string'
@@ -65,13 +73,6 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 				notes: {
 					title: 'Description',
 					type: 'string'
-				},
-				valueDate: {
-					title: 'Date',
-					type: 'custom',
-					width: '20%',
-					renderComponent: DateViewComponent,
-					filter: false
 				}
 			},
 			pager: {
