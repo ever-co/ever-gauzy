@@ -3,6 +3,8 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import * as moment from 'moment';
 import { Store } from '../../../@core/services/store.service';
+import { ExpenseTableComponent } from './table-components/expense-table.component';
+import { IncomeTableComponent } from './table-components/income-table.component';
 
 @Component({
 	templateUrl: './profit-history.component.html',
@@ -68,11 +70,13 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 				},
 				expense: {
 					title: 'Expenses',
-					type: 'string'
+					type: 'custom',
+					renderComponent: ExpenseTableComponent
 				},
 				income: {
 					title: 'Income',
-					type: 'string'
+					type: 'custom',
+					renderComponent: IncomeTableComponent
 				},
 				notes: {
 					title: 'Description',
