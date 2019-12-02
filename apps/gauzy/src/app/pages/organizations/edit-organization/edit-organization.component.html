@@ -161,7 +161,13 @@
 			</div>
 		</div>
 
-		<div class="sub-header block-content">
+		<div
+			*ngIf="
+				selectedOrgRecurringExpense &&
+				selectedOrgRecurringExpense.length > 0
+			"
+			class="sub-header block-content"
+		>
 			<div class="row block-info">
 				<div class="col">{{ 'POP_UPS.CATEGORY_NAME' | translate }}</div>
 				<div class="col">{{ 'POP_UPS.DATE' | translate }}</div>
