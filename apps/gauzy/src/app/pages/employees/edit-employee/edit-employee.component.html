@@ -31,7 +31,10 @@
 
 			<div class="employee-info">
 				<div class="employee-details">
-					<div class="transparent">
+					<div
+						*ngIf="selectedEmployee.user.username"
+						class="transparent"
+					>
 						{{ 'FORM.USERNAME' | translate }}:
 						<strong>{{ selectedEmployee.user.username }}</strong>
 					</div>
