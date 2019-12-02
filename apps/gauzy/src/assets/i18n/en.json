@@ -218,6 +218,7 @@
 		"INVOICE": "Invoice",
 		"PROPOSAL": "Proposal",
 		"CONTRACT": "Contract",
+		"TEAM": "Team",
 		"TASK": "Task",
 		"CLIENT": "Client",
 		"PROJECT": "Project",
