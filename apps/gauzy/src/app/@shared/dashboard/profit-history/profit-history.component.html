@@ -1,11 +1,24 @@
 <div class="profit-history">
 	<h5>Profit Report</h5>
 	<div class="totals">
-		<div>
-			<span>Total Expenses: {{ expensesTotal }}</span>
-			<span class="margin-offset">Total Income: {{ incomeTotal }}</span>
-		</div>
-		<span> Total Profit: {{ incomeTotal - expensesTotal }}</span>
+		<nb-card>
+			<div class="mx-auto p-2">Total Expenses</div>
+			<div class="mx-auto pb-2">
+				<b>{{ expensesTotal }} {{ currency }}</b>
+			</div>
+		</nb-card>
+		<nb-card>
+			<div class="mx-auto p-2">Total Income</div>
+			<div class="mx-auto pb-2">
+				<b>{{ incomeTotal }} {{ currency }}</b>
+			</div>
+		</nb-card>
+		<nb-card>
+			<div class="mx-auto p-2">Total Profit</div>
+			<div class="mx-auto pb-2">
+				<b>{{ incomeTotal - expensesTotal }} {{ currency }}</b>
+			</div>
+		</nb-card>
 	</div>
 	<ng2-smart-table
 		class="table"

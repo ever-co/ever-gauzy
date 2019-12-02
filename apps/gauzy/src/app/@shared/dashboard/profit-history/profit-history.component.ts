@@ -2,6 +2,7 @@ import { OnInit, OnDestroy, Component } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import * as moment from 'moment';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	templateUrl: './profit-history.component.html',
@@ -13,8 +14,9 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 	recordsData: any;
 	incomeTotal: number;
 	expensesTotal: number;
+	currency: string;
 
-	constructor() {}
+	constructor(private store: Store) {}
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -43,6 +45,8 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 			(a, b) => a + b.expense,
 			0
 		);
+
+		this.currency = this.store.selectedOrganization.currency;
 
 		this.smartTableSource.load(combinedTableData);
 	}
