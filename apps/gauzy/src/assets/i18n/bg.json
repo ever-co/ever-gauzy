@@ -1,19 +1,19 @@
 {
 	"BUTTONS": {
-		"ADD": "Добави",
-		"CREATE": "Създай",
-		"REGISTER": "Register",
+		"ADD": "Добавяне",
+		"CREATE": "Създаване",
+		"REGISTER": "Регистриране",
 		"EDIT": "Редактиране",
-		"MANAGE": "Manage",
-		"DETAILS": "Details",
-		"DELETE": "Изтрий",
+		"MANAGE": "Управление",
+		"DETAILS": "Детайли",
+		"DELETE": "Изтриване",
 		"OK": "Да",
 		"SAVE": "Запази",
 		"BACK": "Обратно",
-		"SENT": "Sent",
-		"ACCEPTED": "Accepted",
+		"SENT": "Изпратено",
+		"ACCEPTED": "Прието",
 		"CANCEL": "Отказ",
-		"CLOSE": "Затвори"
+		"CLOSE": "Затваряне"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -40,11 +40,11 @@
 		"RATE": "Почасово",
 		"FLAT_FEE": "Фиксирана тарифа",
 		"MILESTONES": "Поетапно",
-		"PROPOSAL_REGISTERED": "Proposal Registered on",
-		"JOB_TITLE": "Job Title",
-		"VIEW_JOB_POST": "View Job Post",
-		"LINK_TO_JOBPOST": "Link to Job Post",
-		"AUTHOR": "Author"
+		"PROPOSAL_REGISTERED": "Предложението е регистрирано на",
+		"JOB_TITLE": "Заглавие на публикацията",
+		"VIEW_JOB_POST": "Преглед на публикация",
+		"LINK_TO_JOBPOST": "Връзка към публикацията",
+		"AUTHOR": "Автор"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -59,13 +59,13 @@
 			"IMAGE_URL": "Снимка URL (незадължително)",
 			"CURRENCY": "Валута",
 			"DATE_TYPE": "Дата по подразбиране",
-			"ADD_TEAM": "Add New Team"
+			"ADD_TEAM": "Добавяне на нов отбор"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
 			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия",
-			"COMPANY_NAME": "Име на компанията",
+			"COMPANY_NAME": "Име на компания",
 			"ALL_EMPLOYEES": "Всички служители",
 			"CURRENCY": "Валута",
 			"ALL_CURRENCIES": "Всички валути",
@@ -82,15 +82,15 @@
 			"CLIENTS": "Клиенти",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
 			"END_DATE_PROJECT": "Край на проекта (опция)",
-			"TEAM_NAME": "Team Name",
-			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
-			"MEMBERS_COUNT": "Members count"
+			"TEAM_NAME": "Име на отбора",
+			"ADD_REMOVE_MEMBERS": "Добавяне или премахване на членове",
+			"MEMBERS_COUNT": "Брой членове"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
-			"EMPLOYEE": "служителски",
-			"EXPENSE": "разходен"
+			"EMPLOYEE": "служители",
+			"EXPENSE": "Разходи"
 		}
 	},
 	"POP_UPS": {
@@ -117,7 +117,7 @@
 		"DASHBOARD": "Табло",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
-		"PROPOSALS": "Proposals",
+		"PROPOSALS": "Предложения",
 		"HELP": "Помощ",
 		"ABOUT": "За нас",
 		"ADMIN": "Администратор",
@@ -127,16 +127,16 @@
 		"GENERAL": "Основни"
 	},
 	"SETTINGS_MENU": {
-		"THEMES": "Themes",
-		"LIGHT": "Light",
-		"DARK": "Dark",
+		"THEMES": "Теми",
+		"LIGHT": "Светла",
+		"DARK": "Тъмна",
 		"COSMIC": "Cosmic",
 		"CORPORATE": "Corporate",
-		"LANGUAGE": "Language",
+		"LANGUAGE": "Език (Language)",
 		"ENGLISH": "English",
-		"BULGARIAN": "Bulgarian",
-		"HEBREW": "Hebrew",
-		"RUSSIAN": "Russian"
+		"BULGARIAN": "Български",
+		"HEBREW": "Иврит",
+		"RUSSIAN": "Руски"
 	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
@@ -175,7 +175,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
-		"SELECT_ORGANZIATION": "Моля изберете организация от менюто",
+		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
 		"CLIENTS": "Клиенти",
@@ -201,31 +201,31 @@
 			"END_DATE": "Крайна дата",
 			"TYPE": "Тип",
 			"CURRENCY": "Валута",
-			"TEAMS": "Teams"
+			"TEAMS": "Отбори"
 		}
 	},
 	"PROPOSALS_PAGE": {
-		"HEADER": "Proposals Management Page",
-		"STATISTICS": "Statistics",
-		"ACCEPTED_PROPOSALS": "Accepted Proposals",
-		"TOTAL_PROPOSALS": "Total Proposals",
-		"SUCCESS_RATE": "Success Rate"
+		"HEADER": "Предложения - управление",
+		"STATISTICS": "Статистика",
+		"ACCEPTED_PROPOSALS": "Приети предложения",
+		"TOTAL_PROPOSALS": "Общо предложения",
+		"SUCCESS_RATE": "Успеваемост"
 	},
 	"CONTEXT_MENU": {
-		"TIMER": "Start Timer",
-		"ADD_INCOME": "Add Income",
-		"ADD_EXPENSE": "Add Expense",
-		"INVOICE": "Invoice",
-		"PROPOSAL": "Proposal",
-		"CONTRACT": "Contract",
+		"TIMER": "Страртирай таймер",
+		"ADD_INCOME": "Добаветe доход",
+		"ADD_EXPENSE": "Добавете разход",
+		"INVOICE": "Фактура",
+		"PROPOSAL": "Предложение",
+		"CONTRACT": "Договор",
 		"TEAM": "Team",
-		"TASK": "Task",
-		"CLIENT": "Client",
-		"PROJECT": "Project",
-		"ADD_EMPLOYEE": "Add Employee",
-		"CHAT": "Support Chat",
+		"TASK": "Задача",
+		"CLIENT": "Клиент",
+		"PROJECT": "Проект",
+		"ADD_EMPLOYEE": "Добавяне на служител",
+		"CHAT": "Чат за поддръжка",
 		"FAQ": "FAQ",
-		"HELP": "Help"
+		"HELP": "Помощ"
 	},
 	"FOOTER": {
 		"BY": "от",
