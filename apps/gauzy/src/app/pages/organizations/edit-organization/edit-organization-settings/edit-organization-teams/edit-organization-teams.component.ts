@@ -27,6 +27,7 @@ export class EditOrganizationTeamsComponent implements OnInit {
 	teams: OrganizationTeams[];
 	employees: Employee[] = [];
 	teamToEdit: OrganizationTeams;
+	loading = true;
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
@@ -150,5 +151,7 @@ export class EditOrganizationTeamsComponent implements OnInit {
 				(a, b) => b.members.length - a.members.length
 			);
 		}
+
+		this.loading = false;
 	}
 }
