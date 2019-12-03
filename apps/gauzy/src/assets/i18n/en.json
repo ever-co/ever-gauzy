@@ -167,6 +167,7 @@
 		"RECURRING_EXPENSE": "Add employee recurring expense",
 		"BACK_TO_WORK": "Back to Work",
 		"EDIT_EMPLOYEE": {
+			"HEADER": "Manage Employee",
 			"DEVELOPER": "Developer",
 			"DEPARTMENT": "Department",
 			"POSITION": "Position"
@@ -185,6 +186,7 @@
 		"ACTIVE": "Active",
 		"ARCHIVED": "Archived",
 		"EDIT": {
+			"HEADER": "Manage",
 			"CLIENT": "Client",
 			"NEW_CLIENT": "Add new client",
 			"NAME": "Name",
