@@ -10,6 +10,7 @@ import { Subject } from 'rxjs';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ngx-header',
@@ -28,6 +29,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	showExtraActions = false;
 	largeBreakpoint = 1290;
 
+	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -36,7 +38,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		private layoutService: LayoutService,
 		private themeService: NbThemeService,
 		private router: Router,
-		private translate: TranslateService
+		private translate: TranslateService,
+		private store: Store
 	) {}
 
 	ngOnInit() {
@@ -59,6 +62,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
 						openAddDialog: true
 					}
 				});
+			});
+
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				if (org) {
+					this._selectedOrganizationId = org.id;
+					this.loadItems();
+				}
 			});
 
 		this.themeService
@@ -145,7 +157,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			{
 				title: this.getTranslation('CONTEXT_MENU.TEAM'),
 				icon: 'people-outline',
-				link: 'pages/organizations'
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/teams`
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.TASK'),

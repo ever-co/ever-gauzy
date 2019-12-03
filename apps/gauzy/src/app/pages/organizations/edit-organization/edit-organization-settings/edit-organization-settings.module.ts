@@ -9,7 +9,8 @@ import {
 	NbListModule,
 	NbTabsetModule,
 	NbActionsModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
@@ -50,6 +51,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
+		NbSpinnerModule,
 		NbActionsModule,
 		NgSelectModule,
 		ColorPickerModule,
