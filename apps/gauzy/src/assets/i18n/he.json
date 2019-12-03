@@ -167,6 +167,7 @@
 		"RECURRING_EXPENSE": "הוסף הוצאה חוזרת של עובדים",
 		"BACK_TO_WORK": "לחזור לעבודה",
 		"EDIT_EMPLOYEE": {
+			"HEADER": "Manage Employee",
 			"DEVELOPER": "מפתח",
 			"DEPARTMENT": "המחלקה",
 			"POSITION": "עמדה"
@@ -185,6 +186,7 @@
 		"ACTIVE": "פעיל",
 		"ARCHIVED": "נשמר בארכיון",
 		"EDIT": {
+			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
 			"NEW_CLIENT": "הוסף לקוח חדש",
 			"NAME": "שם",
