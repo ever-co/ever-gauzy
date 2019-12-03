@@ -167,6 +167,7 @@
 		"RECURRING_EXPENSE": "Добавяне на периодични разходи на служител",
 		"BACK_TO_WORK": "Връщане на работа",
 		"EDIT_EMPLOYEE": {
+			"HEADER": "Manage Employee",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция"
@@ -185,6 +186,7 @@
 		"ACTIVE": "Активна",
 		"ARCHIVED": "Архивирана",
 		"EDIT": {
+			"HEADER": "Управление",
 			"CLIENT": "Клиент",
 			"NEW_CLIENT": "Добавяне на нов клиент",
 			"NAME": "Име",
