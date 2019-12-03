@@ -4,14 +4,14 @@
 			{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HEADER' | translate }}
 			<span
 				*ngIf="
-					selectedEmployee.user.firstName ||
-					selectedEmployee.user.lastName
+					selectedEmployee?.user?.firstName ||
+					selectedEmployee?.user?.lastName
 				"
 			>
 				{{ selectedEmployee.user.firstName }}
 				{{ selectedEmployee.user.lastName }}
 			</span>
-			<span *ngIf="selectedEmployee.user.username">
+			<span *ngIf="selectedEmployee?.user?.username">
 				<ng-container
 					*ngIf="
 						selectedEmployee.user.firstName ||
