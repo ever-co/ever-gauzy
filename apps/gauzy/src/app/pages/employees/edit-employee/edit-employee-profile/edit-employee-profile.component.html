@@ -1,4 +1,37 @@
 <nb-card>
+	<nb-card-header>
+		<h4>
+			{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HEADER' | translate }}
+			<span
+				*ngIf="
+					selectedEmployee.user.firstName &&
+					selectedEmployee.user.lastName
+				"
+			>
+				{{ selectedEmployee.user.firstName }}
+				{{ selectedEmployee.user.lastName }}
+			</span>
+			<span *ngIf="selectedEmployee.user.username">
+				<ng-container
+					*ngIf="
+						selectedEmployee.user.firstName &&
+							selectedEmployee.user.lastName;
+						then withBraces;
+						else withQuotes
+					"
+				>
+				</ng-container>
+
+				<ng-template #withBraces>
+					({{ selectedEmployee.user.username }})
+				</ng-template>
+
+				<ng-template #withQuotes>
+					'{{ selectedEmployee.user.username }}'
+				</ng-template>
+			</span>
+		</h4>
+	</nb-card-header>
 	<nb-card-body>
 		<div class="navigate" (click)="goBack()">
 			<nb-icon icon="arrow-back-outline"></nb-icon>
