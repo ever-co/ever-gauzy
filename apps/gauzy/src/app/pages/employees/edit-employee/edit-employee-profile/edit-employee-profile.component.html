@@ -4,7 +4,7 @@
 			{{ 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HEADER' | translate }}
 			<span
 				*ngIf="
-					selectedEmployee.user.firstName &&
+					selectedEmployee.user.firstName ||
 					selectedEmployee.user.lastName
 				"
 			>
@@ -14,7 +14,7 @@
 			<span *ngIf="selectedEmployee.user.username">
 				<ng-container
 					*ngIf="
-						selectedEmployee.user.firstName &&
+						selectedEmployee.user.firstName ||
 							selectedEmployee.user.lastName;
 						then withBraces;
 						else withQuotes
