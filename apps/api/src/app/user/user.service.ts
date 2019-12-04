@@ -4,7 +4,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, InsertResult } from 'typeorm';
+import { Repository, InsertResult, UpdateResult } from 'typeorm';
 import { User } from './user.entity';
 import { CrudService } from '../core/crud/crud.service';
 
@@ -54,5 +54,9 @@ export class UserService extends CrudService<User> {
 
 	async createOne(user: User): Promise<InsertResult> {
 		return await this.repository.insert(user);
+	}
+
+	async updateUser(id, user: User) {
+		return await this.repository.update(id, user);
 	}
 }

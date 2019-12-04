@@ -4,7 +4,10 @@ import * as bcrypt from 'bcrypt';
 import { environment as env, environment } from '@env-api/environment';
 
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import {
+	UserRegistrationInput as IUserRegistrationInput,
+	User as IUser
+} from '@gauzy/models';
 import { get, post, Response } from 'request';
 
 export enum Provider {
@@ -214,6 +217,34 @@ export class AuthService {
 					return responseRedirectUse.redirect(redirectSuccessUrl);
 				}
 			);
+		});
+	}
+
+	async createForgottenPasswordToken(email: string): Promise<IUser> {
+		const userExists = this.userService.checkIfExistsEmail(email);
+		if (userExists) {
+			const forgottenPassword = await this.userService.getUserByEmail(
+				email
+			);
+			const newPassword = (
+				Math.floor(Math.random() * 9000000) + 1000000
+			).toString(); //Generate 7 digits number,
+			const forgottenPasswordModel = await this.userService.update(
+				forgottenPassword.id,
+				{
+					email: forgottenPassword.email,
+					hash: await this.getPasswordHash(newPassword)
+				}
+			);
+			return forgottenPasswordModel;
+		}
+	}
+
+	async getForgottenPasswordModel(
+		newPasswordToken: string
+	): Promise<IForgottenPassword> {
+		return await this.forgottenPasswordModel.findOne({
+			newPasswordToken: newPasswordToken
 		});
 	}
 }

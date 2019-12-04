@@ -8,7 +8,8 @@ import {
 	Res,
 	Req,
 	Query,
-	UseGuards
+	UseGuards,
+	Param
 } from '@nestjs/common';
 import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -127,4 +128,57 @@ export class AuthController {
 			return res.redirect('http://localhost:4200/#/auth/register');
 		}
 	}
+
+	// @ApiOperation({ title: 'Forgotten Password' })
+	// @ApiResponse({ status: HttpStatus.OK })
+	// @ApiResponse({ status: HttpStatus.BAD_REQUEST })
+	// @Get('/forgot-password/:email')
+	// public async sendEmailForgotPassword(@Param() params): Promise<Response> {
+	// 	return await this.authService.sendEmailForgotPassword(params.email);
+	// }
+
+	// @Post('/reset-password')
+	// @HttpCode(HttpStatus.OK)
+	// @ApiResponse({ status: HttpStatus.BAD_REQUEST })
+	// public async setNewPassword(
+	// 	@Body() resetPassword: ResetPasswordDto
+	// ): Promise<Response> {
+	// 	try {
+	// 		let isNewPasswordChanged = false;
+	// 		if (resetPassword.email && resetPassword.currentPassword) {
+	// 			const isValidPassword = await this.authService.checkPassword(
+	// 				resetPassword.email,
+	// 				resetPassword.currentPassword
+	// 			);
+	// 			if (isValidPassword) {
+	// 				isNewPasswordChanged = await this.userService.(
+	// 					resetPassword.email,
+	// 					resetPassword.newPassword
+	// 				);
+	// 			}
+	// 		} else if (resetPassword.newPasswordToken) {
+	// 			const forgottenPasswordModel = await this.authService.getForgottenPasswordModel(
+	// 				resetPassword.newPasswordToken
+	// 			);
+	// 			isNewPasswordChanged = await this.userService.setPassword(
+	// 				forgottenPasswordModel.email,
+	// 				resetPassword.newPassword
+	// 			);
+	// 			if (isNewPasswordChanged) await forgottenPasswordModel.remove();
+	// 		} else {
+	// 			return new ResponseError(
+	// 				'RESET_PASSWORD.CHANGE_PASSWORD_ERROR'
+	// 			);
+	// 		}
+	// 		return new ResponseSuccess(
+	// 			'RESET_PASSWORD.PASSWORD_CHANGED',
+	// 			isNewPasswordChanged
+	// 		);
+	// 	} catch (error) {
+	// 		return new ResponseError(
+	// 			'RESET_PASSWORD.CHANGE_PASSWORD_ERROR',
+	// 			error
+	// 		);
+	// 	}
+	// }
 }
