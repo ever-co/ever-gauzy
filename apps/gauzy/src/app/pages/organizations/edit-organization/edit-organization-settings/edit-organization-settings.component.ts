@@ -1,13 +1,14 @@
+import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { takeUntil, first } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { Organization } from '@gauzy/models';
-import { OrganizationsService } from '../../../../@core/services/organizations.service';
+import { Countries, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { Location } from '@angular/common';
-import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+import { CountriesService } from '../../../../@core/services/countries.service';
+import { OrganizationsService } from '../../../../@core/services/organizations.service';
+import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 
 export enum ListsInputType {
 	DEPARTMENTS = 'DEPARTMENTS',
@@ -21,7 +22,8 @@ export enum ListsInputType {
 	styleUrls: [
 		'./edit-organization-settings.component.scss',
 		'../../../employees/edit-employee/edit-employee-profile/edit-employee-profile.component.scss'
-	]
+	],
+	providers: [CountriesService]
 })
 export class EditOrganizationSettingsComponent implements OnInit {
 	@ViewChild('main', { static: false })
@@ -35,6 +37,7 @@ export class EditOrganizationSettingsComponent implements OnInit {
 	positions: string[] = [];
 	vendors: string[] = [];
 	employeesCount: number;
+	countries: Countries[] = [];
 
 	private _activeTabName = 'Main';
 	private _ngOnDestroy$ = new Subject();
@@ -42,6 +45,7 @@ export class EditOrganizationSettingsComponent implements OnInit {
 	constructor(
 		private route: ActivatedRoute,
 		private organizationService: OrganizationsService,
+		private countriesService: CountriesService,
 		private toastrService: NbToastrService,
 		private employeesService: EmployeesService,
 		private location: Location
@@ -108,6 +112,7 @@ export class EditOrganizationSettingsComponent implements OnInit {
 
 	private async _loadOrganization(id: string) {
 		try {
+			await this.loadCountries();
 			this.organization = await this.organizationService
 				.getById(id)
 				.pipe(first())
@@ -129,5 +134,10 @@ export class EditOrganizationSettingsComponent implements OnInit {
 			.toPromise();
 
 		this.employeesCount = total;
+	}
+
+	private async loadCountries() {
+		const { items } = await this.countriesService.getAll();
+		this.countries = items;
 	}
 }
