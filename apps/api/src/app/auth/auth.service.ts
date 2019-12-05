@@ -6,6 +6,8 @@ import { environment as env, environment } from '@env-api/environment';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { get, post, Response } from 'request';
+import { ResetPassword } from './interfaces/reset-password.dto';
+// import { EmailService } from './email.service';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -16,7 +18,10 @@ export enum Provider {
 export class AuthService {
 	saltRounds: number;
 
-	constructor(private readonly userService: UserService) {
+	constructor(
+		private readonly userService: UserService
+	) // private readonly emailService: EmailService
+	{
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
 
@@ -138,7 +143,7 @@ export class AuthService {
 		}
 	}
 
-	async createToken(user: { id: string }): Promise<{ token: string }> {
+	async createToken(user: { id?: string }): Promise<{ token: string }> {
 		const token: string = sign({ id: user.id }, env.JWT_SECRET, {});
 		return { token };
 	}
@@ -214,6 +219,39 @@ export class AuthService {
 					return responseRedirectUse.redirect(redirectSuccessUrl);
 				}
 			);
+		});
+	}
+
+	public async resetPassword(resetPassword: ResetPassword) {
+		if (resetPassword.password.length < 6) {
+			throw new Error('Password should be longer than 6 characters');
+		}
+
+		if (resetPassword.password !== resetPassword.confirmPassword) {
+			throw new Error('Password and its confirmation do not match.');
+		}
+
+		if (!resetPassword.reset_password_token) {
+			throw new Error('Reset password token is missing or invalid');
+		}
+
+		const hash = this.getPasswordHash(resetPassword.password);
+		return this.userService.changePassword(resetPassword);
+	}
+
+	public async requestPassword(email: string) {
+		await this.userService.getUserByEmail(email).then((user) => {
+			if (user && user.id) {
+				const resetPasswordToken = this.createToken(user);
+				return;
+
+				// return this.emailService.sendResetPasswordEmail(
+				// 	email,
+				// 	`${user.firstName} ${user.lastName}`,
+				// 	resetPasswordToken
+				// );
+			}
+			throw new Error('There is no such email in the system');
 		});
 	}
 }

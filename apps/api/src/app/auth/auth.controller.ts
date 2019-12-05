@@ -19,6 +19,8 @@ import { RequestContext } from '../core/context';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { getUserDummyImage } from '../core';
 import { AuthGuard } from '@nestjs/passport';
+import { ResetPassword } from './interfaces/reset-password.dto';
+import { Email } from './interfaces/email.dto';
 
 @ApiUseTags('Auth')
 @Controller()
@@ -76,6 +78,24 @@ export class AuthController {
 	): Promise<{ user: IUser; token: string } | null> {
 		return this.authService.login(findObj, password);
 	}
+
+	@Post('/reset-pass')
+	async resetPass(@Body() resetPass: ResetPassword, @Res() res) {
+		return await this.authService
+			.resetPassword(resetPass)
+			.then(() => res.status(200).send({ message: 'ok' }));
+	}
+
+	@Post('/request-pass')
+	async requestPass(@Body() email: Email, @Res() res) {
+		return await this.authService.requestPassword(email.email).then(() =>
+			res.status(200).send({
+				message: `Email with reset password instructions was sent to email ${email.email}.`
+			})
+		);
+	}
+
+	// DONE!
 
 	@Get('google')
 	@UseGuards(AuthGuard('google'))

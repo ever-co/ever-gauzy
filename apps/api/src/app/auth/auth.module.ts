@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, Logger } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserService, User } from '../user';
@@ -11,7 +11,7 @@ import { authenticate } from 'passport';
 import { FacebookStrategy } from './facebook.strategy';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([User, Role]), CqrsModule],
+	imports: [TypeOrmModule.forFeature([User, Role]), CqrsModule, Logger],
 	controllers: [AuthController],
 	providers: [
 		AuthService,
