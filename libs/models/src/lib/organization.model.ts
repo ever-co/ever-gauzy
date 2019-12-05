@@ -13,6 +13,13 @@ export interface Organization extends IBaseEntityModel {
 	dateFormat?: string;
 	brandColor?: string;
 	timeZone?: string;
+	officialName?: string;
+	startWeekOn?: string;
+	taxId?: string;
+	country?: string;
+	city?: string;
+	address?: string;
+	address2?: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -64,4 +71,14 @@ export enum AlignmentOptions {
 	LEFT = 'LEFT',
 	RIGHT = 'RIGHT',
 	CENTER = 'CENTER'
+}
+
+export enum WeekDaysEnum {
+	MONDAY = 'MONDAY',
+	TUESDAY = 'TUESDAY',
+	WEDNESDAY = 'WEDNESDAY',
+	THURSDAY = 'THURSDAY',
+	FRIDAY = 'FRIDAY',
+	SATURDAY = 'SATURDAY',
+	SUNDAY = 'SUNDAY'
 }

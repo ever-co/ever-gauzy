@@ -40,6 +40,51 @@
 				</div>
 			</div>
 		</div>
+
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="officialNameInput">{{
+						'FORM.LABELS.OFFICIAL_NAME' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="officialNameInput"
+						type="text"
+						nbInput
+						formControlName="officialName"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.OFFICIAL_NAME' | translate
+						}}"
+					/>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="startWeekOnSelect">{{
+						'FORM.LABELS.START_WEEK_ON' | translate
+					}}</label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="startWeekOn"
+						id="startWeekOnSelect"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.START_WEEK_ON' | translate
+						}}"
+						fullWidth="true"
+					>
+						<nb-option
+							*ngFor="let weekday of weekdays"
+							[value]="weekday"
+						>
+							{{ 'SM_TABLE.' + weekday | translate }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+		</div>
+
 		<div class="row">
 			<div class="col-6">
 				<div class="form-group">
@@ -146,6 +191,100 @@
 							{{ getTimeWithOffset(item) }}
 						</ng-template>
 					</ng-select>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="taxIdInput">{{
+						'FORM.LABELS.TAX_ID' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="taxIdInput"
+						type="text"
+						nbInput
+						formControlName="taxId"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.TAX_ID' | translate
+						}}"
+					/>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="countrySelect">{{
+						'FORM.LABELS.COUNTRY' | translate
+					}}</label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="country"
+						id="countrySelect"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.COUNTRY' | translate
+						}}"
+						fullWidth="true"
+					>
+						<nb-option
+							*ngFor="let c of countries"
+							[value]="c.isoCode"
+						>
+							{{ c.country }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="cityInput">{{
+						'FORM.LABELS.CITY' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="cityInput"
+						type="text"
+						nbInput
+						formControlName="city"
+						placeholder="{{ 'FORM.PLACEHOLDERS.CITY' | translate }}"
+					/>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="addressInput">{{
+						'FORM.LABELS.ADDRESS' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="addressInput"
+						type="text"
+						nbInput
+						formControlName="address"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.ADDRESS' | translate
+						}}"
+					/>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="address2Input">{{
+						'FORM.LABELS.ADDRESS_2' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="address2Input"
+						type="text"
+						nbInput
+						formControlName="address2"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.ADDRESS_2' | translate
+						}}"
+					/>
 				</div>
 			</div>
 		</div>

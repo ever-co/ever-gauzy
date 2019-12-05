@@ -1,18 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
-	FormBuilder,
-	FormGroup,
-	Validators,
-	ValidatorFn,
-	AbstractControl
-} from '@angular/forms';
-import {
-	Organization,
+	AlignmentOptions,
+	Countries,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	AlignmentOptions
+	Organization,
+	WeekDaysEnum
 } from '@gauzy/models';
-
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 
@@ -24,6 +19,9 @@ import * as timezone from 'moment-timezone';
 export class EditOrganizationMainComponent implements OnInit {
 	@Input()
 	organization: Organization;
+
+	@Input()
+	countries: Countries[];
 
 	form: FormGroup;
 
@@ -46,7 +44,7 @@ export class EditOrganizationMainComponent implements OnInit {
 		'YYYY-MM-DD',
 		'ddd, MMM D YYYY'
 	];
-
+	weekdays: string[] = Object.values(WeekDaysEnum);
 	constructor(private fb: FormBuilder) {}
 
 	get mainUpdateObj() {
@@ -83,7 +81,14 @@ export class EditOrganizationMainComponent implements OnInit {
 			defaultAlignmentType: [this.organization.defaultAlignmentType],
 			brandColor: [this.organization.brandColor],
 			dateFormat: [this.organization.dateFormat],
-			timeZone: [this.organization.timeZone]
+			timeZone: [this.organization.timeZone],
+			officialName: [this.organization.officialName],
+			startWeekOn: [this.organization.startWeekOn],
+			taxId: [this.organization.taxId],
+			country: [this.organization.country],
+			city: [this.organization.city],
+			address: [this.organization.address],
+			address2: [this.organization.address2]
 		});
 	}
 }

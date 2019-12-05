@@ -11,7 +11,8 @@ import { Base } from '../core/entities/base';
 import {
 	Organization as IOrganization,
 	CurrenciesEnum,
-	DefaultValueDateTypeEnum
+	DefaultValueDateTypeEnum,
+	WeekDaysEnum
 } from '@gauzy/models';
 
 @Entity('organization')
@@ -75,4 +76,46 @@ export class Organization extends Base implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	dateFormat?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	officialName?: string;
+
+	@ApiModelProperty({ type: String, enum: WeekDaysEnum })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	startWeekOn?: string;
+
+	@ApiModelProperty({ type: String, maxLength: 256 })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	taxId?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	country?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	city?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	address?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	address2?: string;
 }
