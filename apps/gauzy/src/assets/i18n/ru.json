@@ -73,7 +73,11 @@
 			"COUNTRY": "Страна",
 			"CITY": "Город",
 			"ADDRESS": "Адрес",
-			"ADDRESS_2": "Адрес 2"
+			"ADDRESS_2": "Адрес 2",
+			"LOGO_ALIGNMENT": "Логотип трассы",
+			"BRAND_COLOR": "Цвет бренда",
+			"DATE_FORMAT": "Формат даты",
+			"CHOOSE_TIME_ZONE": "Выберите часовой пояс"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -224,7 +228,8 @@
 			"END_DATE": "Дата окончания",
 			"TYPE": "Тип",
 			"CURRENCY": "Валюта",
-			"TEAMS": "Команды"
+			"TEAMS": "Команды",
+			"ADD_NEW_CLIENT": "Добавить клиента"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -232,7 +237,17 @@
 		"STATISTICS": "Статистика",
 		"ACCEPTED_PROPOSALS": "Принятые предложения",
 		"TOTAL_PROPOSALS": "Всего предложений",
-		"SUCCESS_RATE": "Скорость успеха"
+		"SUCCESS_RATE": "Скорость успеха",
+		"REGISTER": {
+			"REGISTER_PROPOSALS": "Регистрация предложения",
+			"AUTHOR": "Автор",
+			"JOB_POST_URL": "URL записи задания",
+			"PICK_A_DATE": "Выбрать дату",
+			"JOB_POST_CONTENT": "Контент должности",
+			"UPLOAD": "Выгрузить",
+			"PROPOSALS_CONTENT": "Содержание предложения",
+			"REGISTER_PROPOSALS_BUTTON": "Регистрация предложения"
+		}
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Запустить таймер",
@@ -249,6 +264,26 @@
 		"CHAT": "Чат поддержки",
 		"FAQ": "ЧаВо",
 		"HELP": "Помогите"
+	},
+	"PROFILE_PAGE": {
+		"FIRST_NAME": "Имя",
+		"LAST_NAME": "Фамилия",
+		"EMAIL": "Эл. адрес",
+		"PASSWORD": "Пароль",
+		"REPEAT_PASSWORD": "Повторите пароль",
+		"ERROR": "Ошибка",
+		"SAVE": "Сохранить"
+	},
+	"PAGE_NOT_FOUND": {
+		"404_PAGE_NOT_FOUND": "404 страница не найдена",
+		"TAKE_ME_HOME": "Вернуть меня домой",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Страница, которую вы ищете, не существует"
+	},
+	"HELP_PAGE": {
+		"HELP": "Помогите"
+	},
+	"ABOUT_PAGE": {
+		"ABOUT": "О нас"
 	},
 	"FOOTER": {
 		"BY": "по",

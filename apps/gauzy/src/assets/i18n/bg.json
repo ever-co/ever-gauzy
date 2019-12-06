@@ -73,7 +73,11 @@
 			"COUNTRY": "Държава",
 			"CITY": "Град",
 			"ADDRESS": "Address",
-			"ADDRESS_2": "Address 2"
+			"ADDRESS_2": "Address 2",
+			"LOGO_ALIGNMENT": "Logo Alignment",
+			"BRAND_COLOR": "Brand Color",
+			"DATE_FORMAT": "Date Format",
+			"CHOOSE_TIME_ZONE": "Choose Time Zone"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -224,7 +228,8 @@
 			"END_DATE": "Крайна дата",
 			"TYPE": "Тип",
 			"CURRENCY": "Валута",
-			"TEAMS": "Отбори"
+			"TEAMS": "Отбори",
+			"ADD_NEW_CLIENT": "Добавяне на нов клиент"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -232,7 +237,17 @@
 		"STATISTICS": "Статистика",
 		"ACCEPTED_PROPOSALS": "Приети предложения",
 		"TOTAL_PROPOSALS": "Общо предложения",
-		"SUCCESS_RATE": "Успеваемост"
+		"SUCCESS_RATE": "Успеваемост",
+		"REGISTER": {
+			"REGISTER_PROPOSALS": "Register Proposal",
+			"AUTHOR": "Автор",
+			"JOB_POST_URL": "Job Post URL",
+			"PICK_A_DATE": "Изберете дата",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"UPLOAD": "Upload",
+			"PROPOSALS_CONTENT": "Proposal Content",
+			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		}
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Страртирай таймер",
@@ -249,6 +264,26 @@
 		"CHAT": "Чат за поддръжка",
 		"FAQ": "FAQ",
 		"HELP": "Помощ"
+	},
+	"PROFILE_PAGE": {
+		"FIRST_NAME": "Име",
+		"LAST_NAME": "Фамилия",
+		"EMAIL": "Eлектронна поща",
+		"PASSWORD": "Парола",
+		"REPEAT_PASSWORD": "Repeat Password",
+		"ERROR": "Error",
+		"SAVE": "Запази"
+	},
+	"PAGE_NOT_FOUND": {
+		"404_PAGE_NOT_FOUND": "404 Page Not Found",
+		"TAKE_ME_HOME": "Take me home",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
+	},
+	"HELP_PAGE": {
+		"HELP": "Помощ"
+	},
+	"ABOUT_PAGE": {
+		"ABOUT": "За нас"
 	},
 	"FOOTER": {
 		"BY": "от",

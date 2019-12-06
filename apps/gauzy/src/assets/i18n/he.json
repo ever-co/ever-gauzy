@@ -73,7 +73,11 @@
 			"COUNTRY": "מדינה",
 			"CITY": "עיר",
 			"ADDRESS": "Address",
-			"ADDRESS_2": "Address 2"
+			"ADDRESS_2": "Address 2",
+			"LOGO_ALIGNMENT": "Logo Alignment",
+			"BRAND_COLOR": "Brand Color",
+			"DATE_FORMAT": "Date Format",
+			"CHOOSE_TIME_ZONE": "Choose Time Zone"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -224,7 +228,8 @@
 			"END_DATE": "תאריך סיום",
 			"TYPE": "סוג",
 			"CURRENCY": "מטבע",
-			"TEAMS": "Teams"
+			"TEAMS": "Teams",
+			"ADD_NEW_CLIENT": "הוסף לקוח חדש"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -232,7 +237,17 @@
 		"STATISTICS": "Statistics",
 		"ACCEPTED_PROPOSALS": "Accepted Proposals",
 		"TOTAL_PROPOSALS": "Total Proposals",
-		"SUCCESS_RATE": "Success Rate"
+		"SUCCESS_RATE": "Success Rate",
+		"REGISTER": {
+			"REGISTER_PROPOSALS": "Register Proposal",
+			"AUTHOR": "Author",
+			"JOB_POST_URL": "Job Post URL",
+			"PICK_A_DATE": "תבחר תאריך",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"UPLOAD": "Upload",
+			"PROPOSALS_CONTENT": "Proposal Content",
+			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		}
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Стартирай Таймер",
@@ -249,6 +264,26 @@
 		"CHAT": "Чат с нас",
 		"FAQ": "Въпроси и Отговори",
 		"HELP": "עזרה"
+	},
+	"PROFILE_PAGE": {
+		"FIRST_NAME": "שם פרטי",
+		"LAST_NAME": "שם משפחה",
+		"EMAIL": "דוא\"ל",
+		"PASSWORD": "סיסמה",
+		"REPEAT_PASSWORD": "Repeat Password",
+		"ERROR": "Error",
+		"SAVE": "לשמור"
+	},
+	"PAGE_NOT_FOUND": {
+		"404_PAGE_NOT_FOUND": "404 Page Not Found",
+		"TAKE_ME_HOME": "Take me home",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
+	},
+	"HELP_PAGE": {
+		"HELP": "עזרה"
+	},
+	"ABOUT_PAGE": {
+		"ABOUT": "עלינו"
 	},
 	"FOOTER": {
 		"BY": "על ידי",
