@@ -73,8 +73,8 @@
 						<div class="col">
 							<div class="form-group">
 								<label class="label" for="firstNameInput"
-									>First Name</label
-								>
+									>{{ 'PROFILE_PAGE.FIRST_NAME' | translate }}
+								</label>
 								<input
 									fullWidth
 									id="firstNameInput"
@@ -86,9 +86,9 @@
 						</div>
 						<div class="col">
 							<div class="form-group">
-								<label for="lastNameInput" class="label"
-									>Last Name</label
-								>
+								<label for="lastNameInput" class="label">{{
+									'PROFILE_PAGE.LAST_NAME' | translate
+								}}</label>
 								<input
 									fullWidth
 									id="lastNameInput"
@@ -103,8 +103,8 @@
 						<div class="col">
 							<div class="form-group">
 								<label class="label" for="emailInput"
-									>Email</label
-								>
+									>{{ 'PROFILE_PAGE.EMAIL' | translate }}
+								</label>
 								<input
 									fullWidth
 									id="emailInput"
@@ -117,9 +117,9 @@
 
 						<div class="col">
 							<div class="form-group">
-								<label class="label" for="passwordInput"
-									>Password</label
-								>
+								<label class="label" for="passwordInput">{{
+									'PROFILE_PAGE.PASSWORD' | translate
+								}}</label>
 								<input
 									fullWidth
 									id="passwordInput"
@@ -134,8 +134,13 @@
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
-								<label class="label" for="repeatPasswordInput"
-									>Repeat Password</label
+								<label
+									class="label"
+									for="repeatPasswordInput"
+									>{{
+										'PROFILE_PAGE.REPEAT_PASSWORD'
+											| translate
+									}}</label
 								>
 								<input
 									fullWidth
@@ -146,7 +151,7 @@
 								/>
 								<span *ngIf="repeatPasswordErrorMsg">
 									<strong class="text-danger">
-										Error:
+										{{ 'PROFILE_PAGE.ERROR' | translate }}:
 										{{ repeatPasswordErrorMsg }}</strong
 									></span
 								>
@@ -162,7 +167,7 @@
 							nbButton
 							status="success"
 						>
-							Save
+							{{ 'PROFILE_PAGE.SAVE' | translate }}
 						</button>
 					</div>
 				</form>

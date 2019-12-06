@@ -255,6 +255,15 @@
 		"FAQ": "FAQ",
 		"HELP": "Help"
 	},
+	"PROFILE_PAGE": {
+		"FIRST_NAME": "First Name",
+		"LAST_NAME": "Last Name",
+		"EMAIL": "Email",
+		"PASSWORD": "Password",
+		"REPEAT_PASSWORD": "Repeat Password",
+		"ERROR": "Error",
+		"SAVE": "Save"
+	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
