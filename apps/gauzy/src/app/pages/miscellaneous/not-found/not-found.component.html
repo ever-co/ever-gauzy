@@ -1,15 +1,24 @@
 <div class="row">
-  <div class="col-md-12">
-    <nb-card>
-      <nb-card-body>
-        <div class="flex-centered col-xl-4 col-lg-6 col-md-8 col-sm-12">
-          <h2 class="title">404 Page Not Found</h2>
-          <small class="sub-title">The page you were looking for doesn't exist</small>
-          <button (click)="goToHome()" type="button" class="btn btn-block btn-hero-primary">
-            Take me home
-          </button>
-        </div>
-      </nb-card-body>
-    </nb-card>
-  </div>
+	<div class="col-md-12">
+		<nb-card>
+			<nb-card-body>
+				<div class="flex-centered col-xl-4 col-lg-6 col-md-8 col-sm-12">
+					<h2 class="title">
+						{{ 'PAGE_NOT_FOUND.404_PAGE_NOT_FOUND' | translate }}
+					</h2>
+					<small class="sub-title">{{
+						'PAGE_NOT_FOUND.THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST'
+							| translate
+					}}</small>
+					<button
+						(click)="goToHome()"
+						type="button"
+						class="btn btn-block btn-hero-primary"
+					>
+						{{ 'PAGE_NOT_FOUND.TAKE_ME_HOME' | translate }}
+					</button>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
 </div>
