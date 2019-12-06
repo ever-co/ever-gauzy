@@ -6,6 +6,7 @@ import { environment as env, environment } from '@env-api/environment';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { get, post, Response } from 'request';
+import ResetPasswordParameters from './dto/reset-password-parameters';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -138,7 +139,7 @@ export class AuthService {
 		}
 	}
 
-	async createToken(user: { id: string }): Promise<{ token: string }> {
+	async createToken(user: { id?: string }): Promise<{ token: string }> {
 		const token: string = sign({ id: user.id }, env.JWT_SECRET, {});
 		return { token };
 	}
@@ -214,6 +215,32 @@ export class AuthService {
 					return responseRedirectUse.redirect(redirectSuccessUrl);
 				}
 			);
+		});
+	}
+
+	async resetPassword(resetPassword: ResetPasswordParameters) {
+		if (resetPassword.newPassword.length < 6) {
+			throw new Error('Password should be at least 6 characters long');
+		}
+
+		if (resetPassword.newPassword !== resetPassword.confirmedPassword) {
+			throw new Error('Passwords must match.');
+		}
+
+		if (!resetPassword.ResetPasswordToken) {
+			throw new Error('Authorization token is invalid or missing');
+		}
+
+		const hash = this.getPasswordHash(resetPassword.newPassword);
+		return this.userService.changePassword(resetPassword);
+	}
+
+	async requestPassword(email: string) {
+		await this.userService.getUserByEmail(email).then((user) => {
+			if (user && user.id) {
+				this.createToken(user);
+			}
+			throw new Error('Please check your email and try again');
 		});
 	}
 }
