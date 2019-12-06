@@ -111,7 +111,9 @@
 			</div>
 			<div class="col-6">
 				<div class="form-group">
-					<label class="label"> Logo Alignment </label>
+					<label class="label">
+						{{ 'FORM.LABELS.LOGO_ALIGNMENT' | translate }}
+					</label>
 					<nb-select
 						class="d-block"
 						size="medium"
@@ -132,7 +134,9 @@
 		<div class="row">
 			<div class="col-6">
 				<div class="form-group">
-					<label class="label">Brand Color</label>
+					<label class="label">
+						{{ 'FORM.LABELS.BRAND_COLOR' | translate }}
+					</label>
 					<input
 						fullWidth
 						id="brandColorInput"
@@ -151,7 +155,7 @@
 			<div class="col-6">
 				<div class="form-group">
 					<label class="label">
-						Date Format
+						{{ 'FORM.LABELS.DATE_FORMAT' | translate }}
 					</label>
 					<nb-select
 						class="d-block"
@@ -173,7 +177,9 @@
 		<div class="row">
 			<div class="col-6">
 				<div class="form-group">
-					<label class="label">Choose Time Zone</label>
+					<label class="label">{{
+						'FORM.LABELS.CHOOSE_TIME_ZONE' | translate
+					}}</label>
 					<ng-select
 						[(items)]="listOfZones"
 						placeholder="Choose Timezone"
