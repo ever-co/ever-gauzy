@@ -237,7 +237,17 @@
 		"STATISTICS": "Statistics",
 		"ACCEPTED_PROPOSALS": "Accepted Proposals",
 		"TOTAL_PROPOSALS": "Total Proposals",
-		"SUCCESS_RATE": "Success Rate"
+		"SUCCESS_RATE": "Success Rate",
+		"REGISTER": {
+			"REGISTER_PROPOSALS": "Register Proposal",
+			"AUTHOR": "Author",
+			"JOB_POST_URL": "Job Post URL",
+			"PICK_A_DATE": "Pick a Date",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"UPLOAD": "Upload",
+			"PROPOSALS_CONTENT": "Proposal Content",
+			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		}
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Start Timer",

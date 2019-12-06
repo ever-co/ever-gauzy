@@ -1,7 +1,7 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h3>
-			Register Proposal
+			{{ 'PROPOSALS_PAGE.REGISTER.REGISTER_PROPOSALS' | translate }}
 		</h3>
 	</nb-card-header>
 
@@ -10,7 +10,11 @@
 			<div class="row">
 				<div class="col-sm-4">
 					<div class="form-group">
-						<label class="label">Author</label>
+						<label class="label">
+							{{
+								'PROPOSALS_PAGE.REGISTER.AUTHOR' | translate
+							}}</label
+						>
 						<ga-employee-selector
 							#employeeSelector
 							[skipGlobalChange]="true"
@@ -22,12 +26,20 @@
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group">
-						<label class="label">Job Post URL</label>
+						<label class="label"
+							>{{
+								'PROPOSALS_PAGE.REGISTER.JOB_POST_URL'
+									| translate
+							}}
+						</label>
 						<input
 							nbInput
 							fullWidth
 							type="text"
-							placeholder="Job Post URL"
+							placeholder="{{
+								'PROPOSALS_PAGE.REGISTER.JOB_POST_URL'
+									| translate
+							}}"
 							formControlName="jobPostUrl"
 							autocomplete="on"
 						/>
@@ -35,12 +47,20 @@
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group">
-						<label class="label">Pick a Date</label>
+						<label class="label"
+							>{{
+								'PROPOSALS_PAGE.REGISTER.PICK_A_DATE'
+									| translate
+							}}
+						</label>
 						<input
 							formControlName="valueDate"
 							nbInput
 							fullWidth
-							placeholder="Pick a Date"
+							placeholder="{{
+								'PROPOSALS_PAGE.REGISTER.PICK_A_DATE'
+									| translate
+							}}"
 							[nbDatepicker]="formpicker"
 						/>
 						<nb-datepicker #formpicker></nb-datepicker>
@@ -49,35 +69,51 @@
 				<div class="col-sm-6">
 					<!-- <ngx-ckeditor></ngx-ckeditor> -->
 					<div class="form-group">
-						<label class="label">Job Post Content</label>
+						<label class="label"
+							>{{
+								'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT'
+									| translate
+							}}
+						</label>
 						<textarea
 							nbInput
 							fullWidth
 							rows="12"
 							type="text"
-							placeholder="Job Post Content"
+							placeholder="{{
+								'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT'
+									| translate
+							}}"
 							formControlName="jobPostContent"
 							autocomplete="on"
 						></textarea>
 						<button class="upload-btn" nbButton status="primary">
-							Upload
+							{{ 'PROPOSALS_PAGE.REGISTER.UPLOAD' | translate }}
 						</button>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">Proposal Content</label>
+						<label class="label"
+							>{{
+								'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT'
+									| translate
+							}}
+						</label>
 						<textarea
 							nbInput
 							rows="12"
 							fullWidth
 							type="text"
-							placeholder="Proposal Content"
+							placeholder="{{
+								'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT'
+									| translate
+							}}"
 							formControlName="proposalContent"
 							autocomplete="on"
 						></textarea>
 						<button class="upload-btn" nbButton status="primary">
-							Upload
+							{{ 'PROPOSALS_PAGE.REGISTER.UPLOAD' | translate }}
 						</button>
 					</div>
 				</div>
@@ -92,7 +128,7 @@
 			status="success"
 			nbButton
 		>
-			Register Proposal
+			{{ 'PROPOSALS_PAGE.REGISTER.REGISTER_PROPOSALS' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
