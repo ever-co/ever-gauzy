@@ -10,7 +10,9 @@
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 		<nb-card *ngIf="showAddCard">
-			<nb-card-header>Add new client</nb-card-header>
+			<nb-card-header>{{
+				'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CLIENT' | translate
+			}}</nb-card-header>
 			<nb-card-body>
 				<div class="form-group">
 					<button

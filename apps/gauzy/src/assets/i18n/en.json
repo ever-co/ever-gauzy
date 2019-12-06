@@ -228,7 +228,8 @@
 			"END_DATE": "End Date",
 			"TYPE": "Type",
 			"CURRENCY": "Currency",
-			"TEAMS": "Teams"
+			"TEAMS": "Teams",
+			"ADD_NEW_CLIENT": "Add new client"
 		}
 	},
 	"PROPOSALS_PAGE": {
