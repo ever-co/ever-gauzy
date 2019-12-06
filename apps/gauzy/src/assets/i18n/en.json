@@ -272,6 +272,9 @@
 	"HELP_PAGE": {
 		"HELP": "Help"
 	},
+	"ABOUT_PAGE": {
+		"ABOUT": "About"
+	},
 	"FOOTER": {
 		"BY": "by",
 		"RIGHTS_RECERVED": "All rights reserved."
