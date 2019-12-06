@@ -1,12 +1,14 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { User, UserService } from '../user';
 import * as bcrypt from 'bcrypt';
-import { environment as env, environment } from '@env-api/environment';
-
-import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { get, post, Response } from 'request';
+import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
+import * as nodemailer from 'nodemailer';
+
+import { User, UserService } from '../user';
+import { environment as env, environment } from '@env-api/environment';
+import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import ResetPasswordParameters from './dto/reset-password-parameters';
+import EmailAddress from './dto/email-address';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -236,11 +238,66 @@ export class AuthService {
 	}
 
 	async requestPassword(email: string) {
-		await this.userService.getUserByEmail(email).then((user) => {
+		await this.userService.getUserByEmail(email).then(async (user) => {
 			if (user && user.id) {
-				this.createToken(user);
+				const newToken = await this.createToken(user);
+
+				if (newToken) {
+					const url =
+						process.env.host +
+						':' +
+						process.env.port +
+						'/auth/reset-password/' +
+						newToken;
+
+					const transporter = nodemailer.createTransport({
+						host: 'smtp.ethereal.email',
+						port: 587,
+						secure: false, // true for 465, false for other ports
+						auth: {
+							user: '<username>',
+							pass: '<password>'
+						}
+					});
+
+					const mailOptions = {
+						from: 'Gauzy',
+						to: email,
+						subject: 'Forgotten Password',
+						text: 'Forgot Password',
+						html:
+							'Hello! <br><br> We received a password change request.<br><br>If you requested to reset your password<br><br>' +
+							'<a href=' +
+							process.env.host +
+							':' +
+							process.env.port +
+							'/auth/reset-password/' +
+							newToken +
+							'>Click here</a>'
+					};
+
+					const sent = await new Promise<boolean>(async function(
+						resolve,
+						reject
+					) {
+						return await transporter.sendMail(
+							mailOptions,
+							async (error, info) => {
+								if (error) {
+									console.log('Message sent: %s', error);
+									return reject(false);
+								}
+								console.log('Message sent: %s', info.messageId);
+								resolve(true);
+							}
+						);
+					});
+
+					return url;
+				}
+			} else {
+				throw new Error('Email not found');
 			}
-			throw new Error('Please check your email and try again');
 		});
 	}
 }

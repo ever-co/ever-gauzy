@@ -93,7 +93,7 @@ export class AuthController {
 	async requestPass(@Body() email: EmailAddress, @Res() res) {
 		return await this.authService.requestPassword(email.email).then(() =>
 			res.status(200).send({
-				message: `Please check your email ${email.email} for instructions on reset password. If you don't receive it, please check your junk email folder`
+				message: `Please check your email ${email} for instructions on reset password. If you don't receive it, please check your junk email folder`
 			})
 		);
 	}
