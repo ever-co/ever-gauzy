@@ -73,7 +73,11 @@
 			"COUNTRY": "Country",
 			"CITY": "City",
 			"ADDRESS": "Address",
-			"ADDRESS_2": "Address 2"
+			"ADDRESS_2": "Address 2",
+			"LOGO_ALIGNMENT": "Logo Alignment",
+			"BRAND_COLOR": "Brand Color",
+			"DATE_FORMAT": "Date Format",
+			"CHOOSE_TIME_ZONE": "Choose Time Zone"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
