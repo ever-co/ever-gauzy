@@ -269,6 +269,9 @@
 		"TAKE_ME_HOME": "Take me home",
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
 	},
+	"HELP_PAGE": {
+		"HELP": "Help"
+	},
 	"FOOTER": {
 		"BY": "by",
 		"RIGHTS_RECERVED": "All rights reserved."
