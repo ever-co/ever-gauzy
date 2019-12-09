@@ -42,11 +42,12 @@
 		</div>
 
 		<ng2-smart-table
-			*ngIf="showTable"
+			*ngIf="canShowTable()"
 			class="income-table"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
 			(userRowSelect)="selectExpense($event)"
+			#expensesTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>

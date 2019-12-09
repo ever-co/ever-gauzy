@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { Organization } from '@gauzy/models';
@@ -34,6 +34,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		private employeesService: EmployeesService,
 		private translateService: TranslateService
 	) {}
+
+	@ViewChild('settingsTable', { static: false }) settingsTable;
 
 	settingsSmartTable: object;
 	selectedOrganization: Organization;
@@ -183,6 +185,9 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 			}
 
 			this.smartTableSource.load(items);
+			if (this.settingsTable) {
+				this.settingsTable.grid.dataSet.willSelect = 'false';
+			}
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,

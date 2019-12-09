@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
 import { RolesEnum, Expense } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
@@ -52,6 +52,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
+
+	@ViewChild('expensesTable', { static: false }) expensesTable;
 
 	loadSettingsSmartTable() {
 		this.smartTableSettings = {
@@ -156,6 +158,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			});
 
 		this.loading = false;
+	}
+
+	canShowTable() {
+		if (this.expensesTable) {
+			this.expensesTable.grid.dataSet.willSelect = 'false';
+		}
+		return this.showTable;
 	}
 
 	openAddExpenseDialog() {

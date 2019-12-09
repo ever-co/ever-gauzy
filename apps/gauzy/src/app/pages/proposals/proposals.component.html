@@ -83,12 +83,13 @@
 			</button>
 		</div>
 		<ng2-smart-table
-			*ngIf="showTable"
+			*ngIf="canShowTable()"
 			class="income-table"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
 			(userRowSelect)="selectProposal($event)"
 			style="cursor: pointer"
+			#proposalsTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>

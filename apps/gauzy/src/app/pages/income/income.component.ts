@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
 import { RolesEnum, Income, Employee } from '@gauzy/models';
 import { Subject, Observable, forkJoin } from 'rxjs';
@@ -45,6 +45,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
+
+	@ViewChild('incomeTable', { static: false }) incomeTable;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
@@ -112,6 +114,13 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			});
 
 		this.loading = false;
+	}
+
+	canShowTable() {
+		if (this.incomeTable) {
+			this.incomeTable.grid.dataSet.willSelect = 'false';
+		}
+		return this.showTable;
 	}
 
 	loadSettingsSmartTable() {
