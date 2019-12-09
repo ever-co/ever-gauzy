@@ -112,7 +112,7 @@ export class EditOrganizationSettingsComponent implements OnInit {
 
 	private async _loadOrganization(id: string) {
 		try {
-			await this.loadCountry();
+			await this.loadCountries();
 			this.organization = await this.organizationService
 				.getById(id)
 				.pipe(first())
@@ -136,7 +136,7 @@ export class EditOrganizationSettingsComponent implements OnInit {
 		this.employeesCount = total;
 	}
 
-	private async loadCountry() {
+	private async loadCountries() {
 		const { items } = await this.countryService.getAll();
 		this.countries = items;
 	}
