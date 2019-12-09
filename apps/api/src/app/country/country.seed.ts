@@ -1,11 +1,11 @@
 import { Connection } from 'typeorm';
-import { Countries } from './countries.entity';
+import { Country } from './country.entity';
 
 export const createCountries = async (
 	connection: Connection
-): Promise<Countries[]> => {
+): Promise<Country[]> => {
 	for (let index = 0; index < 5; index++) {
-		const countries: Countries[] = [
+		const countries: Country[] = [
 			{
 				isoCode: 'USA',
 				country: 'United States of America'
@@ -30,12 +30,12 @@ export const createCountries = async (
 
 const insertCountry = async (
 	connection: Connection,
-	country: Countries
+	country: Country
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
-		.into(Countries)
+		.into(Country)
 		.values(country)
 		.execute();
 };

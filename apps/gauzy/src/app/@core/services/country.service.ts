@@ -1,15 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Countries } from '@gauzy/models';
+import { Country } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
-export class CountriesService {
+export class CountryService {
 	constructor(private http: HttpClient) {}
 
-	getAll(): Promise<{ items: Countries[]; total: number }> {
+	getAll(): Promise<{ items: Country[]; total: number }> {
 		return this.http
-			.get<{ items: Countries[]; total: number }>(`/api/countries`)
+			.get<{ items: Country[]; total: number }>(`/api/country`)
 			.pipe(first())
 			.toPromise();
 	}
