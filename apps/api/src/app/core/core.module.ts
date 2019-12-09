@@ -24,7 +24,7 @@ import { OrganizationVendors } from '../organization-vendors';
 import { OrganizationProjects } from '../organization-projects';
 import { OrganizationTeams } from '../organization-teams';
 import { Proposal } from '../proposal';
-import { Countries } from '../countries';
+import { Country } from '../country';
 
 const entities = [
 	User,
@@ -44,7 +44,7 @@ const entities = [
 	EmployeeRecurringExpense,
 	OrganizationTeams,
 	Proposal,
-	Countries
+	Country
 ];
 
 @Module({

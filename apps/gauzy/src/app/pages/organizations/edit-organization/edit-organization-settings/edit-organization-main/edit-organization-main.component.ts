@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	AlignmentOptions,
-	Countries,
+	Country,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	Organization,
@@ -21,7 +21,7 @@ export class EditOrganizationMainComponent implements OnInit {
 	organization: Organization;
 
 	@Input()
-	countries: Countries[];
+	countries: Country[];
 
 	form: FormGroup;
 

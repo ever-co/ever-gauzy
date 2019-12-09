@@ -22,7 +22,7 @@ import { Expense } from '../../expense';
 import { createExpenses } from '../../expense/expense.seed';
 import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
 import { createUsersOrganizations } from '../../user-organization';
-import { createCountries } from '../../countries/countries.seed';
+import { createCountries } from '../../country/country.seed';
 
 const allEntities = [
 	User,

@@ -1,6 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
-export interface Countries extends IBaseEntityModel {
+export interface Country extends IBaseEntityModel {
 	isoCode: string;
 	country: string;
 }
