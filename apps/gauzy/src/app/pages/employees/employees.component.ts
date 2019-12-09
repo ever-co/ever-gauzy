@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Store } from '../../@core/services/store.service';
 import { first, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -57,6 +57,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	bonusForSelectedMonth = 0;
 
 	loading = true;
+
+	@ViewChild('employeesTable', { static: false }) employeesTable;
 
 	constructor(
 		private employeesService: EmployeesService,
@@ -322,6 +324,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		}
 
 		this.sourceSmartTable.load(employeesVm);
+
+		if (this.employeesTable) {
+			this.employeesTable.grid.dataSet.willSelect = 'false';
+		}
 
 		this.organizationName = name;
 

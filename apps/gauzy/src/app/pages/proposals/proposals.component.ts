@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
@@ -68,6 +68,8 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 
 	private _selectedOrganizationId: string;
 
+	@ViewChild('proposalsTable', { static: false }) proposalsTable;
+
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
@@ -109,6 +111,13 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 
 				this.loading = false;
 			});
+	}
+
+	canShowTable() {
+		if (this.proposalsTable) {
+			this.proposalsTable.grid.dataSet.willSelect = 'false';
+		}
+		return this.showTable;
 	}
 
 	add() {
