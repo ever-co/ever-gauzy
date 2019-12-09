@@ -8,8 +8,12 @@ import {
 	Organization,
 	WeekDaysEnum
 } from '@gauzy/models';
+import { EmployeesService } from '../../../../../@core/services';
+import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
+import { first } from 'rxjs/operators';
+import { NbToastrService } from '@nebular/theme';
 
 @Component({
 	selector: 'ga-edit-org-main',
@@ -22,6 +26,10 @@ export class EditOrganizationMainComponent implements OnInit {
 
 	@Input()
 	countries: Country[];
+
+	imageUrl: string;
+	hoverState: boolean;
+	employeesCount: number;
 
 	form: FormGroup;
 
@@ -45,11 +53,18 @@ export class EditOrganizationMainComponent implements OnInit {
 		'ddd, MMM D YYYY'
 	];
 	weekdays: string[] = Object.values(WeekDaysEnum);
-	constructor(private fb: FormBuilder) {}
+	constructor(
+		private fb: FormBuilder,
+		private employeesService: EmployeesService,
+		private organizationService: OrganizationsService,
+		private toastrService: NbToastrService
+	) {}
 
-	get mainUpdateObj() {
-		return this.form.getRawValue();
+	updateImageUrl(url: string) {
+		this.imageUrl = url;
 	}
+
+	handleImageUploadError(event: any) {}
 
 	getTimeWithOffset(zone: string) {
 		let cutZone = zone;
@@ -68,6 +83,37 @@ export class EditOrganizationMainComponent implements OnInit {
 
 	ngOnInit(): void {
 		this._initializedForm();
+		this.imageUrl = this.organization.imageUrl;
+		this.loadEmployeesCount();
+	}
+
+	private async loadEmployeesCount() {
+		const { total } = await this.employeesService
+			.getAll([], { organization: { id: this.organization.id } })
+			.pipe(first())
+			.toPromise();
+
+		this.employeesCount = total;
+	}
+
+	async updateOrganizationSettings() {
+		this.organizationService.update(this.organization.id, {
+			imageUrl: this.imageUrl,
+			...this.form.getRawValue()
+		});
+		this.toastrService.primary(
+			this.organization.name + ' organization main info updeted.',
+			'Success'
+		);
+		this.goBack();
+	}
+
+	goBack() {
+		const currentURL = window.location.href;
+		window.location.href = currentURL.substring(
+			0,
+			currentURL.indexOf('/settings')
+		);
 	}
 
 	private _initializedForm() {

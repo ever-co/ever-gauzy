@@ -10,3 +10,11 @@ nb-tab,
 nb-tabset {
 	height: 100%;
 }
+
+nb-card-body {
+	overflow-y: hidden; //prevent extra scroll bar
+}
+
+:host ::ng-deep .tab-link {
+	padding: 1rem 5px !important;
+}

@@ -1,298 +1,373 @@
-<form [formGroup]="form" *ngIf="form">
-	<div class="fields">
-		<div class="row">
-			<div class="col">
-				<div class="form-group">
-					<label class="label" for="nameInput">{{
-						'FORM.LABELS.NAME' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="nameInput"
-						type="text"
-						nbInput
-						formControlName="name"
-						placeholder="{{ 'FORM.PLACEHOLDERS.NAME' | translate }}"
+<div class="content">
+	<div class="organization-container">
+		<div class="organization-photo">
+			<ngx-image-uploader
+				(changeHoverState)="hoverState = $event"
+				(uploadedImageUrl)="updateImageUrl($event)"
+				(uploadImageError)="handleImageUploadError($event)"
+			></ngx-image-uploader>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				xmlns:xlink="http://www.w3.org/1999/xlink"
+				width="68"
+				height="68"
+				viewBox="0 0 68 68"
+				[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+			>
+				<defs>
+					<path
+						id="a"
+						d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
 					/>
-				</div>
-			</div>
-			<div class="col">
-				<div class="form-group">
-					<label class="label">{{
-						'FORM.LABELS.CURRENCY' | translate
-					}}</label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						formControlName="currency"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate
-						}}"
-						fullWidth="true"
-					>
-						<nb-option
-							*ngFor="let currency of currencies"
-							[value]="currency"
-						>
-							{{ currency }}
-						</nb-option>
-					</nb-select>
-				</div>
-			</div>
-		</div>
+				</defs>
+				<g fill="none" fill-rule="evenodd">
+					<circle
+						cx="34"
+						cy="34"
+						r="34"
+						fill="#0091FF"
+						opacity=".3"
+					/>
+					<circle
+						cx="34"
+						cy="34"
+						r="26"
+						fill="#0091FF"
+						opacity=".9"
+					/>
+					<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
+				</g>
+			</svg>
+			<div
+				class="image-overlay"
+				[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
+			></div>
 
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label" for="officialNameInput">{{
-						'FORM.LABELS.OFFICIAL_NAME' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="officialNameInput"
-						type="text"
-						nbInput
-						formControlName="officialName"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.OFFICIAL_NAME' | translate
-						}}"
-					/>
-				</div>
-			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label" for="startWeekOnSelect">{{
-						'FORM.LABELS.START_WEEK_ON' | translate
-					}}</label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						formControlName="startWeekOn"
-						id="startWeekOnSelect"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.START_WEEK_ON' | translate
-						}}"
-						fullWidth="true"
-					>
-						<nb-option
-							*ngFor="let weekday of weekdays"
-							[value]="weekday"
-						>
-							{{ 'SM_TABLE.' + weekday | translate }}
-						</nb-option>
-					</nb-select>
-				</div>
-			</div>
+			<img
+				*ngIf="imageUrl"
+				[src]="imageUrl"
+				alt="Organization Photo"
+				(mouseenter)="hoverState = true"
+				(mouseleave)="hoverState = false"
+			/>
 		</div>
-
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{
-						'FORM.LABELS.DATE_TYPE' | translate
-					}}</label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						formControlName="defaultValueDateType"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.DATE_TYPE' | translate
-						}}"
-						fullWidth
-					>
-						<nb-option
-							*ngFor="let type of defaultValueDateTypes"
-							[value]="type"
-						>
-							{{ 'SM_TABLE.' + type | translate }}
-						</nb-option>
-					</nb-select>
-				</div>
-			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">
-						{{ 'FORM.LABELS.LOGO_ALIGNMENT' | translate }}
-					</label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						formControlName="defaultAlignmentType"
-						placeholder="Align Logo To"
-						fullWidth
-					>
-						<nb-option
-							*ngFor="let type of defaultAlignmentTypes"
-							[value]="type.toUpperCase()"
-						>
-							{{ type }}
-						</nb-option>
-					</nb-select>
-				</div>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">
-						{{ 'FORM.LABELS.BRAND_COLOR' | translate }}
-					</label>
-					<input
-						fullWidth
-						id="brandColorInput"
-						nbInput
-						formControlName="brandColor"
-						placeholder="Add Color"
-						[colorPicker]="form.get('brandColor').value"
-						[style.background]="form.get('brandColor').value"
-						[value]="form.get('brandColor').value"
-						(colorPickerChange)="
-							form.get('brandColor').setValue($event)
-						"
-					/>
-				</div>
-			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">
-						{{ 'FORM.LABELS.DATE_FORMAT' | translate }}
-					</label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						formControlName="dateFormat"
-						placeholder="Choose Format"
-						fullWidth
-					>
-						<nb-option
-							*ngFor="let format of listOfDateFormats"
-							[value]="format"
-						>
-							{{ dateFormatPreview(format) }}
-						</nb-option>
-					</nb-select>
-				</div>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{
-						'FORM.LABELS.CHOOSE_TIME_ZONE' | translate
-					}}</label>
-					<ng-select
-						[(items)]="listOfZones"
-						placeholder="Choose Timezone"
-						[searchable]="true"
-						formControlName="timeZone"
-					>
-						<ng-template
-							ng-option-tmp
-							let-item="item"
-							let-index="index"
-						>
-							{{ getTimeWithOffset(item) }}
-						</ng-template>
-						<ng-template ng-label-tmp let-item="item">
-							{{ getTimeWithOffset(item) }}
-						</ng-template>
-					</ng-select>
-				</div>
-			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label" for="taxIdInput">{{
-						'FORM.LABELS.TAX_ID' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="taxIdInput"
-						type="text"
-						nbInput
-						formControlName="taxId"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.TAX_ID' | translate
-						}}"
-					/>
-				</div>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label" for="countrySelect">{{
-						'FORM.LABELS.COUNTRY' | translate
-					}}</label>
-					<nb-select
-						class="d-block"
-						size="medium"
-						formControlName="country"
-						id="countrySelect"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.COUNTRY' | translate
-						}}"
-						fullWidth="true"
-					>
-						<nb-option
-							*ngFor="let c of countries"
-							[value]="c.isoCode"
-						>
-							{{ c.country }}
-						</nb-option>
-					</nb-select>
-				</div>
-			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label" for="cityInput">{{
-						'FORM.LABELS.CITY' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="cityInput"
-						type="text"
-						nbInput
-						formControlName="city"
-						placeholder="{{ 'FORM.PLACEHOLDERS.CITY' | translate }}"
-					/>
-				</div>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label" for="addressInput">{{
-						'FORM.LABELS.ADDRESS' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="addressInput"
-						type="text"
-						nbInput
-						formControlName="address"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.ADDRESS' | translate
-						}}"
-					/>
-				</div>
-			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label" for="address2Input">{{
-						'FORM.LABELS.ADDRESS_2' | translate
-					}}</label>
-					<input
-						fullWidth
-						id="address2Input"
-						type="text"
-						nbInput
-						formControlName="address2"
-						placeholder="{{
-							'FORM.PLACEHOLDERS.ADDRESS_2' | translate
-						}}"
-					/>
-				</div>
-			</div>
-		</div>
+		<h6 class="text-center mt-2">
+			{{ employeesCount }}
+			{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
+		</h6>
 	</div>
-</form>
+
+	<form class="main-form" [formGroup]="form" *ngIf="form">
+		<div class="fields">
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label class="label" for="nameInput">{{
+							'FORM.LABELS.NAME' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="nameInput"
+							type="text"
+							nbInput
+							formControlName="name"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.NAME' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="col">
+					<div class="form-group">
+						<label class="label">{{
+							'FORM.LABELS.CURRENCY' | translate
+						}}</label>
+						<nb-select
+							class="d-block"
+							size="medium"
+							formControlName="currency"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate
+							}}"
+							fullWidth="true"
+						>
+							<nb-option
+								*ngFor="let currency of currencies"
+								[value]="currency"
+							>
+								{{ currency }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="officialNameInput">{{
+							'FORM.LABELS.OFFICIAL_NAME' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="officialNameInput"
+							type="text"
+							nbInput
+							formControlName="officialName"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.OFFICIAL_NAME' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="startWeekOnSelect">{{
+							'FORM.LABELS.START_WEEK_ON' | translate
+						}}</label>
+						<nb-select
+							class="d-block"
+							size="medium"
+							formControlName="startWeekOn"
+							id="startWeekOnSelect"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.START_WEEK_ON' | translate
+							}}"
+							fullWidth="true"
+						>
+							<nb-option
+								*ngFor="let weekday of weekdays"
+								[value]="weekday"
+							>
+								{{ 'SM_TABLE.' + weekday | translate }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">{{
+							'FORM.LABELS.DATE_TYPE' | translate
+						}}</label>
+						<nb-select
+							class="d-block"
+							size="medium"
+							formControlName="defaultValueDateType"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.DATE_TYPE' | translate
+							}}"
+							fullWidth
+						>
+							<nb-option
+								*ngFor="let type of defaultValueDateTypes"
+								[value]="type"
+							>
+								{{ 'SM_TABLE.' + type | translate }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">
+							{{ 'FORM.LABELS.LOGO_ALIGNMENT' | translate }}
+						</label>
+						<nb-select
+							class="d-block"
+							size="medium"
+							formControlName="defaultAlignmentType"
+							placeholder="Align Logo To"
+							fullWidth
+						>
+							<nb-option
+								*ngFor="let type of defaultAlignmentTypes"
+								[value]="type.toUpperCase()"
+							>
+								{{ type }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">
+							{{ 'FORM.LABELS.BRAND_COLOR' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="brandColorInput"
+							nbInput
+							formControlName="brandColor"
+							placeholder="Add Color"
+							[colorPicker]="form.get('brandColor').value"
+							[style.background]="form.get('brandColor').value"
+							[value]="form.get('brandColor').value"
+							(colorPickerChange)="
+								form.get('brandColor').setValue($event)
+							"
+						/>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">
+							{{ 'FORM.LABELS.DATE_FORMAT' | translate }}
+						</label>
+						<nb-select
+							class="d-block"
+							size="medium"
+							formControlName="dateFormat"
+							placeholder="Choose Format"
+							fullWidth
+						>
+							<nb-option
+								*ngFor="let format of listOfDateFormats"
+								[value]="format"
+							>
+								{{ dateFormatPreview(format) }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">{{
+							'FORM.LABELS.CHOOSE_TIME_ZONE' | translate
+						}}</label>
+						<ng-select
+							[(items)]="listOfZones"
+							placeholder="Choose Timezone"
+							[searchable]="true"
+							formControlName="timeZone"
+						>
+							<ng-template
+								ng-option-tmp
+								let-item="item"
+								let-index="index"
+							>
+								{{ getTimeWithOffset(item) }}
+							</ng-template>
+							<ng-template ng-label-tmp let-item="item">
+								{{ getTimeWithOffset(item) }}
+							</ng-template>
+						</ng-select>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="taxIdInput">{{
+							'FORM.LABELS.TAX_ID' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="taxIdInput"
+							type="text"
+							nbInput
+							formControlName="taxId"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.TAX_ID' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="countrySelect">{{
+							'FORM.LABELS.COUNTRY' | translate
+						}}</label>
+						<nb-select
+							class="d-block"
+							size="medium"
+							formControlName="country"
+							id="countrySelect"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.COUNTRY' | translate
+							}}"
+							fullWidth="true"
+						>
+							<nb-option
+								*ngFor="let c of countries"
+								[value]="c.isoCode"
+							>
+								{{ c.country }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="cityInput">{{
+							'FORM.LABELS.CITY' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="cityInput"
+							type="text"
+							nbInput
+							formControlName="city"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.CITY' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="addressInput">{{
+							'FORM.LABELS.ADDRESS' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="addressInput"
+							type="text"
+							nbInput
+							formControlName="address"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ADDRESS' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="address2Input">{{
+							'FORM.LABELS.ADDRESS_2' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="address2Input"
+							type="text"
+							nbInput
+							formControlName="address2"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ADDRESS_2' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="actions">
+			<button
+				[disabled]="this.form.invalid"
+				(click)="updateOrganizationSettings()"
+				nbButton
+				status="success"
+			>
+				Save
+			</button>
+		</div>
+	</form>
+</div>
