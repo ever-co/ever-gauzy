@@ -20,7 +20,6 @@ import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { getUserDummyImage } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import ResetPasswordParameters from './dto/reset-password-parameters';
-import EmailAddress from './dto/email-address';
 
 @ApiUseTags('Auth')
 @Controller()
@@ -79,7 +78,7 @@ export class AuthController {
 		return this.authService.login(findObj, password);
 	}
 
-	@Post('/reset-password')
+	@Post('/reset-password/:token')
 	async resetPassword(
 		@Body() resetPassword: ResetPasswordParameters,
 		@Res() res
@@ -90,12 +89,11 @@ export class AuthController {
 	}
 
 	@Post('/request-password')
-	async requestPass(@Body() email: EmailAddress, @Res() res) {
-		return await this.authService.requestPassword(email.email).then(() =>
-			res.status(200).send({
-				message: `Please check your email ${email} for instructions on reset password. If you don't receive it, please check your junk email folder`
-			})
-		);
+	async requestPass(
+		@Body() findObj,
+		...options: any[]
+	): Promise<{ user: IUser; token: string } | null> {
+		return await this.authService.requestPassword(findObj);
 	}
 
 	@Get('google')

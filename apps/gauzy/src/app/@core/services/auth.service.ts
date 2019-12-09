@@ -30,6 +30,15 @@ export class AuthService {
 		return this.http.post<User>('/api/auth/register', registerInput);
 	}
 
+	requestPassword(
+		requestPasswordInput
+	): Observable<{ user?: User; token?: string }> {
+		return this.http.post<{ user?: User; token?: string }>(
+			'/api/auth/request-password',
+			requestPasswordInput
+		);
+	}
+
 	hasRole(roles: RolesEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`/api/auth/role`, { params: { roles } });
 	}

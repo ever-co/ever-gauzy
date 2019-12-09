@@ -43,7 +43,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				success: '/',
 				failure: null
 			},
-			defaultErrors: ['Something went wrong, please try again.'],
+			defaultErrors: ['Email is not correct, please try again.'],
 			defaultMessages: [
 				'Reset password instructions have been sent to your email.'
 			]
@@ -199,8 +199,60 @@ export class AuthStrategy extends NbAuthStrategy {
 		return from(this._logout());
 	}
 
-	requestPassword(data?: any): Observable<NbAuthResult> {
-		throw new Error('Not implemented yet');
+	requestPassword(args: { email: string }): Observable<NbAuthResult> {
+		const { email } = args;
+
+		const requestPasswordInput = {
+			findObj: {
+				email
+			}
+		};
+
+		return this.authService
+			.requestPassword(requestPasswordInput.findObj)
+			.pipe(
+				map((res: { user?: User; token?: string }) => {
+					let user, token;
+
+					if (res) {
+						user = res.user;
+						token = res.token;
+					}
+
+					if (!user) {
+						return new NbAuthResult(
+							false,
+							res,
+							false,
+							AuthStrategy.config.requestPass.defaultErrors
+						);
+					}
+
+					this.store.userId = user.id;
+					this.store.token = token;
+
+					return new NbAuthResult(
+						true,
+						res,
+						false,
+						[],
+						AuthStrategy.config.requestPass.defaultMessages
+					);
+				}),
+				catchError((err) => {
+					console.log(err);
+
+					return of(
+						new NbAuthResult(
+							false,
+							err,
+							false,
+							AuthStrategy.config.requestPass.defaultErrors,
+							[AuthStrategy.config.requestPass.defaultErrors]
+						)
+					);
+				})
+			);
 	}
 
 	resetPassword(data: any = {}): Observable<NbAuthResult> {

@@ -53,6 +53,89 @@ export class AuthService {
 		};
 	}
 
+	async requestPassword(
+		findObj: any
+	): Promise<{ user: User; token: string } | null> {
+		const user = await this.userService.findOne(findObj, {
+			relations: ['role']
+		});
+
+		let token: string;
+
+		if (user && user.id) {
+			const newToken = await this.createToken(user);
+			token = newToken.token;
+
+			if (token) {
+				const url =
+					env.host + ':' + env.port + '/auth/reset-password/' + token;
+
+				const transporter = nodemailer.createTransport({
+					host: 'smtp.ethereal.email',
+					port: 587,
+					secure: false, // true for 465, false for other ports
+					auth: {
+						user: '<username>',
+						pass: '<password>'
+					}
+				});
+
+				const mailOptions = {
+					from: 'Gauzy',
+					to: user.email,
+					subject: 'Forgotten Password',
+					text: 'Forgot Password',
+					html:
+						'Hello! <br><br> We received a password change request.<br><br>If you requested to reset your password<br><br>' +
+						'<a href=' +
+						url +
+						'>Click here</a>'
+				};
+
+				return {
+					user,
+					token
+				};
+
+				const sent = await new Promise<boolean>(async function(
+					resolve,
+					reject
+				) {
+					return await transporter.sendMail(
+						mailOptions,
+						async (error, info) => {
+							if (error) {
+								console.log('Message sent: %s', error);
+								return reject(false);
+							}
+							console.log('Message sent: %s', info.messageId);
+							resolve(true);
+						}
+					);
+				});
+			}
+		} else {
+			throw new Error('Email not found');
+		}
+	}
+
+	async resetPassword(resetPassword: ResetPasswordParameters) {
+		if (resetPassword.newPassword.length < 6) {
+			throw new Error('Password should be at least 6 characters long');
+		}
+
+		if (resetPassword.newPassword !== resetPassword.confirmedPassword) {
+			throw new Error('Passwords must match.');
+		}
+
+		if (!resetPassword.ResetPasswordToken) {
+			throw new Error('Authorization token is invalid or missing');
+		}
+
+		const hash = this.getPasswordHash(resetPassword.newPassword);
+		return this.userService.changePassword(resetPassword);
+	}
+
 	async register(input: IUserRegistrationInput): Promise<User> {
 		const user = this.userService.create({
 			...input.user,
@@ -217,87 +300,6 @@ export class AuthService {
 					return responseRedirectUse.redirect(redirectSuccessUrl);
 				}
 			);
-		});
-	}
-
-	async resetPassword(resetPassword: ResetPasswordParameters) {
-		if (resetPassword.newPassword.length < 6) {
-			throw new Error('Password should be at least 6 characters long');
-		}
-
-		if (resetPassword.newPassword !== resetPassword.confirmedPassword) {
-			throw new Error('Passwords must match.');
-		}
-
-		if (!resetPassword.ResetPasswordToken) {
-			throw new Error('Authorization token is invalid or missing');
-		}
-
-		const hash = this.getPasswordHash(resetPassword.newPassword);
-		return this.userService.changePassword(resetPassword);
-	}
-
-	async requestPassword(email: string) {
-		await this.userService.getUserByEmail(email).then(async (user) => {
-			if (user && user.id) {
-				const newToken = await this.createToken(user);
-
-				if (newToken) {
-					const url =
-						process.env.host +
-						':' +
-						process.env.port +
-						'/auth/reset-password/' +
-						newToken;
-
-					const transporter = nodemailer.createTransport({
-						host: 'smtp.ethereal.email',
-						port: 587,
-						secure: false, // true for 465, false for other ports
-						auth: {
-							user: '<username>',
-							pass: '<password>'
-						}
-					});
-
-					const mailOptions = {
-						from: 'Gauzy',
-						to: email,
-						subject: 'Forgotten Password',
-						text: 'Forgot Password',
-						html:
-							'Hello! <br><br> We received a password change request.<br><br>If you requested to reset your password<br><br>' +
-							'<a href=' +
-							process.env.host +
-							':' +
-							process.env.port +
-							'/auth/reset-password/' +
-							newToken +
-							'>Click here</a>'
-					};
-
-					const sent = await new Promise<boolean>(async function(
-						resolve,
-						reject
-					) {
-						return await transporter.sendMail(
-							mailOptions,
-							async (error, info) => {
-								if (error) {
-									console.log('Message sent: %s', error);
-									return reject(false);
-								}
-								console.log('Message sent: %s', info.messageId);
-								resolve(true);
-							}
-						);
-					});
-
-					return url;
-				}
-			} else {
-				throw new Error('Email not found');
-			}
 		});
 	}
 }
