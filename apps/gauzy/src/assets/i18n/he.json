@@ -77,7 +77,8 @@
 			"LOGO_ALIGNMENT": "Logo Alignment",
 			"BRAND_COLOR": "Brand Color",
 			"DATE_FORMAT": "Date Format",
-			"CHOOSE_TIME_ZONE": "Choose Time Zone"
+			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"POSTCODE": "Postcode (Zip)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -109,7 +110,8 @@
 			"COUNTRY": "מדינה",
 			"CITY": "עיר",
 			"ADDRESS": "Address",
-			"ADDRESS_2": "Address 2"
+			"ADDRESS_2": "Address 2",
+			"POSTCODE": "Postcode (Zip)"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
@@ -210,6 +212,8 @@
 		"PROJECTS": "פרויקטים",
 		"ACTIVE": "פעיל",
 		"ARCHIVED": "נשמר בארכיון",
+		"LOCATION": "Location",
+		"SETTINGS": "הגדרות",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
@@ -229,7 +233,9 @@
 			"TYPE": "סוג",
 			"CURRENCY": "מטבע",
 			"TEAMS": "Teams",
-			"ADD_NEW_CLIENT": "הוסף לקוח חדש"
+			"ADD_NEW_CLIENT": "הוסף לקוח חדש",
+			"GENERAL_SETTINGS": "General Settings",
+			"DESIGN": "Design"
 		}
 	},
 	"PROPOSALS_PAGE": {
