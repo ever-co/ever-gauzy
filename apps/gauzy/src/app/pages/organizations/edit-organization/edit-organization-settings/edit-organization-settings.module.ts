@@ -41,6 +41,8 @@ import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-o
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
 import { ColorPickerModule } from 'ngx-color-picker';
+import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
+import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
 
 @NgModule({
 	imports: [
@@ -83,6 +85,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 	declarations: [
 		EditOrganizationSettingsComponent,
 		EditOrganizationMainComponent,
+		EditOrganizationLocationComponent,
 		OrganizationListComponent,
 		EditOrganizationDepartmentsComponent,
 		EditOrganizationVendorsComponent,
@@ -91,7 +94,8 @@ import { ColorPickerModule } from 'ngx-color-picker';
 		EditOrganizationClientsComponent,
 		EditOrganizationProjectsComponent,
 		EditOrganizationTeamsComponent,
-		EditOrganizationTeamsMutationComponent
+		EditOrganizationTeamsMutationComponent,
+		EditOrganizationOtherSettingsComponent
 	]
 })
 export class EditOrganizationSettingsModule {}

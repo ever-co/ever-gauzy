@@ -1,0 +1,102 @@
+import { Component, Input, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+	AlignmentOptions,
+	DefaultValueDateTypeEnum,
+	Organization,
+	WeekDaysEnum
+} from '@gauzy/models';
+import { NbToastrService } from '@nebular/theme';
+import * as moment from 'moment';
+import * as timezone from 'moment-timezone';
+import { OrganizationsService } from '../../../../../@core/services/organizations.service';
+
+@Component({
+	selector: 'ga-edit-org-other-settings',
+	templateUrl: './edit-organization-other-settings.component.html',
+	styleUrls: ['./edit-organization-other-settings.component.scss']
+})
+export class EditOrganizationOtherSettingsComponent implements OnInit {
+	@Input()
+	organization: Organization;
+
+	form: FormGroup;
+
+	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
+	defaultAlignmentTypes: string[] = Object.values(AlignmentOptions).map(
+		(type) => {
+			return type[0] + type.substr(1, type.length).toLowerCase();
+		}
+	);
+	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
+	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
+	listOfDateFormats = [
+		'M/D/YYYY',
+		'D/M/YYYY',
+		'DDDD/MMMM/YYYY',
+		'MMMM Do YYYY',
+		'dddd, MMMM Do YYYY',
+		'MMM D YYYY',
+		'YYYY-MM-DD',
+		'ddd, MMM D YYYY'
+	];
+	weekdays: string[] = Object.values(WeekDaysEnum);
+	constructor(
+		private fb: FormBuilder,
+		private organizationService: OrganizationsService,
+		private toastrService: NbToastrService
+	) {}
+
+	getTimeWithOffset(zone: string) {
+		let cutZone = zone;
+		if (zone.includes('/')) {
+			cutZone = zone.split('/')[1];
+		}
+
+		const offset = timezone.tz(zone).format('zZ');
+
+		return '(' + offset + ') ' + cutZone;
+	}
+
+	dateFormatPreview(format: string) {
+		return moment().format(format);
+	}
+
+	ngOnInit(): void {
+		this._initializedForm();
+	}
+
+	async updateOrganizationSettings() {
+		this.organizationService.update(
+			this.organization.id,
+			this.form.getRawValue()
+		);
+		this.toastrService.primary(
+			this.organization.name + ' organization settings updated.',
+			'Success'
+		);
+		this.goBack();
+	}
+
+	goBack() {
+		const currentURL = window.location.href;
+		window.location.href = currentURL.substring(
+			0,
+			currentURL.indexOf('/settings')
+		);
+	}
+
+	private _initializedForm() {
+		this.form = this.fb.group({
+			defaultValueDateType: [
+				this.organization.defaultValueDateType,
+				Validators.required
+			],
+			defaultAlignmentType: [this.organization.defaultAlignmentType],
+			brandColor: [this.organization.brandColor],
+			dateFormat: [this.organization.dateFormat],
+			timeZone: [this.organization.timeZone],
+			startWeekOn: [this.organization.startWeekOn]
+		});
+	}
+}

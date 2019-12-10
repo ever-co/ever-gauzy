@@ -1,0 +1,173 @@
+<form class="main-form" [formGroup]="form" *ngIf="form">
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'FORM.LABELS.CHOOSE_TIME_ZONE' | translate
+							}}</label>
+							<ng-select
+								[(items)]="listOfZones"
+								placeholder="Choose Timezone"
+								[searchable]="true"
+								formControlName="timeZone"
+							>
+								<ng-template
+									ng-option-tmp
+									let-item="item"
+									let-index="index"
+								>
+									{{ getTimeWithOffset(item) }}
+								</ng-template>
+								<ng-template ng-label-tmp let-item="item">
+									{{ getTimeWithOffset(item) }}
+								</ng-template>
+							</ng-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label" for="startWeekOnSelect">{{
+								'FORM.LABELS.START_WEEK_ON' | translate
+							}}</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="startWeekOn"
+								id="startWeekOnSelect"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.START_WEEK_ON'
+										| translate
+								}}"
+								fullWidth="true"
+							>
+								<nb-option
+									*ngFor="let weekday of weekdays"
+									[value]="weekday"
+								>
+									{{ 'SM_TABLE.' + weekday | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'FORM.LABELS.DATE_TYPE' | translate
+							}}</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="defaultValueDateType"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.DATE_TYPE' | translate
+								}}"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let type of defaultValueDateTypes"
+									[value]="type"
+								>
+									{{ 'SM_TABLE.' + type | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.DATE_FORMAT' | translate }}
+							</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="dateFormat"
+								placeholder="Choose Format"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let format of listOfDateFormats"
+									[value]="format"
+								>
+									{{ dateFormatPreview(format) }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.DESIGN' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.BRAND_COLOR' | translate }}
+							</label>
+							<input
+								fullWidth
+								id="brandColorInput"
+								nbInput
+								formControlName="brandColor"
+								placeholder="Add Color"
+								[colorPicker]="form.get('brandColor').value"
+								[style.background]="
+									form.get('brandColor').value
+								"
+								[value]="form.get('brandColor').value"
+								(colorPickerChange)="
+									form.get('brandColor').setValue($event)
+								"
+							/>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.LOGO_ALIGNMENT' | translate }}
+							</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="defaultAlignmentType"
+								placeholder="Align Logo To"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let type of defaultAlignmentTypes"
+									[value]="type.toUpperCase()"
+								>
+									{{ type }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+	<div class="actions">
+		<button
+			[disabled]="this.form.invalid"
+			(click)="updateOrganizationSettings()"
+			nbButton
+			status="success"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</div>
+</form>
