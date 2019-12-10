@@ -1,0 +1,58 @@
+.main-form {
+	width: 100%;
+}
+
+.content {
+	display: flex;
+	padding: 50px 0px;
+}
+
+.organization-container {
+	height: 670px;
+	padding-right: 70px;
+	margin-right: 70px;
+	border-right: 1px solid rgba(0, 0, 0, 0.1);
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	transition: transform 150ms ease-in-out;
+
+	.organization-photo {
+		width: fit-content;
+		height: fit-content;
+		position: relative;
+
+		div {
+			pointer-events: none;
+			background: black;
+			position: absolute;
+			height: 100%;
+			width: 100%;
+			border-radius: 13px;
+		}
+
+		img {
+			width: 180px;
+			height: auto;
+			border-radius: 13px;
+		}
+
+		input {
+			width: 100%;
+			height: 100%;
+			opacity: 0;
+			position: absolute;
+			z-index: 3;
+			cursor: pointer;
+		}
+
+		svg {
+			z-index: 2;
+			transition: opacity 0.2s ease-in;
+			opacity: 0.3;
+			position: absolute;
+			top: calc(50% - 68px / 2);
+			left: calc(50% - 68px / 2);
+		}
+	}
+}

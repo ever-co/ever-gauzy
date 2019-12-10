@@ -8,7 +8,6 @@ import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
 import { OrganizationsService } from '../../../../@core/services/organizations.service';
-import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 
 export enum ListsInputType {
 	DEPARTMENTS = 'DEPARTMENTS',
@@ -26,13 +25,8 @@ export enum ListsInputType {
 	providers: [CountryService]
 })
 export class EditOrganizationSettingsComponent implements OnInit {
-	@ViewChild('main', { static: false })
-	main: EditOrganizationMainComponent;
-
-	imageUrl: string;
-
 	organization: Organization;
-	hoverState: boolean;
+
 	departments: string[] = [];
 	positions: string[] = [];
 	vendors: string[] = [];
@@ -47,7 +41,6 @@ export class EditOrganizationSettingsComponent implements OnInit {
 		private organizationService: OrganizationsService,
 		private countryService: CountryService,
 		private toastrService: NbToastrService,
-		private employeesService: EmployeesService,
 		private location: Location
 	) {}
 
@@ -90,26 +83,6 @@ export class EditOrganizationSettingsComponent implements OnInit {
 		);
 	}
 
-	async updateOrganizationSettings() {
-		this.organizationService.update(this.organization.id, {
-			imageUrl: this.imageUrl,
-			...this.main.mainUpdateObj
-		});
-
-		this.toastrService.primary(
-			this.organization.name + ' organization main info updeted.',
-			'Success'
-		);
-
-		this.goBack();
-	}
-
-	handleImageUploadError(event: any) {}
-
-	updateImageUrl(url: string) {
-		this.imageUrl = url;
-	}
-
 	private async _loadOrganization(id: string) {
 		try {
 			await this.loadCountries();
@@ -117,23 +90,12 @@ export class EditOrganizationSettingsComponent implements OnInit {
 				.getById(id)
 				.pipe(first())
 				.toPromise();
-			this.imageUrl = this.organization.imageUrl;
-			this.loadEmployeesCount();
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,
 				'Error'
 			);
 		}
-	}
-
-	private async loadEmployeesCount() {
-		const { total } = await this.employeesService
-			.getAll([], { organization: { id: this.organization.id } })
-			.pipe(first())
-			.toPromise();
-
-		this.employeesCount = total;
 	}
 
 	private async loadCountries() {
