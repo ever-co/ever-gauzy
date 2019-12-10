@@ -7,8 +7,6 @@ import * as nodemailer from 'nodemailer';
 import { User, UserService } from '../user';
 import { environment as env, environment } from '@env-api/environment';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
-import ResetPasswordParameters from './dto/reset-password-parameters';
-import EmailAddress from './dto/email-address';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -55,7 +53,7 @@ export class AuthService {
 
 	async requestPassword(
 		findObj: any
-	): Promise<{ user: User; token: string } | null> {
+	): Promise<{ id: string; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
 			relations: ['role']
 		});
@@ -68,7 +66,8 @@ export class AuthService {
 
 			if (token) {
 				const url =
-					env.host + ':' + env.port + '/auth/reset-password/' + token;
+					'http://localhost:4200/#/auth/reset-password?token=' +
+					token;
 
 				const transporter = nodemailer.createTransport({
 					host: 'smtp.ethereal.email',
@@ -93,7 +92,7 @@ export class AuthService {
 				};
 
 				return {
-					user,
+					id: user.id,
 					token
 				};
 
@@ -119,21 +118,21 @@ export class AuthService {
 		}
 	}
 
-	async resetPassword(resetPassword: ResetPasswordParameters) {
-		if (resetPassword.newPassword.length < 6) {
+	async resetPassword(findObject) {
+		if (findObject.password.length < 6) {
 			throw new Error('Password should be at least 6 characters long');
 		}
 
-		if (resetPassword.newPassword !== resetPassword.confirmedPassword) {
+		if (findObject.password !== findObject.confirmPassword) {
 			throw new Error('Passwords must match.');
 		}
 
-		if (!resetPassword.ResetPasswordToken) {
+		if (!findObject.token) {
 			throw new Error('Authorization token is invalid or missing');
 		}
 
-		const hash = this.getPasswordHash(resetPassword.newPassword);
-		return this.userService.changePassword(resetPassword);
+		const hash = this.getPasswordHash(findObject.password);
+		return this.userService.changePassword(findObject);
 	}
 
 	async register(input: IUserRegistrationInput): Promise<User> {

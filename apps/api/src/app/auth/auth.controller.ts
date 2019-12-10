@@ -19,7 +19,6 @@ import { RequestContext } from '../core/context';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { getUserDummyImage } from '../core';
 import { AuthGuard } from '@nestjs/passport';
-import ResetPasswordParameters from './dto/reset-password-parameters';
 
 @ApiUseTags('Auth')
 @Controller()
@@ -78,21 +77,16 @@ export class AuthController {
 		return this.authService.login(findObj, password);
 	}
 
-	@Post('/reset-password/:token')
-	async resetPassword(
-		@Body() resetPassword: ResetPasswordParameters,
-		@Res() res
-	) {
-		return await this.authService
-			.resetPassword(resetPassword)
-			.then(() => res.status(200).send({ message: 'ok' }));
+	@Post('/reset-password')
+	async resetPassword(@Body() findObject, ...options: any[]) {
+		return await this.authService.resetPassword(findObject);
 	}
 
 	@Post('/request-password')
 	async requestPass(
 		@Body() findObj,
 		...options: any[]
-	): Promise<{ user: IUser; token: string } | null> {
+	): Promise<{ id: string; token: string } | null> {
 		return await this.authService.requestPassword(findObj);
 	}
 

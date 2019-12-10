@@ -32,11 +32,15 @@ export class AuthService {
 
 	requestPassword(
 		requestPasswordInput
-	): Observable<{ user?: User; token?: string }> {
+	): Observable<{ id?: string; token?: string }> {
 		return this.http.post<{ user?: User; token?: string }>(
 			'/api/auth/request-password',
 			requestPasswordInput
 		);
+	}
+
+	resetPassword(resetPasswordInput) {
+		return this.http.post('/api/auth/reset-password', resetPasswordInput);
 	}
 
 	hasRole(roles: RolesEnum[]): Observable<boolean> {
