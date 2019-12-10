@@ -29,8 +29,19 @@
 				>
 					<ga-edit-org-main
 						[organization]="organization"
-						[countries]="countries"
 					></ga-edit-org-main>
+				</nb-tab>
+
+				<nb-tab
+					[active]="activeTabName === 'location'"
+					tabTitle="{{ 'ORGANIZATIONS_PAGE.LOCATION' | translate }}"
+					tabIcon="pin-outline"
+					responsive
+				>
+					<ga-edit-org-location
+						[organization]="organization"
+						[countries]="countries"
+					></ga-edit-org-location>
 				</nb-tab>
 
 				<nb-tab
@@ -99,6 +110,17 @@
 					<ga-edit-org-teams>
 						#teams [organizationId]="organization?.id"
 					</ga-edit-org-teams>
+				</nb-tab>
+
+				<nb-tab
+					[active]="activeTabName === 'settings'"
+					tabTitle="{{ 'ORGANIZATIONS_PAGE.SETTINGS' | translate }}"
+					tabIcon="settings-outline"
+					responsive
+				>
+					<ga-edit-org-other-settings
+						[organization]="organization"
+					></ga-edit-org-other-settings>
 				</nb-tab>
 			</nb-tabset>
 		</div>

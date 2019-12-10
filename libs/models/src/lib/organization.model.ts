@@ -20,6 +20,7 @@ export interface Organization extends IBaseEntityModel {
 	city?: string;
 	address?: string;
 	address2?: string;
+	postcode?: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {

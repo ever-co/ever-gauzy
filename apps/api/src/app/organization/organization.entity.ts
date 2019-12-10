@@ -118,4 +118,10 @@ export class Organization extends Base implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	address2?: string;
+
+	@ApiModelProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	postcode?: string;
 }
