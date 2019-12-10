@@ -291,6 +291,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	) {
 		let findObj;
 		this.showTable = false;
+		this.selectedIncome = null;
 
 		if (orgId) {
 			findObj = {

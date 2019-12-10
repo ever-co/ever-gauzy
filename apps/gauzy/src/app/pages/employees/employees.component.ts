@@ -285,6 +285,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	}
 
 	private async loadPage() {
+		this.selectedEmployee = null;
+
 		const { items } = await this.employeesService
 			.getAll(['user'], {
 				organization: { id: this.selectedOrganizationId }

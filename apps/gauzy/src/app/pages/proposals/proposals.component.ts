@@ -283,6 +283,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 
 	private async _loadTableData(orgId?: string) {
 		this.showTable = false;
+		this.selectedProposal = null;
 		let items: Proposal[];
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(

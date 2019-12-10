@@ -283,6 +283,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 	private async _loadTableData(orgId?: string) {
 		let findObj;
 		this.showTable = false;
+		this.selectedExpense = null;
 
 		if (orgId) {
 			findObj = {
