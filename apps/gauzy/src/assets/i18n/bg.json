@@ -77,7 +77,8 @@
 			"LOGO_ALIGNMENT": "Logo Alignment",
 			"BRAND_COLOR": "Brand Color",
 			"DATE_FORMAT": "Date Format",
-			"CHOOSE_TIME_ZONE": "Choose Time Zone"
+			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"POSTCODE": "Postcode (Zip)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -109,7 +110,8 @@
 			"COUNTRY": "Държава",
 			"CITY": "Град",
 			"ADDRESS": "Address",
-			"ADDRESS_2": "Address 2"
+			"ADDRESS_2": "Address 2",
+			"POSTCODE": "Postcode (Zip)"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Потвърждавате ли изтриване на",
@@ -210,6 +212,8 @@
 		"PROJECTS": "Проекти",
 		"ACTIVE": "Активна",
 		"ARCHIVED": "Архивирана",
+		"LOCATION": "Location",
+		"SETTINGS": "Настройки",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
@@ -229,7 +233,9 @@
 			"TYPE": "Тип",
 			"CURRENCY": "Валута",
 			"TEAMS": "Отбори",
-			"ADD_NEW_CLIENT": "Добавяне на нов клиент"
+			"ADD_NEW_CLIENT": "Добавяне на нов клиент",
+			"GENERAL_SETTINGS": "General Settings",
+			"DESIGN": "Design"
 		}
 	},
 	"PROPOSALS_PAGE": {
