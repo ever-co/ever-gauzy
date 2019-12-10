@@ -77,7 +77,8 @@
 			"LOGO_ALIGNMENT": "Логотип трассы",
 			"BRAND_COLOR": "Цвет бренда",
 			"DATE_FORMAT": "Формат даты",
-			"CHOOSE_TIME_ZONE": "Выберите часовой пояс"
+			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
+			"POSTCODE": "Postcode (Zip)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -109,7 +110,8 @@
 			"COUNTRY": "Страна",
 			"CITY": "Город",
 			"ADDRESS": "Адрес",
-			"ADDRESS_2": "Адрес 2"
+			"ADDRESS_2": "Адрес 2",
+			"POSTCODE": "Postcode (Zip)"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Вы уверены, что хотите удалить",
@@ -210,6 +212,8 @@
 		"PROJECTS": "Проекты",
 		"ACTIVE": "Активно",
 		"ARCHIVED": "Архивирован",
+		"LOCATION": "Местоположение",
+		"SETTINGS": "Настройки",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -229,7 +233,9 @@
 			"TYPE": "Тип",
 			"CURRENCY": "Валюта",
 			"TEAMS": "Команды",
-			"ADD_NEW_CLIENT": "Добавить клиента"
+			"ADD_NEW_CLIENT": "Добавить клиента",
+			"GENERAL_SETTINGS": "Общие настройки",
+			"DESIGN": "Дизайн"
 		}
 	},
 	"PROPOSALS_PAGE": {
