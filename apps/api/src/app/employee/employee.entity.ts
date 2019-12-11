@@ -56,5 +56,5 @@ export class Employee extends Base implements IEmployee {
 	@JoinTable({
 		name: 'organization_team_employee'
 	})
-	teams: OrganizationTeams[];
+	teams?: OrganizationTeams[];
 }

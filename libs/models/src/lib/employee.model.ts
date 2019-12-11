@@ -2,6 +2,7 @@ import { User } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
+import { OrganizationTeams } from './organization-teams-model';
 
 export interface Employee extends IBaseEntityModel {
 	endWork?: any;
@@ -11,6 +12,7 @@ export interface Employee extends IBaseEntityModel {
 	orgId: string;
 	valueDate?: Date;
 	isActive: boolean;
+	teams?: OrganizationTeams[];
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {
