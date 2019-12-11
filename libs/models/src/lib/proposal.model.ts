@@ -15,7 +15,7 @@ export interface Proposal extends IBaseEntityModel {
 }
 
 export interface ProposalCreateInput {
-	employeeId: string;
+	employeeId?: string;
 	organizationId?: string;
 	jobPostUrl?: string;
 	valueDate?: Date;
