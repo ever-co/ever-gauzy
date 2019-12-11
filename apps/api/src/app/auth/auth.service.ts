@@ -1,11 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { User, UserService } from '../user';
 import * as bcrypt from 'bcrypt';
-import { environment as env, environment } from '@env-api/environment';
-
-import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { get, post, Response } from 'request';
+import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
+import * as nodemailer from 'nodemailer';
+
+import { User, UserService } from '../user';
+import { environment as env, environment } from '@env-api/environment';
+import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -48,6 +49,92 @@ export class AuthService {
 			user,
 			token
 		};
+	}
+
+	async requestPassword(
+		findObj: any
+	): Promise<{ id: string; token: string } | null> {
+		const user = await this.userService.findOne(findObj, {
+			relations: ['role']
+		});
+
+		let token: string;
+
+		if (user && user.id) {
+			const newToken = await this.createToken(user);
+			token = newToken.token;
+
+			if (token) {
+				const url = `http://localhost:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
+
+				const transporter = nodemailer.createTransport({
+					host: 'smtp.ethereal.email',
+					port: 587,
+					secure: false, // true for 465, false for other ports
+					auth: {
+						user: '<username>',
+						pass: '<password>'
+					}
+				});
+
+				const mailOptions = {
+					from: 'Gauzy',
+					to: user.email,
+					subject: 'Forgotten Password',
+					text: 'Forgot Password',
+					html:
+						'Hello! <br><br> We received a password change request.<br><br>If you requested to reset your password<br><br>' +
+						'<a href=' +
+						url +
+						'>Click here</a>'
+				};
+
+				return {
+					id: user.id,
+					token
+				};
+
+				const sent = await new Promise<boolean>(async function(
+					resolve,
+					reject
+				) {
+					return await transporter.sendMail(
+						mailOptions,
+						async (error, info) => {
+							if (error) {
+								console.log('Message sent: %s', error);
+								return reject(false);
+							}
+							console.log('Message sent: %s', info.messageId);
+							resolve(true);
+						}
+					);
+				});
+			}
+		} else {
+			throw new Error('Email not found');
+		}
+	}
+
+	async resetPassword(findObject) {
+		if (findObject.password.length < 6) {
+			throw new Error('Password should be at least 6 characters long');
+		}
+
+		if (findObject.password !== findObject.confirmPassword) {
+			throw new Error('Passwords must match.');
+		}
+
+		if (!findObject.user.id) {
+			throw new Error('User not found');
+		}
+
+		if (!findObject.user.token) {
+			throw new Error('Authorization token is invalid or missing');
+		}
+
+		const hash = await this.getPasswordHash(findObject.password);
+		return this.userService.changePassword(findObject.user.id, hash);
 	}
 
 	async register(input: IUserRegistrationInput): Promise<User> {
@@ -138,7 +225,7 @@ export class AuthService {
 		}
 	}
 
-	async createToken(user: { id: string }): Promise<{ token: string }> {
+	async createToken(user: { id?: string }): Promise<{ token: string }> {
 		const token: string = sign({ id: user.id }, env.JWT_SECRET, {});
 		return { token };
 	}

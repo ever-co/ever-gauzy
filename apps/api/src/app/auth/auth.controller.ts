@@ -77,6 +77,19 @@ export class AuthController {
 		return this.authService.login(findObj, password);
 	}
 
+	@Post('/reset-password')
+	async resetPassword(@Body() findObject, ...options: any[]) {
+		return await this.authService.resetPassword(findObject);
+	}
+
+	@Post('/request-password')
+	async requestPass(
+		@Body() findObj,
+		...options: any[]
+	): Promise<{ id: string; token: string } | null> {
+		return await this.authService.requestPassword(findObj);
+	}
+
 	@Get('google')
 	@UseGuards(AuthGuard('google'))
 	googleLogin() {}
