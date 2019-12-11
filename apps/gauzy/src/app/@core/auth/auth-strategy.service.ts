@@ -262,8 +262,12 @@ export class AuthStrategy extends NbAuthStrategy {
 	}): Observable<NbAuthResult> {
 		const { password, confirmPassword } = args;
 
-		const index = this.router.url.indexOf('=');
-		const token = this.router.url.substring(index + 1);
+		const indexToken = this.router.url.indexOf('=');
+		const indexId = this.router.url.lastIndexOf('=');
+		const token = this.router.url.substring(indexToken + 1);
+		const id = this.router.url.substring(indexId + 1);
+
+		console.log(id);
 
 		if (password !== confirmPassword) {
 			return Observable.of(
@@ -275,6 +279,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 		const resetPassInput = {
 			user: {
+				id,
 				token
 			},
 			password,

@@ -65,9 +65,7 @@ export class AuthService {
 			token = newToken.token;
 
 			if (token) {
-				const url =
-					'http://localhost:4200/#/auth/reset-password?token=' +
-					token;
+				const url = `http://localhost:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
 				const transporter = nodemailer.createTransport({
 					host: 'smtp.ethereal.email',
@@ -127,12 +125,16 @@ export class AuthService {
 			throw new Error('Passwords must match.');
 		}
 
-		if (!findObject.token) {
+		if (!findObject.user.id) {
+			throw new Error('User not found');
+		}
+
+		if (!findObject.user.token) {
 			throw new Error('Authorization token is invalid or missing');
 		}
 
-		const hash = this.getPasswordHash(findObject.password);
-		return this.userService.changePassword(findObject);
+		const hash = await this.getPasswordHash(findObject.password);
+		return this.userService.changePassword(findObject.user.id, hash);
 	}
 
 	async register(input: IUserRegistrationInput): Promise<User> {
