@@ -56,24 +56,32 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 	private async registerProposal() {
 		if (this.form.valid) {
 			const result = this.form.value;
+			const selectedEmployee = this.employeeSelector.selectedEmployee.id;
 
 			try {
-				await this.proposalsService.create({
-					employeeId: this.employeeSelector.selectedEmployee.id,
-					organizationId: this._selectedOrganizationId,
-					jobPostUrl: result.jobPostUrl,
-					valueDate: result.valueDate,
-					jobPostContent: result.jobPostContent,
-					proposalContent: result.proposalContent,
-					status: this.statuses[0]
-				});
+				if (selectedEmployee) {
+					await this.proposalsService.create({
+						employeeId: selectedEmployee,
+						organizationId: this._selectedOrganizationId,
+						jobPostUrl: result.jobPostUrl,
+						valueDate: result.valueDate,
+						jobPostContent: result.jobPostContent,
+						proposalContent: result.proposalContent,
+						status: this.statuses[0]
+					});
 
-				this.toastrService.primary(
-					'New proposal registered',
-					'Success'
-				);
+					this.toastrService.primary(
+						'New proposal registered',
+						'Success'
+					);
 
-				this.router.navigate(['/pages/proposals']);
+					this.router.navigate(['/pages/proposals']);
+				} else {
+					this.toastrService.primary(
+						'Please select an employee from the dropdown menu.',
+						'Employee is required!'
+					);
+				}
 			} catch (error) {
 				this.toastrService.danger(
 					error.message || error.message,
