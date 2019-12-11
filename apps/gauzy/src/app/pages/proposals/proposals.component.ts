@@ -263,7 +263,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 			}
 		};
 
-		if (!this.selectedEmployeeId.length) {
+		if (!this.selectedEmployeeId) {
 			this.smartTableSettings['columns'] = {
 				...this.smartTableSettings['columns'],
 				author: {

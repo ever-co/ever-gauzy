@@ -267,8 +267,6 @@ export class AuthStrategy extends NbAuthStrategy {
 		const token = this.router.url.substring(indexToken + 1);
 		const id = this.router.url.substring(indexId + 1);
 
-		console.log(id);
-
 		if (password !== confirmPassword) {
 			return Observable.of(
 				new NbAuthResult(false, null, null, [
@@ -291,9 +289,9 @@ export class AuthStrategy extends NbAuthStrategy {
 				return new NbAuthResult(
 					true,
 					res,
-					AuthStrategy.config.register.redirect.success,
+					AuthStrategy.config.resetPass.redirect.success,
 					[],
-					AuthStrategy.config.register.defaultMessages
+					AuthStrategy.config.resetPass.defaultMessages
 				);
 			}),
 			catchError((err) => {
@@ -304,8 +302,8 @@ export class AuthStrategy extends NbAuthStrategy {
 						false,
 						err,
 						false,
-						AuthStrategy.config.register.defaultErrors,
-						[AuthStrategy.config.register.defaultErrors]
+						AuthStrategy.config.requestPass.defaultErrors,
+						[AuthStrategy.config.requestPass.defaultErrors]
 					)
 				);
 			})
