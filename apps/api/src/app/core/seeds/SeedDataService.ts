@@ -21,8 +21,13 @@ import { createIncomes } from '../../income/income.seed';
 import { Expense } from '../../expense';
 import { createExpenses } from '../../expense/expense.seed';
 import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
-import { createUsersOrganizations } from '../../user-organization';
+import {
+	createUsersOrganizations,
+	UserOrganization
+} from '../../user-organization';
 import { createCountries } from '../../country/country.seed';
+import { OrganizationTeams } from '../../organization-teams';
+import { Country } from '../../country';
 
 const allEntities = [
 	User,
@@ -31,7 +36,10 @@ const allEntities = [
 	Organization,
 	Income,
 	Expense,
-	EmployeeSetting
+	EmployeeSetting,
+	OrganizationTeams,
+	UserOrganization,
+	Country
 ];
 
 @Injectable()
@@ -43,18 +51,22 @@ export class SeedDataService {
 
 	async createConnection() {
 		try {
-			this.log(chalk.green('🏃‍CONNECTING TO DATABASE...'));
+			this.connection = getConnection();
+		} catch (error) {
+			this.log('DATABASE CONNECTION DOES NOT EXIST');
+		}
 
-			this.connection = await getConnection();
+		if (!this.connection || !this.connection.isConnected) {
+			try {
+				this.log(chalk.green('🏃‍CONNECTING TO DATABASE...'));
 
-			if (!this.connection.isConnected) {
 				this.connection = await createConnection({
 					...env.database,
 					entities: allEntities
 				} as ConnectionOptions);
+			} catch (error) {
+				this.handleError(error, 'Unable to connect to database');
 			}
-		} catch (error) {
-			this.handleError(error, 'Unable to connect to database');
 		}
 	}
 
@@ -194,6 +206,7 @@ export class SeedDataService {
 		const entities = await this.getEntities();
 		await this.cleanAll(entities);
 		//await loadAll(entities);
+		this.log(chalk.green(`✅ RESET DATABASE SUCCESSFUL`));
 	}
 
 	private handleError(error: Error, message?: string): void {

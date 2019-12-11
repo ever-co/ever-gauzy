@@ -24,5 +24,5 @@ export class OrganizationTeams extends Base implements IOrganizationTeams {
 	@JoinTable({
 		name: 'organization_team_employee'
 	})
-	members: Employee[];
+	members?: Employee[];
 }
