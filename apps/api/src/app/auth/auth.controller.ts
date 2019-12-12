@@ -18,6 +18,7 @@ import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { getUserDummyImage } from '../core';
+import { environment as env, environment } from '@env-api/environment';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiUseTags('Auth')
@@ -104,10 +105,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`http://localhost:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect('http://localhost:4200/#/auth/register');
+			return res.redirect(`${env.host}:4200/#/auth/register`);
 		}
 	}
 
@@ -134,10 +135,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`http://localhost:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect('http://localhost:4200/#/auth/register');
+			return res.redirect(`${env.host}:4200/#/auth/register`);
 		}
 	}
 }

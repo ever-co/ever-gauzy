@@ -14,7 +14,8 @@ export const env: Env = cleanEnv(
 	process.env,
 	{
 		production: bool({ default: false }),
-		API_BASE_URL: str({ default: 'http://localhost:3000' })
+		API_BASE_URL: str({ default: 'http://localhost:3000' }),
+		CLIENT_BASE_URL: str({ default: 'http://localhost:4200' })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
