@@ -51,7 +51,12 @@
 		"THURSDAY": "Четверг",
 		"FRIDAY": "Пятница",
 		"SATURDAY": "Суббота",
-		"SUNDAY": "Воскресенье"
+		"SUNDAY": "Воскресенье",
+		"NONE": "Нет",
+		"BI_WEEKLY": "Еженедельно",
+		"WEEKLY": "Еженедельно",
+		"TWICE_PER_MONTH": "Дважды в месяц",
+		"MONTHLY": "Ежемесячно"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
@@ -78,7 +83,11 @@
 			"BRAND_COLOR": "Цвет бренда",
 			"DATE_FORMAT": "Формат даты",
 			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
-			"POSTCODE": "Postcode (Zip)"
+			"POSTCODE": "Postcode (Zip)",
+			"PAY_PERIOD": "Период оплаты",
+			"BILL_RATE": "Ставка счета",
+			"CURRENCY_PER_HOUR": "Валюта / час",
+			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -111,7 +120,9 @@
 			"CITY": "Город",
 			"ADDRESS": "Адрес",
 			"ADDRESS_2": "Адрес 2",
-			"POSTCODE": "Postcode (Zip)"
+			"POSTCODE": "Postcode (Zip)",
+			"BILL_RATE": "Ставка счета",
+			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Вы уверены, что хотите удалить",
