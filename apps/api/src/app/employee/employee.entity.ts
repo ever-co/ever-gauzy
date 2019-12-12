@@ -1,20 +1,24 @@
 import {
-	Entity,
-	Column,
-	JoinColumn,
-	OneToOne,
-	RelationId,
-	ManyToOne,
-	ManyToMany,
-	JoinTable
-} from 'typeorm';
+	CurrenciesEnum,
+	Employee as IEmployee,
+	PayPeriodEnum
+} from '@gauzy/models';
 import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
+import { IsDate, IsEnum, IsNumber, IsOptional } from 'class-validator';
+import {
+	Column,
+	Entity,
+	JoinColumn,
+	JoinTable,
+	ManyToMany,
+	ManyToOne,
+	OneToOne,
+	RelationId
+} from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Employee as IEmployee } from '@gauzy/models';
-import { IsDate, IsOptional } from 'class-validator';
-import { User } from '../user';
 import { Organization } from '../organization';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { User } from '../user';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
@@ -51,6 +55,30 @@ export class Employee extends Base implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	endWork?: Date;
+
+	@ApiModelProperty({ type: String, enum: PayPeriodEnum })
+	@IsEnum(PayPeriodEnum)
+	@IsOptional()
+	@Column({ nullable: true })
+	payPeriod?: string;
+
+	@ApiModelProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ type: 'numeric', nullable: true })
+	billRateValue?: number;
+
+	@ApiModelProperty({ type: String, enum: CurrenciesEnum })
+	@IsEnum(CurrenciesEnum)
+	@IsOptional()
+	@Column({ nullable: true })
+	billRateCurrency?: string;
+
+	@ApiModelProperty({ type: Number })
+	@IsNumber()
+	@IsOptional()
+	@Column({ nullable: true })
+	reWeeklyLimit?: number;
 
 	@ManyToMany((type) => OrganizationTeams) // , orgTeams => orgTeams.members
 	@JoinTable({
