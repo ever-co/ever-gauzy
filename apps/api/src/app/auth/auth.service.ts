@@ -65,7 +65,7 @@ export class AuthService {
 			token = newToken.token;
 
 			if (token) {
-				const url = `http://localhost:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
+				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
 				const transporter = nodemailer.createTransport({
 					host: 'smtp.ethereal.email',
