@@ -51,7 +51,12 @@
 		"THURSDAY": "Thursday",
 		"FRIDAY": "Friday",
 		"SATURDAY": "Saturday",
-		"SUNDAY": "Sunday"
+		"SUNDAY": "Sunday",
+		"NONE": "None",
+		"BI_WEEKLY": "Bi Weekly",
+		"WEEKLY": "Weekly",
+		"TWICE_PER_MONTH": "Twice per month",
+		"MONTHLY": "Monthly"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
@@ -78,7 +83,11 @@
 			"BRAND_COLOR": "Brand Color",
 			"DATE_FORMAT": "Date Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
-			"POSTCODE": "Postcode (Zip)"
+			"POSTCODE": "Postcode (Zip)",
+			"PAY_PERIOD": "Pay Period",
+			"BILL_RATE": "Bill Rate",
+			"CURRENCY_PER_HOUR": "Currency / hr",
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -111,7 +120,9 @@
 			"CITY": "עיר",
 			"ADDRESS": "Address",
 			"ADDRESS_2": "Address 2",
-			"POSTCODE": "Postcode (Zip)"
+			"POSTCODE": "Postcode (Zip)",
+			"BILL_RATE": "Bill Rate",
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
