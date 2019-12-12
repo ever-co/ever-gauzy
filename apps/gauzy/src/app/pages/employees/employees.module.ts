@@ -9,6 +9,7 @@ import {
 	NbTooltipModule,
 	NbBadgeModule,
 	NbSelectModule,
+	NbRouteTabsetModule,
 	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -32,6 +33,9 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
 import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
 import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
+import { EditEmployeeMainComponent } from './edit-employee/edit-employee-profile/edit-employee-main/edit-employee-main.component';
+import { EmployeeStore } from '../../@core/services/employee-store.service';
+import { EditEmployeeRatesComponent } from './edit-employee/edit-employee-profile/edit-employee-rate/edit-employee-rate.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -46,7 +50,9 @@ const COMPONENTS = [
 	EmployeeFullNameComponent,
 	EmployeeWorkStatusComponent,
 	EditEmployeeComponent,
-	EditEmployeeProfileComponent
+	EditEmployeeProfileComponent,
+	EditEmployeeMainComponent,
+	EditEmployeeRatesComponent
 ];
 
 @NgModule({
@@ -65,9 +71,11 @@ const COMPONENTS = [
 		EmployeeEndWorkModule,
 		NbTooltipModule,
 		NgSelectModule,
+		NbSelectModule,
 		EmployeeRecurringExpenseMutationModule,
 		ImageUploaderModule,
 		NbBadgeModule,
+		NbRouteTabsetModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
