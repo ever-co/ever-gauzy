@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	AlignmentOptions,
@@ -7,8 +7,11 @@ import {
 	WeekDaysEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 
 @Component({
@@ -17,7 +20,8 @@ import { OrganizationsService } from '../../../../../@core/services/organization
 	styleUrls: ['./edit-organization-other-settings.component.scss']
 })
 export class EditOrganizationOtherSettingsComponent implements OnInit {
-	@Input()
+	private _ngDestroy$ = new Subject<void>();
+
 	organization: Organization;
 
 	form: FormGroup;
@@ -44,7 +48,8 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 	constructor(
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private readonly organizationEditStore: OrganizationEditStore
 	) {}
 
 	getTimeWithOffset(zone: string) {
@@ -63,7 +68,12 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
-		this._initializedForm();
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				this.organization = organization;
+				this._initializedForm();
+			});
 	}
 
 	async updateOrganizationSettings() {
@@ -87,6 +97,10 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 	}
 
 	private _initializedForm() {
+		if (!this.organization) {
+			return;
+		}
+
 		this.form = this.fb.group({
 			defaultValueDateType: [
 				this.organization.defaultValueDateType,

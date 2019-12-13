@@ -1,14 +1,18 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
+import { Component, OnInit } from '@angular/core';
 import { OrganizationPositions } from '@gauzy/models';
+import { NbToastrService } from '@nebular/theme';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-edit-org-positions',
 	templateUrl: './edit-organization-positions.component.html'
 })
 export class EditOrganizationPositionsComponent implements OnInit {
-	@Input()
+	private _ngDestroy$ = new Subject<void>();
+
 	organizationId: string;
 
 	showAddCard: boolean;
@@ -17,11 +21,19 @@ export class EditOrganizationPositionsComponent implements OnInit {
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
-		private readonly toastrService: NbToastrService
+		private readonly toastrService: NbToastrService,
+		private readonly organizationEditStore: OrganizationEditStore
 	) {}
 
 	ngOnInit(): void {
-		this.loadPositions();
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organizationId = organization.id;
+					this.loadPositions();
+				}
+			});
 	}
 
 	async removePosition(id: string, name: string) {

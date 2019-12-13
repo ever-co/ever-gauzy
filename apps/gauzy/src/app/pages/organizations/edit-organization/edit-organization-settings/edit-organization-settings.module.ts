@@ -1,48 +1,50 @@
-import { NgModule } from '@angular/core';
-import {
-	NbCardModule,
-	NbButtonModule,
-	NbInputModule,
-	NbIconModule,
-	NbDialogModule,
-	NbSelectModule,
-	NbListModule,
-	NbTabsetModule,
-	NbActionsModule,
-	NbDatepickerModule,
-	NbSpinnerModule
-} from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
-import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
-import {
-	ThemeModule,
-	HttpLoaderFactory
-} from '../../../../@theme/theme.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { OrganizationsMutationModule } from 'apps/gauzy/src/app/@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { UserFormsModule } from 'apps/gauzy/src/app/@shared/user/forms/user-forms.module';
-import { ImageUploaderModule } from 'apps/gauzy/src/app/@shared/image-uploader/image-uploader.module';
-import { RemoveLodashModule } from 'apps/gauzy/src/app/@shared/remove-lodash/remove-lodash.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { OrganizationListComponent } from '../organization-list/organization-list.component';
-import { EditOrganizationDepartmentsComponent } from './edit-organization-departments/edit-organization-departments.component';
-import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
-import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
-import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
-import { EditOrganizationPositionsComponent } from './edit-organization-positions/edit-organization-positions.component';
-import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
-import { EditOrganizationClientsComponent } from './edit-organization-clients/edit-organization-clients.component';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
-import { EditOrganizationProjectsComponent } from './edit-organization-projects/edit-organization-projects.component';
+import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+	NbActionsModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbIconModule,
+	NbInputModule,
+	NbListModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbTabsetModule
+} from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
+import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
+import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
+import { ImageUploaderModule } from 'apps/gauzy/src/app/@shared/image-uploader/image-uploader.module';
+import { OrganizationsMutationModule } from 'apps/gauzy/src/app/@shared/organizations/organizations-mutation/organizations-mutation.module';
+import { RemoveLodashModule } from 'apps/gauzy/src/app/@shared/remove-lodash/remove-lodash.module';
+import { UserFormsModule } from 'apps/gauzy/src/app/@shared/user/forms/user-forms.module';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
-import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
+import {
+	HttpLoaderFactory,
+	ThemeModule
+} from '../../../../@theme/theme.module';
+import { OrganizationListComponent } from '../organization-list/organization-list.component';
+import { EditOrganizationClientsComponent } from './edit-organization-clients/edit-organization-clients.component';
+import { EditOrganizationDepartmentsComponent } from './edit-organization-departments/edit-organization-departments.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
+import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
+import { EditOrganizationPositionsComponent } from './edit-organization-positions/edit-organization-positions.component';
+import { EditOrganizationProjectsComponent } from './edit-organization-projects/edit-organization-projects.component';
+import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
+import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
+import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
+import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
 
 @NgModule({
 	imports: [
@@ -73,6 +75,7 @@ import { EditOrganizationOtherSettingsComponent } from './edit-organization-othe
 		RemoveLodashModule,
 		NbListModule,
 		NbTabsetModule,
+		NbRouteTabsetModule,
 		NbDatepickerModule,
 		EmployeeSelectorsModule
 	],
@@ -80,7 +83,8 @@ import { EditOrganizationOtherSettingsComponent } from './edit-organization-othe
 		OrganizationDepartmentsService,
 		OrganizationVendorsService,
 		OrganizationPositionsService,
-		OrganizationClientsService
+		OrganizationClientsService,
+		OrganizationEditStore
 	],
 	declarations: [
 		EditOrganizationSettingsComponent,

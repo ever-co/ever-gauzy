@@ -1,19 +1,23 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
+import { Component, OnInit } from '@angular/core';
 import {
 	OrganizationClients,
 	OrganizationClientsCreateInput,
 	OrganizationProjects
 } from '@gauzy/models';
+import { NbToastrService } from '@nebular/theme';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-edit-org-clients',
 	templateUrl: './edit-organization-clients.component.html'
 })
 export class EditOrganizationClientsComponent implements OnInit {
-	@Input()
+	private _ngDestroy$ = new Subject<void>();
+
 	organizationId: string;
 
 	showAddCard: boolean;
@@ -27,11 +31,19 @@ export class EditOrganizationClientsComponent implements OnInit {
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly toastrService: NbToastrService
+		private readonly toastrService: NbToastrService,
+		private readonly organizationEditStore: OrganizationEditStore
 	) {}
 
 	ngOnInit(): void {
-		this.loadClients();
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organizationId = organization.id;
+					this.loadClients();
+				}
+			});
 	}
 
 	async removeClient(id: string, name: string) {
@@ -75,6 +87,10 @@ export class EditOrganizationClientsComponent implements OnInit {
 	}
 
 	private async loadClients() {
+		if (!this.organizationId) {
+			return;
+		}
+
 		const res = await this.organizationClientsService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});

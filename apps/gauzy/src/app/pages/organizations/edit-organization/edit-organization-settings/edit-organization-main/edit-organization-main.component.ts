@@ -1,8 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CurrenciesEnum, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { first } from 'rxjs/operators';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../../../../@core/services';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 
@@ -12,22 +14,21 @@ import { OrganizationsService } from '../../../../../@core/services/organization
 	styleUrls: ['./edit-organization-main.component.scss']
 })
 export class EditOrganizationMainComponent implements OnInit {
-	@Input()
-	organization: Organization;
+	private _ngDestroy$ = new Subject<void>();
 
+	organization: Organization;
 	imageUrl: string;
 	hoverState: boolean;
 	employeesCount: number;
-
 	form: FormGroup;
-
 	currencies: string[] = Object.values(CurrenciesEnum);
 
 	constructor(
 		private fb: FormBuilder,
 		private employeesService: EmployeesService,
 		private organizationService: OrganizationsService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private organizationEditStore: OrganizationEditStore
 	) {}
 
 	updateImageUrl(url: string) {
@@ -37,9 +38,16 @@ export class EditOrganizationMainComponent implements OnInit {
 	handleImageUploadError(event: any) {}
 
 	ngOnInit(): void {
-		this._initializedForm();
-		this.imageUrl = this.organization.imageUrl;
-		this.loadEmployeesCount();
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organization = organization;
+					this._initializeForm();
+					this.imageUrl = this.organization.imageUrl;
+					this.loadEmployeesCount();
+				}
+			});
 	}
 
 	private async loadEmployeesCount() {
@@ -71,7 +79,11 @@ export class EditOrganizationMainComponent implements OnInit {
 		);
 	}
 
-	private _initializedForm() {
+	private _initializeForm() {
+		if (!this.organization) {
+			return;
+		}
+
 		this.form = this.fb.group({
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
