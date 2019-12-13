@@ -1,17 +1,17 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { Component, OnInit } from '@angular/core';
 import {
-	OrganizationTeams,
-	Organization,
 	Employee,
-	OrganizationTeamCreateInput
+	Organization,
+	OrganizationTeamCreateInput,
+	OrganizationTeams
 } from '@gauzy/models';
-import { first } from 'rxjs/operators';
-import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ActivatedRoute } from '@angular/router';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-edit-org-teams',
@@ -19,7 +19,8 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 	styleUrls: ['./edit-organization-teams.component.scss']
 })
 export class EditOrganizationTeamsComponent implements OnInit {
-	@Input()
+	private _ngDestroy$ = new Subject<void>();
+
 	selectedOrg: Organization;
 
 	organizationId: string;
@@ -33,20 +34,20 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private employeesService: EmployeesService,
 		private readonly toastrService: NbToastrService,
-		private store: Store,
-		private route: ActivatedRoute,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private readonly organizationEditStore: OrganizationEditStore
 	) {}
 
 	async ngOnInit() {
-		const { id } = await this.route.params.pipe(first()).toPromise();
-
-		this.organizationId = this.store.selectedOrganization
-			? this.store.selectedOrganization.id
-			: id;
-
-		this.loadTeams();
-		this.loadEmployees();
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organizationId = organization.id;
+					this.loadTeams();
+					this.loadEmployees();
+				}
+			});
 	}
 
 	async addOrEditTeam(team: OrganizationTeamCreateInput) {
@@ -133,6 +134,10 @@ export class EditOrganizationTeamsComponent implements OnInit {
 	}
 
 	private async loadEmployees() {
+		if (!this.organizationId) {
+			return;
+		}
+
 		const { items } = await this.employeesService
 			.getAll(['user'], { organization: { id: this.organizationId } })
 			.pipe(first())
@@ -142,6 +147,10 @@ export class EditOrganizationTeamsComponent implements OnInit {
 	}
 
 	private async loadTeams() {
+		if (!this.organizationId) {
+			return;
+		}
+
 		const teams = await this.organizationTeamsService.getAll(['members'], {
 			organizationId: this.organizationId
 		});

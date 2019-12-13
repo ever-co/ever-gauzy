@@ -10,13 +10,17 @@ import {
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 
 @Component({
 	selector: 'ga-edit-org-projects',
 	templateUrl: './edit-organization-projects.component.html'
 })
 export class EditOrganizationProjectsComponent implements OnInit {
-	@Input()
+	private _ngDestroy$ = new Subject<void>();
+
 	organizationId: string;
 
 	showAddCard: boolean;
@@ -37,11 +41,19 @@ export class EditOrganizationProjectsComponent implements OnInit {
 		private readonly organizationClientsService: OrganizationClientsService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
-		private store: Store
+		private store: Store,
+		private readonly organizationEditStore: OrganizationEditStore
 	) {}
 
 	ngOnInit(): void {
-		this.loadProjects();
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organizationId = organization.id;
+					this.loadProjects();
+				}
+			});
 	}
 
 	async removeProject(id: string, name: string) {
@@ -88,6 +100,10 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	}
 
 	private async loadProjects() {
+		if (!this.organizationId) {
+			return;
+		}
+
 		this.defaultCurrency = this.store.selectedOrganization
 			? this.store.selectedOrganization.currency
 			: 'USD';
@@ -101,6 +117,10 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	}
 
 	private async loadClients() {
+		if (!this.organizationId) {
+			return;
+		}
+
 		const res = await this.organizationClientsService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});

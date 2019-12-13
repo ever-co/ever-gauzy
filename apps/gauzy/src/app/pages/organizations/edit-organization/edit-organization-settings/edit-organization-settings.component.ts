@@ -1,9 +1,9 @@
-import { Location } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Params } from '@angular/router';
 import { Country, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { EmployeesService } from '../../../../@core/services';
+import { TranslateService } from '@ngx-translate/core';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
@@ -33,46 +33,92 @@ export class EditOrganizationSettingsComponent implements OnInit {
 	employeesCount: number;
 	countries: Country[] = [];
 
-	private _activeTabName = 'Main';
 	private _ngOnDestroy$ = new Subject();
+	routeParams: Params;
+	tabs: any[];
 
 	constructor(
 		private route: ActivatedRoute,
 		private organizationService: OrganizationsService,
 		private countryService: CountryService,
 		private toastrService: NbToastrService,
-		private location: Location
+		private translateService: TranslateService,
+		private organizationEditStore: OrganizationEditStore
 	) {}
-
-	get activeTabName() {
-		return this._activeTabName.toLowerCase();
-	}
-
-	tabChange(e) {
-		this._activeTabName = e.tabTitle.toLowerCase();
-		const currentURL = window.location.href;
-
-		if (
-			!currentURL.endsWith('/settings') ||
-			this._activeTabName.toLowerCase() !== 'main'
-		) {
-			window.location.href =
-				currentURL.substring(0, currentURL.indexOf('/settings') + 9) +
-				`/${this._activeTabName}`;
-		}
-	}
 
 	ngOnInit() {
 		this.route.params
 			.pipe(takeUntil(this._ngOnDestroy$))
 			.subscribe((params) => {
-				const tabName = params.tab;
-				if (tabName) {
-					this._activeTabName = tabName;
-				}
-
+				this.routeParams = params;
 				this._loadOrganization(params.id);
 			});
+
+		this.loadTabs();
+		this._applyTranslationOnTabs();
+	}
+
+	getRoute(tabName: string) {
+		return `/pages/organizations/edit/${this.routeParams.id}/settings/${tabName}`;
+	}
+
+	loadTabs() {
+		this.tabs = [
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.MAIN'),
+				icon: 'person-outline',
+				responsive: true,
+				route: this.getRoute('main')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.LOCATION'),
+				icon: 'pin-outline',
+				responsive: true,
+				route: this.getRoute('location')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.DEPARTMENTS'),
+				icon: 'briefcase-outline',
+				responsive: true,
+				route: this.getRoute('departments')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.CLIENTS'),
+				icon: 'briefcase-outline',
+				responsive: true,
+				route: this.getRoute('clients')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.POSITIONS'),
+				icon: 'award-outline',
+				responsive: true,
+				route: this.getRoute('positions')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
+				icon: 'car-outline',
+				responsive: true,
+				route: this.getRoute('vendors')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.PROJECTS'),
+				icon: 'book-outline',
+				responsive: true,
+				route: this.getRoute('projects')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS'),
+				icon: 'people-outline',
+				responsive: true,
+				route: this.getRoute('teams')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.SETTINGS'),
+				icon: 'settings-outline',
+				responsive: true,
+				route: this.getRoute('settings')
+			}
+		];
 	}
 
 	goBack() {
@@ -85,11 +131,12 @@ export class EditOrganizationSettingsComponent implements OnInit {
 
 	private async _loadOrganization(id: string) {
 		try {
-			await this.loadCountries();
 			this.organization = await this.organizationService
 				.getById(id)
 				.pipe(first())
 				.toPromise();
+
+			this.organizationEditStore.selectedOrganization = this.organization;
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,
@@ -98,8 +145,19 @@ export class EditOrganizationSettingsComponent implements OnInit {
 		}
 	}
 
-	private async loadCountries() {
-		const { items } = await this.countryService.getAll();
-		this.countries = items;
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translateService.get(prefix).subscribe((res) => {
+			result = res;
+		});
+		return result;
+	}
+
+	private _applyTranslationOnTabs() {
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngOnDestroy$))
+			.subscribe(() => {
+				this.loadTabs();
+			});
 	}
 }

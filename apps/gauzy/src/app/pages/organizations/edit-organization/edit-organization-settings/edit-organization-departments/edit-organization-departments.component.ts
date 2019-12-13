@@ -2,13 +2,17 @@ import { Component, Input, OnInit } from '@angular/core';
 import { OrganizationDepartment } from '@gauzy/models';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { NbToastrService } from '@nebular/theme';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-edit-org-departments',
 	templateUrl: './edit-organization-departments.component.html'
 })
 export class EditOrganizationDepartmentsComponent implements OnInit {
-	@Input()
+	private _ngDestroy$ = new Subject<void>();
+
 	organizationId: string;
 
 	showAddCard: boolean;
@@ -17,11 +21,19 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
-		private readonly toastrService: NbToastrService
+		private readonly toastrService: NbToastrService,
+		private readonly organizationEditStore: OrganizationEditStore
 	) {}
 
 	ngOnInit() {
-		this.loadDepartments();
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organizationId = organization.id;
+					this.loadDepartments();
+				}
+			});
 	}
 
 	async removeDepartment(id: string, name: string) {
@@ -55,6 +67,10 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 	}
 
 	private async loadDepartments() {
+		if (!this.organizationId) {
+			return;
+		}
+
 		const res = await this.organizationDepartmentsService.getAll({
 			organizationId: this.organizationId
 		});

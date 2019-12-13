@@ -85,8 +85,8 @@
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
 			"POSTCODE": "Postcode (Zip)",
 			"PAY_PERIOD": "Pay Period",
-			"BILL_RATE": "Bill Rate",
-			"CURRENCY_PER_HOUR": "Currency / hr",
+			"BILL_RATE": "Bill Rate / hr",
+			"CURRENCY_PER_HOUR": "Currency",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
 		},
 		"PLACEHOLDERS": {
@@ -121,7 +121,7 @@
 			"ADDRESS": "Address",
 			"ADDRESS_2": "Address 2",
 			"POSTCODE": "Postcode (Zip)",
-			"BILL_RATE": "Bill Rate",
+			"BILL_RATE": "Bill Rate / hr",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
 		},
 		"DELETE_CONFIRMATION": {

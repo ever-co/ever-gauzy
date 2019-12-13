@@ -13,6 +13,7 @@ import { EmployeesService } from '../../@core/services';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
 import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
+import { Store } from '../../@core/services/store.service';
 
 interface SelectedRow {
 	data: Organization;
@@ -32,7 +33,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private router: Router,
 		private employeesService: EmployeesService,
-		private translateService: TranslateService
+		private translateService: TranslateService,
+		private store: Store
 	) {}
 
 	@ViewChild('settingsTable', { static: false }) settingsTable;
@@ -84,6 +86,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
+		this.store.hideOrganizationShortcuts = true;
 		this._loadSmartTable();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
@@ -198,5 +201,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		this.loading = false;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this.store.hideOrganizationShortcuts = false;
+	}
 }
