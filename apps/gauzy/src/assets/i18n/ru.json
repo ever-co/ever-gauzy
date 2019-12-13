@@ -85,8 +85,8 @@
 			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
 			"POSTCODE": "Postcode (Zip)",
 			"PAY_PERIOD": "Период оплаты",
-			"BILL_RATE": "Ставка счета",
-			"CURRENCY_PER_HOUR": "Валюта / час",
+			"BILL_RATE": "Ставка счета / час",
+			"CURRENCY_PER_HOUR": "Валюта",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)"
 		},
 		"PLACEHOLDERS": {
@@ -121,7 +121,7 @@
 			"ADDRESS": "Адрес",
 			"ADDRESS_2": "Адрес 2",
 			"POSTCODE": "Postcode (Zip)",
-			"BILL_RATE": "Ставка счета",
+			"BILL_RATE": "Ставка счета / час",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)"
 		},
 		"DELETE_CONFIRMATION": {
