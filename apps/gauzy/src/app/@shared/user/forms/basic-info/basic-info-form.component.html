@@ -157,4 +157,26 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="form-group row" [hidden]="imageUrl.invalid">
+		<div class="col-sm-12">
+			<div class="row preview-img" [hidden]="!showImageMeta">
+				<div>
+					<img
+						#imagePreview
+						src="{{ imageUrl.value }}"
+						alt="Invalid image"
+						class="img-rounded"
+					/>
+				</div>
+				<div class="remove-icon text-danger" (click)="deleteImg()">
+					<div
+						class="ion-md-remove-circle"
+						placeholder="Remove image"
+						title="remove image"
+					></div>
+				</div>
+			</div>
+		</div>
+	</div>
 </form>
