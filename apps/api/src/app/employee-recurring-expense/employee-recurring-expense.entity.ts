@@ -50,7 +50,7 @@ export class EmployeeRecurringExpense extends Base
 	@ApiModelProperty({ type: Number })
 	@IsNumber()
 	@IsNotEmpty()
-	@Column()
+	@Column({ type: 'numeric' })
 	value: number;
 
 	@ApiModelProperty({ type: String, enum: CurrenciesEnum })
