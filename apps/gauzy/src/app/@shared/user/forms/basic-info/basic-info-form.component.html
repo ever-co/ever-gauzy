@@ -140,30 +140,20 @@
 			</div>
 		</div>
 	</div>
+
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="inputImageUrl" class="label">{{
 					'FORM.LABELS.IMAGE_URL' | translate
 				}}</label>
-				<input
-					nbInput
-					type="text"
+
+				<ngx-file-uploader-input
 					id="inputImageUrl"
-					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.IMAGE_URL' | translate
-					}}"
-					formControlName="imageUrl"
-					[ngClass]="{
-						'status-danger':
-							imageUrl.invalid &&
-							(imageUrl.dirty || imageUrl.touched),
-						'status-success':
-							imageUrl.valid &&
-							(imageUrl.dirty || imageUrl.touched)
-					}"
-				/>
+					[placeholder]="uploaderPlaceholder"
+					[fileUrl]="imageUrl?.value"
+					(uploadedImgUrl)="imageUrl.setValue($event)"
+				></ngx-file-uploader-input>
 			</div>
 		</div>
 	</div>

@@ -6,52 +6,76 @@ import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 
 @Component({
-    selector: 'ga-user-basic-info-form',
-    templateUrl: 'basic-info-form.component.html',
+	selector: 'ga-user-basic-info-form',
+	templateUrl: 'basic-info-form.component.html'
 })
 export class BasicInfoFormComponent {
-    readonly form = this.fb.group({
-        username: [''],
-        firstName: [''],
-        lastName: [''],
-        email: ['', Validators.compose([Validators.required, Validators.email])],
-        imageUrl: ['', Validators.compose([Validators.pattern(new RegExp(`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`, 'g'))])],
-        password: ['', Validators.compose([Validators.required, Validators.minLength(4)])],
-        startedWorkOn: ['', Validators.compose([Validators.required])]
-    });
+	uploaderPlaceholder: string = 'Image';
 
-    username = this.form.get('username');
-    firstName = this.form.get('firstName');
-    lastName = this.form.get('lastName');
-    email = this.form.get('email');
-    imageUrl = this.form.get('imageUrl');
-    password = this.form.get('password');
-    off: string;
-    startedWorkOn = this.form.get('startedWorkOn');
+	readonly form = this.fb.group({
+		username: [''],
+		firstName: [''],
+		lastName: [''],
+		email: [
+			'',
+			Validators.compose([Validators.required, Validators.email])
+		],
+		imageUrl: [
+			'',
+			Validators.compose([
+				Validators.pattern(
+					new RegExp(
+						`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
+						'g'
+					)
+				)
+			])
+		],
+		password: [
+			'',
+			Validators.compose([Validators.required, Validators.minLength(4)])
+		],
+		startedWorkOn: ['', Validators.compose([Validators.required])]
+	});
 
-    constructor(
-        private readonly fb: FormBuilder,
-        private readonly authService: AuthService,
-        private readonly roleService: RoleService
-    ) { }
+	username = this.form.get('username');
+	firstName = this.form.get('firstName');
+	lastName = this.form.get('lastName');
+	email = this.form.get('email');
+	imageUrl = this.form.get('imageUrl');
+	password = this.form.get('password');
+	off: string;
+	startedWorkOn = this.form.get('startedWorkOn');
 
-    async registerUser(roleName: RolesEnum): Promise<User> {
-        if (this.form.valid) {
-            const role = await this.roleService.getRoleByName({ name: roleName }).pipe(first()).toPromise();
-            return this.authService.register({
-                user: {
-                    firstName: this.firstName.value,
-                    lastName: this.lastName.value,
-                    email: this.email.value,
-                    username: this.username.value || null,
-                    imageUrl: this.imageUrl.value,
-                    role,
-                    startedWorkOn: this.startedWorkOn.value
-                },
-                password: this.password.value
-            }).pipe(first()).toPromise();
-        }
+	constructor(
+		private readonly fb: FormBuilder,
+		private readonly authService: AuthService,
+		private readonly roleService: RoleService
+	) {}
 
-        return;
-    }
+	async registerUser(roleName: RolesEnum): Promise<User> {
+		if (this.form.valid) {
+			const role = await this.roleService
+				.getRoleByName({ name: roleName })
+				.pipe(first())
+				.toPromise();
+			return this.authService
+				.register({
+					user: {
+						firstName: this.firstName.value,
+						lastName: this.lastName.value,
+						email: this.email.value,
+						username: this.username.value || null,
+						imageUrl: this.imageUrl.value,
+						role,
+						startedWorkOn: this.startedWorkOn.value
+					},
+					password: this.password.value
+				})
+				.pipe(first())
+				.toPromise();
+		}
+
+		return;
+	}
 }
