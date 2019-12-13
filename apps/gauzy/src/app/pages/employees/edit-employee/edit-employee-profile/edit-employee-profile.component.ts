@@ -87,7 +87,10 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	private async submitEmployeeForm(value: EmployeeUpdateInput) {
 		if (value) {
 			try {
-				this.employeeService.update(this.selectedEmployee.id, value);
+				await this.employeeService.update(
+					this.selectedEmployee.id,
+					value
+				);
 				this.toastrService.primary(
 					this.employeeName + ' profile updated.',
 					'Success'
@@ -95,7 +98,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				this._loadEmployeeData();
 			} catch (error) {
 				this.toastrService.danger(
-					error.error.message || error.message,
+					'A user with this e-mail or username already exists.\nPlease choose another one',
 					'Error'
 				);
 			}
@@ -105,7 +108,10 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	private async submitUserForm(value: UserFindInput) {
 		if (value) {
 			try {
-				this.userService.update(this.selectedEmployee.user.id, value);
+				await this.userService.update(
+					this.selectedEmployee.user.id,
+					value
+				);
 				this.toastrService.primary(
 					this.employeeName + ' profile updated.',
 					'Success'
@@ -113,7 +119,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				this._loadEmployeeData();
 			} catch (error) {
 				this.toastrService.danger(
-					error.error.message || error.message,
+					'A user with this e-mail or username already exists.\nPlease choose another one',
 					'Error'
 				);
 			}
