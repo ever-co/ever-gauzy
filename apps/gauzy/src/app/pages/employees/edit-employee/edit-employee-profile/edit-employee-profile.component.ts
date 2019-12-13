@@ -101,10 +101,17 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				);
 				this._loadEmployeeData();
 			} catch (error) {
-				this.toastrService.danger(
-					'A user with this e-mail or username already exists.\nPlease choose another one',
-					'Error'
-				);
+				if (error.status === 400) {
+					this.toastrService.danger(
+						'A user with this e-mail or username already exists.\nPlease choose another one',
+						'Error'
+					);
+				} else {
+					this.toastrService.danger(
+						error.error.message || error.message,
+						'Error'
+					);
+				}
 			}
 		}
 	}
@@ -122,10 +129,17 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				);
 				this._loadEmployeeData();
 			} catch (error) {
-				this.toastrService.danger(
-					'A user with this e-mail or username already exists.\nPlease choose another one',
-					'Error'
-				);
+				if (error.status === 400) {
+					this.toastrService.danger(
+						'A user with this e-mail or username already exists.\nPlease choose another one',
+						'Error'
+					);
+				} else {
+					this.toastrService.danger(
+						error.error.message || error.message,
+						'Error'
+					);
+				}
 			}
 		}
 	}
