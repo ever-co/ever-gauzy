@@ -6,6 +6,8 @@ import { first, takeUntil } from 'rxjs/operators';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
+import { Store } from '../@core/services/store.service';
+import { Organization } from 'apps/api/src/app/organization';
 
 @Component({
 	selector: 'ngx-pages',
@@ -21,16 +23,31 @@ export class PagesComponent implements OnInit, OnDestroy {
 	menu: NbMenuItem[];
 	private _ngDestroy$ = new Subject<void>();
 	isAdmin: boolean;
+	_selectedOrganization: Organization;
+	_hideOrganizationMenu: boolean;
 
 	constructor(
 		private authService: AuthService,
-		private translate: TranslateService
+		private translate: TranslateService,
+		private store: Store
 	) {}
 
 	async ngOnInit() {
 		await this.checkForAdmin();
 		this.loadItems();
 		this._applyTranslationOnSmartTable();
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				this._selectedOrganization = org;
+				this.loadItems();
+			});
+		this.store.hideOrganizationShortcuts$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((hide) => {
+				this._hideOrganizationMenu = hide;
+				this.loadItems();
+			});
 	}
 
 	loadItems() {
@@ -67,7 +84,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 				link: '/pages/about'
 			}
 		];
-
 		if (this.isAdmin) {
 			this.menu = [
 				...this.menu,
@@ -79,7 +95,56 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: this.getTranslation('MENU.EMPLOYEES'),
 					icon: 'people-outline',
 					link: '/pages/employees'
-				},
+				}
+			];
+
+			if (
+				this._selectedOrganization &&
+				this._selectedOrganization.id &&
+				!this._hideOrganizationMenu
+			) {
+				this.menu = [
+					...this.menu,
+					{
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.PROJECTS'
+						),
+						icon: 'book-outline',
+						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/projects`
+					},
+					{
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.DEPARTMENTS'
+						),
+						icon: 'briefcase-outline',
+						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/departments`
+					},
+					{
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.CLIENTS'
+						),
+						icon: 'book-open-outline',
+						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/clients`
+					},
+					{
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.POSITIONS'
+						),
+						icon: 'award-outline',
+						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/positions`
+					},
+					{
+						title: this.getTranslation(
+							'ORGANIZATIONS_PAGE.VENDORS'
+						),
+						icon: 'car-outline',
+						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/vendors`
+					}
+				];
+			}
+
+			this.menu = [
+				...this.menu,
 				{
 					title: this.getTranslation('MENU.ORGANIZATIONS'),
 					icon: 'globe-outline',

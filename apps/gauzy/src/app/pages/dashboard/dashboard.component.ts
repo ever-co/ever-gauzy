@@ -73,6 +73,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		this.store.hideOrganizationShortcuts = true;
+
 		this.hasRole = await this.authService
 			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
 			.pipe(first())
@@ -267,6 +269,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
+		this.store.hideOrganizationShortcuts = false;
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}

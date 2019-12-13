@@ -6,6 +6,7 @@ import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 export class Store {
 	private _selectedOrganization: Organization;
 	private _selectedProposal: ProposalViewModel;
+
 	selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(
 		this.selectedOrganization
 	);
@@ -17,6 +18,11 @@ export class Store {
 	private _selectedDate: Date;
 	selectedDate$: BehaviorSubject<Date> = new BehaviorSubject(
 		this.selectedDate
+	);
+
+	private _hideOrganizationShortcuts: boolean;
+	hideOrganizationShortcuts$: BehaviorSubject<boolean> = new BehaviorSubject(
+		this.hideOrganizationShortcuts
 	);
 
 	get selectedOrganization(): Organization {
@@ -105,6 +111,15 @@ export class Store {
 				return new Date(Date.now());
 			}
 		}
+	}
+
+	get hideOrganizationShortcuts(): boolean {
+		return this._hideOrganizationShortcuts;
+	}
+
+	set hideOrganizationShortcuts(hide: boolean) {
+		this._hideOrganizationShortcuts = hide;
+		this.hideOrganizationShortcuts$.next(hide);
 	}
 
 	get serverConnection() {

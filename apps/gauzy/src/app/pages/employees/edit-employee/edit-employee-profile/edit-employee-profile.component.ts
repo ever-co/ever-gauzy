@@ -10,6 +10,7 @@ import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { UserFindInput, EmployeeUpdateInput } from '@gauzy/models';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ngx-edit-employee-profile',
@@ -37,10 +38,13 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 		private employeeService: EmployeesService,
 		private userService: UsersService,
 		private toastrService: NbToastrService,
-		private employeeStore: EmployeeStore
+		private employeeStore: EmployeeStore,
+		private store: Store
 	) {}
 
 	ngOnInit() {
+		this.store.hideOrganizationShortcuts = true;
+
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
@@ -135,6 +139,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
+		this.store.hideOrganizationShortcuts = false;
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}

@@ -1,15 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
-  selector: 'ngx-about',
-  templateUrl: './about.component.html',
-  styleUrls: ['./about.component.scss']
+	selector: 'ngx-about',
+	templateUrl: './about.component.html',
+	styleUrls: ['./about.component.scss']
 })
-export class AboutComponent implements OnInit {
+export class AboutComponent implements OnInit, OnDestroy {
+	constructor(private store: Store) {}
 
-  constructor() { }
+	ngOnInit() {
+		this.store.hideOrganizationShortcuts = true;
+	}
 
-  ngOnInit() {
-  }
-
+	ngOnDestroy() {
+		this.store.hideOrganizationShortcuts = false;
+	}
 }
