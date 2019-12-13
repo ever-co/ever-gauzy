@@ -1,0 +1,18 @@
+.row.file-uploader-container {
+	padding-left: 14px;
+	padding-right: 16px;
+
+	button {
+		padding: 0 !important;
+		border-radius: 0px;
+		border-top-right-radius: 0.375rem;
+		border-bottom-right-radius: 0.375rem;
+		margin: 0;
+	}
+
+	input {
+		border-radius: 0px !important;
+		border-top-left-radius: 0.375rem !important;
+		border-bottom-left-radius: 0.375rem !important;
+	}
+}
