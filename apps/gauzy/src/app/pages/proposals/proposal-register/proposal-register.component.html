@@ -67,13 +67,25 @@
 					</div>
 				</div>
 				<div class="col-sm-6">
-					<!-- <ngx-ckeditor></ngx-ckeditor> -->
-					<div class="form-group">
-						<label class="label"
-							>{{
+					<nb-card>
+						<nb-card-header>
+							{{
 								'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT'
 									| translate
 							}}
+						</nb-card-header>
+						<nb-card-body>
+							<ckeditor
+								[config]="{
+									width: '100%',
+									height: '320'
+								}"
+							></ckeditor>
+						</nb-card-body>
+					</nb-card>
+					<!-- <div class="form-group">
+						<label class="label"
+							>
 						</label>
 						<textarea
 							nbInput
@@ -90,10 +102,26 @@
 						<button class="upload-btn" nbButton status="primary">
 							{{ 'PROPOSALS_PAGE.REGISTER.UPLOAD' | translate }}
 						</button>
-					</div>
+					</div> -->
 				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
+				<div div class="col-sm-6">
+					<nb-card>
+						<nb-card-header>
+							{{
+								'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT'
+									| translate
+							}}
+						</nb-card-header>
+						<nb-card-body>
+							<ckeditor
+								[config]="{
+									width: '100%',
+									height: '320'
+								}"
+							></ckeditor>
+						</nb-card-body>
+					</nb-card>
+					<!-- <div class="form-group">
 						<label class="label"
 							>{{
 								'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT'
@@ -115,7 +143,7 @@
 						<button class="upload-btn" nbButton status="primary">
 							{{ 'PROPOSALS_PAGE.REGISTER.UPLOAD' | translate }}
 						</button>
-					</div>
+					</div> -->
 				</div>
 			</div>
 		</form>

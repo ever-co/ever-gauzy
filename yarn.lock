@@ -5935,6 +5935,14 @@ circular-dependency-plugin@5.2.0, circular-dependency-plugin@^5.0.2:
   resolved "https://registry.yarnpkg.com/circular-dependency-plugin/-/circular-dependency-plugin-5.2.0.tgz#e09dbc2dd3e2928442403e2d45b41cea06bc0a93"
   integrity sha512-7p4Kn/gffhQaavNfyDFg7LS5S/UT1JAjyGd4UqR2+jzoYF02eDkj0Ec3+48TsIa4zghjLY87nQHIh/ecK9qLdw==
 
+ckeditor4-angular@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ckeditor4-angular/-/ckeditor4-angular-1.0.1.tgz#9b8cb4e467df85ed151165d56bf6d1c09440e0db"
+  integrity sha512-F4BzdasqjYBt7x51VaueR+1o7HxSfM8HV7LaRFcFUbw+erTUmoG1GU4LxY8Wug5lNVxBjeTelSgNcqBfOEiO6Q==
+  dependencies:
+    load-script "^1.0.0"
+    tslib "^1.9.0"
+
 ckeditor@^4.12.0:
   version "4.12.1"
   resolved "https://registry.yarnpkg.com/ckeditor/-/ckeditor-4.12.1.tgz#954a7b028dd611e44ba51cc7c2fe051cf1052186"
@@ -13334,6 +13342,11 @@ load-json-file@^5.3.0:
     strip-bom "^3.0.0"
     type-fest "^0.3.0"
 
+load-script@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/load-script/-/load-script-1.0.0.tgz#0491939e0bee5643ee494a7e3da3d2bac70c6ca4"
+  integrity sha1-BJGTngvuVkPuSUp+PaPSuscMbKQ=
+
 loader-runner@^2.3.0, loader-runner@^2.4.0:
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/loader-runner/-/loader-runner-2.4.0.tgz#ed47066bfe534d7e84c4c7b9998c2a75607d9357"
@@ -14687,10 +14700,12 @@ ng-packagr@^5.5.0:
     terser "^4.1.2"
     update-notifier "^3.0.0"
 
-ng2-ckeditor@^1.2.3:
-  version "1.2.4"
-  resolved "https://registry.yarnpkg.com/ng2-ckeditor/-/ng2-ckeditor-1.2.4.tgz#dcabe4ce5e076d2d741c04ae531f044ff70376f5"
-  integrity sha512-azoeJ7jURnKoOsDmPGFX7ld4JXA6m14gamrYIU+dsehgeWkLnQrm3I/F0djzYM2JCljsqv8d+84wbT2sNs5xfg==
+ng2-ckeditor@^1.2.6:
+  version "1.2.6"
+  resolved "https://registry.yarnpkg.com/ng2-ckeditor/-/ng2-ckeditor-1.2.6.tgz#be5dc7872846e329f61d5b0d6ce084045044ab7f"
+  integrity sha512-/bw0ZzVBvHUrFrXFeP08XKSsIX67M85rTiZkcphn0kpripAj13JvX/l/SQ74Kfk5K226Y3c+rONDj6OtfZH0kA==
+  dependencies:
+    tslib "^1.9.0"
 
 ng2-completer@^3.0.2:
   version "3.0.2"
