@@ -36,35 +36,28 @@
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">Job Post Content</label>
-						<textarea
-							nbInput
-							fullWidth
-							rows="12"
-							type="text"
-							placeholder="Job Post Content"
+						<ckeditor
 							formControlName="jobPostContent"
-							autocomplete="on"
-						></textarea>
-						<button class="upload-btn" nbButton status="primary">
-							Upload
-						</button>
+							[config]="{
+								width: '100%',
+								height: '320',
+								extraPlugins: 'divarea'
+							}"
+						>
+						</ckeditor>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label class="label">Proposal Content</label>
-						<textarea
-							nbInput
-							rows="12"
-							fullWidth
-							type="text"
-							placeholder="Proposal Content"
+						<ckeditor
 							formControlName="proposalContent"
-							autocomplete="on"
-						></textarea>
-						<button class="upload-btn" nbButton status="primary">
-							Upload
-						</button>
+							[config]="{
+								width: '100%',
+								height: '320',
+								extraPlugins: 'divarea'
+							}"
+						></ckeditor>
 					</div>
 				</div>
 			</div>

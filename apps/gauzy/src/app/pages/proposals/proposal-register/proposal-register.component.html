@@ -76,33 +76,16 @@
 						</nb-card-header>
 						<nb-card-body>
 							<ckeditor
+								formControlName="jobPostContent"
 								[config]="{
 									width: '100%',
-									height: '320'
+									height: '320',
+									extraPlugins: 'divarea'
 								}"
-							></ckeditor>
+							>
+							</ckeditor>
 						</nb-card-body>
 					</nb-card>
-					<!-- <div class="form-group">
-						<label class="label"
-							>
-						</label>
-						<textarea
-							nbInput
-							fullWidth
-							rows="12"
-							type="text"
-							placeholder="{{
-								'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT'
-									| translate
-							}}"
-							formControlName="jobPostContent"
-							autocomplete="on"
-						></textarea>
-						<button class="upload-btn" nbButton status="primary">
-							{{ 'PROPOSALS_PAGE.REGISTER.UPLOAD' | translate }}
-						</button>
-					</div> -->
 				</div>
 				<div div class="col-sm-6">
 					<nb-card>
@@ -114,36 +97,15 @@
 						</nb-card-header>
 						<nb-card-body>
 							<ckeditor
+								formControlName="proposalContent"
 								[config]="{
 									width: '100%',
-									height: '320'
+									height: '320',
+									extraPlugins: 'divarea'
 								}"
 							></ckeditor>
 						</nb-card-body>
 					</nb-card>
-					<!-- <div class="form-group">
-						<label class="label"
-							>{{
-								'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT'
-									| translate
-							}}
-						</label>
-						<textarea
-							nbInput
-							rows="12"
-							fullWidth
-							type="text"
-							placeholder="{{
-								'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT'
-									| translate
-							}}"
-							formControlName="proposalContent"
-							autocomplete="on"
-						></textarea>
-						<button class="upload-btn" nbButton status="primary">
-							{{ 'PROPOSALS_PAGE.REGISTER.UPLOAD' | translate }}
-						</button>
-					</div> -->
 				</div>
 			</div>
 		</form>

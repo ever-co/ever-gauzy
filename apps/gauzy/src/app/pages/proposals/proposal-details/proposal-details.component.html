@@ -28,15 +28,11 @@
 		<div class="wrapper-bottom">
 			<nb-card class="prop-card">
 				<h6>Job Post Content</h6>
-				<div *ngFor="let paragraph of jobPostContentArr">
-					<p>{{ paragraph }}</p>
-				</div>
+				<div class="px-5" [innerHTML]="jobPostContent"></div>
 			</nb-card>
 			<nb-card class="prop-card">
 				<h6>Proposal Content</h6>
-				<div *ngFor="let paragraph of proposalContentArr">
-					<p>{{ paragraph }}</p>
-				</div>
+				<div class="px-5" [innerHTML]="proposalContent"></div>
 			</nb-card>
 		</div>
 	</nb-card-body>
