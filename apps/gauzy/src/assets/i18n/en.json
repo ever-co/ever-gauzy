@@ -124,6 +124,9 @@
 			"BILL_RATE": "Bill Rate / hr",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
 		},
+		"CHECKBOXES": {
+			"INCLUDE_DELETED": "Include Deleted"
+		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",
 			"RECORD": "record",
@@ -202,6 +205,7 @@
 		"ACTIVE": "Active",
 		"END_WORK": "End Work",
 		"WORK_ENDED": "Work Ended",
+		"DELETED": "Deleted",
 		"RECURRING_EXPENSE": "Add employee recurring expense",
 		"BACK_TO_WORK": "Back to Work",
 		"EDIT_EMPLOYEE": {

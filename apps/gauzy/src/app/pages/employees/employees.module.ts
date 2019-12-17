@@ -10,7 +10,8 @@ import {
 	NbBadgeModule,
 	NbSelectModule,
 	NbRouteTabsetModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EmployeesRoutingModule } from './employees-routing.module';
@@ -76,6 +77,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,
+		NbCheckboxModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
