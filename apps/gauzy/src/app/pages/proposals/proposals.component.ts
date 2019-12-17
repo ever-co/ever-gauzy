@@ -12,6 +12,7 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
+import { JobTitleComponent } from './table-components/job-title/job-title.component';
 
 export interface ProposalViewModel {
 	id: string;
@@ -244,8 +245,9 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 				},
 				jobTitle: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
-					type: 'html',
-					width: '25%'
+					type: 'custom',
+					width: '25%',
+					renderComponent: JobTitleComponent
 				},
 				jobPostLink: {
 					title: this.getTranslation('SM_TABLE.VIEW_JOB_POST'),
@@ -328,9 +330,17 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						jobPostLink:
 							'<a href="' +
 							i.jobPostUrl +
-							'" target="_blank">http://...</nb-icon></a>',
+							`" target="_blank">${i.jobPostUrl.substr(
+								8,
+								14
+							)}</nb-icon></a>`,
 						jobPostUrl: i.jobPostUrl,
-						jobTitle: i.jobPostContent.substr(0, 28) + '...',
+						jobTitle: i.jobPostContent
+							.toString()
+							.replace(/<[^>]+>/g, '')
+							.split(/[\s,\n]+/)
+							.slice(0, 3)
+							.join(' '),
 						jobPostContent: i.jobPostContent,
 						proposalContent: i.proposalContent,
 						status: i.status,

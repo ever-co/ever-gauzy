@@ -27,6 +27,7 @@ import { ChartModule } from 'angular2-chartjs';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { JobTitleComponent } from './table-components/job-title/job-title.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -60,13 +61,18 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	entryComponents: [ProposalRegisterComponent, ProposalStatusComponent],
+	entryComponents: [
+		ProposalRegisterComponent,
+		ProposalStatusComponent,
+		JobTitleComponent
+	],
 	declarations: [
 		ProposalsComponent,
 		ProposalRegisterComponent,
 		ProposalStatusComponent,
 		ProposalDetailsComponent,
 		ProposalEditComponent,
+		JobTitleComponent,
 		ProposalsPieChartComponent
 	],
 	providers: [ProposalsService]
