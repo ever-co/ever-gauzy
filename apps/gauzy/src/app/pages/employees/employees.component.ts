@@ -56,6 +56,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	totalExpense = 0;
 	bonusForSelectedMonth = 0;
 
+	includeDeleted = false;
 	loading = true;
 
 	@ViewChild('employeesTable', { static: false }) employeesTable;
@@ -295,34 +296,43 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			.toPromise();
 		const { name } = this.store.selectedOrganization;
 
-		const employeesVm = [];
+		let employeesVm = [];
+		const result = [];
 
 		for (const emp of items) {
-			if (emp.isActive) {
-				await this.getEmployeeStatistics(emp.id);
+			await this.getEmployeeStatistics(emp.id);
 
-				employeesVm.push({
-					fullName: `${emp.user.firstName} ${emp.user.lastName}`,
-					email: emp.user.email,
-					id: emp.id,
-					isActive: emp.isActive,
-					endWork: emp.endWork ? new Date(emp.endWork) : '',
-					workStatus: emp.endWork
-						? new Date(emp.endWork).getDate() +
-						  ' ' +
-						  monthNames[new Date(emp.endWork).getMonth()] +
-						  ' ' +
-						  new Date(emp.endWork).getFullYear()
-						: '',
-					imageUrl: emp.user.imageUrl,
-					// TODO: laod real bonus and bonusDate
-					bonus: this.bonusForSelectedMonth,
-					averageIncome: Math.floor(this.averageIncome),
-					averageExpenses: Math.floor(this.averageExpense),
-					averageBonus: this.averageBonus,
-					bonusDate: Date.now()
-				});
-			}
+			result.push({
+				fullName: `${emp.user.firstName} ${emp.user.lastName}`,
+				email: emp.user.email,
+				id: emp.id,
+				isActive: emp.isActive,
+				endWork: emp.endWork ? new Date(emp.endWork) : '',
+				workStatus: emp.endWork
+					? new Date(emp.endWork).getDate() +
+					  ' ' +
+					  monthNames[new Date(emp.endWork).getMonth()] +
+					  ' ' +
+					  new Date(emp.endWork).getFullYear()
+					: '',
+				imageUrl: emp.user.imageUrl,
+				// TODO: laod real bonus and bonusDate
+				bonus: this.bonusForSelectedMonth,
+				averageIncome: Math.floor(this.averageIncome),
+				averageExpenses: Math.floor(this.averageExpense),
+				averageBonus: this.averageBonus,
+				bonusDate: Date.now()
+			});
+		}
+
+		if (!this.includeDeleted) {
+			result.map((employee) => {
+				if (employee.isActive) {
+					employeesVm.push(employee);
+				}
+			});
+		} else {
+			employeesVm = result;
 		}
 
 		this.sourceSmartTable.load(employeesVm);
@@ -396,6 +406,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 				perPage: 8
 			}
 		};
+	}
+
+	changeIncludeDeleted(checked: boolean) {
+		this.includeDeleted = checked;
+		this.loadPage();
 	}
 
 	getTranslation(prefix: string) {
