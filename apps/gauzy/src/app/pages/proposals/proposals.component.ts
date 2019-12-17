@@ -244,7 +244,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 				},
 				jobTitle: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
-					type: 'string',
+					type: 'html',
 					width: '25%'
 				},
 				jobPostLink: {
@@ -330,7 +330,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 							i.jobPostUrl +
 							'" target="_blank">http://...</nb-icon></a>',
 						jobPostUrl: i.jobPostUrl,
-						jobTitle: i.jobPostContent.substr(0, 30) + '...',
+						jobTitle: i.jobPostContent.substr(0, 28) + '...',
 						jobPostContent: i.jobPostContent,
 						proposalContent: i.proposalContent,
 						status: i.status,

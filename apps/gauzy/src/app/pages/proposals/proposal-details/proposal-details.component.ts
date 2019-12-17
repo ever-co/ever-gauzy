@@ -18,9 +18,9 @@ export class ProposalDetailsComponent implements OnInit {
 
 	proposal: ProposalViewModel;
 	jobPostLink: SafeHtml;
+	jobPostContent: SafeHtml;
+	proposalContent: SafeHtml;
 	author: string;
-	jobPostContentArr: string[];
-	proposalContentArr: string[];
 
 	ngOnInit() {
 		this.proposal = this.store.selectedProposal;
@@ -33,6 +33,14 @@ export class ProposalDetailsComponent implements OnInit {
 			this.proposal.jobPostLink
 		);
 
+		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(
+			this.proposal.jobPostContent
+		);
+
+		this.proposalContent = this.sanitizer.bypassSecurityTrustHtml(
+			this.proposal.proposalContent
+		);
+
 		if (!this.proposal.author) {
 			this.author =
 				this.store.selectedEmployee.firstName +
@@ -41,9 +49,6 @@ export class ProposalDetailsComponent implements OnInit {
 		} else {
 			this.author = this.proposal.author;
 		}
-
-		this.jobPostContentArr = this.proposal.jobPostContent.split('\n');
-		this.proposalContentArr = this.proposal.proposalContent.split('\n');
 	}
 
 	edit() {
