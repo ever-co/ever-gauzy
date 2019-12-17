@@ -124,6 +124,9 @@
 			"BILL_RATE": "Ставка счета / час",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)"
 		},
+		"CHECKBOXES": {
+			"INCLUDE_DELETED": "Включать удаленные"
+		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Вы уверены, что хотите удалить",
 			"RECORD": "запись",
@@ -202,6 +205,7 @@
 		"ACTIVE": "Активный",
 		"END_WORK": "Конец работы",
 		"WORK_ENDED": "Работа завершена",
+		"DELETED": "Удалено",
 		"RECURRING_EXPENSE": "Добавить повторяющиеся расходы сотрудника",
 		"BACK_TO_WORK": "Вернуться к работе",
 		"EDIT_EMPLOYEE": {
