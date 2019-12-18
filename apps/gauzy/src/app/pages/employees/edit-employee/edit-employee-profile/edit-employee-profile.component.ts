@@ -15,7 +15,9 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 @Component({
 	selector: 'ngx-edit-employee-profile',
 	templateUrl: './edit-employee-profile.component.html',
-	styleUrls: ['./edit-employee-profile.component.scss'],
+	styleUrls: [
+		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
+	],
 	providers: [EmployeeStore]
 })
 export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
@@ -43,8 +45,6 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this.store.hideOrganizationShortcuts = true;
-
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
@@ -159,7 +159,6 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this.store.hideOrganizationShortcuts = false;
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}

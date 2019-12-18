@@ -52,7 +52,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		this.store.hideOrganizationShortcuts = true;
 		this.selectedDate = this.store.selectedDate;
 
 		this.store.selectedDate$
@@ -126,7 +125,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this.store.hideOrganizationShortcuts = false;
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}

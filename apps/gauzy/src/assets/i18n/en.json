@@ -56,7 +56,8 @@
 		"BI_WEEKLY": "Bi Weekly",
 		"WEEKLY": "Weekly",
 		"TWICE_PER_MONTH": "Twice per month",
-		"MONTHLY": "Monthly"
+		"MONTHLY": "Monthly",
+		"ROLE": "Role"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -87,7 +88,8 @@
 			"PAY_PERIOD": "Pay Period",
 			"BILL_RATE": "Bill Rate / hr",
 			"CURRENCY_PER_HOUR": "Currency",
-			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
+			"ROLE": "Role"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -122,13 +124,15 @@
 			"ADDRESS_2": "Address 2",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
-			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
+			"ROLE": "Select Role"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "Are you sure you want to delete",
 			"RECORD": "record",
 			"EMPLOYEE": "employee",
-			"EXPENSE": "Expense"
+			"EXPENSE": "Expense",
+			"USER": "user"
 		}
 	},
 	"POP_UPS": {
@@ -162,7 +166,8 @@
 		"EMPLOYEES": "Employees",
 		"ORGANIZATIONS": "Organizations",
 		"SETTINGS": "Settings",
-		"GENERAL": "General"
+		"GENERAL": "General",
+		"USERS": "Users"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -264,6 +269,17 @@
 			"UPLOAD": "Upload",
 			"PROPOSALS_CONTENT": "Proposal Content",
 			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		}
+	},
+	"USERS_PAGE": {
+		"HEADER": "Manage Users for ",
+		"ADD_USER": "Add User",
+		"ROLE": {
+			"ADMIN": "Admin",
+			"MANAGER": "Manager",
+			"DATA_ENTRY": "Data Entry",
+			"VIEWER": "Viewer",
+			"EMPLOYEE": "Employee"
 		}
 	},
 	"CONTEXT_MENU": {

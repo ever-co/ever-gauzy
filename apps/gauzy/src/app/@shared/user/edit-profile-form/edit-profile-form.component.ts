@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	Input,
+	Output,
+	EventEmitter
+} from '@angular/core';
 import {
 	FormBuilder,
 	FormGroup,
@@ -7,20 +14,18 @@ import {
 } from '@angular/forms';
 import { UsersService } from '../../../@core/services/users.service';
 import { Store } from '../../../@core/services/store.service';
-import { User, UserFindInput } from '@gauzy/models';
+import { User, UserFindInput, RolesEnum } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-profile',
-	templateUrl: './profile.component.html',
-	styleUrls: [
-		'../../employees/edit-employee/edit-employee-profile/edit-employee-profile.component.scss'
-	]
+	templateUrl: './edit-profile-form.component.html',
+	styleUrls: ['./edit-profile-form.component.scss']
 })
-export class ProfileComponent implements OnInit, OnDestroy {
+export class EditProfileFormComponent implements OnInit, OnDestroy {
 	private ngDestroy$ = new Subject<void>();
 
 	form: FormGroup;
@@ -35,6 +40,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
 	repeatPasswordErrorMsg: string;
 
 	matchPassword = true;
+
+	@Input()
+	selectedUser: User;
+
+	@Input()
+	allowRoleChange = false;
+
+	@Output()
+	userSubmitted = new EventEmitter<void>();
+
+	allRoles: string[] = Object.values(RolesEnum).filter(
+		(r) => r !== RolesEnum.EMPLOYEE
+	);
 
 	constructor(
 		private fb: FormBuilder,
@@ -80,16 +98,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
 	async ngOnInit() {
 		try {
-			const user = await this.userService.getUserById(this.store.userId);
-			this.roleName = (await this.roleService.getRoleById(
-				user.roleId
-			)).name;
-			this._initializeForm(user);
+			const user = this.selectedUser
+				? this.selectedUser
+				: await this.userService.getUserById(this.store.userId);
+
+			const role =
+				this.selectedUser && this.selectedUser.role
+					? this.selectedUser.role
+					: await this.roleService.getRoleById(user.roleId);
+
+			this.roleName = role.name;
+
+			this._initializeForm({ ...user, role });
 			this.bindFormControls();
 			this.loadControls();
 		} catch (error) {
 			this.toastrService.danger(
-				error.error.message || error.message,
+				error.error ? error.error.message : error.message,
 				'Error'
 			);
 		}
@@ -121,12 +146,28 @@ export class ProfileComponent implements OnInit, OnDestroy {
 			};
 		}
 
+		if (this.allowRoleChange) {
+			const { id } = await this.roleService
+				.getRoleByName({ name: this.form.value['roleName'] })
+				.pipe(first())
+				.toPromise();
+
+			this.accountInfo = {
+				...this.accountInfo,
+				roleId: id
+			};
+		}
+
 		try {
-			await this.userService.update(this.store.userId, this.accountInfo);
+			await this.userService.update(
+				this.selectedUser ? this.selectedUser.id : this.store.userId,
+				this.accountInfo
+			);
 			this.toastrService.primary(
 				'Your profile has been updated successfully.',
 				'Success'
 			);
+			this.userSubmitted.emit();
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,
@@ -155,7 +196,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
 						}
 					}
 				]
-			]
+			],
+			roleName: [user.role.name]
 		});
 	}
 

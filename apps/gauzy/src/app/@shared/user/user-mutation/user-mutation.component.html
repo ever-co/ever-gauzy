@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header class="d-flex">
-		<h5>{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEE' | translate }}</h5>
+		<h5>{{ 'USERS_PAGE.ADD_USER' | translate }}</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -8,10 +8,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-user-basic-info-form
-			#userBasicInfo
-			[isEmployee]="true"
-		></ga-user-basic-info-form>
+		<ga-user-basic-info-form #userBasicInfo></ga-user-basic-info-form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button
@@ -20,8 +17,7 @@
 			(click)="add()"
 			nbButton
 		>
-			<!-- TODO Add translates -->
-			Add
+			{{ 'USERS_PAGE.ADD_USER' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

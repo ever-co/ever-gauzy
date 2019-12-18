@@ -16,7 +16,6 @@ import { UsersService } from '../../../@core/services/users.service';
 
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { Store } from '../../../@core/services/store.service';
-import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 
 @Component({
 	selector: 'ngx-one-column-layout',
@@ -24,6 +23,13 @@ import { UsersOrganizationsService } from '../../../@core/services/users-organiz
 	templateUrl: './one-column.layout.html'
 })
 export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
+	constructor(
+		@Inject(PLATFORM_ID) private platformId,
+		private windowModeBlockScrollService: WindowModeBlockScrollService,
+		private usersService: UsersService,
+		private store: Store,
+		private directionService: NbLayoutDirectionService
+	) {}
 	@ViewChild(NbLayoutComponent, { static: false }) layout: NbLayoutComponent;
 
 	user: any;
@@ -33,14 +39,8 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		{ title: 'Log out', link: '/auth/logout' }
 	];
 
-	constructor(
-		@Inject(PLATFORM_ID) private platformId,
-		private windowModeBlockScrollService: WindowModeBlockScrollService,
-		private usersService: UsersService,
-		private usersOrganizationsService: UsersOrganizationsService,
-		private store: Store,
-		private directionService: NbLayoutDirectionService
-	) {}
+	layout_direction: NbLayoutDirection = this.directionService.getDirection();
+	sidebar_class = 'menu-sidebar';
 
 	ngOnInit() {
 		this.loadUserData();
@@ -55,9 +55,6 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 			this.windowModeBlockScrollService.register(this.layout);
 		}
 	}
-
-	layout_direction: NbLayoutDirection = this.directionService.getDirection();
-	sidebar_class: string = 'menu-sidebar';
 
 	private async loadUserData() {
 		const id = this.store.userId;

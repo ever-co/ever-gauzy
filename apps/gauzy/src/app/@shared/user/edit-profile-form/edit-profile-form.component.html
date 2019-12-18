@@ -52,7 +52,7 @@
 					></div>
 
 					<img
-						*ngIf="form"
+						*ngIf="!!form"
 						[src]="form.get('imageUrl').value"
 						alt="Profile Photo"
 						(mouseenter)="hoverState = true"
@@ -62,13 +62,13 @@
 				<nb-badge
 					status="danger"
 					style="position: relative; margin-top: 20px;"
-					[text]="roleName"
+					[text]="'USERS_PAGE.ROLE.' + roleName | translate"
 					position="bottom-left"
 				></nb-badge>
 			</div>
 
 			<div class="employee-form">
-				<form [formGroup]="form" *ngIf="form">
+				<form [formGroup]="form" *ngIf="!!form">
 					<div class="row">
 						<div class="col">
 							<div class="form-group">
@@ -149,7 +149,7 @@
 									nbInput
 									formControlName="repeatPassword"
 								/>
-								<span *ngIf="repeatPasswordErrorMsg">
+								<span *ngIf="!!repeatPasswordErrorMsg">
 									<strong class="text-danger">
 										{{ 'PROFILE_PAGE.ERROR' | translate }}:
 										{{ repeatPasswordErrorMsg }}</strong
@@ -157,7 +157,29 @@
 								>
 							</div>
 						</div>
-						<div class="col"></div>
+						<div class="col-sm-6" *ngIf="allowRoleChange">
+							<div class="form-group">
+								<label for="startedWork" class="label">{{
+									'FORM.LABELS.ROLE' | translate
+								}}</label>
+								<nb-select
+									class="d-block"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.ROLE' | translate
+									}}"
+									formControlName="roleName"
+								>
+									<nb-option
+										*ngFor="let role of allRoles"
+										value="{{ role }}"
+										>{{
+											'USERS_PAGE.ROLE.' + role
+												| translate
+										}}</nb-option
+									>
+								</nb-select>
+							</div>
+						</div>
 					</div>
 
 					<div class="actions">

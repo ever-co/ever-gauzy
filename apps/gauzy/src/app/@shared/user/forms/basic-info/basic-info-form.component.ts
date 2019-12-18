@@ -1,5 +1,5 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
-import { Validators, FormBuilder } from '@angular/forms';
+import { Component, ViewChild, ElementRef, Input, OnInit } from '@angular/core';
+import { Validators, FormBuilder, Form } from '@angular/forms';
 import { User, RolesEnum } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
@@ -10,46 +10,28 @@ import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 	templateUrl: 'basic-info-form.component.html',
 	styleUrls: ['basic-info-form.component.scss']
 })
-export class BasicInfoFormComponent {
-	uploaderPlaceholder: string = 'Image';
+export class BasicInfoFormComponent implements OnInit {
+	uploaderPlaceholder = 'Image';
 
 	@ViewChild('imagePreview', { static: false })
 	imagePreviewElement: ElementRef;
 
-	readonly form = this.fb.group({
-		username: [''],
-		firstName: [''],
-		lastName: [''],
-		email: [
-			'',
-			Validators.compose([Validators.required, Validators.email])
-		],
-		imageUrl: [
-			'',
-			Validators.compose([
-				Validators.pattern(
-					new RegExp(
-						`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
-						'g'
-					)
-				)
-			])
-		],
-		password: [
-			'',
-			Validators.compose([Validators.required, Validators.minLength(4)])
-		],
-		startedWorkOn: ['', Validators.compose([Validators.required])]
-	});
+	@Input() public isEmployee: boolean;
 
-	username = this.form.get('username');
-	firstName = this.form.get('firstName');
-	lastName = this.form.get('lastName');
-	email = this.form.get('email');
-	imageUrl = this.form.get('imageUrl');
-	password = this.form.get('password');
-	off: string;
-	startedWorkOn = this.form.get('startedWorkOn');
+	allRoles: string[] = Object.values(RolesEnum).filter(
+		(e) => e !== RolesEnum.EMPLOYEE
+	);
+
+	//Fields for the form
+	form: any;
+	imageUrl: any;
+	username: any;
+	firstName: any;
+	lastName: any;
+	email: any;
+	password: any;
+	off: any;
+	role: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -57,14 +39,62 @@ export class BasicInfoFormComponent {
 		private readonly roleService: RoleService
 	) {}
 
+	ngOnInit(): void {
+		this.loadFormData();
+	}
+
+	loadFormData = () => {
+		this.form = this.fb.group({
+			username: [''],
+			firstName: [''],
+			lastName: [''],
+			email: [
+				'',
+				Validators.compose([Validators.required, Validators.email])
+			],
+			imageUrl: [
+				'',
+				Validators.compose([
+					Validators.pattern(
+						new RegExp(
+							`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
+							'g'
+						)
+					)
+				])
+			],
+			password: [
+				'',
+				Validators.compose([
+					Validators.required,
+					Validators.minLength(4)
+				])
+			],
+			startedWorkOn: ['', this.isEmployee ? Validators.required : null],
+			role: ['', this.isEmployee ? null : Validators.required]
+		});
+
+		this.imageUrl = this.form.get('imageUrl');
+		this.username = this.form.get('username');
+		this.firstName = this.form.get('firstName');
+		this.lastName = this.form.get('lastName');
+		this.email = this.form.get('email');
+		this.password = this.form.get('password');
+		this.role = this.form.get('role');
+	};
+
 	get showImageMeta() {
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(roleName: RolesEnum): Promise<User> {
+	async registerUser(defaultRoleName: RolesEnum): Promise<User> {
+		const startedWorkOn = this.form.get('startedWorkOn');
+
 		if (this.form.valid) {
 			const role = await this.roleService
-				.getRoleByName({ name: roleName })
+				.getRoleByName({
+					name: this.role.value ? this.role.value : defaultRoleName
+				})
 				.pipe(first())
 				.toPromise();
 			return this.authService
@@ -76,7 +106,7 @@ export class BasicInfoFormComponent {
 						username: this.username.value || null,
 						imageUrl: this.imageUrl.value,
 						role,
-						startedWorkOn: this.startedWorkOn.value
+						startedWorkOn: startedWorkOn.value
 					},
 					password: this.password.value
 				})

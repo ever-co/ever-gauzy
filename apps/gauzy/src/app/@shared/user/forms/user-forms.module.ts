@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbCardModule,
 	NbDatepickerModule,
-	NbButtonModule
+	NbButtonModule,
+	NbSelectModule
 } from '@nebular/theme';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -32,6 +33,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		NbButtonModule,
 		FileUploaderModule,
+		NbSelectModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

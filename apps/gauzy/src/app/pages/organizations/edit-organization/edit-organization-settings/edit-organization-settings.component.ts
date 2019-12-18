@@ -20,7 +20,7 @@ export enum ListsInputType {
 	templateUrl: './edit-organization-settings.component.html',
 	styleUrls: [
 		'./edit-organization-settings.component.scss',
-		'../../../employees/edit-employee/edit-employee-profile/edit-employee-profile.component.scss'
+		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	],
 	providers: [CountryService]
 })
