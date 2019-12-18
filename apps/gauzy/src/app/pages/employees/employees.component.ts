@@ -18,6 +18,7 @@ import { EmployeeAverageIncomeComponent } from './table-components/employee-aver
 import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
 import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
 import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -69,6 +70,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
+		private errorHandler: ErrorHandlingService,
 		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
@@ -214,10 +216,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
 						this.loadPage();
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -244,10 +243,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					'Success'
 				);
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.errorHandler.handleError(error);
 			}
 			this.selectedEmployee = null;
 			this.loadPage();

@@ -5,6 +5,7 @@ import { EmployeeStatisticsService } from '../../../@core/services/employee-stat
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { monthNames } from '../../../@core/utils/date';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ngx-employee-chart',
@@ -30,6 +31,7 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 		private themeService: NbThemeService,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private store: Store,
+		private errorHandler: ErrorHandlingService,
 		private toastrService: NbToastrService
 	) {}
 
@@ -147,10 +149,7 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 								};
 							});
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});

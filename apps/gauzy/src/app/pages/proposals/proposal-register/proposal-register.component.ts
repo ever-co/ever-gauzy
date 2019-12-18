@@ -5,7 +5,6 @@ import { Store } from '../../../@core/services/store.service';
 import { Proposal, ProposalStatusEnum } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
-import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 

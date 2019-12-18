@@ -12,6 +12,7 @@ import { IncomeMutationComponent } from '../../@shared/income/income-mutation/in
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 interface SelectedRowModel {
 	data: Income;
@@ -32,6 +33,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
+		private errorHandler: ErrorHandlingService,
 		private translateService: TranslateService
 	) {}
 
@@ -245,10 +247,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 						this._loadEmployeeIncomeData();
 						this.selectedIncome = null;
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -276,10 +275,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 						this._loadEmployeeIncomeData();
 						this.selectedIncome = null;
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});

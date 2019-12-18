@@ -13,6 +13,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 export interface ProposalViewModel {
 	id: string;
@@ -46,6 +47,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		private proposalsService: ProposalsService,
 		private toastrService: NbToastrService,
 		private dialogService: NbDialogService,
+		private errorHandler: ErrorHandlingService,
 		private translateService: TranslateService
 	) {}
 
@@ -153,10 +155,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						this._loadTableData();
 						this.selectedProposal = null;
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -187,10 +186,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						this.selectedProposal = null;
 						this._loadTableData();
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -221,10 +217,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						this.selectedProposal = null;
 						this._loadTableData();
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
