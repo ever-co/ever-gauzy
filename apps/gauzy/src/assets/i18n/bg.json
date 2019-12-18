@@ -56,7 +56,8 @@
 		"BI_WEEKLY": "Bi Weekly",
 		"WEEKLY": "Weekly",
 		"TWICE_PER_MONTH": "Twice per month",
-		"MONTHLY": "Monthly"
+		"MONTHLY": "Monthly",
+		"ROLE": "Role"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -87,7 +88,8 @@
 			"PAY_PERIOD": "Pay Period",
 			"BILL_RATE": "Bill Rate / hr",
 			"CURRENCY_PER_HOUR": "Валута",
-			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
+			"ROLE": "Role"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -122,7 +124,8 @@
 			"ADDRESS_2": "Address 2",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
-			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
+			"ROLE": "Select Role"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"
@@ -131,7 +134,8 @@
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
 			"EMPLOYEE": "служители",
-			"EXPENSE": "Разходи"
+			"EXPENSE": "Разходи",
+			"USER": "user"
 		}
 	},
 	"POP_UPS": {
@@ -165,7 +169,8 @@
 		"EMPLOYEES": "Служители",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
-		"GENERAL": "Основни"
+		"GENERAL": "Основни",
+		"USERS": "Users"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -268,6 +273,17 @@
 			"UPLOAD": "Upload",
 			"PROPOSALS_CONTENT": "Proposal Content",
 			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		}
+	},
+	"USERS_PAGE": {
+		"HEADER": "Manage Users for ",
+		"ADD_USER": "Add User",
+		"ROLE": {
+			"ADMIN": "Администратор",
+			"MANAGER": "Manager",
+			"DATA_ENTRY": "Data Entry",
+			"VIEWER": "Viewer",
+			"EMPLOYEE": "Служител"
 		}
 	},
 	"CONTEXT_MENU": {
