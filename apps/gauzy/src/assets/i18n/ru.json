@@ -56,7 +56,8 @@
 		"BI_WEEKLY": "Еженедельно",
 		"WEEKLY": "Еженедельно",
 		"TWICE_PER_MONTH": "Дважды в месяц",
-		"MONTHLY": "Ежемесячно"
+		"MONTHLY": "Ежемесячно",
+		"ROLE": "Роль"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
@@ -87,7 +88,8 @@
 			"PAY_PERIOD": "Период оплаты",
 			"BILL_RATE": "Ставка счета / час",
 			"CURRENCY_PER_HOUR": "Валюта",
-			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)"
+			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
+			"ROLE": "Роль"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -122,7 +124,8 @@
 			"ADDRESS_2": "Адрес 2",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Ставка счета / час",
-			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)"
+			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
+			"ROLE": "Выберите роль"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Включать удаленные"
@@ -131,7 +134,8 @@
 			"SURE": "Вы уверены, что хотите удалить",
 			"RECORD": "запись",
 			"EMPLOYEE": "служащий",
-			"EXPENSE": "Расходная"
+			"EXPENSE": "Расходная",
+			"USER": "пользователь"
 		}
 	},
 	"POP_UPS": {
@@ -165,7 +169,8 @@
 		"EMPLOYEES": "Сотрудники",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
-		"GENERAL": "Генеральная"
+		"GENERAL": "Генеральная",
+		"USERS": "Пользователи"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -268,6 +273,17 @@
 			"UPLOAD": "Выгрузить",
 			"PROPOSALS_CONTENT": "Содержание предложения",
 			"REGISTER_PROPOSALS_BUTTON": "Регистрация предложения"
+		}
+	},
+	"USERS_PAGE": {
+		"HEADER": "Управление пользователями для ",
+		"ADD_USER": "Добавить пользователя",
+		"ROLE": {
+			"ADMIN": "Администратор",
+			"MANAGER": "Менеджер",
+			"DATA_ENTRY": "Ввод данных",
+			"VIEWER": "Просмотрщик",
+			"EMPLOYEE": "Сотрудник"
 		}
 	},
 	"CONTEXT_MENU": {
