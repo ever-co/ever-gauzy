@@ -20,11 +20,6 @@ export class Store {
 		this.selectedDate
 	);
 
-	private _hideOrganizationShortcuts: boolean;
-	hideOrganizationShortcuts$: BehaviorSubject<boolean> = new BehaviorSubject(
-		this.hideOrganizationShortcuts
-	);
-
 	get selectedOrganization(): Organization {
 		return this._selectedOrganization;
 	}
@@ -111,15 +106,6 @@ export class Store {
 				return new Date(Date.now());
 			}
 		}
-	}
-
-	get hideOrganizationShortcuts(): boolean {
-		return this._hideOrganizationShortcuts;
-	}
-
-	set hideOrganizationShortcuts(hide: boolean) {
-		this._hideOrganizationShortcuts = hide;
-		this.hideOrganizationShortcuts$.next(hide);
 	}
 
 	get serverConnection() {

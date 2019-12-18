@@ -108,6 +108,13 @@ const routes: Routes = [
 				data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
+				path: 'users',
+				loadChildren: () =>
+					import('./users/users.module').then((m) => m.UsersModule),
+				canActivate: [RoleGuard],
+				data: { expectedRole: [RolesEnum.ADMIN] }
+			},
+			{
 				path: 'organizations',
 				loadChildren: () =>
 					import('./organizations/organizations.module').then(

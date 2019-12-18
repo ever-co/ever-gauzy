@@ -11,6 +11,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
+import { SelectorService } from '../../../@core/utils/selector.service';
 
 @Component({
 	selector: 'ngx-header',
@@ -39,7 +40,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		private themeService: NbThemeService,
 		private router: Router,
 		private translate: TranslateService,
-		private store: Store
+		private store: Store,
+		private selectorService: SelectorService
 	) {}
 
 	ngOnInit() {
@@ -82,6 +84,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
 		this.loadItems();
 		this._applyTranslationOnSmartTable();
+	}
+
+	showSelectors(url: string) {
+		const selectors = this.selectorService.showSelectors(url);
+		this.showDateSelector = selectors.showDateSelector;
+		this.showEmployeesSelector = selectors.showEmployeesSelector;
+		this.showOrganizationsSelector = selectors.showOrganizationsSelector;
 	}
 
 	toggleSidebar(): boolean {
@@ -193,52 +202,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
 				title: this.getTranslation('CONTEXT_MENU.HELP')
 			}
 		];
-	}
-
-	private showSelectors(url: string) {
-		this.showEmployeesSelector = true;
-		this.showDateSelector = true;
-		this.showOrganizationsSelector = true;
-
-		if (url.endsWith('/employees')) {
-			this.showEmployeesSelector = false;
-			this.showDateSelector = false;
-		}
-
-		const profileRegex = RegExp('/pages/employees/edit/.*/profile', 'i');
-		const organizationRegex = RegExp(
-			'/pages/organizations/edit/.*/settings',
-			'i'
-		);
-
-		if (profileRegex.test(url) || organizationRegex.test(url)) {
-			this.showEmployeesSelector = false;
-			this.showDateSelector = false;
-			this.showOrganizationsSelector = false;
-		}
-
-		if (url.endsWith('/pages/auth/profile')) {
-			this.showEmployeesSelector = false;
-			this.showDateSelector = false;
-			this.showOrganizationsSelector = false;
-		}
-
-		if (url.endsWith('/organizations')) {
-			this.showEmployeesSelector = false;
-			this.showDateSelector = false;
-			this.showOrganizationsSelector = false;
-		}
-
-		const organizationEditRegex = RegExp(
-			'/pages/organizations/edit/[A-Za-z0-9-]+$',
-			'i'
-		);
-
-		if (organizationEditRegex.test(url)) {
-			this.showEmployeesSelector = false;
-			this.showDateSelector = true;
-			this.showOrganizationsSelector = true;
-		}
 	}
 
 	getTranslation(prefix: string) {

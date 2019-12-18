@@ -2,55 +2,66 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 
 import { AuthService } from '../@core/services/auth.service';
 import { RolesEnum } from '@gauzy/models';
-import { first, takeUntil } from 'rxjs/operators';
+import { first, takeUntil, filter } from 'rxjs/operators';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Store } from '../@core/services/store.service';
 import { Organization } from 'apps/api/src/app/organization';
+import { SelectorService } from '../@core/utils/selector.service';
+import { Router, NavigationEnd } from '@angular/router';
 
 @Component({
 	selector: 'ngx-pages',
 	styleUrls: ['pages.component.scss'],
 	template: `
-		<ngx-one-column-layout *ngIf="menu">
+		<ngx-one-column-layout *ngIf="!!menu">
 			<nb-menu [items]="menu"></nb-menu>
 			<router-outlet></router-outlet>
 		</ngx-one-column-layout>
 	`
 })
 export class PagesComponent implements OnInit, OnDestroy {
+	basicMenu: NbMenuItem[];
+	adminMenu: NbMenuItem[];
 	menu: NbMenuItem[];
 	private _ngDestroy$ = new Subject<void>();
 	isAdmin: boolean;
 	_selectedOrganization: Organization;
-	_hideOrganizationMenu: boolean;
 
 	constructor(
 		private authService: AuthService,
 		private translate: TranslateService,
-		private store: Store
+		private store: Store,
+		private selectorService: SelectorService,
+		private router: Router
 	) {}
 
 	async ngOnInit() {
 		await this.checkForAdmin();
-		this.loadItems();
 		this._applyTranslationOnSmartTable();
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				this._selectedOrganization = org;
-				this.loadItems();
+				this.loadItems(
+					this.selectorService.showSelectors(this.router.url)
+						.showOrganizationsSelector
+				);
 			});
-		this.store.hideOrganizationShortcuts$
+
+		this.router.events
+			.pipe(filter((event) => event instanceof NavigationEnd))
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((hide) => {
-				this._hideOrganizationMenu = hide;
-				this.loadItems();
+			.subscribe((e) => {
+				this.loadItems(
+					this.selectorService.showSelectors(e['url'])
+						.showOrganizationsSelector
+				);
 			});
 	}
 
-	loadItems() {
+	loadItems(withOrganizationShortcuts: boolean) {
 		this.menu = [
 			{
 				title: this.getTranslation('MENU.DASHBOARD'),
@@ -95,13 +106,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 					title: this.getTranslation('MENU.EMPLOYEES'),
 					icon: 'people-outline',
 					link: '/pages/employees'
+				},
+				{
+					title: this.getTranslation('MENU.USERS'),
+					icon: 'people-outline',
+					link: '/pages/users'
 				}
 			];
 
 			if (
+				withOrganizationShortcuts &&
 				this._selectedOrganization &&
-				this._selectedOrganization.id &&
-				!this._hideOrganizationMenu
+				this._selectedOrganization.id
 			) {
 				this.menu = [
 					...this.menu,
@@ -185,7 +201,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.menu = [];
-				this.loadItems();
+				this.loadItems(
+					this.selectorService.showSelectors(this.router.url)
+						.showOrganizationsSelector
+				);
 			});
 	}
 

@@ -9,11 +9,7 @@ import { Store } from '../../@core/services/store.service';
 export class HelpComponent implements OnInit, OnDestroy {
 	constructor(private store: Store) {}
 
-	ngOnInit() {
-		this.store.hideOrganizationShortcuts = true;
-	}
+	ngOnInit() {}
 
-	ngOnDestroy() {
-		this.store.hideOrganizationShortcuts = false;
-	}
+	ngOnDestroy() {}
 }

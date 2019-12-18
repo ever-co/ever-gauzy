@@ -42,12 +42,12 @@ import { DARK_THEME } from './styles/theme.dark';
 import { ThemeSettingsComponent } from './components/theme-settings/theme-settings.component';
 import { UsersService } from '../@core/services/users.service';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
-import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
 
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
+import { SelectorService } from '../@core/utils/selector.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -99,7 +99,7 @@ const PIPES = [
 	imports: [CommonModule, ...NB_MODULES],
 	exports: [CommonModule, ...PIPES, ...COMPONENTS],
 	declarations: [...COMPONENTS, ...PIPES],
-	providers: [UsersService, UsersOrganizationsService]
+	providers: [UsersService, SelectorService]
 })
 export class ThemeModule {
 	static forRoot(): ModuleWithProviders {

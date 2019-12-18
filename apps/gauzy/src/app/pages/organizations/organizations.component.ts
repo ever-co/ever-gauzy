@@ -88,7 +88,6 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.store.hideOrganizationShortcuts = true;
 		this._loadSmartTable();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
@@ -194,7 +193,5 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		this.loading = false;
 	}
 
-	ngOnDestroy() {
-		this.store.hideOrganizationShortcuts = false;
-	}
+	ngOnDestroy() {}
 }
