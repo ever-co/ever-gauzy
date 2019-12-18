@@ -45,6 +45,14 @@
 						: 'EMPLOYEES_PAGE.END_WORK') | translate
 				}}
 			</button>
+			<nb-checkbox
+				(checkedChange)="changeIncludeDeleted($event)"
+				status="danger"
+				class="float-right py-auto"
+				>{{
+					'FORM.CHECKBOXES.INCLUDE_DELETED' | translate
+				}}</nb-checkbox
+			>
 		</div>
 		<ng2-smart-table
 			class="employees-table"

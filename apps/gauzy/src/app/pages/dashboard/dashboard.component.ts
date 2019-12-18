@@ -147,7 +147,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		);
 
 		this.incomeData = items;
-		this.totalIncome = items.reduce((a, b) => a + b.amount, 0);
+		this.totalIncome = items.reduce((a, b) => a + +b.amount, 0);
 
 		if (items.length && this.totalIncome !== 0) {
 			const firstItem = items[0];
@@ -189,13 +189,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			}
 		)).items;
 
-		const totalExpense = items.reduce((a, b) => a + b.amount, 0);
+		const totalExpense = items.reduce((a, b) => a + +b.amount, 0);
 		const totalEmployeeRecurringexpense = employeeRecurringexpense.reduce(
-			(a, b) => a + b.value,
+			(a, b) => a + +b.value,
 			0
 		);
 		const totalOrgRecurringexpense = orgRecurringexpense.reduce(
-			(a, b) => a + b.value,
+			(a, b) => a + +b.value,
 			0
 		);
 

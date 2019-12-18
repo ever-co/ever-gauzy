@@ -5,8 +5,6 @@ import { Store } from '../../../@core/services/store.service';
 import { Proposal, ProposalStatusEnum } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -26,6 +24,7 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
+
 	proposal?: Proposal;
 	form: FormGroup;
 	employeeName: string;
@@ -33,6 +32,8 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 	loading = true;
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
+	jobPostContent = '';
+	proposalContent = '';
 
 	ngOnInit() {
 		this._initializeForm();

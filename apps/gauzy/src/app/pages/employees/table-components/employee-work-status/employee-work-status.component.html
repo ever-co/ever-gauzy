@@ -1,13 +1,19 @@
-<div class="text-center d-block" *ngIf="rowData.workStatus; else active">
+<div class="text-center d-block" *ngIf="rowData.workStatus">
 	<div class="badge-danger">
 		{{ 'EMPLOYEES_PAGE.WORK_ENDED' | translate }}
 	</div>
 	{{ rowData.workStatus }}
 </div>
-<ng-template #active>
-	<div class="text-center d-block">
-		<div class="badge-success">
-			{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
-		</div>
+<div
+	class="text-center d-block"
+	*ngIf="rowData.isActive && !rowData.workStatus"
+>
+	<div class="badge-success">
+		{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
 	</div>
-</ng-template>
+</div>
+<div class="text-center d-block" *ngIf="!rowData.isActive">
+	<div class="badge-danger">
+		{{ 'EMPLOYEES_PAGE.DELETED' | translate }}
+	</div>
+</div>

@@ -11,6 +11,7 @@ import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { UserFindInput, EmployeeUpdateInput } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
 @Component({
 	selector: 'ngx-edit-employee-profile',
@@ -41,6 +42,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 		private userService: UsersService,
 		private toastrService: NbToastrService,
 		private employeeStore: EmployeeStore,
+		private errorHandler: ErrorHandlingService,
 		private store: Store
 	) {}
 
@@ -101,17 +103,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				);
 				this._loadEmployeeData();
 			} catch (error) {
-				if (error.status === 400) {
-					this.toastrService.danger(
-						'A user with this e-mail or username already exists.\nPlease choose another one',
-						'Error'
-					);
-				} else {
-					this.toastrService.danger(
-						error.error.message || error.message,
-						'Error'
-					);
-				}
+				this.errorHandler.handleError(error);
 			}
 		}
 	}
@@ -129,17 +121,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				);
 				this._loadEmployeeData();
 			} catch (error) {
-				if (error.status === 400) {
-					this.toastrService.danger(
-						'A user with this e-mail or username already exists.\nPlease choose another one',
-						'Error'
-					);
-				} else {
-					this.toastrService.danger(
-						error.error.message || error.message,
-						'Error'
-					);
-				}
+				this.errorHandler.handleError(error);
 			}
 		}
 	}

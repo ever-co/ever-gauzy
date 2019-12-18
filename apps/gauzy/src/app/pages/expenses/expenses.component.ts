@@ -12,6 +12,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -97,6 +98,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		private expenseService: ExpensesService,
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
+		private errorHandler: ErrorHandlingService,
 		private translateService: TranslateService
 	) {}
 
@@ -197,10 +199,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							? formData.employee
 							: null;
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -234,10 +233,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 						);
 						this._loadTableData();
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -267,10 +263,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 						this._loadTableData();
 						this.selectedExpense = null;
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});

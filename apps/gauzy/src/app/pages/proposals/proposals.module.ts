@@ -16,6 +16,7 @@ import { ProposalRegisterComponent } from './proposal-register/proposal-register
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { CKEditorModule } from 'ng2-ckeditor';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
@@ -26,6 +27,7 @@ import { ChartModule } from 'angular2-chartjs';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { JobTitleComponent } from './table-components/job-title/job-title.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -49,6 +51,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeeSelectorsModule,
 		Ng2SmartTableModule,
 		UserFormsModule,
+		CKEditorModule,
 		ChartModule,
 		TranslateModule.forChild({
 			loader: {
@@ -58,13 +61,18 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	entryComponents: [ProposalRegisterComponent, ProposalStatusComponent],
+	entryComponents: [
+		ProposalRegisterComponent,
+		ProposalStatusComponent,
+		JobTitleComponent
+	],
 	declarations: [
 		ProposalsComponent,
 		ProposalRegisterComponent,
 		ProposalStatusComponent,
 		ProposalDetailsComponent,
 		ProposalEditComponent,
+		JobTitleComponent,
 		ProposalsPieChartComponent
 	],
 	providers: [ProposalsService]
