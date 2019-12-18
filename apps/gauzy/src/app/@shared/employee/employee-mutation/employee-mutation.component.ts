@@ -6,6 +6,7 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-employee-mutation',
@@ -21,7 +22,8 @@ export class EmployeeMutationComponent implements OnInit {
 		protected organizationsService: OrganizationsService,
 		protected employeesService: EmployeesService,
 		protected toastrService: NbToastrService,
-		protected store: Store
+		protected store: Store,
+		private errorHandler: ErrorHandlingService
 	) {}
 
 	ngOnInit(): void {
@@ -45,10 +47,7 @@ export class EmployeeMutationComponent implements OnInit {
 
 			this.closeDialog(employee);
 		} catch (error) {
-			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
-			);
+			this.errorHandler.handleError(error);
 		}
 	}
 }

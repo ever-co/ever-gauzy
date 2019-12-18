@@ -12,6 +12,7 @@ import { NbToastrService } from '@nebular/theme';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ngx-profile',
@@ -41,6 +42,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 		private userService: UsersService,
 		private store: Store,
 		private toastrService: NbToastrService,
+		private errorHandler: ErrorHandlingService,
 		private roleService: RoleService
 	) {}
 
@@ -88,10 +90,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 			this.bindFormControls();
 			this.loadControls();
 		} catch (error) {
-			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
-			);
+			this.errorHandler.handleError(error);
 		}
 	}
 
@@ -128,10 +127,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 				'Success'
 			);
 		} catch (error) {
-			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
-			);
+			this.errorHandler.handleError(error);
 		}
 	}
 

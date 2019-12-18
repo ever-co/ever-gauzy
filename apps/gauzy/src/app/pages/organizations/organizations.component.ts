@@ -14,6 +14,7 @@ import { OrganizationsStatusComponent } from './table-components/organizations-s
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
 import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
 import { Store } from '../../@core/services/store.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 interface SelectedRow {
 	data: Organization;
@@ -34,6 +35,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private employeesService: EmployeesService,
 		private translateService: TranslateService,
+		private errorHandler: ErrorHandlingService,
 		private store: Store
 	) {}
 
@@ -130,10 +132,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 				);
 				this._loadSmartTable();
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.errorHandler.handleError(error);
 			}
 		}
 	}
@@ -165,10 +164,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 				);
 				this._loadSmartTable();
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.errorHandler.handleError(error);
 			}
 		}
 	}
@@ -192,10 +188,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 				this.settingsTable.grid.dataSet.willSelect = 'false';
 			}
 		} catch (error) {
-			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
-			);
+			this.errorHandler.handleError(error);
 		}
 
 		this.loading = false;
