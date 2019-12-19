@@ -120,7 +120,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					this._loadTableData();
 				} else {
 					if (this._selectedOrganizationId) {
-						this._loadTableData(this._selectedOrganizationId);
+						this._loadTableData(null, this._selectedOrganizationId);
 					}
 				}
 			});
@@ -134,7 +134,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				} else {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
-						this._loadTableData(this._selectedOrganizationId);
+						this._loadTableData(null, this._selectedOrganizationId);
 					}
 				}
 			});
@@ -144,6 +144,17 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					if (this.loading) {
+						this._loadTableData(
+							this.store.selectedEmployee
+								? this.store.selectedEmployee.id
+								: null,
+							this.store.selectedEmployee &&
+								this.store.selectedEmployee.id
+								? null
+								: this._selectedOrganizationId
+						);
+					}
 				}
 			});
 
@@ -231,7 +242,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							'Expense edited for ' + this.employeeName,
 							'Success'
 						);
-						this._loadTableData();
+
+						this._loadTableData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
@@ -260,7 +277,12 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							'Expense deleted for ' + this.employeeName,
 							'Success'
 						);
-						this._loadTableData();
+						this._loadTableData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.selectedExpense = null;
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -273,7 +295,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		this.selectedExpense = ev;
 	}
 
-	private async _loadTableData(orgId?: string) {
+	private async _loadTableData(
+		employeeId = this.selectedEmployeeId,
+		orgId?: string
+	) {
 		let findObj;
 		this.showTable = false;
 		this.selectedExpense = null;
@@ -301,7 +326,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		} else {
 			findObj = {
 				employee: {
-					id: this.selectedEmployeeId
+					id: employeeId
 				}
 			};
 

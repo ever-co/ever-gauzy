@@ -101,6 +101,17 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					if (this.loading) {
+						this._loadEmployeeIncomeData(
+							this.store.selectedEmployee
+								? this.store.selectedEmployee.id
+								: null,
+							this.store.selectedEmployee &&
+								this.store.selectedEmployee.id
+								? null
+								: this._selectedOrganizationId
+						);
+					}
 				}
 			});
 
