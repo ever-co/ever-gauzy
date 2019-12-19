@@ -255,7 +255,12 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							'Income edited for ' + this.employeeName,
 							'Success'
 						);
-						this._loadEmployeeIncomeData();
+						this._loadEmployeeIncomeData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.selectedIncome = null;
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -283,7 +288,12 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							'Income deleted for ' + this.employeeName,
 							'Success'
 						);
-						this._loadEmployeeIncomeData();
+						this._loadEmployeeIncomeData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.selectedIncome = null;
 					} catch (error) {
 						this.errorHandler.handleError(error);
