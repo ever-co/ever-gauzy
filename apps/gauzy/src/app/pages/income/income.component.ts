@@ -101,6 +101,17 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					if (this.loading) {
+						this._loadEmployeeIncomeData(
+							this.store.selectedEmployee
+								? this.store.selectedEmployee.id
+								: null,
+							this.store.selectedEmployee &&
+								this.store.selectedEmployee.id
+								? null
+								: this._selectedOrganizationId
+						);
+					}
 				}
 			});
 
@@ -244,7 +255,12 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							'Income edited for ' + this.employeeName,
 							'Success'
 						);
-						this._loadEmployeeIncomeData();
+						this._loadEmployeeIncomeData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.selectedIncome = null;
 					} catch (error) {
 						this.errorHandler.handleError(error);
@@ -272,7 +288,12 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							'Income deleted for ' + this.employeeName,
 							'Success'
 						);
-						this._loadEmployeeIncomeData();
+						this._loadEmployeeIncomeData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.selectedIncome = null;
 					} catch (error) {
 						this.errorHandler.handleError(error);
