@@ -172,22 +172,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			this.selectedDate
 		);
 
-		const employeeRecurringexpense = (await this.employeeRecurringExpenseService.getAll(
-			[],
-			{
-				employeeId: this.selectedEmployee.id,
-				year: this.selectedDate.getFullYear(),
-				month: this.selectedDate.getMonth() + 1
-			}
-		)).items;
+		const employeeRecurringexpense = this.selectedDate
+			? (await this.employeeRecurringExpenseService.getAll([], {
+					employeeId: this.selectedEmployee.id,
+					year: this.selectedDate.getFullYear(),
+					month: this.selectedDate.getMonth() + 1
+			  })).items
+			: [];
 
-		const orgRecurringexpense = (await this.organizationRecurringExpenseService.getForEmployee(
-			{
-				orgId: this.store.selectedOrganization.id,
-				year: this.selectedDate.getFullYear(),
-				month: this.selectedDate.getMonth() + 1
-			}
-		)).items;
+		const orgRecurringexpense = this.selectedDate
+			? (await this.organizationRecurringExpenseService.getForEmployee({
+					orgId: this.store.selectedOrganization.id,
+					year: this.selectedDate.getFullYear(),
+					month: this.selectedDate.getMonth() + 1
+			  })).items
+			: [];
 
 		const totalExpense = items.reduce((a, b) => a + +b.amount, 0);
 		const totalEmployeeRecurringexpense = employeeRecurringexpense.reduce(
