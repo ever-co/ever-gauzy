@@ -14,10 +14,12 @@ export class SelectorService {
 		showEmployeesSelector: boolean;
 		showDateSelector: boolean;
 		showOrganizationsSelector: boolean;
+		showOrganizationShortcuts: boolean;
 	} {
 		let showEmployeesSelector = true;
 		let showDateSelector = true;
 		let showOrganizationsSelector = true;
+		let showOrganizationShortcuts = true;
 
 		if (url.endsWith('/employees')) {
 			showEmployeesSelector = false;
@@ -30,22 +32,32 @@ export class SelectorService {
 			'i'
 		);
 
-		if (profileRegex.test(url) || organizationRegex.test(url)) {
+		if (profileRegex.test(url)) {
 			showEmployeesSelector = false;
 			showDateSelector = false;
 			showOrganizationsSelector = false;
+			showOrganizationShortcuts = false;
+		}
+
+		if (organizationRegex.test(url)) {
+			showEmployeesSelector = false;
+			showDateSelector = false;
+			showOrganizationsSelector = false;
+			showOrganizationShortcuts = true;
 		}
 
 		if (url.endsWith('/pages/auth/profile')) {
 			showEmployeesSelector = false;
 			showDateSelector = false;
 			showOrganizationsSelector = false;
+			showOrganizationShortcuts = false;
 		}
 
 		if (url.endsWith('/organizations')) {
 			showEmployeesSelector = false;
 			showDateSelector = false;
 			showOrganizationsSelector = false;
+			showOrganizationShortcuts = false;
 		}
 
 		const organizationEditRegex = RegExp(
@@ -57,12 +69,14 @@ export class SelectorService {
 			showEmployeesSelector = false;
 			showDateSelector = true;
 			showOrganizationsSelector = true;
+			showOrganizationShortcuts = true;
 		}
 
 		return {
 			showEmployeesSelector,
 			showDateSelector,
-			showOrganizationsSelector
+			showOrganizationsSelector,
+			showOrganizationShortcuts
 		};
 	}
 }

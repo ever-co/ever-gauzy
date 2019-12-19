@@ -1,15 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-
-import { AuthService } from '../@core/services/auth.service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { RolesEnum } from '@gauzy/models';
-import { first, takeUntil, filter } from 'rxjs/operators';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { Store } from '../@core/services/store.service';
 import { Organization } from 'apps/api/src/app/organization';
+import { Subject } from 'rxjs';
+import { filter, first, takeUntil } from 'rxjs/operators';
+import { AuthService } from '../@core/services/auth.service';
+import { Store } from '../@core/services/store.service';
 import { SelectorService } from '../@core/utils/selector.service';
-import { Router, NavigationEnd } from '@angular/router';
 
 @Component({
 	selector: 'ngx-pages',
@@ -24,10 +23,188 @@ import { Router, NavigationEnd } from '@angular/router';
 export class PagesComponent implements OnInit, OnDestroy {
 	basicMenu: NbMenuItem[];
 	adminMenu: NbMenuItem[];
-	menu: NbMenuItem[];
 	private _ngDestroy$ = new Subject<void>();
 	isAdmin: boolean;
 	_selectedOrganization: Organization;
+
+	//TODO: Find a way to translate titles on init.
+	MENU_ITEMS: NbMenuItem[] = [
+		{
+			title: 'Dashboard',
+			icon: 'home-outline',
+			link: '/pages/dashboard',
+			home: true,
+			data: {
+				translated: false,
+				translationKey: 'MENU.DASHBOARD'
+			}
+		},
+		{
+			title: 'Income',
+			icon: 'plus-circle-outline',
+			link: '/pages/income',
+			data: {
+				translated: false,
+				translationKey: 'MENU.INCOME'
+			}
+		},
+		{
+			title: 'Expenses',
+			icon: 'minus-circle-outline',
+			link: '/pages/expenses',
+			data: {
+				translated: false,
+				translationKey: 'MENU.EXPENSES'
+			}
+		},
+		{
+			title: 'Proposals',
+			icon: 'paper-plane-outline',
+			link: '/pages/proposals',
+			hidden: false,
+			data: {
+				translated: false,
+				translationKey: 'MENU.PROPOSALS'
+			}
+		},
+		{
+			title: 'Help',
+			icon: 'question-mark-circle-outline',
+			link: '/pages/help',
+			data: {
+				translated: false,
+				translationKey: 'MENU.HELP'
+			}
+		},
+		{
+			title: 'About',
+			icon: 'droplet-outline',
+			link: '/pages/about',
+			data: {
+				translated: false,
+				translationKey: 'MENU.ABOUT'
+			}
+		},
+		{
+			title: 'Admin',
+			group: true,
+			data: {
+				translated: false,
+				permission: 'admin',
+				translationKey: 'MENU.ADMIN'
+			}
+		},
+		{
+			title: 'Employees',
+			icon: 'people-outline',
+			link: '/pages/employees',
+			data: {
+				translated: false,
+				permission: 'admin',
+				translationKey: 'MENU.EMPLOYEES'
+			}
+		},
+		{
+			title: 'Users',
+			icon: 'people-outline',
+			link: '/pages/users',
+			data: {
+				translated: false,
+				permission: 'admin',
+				translationKey: 'MENU.USERS'
+			}
+		},
+		{
+			title: 'Projects',
+			icon: 'book-outline',
+			link: `/pages/organizations/`,
+			data: {
+				translated: false,
+				permission: 'organization-selected',
+				urlPrefix: `/pages/organizations/edit/`,
+				urlPostfix: '/settings/projects',
+				translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
+			}
+		},
+		{
+			title: 'Departments',
+			icon: 'briefcase-outline',
+			link: `/pages/organizations/`,
+			data: {
+				translated: false,
+				permission: 'organization-selected',
+				urlPrefix: `/pages/organizations/edit/`,
+				urlPostfix: '/settings/departments',
+				translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
+			}
+		},
+		{
+			title: 'Clients',
+			icon: 'book-open-outline',
+			link: `/pages/organizations/`,
+			data: {
+				translated: false,
+				permission: 'organization-selected',
+				urlPrefix: `/pages/organizations/edit/`,
+				urlPostfix: '/settings/clients',
+				translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
+			}
+		},
+		{
+			title: 'Positions',
+			icon: 'award-outline',
+			link: `/pages/organizations/`,
+			data: {
+				translated: false,
+				permission: 'organization-selected',
+				urlPrefix: `/pages/organizations/edit/`,
+				urlPostfix: '/settings/positions',
+				translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
+			}
+		},
+		{
+			title: 'Vendors',
+			icon: 'car-outline',
+			link: `/pages/organizations/`,
+			data: {
+				translated: false,
+				permission: 'organization-selected',
+				urlPrefix: `/pages/organizations/edit/`,
+				urlPostfix: '/settings/vendors',
+				translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
+			}
+		},
+		{
+			title: 'Organizations',
+			icon: 'globe-outline',
+			link: '/pages/organizations',
+			data: {
+				translated: false,
+				permission: 'admin',
+				translationKey: 'MENU.ORGANIZATIONS'
+			}
+		},
+		{
+			title: 'Settings',
+			icon: 'settings-outline',
+			data: {
+				translated: false,
+				translationKey: 'MENU.SETTINGS'
+			},
+			children: [
+				{
+					title: 'General',
+					link: '/pages/settings/general',
+					data: {
+						translated: false,
+						translationKey: 'MENU.GENERAL'
+					}
+				}
+			]
+		}
+	];
+
+	menu: NbMenuItem[] = this.MENU_ITEMS;
 
 	constructor(
 		private authService: AuthService,
@@ -46,7 +223,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				this._selectedOrganization = org;
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationsSelector
+						.showOrganizationShortcuts
 				);
 			});
 
@@ -56,127 +233,58 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.subscribe((e) => {
 				this.loadItems(
 					this.selectorService.showSelectors(e['url'])
-						.showOrganizationsSelector
+						.showOrganizationShortcuts
 				);
 			});
 	}
 
-	loadItems(withOrganizationShortcuts: boolean) {
-		this.menu = [
-			{
-				title: this.getTranslation('MENU.DASHBOARD'),
-				icon: 'home-outline',
-				link: '/pages/dashboard',
-				home: true
-			},
-			{
-				title: this.getTranslation('MENU.INCOME'),
-				icon: 'plus-circle-outline',
-				link: '/pages/income'
-			},
-			{
-				title: this.getTranslation('MENU.EXPENSES'),
-				icon: 'minus-circle-outline',
-				link: '/pages/expenses'
-			},
-			{
-				title: this.getTranslation('MENU.PROPOSALS'),
-				icon: 'paper-plane-outline',
-				link: '/pages/proposals'
-			},
-			{
-				title: this.getTranslation('MENU.HELP'),
-				icon: 'question-mark-circle-outline',
-				link: '/pages/help'
-			},
-			{
-				title: this.getTranslation('MENU.ABOUT'),
-				icon: 'droplet-outline',
-				link: '/pages/about'
-			}
-		];
-		if (this.isAdmin) {
-			this.menu = [
-				...this.menu,
-				{
-					title: this.getTranslation('MENU.ADMIN'),
-					group: true
-				},
-				{
-					title: this.getTranslation('MENU.EMPLOYEES'),
-					icon: 'people-outline',
-					link: '/pages/employees'
-				},
-				{
-					title: this.getTranslation('MENU.USERS'),
-					icon: 'people-outline',
-					link: '/pages/users'
-				}
-			];
+	loadItems(
+		withOrganizationShortcuts: boolean,
+		forceTranslate: boolean = false
+	) {
+		this.menu.forEach((item) => {
+			this.refreshMenuItem(
+				item,
+				withOrganizationShortcuts,
+				forceTranslate
+			);
+		});
+	}
 
-			if (
-				withOrganizationShortcuts &&
-				this._selectedOrganization &&
-				this._selectedOrganization.id
-			) {
-				this.menu = [
-					...this.menu,
-					{
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.PROJECTS'
-						),
-						icon: 'book-outline',
-						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/projects`
-					},
-					{
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.DEPARTMENTS'
-						),
-						icon: 'briefcase-outline',
-						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/departments`
-					},
-					{
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.CLIENTS'
-						),
-						icon: 'book-open-outline',
-						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/clients`
-					},
-					{
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.POSITIONS'
-						),
-						icon: 'award-outline',
-						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/positions`
-					},
-					{
-						title: this.getTranslation(
-							'ORGANIZATIONS_PAGE.VENDORS'
-						),
-						icon: 'car-outline',
-						link: `/pages/organizations/edit/${this._selectedOrganization.id}/settings/vendors`
-					}
-				];
-			}
+	refreshMenuItem(item, withOrganizationShortcuts, forceTranslate) {
+		if (!item.data.translated) {
+			item.title = this.getTranslation(item.data.translationKey);
+		} else if (forceTranslate) {
+			item.title = this.getTranslation(item.data.translationKey);
+		}
 
-			this.menu = [
-				...this.menu,
-				{
-					title: this.getTranslation('MENU.ORGANIZATIONS'),
-					icon: 'globe-outline',
-					link: '/pages/organizations'
-				},
-				{
-					title: this.getTranslation('MENU.SETTINGS'),
-					icon: 'settings-outline',
-					children: [
-						{
-							title: this.getTranslation('MENU.GENERAL'),
-							link: '/pages/settings/general'
-						}
-					]
+		if (!item.data.permission) {
+			item.hidden = false;
+		} else {
+			if (item.data.permission === 'admin') {
+				item.hidden = !this.isAdmin;
+			} else if (item.data.permission === 'organization-selected') {
+				item.hidden =
+					!withOrganizationShortcuts || !this._selectedOrganization;
+				if (!item.hidden) {
+					item.link =
+						item.data.urlPrefix +
+						this._selectedOrganization.id +
+						item.data.urlPostfix;
 				}
-			];
+			} else {
+				item.hidden = false;
+			}
+		}
+
+		if (item.children) {
+			item.children.forEach((childItem) => {
+				this.refreshMenuItem(
+					childItem,
+					withOrganizationShortcuts,
+					forceTranslate
+				);
+			});
 		}
 	}
 
@@ -189,7 +297,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	getTranslation(prefix: string) {
-		let result = '';
+		let result = prefix;
 		this.translate.get(prefix).subscribe((res) => {
 			result = res;
 		});
@@ -200,10 +308,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 		this.translate.onLangChange
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				this.menu = [];
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationsSelector
+						.showOrganizationShortcuts,
+					true
 				);
 			});
 	}
