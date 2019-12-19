@@ -67,17 +67,19 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
+				const testAccount = await nodemailer.createTestAccount();
+
 				const transporter = nodemailer.createTransport({
 					host: 'smtp.ethereal.email',
 					port: 587,
 					secure: false, // true for 465, false for other ports
 					auth: {
-						user: '<username>',
-						pass: '<password>'
+						user: testAccount.user,
+						pass: testAccount.pass
 					}
 				});
 
-				const mailOptions = {
+				const info = await transporter.sendMail({
 					from: 'Gauzy',
 					to: user.email,
 					subject: 'Forgotten Password',
@@ -87,29 +89,18 @@ export class AuthService {
 						'<a href=' +
 						url +
 						'>Click here</a>'
-				};
+				});
+
+				console.log('Message sent: %s', info.messageId);
+				console.log(
+					'Preview URL: %s',
+					nodemailer.getTestMessageUrl(info)
+				);
 
 				return {
 					id: user.id,
 					token
 				};
-
-				const sent = await new Promise<boolean>(async function(
-					resolve,
-					reject
-				) {
-					return await transporter.sendMail(
-						mailOptions,
-						async (error, info) => {
-							if (error) {
-								console.log('Message sent: %s', error);
-								return reject(false);
-							}
-							console.log('Message sent: %s', info.messageId);
-							resolve(true);
-						}
-					);
-				});
 			}
 		} else {
 			throw new Error('Email not found');
