@@ -27,134 +27,184 @@ export class PagesComponent implements OnInit, OnDestroy {
 	isAdmin: boolean;
 	_selectedOrganization: Organization;
 
+	//TODO: Find a way to translate titles on init.
 	MENU_ITEMS: NbMenuItem[] = [
 		{
-			title: this.getTranslation('MENU.DASHBOARD'),
+			title: 'Dashboard',
 			icon: 'home-outline',
 			link: '/pages/dashboard',
-			home: true
-		},
-		{
-			title: this.getTranslation('MENU.INCOME'),
-			icon: 'plus-circle-outline',
-			link: '/pages/income'
-		},
-		{
-			title: this.getTranslation('MENU.EXPENSES'),
-			icon: 'minus-circle-outline',
-			link: '/pages/expenses'
-		},
-		{
-			title: this.getTranslation('MENU.PROPOSALS'),
-
-			icon: 'paper-plane-outline',
-			link: '/pages/proposals',
-			hidden: false
-		},
-		{
-			title: this.getTranslation('MENU.HELP'),
-			icon: 'question-mark-circle-outline',
-			link: '/pages/help'
-		},
-		{
-			title: this.getTranslation('MENU.ABOUT'),
-			icon: 'droplet-outline',
-			link: '/pages/about'
-		},
-		{
-			title: this.getTranslation('MENU.ADMIN'),
-			group: true,
+			home: true,
 			data: {
-				permission: 'admin'
+				translated: false,
+				translationKey: 'MENU.DASHBOARD'
 			}
 		},
 		{
-			title: this.getTranslation('MENU.EMPLOYEES'),
+			title: 'Income',
+			icon: 'plus-circle-outline',
+			link: '/pages/income',
+			data: {
+				translated: false,
+				translationKey: 'MENU.INCOME'
+			}
+		},
+		{
+			title: 'Expenses',
+			icon: 'minus-circle-outline',
+			link: '/pages/expenses',
+			data: {
+				translated: false,
+				translationKey: 'MENU.EXPENSES'
+			}
+		},
+		{
+			title: 'Proposals',
+			icon: 'paper-plane-outline',
+			link: '/pages/proposals',
+			hidden: false,
+			data: {
+				translated: false,
+				translationKey: 'MENU.PROPOSALS'
+			}
+		},
+		{
+			title: 'Help',
+			icon: 'question-mark-circle-outline',
+			link: '/pages/help',
+			data: {
+				translated: false,
+				translationKey: 'MENU.HELP'
+			}
+		},
+		{
+			title: 'About',
+			icon: 'droplet-outline',
+			link: '/pages/about',
+			data: {
+				translated: false,
+				translationKey: 'MENU.ABOUT'
+			}
+		},
+		{
+			title: 'Admin',
+			group: true,
+			data: {
+				translated: false,
+				permission: 'admin',
+				translationKey: 'MENU.ADMIN'
+			}
+		},
+		{
+			title: 'Employees',
 			icon: 'people-outline',
 			link: '/pages/employees',
 			data: {
-				permission: 'admin'
+				translated: false,
+				permission: 'admin',
+				translationKey: 'MENU.EMPLOYEES'
 			}
 		},
 		{
-			title: this.getTranslation('MENU.USERS'),
+			title: 'Users',
 			icon: 'people-outline',
 			link: '/pages/users',
 			data: {
-				permission: 'admin'
+				translated: false,
+				permission: 'admin',
+				translationKey: 'MENU.USERS'
 			}
 		},
 		{
-			title: this.getTranslation('ORGANIZATIONS_PAGE.PROJECTS'),
+			title: 'Projects',
 			icon: 'book-outline',
 			link: `/pages/organizations/`,
 			data: {
+				translated: false,
 				permission: 'organization-selected',
 				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/projects'
+				urlPostfix: '/settings/projects',
+				translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
 			}
 		},
 		{
-			title: this.getTranslation('ORGANIZATIONS_PAGE.DEPARTMENTS'),
+			title: 'Departments',
 			icon: 'briefcase-outline',
 			link: `/pages/organizations/`,
 			data: {
+				translated: false,
 				permission: 'organization-selected',
 				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/departments'
+				urlPostfix: '/settings/departments',
+				translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
 			}
 		},
 		{
-			title: this.getTranslation('ORGANIZATIONS_PAGE.CLIENTS'),
+			title: 'Clients',
 			icon: 'book-open-outline',
 			link: `/pages/organizations/`,
 			data: {
+				translated: false,
 				permission: 'organization-selected',
 				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/clients'
+				urlPostfix: '/settings/clients',
+				translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
 			}
 		},
 		{
-			title: this.getTranslation('ORGANIZATIONS_PAGE.POSITIONS'),
+			title: 'Positions',
 			icon: 'award-outline',
 			link: `/pages/organizations/`,
 			data: {
+				translated: false,
 				permission: 'organization-selected',
 				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/positions'
+				urlPostfix: '/settings/positions',
+				translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
 			}
 		},
 		{
-			title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
+			title: 'Vendors',
 			icon: 'car-outline',
 			link: `/pages/organizations/`,
 			data: {
+				translated: false,
 				permission: 'organization-selected',
 				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/vendors'
+				urlPostfix: '/settings/vendors',
+				translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
 			}
 		},
 		{
-			title: this.getTranslation('MENU.ORGANIZATIONS'),
+			title: 'Organizations',
 			icon: 'globe-outline',
 			link: '/pages/organizations',
 			data: {
-				permission: 'admin'
+				translated: false,
+				permission: 'admin',
+				translationKey: 'MENU.ORGANIZATIONS'
 			}
 		},
 		{
-			title: this.getTranslation('MENU.SETTINGS'),
+			title: 'Settings',
 			icon: 'settings-outline',
+			data: {
+				translated: false,
+				translationKey: 'MENU.SETTINGS'
+			},
 			children: [
 				{
-					title: this.getTranslation('MENU.GENERAL'),
-					link: '/pages/settings/general'
+					title: 'General',
+					link: '/pages/settings/general',
+					data: {
+						translated: false,
+						translationKey: 'MENU.GENERAL'
+					}
 				}
 			]
 		}
 	];
 
-	menu: NbMenuItem[] = [];
+	menu: NbMenuItem[] = this.MENU_ITEMS;
 
 	constructor(
 		private authService: AuthService,
@@ -173,8 +223,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				this._selectedOrganization = org;
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
-						.showOrganizationShortcuts,
-					false
+						.showOrganizationShortcuts
 				);
 			});
 
@@ -184,32 +233,43 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.subscribe((e) => {
 				this.loadItems(
 					this.selectorService.showSelectors(e['url'])
-						.showOrganizationShortcuts,
-					false
+						.showOrganizationShortcuts
 				);
 			});
 	}
 
-	loadItems(withOrganizationShortcuts: boolean, translateTitle) {
+	loadItems(
+		withOrganizationShortcuts: boolean,
+		forceTranslate: boolean = false
+	) {
 		this.menu.forEach((item) => {
 			this.refreshMenuItem(
 				item,
 				withOrganizationShortcuts,
-				translateTitle
+				forceTranslate
 			);
 		});
 	}
 
-	refreshMenuItem(item, withOrganizationShortcuts, translateTitle) {
-		if (translateTitle) {
-			item.title = this.getTranslation(item.title);
+	refreshMenuItem(item, withOrganizationShortcuts, forceTranslate) {
+		if (!item.data.translated) {
+			item.title = this.getTranslation(item.data.translationKey);
+		} else if (forceTranslate) {
+			item.title = this.getTranslation(item.data.translationKey);
 		}
-		if (!item.data) {
+
+		if (!item.data.permission) {
 			item.hidden = false;
 		} else {
 			if (item.data.permission === 'admin') {
 				item.hidden = !this.isAdmin;
 			} else if (item.data.permission === 'organization-selected') {
+				console.log(
+					'org data hidden: ??',
+					!withOrganizationShortcuts,
+					!this._selectedOrganization,
+					item
+				);
 				item.hidden =
 					!withOrganizationShortcuts || !this._selectedOrganization;
 				if (!item.hidden) {
@@ -228,7 +288,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				this.refreshMenuItem(
 					childItem,
 					withOrganizationShortcuts,
-					translateTitle
+					forceTranslate
 				);
 			});
 		}
@@ -243,7 +303,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 	}
 
 	getTranslation(prefix: string) {
-		let result = '';
+		let result = prefix;
 		this.translate.get(prefix).subscribe((res) => {
 			result = res;
 		});
@@ -254,7 +314,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 		this.translate.onLangChange
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
-				this.menu = this.MENU_ITEMS;
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts,
