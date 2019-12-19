@@ -264,12 +264,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			if (item.data.permission === 'admin') {
 				item.hidden = !this.isAdmin;
 			} else if (item.data.permission === 'organization-selected') {
-				console.log(
-					'org data hidden: ??',
-					!withOrganizationShortcuts,
-					!this._selectedOrganization,
-					item
-				);
 				item.hidden =
 					!withOrganizationShortcuts || !this._selectedOrganization;
 				if (!item.hidden) {
