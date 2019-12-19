@@ -56,7 +56,8 @@
 		"BI_WEEKLY": "Bi Weekly",
 		"WEEKLY": "Weekly",
 		"TWICE_PER_MONTH": "Twice per month",
-		"MONTHLY": "Monthly"
+		"MONTHLY": "Monthly",
+		"ROLE": "Role"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
@@ -87,7 +88,8 @@
 			"PAY_PERIOD": "Pay Period",
 			"BILL_RATE": "Bill Rate / hr",
 			"CURRENCY_PER_HOUR": "מטבע",
-			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
+			"ROLE": "Role"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -122,7 +124,8 @@
 			"ADDRESS_2": "Address 2",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
-			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)"
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
+			"ROLE": "Select Role"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"
@@ -131,7 +134,8 @@
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
 			"RECORD": "תקליט",
 			"EMPLOYEE": "עובד",
-			"EXPENSE": "הוצאה"
+			"EXPENSE": "הוצאה",
+			"USER": "user"
 		}
 	},
 	"POP_UPS": {
@@ -165,7 +169,8 @@
 		"EMPLOYEES": "עובדים",
 		"ORGANIZATIONS": "ארגונים",
 		"SETTINGS": "הגדרות",
-		"GENERAL": "כללי"
+		"GENERAL": "כללי",
+		"USERS": "Users"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -268,6 +273,17 @@
 			"UPLOAD": "Upload",
 			"PROPOSALS_CONTENT": "Proposal Content",
 			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		}
+	},
+	"USERS_PAGE": {
+		"HEADER": "Manage Users for ",
+		"ADD_USER": "Add User",
+		"ROLE": {
+			"ADMIN": "מנהל",
+			"MANAGER": "Manager",
+			"DATA_ENTRY": "Data Entry",
+			"VIEWER": "Viewer",
+			"EMPLOYEE": "עובד"
 		}
 	},
 	"CONTEXT_MENU": {
