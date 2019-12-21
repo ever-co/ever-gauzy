@@ -1,11 +1,11 @@
 import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationProjectsService } from './organization-projects.service';
 import { OrganizationProjects } from './organization-projects.entity';
 import { IPagination } from '../core';
 
-@ApiUseTags('Organization-Projects')
+@ApiTags('Organization-Projects')
 @Controller()
 export class OrganizationProjectsController extends CrudController<
 	OrganizationProjects
@@ -17,7 +17,7 @@ export class OrganizationProjectsController extends CrudController<
 	}
 
 	@ApiOperation({
-		title: 'Find all organization projects recurring expense.'
+		summary: 'Find all organization projects recurring expense.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,

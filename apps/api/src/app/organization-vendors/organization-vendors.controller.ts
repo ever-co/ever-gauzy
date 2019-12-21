@@ -1,11 +1,11 @@
 import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationVendorsService } from './organization-vendors.service';
 import { OrganizationVendors } from './organization-vendors.entity';
 import { IPagination } from '../core';
 
-@ApiUseTags('Organization-Vendors')
+@ApiTags('Organization-Vendors')
 @Controller()
 export class OrganizationVendorsController extends CrudController<
 	OrganizationVendors
@@ -16,7 +16,7 @@ export class OrganizationVendorsController extends CrudController<
 		super(organizationVendorsService);
 	}
 
-	@ApiOperation({ title: 'Find all organization vendors recurring expense.' })
+	@ApiOperation({ summary: 'Find all organization vendors recurring expense.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found vendors recurring expense',

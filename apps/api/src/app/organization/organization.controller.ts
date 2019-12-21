@@ -1,5 +1,5 @@
 import { Controller, HttpStatus, Get, Param, UseGuards } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
 import { Organization } from './organization.entity';
 import { CrudController } from '../core/crud/crud.controller';
@@ -11,14 +11,14 @@ import { RolesEnum } from 'apps/common/enums/roles';
 
 @UseGuards(RoleGuard)
 @Roles(RolesEnum.ADMIN)
-@ApiUseTags('Organization')
+@ApiTags('Organization')
 @Controller()
 export class OrganizationController extends CrudController<Organization> {
 	constructor(private readonly organizationService: OrganizationService) {
 		super(organizationService);
 	}
 
-	@ApiOperation({ title: 'Find all organizations.' })
+	@ApiOperation({ summary: 'Find all organizations.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found organizations',
@@ -33,7 +33,7 @@ export class OrganizationController extends CrudController<Organization> {
 		return this.organizationService.findAll();
 	}
 
-	@ApiOperation({ title: 'Find Organization by id.' })
+	@ApiOperation({ summary: 'Find Organization by id.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',

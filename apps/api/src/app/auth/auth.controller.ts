@@ -10,7 +10,7 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
@@ -21,7 +21,7 @@ import { getUserDummyImage } from '../core';
 import { environment as env, environment } from '@env-api/environment';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiUseTags('Auth')
+@ApiTags('Auth')
 @Controller()
 export class AuthController {
 	constructor(
@@ -29,7 +29,7 @@ export class AuthController {
 		private readonly commandBus: CommandBus
 	) {}
 
-	@ApiOperation({ title: 'Is authenticated' })
+	@ApiOperation({ summary: 'Is authenticated' })
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/authenticated')
@@ -39,7 +39,7 @@ export class AuthController {
 		return this.authService.isAuthenticated(token);
 	}
 
-	@ApiOperation({ title: 'Has role?' })
+	@ApiOperation({ summary: 'Has role?' })
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/role')
@@ -48,7 +48,7 @@ export class AuthController {
 		return this.authService.hasRole(token, roles);
 	}
 
-	@ApiOperation({ title: 'Create new record' })
+	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.' /*, type: T*/

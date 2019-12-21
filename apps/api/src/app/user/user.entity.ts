@@ -10,7 +10,7 @@ import {
 	RelationId,
 	JoinColumn
 } from 'typeorm';
-import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
 	IsEmail,
@@ -26,28 +26,28 @@ import { Role } from '../role';
 
 @Entity('user')
 export class User extends Base implements IUser {
-	@ApiModelPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	thirdPartyId?: string;
 
-	@ApiModelPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	firstName?: string;
 
-	@ApiModelPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	lastName?: string;
 
-	@ApiModelProperty({ type: String, minLength: 3, maxLength: 100 })
+	@ApiProperty({ type: String, minLength: 3, maxLength: 100 })
 	@IsEmail()
 	@IsNotEmpty()
 	@Index({ unique: true })
@@ -55,7 +55,7 @@ export class User extends Base implements IUser {
 	@Column({ nullable: true })
 	email?: string;
 
-	@ApiModelPropertyOptional({ type: String, minLength: 3, maxLength: 20 })
+	@ApiPropertyOptional({ type: String, minLength: 3, maxLength: 20 })
 	@IsAscii()
 	@MinLength(3)
 	@MaxLength(20)
@@ -64,24 +64,24 @@ export class User extends Base implements IUser {
 	@Column({ nullable: true })
 	username?: string;
 
-	@ApiModelPropertyOptional({ type: Role })
+	@ApiPropertyOptional({ type: Role })
 	@ManyToOne((type) => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	role?: Role;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@RelationId((user: User) => user.role)
 	@Column()
 	roleId?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	hash?: string;
 
-	@ApiModelPropertyOptional({ type: String, maxLength: 500 })
+	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;

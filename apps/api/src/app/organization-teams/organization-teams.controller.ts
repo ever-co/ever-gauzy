@@ -9,7 +9,7 @@ import {
 	Put,
 	Param
 } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationTeamsService } from './organization-teams.service';
 import { IPagination } from '../core';
@@ -20,7 +20,7 @@ import {
 import { OrganizationTeams } from './organization-teams.entity';
 import { UpdateResult } from 'typeorm';
 
-@ApiUseTags('Organization-Teams')
+@ApiTags('Organization-Teams')
 @Controller()
 export class OrganizationTeamsController extends CrudController<
 	OrganizationTeams
@@ -31,7 +31,7 @@ export class OrganizationTeamsController extends CrudController<
 		super(organizationTeamsService);
 	}
 
-	@ApiOperation({ title: 'Create new record' })
+	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.' /*, type: T*/
@@ -50,7 +50,7 @@ export class OrganizationTeamsController extends CrudController<
 	}
 
 	@ApiOperation({
-		title: 'Find all organization Teams.'
+		summary: 'Find all organization Teams.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -73,7 +73,7 @@ export class OrganizationTeamsController extends CrudController<
 		});
 	}
 
-	@ApiOperation({ title: 'Update an organization Team' })
+	@ApiOperation({ summary: 'Update an organization Team' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully edited.'
