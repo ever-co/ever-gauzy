@@ -7,7 +7,7 @@ import { EmployeeStatistics } from '@gauzy/models';
 export class EmployeeStatisticsController {
     constructor(private employeeStatisticsService: EmployeeStatisticsService) { }
 
-    @ApiOperation({ title: 'Find by id' })
+    @ApiOperation({ summary: 'Find by id' })
     @ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
     @Get(':id')

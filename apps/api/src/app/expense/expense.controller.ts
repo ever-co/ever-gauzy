@@ -1,5 +1,5 @@
 import { Controller, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ExpenseService } from './expense.service';
 import { Expense } from './expense.entity';
 import { CrudController } from '../core/crud/crud.controller';
@@ -8,7 +8,7 @@ import { ExpenseCreateInput as IExpenseCreateInput } from '@gauzy/models';
 import { ExpenseCreateCommand } from './commands/expense.create.command';
 import { IPagination } from '../core';
 
-@ApiUseTags('Expense')
+@ApiTags('Expense')
 @Controller()
 export class ExpenseController extends CrudController<Expense> {
     constructor(private readonly expenseService: ExpenseService,
@@ -16,7 +16,7 @@ export class ExpenseController extends CrudController<Expense> {
         super(expenseService);
     }
 
-    @ApiOperation({ title: 'Find all expense.' })
+    @ApiOperation({ summary: 'Find all expense.' })
     @ApiResponse({ status: HttpStatus.OK, description: 'Found expense', type: Expense })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
     @Get()
@@ -26,7 +26,7 @@ export class ExpenseController extends CrudController<Expense> {
         return this.expenseService.findAll({ where: findInput, relations }, filterDate);
     }
 
-    @ApiOperation({ title: 'Create new record' })
+    @ApiOperation({ summary: 'Create new record' })
     @ApiResponse({ status: HttpStatus.CREATED, description: 'The record has been successfully created.' /*, type: T*/ })
     @ApiResponse({
         status: HttpStatus.BAD_REQUEST,

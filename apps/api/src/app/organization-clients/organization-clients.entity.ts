@@ -6,7 +6,7 @@ import {
 	ManyToOne,
 	OneToMany
 } from 'typeorm';
-import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
 	IsString,
@@ -21,73 +21,73 @@ import { OrganizationProjects } from '../organization-projects';
 
 @Entity('organization_clients')
 export class OrganizationClients extends Base implements IOrganizationClients {
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	organizationId: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsEmail()
 	@IsNotEmpty()
 	@Column()
 	primaryEmail: string;
 
-	@ApiModelPropertyOptional({ type: String, isArray: true })
+	@ApiPropertyOptional({ type: String, isArray: true })
 	emailAddresses?: string[];
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	primaryPhone: string;
 
-	@ApiModelPropertyOptional({ type: String, isArray: true })
+	@ApiPropertyOptional({ type: String, isArray: true })
 	phones?: string[];
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	country: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	street: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	city: string;
 
-	@ApiModelPropertyOptional({ type: Number })
+	@ApiPropertyOptional({ type: Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true })
 	zipCode?: number;
 
-	@ApiModelPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
 	state?: string;
 
-	@ApiModelPropertyOptional({ type: OrganizationProjects, isArray: true })
+	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
 	@OneToMany((type) => OrganizationProjects, (projects) => projects.client)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
 
-	@ApiModelPropertyOptional({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })

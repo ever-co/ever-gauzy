@@ -25,7 +25,7 @@ import { PaginationParams } from './pagination-params';
 export abstract class CrudController<T extends Base> {
 	protected constructor(private readonly crudService: ICrudService<T>) {}
 
-	@ApiOperation({ title: 'find all' })
+	@ApiOperation({ summary: 'find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found records' /* type: IPagination<T> */
@@ -35,7 +35,7 @@ export abstract class CrudController<T extends Base> {
 		return this.crudService.findAll(filter);
 	}
 
-	@ApiOperation({ title: 'Find by id' })
+	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record' /*, type: T*/
@@ -49,7 +49,7 @@ export abstract class CrudController<T extends Base> {
 		return this.crudService.findOne(id);
 	}
 
-	@ApiOperation({ title: 'Create new record' })
+	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.' /*, type: T*/
@@ -68,7 +68,7 @@ export abstract class CrudController<T extends Base> {
 		return this.crudService.create(entity);
 	}
 
-	@ApiOperation({ title: 'Update an existing record' })
+	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully edited.'
@@ -92,7 +92,7 @@ export abstract class CrudController<T extends Base> {
 		return this.crudService.update(id, entity); // FIXME: https://github.com/typeorm/typeorm/issues/1544
 	}
 
-	@ApiOperation({ title: 'Delete record' })
+	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
 		description: 'The record has been successfully deleted'

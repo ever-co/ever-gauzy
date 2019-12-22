@@ -1,5 +1,5 @@
 import { Column, Entity, Index } from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
 	IsString,
@@ -17,14 +17,14 @@ import {
 @Entity('organization_recurring_expense')
 export class OrganizationRecurringExpense extends Base
 	implements IOrganizationRecurringExpense {
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	orgId: string;
 
-	@ApiModelProperty({ type: Number, minimum: 1, maximum: 12 })
+	@ApiProperty({ type: Number, minimum: 1, maximum: 12 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(1)
@@ -32,27 +32,27 @@ export class OrganizationRecurringExpense extends Base
 	@Column()
 	month: number;
 
-	@ApiModelProperty({ type: Number, minimum: 1 })
+	@ApiProperty({ type: Number, minimum: 1 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(0)
 	@Column()
 	year: number;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	categoryName: string;
 
-	@ApiModelProperty({ type: Number })
+	@ApiProperty({ type: Number })
 	@IsNumber()
 	@IsNotEmpty()
 	@Column({ type: 'numeric' })
 	value: number;
 
-	@ApiModelProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()

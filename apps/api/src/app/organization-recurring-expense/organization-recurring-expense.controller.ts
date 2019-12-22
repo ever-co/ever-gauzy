@@ -1,11 +1,11 @@
 import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import { IPagination } from '../core';
 
-@ApiUseTags('OrganizationRecurringExpense')
+@ApiTags('OrganizationRecurringExpense')
 @Controller()
 export class OrganizationRecurringExpenseController extends CrudController<
 	OrganizationRecurringExpense
@@ -17,7 +17,7 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	}
 
 	@ApiOperation({
-		title: 'Find all organization recurring expenses.'
+		summary: 'Find all organization recurring expenses.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -40,7 +40,7 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	}
 
 	@ApiOperation({
-		title: 'Find all organization recurring expenses for given employee.'
+		summary: 'Find all organization recurring expenses for given employee.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
