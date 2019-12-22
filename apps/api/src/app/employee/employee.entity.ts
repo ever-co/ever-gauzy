@@ -3,7 +3,7 @@ import {
 	Employee as IEmployee,
 	PayPeriodEnum
 } from '@gauzy/models';
-import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import {
 	Column,
@@ -22,59 +22,59 @@ import { User } from '../user';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
-	@ApiModelProperty({ type: User })
+	@ApiProperty({ type: User })
 	@OneToOne((type) => User, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn()
 	user: User;
 
-	@ApiModelProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.user)
 	readonly userId: string;
 
-	@ApiModelProperty({ type: Organization })
+	@ApiProperty({ type: Organization })
 	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn()
 	organization: Organization;
 
-	@ApiModelProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.organization)
 	readonly orgId: string;
 
-	@ApiModelPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	@ApiModelPropertyOptional({ type: Boolean, default: true })
+	@ApiPropertyOptional({ type: Boolean, default: true })
 	@Column({ nullable: true, default: true })
 	isActive: boolean;
 
-	@ApiModelPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	endWork?: Date;
 
-	@ApiModelProperty({ type: String, enum: PayPeriodEnum })
+	@ApiProperty({ type: String, enum: PayPeriodEnum })
 	@IsEnum(PayPeriodEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	payPeriod?: string;
 
-	@ApiModelProperty({ type: Number })
+	@ApiProperty({ type: Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ type: 'numeric', nullable: true })
 	billRateValue?: number;
 
-	@ApiModelProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	billRateCurrency?: string;
 
-	@ApiModelProperty({ type: Number })
+	@ApiProperty({ type: Number })
 	@IsNumber()
 	@IsOptional()
 	@Column({ nullable: true })

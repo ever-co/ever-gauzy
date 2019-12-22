@@ -3,20 +3,20 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { Controller, HttpStatus, Get, Param } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import { CrudController } from '../core/crud/crud.controller';
 import { User } from './user.entity';
 import { UUIDValidationPipe } from '../shared';
 
-@ApiUseTags('User')
+@ApiTags('User')
 @Controller()
 export class UserController extends CrudController<User> {
   constructor(private readonly userService: UserService) {
     super(userService);
   }
 
-  @ApiOperation({ title: 'Find User by id.' })
+  @ApiOperation({ summary: 'Find User by id.' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Found one record', type: User })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
   @Get(':id')

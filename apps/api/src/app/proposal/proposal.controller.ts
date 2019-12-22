@@ -1,5 +1,5 @@
 import { Controller, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
 import { CrudController } from '../core/crud/crud.controller';
@@ -9,14 +9,14 @@ import {
 } from '@gauzy/models';
 import { IPagination } from '../core';
 
-@ApiUseTags('Proposal')
+@ApiTags('Proposal')
 @Controller()
 export class ProposalController extends CrudController<Proposal> {
 	constructor(private readonly proposalService: ProposalService) {
 		super(proposalService);
 	}
 
-	@ApiOperation({ title: 'Find all proposals.' })
+	@ApiOperation({ summary: 'Find all proposals.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found proposals',
@@ -38,7 +38,7 @@ export class ProposalController extends CrudController<Proposal> {
 		);
 	}
 
-	@ApiOperation({ title: 'Create new record' })
+	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.' /*, type: T*/

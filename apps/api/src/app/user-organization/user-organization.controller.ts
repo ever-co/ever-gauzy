@@ -1,12 +1,12 @@
 import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { UserOrganization as IUserOrganization } from '@gauzy/models';
 import { UserOrganizationService } from './user-organization.services';
 import { IPagination } from '../core';
 import { UserOrganization } from './user-organization.entity';
 
-@ApiUseTags('UserOrganization')
+@ApiTags('UserOrganization')
 @Controller()
 export class UserOrganizationController extends CrudController<
 	IUserOrganization
@@ -17,7 +17,7 @@ export class UserOrganizationController extends CrudController<
 		super(userOrganizationService);
 	}
 
-	@ApiOperation({ title: 'Find all UserOrganizations.' })
+	@ApiOperation({ summary: 'Find all UserOrganizations.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found UserOrganizations',
@@ -40,7 +40,7 @@ export class UserOrganizationController extends CrudController<
 
 	// This was not being used and it overrides the default unnecessarily, so removed until required.
 	// Please do not user Get() for findOne and use something like @Get(/organization/id)
-	// @ApiOperation({ title: 'Find one from the search input' })
+	// @ApiOperation({ summary: 'Find one from the search input' })
 	// @ApiResponse({ status: HttpStatus.OK, description: 'Found user organization', type: UserOrganization })
 	// @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
 	// @Get()

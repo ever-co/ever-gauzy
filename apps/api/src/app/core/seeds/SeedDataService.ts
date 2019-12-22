@@ -128,17 +128,10 @@ export class SeedDataService {
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
 
-			await createIncomes(
-				this.connection,
-				{
-					org: defaultOrganization,
-					employees: [...employees.defaultEmployees]
-				},
-				{
-					orgs: randomOrganizations,
-					employees: [...employees.randomEmployees]
-				}
-			);
+			await createIncomes(this.connection, {
+				org: defaultOrganization,
+				employees: [...employees.defaultEmployees]
+			});
 
 			await createExpenses(
 				this.connection,

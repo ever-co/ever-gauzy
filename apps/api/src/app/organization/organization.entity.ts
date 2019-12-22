@@ -1,5 +1,5 @@
 import { Column, Entity, Index } from 'typeorm';
-import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
 	IsString,
@@ -17,109 +17,109 @@ import {
 
 @Entity('organization')
 export class Organization extends Base implements IOrganization {
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiModelPropertyOptional({ type: String, maxLength: 500 })
+	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@ApiModelProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	currency: string;
 
-	@ApiModelPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	@ApiModelProperty({ type: String, enum: DefaultValueDateTypeEnum })
+	@ApiProperty({ type: String, enum: DefaultValueDateTypeEnum })
 	@IsEnum(DefaultValueDateTypeEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	defaultValueDateType: string;
 
-	@ApiModelProperty({ type: Boolean, default: true })
+	@ApiProperty({ type: Boolean, default: true })
 	@Column({ default: true })
 	isActive: boolean;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	defaultAlignmentType?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	timeZone?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	brandColor?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	dateFormat?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	officialName?: string;
 
-	@ApiModelProperty({ type: String, enum: WeekDaysEnum })
+	@ApiProperty({ type: String, enum: WeekDaysEnum })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	startWeekOn?: string;
 
-	@ApiModelProperty({ type: String, maxLength: 256 })
+	@ApiProperty({ type: String, maxLength: 256 })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	taxId?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	country?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	city?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	address?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
 	address2?: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
