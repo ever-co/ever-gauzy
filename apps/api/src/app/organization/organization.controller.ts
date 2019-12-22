@@ -6,8 +6,8 @@ import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
 import { UUIDValidationPipe } from '../shared';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
+import { RolesEnum } from '@gauzy/models';
 import { Roles } from '../shared/decorators/roles';
-import { RolesEnum } from 'apps/common/enums/roles';
 
 @UseGuards(RoleGuard)
 @Roles(RolesEnum.ADMIN)

@@ -1,9 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { RolesEnum } from '@gauzy/models';
+import { RolesEnum, Organization } from '@gauzy/models';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Organization } from 'apps/api/src/app/organization';
 import { Subject } from 'rxjs';
 import { filter, first, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../@core/services/auth.service';

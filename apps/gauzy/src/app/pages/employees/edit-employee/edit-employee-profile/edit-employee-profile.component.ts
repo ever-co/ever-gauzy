@@ -3,13 +3,12 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
-import { Employee } from 'apps/api/src/app/employee';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { UserFindInput, EmployeeUpdateInput } from '@gauzy/models';
+import { UserFindInput, EmployeeUpdateInput, Employee } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 

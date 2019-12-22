@@ -13,12 +13,14 @@ import { EmployeeService } from './employee.service';
 import { Employee } from './employee.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
-import { EmployeeCreateInput as IEmployeeCreateInput } from '@gauzy/models';
+import {
+	EmployeeCreateInput as IEmployeeCreateInput,
+	RolesEnum
+} from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand } from './commands';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
 import { Roles } from '../shared/decorators/roles';
-import { RolesEnum } from 'apps/common/enums/roles';
 
 @UseGuards(RoleGuard)
 @Roles(RolesEnum.ADMIN)

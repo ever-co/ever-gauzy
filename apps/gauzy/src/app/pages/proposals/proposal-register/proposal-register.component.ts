@@ -54,7 +54,7 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	private async registerProposal() {
+	public async registerProposal() {
 		if (this.form.valid) {
 			const result = this.form.value;
 			const selectedEmployee = this.employeeSelector.selectedEmployee.id;

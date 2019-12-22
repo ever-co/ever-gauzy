@@ -79,7 +79,7 @@ jobs:
                   command: yarn bootstrap
             - run:
                   name: Run Build
-                  command: yarn build:api
+                  command: yarn build:api:prod
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-api-{{ checksum "yarn.lock" }}
@@ -117,7 +117,7 @@ jobs:
                   command: yarn bootstrap
             - run:
                   name: Run Build
-                  command: yarn build
+                  command: yarn build:prod
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-web-{{ checksum "yarn.lock" }}

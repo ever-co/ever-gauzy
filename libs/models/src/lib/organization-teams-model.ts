@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from 'apps/api/src/app/employee';
+import { Employee } from './employee.model';
 
 export interface OrganizationTeams extends IBaseEntityModel {
 	name: string;
