@@ -9,7 +9,7 @@ RUN apk update \
     snappy g++ snappy-dev gcc libgcc libstdc++ linux-headers autoconf automake make nasm python git \
     && npm install --quiet node-gyp -g \ 
     && npm config set python /usr/bin/python \
-    && npm install yarn -g
+    && npm install yarn@latest -g --force
 
 RUN mkdir /srv/gauzy && chown node:node /srv/gauzy
 
