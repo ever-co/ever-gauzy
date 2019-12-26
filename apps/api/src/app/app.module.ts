@@ -24,6 +24,7 @@ import { OrganizationVendorsModule } from './organization-vendors';
 import { OrganizationTeamsModule } from './organization-teams';
 import { ProposalModule } from './proposal';
 import { CountryModule } from './country';
+import { InviteModule } from './invite';
 
 @Module({
 	imports: [
@@ -89,6 +90,10 @@ import { CountryModule } from './country';
 					{
 						path: '/country',
 						module: CountryModule
+					},
+					{
+						path: '/invite',
+						module: InviteModule
 					}
 				]
 			}
@@ -113,7 +118,8 @@ import { CountryModule } from './country';
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamsModule,
 		ProposalModule,
-		CountryModule
+		CountryModule,
+		InviteModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Role, RolesEnum } from '@gauzy/models';
+import { Role, RolesEnum, InvitationTypeEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -11,6 +11,7 @@ import { UsersOrganizationsService } from '../../@core/services/users-organizati
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
+import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 
 interface UserViewModel {
 	fullName: string;
@@ -50,9 +51,12 @@ export class UsersComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		console.log('on init called');
+
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
+				console.log("let's load page");
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
 					this.loadPage();
@@ -104,6 +108,20 @@ export class UsersComponent implements OnInit, OnDestroy {
 
 			this.loadPage();
 		}
+	}
+
+	async invite() {
+		const dialog = this.dialogService.open(InviteMutationComponent, {
+			context: {
+				invitationType: InvitationTypeEnum.USER,
+				selectedOrganizationId: this.selectedOrganizationId,
+				currentUserId: this.store.userId
+			}
+		});
+
+		const data = await dialog.onClose.pipe(first()).toPromise();
+
+		console.log('Data', data);
 	}
 
 	edit() {

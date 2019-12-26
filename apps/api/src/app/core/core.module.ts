@@ -25,8 +25,10 @@ import { OrganizationProjects } from '../organization-projects';
 import { OrganizationTeams } from '../organization-teams';
 import { Proposal } from '../proposal';
 import { Country } from '../country';
+import { Invite } from '../invite';
 
 const entities = [
+	Invite,
 	User,
 	Employee,
 	Role,

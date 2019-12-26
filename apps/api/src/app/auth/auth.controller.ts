@@ -18,7 +18,7 @@ import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { getUserDummyImage } from '../core';
-import { environment as env, environment } from '@env-api/environment';
+import { environment as env } from '@env-api/environment';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Auth')
