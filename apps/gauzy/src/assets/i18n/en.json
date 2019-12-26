@@ -14,7 +14,10 @@
 		"SENT": "Sent",
 		"ACCEPTED": "Accepted",
 		"CANCEL": "Cancel",
-		"CLOSE": "Close"
+		"CLOSE": "Close",
+		"INVITE": "Invite",
+		"SELECT_ALL": "Select All",
+		"COPY_LINK": "Copy Link"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -90,7 +93,9 @@
 			"BILL_RATE": "Bill Rate / hr",
 			"CURRENCY_PER_HOUR": "Currency",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
-			"ROLE": "Role"
+			"ROLE": "Role",
+			"EMAILS": "Email Addresses",
+			"PROJECTS_OPTIONAL": "Projects (Optional)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -126,7 +131,9 @@
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
-			"ROLE": "Select Role"
+			"EMAILS": "Type an email address and press enter",
+			"ROLE": "Select Role",
+			"PROJECTS": "Choose Projects"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"
@@ -313,6 +320,18 @@
 		"ERROR": "Error",
 		"SAVE": "Save"
 	},
+	"INVITE_PAGE": {
+		"USER": {
+			"HEADER": "Invite Users",
+			"ACTION": "Invite Users"
+		},
+		"EMPLOYEE": {
+			"HEADER": "Invite Employees",
+			"ACTION": "Invite Employees"
+		},
+		"SENT": "{{total}} Invites Sent.",
+		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored."
+	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
@@ -327,5 +346,15 @@
 	"FOOTER": {
 		"BY": "by",
 		"RIGHTS_RECERVED": "All rights reserved."
+	},
+	"TOASTR": {
+		"TITLE": {
+			"SUCCESS": "Success",
+			"ERROR": "Error",
+			"WARNING": "Warning"
+		},
+		"MESSAGE": {
+			"PROJECT_LOAD": "Could Not Load Projects"
+		}
 	}
 }

@@ -16,6 +16,8 @@ export * from './lib/organization-teams-model';
 export * from './lib/organization-recurring-expense';
 export * from './lib/employee-recurring-expense';
 export * from './lib/country.model';
+export * from './lib/invite.model';
+
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
 export { DefaultUser } from './lib/default-user.model';

@@ -27,6 +27,7 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit-profile-form.module';
+import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -65,7 +66,8 @@ const COMPONENTS = [
 			}
 		}),
 		NbSpinnerModule,
-		EditProfileFormModule
+		EditProfileFormModule,
+		InviteMutationModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [UserFullNameComponent],
