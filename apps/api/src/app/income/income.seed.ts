@@ -3,7 +3,8 @@ import { environment as env } from '@env-api/environment';
 import { Income } from './income.entity';
 import * as faker from 'faker';
 import { CurrenciesEnum, Organization, Employee } from '@gauzy/models';
-import { incomeData } from './income-seed-data/november-19';
+import * as fs from 'fs';
+import * as csv from 'csv-parser';
 
 export const createIncomes = async (
 	connection: Connection,
@@ -17,28 +18,35 @@ export const createIncomes = async (
 	}
 ): Promise<{ defaultIncomes: Income[]; randomIncomes: Income[] }> => {
 	const currencies = Object.values(CurrenciesEnum);
-
 	const defaultIncomes: Income[] = [];
+	const incomeData = [];
+	const filePath =
+		'./apps/api/src/app/income/income-seed-data/income-data.csv';
 
-	incomeData.map(async (seedIncome) => {
-		const income = new Income();
-		const foundEmployee = defaultData.employees.find(
-			(emp) => emp.user.email === seedIncome.email
-		);
+	fs.createReadStream(filePath)
+		.pipe(csv())
+		.on('data', (data) => incomeData.push(data))
+		.on('end', () => {
+			incomeData.map(async (seedIncome) => {
+				const income = new Income();
+				const foundEmployee = defaultData.employees.find(
+					(emp) => emp.user.email === seedIncome.email
+				);
 
-		income.employee = foundEmployee;
-		income.clientName = seedIncome.clientName;
-		income.organization = defaultData.org;
-		income.amount = seedIncome.amount;
-		income.clientId = faker.random
-			.number({ min: 10, max: 9999 })
-			.toString();
-		income.currency = seedIncome.currency;
-		income.valueDate = new Date(seedIncome.valueDate);
-		income.notes = seedIncome.notes;
+				income.employee = foundEmployee;
+				income.clientName = seedIncome.clientName;
+				income.organization = defaultData.org;
+				income.amount = seedIncome.amount;
+				income.clientId = faker.random
+					.number({ min: 10, max: 9999 })
+					.toString();
+				income.currency = seedIncome.currency;
+				income.valueDate = new Date(seedIncome.valueDate);
+				income.notes = seedIncome.notes;
 
-		await insertIncome(connection, income);
-	});
+				await insertIncome(connection, income);
+			});
+		});
 
 	const randomIncomes: Income[] = [];
 
