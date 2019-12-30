@@ -22,7 +22,8 @@ interface UserViewModel {
 }
 
 @Component({
-	templateUrl: './users.component.html'
+	templateUrl: './users.component.html',
+	styleUrls: ['./users.component.scss']
 })
 export class UsersComponent implements OnInit, OnDestroy {
 	organizationName: string;
@@ -126,6 +127,10 @@ export class UsersComponent implements OnInit, OnDestroy {
 
 	edit() {
 		this.router.navigate(['/pages/users/edit/' + this.selectedUser.id]);
+	}
+
+	manageInvites() {
+		this.router.navigate(['/pages/users/invites/']);
 	}
 
 	async delete() {

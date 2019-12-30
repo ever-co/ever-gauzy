@@ -8,7 +8,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
-import { InsertResult, Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects';
 import { Invite } from './invite.entity';
@@ -24,22 +24,6 @@ export class InviteService extends CrudService<Invite> {
 	) {
 		super(inviteRepository);
 	}
-
-	// async getInviteByCode(code: string): Promise<Invite> {
-	// 	const invite = await this.repository
-	// 		.createQueryBuilder('invite')
-	// 		.where('invite.code = :code', { code })
-	// 		.getOne();
-	// 	return invite;
-	// }
-
-	// async getInviteByEmail(email: string): Promise<Invite> {
-	// 	const invite = await this.repository
-	// 		.createQueryBuilder('invite')
-	// 		.where('invite.email = :email', { email })
-	// 		.getOne();
-	// 	return invite;
-	// }
 
 	/**
 	 * Creates all invites. If an email Id already exists, this function will first delete
@@ -77,7 +61,7 @@ export class InviteService extends CrudService<Invite> {
 
 		for (let i = 0; i < invitesToCreate.length; i++) {
 			const email = invitesToCreate[i];
-			const token = await this.createToken(email);
+			const token = this.createToken(email);
 
 			const invite = new Invite();
 			invite.token = token;
@@ -96,36 +80,19 @@ export class InviteService extends CrudService<Invite> {
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 
-	async createToken(email): Promise<string> {
+	async validate(relations, email, token): Promise<Invite> {
+		return this.findOne({
+			relations,
+			where: {
+				email,
+				token,
+				expireDate: MoreThanOrEqual(new Date())
+			}
+		});
+	}
+
+	createToken(email): string {
 		const token: string = sign({ email }, env.JWT_SECRET, {});
 		return token;
-	}
-
-	async checkIfExistsByCode(code: string): Promise<boolean> {
-		const count = await this.repository
-			.createQueryBuilder('invite')
-			.where('invite.code = :code', { code })
-			.getCount();
-		return count > 0;
-	}
-
-	async checkIfExists(id: string): Promise<boolean> {
-		const count = await this.repository
-			.createQueryBuilder('invite')
-			.where('invite.id = :id', { id })
-			.getCount();
-		return count > 0;
-	}
-
-	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
-		const count = await this.repository
-			.createQueryBuilder('invite')
-			.where('invite.thirdPartyId = :thirdPartyId', { thirdPartyId })
-			.getCount();
-		return count > 0;
-	}
-
-	async createOne(invite: Invite): Promise<InsertResult> {
-		return await this.repository.insert(invite);
 	}
 }

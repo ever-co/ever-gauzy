@@ -2,26 +2,26 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import {
-	Column,
-	Entity,
-	Index,
-	ManyToOne,
-	RelationId,
-	JoinColumn
-} from 'typeorm';
+import { User as IUser } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
 	IsEmail,
 	IsNotEmpty,
+	IsOptional,
 	IsString,
 	MaxLength,
-	MinLength,
-	IsOptional
+	MinLength
 } from 'class-validator';
+import {
+	Column,
+	Entity,
+	Index,
+	JoinColumn,
+	ManyToOne,
+	RelationId
+} from 'typeorm';
 import { Base } from '../core/entities/base';
-import { User as IUser } from '@gauzy/models';
 import { Role } from '../role';
 
 @Entity('user')
@@ -69,10 +69,9 @@ export class User extends Base implements IUser {
 	@JoinColumn()
 	role?: Role;
 
-	@ApiProperty({ type: String })
+	@ApiPropertyOptional({ type: String, readOnly: true })
 	@RelationId((user: User) => user.role)
-	@Column()
-	roleId?: string;
+	readonly roleId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()

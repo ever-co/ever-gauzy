@@ -1,24 +1,22 @@
 import {
+	CreateEmailInvitesInput,
+	CreateEmailInvitesOutput
+} from '@gauzy/models';
+import {
+	BadRequestException,
+	Body,
 	Controller,
 	Get,
-	HttpStatus,
-	Param,
 	HttpCode,
+	HttpStatus,
 	Post,
-	Body,
 	Query
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { UUIDValidationPipe } from '../shared';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
-import { DeepPartial, InsertResult } from 'typeorm';
-import {
-	CreateEmailInvitesInput,
-	CreateInviteInput,
-	CreateEmailInvitesOutput
-} from '@gauzy/models';
 
 @ApiTags('Invite')
 @Controller()
@@ -26,52 +24,6 @@ export class InviteController extends CrudController<Invite> {
 	constructor(private readonly inviteService: InviteService) {
 		super(inviteService);
 	}
-
-	// @ApiOperation({ summary: 'Find Invite by id.' })
-	// @ApiResponse({
-	// 	status: HttpStatus.OK,
-	//   description: 'Found one record',
-	// 	type: Invite
-	// })
-	// @ApiResponse({
-	// 	status: HttpStatus.NOT_FOUND,
-	// 	description: 'Record not found'
-	// })
-	// @Get('code/:code')
-	// async findByCode(@Param('code') code: string): Promise<Invite> {
-	// 	return this.inviteService.getInviteByCode(code);
-	// }
-
-	// @ApiOperation({ summary: 'Find Invite by email.' })
-	// @ApiResponse({
-	// 	status: HttpStatus.OK,
-	//   description: 'Found one record',
-	// 	type: Invite
-	// })
-	// @ApiResponse({
-	// 	status: HttpStatus.NOT_FOUND,
-	// 	description: 'Record not found'
-	// })
-	// @Get('email/:email')
-	// async findByEmail(@Param('code') code: string): Promise<Invite> {
-	// 	return this.inviteService.getInviteByEmail(code);
-	// }
-
-	// @ApiOperation({ summary: 'Find Invites by email.' })
-	// @ApiResponse({
-	// 	status: HttpStatus.OK,
-	//   description: 'Found one record',
-	// 	type: Invite
-	// })
-	// @ApiResponse({
-	// 	status: HttpStatus.NOT_FOUND,
-	// 	description: 'Record not found'
-	// })
-	// @Get('emails')
-	// async findManyByEmail(@Query('data') data: string): Promise<Invite[]> {
-	//   const { emails } = JSON.parse(data);
-	// 	return this.inviteService.getInvitesByEmail(emails);
-	// }
 
 	@ApiOperation({ summary: 'Create email invites' })
 	@ApiResponse({
@@ -89,5 +41,51 @@ export class InviteController extends CrudController<Invite> {
 		@Body() entity: CreateEmailInvitesInput
 	): Promise<CreateEmailInvitesOutput> {
 		return this.inviteService.createBulk(entity);
+	}
+
+	@ApiOperation({ summary: 'Get invite.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found invite',
+		type: Invite
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('validate')
+	async validateInvite(@Query('data') data: string): Promise<Invite> {
+		const {
+			relations,
+			findInput: { email, token }
+		} = JSON.parse(data);
+
+		if (!email && !token) {
+			throw new BadRequestException('Email & Token Mandatory');
+		}
+
+		return this.inviteService.validate(relations, email, token);
+	}
+
+	@ApiOperation({ summary: 'Find all invites.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found invites',
+		type: Invite
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('all')
+	async findAllInvites(
+		@Query('data') data: string
+	): Promise<IPagination<Invite>> {
+		const { relations, findInput } = JSON.parse(data);
+
+		return this.inviteService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 }

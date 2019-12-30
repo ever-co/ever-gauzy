@@ -17,7 +17,9 @@
 		"CLOSE": "Close",
 		"INVITE": "Invite",
 		"SELECT_ALL": "Select All",
-		"COPY_LINK": "Copy Link"
+		"COPY_LINK": "Copy Link",
+		"MANAGE_INVITES": "Manage Invites",
+		"RESEND": "Resend"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -61,7 +63,10 @@
 		"WEEKLY": "Weekly",
 		"TWICE_PER_MONTH": "Twice per month",
 		"MONTHLY": "Monthly",
-		"ROLE": "Role"
+		"ROLE": "Role",
+		"PROJECTS": "Projects",
+		"INVITED_BY": "Invited By",
+		"EXPIRE_DATE": "Expires"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -322,15 +327,22 @@
 	},
 	"INVITE_PAGE": {
 		"USER": {
+			"MANAGE": "Manage User Invites for",
 			"HEADER": "Invite Users",
 			"ACTION": "Invite Users"
 		},
 		"EMPLOYEE": {
+			"MANAGE": "Manage Employee Invites for",
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
 		},
 		"SENT": "{{total}} Invites Sent.",
-		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored."
+		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
+		"STATUS": {
+			"INVITED": "Invited",
+			"EXPIRED": "Expired",
+			"ACCEPTED": "Accepted"
+		}
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page Not Found",
@@ -354,7 +366,8 @@
 			"WARNING": "Warning"
 		},
 		"MESSAGE": {
-			"PROJECT_LOAD": "Could Not Load Projects"
+			"PROJECT_LOAD": "Could Not Load Projects",
+			"COPIED": "Link copied to clipboard"
 		}
 	}
 }
