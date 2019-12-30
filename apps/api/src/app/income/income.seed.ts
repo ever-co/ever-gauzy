@@ -10,11 +10,15 @@ export const createIncomes = async (
 	defaultData: {
 		org: Organization;
 		employees: Employee[];
+	},
+	randomData: {
+		orgs: Organization[];
+		employees: Employee[];
 	}
-): Promise<{ seededIncomes: Income[] }> => {
+): Promise<{ defaultIncomes: Income[]; randomIncomes: Income[] }> => {
 	const currencies = Object.values(CurrenciesEnum);
 
-	const seededIncomes: Income[] = [];
+	const defaultIncomes: Income[] = [];
 
 	incomeData.map(async (seedIncome) => {
 		const income = new Income();
@@ -34,10 +38,39 @@ export const createIncomes = async (
 		income.notes = seedIncome.notes;
 
 		await insertIncome(connection, income);
-		seededIncomes.push(income);
 	});
 
-	return { seededIncomes };
+	const randomIncomes: Income[] = [];
+
+	const clientsArray = ['NA', 'UR', 'CA', 'ET', 'GA'];
+	const notesArray = [
+		'Great job!',
+		'Well done!',
+		'Nice!',
+		'Done',
+		'Great job!'
+	];
+
+	for (let index = 0; index < 25; index++) {
+		const income = new Income();
+
+		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
+
+		income.organization = randomData.orgs[index % 5];
+		income.employee = randomData.employees[currentIndex];
+		income.clientName = clientsArray[currentIndex];
+		income.amount = faker.random.number({ min: 10, max: 9999 });
+		income.clientId = faker.random
+			.number({ min: 10, max: 9999 })
+			.toString();
+		income.currency = currencies[(index % currencies.length) + 1 - 1];
+		income.valueDate = faker.date.recent(15);
+		income.notes = notesArray[currentIndex];
+
+		await insertIncome(connection, income);
+	}
+
+	return { defaultIncomes, randomIncomes };
 };
 
 const insertIncome = async (
