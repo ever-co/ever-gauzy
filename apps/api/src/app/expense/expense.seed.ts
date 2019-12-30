@@ -54,23 +54,25 @@ export const createExpenses = async (
 		'Rent for September'
 	];
 
-	for (let index = 0; index < 5; index++) {
+	for (let index = 0; index < 25; index++) {
 		const expense = new Expense();
 
-		expense.employee = randomData.employees[index];
-		expense.organization = randomData.orgs[index];
+		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
+
+		expense.organization = randomData.orgs[index % 5];
+		expense.employee = randomData.employees[currentIndex];
 		expense.amount = faker.random.number({ min: 10, max: 999 });
-		expense.vendorName = vendorsArray[index];
+		expense.vendorName = vendorsArray[currentIndex];
 		expense.vendorId = faker.random
 			.number({ min: 10, max: 9999 })
 			.toString();
-		expense.categoryName = categoryArray[index];
+		expense.categoryName = categoryArray[currentIndex];
 		expense.categoryId = faker.random
 			.number({ min: 10, max: 9999 })
 			.toString();
 		expense.currency = currencies[(index % currencies.length) + 1 - 1];
 		expense.valueDate = faker.date.recent(15);
-		expense.notes = notesArray[index];
+		expense.notes = notesArray[currentIndex];
 
 		await insertExpense(connection, expense);
 		randomExpenses.push(expense);
