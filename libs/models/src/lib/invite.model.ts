@@ -6,6 +6,7 @@ import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { User } from './user.model';
 import { OrganizationProjects } from './organization-projects.model';
+import { Organization } from './organization.model';
 
 export interface Invite extends IBaseEntityModel {
 	token: string;
@@ -17,6 +18,8 @@ export interface Invite extends IBaseEntityModel {
 	expireDate: Date;
 	role?: Role;
 	invitedBy?: User;
+	projects?: OrganizationProjects[];
+	organization?: Organization;
 }
 
 export interface CreateEmailInvitesInput {
@@ -44,9 +47,18 @@ export interface CreateInviteInput {
 	projects?: OrganizationProjects[];
 }
 
+export interface InviteFindInput {
+	organizationId?: string;
+}
+
+export interface PublicInviteFindInput {
+	email: string;
+	token: string;
+}
+
 export enum InviteStatusEnum {
 	INVITED = 'INVITED',
-	EXPECTED = 'EXPECTED',
+	ACCEPTED = 'ACCEPTED',
 	EXPIRED = 'EXPIRED'
 }
 
@@ -54,31 +66,3 @@ export enum InvitationTypeEnum {
 	USER = 'USER',
 	EMPLOYEE = 'EMPLOYEE'
 }
-
-// export interface UserFindInput extends IBaseEntityModel {
-// 	thirdPartyId?: string;
-// 	firstName?: string;
-// 	lastName?: string;
-// 	email?: string;
-// 	username?: string;
-// 	role?: Role;
-// 	roleId?: string;
-// 	hash?: string;
-// 	imageUrl?: string;
-// }
-
-// export interface UserRegistrationInput {
-// 	user: User;
-// 	password?: string;
-// }
-
-// export interface UserCreateInput {
-// 	firstName?: string;
-// 	lastName?: string;
-// 	email?: string;
-// 	username?: string;
-// 	role?: Role;
-// 	roleId?: string;
-// 	hash?: string;
-// 	imageUrl?: string;
-// }

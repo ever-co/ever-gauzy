@@ -44,7 +44,6 @@
 				<ng-select
 					id="projectsSelect"
 					class="adjust-height"
-					[addTag]="addTagFn"
 					[hideSelected]="true"
 					multiple="true"
 					bindLabel="name"
@@ -60,12 +59,8 @@
 			</div>
 		</div>
 	</div>
-	<div class="row" *ngIf="alertText">
-		<div class="col-sm-12">
-			{{ alertText }}
-		</div>
-	</div>
-	<div class="row">
+	<div class="employee-padding" *ngIf="invitationType === 'EMPLOYEE'"></div>
+	<div class="row" *ngIf="invitationType === 'USER'">
 		<div class="col-sm-6">
 			<div class="form-group">
 				<label for="startedWork" class="label">{{

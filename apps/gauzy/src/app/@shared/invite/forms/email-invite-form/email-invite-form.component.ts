@@ -1,10 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
 import {
-	Invite,
+	CreateEmailInvitesOutput,
+	InvitationTypeEnum,
 	OrganizationProjects,
-	RolesEnum,
-	CreateEmailInvitesOutput
+	RolesEnum
 } from '@gauzy/models';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
@@ -16,13 +16,14 @@ import { first } from 'rxjs/operators';
 	styleUrls: ['email-invite-form.component.scss']
 })
 export class EmailInviteFormComponent implements OnInit {
-	@Input() public isEmployee: boolean;
-
 	@Input() public organizationProjects: OrganizationProjects[];
 
 	@Input() public selectedOrganizationId: string;
 
 	@Input() public currentUserId: string;
+
+	@Input()
+	invitationType: InvitationTypeEnum;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -57,6 +58,10 @@ export class EmailInviteFormComponent implements OnInit {
 		return invalid ? { emails: invalid } : null;
 	}
 
+	isEmployeeInvitation = () => {
+		return this.invitationType === InvitationTypeEnum.EMPLOYEE;
+	};
+
 	addTagFn(emailAddress) {
 		return { emailAddress: emailAddress, tag: true };
 	}
@@ -71,8 +76,10 @@ export class EmailInviteFormComponent implements OnInit {
 				])
 			],
 			projects: [''],
-			roleName: ['', Validators.required]
-			//roleName: ['', this.isEmployee ? null : Validators.required]
+			roleName: [
+				'',
+				this.isEmployeeInvitation() ? null : Validators.required
+			]
 		});
 
 		this.emails = this.form.get('emails');
@@ -88,13 +95,17 @@ export class EmailInviteFormComponent implements OnInit {
 		);
 	}
 
+	getRoleNameFromForm = () => {
+		return this.roleName.value || RolesEnum.VIEWER;
+	};
+
 	async saveInvites(): Promise<CreateEmailInvitesOutput> {
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
-					name: this.roleName.value
-						? this.roleName.value
-						: RolesEnum.EMPLOYEE
+					name: this.isEmployeeInvitation()
+						? RolesEnum.EMPLOYEE
+						: this.getRoleNameFromForm()
 				})
 				.pipe(first())
 				.toPromise();

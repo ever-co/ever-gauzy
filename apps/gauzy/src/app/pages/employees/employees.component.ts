@@ -1,24 +1,26 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { Store } from '../../@core/services/store.service';
-import { first, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { LocalDataSource } from 'ng2-smart-table';
-import { EmployeesService } from '../../@core/services/employees.service';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { InvitationTypeEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
+import { EmployeesService } from '../../@core/services/employees.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { Store } from '../../@core/services/store.service';
+import { monthNames } from '../../@core/utils/date';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
+import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
+import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
+import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
+import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
-import { Router, ActivatedRoute } from '@angular/router';
-import { monthNames } from '../../@core/utils/date';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
-import { TranslateService } from '@ngx-translate/core';
-import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
-import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
-import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
-import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -189,6 +191,24 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		this.router.navigate([
 			'/pages/employees/edit/' + this.selectedEmployee.id
 		]);
+	}
+
+	manageInvites() {
+		this.router.navigate(['/pages/employees/invites']);
+	}
+
+	async invite() {
+		const dialog = this.dialogService.open(InviteMutationComponent, {
+			context: {
+				invitationType: InvitationTypeEnum.EMPLOYEE,
+				selectedOrganizationId: this.selectedOrganizationId,
+				currentUserId: this.store.userId
+			}
+		});
+
+		const data = await dialog.onClose.pipe(first()).toPromise();
+
+		console.log('Data', data);
 	}
 
 	async delete() {

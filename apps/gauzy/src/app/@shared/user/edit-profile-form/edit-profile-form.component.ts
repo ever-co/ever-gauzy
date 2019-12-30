@@ -146,14 +146,14 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		}
 
 		if (this.allowRoleChange) {
-			const { id } = await this.roleService
+			const role = await this.roleService
 				.getRoleByName({ name: this.form.value['roleName'] })
 				.pipe(first())
 				.toPromise();
 
 			this.accountInfo = {
 				...this.accountInfo,
-				roleId: id
+				role
 			};
 		}
 

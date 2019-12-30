@@ -1,0 +1,83 @@
+<form [formGroup]="form" *ngIf="form" class="accept-invite-form">
+	<div class="row form-input">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="fullNameInput" class="label">Full Name</label>
+				<input
+					placeholder="Enter Your Full Name"
+					fullWidth
+					id="fullNameInput"
+					nbInput
+					formControlName="fullName"
+					fieldSize="large"
+				/>
+			</div>
+		</div>
+	</div>
+
+	<div class="row form-input">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label class="label" for="passwordInput">Password</label>
+				<input
+					fullWidth
+					id="passwordInput"
+					type="password"
+					nbInput
+					formControlName="password"
+					placeholder="Password"
+					fieldSize="large"
+				/>
+			</div>
+		</div>
+	</div>
+
+	<div class="row form-input">
+		<div class="col">
+			<div class="form-group">
+				<label class="label" for="repeatPasswordInput"
+					>Repeat Password</label
+				>
+				<input
+					fullWidth
+					id="repeatPasswordInput"
+					type="password"
+					nbInput
+					formControlName="repeatPassword"
+					placeholder="Repeat Password"
+					fieldSize="large"
+				/>
+				<span *ngIf="!!repeatPasswordErrorMsg">
+					<strong class="text-danger">
+						{{ repeatPasswordErrorMsg }}</strong
+					></span
+				>
+			</div>
+		</div>
+	</div>
+
+	<div class="row form-input">
+		<div class="col">
+			<div class="form-group">
+				<nb-checkbox formControlName="agreeTerms"
+					>Agree to
+					<a href="#" target="_blank"
+						>Terms & Conditions</a
+					></nb-checkbox
+				>
+			</div>
+		</div>
+	</div>
+
+	<div class="actions">
+		<button
+			[disabled]="form.invalid || !matchPassword"
+			(click)="saveInvites()"
+			nbButton
+			fullWidth
+			status="success"
+		>
+			Complete Registration
+		</button>
+	</div>
+</form>

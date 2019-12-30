@@ -6,15 +6,16 @@ import {
 	Entity,
 	Index,
 	JoinColumn,
-	ManyToOne,
-	RelationId,
+	JoinTable,
 	ManyToMany,
-	JoinTable
+	ManyToOne,
+	RelationId
 } from 'typeorm';
 import { Base } from '../core/entities/base';
+import { Organization } from '../organization';
+import { OrganizationProjects } from '../organization-projects';
 import { Role } from '../role';
 import { User } from '../user';
-import { OrganizationProjects } from '../organization-projects';
 
 @Entity('invite')
 export class Invite extends Base implements IInvite {
@@ -32,6 +33,7 @@ export class Invite extends Base implements IInvite {
 	email: string;
 
 	@ApiProperty({ type: String })
+	@RelationId((invite: Invite) => invite.organization)
 	@IsNotEmpty()
 	@Column()
 	organizationId: string;
@@ -61,6 +63,11 @@ export class Invite extends Base implements IInvite {
 	@ManyToOne((type) => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	role?: Role;
+
+	@ApiPropertyOptional({ type: Organization })
+	@ManyToOne((type) => Organization, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	organization?: Organization;
 
 	@ApiPropertyOptional({ type: User })
 	@ManyToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })

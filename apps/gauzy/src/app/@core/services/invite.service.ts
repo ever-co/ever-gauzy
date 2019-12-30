@@ -6,27 +6,15 @@ import {
 	OrganizationProjectsFindInput,
 	CreateEmailInvitesInput,
 	Invite,
-	CreateEmailInvitesOutput
+	CreateEmailInvitesOutput,
+	InviteFindInput,
+	PublicInviteFindInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
 export class InviteService {
 	constructor(private http: HttpClient) {}
-
-	// getInviteByEmail(email: string): Promise<Invite> {
-	// 	return this.http
-	// 		.get<Invite>(`/api/invite/email/${email}`)
-	// 		.pipe(first())
-	// 		.toPromise();
-	// }
-
-	// getInviteByEmail(email: string): Promise<Invite> {
-	// 	return this.http
-	// 		.get<Invite>(`/api/invite/email/${email}`)
-	// 		.pipe(first())
-	// 		.toPromise();
-	// }
 
 	createWithEmails(
 		createInput: CreateEmailInvitesInput
@@ -37,22 +25,33 @@ export class InviteService {
 			.toPromise();
 	}
 
-	// getAll(
-	// 	relations: string[],
-	// 	findInput?: OrganizationProjectsFindInput
-	// ): Promise<{ items: any[]; total: number }> {
-	// 	const data = JSON.stringify({ relations, findInput });
+	getAll(
+		relations: string[],
+		findInput?: InviteFindInput
+	): Promise<{ items: Invite[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
 
-	// 	return this.http
-	// 		.get<{ items: OrganizationProjects[]; total: number }>(
-	// 			`/api/invites`,
-	// 			{
-	// 				params: { data }
-	// 			}
-	// 		)
-	// 		.pipe(first())
-	// 		.toPromise();
-	// }
+		return this.http
+			.get<{ items: Invite[]; total: number }>(`/api/invite/all`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	validateInvite(
+		relations: string[],
+		findInput: PublicInviteFindInput
+	): Promise<Invite> {
+		const data = JSON.stringify({ relations, findInput });
+
+		return this.http
+			.get<Invite>(`/api/invite/validate`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
 
 	// update(id: string, updateInput: any): Promise<any> {
 	// 	return this.http
