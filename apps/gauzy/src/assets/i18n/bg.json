@@ -189,11 +189,11 @@
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
-			"AVERAGE_BONUS": "Среден бонус",
+			"AVERAGE_BONUS": "Average Monthly Bonus",
 			"TOTAL_INCOME": "Общ доход",
 			"TOTAL_EXPENSES": "Общи разходи",
 			"PROFIT": "Печалба",
-			"PROFIT_CALC": "Печалба = Общ доход - Общи разходи",
+			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
 			"NOTE": "Забележка: отрицателните бонуси трябва да се приспадат през следващите месеци от положителните бонуси преди окончателните плащания на бонуси",
 			"BONUS": "Бонус"
 		}

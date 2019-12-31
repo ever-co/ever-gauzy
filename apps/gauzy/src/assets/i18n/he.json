@@ -189,11 +189,11 @@
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"DEVELOPER": {
 			"DEVELOPER": "מפתח",
-			"AVERAGE_BONUS": "בונוס ממוצע",
+			"AVERAGE_BONUS": "Average Monthly Bonus",
 			"TOTAL_INCOME": "הכנסה כוללת",
 			"TOTAL_EXPENSES": "סך ההוצאות",
 			"PROFIT": "רווח",
-			"PROFIT_CALC": "רווח = סך ההכנסה - סך כל ההוצאות",
+			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
 			"NOTE": "הערה: יש לנכות את הבונוסים השליליים בחודשים הקרובים מהבונוסים החיוביים לפני תשלומי הבונוס הסופיים",
 			"BONUS": "בונוס"
 		}
