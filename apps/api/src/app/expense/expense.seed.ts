@@ -33,7 +33,7 @@ export const createExpenses = async (
 
 				expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
-				expense.amount = seedExpense.amount;
+				expense.amount = Math.abs(seedExpense.amount);
 				expense.vendorName = seedExpense.vendorName;
 				expense.vendorId = seedExpense.vendorId;
 				expense.categoryName = seedExpense.categoryName;

@@ -16,6 +16,7 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 	recordsData: any;
 	incomeTotal: number;
 	expensesTotal: number;
+	profit: number;
 	currency: string;
 
 	constructor(private store: Store) {}
@@ -33,7 +34,7 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 
 		const expenseList = this.recordsData.expenses.map((exp) => {
 			return {
-				expense: exp.amount,
+				expense: Math.abs(exp.amount),
 				income: 0,
 				valueDate: exp.valueDate,
 				notes: exp.notes
@@ -47,6 +48,8 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 			(a, b) => a + +b.expense,
 			0
 		);
+
+		this.profit = this.incomeTotal - Math.abs(this.expensesTotal);
 
 		this.currency = this.store.selectedOrganization.currency;
 
