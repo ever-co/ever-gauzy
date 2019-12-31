@@ -189,11 +189,11 @@
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
 		"DEVELOPER": {
 			"DEVELOPER": "Developer",
-			"AVERAGE_BONUS": "Average Bonus",
+			"AVERAGE_BONUS": "Average Monthly Bonus",
 			"TOTAL_INCOME": "Total Income",
 			"TOTAL_EXPENSES": "Total Expenses",
 			"PROFIT": "Profit",
-			"PROFIT_CALC": "Profit = Total Income - Total Expenses",
+			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
 			"NOTE": "Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments",
 			"BONUS": "Bonus"
 		}
