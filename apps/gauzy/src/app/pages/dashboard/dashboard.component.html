@@ -27,7 +27,7 @@
 
 			<div *ngIf="avarageBonus" class="employee-details">
 				{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
-				{{ avarageBonus }}
+				{{ avarageBonus | currency: defaultCurrency }}
 			</div>
 		</div>
 
@@ -140,6 +140,7 @@
 					<div class="bonus-value">
 						<div>
 							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
+							{{ bonusPercentage }} %
 						</div>
 						<div
 							*ngIf="defaultCurrency"
@@ -154,7 +155,7 @@
 							{{ bonus }}
 						</div>
 					</div>
-					<div class="bonus-disclaimer">
+					<div class="bonus-disclaimer" *ngIf="bonus < 0">
 						{{ 'DASHBOARD_PAGE.DEVELOPER.NOTE' | translate }}
 					</div>
 				</div>

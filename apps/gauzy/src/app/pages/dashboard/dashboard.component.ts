@@ -49,6 +49,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	totalExpense = 0;
 	difference = 0;
 	bonus = 0;
+	bonusPercentage = 0;
 
 	avarageBonus: number;
 
@@ -159,8 +160,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 	private async _loadEmployeeTotalExpense() {
 		await this._loadExpense();
-		this.difference = this.totalIncome - this.totalExpense;
+		this.difference = this.totalIncome - Math.abs(this.totalExpense);
 		this.bonus = (this.difference * 75) / 100;
+		this.bonusPercentage = (this.bonus / this.difference) * 100;
 	}
 
 	private async _loadExpense() {
