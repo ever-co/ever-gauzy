@@ -140,7 +140,7 @@
 					<div class="bonus-value">
 						<div>
 							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
-							{{ bonusPercentage }} %
+							{{ bonusPercentage || 0 }} %
 						</div>
 						<div
 							*ngIf="defaultCurrency"
