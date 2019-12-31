@@ -18,16 +18,15 @@ export const createIncomes = async (
 	}
 ): Promise<{ defaultIncomes: Income[]; randomIncomes: Income[] }> => {
 	const currencies = Object.values(CurrenciesEnum);
-	const defaultIncomes: Income[] = [];
-	const incomeData = [];
+	const defaultIncomes = [];
 	const filePath =
 		'./apps/api/src/app/income/income-seed-data/income-data.csv';
 
 	fs.createReadStream(filePath)
 		.pipe(csv())
-		.on('data', (data) => incomeData.push(data))
+		.on('data', (data) => defaultIncomes.push(data))
 		.on('end', () => {
-			incomeData.map(async (seedIncome) => {
+			defaultIncomes.map(async (seedIncome) => {
 				const income = new Income();
 				const foundEmployee = defaultData.employees.find(
 					(emp) => emp.user.email === seedIncome.email

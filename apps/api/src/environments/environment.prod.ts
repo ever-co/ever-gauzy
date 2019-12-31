@@ -108,6 +108,13 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/hristo.jpg'
 		},
 		{
+			email: 'alex@ever.co',
+			password: '123456',
+			firstName: 'Aleksandar',
+			lastName: 'Tasev',
+			imageUrl: 'assets/images/avatars/alexander.jpg'
+		},
+		{
 			email: 'milena@ever.co',
 			password: '123456',
 			firstName: 'Milena',
