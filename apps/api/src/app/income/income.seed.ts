@@ -1,5 +1,4 @@
 import { Connection } from 'typeorm';
-import { environment as env } from '@env-api/environment';
 import { Income } from './income.entity';
 import * as faker from 'faker';
 import { CurrenciesEnum, Organization, Employee } from '@gauzy/models';

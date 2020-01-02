@@ -40,12 +40,15 @@
 					<nb-datepicker #formpicker></nb-datepicker>
 				</div>
 
-				<div class="col-sm-6">
+				<div class="col-sm-6" *ngIf="vendors.length">
 					<div class="form-group">
 						<ng-select
-							[items]="fakeVendors"
+							nbInput
+							type="text"
+							[items]="vendors"
 							bindLabel="vendorName"
-							[searchable]="false"
+							[searchable]="true"
+							autocomplete="on"
 							formControlName="vendor"
 							placeholder="{{
 								'POP_UPS.ALL_VENDORS' | translate
@@ -94,7 +97,7 @@
 				</div>
 
 				<div class="col-sm-6">
-					<div class="form-group">
+					<div class="form-group" *ngIf="fakeCategories.length">
 						<ng-select
 							[items]="fakeCategories"
 							bindLabel="categoryName"
@@ -108,8 +111,18 @@
 					</div>
 				</div>
 			</div>
-
-			<div class="row">
+			<div class="text-right">
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="showNotesInput()"
+					*ngIf="!showNotes"
+				>
+					{{ 'BUTTONS.ADD_NOTE' | translate }}
+				</button>
+			</div>
+			<div class="row" *ngIf="showNotes">
 				<div class="col">
 					<div class="form-group">
 						<textarea
@@ -134,6 +147,14 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="danger"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
 		<button
 			[disabled]="form.invalid"
 			(click)="addOrEditExpense()"
