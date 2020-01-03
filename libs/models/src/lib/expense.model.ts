@@ -16,6 +16,9 @@ export interface Expense extends IBaseEntityModel {
 	valueDate?: Date;
 	currency: string;
 	purpose?: string;
+	taxType?: string;
+	taxLabel?: string;
+	rateValue?: number;
 }
 
 export interface ExpenseCreateInput {
@@ -30,6 +33,9 @@ export interface ExpenseCreateInput {
 	currency?: string;
 	orgId?: string;
 	purpose?: string;
+	taxType?: string;
+	taxLabel?: string;
+	rateValue?: number;
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {
@@ -46,6 +52,9 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	valueDate?: Date;
 	currency?: string;
 	purpose?: string;
+	taxType?: string;
+	taxLabel?: string;
+	rateValue?: number;
 }
 
 export interface ExpenseUpdateInput {
@@ -60,4 +69,12 @@ export interface ExpenseUpdateInput {
 	valueDate?: Date;
 	currency?: string;
 	purpose?: string;
+	taxType?: string;
+	taxLabel?: string;
+	rateValue?: number;
+}
+
+export enum TaxTypesEnum {
+	PERCENTAGE = 'Percentage',
+	VALUE = 'Value'
 }

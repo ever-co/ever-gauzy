@@ -2,7 +2,11 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
-import { CurrenciesEnum, OrganizationSelectInput } from '@gauzy/models';
+import {
+	CurrenciesEnum,
+	OrganizationSelectInput,
+	TaxTypesEnum
+} from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
@@ -21,9 +25,12 @@ export class ExpensesMutationComponent implements OnInit {
 	expense: ExpenseViewModel;
 	fakeCategories: { categoryName: string; categoryId: string }[] = [];
 	currencies = Object.values(CurrenciesEnum);
+	taxTypes = Object.values(TaxTypesEnum);
 	vendor: { vendorName: string; vendorId: string };
 	vendors: { vendorName: string; vendorId: string }[] = [];
 	showNotes = false;
+	showTaxesInput = false;
+	disable = true;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -121,6 +128,13 @@ export class ExpensesMutationComponent implements OnInit {
 		return (this.showNotes = !this.showNotes);
 	}
 
+	includeTaxes() {
+		if (this.form.value.taxType) {
+			this.disable = false;
+		}
+		return (this.showTaxesInput = !this.showTaxesInput);
+	}
+
 	private _initializeForm() {
 		if (this.expense) {
 			this.form = this.fb.group({
@@ -146,7 +160,10 @@ export class ExpensesMutationComponent implements OnInit {
 					new Date(this.expense.valueDate),
 					Validators.required
 				],
-				purpose: [this.expense.purpose]
+				purpose: [this.expense.purpose],
+				taxType: [this.expense.taxType],
+				taxLabel: [this.expense.taxLabel],
+				rateValue: [this.expense.rateValue]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -159,7 +176,10 @@ export class ExpensesMutationComponent implements OnInit {
 					this.store.getDateFromOrganizationSettings(),
 					Validators.required
 				],
-				purpose: ['']
+				purpose: [''],
+				taxType: [TaxTypesEnum.PERCENTAGE],
+				taxLabel: [''],
+				rateValue: ['']
 			});
 
 			this._loadDefaultCurrency();

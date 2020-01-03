@@ -98,4 +98,24 @@ export class Expense extends Base implements IExpense {
 	@IsOptional()
 	@Column({ nullable: true })
 	purpose?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	taxType?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	taxLabel?: string;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsNotEmpty()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	rateValue: number;
 }
