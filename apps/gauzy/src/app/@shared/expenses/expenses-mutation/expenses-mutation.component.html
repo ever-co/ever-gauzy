@@ -1,11 +1,11 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>
+		<h4>
 			{{
 				(expense ? 'POP_UPS.EDIT_EXPENSE' : 'POP_UPS.ADD_EXPENSE')
 					| translate
 			}}
-		</h5>
+		</h4>
 		<ga-employee-selector
 			#employeeSelector
 			[hidden]="expense"
@@ -110,7 +110,6 @@
 						</ng-select>
 					</div>
 				</div>
-
 				<div class="col-sm-6">
 					<div class="form-group">
 						<input
@@ -122,15 +121,26 @@
 					</div>
 				</div>
 			</div>
-			<div class="text-right">
+			<div class="text-left">
 				<button
 					nbButton
 					size="tiny"
 					status="info"
 					(click)="showNotesInput()"
 					*ngIf="!showNotes"
+					class="mr-3 mb-3"
 				>
 					{{ 'BUTTONS.ADD_NOTE' | translate }}
+				</button>
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="includeTaxes()"
+					*ngIf="!showTaxesInput"
+					class="mr-3 mb-3"
+				>
+					Include Taxes
 				</button>
 			</div>
 			<div class="row" *ngIf="showNotes">
@@ -152,6 +162,47 @@
 							}"
 						>
 						</textarea>
+					</div>
+				</div>
+			</div>
+			<div class="row" *ngIf="showTaxesInput">
+				<div class="col">
+					<h6>Include Taxes</h6>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<input
+								nbInput
+								type="text"
+								formControlName="taxLabel"
+								fullWidth
+								placeholder="Tax Label"
+							/>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<ng-select
+								[items]="taxTypes"
+								bindLabel="taxType"
+								formControlName="taxType"
+								fullWidth
+								[clearable]="false"
+								placeholder="Tax Type (% or Value)"
+							>
+							</ng-select>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<input
+								nbInput
+								type="number"
+								step="1"
+								fullWidth
+								placeholder="Tax Rate %"
+								formControlName="rateValue"
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

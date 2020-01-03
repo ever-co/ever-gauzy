@@ -25,6 +25,9 @@ export interface ExpenseViewModel {
 	amount: number;
 	notes: string;
 	purpose: string;
+	taxType: string;
+	taxLabel: string;
+	rateValue: number;
 }
 
 interface SelectedRowModel {
@@ -203,7 +206,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							valueDate: formData.valueDate,
 							notes: formData.notes,
 							currency: formData.currency,
-							purpose: formData.purpose
+							purpose: formData.purpose,
+							taxType: formData.taxType,
+							taxLabel: formData.taxLabel,
+							rateValue: formData.rateValue
 						});
 
 						this.toastrService.primary(
@@ -359,7 +365,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					notes: i.notes,
 					currency: i.currency,
 					employee: i.employee,
-					purpose: i.purpose
+					purpose: i.purpose,
+					taxType: i.taxType,
+					taxLabel: i.taxLabel,
+					rateValue: i.rateValue
 				};
 			});
 
