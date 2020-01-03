@@ -92,4 +92,10 @@ export class Expense extends Base implements IExpense {
 	@IsOptional()
 	@Column({ nullable: true })
 	valueDate?: Date;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	purpose?: string;
 }
