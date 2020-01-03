@@ -145,7 +145,8 @@ export class ExpensesMutationComponent implements OnInit {
 				valueDate: [
 					new Date(this.expense.valueDate),
 					Validators.required
-				]
+				],
+				purpose: [this.expense.purpose]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -157,7 +158,8 @@ export class ExpensesMutationComponent implements OnInit {
 				valueDate: [
 					this.store.getDateFromOrganizationSettings(),
 					Validators.required
-				]
+				],
+				purpose: ['']
 			});
 
 			this._loadDefaultCurrency();

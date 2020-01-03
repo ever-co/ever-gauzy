@@ -35,6 +35,7 @@ export class ExpenseCreateHandler
 		expense.employee = employee;
 		expense.organization = organization;
 		expense.currency = input.currency;
+		expense.purpose = input.purpose;
 
 		if (!expense.currency) {
 			expense.currency = organization.currency;

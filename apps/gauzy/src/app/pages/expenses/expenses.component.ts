@@ -24,6 +24,7 @@ export interface ExpenseViewModel {
 	currency: string;
 	amount: number;
 	notes: string;
+	purpose: string;
 }
 
 interface SelectedRowModel {
@@ -65,7 +66,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
-					width: '20%',
+					width: '10%',
 					renderComponent: DateViewComponent,
 					filter: false
 				},
@@ -80,11 +81,15 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
 					type: 'number',
-					width: '15%',
+					width: '10%',
 					filter: false
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
+					type: 'string'
+				},
+				purpose: {
+					title: 'Purpose',
 					type: 'string'
 				}
 			}
@@ -197,7 +202,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							vendorName: formData.vendor.vendorName,
 							valueDate: formData.valueDate,
 							notes: formData.notes,
-							currency: formData.currency
+							currency: formData.currency,
+							purpose: formData.purpose
 						});
 
 						this.toastrService.primary(
@@ -235,7 +241,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							vendorName: formData.vendor.vendorName,
 							valueDate: formData.valueDate,
 							notes: formData.notes,
-							currency: formData.currency
+							currency: formData.currency,
+							purpose: formData.purpose
 						});
 
 						this.toastrService.primary(
@@ -351,7 +358,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					amount: i.amount,
 					notes: i.notes,
 					currency: i.currency,
-					employee: i.employee
+					employee: i.employee,
+					purpose: i.purpose
 				};
 			});
 
