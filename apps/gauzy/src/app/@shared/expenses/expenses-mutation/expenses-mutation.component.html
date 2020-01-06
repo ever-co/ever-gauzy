@@ -39,7 +39,6 @@
 					/>
 					<nb-datepicker #formpicker></nb-datepicker>
 				</div>
-
 				<div class="col-sm-6" *ngIf="vendors.length">
 					<div class="form-group">
 						<ng-select
@@ -58,7 +57,6 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
@@ -81,7 +79,6 @@
 						/>
 					</div>
 				</div>
-
 				<div class="col-sm-6">
 					<nb-select
 						class="d-block"
@@ -95,7 +92,6 @@
 						>
 					</nb-select>
 				</div>
-
 				<div class="col-sm-6">
 					<div class="form-group" *ngIf="fakeCategories.length">
 						<ng-select
@@ -165,9 +161,9 @@
 					</div>
 				</div>
 			</div>
-			<div class="row" *ngIf="showTaxesInput">
-				<div class="col">
-					<h6>Include Taxes</h6>
+			<div *ngIf="showTaxesInput">
+				<h6>Include Taxes</h6>
+				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
 							<input
@@ -199,10 +195,19 @@
 								type="number"
 								step="1"
 								fullWidth
-								placeholder="Tax Rate %"
+								placeholder="Tax Rate"
 								formControlName="rateValue"
 							/>
 						</div>
+					</div>
+					<div class="col-sm-6">
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							[placeholder]="calculatedValue"
+							disabled
+						/>
 					</div>
 				</div>
 			</div>

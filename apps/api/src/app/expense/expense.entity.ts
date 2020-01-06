@@ -113,9 +113,8 @@ export class Expense extends Base implements IExpense {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@IsNotEmpty()
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@Column({ nullable: true, type: 'numeric' })
 	rateValue: number;
 }
