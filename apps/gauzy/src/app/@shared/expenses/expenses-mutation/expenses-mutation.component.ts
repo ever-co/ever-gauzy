@@ -1,23 +1,21 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	ViewChild,
-	OnChanges
-} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
-	TaxTypesEnum
+	TaxTypesEnum,
+	OrganizationClients,
+	OrganizationProjects
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
+import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 
 @Component({
 	selector: 'ga-expenses-mutation',
@@ -29,11 +27,14 @@ export class ExpensesMutationComponent implements OnInit {
 	employeeSelector: EmployeeSelectorComponent;
 	form: FormGroup;
 	expense: ExpenseViewModel;
+	organizationId: string;
 	fakeCategories: { categoryName: string; categoryId: string }[] = [];
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
 	vendor: { vendorName: string; vendorId: string };
 	vendors: { vendorName: string; vendorId: string }[] = [];
+	clients: OrganizationClients[];
+	projects: OrganizationProjects[];
 	calculatedValue = '0';
 	showNotes = false;
 	showTaxesInput = false;
@@ -44,11 +45,15 @@ export class ExpensesMutationComponent implements OnInit {
 		private fb: FormBuilder,
 		private organizationsService: OrganizationsService,
 		private organizationVendorsService: OrganizationVendorsService,
-		private store: Store
+		private store: Store,
+		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationProjectsService: OrganizationProjectsService
 	) {}
 
 	ngOnInit() {
-		this.getData();
+		this.getDefaultData();
+		this.loadClients();
+		this.loadProjects();
 		this._initializeForm();
 
 		// TODO: here we'll get all the categories and vendors for ng-select menus
@@ -60,9 +65,10 @@ export class ExpensesMutationComponent implements OnInit {
 
 	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
 
-	private async getData() {
+	private async getDefaultData() {
+		this.organizationId = this.store.selectedOrganization.id;
 		const res = await this.organizationVendorsService.getAll({
-			organizationId: this.store.selectedOrganization.id
+			organizationId: this.organizationId
 		});
 
 		if (res) {
@@ -185,6 +191,8 @@ export class ExpensesMutationComponent implements OnInit {
 					Validators.required
 				],
 				purpose: [''],
+				clientName: [''],
+				projectName: [''],
 				taxType: [TaxTypesEnum.PERCENTAGE],
 				taxLabel: [''],
 				rateValue: [0]
@@ -214,6 +222,26 @@ export class ExpensesMutationComponent implements OnInit {
 				val.notes = this.calculatedValue + '. ' + oldNotes;
 			}
 		});
+	}
+
+	private async loadClients() {
+		const res = await this.organizationClientsService.getAll(['projects'], {
+			organizationId: this.organizationId
+		});
+		if (res) {
+			this.clients = res.items;
+		}
+	}
+
+	private async loadProjects() {
+		const res = await this.organizationProjectsService.getAll(['client'], {
+			organizationId: this.organizationId,
+			client: null
+		});
+
+		if (res) {
+			this.projects = res.items;
+		}
 	}
 
 	private async _loadDefaultCurrency() {

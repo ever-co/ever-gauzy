@@ -117,7 +117,40 @@
 					</div>
 				</div>
 			</div>
-			<div class="text-left">
+
+			<div>
+				<h6>Assign to</h6>
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<ng-select
+								[items]="clients"
+								nbInput
+								bindLabel="name"
+								[searchable]="true"
+								formControlName="clientName"
+								placeholder="Client"
+							>
+							</ng-select>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<ng-select
+								[items]="projects"
+								nbInput
+								bindLabel="name"
+								[searchable]="true"
+								formControlName="projectName"
+								placeholder="Project"
+							>
+							</ng-select>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="mt-3 text-left">
 				<button
 					nbButton
 					size="tiny"
