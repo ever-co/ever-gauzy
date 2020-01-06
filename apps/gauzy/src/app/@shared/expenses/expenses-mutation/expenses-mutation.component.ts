@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	ViewChild,
+	OnChanges
+} from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
@@ -28,6 +34,7 @@ export class ExpensesMutationComponent implements OnInit {
 	taxTypes = Object.values(TaxTypesEnum);
 	vendor: { vendorName: string; vendorId: string };
 	vendors: { vendorName: string; vendorId: string }[] = [];
+	calculatedValue = '0';
 	showNotes = false;
 	showTaxesInput = false;
 	disable = true;
@@ -132,6 +139,7 @@ export class ExpensesMutationComponent implements OnInit {
 		if (this.form.value.taxType) {
 			this.disable = false;
 		}
+		this.calculateTaxes();
 		return (this.showTaxesInput = !this.showTaxesInput);
 	}
 
@@ -179,11 +187,33 @@ export class ExpensesMutationComponent implements OnInit {
 				purpose: [''],
 				taxType: [TaxTypesEnum.PERCENTAGE],
 				taxLabel: [''],
-				rateValue: ['']
+				rateValue: [0]
 			});
 
 			this._loadDefaultCurrency();
 		}
+	}
+
+	private calculateTaxes() {
+		this.form.valueChanges.subscribe((val) => {
+			const amount = val.amount;
+			const rate = val.rateValue;
+			const oldNotes = val.notes;
+
+			if (val.taxType === 'Percentage') {
+				const result = (amount / (rate + 100)) * 100 * (rate / 100);
+
+				this.calculatedValue =
+					'Tax Amount: ' + result.toFixed(2) + ' ' + val.currency;
+			} else {
+				const result = (rate / (amount - rate)) * 100;
+				this.calculatedValue = 'Tax Rate: ' + result.toFixed(2) + ' %';
+			}
+
+			if (rate !== 0) {
+				val.notes = this.calculatedValue + '. ' + oldNotes;
+			}
+		});
 	}
 
 	private async _loadDefaultCurrency() {
