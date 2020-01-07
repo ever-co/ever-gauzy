@@ -5,9 +5,7 @@ import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
-	TaxTypesEnum,
-	OrganizationClients,
-	OrganizationProjects
+	TaxTypesEnum
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -31,10 +29,12 @@ export class ExpensesMutationComponent implements OnInit {
 	fakeCategories: { categoryName: string; categoryId: string }[] = [];
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
-	vendor: { vendorName: string; vendorId: string };
+	// vendor: { vendorName: string; vendorId: string };
 	vendors: { vendorName: string; vendorId: string }[] = [];
-	clients: OrganizationClients[];
-	projects: OrganizationProjects[];
+	// client: { clientName: string; clientId: string };
+	clients: { clientName: string; clientId: string }[] = [];
+	// project: { projectName: string; projectId: string };
+	projects: { projectName: string; projectId: string }[] = [];
 	calculatedValue = '0';
 	showNotes = false;
 	showTaxesInput = false;
@@ -55,8 +55,6 @@ export class ExpensesMutationComponent implements OnInit {
 		this.loadClients();
 		this.loadProjects();
 		this._initializeForm();
-
-		// TODO: here we'll get all the categories and vendors for ng-select menus
 	}
 
 	get currency() {
@@ -175,6 +173,18 @@ export class ExpensesMutationComponent implements OnInit {
 					Validators.required
 				],
 				purpose: [this.expense.purpose],
+				client: [
+					{
+						clientName: this.expense.clientName,
+						clientId: this.expense.clientId
+					}
+				],
+				project: [
+					{
+						projectName: this.expense.projectName,
+						projectId: this.expense.projectId
+					}
+				],
 				taxType: [this.expense.taxType],
 				taxLabel: [this.expense.taxLabel],
 				rateValue: [this.expense.rateValue]
@@ -191,8 +201,8 @@ export class ExpensesMutationComponent implements OnInit {
 					Validators.required
 				],
 				purpose: [''],
-				clientName: [''],
-				projectName: [''],
+				client: [null],
+				project: [null],
 				taxType: [TaxTypesEnum.PERCENTAGE],
 				taxLabel: [''],
 				rateValue: [0]
@@ -228,19 +238,29 @@ export class ExpensesMutationComponent implements OnInit {
 		const res = await this.organizationClientsService.getAll(['projects'], {
 			organizationId: this.organizationId
 		});
+
 		if (res) {
-			this.clients = res.items;
+			res.items.forEach((client) => {
+				this.clients.push({
+					clientName: client.name,
+					clientId: client.id
+				});
+			});
 		}
 	}
 
 	private async loadProjects() {
 		const res = await this.organizationProjectsService.getAll(['client'], {
-			organizationId: this.organizationId,
-			client: null
+			organizationId: this.organizationId
 		});
 
 		if (res) {
-			this.projects = res.items;
+			res.items.forEach((project) => {
+				this.projects.push({
+					projectName: project.name,
+					projectId: project.id
+				});
+			});
 		}
 	}
 

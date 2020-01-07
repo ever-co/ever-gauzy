@@ -21,6 +21,10 @@ export interface ExpenseViewModel {
 	vendorName: string;
 	categoryId: string;
 	categoryName: string;
+	clientId: string;
+	clientName: string;
+	projectId: string;
+	projectName: string;
 	currency: string;
 	amount: number;
 	notes: string;
@@ -203,6 +207,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							categoryName: formData.category.categoryName,
 							vendorId: formData.vendor.vendorId,
 							vendorName: formData.vendor.vendorName,
+							clientId: formData.client.clientId,
+							clientName: formData.client.clientName,
+							projectId: formData.project.projectId,
+							projectName: formData.project.projectName,
 							valueDate: formData.valueDate,
 							notes: formData.notes,
 							currency: formData.currency,
@@ -245,12 +253,15 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							categoryName: formData.category.categoryName,
 							vendorId: formData.vendor.vendorId,
 							vendorName: formData.vendor.vendorName,
+							clientId: formData.client.clientId,
+							clientName: formData.client.clientName,
+							projectId: formData.project.projectId,
+							projectName: formData.project.projectName,
 							valueDate: formData.valueDate,
 							notes: formData.notes,
 							currency: formData.currency,
 							purpose: formData.purpose
 						});
-
 						this.toastrService.primary(
 							'Expense edited for ' + this.employeeName,
 							'Success'
@@ -361,6 +372,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					vendorName: i.vendorName,
 					categoryId: i.categoryId,
 					categoryName: i.categoryName,
+					clientId: i.clientId,
+					clientName: i.clientName,
+					projectId: i.projectId,
+					projectName: i.projectName,
 					amount: i.amount,
 					notes: i.notes,
 					currency: i.currency,

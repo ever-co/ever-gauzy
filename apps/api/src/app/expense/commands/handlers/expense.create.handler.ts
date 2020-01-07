@@ -30,6 +30,10 @@ export class ExpenseCreateHandler
 		expense.categoryName = input.categoryName;
 		expense.vendorId = input.vendorId;
 		expense.vendorName = input.vendorName;
+		expense.clientName = input.clientName;
+		expense.clientId = input.clientId;
+		expense.projectName = input.projectName;
+		expense.projectId = input.projectId;
 		expense.notes = input.notes;
 		expense.valueDate = input.valueDate;
 		expense.employee = employee;

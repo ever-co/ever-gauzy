@@ -39,6 +39,17 @@ export class OrganizationClientsService {
 			.toPromise();
 	}
 
+	getByName(
+		relations?: string[],
+		findInput?: string
+	): Promise<OrganizationClientsFindInput> {
+		const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get(`/api/organization-clients`, { params: { data } })
+			.pipe(first())
+			.toPromise();
+	}
+
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
 			.put(`/api/organization-clients/${id}`, updateInput)
