@@ -78,6 +78,30 @@ export class Expense extends Base implements IExpense {
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
+	clientId?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	clientName?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	projectId?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	projectName?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })

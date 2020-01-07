@@ -118,7 +118,7 @@
 				</div>
 			</div>
 
-			<div>
+			<div *ngIf="clients.length || projects.length">
 				<h6>Assign to</h6>
 				<div class="row">
 					<div class="col-sm-6">
@@ -126,23 +126,29 @@
 							<ng-select
 								[items]="clients"
 								nbInput
-								bindLabel="name"
+								bindLabel="clientName"
 								[searchable]="true"
-								formControlName="clientName"
-								placeholder="Client"
+								autocomplete="on"
+								formControlName="client"
+								placeholder="{{
+									'CONTEXT_MENU.CLIENT' | translate
+								}}"
 							>
 							</ng-select>
 						</div>
 					</div>
-					<div class="col-sm-6">
+					<div class="col-sm-6" *ngIf="projects.length">
 						<div class="form-group">
 							<ng-select
 								[items]="projects"
 								nbInput
-								bindLabel="name"
+								bindLabel="projectName"
 								[searchable]="true"
-								formControlName="projectName"
-								placeholder="Project"
+								autocomplete="on"
+								formControlName="project"
+								placeholder="{{
+									'CONTEXT_MENU.PROJECT' | translate
+								}}"
 							>
 							</ng-select>
 						</div>
@@ -204,7 +210,9 @@
 								type="text"
 								formControlName="taxLabel"
 								fullWidth
-								placeholder="Tax Label"
+								placeholder="{{
+									'POP_UPS.TAX_LABEL' | translate
+								}}"
 							/>
 						</div>
 					</div>
@@ -216,7 +224,9 @@
 								formControlName="taxType"
 								fullWidth
 								[clearable]="false"
-								placeholder="Tax Type (% or Value)"
+								placeholder="{{
+									'POP_UPS.TAX_TYPE' | translate
+								}}"
 							>
 							</ng-select>
 						</div>
@@ -228,8 +238,10 @@
 								type="number"
 								step="1"
 								fullWidth
-								placeholder="Tax Rate"
 								formControlName="rateValue"
+								placeholder="{{
+									'POP_UPS.TAX_RATE' | translate
+								}}"
 							/>
 						</div>
 					</div>
