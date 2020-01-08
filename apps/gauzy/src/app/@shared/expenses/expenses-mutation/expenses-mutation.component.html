@@ -21,6 +21,13 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form" *ngIf="form">
+			<nb-radio-group formControlName="typeOfExpense">
+				<nb-radio
+					*ngFor="let expenseType of expenseTypes"
+					[value]="expenseType"
+					>{{ expenseType }}
+				</nb-radio>
+			</nb-radio-group>
 			<div class="row">
 				<div class="col-sm-6">
 					<input
@@ -125,7 +132,6 @@
 						<div class="form-group">
 							<ng-select
 								[items]="clients"
-								nbInput
 								bindLabel="clientName"
 								[searchable]="true"
 								autocomplete="on"

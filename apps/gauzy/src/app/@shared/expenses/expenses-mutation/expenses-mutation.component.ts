@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
-	TaxTypesEnum
+	TaxTypesEnum,
+	ExpenseTypesEnum
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -26,14 +27,13 @@ export class ExpensesMutationComponent implements OnInit {
 	form: FormGroup;
 	expense: ExpenseViewModel;
 	organizationId: string;
-	fakeCategories: { categoryName: string; categoryId: string }[] = [];
+	typeOfExpense: string;
+	expenseTypes = Object.values(ExpenseTypesEnum);
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
-	// vendor: { vendorName: string; vendorId: string };
+	fakeCategories: { categoryName: string; categoryId: string }[] = [];
 	vendors: { vendorName: string; vendorId: string }[] = [];
-	// client: { clientName: string; clientId: string };
 	clients: { clientName: string; clientId: string }[] = [];
-	// project: { projectName: string; projectId: string };
 	projects: { projectName: string; projectId: string }[] = [];
 	calculatedValue = '0';
 	showNotes = false;
@@ -43,6 +43,7 @@ export class ExpensesMutationComponent implements OnInit {
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
 		private fb: FormBuilder,
+		private toastrService: NbToastrService,
 		private organizationsService: OrganizationsService,
 		private organizationVendorsService: OrganizationVendorsService,
 		private store: Store,
@@ -127,6 +128,31 @@ export class ExpensesMutationComponent implements OnInit {
 	}
 
 	addOrEditExpense() {
+		if (
+			this.form.value.typeOfExpense === 'Billable to Client' &&
+			!this.form.value.clientName
+		) {
+			this.toastrService.warning(
+				'Please select a Client from the dropdown menu below or change Expense type setting.',
+				'Client is required!'
+			);
+			return;
+		}
+
+		if (this.form.value.client === null) {
+			this.form.value.client = {
+				clientName: null,
+				clientId: null
+			};
+		}
+
+		if (this.form.value.project === null) {
+			this.form.value.project = {
+				projectName: null,
+				projectId: null
+			};
+		}
+
 		this.dialogRef.close(
 			Object.assign(
 				{ employee: this.employeeSelector.selectedEmployee },
@@ -159,6 +185,7 @@ export class ExpensesMutationComponent implements OnInit {
 					},
 					Validators.required
 				],
+				typeOfExpense: this.expense.typeOfExpense,
 				category: [
 					{
 						categoryId: this.expense.categoryId,
@@ -173,18 +200,8 @@ export class ExpensesMutationComponent implements OnInit {
 					Validators.required
 				],
 				purpose: [this.expense.purpose],
-				client: [
-					{
-						clientName: this.expense.clientName,
-						clientId: this.expense.clientId
-					}
-				],
-				project: [
-					{
-						projectName: this.expense.projectName,
-						projectId: this.expense.projectId
-					}
-				],
+				client: [null],
+				project: [null],
 				taxType: [this.expense.taxType],
 				taxLabel: [this.expense.taxLabel],
 				rateValue: [this.expense.rateValue]
@@ -193,6 +210,7 @@ export class ExpensesMutationComponent implements OnInit {
 			this.form = this.fb.group({
 				amount: ['', Validators.required],
 				vendor: [null, Validators.required],
+				typeOfExpense: [this.expenseTypes[0]],
 				category: [null, Validators.required],
 				notes: [''],
 				currency: [''],

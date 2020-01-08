@@ -10,6 +10,7 @@ export interface Expense extends IBaseEntityModel {
 	amount: number;
 	vendorName: string;
 	vendorId?: string;
+	typeOfExpense?: string;
 	categoryName: string;
 	categoryId?: string;
 	clientId?: string;
@@ -30,6 +31,7 @@ export interface ExpenseCreateInput {
 	amount: number;
 	vendorName: string;
 	vendorId: string;
+	typeOfExpense?: string;
 	categoryName: string;
 	categoryId: string;
 	clientId?: string;
@@ -51,6 +53,7 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 	vendorName?: string;
 	vendorId?: string;
+	typeOfExpense?: string;
 	categoryName?: string;
 	categoryId?: string;
 	amount?: number;
@@ -73,6 +76,7 @@ export interface ExpenseUpdateInput {
 	amount?: number;
 	vendorName?: string;
 	vendorId?: string;
+	typeOfExpense?: string;
 	categoryName?: string;
 	categoryId?: string;
 	clientId?: string;
@@ -86,6 +90,12 @@ export interface ExpenseUpdateInput {
 	taxType?: string;
 	taxLabel?: string;
 	rateValue?: number;
+}
+
+export enum ExpenseTypesEnum {
+	TAX_DEDUCTIBLE = 'Tax Deductible',
+	NOT_TAX_DEDUCTIBLE = 'Not Tax Deductible',
+	BILLABLE_TO_CLIENT = 'Billable to Client'
 }
 
 export enum TaxTypesEnum {

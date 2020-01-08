@@ -19,6 +19,7 @@ export interface ExpenseViewModel {
 	valueDate: Date;
 	vendorId: string;
 	vendorName: string;
+	typeOfExpense: string;
 	categoryId: string;
 	categoryName: string;
 	clientId: string;
@@ -207,6 +208,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							categoryName: formData.category.categoryName,
 							vendorId: formData.vendor.vendorId,
 							vendorName: formData.vendor.vendorName,
+							typeOfExpense: formData.typeOfExpense,
 							clientId: formData.client.clientId,
 							clientName: formData.client.clientName,
 							projectId: formData.project.projectId,
@@ -253,6 +255,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							categoryName: formData.category.categoryName,
 							vendorId: formData.vendor.vendorId,
 							vendorName: formData.vendor.vendorName,
+							typeOfExpense: formData.typeOfExpense,
 							clientId: formData.client.clientId,
 							clientName: formData.client.clientName,
 							projectId: formData.project.projectId,
@@ -370,6 +373,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					valueDate: i.valueDate,
 					vendorId: i.vendorId,
 					vendorName: i.vendorName,
+					typeOfExpense: i.typeOfExpense,
 					categoryId: i.categoryId,
 					categoryName: i.categoryName,
 					clientId: i.clientId,

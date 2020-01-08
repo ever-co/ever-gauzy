@@ -16,7 +16,7 @@ export class ErrorHandlingService {
 	}
 
 	private getErrorDetails(err) {
-		const message: string = err.error.message;
+		const message: string = err.error.message || err.message;
 		const detail: string = err.error.detail;
 
 		if (message) {
@@ -27,20 +27,13 @@ export class ErrorHandlingService {
 					this.handleDuplicateKeyError(detail);
 					this.errorTitle = 'Record already exists';
 					break;
-				default:
-					this.errorTitle = message;
-			}
-		} else {
-			const keywords = err.message.split(' ', 3).join(' ');
-
-			switch (keywords) {
 				case 'Http failure response':
 					this.errorTitle = 'Lost connection with the server';
 					this.errorContent = 'Please try again later';
 					break;
 				default:
 					this.errorTitle = 'Error';
-					this.errorContent = err.message;
+					this.errorContent = message;
 			}
 		}
 	}
