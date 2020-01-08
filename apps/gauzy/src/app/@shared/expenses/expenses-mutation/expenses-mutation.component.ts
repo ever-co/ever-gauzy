@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
@@ -38,12 +38,12 @@ export class ExpensesMutationComponent implements OnInit {
 	calculatedValue = '0';
 	showNotes = false;
 	showTaxesInput = false;
+	showWarning = false;
 	disable = true;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
 		private fb: FormBuilder,
-		private toastrService: NbToastrService,
 		private organizationsService: OrganizationsService,
 		private organizationVendorsService: OrganizationVendorsService,
 		private store: Store,
@@ -130,13 +130,15 @@ export class ExpensesMutationComponent implements OnInit {
 	addOrEditExpense() {
 		if (
 			this.form.value.typeOfExpense === 'Billable to Client' &&
-			!this.form.value.clientName
+			!this.form.value.client
 		) {
-			this.toastrService.warning(
-				'Please select a Client from the dropdown menu below or change Expense type setting.',
-				'Client is required!'
-			);
+			this.showWarning = true;
+			setTimeout(() => {
+				this.closeWarning();
+			}, 3000);
 			return;
+		} else {
+			this.closeWarning();
 		}
 
 		if (this.form.value.client === null) {
@@ -294,4 +296,10 @@ export class ExpensesMutationComponent implements OnInit {
 			this.currency.setValue(orgData.currency);
 		}
 	}
+
+	private closeWarning() {
+		this.showWarning = !this.showWarning;
+	}
+
+	private attachReceipt() {}
 }

@@ -8,6 +8,7 @@
 		</h4>
 		<ga-employee-selector
 			#employeeSelector
+			fullWidth
 			[hidden]="expense"
 			[skipGlobalChange]="true"
 			class="employees"
@@ -124,13 +125,25 @@
 					</div>
 				</div>
 			</div>
-
+			<nb-card accent="warning" class="p-3" *ngIf="showWarning">
+				<nb-icon
+					class="ml-auto close"
+					(click)="closeWarning()"
+					icon="close-outline"
+				></nb-icon>
+				<p><b>Client is required!</b></p>
+				<p>
+					Please select a Client from the dropdown menu below or
+					change Expense type setting.
+				</p>
+			</nb-card>
 			<div *ngIf="clients.length || projects.length">
 				<h6>Assign to</h6>
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
 							<ng-select
+								[isOpen]="showWarning ? true : null"
 								[items]="clients"
 								bindLabel="clientName"
 								[searchable]="true"
@@ -182,6 +195,15 @@
 					class="mr-3 mb-3"
 				>
 					Include Taxes
+				</button>
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="attachReceipt()"
+					class="mr-3 mb-3"
+				>
+					Attach a receipt
 				</button>
 			</div>
 			<div class="row" *ngIf="showNotes">
