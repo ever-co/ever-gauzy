@@ -61,6 +61,13 @@ export class Expense extends Base implements IExpense {
 	@Column({ nullable: true })
 	vendorId?: string;
 
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	typeOfExpense: string;
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
