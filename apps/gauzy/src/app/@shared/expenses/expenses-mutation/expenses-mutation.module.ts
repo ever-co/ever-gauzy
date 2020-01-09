@@ -17,6 +17,8 @@ import { EmployeeSelectorsModule } from '../../../@theme/components/header/selec
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
+import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
+import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -29,6 +31,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbIconModule,
 		NgSelectModule,
+		ImageUploaderModule,
 		ReactiveFormsModule,
 		NbInputModule,
 		FormsModule,
@@ -45,8 +48,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		})
 	],
 	exports: [ExpensesMutationComponent],
-	declarations: [ExpensesMutationComponent],
-	entryComponents: [ExpensesMutationComponent],
+	declarations: [ExpensesMutationComponent, AttachReceiptComponent],
+	entryComponents: [ExpensesMutationComponent, AttachReceiptComponent],
 	providers: [OrganizationsService]
 })
 export class ExpensesMutationModule {}

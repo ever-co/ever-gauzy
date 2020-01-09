@@ -1,0 +1,38 @@
+.receipt-image {
+	width: 600px;
+	height: 846px;
+	background-color: white;
+	overflow: hidden;
+	position: relative;
+
+	div {
+		pointer-events: none;
+		background: black;
+		position: absolute;
+		height: 100%;
+		width: 100%;
+	}
+
+	img {
+		width: 100%;
+		height: auto;
+	}
+
+	input {
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		position: absolute;
+		z-index: 3;
+		cursor: pointer;
+	}
+
+	svg {
+		z-index: 2;
+		transition: opacity 0.2s ease-in;
+		opacity: 0.3;
+		position: absolute;
+		top: calc(50% - 68px / 2);
+		left: calc(50% - 68px / 2);
+	}
+}

@@ -44,6 +44,7 @@ export class ExpenseCreateHandler
 		expense.taxType = input.taxType;
 		expense.taxLabel = input.taxLabel;
 		expense.rateValue = input.rateValue;
+		expense.receipt = input.receipt;
 
 		if (!expense.currency) {
 			expense.currency = organization.currency;

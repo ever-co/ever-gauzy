@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
@@ -15,6 +15,7 @@ import { EmployeeSelectorComponent } from '../../../@theme/components/header/sel
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 
 @Component({
 	selector: 'ga-expenses-mutation',
@@ -35,6 +36,7 @@ export class ExpensesMutationComponent implements OnInit {
 	vendors: { vendorName: string; vendorId: string }[] = [];
 	clients: { clientName: string; clientId: string }[] = [];
 	projects: { projectName: string; projectId: string }[] = [];
+	defaultImage = './assets/images/others/invoice-template.png';
 	calculatedValue = '0';
 	showNotes = false;
 	showTaxesInput = false;
@@ -43,6 +45,7 @@ export class ExpensesMutationComponent implements OnInit {
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
+		private dialogService: NbDialogService,
 		private fb: FormBuilder,
 		private organizationsService: OrganizationsService,
 		private organizationVendorsService: OrganizationVendorsService,
@@ -206,7 +209,8 @@ export class ExpensesMutationComponent implements OnInit {
 				project: [null],
 				taxType: [this.expense.taxType],
 				taxLabel: [this.expense.taxLabel],
-				rateValue: [this.expense.rateValue]
+				rateValue: [this.expense.rateValue],
+				receipt: [this.expense.receipt]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -225,7 +229,8 @@ export class ExpensesMutationComponent implements OnInit {
 				project: [null],
 				taxType: [TaxTypesEnum.PERCENTAGE],
 				taxLabel: [''],
-				rateValue: [0]
+				rateValue: [0],
+				receipt: [this.defaultImage]
 			});
 
 			this._loadDefaultCurrency();
@@ -301,5 +306,15 @@ export class ExpensesMutationComponent implements OnInit {
 		this.showWarning = !this.showWarning;
 	}
 
-	private attachReceipt() {}
+	private attachReceipt() {
+		this.dialogService
+			.open(AttachReceiptComponent, {
+				context: {
+					currentReceipt: this.form.value.receipt
+				}
+			})
+			.onClose.subscribe((newReceipt) => {
+				this.form.value.receipt = newReceipt;
+			});
+	}
 }
