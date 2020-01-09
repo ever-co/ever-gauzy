@@ -28,6 +28,8 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit-profile-form.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
+import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
+import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -36,7 +38,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 const COMPONENTS = [
 	UsersComponent,
 	UserFullNameComponent,
-	EditUserProfileComponent
+	EditUserProfileComponent,
+	ManageUserInviteComponent
 ];
 
 @NgModule({
@@ -67,7 +70,8 @@ const COMPONENTS = [
 		}),
 		NbSpinnerModule,
 		EditProfileFormModule,
-		InviteMutationModule
+		InviteMutationModule,
+		InviteTableModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [UserFullNameComponent],

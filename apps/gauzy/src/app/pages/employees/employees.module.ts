@@ -24,7 +24,7 @@ import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation
 import { EmployeeRecurringExpenseMutationModule } from '../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
-import { InviteTableModule } from '../../@shared/invite/invite-table/invite-table.module';
+import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EditEmployeeMainComponent } from './edit-employee/edit-employee-profile/edit-employee-main/edit-employee-main.component';
 import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-profile/edit-employee-profile.component';

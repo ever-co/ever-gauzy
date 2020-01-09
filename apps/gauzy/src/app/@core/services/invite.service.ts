@@ -53,17 +53,10 @@ export class InviteService {
 			.toPromise();
 	}
 
-	// update(id: string, updateInput: any): Promise<any> {
-	// 	return this.http
-	// 		.put(`/api/organization-projects/${id}`, updateInput)
-	// 		.pipe(first())
-	// 		.toPromise();
-	// }
-
-	// delete(id: string): Promise<any> {
-	// 	return this.http
-	// 		.delete(`/api/organization-projects/${id}`)
-	// 		.pipe(first())
-	// 		.toPromise();
-	// }
+	update(id: string, updateInput: any): Promise<any> {
+		return this.http
+			.put(`/api/invite/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
 }

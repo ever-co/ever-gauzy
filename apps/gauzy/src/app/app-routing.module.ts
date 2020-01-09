@@ -12,8 +12,8 @@ import { AuthGuard } from './@core/auth/auth.guard';
 import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
 import { SignInSuccessModule } from './auth/signin-success/signin-success-login-google.module';
 import { AppModuleGuard } from './app.module.guards';
-import { AcceptInvitePage } from './auth/invite/invite.page';
-import { AcceptInviteModule } from './auth/invite/invite.module';
+import { AcceptInvitePage } from './auth/accept-invite/accept-invite.component';
+import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 
 const routes: Routes = [
 	{

@@ -136,7 +136,7 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 		this.validations.repeatPasswordControl();
 	}
 
-	async saveInvites(): Promise<CreateEmailInvitesOutput> {
+	saveInvites() {
 		if (this.form.valid) {
 			this.submitForm.emit({
 				user: {
@@ -158,8 +158,6 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 				password: this.password.value
 			});
 		}
-
-		return;
 	}
 
 	ngOnDestroy(): void {

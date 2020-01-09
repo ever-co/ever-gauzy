@@ -49,11 +49,16 @@ export interface CreateInviteInput {
 
 export interface InviteFindInput {
 	organizationId?: string;
+	invitationType?: InvitationTypeEnum;
 }
 
 export interface PublicInviteFindInput {
 	email: string;
 	token: string;
+}
+
+export interface InviteUpdateInput {
+	status: InviteStatusEnum;
 }
 
 export enum InviteStatusEnum {

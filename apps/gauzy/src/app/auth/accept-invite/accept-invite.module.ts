@@ -15,22 +15,17 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { EmployeesService } from '../../@core/services';
 import { InviteService } from '../../@core/services/invite.service';
 import { RoleService } from '../../@core/services/role.service';
+import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { AcceptInviteFormComponent } from './accept-invite-form/accept-invite-form.component';
-import { AcceptInvitePage } from './invite.page';
+import { AcceptInvitePage } from './accept-invite.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
-
-// const routes: Routes = [
-// 	{
-// 		path: '',
-// 		component: AcceptInvitePage
-// 	}
-// ];
 
 @NgModule({
 	imports: [
@@ -58,6 +53,11 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [AcceptInvitePage, AcceptInviteFormComponent],
 	entryComponents: [AcceptInvitePage, AcceptInviteFormComponent],
-	providers: [InviteService, RoleService]
+	providers: [
+		InviteService,
+		RoleService,
+		EmployeesService,
+		UsersOrganizationsService
+	]
 })
 export class AcceptInviteModule {}

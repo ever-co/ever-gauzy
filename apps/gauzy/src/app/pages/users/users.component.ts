@@ -52,12 +52,9 @@ export class UsersComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		console.log('on init called');
-
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
-				console.log("let's load page");
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
 					this.loadPage();
@@ -120,9 +117,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 			}
 		});
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
-
-		console.log('Data', data);
+		await dialog.onClose.pipe(first()).toPromise();
 	}
 
 	edit() {

@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { InvitationTypeEnum } from '@gauzy/models';
+import { ActivatedRoute } from '@angular/router';
+import { InvitationTypeEnum, RolesEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -9,7 +9,6 @@ import { first, takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { InviteService } from '../../../@core/services/invite.service';
 import { Store } from '../../../@core/services/store.service';
-import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import moment = require('moment-timezone');
@@ -27,11 +26,11 @@ interface InviteViewModel {
 }
 
 @Component({
-	selector: 'ga-invite-table',
-	templateUrl: './invite-table.component.html',
-	styleUrls: ['./invite-table.component.scss']
+	selector: 'ga-invites',
+	templateUrl: './invites.component.html',
+	styleUrls: ['./invites.component.scss']
 })
-export class InviteTableComponent implements OnInit, OnDestroy {
+export class InvitesComponent implements OnInit, OnDestroy {
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -43,7 +42,7 @@ export class InviteTableComponent implements OnInit, OnDestroy {
 
 	private _ngDestroy$ = new Subject<void>();
 
-	employeeName = 'Employee';
+	invitedName = 'Employee / User';
 
 	loading = true;
 
@@ -52,7 +51,6 @@ export class InviteTableComponent implements OnInit, OnDestroy {
 	constructor(
 		private dialogService: NbDialogService,
 		private store: Store,
-		private router: Router,
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
@@ -72,14 +70,6 @@ export class InviteTableComponent implements OnInit, OnDestroy {
 
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-
-		this.route.queryParamMap
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((params) => {
-				if (params.get('openAddDialog')) {
-					//	this.add();
-				}
-			});
 	}
 
 	selectEmployeeTmp(ev: {
@@ -91,7 +81,7 @@ export class InviteTableComponent implements OnInit, OnDestroy {
 		if (ev.isSelected) {
 			this.selectedInvite = ev.data;
 			const checkName = this.selectedInvite.fullName.trim();
-			this.employeeName = checkName ? checkName : 'Employee';
+			this.invitedName = checkName ? checkName : 'Employee / User';
 		} else {
 			this.selectedInvite = null;
 		}
@@ -100,15 +90,15 @@ export class InviteTableComponent implements OnInit, OnDestroy {
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
-				invitationType: InvitationTypeEnum.EMPLOYEE,
+				invitationType: this.invitationType,
 				selectedOrganizationId: this.selectedOrganizationId,
 				currentUserId: this.store.userId
 			}
 		});
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		await dialog.onClose.pipe(first()).toPromise();
 
-		console.log('Data', data);
+		this.loadPage();
 	}
 
 	copyToClipboard() {
@@ -126,36 +116,36 @@ export class InviteTableComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	async delete() {
-		this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: {
-					recordType:
-						this.selectedInvite.fullName +
-						' ' +
-						this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
-				}
-			})
-			.onClose.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (result) => {
-				if (result) {
-					try {
-						// await this.employeesService.setEmployeeAsInactive(
-						// 	this.selectedInvite.id
-						// );
+	// async delete() {
+	// 	this.dialogService
+	// 		.open(DeleteConfirmationComponent, {
+	// 			context: {
+	// 				recordType:
+	// 					this.selectedInvite.fullName +
+	// 					' ' +
+	// 					this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
+	// 			}
+	// 		})
+	// 		.onClose.pipe(takeUntil(this._ngDestroy$))
+	// 		.subscribe(async (result) => {
+	// 			if (result) {
+	// 				try {
+	// 					// await this.employeesService.setEmployeeAsInactive(
+	// 					// 	this.selectedInvite.id
+	// 					// );
 
-						this.toastrService.primary(
-							this.employeeName + ' set as inactive.',
-							'Success'
-						);
+	// 					this.toastrService.primary(
+	// 						this.invitedName + ' set as inactive.',
+	// 						'Success'
+	// 					);
 
-						this.loadPage();
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					}
-				}
-			});
-	}
+	// 					this.loadPage();
+	// 				} catch (error) {
+	// 					this.errorHandler.handleError(error);
+	// 				}
+	// 			}
+	// 		});
+	// }
 
 	private async loadPage() {
 		this.selectedInvite = null;
@@ -169,7 +159,11 @@ export class InviteTableComponent implements OnInit, OnDestroy {
 					organizationId: this.selectedOrganizationId
 				}
 			);
-			invites = items;
+			invites = items.filter((invite) => {
+				return this.invitationType === InvitationTypeEnum.EMPLOYEE
+					? invite.role.name === RolesEnum.EMPLOYEE
+					: invite.role.name !== RolesEnum.EMPLOYEE;
+			});
 		} catch (error) {
 			this.toastrService.warning('Could not load invites');
 		}
@@ -250,6 +244,10 @@ export class InviteTableComponent implements OnInit, OnDestroy {
 
 		if (this.invitationType === InvitationTypeEnum.EMPLOYEE) {
 			delete settingsSmartTable['columns']['roleName'];
+		}
+
+		if (this.invitationType === InvitationTypeEnum.USER) {
+			delete settingsSmartTable['columns']['projects'];
 		}
 
 		this.settingsSmartTable = settingsSmartTable;

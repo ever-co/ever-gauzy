@@ -20,14 +20,14 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
-import { InviteTableComponent } from './invite-table.component';
+import { InvitesComponent } from './invites.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-const COMPONENTS = [InviteTableComponent, ProjectNamesComponent];
+const COMPONENTS = [InvitesComponent, ProjectNamesComponent];
 
 @NgModule({
 	imports: [
