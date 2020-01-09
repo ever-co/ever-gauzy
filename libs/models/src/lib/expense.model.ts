@@ -24,6 +24,7 @@ export interface Expense extends IBaseEntityModel {
 	taxType?: string;
 	taxLabel?: string;
 	rateValue?: number;
+	receipt?: string;
 }
 
 export interface ExpenseCreateInput {
@@ -46,6 +47,7 @@ export interface ExpenseCreateInput {
 	taxType?: string;
 	taxLabel?: string;
 	rateValue?: number;
+	receipt?: string;
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {
@@ -68,6 +70,7 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	taxType?: string;
 	taxLabel?: string;
 	rateValue?: number;
+	receipt?: string;
 }
 
 export interface ExpenseUpdateInput {
@@ -90,6 +93,7 @@ export interface ExpenseUpdateInput {
 	taxType?: string;
 	taxLabel?: string;
 	rateValue?: number;
+	receipt?: string;
 }
 
 export enum ExpenseTypesEnum {
