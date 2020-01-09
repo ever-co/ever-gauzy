@@ -14,7 +14,12 @@
 		"SENT": "Изпратено",
 		"ACCEPTED": "Прието",
 		"CANCEL": "Отказ",
-		"CLOSE": "Затваряне"
+		"CLOSE": "Затваряне",
+		"INVITE": "Invite",
+		"SELECT_ALL": "Select All",
+		"COPY_LINK": "Copy Link",
+		"MANAGE_INVITES": "Manage Invites",
+		"RESEND": "Resend"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -58,7 +63,10 @@
 		"WEEKLY": "Weekly",
 		"TWICE_PER_MONTH": "Twice per month",
 		"MONTHLY": "Monthly",
-		"ROLE": "Role"
+		"ROLE": "Role",
+		"PROJECTS": "Проекти",
+		"INVITED_BY": "Invited By",
+		"EXPIRE_DATE": "Expires"
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -90,7 +98,9 @@
 			"BILL_RATE": "Bill Rate / hr",
 			"CURRENCY_PER_HOUR": "Валута",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
-			"ROLE": "Role"
+			"ROLE": "Role",
+			"EMAILS": "Email Addresses",
+			"PROJECTS_OPTIONAL": "Projects (Optional)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -126,7 +136,9 @@
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
-			"ROLE": "Select Role"
+			"EMAILS": "Type an email address and press enter",
+			"ROLE": "Select Role",
+			"PROJECTS": "Choose Projects"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"
@@ -316,6 +328,25 @@
 		"ERROR": "Error",
 		"SAVE": "Запази"
 	},
+	"INVITE_PAGE": {
+		"USER": {
+			"MANAGE": "Manage User Invites for",
+			"HEADER": "Invite Users",
+			"ACTION": "Invite Users"
+		},
+		"EMPLOYEE": {
+			"MANAGE": "Manage Employee Invites for",
+			"HEADER": "Invite Employees",
+			"ACTION": "Invite Employees"
+		},
+		"SENT": "{{total}} Invites Sent.",
+		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
+		"STATUS": {
+			"INVITED": "Invited",
+			"EXPIRED": "Expired",
+			"ACCEPTED": "Прието"
+		}
+	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
@@ -330,5 +361,16 @@
 	"FOOTER": {
 		"BY": "от",
 		"RIGHTS_RECERVED": "Всички права запазени."
+	},
+	"TOASTR": {
+		"TITLE": {
+			"SUCCESS": "Success",
+			"ERROR": "Error",
+			"WARNING": "Warning"
+		},
+		"MESSAGE": {
+			"PROJECT_LOAD": "Could Not Load Projects",
+			"COPIED": "Link copied to clipboard"
+		}
 	}
 }
