@@ -12,11 +12,7 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import {
-	CreateEmailInvitesOutput,
-	Invite,
-	UserRegistrationInput
-} from '@gauzy/models';
+import { Invite, UserRegistrationInput } from '@gauzy/models';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';

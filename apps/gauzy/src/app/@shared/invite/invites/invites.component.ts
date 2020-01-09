@@ -176,7 +176,7 @@ export class InvitesComponent implements OnInit, OnDestroy {
 			invitesVm.push({
 				email: invite.email,
 				expireDate: moment(invite.expireDate).fromNow(),
-				imageUrl: invite.invitedBy.imageUrl,
+				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
 				fullName: `${(invite.invitedBy && invite.invitedBy.firstName) ||
 					''} ${(invite.invitedBy && invite.invitedBy.lastName) ||
 					''}`,
