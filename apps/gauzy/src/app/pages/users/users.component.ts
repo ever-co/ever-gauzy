@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Role, RolesEnum } from '@gauzy/models';
+import { Role, RolesEnum, InvitationTypeEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -11,6 +11,7 @@ import { UsersOrganizationsService } from '../../@core/services/users-organizati
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
+import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 
 interface UserViewModel {
 	fullName: string;
@@ -21,7 +22,8 @@ interface UserViewModel {
 }
 
 @Component({
-	templateUrl: './users.component.html'
+	templateUrl: './users.component.html',
+	styleUrls: ['./users.component.scss']
 })
 export class UsersComponent implements OnInit, OnDestroy {
 	organizationName: string;
@@ -106,8 +108,24 @@ export class UsersComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	async invite() {
+		const dialog = this.dialogService.open(InviteMutationComponent, {
+			context: {
+				invitationType: InvitationTypeEnum.USER,
+				selectedOrganizationId: this.selectedOrganizationId,
+				currentUserId: this.store.userId
+			}
+		});
+
+		await dialog.onClose.pipe(first()).toPromise();
+	}
+
 	edit() {
 		this.router.navigate(['/pages/users/edit/' + this.selectedUser.id]);
+	}
+
+	manageInvites() {
+		this.router.navigate(['/pages/users/invites/']);
 	}
 
 	async delete() {

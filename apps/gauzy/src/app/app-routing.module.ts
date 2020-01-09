@@ -12,6 +12,8 @@ import { AuthGuard } from './@core/auth/auth.guard';
 import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
 import { SignInSuccessModule } from './auth/signin-success/signin-success-login-google.module';
 import { AppModuleGuard } from './app.module.guards';
+import { AcceptInvitePage } from './auth/accept-invite/accept-invite.component';
+import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 
 const routes: Routes = [
 	{
@@ -48,6 +50,10 @@ const routes: Routes = [
 			{
 				path: 'reset-password',
 				component: NbResetPasswordComponent
+			},
+			{
+				path: 'accept-invite',
+				component: AcceptInvitePage
 			}
 		]
 	},
@@ -65,7 +71,11 @@ const config: ExtraOptions = {
 };
 
 @NgModule({
-	imports: [RouterModule.forRoot(routes, config), SignInSuccessModule],
+	imports: [
+		RouterModule.forRoot(routes, config),
+		SignInSuccessModule,
+		AcceptInviteModule
+	],
 	exports: [RouterModule]
 })
 export class AppRoutingModule {}

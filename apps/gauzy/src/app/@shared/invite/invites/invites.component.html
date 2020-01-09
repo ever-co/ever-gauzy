@@ -1,0 +1,36 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<h4>
+			{{ 'INVITE_PAGE.' + invitationType + '.MANAGE' | translate }}
+			{{ organizationName }}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3">
+			<button nbButton status="primary" (click)="invite()" class="mr-2">
+				<nb-icon class="mr-1" icon="email-outline"></nb-icon
+				>{{ 'BUTTONS.INVITE' | translate }}
+			</button>
+
+			<button
+				nbButton
+				[disabled]="!selectedInvite"
+				status="success"
+				(click)="copyToClipboard()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="link-2-outline"></nb-icon
+				>{{ 'BUTTONS.COPY_LINK' | translate }}
+			</button>
+		</div>
+		<ng2-smart-table
+			class="employees-table"
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectEmployeeTmp($event)"
+			#employeesTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>
