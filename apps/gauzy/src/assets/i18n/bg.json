@@ -301,17 +301,17 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "Edit",
-			"AUTHOR": "Author",
+			"EDIT": "Редактиране",
+			"AUTHOR": "Автор",
 			"JOB_POST_URL": "Job Post URL",
 			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"STATUS": "Status",
+			"STATUS": "Статус",
 			"JOB_POST_CONTENT": "Job Post Content",
 			"PROPOSAL_CONTENT": "Proposal Content"
 		},
 		"EDIT_PROPOSAL": {
 			"EDIT_PROPOSAL": "Edit Proposal",
-			"AUTHOR": "Author",
+			"AUTHOR": "Автор",
 			"JOB_POST_URL": "Job Post URL",
 			"PROPOSAL_SENT_ON": "Proposal Sent On",
 			"JOB_POST_CONTENT": "Job Post Content",
