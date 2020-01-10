@@ -144,6 +144,10 @@
 			"ADD_COLOR": "Add Color",
 			"ALIGN_LOGO_TO": "Align Logo To"
 		},
+		"RATES": {
+			"DEFAULT_RATE": "Default Rate",
+			"LIMITS": "Limits"
+		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"
 		},
