@@ -14,6 +14,7 @@ import { SignInSuccessModule } from './auth/signin-success/signin-success-login-
 import { AppModuleGuard } from './app.module.guards';
 import { AcceptInvitePage } from './auth/accept-invite/accept-invite.component';
 import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
+import { NoAuthGuard } from './@core/auth/no-auth.guard';
 
 const routes: Routes = [
 	{
@@ -29,15 +30,18 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				component: NbLoginComponent
+				component: NbLoginComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'login',
-				component: NbLoginComponent
+				component: NbLoginComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'register',
-				component: NbRegisterComponent
+				component: NbRegisterComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'logout',
@@ -45,15 +49,18 @@ const routes: Routes = [
 			},
 			{
 				path: 'request-password',
-				component: NbRequestPasswordComponent
+				component: NbRequestPasswordComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'reset-password',
-				component: NbResetPasswordComponent
+				component: NbResetPasswordComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'accept-invite',
-				component: AcceptInvitePage
+				component: AcceptInvitePage,
+				canActivate: [NoAuthGuard]
 			}
 		]
 	},
