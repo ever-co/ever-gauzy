@@ -1,12 +1,10 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { InvitationTypeEnum, RolesEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { InviteService } from '../../../@core/services/invite.service';
 import { Store } from '../../../@core/services/store.service';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
@@ -52,9 +50,7 @@ export class InvitesComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private store: Store,
 		private toastrService: NbToastrService,
-		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService,
 		private inviteService: InviteService
 	) {}
 
@@ -116,37 +112,6 @@ export class InvitesComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	// async delete() {
-	// 	this.dialogService
-	// 		.open(DeleteConfirmationComponent, {
-	// 			context: {
-	// 				recordType:
-	// 					this.selectedInvite.fullName +
-	// 					' ' +
-	// 					this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
-	// 			}
-	// 		})
-	// 		.onClose.pipe(takeUntil(this._ngDestroy$))
-	// 		.subscribe(async (result) => {
-	// 			if (result) {
-	// 				try {
-	// 					// await this.employeesService.setEmployeeAsInactive(
-	// 					// 	this.selectedInvite.id
-	// 					// );
-
-	// 					this.toastrService.primary(
-	// 						this.invitedName + ' set as inactive.',
-	// 						'Success'
-	// 					);
-
-	// 					this.loadPage();
-	// 				} catch (error) {
-	// 					this.errorHandler.handleError(error);
-	// 				}
-	// 			}
-	// 		});
-	// }
-
 	private async loadPage() {
 		this.selectedInvite = null;
 
@@ -165,7 +130,10 @@ export class InvitesComponent implements OnInit, OnDestroy {
 					: invite.role.name !== RolesEnum.EMPLOYEE;
 			});
 		} catch (error) {
-			this.toastrService.warning('Could not load invites');
+			this.toastrService.danger(
+				this.getTranslation('TOASTR.MESSAGE.INVITES_LOAD'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
 		}
 
 		const { name } = this.store.selectedOrganization;
@@ -183,9 +151,9 @@ export class InvitesComponent implements OnInit, OnDestroy {
 				roleName: invite.role
 					? this.getTranslation(`USERS_PAGE.ROLE.${invite.role.name}`)
 					: '',
-				status: this.getTranslation(
-					`INVITE_PAGE.STATUS.${invite.status}`
-				),
+				status: moment(invite.expireDate).isAfter(moment())
+					? this.getTranslation(`INVITE_PAGE.STATUS.${invite.status}`)
+					: this.getTranslation(`INVITE_PAGE.STATUS.EXPIRED`),
 				projectNames: (invite.projects || []).map(
 					(project) => project.name
 				),

@@ -12,6 +12,7 @@ import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects';
 import { Invite } from './invite.entity';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class InviteService extends CrudService<Invite> {
@@ -23,6 +24,37 @@ export class InviteService extends CrudService<Invite> {
 		>
 	) {
 		super(inviteRepository);
+	}
+
+	async sendInvitationMail(email: string, token: string): Promise<any> {
+		const url = `${env.host}:4200/#/auth/accept-invite?email=${email}&token=${token}`;
+
+		const testAccount = await nodemailer.createTestAccount();
+
+		const transporter = nodemailer.createTransport({
+			host: 'smtp.ethereal.email',
+			port: 587,
+			secure: false, // true for 465, false for other ports
+			auth: {
+				user: testAccount.user,
+				pass: testAccount.pass
+			}
+		});
+
+		const info = await transporter.sendMail({
+			from: 'Gauzy',
+			to: email,
+			subject: 'Invitation',
+			text: 'Invitation to Gauzy',
+			html:
+				'Hello! <br><br> You have been invited to Gauzy<br><br>To accept your invitation & create your account<br><br>' +
+				'<a href=' +
+				url +
+				'>Click here</a>'
+		});
+
+		console.log('Message sent: %s', info.messageId);
+		console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
 	}
 
 	/**
@@ -77,6 +109,9 @@ export class InviteService extends CrudService<Invite> {
 		}
 
 		const items = await this.repository.save(invites);
+		items.forEach((item) =>
+			this.sendInvitationMail(item.email, item.token)
+		);
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 
@@ -86,7 +121,8 @@ export class InviteService extends CrudService<Invite> {
 			where: {
 				email,
 				token,
-				expireDate: MoreThanOrEqual(new Date())
+				expireDate: MoreThanOrEqual(new Date()),
+				status: InviteStatusEnum.INVITED
 			}
 		});
 	}

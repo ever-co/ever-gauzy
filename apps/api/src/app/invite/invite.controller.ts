@@ -1,6 +1,7 @@
 import {
 	CreateEmailInvitesInput,
-	CreateEmailInvitesOutput
+	CreateEmailInvitesOutput,
+	InviteAcceptInput
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -12,16 +13,23 @@ import {
 	Post,
 	Query
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UpdateResult } from 'typeorm';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
+import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.command';
+import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 
 @ApiTags('Invite')
 @Controller()
 export class InviteController extends CrudController<Invite> {
-	constructor(private readonly inviteService: InviteService) {
+	constructor(
+		private readonly inviteService: InviteService,
+		private readonly commandBus: CommandBus
+	) {
 		super(inviteService);
 	}
 
@@ -87,5 +95,39 @@ export class InviteController extends CrudController<Invite> {
 			where: findInput,
 			relations
 		});
+	}
+
+	@ApiOperation({ summary: 'Accept employee invite.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('employee')
+	async acceptEmployeeInvite(
+		@Body() entity: InviteAcceptInput
+	): Promise<UpdateResult | Invite> {
+		return this.commandBus.execute(new InviteAcceptEmployeeCommand(entity));
+	}
+
+	@ApiOperation({ summary: 'Accept user invite.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('user')
+	async acceptUserInvite(
+		@Body() entity: InviteAcceptInput
+	): Promise<UpdateResult | Invite> {
+		return this.commandBus.execute(new InviteAcceptUserCommand(entity));
 	}
 }

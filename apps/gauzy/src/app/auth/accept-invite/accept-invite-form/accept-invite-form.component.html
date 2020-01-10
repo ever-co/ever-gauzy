@@ -10,6 +10,14 @@
 					nbInput
 					formControlName="fullName"
 					fieldSize="large"
+					[ngClass]="{
+						'status-danger':
+							fullName.invalid &&
+							(fullName.dirty || fullName.touched),
+						'status-success':
+							fullName.valid &&
+							(fullName.dirty || fullName.touched)
+					}"
 				/>
 			</div>
 		</div>
@@ -27,6 +35,14 @@
 					formControlName="password"
 					placeholder="Password"
 					fieldSize="large"
+					[ngClass]="{
+						'status-danger':
+							password.invalid &&
+							(password.dirty || password.touched),
+						'status-success':
+							password.valid &&
+							(password.dirty || password.touched)
+					}"
 				/>
 			</div>
 		</div>
@@ -46,6 +62,14 @@
 					formControlName="repeatPassword"
 					placeholder="Repeat Password"
 					fieldSize="large"
+					[ngClass]="{
+						'status-danger':
+							repeatPassword.invalid &&
+							(repeatPassword.dirty || repeatPassword.touched),
+						'status-success':
+							repeatPassword.valid &&
+							(repeatPassword.dirty || repeatPassword.touched)
+					}"
 				/>
 				<span *ngIf="!!repeatPasswordErrorMsg">
 					<strong class="text-danger">
