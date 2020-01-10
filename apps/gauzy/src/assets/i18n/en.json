@@ -156,7 +156,8 @@
 			"RECORD": "record",
 			"EMPLOYEE": "employee",
 			"EXPENSE": "Expense",
-			"USER": "user"
+			"USER": "user",
+			"INVITATION": "invitation"
 		}
 	},
 	"POP_UPS": {
@@ -401,7 +402,8 @@
 		"MESSAGE": {
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
-			"INVITES_LOAD": "Could Not Load Invites"
+			"INVITES_LOAD": "Could Not Load Invites",
+			"INVITES_RESEND": "Invite has been resent to {{ email }}."
 		}
 	}
 }

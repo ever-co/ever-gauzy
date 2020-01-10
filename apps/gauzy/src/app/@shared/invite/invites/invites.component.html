@@ -22,6 +22,28 @@
 				<nb-icon class="mr-1" icon="link-2-outline"></nb-icon
 				>{{ 'BUTTONS.COPY_LINK' | translate }}
 			</button>
+
+			<button
+				nbButton
+				[disabled]="!selectedInvite"
+				status="warning"
+				(click)="resendInvite()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="flip-2-outline"></nb-icon
+				>{{ 'BUTTONS.RESEND' | translate }}
+			</button>
+
+			<button
+				nbButton
+				[disabled]="!selectedInvite"
+				status="danger"
+				(click)="deleteInvite()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+				>{{ 'BUTTONS.DELETE' | translate }}
+			</button>
 		</div>
 		<ng2-smart-table
 			class="employees-table"

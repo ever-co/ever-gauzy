@@ -27,6 +27,11 @@ export interface InviteAcceptInput extends UserRegistrationInput {
 	organization: Organization;
 }
 
+export interface InviteResendInput {
+	id: string;
+	invitedById: string;
+}
+
 export interface CreateEmailInvitesInput {
 	emailIds: string[];
 	projectIds?: string[];

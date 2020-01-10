@@ -7,9 +7,11 @@ import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { InviteService } from '../../../@core/services/invite.service';
 import { Store } from '../../../@core/services/store.service';
+import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import moment = require('moment-timezone');
+import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 
 interface InviteViewModel {
 	email: string;
@@ -221,9 +223,78 @@ export class InvitesComponent implements OnInit, OnDestroy {
 		this.settingsSmartTable = settingsSmartTable;
 	}
 
-	getTranslation(prefix: string) {
+	async deleteInvite() {
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType:
+						this.selectedInvite.email +
+						' ' +
+						this.getTranslation(
+							'FORM.DELETE_CONFIRMATION.INVITATION'
+						)
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.inviteService.delete(this.selectedInvite.id);
+
+						this.toastrService.primary(
+							this.selectedInvite.email + ' has been deleted.',
+							'Success'
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					}
+				}
+			});
+	}
+
+	async resendInvite() {
+		this.dialogService
+			.open(ResendConfirmationComponent, {
+				context: {
+					email: this.selectedInvite.email
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.inviteService.resendInvite({
+							id: this.selectedInvite.id,
+							invitedById: this.store.userId
+						});
+
+						this.toastrService.primary(
+							this.getTranslation(
+								'TOASTR.MESSAGE.INVITES_RESEND',
+								{ email: this.selectedInvite.email }
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					}
+				}
+			});
+	}
+
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translate.get(prefix).subscribe((res) => {
+		this.translate.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 		return result;
