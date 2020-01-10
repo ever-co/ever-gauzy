@@ -138,7 +138,15 @@
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
 			"EMAILS": "Введите адрес электронной почты и нажмите Enter",
 			"ROLE": "Выберите роль",
-			"PROJECTS": "Выберите проекты"
+			"PROJECTS": "Выберите проекты",
+			"CHOOSE_FORMAT": "Выберите формат",
+			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
+			"ADD_COLOR": "Добавить цвет",
+			"ALIGN_LOGO_TO": "Выровнять логотип по"
+		},
+		"RATES": {
+			"DEFAULT_RATE": "Стандартная ставка",
+			"LIMITS": "Лимиты"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Включать удаленные"
@@ -290,6 +298,28 @@
 			"UPLOAD": "Выгрузить",
 			"PROPOSALS_CONTENT": "Содержание предложения",
 			"REGISTER_PROPOSALS_BUTTON": "Регистрация предложения"
+		},
+		"PROPOSAL_DETAILS": {
+			"PROPOSAL_DETAILS": "Детали предложения",
+			"EDIT": "Редактировать",
+			"AUTHOR": "Автор",
+			"JOB_POST_URL": "URL записи задания",
+			"PROPOSAL_SENT_ON": "Предложение отправлено",
+			"STATUS": "Статус",
+			"JOB_POST_CONTENT": "Контент должности",
+			"PROPOSAL_CONTENT": "Содержание предложения"
+		},
+		"EDIT_PROPOSAL": {
+			"EDIT_PROPOSAL": "Изменить предложение",
+			"AUTHOR": "Автор",
+			"JOB_POST_URL": "URL записи задания",
+			"PROPOSAL_SENT_ON": "Предложение отправлено",
+			"JOB_POST_CONTENT": "Контент должности",
+			"PROPOSAL_CONTENT": "Содержание предложения",
+			"EDIT_PROPOSAL_BUTTON": "Изменить предложение",
+			"PLACEHOLDER": {
+				"JOB_POST_URL": "URL записи задания"
+			}
 		}
 	},
 	"USERS_PAGE": {
