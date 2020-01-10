@@ -400,7 +400,8 @@
 		},
 		"MESSAGE": {
 			"PROJECT_LOAD": "Не удалось загрузить проекты",
-			"COPIED": "Ссылка скопирована в буфер обмена"
+			"COPIED": "Ссылка скопирована в буфер обмена",
+			"INVITES_LOAD": "Could Not Load Invites"
 		}
 	}
 }
