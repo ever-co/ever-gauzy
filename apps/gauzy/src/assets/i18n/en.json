@@ -138,7 +138,15 @@
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
 			"EMAILS": "Type an email address and press enter",
 			"ROLE": "Select Role",
-			"PROJECTS": "Choose Projects"
+			"PROJECTS": "Choose Projects",
+			"CHOOSE_FORMAT": "Choose Format",
+			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"ADD_COLOR": "Add Color",
+			"ALIGN_LOGO_TO": "Align Logo To"
+		},
+		"RATES": {
+			"DEFAULT_RATE": "Default Rate",
+			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"
@@ -290,6 +298,28 @@
 			"UPLOAD": "Upload",
 			"PROPOSALS_CONTENT": "Proposal Content",
 			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		},
+		"PROPOSAL_DETAILS":{
+			"PROPOSAL_DETAILS": "Proposal Details",
+			"EDIT":"Edit",
+			"AUTHOR":"Author",
+			"JOB_POST_URL": "Job Post URL",
+			"PROPOSAL_SENT_ON":"Proposal Sent On",
+			"STATUS": "Status",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"PROPOSAL_CONTENT": "Proposal Content"
+		},
+		"EDIT_PROPOSAL": {
+			"EDIT_PROPOSAL":"Edit Proposal",
+			"AUTHOR": "Author",
+			"JOB_POST_URL": "Job Post URL",
+			"PROPOSAL_SENT_ON": "Proposal Sent On",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"PROPOSAL_CONTENT": "Proposal Content",
+			"EDIT_PROPOSAL_BUTTON": "Edit Proposal",
+			"PLACEHOLDER": {
+				"JOB_POST_URL": "Job Post URL"
+			}
 		}
 	},
 	"USERS_PAGE": {
