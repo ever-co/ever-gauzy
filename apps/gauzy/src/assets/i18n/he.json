@@ -301,11 +301,11 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "Edit",
+			"EDIT": "ערוך",
 			"AUTHOR": "Author",
 			"JOB_POST_URL": "Job Post URL",
 			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"STATUS": "Status",
+			"STATUS": "עבודה",
 			"JOB_POST_CONTENT": "Job Post Content",
 			"PROPOSAL_CONTENT": "Proposal Content"
 		},
