@@ -336,7 +336,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 				bonus: this.bonusForSelectedMonth,
 				averageIncome: Math.floor(this.averageIncome),
 				averageExpenses: Math.floor(this.averageExpense),
-				averageBonus: this.averageBonus,
+				averageBonus: Math.floor(this.averageBonus),
 				bonusDate: Date.now()
 			});
 		}
