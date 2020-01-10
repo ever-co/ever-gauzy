@@ -138,7 +138,11 @@
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
 			"EMAILS": "Type an email address and press enter",
 			"ROLE": "Select Role",
-			"PROJECTS": "Choose Projects"
+			"PROJECTS": "Choose Projects",
+			"CHOOSE_FORMAT": "Choose Format",
+			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"ADD_COLOR": "Add Color",
+			"ALIGN_LOGO_TO": "Align Logo To"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"

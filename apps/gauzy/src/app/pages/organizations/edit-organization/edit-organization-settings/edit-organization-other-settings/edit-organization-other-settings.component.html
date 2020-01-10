@@ -13,7 +13,9 @@
 							}}</label>
 							<ng-select
 								[(items)]="listOfZones"
-								placeholder="Choose Timezone"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate
+								}}"
 								[searchable]="true"
 								formControlName="timeZone"
 							>
@@ -89,7 +91,7 @@
 								class="d-block"
 								size="medium"
 								formControlName="dateFormat"
-								placeholder="Choose Format"
+								placeholder="{{ 'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate }}"
 								fullWidth
 							>
 								<nb-option
@@ -123,7 +125,7 @@
 								id="brandColorInput"
 								nbInput
 								formControlName="brandColor"
-								placeholder="Add Color"
+								placeholder="{{ 'FORM.PLACEHOLDERS.ADD_COLOR' | translate }}"
 								[colorPicker]="form.get('brandColor').value"
 								[style.background]="
 									form.get('brandColor').value
@@ -144,7 +146,7 @@
 								class="d-block"
 								size="medium"
 								formControlName="defaultAlignmentType"
-								placeholder="Align Logo To"
+								placeholder="{{ 'FORM.PLACEHOLDERS.ALIGN_LOGO_TO' | translate }}"
 								fullWidth
 							>
 								<nb-option
