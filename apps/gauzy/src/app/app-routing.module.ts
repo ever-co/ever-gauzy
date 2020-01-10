@@ -30,7 +30,8 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				component: NbLoginComponent
+				component: NbLoginComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'login',
