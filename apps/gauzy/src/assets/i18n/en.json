@@ -370,7 +370,8 @@
 		},
 		"MESSAGE": {
 			"PROJECT_LOAD": "Could Not Load Projects",
-			"COPIED": "Link copied to clipboard"
+			"COPIED": "Link copied to clipboard",
+			"INVITES_LOAD": "Could Not Load Invites"
 		}
 	}
 }

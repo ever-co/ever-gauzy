@@ -5,7 +5,8 @@ import {
 	CreateEmailInvitesOutput,
 	Invite,
 	InviteFindInput,
-	PublicInviteFindInput
+	PublicInviteFindInput,
+	InviteAcceptInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -53,6 +54,20 @@ export class InviteService {
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
 			.put(`/api/invite/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	acceptEmployeeInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+		return this.http
+			.post(`/api/invite/employee`, acceptInviteInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	acceptUserInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+		return this.http
+			.post(`/api/invite/user`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}

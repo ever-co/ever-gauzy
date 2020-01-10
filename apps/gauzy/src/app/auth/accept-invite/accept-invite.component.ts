@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
 	Invite,
 	InviteStatusEnum,
@@ -11,6 +11,7 @@ import { EmployeesService } from '../../@core/services';
 import { AuthService } from '../../@core/services/auth.service';
 import { InviteService } from '../../@core/services/invite.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
+import { NbToastrService } from '@nebular/theme';
 
 @Component({
 	styleUrls: ['./accept-invite.component.scss'],
@@ -22,11 +23,10 @@ export class AcceptInvitePage implements OnInit, OnDestroy {
 	inviteLoadErrorMessage = '';
 
 	constructor(
+		private readonly router: Router,
+		private toastrService: NbToastrService,
 		private inviteService: InviteService,
-		private route: ActivatedRoute,
-		private authService: AuthService,
-		private employeesService: EmployeesService,
-		private usersOrganizationsService: UsersOrganizationsService
+		private route: ActivatedRoute
 	) {}
 
 	ngOnInit(): void {
@@ -44,6 +44,7 @@ export class AcceptInvitePage implements OnInit, OnDestroy {
 					token
 				}
 			);
+			this.inviteLoadErrorMessage = '';
 		} catch (error) {
 			this.inviteLoadErrorMessage = 'This invitation is no longer valid';
 		}
@@ -52,36 +53,36 @@ export class AcceptInvitePage implements OnInit, OnDestroy {
 
 	submitForm = async (userRegistrationInput: UserRegistrationInput) => {
 		try {
-			const registeredUser = await this.authService
-				.register(userRegistrationInput)
-				.pipe(first())
-				.toPromise();
-
 			const { organization } = this.invitation;
 
 			if (userRegistrationInput.user.role.name === RolesEnum.EMPLOYEE) {
-				await this.employeesService
-					.create({
-						user: registeredUser,
-						organization
-					})
-					.pipe(first())
-					.toPromise();
+				await this.inviteService.acceptEmployeeInvite({
+					user: userRegistrationInput.user,
+					password: userRegistrationInput.password,
+					organization,
+					inviteId: this.invitation.id
+				});
 			} else {
-				await this.usersOrganizationsService
-					.create({
-						userId: registeredUser.id,
-						orgId: organization.id,
-						isActive: true
-					})
-					.pipe(first())
-					.toPromise();
+				await this.inviteService.acceptUserInvite({
+					user: userRegistrationInput.user,
+					password: userRegistrationInput.password,
+					organization,
+					inviteId: this.invitation.id
+				});
 			}
 
-			this.inviteService.update(this.invitation.id, {
-				status: InviteStatusEnum.ACCEPTED
-			});
-		} catch (error) {}
+			this.toastrService.success(
+				'Your account has been created, please login',
+				'Success'
+			);
+
+			this.router.navigate(['/auth/login']);
+		} catch (error) {
+			this.toastrService.danger(
+				error.error ? error.error.message : error.message,
+				'Could not create your account'
+			);
+		}
 	};
 
 	ngOnDestroy(): void {}

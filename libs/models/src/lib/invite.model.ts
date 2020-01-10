@@ -4,7 +4,7 @@
 
 import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { User } from './user.model';
+import { User, UserRegistrationInput } from './user.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Organization } from './organization.model';
 
@@ -20,6 +20,11 @@ export interface Invite extends IBaseEntityModel {
 	invitedBy?: User;
 	projects?: OrganizationProjects[];
 	organization?: Organization;
+}
+
+export interface InviteAcceptInput extends UserRegistrationInput {
+	inviteId: string;
+	organization: Organization;
 }
 
 export interface CreateEmailInvitesInput {
@@ -63,8 +68,7 @@ export interface InviteUpdateInput {
 
 export enum InviteStatusEnum {
 	INVITED = 'INVITED',
-	ACCEPTED = 'ACCEPTED',
-	EXPIRED = 'EXPIRED'
+	ACCEPTED = 'ACCEPTED'
 }
 
 export enum InvitationTypeEnum {
