@@ -1,7 +1,10 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h3>
-			Edit Proposal
+			{{
+				'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL'
+					| translate
+			}}
 		</h3>
 	</nb-card-header>
 
@@ -10,18 +13,27 @@
 			<div class="row">
 				<div class="col-sm-4">
 					<div class="form-group">
-						<label class="label">Author</label>
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.AUTHOR'
+								| translate
+						}}</label>
 						<div>{{ proposal.author }}</div>
 					</div>
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group">
-						<label class="label">Job Post URL</label>
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_URL'
+								| translate
+						}}</label>
 						<input
 							nbInput
 							fullWidth
 							type="text"
-							placeholder="Job Post URL"
+							placeholder="{{
+								'PROPOSALS_PAGE.EDIT_PROPOSAL.PLACEHOLDER.JOB_POST_URL'
+									| translate
+							}}"
 							formControlName="jobPostUrl"
 							autocomplete="on"
 						/>
@@ -29,13 +41,19 @@
 				</div>
 				<div class="col-sm-4">
 					<div class="form-group">
-						<label class="label">Proposal Sent On</label>
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_SENT_ON'
+								| translate
+						}}</label>
 						<div>{{ proposal.valueDate | date: 'shortDate' }}</div>
 					</div>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">Job Post Content</label>
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_CONTENT'
+								| translate
+						}}</label>
 						<ckeditor
 							formControlName="jobPostContent"
 							[config]="{
@@ -49,7 +67,10 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label class="label">Proposal Content</label>
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_CONTENT'
+								| translate
+						}}</label>
 						<ckeditor
 							formControlName="proposalContent"
 							[config]="{
@@ -70,7 +91,10 @@
 			status="success"
 			nbButton
 		>
-			Edit Proposal
+		{{
+			'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL_BUTTON'
+				| translate
+		}}
 		</button>
 	</nb-card-footer>
 </nb-card>
