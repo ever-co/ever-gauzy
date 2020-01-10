@@ -40,6 +40,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 	private _ngDestroy$ = new Subject<void>();
 
+	loading = true;
+
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
@@ -213,6 +215,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadOrgRecurringExpense() {
+		
 		if (this.selectedOrg && this.selectedDate) {
 			this.selectedOrgRecurringExpense = (await this.organizationRecurringExpenseService.getAll(
 				[],
@@ -222,7 +225,9 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 					month: this.selectedDate.getMonth() + 1
 				}
 			)).items;
+			this.loading = false;
 		}
+
 	}
 
 	private clearMutationCard() {

@@ -1,4 +1,6 @@
-<nb-card class="org-edit">
+<nb-card class="org-edit"
+[nbSpinner]="loading" nbSpinnerStatus="primary"
+>
 	<nb-card-header class="header">
 		<div
 			class="header-container"
@@ -51,7 +53,7 @@
 			<h6>{{ 'POP_UPS.SELECT_ORGANZIATION' | translate }}</h6>
 		</ng-template>
 	</nb-card-header>
-	<nb-card-body
+	<nb-card-body 
 		class="settings-body"
 		*ngIf="selectedDate && selectedOrgFromHeader"
 	>
