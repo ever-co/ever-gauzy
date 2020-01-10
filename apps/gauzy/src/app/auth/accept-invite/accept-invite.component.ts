@@ -1,17 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-	Invite,
-	InviteStatusEnum,
-	RolesEnum,
-	UserRegistrationInput
-} from '@gauzy/models';
-import { first } from 'rxjs/operators';
-import { EmployeesService } from '../../@core/services';
-import { AuthService } from '../../@core/services/auth.service';
-import { InviteService } from '../../@core/services/invite.service';
-import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
+import { Invite, RolesEnum, UserRegistrationInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
+import { InviteService } from '../../@core/services/invite.service';
 
 @Component({
 	styleUrls: ['./accept-invite.component.scss'],
