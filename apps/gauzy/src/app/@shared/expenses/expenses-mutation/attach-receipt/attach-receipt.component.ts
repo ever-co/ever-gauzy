@@ -11,6 +11,7 @@ export class AttachReceiptComponent implements OnInit {
 
 	imageUrl: string;
 	currentReceipt: string;
+	hoverState: boolean;
 	disable = true;
 
 	ngOnInit() {
