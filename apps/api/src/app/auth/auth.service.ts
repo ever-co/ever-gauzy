@@ -79,6 +79,16 @@ export class AuthService {
 					}
 				});
 
+				// Gmail example:
+
+				// const transporter = nodemailer.createTransport({
+				// 	service: 'gmail',
+				// 	auth: {
+				// 		user: 'user@gmail.com',
+				// 		pass: 'password'
+				// 	}
+				// });
+
 				const info = await transporter.sendMail({
 					from: 'Gauzy',
 					to: user.email,
