@@ -294,6 +294,16 @@
 			"UPLOAD": "Upload",
 			"PROPOSALS_CONTENT": "Proposal Content",
 			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		},
+		"PROPOSAL_DETAILS":{
+			"PROPOSAL_DETAILS": "Proposal Details",
+			"EDIT":"Edit",
+			"AUTHOR":"Author",
+			"JOB_POST_URL": "Job Post URL",
+			"PROPOSAL_SENT_ON":"Proposal Sent On",
+			"STATUS": "Status",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"PROPOSAL_CONTENT": "Proposal Content"
 		}
 	},
 	"USERS_PAGE": {
