@@ -139,14 +139,14 @@
 			"EMAILS": "Введите адрес электронной почты и нажмите Enter",
 			"ROLE": "Выберите роль",
 			"PROJECTS": "Выберите проекты",
-			"CHOOSE_FORMAT": "Choose Format",
-			"CHOOSE_TIME_ZONE": "Choose Time Zone",
-			"ADD_COLOR": "Add Color",
-			"ALIGN_LOGO_TO": "Align Logo To"
+			"CHOOSE_FORMAT": "Выберите формат",
+			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
+			"ADD_COLOR": "Добавить цвет",
+			"ALIGN_LOGO_TO": "Выровнять логотип по"
 		},
 		"RATES": {
-			"DEFAULT_RATE": "Default Rate",
-			"LIMITS": "Limits"
+			"DEFAULT_RATE": "Стандартная ставка",
+			"LIMITS": "Лимиты"
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Включать удаленные"
@@ -300,25 +300,25 @@
 			"REGISTER_PROPOSALS_BUTTON": "Регистрация предложения"
 		},
 		"PROPOSAL_DETAILS": {
-			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "Edit",
-			"AUTHOR": "Author",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"STATUS": "Status",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content"
+			"PROPOSAL_DETAILS": "Детали предложения",
+			"EDIT": "Редактировать",
+			"AUTHOR": "Автор",
+			"JOB_POST_URL": "URL записи задания",
+			"PROPOSAL_SENT_ON": "Предложение отправлено",
+			"STATUS": "Статус",
+			"JOB_POST_CONTENT": "Контент должности",
+			"PROPOSAL_CONTENT": "Содержание предложения"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL": "Edit Proposal",
-			"AUTHOR": "Author",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"EDIT_PROPOSAL_BUTTON": "Edit Proposal",
+			"EDIT_PROPOSAL": "Изменить предложение",
+			"AUTHOR": "Автор",
+			"JOB_POST_URL": "URL записи задания",
+			"PROPOSAL_SENT_ON": "Предложение отправлено",
+			"JOB_POST_CONTENT": "Контент должности",
+			"PROPOSAL_CONTENT": "Содержание предложения",
+			"EDIT_PROPOSAL_BUTTON": "Изменить предложение",
 			"PLACEHOLDER": {
-				"JOB_POST_URL": "Job Post URL"
+				"JOB_POST_URL": "URL записи задания"
 			}
 		}
 	},
