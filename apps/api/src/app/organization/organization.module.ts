@@ -5,14 +5,17 @@ import { OrganizationService } from './organization.service';
 import { OrganizationController } from './organization.controller';
 import { AuthService } from '../auth';
 import { UserService, User } from '../user';
+import { EmailModule } from '../email-templates/email.module';
+import { EmailService } from '../email-templates/email.service';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Organization]),
-		TypeOrmModule.forFeature([User])
+		TypeOrmModule.forFeature([User]),
+		EmailModule
 	],
 	controllers: [OrganizationController],
-	providers: [OrganizationService, AuthService, UserService],
+	providers: [OrganizationService, AuthService, UserService, EmailService],
 	exports: [OrganizationService]
 })
 export class OrganizationModule {}

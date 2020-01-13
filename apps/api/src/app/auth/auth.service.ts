@@ -2,11 +2,10 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { get, post, Response } from 'request';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import * as nodemailer from 'nodemailer';
-
 import { User, UserService } from '../user';
 import { environment as env, environment } from '@env-api/environment';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import { EmailService } from '../email-templates/email.service';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -17,7 +16,10 @@ export enum Provider {
 export class AuthService {
 	saltRounds: number;
 
-	constructor(private readonly userService: UserService) {
+	constructor(
+		private readonly userService: UserService,
+		private emailService: EmailService
+	) {
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
 
@@ -67,45 +69,7 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
-				const testAccount = await nodemailer.createTestAccount();
-
-				const transporter = nodemailer.createTransport({
-					host: 'smtp.ethereal.email',
-					port: 587,
-					secure: false, // true for 465, false for other ports
-					auth: {
-						user: testAccount.user,
-						pass: testAccount.pass
-					}
-				});
-
-				// Gmail example:
-
-				// const transporter = nodemailer.createTransport({
-				// 	service: 'gmail',
-				// 	auth: {
-				// 		user: 'user@gmail.com',
-				// 		pass: 'password'
-				// 	}
-				// });
-
-				const info = await transporter.sendMail({
-					from: 'Gauzy',
-					to: user.email,
-					subject: 'Forgotten Password',
-					text: 'Forgot Password',
-					html:
-						'Hello! <br><br> We received a password change request.<br><br>If you requested to reset your password<br><br>' +
-						'<a href=' +
-						url +
-						'>Click here</a>'
-				});
-
-				console.log('Message sent: %s', info.messageId);
-				console.log(
-					'Preview URL: %s',
-					nodemailer.getTestMessageUrl(info)
-				);
+				this.emailService.sendEmail(user, url);
 
 				return {
 					id: user.id,
