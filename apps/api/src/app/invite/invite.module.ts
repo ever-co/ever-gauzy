@@ -15,6 +15,8 @@ import {
 	UserOrganizationService,
 	UserOrganization
 } from '../user-organization';
+import { EmailModule } from '../email-templates/email.module';
+import { EmailService } from '../email-templates/email.service';
 
 @Module({
 	imports: [
@@ -26,7 +28,8 @@ import {
 			OrganizationProjects
 		]),
 		SharedModule,
-		CqrsModule
+		CqrsModule,
+		EmailModule
 	],
 	controllers: [InviteController],
 	providers: [
@@ -35,7 +38,8 @@ import {
 		EmployeeService,
 		UserService,
 		AuthService,
-		UserOrganizationService
+		UserOrganizationService,
+		EmailService
 	],
 	exports: [InviteService]
 })
