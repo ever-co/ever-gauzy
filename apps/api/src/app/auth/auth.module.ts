@@ -9,13 +9,16 @@ import { RoleService, Role } from '../role';
 import { GoogleStrategy } from './google.strategy';
 import { authenticate } from 'passport';
 import { FacebookStrategy } from './facebook.strategy';
+import { EmailService } from '../email-templates/email.service';
+import { EmailModule } from '../email-templates/email.module';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([User, Role]), CqrsModule],
+	imports: [TypeOrmModule.forFeature([User, Role]), CqrsModule, EmailModule],
 	controllers: [AuthController],
 	providers: [
 		AuthService,
 		UserService,
+		EmailService,
 		RoleService,
 		...CommandHandlers,
 		GoogleStrategy,

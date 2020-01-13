@@ -8,15 +8,24 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { User } from '../user/user.entity';
 import { AuthService } from '../auth';
 import { UserService } from '../user';
+import { EmailModule } from '../email-templates/email.module';
+import { EmailService } from '../email-templates/email.service';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Employee]),
 		TypeOrmModule.forFeature([User]),
-		CqrsModule
+		CqrsModule,
+		EmailModule
 	],
 	controllers: [EmployeeController],
-	providers: [EmployeeService, ...CommandHandlers, AuthService, UserService],
+	providers: [
+		EmployeeService,
+		...CommandHandlers,
+		AuthService,
+		UserService,
+		EmailService
+	],
 	exports: [EmployeeService]
 })
 export class EmployeeModule {}

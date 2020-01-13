@@ -3306,6 +3306,14 @@
   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.5.tgz#b14efa8852b7768d898906613c23f688713e02cd"
   integrity sha512-Q1y515GcOdTHgagaVFhHnIFQ38ygs/kmxdNpvpou+raI9UO3YZcHDngBSYKQklcKlvA7iuQlmIKbzvmxcOE9CQ==
 
+"@types/email-templates@^6.0.2":
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/@types/email-templates/-/email-templates-6.0.2.tgz#02a2563334e1d7368f14037945aee39b65e32e3c"
+  integrity sha512-9pzmolar0fCWBm1xtp1CB3GI/9PRhxOGzQZG7cSx48vnesxF+F+JSzCtnfunYwCvx4TWKvb3QqbfTRps2g+KlA==
+  dependencies:
+    "@types/html-to-text" "*"
+    "@types/nodemailer" "*"
+
 "@types/estree@0.0.39":
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
@@ -3378,6 +3386,11 @@
   integrity sha512-MPZ7HoCGLoajTZhy3hMWHvdiOMHCZJ51U2Bve25oujn3G7KdXy0G3iRS0dUpVtKOGMNcuBF6yLDRpNdm2JH0OQ==
   dependencies:
     "@types/express" "*"
+
+"@types/html-to-text@*":
+  version "1.4.31"
+  resolved "https://registry.yarnpkg.com/@types/html-to-text/-/html-to-text-1.4.31.tgz#3b73aa59f127551cc0ce615346caa730e7622f9f"
+  integrity sha512-9vTFw6vYZNnjPOep9WRXs7cw0vg04pAZgcX9bqx70q1BNT7y9sOJovpbiNIcSNyHF/6LscLvGhtb5Og1T0UEvA==
 
 "@types/istanbul-lib-coverage@*", "@types/istanbul-lib-coverage@^2.0.0":
   version "2.0.1"
@@ -3490,6 +3503,13 @@
   version "8.10.54"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-8.10.54.tgz#1c88eb253ac1210f1a5876953fb70f7cc4928402"
   integrity sha512-kaYyLYf6ICn6/isAyD4K1MyWWd5Q3JgH6bnMN089LUx88+s4W8GvK9Q6JMBVu5vsFFp7pMdSxdKmlBXwH/VFRg==
+
+"@types/nodemailer@*":
+  version "6.4.0"
+  resolved "https://registry.yarnpkg.com/@types/nodemailer/-/nodemailer-6.4.0.tgz#d8c039be3ed685c4719a026455555be82c124b74"
+  integrity sha512-KY7bFWB0MahRZvVW4CuW83qcCDny59pJJ0MQ5ifvfcjNwPlIT0vW4uARO4u1gtkYnWdhSvURegecY/tzcukJcA==
+  dependencies:
+    "@types/node" "*"
 
 "@types/nodemailer@^6.2.2":
   version "6.2.2"
@@ -15545,10 +15565,10 @@ node-sass-tilde-importer@^1.0.0:
   dependencies:
     find-parent-dir "^0.3.0"
 
-nodemailer-express-handlebars@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/nodemailer-express-handlebars/-/nodemailer-express-handlebars-3.1.0.tgz#e80da7528cfd30a8dd49c002642854edcab72c68"
-  integrity sha512-JLt+lAlo/D3TfpVnDY+imLHAAonX5L9FEHaczyiPxWCH259bsfxEjPSWl/rWgnvcoFT8uC/hwHi/I0ScFmHlIQ==
+nodemailer-handlebars@^1.0.0:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/nodemailer-handlebars/-/nodemailer-handlebars-1.0.1.tgz#55abc0d1fbb05351972738efd8a48ee97d1b4ba0"
+  integrity sha512-doSPCuWpHXoU1/EvmzsNhMlesk/F4zA0PIWdDKqwgEMGdjgCRazYC5VrWCt28VnwiWS8FrqE/Su3HwaozjY8NQ==
   dependencies:
     express-handlebars "^3.0.0"
 
