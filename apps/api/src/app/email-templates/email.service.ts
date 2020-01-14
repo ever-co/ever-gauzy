@@ -5,36 +5,39 @@ import { User } from '../user';
 
 @Injectable()
 export class EmailService {
-	async sendEmail(user: User, url: string) {
-		const email = new Email({
-			message: {
-				from: 'Gauzy',
-				subject: 'Forgotten Password'
-			},
-			transport: {
-				jsonTransport: true
-			},
-			views: {
-				options: {
-					extension: 'hbs'
-				}
-			},
-			preview: {
-				open: {
-					app: 'firefox',
-					wait: false
-				}
+	email = new Email({
+		message: {
+			from: 'Gauzy@Ever.co'
+		},
+		transport: {
+			jsonTransport: true
+		},
+		i18n: {},
+		views: {
+			options: {
+				extension: 'hbs'
 			}
-		});
+		},
+		preview: {
+			open: {
+				app: 'firefox',
+				wait: false
+			}
+		}
+	});
 
-		email
+	async welcomeUser(user: User) {
+		this.email
 			.send({
-				template: '../apps/api/src/app/email-templates/views/password',
+				template:
+					'../apps/api/src/app/email-templates/views/welcome-user',
 				message: {
-					to: `${user.email}`
+					to: `${user.email}`,
+					subject: 'Welcome to Gauzy'
 				},
 				locals: {
-					generatedUrl: url
+					email: user.email,
+					locale: 'en'
 				}
 			})
 			.then((res) => {
@@ -43,6 +46,26 @@ export class EmailService {
 			.catch(console.error);
 	}
 
+	async requestPassword(user: User, url: string) {
+		this.email
+			.send({
+				template: '../apps/api/src/app/email-templates/views/password',
+				message: {
+					to: `${user.email}`,
+					subject: 'Forgotten Password'
+				},
+				locals: {
+					generatedUrl: url,
+					locale: 'en'
+				}
+			})
+			.then((res) => {
+				console.log(res);
+			})
+			.catch(console.error);
+	}
+
+	// tested e-mail send functionality
 	async nodemailerSendEmail(user: User, url: string) {
 		const testAccount = await nodemailer.createTestAccount();
 
