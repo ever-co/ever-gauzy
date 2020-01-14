@@ -66,7 +66,9 @@
 		"ROLE": "Роль",
 		"PROJECTS": "Проекты",
 		"INVITED_BY": "Приглашен",
-		"EXPIRE_DATE": "Истекает"
+		"EXPIRE_DATE": "Истекает",
+		"CLIENTS": "Клиенты",
+		"DEPARTMENTS": "Департаменты"
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
@@ -100,7 +102,9 @@
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
 			"ROLE": "Роль",
 			"EMAILS": "Адреса E-mail",
-			"PROJECTS_OPTIONAL": "Проекты (необязательно)"
+			"PROJECTS_OPTIONAL": "Проекты (необязательно)",
+			"CLIENTS_OPTIONAL": "Клиенты (необязательно)",
+			"DEPARTMENTS_OPTIONAL": "Отделы (необязательно)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -142,7 +146,8 @@
 			"CHOOSE_FORMAT": "Выберите формат",
 			"CHOOSE_TIME_ZONE": "Выберите часовой пояс",
 			"ADD_COLOR": "Добавить цвет",
-			"ALIGN_LOGO_TO": "Выровнять логотип по"
+			"ALIGN_LOGO_TO": "Выровнять логотип по",
+			"DEPARTMENTS": "Департаменты"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -156,7 +161,8 @@
 			"RECORD": "запись",
 			"EMPLOYEE": "служащий",
 			"EXPENSE": "Расходная",
-			"USER": "пользователь"
+			"USER": "пользователь",
+			"INVITATION": "приглашение"
 		}
 	},
 	"POP_UPS": {
@@ -401,7 +407,8 @@
 		"MESSAGE": {
 			"PROJECT_LOAD": "Не удалось загрузить проекты",
 			"COPIED": "Ссылка скопирована в буфер обмена",
-			"INVITES_LOAD": "Could Not Load Invites"
+			"INVITES_LOAD": "Could Not Load Invites",
+			"INVITES_RESEND": "Приглашение было отправлено на адрес {{ email }}."
 		}
 	}
 }
