@@ -3,8 +3,9 @@ import {
 	Entity,
 	Index,
 	JoinColumn,
-	ManyToOne,
-	OneToMany
+	ManyToMany,
+	OneToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -18,6 +19,7 @@ import { Base } from '../core/entities/base';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationClients as IOrganizationClients } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects';
+import { Employee } from '../employee';
 
 @Entity('organization_clients')
 export class OrganizationClients extends Base implements IOrganizationClients {
@@ -92,4 +94,10 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	@IsOptional()
 	@Column({ nullable: true })
 	notes?: string;
+
+	@ManyToMany((type) => Employee, { cascade: ['update'] })
+	@JoinTable({
+		name: 'organization_clients_employee'
+	})
+	members?: Employee[];
 }

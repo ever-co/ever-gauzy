@@ -59,6 +59,72 @@
 			</div>
 		</div>
 	</div>
+	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="clientsSelect" class="label label-with-select"
+					>{{ 'FORM.LABELS.CLIENTS_OPTIONAL' | translate }}
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						(click)="selectAllClients()"
+					>
+						{{ 'BUTTONS.SELECT_ALL' | translate }}
+					</button>
+				</label>
+				<ng-select
+					id="clientsSelect"
+					class="adjust-height"
+					[hideSelected]="true"
+					multiple="true"
+					bindLabel="name"
+					formControlName="clients"
+					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+				>
+					<ng-option
+						*ngFor="let client of organizationClients"
+						value="{{ client.id }}"
+						>{{ client.name }}</ng-option
+					>
+				</ng-select>
+			</div>
+		</div>
+	</div>
+	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="departmentsSelect" class="label label-with-select"
+					>{{ 'FORM.LABELS.DEPARTMENTS_OPTIONAL' | translate }}
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						(click)="selectAllDepartments()"
+					>
+						{{ 'BUTTONS.SELECT_ALL' | translate }}
+					</button>
+				</label>
+				<ng-select
+					id="departmentsSelect"
+					class="adjust-height"
+					[hideSelected]="true"
+					multiple="true"
+					bindLabel="name"
+					formControlName="departments"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.DEPARTMENTS' | translate
+					}}"
+				>
+					<ng-option
+						*ngFor="let department of organizationDepartments"
+						value="{{ department.id }}"
+						>{{ department.name }}</ng-option
+					>
+				</ng-select>
+			</div>
+		</div>
+	</div>
 	<div class="employee-padding" *ngIf="invitationType === 'EMPLOYEE'"></div>
 	<div class="row" *ngIf="invitationType === 'USER'">
 		<div class="col-sm-6">

@@ -24,6 +24,8 @@ import { InvitesComponent } from './invites.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
+import { ClientNamesComponent } from './client-names/client-names.component';
+import { DepartmentNamesComponent } from './department-names/department-names.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -32,6 +34,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 const COMPONENTS = [
 	InvitesComponent,
 	ProjectNamesComponent,
+	ClientNamesComponent,
+	DepartmentNamesComponent,
 	ResendConfirmationComponent
 ];
 
@@ -65,7 +69,12 @@ const COMPONENTS = [
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS],
-	entryComponents: [ProjectNamesComponent, ResendConfirmationComponent],
+	entryComponents: [
+		ProjectNamesComponent,
+		ClientNamesComponent,
+		DepartmentNamesComponent,
+		ResendConfirmationComponent
+	],
 	providers: []
 })
 export class InviteTableModule {}

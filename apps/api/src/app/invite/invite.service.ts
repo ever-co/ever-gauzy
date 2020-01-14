@@ -3,7 +3,9 @@ import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
 	InviteStatusEnum,
-	OrganizationProjects as IOrganizationProjects
+	OrganizationProjects as IOrganizationProjects,
+	OrganizationClients as IOrganizationClients,
+	OrganizationDepartment as IOrganizationDepartment
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +15,8 @@ import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects';
 import { Invite } from './invite.entity';
 import * as nodemailer from 'nodemailer';
+import { OrganizationClients } from '../organization-clients';
+import { OrganizationDepartment } from '../organization-department';
 
 @Injectable()
 export class InviteService extends CrudService<Invite> {
@@ -21,6 +25,16 @@ export class InviteService extends CrudService<Invite> {
 		@InjectRepository(OrganizationProjects)
 		private readonly organizationProjectsRepository: Repository<
 			OrganizationProjects
+		>,
+
+		@InjectRepository(OrganizationClients)
+		private readonly organizationClientsRepository: Repository<
+			OrganizationClients
+		>,
+
+		@InjectRepository(OrganizationDepartment)
+		private readonly organizationDepartmentRepository: Repository<
+			OrganizationDepartment
 		>
 	) {
 		super(inviteRepository);
@@ -71,6 +85,8 @@ export class InviteService extends CrudService<Invite> {
 			emailIds,
 			roleId,
 			projectIds,
+			clientIds,
+			departmentIds,
 			organizationId,
 			invitedById
 		} = emailInvites;
@@ -79,6 +95,14 @@ export class InviteService extends CrudService<Invite> {
 
 		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
 			projectIds || []
+		);
+
+		const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findByIds(
+			departmentIds || []
+		);
+
+		const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
+			clientIds || []
 		);
 
 		const existingInvites = (await this.repository
@@ -104,6 +128,8 @@ export class InviteService extends CrudService<Invite> {
 			invite.status = InviteStatusEnum.INVITED;
 			invite.expireDate = expireDate;
 			invite.projects = projects;
+			invite.departments = departments;
+			invite.clients = clients;
 
 			invites.push(invite);
 		}

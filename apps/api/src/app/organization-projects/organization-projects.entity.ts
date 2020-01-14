@@ -4,7 +4,8 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	ManyToMany
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -71,8 +72,9 @@ export class OrganizationProjects extends Base
 	@Column()
 	currency: string;
 
-	@ApiPropertyOptional({ type: Employee, isArray: true })
-	@ManyToMany((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	team?: Employee[];
+	@ManyToMany((type) => Employee, { cascade: ['update'] })
+	@JoinTable({
+		name: 'organization_project_employee'
+	})
+	members?: Employee[];
 }

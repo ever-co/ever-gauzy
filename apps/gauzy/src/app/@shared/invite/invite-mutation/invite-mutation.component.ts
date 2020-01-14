@@ -2,12 +2,16 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import {
 	InvitationTypeEnum,
 	Invite,
-	OrganizationProjects
+	OrganizationProjects,
+	OrganizationClients,
+	OrganizationDepartment
 } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { EmailInviteFormComponent } from '../forms/email-invite-form/email-invite-form.component';
+import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 
 @Component({
 	selector: 'ga-invite-mutation',
@@ -28,19 +32,23 @@ export class InviteMutationComponent implements OnInit {
 	emailInviteForm: EmailInviteFormComponent;
 
 	organizationProjects: OrganizationProjects[];
+	organizationClients: OrganizationClients[];
+	organizationDepartments: OrganizationDepartment[];
 
 	constructor(
 		private dialogRef: NbDialogRef<InviteMutationComponent>,
 		private organizationProjectsService: OrganizationProjectsService,
+		private organizationClientsService: OrganizationClientsService,
+		private organizationDepartmentsService: OrganizationDepartmentsService,
 		private translateService: TranslateService,
 		private toastrService: NbToastrService
 	) {}
 
 	ngOnInit(): void {
-		this.loadProjects();
+		this.loadOrganizationData();
 	}
 
-	async loadProjects() {
+	loadOrganizationData() {
 		if (!this.selectedOrganizationId) {
 			this.toastrService.warning(
 				this.getTranslation('TOASTR.MESSAGE.PROJECT_LOAD'),
@@ -50,17 +58,36 @@ export class InviteMutationComponent implements OnInit {
 		}
 
 		try {
-			const res = await this.organizationProjectsService.getAll([], {
-				organizationId: this.selectedOrganizationId
-			});
-
-			this.organizationProjects = res.items;
+			this.loadProjects();
+			this.loadClients();
+			this.loadDepartments();
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
+	}
+
+	async loadProjects() {
+		const res = await this.organizationProjectsService.getAll([], {
+			organizationId: this.selectedOrganizationId
+		});
+		this.organizationProjects = res.items;
+	}
+
+	async loadClients() {
+		const res = await this.organizationClientsService.getAll([], {
+			organizationId: this.selectedOrganizationId
+		});
+		this.organizationClients = res.items;
+	}
+
+	async loadDepartments() {
+		const res = await this.organizationDepartmentsService.getAll({
+			organizationId: this.selectedOrganizationId
+		});
+		this.organizationDepartments = res.items;
 	}
 
 	closeDialog(savedInvites: Invite[] = []) {

@@ -1,22 +1,32 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-
-import { Invite } from './invite.entity';
-import { InviteService } from './invite.service';
-import { InviteController } from './invite.controller';
-import { SharedModule } from '../shared';
-import { OrganizationProjects } from '../organization-projects';
-import { Employee, EmployeeService } from '../employee';
 import { CqrsModule } from '@nestjs/cqrs';
-import { CommandHandlers } from './commands/handlers';
-import { UserService, User } from '../user';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from '../auth';
+import { Employee, EmployeeService } from '../employee';
 import {
-	UserOrganizationService,
-	UserOrganization
+	OrganizationClients,
+	OrganizationClientsService
+} from '../organization-clients';
+import {
+	OrganizationDepartment,
+	OrganizationDepartmentService
+} from '../organization-department';
+import {
+	OrganizationProjects,
+	OrganizationProjectsService
+} from '../organization-projects';
+import { SharedModule } from '../shared';
+import { User, UserService } from '../user';
+import {
+	UserOrganization,
+	UserOrganizationService
 } from '../user-organization';
 import { EmailModule } from '../email-templates/email.module';
 import { EmailService } from '../email-templates/email.service';
+import { CommandHandlers } from './commands/handlers';
+import { InviteController } from './invite.controller';
+import { Invite } from './invite.entity';
+import { InviteService } from './invite.service';
 
 @Module({
 	imports: [
@@ -25,7 +35,9 @@ import { EmailService } from '../email-templates/email.service';
 			Employee,
 			User,
 			UserOrganization,
-			OrganizationProjects
+			OrganizationProjects,
+			OrganizationClients,
+			OrganizationDepartment
 		]),
 		SharedModule,
 		CqrsModule,
@@ -39,7 +51,10 @@ import { EmailService } from '../email-templates/email.service';
 		UserService,
 		AuthService,
 		UserOrganizationService,
-		EmailService
+		EmailService,
+		OrganizationProjectsService,
+		OrganizationClientsService,
+		OrganizationDepartmentService
 	],
 	exports: [InviteService]
 })

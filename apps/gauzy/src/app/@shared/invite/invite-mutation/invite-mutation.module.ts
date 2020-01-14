@@ -10,6 +10,8 @@ import { HttpClient } from '@angular/common/http';
 import { UsersService } from '../../../@core/services';
 import { InviteFormsModule } from '../forms/invite-forms.module';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -34,6 +36,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 	exports: [InviteMutationComponent],
 	declarations: [InviteMutationComponent],
 	entryComponents: [InviteMutationComponent],
-	providers: [OrganizationsService, OrganizationProjectsService, UsersService]
+	providers: [
+		OrganizationsService,
+		OrganizationProjectsService,
+		OrganizationClientsService,
+		OrganizationDepartmentsService,
+		UsersService
+	]
 })
 export class InviteMutationModule {}

@@ -12,6 +12,8 @@ import { InviteMutationComponent } from '../invite-mutation/invite-mutation.comp
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import moment = require('moment-timezone');
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
+import { ClientNamesComponent } from './client-names/client-names.component';
+import { DepartmentNamesComponent } from './department-names/department-names.component';
 
 interface InviteViewModel {
 	email: string;
@@ -21,6 +23,8 @@ interface InviteViewModel {
 	roleName?: string;
 	status: string;
 	projectNames: string[];
+	clientNames: string[];
+	departmentNames: string[];
 	id: string;
 	inviteUrl: string;
 }
@@ -121,7 +125,7 @@ export class InvitesComponent implements OnInit, OnDestroy {
 
 		try {
 			const { items } = await this.inviteService.getAll(
-				['projects', 'invitedBy', 'role'],
+				['projects', 'invitedBy', 'role', 'clients', 'departments'],
 				{
 					organizationId: this.selectedOrganizationId
 				}
@@ -159,6 +163,12 @@ export class InvitesComponent implements OnInit, OnDestroy {
 				projectNames: (invite.projects || []).map(
 					(project) => project.name
 				),
+				clientNames: (invite.clients || []).map(
+					(client) => client.name
+				),
+				departmentNames: (invite.departments || []).map(
+					(department) => department.name
+				),
 				id: invite.id,
 				inviteUrl: `auth/accept-invite?email=${invite.email}&token=${invite.token}`
 			});
@@ -193,6 +203,18 @@ export class InvitesComponent implements OnInit, OnDestroy {
 					renderComponent: ProjectNamesComponent,
 					filter: false
 				},
+				clients: {
+					title: this.getTranslation('SM_TABLE.CLIENTS'),
+					type: 'custom',
+					renderComponent: ClientNamesComponent,
+					filter: false
+				},
+				departments: {
+					title: this.getTranslation('SM_TABLE.DEPARTMENTS'),
+					type: 'custom',
+					renderComponent: DepartmentNamesComponent,
+					filter: false
+				},
 				fullName: {
 					title: this.getTranslation('SM_TABLE.INVITED_BY'),
 					type: 'text'
@@ -218,6 +240,8 @@ export class InvitesComponent implements OnInit, OnDestroy {
 
 		if (this.invitationType === InvitationTypeEnum.USER) {
 			delete settingsSmartTable['columns']['projects'];
+			delete settingsSmartTable['columns']['clients'];
+			delete settingsSmartTable['columns']['departments'];
 		}
 
 		this.settingsSmartTable = settingsSmartTable;
