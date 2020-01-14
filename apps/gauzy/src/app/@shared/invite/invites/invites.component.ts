@@ -7,9 +7,13 @@ import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { InviteService } from '../../../@core/services/invite.service';
 import { Store } from '../../../@core/services/store.service';
+import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import moment = require('moment-timezone');
+import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
+import { ClientNamesComponent } from './client-names/client-names.component';
+import { DepartmentNamesComponent } from './department-names/department-names.component';
 
 interface InviteViewModel {
 	email: string;
@@ -19,6 +23,8 @@ interface InviteViewModel {
 	roleName?: string;
 	status: string;
 	projectNames: string[];
+	clientNames: string[];
+	departmentNames: string[];
 	id: string;
 	inviteUrl: string;
 }
@@ -119,7 +125,7 @@ export class InvitesComponent implements OnInit, OnDestroy {
 
 		try {
 			const { items } = await this.inviteService.getAll(
-				['projects', 'invitedBy', 'role'],
+				['projects', 'invitedBy', 'role', 'clients', 'departments'],
 				{
 					organizationId: this.selectedOrganizationId
 				}
@@ -157,6 +163,12 @@ export class InvitesComponent implements OnInit, OnDestroy {
 				projectNames: (invite.projects || []).map(
 					(project) => project.name
 				),
+				clientNames: (invite.clients || []).map(
+					(client) => client.name
+				),
+				departmentNames: (invite.departments || []).map(
+					(department) => department.name
+				),
 				id: invite.id,
 				inviteUrl: `auth/accept-invite?email=${invite.email}&token=${invite.token}`
 			});
@@ -191,6 +203,18 @@ export class InvitesComponent implements OnInit, OnDestroy {
 					renderComponent: ProjectNamesComponent,
 					filter: false
 				},
+				clients: {
+					title: this.getTranslation('SM_TABLE.CLIENTS'),
+					type: 'custom',
+					renderComponent: ClientNamesComponent,
+					filter: false
+				},
+				departments: {
+					title: this.getTranslation('SM_TABLE.DEPARTMENTS'),
+					type: 'custom',
+					renderComponent: DepartmentNamesComponent,
+					filter: false
+				},
 				fullName: {
 					title: this.getTranslation('SM_TABLE.INVITED_BY'),
 					type: 'text'
@@ -216,14 +240,85 @@ export class InvitesComponent implements OnInit, OnDestroy {
 
 		if (this.invitationType === InvitationTypeEnum.USER) {
 			delete settingsSmartTable['columns']['projects'];
+			delete settingsSmartTable['columns']['clients'];
+			delete settingsSmartTable['columns']['departments'];
 		}
 
 		this.settingsSmartTable = settingsSmartTable;
 	}
 
-	getTranslation(prefix: string) {
+	async deleteInvite() {
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType:
+						this.selectedInvite.email +
+						' ' +
+						this.getTranslation(
+							'FORM.DELETE_CONFIRMATION.INVITATION'
+						)
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.inviteService.delete(this.selectedInvite.id);
+
+						this.toastrService.primary(
+							this.selectedInvite.email + ' has been deleted.',
+							'Success'
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					}
+				}
+			});
+	}
+
+	async resendInvite() {
+		this.dialogService
+			.open(ResendConfirmationComponent, {
+				context: {
+					email: this.selectedInvite.email
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.inviteService.resendInvite({
+							id: this.selectedInvite.id,
+							invitedById: this.store.userId
+						});
+
+						this.toastrService.primary(
+							this.getTranslation(
+								'TOASTR.MESSAGE.INVITES_RESEND',
+								{ email: this.selectedInvite.email }
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.toastrService.danger(
+							error.error.message || error.message,
+							'Error'
+						);
+					}
+				}
+			});
+	}
+
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translate.get(prefix).subscribe((res) => {
+		this.translate.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 		return result;

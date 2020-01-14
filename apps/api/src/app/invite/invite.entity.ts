@@ -16,6 +16,8 @@ import { Organization } from '../organization';
 import { OrganizationProjects } from '../organization-projects';
 import { Role } from '../role';
 import { User } from '../user';
+import { OrganizationClients } from '../organization-clients';
+import { OrganizationDepartment } from '../organization-department';
 
 @Entity('invite')
 export class Invite extends Base implements IInvite {
@@ -76,7 +78,19 @@ export class Invite extends Base implements IInvite {
 
 	@ManyToMany((type) => OrganizationProjects)
 	@JoinTable({
-		name: 'invite_projects'
+		name: 'invite_organization_projects'
 	})
 	projects?: OrganizationProjects[];
+
+	@ManyToMany((type) => OrganizationClients)
+	@JoinTable({
+		name: 'invite_organization_clients'
+	})
+	clients?: OrganizationClients[];
+
+	@ManyToMany((type) => OrganizationDepartment)
+	@JoinTable({
+		name: 'invite_organization_departments'
+	})
+	departments?: OrganizationDepartment[];
 }

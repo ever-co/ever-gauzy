@@ -22,12 +22,22 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
+import { UserFormsModule } from '../../user/forms/user-forms.module';
+import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
+import { ClientNamesComponent } from './client-names/client-names.component';
+import { DepartmentNamesComponent } from './department-names/department-names.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-const COMPONENTS = [InvitesComponent, ProjectNamesComponent];
+const COMPONENTS = [
+	InvitesComponent,
+	ProjectNamesComponent,
+	ClientNamesComponent,
+	DepartmentNamesComponent,
+	ResendConfirmationComponent
+];
 
 @NgModule({
 	imports: [
@@ -54,11 +64,17 @@ const COMPONENTS = [InvitesComponent, ProjectNamesComponent];
 			}
 		}),
 		NbSpinnerModule,
-		InviteMutationModule
+		InviteMutationModule,
+		UserFormsModule
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS],
-	entryComponents: [ProjectNamesComponent],
+	entryComponents: [
+		ProjectNamesComponent,
+		ClientNamesComponent,
+		DepartmentNamesComponent,
+		ResendConfirmationComponent
+	],
 	providers: []
 })
 export class InviteTableModule {}

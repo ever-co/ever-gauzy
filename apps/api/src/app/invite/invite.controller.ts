@@ -1,7 +1,8 @@
 import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
-	InviteAcceptInput
+	InviteAcceptInput,
+	InviteResendInput
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -22,6 +23,7 @@ import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.c
 import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
+import { InviteResendCommand } from './commands/invite.resend.command';
 
 @ApiTags('Invite')
 @Controller()
@@ -129,5 +131,22 @@ export class InviteController extends CrudController<Invite> {
 		@Body() entity: InviteAcceptInput
 	): Promise<UpdateResult | Invite> {
 		return this.commandBus.execute(new InviteAcceptUserCommand(entity));
+	}
+
+	@ApiOperation({ summary: 'Resend invite.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('resend')
+	async resendInvite(
+		@Body() entity: InviteResendInput
+	): Promise<UpdateResult | Invite> {
+		return this.commandBus.execute(new InviteResendCommand(entity));
 	}
 }

@@ -7,6 +7,8 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { User, UserRegistrationInput } from './user.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Organization } from './organization.model';
+import { OrganizationClients } from './organization-clients.model';
+import { OrganizationDepartment } from './organization-department.model';
 
 export interface Invite extends IBaseEntityModel {
 	token: string;
@@ -19,6 +21,8 @@ export interface Invite extends IBaseEntityModel {
 	role?: Role;
 	invitedBy?: User;
 	projects?: OrganizationProjects[];
+	clients?: OrganizationClients[];
+	departments?: OrganizationDepartment[];
 	organization?: Organization;
 }
 
@@ -27,9 +31,16 @@ export interface InviteAcceptInput extends UserRegistrationInput {
 	organization: Organization;
 }
 
+export interface InviteResendInput {
+	id: string;
+	invitedById: string;
+}
+
 export interface CreateEmailInvitesInput {
 	emailIds: string[];
 	projectIds?: string[];
+	clientIds?: string[];
+	departmentIds?: string[];
 	organizationId: string;
 	roleId: string;
 	invitedById: string;

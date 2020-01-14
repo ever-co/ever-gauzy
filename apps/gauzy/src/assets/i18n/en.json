@@ -66,7 +66,9 @@
 		"ROLE": "Role",
 		"PROJECTS": "Projects",
 		"INVITED_BY": "Invited By",
-		"EXPIRE_DATE": "Expires"
+		"EXPIRE_DATE": "Expires",
+		"CLIENTS": "Clients",
+		"DEPARTMENTS": "Departments"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -100,7 +102,9 @@
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
 			"ROLE": "Role",
 			"EMAILS": "Email Addresses",
-			"PROJECTS_OPTIONAL": "Projects (Optional)"
+			"PROJECTS_OPTIONAL": "Projects (Optional)",
+			"CLIENTS_OPTIONAL": "Clients (Optional)",
+			"DEPARTMENTS_OPTIONAL": "Departments (Optional)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -142,7 +146,8 @@
 			"CHOOSE_FORMAT": "Choose Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
 			"ADD_COLOR": "Add Color",
-			"ALIGN_LOGO_TO": "Align Logo To"
+			"ALIGN_LOGO_TO": "Align Logo To",
+			"DEPARTMENTS": "Departments"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -156,7 +161,8 @@
 			"RECORD": "record",
 			"EMPLOYEE": "employee",
 			"EXPENSE": "Expense",
-			"USER": "user"
+			"USER": "user",
+			"INVITATION": "invitation"
 		}
 	},
 	"POP_UPS": {
@@ -299,18 +305,18 @@
 			"PROPOSALS_CONTENT": "Proposal Content",
 			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
 		},
-		"PROPOSAL_DETAILS":{
+		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT":"Edit",
-			"AUTHOR":"Author",
+			"EDIT": "Edit",
+			"AUTHOR": "Author",
 			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON":"Proposal Sent On",
+			"PROPOSAL_SENT_ON": "Proposal Sent On",
 			"STATUS": "Status",
 			"JOB_POST_CONTENT": "Job Post Content",
 			"PROPOSAL_CONTENT": "Proposal Content"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL":"Edit Proposal",
+			"EDIT_PROPOSAL": "Edit Proposal",
 			"AUTHOR": "Author",
 			"JOB_POST_URL": "Job Post URL",
 			"PROPOSAL_SENT_ON": "Proposal Sent On",
@@ -401,7 +407,8 @@
 		"MESSAGE": {
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
-			"INVITES_LOAD": "Could Not Load Invites"
+			"INVITES_LOAD": "Could Not Load Invites",
+			"INVITES_RESEND": "Invite has been resent to {{ email }}."
 		}
 	}
 }
