@@ -66,7 +66,9 @@
 		"ROLE": "Role",
 		"PROJECTS": "פרויקטים",
 		"INVITED_BY": "Invited By",
-		"EXPIRE_DATE": "Expires"
+		"EXPIRE_DATE": "Expires",
+		"CLIENTS": "לקוחות",
+		"DEPARTMENTS": "מחלקות"
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
@@ -100,7 +102,9 @@
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
 			"ROLE": "Role",
 			"EMAILS": "Email Addresses",
-			"PROJECTS_OPTIONAL": "Projects (Optional)"
+			"PROJECTS_OPTIONAL": "Projects (Optional)",
+			"CLIENTS_OPTIONAL": "Clients (Optional)",
+			"DEPARTMENTS_OPTIONAL": "Departments (Optional)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -142,7 +146,8 @@
 			"CHOOSE_FORMAT": "Choose Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
 			"ADD_COLOR": "Add Color",
-			"ALIGN_LOGO_TO": "Align Logo To"
+			"ALIGN_LOGO_TO": "Align Logo To",
+			"DEPARTMENTS": "מחלקות"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -156,7 +161,8 @@
 			"RECORD": "תקליט",
 			"EMPLOYEE": "עובד",
 			"EXPENSE": "הוצאה",
-			"USER": "user"
+			"USER": "user",
+			"INVITATION": "invitation"
 		}
 	},
 	"POP_UPS": {
@@ -401,7 +407,8 @@
 		"MESSAGE": {
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
-			"INVITES_LOAD": "Could Not Load Invites"
+			"INVITES_LOAD": "Could Not Load Invites",
+			"INVITES_RESEND": "Invite has been resent to {{ email }}."
 		}
 	}
 }
