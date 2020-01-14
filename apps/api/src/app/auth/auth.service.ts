@@ -69,7 +69,7 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
-				this.emailService.sendEmail(user, url);
+				this.emailService.requestPassword(user, url);
 
 				return {
 					id: user.id,
@@ -103,16 +103,22 @@ export class AuthService {
 	}
 
 	async register(input: IUserRegistrationInput): Promise<User> {
-		const user = this.userService.create({
-			...input.user,
-			...(input.password
-				? {
-						hash: await this.getPasswordHash(input.password)
-				  }
-				: {})
-		});
+		try {
+			const user = this.userService.create({
+				...input.user,
+				...(input.password
+					? {
+							hash: await this.getPasswordHash(input.password)
+					  }
+					: {})
+			});
 
-		return user;
+			this.emailService.welcomeUser(input.user);
+
+			return user;
+		} catch (err) {
+			throw err;
+		}
 	}
 
 	async isAuthenticated(token: string): Promise<boolean> {
