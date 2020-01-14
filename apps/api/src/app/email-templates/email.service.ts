@@ -29,8 +29,7 @@ export class EmailService {
 
 		email
 			.send({
-				template:
-					'C:/Coding/gauzy/apps/api/src/app/email-templates/views',
+				template: '../apps/api/src/app/email-templates/views/password',
 				message: {
 					to: `${user.email}`
 				},
