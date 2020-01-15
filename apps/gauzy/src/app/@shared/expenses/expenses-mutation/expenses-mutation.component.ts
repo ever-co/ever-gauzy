@@ -38,6 +38,7 @@ export class ExpensesMutationComponent implements OnInit {
 	projects: { projectName: string; projectId: string }[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
 	calculatedValue = '0';
+	duplicate: boolean;
 	showNotes = false;
 	showTaxesInput = false;
 	showWarning = false;
