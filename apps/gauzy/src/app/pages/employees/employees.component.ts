@@ -364,6 +364,12 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
 	private _loadSmartTableSettings() {
 		const dateNow = new Date();
+		const month =
+			monthNames[dateNow.getMonth() - 1] ||
+			monthNames[monthNames.length - 1];
+		const year = monthNames[dateNow.getMonth() - 1]
+			? dateNow.getFullYear()
+			: dateNow.getFullYear() - 1;
 
 		this.settingsSmartTable = {
 			actions: false,
@@ -400,9 +406,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					renderComponent: EmployeeAverageBonusComponent
 				},
 				bonus: {
-					title: `${this.getTranslation('SM_TABLE.BONUS')} (${
-						monthNames[dateNow.getMonth() - 1]
-					} ${dateNow.getFullYear()})`,
+					title: `${this.getTranslation(
+						'SM_TABLE.BONUS'
+					)} (${month} ${year})`,
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
