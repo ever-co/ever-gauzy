@@ -190,6 +190,51 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		return this.showTable;
 	}
 
+	getFormData(formData) {
+		return {
+			amount: formData.amount,
+			categoryId: formData.category.categoryId,
+			categoryName: formData.category.categoryName,
+			vendorId: formData.vendor.vendorId,
+			vendorName: formData.vendor.vendorName,
+			typeOfExpense: formData.typeOfExpense,
+			clientId: formData.client.clientId,
+			clientName: formData.client.clientName,
+			projectId: formData.project.projectId,
+			projectName: formData.project.projectName,
+			valueDate: formData.valueDate,
+			notes: formData.notes,
+			currency: formData.currency,
+			purpose: formData.purpose,
+			taxType: formData.taxType,
+			taxLabel: formData.taxLabel,
+			rateValue: formData.rateValue,
+			receipt: formData.receipt
+		};
+	}
+
+	async addExpense(completedForm, formData) {
+		try {
+			await this.expenseService.create({
+				...completedForm,
+				employeeId: formData.employee.id,
+				orgId: this.store.selectedOrganization.id
+			});
+
+			this.toastrService.primary(
+				'Expense added for ' + this.employeeName,
+				'Success'
+			);
+
+			this._loadTableData();
+			this.store.selectedEmployee = formData.employee.id
+				? formData.employee
+				: null;
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
 	openAddExpenseDialog() {
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
@@ -200,42 +245,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				if (formData) {
-					try {
-						await this.expenseService.create({
-							employeeId: formData.employee.id,
-							orgId: this.store.selectedOrganization.id,
-							amount: formData.amount,
-							categoryId: formData.category.categoryId,
-							categoryName: formData.category.categoryName,
-							vendorId: formData.vendor.vendorId,
-							vendorName: formData.vendor.vendorName,
-							typeOfExpense: formData.typeOfExpense,
-							clientId: formData.client.clientId,
-							clientName: formData.client.clientName,
-							projectId: formData.project.projectId,
-							projectName: formData.project.projectName,
-							valueDate: formData.valueDate,
-							notes: formData.notes,
-							currency: formData.currency,
-							purpose: formData.purpose,
-							taxType: formData.taxType,
-							taxLabel: formData.taxLabel,
-							rateValue: formData.rateValue,
-							receipt: formData.receipt
-						});
-
-						this.toastrService.primary(
-							'Expense added for ' + this.employeeName,
-							'Success'
-						);
-
-						this._loadTableData();
-						this.store.selectedEmployee = formData.employee.id
-							? formData.employee
-							: null;
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					}
+					const completedForm = this.getFormData(formData);
+					this.addExpense(completedForm, formData);
 				}
 			});
 	}
@@ -251,23 +262,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			.subscribe(async (formData) => {
 				if (formData) {
 					try {
-						await this.expenseService.update(formData.id, {
-							amount: formData.amount,
-							categoryId: formData.category.categoryId,
-							categoryName: formData.category.categoryName,
-							vendorId: formData.vendor.vendorId,
-							vendorName: formData.vendor.vendorName,
-							typeOfExpense: formData.typeOfExpense,
-							clientId: formData.client.clientId,
-							clientName: formData.client.clientName,
-							projectId: formData.project.projectId,
-							projectName: formData.project.projectName,
-							valueDate: formData.valueDate,
-							notes: formData.notes,
-							currency: formData.currency,
-							purpose: formData.purpose,
-							receipt: formData.receipt
-						});
+						await this.expenseService.update(
+							formData.id,
+							this.getFormData(formData)
+						);
 						this.toastrService.primary(
 							'Expense edited for ' + this.employeeName,
 							'Success'
@@ -282,6 +280,27 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					} catch (error) {
 						this.errorHandler.handleError(error);
 					}
+				}
+			});
+	}
+
+	openDuplicateExpenseDialog() {
+		if (!this.store.selectedDate) {
+			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
+		}
+
+		this.dialogService
+			.open(ExpensesMutationComponent, {
+				context: {
+					expense: this.selectedExpense.data,
+					duplicate: true
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (formData) => {
+				if (formData) {
+					const completedForm = this.getFormData(formData);
+					this.addExpense(completedForm, formData);
 				}
 			});
 	}

@@ -1,15 +1,18 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h4>
+		<h4 *ngIf="expense; else headerAdd">
 			{{
-				(expense ? 'POP_UPS.EDIT_EXPENSE' : 'POP_UPS.ADD_EXPENSE')
+				(duplicate ? 'POP_UPS.DUPLICATE' : 'POP_UPS.EDIT_EXPENSE')
 					| translate
 			}}
 		</h4>
+		<ng-template #headerAdd>
+			<h4>{{ 'POP_UPS.ADD_EXPENSE' | translate }}</h4>
+		</ng-template>
 		<ga-employee-selector
 			#employeeSelector
 			fullWidth
-			[hidden]="expense"
+			[hidden]="expense && !duplicate"
 			[skipGlobalChange]="true"
 			class="employees"
 		></ga-employee-selector>
@@ -301,7 +304,7 @@
 			status="success"
 			nbButton
 		>
-			{{ (expense ? 'BUTTONS.EDIT' : 'BUTTONS.ADD') | translate }}
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

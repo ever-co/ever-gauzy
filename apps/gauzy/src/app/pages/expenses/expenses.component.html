@@ -29,6 +29,19 @@
 
 			<button
 				nbButton
+				status="primary"
+				class="mr-2"
+				[disabled]="
+					selectedExpense ? !selectedExpense.isSelected : true
+				"
+				(click)="openDuplicateExpenseDialog()"
+			>
+				<nb-icon class="mr-1" icon="copy-outline"></nb-icon
+				>{{ 'BUTTONS.DUPLICATE' | translate }}
+			</button>
+
+			<button
+				nbButton
 				status="danger"
 				class="mr-2"
 				[disabled]="
