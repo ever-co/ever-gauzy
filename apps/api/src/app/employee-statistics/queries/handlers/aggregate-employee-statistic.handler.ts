@@ -1,10 +1,5 @@
-import {
-	Invite,
-	AggregatedEmployeeStatistic,
-	StatisticSum
-} from '@gauzy/models';
+import { AggregatedEmployeeStatistic, StatisticSum } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { UpdateResult } from 'typeorm';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
 import { IncomeService } from '../../../income';
 import { ExpenseService } from '../../../expense';
