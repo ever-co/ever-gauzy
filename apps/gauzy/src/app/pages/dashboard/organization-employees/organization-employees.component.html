@@ -1,0 +1,108 @@
+<nb-card>
+	<nb-card-header>
+		<div class="row organization-employee-header">
+			<div class="col"></div>
+
+			<div class="col">
+				<ga-single-statistic
+					title="Total Income"
+					[value]="aggregatedEmployeeStatistics?.total?.income"
+					[prefix]="selectedOrganization?.currency"
+				></ga-single-statistic>
+			</div>
+
+			<div class="col">
+				<ga-single-statistic
+					title="Total Expenses"
+					[value]="aggregatedEmployeeStatistics?.total?.expense"
+					[prefix]="selectedOrganization?.currency"
+				></ga-single-statistic>
+			</div>
+
+			<div class="col">
+				<ga-single-statistic
+					title="Profit"
+					[value]="aggregatedEmployeeStatistics?.total?.profit"
+					[prefix]="selectedOrganization?.currency"
+				></ga-single-statistic>
+			</div>
+
+			<div class="col">
+				<ga-single-statistic
+					title="Total Bonus"
+					[value]="aggregatedEmployeeStatistics?.total?.bonus"
+					[prefix]="selectedOrganization?.currency"
+					type="highlight"
+				></ga-single-statistic>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="settings-body">
+		<div class="body-header">
+			<div>
+				<span class="setting-name">
+					{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}
+				</span>
+			</div>
+		</div>
+
+		<div class="sub-header block-content">
+			<div class="row block-info">
+				<div class="col"></div>
+				<div class="col">
+					{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate }}
+				</div>
+				<div class="col">
+					{{ 'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate }}
+				</div>
+				<div class="col">
+					{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
+				</div>
+				<div class="col">
+					{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
+				</div>
+			</div>
+		</div>
+
+		<div
+			class="setting-block"
+			*ngFor="
+				let employeeExpense of aggregatedEmployeeStatistics?.employees
+			"
+		>
+			<div class="block-content">
+				<div class="block-info">
+					<div class="row">
+						<div class="col">
+							<div class="image-container">
+								<img
+									[src]="
+										employeeExpense.employee?.user?.imageUrl
+									"
+								/>
+							</div>
+							{{ employeeExpense.employee?.user?.firstName }}
+							{{ employeeExpense.employee?.user?.lastName }}
+						</div>
+						<div class="col">
+							{{ selectedOrganization?.currency }}
+							{{ employeeExpense.income || 0 }}
+						</div>
+						<div class="col">
+							{{ selectedOrganization?.currency }}
+							{{ employeeExpense.expense || 0 }}
+						</div>
+						<div class="col">
+							{{ selectedOrganization?.currency }}
+							{{ employeeExpense.profit || 0 }}
+						</div>
+						<div class="col">
+							{{ selectedOrganization?.currency }}
+							{{ employeeExpense.bonus || 0 }}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

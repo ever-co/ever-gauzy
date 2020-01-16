@@ -1,0 +1,25 @@
+.organization-employee-header {
+	padding: 0px 45px;
+}
+
+.block-content {
+	.block-info {
+		width: 100%;
+	}
+	.col {
+		display: flex;
+		align-items: center;
+	}
+	.image-container {
+		width: 70px;
+		height: 63px;
+		display: inline-flex;
+		justify-content: center;
+		margin-right: 15px;
+	}
+
+	img {
+		height: 100%;
+		max-width: 70px;
+	}
+}

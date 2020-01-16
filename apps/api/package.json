@@ -41,6 +41,7 @@
 		"cli-ux": "^5.3.0",
 		"cls-hooked": "^4.2.2",
 		"csurf": "^1.10.0",
+		"currency.js": "^1.2.2",
 		"faker": "^4.1.0",
 		"fastify-swagger": "^2.5.0",
 		"helmet": "^3.20.1",
