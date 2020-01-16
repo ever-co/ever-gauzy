@@ -32,6 +32,7 @@
 					title="Total Bonus"
 					[value]="aggregatedEmployeeStatistics?.total?.bonus"
 					[prefix]="selectedOrganization?.currency"
+					type="highlight"
 				></ga-single-statistic>
 			</div>
 		</div>
@@ -88,10 +89,8 @@
 							{{ employeeExpense.income || 0 }}
 						</div>
 						<div class="col">
-							<span class="block-amount">
-								{{ selectedOrganization?.currency }}
-								{{ employeeExpense.expense || 0 }}
-							</span>
+							{{ selectedOrganization?.currency }}
+							{{ employeeExpense.expense || 0 }}
 						</div>
 						<div class="col">
 							{{ selectedOrganization?.currency }}

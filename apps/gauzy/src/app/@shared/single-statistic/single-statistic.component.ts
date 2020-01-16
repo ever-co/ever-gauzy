@@ -10,7 +10,7 @@ export class SingleStatisticComponent implements OnInit {
 	@Input() prefix: string;
 	@Input() value: string;
 	@Input() suffix: string;
-
+	@Input() type: string;
 	constructor() {}
 
 	ngOnInit() {}

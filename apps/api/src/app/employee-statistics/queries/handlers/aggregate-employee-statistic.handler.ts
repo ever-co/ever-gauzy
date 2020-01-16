@@ -64,25 +64,27 @@ export class AggregateOrganizationQueryHandler
 				}
 			},
 			relations: ['user']
-		})).items.map((employee) => {
-			const income = Math.floor(incomes[employee.id]) || 0;
-			const expense = Math.floor(expenses[employee.id]) || 0;
-			const profit = Math.floor(income - expense);
-			const bonus = Math.floor((profit * 75) / 100);
+		})).items
+			.map((employee) => {
+				const income = Math.floor(incomes[employee.id]) || 0;
+				const expense = Math.floor(expenses[employee.id]) || 0;
+				const profit = Math.floor(income - expense);
+				const bonus = Math.floor((profit * 75) / 100);
 
-			total.income += income;
-			total.expense += expense;
-			total.profit += profit;
-			total.bonus += bonus;
+				total.income += income;
+				total.expense += expense;
+				total.profit += profit;
+				total.bonus += bonus;
 
-			return {
-				employee,
-				income,
-				expense,
-				profit,
-				bonus
-			};
-		});
+				return {
+					employee,
+					income,
+					expense,
+					profit,
+					bonus
+				};
+			})
+			.sort((a, b) => b.bonus - a.bonus);
 
 		return {
 			total,
