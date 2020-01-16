@@ -10,10 +10,14 @@ import { GoogleStrategy } from './google.strategy';
 import { authenticate } from 'passport';
 import { FacebookStrategy } from './facebook.strategy';
 import { EmailService } from '../email-templates/email.service';
-import { EmailModule } from '../email-templates/email.module';
+import { EmailModule, EmailTemplate } from '../email-templates';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([User, Role]), CqrsModule, EmailModule],
+	imports: [
+		TypeOrmModule.forFeature([User, Role, EmailTemplate]),
+		CqrsModule,
+		EmailModule
+	],
 	controllers: [AuthController],
 	providers: [
 		AuthService,

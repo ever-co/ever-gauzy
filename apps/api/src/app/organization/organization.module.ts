@@ -7,11 +7,13 @@ import { AuthService } from '../auth';
 import { UserService, User } from '../user';
 import { EmailModule } from '../email-templates/email.module';
 import { EmailService } from '../email-templates/email.service';
+import { EmailTemplate } from '../email-templates';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Organization]),
 		TypeOrmModule.forFeature([User]),
+		TypeOrmModule.forFeature([EmailTemplate]),
 		EmailModule
 	],
 	controllers: [OrganizationController],

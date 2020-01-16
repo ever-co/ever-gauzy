@@ -10,11 +10,13 @@ import { AuthService } from '../auth';
 import { UserService } from '../user';
 import { EmailModule } from '../email-templates/email.module';
 import { EmailService } from '../email-templates/email.service';
+import { EmailTemplate } from '../email-templates';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Employee]),
 		TypeOrmModule.forFeature([User]),
+		TypeOrmModule.forFeature([EmailTemplate]),
 		CqrsModule,
 		EmailModule
 	],
