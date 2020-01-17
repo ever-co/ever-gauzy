@@ -4,7 +4,7 @@ import { EmailTemplate as IEmailTemplate } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 
-@Entity('email')
+@Entity('email-templates')
 export class EmailTemplate extends Base implements IEmailTemplate {
 	@ApiProperty({ type: String })
 	@IsString()

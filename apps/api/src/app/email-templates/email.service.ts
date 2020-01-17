@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
 import * as Email from 'email-templates';
 import { User } from '../user';
-import { InjectRepository } from '@nestjs/typeorm';
 import { EmailTemplate } from './email.entity';
-import { Repository } from 'typeorm';
 import { CrudService } from '../core';
 
 @Injectable()
@@ -76,10 +76,7 @@ export class EmailService extends CrudService<EmailTemplate> {
 			.catch(console.error);
 	}
 
-	createEmailRecord(message) {
-		console.log(message.originalMessage.subject);
-		console.log(message.originalMessage.html);
-
+	createEmailRecord(message): Promise<EmailTemplate> {
 		const email = new EmailTemplate();
 
 		email.name = message.subject;
