@@ -26,6 +26,7 @@ import { OrganizationTeams } from '../organization-teams';
 import { Proposal } from '../proposal';
 import { Country } from '../country';
 import { Invite } from '../invite';
+import { EmailTemplate } from '../email-templates';
 
 const entities = [
 	Invite,
@@ -46,7 +47,8 @@ const entities = [
 	EmployeeRecurringExpense,
 	OrganizationTeams,
 	Proposal,
-	Country
+	Country,
+	EmailTemplate
 ];
 
 @Module({

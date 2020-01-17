@@ -1,10 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as nodemailer from 'nodemailer';
 import * as Email from 'email-templates';
 import { User } from '../user';
+import { EmailTemplate } from './email.entity';
+import { CrudService } from '../core';
 
 @Injectable()
-export class EmailService {
+export class EmailService extends CrudService<EmailTemplate> {
+	constructor(
+		@InjectRepository(EmailTemplate)
+		private readonly emailRepository: Repository<EmailTemplate>
+	) {
+		super(emailRepository);
+	}
+
 	email = new Email({
 		message: {
 			from: 'Gauzy@Ever.co'
@@ -26,7 +37,7 @@ export class EmailService {
 		}
 	});
 
-	async welcomeUser(user: User) {
+	welcomeUser(user: User) {
 		this.email
 			.send({
 				template:
@@ -41,12 +52,12 @@ export class EmailService {
 				}
 			})
 			.then((res) => {
-				console.log(res);
+				this.createEmailRecord(res.originalMessage);
 			})
 			.catch(console.error);
 	}
 
-	async requestPassword(user: User, url: string) {
+	requestPassword(user: User, url: string) {
 		this.email
 			.send({
 				template: '../apps/api/src/app/email-templates/views/password',
@@ -60,9 +71,19 @@ export class EmailService {
 				}
 			})
 			.then((res) => {
-				console.log(res);
+				this.createEmailRecord(res.originalMessage);
 			})
 			.catch(console.error);
+	}
+
+	createEmailRecord(message): Promise<EmailTemplate> {
+		const email = new EmailTemplate();
+
+		email.name = message.subject;
+		email.content = message.html;
+		email.languageCode = 'en';
+
+		return this.emailRepository.save(email);
 	}
 
 	// tested e-mail send functionality

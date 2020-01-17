@@ -25,6 +25,7 @@ import { OrganizationTeamsModule } from './organization-teams';
 import { ProposalModule } from './proposal';
 import { CountryModule } from './country';
 import { InviteModule } from './invite';
+import { EmailModule } from './email-templates';
 
 @Module({
 	imports: [
@@ -94,6 +95,10 @@ import { InviteModule } from './invite';
 					{
 						path: '/invite',
 						module: InviteModule
+					},
+					{
+						path: '/email',
+						module: EmailModule
 					}
 				]
 			}
@@ -118,6 +123,7 @@ import { InviteModule } from './invite';
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamsModule,
 		ProposalModule,
+		EmailModule,
 		CountryModule,
 		InviteModule
 	],
