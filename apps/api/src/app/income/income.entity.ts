@@ -13,7 +13,8 @@ import {
 	IsNumber,
 	IsOptional,
 	IsDate,
-	IsEnum
+	IsEnum,
+	IsBoolean
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Income as IIncome, CurrenciesEnum } from '@gauzy/models';
@@ -79,4 +80,10 @@ export class Income extends Base implements IIncome {
 	@IsOptional()
 	@Column({ nullable: true })
 	notes?: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@IsOptional()
+	@Column({ nullable: true })
+	isBonus: boolean;
 }
