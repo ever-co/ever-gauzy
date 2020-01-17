@@ -13,6 +13,7 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 
 interface SelectedRowModel {
 	data: Income;
@@ -153,9 +154,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
-					type: 'number',
+					type: 'custom',
 					width: '15%',
-					filter: false
+					filter: false,
+					renderComponent: IncomeAmountComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
