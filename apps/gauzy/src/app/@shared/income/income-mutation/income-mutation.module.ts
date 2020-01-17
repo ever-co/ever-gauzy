@@ -7,7 +7,9 @@ import {
 	NbIconModule,
 	NbDatepickerModule,
 	NbInputModule,
-	NbSelectModule
+	NbSelectModule,
+	NbCheckboxModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { IncomeService } from '../../../@core/services/income.service';
 import { IncomeMutationComponent } from './income-mutation.component';
@@ -35,6 +37,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		NbInputModule,
 		NbSelectModule,
+		NbCheckboxModule,
+		NbTooltipModule,
 		EmployeeSelectorsModule,
 		TranslateModule.forChild({
 			loader: {

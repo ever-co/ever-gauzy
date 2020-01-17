@@ -207,7 +207,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					employeeId: result.employee.id,
 					orgId: this.store.selectedOrganization.id,
 					notes: result.notes,
-					currency: result.currency
+					currency: result.currency,
+					isBonus: result.isBonus
 				});
 
 				this.toastrService.primary(
@@ -247,7 +248,8 @@ export class IncomeComponent implements OnInit, OnDestroy {
 								clientId: result.client.clientId,
 								valueDate: result.valueDate,
 								notes: result.notes,
-								currency: result.currency
+								currency: result.currency,
+								isBonus: result.isBonus
 							}
 						);
 

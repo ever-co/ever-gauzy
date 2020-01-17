@@ -33,6 +33,7 @@ export class IncomeCreateHandler
 		income.valueDate = input.valueDate;
 		income.notes = input.notes;
 		income.currency = input.currency;
+		income.isBonus = input.isBonus;
 
 		if (!income.currency) {
 			income.currency = organization.currency;

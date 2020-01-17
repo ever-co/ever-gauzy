@@ -232,7 +232,8 @@
 		}
 	},
 	"INCOME_PAGE": {
-		"INCOME": "Income"
+		"INCOME": "Income",
+		"BONUS_HELP": "If set, company % fee will NOT be applied to the Bonus Income"
 	},
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Expenses"
