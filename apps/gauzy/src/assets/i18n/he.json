@@ -233,7 +233,8 @@
 	},
 	"INCOME_PAGE": {
 		"INCOME": "הכנסה",
-		"BONUS_HELP": "If set, company % fee will NOT be applied to the Bonus Income"
+		"BONUS_HELP": "If set, company % fee will NOT be applied to the Bonus Income",
+		"BONUS_TOOLTIP": "This is a direct bonus"
 	},
 	"EXPENSES_PAGE": {
 		"EXPENSES": "הוצאות"
