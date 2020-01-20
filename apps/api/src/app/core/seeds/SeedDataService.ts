@@ -28,6 +28,7 @@ import {
 import { createCountries } from '../../country/country.seed';
 import { OrganizationTeams } from '../../organization-teams';
 import { Country } from '../../country';
+import { createTeams } from '../../organization-teams/organization-teams.seed';
 
 const allEntities = [
 	User,
@@ -117,6 +118,12 @@ export class SeedDataService {
 				this.connection,
 				{ org: defaultOrganization, users: [...defaultUsers] },
 				{ orgs: randomOrganizations, users: [...randomUsers] }
+			);
+
+			await createTeams(
+				this.connection,
+				defaultOrganization,
+				employees.defaultEmployees
 			);
 
 			const usersOrganizations = await createUsersOrganizations(
