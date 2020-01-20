@@ -37,18 +37,20 @@ export class EmailService extends CrudService<EmailTemplate> {
 		}
 	});
 
+	languageCode: string;
+
 	welcomeUser(user: User) {
+		this.languageCode = 'he';
+
 		this.email
 			.send({
-				template:
-					'../apps/api/src/app/email-templates/views/welcome-user',
+				template: `../apps/api/src/app/email-templates/views/welcome-user/${this.languageCode}`,
 				message: {
 					to: `${user.email}`,
 					subject: 'Welcome to Gauzy'
 				},
 				locals: {
-					email: user.email,
-					locale: 'en'
+					email: user.email
 				}
 			})
 			.then((res) => {
@@ -58,16 +60,17 @@ export class EmailService extends CrudService<EmailTemplate> {
 	}
 
 	requestPassword(user: User, url: string) {
+		this.languageCode = 'bg';
+
 		this.email
 			.send({
-				template: '../apps/api/src/app/email-templates/views/password',
+				template: `../apps/api/src/app/email-templates/views/password/${this.languageCode}`,
 				message: {
 					to: `${user.email}`,
 					subject: 'Forgotten Password'
 				},
 				locals: {
-					generatedUrl: url,
-					locale: 'en'
+					generatedUrl: url
 				}
 			})
 			.then((res) => {
@@ -77,6 +80,8 @@ export class EmailService extends CrudService<EmailTemplate> {
 	}
 
 	createEmailRecord(message): Promise<EmailTemplate> {
+		console.log(message);
+
 		const email = new EmailTemplate();
 
 		email.name = message.subject;
