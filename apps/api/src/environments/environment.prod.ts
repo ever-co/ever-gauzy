@@ -120,6 +120,34 @@ export const environment: IEnvironment = {
 			firstName: 'Milena',
 			lastName: 'Dimova',
 			imageUrl: 'assets/images/avatars/milena.jpg'
+		},
+		{
+			email: 'rachit@ever.co',
+			password: '123456',
+			firstName: 'Rachit',
+			lastName: 'Magon',
+			imageUrl: 'assets/images/avatars/rachit.png'
+		}
+	],
+
+	defaultTeams: [
+		{
+			name: 'Employees',
+			defaultMembers: [
+				'admin@ever.co',
+				'alish@ever.co',
+				'blagovest@ever.co',
+				'elvis@ever.co',
+				'emil@ever.co',
+				'boyan@ever.co',
+				'hristo@ever.co',
+				'alex@ever.co',
+				'milena@ever.co'
+			]
+		},
+		{
+			name: 'Contractors',
+			defaultMembers: ['rachit@ever.co']
 		}
 	]
 };
