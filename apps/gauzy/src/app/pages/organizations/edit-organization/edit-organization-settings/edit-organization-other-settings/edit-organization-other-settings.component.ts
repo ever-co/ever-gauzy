@@ -4,7 +4,8 @@ import {
 	AlignmentOptions,
 	DefaultValueDateTypeEnum,
 	Organization,
-	WeekDaysEnum
+	WeekDaysEnum,
+	RegionsEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
@@ -34,17 +35,14 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 	);
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
-	listOfDateFormats = [
-		'M/D/YYYY',
-		'D/M/YYYY',
-		'DDDD/MMMM/YYYY',
-		'MMMM Do YYYY',
-		'dddd, MMMM Do YYYY',
-		'MMM D YYYY',
-		'YYYY-MM-DD',
-		'ddd, MMM D YYYY'
-	];
+	listOfDateFormats = ['L', 'LL', 'LLL', 'LLLL'];
+	numberFormats: ['12000.00', '12 000.00', '12 000,00', "12'000.00"];
+	numberFormat: string;
 	weekdays: string[] = Object.values(WeekDaysEnum);
+	regionCodes = Object.keys(RegionsEnum);
+	regionCode: string;
+	regions = Object.values(RegionsEnum);
+
 	constructor(
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
@@ -64,6 +62,7 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 	}
 
 	dateFormatPreview(format: string) {
+		moment.locale(this.regionCode);
 		return moment().format(format);
 	}
 

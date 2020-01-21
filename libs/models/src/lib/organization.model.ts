@@ -50,6 +50,13 @@ export enum OrganizationSelectInput {
 	isActive = 'isActive'
 }
 
+export enum RegionsEnum {
+	'EN' = 'English (United States)',
+	'BG' = 'Bulgarian (Bulgaria)',
+	'RU' = 'Rusian (Russia)',
+	'HE' = 'Hebrew (Israel)'
+}
+
 export enum CurrenciesEnum {
 	USD = 'USD',
 	BGN = 'BGN',
