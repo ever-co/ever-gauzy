@@ -1,38 +1,66 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EmployeeRecurringExpense, EmployeeRecurringExpenseFindInput, } from '@gauzy/models';
+import { Injectable } from '@angular/core';
+import {
+	EmployeeRecurringExpense,
+	EmployeeRecurringExpenseByMonthFindInput,
+	EmployeeRecurringExpenseDeleteInput
+} from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable({
-    providedIn: 'root'
+	providedIn: 'root'
 })
 export class EmployeeRecurringExpenseService {
+	constructor(private http: HttpClient) {}
 
-    constructor(private http: HttpClient) { }
+	create(createInput: EmployeeRecurringExpense): Promise<any> {
+		return this.http
+			.post<EmployeeRecurringExpense>(
+				'/api/employee-recurring-expense',
+				createInput
+			)
+			.pipe(first())
+			.toPromise();
+	}
 
-    create(createInput: EmployeeRecurringExpense): Promise<any> {
-        return this.http.post<EmployeeRecurringExpense>('/api/employee-recurring-expense', createInput).pipe(first()).toPromise();
-    }
+	getAll(
+		relations?: string[],
+		findInput?: EmployeeRecurringExpenseByMonthFindInput
+	): Promise<{
+		items: EmployeeRecurringExpense[];
+		total: number;
+	}> {
+		const data = JSON.stringify({ relations, findInput });
 
-    getAll(relations?: string[], findInput?: EmployeeRecurringExpenseFindInput): Promise<{
-        items: EmployeeRecurringExpense[],
-        total: number
-    }> {
-        const data = JSON.stringify({ relations, findInput });
+		return this.http
+			.get<{
+				items: EmployeeRecurringExpense[];
+				total: number;
+			}>('/api/employee-recurring-expense/month', {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
 
-        return this.http.get<{
-            items: EmployeeRecurringExpense[],
-            total: number
-        }>('/api/employee-recurring-expense', {
-            params: { data }
-        }).pipe(first()).toPromise();
-    }
+	delete(
+		id: string,
+		deleteInput: EmployeeRecurringExpenseDeleteInput
+	): Promise<any> {
+		const data = JSON.stringify({ deleteInput });
 
-    delete(id: string): Promise<any> {
-        return this.http.delete(`/api/employee-recurring-expense/${id}`).pipe(first()).toPromise();
-    }
+		return this.http
+			.delete(`/api/employee-recurring-expense/${id}`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
 
-    update(id: string, updateInput: EmployeeRecurringExpense): Promise<any> {
-        return this.http.put(`/api/employee-recurring-expense/${id}`, updateInput).pipe(first()).toPromise();
-    }
+	update(id: string, updateInput: EmployeeRecurringExpense): Promise<any> {
+		return this.http
+			.put(`/api/employee-recurring-expense/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
 }

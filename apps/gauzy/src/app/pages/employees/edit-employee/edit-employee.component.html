@@ -105,7 +105,7 @@
 					{{ 'POP_UPS.CATEGORY_NAME' | translate }}
 				</div>
 				<div class="col">
-					{{ 'POP_UPS.DATE' | translate }}
+					{{ 'Starts On' }}
 				</div>
 				<div class="col">
 					{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
@@ -125,8 +125,9 @@
 					<div class="row">
 						<div class="col">{{ setting.categoryName }}</div>
 						<div class="col">
-							{{ getMonthString(setting.month) }}
-							{{ setting.year }}
+							{{ setting.startDay }}
+							{{ getMonthString(setting.startMonth) }}
+							{{ setting.startYear }}
 						</div>
 						<div class="col">
 							<span class="block-amount"

@@ -69,8 +69,25 @@
 					type="submit"
 					nbButton
 					status="success"
+					*ngIf="!employeeRecurringExpense"
+					nbTooltip="{{
+						'EMPLOYEES_PAGE.RECURRING_EXPENSE_ADD' | translate
+					}}"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+				<button
+					(click)="submitForm()"
+					[disabled]="form.invalid"
+					type="submit"
+					nbButton
+					status="success"
+					*ngIf="employeeRecurringExpense"
+					nbTooltip="{{
+						'EMPLOYEES_PAGE.RECURRING_EXPENSE_EDIT' | translate
+					}}"
+				>
+					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 			</div>
 		</form>

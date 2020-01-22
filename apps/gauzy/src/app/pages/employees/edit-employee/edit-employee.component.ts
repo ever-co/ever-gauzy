@@ -4,7 +4,11 @@ import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
-import { Employee, EmployeeRecurringExpense } from '@gauzy/models';
+import {
+	Employee,
+	EmployeeRecurringExpense,
+	RecurringExpenseDeletionEnum
+} from '@gauzy/models';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeeRecurringExpenseMutationComponent } from '../../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.component';
@@ -12,6 +16,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 import { monthNames } from '../../../@core/utils/date';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
+import { RecurringExpenseDeleteConfirmationComponent } from '../../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
 
 @Component({
 	selector: 'ngx-edit-employee',
@@ -118,11 +123,10 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 					// TODO
 					categoryName: result.categoryName,
 					value: result.value,
-					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth() + 1,
-					currency: result.currency,
-					// TODO get form UI
-					isRecurring: true
+					startDay: 1,
+					startYear: this.selectedDate.getFullYear(),
+					startMonth: this.selectedDate.getMonth() + 1,
+					currency: result.currency
 				});
 
 				this.toastrService.primary(
@@ -164,7 +168,12 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 		if (result) {
 			try {
 				const id = this.selectedEmployeeRecurringExpense[index].id;
-				await this.employeeRecurringExpenseService.update(id, result);
+				await this.employeeRecurringExpenseService.update(id, {
+					...result,
+					startDay: 1,
+					startMonth: this.selectedDate.getMonth() + 1,
+					startYear: this.selectedDate.getFullYear()
+				});
 				this.selectedRowIndexToShow = null;
 				this._loadEmployeeRecurringExpense();
 
@@ -185,17 +194,36 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 	}
 
 	async deleteEmployeeRecurringExpense(index: number) {
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: { recordType: 'Employee recurring expense' }
+		const selectedExpense = this.selectedEmployeeRecurringExpense[index];
+		const result: RecurringExpenseDeletionEnum = await this.dialogService
+			.open(RecurringExpenseDeleteConfirmationComponent, {
+				context: {
+					recordType: 'Employee recurring expense',
+					start: `${this.getMonthString(
+						selectedExpense.startMonth
+					)}, ${selectedExpense.startYear}`,
+					current: `${this.getMonthString(
+						this.selectedDate.getMonth() + 1
+					)}, ${this.selectedDate.getFullYear()}`,
+					end: selectedExpense.endMonth
+						? `${this.getMonthString(selectedExpense.endMonth)}, ${
+								selectedExpense.endYear
+						  }`
+						: 'end'
+				}
 			})
 			.onClose.pipe(first())
 			.toPromise();
 
 		if (result) {
 			try {
-				const id = this.selectedEmployeeRecurringExpense[index].id;
-				await this.employeeRecurringExpenseService.delete(id);
+				const id = selectedExpense.id;
+				await this.employeeRecurringExpenseService.delete(id, {
+					deletionType: result,
+					day: 1,
+					month: this.selectedDate.getMonth() + 1,
+					year: this.selectedDate.getFullYear()
+				});
 				this.selectedRowIndexToShow = null;
 
 				this.toastrService.primary(
