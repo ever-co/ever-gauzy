@@ -69,7 +69,13 @@
 		"INVITED_BY": "Invited By",
 		"EXPIRE_DATE": "Expires",
 		"CLIENTS": "Клиенти",
-		"DEPARTMENTS": "Отдели"
+		"DEPARTMENTS": "Отдели",
+		"REGION": {
+			"BG": "Български (България)",
+			"EN": "English (United States)",
+			"RU": "Русский (Россия)",
+			"HE": "עברית ישראל"
+		}
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
@@ -148,7 +154,9 @@
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
 			"ADD_COLOR": "Add Color",
 			"ALIGN_LOGO_TO": "Align Logo To",
-			"DEPARTMENTS": "Отдели"
+			"DEPARTMENTS": "Отдели",
+			"NUMBER_FORMAT": "Select Number Format",
+			"REGIONS": "Select Region"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
