@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { NgModel } from '@angular/forms';
 import { RecurringExpenseDeletionEnum } from '@gauzy/models';
 
 @Component({

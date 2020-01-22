@@ -94,7 +94,7 @@ export class EmployeeRecurringExpenseController extends CrudController<
 	async findAllEmployees(
 		@Query('data') data: string
 	): Promise<IPagination<EmployeeRecurringExpense>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { findInput } = JSON.parse(data);
 
 		return this.queryBus.execute(
 			new EmployeeRecurringExpenseByMonthQuery(findInput)
