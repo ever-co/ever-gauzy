@@ -189,7 +189,11 @@
 		"AMOUNT": "כמות",
 		"NOTES": "הערות",
 		"EDIT": "ערוך",
-		"ADD": "הוסף"
+		"ADD": "הוסף",
+		"DELETE_RECURRING_EXPENSE": "Delete Recurring Expense",
+		"DELETE_ONLY_THIS": "Delete only this",
+		"DELETE_THIS_FUTURE": "Delete this and future",
+		"DELETE_ALL_ENTRIES": "Delete all entries"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
@@ -246,7 +250,9 @@
 		"END_WORK": "סיום עבודה",
 		"WORK_ENDED": "העבודה הסתיימה",
 		"DELETED": "Deleted",
-		"RECURRING_EXPENSE": "הוסף הוצאה חוזרת של עובדים",
+		"RECURRING_EXPENSE": "Employee Recurring Expense",
+		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
+		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",
 		"BACK_TO_WORK": "לחזור לעבודה",
 		"EDIT_EMPLOYEE": {
 			"HEADER": "Manage Employee",

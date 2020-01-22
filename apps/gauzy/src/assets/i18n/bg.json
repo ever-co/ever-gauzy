@@ -189,7 +189,11 @@
 		"AMOUNT": "Сума",
 		"NOTES": "Бележки",
 		"EDIT": "Редактиране",
-		"ADD": "Добави"
+		"ADD": "Добави",
+		"DELETE_RECURRING_EXPENSE": "Delete Recurring Expense",
+		"DELETE_ONLY_THIS": "Delete only this",
+		"DELETE_THIS_FUTURE": "Delete this and future",
+		"DELETE_ALL_ENTRIES": "Delete all entries"
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
@@ -246,7 +250,9 @@
 		"END_WORK": "Край на работа",
 		"WORK_ENDED": "Завършена работа",
 		"DELETED": "Deleted",
-		"RECURRING_EXPENSE": "Добавяне на периодични разходи на служител",
+		"RECURRING_EXPENSE": "Employee Recurring Expense",
+		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
+		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",
 		"BACK_TO_WORK": "Връщане на работа",
 		"EDIT_EMPLOYEE": {
 			"HEADER": "Manage Employee",
