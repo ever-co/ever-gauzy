@@ -4,7 +4,9 @@ import {
 	AlignmentOptions,
 	DefaultValueDateTypeEnum,
 	Organization,
-	WeekDaysEnum
+	WeekDaysEnum,
+	RegionsEnum,
+	CurrenciesEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
@@ -34,17 +36,15 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 	);
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
-	listOfDateFormats = [
-		'M/D/YYYY',
-		'D/M/YYYY',
-		'DDDD/MMMM/YYYY',
-		'MMMM Do YYYY',
-		'dddd, MMMM Do YYYY',
-		'MMM D YYYY',
-		'YYYY-MM-DD',
-		'ddd, MMM D YYYY'
-	];
+	listOfDateFormats = ['L', 'L hh:mm', 'LL', 'LLL', 'LLLL'];
+	numberFormats = ['USD', 'BGN', 'ILS'];
+	numberFormat: string;
 	weekdays: string[] = Object.values(WeekDaysEnum);
+	currencies = Object.values(CurrenciesEnum);
+	regionCodes = Object.keys(RegionsEnum);
+	regionCode: string;
+	regions = Object.values(RegionsEnum);
+
 	constructor(
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
@@ -64,7 +64,35 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 	}
 
 	dateFormatPreview(format: string) {
+		this.form.valueChanges
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((val) => {
+				this.regionCode = val.regionCode;
+			});
+
+		moment.locale(this.regionCode);
 		return moment().format(format);
+	}
+
+	numberFormatPreview(format: string) {
+		const number = 12345.67;
+		let code: string;
+		switch (format) {
+			case 'BGN':
+				code = 'bg';
+				break;
+			case 'USD':
+				code = 'en';
+				break;
+			case 'ILS':
+				code = 'he';
+				break;
+		}
+		return number.toLocaleString(`${code}`, {
+			style: 'currency',
+			currency: `${format}`,
+			currencyDisplay: 'symbol'
+		});
 	}
 
 	ngOnInit(): void {
@@ -106,11 +134,13 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 				this.organization.defaultValueDateType,
 				Validators.required
 			],
+			regionCode: [this.organization.regionCode],
 			defaultAlignmentType: [this.organization.defaultAlignmentType],
 			brandColor: [this.organization.brandColor],
 			dateFormat: [this.organization.dateFormat],
 			timeZone: [this.organization.timeZone],
-			startWeekOn: [this.organization.startWeekOn]
+			startWeekOn: [this.organization.startWeekOn],
+			numberFormat: [this.organization.numberFormat]
 		});
 	}
 }

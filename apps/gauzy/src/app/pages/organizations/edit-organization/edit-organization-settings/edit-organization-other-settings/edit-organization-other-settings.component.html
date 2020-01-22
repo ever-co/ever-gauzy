@@ -14,7 +14,8 @@
 							<ng-select
 								[(items)]="listOfZones"
 								placeholder="{{
-									'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate
+									'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE'
+										| translate
 								}}"
 								[searchable]="true"
 								formControlName="timeZone"
@@ -84,6 +85,49 @@
 					</div>
 					<div class="col-6">
 						<div class="form-group">
+							<label class="label">Regions</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.REGIONS' | translate
+								}}"
+								formControlName="regionCode"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let code of regionCodes"
+									[value]="code"
+								>
+									{{ 'SM_TABLE.REGION.' + code | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">Number Formats</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.NUMBER_FORMAT'
+										| translate
+								}}"
+								formControlName="numberFormat"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let numFormat of numberFormats"
+									[value]="numFormat"
+								>
+									{{ numberFormatPreview(numFormat) }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
 							<label class="label">
 								{{ 'FORM.LABELS.DATE_FORMAT' | translate }}
 							</label>
@@ -91,7 +135,10 @@
 								class="d-block"
 								size="medium"
 								formControlName="dateFormat"
-								placeholder="{{ 'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate }}"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CHOOSE_FORMAT'
+										| translate
+								}}"
 								fullWidth
 							>
 								<nb-option
@@ -125,7 +172,9 @@
 								id="brandColorInput"
 								nbInput
 								formControlName="brandColor"
-								placeholder="{{ 'FORM.PLACEHOLDERS.ADD_COLOR' | translate }}"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_COLOR' | translate
+								}}"
 								[colorPicker]="form.get('brandColor').value"
 								[style.background]="
 									form.get('brandColor').value
@@ -146,7 +195,10 @@
 								class="d-block"
 								size="medium"
 								formControlName="defaultAlignmentType"
-								placeholder="{{ 'FORM.PLACEHOLDERS.ALIGN_LOGO_TO' | translate }}"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ALIGN_LOGO_TO'
+										| translate
+								}}"
 								fullWidth
 							>
 								<nb-option

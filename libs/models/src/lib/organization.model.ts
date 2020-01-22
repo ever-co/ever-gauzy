@@ -21,6 +21,8 @@ export interface Organization extends IBaseEntityModel {
 	address?: string;
 	address2?: string;
 	postcode?: string;
+	regionCode?: string;
+	numberFormat?: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -48,6 +50,13 @@ export enum OrganizationSelectInput {
 	createdAt = 'createdAt',
 	updatedAt = 'updatedAt',
 	isActive = 'isActive'
+}
+
+export enum RegionsEnum {
+	'EN' = 'English (United States)',
+	'BG' = 'Bulgarian (Bulgaria)',
+	'HE' = 'Hebrew (Israel)',
+	'RU' = 'Rusian (Russia)'
 }
 
 export enum CurrenciesEnum {

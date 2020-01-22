@@ -124,4 +124,16 @@ export class Organization extends Base implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	postcode?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	regionCode?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	numberFormat?: string;
 }
