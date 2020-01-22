@@ -86,24 +86,44 @@
 					<div class="col-6">
 						<div class="form-group">
 							<label class="label">Regions</label>
-							<ng-select
-								[(items)]="regionCodes"
-								placeholder="Select Region"
-								[searchable]="true"
+							<nb-select
+								class="d-block"
+								size="medium"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.REGIONS' | translate
+								}}"
 								formControlName="regionCode"
+								fullWidth
 							>
-							</ng-select>
+								<nb-option
+									*ngFor="let code of regionCodes"
+									[value]="code"
+								>
+									{{ 'SM_TABLE.REGION.' + code | translate }}
+								</nb-option>
+							</nb-select>
 						</div>
 					</div>
 					<div class="col-6">
 						<div class="form-group">
-							<label class="label">Number Format</label>
-							<ng-select
-								[(items)]="numberFormats"
-								placeholder="Select Number Format"
+							<label class="label">Number Formats</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.NUMBER_FORMAT'
+										| translate
+								}}"
 								formControlName="numberFormat"
+								fullWidth
 							>
-							</ng-select>
+								<nb-option
+									*ngFor="let numFormat of numberFormats"
+									[value]="numFormat"
+								>
+									{{ numberFormatPreview(numFormat) }}
+								</nb-option>
+							</nb-select>
 						</div>
 					</div>
 					<div class="col-6">
