@@ -35,7 +35,7 @@ export class EmployeeRecurringExpenseController extends CrudController<
 
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
+		status: HttpStatus.OK,
 		description: 'The record has been successfully deleted'
 	})
 	@ApiResponse({

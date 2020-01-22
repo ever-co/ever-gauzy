@@ -38,10 +38,10 @@ export class EmployeeRecurringExpenseDeleteHandler
 				});
 				break;
 			case RecurringExpenseDeletionEnum.FUTURE:
-				await this.updateEndDateToLastMonth(id, deleteInput);
+				result = await this.updateEndDateToLastMonth(id, deleteInput);
 				break;
 			case RecurringExpenseDeletionEnum.CURRENT:
-				await this.deleteOneMonthOnly(id, deleteInput);
+				result = await this.deleteOneMonthOnly(id, deleteInput);
 				break;
 			default:
 				throw new BadRequestException(
@@ -113,6 +113,7 @@ export class EmployeeRecurringExpenseDeleteHandler
 		const endMonth = deleteInput.month > 1 ? deleteInput.month - 1 : 12; //Because input.startMonth needs to be deleted
 		const endYear =
 			deleteInput.month > 1 ? deleteInput.year : deleteInput.year - 1;
+
 		return await this.employeeRecurringExpenseService.update(id, {
 			endDay: 1,
 			endMonth,
