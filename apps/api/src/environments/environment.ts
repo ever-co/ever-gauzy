@@ -140,6 +140,13 @@ export const environment: IEnvironment = {
 			firstName: 'Atanas',
 			lastName: 'Yonkov',
 			imageUrl: 'assets/images/avatars/atanas.jpeg'
+		},
+		{
+			email: 'dimana@ever.co',
+			password: '123456',
+			firstName: 'Dimana',
+			lastName: 'Tsvetkova',
+			imageUrl: 'assets/images/avatars/dimana.jpeg'
 		}
 	],
 
@@ -160,7 +167,11 @@ export const environment: IEnvironment = {
 		},
 		{
 			name: 'Contractors',
-			defaultMembers: ['rachit@ever.co', 'atanas@ever.co']
+			defaultMembers: [
+				'rachit@ever.co',
+				'atanas@ever.co',
+				'dimana@ever.co'
+			]
 		}
 	]
 };
