@@ -24,19 +24,25 @@ export class EmployeeRecurringExpenseEditHandler
 			id
 		);
 
-		if (
-			originalExpense.startDay === input.startDay &&
-			originalExpense.startMonth === input.startMonth &&
-			originalExpense.startYear === input.startYear
-		) {
+		const inputDate = new Date(
+			input.startYear,
+			input.startMonth - 1,
+			input.startDay
+		);
+
+		if (originalExpense.startDate.getTime() === inputDate.getTime()) {
 			return await this.employeeRecurringExpenseService.update(id, input);
 		}
 
+		const endMonth = input.startMonth > 1 ? input.startMonth - 1 : 12;
+		const endYear =
+			input.startMonth > 1 ? input.startYear : input.startYear - 1;
+
 		await this.employeeRecurringExpenseService.update(id, {
 			endDay: input.startDay,
-			endMonth: input.startMonth > 1 ? input.startMonth - 1 : 12, //Because from input.startMonth the new value will be considered
-			endYear:
-				input.startMonth > 1 ? input.startYear : input.startYear - 1
+			endMonth, //Because from input.startMonth the new value will be considered
+			endYear,
+			endDate: new Date(endYear, endMonth - 1, input.startDay)
 		});
 
 		const newExpense = await this.employeeRecurringExpenseService.create({
@@ -44,9 +50,15 @@ export class EmployeeRecurringExpenseEditHandler
 			startDay: input.startDay,
 			startMonth: input.startMonth,
 			startYear: input.startYear,
+			startDate: new Date(
+				input.startYear,
+				input.startMonth - 1,
+				input.startDay
+			),
 			endDay: originalExpense.endDay,
 			endMonth: originalExpense.endMonth,
 			endYear: originalExpense.endYear,
+			endDate: originalExpense.endDate,
 			value: input.value,
 			categoryName: originalExpense.categoryName,
 			currency: originalExpense.currency

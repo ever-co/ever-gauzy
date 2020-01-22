@@ -5,9 +5,11 @@ export interface EmployeeRecurringExpense extends IBaseEntityModel {
 	startDay: number;
 	startMonth: number;
 	startYear: number;
+	startDate: Date;
 	endDay?: number;
 	endMonth?: number;
 	endYear?: number;
+	endDate?: Date;
 	categoryName: string;
 	value: number;
 	currency: string;
@@ -35,7 +37,6 @@ export interface EmployeeRecurringExpenseByMonthFindInput
 
 export interface EmployeeRecurringExpenseDeleteInput {
 	deletionType: RecurringExpenseDeletionEnum;
-	day: number;
 	month: number;
 	year: number;
 }

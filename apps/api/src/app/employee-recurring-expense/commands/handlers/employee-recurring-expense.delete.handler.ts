@@ -58,8 +58,11 @@ export class EmployeeRecurringExpenseDeleteHandler
 	 * 2. Check if there is only one month in the original month (start date = end date = the one which needs to be deleted)
 	 * 2.a If true then delete the entry completely.
 	 * 2.b If false proceed to 3
-	 * 3. Update the end month of the original expense to one less than the month to be deleted
-	 * 4. Create a new record with start month as one more than the month to be deleted
+	 * 3. Check if this is the first month (start date = the one which needs to be deleted)
+	 * 3.a If true then delete entry but create for next months
+	 * 3.b If false then proceed to 4
+	 * 4. Update the end month of the original expense to one less than the month to be deleted
+	 * 5. Create a new record with start month as one more than the month to be deleted
 	 */
 	private async deleteOneMonthOnly(
 		id: string,
@@ -68,24 +71,29 @@ export class EmployeeRecurringExpenseDeleteHandler
 		const originalExpense = await this.employeeRecurringExpenseService.findOne(
 			id
 		);
-		const originalStartDate = new Date(
-			originalExpense.startYear,
-			originalExpense.startMonth
-		);
-		const originalEndDate = new Date(
-			originalExpense.endYear,
-			originalExpense.endMonth
-		);
 
-		const deleteDate = new Date(deleteInput.year, deleteInput.month);
+		const deleteDate = new Date(deleteInput.year, deleteInput.month - 1);
 
 		if (
-			originalStartDate.getTime() === originalEndDate.getTime() &&
-			originalEndDate.getTime() === deleteDate.getTime()
+			deleteDate.getTime() === originalExpense.startDate.getTime() &&
+			originalExpense.endDate &&
+			originalExpense.endDate.getTime() === deleteDate.getTime()
 		) {
+			//Only delete
+			return await this.employeeRecurringExpenseService.delete({
+				id
+			});
+		} else if (
+			deleteDate.getTime() === originalExpense.startDate.getTime()
+		) {
+			//Delete and create for next month onwards
 			await this.employeeRecurringExpenseService.delete({
 				id
 			});
+			return await this.createExpenseFromNextMonth(
+				deleteInput,
+				originalExpense
+			);
 		} else {
 			await this.updateEndDateToLastMonth(id, deleteInput);
 			return await this.createExpenseFromNextMonth(
@@ -102,11 +110,14 @@ export class EmployeeRecurringExpenseDeleteHandler
 		id: string,
 		deleteInput: EmployeeRecurringExpenseDeleteInput
 	): Promise<EmployeeRecurringExpense | UpdateResult | DeleteResult> {
+		const endMonth = deleteInput.month > 1 ? deleteInput.month - 1 : 12; //Because input.startMonth needs to be deleted
+		const endYear =
+			deleteInput.month > 1 ? deleteInput.year : deleteInput.year - 1;
 		return await this.employeeRecurringExpenseService.update(id, {
 			endDay: 1,
-			endMonth: deleteInput.month > 1 ? deleteInput.month - 1 : 12, //Because input.startMonth needs to be deleted
-			endYear:
-				deleteInput.month > 1 ? deleteInput.year : deleteInput.year - 1
+			endMonth,
+			endYear,
+			endDate: new Date(endYear, endMonth - 1, 1)
 		});
 	}
 
@@ -120,37 +131,27 @@ export class EmployeeRecurringExpenseDeleteHandler
 		deleteInput: EmployeeRecurringExpenseDeleteInput,
 		originalExpense: EmployeeRecurringExpense
 	): Promise<EmployeeRecurringExpense> {
-		console.log('Create next month waa');
-
-		const nextStartDate = new Date(deleteInput.year, deleteInput.month);
-
-		// This is because we store months from 1, but Date() takes months from 0
-		const originalEndDate = new Date(
-			originalExpense.endYear,
-			originalExpense.endMonth - 1
-		);
-
-		console.log('next start daate', nextStartDate);
-
-		console.log('orig end date', originalEndDate);
+		const nextStartDate = new Date(deleteInput.year, deleteInput.month, 1);
 
 		// If there is still more time left after deleting one month from in between
 		if (
-			!originalExpense.endYear ||
-			nextStartDate.getDate() <= originalEndDate.getDate()
+			!originalExpense.endDate ||
+			nextStartDate.getTime() <= originalExpense.endDate.getTime()
 		) {
 			//Create new expense for the remaining time
 			return await this.employeeRecurringExpenseService.create({
 				employeeId: originalExpense.employeeId,
-				startDay: deleteInput.day,
-				startMonth: nextStartDate.getMonth() + 1,
-				startYear: nextStartDate.getFullYear(),
+				startDay: 1,
+				startMonth: deleteInput.month + 1,
+				startYear: deleteInput.year,
+				startDate: nextStartDate,
 				endDay: originalExpense.endDay,
 				endMonth: originalExpense.endMonth,
 				endYear: originalExpense.endYear,
-				value: originalExpense.value,
+				endDate: originalExpense.endDate,
 				categoryName: originalExpense.categoryName,
-				currency: originalExpense.currency
+				currency: originalExpense.currency,
+				value: originalExpense.value
 			});
 		}
 		return;

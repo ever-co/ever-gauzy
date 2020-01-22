@@ -1,22 +1,21 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
-import { EmployeesService } from '../../../@core/services/employees.service';
-import { Store } from '../../../@core/services/store.service';
 import {
 	Employee,
 	EmployeeRecurringExpense,
 	RecurringExpenseDeletionEnum
 } from '@gauzy/models';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { EmployeeRecurringExpenseMutationComponent } from '../../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.component';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { monthNames } from '../../../@core/utils/date';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
 import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
+import { EmployeesService } from '../../../@core/services/employees.service';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { Store } from '../../../@core/services/store.service';
+import { monthNames } from '../../../@core/utils/date';
+import { EmployeeRecurringExpenseMutationComponent } from '../../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.component';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
+import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
 	selector: 'ngx-edit-employee',
@@ -126,6 +125,11 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 					startDay: 1,
 					startYear: this.selectedDate.getFullYear(),
 					startMonth: this.selectedDate.getMonth() + 1,
+					startDate: new Date(
+						this.selectedDate.getFullYear(),
+						this.selectedDate.getMonth(),
+						1
+					),
 					currency: result.currency
 				});
 
@@ -220,7 +224,6 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 				const id = selectedExpense.id;
 				await this.employeeRecurringExpenseService.delete(id, {
 					deletionType: result,
-					day: 1,
 					month: this.selectedDate.getMonth() + 1,
 					year: this.selectedDate.getFullYear()
 				});

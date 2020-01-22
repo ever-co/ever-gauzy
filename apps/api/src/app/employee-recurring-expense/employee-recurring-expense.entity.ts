@@ -10,7 +10,9 @@ import {
 	IsNumber,
 	IsString,
 	Max,
-	Min
+	Min,
+	IsDate,
+	IsOptional
 } from 'class-validator';
 import { Column, Entity, Index } from 'typeorm';
 import { Base } from '../core/entities/base';
@@ -48,6 +50,11 @@ export class EmployeeRecurringExpense extends Base
 	@Column()
 	startYear: number;
 
+	@ApiProperty({ type: Date })
+	@IsDate()
+	@Column()
+	startDate: Date;
+
 	@ApiProperty({ type: Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@Optional()
@@ -70,6 +77,12 @@ export class EmployeeRecurringExpense extends Base
 	@Min(0)
 	@Column({ nullable: true })
 	endYear: number;
+
+	@ApiProperty({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	endDate?: Date;
 
 	@ApiProperty({ type: String })
 	@IsString()
