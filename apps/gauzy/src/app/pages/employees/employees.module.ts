@@ -39,6 +39,7 @@ import { EmployeeAverageIncomeComponent } from './table-components/employee-aver
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
+import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -90,7 +91,8 @@ const COMPONENTS = [
 		}),
 		NbSpinnerModule,
 		InviteMutationModule,
-		InviteTableModule
+		InviteTableModule,
+		RecurringExpenseDeleteConfirmationModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
