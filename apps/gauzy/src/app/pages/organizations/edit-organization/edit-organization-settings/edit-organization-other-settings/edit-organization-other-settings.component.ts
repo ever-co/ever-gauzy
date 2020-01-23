@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	AlignmentOptions,
@@ -21,7 +21,8 @@ import { OrganizationsService } from '../../../../../@core/services/organization
 	templateUrl: './edit-organization-other-settings.component.html',
 	styleUrls: ['./edit-organization-other-settings.component.scss']
 })
-export class EditOrganizationOtherSettingsComponent implements OnInit {
+export class EditOrganizationOtherSettingsComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: Organization;
@@ -142,5 +143,10 @@ export class EditOrganizationOtherSettingsComponent implements OnInit {
 			startWeekOn: [this.organization.startWeekOn],
 			numberFormat: [this.organization.numberFormat]
 		});
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }
