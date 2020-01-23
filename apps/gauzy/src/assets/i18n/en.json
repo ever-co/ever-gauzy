@@ -347,6 +347,18 @@
 			}
 		}
 	},
+	"TIME_OFF_PAGE": {
+		"HEADER": "Time Off",
+		"REQUEST_DAYS_OFF": "Request Days Off",
+		"ADD_HOLIDAYS": "Add Holidays",
+		"DISPLAY_HOLIDAYS": "Display Holidays",
+		"STATUSES": {
+			"REQUESTED": "Requested",
+			"APPROVED": "Approved",
+			"DENIED": "Denied",
+			"ALL": "All"
+		}
+	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
