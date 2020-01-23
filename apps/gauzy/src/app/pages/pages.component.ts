@@ -26,7 +26,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 	isAdmin: boolean;
 	_selectedOrganization: Organization;
 
-	//TODO: Find a way to translate titles on init.
 	MENU_ITEMS: NbMenuItem[] = [
 		{
 			title: 'Dashboard',
@@ -64,6 +63,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 			data: {
 				translated: false,
 				translationKey: 'MENU.PROPOSALS'
+			}
+		},
+		{
+			title: 'Time Off',
+			icon: 'calendar-outline',
+			link: '/pages/time-off',
+			data: {
+				translated: false,
+				translationKey: 'MENU.TIME_OFF'
 			}
 		},
 		{

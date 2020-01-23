@@ -73,6 +73,20 @@ const routes: Routes = [
 				}
 			},
 			{
+				path: 'time-off',
+				loadChildren: () =>
+					import('./time-off/time-off.module').then(
+						(m) => m.TimeOffModule
+					),
+				canActivate: [RoleGuard],
+				data: {
+					expectedRole: [
+						// RolesEnum.EMPLOYEE,
+						RolesEnum.ADMIN
+					]
+				}
+			},
+			{
 				path: 'help',
 				loadChildren: () =>
 					import('./help/help.module').then((m) => m.HelpModule),
