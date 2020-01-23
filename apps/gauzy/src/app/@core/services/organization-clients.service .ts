@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import {
 	OrganizationClientsCreateInput,
 	OrganizationClients,
-	OrganizationClientsFindInput
+	OrganizationClientsFindInput,
+	EditEntityByMemberInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -18,6 +19,15 @@ export class OrganizationClientsService {
 	): Promise<OrganizationClients> {
 		return this.http
 			.post<OrganizationClients>('/api/organization-clients', createInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllByEmployee(id: string): Promise<OrganizationClients[]> {
+		return this.http
+			.get<OrganizationClients[]>(
+				`/api/organization-clients/employee/${id}`
+			)
 			.pipe(first())
 			.toPromise();
 	}
@@ -50,9 +60,9 @@ export class OrganizationClientsService {
 			.toPromise();
 	}
 
-	update(id: string, updateInput: any): Promise<any> {
+	updateByEmployee(updateInput: EditEntityByMemberInput): Promise<any> {
 		return this.http
-			.put(`/api/organization-clients/${id}`, updateInput)
+			.put(`/api/organization-clients/employee`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

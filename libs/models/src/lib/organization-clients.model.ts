@@ -1,8 +1,9 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Employee } from './employee.model';
+import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 
-export interface OrganizationClients extends IBaseEntityModel {
+export interface OrganizationClients extends IBaseEntityWithMembers {
 	name: string;
 	organizationId: string;
 	primaryEmail: string;

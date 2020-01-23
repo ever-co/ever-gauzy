@@ -12,7 +12,8 @@ import {
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbActionsModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -40,6 +41,10 @@ import { EmployeeBonusComponent } from './table-components/employee-bonus/employ
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
+import { EditEmployeeDepartmentComponent } from './edit-employee/edit-employee-profile/edit-employee-department/edit-employee-department.component';
+import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-employee-membership-form/edit-employee-membership-form.module';
+import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
+import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -57,7 +62,10 @@ const COMPONENTS = [
 	EditEmployeeProfileComponent,
 	EditEmployeeMainComponent,
 	EditEmployeeRatesComponent,
-	ManageEmployeeInviteComponent
+	ManageEmployeeInviteComponent,
+	EditEmployeeDepartmentComponent,
+	EditEmployeeProjectsComponent,
+	EditEmployeeClientComponent
 ];
 
 @NgModule({
@@ -92,7 +100,9 @@ const COMPONENTS = [
 		NbSpinnerModule,
 		InviteMutationModule,
 		InviteTableModule,
-		RecurringExpenseDeleteConfirmationModule
+		RecurringExpenseDeleteConfirmationModule,
+		NbActionsModule,
+		EditEmployeeMembershipFormModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

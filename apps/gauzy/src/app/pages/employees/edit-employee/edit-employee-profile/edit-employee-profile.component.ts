@@ -81,6 +81,24 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				icon: 'pricetags-outline',
 				responsive: true,
 				route: `/pages/employees/edit/${this.routeParams.id}/profile/rates`
+			},
+			{
+				title: 'Departments',
+				icon: 'briefcase-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/departments`
+			},
+			{
+				title: 'Projects',
+				icon: 'book-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/projects`
+			},
+			{
+				title: 'Clients',
+				icon: 'book-open-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/clients`
 			}
 		];
 	}

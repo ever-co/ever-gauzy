@@ -2,8 +2,9 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee } from './employee.model';
 import { OrganizationClients } from './organization-clients.model';
 import { CurrenciesEnum, ProjectTypeEnum } from './organization.model';
+import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 
-export interface OrganizationProjects extends IBaseEntityModel {
+export interface OrganizationProjects extends IBaseEntityWithMembers {
 	name: string;
 	organizationId: string;
 	client?: OrganizationClients;
