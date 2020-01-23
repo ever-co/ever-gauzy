@@ -5,7 +5,6 @@ import {
 	EditEntityByMemberInput,
 	Employee
 } from '@gauzy/models';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject } from 'rxjs';
 
 @Component({
