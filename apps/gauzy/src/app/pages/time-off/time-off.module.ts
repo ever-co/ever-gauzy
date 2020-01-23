@@ -12,7 +12,8 @@ import {
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -44,6 +45,7 @@ const COMPONENTS = [TimeOffComponent];
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		NgSelectModule,
+		NbRadioModule,
 		NbSelectModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,

@@ -1,1 +1,65 @@
-<p>time-off works!</p>
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<h4>{{ 'TIME_OFF_PAGE.HEADER' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<button
+				nbButton
+				status="primary"
+				(click)="requestDaysOff()"
+				class="ml-2"
+			>
+				<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
+				{{ 'TIME_OFF_PAGE.REQUEST_DAYS_OFF' | translate }}
+			</button>
+
+			<button nbButton status="info" (click)="addHolidays()" class="ml-2">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
+			</button>
+
+			<div style="display: flex;">
+				<nb-radio-group
+					class="align-center"
+					[(ngModel)]="selectedStatus"
+				>
+					<nb-radio
+						*ngFor="let status of timeOffStatuses"
+						[value]="status"
+						>{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
+					</nb-radio>
+				</nb-radio-group>
+				<nb-checkbox
+					(checkedChange)="changeDisplayHolidays($event)"
+					class="my-auto"
+					status="primary"
+					checked
+					>{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
+				</nb-checkbox>
+				<button
+					nbButton
+					status="primary"
+					(click)="requestDaysOff()"
+					style="border-radius: 5px 20px 5px;"
+					class="ml-4"
+				>
+					<nb-icon
+						class="mr-1"
+						style="font-size: 2em;"
+						icon="settings-outline"
+					></nb-icon>
+				</button>
+			</div>
+		</div>
+
+		<!-- <ng2-smart-table
+			class="tyme-off-table"
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectEmployeeTmp($event)"
+			#timeOffTable
+        </ng2-smart-table> -->
+	</nb-card-body>
+</nb-card>
