@@ -1,4 +1,10 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	ElementRef,
+	OnDestroy
+} from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
@@ -10,19 +16,22 @@ import {
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
+import { Subject } from 'rxjs';
 
 @Component({
 	selector: 'ga-expenses-mutation',
 	templateUrl: './expenses-mutation.component.html',
 	styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent implements OnInit {
+export class ExpensesMutationComponent implements OnInit, OnDestroy {
+	private _ngDestroy$ = new Subject<void>();
+
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
 	form: FormGroup;
@@ -239,25 +248,28 @@ export class ExpensesMutationComponent implements OnInit {
 	}
 
 	private calculateTaxes() {
-		this.form.valueChanges.subscribe((val) => {
-			const amount = val.amount;
-			const rate = val.rateValue;
-			const oldNotes = val.notes;
+		this.form.valueChanges
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((val) => {
+				const amount = val.amount;
+				const rate = val.rateValue;
+				const oldNotes = val.notes;
 
-			if (val.taxType === 'Percentage') {
-				const result = (amount / (rate + 100)) * 100 * (rate / 100);
+				if (val.taxType === 'Percentage') {
+					const result = (amount / (rate + 100)) * 100 * (rate / 100);
 
-				this.calculatedValue =
-					'Tax Amount: ' + result.toFixed(2) + ' ' + val.currency;
-			} else {
-				const result = (rate / (amount - rate)) * 100;
-				this.calculatedValue = 'Tax Rate: ' + result.toFixed(2) + ' %';
-			}
+					this.calculatedValue =
+						'Tax Amount: ' + result.toFixed(2) + ' ' + val.currency;
+				} else {
+					const result = (rate / (amount - rate)) * 100;
+					this.calculatedValue =
+						'Tax Rate: ' + result.toFixed(2) + ' %';
+				}
 
-			if (rate !== 0) {
-				val.notes = this.calculatedValue + '. ' + oldNotes;
-			}
-		});
+				if (rate !== 0) {
+					val.notes = this.calculatedValue + '. ' + oldNotes;
+				}
+			});
 	}
 
 	private async loadClients() {
@@ -314,8 +326,14 @@ export class ExpensesMutationComponent implements OnInit {
 					currentReceipt: this.form.value.receipt
 				}
 			})
-			.onClose.subscribe((newReceipt) => {
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((newReceipt) => {
 				this.form.value.receipt = newReceipt;
 			});
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }
