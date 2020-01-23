@@ -347,6 +347,18 @@
 			}
 		}
 	},
+	"TIME_OFF_PAGE": {
+		"HEADER": "Время выключено",
+		"REQUEST_DAYS_OFF": "Запросить выходные",
+		"ADD_HOLIDAYS": "Добавить выходные",
+		"DISPLAY_HOLIDAYS": "Показать Праздники",
+		"STATUSES": {
+			"REQUESTED": "Запрошено",
+			"APPROVED": "Одобрено",
+			"DENIED": "Отказано",
+			"ALL": "Все"
+		}
+	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
 		"ADD_USER": "Добавить пользователя",
