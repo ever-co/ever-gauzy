@@ -1,0 +1,23 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			Add/Edit Policy
+		</h5>
+		<ga-employee-selector
+			#employeeSelector
+			[hidden]="false"
+			[skipGlobalChange]="true"
+			class="employees"
+		>
+		</ga-employee-selector>
+
+		<nb-icon
+			class="ml-auto mt-1 close"
+			(click)="close()"
+			icon="close-outline"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<!-- Implement form -->
+	</nb-card-body>
+</nb-card>

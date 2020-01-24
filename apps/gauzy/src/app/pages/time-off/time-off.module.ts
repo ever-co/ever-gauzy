@@ -25,6 +25,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
+import { TimeOffMutationModule } from '../../@shared/time-off/time-off-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -56,7 +57,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NbSpinnerModule
+		NbSpinnerModule,
+		TimeOffMutationModule
 	],
 	declarations: [TimeOffComponent, TimeOffSettingsComponent],
 	entryComponents: [TimeOffSettingsComponent],
