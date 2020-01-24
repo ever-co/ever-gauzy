@@ -157,7 +157,9 @@
 			"ALIGN_LOGO_TO": "Align Logo To",
 			"DEPARTMENTS": "Departments",
 			"NUMBER_FORMAT": "Select Number Format",
-			"REGIONS": "Select Region"
+			"REGIONS": "Select Region",
+			"REMOVE_IMAGE": "Remove image",
+			"UPLOADER_PLACEHOLDER": "Image"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
