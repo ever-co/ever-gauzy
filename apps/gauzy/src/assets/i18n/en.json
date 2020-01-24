@@ -458,7 +458,11 @@
 			"EMPLOYEE_PROJECT_REMOVED": "Employee removed from project",
 			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
-			"EMPLOYEE_EDIT_ERROR": "Error in editing employee"
+			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
+			"CONFIRM": "Confirm",
+			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
+			"OK": "OK",
+			"CANCEL": "Cancel"
 		}
 	}
 }
