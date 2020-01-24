@@ -3,6 +3,8 @@ import { AuthService } from '../../../@core/services/auth.service';
 import { TimeOffPolicy, RolesEnum } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
+import { NbDialogService } from '@nebular/theme';
+import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
 
 interface SelectedRowModel {
 	data: TimeOffPolicy;
@@ -17,7 +19,10 @@ interface SelectedRowModel {
 	styleUrls: ['./time-off-settings.component.scss']
 })
 export class TimeOffSettingsComponent implements OnInit {
-	constructor(private authService: AuthService) {}
+	constructor(
+		private dialogService: NbDialogService,
+		private authService: AuthService
+	) {}
 
 	hasRole: boolean;
 	selectedPolicy: SelectedRowModel;
@@ -31,9 +36,20 @@ export class TimeOffSettingsComponent implements OnInit {
 			.toPromise();
 	}
 
-	addPolicy() {}
+	async addPolicy() {
+		const result = await this.dialogService
+			.open(TimeOffSettingsMutationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+	}
 
-	editPolicy() {}
+	async editPolicy() {
+		const result = await this.dialogService
+			// TODO: add Policy as context here
+			.open(TimeOffSettingsMutationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+	}
 
 	deletePolicy() {}
 }
