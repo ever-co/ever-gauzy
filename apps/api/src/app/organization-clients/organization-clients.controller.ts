@@ -1,9 +1,21 @@
-import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationClientsService } from './organization-clients.service';
-import { OrganizationClients } from './organization-clients.entity';
+import { EditEntityByMemberInput } from '@gauzy/models';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Put,
+	Query
+} from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
+import { CrudController } from '../core/crud/crud.controller';
+import { OrganizationClientsEditByEmployeeCommand } from './commands/organization-clients.edit-by-employee.command';
+import { OrganizationClients } from './organization-clients.entity';
+import { OrganizationClientsService } from './organization-clients.service';
 
 @ApiTags('Organization-Clients')
 @Controller()
@@ -11,12 +23,34 @@ export class OrganizationClientsController extends CrudController<
 	OrganizationClients
 > {
 	constructor(
-		private readonly organizationClientsService: OrganizationClientsService
+		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly commandBus: CommandBus
 	) {
 		super(organizationClientsService);
 	}
 
-	@ApiOperation({ summary: 'Find all organization clients recurring expense.' })
+	@ApiOperation({
+		summary: 'Find all organization projects by Employee.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found projects',
+		type: OrganizationClients
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('employee/:id')
+	async findByEmployee(
+		@Param('id') id: string
+	): Promise<IPagination<OrganizationClients>> {
+		return this.organizationClientsService.findByEmployee(id);
+	}
+
+	@ApiOperation({
+		summary: 'Find all organization clients recurring expense.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found clients recurring expense',
@@ -36,5 +70,29 @@ export class OrganizationClientsController extends CrudController<
 			where: findInput,
 			relations
 		});
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put('employee')
+	async updateEmployee(
+		@Body() entity: EditEntityByMemberInput
+	): Promise<any> {
+		return this.commandBus.execute(
+			new OrganizationClientsEditByEmployeeCommand(entity)
+		);
 	}
 }

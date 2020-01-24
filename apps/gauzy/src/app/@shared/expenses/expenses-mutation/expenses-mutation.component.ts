@@ -2,7 +2,6 @@ import {
 	Component,
 	OnInit,
 	ViewChild,
-	ElementRef,
 	OnDestroy
 } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
