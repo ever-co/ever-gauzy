@@ -134,14 +134,20 @@
 					(click)="closeWarning()"
 					icon="close-outline"
 				></nb-icon>
-				<p><b>Client is required!</b></p>
 				<p>
-					Please select a Client from the dropdown menu below or
-					change Expense type setting.
+					<b>{{
+						'EXPENSES_PAGE.MUTATION.CLIENT_IS_REQUIRED' | translate
+					}}</b>
+				</p>
+				<p>
+					{{
+						'EXPENSES_PAGE.MUTATION.PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE'
+							| translate
+					}}
 				</p>
 			</nb-card>
 			<div *ngIf="clients.length || projects.length">
-				<h6>Assign to</h6>
+				<h6>{{ 'EXPENSES_PAGE.MUTATION.ASSIGN_TO' | translate }}</h6>
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">
@@ -197,7 +203,7 @@
 					*ngIf="!showTaxesInput"
 					class="mr-3 mb-3"
 				>
-					Include Taxes
+					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
 				</button>
 				<button
 					nbButton
@@ -206,7 +212,7 @@
 					(click)="attachReceipt()"
 					class="mr-3 mb-3"
 				>
-					Attach a receipt
+					{{ 'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT' | translate }}
 				</button>
 			</div>
 			<div class="row" *ngIf="showNotes">
@@ -232,7 +238,9 @@
 				</div>
 			</div>
 			<div *ngIf="showTaxesInput">
-				<h6>Include Taxes</h6>
+				<h6>
+					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
+				</h6>
 				<div class="row">
 					<div class="col-sm-6">
 						<div class="form-group">

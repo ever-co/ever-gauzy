@@ -251,7 +251,14 @@
 		"BONUS_TOOLTIP": "This is a direct bonus"
 	},
 	"EXPENSES_PAGE": {
-		"EXPENSES": "Expenses"
+		"EXPENSES": "Expenses",
+		"MUTATION": {
+			"CLIENT_IS_REQUIRED!": "Client is required!",
+			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Please select a Client from the dropdown menu below or change Expense type setting.",
+			"ASSIGN_TO": "Assign to",
+			"INCLUDE_TAXES": "Include Taxes",
+			"ATTACH_A_RECEIPT": "Attach a receipt"
+		}
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Manage Employees for ",
