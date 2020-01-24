@@ -376,6 +376,10 @@
 			"APPROVED": "Approved",
 			"DENIED": "Denied",
 			"ALL": "All"
+		},
+		"POLICY": {
+			"HEADER": "Time Off Policy",
+			"ADD_POLICY": "Add Policy"
 		}
 	},
 	"USERS_PAGE": {
