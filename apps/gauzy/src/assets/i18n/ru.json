@@ -111,7 +111,8 @@
 			"EMAILS": "Адреса E-mail",
 			"PROJECTS_OPTIONAL": "Проекты (необязательно)",
 			"CLIENTS_OPTIONAL": "Клиенты (необязательно)",
-			"DEPARTMENTS_OPTIONAL": "Отделы (необязательно)"
+			"DEPARTMENTS_OPTIONAL": "Отделы (необязательно)",
+			"PROJECTS": "Проекты"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -267,7 +268,10 @@
 			"HEADER": "Управление сотрудником",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Департамент",
-			"POSITION": "Позиция"
+			"POSITION": "Позиция",
+			"EMPLOYEE_DEPARTMENTS": "Кафедры работника:",
+			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
+			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -439,7 +443,14 @@
 			"PROJECT_LOAD": "Не удалось загрузить проекты",
 			"COPIED": "Ссылка скопирована в буфер обмена",
 			"INVITES_LOAD": "Could Not Load Invites",
-			"INVITES_RESEND": "Приглашение было отправлено на адрес {{ email }}."
+			"INVITES_RESEND": "Приглашение было отправлено на адрес {{ email }}.",
+			"EMPLOYEE_DEPARTMENT_ADDED": "Сотрудник добавлен в отдел",
+			"EMPLOYEE_DEPARTMENT_REMOVED": "Сотрудник удалён из отдела",
+			"EMPLOYEE_PROJECT_ADDED": "Сотрудник добавлен в проект",
+			"EMPLOYEE_PROJECT_REMOVED": "Сотрудник удален из проекта",
+			"EMPLOYEE_CLIENT_ADDED": "Сотрудник добавлен к клиенту",
+			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
+			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника"
 		}
 	}
 }
