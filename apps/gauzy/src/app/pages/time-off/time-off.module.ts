@@ -24,12 +24,11 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 import { ThemeModule } from '../../@theme/theme.module';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
+import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
-
-const COMPONENTS = [TimeOffComponent];
 
 @NgModule({
 	imports: [
@@ -59,8 +58,8 @@ const COMPONENTS = [TimeOffComponent];
 		}),
 		NbSpinnerModule
 	],
-	declarations: [...COMPONENTS],
-	entryComponents: [],
+	declarations: [TimeOffComponent, TimeOffSettingsComponent],
+	entryComponents: [TimeOffSettingsComponent],
 	providers: [OrganizationsService]
 })
 export class TimeOffModule {}
