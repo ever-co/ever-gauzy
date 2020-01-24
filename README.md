@@ -10,7 +10,7 @@ Gauzy™ - Open-Source Profits Sharing Platform for modern agencies, studios and
 -   **Stock Options** solving **fair sharing of profits _in the future_**.
 -   **Gauzy** solving **fair sharing of profits _today_**.
 
-Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your agency or studio.
+Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your agency, studio or in-house teams
 
 Feel free to test:
 
