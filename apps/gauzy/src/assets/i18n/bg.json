@@ -111,7 +111,8 @@
 			"EMAILS": "Email Addresses",
 			"PROJECTS_OPTIONAL": "Projects (Optional)",
 			"CLIENTS_OPTIONAL": "Clients (Optional)",
-			"DEPARTMENTS_OPTIONAL": "Departments (Optional)"
+			"DEPARTMENTS_OPTIONAL": "Departments (Optional)",
+			"PROJECTS": "Проекти"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -267,7 +268,10 @@
 			"HEADER": "Manage Employee",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
-			"POSITION": "Позиция"
+			"POSITION": "Позиция",
+			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
+			"EMPLOYEE_PROJECTS": "Employee's Projects:",
+			"EMPLOYEE_CLIENTS": "Employee's Clients:"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -439,7 +443,14 @@
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
 			"INVITES_LOAD": "Could Not Load Invites",
-			"INVITES_RESEND": "Invite has been resent to {{ email }}."
+			"INVITES_RESEND": "Invite has been resent to {{ email }}.",
+			"EMPLOYEE_DEPARTMENT_ADDED": "Employee added to department",
+			"EMPLOYEE_DEPARTMENT_REMOVED": "Employee removed from department",
+			"EMPLOYEE_PROJECT_ADDED": "Employee added to project",
+			"EMPLOYEE_PROJECT_REMOVED": "Employee removed from project",
+			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
+			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
+			"EMPLOYEE_EDIT_ERROR": "Error in editing employee"
 		}
 	}
 }
