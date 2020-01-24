@@ -157,7 +157,9 @@
 			"ALIGN_LOGO_TO": "Align Logo To",
 			"DEPARTMENTS": "מחלקות",
 			"NUMBER_FORMAT": "Select Number Format",
-			"REGIONS": "Select Region"
+			"REGIONS": "Select Region",
+			"REMOVE_IMAGE": "Remove image",
+			"UPLOADER_PLACEHOLDER": "תמונה"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -202,7 +204,12 @@
 		"DELETE_RECURRING_EXPENSE": "Delete Recurring Expense",
 		"DELETE_ONLY_THIS": "Delete only this",
 		"DELETE_THIS_FUTURE": "Delete this and future",
-		"DELETE_ALL_ENTRIES": "Delete all entries"
+		"DELETE_ALL_ENTRIES": "Delete all entries",
+		"CONFIRM": "אשר",
+		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
+		"OK": "OK",
+		"CANCEL": "בטל",
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
@@ -251,7 +258,14 @@
 		"BONUS_TOOLTIP": "This is a direct bonus"
 	},
 	"EXPENSES_PAGE": {
-		"EXPENSES": "הוצאות"
+		"EXPENSES": "הוצאות",
+		"MUTATION": {
+			"CLIENT_IS_REQUIRED!": "Client is required!",
+			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Please select a Client from the dropdown menu below or change Expense type setting.",
+			"ASSIGN_TO": "Assign to",
+			"INCLUDE_TAXES": "Include Taxes",
+			"ATTACH_A_RECEIPT": "Attach a receipt"
+		}
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "נהל עובדים עבור ",
@@ -264,6 +278,7 @@
 		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
 		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",
 		"BACK_TO_WORK": "לחזור לעבודה",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
 		"EDIT_EMPLOYEE": {
 			"HEADER": "Manage Employee",
 			"DEVELOPER": "מפתח",
@@ -450,7 +465,12 @@
 			"EMPLOYEE_PROJECT_REMOVED": "Employee removed from project",
 			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
-			"EMPLOYEE_EDIT_ERROR": "Error in editing employee"
+			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
+			"CONFIRM": "אשר",
+			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
+			"OK": "OK",
+			"CANCEL": "בטל",
+			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
 		}
 	}
 }

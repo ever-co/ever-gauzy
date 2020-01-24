@@ -157,7 +157,9 @@
 			"ALIGN_LOGO_TO": "Выровнять логотип по",
 			"DEPARTMENTS": "Департаменты",
 			"NUMBER_FORMAT": "Выберите формат чисел",
-			"REGIONS": "Выберите регион"
+			"REGIONS": "Выберите регион",
+			"REMOVE_IMAGE": "Remove image",
+			"UPLOADER_PLACEHOLDER": "Изображение"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -202,7 +204,12 @@
 		"DELETE_RECURRING_EXPENSE": "Удалить повторяющиеся расходы",
 		"DELETE_ONLY_THIS": "Удалить только это",
 		"DELETE_THIS_FUTURE": "Удалить это и будущее",
-		"DELETE_ALL_ENTRIES": "Удалить все записи"
+		"DELETE_ALL_ENTRIES": "Удалить все записи",
+		"CONFIRM": "Подтвердить",
+		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
+		"OK": "ОК",
+		"CANCEL": "Отменить",
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
@@ -251,7 +258,14 @@
 		"BONUS_TOOLTIP": "Это прямой бонус"
 	},
 	"EXPENSES_PAGE": {
-		"EXPENSES": "Затраты"
+		"EXPENSES": "Затраты",
+		"MUTATION": {
+			"CLIENT_IS_REQUIRED!": "Клиент не требуется!",
+			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Пожалуйста, выберите Клиента из выпадающего меню ниже или измените настройки типа расходов.",
+			"ASSIGN_TO": "Назначить",
+			"INCLUDE_TAXES": "Включить налоги",
+			"ATTACH_A_RECEIPT": "Добавить квитанцию"
+		}
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление сотрудниками для",
@@ -264,6 +278,7 @@
 		"RECURRING_EXPENSE_EDIT": "Редактировать текущие и все будущие расходы. Никаких изменений за прошлые расходы не будет.",
 		"RECURRING_EXPENSE_ADD": "Это добавит расходы повторяющиеся каждый месяц.",
 		"BACK_TO_WORK": "Вернуться к работе",
+		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
 		"EDIT_EMPLOYEE": {
 			"HEADER": "Управление сотрудником",
 			"DEVELOPER": "Разработчик",
@@ -450,7 +465,12 @@
 			"EMPLOYEE_PROJECT_REMOVED": "Сотрудник удален из проекта",
 			"EMPLOYEE_CLIENT_ADDED": "Сотрудник добавлен к клиенту",
 			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
-			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника"
+			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника",
+			"CONFIRM": "Подтвердить",
+			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
+			"OK": "ОК",
+			"CANCEL": "Отменить",
+			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить"
 		}
 	}
 }
