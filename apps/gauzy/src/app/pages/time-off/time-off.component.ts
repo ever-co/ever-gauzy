@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { StatusTypesEnum } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-time-off',
@@ -11,7 +12,11 @@ import { takeUntil } from 'rxjs/operators';
 	styleUrls: ['./time-off.component.scss']
 })
 export class TimeOffComponent implements OnInit, OnDestroy {
-	constructor(private store: Store, private dialogService: NbDialogService) {}
+	constructor(
+		private router: Router,
+		private dialogService: NbDialogService,
+		private store: Store
+	) {}
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
@@ -75,6 +80,10 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 		employeeId = this.selectedEmployeeId,
 		orgId?: string
 	) {}
+
+	openTimeOffSettings() {
+		this.router.navigate(['/pages/time-off/settings']);
+	}
 
 	requestDaysOff() {}
 
