@@ -4,6 +4,7 @@ import { User, RolesEnum } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -11,7 +12,7 @@ import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 	styleUrls: ['basic-info-form.component.scss']
 })
 export class BasicInfoFormComponent implements OnInit {
-	uploaderPlaceholder = 'Image';
+	UPLOADER_PLACEHOLDER: string = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
 	@ViewChild('imagePreview', { static: false })
 	imagePreviewElement: ElementRef;
@@ -36,11 +37,26 @@ export class BasicInfoFormComponent implements OnInit {
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly authService: AuthService,
-		private readonly roleService: RoleService
+		private readonly roleService: RoleService,
+		private readonly translateService: TranslateService
 	) {}
 
 	ngOnInit(): void {
 		this.loadFormData();
+	}
+
+	get uploaderPlaceholder() {
+		return this._translate(this.UPLOADER_PLACEHOLDER);
+	}
+
+	private _translate(key: string): string {
+		let translationResult = '';
+
+		this.translateService.get(key).subscribe((res) => {
+			translationResult = res;
+		});
+
+		return translationResult;
 	}
 
 	loadFormData = () => {

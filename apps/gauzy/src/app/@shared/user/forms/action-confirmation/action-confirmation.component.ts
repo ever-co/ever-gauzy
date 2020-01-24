@@ -10,7 +10,11 @@ import { NbDialogRef } from '@nebular/theme';
 			</nb-card-header>
 			<nb-card-body>
 				<span>
-					Are you sure you want to change the {{ recordType }}?
+					{{
+						'POP_UPS.ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE'
+							| translate
+					}}
+					{{ recordType }}?
 				</span>
 			</nb-card-body>
 			<nb-card-footer>
@@ -20,10 +24,10 @@ import { NbDialogRef } from '@nebular/theme';
 					status="success"
 					nbButton
 				>
-					OK
+					{{ 'POP_UPS.OK' | translate }}
 				</button>
 				<button (click)="close()" status="danger" nbButton>
-					Cancel
+					{{ 'POP_UPS.CANCEL' | translate }}
 				</button>
 			</nb-card-footer>
 		</nb-card>
