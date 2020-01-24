@@ -202,7 +202,12 @@
 		"DELETE_RECURRING_EXPENSE": "Delete Recurring Expense",
 		"DELETE_ONLY_THIS": "Delete only this",
 		"DELETE_THIS_FUTURE": "Delete this and future",
-		"DELETE_ALL_ENTRIES": "Delete all entries"
+		"DELETE_ALL_ENTRIES": "Delete all entries",
+		"CONFIRM": "Confirm",
+		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
+		"OK": "OK",
+		"CANCEL": "Cancel",
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
@@ -462,7 +467,8 @@
 			"CONFIRM": "Confirm",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
-			"CANCEL": "Cancel"
+			"CANCEL": "Cancel",
+			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
 		}
 	}
 }

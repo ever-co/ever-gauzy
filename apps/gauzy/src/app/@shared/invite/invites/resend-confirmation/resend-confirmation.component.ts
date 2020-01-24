@@ -6,12 +6,12 @@ import { NbDialogRef } from '@nebular/theme';
 	template: `
 		<nb-card class="center">
 			<nb-card-header>
-				<h6>{{ 'TOASTR.MESSAGE.CONFIRM' | translate }}</h6>
+				<h6>{{ 'POP_UPS.CONFIRM' | translate }}</h6>
 			</nb-card-header>
 			<nb-card-body>
 				<span>
 					{{
-						'TOASTR.MESSAGE.ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO'
+						'POP_UPS.ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO'
 							| translate
 					}}
 					{{ email }} ?
@@ -24,10 +24,10 @@ import { NbDialogRef } from '@nebular/theme';
 					status="success"
 					nbButton
 				>
-					{{ 'TOASTR.MESSAGE.OK' | translate }}
+					{{ 'POP_UPS.OK' | translate }}
 				</button>
 				<button (click)="close()" status="danger" nbButton>
-					{{ 'TOASTR.MESSAGE.CANCEL' | translate }}
+					{{ 'POP_UPS.CANCEL' | translate }}
 				</button>
 			</nb-card-footer>
 		</nb-card>
