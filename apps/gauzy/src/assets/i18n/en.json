@@ -264,6 +264,7 @@
 		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
 		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",
 		"BACK_TO_WORK": "Back to Work",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
 		"EDIT_EMPLOYEE": {
 			"HEADER": "Manage Employee",
 			"DEVELOPER": "Developer",
