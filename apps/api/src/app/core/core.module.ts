@@ -27,6 +27,7 @@ import { Proposal } from '../proposal';
 import { Country } from '../country';
 import { Invite } from '../invite';
 import { EmailTemplate } from '../email-templates';
+import { TimeOffPolicy } from '../time-off';
 
 const entities = [
 	Invite,
@@ -48,7 +49,8 @@ const entities = [
 	OrganizationTeams,
 	Proposal,
 	Country,
-	EmailTemplate
+	EmailTemplate,
+	TimeOffPolicy
 ];
 
 @Module({

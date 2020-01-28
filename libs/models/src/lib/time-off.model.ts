@@ -4,7 +4,16 @@ import { OrganizationTeams } from '..';
 
 export interface TimeOffPolicy extends IBaseEntityModel {
 	employees?: Employee[];
-	teams?: OrganizationTeams[];
+	// teams?: OrganizationTeams[];
+	organizationId?: string;
+	name?: string;
+	requiresApproval?: boolean;
+	paid?: boolean;
+}
+
+export interface TimeOffPolicyCreateInput extends IBaseEntityModel {
+	employees?: Employee[];
+	// teams?: OrganizationTeams[];
 	organizationId?: string;
 	name?: string;
 	requiresApproval?: boolean;

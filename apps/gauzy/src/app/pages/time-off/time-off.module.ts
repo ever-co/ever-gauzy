@@ -26,6 +26,8 @@ import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
 import { TimeOffMutationModule } from '../../@shared/time-off/time-off-mutation.module';
+import { TimeOffService } from '../../@core/services/time-off.service';
+import { EmployeesService } from '../../@core/services';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -62,6 +64,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [TimeOffComponent, TimeOffSettingsComponent],
 	entryComponents: [TimeOffSettingsComponent],
-	providers: [OrganizationsService]
+	providers: [OrganizationsService, TimeOffService]
 })
 export class TimeOffModule {}
