@@ -26,6 +26,7 @@ import { ProposalModule } from './proposal';
 import { CountryModule } from './country';
 import { InviteModule } from './invite';
 import { EmailModule } from './email-templates';
+import { TimeOffModule } from './time-off/time-off.module';
 
 @Module({
 	imports: [
@@ -99,6 +100,10 @@ import { EmailModule } from './email-templates';
 					{
 						path: '/email',
 						module: EmailModule
+					},
+					{
+						path: 'time-off',
+						module: TimeOffModule
 					}
 				]
 			}
@@ -125,7 +130,8 @@ import { EmailModule } from './email-templates';
 		ProposalModule,
 		EmailModule,
 		CountryModule,
-		InviteModule
+		InviteModule,
+		TimeOffModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

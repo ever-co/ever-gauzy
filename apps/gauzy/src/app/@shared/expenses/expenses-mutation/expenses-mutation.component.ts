@@ -1,9 +1,4 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	OnDestroy
-} from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
@@ -334,5 +329,6 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+		clearTimeout();
 	}
 }

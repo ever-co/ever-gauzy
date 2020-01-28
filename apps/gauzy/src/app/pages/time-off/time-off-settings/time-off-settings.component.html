@@ -8,7 +8,7 @@
 				nbButton
 				status="success"
 				class="mr-2"
-				(click)="addPolicy()"
+				(click)="openAddPolicyDialog()"
 			>
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
@@ -18,7 +18,7 @@
 				status="info"
 				class="mr-2"
 				[disabled]="selectedPolicy ? !selectedPolicy.isSelected : true"
-				(click)="editPolicy()"
+				(click)="openEditPolicyDialog()"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 				>{{ 'BUTTONS.EDIT' | translate }}

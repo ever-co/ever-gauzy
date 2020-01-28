@@ -246,18 +246,18 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployeeRecurringExpense() {
-		this.selectedEmployeeRecurringExpense = (await this.employeeRecurringExpenseService.getAll(
-			[],
-			{
+		this.selectedEmployeeRecurringExpense = (
+			await this.employeeRecurringExpenseService.getAll([], {
 				employeeId: this.selectedEmployee.id,
 				year: this.selectedDate.getFullYear(),
 				month: this.selectedDate.getMonth() + 1
-			}
-		)).items;
+			})
+		).items;
 	}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+		clearTimeout();
 	}
 }
