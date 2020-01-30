@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ErrorHandler } from '@angular/core';
 import { AuthService } from '../../../@core/services/auth.service';
 import { TimeOffPolicy, RolesEnum } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
@@ -7,6 +7,15 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
 import { TimeOffService } from '../../../@core/services/time-off.service';
 import { Subject } from 'rxjs';
+import { Store } from '../../../@core/services/store.service';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+
+export interface TimeOffPolicyVM {
+	id: string;
+	name: string;
+	requiresApproval: boolean;
+	paid: boolean;
+}
 
 interface SelectedRowModel {
 	data: TimeOffPolicy;
@@ -25,20 +34,59 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private authService: AuthService,
 		private toastrService: NbToastrService,
-		private tymeOffService: TimeOffService
+		private tymeOffService: TimeOffService,
+		private store: Store,
+		private errorHandler: ErrorHandler
 	) {}
 
+	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
 	hasRole: boolean;
 	selectedPolicy: SelectedRowModel;
 	smartTableSource = new LocalDataSource();
+	showTable: boolean;
 	loading = false;
+
+	smartTableSettings = {
+		actions: false,
+		editable: true,
+		noDataMessage: 'No Data',
+		columns: {
+			name: {
+				title: 'Name',
+				type: 'string',
+				filter: true
+			},
+			requiresApproval: {
+				title: 'Requires Approval',
+				type: 'boolean',
+				width: '20%',
+				filter: false
+			},
+			paid: {
+				title: 'Paid',
+				type: 'boolean',
+				width: '20%',
+				filter: false
+			}
+		}
+	};
 
 	async ngOnInit() {
 		this.hasRole = await this.authService
 			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
 			.pipe(first())
 			.toPromise();
+
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				if (org) {
+					this._selectedOrganizationId = org.id;
+
+					this._loadTableData(this._selectedOrganizationId);
+				}
+			});
 	}
 
 	async openAddPolicyDialog() {
@@ -46,10 +94,9 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 			.open(TimeOffSettingsMutationComponent)
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
-				console.log(formData);
-
 				if (formData) {
 					await this.addPolicy(formData);
+					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
 	}
@@ -79,7 +126,72 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 			.toPromise();
 	}
 
-	deletePolicy() {}
+	async deletePolicy() {
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: 'Policy'
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.tymeOffService.delete(
+							this.selectedPolicy.data.id
+						);
+
+						this.toastrService.primary('Policy deleted', 'Success');
+						this._loadTableData(this._selectedOrganizationId);
+						this.selectedPolicy = null;
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
+			});
+	}
+
+	selectTimeOffPolicy(ev: SelectedRowModel) {
+		this.selectedPolicy = ev;
+	}
+
+	private async _loadTableData(orgId: string) {
+		this.showTable = false;
+		this.selectedPolicy = null;
+		let findObj;
+
+		if (orgId) {
+			findObj = {
+				organization: {
+					id: orgId
+				}
+			};
+
+			try {
+				const { items } = await this.tymeOffService.getAll(
+					['employees'],
+					findObj
+				);
+
+				const policyVM: TimeOffPolicyVM[] = items.map((i) => {
+					return {
+						id: i.id,
+						name: i.name,
+						requiresApproval: i.requiresApproval,
+						paid: i.paid
+					};
+				});
+
+				this.smartTableSource.load(policyVM);
+				this.showTable = true;
+			} catch (error) {
+				this.toastrService.danger(
+					error.error.message || error.message,
+					'Error'
+				);
+			}
+		}
+	}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

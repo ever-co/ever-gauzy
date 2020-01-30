@@ -11,24 +11,24 @@ import {
 import { IPagination } from '../../core';
 import { TimeOffPolicyService } from './time-off-policy.service';
 
-@ApiTags('Proposal')
+@ApiTags('Policy')
 @Controller()
 export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 	constructor(private readonly policyService: TimeOffPolicyService) {
 		super(policyService);
 	}
 
-	@ApiOperation({ summary: 'Find all proposals.' })
+	@ApiOperation({ summary: 'Find all policies.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found proposals',
+		description: 'Found policies',
 		type: TimeOffPolicy
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
+	@Get('/policy')
 	async findAllTimeOffPolicies(
 		@Query('data') data: string
 	): Promise<IPagination<ITimeOffPolicy>> {
@@ -50,7 +50,7 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/create')
+	@Post('/policy/create')
 	async createTimeOffPolicy(
 		@Body() entity: ITimeOffPolicyCreateInput,
 		...options: any[]

@@ -27,7 +27,7 @@ import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
 import { TimeOffMutationModule } from '../../@shared/time-off/time-off-mutation.module';
 import { TimeOffService } from '../../@core/services/time-off.service';
-import { EmployeesService } from '../../@core/services';
+import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -37,6 +37,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	imports: [
 		TimeOffRoutingModule,
 		ThemeModule,
+		UserFormsModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,
