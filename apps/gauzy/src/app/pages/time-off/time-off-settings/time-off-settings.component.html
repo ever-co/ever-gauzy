@@ -34,5 +34,15 @@
 				>{{ 'BUTTONS.DELETE' | translate }}
 			</button>
 		</div>
+
+		<ng2-smart-table
+			class="income-table"
+			[settings]="smartTableSettings"
+			[source]="smartTableSource"
+			(userRowSelect)="selectTimeOffPolicy($event)"
+			style="cursor: pointer;"
+			#timeOffPolicyTable
+		>
+		</ng2-smart-table>
 	</nb-card-body>
 </nb-card>

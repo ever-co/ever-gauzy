@@ -20,6 +20,15 @@ export interface TimeOffPolicyCreateInput extends IBaseEntityModel {
 	paid?: boolean;
 }
 
+export interface TimeOffPolicyFindInput extends IBaseEntityModel {
+	employees?: Employee[];
+	// teams?: OrganizationTeams[];
+	organizationId?: string;
+	name?: string;
+	requiresApproval?: boolean;
+	paid?: boolean;
+}
+
 export interface TimeOff extends IBaseEntityModel {
 	employee?: Employee;
 	organizationId?: string;
