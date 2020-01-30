@@ -1,14 +1,20 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { OrganizationDepartment } from '@gauzy/models';
-import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
+import { Component, OnInit } from '@angular/core';
+import {
+	Employee,
+	OrganizationDepartment,
+	OrganizationDepartmentCreateInput
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-edit-org-departments',
-	templateUrl: './edit-organization-departments.component.html'
+	templateUrl: './edit-organization-departments.component.html',
+	styleUrls: ['./edit-organization-departments.component.scss']
 })
 export class EditOrganizationDepartmentsComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
@@ -18,11 +24,14 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 	showAddCard: boolean;
 
 	departments: OrganizationDepartment[];
+	employees: Employee[] = [];
+	departmentToEdit: OrganizationDepartment;
 
 	constructor(
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore
+		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly employeesService: EmployeesService
 	) {}
 
 	ngOnInit() {
@@ -32,8 +41,27 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 				if (organization) {
 					this.organizationId = organization.id;
 					this.loadDepartments();
+					this.loadEmployees();
 				}
 			});
+	}
+
+	cancel() {
+		this.departmentToEdit = null;
+		this.showAddCard = !this.showAddCard;
+	}
+
+	private async loadEmployees() {
+		if (!this.organizationId) {
+			return;
+		}
+
+		const { items } = await this.employeesService
+			.getAll(['user'], { organization: { id: this.organizationId } })
+			.pipe(first())
+			.toPromise();
+
+		this.employees = items;
 	}
 
 	async removeDepartment(id: string, name: string) {
@@ -45,16 +73,26 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 		this.loadDepartments();
 	}
 
-	private async addDepartment(name: string) {
-		if (name) {
-			await this.organizationDepartmentsService.create({
-				name,
-				organizationId: this.organizationId
-			});
+	async editDepartment(department: OrganizationDepartment) {
+		this.departmentToEdit = department;
+		this.showAddCard = true;
+	}
 
-			this.showAddCard = !this.showAddCard;
+	private async addOrEditDepartment(
+		input: OrganizationDepartmentCreateInput
+	) {
+		if (input.name) {
+			this.departmentToEdit
+				? await this.organizationDepartmentsService.update(
+						this.departmentToEdit.id,
+						input
+				  )
+				: await this.organizationDepartmentsService.create(input);
+
+			this.cancel();
+
 			this.toastrService.primary(
-				name + ' Department successfully added!',
+				input.name + ' Department successfully added!',
 				'Success'
 			);
 			this.loadDepartments();
@@ -71,9 +109,12 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 			return;
 		}
 
-		const res = await this.organizationDepartmentsService.getAll({
-			organizationId: this.organizationId
-		});
+		const res = await this.organizationDepartmentsService.getAll(
+			['members', 'members.user'],
+			{
+				organizationId: this.organizationId
+			}
+		);
 		if (res) {
 			this.departments = res.items;
 		}

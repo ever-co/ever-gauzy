@@ -89,7 +89,7 @@ export class EditEmployeeDepartmentComponent implements OnInit {
 			return;
 		}
 
-		const res = await this.organizationDepartmentsService.getAll({
+		const res = await this.organizationDepartmentsService.getAll([], {
 			organizationId: this.selectedEmployee.orgId
 		});
 

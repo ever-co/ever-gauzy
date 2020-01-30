@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import {
-	OrganizationDepartmentCreateInput,
+	EditEntityByMemberInput,
 	OrganizationDepartment,
-	OrganizationDepartmentFindInput,
-	EditEntityByMemberInput
+	OrganizationDepartmentCreateInput,
+	OrganizationDepartmentFindInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -36,9 +36,10 @@ export class OrganizationDepartmentsService {
 	}
 
 	getAll(
+		relations?: string[],
 		findInput?: OrganizationDepartmentFindInput
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
 			.get<{ items: OrganizationDepartment[]; total: number }>(
@@ -47,6 +48,16 @@ export class OrganizationDepartmentsService {
 					params: { data }
 				}
 			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	update(
+		id: string,
+		updateInput: OrganizationDepartmentCreateInput
+	): Promise<any> {
+		return this.http
+			.put(`/api/organization-department/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

@@ -84,7 +84,7 @@ export class InviteMutationComponent implements OnInit {
 	}
 
 	async loadDepartments() {
-		const res = await this.organizationDepartmentsService.getAll({
+		const res = await this.organizationDepartmentsService.getAll([], {
 			organizationId: this.selectedOrganizationId
 		});
 		this.organizationDepartments = res.items;

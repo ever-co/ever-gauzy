@@ -33,7 +33,7 @@ export interface OrganizationClientsFindInput extends IBaseEntityModel {
 	notes?: string;
 }
 
-export interface OrganizationClientsCreateInput {
+export interface OrganizationClientsCreateInput extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	primaryEmail: string;
