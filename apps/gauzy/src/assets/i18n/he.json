@@ -112,7 +112,9 @@
 			"PROJECTS_OPTIONAL": "Projects (Optional)",
 			"CLIENTS_OPTIONAL": "Clients (Optional)",
 			"DEPARTMENTS_OPTIONAL": "Departments (Optional)",
-			"PROJECTS": "פרויקטים"
+			"PROJECTS": "פרויקטים",
+			"ADD_NEW_DEPARTMENT": "Add New Department",
+			"EDIT_DEPARTMENT": "Edit Department"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -159,7 +161,8 @@
 			"NUMBER_FORMAT": "Select Number Format",
 			"REGIONS": "Select Region",
 			"REMOVE_IMAGE": "Remove image",
-			"UPLOADER_PLACEHOLDER": "תמונה"
+			"UPLOADER_PLACEHOLDER": "תמונה",
+			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -324,7 +327,9 @@
 			"TEAMS": "Teams",
 			"ADD_NEW_CLIENT": "הוסף לקוח חדש",
 			"GENERAL_SETTINGS": "General Settings",
-			"DESIGN": "Design"
+			"DESIGN": "Design",
+			"CLICK_EMPLOYEE": "Click to edit employee",
+			"EDIT_PROJECT": "Edit Project"
 		}
 	},
 	"PROPOSALS_PAGE": {
