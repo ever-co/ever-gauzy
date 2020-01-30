@@ -112,7 +112,9 @@
 			"PROJECTS_OPTIONAL": "Проекты (необязательно)",
 			"CLIENTS_OPTIONAL": "Клиенты (необязательно)",
 			"DEPARTMENTS_OPTIONAL": "Отделы (необязательно)",
-			"PROJECTS": "Проекты"
+			"PROJECTS": "Проекты",
+			"ADD_NEW_DEPARTMENT": "Добавить новый отдел",
+			"EDIT_DEPARTMENT": "Редактировать отдел"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -159,7 +161,8 @@
 			"NUMBER_FORMAT": "Выберите формат чисел",
 			"REGIONS": "Выберите регион",
 			"REMOVE_IMAGE": "Remove image",
-			"UPLOADER_PLACEHOLDER": "Изображение"
+			"UPLOADER_PLACEHOLDER": "Изображение",
+			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -324,7 +327,9 @@
 			"TEAMS": "Команды",
 			"ADD_NEW_CLIENT": "Добавить клиента",
 			"GENERAL_SETTINGS": "Общие настройки",
-			"DESIGN": "Дизайн"
+			"DESIGN": "Дизайн",
+			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
+			"EDIT_PROJECT": "Редактировать проект"
 		}
 	},
 	"PROPOSALS_PAGE": {
