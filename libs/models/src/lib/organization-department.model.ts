@@ -1,5 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
+import { Employee } from './employee.model';
 
 export interface OrganizationDepartment extends IBaseEntityWithMembers {
 	name: string;
@@ -18,5 +19,6 @@ export interface OrganizationDepartmentFindByMemberInput
 
 export interface OrganizationDepartmentCreateInput {
 	name: string;
+	members?: Employee[];
 	organizationId: string;
 }

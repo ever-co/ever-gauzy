@@ -45,6 +45,11 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
 import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
 import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
+import { EditOrganizationDepartmentsMutationComponent } from './edit-organization-departments/edit-organization-departments-mutation/edit-organization-departments-mutation.component';
+import { EntityWithMembersModule } from 'apps/gauzy/src/app/@shared/entity-with-members-card/entity-with-members-card.module';
+import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/employee-multi-select/employee-multi-select.module';
+import { EditOrganizationClientMutationComponent } from './edit-organization-clients/edit-organization-clients-mutation/edit-organization-clients-mutation.component';
+import { EditOrganizationProjectsMutationComponent } from './edit-organization-projects/edit-organization-projects-mutation/edit-organization-projects-mutation.component';
 
 @NgModule({
 	imports: [
@@ -77,7 +82,9 @@ import { EditOrganizationVendorsComponent } from './edit-organization-vendors/ed
 		NbTabsetModule,
 		NbRouteTabsetModule,
 		NbDatepickerModule,
-		EmployeeSelectorsModule
+		EmployeeSelectorsModule,
+		EntityWithMembersModule,
+		EmployeeMultiSelectModule
 	],
 	providers: [
 		OrganizationDepartmentsService,
@@ -99,7 +106,10 @@ import { EditOrganizationVendorsComponent } from './edit-organization-vendors/ed
 		EditOrganizationProjectsComponent,
 		EditOrganizationTeamsComponent,
 		EditOrganizationTeamsMutationComponent,
-		EditOrganizationOtherSettingsComponent
+		EditOrganizationOtherSettingsComponent,
+		EditOrganizationDepartmentsMutationComponent,
+		EditOrganizationClientMutationComponent,
+		EditOrganizationProjectsMutationComponent
 	]
 })
 export class EditOrganizationSettingsModule {}

@@ -2,175 +2,66 @@
 	<nb-card-header>
 		<button
 			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard; this.loadClients()"
+			(click)="showAddCard = !showAddCard"
 			nbButton
 			status="success"
 		>
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<nb-card *ngIf="showAddCard">
-			<nb-card-header>{{
-				'ORGANIZATIONS_PAGE.EDIT.NEW_PROJECT' | translate
-			}}</nb-card-header>
-			<nb-card-body>
-				<div class="form-group">
-					<button
-						class="mr-2"
-						(click)="
-							addProject({
-								organizationId: organizationId,
-								name: name.value,
-								client: selectedClient,
-								type: selectedType ? selectedType : 'RATE',
-								currency: selectedCurrency
-									? selectedCurrency
-									: defaultCurrency,
-								startDate: startDateValue,
-								endDate: endDateValue
-							})
-						"
-						nbButton
-						status="success"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-					<button
-						(click)="showAddCard = !showAddCard"
-						nbButton
-						status="danger"
-					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button>
-				</div>
-				<form class="row">
-					<div class="form-group col-4">
-						<input
-							type="text"
-							#name
-							nbInput
-							fullWidth
-							placeholder="{{
-								'FORM.PLACEHOLDERS.NAME' | translate
-							}}"
-						/>
-					</div>
-					<div class="form-group col-4">
-						<nb-select
-							(selectedChange)="onClientsSelected($event)"
-							fullWidth
-							placeholder="{{
-								'FORM.PLACEHOLDERS.CLIENTS' | translate
-							}}"
-						>
-							<nb-option
-								*ngFor="let client of clients"
-								value="{{ client.id }}"
-								>{{ client.name }}</nb-option
-							>
-						</nb-select>
-					</div>
-					<div class="form-group col-4">
-						<nb-select
-							fullWidth
-							placeholder="{{
-								'FORM.PLACEHOLDERS.TYPE' | translate
-							}}"
-							[(selected)]="selectedType"
-						>
-							<nb-option
-								*ngFor="let type of types"
-								[value]="type"
-							>
-								{{ 'SM_TABLE.' + type | translate }}
-							</nb-option>
-						</nb-select>
-					</div>
-					<div class="form-group col-4">
-						<nb-select
-							fullWidth
-							placeholder="{{
-								'FORM.PLACEHOLDERS.CURRENCY' | translate
-							}}"
-							[(selected)]="selectedCurrency"
-						>
-							<nb-option
-								*ngFor="let currency of currencies"
-								value="{{ currency }}"
-								>{{ currency }}
-							</nb-option>
-						</nb-select>
-					</div>
-
-					<div class="form-group col-4">
-						<input
-							[nbDatepicker]="startDate"
-							nbInput
-							fullWidth
-							[(ngModel)]="startDateValue"
-							[ngModelOptions]="{ standalone: true }"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.START_DATE_PROJECT'
-									| translate
-							}}"
-						/>
-						<nb-datepicker #startDate></nb-datepicker>
-					</div>
-					<div class="form-group col-4">
-						<input
-							[nbDatepicker]="endDate"
-							nbInput
-							fullWidth
-							[(ngModel)]="endDateValue"
-							[ngModelOptions]="{ standalone: true }"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
-							}}"
-						/>
-						<nb-datepicker #endDate></nb-datepicker>
-					</div>
-				</form>
-			</nb-card-body>
-		</nb-card>
+		<ga-edit-organization-projects-mutation
+			*ngIf="showAddCard"
+			[employees]="employees"
+			[organization]="organization"
+			[project]="projectToEdit"
+			[clients]="clients"
+			(canceled)="cancel()"
+			(addOrEditProject)="addOrEditProject($event)"
+		>
+		</ga-edit-organization-projects-mutation>
 	</nb-card-header>
-	<nb-card-body *ngIf="projects?.length">
-		<div class="ml-3 mr-3 mb-3 row">
-			<div class="col-2 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.NAME' | translate }}
+	<nb-card-body class="project-list" *ngIf="projects?.length">
+		<ga-entity-with-members-card
+			*ngFor="let p of projects"
+			[entityWithMembers]="p"
+			(remove)="removeProject(p.id, p.name)"
+			(edit)="editProject(p)"
+			class="member-card"
+		>
+			<div class="client-info">
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.CLIENT' | translate }}
+					</div>
+					<div class="info-value">{{ p.client?.name }}</div>
+				</div>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.START_DATE' | translate }}
+					</div>
+					<div class="info-value">{{ p.startDate | date }}</div>
+				</div>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.END_DATE' | translate }}
+					</div>
+					<div class="info-value">{{ p.endDate | date }}</div>
+				</div>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.TYPE' | translate }}
+					</div>
+					<div class="info-value">
+						{{ p.type | removeLodash | titlecase }}
+					</div>
+				</div>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.CURRENCY' | translate }}
+					</div>
+					<div class="info-value">{{ p.currency }}</div>
+				</div>
 			</div>
-			<div class="col d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.CLIENT' | translate }}
-			</div>
-			<div class="col-2 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.START_DATE' | translate }}
-			</div>
-			<div class="col d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.END_DATE' | translate }}
-			</div>
-			<div class="col d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.TYPE' | translate }}
-			</div>
-			<div class="col d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.CURRENCY' | translate }}
-			</div>
-		</div>
-		<br />
-		<div *ngFor="let project of projects" class="ml-3 mr-3 mb-3 row">
-			<div class="col-2 d-inline">{{ project.name }}</div>
-			<div class="col d-inline">{{ project.client?.name }}</div>
-			<div class="col d-inline">{{ project.startDate | date }}</div>
-			<div class="col d-inline">{{ project.endDate | date }}</div>
-			<div class="col d-inline text-left">
-				{{ project.type | removeLodash | titlecase }}
-			</div>
-			<div class="col d-inline text-center">{{ project.currency }}</div>
-			<nb-actions class="float-right" e="medium">
-				<nb-action
-					(click)="removeProject(project.id, project.name)"
-					class="d-inline pr-0"
-					icon="close"
-				></nb-action>
-			</nb-actions>
-		</div>
+		</ga-entity-with-members-card>
 	</nb-card-body>
 </nb-card>

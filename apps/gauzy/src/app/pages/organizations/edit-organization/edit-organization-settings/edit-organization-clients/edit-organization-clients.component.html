@@ -1,181 +1,76 @@
 <nb-card>
 	<nb-card-header>
-		<button
-			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard; loadProjects()"
-			nbButton
-			status="success"
-		>
+		<button *ngIf="!showAddCard" (click)="add()" nbButton status="success">
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<nb-card *ngIf="showAddCard">
-			<nb-card-header>{{
-				'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CLIENT' | translate
-			}}</nb-card-header>
-			<nb-card-body>
-				<div class="form-group">
-					<button
-						class="mr-2"
-						(click)="
-							addClient({
-								organizationId: organizationId,
-								name: name.value,
-								primaryEmail: email.value,
-								primaryPhone: phone.value,
-								country: country.value,
-								city: city.value,
-								street: street.value,
-								projects: getSelectProjects()
-							})
-						"
-						nbButton
-						status="success"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-					<button
-						(click)="showAddCard = !showAddCard"
-						nbButton
-						status="danger"
-					>
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button>
-				</div>
-				<form class="row">
-					<div class="form-group col-4">
-						<input
-							type="text"
-							#name
-							nbInput
-							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.EDIT.NAME' | translate
-							}}"
-						/>
-					</div>
-					<div class="form-group col-4">
-						<input
-							type="email"
-							#email
-							nbInput
-							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL'
-									| translate
-							}}"
-						/>
-					</div>
-					<div class="form-group col-4">
-						<input
-							type="text"
-							#phone
-							nbInput
-							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
-							}}"
-						/>
-					</div>
-					<div class="form-group col-4">
-						<input
-							type="text"
-							#country
-							nbInput
-							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate
-							}}"
-						/>
-					</div>
-					<div class="form-group col-4">
-						<input
-							type="text"
-							#city
-							nbInput
-							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.EDIT.CITY' | translate
-							}}"
-						/>
-					</div>
-					<div class="form-group col-4">
-						<input
-							#street
-							type="text"
-							nbInput
-							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.EDIT.STREET' | translate
-							}}"
-						/>
-					</div>
-					<div class="form-group col-4">
-						<nb-select
-							[(selected)]="selectProjects"
-							multiple
-							fullWidth
-							placeholder="{{
-								'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
-							}}"
-						>
-							<nb-option
-								*ngFor="let p of projects"
-								value="{{ getStringValue(p) }}"
-								>{{ p.name }}</nb-option
-							>
-						</nb-select>
-					</div>
-				</form>
-			</nb-card-body>
-		</nb-card>
+		<ga-edit-organization-clients-mutation
+			*ngIf="showAddCard"
+			[employees]="employees"
+			[organizationId]="organizationId"
+			[client]="clientToEdit"
+			[projectsWithoutClients]="projectsWithoutClients"
+			(canceled)="cancel()"
+			(addOrEditClient)="addOrEditClient($event)"
+		>
+		</ga-edit-organization-clients-mutation>
 	</nb-card-header>
-	<nb-card-body *ngIf="clients?.length">
-		<div class="ml-3 mr-3 mb-3 row">
-			<div class="col-1 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.NAME' | translate }}
-			</div>
-			<div class="col-2 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate }}
-			</div>
-			<div class="col-2 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
-			</div>
-			<div class="col-1 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate }}
-			</div>
-			<div class="col-1 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.CITY' | translate }}
-			</div>
-			<div class="col-2 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.STREET' | translate }}
-			</div>
-			<div class="col-2 d-inline">
-				{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
-			</div>
-			<div class="col-1 d-inline"></div>
-		</div>
-		<nb-card *ngFor="let c of clients">
-			<nb-card-body class="d-flex">
-				<div class="col-1 d-inline">{{ c.name }}</div>
-				<div class="col-2 d-inline">{{ c.primaryEmail }}</div>
-				<div class="col-2 d-inline">{{ c.primaryPhone }}</div>
-				<div class="col-1 d-inline">{{ c.country }}</div>
-				<div class="col-1 d-inline">{{ c.city }}</div>
-				<div class="col-2 d-inline">{{ c.street }}</div>
 
-				<div class="col-2 d-inline-block">
-					<div *ngFor="let p of c.projects">{{ p.name }}</div>
+	<nb-card-body class="client-list" *ngIf="clients?.length">
+		<ga-entity-with-members-card
+			*ngFor="let c of clients"
+			[entityWithMembers]="c"
+			(remove)="removeClient(c.id, c.name)"
+			(edit)="editClient(c)"
+			class="member-card"
+		>
+			<div class="client-info">
+				<div class="info-line">
+					<div class="info-meta">
+						{{
+							'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
+						}}
+					</div>
+					<div class="info-value">{{ c.primaryEmail }}</div>
 				</div>
-
-				<nb-actions class="float-right col-1" e="medium">
-					<nb-action
-						(click)="removeClient(c.id, c.name)"
-						class="d-inline pr-0"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate }}
+					</div>
+					<div class="info-value">{{ c.primaryPhone }}</div>
+				</div>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate }}
+					</div>
+					<div class="info-value">{{ c.country }}</div>
+				</div>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.CITY' | translate }}
+					</div>
+					<div class="info-value">{{ c.city }}</div>
+				</div>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.STREET' | translate }}
+					</div>
+					<div class="info-value">{{ c.street }}</div>
+				</div>
+				<div class="info-line">
+					<div class="info-meta">
+						{{ 'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate }}
+					</div>
+					<div class="info-value">
+						<div
+							class="info-list-item"
+							*ngFor="let p of c.projects"
+						>
+							{{ p.name }}
+						</div>
+					</div>
+				</div>
+			</div>
+		</ga-entity-with-members-card>
 	</nb-card-body>
 </nb-card>

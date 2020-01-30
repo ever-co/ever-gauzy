@@ -1,0 +1,104 @@
+<nb-card>
+	<nb-card-header>{{
+		(project
+			? 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT'
+			: 'ORGANIZATIONS_PAGE.EDIT.NEW_PROJECT') | translate
+	}}</nb-card-header>
+	<nb-card-body>
+		<div class="form-group">
+			<button
+				class="mr-2"
+				(click)="submitForm()"
+				nbButton
+				status="success"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button (click)="cancel()" nbButton status="danger">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+		</div>
+		<form [formGroup]="form" class="row">
+			<div class="form-group col-4">
+				<input
+					type="text"
+					#name
+					nbInput
+					fullWidth
+					formControlName="name"
+					placeholder="{{ 'FORM.PLACEHOLDERS.NAME' | translate }}"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<nb-select
+					fullWidth
+					formControlName="client"
+					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+				>
+					<nb-option
+						*ngFor="let client of clients"
+						value="{{ client.id }}"
+						>{{ client.name }}</nb-option
+					>
+				</nb-select>
+			</div>
+			<div class="form-group col-4">
+				<nb-select
+					fullWidth
+					placeholder="{{ 'FORM.PLACEHOLDERS.TYPE' | translate }}"
+					formControlName="type"
+				>
+					<nb-option *ngFor="let type of types" [value]="type">
+						{{ 'SM_TABLE.' + type | translate }}
+					</nb-option>
+				</nb-select>
+			</div>
+			<div class="form-group col-4">
+				<nb-select
+					fullWidth
+					placeholder="{{ 'FORM.PLACEHOLDERS.CURRENCY' | translate }}"
+					formControlName="currency"
+				>
+					<nb-option
+						*ngFor="let currency of currencies"
+						value="{{ currency }}"
+						>{{ currency }}
+					</nb-option>
+				</nb-select>
+			</div>
+
+			<div class="form-group col-4">
+				<input
+					[nbDatepicker]="startDate"
+					nbInput
+					fullWidth
+					formControlName="startDate"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate
+					}}"
+				/>
+				<nb-datepicker #startDate></nb-datepicker>
+			</div>
+			<div class="form-group col-4">
+				<input
+					[nbDatepicker]="endDate"
+					nbInput
+					fullWidth
+					formControlName="endDate"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
+					}}"
+				/>
+				<nb-datepicker #endDate></nb-datepicker>
+			</div>
+			<div class="form-group col-4">
+				<ga-employee-multi-select
+					[selectedEmployeeIds]="selectedEmployeeIds"
+					[allEmployees]="employees"
+					(selectedChange)="onMembersSelected($event)"
+				>
+				</ga-employee-multi-select>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>

@@ -1,4 +1,7 @@
-import { EditEntityByMemberInput } from '@gauzy/models';
+import {
+	EditEntityByMemberInput,
+	OrganizationDepartmentCreateInput
+} from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -14,6 +17,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationDepartmentEditByEmployeeCommand } from './commands/organization-department.edit-by-employee.command';
+import { OrganizationDepartmentUpdateCommand } from './commands/organization-department.update.command';
 import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
 
@@ -64,9 +68,12 @@ export class OrganizationDepartmentController extends CrudController<
 	async findAllOrganizationDepartments(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationDepartment>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput, relations } = JSON.parse(data);
 
-		return this.organizationDepartmentService.findAll({ where: findInput });
+		return this.organizationDepartmentService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -90,6 +97,31 @@ export class OrganizationDepartmentController extends CrudController<
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationDepartmentEditByEmployeeCommand(entity)
+		);
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	async update(
+		@Param('id') id: string,
+		@Body() entity: OrganizationDepartmentCreateInput
+	): Promise<any> {
+		return this.commandBus.execute(
+			new OrganizationDepartmentUpdateCommand(id, entity)
 		);
 	}
 }

@@ -1,0 +1,78 @@
+<nb-card style="padding: 0 !important" class="card-body">
+	<nb-card-header style="padding: 0.5rem;">
+		<div class="header-container">
+			<div>{{ entityWithMembers.name }}</div>
+			<div class="members-count">
+				{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
+				{{
+					entityWithMembers.members
+						? entityWithMembers.members.length
+						: 0
+				}}
+			</div>
+			<ng-content></ng-content>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body class="team-card">
+		<div
+			*ngIf="
+				entityWithMembers.members &&
+				entityWithMembers.members.length > 0
+			"
+		>
+			<div
+				class="name-container"
+				*ngFor="let member of entityWithMembers.members"
+			>
+				<div class="image-container">
+					<a
+						href="/#/pages/employees/edit/{{
+							member.id
+						}}/profile/main"
+						target="_blank"
+					>
+						<img
+							nbTooltip="{{
+								'ORGANIZATIONS_PAGE.EDIT.CLICK_EMPLOYEE'
+									| translate
+							}}"
+							[src]="member.user.imageUrl"
+						/>
+					</a>
+				</div>
+				<span
+					>{{ member.user.firstName }}
+					{{ member.user.lastName }}
+				</span>
+			</div>
+		</div>
+
+		<div class="button-container">
+			<button
+				nbButton
+				class="mr-2"
+				status="info"
+				size="tiny"
+				(click)="
+					editEntity(entityWithMembers.id, entityWithMembers.name)
+				"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				size="tiny"
+				class="mr-2"
+				nbButton
+				(click)="
+					removeEntity(entityWithMembers.id, entityWithMembers.name)
+				"
+				status="danger"
+			>
+				<nb-icon class="mr-2" icon="trash-2-outline"></nb-icon
+				>{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+	</nb-card-body>
+</nb-card>

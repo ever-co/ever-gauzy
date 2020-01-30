@@ -1,48 +1,42 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
+import { Component, OnInit } from '@angular/core';
 import {
-	OrganizationProjects,
+	Employee,
+	Organization,
 	OrganizationClients,
-	OrganizationProjectsCreateInput,
-	ProjectTypeEnum,
-	CurrenciesEnum
+	OrganizationProjects,
+	OrganizationProjectsCreateInput
 } from '@gauzy/models';
-import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
+import { NbToastrService } from '@nebular/theme';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { first, takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-edit-org-projects',
-	templateUrl: './edit-organization-projects.component.html'
+	templateUrl: './edit-organization-projects.component.html',
+	styleUrls: ['./edit-organization-projects.component.scss']
 })
 export class EditOrganizationProjectsComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
-	organizationId: string;
-
+	organization: Organization;
 	showAddCard: boolean;
-
 	projects: OrganizationProjects[];
 	clients: OrganizationClients[];
-	types: string[] = Object.values(ProjectTypeEnum);
-	currencies: string[] = Object.values(CurrenciesEnum);
-
-	selectedClient: OrganizationClients;
-	selectedType: string;
-	selectedCurrency: string;
-	startDateValue: Date;
-	endDateValue: Date;
-	defaultCurrency: string;
+	employees: Employee[] = [];
+	projectToEdit: OrganizationProjects;
 
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private store: Store,
-		private readonly organizationEditStore: OrganizationEditStore
+		private readonly organizationEditStore: OrganizationEditStore,
+		private readonly employeesService: EmployeesService
 	) {}
 
 	ngOnInit(): void {
@@ -50,10 +44,25 @@ export class EditOrganizationProjectsComponent implements OnInit {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
-					this.organizationId = organization.id;
+					this.organization = organization;
 					this.loadProjects();
+					this.loadEmployees();
+					this.loadClients();
 				}
 			});
+	}
+
+	private async loadEmployees() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { items } = await this.employeesService
+			.getAll(['user'], { organization: { id: this.organization.id } })
+			.pipe(first())
+			.toPromise();
+
+		this.employees = items;
 	}
 
 	async removeProject(id: string, name: string) {
@@ -67,19 +76,12 @@ export class EditOrganizationProjectsComponent implements OnInit {
 		this.loadProjects();
 	}
 
-	async onClientsSelected(id) {
-		const res = await this.organizationClientsService.getAll(['projects'], {
-			id
-		});
-
-		if (res) {
-			this.selectedClient = res.items[0];
-		} else {
-			this.selectedClient = null;
-		}
+	cancel() {
+		this.projectToEdit = null;
+		this.showAddCard = !this.showAddCard;
 	}
 
-	private async addProject(project: OrganizationProjectsCreateInput) {
+	private async addOrEditProject(project: OrganizationProjectsCreateInput) {
 		if (project.name) {
 			await this.organizationProjectsService.create(project);
 
@@ -88,8 +90,8 @@ export class EditOrganizationProjectsComponent implements OnInit {
 				'Success'
 			);
 
+			this.projectToEdit = null;
 			this.showAddCard = !this.showAddCard;
-			this.selectedClient = null;
 			this.loadProjects();
 		} else {
 			this.toastrService.danger(
@@ -100,32 +102,36 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	}
 
 	private async loadProjects() {
-		if (!this.organizationId) {
+		if (!this.organization) {
 			return;
 		}
 
-		this.defaultCurrency = this.store.selectedOrganization
-			? this.store.selectedOrganization.currency
-			: 'USD';
-
-		const res = await this.organizationProjectsService.getAll(['client'], {
-			organizationId: this.organizationId
-		});
+		const res = await this.organizationProjectsService.getAll(
+			['client', 'members', 'members.user'],
+			{
+				organizationId: this.organization.id
+			}
+		);
 		if (res) {
 			this.projects = res.items;
 		}
 	}
 
 	private async loadClients() {
-		if (!this.organizationId) {
+		if (!this.organization) {
 			return;
 		}
 
 		const res = await this.organizationClientsService.getAll(['projects'], {
-			organizationId: this.organizationId
+			organizationId: this.organization.id
 		});
 		if (res) {
 			this.clients = res.items;
 		}
+	}
+
+	async editProject(project: OrganizationProjects) {
+		this.projectToEdit = project;
+		this.showAddCard = true;
 	}
 }
