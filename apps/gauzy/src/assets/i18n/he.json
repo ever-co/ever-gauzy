@@ -244,6 +244,19 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
+		"PROFIT_HISTORY": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "סך ההוצאות",
+			"TOTAL_INCOME": "הכנסה כוללת",
+			"TOTAL_PROFIT": "Total Profit"
+		},
+		"TITLE": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "סך ההוצאות",
+			"TOTAL_INCOME": "הכנסה כוללת",
+			"PROFIT": "רווח",
+			"TOTAL_BONUS": "Total Bonus"
+		},
 		"DEVELOPER": {
 			"DEVELOPER": "מפתח",
 			"AVERAGE_BONUS": "Average Monthly Bonus",
@@ -480,6 +493,17 @@
 			"OK": "OK",
 			"CANCEL": "בטל",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
+		}
+	},
+	"ACCEPT_INVITE": {
+		"ACCEPT_INVITE_FORM": {
+			"FULL_NAME": "שם מלא",
+			"ENTER_YOUR_FULL_NAME": "Enter Your Full Name",
+			"PASSWORD": "סיסמה",
+			"REPEAT_PASSWORD": "Repeat Password",
+			"AGREE_TO": "Agree to",
+			"TERMS_AND_CONDITIONS": "Terms & Conditions",
+			"COMPLETE_REGISTRATION": "Complete Registration"
 		}
 	}
 }
