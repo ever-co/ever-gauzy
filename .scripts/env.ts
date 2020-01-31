@@ -2,7 +2,7 @@
 // We are using dotenv (.env) for consistency with other Platform projects
 // This is Angular app and all settings will be loaded into the client browser!
 
-import { cleanEnv, num, str, bool } from 'envalid';
+import { cleanEnv, str, bool } from 'envalid';
 
 export type Env = Readonly<{
 	production: boolean;

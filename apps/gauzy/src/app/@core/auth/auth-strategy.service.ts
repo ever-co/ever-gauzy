@@ -80,7 +80,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		const { email, password } = args;
 
 		// TODO implement remember me feature
-		const rememberMe = !!args.rememberMe;
+		// const rememberMe = !!args.rememberMe;
 
 		const loginInput = {
 			findObj: {
