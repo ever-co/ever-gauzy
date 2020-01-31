@@ -5,9 +5,7 @@
 				<div class="col">
 					<nb-card>
 						<nb-card-header>
-							{{
-								'FORM.RATES.DEFAULT_RATE' | translate
-							}}
+							{{ 'FORM.RATES.DEFAULT_RATE' | translate }}
 						</nb-card-header>
 						<nb-card-body>
 							<div class="form-group">
@@ -74,6 +72,7 @@
 										}}"
 										class="d-block"
 										size="medium"
+										disabled
 									>
 										<nb-option
 											*ngFor="let currency of currencies"
@@ -90,10 +89,7 @@
 				<div class="col">
 					<nb-card>
 						<nb-card-header>
-							{{
-								'FORM.RATES.LIMITS'
-									| translate
-							}}
+							{{ 'FORM.RATES.LIMITS' | translate }}
 						</nb-card-header>
 						<nb-card-body>
 							<div class="form-group">

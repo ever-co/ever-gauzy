@@ -200,7 +200,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			const month = ('0' + editExpense.month).slice(-2);
 			this.date = `${editExpense.year}-${month}`;
 			this.editExpenseId = editExpense.id;
-
+			this.selectedCurrency =
+				editExpense.currency || this.selectedOrg.currency;
 			this.showAddCard = true;
 		}
 	}
@@ -215,7 +216,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadOrgRecurringExpense() {
-		
 		if (this.selectedOrg && this.selectedDate) {
 			this.selectedOrgRecurringExpense = (await this.organizationRecurringExpenseService.getAll(
 				[],
@@ -227,7 +227,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			)).items;
 			this.loading = false;
 		}
-
 	}
 
 	private clearMutationCard() {

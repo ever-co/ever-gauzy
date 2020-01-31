@@ -18,7 +18,7 @@
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 		</div>
-		<form [formGroup]="form" class="row">
+		<form [formGroup]="form" *ngIf="form" class="row">
 			<div class="form-group col-4">
 				<input
 					type="text"
@@ -58,6 +58,7 @@
 					fullWidth
 					placeholder="{{ 'FORM.PLACEHOLDERS.CURRENCY' | translate }}"
 					formControlName="currency"
+					disabled
 				>
 					<nb-option
 						*ngFor="let currency of currencies"

@@ -1,10 +1,16 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { CurrenciesEnum, Employee, PayPeriodEnum } from '@gauzy/models';
+import {
+	CurrenciesEnum,
+	Employee,
+	OrganizationSelectInput,
+	PayPeriodEnum
+} from '@gauzy/models';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
+import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
 import { Subject, Subscription } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-edit-employee-rates',
@@ -24,7 +30,8 @@ export class EditEmployeeRatesComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private fb: FormBuilder,
-		private employeeStore: EmployeeStore
+		private employeeStore: EmployeeStore,
+		private readonly organizationsService: OrganizationsService
 	) {}
 
 	ngOnInit() {
@@ -46,11 +53,17 @@ export class EditEmployeeRatesComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _initializeForm(employee: Employee) {
+	private async _initializeForm(employee: Employee) {
+		const currencyValue =
+			employee.billRateCurrency ||
+			(await this.getDefaultCurrency(employee));
+
+		console.log(employee.billRateCurrency, !!employee.billRateCurrency);
+
 		this.form = this.fb.group({
 			payPeriod: [employee.payPeriod],
 			billRateValue: [employee.billRateValue],
-			billRateCurrency: [employee.billRateCurrency],
+			billRateCurrency: [currencyValue],
 			reWeeklyLimit: [
 				employee.reWeeklyLimit,
 				Validators.compose([Validators.min(1), Validators.max(128)])
@@ -61,5 +74,14 @@ export class EditEmployeeRatesComponent implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	private async getDefaultCurrency(employee: Employee) {
+		const orgData = await this.organizationsService
+			.getById(employee.orgId, [OrganizationSelectInput.currency])
+			.pipe(first())
+			.toPromise();
+
+		return orgData.currency;
 	}
 }

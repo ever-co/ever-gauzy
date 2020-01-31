@@ -4,7 +4,7 @@ import { Component, Input } from '@angular/core';
 	selector: 'ga-income-amount',
 	template: `
 		<span
-			>{{ value }}
+			>{{ rowData.currency }} {{ value }}
 			<nb-icon
 				*ngIf="rowData?.isBonus"
 				nbTooltip="{{ 'INCOME_PAGE.BONUS_TOOLTIP' | translate }}"

@@ -55,11 +55,15 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 
 		this.form = this.fb.group({
 			name: [this.project ? this.project.name : ''],
-			client: [this.project ? this.project.client.id : ''],
+			client: [
+				this.project && this.project.client
+					? this.project.client.id
+					: ''
+			],
 			type: [this.project ? this.project.type : 'RATE'],
 			currency: [this.project ? this.project.currency : defaultCurrency],
-			startDate: [this.project ? this.project.startDate : undefined],
-			endDate: [this.project ? this.project.endDate : undefined]
+			startDate: [this.project ? this.project.startDate : null],
+			endDate: [this.project ? this.project.endDate : null]
 		});
 	}
 
