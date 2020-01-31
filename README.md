@@ -4,19 +4,36 @@
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ - Open-Source Profits Sharing Platform for modern agencies, studios and in-house teams
+Gauzy™ - Open-Source Profits Sharing Platform for modern agencies, studios and in-house teams. 
 
 -   **Open-Source Software** solving **fair sharing of technology**.
 -   **Stock Options** solving **fair sharing of profits _in the future_**.
 -   **Gauzy** solving **fair sharing of profits _today_**.
 
+Gauzy supports following schemas for Employee Bonus calculations:
+
+-  **Profit-based**, when employees get bonuses based on profits of the company from work done by given employee. 
+-  **Revenue-based**, when employees get bonuses based on revenue (gross income) from work done by given employee.
+
+In order to allow bonuses calculations, Gauzy Platform includes multiple features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
+- Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
+- Employees Management (register of company employees / contractors, rates of employees, etc.)
+- Income / Expenses Management
+- Proposals
+- Multiple Organizations Management
+- Organization Departments and Teams
+- Organization Clients, Projects and Vendors
+- Time Management (WIP)
+
+So, while the primary purpose of Gauzy Platform is to allow transparent and fair bonuses calculation, you can also use Gauzy software as a **Platform to run your outsourcing/freelance agency or studio business**. 
+
 Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your agency, studio or in-house teams
 
 Feel free to test:
 
-- Gauzy Platform Demo at <https://demo.gauzy.co> (login with `admin@ever.co` and password: `admin`)
-- Gauzy Platform SaaS at <https://app.gauzy.co> (WIP, planned)
-- Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev>
+- Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as demo, login with `admin@ever.co` and password: `admin`)
+- Gauzy Platform Demo at <https://demo.gauzy.co> (temporary shutdown)
+- Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary shutdown)
 
 ## Quick Start
 
