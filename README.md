@@ -18,12 +18,21 @@ Gauzy supports following schemas for Employee Bonus calculations:
 In order to allow bonuses calculations, Gauzy Platform includes multiple features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
 - Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
 - Employees Management (register of company employees / contractors, rates of employees, etc.)
+- Employees Onboarding (WIP)
 - Income / Expenses Management
 - Proposals
+- Sales Pipelines (WIP)
 - Multiple Organizations Management
 - Organization Departments and Teams
-- Organization Clients, Projects and Vendors
-- Time Management (WIP)
+- Organization Clients and Vendors
+- Days Off Management
+- Equipment Sharing (WIP)
+- Project Management (WIP)
+- Invoicing (WIP)
+- Billing (WIP)
+- Payments (WIP)
+- Time Management/Tracking (WIP)
+- Multi-currency
 
 So, while the primary purpose of Gauzy Platform is to allow transparent and fair bonuses calculation, you can also use Gauzy software as a **Platform to run your outsourcing/freelance agency or studio business**. 
 
