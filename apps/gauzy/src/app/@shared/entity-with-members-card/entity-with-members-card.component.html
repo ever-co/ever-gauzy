@@ -54,9 +54,7 @@
 				class="mr-2"
 				status="info"
 				size="tiny"
-				(click)="
-					editEntity(entityWithMembers.id, entityWithMembers.name)
-				"
+				(click)="editEntity(entityWithMembers.id)"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 				>{{ 'BUTTONS.EDIT' | translate }}
@@ -65,9 +63,7 @@
 				size="tiny"
 				class="mr-2"
 				nbButton
-				(click)="
-					removeEntity(entityWithMembers.id, entityWithMembers.name)
-				"
+				(click)="removeEntity(entityWithMembers.id)"
 				status="danger"
 			>
 				<nb-icon class="mr-2" icon="trash-2-outline"></nb-icon
