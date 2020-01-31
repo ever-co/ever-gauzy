@@ -112,7 +112,9 @@
 			"PROJECTS_OPTIONAL": "Projects (Optional)",
 			"CLIENTS_OPTIONAL": "Clients (Optional)",
 			"DEPARTMENTS_OPTIONAL": "Departments (Optional)",
-			"PROJECTS": "פרויקטים"
+			"PROJECTS": "פרויקטים",
+			"ADD_NEW_DEPARTMENT": "Add New Department",
+			"EDIT_DEPARTMENT": "Edit Department"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -159,7 +161,8 @@
 			"NUMBER_FORMAT": "Select Number Format",
 			"REGIONS": "Select Region",
 			"REMOVE_IMAGE": "Remove image",
-			"UPLOADER_PLACEHOLDER": "תמונה"
+			"UPLOADER_PLACEHOLDER": "תמונה",
+			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -241,6 +244,19 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
+		"PROFIT_HISTORY": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "סך ההוצאות",
+			"TOTAL_INCOME": "הכנסה כוללת",
+			"TOTAL_PROFIT": "Total Profit"
+		},
+		"TITLE": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "סך ההוצאות",
+			"TOTAL_INCOME": "הכנסה כוללת",
+			"PROFIT": "רווח",
+			"TOTAL_BONUS": "Total Bonus"
+		},
 		"DEVELOPER": {
 			"DEVELOPER": "מפתח",
 			"AVERAGE_BONUS": "Average Monthly Bonus",
@@ -324,7 +340,9 @@
 			"TEAMS": "Teams",
 			"ADD_NEW_CLIENT": "הוסף לקוח חדש",
 			"GENERAL_SETTINGS": "General Settings",
-			"DESIGN": "Design"
+			"DESIGN": "Design",
+			"CLICK_EMPLOYEE": "Click to edit employee",
+			"EDIT_PROJECT": "Edit Project"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -475,6 +493,17 @@
 			"OK": "OK",
 			"CANCEL": "בטל",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
+		}
+	},
+	"ACCEPT_INVITE": {
+		"ACCEPT_INVITE_FORM": {
+			"FULL_NAME": "שם מלא",
+			"ENTER_YOUR_FULL_NAME": "Enter Your Full Name",
+			"PASSWORD": "סיסמה",
+			"REPEAT_PASSWORD": "Repeat Password",
+			"AGREE_TO": "Agree to",
+			"TERMS_AND_CONDITIONS": "Terms & Conditions",
+			"COMPLETE_REGISTRATION": "Complete Registration"
 		}
 	}
 }
