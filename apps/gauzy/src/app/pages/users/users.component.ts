@@ -178,7 +178,8 @@ export class UsersComponent implements OnInit, OnDestroy {
 		for (const orgUser of items) {
 			if (
 				orgUser.isActive &&
-				orgUser.user.role.name !== RolesEnum.EMPLOYEE
+				(!orgUser.user.role ||
+					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
 			) {
 				usersVm.push({
 					fullName: `${orgUser.user.firstName || ''} ${orgUser.user
@@ -208,8 +209,6 @@ export class UsersComponent implements OnInit, OnDestroy {
 	}
 
 	private _loadSmartTableSettings() {
-		const dateNow = new Date();
-
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {

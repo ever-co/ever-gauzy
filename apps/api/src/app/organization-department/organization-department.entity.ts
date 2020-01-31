@@ -1,16 +1,7 @@
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	ManyToMany,
-	JoinTable
-} from 'typeorm';
+import { Column, Entity, Index, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Organization } from '../organization/organization.entity';
 import { OrganizationDepartment as IOrganizationDepartment } from '@gauzy/models';
 import { Employee } from '../employee';
 

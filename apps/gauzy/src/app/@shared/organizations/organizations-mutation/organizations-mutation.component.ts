@@ -1,11 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import {
-	CurrenciesEnum,
-	Organization,
-	DefaultValueDateTypeEnum
-} from '@gauzy/models';
+import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 @Component({
 	selector: 'ngx-organizations-mutation',

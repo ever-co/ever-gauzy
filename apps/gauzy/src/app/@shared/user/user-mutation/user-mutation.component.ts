@@ -1,12 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
-import { RolesEnum, Employee, UserOrganization } from '@gauzy/models';
+import { RolesEnum, UserOrganization } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { EmployeesService } from '../../../@core/services/employees.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
-import { UsersService } from '../../../@core/services';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 
 @Component({

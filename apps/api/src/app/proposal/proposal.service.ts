@@ -51,9 +51,7 @@ export class ProposalService extends CrudService<Proposal> {
 		proposal.jobPostContent = entity.jobPostContent;
 		proposal.proposalContent = entity.proposalContent;
 
-		const employee = await this.employeeRepository.findOneOrFail(
-			entity.employeeId
-		);
+		await this.employeeRepository.findOneOrFail(entity.employeeId);
 
 		return this.proposalRepository.save(proposal);
 	}

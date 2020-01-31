@@ -16,7 +16,6 @@ import {
 	IsNumber
 } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Organization } from '../organization/organization.entity';
 import { OrganizationClients as IOrganizationClients } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects';
 import { Employee } from '../employee';

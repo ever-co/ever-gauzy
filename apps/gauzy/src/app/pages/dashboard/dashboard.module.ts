@@ -23,7 +23,6 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EmployeeChartComponent } from './employee-chart/employee-chart.component';
-import { ProfitHistoryComponent } from '../../@shared/dashboard/profit-history/profit-history.component';
 import { ProfitHistoryModule } from '../../@shared/dashboard/profit-history/profit-history.module';
 import { OrganizationEmployeesComponent } from './organization-employees/organization-employees.component';
 import { SingleStatisticModule } from '../../@shared/single-statistic/single-statistic.module';

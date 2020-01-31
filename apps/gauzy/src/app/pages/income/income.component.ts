@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum, Income, Employee } from '@gauzy/models';
-import { Subject, Observable, forkJoin } from 'rxjs';
+import { RolesEnum, Income } from '@gauzy/models';
+import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { IncomeService } from '../../@core/services/income.service';

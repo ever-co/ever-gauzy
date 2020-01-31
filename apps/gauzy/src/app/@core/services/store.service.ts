@@ -1,5 +1,5 @@
 import { User, Organization, DefaultValueDateTypeEnum } from '@gauzy/models';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 

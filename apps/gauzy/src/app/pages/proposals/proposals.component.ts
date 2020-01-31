@@ -5,7 +5,7 @@ import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { Proposal } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { ProposalsService } from '../../@core/services/proposals.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';

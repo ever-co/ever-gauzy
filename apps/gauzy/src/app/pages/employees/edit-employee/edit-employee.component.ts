@@ -103,12 +103,7 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 
 	async addEmployeeRecurringExpense() {
 		// TODO get currency from the page dropdown
-		let currency;
 		const organization = this.store.selectedOrganization;
-
-		if (organization) {
-			currency = organization.currency;
-		}
 
 		const result = await this.dialogService
 			.open(EmployeeRecurringExpenseMutationComponent)
@@ -246,13 +241,14 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployeeRecurringExpense() {
-		this.selectedEmployeeRecurringExpense = (
-			await this.employeeRecurringExpenseService.getAll([], {
+		this.selectedEmployeeRecurringExpense = (await this.employeeRecurringExpenseService.getAll(
+			[],
+			{
 				employeeId: this.selectedEmployee.id,
 				year: this.selectedDate.getFullYear(),
 				month: this.selectedDate.getMonth() + 1
-			})
-		).items;
+			}
+		)).items;
 	}
 
 	ngOnDestroy() {

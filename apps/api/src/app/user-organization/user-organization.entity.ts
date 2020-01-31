@@ -2,8 +2,6 @@ import {
 	Entity,
 	Index,
 	Column,
-	ManyToOne,
-	ManyToMany,
 	JoinColumn,
 	RelationId,
 	OneToOne

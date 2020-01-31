@@ -49,7 +49,7 @@ export class FileUploaderInputComponent {
 		if (this.uploader.queue.length > 0) {
 			this.uploader.queue[this.uploader.queue.length - 1].upload();
 		} else {
-			const image = await this._setupImage(newValue);
+			await this._setupImage(newValue);
 
 			this.uploadedImgUrl.emit(this.fileUrl);
 			this.oldValue = this.fileUrl;
@@ -62,19 +62,19 @@ export class FileUploaderInputComponent {
 		) => {
 			const data = JSON.parse(response);
 			this.fileUrl = data.url;
-			const locale = this.locale;
-			const width = data.width;
-			const height = data.height;
-			const orientation = width !== height ? (width > height ? 2 : 1) : 0;
-			const url = data.url;
+			// const locale = this.locale;
+			// const width = data.width;
+			// const height = data.height;
+			// const orientation = width !== height ? (width > height ? 2 : 1) : 0;
+			// const url = data.url;
 
-			const newImage = {
-				locale,
-				url,
-				width,
-				height,
-				orientation
-			};
+			// const newImage = {
+			// 	locale,
+			// 	url,
+			// 	width,
+			// 	height,
+			// 	orientation
+			// };
 
 			this.uploadedImgUrl.emit(data.url);
 			this.oldValue = this.fileUrl;

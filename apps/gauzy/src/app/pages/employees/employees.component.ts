@@ -342,7 +342,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		}
 
 		if (!this.includeDeleted) {
-			result.map((employee) => {
+			result.forEach((employee) => {
 				if (employee.isActive) {
 					employeesVm.push(employee);
 				}

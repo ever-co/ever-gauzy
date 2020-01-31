@@ -32,7 +32,7 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 	async findAllTimeOffPolicies(
 		@Query('data') data: string
 	): Promise<IPagination<ITimeOffPolicy>> {
-		const { relations, findInput, filterDate } = JSON.parse(data);
+		const { relations, findInput } = JSON.parse(data);
 
 		return this.policyService.getAllPolicies({
 			where: findInput,

@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, UpdateResult } from 'typeorm';
+import { Repository, FindManyOptions } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
@@ -10,7 +10,6 @@ import { Employee } from '../employee';
 import { IPagination } from '../core';
 import { User } from '../user';
 import { OrganizationTeams } from './organization-teams.entity';
-import { getRepository } from 'typeorm';
 
 @Injectable()
 export class OrganizationTeamsService extends CrudService<OrganizationTeams> {

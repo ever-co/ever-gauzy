@@ -18,8 +18,6 @@ import {
 	OrganizationTeams as IIOrganizationTeams
 } from '@gauzy/models';
 import { OrganizationTeams } from './organization-teams.entity';
-import { UpdateResult } from 'typeorm';
-
 @ApiTags('Organization-Teams')
 @Controller()
 export class OrganizationTeamsController extends CrudController<
