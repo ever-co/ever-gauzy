@@ -103,22 +103,18 @@ export class AuthService {
 	}
 
 	async register(input: IUserRegistrationInput): Promise<User> {
-		try {
-			const user = this.userService.create({
-				...input.user,
-				...(input.password
-					? {
-							hash: await this.getPasswordHash(input.password)
-					  }
-					: {})
-			});
+		const user = this.userService.create({
+			...input.user,
+			...(input.password
+				? {
+						hash: await this.getPasswordHash(input.password)
+				  }
+				: {})
+		});
 
-			this.emailService.welcomeUser(input.user);
+		this.emailService.welcomeUser(input.user);
 
-			return user;
-		} catch (err) {
-			throw err;
-		}
+		return user;
 	}
 
 	async isAuthenticated(token: string): Promise<boolean> {
@@ -148,7 +144,7 @@ export class AuthService {
 
 	async hasRole(token: string, roles: string[] = []): Promise<boolean> {
 		try {
-			const { id, role } = verify(token, env.JWT_SECRET) as {
+			const { role } = verify(token, env.JWT_SECRET) as {
 				id: string;
 				role: string;
 			};

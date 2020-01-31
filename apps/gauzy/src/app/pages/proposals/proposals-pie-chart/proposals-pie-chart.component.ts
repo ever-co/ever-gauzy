@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, Input, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
-import { delay, takeWhile } from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-proposals-pie-chart',

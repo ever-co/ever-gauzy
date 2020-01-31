@@ -1,7 +1,6 @@
 import { OnInit, OnDestroy, Component } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
-import * as moment from 'moment';
 import { Store } from '../../../@core/services/store.service';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';

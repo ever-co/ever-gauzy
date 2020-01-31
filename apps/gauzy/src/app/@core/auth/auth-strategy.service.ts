@@ -1,8 +1,8 @@
 import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import 'rxjs/add/observable/of';
-import { catchError, map, takeUntil } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { User } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
@@ -141,7 +141,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		confirmPassword: string;
 		terms: boolean;
 	}): Observable<NbAuthResult> {
-		const { email, fullName, password, confirmPassword, terms } = args;
+		const { email, fullName, password, confirmPassword } = args;
 
 		if (password !== confirmPassword) {
 			return Observable.of(

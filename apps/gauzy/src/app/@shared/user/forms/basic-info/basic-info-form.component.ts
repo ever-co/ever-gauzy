@@ -1,5 +1,5 @@
 import { Component, ViewChild, ElementRef, Input, OnInit } from '@angular/core';
-import { Validators, FormBuilder, Form } from '@angular/forms';
+import { Validators, FormBuilder } from '@angular/forms';
 import { User, RolesEnum } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';

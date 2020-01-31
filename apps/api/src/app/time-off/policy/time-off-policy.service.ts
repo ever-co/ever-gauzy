@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, EntityRepository } from 'typeorm';
+import { Repository, FindManyOptions } from 'typeorm';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { CrudService } from '../../core/crud/crud.service';
 import { IPagination } from '../../core';

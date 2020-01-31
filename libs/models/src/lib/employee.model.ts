@@ -1,9 +1,5 @@
 import { User } from '..';
-import {
-	Organization,
-	OrganizationFindInput,
-	CurrenciesEnum
-} from './organization.model';
+import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';

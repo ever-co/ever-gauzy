@@ -126,7 +126,7 @@ export class SeedDataService {
 				employees.defaultEmployees
 			);
 
-			const usersOrganizations = await createUsersOrganizations(
+			await createUsersOrganizations(
 				this.connection,
 				{
 					org: defaultOrganization,

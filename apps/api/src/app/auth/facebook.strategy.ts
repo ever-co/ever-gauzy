@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { use } from 'passport';
 import { environment as env } from '@env-api/environment';
-import { Provider, AuthService } from './auth.service';
+import { AuthService } from './auth.service';
 import { RoleService } from '../role/role.service';
-import { User, RolesEnum } from '@gauzy/models';
 
 const FacebookTokenStrategy = require('passport-facebook-token');
 

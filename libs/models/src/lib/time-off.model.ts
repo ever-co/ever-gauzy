@@ -1,6 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee } from './employee.model';
-import { OrganizationTeams } from '..';
 
 export interface TimeOffPolicy extends IBaseEntityModel {
 	employees?: Employee[];

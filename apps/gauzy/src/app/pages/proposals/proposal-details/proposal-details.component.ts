@@ -1,4 +1,4 @@
-import { Component, OnInit, SecurityContext } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { ProposalViewModel } from '../proposals.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
