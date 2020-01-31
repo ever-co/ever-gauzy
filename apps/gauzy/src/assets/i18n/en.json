@@ -494,5 +494,16 @@
 			"CANCEL": "Cancel",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
 		}
+	},
+	"ACCEPT_INVITE": {
+		"ACCEPT_INVITE_FORM": {
+			"FULL_NAME": "Full Name",
+			"ENTER_YOUR_FULL_NAME": "Enter Your Full Name",
+			"PASSWORD": "Password",
+			"REPEAT_PASSWORD": "Repeat Password",
+			"AGREE_TO": "Agree to",
+			"TERMS_AND_CONDITIONS": "Terms & Conditions",
+			"COMPLETE_REGISTRATION": "Complete Registration"
+		}
 	}
 }
