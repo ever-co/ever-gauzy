@@ -244,6 +244,12 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
+		"PROFIT_HISTORY": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "Total Expenses",
+			"TOTAL_INCOME": "Total Income",
+			"TOTAL_PROFIT": "Total Profit"
+		},
 		"TITLE": {
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "Total Expenses",
