@@ -53,6 +53,7 @@ export class ProposalEditComponent implements OnInit {
 					proposalContent: result.proposalContent
 				});
 
+				// TODO translate
 				this.toastrService.primary(
 					'Proposal successfuly updated',
 					'Success'

@@ -17,6 +17,7 @@ export class ProposalsPieChartComponent implements AfterViewInit, OnDestroy {
 
 	constructor(private theme: NbThemeService) {}
 
+	// TODO translate
 	ngAfterViewInit() {
 		this.themeSubscription = this.theme.getJsTheme().subscribe((config) => {
 			const colors = config.variables;

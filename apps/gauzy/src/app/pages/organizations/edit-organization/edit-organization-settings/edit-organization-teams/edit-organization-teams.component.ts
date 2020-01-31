@@ -85,6 +85,7 @@ export class EditOrganizationTeamsComponent implements OnInit {
 				}
 			}
 		} else {
+			// TODO translate
 			this.toastrService.danger(
 				'Please add a Team name and at least one member',
 				'Team name and members are required'

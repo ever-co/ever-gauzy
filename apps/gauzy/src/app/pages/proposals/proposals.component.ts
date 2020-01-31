@@ -178,7 +178,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 								status: 'ACCEPTED'
 							}
 						);
-
+						// TODO translate
 						this.toastrService.primary(
 							'Proposal status updated to Accepted',
 							'Success'

@@ -108,6 +108,7 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 
 				await this.tymeOffService.create(formData);
 
+				// TODO translate
 				this.toastrService.primary(
 					'New Time off Policy created!',
 					'Success'
