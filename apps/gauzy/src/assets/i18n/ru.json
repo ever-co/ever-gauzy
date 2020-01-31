@@ -244,6 +244,19 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
+		"PROFIT_HISTORY": {
+			"PROFIT_REPORT": "Отчет о прибыли",
+			"TOTAL_EXPENSES": "Всего расходов",
+			"TOTAL_INCOME": "Общий доход",
+			"TOTAL_PROFIT": "Общая прибыль"
+		},
+		"TITLE": {
+			"PROFIT_REPORT": "Отчет о прибыли",
+			"TOTAL_EXPENSES": "Всего расходов",
+			"TOTAL_INCOME": "Общий доход",
+			"PROFIT": "Прибыль",
+			"TOTAL_BONUS": "Общий бонус"
+		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
 			"AVERAGE_BONUS": "Средний ежемесячный бонус",
@@ -480,6 +493,17 @@
 			"OK": "ОК",
 			"CANCEL": "Отменить",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить"
+		}
+	},
+	"ACCEPT_INVITE": {
+		"ACCEPT_INVITE_FORM": {
+			"FULL_NAME": "Полное имя",
+			"ENTER_YOUR_FULL_NAME": "Введите ваше полное имя",
+			"PASSWORD": "Пароль",
+			"REPEAT_PASSWORD": "Повторите пароль",
+			"AGREE_TO": "Согласен с",
+			"TERMS_AND_CONDITIONS": "Условия использования",
+			"COMPLETE_REGISTRATION": "Завершить регистрацию"
 		}
 	}
 }
