@@ -117,7 +117,7 @@ jobs:
                   command: yarn bootstrap
             - run:
                   name: Run Build
-                  command: yarn build:prod
+                  command: yarn build:prod:circle
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-web-{{ checksum "yarn.lock" }}

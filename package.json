@@ -34,6 +34,7 @@
 		"prebuild": "rimraf dist coverage",
 		"build": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn ng build",
 		"build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn ng build gauzy -c=production --prod",
+		"build:prod:circle": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn ng build gauzy -c=production --prod --no-progress",
 		"build:api": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn ng build api",
 		"build:api:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn ng build api -c=production --prod",
 		"bundle-report": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn ng build -c=production --stats-json && webpack-bundle-analyzer dist/apps/gauzy/stats.json",
