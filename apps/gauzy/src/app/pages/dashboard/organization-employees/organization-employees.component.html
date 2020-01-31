@@ -5,7 +5,9 @@
 
 			<div class="col">
 				<ga-single-statistic
-					title="Total Income"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME' | translate
+					}}"
 					[value]="aggregatedEmployeeStatistics?.total?.income"
 					[prefix]="selectedOrganization?.currency"
 				></ga-single-statistic>
@@ -13,7 +15,9 @@
 
 			<div class="col">
 				<ga-single-statistic
-					title="Total Expenses"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES' | translate
+					}}"
 					[value]="aggregatedEmployeeStatistics?.total?.expense"
 					[prefix]="selectedOrganization?.currency"
 				></ga-single-statistic>
@@ -21,7 +25,7 @@
 
 			<div class="col">
 				<ga-single-statistic
-					title="Profit"
+					title="{{ 'DASHBOARD_PAGE.TITLE.PROFIT' | translate }}"
 					[value]="aggregatedEmployeeStatistics?.total?.profit"
 					[prefix]="selectedOrganization?.currency"
 				></ga-single-statistic>
@@ -29,7 +33,7 @@
 
 			<div class="col">
 				<ga-single-statistic
-					title="Total Bonus"
+					title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}"
 					[value]="aggregatedEmployeeStatistics?.total?.bonus"
 					[prefix]="selectedOrganization?.currency"
 					type="highlight"

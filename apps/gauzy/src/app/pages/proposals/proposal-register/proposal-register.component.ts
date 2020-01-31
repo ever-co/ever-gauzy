@@ -71,6 +71,7 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 						status: this.statuses[0]
 					});
 
+					// TODO translate
 					this.toastrService.primary(
 						'New proposal registered',
 						'Success'

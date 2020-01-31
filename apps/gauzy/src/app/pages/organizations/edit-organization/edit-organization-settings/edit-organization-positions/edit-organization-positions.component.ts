@@ -62,6 +62,7 @@ export class EditOrganizationPositionsComponent implements OnInit {
 			this.showAddCard = !this.showAddCard;
 			this.loadPositions();
 		} else {
+			// TODO translate
 			this.toastrService.danger(
 				'Please add a Position name',
 				'Position name is required'

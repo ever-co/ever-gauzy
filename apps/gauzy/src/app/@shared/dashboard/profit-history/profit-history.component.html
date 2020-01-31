@@ -1,20 +1,26 @@
 <div class="profit-history">
-	<h5>Profit Report</h5>
+	<h5>{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.PROFIT_REPORT' | translate }}</h5>
 	<div class="totals">
 		<nb-card>
-			<div class="mx-auto p-2">Total Expenses</div>
+			<div class="mx-auto p-2">
+				{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_EXPENSES' | translate }}
+			</div>
 			<div class="mx-auto pb-2">
 				<b>{{ expensesTotal }} {{ currency }}</b>
 			</div>
 		</nb-card>
 		<nb-card>
-			<div class="mx-auto p-2">Total Income</div>
+			<div class="mx-auto p-2">
+				{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_INCOME' | translate }}
+			</div>
 			<div class="mx-auto pb-2">
 				<b>{{ incomeTotal }} {{ currency }}</b>
 			</div>
 		</nb-card>
 		<nb-card>
-			<div class="mx-auto p-2">Total Profit</div>
+			<div class="mx-auto p-2">
+				{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_PROFIT' | translate }}
+			</div>
 			<div class="mx-auto pb-2">
 				<b>{{ profit }} {{ currency }}</b>
 			</div>

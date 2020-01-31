@@ -6,7 +6,9 @@ import { NbDialogRef } from '@nebular/theme';
 	template: `
 		<nb-card class="center">
 			<nb-card-header>
-				<h6>Confirm</h6>
+				<h6>
+					{{ 'POP_UPS.CONFIRM' | translate }}
+				</h6>
 			</nb-card-header>
 			<nb-card-body>
 				<span>

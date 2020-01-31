@@ -244,6 +244,19 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
+		"PROFIT_HISTORY": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "Total Expenses",
+			"TOTAL_INCOME": "Total Income",
+			"TOTAL_PROFIT": "Total Profit"
+		},
+		"TITLE": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "Total Expenses",
+			"TOTAL_INCOME": "Total Income",
+			"PROFIT": "Profit",
+			"TOTAL_BONUS": "Total Bonus"
+		},
 		"DEVELOPER": {
 			"DEVELOPER": "Developer",
 			"AVERAGE_BONUS": "Average Monthly Bonus",
@@ -480,6 +493,17 @@
 			"OK": "OK",
 			"CANCEL": "Cancel",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
+		}
+	},
+	"ACCEPT_INVITE": {
+		"ACCEPT_INVITE_FORM": {
+			"FULL_NAME": "Full Name",
+			"ENTER_YOUR_FULL_NAME": "Enter Your Full Name",
+			"PASSWORD": "Password",
+			"REPEAT_PASSWORD": "Repeat Password",
+			"AGREE_TO": "Agree to",
+			"TERMS_AND_CONDITIONS": "Terms & Conditions",
+			"COMPLETE_REGISTRATION": "Complete Registration"
 		}
 	}
 }

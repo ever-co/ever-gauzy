@@ -119,6 +119,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			this._loadOrgRecurringExpense();
 			this.clearMutationCard();
 		} catch (error) {
+			// TODO translate
 			this.toastrService.danger(
 				'Please fill all the required fields',
 				'Name, Value and Date are required'
@@ -217,14 +218,13 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 	private async _loadOrgRecurringExpense() {
 		if (this.selectedOrg && this.selectedDate) {
-			this.selectedOrgRecurringExpense = (await this.organizationRecurringExpenseService.getAll(
-				[],
-				{
+			this.selectedOrgRecurringExpense = (
+				await this.organizationRecurringExpenseService.getAll([], {
 					orgId: this.selectedOrg.id,
 					year: this.selectedDate.getFullYear(),
 					month: this.selectedDate.getMonth() + 1
-				}
-			)).items;
+				})
+			).items;
 			this.loading = false;
 		}
 	}

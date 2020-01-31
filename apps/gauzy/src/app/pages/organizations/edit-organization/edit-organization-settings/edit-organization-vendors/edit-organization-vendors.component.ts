@@ -62,6 +62,7 @@ export class EditOrganizationVendorsComponent implements OnInit {
 			this.showAddCard = !this.showAddCard;
 			this.loadVendors();
 		} else {
+			// TODO translate
 			this.toastrService.danger(
 				'Please add a Vendor name',
 				'Vendor name is required'

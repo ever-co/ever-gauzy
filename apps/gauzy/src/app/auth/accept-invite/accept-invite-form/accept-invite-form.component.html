@@ -2,9 +2,15 @@
 	<div class="row form-input">
 		<div class="col-sm-12">
 			<div class="form-group">
-				<label for="fullNameInput" class="label">Full Name</label>
+				<!-- TODO translate -->
+				<label for="fullNameInput" class="label">{{
+					'ACCEPT_INVITE.ACCEPT_INVITE_FORM.FULL_NAME' | translate
+				}}</label>
 				<input
-					placeholder="Enter Your Full Name"
+					placeholder="{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.ENTER_YOUR_FULL_NAME'
+							| translate
+					}}"
 					fullWidth
 					id="fullNameInput"
 					nbInput
@@ -26,14 +32,20 @@
 	<div class="row form-input">
 		<div class="col-sm-12">
 			<div class="form-group">
-				<label class="label" for="passwordInput">Password</label>
+				<label class="label" for="passwordInput"
+					>{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate
+					}}
+				</label>
 				<input
 					fullWidth
 					id="passwordInput"
 					type="password"
 					nbInput
 					formControlName="password"
-					placeholder="Password"
+					placeholder="{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate
+					}}"
 					fieldSize="large"
 					[ngClass]="{
 						'status-danger':
@@ -51,16 +63,20 @@
 	<div class="row form-input">
 		<div class="col">
 			<div class="form-group">
-				<label class="label" for="repeatPasswordInput"
-					>Repeat Password</label
-				>
+				<label class="label" for="repeatPasswordInput">{{
+					'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD'
+						| translate
+				}}</label>
 				<input
 					fullWidth
 					id="repeatPasswordInput"
 					type="password"
 					nbInput
 					formControlName="repeatPassword"
-					placeholder="Repeat Password"
+					placeholder="{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD'
+							| translate
+					}}"
 					fieldSize="large"
 					[ngClass]="{
 						'status-danger':
@@ -84,10 +100,13 @@
 		<div class="col">
 			<div class="form-group">
 				<nb-checkbox formControlName="agreeTerms"
-					>Agree to
-					<a href="#" target="_blank"
-						>Terms & Conditions</a
-					></nb-checkbox
+					>{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.AGREE_TO' | translate
+					}}
+					<a href="#" target="_blank">{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.TERMS_AND_CONDITIONS'
+							| translate
+					}}</a></nb-checkbox
 				>
 			</div>
 		</div>
@@ -101,7 +120,10 @@
 			fullWidth
 			status="success"
 		>
-			Complete Registration
+			{{
+				'ACCEPT_INVITE.ACCEPT_INVITE_FORM.COMPLETE_REGISTRATION'
+					| translate
+			}}
 		</button>
 	</div>
 </form>
