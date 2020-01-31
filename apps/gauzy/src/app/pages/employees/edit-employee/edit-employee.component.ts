@@ -103,7 +103,6 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 
 	async addEmployeeRecurringExpense() {
 		// TODO get currency from the page dropdown
-		const organization = this.store.selectedOrganization;
 
 		const result = await this.dialogService
 			.open(EmployeeRecurringExpenseMutationComponent)
