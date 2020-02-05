@@ -1,3 +1,17 @@
 .main {
 	width: 750px;
+
+	nb-card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		nb-icon {
+			cursor: pointer;
+		}
+	}
+
+	.checkboxes > :first-child {
+		padding-right: 15px;
+	}
 }
