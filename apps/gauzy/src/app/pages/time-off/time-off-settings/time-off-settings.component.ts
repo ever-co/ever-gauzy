@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ErrorHandler } from '@angular/core';
 import { AuthService } from '../../../@core/services/auth.service';
-import { TimeOffPolicy, RolesEnum, Employee } from '@gauzy/models';
+import { RolesEnum, Employee } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';

@@ -1,5 +1,5 @@
 <nb-card class="main">
-	<nb-card-header class="row">
+	<nb-card-header>
 		<h5 *ngIf="!policy; else showEditHeader">
 			{{ 'TIME_OFF_PAGE.POLICY.ADD_POLICY' | translate }}
 		</h5>
@@ -61,12 +61,14 @@
 					(checkedChange)="changeRequiresApproval($event)"
 					class="my-auto align-center"
 					status="primary"
+					[checked]="requiresApproval"
 					>Requires approval
 				</nb-checkbox>
 				<nb-checkbox
 					(checkedChange)="changePaidStatus($event)"
 					class="my-auto align-center"
 					status="primary"
+					[checked]="paid"
 					>Paid
 				</nb-checkbox>
 			</div>
