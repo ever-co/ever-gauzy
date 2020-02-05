@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ErrorHandler } from '@angular/core';
 import { AuthService } from '../../../@core/services/auth.service';
-import { TimeOffPolicy, RolesEnum } from '@gauzy/models';
+import { TimeOffPolicy, RolesEnum, Employee } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -15,12 +15,13 @@ export interface TimeOffPolicyVM {
 	name: string;
 	requiresApproval: boolean;
 	paid: boolean;
+	employees: Employee[];
 }
 
 interface SelectedRowModel {
-	data: TimeOffPolicy;
+	data: TimeOffPolicyVM;
 	isSelected: boolean;
-	selected: TimeOffPolicy[];
+	selected: TimeOffPolicyVM[];
 	source: LocalDataSource;
 }
 
@@ -43,6 +44,7 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	hasRole: boolean;
 	selectedPolicy: SelectedRowModel;
+	selectedPolicyId: string;
 	smartTableSource = new LocalDataSource();
 	showTable: boolean;
 	loading = false;
@@ -104,11 +106,8 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	async addPolicy(formData) {
 		if (formData) {
 			try {
-				console.log(formData);
-
 				await this.tymeOffService.create(formData);
 
-				// TODO translate
 				this.toastrService.primary(
 					'New Time off Policy created!',
 					'Success'
@@ -120,11 +119,37 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	}
 
 	async openEditPolicyDialog() {
-		await this.dialogService
-			// TODO: add Policy as context here
-			.open(TimeOffSettingsMutationComponent)
+		this.selectedPolicyId = this.selectedPolicy.data.id;
+
+		this.dialogService
+			.open(TimeOffSettingsMutationComponent, {
+				context: {
+					policy: this.selectedPolicy.data
+				}
+			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
-			.toPromise();
+			.subscribe(async (formData) => {
+				if (formData) {
+					await this.editPolicy(formData);
+					this._loadTableData(this._selectedOrganizationId);
+				}
+			});
+	}
+
+	async editPolicy(formData) {
+		if (formData) {
+			try {
+				await this.tymeOffService.update(
+					this.selectedPolicyId,
+					formData
+				);
+				this.toastrService.primary('Time off policy edited', 'Success');
+
+				this._loadTableData(this._selectedOrganizationId);
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
+		}
 	}
 
 	async deletePolicy() {
@@ -159,7 +184,7 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	private async _loadTableData(orgId: string) {
 		this.showTable = false;
 		this.selectedPolicy = null;
-		let findObj;
+		let findObj: {};
 
 		if (orgId) {
 			findObj = {
@@ -179,7 +204,8 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 						id: i.id,
 						name: i.name,
 						requiresApproval: i.requiresApproval,
-						paid: i.paid
+						paid: i.paid,
+						employees: i.employees
 					};
 				});
 

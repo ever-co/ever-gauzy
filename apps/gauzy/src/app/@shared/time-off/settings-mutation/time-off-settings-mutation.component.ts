@@ -5,6 +5,7 @@ import { EmployeesService } from '../../../@core/services';
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
+import { TimeOffPolicyVM } from '../../../pages/time-off/time-off-settings/time-off-settings.component';
 
 @Component({
 	selector: 'ngx-time-off-settings-mutation',
@@ -23,13 +24,14 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	@Input()
 	team?: OrganizationTeams;
 
+	policy: TimeOffPolicyVM;
 	organizationId: string;
-	selectedEmployees: string[];
+	selectedEmployees: string[] = [];
 	employees: Employee[] = [];
 	name: string;
+	requiresApproval: boolean;
+	paid: boolean;
 	showWarning = false;
-	requiresApproval = false;
-	paid = true;
 
 	ngOnInit() {
 		this.store.selectedOrganization$
@@ -39,19 +41,37 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 			});
 
 		this.loadEmployees();
+		this._initializeForm();
 	}
 
 	private async loadEmployees() {
 		if (!this.organizationId) {
 			return;
 		}
-
 		const { items } = await this.employeesService
 			.getAll(['user'], { organization: { id: this.organizationId } })
 			.pipe(first())
 			.toPromise();
 
 		this.employees = items;
+
+		if (this.policy) {
+			this.policy.employees.forEach((employee) => {
+				this.selectedEmployees.push(employee.id);
+			});
+		}
+	}
+
+	private _initializeForm() {
+		if (this.policy) {
+			this.name = this.policy.name;
+			this.paid = this.policy.paid;
+			this.requiresApproval = this.policy.requiresApproval;
+		} else {
+			this.name = '';
+			this.paid = true;
+			this.requiresApproval = false;
+		}
 	}
 
 	addOrEditPolicy() {

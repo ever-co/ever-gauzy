@@ -1,8 +1,13 @@
 <nb-card class="main">
 	<nb-card-header class="row">
-		<h5>
+		<h5 *ngIf="!policy; else showEditHeader">
 			{{ 'TIME_OFF_PAGE.POLICY.ADD_POLICY' | translate }}
 		</h5>
+		<ng-template #showEditHeader>
+			<h5>
+				{{ 'TIME_OFF_PAGE.POLICY.EDIT_POLICY' | translate }}
+			</h5>
+		</ng-template>
 		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
@@ -55,13 +60,14 @@
 				(checkedChange)="changeRequiresApproval($event)"
 				class="my-auto align-center"
 				status="primary"
+				[checked]="requiresApproval"
 				>Requires approval
 			</nb-checkbox>
 			<nb-checkbox
 				(checkedChange)="changePaidStatus($event)"
 				class="my-auto align-center"
 				status="primary"
-				checked
+				[checked]="paid"
 				>Paid
 			</nb-checkbox>
 		</form>
