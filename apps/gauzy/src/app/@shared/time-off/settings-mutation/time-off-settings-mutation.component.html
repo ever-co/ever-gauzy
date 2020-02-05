@@ -56,20 +56,20 @@
 					>
 				</nb-select>
 			</div>
-			<nb-checkbox
-				(checkedChange)="changeRequiresApproval($event)"
-				class="my-auto align-center"
-				status="primary"
-				[checked]="requiresApproval"
-				>Requires approval
-			</nb-checkbox>
-			<nb-checkbox
-				(checkedChange)="changePaidStatus($event)"
-				class="my-auto align-center"
-				status="primary"
-				[checked]="paid"
-				>Paid
-			</nb-checkbox>
+			<div class="form-group col-6 checkboxes">
+				<nb-checkbox
+					(checkedChange)="changeRequiresApproval($event)"
+					class="my-auto align-center"
+					status="primary"
+					>Requires approval
+				</nb-checkbox>
+				<nb-checkbox
+					(checkedChange)="changePaidStatus($event)"
+					class="my-auto align-center"
+					status="primary"
+					>Paid
+				</nb-checkbox>
+			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">

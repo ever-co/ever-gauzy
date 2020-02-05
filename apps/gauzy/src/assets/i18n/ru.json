@@ -409,6 +409,9 @@
 			"DATA_ENTRY": "Ввод данных",
 			"VIEWER": "Просмотрщик",
 			"EMPLOYEE": "Сотрудник"
+		},
+		"EDIT_USER": {
+			"HEADER": "Управление пользователем"
 		}
 	},
 	"CONTEXT_MENU": {
