@@ -1,9 +1,9 @@
 import { Entity, Index, Column, ManyToMany, JoinTable } from 'typeorm';
-import { Base } from '../../core/entities/base';
+import { Base } from '../core/entities/base';
 import { TimeOffPolicy as ITimeOffPolicy } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
-import { Employee } from '../../employee';
+import { Employee } from '../employee';
 
 @Entity('time-off-policy')
 export class TimeOffPolicy extends Base implements ITimeOffPolicy {

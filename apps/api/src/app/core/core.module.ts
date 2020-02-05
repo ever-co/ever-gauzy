@@ -27,7 +27,7 @@ import { Proposal } from '../proposal';
 import { Country } from '../country';
 import { Invite } from '../invite';
 import { EmailTemplate } from '../email-templates';
-import { TimeOffPolicy } from '../time-off';
+import { TimeOffPolicy } from '../time-off-policy';
 
 const entities = [
 	Invite,

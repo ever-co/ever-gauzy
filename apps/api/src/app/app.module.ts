@@ -26,7 +26,7 @@ import { ProposalModule } from './proposal';
 import { CountryModule } from './country';
 import { InviteModule } from './invite';
 import { EmailModule } from './email-templates';
-import { TimeOffModule } from './time-off/time-off.module';
+import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 
 @Module({
 	imports: [
@@ -102,8 +102,8 @@ import { TimeOffModule } from './time-off/time-off.module';
 						module: EmailModule
 					},
 					{
-						path: 'time-off',
-						module: TimeOffModule
+						path: 'time-off-policy',
+						module: TimeOffPolicyModule
 					}
 				]
 			}
@@ -131,7 +131,7 @@ import { TimeOffModule } from './time-off/time-off.module';
 		EmailModule,
 		CountryModule,
 		InviteModule,
-		TimeOffModule
+		TimeOffPolicyModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
