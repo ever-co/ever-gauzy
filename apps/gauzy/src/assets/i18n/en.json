@@ -409,6 +409,9 @@
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
 			"EMPLOYEE": "Employee"
+		},
+		"EDIT_USER": {
+			"HEADER": "Manage User"
 		}
 	},
 	"CONTEXT_MENU": {
