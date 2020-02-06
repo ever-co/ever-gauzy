@@ -368,7 +368,7 @@
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
 			"GROUPS": {
-				"GENERAL": "General",
+				"GENERAL": "Основни",
 				"ADMINISTRATION": "Administration"
 			}
 		}
