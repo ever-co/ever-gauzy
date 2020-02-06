@@ -398,7 +398,10 @@
 		"POLICY": {
 			"HEADER": "Time Off Policy",
 			"ADD_POLICY": "Add Policy",
-			"EDIT_POLICY": "Edit Policy"
+			"EDIT_POLICY": "Edit Policy",
+			"NAME": "Name",
+			"REQUIRES_APPROVAL": "Requires Approval",
+			"PAID": "Paid"
 		}
 	},
 	"USERS_PAGE": {
