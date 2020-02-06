@@ -1,10 +1,17 @@
-import { Component, OnInit, OnDestroy, ErrorHandler } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	ErrorHandler,
+	ViewChild
+} from '@angular/core';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RolesEnum, Employee } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off/settings-mutation/time-off-settings-mutation.component';
+import { TranslateService } from '@ngx-translate/core';
 import { TimeOffService } from '../../../@core/services/time-off.service';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
@@ -37,44 +44,26 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private tymeOffService: TimeOffService,
 		private store: Store,
-		private errorHandler: ErrorHandler
+		private errorHandler: ErrorHandler,
+		private translateService: TranslateService
 	) {}
 
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
+	smartTableSettings: object;
 	hasRole: boolean;
 	selectedPolicy: SelectedRowModel;
-	selectedPolicyId: string;
 	smartTableSource = new LocalDataSource();
+	selectedPolicyId: string;
 	showTable: boolean;
 	loading = false;
 
-	smartTableSettings = {
-		actions: false,
-		editable: true,
-		noDataMessage: 'No Data',
-		columns: {
-			name: {
-				title: 'Name',
-				type: 'string',
-				filter: true
-			},
-			requiresApproval: {
-				title: 'Requires Approval',
-				type: 'boolean',
-				width: '20%',
-				filter: false
-			},
-			paid: {
-				title: 'Paid',
-				type: 'boolean',
-				width: '20%',
-				filter: false
-			}
-		}
-	};
+	@ViewChild('timeOffPolicyTable', { static: false }) timeOffPolicyTable;
 
 	async ngOnInit() {
+		this.loadSettingsSmartTable();
+		this._applyTranslationOnSmartTable();
+
 		this.hasRole = await this.authService
 			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
 			.pipe(first())
@@ -89,6 +78,39 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
+	}
+
+	loadSettingsSmartTable() {
+		this.smartTableSettings = {
+			actions: false,
+			editable: true,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
+			columns: {
+				name: {
+					title: this.getTranslation('TIME_OFF_PAGE.POLICY.NAME'),
+					type: 'string',
+					filter: true
+				},
+				requiresApproval: {
+					title: this.getTranslation(
+						'TIME_OFF_PAGE.POLICY.REQUIRES_APPROVAL'
+					),
+					type: 'boolean',
+					width: '20%',
+					filter: false
+				},
+				paid: {
+					title: this.getTranslation('TIME_OFF_PAGE.POLICY.PAID'),
+					type: 'boolean',
+					width: '20%',
+					filter: false
+				}
+			},
+			pager: {
+				display: true,
+				perPage: 8
+			}
+		};
 	}
 
 	async openAddPolicyDialog() {
@@ -218,6 +240,21 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 				);
 			}
 		}
+	}
+
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translateService.get(prefix).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSettingsSmartTable();
+		});
 	}
 
 	ngOnDestroy() {
