@@ -398,7 +398,10 @@
 		"POLICY": {
 			"HEADER": "Время выкл. политики",
 			"ADD_POLICY": "Добавить Политику",
-			"EDIT_POLICY": "Изменить политику"
+			"EDIT_POLICY": "Изменить политику",
+			"NAME": "Имя",
+			"REQUIRES_APPROVAL": "Требует одобрения",
+			"PAID": "Оплачено"
 		}
 	},
 	"USERS_PAGE": {
