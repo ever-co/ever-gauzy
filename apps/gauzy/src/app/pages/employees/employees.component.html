@@ -4,13 +4,18 @@
 			<h4>
 				{{ 'EMPLOYEES_PAGE.HEADER' | translate }} {{ organizationName }}
 			</h4>
-			<button nbButton status="primary" (click)="manageInvites()">
+			<button
+				*ngIf="hasEditPermission"
+				nbButton
+				status="primary"
+				(click)="manageInvites()"
+			>
 				{{ 'BUTTONS.MANAGE_INVITES' | translate }}
 			</button>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
+		<div class="mb-3" *ngIf="hasEditPermission">
 			<button nbButton status="primary" (click)="invite()" class="mr-2">
 				<nb-icon class="mr-1" icon="email-outline"></nb-icon
 				>{{ 'BUTTONS.INVITE' | translate }}
@@ -52,7 +57,8 @@
 				{{
 					(selectedEmployee && selectedEmployee.endWork
 						? 'EMPLOYEES_PAGE.BACK_TO_WORK'
-						: 'EMPLOYEES_PAGE.END_WORK') | translate
+						: 'EMPLOYEES_PAGE.END_WORK'
+					) | translate
 				}}
 			</button>
 			<nb-checkbox

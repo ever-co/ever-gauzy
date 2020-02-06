@@ -29,6 +29,7 @@ import { createCountries } from '../../country/country.seed';
 import { OrganizationTeams } from '../../organization-teams';
 import { Country } from '../../country';
 import { createTeams } from '../../organization-teams/organization-teams.seed';
+import { RolePermissions, createRolePermissions } from '../../role-permissions';
 
 const allEntities = [
 	User,
@@ -40,7 +41,8 @@ const allEntities = [
 	EmployeeSetting,
 	OrganizationTeams,
 	UserOrganization,
-	Country
+	Country,
+	RolePermissions
 ];
 
 @Injectable()
@@ -160,6 +162,8 @@ export class SeedDataService {
 			);
 
 			await createCountries(this.connection);
+
+			await createRolePermissions(this.connection, roles);
 
 			this.log(
 				chalk.green(

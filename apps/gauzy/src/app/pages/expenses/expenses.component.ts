@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum, Expense } from '@gauzy/models';
+import { RolesEnum, Expense, PermissionsEnum } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
@@ -53,14 +53,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 	selectedEmployeeId: string;
 	selectedDate: Date;
 
-	hasRole: boolean;
-
 	smartTableSource = new LocalDataSource();
 
 	selectedExpense: SelectedRowModel;
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
+	hasEditPermission = false;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
@@ -122,10 +121,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
+			});
 
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))

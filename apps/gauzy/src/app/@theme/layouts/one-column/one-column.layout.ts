@@ -58,7 +58,12 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 
 	private async loadUserData() {
 		const id = this.store.userId;
-		this.user = await this.usersService.getUserById(id);
+		const { items } = await this.usersService.getAll(
+			['role', 'role.rolePermissions'],
+			{ id }
+		);
+		this.user = items[0];
+		this.store.userRolePermissions = items[0].role.rolePermissions;
 
 		// We did not doing nothing with the result?
 		// Also if user still did not have organization?

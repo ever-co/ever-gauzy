@@ -30,7 +30,7 @@
 			></ngx-proposals-pie-chart> -->
 		</nb-card>
 
-		<div class="mb-3">
+		<div class="mb-3" *ngIf="hasEditPermission">
 			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 				{{ 'BUTTONS.REGISTER' | translate }}

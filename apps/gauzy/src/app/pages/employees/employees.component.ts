@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { InvitationTypeEnum } from '@gauzy/models';
+import { InvitationTypeEnum, PermissionsEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -61,6 +61,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
 	includeDeleted = false;
 	loading = true;
+	hasEditPermission = false;
 
 	@ViewChild('employeesTable', { static: false }) employeesTable;
 
@@ -77,6 +78,14 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EMPLOYEES_EDIT
+				);
+			});
+
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
