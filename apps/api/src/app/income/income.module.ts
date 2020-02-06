@@ -8,14 +8,20 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { EmployeeService } from '../employee/employee.service';
 import { Employee } from '../employee';
 import { Organization, OrganizationService } from '../organization';
+import { User } from '../user';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Income, Employee, Organization]),
-        CqrsModule
-    ],
-    controllers: [IncomeController],
-    providers: [IncomeService, EmployeeService, OrganizationService, ...CommandHandlers],
-    exports: [IncomeService],
+	imports: [
+		TypeOrmModule.forFeature([Income, Employee, Organization, User]),
+		CqrsModule
+	],
+	controllers: [IncomeController],
+	providers: [
+		IncomeService,
+		EmployeeService,
+		OrganizationService,
+		...CommandHandlers
+	],
+	exports: [IncomeService]
 })
-export class IncomeModule { }
+export class IncomeModule {}

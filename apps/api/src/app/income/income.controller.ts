@@ -1,12 +1,25 @@
-import { Controller, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Post,
+	Body,
+	Get,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IncomeService } from './income.service';
 import { Income } from './income.entity';
 import { CrudController } from '../core/crud/crud.controller';
-import { IncomeCreateInput as IIncomeCreateInput } from '@gauzy/models';
+import {
+	IncomeCreateInput as IIncomeCreateInput,
+	PermissionsEnum
+} from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { IncomeCreateCommand } from './commands/income.create.command';
 import { IPagination } from '../core';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('Income')
 @Controller()
@@ -29,6 +42,8 @@ export class IncomeController extends CrudController<Income> {
 		description: 'Record not found'
 	})
 	@Get()
+	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
+	@UseGuards(PermissionGuard)
 	async findAllIncome(
 		@Query('data') data: string
 	): Promise<IPagination<Income>> {
@@ -50,6 +65,8 @@ export class IncomeController extends CrudController<Income> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/create')
+	@Permissions(PermissionsEnum.ORG_INCOMES_EDIT)
+	@UseGuards(PermissionGuard)
 	async create(
 		@Body() entity: IIncomeCreateInput,
 		...options: any[]

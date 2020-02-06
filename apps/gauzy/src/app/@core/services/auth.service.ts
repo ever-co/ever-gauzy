@@ -4,7 +4,8 @@ import { first } from 'rxjs/operators';
 import {
 	User,
 	RolesEnum,
-	UserRegistrationInput as IUserRegistrationInput
+	UserRegistrationInput as IUserRegistrationInput,
+	PermissionsEnum
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 
@@ -45,5 +46,11 @@ export class AuthService {
 
 	hasRole(roles: RolesEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`/api/auth/role`, { params: { roles } });
+	}
+
+	hasPermission(permission: PermissionsEnum): Observable<boolean> {
+		return this.http.get<boolean>(`/api/auth/permission`, {
+			params: { permission }
+		});
 	}
 }

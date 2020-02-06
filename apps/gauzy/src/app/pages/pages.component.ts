@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { RolesEnum, Organization } from '@gauzy/models';
+import { Organization, PermissionsEnum, RolesEnum } from '@gauzy/models';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -34,7 +34,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			home: true,
 			data: {
 				translated: false,
-				translationKey: 'MENU.DASHBOARD'
+				translationKey: 'MENU.DASHBOARD',
+				permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW]
 			}
 		},
 		{
@@ -43,7 +44,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/income',
 			data: {
 				translated: false,
-				translationKey: 'MENU.INCOME'
+				translationKey: 'MENU.INCOME',
+				permissionKeys: [PermissionsEnum.ORG_INCOMES_VIEW]
 			}
 		},
 		{
@@ -52,7 +54,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/expenses',
 			data: {
 				translated: false,
-				translationKey: 'MENU.EXPENSES'
+				translationKey: 'MENU.EXPENSES',
+				permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
 			}
 		},
 		{
@@ -62,7 +65,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			hidden: false,
 			data: {
 				translated: false,
-				translationKey: 'MENU.PROPOSALS'
+				translationKey: 'MENU.PROPOSALS',
+				permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
 			}
 		},
 		{
@@ -71,7 +75,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/time-off',
 			data: {
 				translated: false,
-				translationKey: 'MENU.TIME_OFF'
+				translationKey: 'MENU.TIME_OFF',
+				permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW]
 			}
 		},
 		{
@@ -97,7 +102,12 @@ export class PagesComponent implements OnInit, OnDestroy {
 			group: true,
 			data: {
 				translated: false,
-				permission: 'admin',
+				permissionKeys: [
+					PermissionsEnum.ORG_EMPLOYEES_VIEW,
+					PermissionsEnum.ORG_USERS_VIEW,
+					PermissionsEnum.ALL_ORG_EDIT,
+					PermissionsEnum.ALL_ORG_VIEW
+				],
 				translationKey: 'MENU.ADMIN'
 			}
 		},
@@ -107,7 +117,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/employees',
 			data: {
 				translated: false,
-				permission: 'admin',
+				permissionKeys: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
 				translationKey: 'MENU.EMPLOYEES'
 			}
 		},
@@ -117,7 +127,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/users',
 			data: {
 				translated: false,
-				permission: 'admin',
+				permissionKeys: [PermissionsEnum.ORG_USERS_VIEW],
 				translationKey: 'MENU.USERS'
 			}
 		},
@@ -127,7 +137,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: `/pages/organizations/`,
 			data: {
 				translated: false,
-				permission: 'organization-selected',
+				organizationShortcut: true,
+				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 				urlPrefix: `/pages/organizations/edit/`,
 				urlPostfix: '/settings/projects',
 				translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
@@ -139,7 +150,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: `/pages/organizations/`,
 			data: {
 				translated: false,
-				permission: 'organization-selected',
+				organizationShortcut: true,
+				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 				urlPrefix: `/pages/organizations/edit/`,
 				urlPostfix: '/settings/departments',
 				translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
@@ -151,7 +163,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: `/pages/organizations/`,
 			data: {
 				translated: false,
-				permission: 'organization-selected',
+				organizationShortcut: true,
+				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 				urlPrefix: `/pages/organizations/edit/`,
 				urlPostfix: '/settings/clients',
 				translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
@@ -163,7 +176,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: `/pages/organizations/`,
 			data: {
 				translated: false,
-				permission: 'organization-selected',
+				organizationShortcut: true,
+				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 				urlPrefix: `/pages/organizations/edit/`,
 				urlPostfix: '/settings/positions',
 				translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
@@ -175,7 +189,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: `/pages/organizations/`,
 			data: {
 				translated: false,
-				permission: 'organization-selected',
+				organizationShortcut: true,
+				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 				urlPrefix: `/pages/organizations/edit/`,
 				urlPostfix: '/settings/vendors',
 				translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
@@ -187,7 +202,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/organizations',
 			data: {
 				translated: false,
-				permission: 'admin',
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
 				translationKey: 'MENU.ORGANIZATIONS'
 			}
 		},
@@ -205,6 +220,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.GENERAL'
+					}
+				},
+				{
+					title: 'Roles & Permissions',
+					link: '/pages/settings/roles',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ROLES'
 					}
 				}
 			]
@@ -228,6 +251,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
 				this._selectedOrganization = org;
+				this.loadItems(
+					this.selectorService.showSelectors(this.router.url)
+						.showOrganizationShortcuts
+				);
+			});
+
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
 				this.loadItems(
 					this.selectorService.showSelectors(this.router.url)
 						.showOrganizationShortcuts
@@ -265,12 +297,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 			item.title = this.getTranslation(item.data.translationKey);
 		}
 
-		if (!item.data.permission) {
-			item.hidden = false;
-		} else {
-			if (item.data.permission === 'admin') {
-				item.hidden = !this.isAdmin;
-			} else if (item.data.permission === 'organization-selected') {
+		if (item.data.permissionKeys) {
+			const anyPermission = item.data.permissionKeys.reduce(
+				(permission, key) => {
+					return this.store.hasPermission(key) || permission;
+				},
+				false
+			);
+			item.hidden = !anyPermission;
+
+			if (anyPermission && item.data.organizationShortcut) {
 				item.hidden =
 					!withOrganizationShortcuts || !this._selectedOrganization;
 				if (!item.hidden) {
@@ -279,8 +315,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						this._selectedOrganization.id +
 						item.data.urlPostfix;
 				}
-			} else {
-				item.hidden = false;
 			}
 		}
 

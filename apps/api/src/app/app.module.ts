@@ -27,6 +27,7 @@ import { CountryModule } from './country';
 import { InviteModule } from './invite';
 import { EmailModule } from './email-templates';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
+import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 
 @Module({
 	imports: [
@@ -104,6 +105,10 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 					{
 						path: 'time-off-policy',
 						module: TimeOffPolicyModule
+					},
+					{
+						path: 'role-permissions',
+						module: RolePermissionsModule
 					}
 				]
 			}
@@ -131,7 +136,8 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 		EmailModule,
 		CountryModule,
 		InviteModule,
-		TimeOffPolicyModule
+		TimeOffPolicyModule,
+		RolePermissionsModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

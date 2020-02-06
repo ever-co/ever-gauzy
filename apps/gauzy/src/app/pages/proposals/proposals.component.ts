@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
-import { Proposal } from '@gauzy/models';
+import { Proposal, PermissionsEnum } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
@@ -68,6 +68,7 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 	successRate: string;
 	chartData: { value: number; name: string }[] = [];
 	loading = true;
+	hasEditPermission = false;
 
 	private _selectedOrganizationId: string;
 
@@ -76,6 +77,14 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
+
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_PROPOSALS_EDIT
+				);
+			});
 
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))

@@ -1,19 +1,19 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum, Income } from '@gauzy/models';
-import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
-import { Store } from '../../@core/services/store.service';
-import { IncomeService } from '../../@core/services/income.service';
-import { LocalDataSource } from 'ng2-smart-table';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Income, PermissionsEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+import { AuthService } from '../../@core/services/auth.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { IncomeService } from '../../@core/services/income.service';
+import { Store } from '../../@core/services/store.service';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { ActivatedRoute } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 interface SelectedRowModel {
 	data: Income;
@@ -39,7 +39,6 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	) {}
 
 	smartTableSettings: object;
-	hasRole: boolean;
 	selectedEmployeeId: string;
 	selectedDate: Date;
 	smartTableSource = new LocalDataSource();
@@ -48,6 +47,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
+	hasEditPermission = false;
 
 	@ViewChild('incomeTable', { static: false }) incomeTable;
 
@@ -58,10 +58,13 @@ export class IncomeComponent implements OnInit, OnDestroy {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_INCOMES_EDIT
+				);
+			});
 
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))
