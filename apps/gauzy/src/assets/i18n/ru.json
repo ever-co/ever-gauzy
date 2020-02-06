@@ -162,7 +162,10 @@
 			"REGIONS": "Выберите регион",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Изображение",
-			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников"
+			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+			"DATE": "Дата",
+			"VALUE": "Стоимость",
+			"SELECT_CURRENCY": "Выберите валюту"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -244,6 +247,7 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
+		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Отчет о прибыли",
 			"TOTAL_EXPENSES": "Всего расходов",
@@ -342,7 +346,8 @@
 			"GENERAL_SETTINGS": "Общие настройки",
 			"DESIGN": "Дизайн",
 			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
-			"EDIT_PROJECT": "Редактировать проект"
+			"EDIT_PROJECT": "Редактировать проект",
+			"REGIONS": "Регионы"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -389,6 +394,7 @@
 		"REQUEST_DAYS_OFF": "Запросить выходные",
 		"ADD_HOLIDAYS": "Добавить выходные",
 		"DISPLAY_HOLIDAYS": "Показать Праздники",
+		"TIME_OFF_SETTINGS": "Настройки таймера",
 		"STATUSES": {
 			"REQUESTED": "Запрошено",
 			"APPROVED": "Одобрено",
@@ -461,6 +467,11 @@
 			"EXPIRED": "Истёк",
 			"ACCEPTED": "Принято"
 		}
+	},
+	"HEADER": {
+		"SELECT_EMPLOYEE": "Выбрать сотрудника",
+		"SELECT_A_DATE": "Выберите дату",
+		"SELECT_AN_ORGANIZATION": "Выберите организацию"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 страница не найдена",
