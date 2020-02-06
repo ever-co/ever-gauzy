@@ -14,9 +14,7 @@
 							class="d-block"
 							size="medium"
 							[(selected)]="selectedRole"
-							(selectedChange)="
-								loadPermissionsForSelectedRole($event)
-							"
+							(selectedChange)="loadPermissionsForSelectedRole()"
 							placeholder="{{
 								'FORM.PLACEHOLDERS.ROLE' | translate
 							}}"
