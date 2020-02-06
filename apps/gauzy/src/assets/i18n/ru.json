@@ -230,7 +230,8 @@
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
-		"USERS": "Пользователи"
+		"USERS": "Пользователи",
+		"ROLES": "Roles & Permissions"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -323,6 +324,7 @@
 		"ARCHIVED": "Архивирован",
 		"LOCATION": "Местоположение",
 		"SETTINGS": "Настройки",
+		"ROLES": "Roles",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -347,7 +349,28 @@
 			"DESIGN": "Дизайн",
 			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
 			"EDIT_PROJECT": "Редактировать проект",
-			"REGIONS": "Регионы"
+			"REGIONS": "Регионы",
+			"ROLES_PERMISSIONS": "Roles & Permissions"
+		},
+		"PERMISSIONS": {
+			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
+			"ORG_EXPENSES_VIEW": "View Expenses Page",
+			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
+			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
+			"ORG_INCOMES_VIEW": "View Incomes Page",
+			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
+			"ORG_PROPOSALS_VIEW": "View Proposals Page",
+			"ORG_TIME_OFF_VIEW": "View Time Off Page",
+			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
+			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
+			"ORG_USERS_VIEW": "View Organization Users",
+			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
+			"ALL_ORG_VIEW": "View All Organizations",
+			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
+			"GROUPS": {
+				"GENERAL": "General",
+				"ADMINISTRATION": "Administration"
+			}
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -510,7 +533,9 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",
 			"CANCEL": "Отменить",
-			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить"
+			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
+			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
+			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again"
 		}
 	},
 	"ACCEPT_INVITE": {
