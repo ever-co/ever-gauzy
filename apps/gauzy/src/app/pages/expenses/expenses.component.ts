@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum, Expense, PermissionsEnum } from '@gauzy/models';
-import { first, takeUntil } from 'rxjs/operators';
+import { Expense, PermissionsEnum } from '@gauzy/models';
+import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { Store } from '../../@core/services/store.service';

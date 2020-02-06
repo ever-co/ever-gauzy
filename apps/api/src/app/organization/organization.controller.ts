@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
 import { Organization } from './organization.entity';
