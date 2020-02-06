@@ -343,7 +343,8 @@
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
 			"CLICK_EMPLOYEE": "Click to edit employee",
-			"EDIT_PROJECT": "Edit Project"
+			"EDIT_PROJECT": "Edit Project",
+			"REGIONS": "Regions"
 		}
 	},
 	"PROPOSALS_PAGE": {
