@@ -244,6 +244,7 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
+		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "Total Expenses",
