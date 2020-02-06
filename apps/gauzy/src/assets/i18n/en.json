@@ -391,6 +391,7 @@
 		"REQUEST_DAYS_OFF": "Request Days Off",
 		"ADD_HOLIDAYS": "Add Holidays",
 		"DISPLAY_HOLIDAYS": "Display Holidays",
+		"TIME_OFF_SETTINGS": "Time Off Settings",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
