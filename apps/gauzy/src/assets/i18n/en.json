@@ -162,7 +162,10 @@
 			"REGIONS": "Select Region",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Image",
-			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees"
+			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"DATE": "Date",
+			"VALUE": "Value",
+			"SELECT_CURRENCY": "Select Currency"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",

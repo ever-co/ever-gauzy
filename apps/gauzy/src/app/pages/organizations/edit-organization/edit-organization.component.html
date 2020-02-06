@@ -89,7 +89,9 @@
 								[(ngModel)]="name"
 								nbInput
 								fullWidth
-								placeholder="Name"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.NAME' | translate
+								}}"
 							/>
 						</div>
 						<div class="col-3">
@@ -98,24 +100,30 @@
 								[(ngModel)]="date"
 								nbInput
 								fullWidth
-								placeholder="Date"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.DATE' | translate
+								}}"
 							/>
 						</div>
 						<div class="col-2">
-							<!-- TODO translate to placeholder -->
 							<input
 								type="number"
 								[(ngModel)]="expenseValue"
 								nbInput
 								fullWidth
-								placeholder="Value"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.VALUE' | translate
+								}}"
 							/>
 						</div>
 
 						<div class="col-2">
 							<nb-select
 								class="d-block"
-								placeholder="Select Currency"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.SELECT_CURRENCY'
+										| translate
+								}}"
 								[(selected)]="selectedCurrency"
 								disabled
 							>
