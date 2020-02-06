@@ -231,7 +231,7 @@
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
 		"USERS": "Пользователи",
-		"ROLES": "Roles & Permissions"
+		"ROLES": "Роли и Разрешения"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -324,7 +324,7 @@
 		"ARCHIVED": "Архивирован",
 		"LOCATION": "Местоположение",
 		"SETTINGS": "Настройки",
-		"ROLES": "Roles",
+		"ROLES": "Роли",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -350,26 +350,26 @@
 			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
 			"EDIT_PROJECT": "Редактировать проект",
 			"REGIONS": "Регионы",
-			"ROLES_PERMISSIONS": "Roles & Permissions"
+			"ROLES_PERMISSIONS": "Роли и Разрешения"
 		},
 		"PERMISSIONS": {
-			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
-			"ORG_EXPENSES_VIEW": "View Expenses Page",
-			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
-			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
-			"ORG_INCOMES_VIEW": "View Incomes Page",
-			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
-			"ORG_PROPOSALS_VIEW": "View Proposals Page",
-			"ORG_TIME_OFF_VIEW": "View Time Off Page",
-			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
-			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
-			"ORG_USERS_VIEW": "View Organization Users",
-			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
-			"ALL_ORG_VIEW": "View All Organizations",
-			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
+			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",
+			"ORG_EXPENSES_VIEW": "Страница расходов",
+			"ORG_EXPENSES_EDIT": "Создание/Редактирование/Удаление расходов",
+			"ORG_INCOMES_EDIT": "Создание/Изменить/Удалить доходы",
+			"ORG_INCOMES_VIEW": "Просмотр страницы доходов",
+			"ORG_PROPOSALS_EDIT": "Создание/Изменить/Удалить предложения",
+			"ORG_PROPOSALS_VIEW": "Показать страницу предложений",
+			"ORG_TIME_OFF_VIEW": "Показать время на странице",
+			"ORG_EMPLOYEES_VIEW": "Сотрудники организации",
+			"ORG_EMPLOYEES_EDIT": "Создать/Редактировать/Удалить Сотрудников Организации",
+			"ORG_USERS_VIEW": "Просмотр пользователей организации",
+			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
+			"ALL_ORG_VIEW": "Просмотр всех организаций",
+			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
 			"GROUPS": {
-				"GENERAL": "General",
-				"ADMINISTRATION": "Administration"
+				"GENERAL": "Генеральная",
+				"ADMINISTRATION": "Администрация"
 			}
 		}
 	},
@@ -534,8 +534,8 @@
 			"OK": "ОК",
 			"CANCEL": "Отменить",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
-			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
-			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again"
+			"PERMISSION_UPDATED": "Права доступа {{ permissionName }} изменены для {{ roleName }}",
+			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку"
 		}
 	},
 	"ACCEPT_INVITE": {
