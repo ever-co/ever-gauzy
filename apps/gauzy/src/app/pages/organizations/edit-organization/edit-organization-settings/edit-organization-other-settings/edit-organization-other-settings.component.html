@@ -218,6 +218,64 @@
 			</div>
 		</nb-card-body>
 	</nb-card>
+
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.BONUS' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.TYPE_OF_BONUS' | translate }}
+							</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="bonusType"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
+										| translate
+								}}"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let type of defaultBonusTypes"
+									[value]="type"
+								>
+									{{ 'SM_TABLE.' + type | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.BONUS_PERCENTAGE' | translate }}
+							</label>
+							<input
+								nbInput
+								type="number"
+								formControlName="bonusPercentage"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.BONUS_PERCENTAGE'
+										| translate
+								}}"
+								fullWidth
+								class="d-block"
+								[ngClass]="{
+									'status-danger': form.get('bonusPercentage')
+										.invalid
+								}"
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
 	<div class="actions">
 		<button
 			[disabled]="this.form.invalid"

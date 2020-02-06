@@ -6,7 +6,8 @@ import {
 	Organization,
 	WeekDaysEnum,
 	RegionsEnum,
-	CurrenciesEnum
+	CurrenciesEnum,
+	BonusTypeEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
@@ -35,6 +36,8 @@ export class EditOrganizationOtherSettingsComponent
 			return type[0] + type.substr(1, type.length).toLowerCase();
 		}
 	);
+	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
+
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
 	listOfDateFormats = ['L', 'L hh:mm', 'LL', 'LLL', 'LLLL'];
@@ -141,7 +144,12 @@ export class EditOrganizationOtherSettingsComponent
 			dateFormat: [this.organization.dateFormat],
 			timeZone: [this.organization.timeZone],
 			startWeekOn: [this.organization.startWeekOn],
-			numberFormat: [this.organization.numberFormat]
+			numberFormat: [this.organization.numberFormat],
+			bonusType: [this.organization.bonusType],
+			bonusPercentage: [
+				this.organization.bonusPercentage,
+				[Validators.min(0), Validators.max(100)]
+			]
 		});
 	}
 

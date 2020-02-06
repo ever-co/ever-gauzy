@@ -39,6 +39,8 @@
 		"EXPENSES": "Expenses (Average)",
 		"BONUS": "Bonus",
 		"BONUS_AVG": "Bonus (Average)",
+		"PROFIT_BASED_BONUS": "Profit Based Bonus",
+		"REVENUE_BASED_BONUS": "Revenue Based Bonus",
 		"STATUS": "Status",
 		"WORK_STATUS": "Work Status",
 		"TODAY": "Today",
@@ -114,7 +116,9 @@
 			"DEPARTMENTS_OPTIONAL": "Departments (Optional)",
 			"PROJECTS": "Projects",
 			"ADD_NEW_DEPARTMENT": "Add New Department",
-			"EDIT_DEPARTMENT": "Edit Department"
+			"EDIT_DEPARTMENT": "Edit Department",
+			"TYPE_OF_BONUS": "Bonus Type",
+			"BONUS_PERCENTAGE": "Bonus Percentage"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -165,7 +169,9 @@
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"DATE": "Date",
 			"VALUE": "Value",
-			"SELECT_CURRENCY": "Select Currency"
+			"SELECT_CURRENCY": "Select Currency",
+			"TYPE_OF_BONUS": "Type of Bonus",
+			"BONUS_PERCENTAGE": "Bonus Percentage"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -347,6 +353,7 @@
 			"ADD_NEW_CLIENT": "Add new client",
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
+			"BONUS": "Bonus",
 			"CLICK_EMPLOYEE": "Click to edit employee",
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",

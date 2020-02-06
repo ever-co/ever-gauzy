@@ -5,14 +5,16 @@ import {
 	IsString,
 	IsDate,
 	IsOptional,
-	IsEnum
+	IsEnum,
+	IsNumber
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import {
 	Organization as IOrganization,
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	WeekDaysEnum
+	WeekDaysEnum,
+	BonusTypeEnum
 } from '@gauzy/models';
 
 @Entity('organization')
@@ -136,4 +138,14 @@ export class Organization extends Base implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	numberFormat?: string;
+
+	@ApiProperty({ type: String, enum: BonusTypeEnum })
+	@IsEnum(BonusTypeEnum)
+	@Column({ nullable: true })
+	bonusType?: string;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@Column({ nullable: true })
+	bonusPercentage?: number;
 }
