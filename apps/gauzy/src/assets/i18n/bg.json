@@ -7,7 +7,7 @@
 		"EDIT": "Редактиране",
 		"MANAGE": "Управление",
 		"DETAILS": "Детайли",
-		"DUPLICATE": "Duplicate",
+		"DUPLICATE": "Дублиране",
 		"DELETE": "Изтриване",
 		"OK": "Да",
 		"SAVE": "Запази",
@@ -16,8 +16,8 @@
 		"ACCEPTED": "Прието",
 		"CANCEL": "Отказ",
 		"CLOSE": "Затваряне",
-		"INVITE": "Invite",
-		"SELECT_ALL": "Select All",
+		"INVITE": "Покана",
+		"SELECT_ALL": "Селектиране на всички",
 		"COPY_LINK": "Copy Link",
 		"MANAGE_INVITES": "Manage Invites",
 		"RESEND": "Resend"
@@ -162,7 +162,10 @@
 			"REGIONS": "Select Region",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Снимка",
-			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees"
+			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"DATE": "Дата",
+			"VALUE": "Стойност",
+			"SELECT_CURRENCY": "Select Currency"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -244,6 +247,7 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
+		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "Общи разходи",
@@ -342,7 +346,8 @@
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
 			"CLICK_EMPLOYEE": "Click to edit employee",
-			"EDIT_PROJECT": "Edit Project"
+			"EDIT_PROJECT": "Edit Project",
+			"REGIONS": "Regions"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -389,6 +394,7 @@
 		"REQUEST_DAYS_OFF": "Request Days Off",
 		"ADD_HOLIDAYS": "Add Holidays",
 		"DISPLAY_HOLIDAYS": "Display Holidays",
+		"TIME_OFF_SETTINGS": "Time Off Settings",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -461,6 +467,11 @@
 			"EXPIRED": "Expired",
 			"ACCEPTED": "Прието"
 		}
+	},
+	"HEADER": {
+		"SELECT_EMPLOYEE": "Select Employee",
+		"SELECT_A_DATE": "Select A date",
+		"SELECT_AN_ORGANIZATION": "Select An Organization"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page Not Found",
