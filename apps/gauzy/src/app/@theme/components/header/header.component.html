@@ -95,21 +95,27 @@
 	*ngIf="showExtraActions && getWindowWidth() < largeBreakpoint"
 >
 	<!-- TODO translate -->
-	<div><h6>Select Employee</h6></div>
+	<div>
+		<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>
+	</div>
 
 	<ga-employee-selector
 		*ngIf="showEmployeesSelector"
 		class="header-selector employee-selector"
 	></ga-employee-selector>
 
-	<div><h6>Select A date</h6></div>
+	<div>
+		<h6>{{ 'HEADER.SELECT_A_DATE' | translate }}</h6>
+	</div>
 
 	<ga-date-selector
 		*ngIf="showDateSelector"
 		class="date-selector"
 	></ga-date-selector>
 
-	<div><h6>Select An Organization</h6></div>
+	<div>
+		<h6>{{ 'HEADER.SELECT_AN_ORGANIZATION' | translate }}</h6>
+	</div>
 
 	<ga-organization-selector
 		*ngIf="showOrganizationsSelector"
