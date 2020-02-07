@@ -23,6 +23,8 @@ export interface Organization extends IBaseEntityModel {
 	postcode?: string;
 	regionCode?: string;
 	numberFormat?: string;
+	bonusType?: string;
+	bonusPercentage?: number;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -91,4 +93,9 @@ export enum WeekDaysEnum {
 	FRIDAY = 'FRIDAY',
 	SATURDAY = 'SATURDAY',
 	SUNDAY = 'SUNDAY'
+}
+
+export enum BonusTypeEnum {
+	PROFIT_BASED_BONUS = 'PROFIT_BASED_BONUS',
+	REVENUE_BASED_BONUS = 'REVENUE_BASED_BONUS'
 }
