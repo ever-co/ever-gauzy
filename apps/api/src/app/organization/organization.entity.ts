@@ -6,7 +6,9 @@ import {
 	IsDate,
 	IsOptional,
 	IsEnum,
-	IsNumber
+	IsNumber,
+	Min,
+	Max
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import {
@@ -146,6 +148,8 @@ export class Organization extends Base implements IOrganization {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
+	@Min(0)
+	@Max(100)
 	@Column({ nullable: true })
 	bonusPercentage?: number;
 }

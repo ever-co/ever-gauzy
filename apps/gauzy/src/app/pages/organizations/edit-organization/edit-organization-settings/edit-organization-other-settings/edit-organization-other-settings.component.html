@@ -239,6 +239,9 @@
 									'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
 										| translate
 								}}"
+								(selectedChange)="
+									loadDefaultBonusPercentage($event)
+								"
 								fullWidth
 							>
 								<nb-option

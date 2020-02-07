@@ -128,6 +128,16 @@ export class EditOrganizationOtherSettingsComponent
 		);
 	}
 
+	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
+		switch (bonusType) {
+			case BonusTypeEnum.PROFIT_BASED_BONUS:
+				this.form.get('bonusPercentage').setValue(75);
+				break;
+			case BonusTypeEnum.REVENUE_BASED_BONUS:
+				this.form.get('bonusPercentage').setValue(10);
+				break;
+		}
+	}
 	private _initializedForm() {
 		if (!this.organization) {
 			return;
@@ -145,9 +155,11 @@ export class EditOrganizationOtherSettingsComponent
 			timeZone: [this.organization.timeZone],
 			startWeekOn: [this.organization.startWeekOn],
 			numberFormat: [this.organization.numberFormat],
-			bonusType: [this.organization.bonusType],
+			bonusType: [
+				this.organization.bonusType || BonusTypeEnum.PROFIT_BASED_BONUS
+			],
 			bonusPercentage: [
-				this.organization.bonusPercentage,
+				this.organization.bonusPercentage || 75,
 				[Validators.min(0), Validators.max(100)]
 			]
 		});
