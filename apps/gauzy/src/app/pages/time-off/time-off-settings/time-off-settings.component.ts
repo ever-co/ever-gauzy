@@ -56,37 +56,10 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	hasRole: boolean;
 	selectedPolicy: SelectedRowModel;
 	smartTableSource = new LocalDataSource();
-	
-	showTable: boolean;
-  selectedPolicyId: string;
-	loading = false;
 
-	smartTableSettings = {
-		actions: false,
-		editable: true,
-		noDataMessage: 'No Data',
-		columns: {
-			name: {
-				title: 'Name',
-				type: 'string',
-				filter: true
-			},
-			requiresApproval: {
-				title: 'Requires Approval',
-				type: 'custom',
-				width: '20%',
-				filter: false,
-				renderComponent: RequestApprovalIcon
-			},
-			paid: {
-				title: 'Paid',
-				type: 'custom',
-				width: '20%',
-				filter: false,
-				renderComponent: PaidIcon
-			}
-		}
-	};
+	selectedPolicyId: string;
+	showTable: boolean;
+	loading = false;
 
 	@ViewChild('timeOffPolicyTable', { static: false }) timeOffPolicyTable;
 
@@ -104,7 +77,6 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
-
 					this._loadTableData(this._selectedOrganizationId);
 				}
 			});
@@ -125,15 +97,17 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 					title: this.getTranslation(
 						'TIME_OFF_PAGE.POLICY.REQUIRES_APPROVAL'
 					),
-					type: 'boolean',
+					type: 'custom',
 					width: '20%',
-					filter: false
+					filter: false,
+					renderComponent: RequestApprovalIcon
 				},
 				paid: {
 					title: this.getTranslation('TIME_OFF_PAGE.POLICY.PAID'),
-					type: 'boolean',
+					type: 'custom',
 					width: '20%',
-					filter: false
+					filter: false,
+					renderComponent: PaidIcon
 				}
 			},
 			pager: {
