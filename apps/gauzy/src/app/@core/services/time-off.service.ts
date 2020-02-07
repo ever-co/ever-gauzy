@@ -4,7 +4,8 @@ import { first } from 'rxjs/operators';
 import {
 	TimeOffPolicy,
 	TimeOffPolicyCreateInput,
-	TimeOffPolicyFindInput
+	TimeOffPolicyFindInput,
+	TimeOffPolicyUpdateInput
 } from '@gauzy/models';
 
 @Injectable({
@@ -15,7 +16,7 @@ export class TimeOffService {
 
 	create(createInput: TimeOffPolicyCreateInput): Promise<any> {
 		return this.http
-			.post<TimeOffPolicy>('/api/time-off/policy/create', createInput)
+			.post<TimeOffPolicy>('/api/time-off-policy/create', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -28,7 +29,7 @@ export class TimeOffService {
 
 		return this.http
 			.get<{ items: TimeOffPolicy[]; total: number }>(
-				`/api/time-off/policy`,
+				`/api/time-off-policy`,
 				{
 					params: { data }
 				}
@@ -37,9 +38,16 @@ export class TimeOffService {
 			.toPromise();
 	}
 
+	update(id: string, updateInput: TimeOffPolicyUpdateInput): Promise<any> {
+		return this.http
+			.put(`/api/time-off-policy/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/time-off/${id}`)
+			.delete(`/api/time-off-policy/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

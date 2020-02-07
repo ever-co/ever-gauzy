@@ -1,0 +1,85 @@
+<nb-card>
+	<nb-card-header>
+		{{ 'ORGANIZATIONS_PAGE.EDIT.ROLES_PERMISSIONS' | translate }}
+	</nb-card-header>
+	<nb-card-body>
+		<div class="fields">
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label">
+							{{ 'FORM.LABELS.ROLE' | translate }}
+						</label>
+						<nb-select
+							class="d-block"
+							size="medium"
+							[(selected)]="selectedRole"
+							(selectedChange)="loadPermissionsForSelectedRole()"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ROLE' | translate
+							}}"
+							fullWidth
+						>
+							<nb-option
+								*ngFor="let role of allRoles"
+								[value]="role.toUpperCase()"
+							>
+								{{ 'USERS_PAGE.ROLE.' + role | translate }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+
+			<div class="row" [nbSpinner]="loading" nbSpinnerSize="large">
+				<div class="col-6">
+					<nb-card>
+						<nb-card-header>{{
+							'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.GENERAL'
+								| translate
+						}}</nb-card-header>
+						<nb-card-body class="permission-items-col">
+							<nb-toggle
+								*ngFor="
+									let permission of permissionGroups.GENERAL
+								"
+								[(checked)]="enabledPermissions[permission]"
+								(checkedChange)="
+									permissionChanged(permission, $event)
+								"
+								labelPosition="start"
+								status="basic"
+								>{{
+									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
+										permission | translate
+								}}</nb-toggle
+							>
+						</nb-card-body>
+					</nb-card>
+				</div>
+				<div class="col-6">
+					<nb-card>
+						<nb-card-header>{{
+							'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.ADMINISTRATION'
+								| translate
+						}}</nb-card-header>
+						<nb-card-body class="permission-items-col">
+							<nb-toggle
+								*ngFor="
+									let permission of permissionGroups.ADMINISTRATION
+								"
+								labelPosition="start"
+								status="basic"
+								[(checked)]="enabledPermissions[permission]"
+								>{{
+									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
+										permission | translate
+								}}</nb-toggle
+							>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

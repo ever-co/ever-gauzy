@@ -8,7 +8,7 @@
 		<h4>{{ 'INCOME_PAGE.INCOME' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div *ngIf="hasRole" class="btn-container mb-3">
+		<div *ngIf="hasEditPermission" class="btn-container mb-3">
 			<button
 				nbButton
 				status="success"

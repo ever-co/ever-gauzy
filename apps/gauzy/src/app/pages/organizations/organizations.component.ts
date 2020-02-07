@@ -1,20 +1,21 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { OrganizationsService } from '../../@core/services/organizations.service';
-import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
-import { Organization } from '@gauzy/models';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
-import { LocalDataSource } from 'ng2-smart-table';
-import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
-import { first } from 'rxjs/operators';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Router } from '@angular/router';
+import { Organization, PermissionsEnum } from '@gauzy/models';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../@core/services';
-import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
-import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
-import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
-import { Store } from '../../@core/services/store.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { OrganizationsService } from '../../@core/services/organizations.service';
+import { Store } from '../../@core/services/store.service';
+import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
+import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
+import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
+import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 
 interface SelectedRow {
 	data: Organization;
@@ -39,6 +40,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		private store: Store
 	) {}
 
+	private _ngDestroy$ = new Subject<void>();
+
 	@ViewChild('settingsTable', { static: false }) settingsTable;
 
 	settingsSmartTable: object;
@@ -46,6 +49,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 	smartTableSource = new LocalDataSource();
 
 	loading = true;
+	hasEditPermission = false;
 
 	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
@@ -91,6 +95,14 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		this._loadSmartTable();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
+
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ALL_ORG_EDIT
+				);
+			});
 	}
 
 	selectOrganization(data: SelectedRow) {
@@ -193,5 +205,8 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 		this.loading = false;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 }

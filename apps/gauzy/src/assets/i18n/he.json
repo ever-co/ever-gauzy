@@ -162,7 +162,10 @@
 			"REGIONS": "Select Region",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "תמונה",
-			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees"
+			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"DATE": "תאריך",
+			"VALUE": "ערך",
+			"SELECT_CURRENCY": "Select Currency"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -227,7 +230,8 @@
 		"ORGANIZATIONS": "ארגונים",
 		"SETTINGS": "הגדרות",
 		"GENERAL": "כללי",
-		"USERS": "Users"
+		"USERS": "Users",
+		"ROLES": "Roles & Permissions"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -244,6 +248,7 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
+		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "סך ההוצאות",
@@ -319,6 +324,7 @@
 		"ARCHIVED": "נשמר בארכיון",
 		"LOCATION": "Location",
 		"SETTINGS": "הגדרות",
+		"ROLES": "Roles",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
@@ -342,7 +348,29 @@
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
 			"CLICK_EMPLOYEE": "Click to edit employee",
-			"EDIT_PROJECT": "Edit Project"
+			"EDIT_PROJECT": "Edit Project",
+			"REGIONS": "Regions",
+			"ROLES_PERMISSIONS": "Roles & Permissions"
+		},
+		"PERMISSIONS": {
+			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
+			"ORG_EXPENSES_VIEW": "View Expenses Page",
+			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
+			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
+			"ORG_INCOMES_VIEW": "View Incomes Page",
+			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
+			"ORG_PROPOSALS_VIEW": "View Proposals Page",
+			"ORG_TIME_OFF_VIEW": "View Time Off Page",
+			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
+			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
+			"ORG_USERS_VIEW": "View Organization Users",
+			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
+			"ALL_ORG_VIEW": "View All Organizations",
+			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
+			"GROUPS": {
+				"GENERAL": "כללי",
+				"ADMINISTRATION": "Administration"
+			}
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -389,6 +417,7 @@
 		"REQUEST_DAYS_OFF": "Request Days Off",
 		"ADD_HOLIDAYS": "Add Holidays",
 		"DISPLAY_HOLIDAYS": "Display Holidays",
+		"TIME_OFF_SETTINGS": "Time Off Settings",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -397,7 +426,11 @@
 		},
 		"POLICY": {
 			"HEADER": "Time Off Policy",
-			"ADD_POLICY": "Add Policy"
+			"ADD_POLICY": "Add Policy",
+			"EDIT_POLICY": "Edit Policy",
+			"NAME": "שם",
+			"REQUIRES_APPROVAL": "Requires Approval",
+			"PAID": "Paid"
 		}
 	},
 	"USERS_PAGE": {
@@ -409,6 +442,9 @@
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
 			"EMPLOYEE": "עובד"
+		},
+		"EDIT_USER": {
+			"HEADER": "Manage User"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -455,6 +491,11 @@
 			"ACCEPTED": "Accepted"
 		}
 	},
+	"HEADER": {
+		"SELECT_EMPLOYEE": "Select Employee",
+		"SELECT_A_DATE": "Select A date",
+		"SELECT_AN_ORGANIZATION": "Select An Organization"
+	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
@@ -492,7 +533,9 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
 			"CANCEL": "בטל",
-			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
+			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
+			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
+			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again"
 		}
 	},
 	"ACCEPT_INVITE": {

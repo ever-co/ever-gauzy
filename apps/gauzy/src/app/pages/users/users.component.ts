@@ -1,6 +1,11 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Role, RolesEnum, InvitationTypeEnum } from '@gauzy/models';
+import {
+	Role,
+	RolesEnum,
+	InvitationTypeEnum,
+	PermissionsEnum
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -38,6 +43,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 	userName = 'User';
 
 	loading = true;
+	hasEditPermission = false;
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -63,6 +69,14 @@ export class UsersComponent implements OnInit, OnDestroy {
 
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
+
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_USERS_EDIT
+				);
+			});
 
 		this.route.queryParamMap
 			.pipe(takeUntil(this._ngDestroy$))

@@ -1,4 +1,10 @@
-import { User, Organization, DefaultValueDateTypeEnum } from '@gauzy/models';
+import {
+	DefaultValueDateTypeEnum,
+	Organization,
+	PermissionsEnum,
+	RolePermissions,
+	User
+} from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
@@ -6,6 +12,7 @@ import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 export class Store {
 	private _selectedOrganization: Organization;
 	private _selectedProposal: ProposalViewModel;
+	private _userRolePermissions: RolePermissions[];
 
 	selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(
 		this.selectedOrganization
@@ -19,6 +26,10 @@ export class Store {
 	selectedDate$: BehaviorSubject<Date> = new BehaviorSubject(
 		this.selectedDate
 	);
+
+	userRolePermissions$: BehaviorSubject<
+		RolePermissions[]
+	> = new BehaviorSubject(this.userRolePermissions);
 
 	get selectedOrganization(): Organization {
 		return this._selectedOrganization;
@@ -87,6 +98,21 @@ export class Store {
 
 	set selectedProposal(proposal: ProposalViewModel) {
 		this._selectedProposal = proposal;
+	}
+
+	get userRolePermissions(): RolePermissions[] {
+		return this._userRolePermissions;
+	}
+
+	set userRolePermissions(rolePermissions: RolePermissions[]) {
+		this._userRolePermissions = rolePermissions;
+		this.userRolePermissions$.next(rolePermissions);
+	}
+
+	hasPermission(permission: PermissionsEnum) {
+		return !!(this._userRolePermissions || []).find(
+			(p) => p.permission === permission && p.enabled
+		);
 	}
 
 	getDateFromOrganizationSettings() {

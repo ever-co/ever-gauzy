@@ -5,16 +5,33 @@ import { first } from 'rxjs/operators';
 
 @Injectable()
 export class UsersService {
+	constructor(private http: HttpClient) {}
 
-    constructor(
-        private http: HttpClient
-    ) { }
+	getUserById(id: string): Promise<User> {
+		return this.http
+			.get<User>(`/api/user/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
 
-    getUserById(id: string): Promise<User> {
-        return this.http.get<User>(`/api/user/${id}`).pipe(first()).toPromise()
-    }
+	getAll(
+		relations?: string[],
+		findInput?: UserFindInput
+	): Promise<{ items: User[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
 
-    update(userId: string, updateInput: UserFindInput) {
-        return this.http.put(`/api/user/${userId}`, updateInput).pipe(first()).toPromise();
-    }
+		return this.http
+			.get<{ items: User[]; total: number }>(`/api/user`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	update(userId: string, updateInput: UserFindInput) {
+		return this.http
+			.put(`/api/user/${userId}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
 }

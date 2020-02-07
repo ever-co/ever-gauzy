@@ -162,7 +162,10 @@
 			"REGIONS": "Выберите регион",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Изображение",
-			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников"
+			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+			"DATE": "Дата",
+			"VALUE": "Стоимость",
+			"SELECT_CURRENCY": "Выберите валюту"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -227,7 +230,8 @@
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
-		"USERS": "Пользователи"
+		"USERS": "Пользователи",
+		"ROLES": "Роли и Разрешения"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -244,6 +248,7 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
+		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Отчет о прибыли",
 			"TOTAL_EXPENSES": "Всего расходов",
@@ -319,6 +324,7 @@
 		"ARCHIVED": "Архивирован",
 		"LOCATION": "Местоположение",
 		"SETTINGS": "Настройки",
+		"ROLES": "Роли",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -342,7 +348,29 @@
 			"GENERAL_SETTINGS": "Общие настройки",
 			"DESIGN": "Дизайн",
 			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
-			"EDIT_PROJECT": "Редактировать проект"
+			"EDIT_PROJECT": "Редактировать проект",
+			"REGIONS": "Регионы",
+			"ROLES_PERMISSIONS": "Роли и Разрешения"
+		},
+		"PERMISSIONS": {
+			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",
+			"ORG_EXPENSES_VIEW": "Страница расходов",
+			"ORG_EXPENSES_EDIT": "Создание/Редактирование/Удаление расходов",
+			"ORG_INCOMES_EDIT": "Создание/Изменить/Удалить доходы",
+			"ORG_INCOMES_VIEW": "Просмотр страницы доходов",
+			"ORG_PROPOSALS_EDIT": "Создание/Изменить/Удалить предложения",
+			"ORG_PROPOSALS_VIEW": "Показать страницу предложений",
+			"ORG_TIME_OFF_VIEW": "Показать время на странице",
+			"ORG_EMPLOYEES_VIEW": "Сотрудники организации",
+			"ORG_EMPLOYEES_EDIT": "Создать/Редактировать/Удалить Сотрудников Организации",
+			"ORG_USERS_VIEW": "Просмотр пользователей организации",
+			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
+			"ALL_ORG_VIEW": "Просмотр всех организаций",
+			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
+			"GROUPS": {
+				"GENERAL": "Генеральная",
+				"ADMINISTRATION": "Администрация"
+			}
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -389,6 +417,7 @@
 		"REQUEST_DAYS_OFF": "Запросить выходные",
 		"ADD_HOLIDAYS": "Добавить выходные",
 		"DISPLAY_HOLIDAYS": "Показать Праздники",
+		"TIME_OFF_SETTINGS": "Настройки таймера",
 		"STATUSES": {
 			"REQUESTED": "Запрошено",
 			"APPROVED": "Одобрено",
@@ -397,7 +426,11 @@
 		},
 		"POLICY": {
 			"HEADER": "Время выкл. политики",
-			"ADD_POLICY": "Добавить Политику"
+			"ADD_POLICY": "Добавить Политику",
+			"EDIT_POLICY": "Изменить политику",
+			"NAME": "Имя",
+			"REQUIRES_APPROVAL": "Требует одобрения",
+			"PAID": "Оплачено"
 		}
 	},
 	"USERS_PAGE": {
@@ -409,6 +442,9 @@
 			"DATA_ENTRY": "Ввод данных",
 			"VIEWER": "Просмотрщик",
 			"EMPLOYEE": "Сотрудник"
+		},
+		"EDIT_USER": {
+			"HEADER": "Управление пользователем"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -455,6 +491,11 @@
 			"ACCEPTED": "Принято"
 		}
 	},
+	"HEADER": {
+		"SELECT_EMPLOYEE": "Выбрать сотрудника",
+		"SELECT_A_DATE": "Выберите дату",
+		"SELECT_AN_ORGANIZATION": "Выберите организацию"
+	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 страница не найдена",
 		"TAKE_ME_HOME": "Вернуть меня домой",
@@ -492,7 +533,9 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",
 			"CANCEL": "Отменить",
-			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить"
+			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
+			"PERMISSION_UPDATED": "Права доступа {{ permissionName }} изменены для {{ roleName }}",
+			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку"
 		}
 	},
 	"ACCEPT_INVITE": {
