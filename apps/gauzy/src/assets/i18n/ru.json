@@ -39,6 +39,8 @@
 		"EXPENSES": "Расходы (средние)",
 		"BONUS": "Бонус",
 		"BONUS_AVG": "Бонус (средний)",
+		"PROFIT_BASED_BONUS": "Бонус на основе прибыли",
+		"REVENUE_BASED_BONUS": "Бонус на основе дохода",
 		"STATUS": "Статус",
 		"WORK_STATUS": "Статус работы",
 		"TODAY": "Сегодня",
@@ -114,7 +116,9 @@
 			"DEPARTMENTS_OPTIONAL": "Отделы (необязательно)",
 			"PROJECTS": "Проекты",
 			"ADD_NEW_DEPARTMENT": "Добавить новый отдел",
-			"EDIT_DEPARTMENT": "Редактировать отдел"
+			"EDIT_DEPARTMENT": "Редактировать отдел",
+			"TYPE_OF_BONUS": "Тип бонуса",
+			"BONUS_PERCENTAGE": "Бонус Процент"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -165,7 +169,9 @@
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
-			"SELECT_CURRENCY": "Выберите валюту"
+			"SELECT_CURRENCY": "Выберите валюту",
+			"TYPE_OF_BONUS": "Тип бонуса",
+			"BONUS_PERCENTAGE": "Бонус Процент"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -347,6 +353,7 @@
 			"ADD_NEW_CLIENT": "Добавить клиента",
 			"GENERAL_SETTINGS": "Общие настройки",
 			"DESIGN": "Дизайн",
+			"BONUS": "Бонус",
 			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
 			"EDIT_PROJECT": "Редактировать проект",
 			"REGIONS": "Регионы",

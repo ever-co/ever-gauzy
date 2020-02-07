@@ -39,6 +39,8 @@
 		"EXPENSES": "הכנסה (הוצאות)",
 		"BONUS": "בונוס",
 		"BONUS_AVG": "הכנסה (בונוס)",
+		"PROFIT_BASED_BONUS": "Profit Based Bonus",
+		"REVENUE_BASED_BONUS": "Revenue Based Bonus",
 		"STATUS": "עבודה",
 		"WORK_STATUS": "סטטוס עבודה",
 		"TODAY": "היום",
@@ -114,7 +116,9 @@
 			"DEPARTMENTS_OPTIONAL": "Departments (Optional)",
 			"PROJECTS": "פרויקטים",
 			"ADD_NEW_DEPARTMENT": "Add New Department",
-			"EDIT_DEPARTMENT": "Edit Department"
+			"EDIT_DEPARTMENT": "Edit Department",
+			"TYPE_OF_BONUS": "Bonus Type",
+			"BONUS_PERCENTAGE": "Bonus Percentage"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -165,7 +169,9 @@
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"DATE": "תאריך",
 			"VALUE": "ערך",
-			"SELECT_CURRENCY": "Select Currency"
+			"SELECT_CURRENCY": "Select Currency",
+			"TYPE_OF_BONUS": "Type of Bonus",
+			"BONUS_PERCENTAGE": "Bonus Percentage"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -347,6 +353,7 @@
 			"ADD_NEW_CLIENT": "הוסף לקוח חדש",
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
+			"BONUS": "בונוס",
 			"CLICK_EMPLOYEE": "Click to edit employee",
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
