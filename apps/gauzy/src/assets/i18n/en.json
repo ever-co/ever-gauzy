@@ -555,5 +555,18 @@
 			"TERMS_AND_CONDITIONS": "Terms & Conditions",
 			"COMPLETE_REGISTRATION": "Complete Registration"
 		}
+	},
+	"NOTES": {
+		"INCOME": {
+			"ADD_INCOME": "Income added for {{ name }}",
+			"EDIT_INCOME": "Income edited for {{ name }}",
+			"DELETE_INCOME": "Income deleted for {{ name }}",
+			"INCOME_ERROR": "{{ error }}"
+		},
+		"EXPENSES": {
+			"ADD_EXPENSE": "Expense added for {{ name }}",
+			"OPEN_EDIT_EXPENSE_DIALOG": "Expense edited for {{ name }}",
+			"DELETE_EXPENSE": "Expense deleted for {{ name }}"
+		}
 	}
 }

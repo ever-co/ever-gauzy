@@ -130,8 +130,6 @@ export class InviteMutationComponent implements OnInit {
 		let result = '';
 		this.translateService.get(prefix, params).subscribe((res) => {
 			result = res;
-			console.log(prefix);
-			console.log(res);
 		});
 
 		return result;

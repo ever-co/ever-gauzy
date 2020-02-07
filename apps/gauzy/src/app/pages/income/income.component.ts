@@ -178,9 +178,9 @@ export class IncomeComponent implements OnInit, OnDestroy {
 		this.selectedIncome = ev;
 	}
 
-	getTranslation(prefix: string) {
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
+		this.translateService.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 
@@ -217,8 +217,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 				});
 
 				this.toastrService.primary(
-					'Income added for ' + this.employeeName,
-					'Success'
+					this.getTranslation('NOTES.INCOME.ADD_INCOME', {
+						name: this.employeeName
+					}),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 
 				this._loadEmployeeIncomeData();
@@ -227,8 +229,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					: null;
 			} catch (error) {
 				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
+					this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
+						error: error.error.message || error.message
+					}),
+					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
 			}
 		}
@@ -259,8 +263,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							'Income edited for ' + this.employeeName,
-							'Success'
+							this.getTranslation('NOTES.INCOME.EDIT_INCOME', {
+								name: this.employeeName
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this._loadEmployeeIncomeData(
 							this.selectedEmployeeId,
@@ -292,8 +298,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							'Income deleted for ' + this.employeeName,
-							'Success'
+							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
+								name: this.employeeName
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this._loadEmployeeIncomeData(
 							this.selectedEmployeeId,

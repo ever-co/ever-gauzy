@@ -226,8 +226,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			});
 
 			this.toastrService.primary(
-				'Expense added for ' + this.employeeName,
-				'Success'
+				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
+					name: this.employeeName
+				}),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
 			this._loadTableData();
@@ -271,8 +273,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 							this.getFormData(formData)
 						);
 						this.toastrService.primary(
-							'Expense edited for ' + this.employeeName,
-							'Success'
+							this.getTranslation(
+								'NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG',
+								{
+									name: this.employeeName
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 
 						this._loadTableData(
@@ -327,8 +334,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							'Expense deleted for ' + this.employeeName,
-							'Success'
+							this.getTranslation(
+								'NOTES.EXPENSES.DELETE_EXPENSE',
+								{
+									name: this.employeeName
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this._loadTableData(
 							this.selectedEmployeeId,
@@ -433,9 +445,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		).trim();
 	}
 
-	getTranslation(prefix: string) {
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
+		this.translateService.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 
