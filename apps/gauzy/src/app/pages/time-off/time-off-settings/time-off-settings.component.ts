@@ -16,6 +16,8 @@ import { TimeOffService } from '../../../@core/services/time-off.service';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { RequestApprovalIcon } from '../table-components/request-approval-icon';
+import { PaidIcon } from '../table-components/paid-icon';
 
 export interface TimeOffPolicyVM {
 	id: string;
@@ -54,9 +56,37 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	hasRole: boolean;
 	selectedPolicy: SelectedRowModel;
 	smartTableSource = new LocalDataSource();
-	selectedPolicyId: string;
+	
 	showTable: boolean;
+  selectedPolicyId: string;
 	loading = false;
+
+	smartTableSettings = {
+		actions: false,
+		editable: true,
+		noDataMessage: 'No Data',
+		columns: {
+			name: {
+				title: 'Name',
+				type: 'string',
+				filter: true
+			},
+			requiresApproval: {
+				title: 'Requires Approval',
+				type: 'custom',
+				width: '20%',
+				filter: false,
+				renderComponent: RequestApprovalIcon
+			},
+			paid: {
+				title: 'Paid',
+				type: 'custom',
+				width: '20%',
+				filter: false,
+				renderComponent: PaidIcon
+			}
+		}
+	};
 
 	@ViewChild('timeOffPolicyTable', { static: false }) timeOffPolicyTable;
 
