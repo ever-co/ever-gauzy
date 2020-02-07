@@ -374,6 +374,8 @@
 			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
+			"POLICY_VIEW": "View Time Off Policy",
+			"POLICY_EDIT": "Edit Time Off Policy",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Administration"
