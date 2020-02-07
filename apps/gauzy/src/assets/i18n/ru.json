@@ -374,6 +374,8 @@
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
+			"POLICY_VIEW": "Просмотр политики отключения",
+			"POLICY_EDIT": "Редактировать политику отключения",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -554,6 +556,19 @@
 			"AGREE_TO": "Согласен с",
 			"TERMS_AND_CONDITIONS": "Условия использования",
 			"COMPLETE_REGISTRATION": "Завершить регистрацию"
+		}
+	},
+	"NOTES": {
+		"INCOME": {
+			"ADD_INCOME": "Доход добавлен для {{ name }}",
+			"EDIT_INCOME": "Доход отредактирован для {{ name }}",
+			"DELETE_INCOME": "Доход удален для {{ name }}",
+			"INCOME_ERROR": "{{ error }}"
+		},
+		"EXPENSES": {
+			"ADD_EXPENSE": "Добавлены расходы на {{ name }}",
+			"OPEN_EDIT_EXPENSE_DIALOG": "Расход отредактирован для {{ name }}",
+			"DELETE_EXPENSE": "Расход удален для {{ name }}"
 		}
 	}
 }
