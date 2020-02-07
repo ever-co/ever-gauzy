@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { StatusTypesEnum } from '@gauzy/models';
+import { StatusTypesEnum, PermissionsEnum } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -26,8 +26,16 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	timeOffStatuses = Object.keys(StatusTypesEnum);
 	loading = false;
 	displayHolidays = true;
-
+	hasEditPermission = false;
 	ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.POLICY_EDIT
+				);
+			});
+
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((date) => {
