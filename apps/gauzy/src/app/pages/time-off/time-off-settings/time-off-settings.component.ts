@@ -9,6 +9,8 @@ import { TimeOffService } from '../../../@core/services/time-off.service';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { RequestApprovalIcon } from '../table-components/request-approval-icon';
+import { PaidIcon } from '../table-components/paid-icon';
 
 export interface TimeOffPolicyVM {
 	id: string;
@@ -44,6 +46,7 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	hasRole: boolean;
 	selectedPolicy: SelectedRowModel;
 	smartTableSource = new LocalDataSource();
+	s;
 	showTable: boolean;
 	loading = false;
 
@@ -59,15 +62,17 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 			},
 			requiresApproval: {
 				title: 'Requires Approval',
-				type: 'boolean',
+				type: 'custom',
 				width: '20%',
-				filter: false
+				filter: false,
+				renderComponent: RequestApprovalIcon
 			},
 			paid: {
 				title: 'Paid',
-				type: 'boolean',
+				type: 'custom',
 				width: '20%',
-				filter: false
+				filter: false,
+				renderComponent: PaidIcon
 			}
 		}
 	};

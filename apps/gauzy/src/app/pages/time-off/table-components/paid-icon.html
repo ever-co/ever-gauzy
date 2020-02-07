@@ -1,0 +1,14 @@
+<div class="center">
+	<div
+		class="badge-width text-center d-block badge-success"
+		*ngIf="rowData.paid == true; else notPaid"
+	>
+		<nb-icon icon="checkmark-outline"></nb-icon>
+	</div>
+
+	<ng-template #notPaid>
+		<div class="badge-width text-center d-block badge-danger">
+			<nb-icon icon="close-outline"></nb-icon>
+		</div>
+	</ng-template>
+</div>
