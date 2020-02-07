@@ -68,6 +68,10 @@
 								*ngFor="
 									let permission of permissionGroups.ADMINISTRATION
 								"
+								[(checked)]="enabledPermissions[permission]"
+								(checkedChange)="
+									permissionChanged(permission, $event)
+								"
 								labelPosition="start"
 								status="basic"
 								[(checked)]="enabledPermissions[permission]"

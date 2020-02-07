@@ -46,7 +46,9 @@ export class EditRolesPermissionsComponent implements OnInit, OnDestroy {
 			PermissionsEnum.ORG_USERS_VIEW,
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.ALL_ORG_EDIT
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.POLICY_VIEW,
+			PermissionsEnum.POLICY_EDIT
 		]
 	};
 
