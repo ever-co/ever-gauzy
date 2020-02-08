@@ -6,8 +6,6 @@ import {
 } from '@gauzy/models';
 import { IncomeService } from '../income';
 import { ExpenseService } from '../expense';
-import { OrganizationService } from '../organization';
-
 @Injectable()
 export class EmployeeStatisticsService {
 	private _monthNames = [
