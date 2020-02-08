@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { EmployeeStatisticsFindInput, EmployeeStatistics } from '@gauzy/models';
+import {
+	EmployeeStatisticsFindInput,
+	EmployeeStatistics,
+	BonusTypeEnum
+} from '@gauzy/models';
 import { IncomeService } from '../income';
 import { ExpenseService } from '../expense';
+import { OrganizationService } from '../organization';
 
 @Injectable()
 export class EmployeeStatisticsService {
@@ -29,16 +34,18 @@ export class EmployeeStatisticsService {
 		employeeId: string,
 		findInput?: EmployeeStatisticsFindInput
 	): Promise<EmployeeStatistics> {
-		const mappedEmployeeIncome = (await this.incomeService.findAll(
-			{
-				where: {
-					employee: {
-						id: employeeId
+		const mappedEmployeeIncome = (
+			await this.incomeService.findAll(
+				{
+					where: {
+						employee: {
+							id: employeeId
+						}
 					}
-				}
-			},
-			findInput ? findInput.valueDate.toString() : null
-		)).items.map((e) => {
+				},
+				findInput ? findInput.valueDate.toString() : null
+			)
+		).items.map((e) => {
 			const obj = {};
 			const formattedDate = this._formatDate(e.valueDate);
 
@@ -47,16 +54,18 @@ export class EmployeeStatisticsService {
 			return obj;
 		});
 
-		const mappedEmployeeExpenses = (await this.expenseService.findAll(
-			{
-				where: {
-					employee: {
-						id: employeeId
+		const mappedEmployeeExpenses = (
+			await this.expenseService.findAll(
+				{
+					where: {
+						employee: {
+							id: employeeId
+						}
 					}
-				}
-			},
-			findInput ? findInput.valueDate.toString() : null
-		)).items.map((e) => {
+				},
+				findInput ? findInput.valueDate.toString() : null
+			)
+		).items.map((e) => {
 			const obj = {};
 			const formattedDate = this._formatDate(e.valueDate);
 
@@ -118,13 +127,26 @@ export class EmployeeStatisticsService {
 				: expenseStatistics.push(0);
 		});
 
+		const {
+			organization: { bonusType, bonusPercentage }
+		} = await this.incomeService.findOne({
+			where: { employee: { id: employeeId } },
+			relations: ['organization']
+		});
 		let profitStatistics = [];
 		let bonusStatistics = [];
 
 		expenseStatistics.forEach((expenseStat, index) => {
-			const profit = incomeStatistics[index] - expenseStat;
+			const income = incomeStatistics[index];
+			const profit = income - expenseStat;
+			const bonus = this.calculateEmployeeBonus(
+				bonusType,
+				bonusPercentage,
+				income,
+				profit
+			);
 			profitStatistics.push(profit);
-			bonusStatistics.push((profit * 75) / 100);
+			bonusStatistics.push(bonus);
 		});
 
 		if (findInput && findInput.valueDate) {
@@ -166,4 +188,20 @@ export class EmployeeStatisticsService {
 		return `${this._monthNames[date.getMonth()]} '${date.getFullYear() -
 			2000}`;
 	}
+
+	calculateEmployeeBonus = (
+		bonusType: string,
+		bonusPercentage: number,
+		income: number,
+		profit: number
+	) => {
+		switch (bonusType) {
+			case BonusTypeEnum.PROFIT_BASED_BONUS:
+				return (profit * bonusPercentage) / 100;
+			case BonusTypeEnum.REVENUE_BASED_BONUS:
+				return (income * bonusPercentage) / 100;
+			default:
+				return 0;
+		}
+	};
 }

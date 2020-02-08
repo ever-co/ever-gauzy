@@ -10,7 +10,9 @@ import {
 	Income,
 	Expense,
 	EmployeeRecurringExpense,
-	OrganizationRecurringExpense
+	OrganizationRecurringExpense,
+	BonusTypeEnum,
+	Organization
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import {
@@ -45,12 +47,13 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
-
+	selectedOrganization: Organization;
 	totalIncome = 0;
 	totalExpense = 0;
 	difference = 0;
 	bonus = 0;
 	bonusPercentage = 0;
+	bonusType: string;
 
 	avarageBonus: number;
 
@@ -104,6 +107,16 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				if (this.selectedEmployee) {
 					this._loadEmployeeTotalIncome();
 					this._loadEmployeeTotalExpense();
+				}
+			});
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				this.selectedOrganization = organization;
+
+				if (this.selectedOrganization) {
+					this.bonusType = this.selectedOrganization.bonusType;
+					this.bonusPercentage = this.selectedOrganization.bonusPercentage;
 				}
 			});
 
@@ -161,9 +174,14 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	private async _loadEmployeeTotalExpense() {
 		await this._loadExpense();
-		this.difference = this.totalIncome - Math.abs(this.totalExpense);
-		this.bonus = (this.difference * 75) / 100;
-		this.bonusPercentage = (this.bonus / this.difference) * 100;
+		const profit = this.totalIncome - Math.abs(this.totalExpense);
+		this.difference = profit;
+		this.bonus = this.calculateEmployeeBonus(
+			this.bonusType,
+			this.bonusPercentage,
+			this.totalIncome,
+			profit
+		);
 	}
 
 	private async _loadExpense() {
@@ -176,19 +194,25 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		);
 
 		const employeeRecurringexpense = this.selectedDate
-			? (await this.employeeRecurringExpenseService.getAll([], {
-					employeeId: this.selectedEmployee.id,
-					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth() + 1
-			  })).items
+			? (
+					await this.employeeRecurringExpenseService.getAll([], {
+						employeeId: this.selectedEmployee.id,
+						year: this.selectedDate.getFullYear(),
+						month: this.selectedDate.getMonth() + 1
+					})
+			  ).items
 			: [];
 
 		const orgRecurringexpense = this.selectedDate
-			? (await this.organizationRecurringExpenseService.getForEmployee({
-					orgId: this.store.selectedOrganization.id,
-					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth() + 1
-			  })).items
+			? (
+					await this.organizationRecurringExpenseService.getForEmployee(
+						{
+							orgId: this.store.selectedOrganization.id,
+							year: this.selectedDate.getFullYear(),
+							month: this.selectedDate.getMonth() + 1
+						}
+					)
+			  ).items
 			: [];
 
 		const totalExpense = items.reduce((a, b) => a + +b.amount, 0);
@@ -267,6 +291,22 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 		return viewDashboardExpenseHistory;
 	}
+
+	calculateEmployeeBonus = (
+		bonusType: string,
+		bonusPercentage: number,
+		income: number,
+		profit: number
+	) => {
+		switch (bonusType) {
+			case BonusTypeEnum.PROFIT_BASED_BONUS:
+				return (profit * bonusPercentage) / 100;
+			case BonusTypeEnum.REVENUE_BASED_BONUS:
+				return (income * bonusPercentage) / 100;
+			default:
+				return 0;
+		}
+	};
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

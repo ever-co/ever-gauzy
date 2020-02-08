@@ -6,11 +6,12 @@ import { Expense, ExpenseService } from '../expense';
 import { Income, IncomeService } from '../income';
 import { EmployeeStatisticsController } from './employee-statistics.controller';
 import { EmployeeStatisticsService } from './employee-statistics.service';
+import { Organization, OrganizationService } from '../organization';
 import { QueryHandlers } from './queries/handlers';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Income, Expense, Employee]),
+		TypeOrmModule.forFeature([Income, Expense, Employee, Organization]),
 		CqrsModule
 	],
 	controllers: [EmployeeStatisticsController],
@@ -19,6 +20,7 @@ import { QueryHandlers } from './queries/handlers';
 		IncomeService,
 		ExpenseService,
 		EmployeeService,
+		OrganizationService,
 		...QueryHandlers
 	],
 	exports: [EmployeeStatisticsService]
