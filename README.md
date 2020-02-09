@@ -123,12 +123,14 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 #### Developers (alphabetical order)
 
 -   Aleksandar Tasev ([AlexTasev](https://github.com/AlexTasev))
+-   Aleksander Savov ([sunk0](https://github.com/sunk0))
 -   Alish Meklyov ([Alish](https://github.com/AlishMekliov931))
 -   Blagovest Gerov ([BlagovestGerov](https://github.com/BlagovestGerov))
 -   Boyan Stanchev ([boyanstanchev](https://github.com/boyanstanchev))
 -   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
+-   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
 #### Designers & QA
 
@@ -137,6 +139,7 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 ### Contributors
 
 -   Rachit Magon ([rmagon](https://github.com/rmagon))
+-   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
 -   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
 
 View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
