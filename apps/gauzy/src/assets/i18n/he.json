@@ -544,7 +544,8 @@
 			"CANCEL": "בטל",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
 			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
-			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again"
+			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -568,7 +569,22 @@
 		"EXPENSES": {
 			"ADD_EXPENSE": "Expense added for {{ name }}",
 			"OPEN_EDIT_EXPENSE_DIALOG": "Expense edited for {{ name }}",
-			"DELETE_EXPENSE": "Expense deleted for {{ name }}"
+			"DELETE_EXPENSE": "Expense deleted for {{ name }}",
+			"EXPENSES_ERROR": "{{ error }}"
+		},
+		"PROPOSALS": {
+			"EDIT_PROPOSAL": "Proposal successfuly updated",
+			"REGISTER_PROPOSAL": "New proposal registered",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Please select an employee from the dropdown menu.",
+			"REGISTER_PROPOSAL_ERROR": "{{ error }}"
+		},
+		"POLICY": {
+			"ADD_POLICY": "New Time off Policy created!",
+			"EDIT_POLICY": "Time off policy edited",
+			"DELETE_POLICY": "Policy deleted"
+		},
+		"USER": {
+			"EDIT_PROFILE": "Your profile has been updated successfully."
 		}
 	}
 }
