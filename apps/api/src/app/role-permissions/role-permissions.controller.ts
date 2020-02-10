@@ -7,8 +7,7 @@ import {
 	Body,
 	Post,
 	Put,
-	Param,
-	UseGuards
+	Param
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';

@@ -7,7 +7,7 @@ import {
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';

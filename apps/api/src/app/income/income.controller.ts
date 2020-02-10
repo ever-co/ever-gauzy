@@ -1,20 +1,9 @@
-import {
-	Controller,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IncomeService } from './income.service';
 import { Income } from './income.entity';
 import { CrudController } from '../core/crud/crud.controller';
-import {
-	IncomeCreateInput as IIncomeCreateInput,
-	PermissionsEnum
-} from '@gauzy/models';
+import { IncomeCreateInput as IIncomeCreateInput } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { IncomeCreateCommand } from './commands/income.create.command';
 import { IPagination } from '../core';

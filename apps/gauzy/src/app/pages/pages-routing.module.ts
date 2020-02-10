@@ -3,8 +3,8 @@ import { NgModule } from '@angular/core';
 
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
-import { RoleGuard } from '../@core/role/role.guard';
-import { RolesEnum } from '@gauzy/models';
+// import { RoleGuard } from '../@core/role/role.guard';
+// import { RolesEnum } from '@gauzy/models';
 
 const routes: Routes = [
 	{
