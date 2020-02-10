@@ -5,10 +5,9 @@ import {
 	Query,
 	Post,
 	Body,
-	Param,
-	UseGuards
+	Param
 } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
 import { Employee } from './employee.entity';
 import { CrudController } from '../core/crud/crud.controller';
@@ -16,13 +15,8 @@ import { IPagination } from '../core';
 import { EmployeeCreateInput as IEmployeeCreateInput } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand } from './commands';
-import { RoleGuard } from '../shared/guards/auth/role.guard';
-import { Roles } from '../shared/decorators/roles';
-import { RolesEnum } from 'apps/common/enums/roles';
 
-@UseGuards(RoleGuard)
-@Roles(RolesEnum.ADMIN)
-@ApiUseTags('Employee')
+@ApiTags('Employee')
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
@@ -32,7 +26,7 @@ export class EmployeeController extends CrudController<Employee> {
 		super(employeeService);
 	}
 
-	@ApiOperation({ title: 'Find all employees.' })
+	@ApiOperation({ summary: 'Find all employees.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found employees',
@@ -50,7 +44,7 @@ export class EmployeeController extends CrudController<Employee> {
 		return this.employeeService.findAll({ where: findInput, relations });
 	}
 
-	@ApiOperation({ title: 'Find User by id.' })
+	@ApiOperation({ summary: 'Find User by id.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',
@@ -65,7 +59,7 @@ export class EmployeeController extends CrudController<Employee> {
 		return this.employeeService.findOne(id);
 	}
 
-	@ApiOperation({ title: 'Create new record' })
+	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.' /*, type: T*/

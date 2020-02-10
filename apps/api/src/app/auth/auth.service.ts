@@ -1,11 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { User, UserService } from '../user';
 import * as bcrypt from 'bcrypt';
-import { environment as env, environment } from '@env-api/environment';
-
-import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { get, post, Response } from 'request';
+import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
+import { User, UserService } from '../user';
+import { environment as env, environment } from '@env-api/environment';
+import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import { EmailService } from '../email-templates/email.service';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -16,7 +16,10 @@ export enum Provider {
 export class AuthService {
 	saltRounds: number;
 
-	constructor(private readonly userService: UserService) {
+	constructor(
+		private readonly userService: UserService,
+		private emailService: EmailService
+	) {
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
 
@@ -50,6 +53,55 @@ export class AuthService {
 		};
 	}
 
+	async requestPassword(
+		findObj: any
+	): Promise<{ id: string; token: string } | null> {
+		const user = await this.userService.findOne(findObj, {
+			relations: ['role']
+		});
+
+		let token: string;
+
+		if (user && user.id) {
+			const newToken = await this.createToken(user);
+			token = newToken.token;
+
+			if (token) {
+				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
+
+				this.emailService.requestPassword(user, url);
+
+				return {
+					id: user.id,
+					token
+				};
+			}
+		} else {
+			throw new Error('Email not found');
+		}
+	}
+
+	async resetPassword(findObject) {
+		if (findObject.password.length < 6) {
+			throw new Error('Password should be at least 6 characters long');
+		}
+
+		if (findObject.password !== findObject.confirmPassword) {
+			throw new Error('Passwords must match.');
+		}
+
+		if (!findObject.user.id) {
+			throw new Error('User not found');
+		}
+
+		if (!findObject.user.token) {
+			throw new Error('Authorization token is invalid or missing');
+		}
+
+		const hash = await this.getPasswordHash(findObject.password);
+		return this.userService.changePassword(findObject.user.id, hash);
+	}
+
 	async register(input: IUserRegistrationInput): Promise<User> {
 		const user = this.userService.create({
 			...input.user,
@@ -59,6 +111,8 @@ export class AuthService {
 				  }
 				: {})
 		});
+
+		this.emailService.welcomeUser(input.user);
 
 		return user;
 	}
@@ -90,7 +144,7 @@ export class AuthService {
 
 	async hasRole(token: string, roles: string[] = []): Promise<boolean> {
 		try {
-			const { id, role } = verify(token, env.JWT_SECRET) as {
+			const { role } = verify(token, env.JWT_SECRET) as {
 				id: string;
 				role: string;
 			};
@@ -138,7 +192,7 @@ export class AuthService {
 		}
 	}
 
-	async createToken(user: { id: string }): Promise<{ token: string }> {
+	async createToken(user: { id?: string }): Promise<{ token: string }> {
 		const token: string = sign({ id: user.id }, env.JWT_SECRET, {});
 		return { token };
 	}

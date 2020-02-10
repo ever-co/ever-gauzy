@@ -1,20 +1,12 @@
-import { Component, Input, OnInit } from '@angular/core';
-import {
-	FormBuilder,
-	FormGroup,
-	Validators,
-	ValidatorFn,
-	AbstractControl
-} from '@angular/forms';
-import {
-	Organization,
-	CurrenciesEnum,
-	DefaultValueDateTypeEnum,
-	AlignmentOptions
-} from '@gauzy/models';
-
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CurrenciesEnum, Organization } from '@gauzy/models';
+import { NbToastrService } from '@nebular/theme';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+import { EmployeesService } from '../../../../../@core/services';
+import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 
 @Component({
 	selector: 'ga-edit-org-main',
@@ -22,68 +14,81 @@ import * as timezone from 'moment-timezone';
 	styleUrls: ['./edit-organization-main.component.scss']
 })
 export class EditOrganizationMainComponent implements OnInit {
-	@Input()
+	private _ngDestroy$ = new Subject<void>();
+
 	organization: Organization;
-
+	imageUrl: string;
+	hoverState: boolean;
+	employeesCount: number;
 	form: FormGroup;
-
 	currencies: string[] = Object.values(CurrenciesEnum);
-	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
-	defaultAlignmentTypes: string[] = Object.values(AlignmentOptions).map(
-		(type) => {
-			return type[0] + type.substr(1, type.length).toLowerCase();
-		}
-	);
-	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
-	// todo: maybe its better to place listOfDateFormats somewhere more global for the app?
-	listOfDateFormats = [
-		'M/D/YYYY',
-		'D/M/YYYY',
-		'DDDD/MMMM/YYYY',
-		'MMMM Do YYYY',
-		'dddd, MMMM Do YYYY',
-		'MMM D YYYY',
-		'YYYY-MM-DD',
-		'ddd, MMM D YYYY'
-	];
 
-	constructor(private fb: FormBuilder) {}
+	constructor(
+		private fb: FormBuilder,
+		private employeesService: EmployeesService,
+		private organizationService: OrganizationsService,
+		private toastrService: NbToastrService,
+		private organizationEditStore: OrganizationEditStore
+	) {}
 
-	get mainUpdateObj() {
-		return this.form.getRawValue();
+	updateImageUrl(url: string) {
+		this.imageUrl = url;
 	}
 
-	getTimeWithOffset(zone: string) {
-		let cutZone = zone;
-		if (zone.includes('/')) {
-			cutZone = zone.split('/')[1];
-		}
-
-		const offset = timezone.tz(zone).format('zZ');
-
-		return '(' + offset + ') ' + cutZone;
-	}
-
-	dateFormatPreview(format: string) {
-		return moment().format(format);
-	}
+	handleImageUploadError(event: any) {}
 
 	ngOnInit(): void {
-		this._initializedForm();
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.organization = organization;
+					this._initializeForm();
+					this.imageUrl = this.organization.imageUrl;
+					this.loadEmployeesCount();
+				}
+			});
 	}
 
-	private _initializedForm() {
+	private async loadEmployeesCount() {
+		const { total } = await this.employeesService
+			.getAll([], { organization: { id: this.organization.id } })
+			.pipe(first())
+			.toPromise();
+
+		this.employeesCount = total;
+	}
+
+	async updateOrganizationSettings() {
+		this.organizationService.update(this.organization.id, {
+			imageUrl: this.imageUrl,
+			...this.form.getRawValue()
+		});
+		this.toastrService.primary(
+			this.organization.name + ' organization main info updated.',
+			'Success'
+		);
+		this.goBack();
+	}
+
+	goBack() {
+		const currentURL = window.location.href;
+		window.location.href = currentURL.substring(
+			0,
+			currentURL.indexOf('/settings')
+		);
+	}
+
+	private _initializeForm() {
+		if (!this.organization) {
+			return;
+		}
+
 		this.form = this.fb.group({
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
-			defaultValueDateType: [
-				this.organization.defaultValueDateType,
-				Validators.required
-			],
-			defaultAlignmentType: [this.organization.defaultAlignmentType],
-			brandColor: [this.organization.brandColor],
-			dateFormat: [this.organization.dateFormat],
-			timeZone: [this.organization.timeZone]
+			officialName: [this.organization.officialName],
+			taxId: [this.organization.taxId]
 		});
 	}
 }

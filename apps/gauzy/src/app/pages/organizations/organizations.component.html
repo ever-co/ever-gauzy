@@ -3,7 +3,7 @@
 		<h4>{{ 'ORGANIZATIONS_PAGE.ORGANIZATIONS' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
+		<div class="mb-3" *ngIf="hasEditPermission">
 			<button
 				nbButton
 				status="success"
@@ -39,6 +39,8 @@
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			(userRowSelect)="selectOrganization($event)"
+			style="cursor: pointer;"
+			#settingsTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>

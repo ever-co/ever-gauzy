@@ -2,6 +2,8 @@ import { Connection } from 'typeorm';
 import { Expense } from './expense.entity';
 import * as faker from 'faker';
 import { CurrenciesEnum, Organization, Employee } from '@gauzy/models';
+import * as fs from 'fs';
+import * as csv from 'csv-parser';
 
 export const createExpenses = async (
 	connection: Connection,
@@ -13,22 +15,38 @@ export const createExpenses = async (
 		orgs: Organization[];
 		employees: Employee[];
 	}
-): Promise<{ defaultExpense: Expense; randomExpenses: Expense[] }> => {
-	const defaultExpense = new Expense();
+): Promise<{ defaultExpenses: Expense[]; randomExpenses: Expense[] }> => {
 	const currencies = Object.values(CurrenciesEnum);
+	const defaultExpenses = [];
+	const filePath =
+		'./apps/api/src/app/expense/expense-seed-data/expenses-data.csv';
 
-	defaultExpense.employee = randomData.employees[0];
-	defaultExpense.organization = defaultData.org;
-	defaultExpense.amount = 250;
-	defaultExpense.vendorName = 'Ever';
-	defaultExpense.vendorId = '15';
-	defaultExpense.categoryName = 'Software';
-	defaultExpense.categoryId = '15';
-	defaultExpense.currency = currencies[0];
-	defaultExpense.valueDate = new Date();
-	defaultExpense.notes = 'Some notes';
+	fs.createReadStream(filePath)
+		.pipe(csv())
+		.on('data', (data) => defaultExpenses.push(data))
+		.on('end', () => {
+			defaultExpenses.map(async (seedExpense) => {
+				const expense = new Expense();
+				const foundEmployee = defaultData.employees.find(
+					(emp) => emp.user.email === seedExpense.email
+				);
 
-	await insertExpense(connection, defaultExpense);
+				expense.employee = foundEmployee;
+				expense.organization = defaultData.org;
+				expense.amount = Math.abs(seedExpense.amount);
+				expense.vendorName = seedExpense.vendorName;
+				expense.vendorId = seedExpense.vendorId;
+				expense.categoryName = seedExpense.categoryName;
+				expense.categoryId = faker.random
+					.number({ min: 10, max: 9999 })
+					.toString();
+				expense.currency = seedExpense.currency;
+				expense.valueDate = new Date(seedExpense.valueDate);
+				expense.notes = seedExpense.notes;
+
+				await insertExpense(connection, expense);
+			});
+		});
 
 	const randomExpenses: Expense[] = [];
 
@@ -54,29 +72,31 @@ export const createExpenses = async (
 		'Rent for September'
 	];
 
-	for (let index = 0; index < 5; index++) {
+	for (let index = 0; index < 25; index++) {
 		const expense = new Expense();
 
-		expense.employee = randomData.employees[index];
-		expense.organization = randomData.orgs[index];
+		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
+
+		expense.organization = randomData.orgs[index % 5];
+		expense.employee = randomData.employees[currentIndex];
 		expense.amount = faker.random.number({ min: 10, max: 999 });
-		expense.vendorName = vendorsArray[index];
+		expense.vendorName = vendorsArray[currentIndex];
 		expense.vendorId = faker.random
 			.number({ min: 10, max: 9999 })
 			.toString();
-		expense.categoryName = categoryArray[index];
+		expense.categoryName = categoryArray[currentIndex];
 		expense.categoryId = faker.random
 			.number({ min: 10, max: 9999 })
 			.toString();
 		expense.currency = currencies[(index % currencies.length) + 1 - 1];
 		expense.valueDate = faker.date.recent(15);
-		expense.notes = notesArray[index];
+		expense.notes = notesArray[currentIndex];
 
 		await insertExpense(connection, expense);
 		randomExpenses.push(expense);
 	}
 
-	return { defaultExpense, randomExpenses };
+	return { defaultExpenses, randomExpenses };
 };
 
 const insertExpense = async (

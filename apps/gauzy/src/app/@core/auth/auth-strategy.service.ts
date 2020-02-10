@@ -1,6 +1,6 @@
 import { Observable, from, of } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import 'rxjs/add/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
@@ -43,7 +43,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				success: '/',
 				failure: null
 			},
-			defaultErrors: ['Something went wrong, please try again.'],
+			defaultErrors: ['Email is not correct, please try again.'],
 			defaultMessages: [
 				'Reset password instructions have been sent to your email.'
 			]
@@ -61,6 +61,7 @@ export class AuthStrategy extends NbAuthStrategy {
 
 	constructor(
 		private route: ActivatedRoute,
+		private router: Router,
 		private authService: AuthService,
 		private store: Store
 	) {
@@ -79,7 +80,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		const { email, password } = args;
 
 		// TODO implement remember me feature
-		const rememberMe = !!args.rememberMe;
+		// const rememberMe = !!args.rememberMe;
 
 		const loginInput = {
 			findObj: {
@@ -140,7 +141,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		confirmPassword: string;
 		terms: boolean;
 	}): Observable<NbAuthResult> {
-		const { email, fullName, password, confirmPassword, terms } = args;
+		const { email, fullName, password, confirmPassword } = args;
 
 		if (password !== confirmPassword) {
 			return Observable.of(
@@ -199,12 +200,114 @@ export class AuthStrategy extends NbAuthStrategy {
 		return from(this._logout());
 	}
 
-	requestPassword(data?: any): Observable<NbAuthResult> {
-		throw new Error('Not implemented yet');
+	requestPassword(args: { email: string }): Observable<NbAuthResult> {
+		const { email } = args;
+
+		const requestPasswordInput = {
+			findObj: {
+				email
+			}
+		};
+
+		return this.authService
+			.requestPassword(requestPasswordInput.findObj)
+			.pipe(
+				map((res: { id?: string; token?: string }) => {
+					let id, token;
+
+					if (res) {
+						id = res.id;
+						token = res.token;
+					}
+
+					if (!token) {
+						return new NbAuthResult(
+							false,
+							res,
+							false,
+							AuthStrategy.config.requestPass.defaultErrors
+						);
+					}
+
+					this.store.userId = id;
+					this.store.token = token;
+
+					return new NbAuthResult(
+						true,
+						res,
+						false,
+						[],
+						AuthStrategy.config.requestPass.defaultMessages
+					);
+				}),
+				catchError((err) => {
+					console.log(err);
+
+					return of(
+						new NbAuthResult(
+							false,
+							err,
+							false,
+							AuthStrategy.config.requestPass.defaultErrors,
+							[AuthStrategy.config.requestPass.defaultErrors]
+						)
+					);
+				})
+			);
 	}
 
-	resetPassword(data: any = {}): Observable<NbAuthResult> {
-		throw new Error('Not implemented yet');
+	resetPassword(args: {
+		password: string;
+		confirmPassword: string;
+	}): Observable<NbAuthResult> {
+		const { password, confirmPassword } = args;
+
+		const indexToken = this.router.url.indexOf('=');
+		const indexId = this.router.url.lastIndexOf('=');
+		const token = this.router.url.substring(indexToken + 1);
+		const id = this.router.url.substring(indexId + 1);
+
+		if (password !== confirmPassword) {
+			return Observable.of(
+				new NbAuthResult(false, null, null, [
+					"The passwords don't match."
+				])
+			);
+		}
+
+		const resetPassInput = {
+			user: {
+				id,
+				token
+			},
+			password,
+			confirmPassword
+		};
+
+		return this.authService.resetPassword(resetPassInput).pipe(
+			map((res) => {
+				return new NbAuthResult(
+					true,
+					res,
+					AuthStrategy.config.resetPass.redirect.success,
+					[],
+					AuthStrategy.config.resetPass.defaultMessages
+				);
+			}),
+			catchError((err) => {
+				console.log(err);
+
+				return of(
+					new NbAuthResult(
+						false,
+						err,
+						false,
+						AuthStrategy.config.requestPass.defaultErrors,
+						[AuthStrategy.config.requestPass.defaultErrors]
+					)
+				);
+			})
+		);
 	}
 
 	refreshToken(data?: any): Observable<NbAuthResult> {

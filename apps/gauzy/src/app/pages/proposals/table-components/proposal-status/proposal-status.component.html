@@ -1,0 +1,15 @@
+<div
+	class="text-center d-block"
+	*ngIf="rowData.status == 'SENT'; else accepted"
+>
+	<div class="badge-warning">
+		{{ 'BUTTONS.SENT' | translate }}
+	</div>
+</div>
+<ng-template #accepted>
+	<div class="text-center d-block">
+		<div class="badge-success">
+			{{ 'BUTTONS.ACCEPTED' | translate }}
+		</div>
+	</div>
+</ng-template>

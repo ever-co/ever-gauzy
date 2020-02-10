@@ -1,0 +1,24 @@
+<div class="row file-uploader-container">
+	<input
+		[hidden]="true"
+		(change)="imageUrlChanged()"
+		#fileInput
+		type="file"
+		id="fileInput"
+		ng2FileSelect
+		[uploader]="uploader"
+	/>
+
+	<input
+		#shownInput="ngModel"
+		type="text"
+		class="form-control col-10"
+		[ngClass]="customClass"
+		placeholder="{{ placeholder }}"
+		(change)="imageUrlChanged()"
+		[(ngModel)]="fileUrl"
+	/>
+	<button nbButton status="primary" (click)="fileInput.click()" class="col-2">
+		{{ 'BROWSE' | translate }}
+	</button>
+</div>

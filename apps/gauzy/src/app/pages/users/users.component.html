@@ -1,0 +1,59 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>
+				{{ 'USERS_PAGE.HEADER' | translate }} {{ organizationName }}
+			</h4>
+			<button
+				nbButton
+				*ngIf="hasEditPermission"
+				status="primary"
+				(click)="manageInvites()"
+			>
+				{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+			</button>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3" *ngIf="hasEditPermission">
+			<button nbButton status="primary" (click)="invite()" class="mr-2">
+				<nb-icon class="mr-1" icon="email-outline"></nb-icon
+				>{{ 'BUTTONS.INVITE' | translate }}
+			</button>
+
+			<button nbButton status="success" (click)="add()" class="mr-2">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+
+			<button
+				nbButton
+				[disabled]="!selectedUser"
+				(click)="edit()"
+				status="info"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				[disabled]="!selectedUser"
+				(click)="delete()"
+				status="danger"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+				>{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+		<ng2-smart-table
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectUserTmp($event)"
+			#usersTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>

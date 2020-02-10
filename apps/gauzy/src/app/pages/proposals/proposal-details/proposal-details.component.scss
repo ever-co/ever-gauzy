@@ -1,0 +1,50 @@
+nb-card-header {
+	display: flex;
+	justify-content: space-between;
+}
+
+.card-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.wrapper-top {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	grid-gap: 2em;
+	text-align: center;
+
+	.prop-card {
+		align-items: center;
+		padding: 2em;
+	}
+
+	@media (max-width: 1120px) {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	@media (max-width: 600px) {
+		display: block;
+	}
+}
+
+.wrapper-bottom {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-gap: 2em;
+	text-align: left;
+	height: fit-content;
+
+	h6 {
+		text-align: center;
+		padding: 1em;
+	}
+
+	p {
+		padding: 0 2em;
+	}
+
+	@media (max-width: 900px) {
+		display: block;
+	}
+}

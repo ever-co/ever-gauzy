@@ -1,32 +1,46 @@
-import { Entity, Index, Column } from 'typeorm';
+import {
+	Entity,
+	Index,
+	Column,
+	JoinColumn,
+	RelationId,
+	OneToOne
+} from 'typeorm';
 import { Base } from '../core/entities/base';
-import { UserOrganization as  IUserOrganization } from '@gauzy/models';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { UserOrganization as IUserOrganization } from '@gauzy/models';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
+import { User } from '../user';
 
 @Entity('user_organization')
 export class UserOrganization extends Base implements IUserOrganization {
-    @ApiModelProperty({ type: String })
-    @IsString()
-    @IsNotEmpty()
-    @Index()
-    @Column()
-    userId: string;
+	@ApiProperty({ type: User })
+	@OneToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	user?: User;
 
-    @ApiModelProperty({ type: String })
-    @IsString()
-    @IsNotEmpty()
-    @Index()
-    @Column()
-    orgId: string;
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	@RelationId((userOrganization: UserOrganization) => userOrganization.user)
+	userId: string;
 
-    @ApiModelProperty({ type: Boolean, default: true })
-    @Index()
-    @Column({ default: true })
-    isDefault: boolean;
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	orgId: string;
 
-    @ApiModelProperty({ type: Boolean, default: true })
-    @Index()
-    @Column({ default: true })
-    isActive: boolean;
+	@ApiProperty({ type: Boolean, default: true })
+	@Index()
+	@Column({ default: true })
+	isDefault: boolean;
+
+	@ApiProperty({ type: Boolean, default: true })
+	@Index()
+	@Column({ default: true })
+	isActive: boolean;
 }

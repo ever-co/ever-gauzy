@@ -1,0 +1,35 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<h5>{{ 'INVITE_PAGE.' + invitationType + '.HEADER' | translate }}</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<ga-email-invite-form
+			#emailInviteForm
+			[organizationProjects]="organizationProjects"
+			[organizationClients]="organizationClients"
+			[organizationDepartments]="organizationDepartments"
+			[selectedOrganizationId]="selectedOrganizationId"
+			[currentUserId]="currentUserId"
+			[invitationType]="invitationType"
+		></ga-email-invite-form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button class="mr-2" status="danger" (click)="closeDialog()" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			class="mr-2"
+			[disabled]="emailInviteForm.form.invalid"
+			status="success"
+			(click)="add()"
+			nbButton
+		>
+			{{ 'INVITE_PAGE.' + invitationType + '.ACTION' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

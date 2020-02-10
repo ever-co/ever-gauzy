@@ -1,18 +1,24 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Params } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Location } from '@angular/common';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { first, takeUntil } from 'rxjs/operators';
-import { Employee } from '@gauzy/models';
-import { Subject, Subscription } from 'rxjs';
-import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { ActivatedRoute, Params } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
+import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
+import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
+import { Subject, Subscription } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+import { UserFindInput, EmployeeUpdateInput, Employee } from '@gauzy/models';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
 @Component({
 	selector: 'ngx-edit-employee-profile',
 	templateUrl: './edit-employee-profile.component.html',
-	styleUrls: ['./edit-employee-profile.component.scss']
+	styleUrls: [
+		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
+	],
+	providers: [EmployeeStore]
 })
 export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
@@ -25,13 +31,18 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	selectedEmployee: Employee;
 	employeeName = 'Employee';
 
+	tabs: any[];
+
 	constructor(
 		private route: ActivatedRoute,
 		private fb: FormBuilder,
 		private location: Location,
 		private employeeService: EmployeesService,
 		private userService: UsersService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private employeeStore: EmployeeStore,
+		private errorHandler: ErrorHandlingService,
+		private store: Store
 	) {}
 
 	ngOnInit() {
@@ -42,55 +53,66 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				this._loadEmployeeData();
 			});
 
-		this.getFakeData();
+		this.employeeStore.userForm$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((value) => {
+				this.submitUserForm(value);
+			});
+
+		this.employeeStore.employeeForm$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((value) => {
+				this.submitEmployeeForm(value);
+			});
+
+		this.loadTabs();
+	}
+
+	loadTabs() {
+		this.tabs = [
+			{
+				title: 'Main',
+				icon: 'person-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/main`
+			},
+			{
+				title: 'Rates',
+				icon: 'pricetags-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/rates`
+			},
+			{
+				title: 'Departments',
+				icon: 'briefcase-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/departments`
+			},
+			{
+				title: 'Projects',
+				icon: 'book-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/projects`
+			},
+			{
+				title: 'Clients',
+				icon: 'book-open-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/clients`
+			}
+		];
 	}
 
 	goBack() {
 		this.location.back();
 	}
 
-	handleImageUploadError(error: any) {
-		this.toastrService.danger(error);
-	}
-
-	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
-
-	private getFakeData() {
-		const fakeDepartmentNames = [
-			'Accounting',
-			'IT',
-			'Marketing',
-			'Human Resources'
-		];
-
-		fakeDepartmentNames.forEach((name) => {
-			this.fakeDepartments.push({
-				departmentName: name,
-				departmentId: this.getFakeId()
-			});
-		});
-
-		const fakePositionNames = [
-			'Developer',
-			'Project Manager',
-			'Accounting Employee',
-			'Head of Human Resources'
-		];
-
-		fakePositionNames.forEach((name) => {
-			this.fakePositions.push({
-				positionName: name,
-				positionId: this.getFakeId()
-			});
-		});
-	}
-
-	async submitForm() {
-		if (this.form.valid) {
+	private async submitEmployeeForm(value: EmployeeUpdateInput) {
+		if (value) {
 			try {
-				this.userService.update(
-					this.selectedEmployee.user.id,
-					this.form.value
+				await this.employeeService.update(
+					this.selectedEmployee.id,
+					value
 				);
 				this.toastrService.primary(
 					this.employeeName + ' profile updated.',
@@ -98,10 +120,25 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				);
 				this._loadEmployeeData();
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
+				this.errorHandler.handleError(error);
+			}
+		}
+	}
+
+	private async submitUserForm(value: UserFindInput) {
+		if (value) {
+			try {
+				await this.userService.update(
+					this.selectedEmployee.user.id,
+					value
 				);
+				this.toastrService.primary(
+					this.employeeName + ' profile updated.',
+					'Success'
+				);
+				this._loadEmployeeData();
+			} catch (error) {
+				this.errorHandler.handleError(error);
 			}
 		}
 	}
@@ -116,18 +153,8 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 		this.selectedEmployee = items[0];
 		const checkUsername = this.selectedEmployee.user.username;
 		this.employeeName = checkUsername ? checkUsername : 'Employee';
-		this._initializeForm(items[0]);
-	}
 
-	private _initializeForm(employee: Employee) {
-		// TODO: Implement Departments and Positions!
-		this.form = this.fb.group({
-			username: [employee.user.username],
-			email: [employee.user.email, Validators.required],
-			firstName: [employee.user.firstName, Validators.required],
-			lastName: [employee.user.lastName, Validators.required],
-			imageUrl: [employee.user.imageUrl, Validators.required]
-		});
+		this.employeeStore.selectedEmployee = this.selectedEmployee;
 	}
 
 	ngOnDestroy() {

@@ -1,0 +1,48 @@
+<nb-card>
+	<nb-card-header>
+		<h4>
+			{{ 'USERS_PAGE.EDIT_USER.HEADER' | translate }}
+			<span *ngIf="selectedUser?.firstName || selectedUser?.lastName">
+				{{ selectedUser.firstName }}
+				{{ selectedUser.lastName }}
+			</span>
+			<span *ngIf="selectedUser?.username">
+				<ng-container
+					*ngIf="
+						selectedUser.firstName || selectedUser.lastName;
+						then withBraces;
+						else withQuotes
+					"
+				>
+				</ng-container>
+
+				<ng-template #withBraces>
+					({{ selectedUser.username }})
+				</ng-template>
+
+				<ng-template #withQuotes>
+					'{{ selectedUser.username }}'
+				</ng-template>
+			</span>
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="navigate" (click)="goBack()">
+			<nb-icon icon="arrow-back-outline"></nb-icon>
+			<span>{{ 'BUTTONS.BACK' | translate }}</span>
+		</div>
+
+		<!-- <ga-edit-user-main
+      *ngIf="!!selectedUser"
+			[selectedUser]="selectedUser"
+			(submitUser)="submitUserForm($event)"
+    ></ga-edit-user-main> -->
+
+		<ngx-profile
+			*ngIf="!!selectedUser"
+			[selectedUser]="selectedUser"
+			[allowRoleChange]="true"
+			(userSubmitted)="goBack()"
+		></ngx-profile>
+	</nb-card-body>
+</nb-card>

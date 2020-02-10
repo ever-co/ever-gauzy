@@ -7,7 +7,8 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbDatepickerModule,
-	NbSelectModule
+	NbSelectModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { EmployeeRecurringExpenseMutationComponent } from './employee-recurring-expense-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -32,6 +33,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		NgSelectModule,
 		NbSelectModule,
+		NbTooltipModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

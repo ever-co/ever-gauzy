@@ -1,0 +1,13 @@
+<div class="center">
+	<div
+		class="badge-width text-center d-block badge-success"
+		*ngIf="rowData.requiresApproval == true; else notApproved"
+	>
+		<nb-icon icon="checkmark-outline"></nb-icon>
+	</div>
+	<ng-template #notApproved>
+		<div class="badge-width text-center badge-danger">
+			<nb-icon icon="close-outline"></nb-icon>
+		</div>
+	</ng-template>
+</div>

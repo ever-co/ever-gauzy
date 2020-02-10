@@ -1,4 +1,4 @@
-<nb-card class="org-edit">
+<nb-card class="org-edit" [nbSpinner]="loading" nbSpinnerStatus="primary">
 	<nb-card-header class="header">
 		<div
 			class="header-container"
@@ -65,7 +65,9 @@
 				<span *ngIf="!showAddCard">
 					<button
 						(click)="
-							showAddCard = !showAddCard; date = getDefaultDate()
+							showAddCard = !showAddCard;
+							date = getDefaultDate();
+							selectedCurrency = selectedOrg.currency
 						"
 						nbButton
 						status="success"
@@ -87,7 +89,9 @@
 								[(ngModel)]="name"
 								nbInput
 								fullWidth
-								placeholder="Name"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.NAME' | translate
+								}}"
 							/>
 						</div>
 						<div class="col-3">
@@ -96,7 +100,9 @@
 								[(ngModel)]="date"
 								nbInput
 								fullWidth
-								placeholder="Date"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.DATE' | translate
+								}}"
 							/>
 						</div>
 						<div class="col-2">
@@ -105,15 +111,21 @@
 								[(ngModel)]="expenseValue"
 								nbInput
 								fullWidth
-								placeholder="Value"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.VALUE' | translate
+								}}"
 							/>
 						</div>
 
 						<div class="col-2">
 							<nb-select
 								class="d-block"
-								placeholder="Select Currency"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.SELECT_CURRENCY'
+										| translate
+								}}"
 								[(selected)]="selectedCurrency"
+								disabled
 							>
 								<nb-option
 									*ngFor="let currency of currencies"
@@ -161,7 +173,13 @@
 			</div>
 		</div>
 
-		<div class="sub-header block-content">
+		<div
+			*ngIf="
+				selectedOrgRecurringExpense &&
+				selectedOrgRecurringExpense.length > 0
+			"
+			class="sub-header block-content"
+		>
 			<div class="row block-info">
 				<div class="col">{{ 'POP_UPS.CATEGORY_NAME' | translate }}</div>
 				<div class="col">{{ 'POP_UPS.DATE' | translate }}</div>

@@ -1,0 +1,48 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<h4>{{ 'TIME_OFF_PAGE.POLICY.HEADER' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div *ngIf="hasEditPermission" class="btn-container mb-3">
+			<button
+				nbButton
+				status="success"
+				class="mr-2"
+				(click)="openAddPolicyDialog()"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<button
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="selectedPolicy ? !selectedPolicy.isSelected : true"
+				(click)="openEditPolicyDialog()"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="selectedPolicy ? !selectedPolicy.isSelected : true"
+				(click)="deletePolicy()"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+				>{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+
+		<ng2-smart-table
+			class="income-table"
+			[settings]="smartTableSettings"
+			[source]="smartTableSource"
+			(userRowSelect)="selectTimeOffPolicy($event)"
+			style="cursor: pointer;"
+			#timeOffPolicyTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>

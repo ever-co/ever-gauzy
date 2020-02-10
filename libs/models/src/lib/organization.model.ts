@@ -13,6 +13,18 @@ export interface Organization extends IBaseEntityModel {
 	dateFormat?: string;
 	brandColor?: string;
 	timeZone?: string;
+	officialName?: string;
+	startWeekOn?: string;
+	taxId?: string;
+	country?: string;
+	city?: string;
+	address?: string;
+	address2?: string;
+	postcode?: string;
+	regionCode?: string;
+	numberFormat?: string;
+	bonusType?: string;
+	bonusPercentage?: number;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -42,6 +54,13 @@ export enum OrganizationSelectInput {
 	isActive = 'isActive'
 }
 
+export enum RegionsEnum {
+	'EN' = 'English (United States)',
+	'BG' = 'Bulgarian (Bulgaria)',
+	'HE' = 'Hebrew (Israel)',
+	'RU' = 'Rusian (Russia)'
+}
+
 export enum CurrenciesEnum {
 	USD = 'USD',
 	BGN = 'BGN',
@@ -64,4 +83,19 @@ export enum AlignmentOptions {
 	LEFT = 'LEFT',
 	RIGHT = 'RIGHT',
 	CENTER = 'CENTER'
+}
+
+export enum WeekDaysEnum {
+	MONDAY = 'MONDAY',
+	TUESDAY = 'TUESDAY',
+	WEDNESDAY = 'WEDNESDAY',
+	THURSDAY = 'THURSDAY',
+	FRIDAY = 'FRIDAY',
+	SATURDAY = 'SATURDAY',
+	SUNDAY = 'SUNDAY'
+}
+
+export enum BonusTypeEnum {
+	PROFIT_BASED_BONUS = 'PROFIT_BASED_BONUS',
+	REVENUE_BASED_BONUS = 'REVENUE_BASED_BONUS'
 }

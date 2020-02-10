@@ -20,7 +20,7 @@ jobs:
         <<: *defaults
         working_directory: /tmp/workspace/monorepo-root
         docker:
-            - image: circleci/node:12.4.0
+            - image: circleci/node:13.7.0
         steps:
             - checkout
             - run:
@@ -31,7 +31,7 @@ jobs:
                       # download latest
                       rm -rf ~/.yarn
                       curl -o- -L https://yarnpkg.com/install.sh | bash
-                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV           
+                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
@@ -55,7 +55,7 @@ jobs:
         <<: *defaults
         working_directory: /tmp/workspace/api
         docker:
-            - image: circleci/node:12.4.0
+            - image: circleci/node:13.7.0
         steps:
             - checkout
             - run:
@@ -66,7 +66,7 @@ jobs:
                       # download latest
                       rm -rf ~/.yarn
                       curl -o- -L https://yarnpkg.com/install.sh | bash
-                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV           
+                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
@@ -79,7 +79,7 @@ jobs:
                   command: yarn bootstrap
             - run:
                   name: Run Build
-                  command: yarn build:api                  
+                  command: yarn build:api:prod
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-api-{{ checksum "yarn.lock" }}
@@ -88,12 +88,12 @@ jobs:
             - persist_to_workspace:
                   root: /tmp/workspace/api
                   paths:
-                      - '*'                      
+                      - '*'
     build-web:
         <<: *defaults
         working_directory: /tmp/workspace/web
         docker:
-            - image: circleci/node:12.4.0
+            - image: circleci/node:13.7.0
         steps:
             - checkout
             - run:
@@ -104,7 +104,7 @@ jobs:
                       # download latest
                       rm -rf ~/.yarn
                       curl -o- -L https://yarnpkg.com/install.sh | bash
-                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV           
+                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
             - restore_cache:
                   name: Restore Yarn Package Cache
                   keys:
@@ -117,7 +117,7 @@ jobs:
                   command: yarn bootstrap
             - run:
                   name: Run Build
-                  command: yarn build
+                  command: yarn build:prod:circle
             - save_cache:
                   name: Save Yarn Package Cache
                   key: yarn-packages-web-{{ checksum "yarn.lock" }}
@@ -126,11 +126,11 @@ jobs:
             - persist_to_workspace:
                   root: /tmp/workspace/web
                   paths:
-                      - '*'                                            
+                      - '*'
 workflows:
     version: 2
     build_and_test:
         jobs:
-            - build-monorepo-root            
+            - build-monorepo-root
             - build-web
-            # - build-api
+            - build-api

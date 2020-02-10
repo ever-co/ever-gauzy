@@ -1,23 +1,26 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from '../../@core/services/store.service';
-import { first, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { LocalDataSource } from 'ng2-smart-table';
-import { EmployeesService } from '../../@core/services/employees.service';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { InvitationTypeEnum, PermissionsEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
+import { EmployeesService } from '../../@core/services/employees.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { Store } from '../../@core/services/store.service';
+import { monthNames } from '../../@core/utils/date';
 import { EmployeeEndWorkComponent } from '../../@shared/employee/employee-end-work-popup/employee-end-work.component';
+import { EmployeeMutationComponent } from '../../@shared/employee/employee-mutation/employee-mutation.component';
+import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
+import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
+import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
-import { Router, ActivatedRoute } from '@angular/router';
-import { monthNames } from '../../@core/utils/date';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
-import { TranslateService } from '@ngx-translate/core';
-import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
-import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
-import { EmployeeAverageBonusComponent } from './table-components/employee-average-bonus/employee-average-bonus.component';
-import { EmployeeStatisticsService } from '../../@core/services/employee-statistics.serivce';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -56,7 +59,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	totalExpense = 0;
 	bonusForSelectedMonth = 0;
 
+	includeDeleted = false;
 	loading = true;
+	hasEditPermission = false;
+
+	@ViewChild('employeesTable', { static: false }) employeesTable;
 
 	constructor(
 		private employeesService: EmployeesService,
@@ -66,10 +73,19 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
+		private errorHandler: ErrorHandlingService,
 		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
 	async ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EMPLOYEES_EDIT
+				);
+			});
+
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -186,6 +202,24 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		]);
 	}
 
+	manageInvites() {
+		this.router.navigate(['/pages/employees/invites']);
+	}
+
+	async invite() {
+		const dialog = this.dialogService.open(InviteMutationComponent, {
+			context: {
+				invitationType: InvitationTypeEnum.EMPLOYEE,
+				selectedOrganizationId: this.selectedOrganizationId,
+				currentUserId: this.store.userId
+			}
+		});
+
+		const data = await dialog.onClose.pipe(first()).toPromise();
+
+		console.log('Data', data);
+	}
+
 	async delete() {
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
@@ -211,10 +245,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
 						this.loadPage();
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -241,10 +272,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					'Success'
 				);
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.errorHandler.handleError(error);
 			}
 			this.selectedEmployee = null;
 			this.loadPage();
@@ -283,6 +311,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	}
 
 	private async loadPage() {
+		this.selectedEmployee = null;
+
 		const { items } = await this.employeesService
 			.getAll(['user'], {
 				organization: { id: this.selectedOrganizationId }
@@ -291,37 +321,50 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			.toPromise();
 		const { name } = this.store.selectedOrganization;
 
-		const employeesVm = [];
+		let employeesVm = [];
+		const result = [];
 
 		for (const emp of items) {
-			if (emp.isActive) {
-				await this.getEmployeeStatistics(emp.id);
+			await this.getEmployeeStatistics(emp.id);
 
-				employeesVm.push({
-					fullName: `${emp.user.firstName} ${emp.user.lastName}`,
-					email: emp.user.email,
-					id: emp.id,
-					isActive: emp.isActive,
-					endWork: emp.endWork ? new Date(emp.endWork) : '',
-					workStatus: emp.endWork
-						? new Date(emp.endWork).getDate() +
-						  ' ' +
-						  monthNames[new Date(emp.endWork).getMonth()] +
-						  ' ' +
-						  new Date(emp.endWork).getFullYear()
-						: '',
-					imageUrl: emp.user.imageUrl,
-					// TODO: laod real bonus and bonusDate
-					bonus: this.bonusForSelectedMonth,
-					averageIncome: Math.floor(this.averageIncome),
-					averageExpenses: Math.floor(this.averageExpense),
-					averageBonus: this.averageBonus,
-					bonusDate: Date.now()
-				});
-			}
+			result.push({
+				fullName: `${emp.user.firstName} ${emp.user.lastName}`,
+				email: emp.user.email,
+				id: emp.id,
+				isActive: emp.isActive,
+				endWork: emp.endWork ? new Date(emp.endWork) : '',
+				workStatus: emp.endWork
+					? new Date(emp.endWork).getDate() +
+					  ' ' +
+					  monthNames[new Date(emp.endWork).getMonth()] +
+					  ' ' +
+					  new Date(emp.endWork).getFullYear()
+					: '',
+				imageUrl: emp.user.imageUrl,
+				// TODO: laod real bonus and bonusDate
+				bonus: this.bonusForSelectedMonth,
+				averageIncome: Math.floor(this.averageIncome),
+				averageExpenses: Math.floor(this.averageExpense),
+				averageBonus: Math.floor(this.averageBonus),
+				bonusDate: Date.now()
+			});
+		}
+
+		if (!this.includeDeleted) {
+			result.forEach((employee) => {
+				if (employee.isActive) {
+					employeesVm.push(employee);
+				}
+			});
+		} else {
+			employeesVm = result;
 		}
 
 		this.sourceSmartTable.load(employeesVm);
+
+		if (this.employeesTable) {
+			this.employeesTable.grid.dataSet.willSelect = 'false';
+		}
 
 		this.organizationName = name;
 
@@ -330,6 +373,12 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 
 	private _loadSmartTableSettings() {
 		const dateNow = new Date();
+		const month =
+			monthNames[dateNow.getMonth() - 1] ||
+			monthNames[monthNames.length - 1];
+		const year = monthNames[dateNow.getMonth() - 1]
+			? dateNow.getFullYear()
+			: dateNow.getFullYear() - 1;
 
 		this.settingsSmartTable = {
 			actions: false,
@@ -366,9 +415,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 					renderComponent: EmployeeAverageBonusComponent
 				},
 				bonus: {
-					title: `${this.getTranslation('SM_TABLE.BONUS')} (${
-						monthNames[dateNow.getMonth() - 1]
-					} ${dateNow.getFullYear()})`,
+					title: `${this.getTranslation(
+						'SM_TABLE.BONUS'
+					)} (${month} ${year})`,
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
@@ -388,6 +437,11 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 				perPage: 8
 			}
 		};
+	}
+
+	changeIncludeDeleted(checked: boolean) {
+		this.includeDeleted = checked;
+		this.loadPage();
 	}
 
 	getTranslation(prefix: string) {

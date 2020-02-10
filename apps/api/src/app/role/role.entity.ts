@@ -1,19 +1,22 @@
-import {
-    Column,
-    Entity,
-    Index,
-} from 'typeorm';
-import { ApiModelProperty } from '@nestjs/swagger';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsEnum } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Role as IRole, RolesEnum } from '@gauzy/models';
+import { RolePermissions } from '../role-permissions';
 
 @Entity('role')
 export class Role extends Base implements IRole {
-    @ApiModelProperty({ type: String, enum: RolesEnum })
-    @IsEnum(RolesEnum)
-    @IsNotEmpty()
-    @Index()
-    @Column()
-    name: string;
+	@ApiProperty({ type: String, enum: RolesEnum })
+	@IsEnum(RolesEnum)
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	name: string;
+
+	@OneToMany(
+		(type) => RolePermissions,
+		(rolePermission) => rolePermission.role
+	)
+	rolePermissions: RolePermissions[];
 }

@@ -40,8 +40,8 @@
 				<div class="col-sm-6">
 					<nb-select
 						class="d-block"
-						placeholder="Select Showcase"
 						formControlName="currency"
+						disabled
 					>
 						<nb-option
 							*ngFor="let currency of currencies"
@@ -69,8 +69,25 @@
 					type="submit"
 					nbButton
 					status="success"
+					*ngIf="!employeeRecurringExpense"
+					nbTooltip="{{
+						'EMPLOYEES_PAGE.RECURRING_EXPENSE_ADD' | translate
+					}}"
 				>
 					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+				<button
+					(click)="submitForm()"
+					[disabled]="form.invalid"
+					type="submit"
+					nbButton
+					status="success"
+					*ngIf="employeeRecurringExpense"
+					nbTooltip="{{
+						'EMPLOYEES_PAGE.RECURRING_EXPENSE_EDIT' | translate
+					}}"
+				>
+					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
 			</div>
 		</form>

@@ -1,0 +1,124 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h3>
+			{{ 'PROPOSALS_PAGE.REGISTER.REGISTER_PROPOSALS' | translate }}
+		</h3>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label">
+							{{
+								'PROPOSALS_PAGE.REGISTER.AUTHOR' | translate
+							}}</label
+						>
+						<ga-employee-selector
+							#employeeSelector
+							[skipGlobalChange]="true"
+							id="authorInput"
+							class="employees"
+						>
+						</ga-employee-selector>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label"
+							>{{
+								'PROPOSALS_PAGE.REGISTER.JOB_POST_URL'
+									| translate
+							}}
+						</label>
+						<input
+							nbInput
+							fullWidth
+							type="text"
+							placeholder="{{
+								'PROPOSALS_PAGE.REGISTER.JOB_POST_URL'
+									| translate
+							}}"
+							formControlName="jobPostUrl"
+							autocomplete="on"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label"
+							>{{
+								'PROPOSALS_PAGE.REGISTER.PICK_A_DATE'
+									| translate
+							}}
+						</label>
+						<input
+							formControlName="valueDate"
+							nbInput
+							fullWidth
+							placeholder="{{
+								'PROPOSALS_PAGE.REGISTER.PICK_A_DATE'
+									| translate
+							}}"
+							[nbDatepicker]="formpicker"
+						/>
+						<nb-datepicker #formpicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<nb-card>
+						<nb-card-header>
+							{{
+								'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT'
+									| translate
+							}}
+						</nb-card-header>
+						<nb-card-body>
+							<ckeditor
+								formControlName="jobPostContent"
+								[config]="{
+									width: '100%',
+									height: '320',
+									extraPlugins: 'divarea'
+								}"
+							>
+							</ckeditor>
+						</nb-card-body>
+					</nb-card>
+				</div>
+				<div div class="col-sm-6">
+					<nb-card>
+						<nb-card-header>
+							{{
+								'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT'
+									| translate
+							}}
+						</nb-card-header>
+						<nb-card-body>
+							<ckeditor
+								formControlName="proposalContent"
+								[config]="{
+									width: '100%',
+									height: '320',
+									extraPlugins: 'divarea'
+								}"
+							></ckeditor>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			[disabled]="form.invalid"
+			(click)="registerProposal()"
+			class="register-btn"
+			status="success"
+			nbButton
+		>
+			{{ 'PROPOSALS_PAGE.REGISTER.REGISTER_PROPOSALS' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

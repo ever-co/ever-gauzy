@@ -1,181 +1,19 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary">
-	<nb-card-header class="header">
-		<div
-			class="header-container"
-			*ngIf="
-				selectedDate && selectedEmployee && selectedEmployee.id;
-				else noName
-			"
-		>
-			<div class="employee-info">
-				<img
-					class="employee-image"
-					[src]="selectedEmployee.imageUrl"
-					alt="Employee Avatar"
-				/>
+<nb-spinner *ngIf="loading"> </nb-spinner>
 
-				<div class="employee-details">
-					<span class="employee-name"
-						>{{ selectedEmployee.firstName }}
-						{{ selectedEmployee.lastName }}</span
-					>
-					<div class="employee-position">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }}
-					</div>
-				</div>
-			</div>
+<div *ngIf="!loading">
+	<div
+		*ngIf="
+			selectedEmployee && selectedEmployee.id;
+			then employeeStats;
+			else orgEmployees
+		"
+	></div>
+</div>
 
-			<div *ngIf="avarageBonus" class="employee-details">
-				{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
-				{{ avarageBonus }}
-			</div>
-		</div>
+<ng-template #employeeStats>
+	<ga-employee-statistics> </ga-employee-statistics>
+</ng-template>
 
-		<ng-template #noName>
-			<h4>{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}</h4>
-		</ng-template>
-	</nb-card-header>
-
-	<nb-card-body class="body">
-		<div class="half-content" *ngIf="hasRole; else noRole">
-			<div
-				*ngIf="
-					selectedDate && selectedEmployee && selectedEmployee.id;
-					else notSelected
-				"
-			>
-				<div
-					class="info-block open"
-					(click)="openHistoryDialog('INCOME')"
-				>
-					<div class="info-text">
-						{{
-							'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate
-						}}
-					</div>
-
-					<div class="info-value">
-						<span *ngIf="incomeCurrency" class="income-color">{{
-							totalIncome | currency: incomeCurrency
-						}}</span>
-						<span *ngIf="!incomeCurrency" class="income-color">{{
-							totalIncome
-						}}</span>
-						<nb-icon
-							class="ml-2"
-							icon="link-2-outline"
-							nbTooltip="Open Records History"
-							nbTooltipTrigger="hover"
-						>
-						</nb-icon>
-					</div>
-				</div>
-
-				<div
-					class="info-block open"
-					(click)="openHistoryDialog('EXPENSES')"
-				>
-					<div class="info-text">
-						{{
-							'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES'
-								| translate
-						}}
-					</div>
-
-					<div class="info-value">
-						<span *ngIf="expenseCurrency" class="expense-color">{{
-							totalExpense | currency: expenseCurrency
-						}}</span>
-						<span *ngIf="!expenseCurrency" class="expense-color">{{
-							totalExpense
-						}}</span>
-						<nb-icon
-							nbTooltip="Open Records History"
-							nbTooltipTrigger="hover"
-							class="ml-2"
-							icon="link-2-outline"
-						>
-						</nb-icon>
-					</div>
-				</div>
-				<!-- POPUP GOES HERE -->
-				<div class="info-block" (click)="openProfitDialog()">
-					<div class="info-text">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
-						<div style="font-size: 10px">
-							{{
-								'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC'
-									| translate
-							}}
-						</div>
-					</div>
-					<div class="info-value">
-						<span
-							*ngIf="defaultCurrency"
-							[ngClass]="{
-								'profit-positive-color': bonus >= 0,
-								'profit-negative-color': bonus < 0
-							}"
-							>{{ difference | currency: defaultCurrency }}</span
-						>
-						<span
-							*ngIf="!defaultCurrency"
-							[ngClass]="{
-								'profit-positive-color': bonus >= 0,
-								'profit-negative-color': bonus < 0
-							}"
-							>{{ difference }}</span
-						>
-						<nb-icon
-							nbTooltip="Open Records History"
-							nbTooltipTrigger="hover"
-							class="ml-2"
-							icon="link-2-outline"
-						>
-						</nb-icon>
-					</div>
-				</div>
-
-				<div class="bonus">
-					<div class="bonus-value">
-						<div>
-							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
-						</div>
-						<div
-							*ngIf="defaultCurrency"
-							[ngClass]="{ 'negative-bonus-color': bonus < 0 }"
-						>
-							{{ bonus | currency: defaultCurrency }}
-						</div>
-						<div
-							*ngIf="!defaultCurrency"
-							[ngClass]="{ 'negative-bonus-color': bonus < 0 }"
-						>
-							{{ bonus }}
-						</div>
-					</div>
-					<div class="bonus-disclaimer">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.NOTE' | translate }}
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<div
-			*ngIf="selectedDate && selectedEmployee && selectedEmployee.id"
-			class="half-content"
-		>
-			<ngx-employee-chart></ngx-employee-chart>
-		</div>
-
-		<ng-template #notSelected>
-			<span>{{
-				'DASHBOARD_PAGE.SELECT_A_MONTH_AND_EMPLOYEE' | translate
-			}}</span>
-		</ng-template>
-
-		<ng-template #noRole>
-			<span>Insert text for not authenticated users</span>
-		</ng-template>
-	</nb-card-body>
-</nb-card>
+<ng-template #orgEmployees>
+	<ga-organization-employees> </ga-organization-employees>
+</ng-template>

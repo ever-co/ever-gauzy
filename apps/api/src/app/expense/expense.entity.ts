@@ -1,13 +1,20 @@
 import {
-    Column,
-    Entity,
-    Index,
-    ManyToOne,
-    RelationId,
-    JoinColumn,
+	Column,
+	Entity,
+	Index,
+	ManyToOne,
+	RelationId,
+	JoinColumn
 } from 'typeorm';
-import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDate, IsEnum } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	IsNotEmpty,
+	IsString,
+	IsNumber,
+	IsOptional,
+	IsDate,
+	IsEnum
+} from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
 import { Organization } from '../organization';
@@ -15,74 +22,136 @@ import { Employee } from '../employee';
 
 @Entity('expense')
 export class Expense extends Base implements IExpense {
-    @ApiModelProperty({ type: Employee })
-    @ManyToOne(type => Employee, { nullable: true, onDelete: 'CASCADE' })
-    @JoinColumn()
-    employee?: Employee;
+	@ApiProperty({ type: Employee })
+	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	employee?: Employee;
 
-    @ApiModelProperty({ type: String, readOnly: true })
-    @RelationId((expense: Expense) => expense.employee)
-    @Column({ nullable: true })
-    readonly employeeId?: string;
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((expense: Expense) => expense.employee)
+	@Column({ nullable: true })
+	readonly employeeId?: string;
 
-    @ApiModelProperty({ type: Organization })
-    @ManyToOne(type => Organization, { nullable: false, onDelete: 'CASCADE' })
-    @JoinColumn()
-    organization: Organization;
+	@ApiProperty({ type: Organization })
+	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
+	@JoinColumn()
+	organization: Organization;
 
-    @ApiModelProperty({ type: String, readOnly: true })
-    @RelationId((expense: Expense) => expense.organization)
-    readonly orgId: string;
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((expense: Expense) => expense.organization)
+	readonly orgId: string;
 
-    @ApiModelProperty({ type: Number })
-    @IsNumber()
-    @IsNotEmpty()
-    @Index()
-    @Column()
-    amount: number;
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@IsNotEmpty()
+	@Index()
+	@Column({ type: 'numeric' })
+	amount: number;
 
-    @ApiModelProperty({ type: String })
-    @IsString()
-    @IsNotEmpty()
-    @Index()
-    @Column()
-    vendorName: string;
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	vendorName: string;
 
-    @ApiModelPropertyOptional({ type: String })
-    @Index()
-    @IsOptional()
-    @Column({ nullable: true })
-    vendorId?: string;
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	vendorId?: string;
 
-    @ApiModelProperty({ type: String })
-    @IsString()
-    @IsNotEmpty()
-    @Index()
-    @Column()
-    categoryName: string;
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Index()
+	@Column({ nullable: true })
+	typeOfExpense: string;
 
-    @ApiModelPropertyOptional({ type: String })
-    @Index()
-    @IsOptional()
-    @Column({ nullable: true })
-    categoryId?: string;
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	categoryName: string;
 
-    @ApiModelPropertyOptional({ type: String })
-    @Index()
-    @IsOptional()
-    @Column({ nullable: true })
-    notes?: string;
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	categoryId?: string;
 
-    @ApiModelProperty({ type: String, enum: CurrenciesEnum })
-    @IsEnum(CurrenciesEnum)
-    @IsNotEmpty()
-    @Index()
-    @Column()
-    currency: string;
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	clientId?: string;
 
-    @ApiModelPropertyOptional({ type: Date })
-    @IsDate()
-    @IsOptional()
-    @Column({ nullable: true })
-    valueDate?: Date;
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	clientName?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	projectId?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	projectName?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	notes?: string;
+
+	@ApiProperty({ type: String, enum: CurrenciesEnum })
+	@IsEnum(CurrenciesEnum)
+	@IsNotEmpty()
+	@Index()
+	@Column()
+	currency: string;
+
+	@ApiPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	valueDate?: Date;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	purpose?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	taxType?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	taxLabel?: string;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true, type: 'numeric' })
+	rateValue: number;
+
+	@ApiPropertyOptional({ type: String })
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	receipt?: string;
 }

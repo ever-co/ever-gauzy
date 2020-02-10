@@ -1,29 +1,96 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<h4>Proposals Management Page</h4>
+		<h4>{{ 'PROPOSALS_PAGE.HEADER' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
+		<nb-card class="p-3">
+			<h6>{{ 'PROPOSALS_PAGE.STATISTICS' | translate }}</h6>
+			<div>
+				<span
+					>{{
+						'PROPOSALS_PAGE.ACCEPTED_PROPOSALS' | translate
+					}}: </span
+				><span>{{ countAccepted }}</span>
+			</div>
+			<div>
+				<span
+					>{{ 'PROPOSALS_PAGE.TOTAL_PROPOSALS' | translate }}:
+				</span>
+				<span>{{ totalProposals }}</span>
+			</div>
+			<div>
+				<span>{{ 'PROPOSALS_PAGE.SUCCESS_RATE' | translate }}: </span>
+				<span
+					><b>{{ successRate }}</b>
+				</span>
+			</div>
+			<!-- <ngx-proposals-pie-chart
+				*ngIf="chartData.length"
+				[values]="chartData"
+			></ngx-proposals-pie-chart> -->
+		</nb-card>
+
+		<div class="mb-3" *ngIf="hasEditPermission">
 			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-				Register
-			</button>
-
-			<button nbButton (click)="edit()" status="info" class="mr-2">
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>Edit
-			</button>
-			<button nbButton (click)="delete()" status="danger" class="mr-2">
-				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon>Delete
+				{{ 'BUTTONS.REGISTER' | translate }}
 			</button>
 			<button
 				nbButton
-				(click)="changeStatus()"
+				(click)="details()"
+				status="info"
+				class="mr-2"
+				[disabled]="
+					selectedProposal ? !selectedProposal.isSelected : true
+				"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.DETAILS' | translate }}
+			</button>
+			<button
+				nbButton
+				(click)="delete()"
+				status="danger"
+				class="mr-2"
+				[disabled]="
+					selectedProposal ? !selectedProposal.isSelected : true
+				"
+			>
+				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+				>{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+			<button
+				*ngIf="proposalStatus"
+				nbButton
+				(click)="
+					proposalStatus == 'SENT'
+						? switchToAccepted()
+						: switchToSent()
+				"
 				status="warning"
 				class="mr-2"
+				[disabled]="
+					selectedProposal ? !selectedProposal.isSelected : true
+				"
 			>
 				<nb-icon class="mr-1" icon="person-delete-outline"> </nb-icon>
-				Accepted
+				<span *ngIf="proposalStatus == 'ACCEPTED'">{{
+					'BUTTONS.SENT' | translate
+				}}</span>
+				<span *ngIf="proposalStatus == 'SENT'">{{
+					'BUTTONS.ACCEPTED' | translate
+				}}</span>
 			</button>
 		</div>
+		<ng2-smart-table
+			*ngIf="canShowTable()"
+			class="income-table"
+			[settings]="smartTableSettings"
+			[source]="smartTableSource"
+			(userRowSelect)="selectProposal($event)"
+			style="cursor: pointer"
+			#proposalsTable
+		>
+		</ng2-smart-table>
 	</nb-card-body>
 </nb-card>

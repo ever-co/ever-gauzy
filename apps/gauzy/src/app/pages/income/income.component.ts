@@ -1,17 +1,19 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum, Income, Employee } from '@gauzy/models';
-import { Subject, Observable, forkJoin } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
-import { Store } from '../../@core/services/store.service';
-import { IncomeService } from '../../@core/services/income.service';
-import { LocalDataSource } from 'ng2-smart-table';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Income, PermissionsEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+import { AuthService } from '../../@core/services/auth.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { IncomeService } from '../../@core/services/income.service';
+import { Store } from '../../@core/services/store.service';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { ActivatedRoute } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 interface SelectedRowModel {
 	data: Income;
@@ -32,11 +34,11 @@ export class IncomeComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
+		private errorHandler: ErrorHandlingService,
 		private translateService: TranslateService
 	) {}
 
 	smartTableSettings: object;
-	hasRole: boolean;
 	selectedEmployeeId: string;
 	selectedDate: Date;
 	smartTableSource = new LocalDataSource();
@@ -45,6 +47,9 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
+	hasEditPermission = false;
+
+	@ViewChild('incomeTable', { static: false }) incomeTable;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
@@ -53,10 +58,13 @@ export class IncomeComponent implements OnInit, OnDestroy {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_INCOMES_EDIT
+				);
+			});
 
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -88,9 +96,6 @@ export class IncomeComponent implements OnInit, OnDestroy {
 							null,
 							this._selectedOrganizationId
 						);
-						this.incomeService.getAll().then((data) => {
-							this.smartTableSource.load(data.items);
-						});
 					}
 				}
 			});
@@ -100,6 +105,17 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					if (this.loading) {
+						this._loadEmployeeIncomeData(
+							this.store.selectedEmployee
+								? this.store.selectedEmployee.id
+								: null,
+							this.store.selectedEmployee &&
+								this.store.selectedEmployee.id
+								? null
+								: this._selectedOrganizationId
+						);
+					}
 				}
 			});
 
@@ -112,6 +128,13 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			});
 
 		this.loading = false;
+	}
+
+	canShowTable() {
+		if (this.incomeTable) {
+			this.incomeTable.grid.dataSet.willSelect = 'false';
+		}
+		return this.showTable;
 	}
 
 	loadSettingsSmartTable() {
@@ -134,9 +157,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
-					type: 'number',
+					type: 'custom',
 					width: '15%',
-					filter: false
+					filter: false,
+					renderComponent: IncomeAmountComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
@@ -154,9 +178,9 @@ export class IncomeComponent implements OnInit, OnDestroy {
 		this.selectedIncome = ev;
 	}
 
-	getTranslation(prefix: string) {
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
+		this.translateService.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 
@@ -188,12 +212,15 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					employeeId: result.employee.id,
 					orgId: this.store.selectedOrganization.id,
 					notes: result.notes,
-					currency: result.currency
+					currency: result.currency,
+					isBonus: result.isBonus
 				});
 
 				this.toastrService.primary(
-					'Income added for ' + this.employeeName,
-					'Success'
+					this.getTranslation('NOTES.INCOME.ADD_INCOME', {
+						name: this.employeeName
+					}),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 
 				this._loadEmployeeIncomeData();
@@ -202,8 +229,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					: null;
 			} catch (error) {
 				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
+					this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
+						error: error.error.message || error.message
+					}),
+					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
 			}
 		}
@@ -228,21 +257,26 @@ export class IncomeComponent implements OnInit, OnDestroy {
 								clientId: result.client.clientId,
 								valueDate: result.valueDate,
 								notes: result.notes,
-								currency: result.currency
+								currency: result.currency,
+								isBonus: result.isBonus
 							}
 						);
 
 						this.toastrService.primary(
-							'Income edited for ' + this.employeeName,
-							'Success'
+							this.getTranslation('NOTES.INCOME.EDIT_INCOME', {
+								name: this.employeeName
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadEmployeeIncomeData();
+						this._loadEmployeeIncomeData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.selectedIncome = null;
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -264,16 +298,20 @@ export class IncomeComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							'Income deleted for ' + this.employeeName,
-							'Success'
+							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
+								name: this.employeeName
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadEmployeeIncomeData();
+						this._loadEmployeeIncomeData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.selectedIncome = null;
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -285,6 +323,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	) {
 		let findObj;
 		this.showTable = false;
+		this.selectedIncome = null;
 
 		if (orgId) {
 			findObj = {

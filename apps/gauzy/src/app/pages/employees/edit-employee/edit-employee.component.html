@@ -31,7 +31,10 @@
 
 			<div class="employee-info">
 				<div class="employee-details">
-					<div class="transparent">
+					<div
+						*ngIf="selectedEmployee.user.username"
+						class="transparent"
+					>
 						{{ 'FORM.USERNAME' | translate }}:
 						<strong>{{ selectedEmployee.user.username }}</strong>
 					</div>
@@ -67,7 +70,7 @@
 		</div>
 
 		<ng-template #noName>
-			<h6>Please select employee from the menu above.</h6>
+			<h6>{{ 'EMPLOYEES_PAGE.SELECT_EMPLOYEE_MSG' | translate }}</h6>
 		</ng-template>
 	</nb-card-header>
 	<nb-card-body
@@ -102,7 +105,7 @@
 					{{ 'POP_UPS.CATEGORY_NAME' | translate }}
 				</div>
 				<div class="col">
-					{{ 'POP_UPS.DATE' | translate }}
+					{{ 'Starts On' }}
 				</div>
 				<div class="col">
 					{{ 'POP_UPS.EXPENSE_VALUE' | translate }}
@@ -122,8 +125,9 @@
 					<div class="row">
 						<div class="col">{{ setting.categoryName }}</div>
 						<div class="col">
-							{{ getMonthString(setting.month) }}
-							{{ setting.year }}
+							{{ setting.startDay }}
+							{{ getMonthString(setting.startMonth) }}
+							{{ setting.startYear }}
 						</div>
 						<div class="col">
 							<span class="block-amount"
@@ -135,33 +139,37 @@
 					</div>
 				</div>
 				<div class="block-value">
-					<svg
-						class="hide-menu"
-						*ngIf="selectedRowIndexToShow === i"
+					<span
 						(click)="selectedRowIndexToShow = null"
-						xmlns="http://www.w3.org/2000/svg"
-						xmlns:xlink="http://www.w3.org/1999/xlink"
-						width="17"
-						height="16"
-						viewBox="0 0 17 16"
+						class="hide-menu"
 					>
-						<defs>
-							<path
-								id="a"
-								d="M1511 405c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1s.45-1 1-1h1v-12h-1c-.55 0-1-.45-1-1s.45-1 1-1h2zm-7.2 3.4l3 4c.26.346.268.82.018 1.175l-2.814 4a.999.999 0 0 1-1.393.243 1 1 0 0 1-.243-1.394l1.718-2.442c-.03.003-.056.018-.086.018h-8a1 1 0 0 1 0-2h8.001l-1.801-2.4a.999.999 0 1 1 1.6-1.2z"
+						<svg
+							class="hide-menu"
+							*ngIf="selectedRowIndexToShow === i"
+							xmlns="http://www.w3.org/2000/svg"
+							xmlns:xlink="http://www.w3.org/1999/xlink"
+							width="17"
+							height="16"
+							viewBox="0 0 17 16"
+						>
+							<defs>
+								<path
+									id="a"
+									d="M1511 405c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1s.45-1 1-1h1v-12h-1c-.55 0-1-.45-1-1s.45-1 1-1h2zm-7.2 3.4l3 4c.26.346.268.82.018 1.175l-2.814 4a.999.999 0 0 1-1.393.243 1 1 0 0 1-.243-1.394l1.718-2.442c-.03.003-.056.018-.086.018h-8a1 1 0 0 1 0-2h8.001l-1.801-2.4a.999.999 0 1 1 1.6-1.2z"
+								/>
+							</defs>
+							<use
+								fill="inherit"
+								fill-rule="nonzero"
+								opacity=".5"
+								transform="translate(-1495 -405)"
+								xlink:href="#a"
 							/>
-						</defs>
-						<use
-							fill="#0D1C2E"
-							fill-rule="nonzero"
-							opacity=".5"
-							transform="translate(-1495 -405)"
-							xlink:href="#a"
-						/>
-					</svg>
-					<small *ngIf="selectedRowIndexToShow === i">{{
-						'BUTTONS.CLOSE' | translate
-					}}</small>
+						</svg>
+						<small *ngIf="selectedRowIndexToShow === i">{{
+							'BUTTONS.CLOSE' | translate
+						}}</small>
+					</span>
 					<span
 						*ngIf="selectedRowIndexToShow !== i"
 						class="block-actions open"

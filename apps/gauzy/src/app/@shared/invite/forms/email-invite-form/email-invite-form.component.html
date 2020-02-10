@@ -1,0 +1,157 @@
+<form [formGroup]="form" *ngIf="form">
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="emailsSelect" class="label">{{
+					'FORM.LABELS.EMAILS' | translate
+				}}</label>
+				<ng-select
+					id="emailsSelect"
+					class="adjust-height"
+					[items]="[]"
+					[addTag]="addTagFn"
+					[hideSelected]="true"
+					multiple="true"
+					bindLabel="emailAddress"
+					formControlName="emails"
+					placeholder="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
+					notFoundText="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
+					[ngClass]="{
+						'item-invalid':
+							emails.invalid && (emails.dirty || emails.touched),
+						'item-valid':
+							emails.valid && (emails.dirty || emails.touched)
+					}"
+				>
+				</ng-select>
+			</div>
+		</div>
+	</div>
+	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="projectsSelect" class="label label-with-select"
+					>{{ 'FORM.LABELS.PROJECTS_OPTIONAL' | translate }}
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						(click)="selectAllProjects()"
+					>
+						{{ 'BUTTONS.SELECT_ALL' | translate }}
+					</button>
+				</label>
+				<ng-select
+					id="projectsSelect"
+					class="adjust-height"
+					[hideSelected]="true"
+					multiple="true"
+					bindLabel="name"
+					formControlName="projects"
+					placeholder="{{ 'FORM.PLACEHOLDERS.PROJECTS' | translate }}"
+				>
+					<ng-option
+						*ngFor="let project of organizationProjects"
+						value="{{ project.id }}"
+						>{{ project.name }}</ng-option
+					>
+				</ng-select>
+			</div>
+		</div>
+	</div>
+	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="clientsSelect" class="label label-with-select"
+					>{{ 'FORM.LABELS.CLIENTS_OPTIONAL' | translate }}
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						(click)="selectAllClients()"
+					>
+						{{ 'BUTTONS.SELECT_ALL' | translate }}
+					</button>
+				</label>
+				<ng-select
+					id="clientsSelect"
+					class="adjust-height"
+					[hideSelected]="true"
+					multiple="true"
+					bindLabel="name"
+					formControlName="clients"
+					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+				>
+					<ng-option
+						*ngFor="let client of organizationClients"
+						value="{{ client.id }}"
+						>{{ client.name }}</ng-option
+					>
+				</ng-select>
+			</div>
+		</div>
+	</div>
+	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="departmentsSelect" class="label label-with-select"
+					>{{ 'FORM.LABELS.DEPARTMENTS_OPTIONAL' | translate }}
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						(click)="selectAllDepartments()"
+					>
+						{{ 'BUTTONS.SELECT_ALL' | translate }}
+					</button>
+				</label>
+				<ng-select
+					id="departmentsSelect"
+					class="adjust-height"
+					[hideSelected]="true"
+					multiple="true"
+					bindLabel="name"
+					formControlName="departments"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.DEPARTMENTS' | translate
+					}}"
+				>
+					<ng-option
+						*ngFor="let department of organizationDepartments"
+						value="{{ department.id }}"
+						>{{ department.name }}</ng-option
+					>
+				</ng-select>
+			</div>
+		</div>
+	</div>
+	<div class="employee-padding" *ngIf="invitationType === 'EMPLOYEE'"></div>
+	<div class="row" *ngIf="invitationType === 'USER'">
+		<div class="col-sm-6">
+			<div class="form-group">
+				<label for="startedWork" class="label">{{
+					'FORM.LABELS.ROLE' | translate
+				}}</label>
+				<nb-select
+					class="d-block"
+					placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
+					formControlName="roleName"
+					[ngClass]="{
+						'status-danger':
+							roleName.invalid &&
+							(roleName.dirty || roleName.touched),
+						'status-success':
+							roleName.valid &&
+							(roleName.dirty || roleName.touched)
+					}"
+				>
+					<nb-option
+						*ngFor="let role of allRoles"
+						value="{{ role }}"
+						>{{ 'USERS_PAGE.ROLE.' + role | translate }}</nb-option
+					>
+				</nb-select>
+			</div>
+		</div>
+	</div>
+</form>

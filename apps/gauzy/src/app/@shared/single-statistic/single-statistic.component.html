@@ -1,0 +1,11 @@
+<div class="statistic-component">
+	<div class="title">
+		{{ title }}
+	</div>
+	<div class="content" [ngSwitch]="type">
+		<span *ngSwitchCase="'highlight'" class="block-amount"
+			>{{ prefix }} {{ value }} {{ suffix }}</span
+		>
+		<span *ngSwitchDefault> {{ prefix }} {{ value }} {{ suffix }} </span>
+	</div>
+</div>

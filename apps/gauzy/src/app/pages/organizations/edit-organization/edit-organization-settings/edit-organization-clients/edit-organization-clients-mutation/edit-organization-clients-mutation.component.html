@@ -1,0 +1,117 @@
+<nb-card>
+	<nb-card-header>{{
+		'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CLIENT' | translate
+	}}</nb-card-header>
+	<nb-card-body>
+		<div class="form-group">
+			<button
+				class="mr-2"
+				(click)="submitForm()"
+				nbButton
+				status="success"
+				[disabled]="!form.valid"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button (click)="cancel()" nbButton status="danger">
+				{{ 'BUTTONS.CANCEL' | translate }}
+			</button>
+		</div>
+		<form [formGroup]="form" *ngIf="form" class="row">
+			<div class="form-group col-4">
+				<input
+					type="text"
+					#name
+					nbInput
+					fullWidth
+					formControlName="name"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.NAME' | translate
+					}}"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<input
+					type="email"
+					#email
+					nbInput
+					fullWidth
+					formControlName="primaryEmail"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
+					}}"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<input
+					type="text"
+					#phone
+					nbInput
+					fullWidth
+					formControlName="primaryPhone"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
+					}}"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<input
+					type="text"
+					#country
+					nbInput
+					fullWidth
+					formControlName="country"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.COUNTRY' | translate
+					}}"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<input
+					type="text"
+					#city
+					nbInput
+					fullWidth
+					formControlName="city"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.CITY' | translate
+					}}"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<input
+					#street
+					type="text"
+					nbInput
+					fullWidth
+					formControlName="street"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.STREET' | translate
+					}}"
+				/>
+			</div>
+			<div class="form-group col-4">
+				<nb-select
+					multiple
+					fullWidth
+					formControlName="selectProjects"
+					placeholder="{{
+						'ORGANIZATIONS_PAGE.EDIT.PROJECTS' | translate
+					}}"
+				>
+					<nb-option *ngFor="let p of allProjects" [value]="p.id">{{
+						p.name
+					}}</nb-option>
+				</nb-select>
+			</div>
+			<div class="form-group col-4">
+				<ga-employee-multi-select
+					[selectedEmployeeIds]="selectedEmployeeIds"
+					[allEmployees]="employees"
+					(selectedChange)="onMembersSelected($event)"
+				>
+				</ga-employee-multi-select>
+			</div>
+		</form>
+	</nb-card-body>
+</nb-card>

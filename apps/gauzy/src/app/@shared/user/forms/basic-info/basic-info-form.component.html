@@ -99,7 +99,7 @@
 		</div>
 	</div>
 	<div class="row">
-		<div class="col-sm-6">
+		<div class="col-sm-6" *ngIf="isEmployee">
 			<div class="form-group">
 				<label for="startedWork" class="label">{{
 					'FORM.LABELS.START_DATE' | translate
@@ -114,6 +114,24 @@
 					formControlName="startedWorkOn"
 				/>
 				<nb-datepicker #datepicker></nb-datepicker>
+			</div>
+		</div>
+		<div class="col-sm-6" *ngIf="!isEmployee">
+			<div class="form-group">
+				<label for="startedWork" class="label">{{
+					'FORM.LABELS.ROLE' | translate
+				}}</label>
+				<nb-select
+					class="d-block"
+					placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
+					formControlName="role"
+				>
+					<nb-option
+						*ngFor="let role of allRoles"
+						value="{{ role }}"
+						>{{ 'USERS_PAGE.ROLE.' + role | translate }}</nb-option
+					>
+				</nb-select>
 			</div>
 		</div>
 		<div class="col-sm-6">
@@ -140,30 +158,44 @@
 			</div>
 		</div>
 	</div>
+
 	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="inputImageUrl" class="label">{{
 					'FORM.LABELS.IMAGE_URL' | translate
 				}}</label>
-				<input
-					nbInput
-					type="text"
+
+				<ngx-file-uploader-input
 					id="inputImageUrl"
-					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.IMAGE_URL' | translate
-					}}"
-					formControlName="imageUrl"
-					[ngClass]="{
-						'status-danger':
-							imageUrl.invalid &&
-							(imageUrl.dirty || imageUrl.touched),
-						'status-success':
-							imageUrl.valid &&
-							(imageUrl.dirty || imageUrl.touched)
-					}"
-				/>
+					[placeholder]="uploaderPlaceholder"
+					[fileUrl]="imageUrl?.value"
+					(uploadedImgUrl)="imageUrl.setValue($event)"
+				></ngx-file-uploader-input>
+			</div>
+		</div>
+	</div>
+
+	<div class="form-group row" [hidden]="imageUrl.invalid">
+		<div class="col-sm-12">
+			<div class="row preview-img" [hidden]="!showImageMeta">
+				<div>
+					<img
+						#imagePreview
+						src="{{ imageUrl.value }}"
+						alt="Invalid image"
+						class="img-rounded"
+					/>
+				</div>
+				<div class="remove-icon text-danger" (click)="deleteImg()">
+					<div
+						class="ion-md-remove-circle"
+						placeholder="Remove image"
+						title="{{
+							'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate
+						}}"
+					></div>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -108,11 +108,64 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/hristo.jpg'
 		},
 		{
+			email: 'alex@ever.co',
+			password: '123456',
+			firstName: 'Aleksandar',
+			lastName: 'Tasev',
+			imageUrl: 'assets/images/avatars/alexander.jpg'
+		},
+		{
 			email: 'milena@ever.co',
 			password: '123456',
 			firstName: 'Milena',
 			lastName: 'Dimova',
 			imageUrl: 'assets/images/avatars/milena.jpg'
+		},
+		{
+			email: 'rachit@ever.co',
+			password: '123456',
+			firstName: 'Rachit',
+			lastName: 'Magon',
+			imageUrl: 'assets/images/avatars/rachit.png'
+		},
+		{
+			email: 'atanas@ever.co',
+			password: '123456',
+			firstName: 'Atanas',
+			lastName: 'Yonkov',
+			imageUrl: 'assets/images/avatars/atanas.jpeg'
+		},
+		{
+			email: 'dimana@ever.co',
+			password: '123456',
+			firstName: 'Dimana',
+			lastName: 'Tsvetkova',
+			imageUrl: 'assets/images/avatars/dimana.jpeg'
+		}
+	],
+
+	defaultTeams: [
+		{
+			name: 'Employees',
+			defaultMembers: [
+				'admin@ever.co',
+				'alish@ever.co',
+				'blagovest@ever.co',
+				'elvis@ever.co',
+				'emil@ever.co',
+				'boyan@ever.co',
+				'hristo@ever.co',
+				'alex@ever.co',
+				'milena@ever.co'
+			]
+		},
+		{
+			name: 'Contractors',
+			defaultMembers: [
+				'rachit@ever.co',
+				'atanas@ever.co',
+				'dimana@ever.co'
+			]
 		}
 	]
 };

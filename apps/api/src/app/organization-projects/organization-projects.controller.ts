@@ -1,27 +1,59 @@
-import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationProjectsService } from './organization-projects.service';
-import { OrganizationProjects } from './organization-projects.entity';
+import { EditEntityByMemberInput } from '@gauzy/models';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Put,
+	Query
+} from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
+import { CrudController } from '../core/crud/crud.controller';
+import { OrganizationProjectEditByEmployeeCommand } from './commands/organization-project.edit-by-employee.command';
+import { OrganizationProjects } from './organization-projects.entity';
+import { OrganizationProjectsService } from './organization-projects.service';
 
-@ApiUseTags('Organization-Projects')
+@ApiTags('Organization-Projects')
 @Controller()
 export class OrganizationProjectsController extends CrudController<
 	OrganizationProjects
 > {
 	constructor(
-		private readonly organizationProjectsService: OrganizationProjectsService
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly commandBus: CommandBus
 	) {
 		super(organizationProjectsService);
 	}
 
 	@ApiOperation({
-		title: 'Find all organization projects recurring expense.'
+		summary: 'Find all organization projects by Employee.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found projects recurring expense',
+		description: 'Found projects',
+		type: OrganizationProjects
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('employee/:id')
+	async findByEmployee(
+		@Param('id') id: string
+	): Promise<IPagination<OrganizationProjects>> {
+		return this.organizationProjectsService.findByEmployee(id);
+	}
+
+	@ApiOperation({
+		summary: 'Find all organization projects.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found projects',
 		type: OrganizationProjects
 	})
 	@ApiResponse({
@@ -38,5 +70,29 @@ export class OrganizationProjectsController extends CrudController<
 			where: findInput,
 			relations
 		});
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put('employee')
+	async updateEmployee(
+		@Body() entity: EditEntityByMemberInput
+	): Promise<any> {
+		return this.commandBus.execute(
+			new OrganizationProjectEditByEmployeeCommand(entity)
+		);
 	}
 }

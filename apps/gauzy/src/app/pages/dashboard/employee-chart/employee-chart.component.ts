@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbThemeService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { monthNames } from '../../../@core/utils/date';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ngx-employee-chart',
@@ -15,8 +16,7 @@ import { monthNames } from '../../../@core/utils/date';
 			[data]="data"
 			[options]="options"
 		></chart>
-	`,
-	styleUrls: ['./employee-chart.component.scss']
+	`
 })
 export class EmployeeChartComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
@@ -31,6 +31,7 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 		private themeService: NbThemeService,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private store: Store,
+		private errorHandler: ErrorHandlingService,
 		private toastrService: NbToastrService
 	) {}
 
@@ -148,10 +149,7 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 								};
 							});
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});

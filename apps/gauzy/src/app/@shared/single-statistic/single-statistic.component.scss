@@ -1,0 +1,20 @@
+@import '../../@theme/styles/themes.scss';
+
+@include nb-install-component() {
+	.statistic-component {
+		display: inline-flex;
+		flex-direction: column;
+	}
+	.title {
+		font-size: nb-theme(text-subtitle-2-font-size);
+		color: nb-theme(text-hint-color);
+	}
+	.content {
+		font-size: nb-theme(text-heading-4-font-size);
+		color: nb-theme(text-basic-color);
+	}
+	.block-amount {
+		color: #0091ff;
+		font-weight: bold;
+	}
+}

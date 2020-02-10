@@ -3,7 +3,7 @@
 		<h4>{{ 'EXPENSES_PAGE.EXPENSES' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div *ngIf="hasRole" class="mb-3">
+		<div *ngIf="hasEditPermission" class="mb-3">
 			<button
 				nbButton
 				status="success"
@@ -29,6 +29,19 @@
 
 			<button
 				nbButton
+				status="primary"
+				class="mr-2"
+				[disabled]="
+					selectedExpense ? !selectedExpense.isSelected : true
+				"
+				(click)="openDuplicateExpenseDialog()"
+			>
+				<nb-icon class="mr-1" icon="copy-outline"></nb-icon
+				>{{ 'BUTTONS.DUPLICATE' | translate }}
+			</button>
+
+			<button
+				nbButton
 				status="danger"
 				class="mr-2"
 				[disabled]="
@@ -42,11 +55,13 @@
 		</div>
 
 		<ng2-smart-table
-			*ngIf="showTable"
+			*ngIf="canShowTable()"
 			class="income-table"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
 			(userRowSelect)="selectExpense($event)"
+			style="cursor: pointer;"
+			#expensesTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>

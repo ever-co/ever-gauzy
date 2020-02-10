@@ -1,14 +1,18 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>
+		<h4 *ngIf="expense; else headerAdd">
 			{{
-				(expense ? 'POP_UPS.EDIT_EXPENSE' : 'POP_UPS.ADD_EXPENSE')
+				(duplicate ? 'POP_UPS.DUPLICATE' : 'POP_UPS.EDIT_EXPENSE')
 					| translate
 			}}
-		</h5>
+		</h4>
+		<ng-template #headerAdd>
+			<h4>{{ 'POP_UPS.ADD_EXPENSE' | translate }}</h4>
+		</ng-template>
 		<ga-employee-selector
 			#employeeSelector
-			[hidden]="expense"
+			fullWidth
+			[hidden]="expense && !duplicate"
 			[skipGlobalChange]="true"
 			class="employees"
 		></ga-employee-selector>
@@ -21,6 +25,13 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form" *ngIf="form">
+			<nb-radio-group formControlName="typeOfExpense">
+				<nb-radio
+					*ngFor="let expenseType of expenseTypes"
+					[value]="expenseType"
+					>{{ expenseType }}
+				</nb-radio>
+			</nb-radio-group>
 			<div class="row">
 				<div class="col-sm-6">
 					<input
@@ -39,13 +50,15 @@
 					/>
 					<nb-datepicker #formpicker></nb-datepicker>
 				</div>
-
-				<div class="col-sm-6">
+				<div class="col-sm-6" *ngIf="vendors.length">
 					<div class="form-group">
 						<ng-select
-							[items]="fakeVendors"
+							nbInput
+							type="text"
+							[items]="vendors"
 							bindLabel="vendorName"
-							[searchable]="false"
+							[searchable]="true"
+							autocomplete="on"
 							formControlName="vendor"
 							placeholder="{{
 								'POP_UPS.ALL_VENDORS' | translate
@@ -55,7 +68,6 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
@@ -78,12 +90,11 @@
 						/>
 					</div>
 				</div>
-
 				<div class="col-sm-6">
 					<nb-select
 						class="d-block"
-						placeholder="Select Showcase"
 						formControlName="currency"
+						disabled
 					>
 						<nb-option
 							*ngFor="let currency of currencies"
@@ -92,9 +103,8 @@
 						>
 					</nb-select>
 				</div>
-
 				<div class="col-sm-6">
-					<div class="form-group">
+					<div class="form-group" *ngIf="fakeCategories.length">
 						<ng-select
 							[items]="fakeCategories"
 							bindLabel="categoryName"
@@ -107,9 +117,105 @@
 						</ng-select>
 					</div>
 				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<input
+							nbInput
+							type="text"
+							formControlName="purpose"
+							placeholder="{{ 'POP_UPS.PURPOSE' | translate }}"
+						/>
+					</div>
+				</div>
+			</div>
+			<nb-card accent="warning" class="p-3" *ngIf="showWarning">
+				<nb-icon
+					class="ml-auto close"
+					(click)="closeWarning()"
+					icon="close-outline"
+				></nb-icon>
+				<p>
+					<b>{{
+						'EXPENSES_PAGE.MUTATION.CLIENT_IS_REQUIRED' | translate
+					}}</b>
+				</p>
+				<p>
+					{{
+						'EXPENSES_PAGE.MUTATION.PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE'
+							| translate
+					}}
+				</p>
+			</nb-card>
+			<div *ngIf="clients.length || projects.length">
+				<h6>{{ 'EXPENSES_PAGE.MUTATION.ASSIGN_TO' | translate }}</h6>
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<ng-select
+								[isOpen]="showWarning ? true : null"
+								[items]="clients"
+								bindLabel="clientName"
+								[searchable]="true"
+								autocomplete="on"
+								formControlName="client"
+								placeholder="{{
+									'CONTEXT_MENU.CLIENT' | translate
+								}}"
+							>
+							</ng-select>
+						</div>
+					</div>
+					<div class="col-sm-6" *ngIf="projects.length">
+						<div class="form-group">
+							<ng-select
+								[items]="projects"
+								nbInput
+								bindLabel="projectName"
+								[searchable]="true"
+								autocomplete="on"
+								formControlName="project"
+								placeholder="{{
+									'CONTEXT_MENU.PROJECT' | translate
+								}}"
+							>
+							</ng-select>
+						</div>
+					</div>
+				</div>
 			</div>
 
-			<div class="row">
+			<div class="mt-3 text-left">
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="showNotesInput()"
+					*ngIf="!showNotes"
+					class="mr-3 mb-3"
+				>
+					{{ 'BUTTONS.ADD_NOTE' | translate }}
+				</button>
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="includeTaxes()"
+					*ngIf="!showTaxesInput"
+					class="mr-3 mb-3"
+				>
+					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
+				</button>
+				<button
+					nbButton
+					size="tiny"
+					status="info"
+					(click)="attachReceipt()"
+					class="mr-3 mb-3"
+				>
+					{{ 'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT' | translate }}
+				</button>
+			</div>
+			<div class="row" *ngIf="showNotes">
 				<div class="col">
 					<div class="form-group">
 						<textarea
@@ -131,16 +237,82 @@
 					</div>
 				</div>
 			</div>
+			<div *ngIf="showTaxesInput">
+				<h6>
+					{{ 'EXPENSES_PAGE.MUTATION.INCLUDE_TAXES' | translate }}
+				</h6>
+				<div class="row">
+					<div class="col-sm-6">
+						<div class="form-group">
+							<input
+								nbInput
+								type="text"
+								formControlName="taxLabel"
+								fullWidth
+								placeholder="{{
+									'POP_UPS.TAX_LABEL' | translate
+								}}"
+							/>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<ng-select
+								[items]="taxTypes"
+								bindLabel="taxType"
+								formControlName="taxType"
+								fullWidth
+								[clearable]="false"
+								placeholder="{{
+									'POP_UPS.TAX_TYPE' | translate
+								}}"
+							>
+							</ng-select>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<div class="form-group">
+							<input
+								nbInput
+								type="number"
+								step="1"
+								fullWidth
+								formControlName="rateValue"
+								placeholder="{{
+									'POP_UPS.TAX_RATE' | translate
+								}}"
+							/>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							[placeholder]="calculatedValue"
+							disabled
+						/>
+					</div>
+				</div>
+			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="danger"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
 		<button
 			[disabled]="form.invalid"
 			(click)="addOrEditExpense()"
 			status="success"
 			nbButton
 		>
-			{{ (expense ? 'BUTTONS.EDIT' : 'BUTTONS.ADD') | translate }}
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

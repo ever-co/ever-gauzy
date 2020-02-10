@@ -7,7 +7,6 @@ import { Component, OnInit } from '@angular/core';
 import { AnalyticsService } from './@core/utils/analytics.service';
 import { Cloudinary } from '@cloudinary/angular-5.x';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
 import { Store } from './@core/services/store.service';
 import { Router } from '@angular/router';
 

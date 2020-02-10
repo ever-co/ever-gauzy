@@ -10,7 +10,7 @@ import {
 	Query,
 	UseGuards
 } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
@@ -18,9 +18,10 @@ import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { getUserDummyImage } from '../core';
+import { environment as env } from '@env-api/environment';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiUseTags('Auth')
+@ApiTags('Auth')
 @Controller()
 export class AuthController {
 	constructor(
@@ -28,7 +29,7 @@ export class AuthController {
 		private readonly commandBus: CommandBus
 	) {}
 
-	@ApiOperation({ title: 'Is authenticated' })
+	@ApiOperation({ summary: 'Is authenticated' })
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/authenticated')
@@ -38,7 +39,7 @@ export class AuthController {
 		return this.authService.isAuthenticated(token);
 	}
 
-	@ApiOperation({ title: 'Has role?' })
+	@ApiOperation({ summary: 'Has role?' })
 	@ApiResponse({ status: HttpStatus.OK })
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/role')
@@ -47,7 +48,7 @@ export class AuthController {
 		return this.authService.hasRole(token, roles);
 	}
 
-	@ApiOperation({ title: 'Create new record' })
+	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.' /*, type: T*/
@@ -77,6 +78,19 @@ export class AuthController {
 		return this.authService.login(findObj, password);
 	}
 
+	@Post('/reset-password')
+	async resetPassword(@Body() findObject, ...options: any[]) {
+		return await this.authService.resetPassword(findObject);
+	}
+
+	@Post('/request-password')
+	async requestPass(
+		@Body() findObj,
+		...options: any[]
+	): Promise<{ id: string; token: string } | null> {
+		return await this.authService.requestPassword(findObj);
+	}
+
 	@Get('google')
 	@UseGuards(AuthGuard('google'))
 	googleLogin() {}
@@ -91,10 +105,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`http://localhost:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect('http://localhost:4200/#/auth/register');
+			return res.redirect(`${env.host}:4200/#/auth/register`);
 		}
 	}
 
@@ -121,10 +135,10 @@ export class AuthController {
 
 		if (success) {
 			return res.redirect(
-				`http://localhost:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
+				`${env.host}:4200/#/sign-in/success?jwt=${jwt}&userId=${userId}`
 			);
 		} else {
-			return res.redirect('http://localhost:4200/#/auth/register');
+			return res.redirect(`${env.host}:4200/#/auth/register`);
 		}
 	}
 }

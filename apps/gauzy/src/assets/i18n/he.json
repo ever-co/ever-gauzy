@@ -2,14 +2,25 @@
 	"BUTTONS": {
 		"ADD": "הוסף",
 		"CREATE": "צור",
+		"REGISTER": "Register",
+		"ADD_NOTE": "Add note",
 		"EDIT": "ערוך",
 		"MANAGE": "Управление",
+		"DETAILS": "Details",
+		"DUPLICATE": "Duplicate",
 		"DELETE": "מחק",
 		"OK": "בסדר",
 		"SAVE": "לשמור",
 		"BACK": "חזור",
+		"SENT": "Sent",
+		"ACCEPTED": "Accepted",
 		"CANCEL": "בטל",
-		"CLOSE": "סוֹף"
+		"CLOSE": "סוֹף",
+		"INVITE": "Invite",
+		"SELECT_ALL": "Select All",
+		"COPY_LINK": "Copy Link",
+		"MANAGE_INVITES": "Manage Invites",
+		"RESEND": "Resend"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -28,6 +39,8 @@
 		"EXPENSES": "הכנסה (הוצאות)",
 		"BONUS": "בונוס",
 		"BONUS_AVG": "הכנסה (בונוס)",
+		"PROFIT_BASED_BONUS": "Profit Based Bonus",
+		"REVENUE_BASED_BONUS": "Revenue Based Bonus",
 		"STATUS": "עבודה",
 		"WORK_STATUS": "סטטוס עבודה",
 		"TODAY": "היום",
@@ -35,7 +48,36 @@
 		"START_OF_MONTH": "תחילת החודש",
 		"RATE": "ציון",
 		"FLAT_FEE": "מחיר שטוח",
-		"MILESTONES": "אבני דרך"
+		"MILESTONES": "אבני דרך",
+		"PROPOSAL_REGISTERED": "Proposal Registered on",
+		"JOB_TITLE": "Job Title",
+		"VIEW_JOB_POST": "View Job Post",
+		"LINK_TO_JOBPOST": "Link to Job Post",
+		"AUTHOR": "Author",
+		"MONDAY": "Monday",
+		"TUESDAY": "Tuesday",
+		"WEDNESDAY": "Wednesday",
+		"THURSDAY": "Thursday",
+		"FRIDAY": "Friday",
+		"SATURDAY": "Saturday",
+		"SUNDAY": "Sunday",
+		"NONE": "None",
+		"BI_WEEKLY": "Bi Weekly",
+		"WEEKLY": "Weekly",
+		"TWICE_PER_MONTH": "Twice per month",
+		"MONTHLY": "Monthly",
+		"ROLE": "Role",
+		"PROJECTS": "פרויקטים",
+		"INVITED_BY": "Invited By",
+		"EXPIRE_DATE": "Expires",
+		"CLIENTS": "לקוחות",
+		"DEPARTMENTS": "מחלקות",
+		"REGION": {
+			"BG": "Български (България)",
+			"EN": "English (United States)",
+			"RU": "Русский (Россия)",
+			"HE": "עברית ישראל"
+		}
 	},
 	"FORM": {
 		"USERNAME": "שם משתמש",
@@ -49,7 +91,34 @@
 			"START_DATE": "תאריך התחלת העבודה",
 			"IMAGE_URL": "תמונה URL",
 			"CURRENCY": "מטבע",
-			"DATE_TYPE": "סוג תאריך ברירת מחדל"
+			"DATE_TYPE": "סוג תאריך ברירת מחדל",
+			"ADD_TEAM": "Add New Team",
+			"OFFICIAL_NAME": "Official Name",
+			"START_WEEK_ON": "Start Week On",
+			"TAX_ID": "Tax ID",
+			"COUNTRY": "מדינה",
+			"CITY": "עיר",
+			"ADDRESS": "Address",
+			"ADDRESS_2": "Address 2",
+			"LOGO_ALIGNMENT": "Logo Alignment",
+			"BRAND_COLOR": "Brand Color",
+			"DATE_FORMAT": "Date Format",
+			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"POSTCODE": "Postcode (Zip)",
+			"PAY_PERIOD": "Pay Period",
+			"BILL_RATE": "Bill Rate / hr",
+			"CURRENCY_PER_HOUR": "מטבע",
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
+			"ROLE": "Role",
+			"EMAILS": "Email Addresses",
+			"PROJECTS_OPTIONAL": "Projects (Optional)",
+			"CLIENTS_OPTIONAL": "Clients (Optional)",
+			"DEPARTMENTS_OPTIONAL": "Departments (Optional)",
+			"PROJECTS": "פרויקטים",
+			"ADD_NEW_DEPARTMENT": "Add New Department",
+			"EDIT_DEPARTMENT": "Edit Department",
+			"TYPE_OF_BONUS": "Bonus Type",
+			"BONUS_PERCENTAGE": "Bonus Percentage"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -67,17 +136,57 @@
 			"TYPE": "סוג",
 			"IMAGE_URL": "תמונה",
 			"ADD_DEPARTMENT": "הוסף מחלקה",
-			"ADD_POSITION": "הוסף ספיגה",
+			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "הוסף ספק",
 			"CLIENTS": "לקוחות",
 			"START_DATE_PROJECT": "תאריך התחלת הפרויקט",
-			"END_DATE_PROJECT": "תאריך סיום של הפרויקט"
+			"END_DATE_PROJECT": "תאריך סיום של הפרויקט",
+			"TEAM_NAME": "Team Name",
+			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
+			"MEMBERS_COUNT": "Members count",
+			"OFFICIAL_NAME": "Enter Official Name",
+			"START_WEEK_ON": "Start Week On",
+			"TAX_ID": "Tax ID",
+			"COUNTRY": "מדינה",
+			"CITY": "עיר",
+			"ADDRESS": "Address",
+			"ADDRESS_2": "Address 2",
+			"POSTCODE": "Postcode (Zip)",
+			"BILL_RATE": "Bill Rate / hr",
+			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
+			"EMAILS": "Type an email address and press enter",
+			"ROLE": "Select Role",
+			"PROJECTS": "Choose Projects",
+			"CHOOSE_FORMAT": "Choose Format",
+			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"ADD_COLOR": "Add Color",
+			"ALIGN_LOGO_TO": "Align Logo To",
+			"DEPARTMENTS": "מחלקות",
+			"NUMBER_FORMAT": "Select Number Format",
+			"REGIONS": "Select Region",
+			"REMOVE_IMAGE": "Remove image",
+			"UPLOADER_PLACEHOLDER": "תמונה",
+			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"DATE": "תאריך",
+			"VALUE": "ערך",
+			"SELECT_CURRENCY": "Select Currency",
+			"TYPE_OF_BONUS": "Type of Bonus",
+			"BONUS_PERCENTAGE": "Bonus Percentage"
+		},
+		"RATES": {
+			"DEFAULT_RATE": "Default Rate",
+			"LIMITS": "Limits"
+		},
+		"CHECKBOXES": {
+			"INCLUDE_DELETED": "Include Deleted"
 		},
 		"DELETE_CONFIRMATION": {
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
 			"RECORD": "תקליט",
 			"EMPLOYEE": "עובד",
-			"EXPENSE": "הוצאה"
+			"EXPENSE": "הוצאה",
+			"USER": "user",
+			"INVITATION": "invitation"
 		}
 	},
 	"POP_UPS": {
@@ -85,33 +194,50 @@
 		"ADD_EXPENSE": "הוסף הוצאה",
 		"EDIT_INCOME": "ערוך הכנסה",
 		"EDIT_EXPENSE": "ערוך הוצאות",
+		"DUPLICATE": "Duplicate",
 		"DATE": "תאריך",
 		"PICK_DATE": "תבחר תאריך",
 		"ALL_CLIENTS": "כל הלקוחות",
-		"ALL_VENDORS": "כל הספקים",
+		"ALL_VENDORS": "Vendor / Merchant",
 		"ALL_CATEGORIES": "כל הקטגוריות",
 		"CATEGORY_NAME": "שם קטגוריה",
 		"EXPENSE_VALUE": "ערך הוצאה",
+		"TAX_LABEL": "Tax Label",
+		"TAX_TYPE": "Tax Type (% or Value)",
+		"TAX_RATE": "Tax Rate",
 		"RECURRING_EXPENSES": "הוצאות חודשיות חוזרות ונשנות",
+		"PURPOSE": "Purpose",
 		"BACK_TO_WORK": "לחזור לעבודה",
 		"END_WORK": "סיום העבודה עבור",
 		"AMOUNT": "כמות",
 		"NOTES": "הערות",
 		"EDIT": "ערוך",
-		"ADD": "הוסף"
+		"ADD": "הוסף",
+		"DELETE_RECURRING_EXPENSE": "Delete Recurring Expense",
+		"DELETE_ONLY_THIS": "Delete only this",
+		"DELETE_THIS_FUTURE": "Delete this and future",
+		"DELETE_ALL_ENTRIES": "Delete all entries",
+		"CONFIRM": "אשר",
+		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
+		"OK": "OK",
+		"CANCEL": "בטל",
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
 		"PROPOSALS": "Proposals",
+		"TIME_OFF": "Time Off",
 		"HELP": "עזרה",
 		"ABOUT": "עלינו",
 		"ADMIN": "מנהל",
 		"EMPLOYEES": "עובדים",
 		"ORGANIZATIONS": "ארגונים",
 		"SETTINGS": "הגדרות",
-		"GENERAL": "כללי"
+		"GENERAL": "כללי",
+		"USERS": "Users",
+		"ROLES": "Roles & Permissions"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -128,22 +254,45 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
+		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
+		"PROFIT_HISTORY": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "סך ההוצאות",
+			"TOTAL_INCOME": "הכנסה כוללת",
+			"TOTAL_PROFIT": "Total Profit"
+		},
+		"TITLE": {
+			"PROFIT_REPORT": "Profit Report",
+			"TOTAL_EXPENSES": "סך ההוצאות",
+			"TOTAL_INCOME": "הכנסה כוללת",
+			"PROFIT": "רווח",
+			"TOTAL_BONUS": "Total Bonus"
+		},
 		"DEVELOPER": {
 			"DEVELOPER": "מפתח",
-			"AVERAGE_BONUS": "בונוס ממוצע",
+			"AVERAGE_BONUS": "Average Monthly Bonus",
 			"TOTAL_INCOME": "הכנסה כוללת",
 			"TOTAL_EXPENSES": "סך ההוצאות",
 			"PROFIT": "רווח",
-			"PROFIT_CALC": "רווח = סך ההכנסה - סך כל ההוצאות",
+			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
 			"NOTE": "הערה: יש לנכות את הבונוסים השליליים בחודשים הקרובים מהבונוסים החיוביים לפני תשלומי הבונוס הסופיים",
 			"BONUS": "בונוס"
 		}
 	},
 	"INCOME_PAGE": {
-		"INCOME": "הכנסה"
+		"INCOME": "הכנסה",
+		"BONUS_HELP": "If set, company % fee will NOT be applied to the Bonus Income",
+		"BONUS_TOOLTIP": "This is a direct bonus"
 	},
 	"EXPENSES_PAGE": {
-		"EXPENSES": "הוצאות"
+		"EXPENSES": "הוצאות",
+		"MUTATION": {
+			"CLIENT_IS_REQUIRED!": "Client is required!",
+			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Please select a Client from the dropdown menu below or change Expense type setting.",
+			"ASSIGN_TO": "Assign to",
+			"INCLUDE_TAXES": "Include Taxes",
+			"ATTACH_A_RECEIPT": "Attach a receipt"
+		}
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "נהל עובדים עבור ",
@@ -151,12 +300,20 @@
 		"ACTIVE": "פעיל",
 		"END_WORK": "סיום עבודה",
 		"WORK_ENDED": "העבודה הסתיימה",
-		"RECURRING_EXPENSE": "הוסף הוצאה חוזרת של עובדים",
+		"DELETED": "Deleted",
+		"RECURRING_EXPENSE": "Employee Recurring Expense",
+		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
+		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",
 		"BACK_TO_WORK": "לחזור לעבודה",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
 		"EDIT_EMPLOYEE": {
+			"HEADER": "Manage Employee",
 			"DEVELOPER": "מפתח",
 			"DEPARTMENT": "המחלקה",
-			"POSITION": "עמדה"
+			"POSITION": "עמדה",
+			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
+			"EMPLOYEE_PROJECTS": "Employee's Projects:",
+			"EMPLOYEE_CLIENTS": "Employee's Clients:"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -171,7 +328,11 @@
 		"PROJECTS": "פרויקטים",
 		"ACTIVE": "פעיל",
 		"ARCHIVED": "נשמר בארכיון",
+		"LOCATION": "Location",
+		"SETTINGS": "הגדרות",
+		"ROLES": "Roles",
 		"EDIT": {
+			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
 			"NEW_CLIENT": "הוסף לקוח חדש",
 			"NAME": "שם",
@@ -188,7 +349,111 @@
 			"END_DATE": "תאריך סיום",
 			"TYPE": "סוג",
 			"CURRENCY": "מטבע",
-			"TEAMS": "Teams"
+			"TEAMS": "Teams",
+			"ADD_NEW_CLIENT": "הוסף לקוח חדש",
+			"GENERAL_SETTINGS": "General Settings",
+			"DESIGN": "Design",
+			"BONUS": "בונוס",
+			"CLICK_EMPLOYEE": "Click to edit employee",
+			"EDIT_PROJECT": "Edit Project",
+			"REGIONS": "Regions",
+			"ROLES_PERMISSIONS": "Roles & Permissions"
+		},
+		"PERMISSIONS": {
+			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
+			"ORG_EXPENSES_VIEW": "View Expenses Page",
+			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
+			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
+			"ORG_INCOMES_VIEW": "View Incomes Page",
+			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
+			"ORG_PROPOSALS_VIEW": "View Proposals Page",
+			"ORG_TIME_OFF_VIEW": "View Time Off Page",
+			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
+			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
+			"ORG_USERS_VIEW": "View Organization Users",
+			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
+			"ALL_ORG_VIEW": "View All Organizations",
+			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
+			"POLICY_VIEW": "View Time Off Policy",
+			"POLICY_EDIT": "Edit Time Off Policy",
+			"GROUPS": {
+				"GENERAL": "כללי",
+				"ADMINISTRATION": "Administration"
+			}
+		}
+	},
+	"PROPOSALS_PAGE": {
+		"HEADER": "Proposals Management Page",
+		"STATISTICS": "Statistics",
+		"ACCEPTED_PROPOSALS": "Accepted Proposals",
+		"TOTAL_PROPOSALS": "Total Proposals",
+		"SUCCESS_RATE": "Success Rate",
+		"REGISTER": {
+			"REGISTER_PROPOSALS": "Register Proposal",
+			"AUTHOR": "Author",
+			"JOB_POST_URL": "Job Post URL",
+			"PICK_A_DATE": "תבחר תאריך",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"UPLOAD": "Upload",
+			"PROPOSALS_CONTENT": "Proposal Content",
+			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+		},
+		"PROPOSAL_DETAILS": {
+			"PROPOSAL_DETAILS": "Proposal Details",
+			"EDIT": "ערוך",
+			"AUTHOR": "Author",
+			"JOB_POST_URL": "Job Post URL",
+			"PROPOSAL_SENT_ON": "Proposal Sent On",
+			"STATUS": "עבודה",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"PROPOSAL_CONTENT": "Proposal Content"
+		},
+		"EDIT_PROPOSAL": {
+			"EDIT_PROPOSAL": "Edit Proposal",
+			"AUTHOR": "Author",
+			"JOB_POST_URL": "Job Post URL",
+			"PROPOSAL_SENT_ON": "Proposal Sent On",
+			"JOB_POST_CONTENT": "Job Post Content",
+			"PROPOSAL_CONTENT": "Proposal Content",
+			"EDIT_PROPOSAL_BUTTON": "Edit Proposal",
+			"PLACEHOLDER": {
+				"JOB_POST_URL": "Job Post URL"
+			}
+		}
+	},
+	"TIME_OFF_PAGE": {
+		"HEADER": "Time Off",
+		"REQUEST_DAYS_OFF": "Request Days Off",
+		"ADD_HOLIDAYS": "Add Holidays",
+		"DISPLAY_HOLIDAYS": "Display Holidays",
+		"TIME_OFF_SETTINGS": "Time Off Settings",
+		"STATUSES": {
+			"REQUESTED": "Requested",
+			"APPROVED": "Approved",
+			"DENIED": "Denied",
+			"ALL": "All"
+		},
+		"POLICY": {
+			"HEADER": "Time Off Policy",
+			"ADD_POLICY": "Add Policy",
+			"EDIT_POLICY": "Edit Policy",
+			"NAME": "שם",
+			"REQUIRES_APPROVAL": "Requires Approval",
+			"PAID": "Paid"
+		}
+	},
+	"USERS_PAGE": {
+		"HEADER": "Manage Users for ",
+		"ADD_USER": "Add User",
+		"ROLE": {
+			"ADMIN": "מנהל",
+			"MANAGER": "Manager",
+			"DATA_ENTRY": "Data Entry",
+			"VIEWER": "Viewer",
+			"EMPLOYEE": "עובד"
+		},
+		"EDIT_USER": {
+			"HEADER": "Manage User"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -198,6 +463,7 @@
 		"INVOICE": "Фактура",
 		"PROPOSAL": "Предложение",
 		"CONTRACT": "Договор",
+		"TEAM": "Team",
 		"TASK": "Задача",
 		"CLIENT": "לקוחות",
 		"PROJECT": "פרויקטים",
@@ -206,8 +472,119 @@
 		"FAQ": "Въпроси и Отговори",
 		"HELP": "עזרה"
 	},
+	"PROFILE_PAGE": {
+		"FIRST_NAME": "שם פרטי",
+		"LAST_NAME": "שם משפחה",
+		"EMAIL": "דוא\"ל",
+		"PASSWORD": "סיסמה",
+		"REPEAT_PASSWORD": "Repeat Password",
+		"ERROR": "Error",
+		"SAVE": "לשמור"
+	},
+	"INVITE_PAGE": {
+		"USER": {
+			"MANAGE": "Manage User Invites for",
+			"HEADER": "Invite Users",
+			"ACTION": "Invite Users"
+		},
+		"EMPLOYEE": {
+			"MANAGE": "Manage Employee Invites for",
+			"HEADER": "Invite Employees",
+			"ACTION": "Invite Employees"
+		},
+		"SENT": "{{total}} Invites Sent.",
+		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
+		"STATUS": {
+			"INVITED": "Invited",
+			"EXPIRED": "Expired",
+			"ACCEPTED": "Accepted"
+		}
+	},
+	"HEADER": {
+		"SELECT_EMPLOYEE": "Select Employee",
+		"SELECT_A_DATE": "Select A date",
+		"SELECT_AN_ORGANIZATION": "Select An Organization"
+	},
+	"PAGE_NOT_FOUND": {
+		"404_PAGE_NOT_FOUND": "404 Page Not Found",
+		"TAKE_ME_HOME": "Take me home",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
+	},
+	"HELP_PAGE": {
+		"HELP": "עזרה"
+	},
+	"ABOUT_PAGE": {
+		"ABOUT": "עלינו"
+	},
 	"FOOTER": {
 		"BY": "על ידי",
 		"RIGHTS_RECERVED": "כל הזכויות שמורות"
+	},
+	"TOASTR": {
+		"TITLE": {
+			"SUCCESS": "Success",
+			"ERROR": "Error",
+			"WARNING": "Warning"
+		},
+		"MESSAGE": {
+			"PROJECT_LOAD": "Could Not Load Projects",
+			"COPIED": "Link copied to clipboard",
+			"INVITES_LOAD": "Could Not Load Invites",
+			"INVITES_RESEND": "Invite has been resent to {{ email }}.",
+			"EMPLOYEE_DEPARTMENT_ADDED": "Employee added to department",
+			"EMPLOYEE_DEPARTMENT_REMOVED": "Employee removed from department",
+			"EMPLOYEE_PROJECT_ADDED": "Employee added to project",
+			"EMPLOYEE_PROJECT_REMOVED": "Employee removed from project",
+			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
+			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
+			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
+			"CONFIRM": "אשר",
+			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
+			"OK": "OK",
+			"CANCEL": "בטל",
+			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
+			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
+			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!"
+		}
+	},
+	"ACCEPT_INVITE": {
+		"ACCEPT_INVITE_FORM": {
+			"FULL_NAME": "שם מלא",
+			"ENTER_YOUR_FULL_NAME": "Enter Your Full Name",
+			"PASSWORD": "סיסמה",
+			"REPEAT_PASSWORD": "Repeat Password",
+			"AGREE_TO": "Agree to",
+			"TERMS_AND_CONDITIONS": "Terms & Conditions",
+			"COMPLETE_REGISTRATION": "Complete Registration"
+		}
+	},
+	"NOTES": {
+		"INCOME": {
+			"ADD_INCOME": "Income added for {{ name }}",
+			"EDIT_INCOME": "Income edited for {{ name }}",
+			"DELETE_INCOME": "Income deleted for {{ name }}",
+			"INCOME_ERROR": "{{ error }}"
+		},
+		"EXPENSES": {
+			"ADD_EXPENSE": "Expense added for {{ name }}",
+			"OPEN_EDIT_EXPENSE_DIALOG": "Expense edited for {{ name }}",
+			"DELETE_EXPENSE": "Expense deleted for {{ name }}",
+			"EXPENSES_ERROR": "{{ error }}"
+		},
+		"PROPOSALS": {
+			"EDIT_PROPOSAL": "Proposal successfuly updated",
+			"REGISTER_PROPOSAL": "New proposal registered",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Please select an employee from the dropdown menu.",
+			"REGISTER_PROPOSAL_ERROR": "{{ error }}"
+		},
+		"POLICY": {
+			"ADD_POLICY": "New Time off Policy created!",
+			"EDIT_POLICY": "Time off policy edited",
+			"DELETE_POLICY": "Policy deleted"
+		},
+		"USER": {
+			"EDIT_PROFILE": "Your profile has been updated successfully."
+		}
 	}
 }

@@ -1,6 +1,5 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { Employee } from 'apps/api/src/app/employee';
-import { OrganizationTeams } from '@gauzy/models';
+import { OrganizationTeams, Employee } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-edit-organization-teams-mutation',

@@ -23,8 +23,15 @@ import { OrganizationPositions } from '../organization-positions';
 import { OrganizationVendors } from '../organization-vendors';
 import { OrganizationProjects } from '../organization-projects';
 import { OrganizationTeams } from '../organization-teams';
+import { Proposal } from '../proposal';
+import { Country } from '../country';
+import { Invite } from '../invite';
+import { EmailTemplate } from '../email-templates';
+import { TimeOffPolicy } from '../time-off-policy';
+import { RolePermissions } from '../role-permissions';
 
 const entities = [
+	Invite,
 	User,
 	Employee,
 	Role,
@@ -40,7 +47,12 @@ const entities = [
 	OrganizationVendors,
 	OrganizationRecurringExpense,
 	EmployeeRecurringExpense,
-	OrganizationTeams
+	OrganizationTeams,
+	Proposal,
+	Country,
+	EmailTemplate,
+	TimeOffPolicy,
+	RolePermissions
 ];
 
 @Module({

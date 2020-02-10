@@ -1,0 +1,85 @@
+<nb-card class="main">
+	<nb-card-header>
+		<h5 *ngIf="!policy; else showEditHeader">
+			{{ 'TIME_OFF_PAGE.POLICY.ADD_POLICY' | translate }}
+		</h5>
+		<ng-template #showEditHeader>
+			<h5>
+				{{ 'TIME_OFF_PAGE.POLICY.EDIT_POLICY' | translate }}
+			</h5>
+		</ng-template>
+		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form class="row">
+			<div class="form-group col-6">
+				<input
+					type="text"
+					name="name"
+					[(ngModel)]="name"
+					nbInput
+					fullWidth
+					placeholder="Policy Name"
+				/>
+			</div>
+			<nb-card accent="warning" class="p-3" *ngIf="showWarning">
+				<nb-icon
+					class="ml-auto close"
+					(click)="closeWarning()"
+					icon="close-outline"
+				></nb-icon>
+				<p>
+					Name of Policy and selection of employees are required!
+				</p>
+			</nb-card>
+			<div class="form-group col-6">
+				<nb-select
+					multiple
+					[selected]="selectedEmployees"
+					(selectedChange)="onEmployeesSelected($event)"
+					fullWidth
+					placeholder="Add or remove employees"
+				>
+					<nb-option
+						*ngFor="let employee of employees"
+						[value]="employee.id"
+					>
+						<img
+							src="{{ employee.user.imageUrl }}"
+							alt="Smiley face"
+							height="40"
+							width="40"
+							style="margin-right:10px"
+						/>
+						{{ employee.user.firstName }}
+						{{ employee.user.lastName }}</nb-option
+					>
+				</nb-select>
+			</div>
+			<div class="form-group col-6 checkboxes">
+				<nb-checkbox
+					(checkedChange)="changeRequiresApproval($event)"
+					class="my-auto align-center"
+					status="primary"
+					[checked]="requiresApproval"
+					>Requires approval
+				</nb-checkbox>
+				<nb-checkbox
+					(checkedChange)="changePaidStatus($event)"
+					class="my-auto align-center"
+					status="primary"
+					[checked]="paid"
+					>Paid
+				</nb-checkbox>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="close()" status="danger" class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="addOrEditPolicy()" status="success" nbButton>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

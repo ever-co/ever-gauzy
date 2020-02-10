@@ -23,8 +23,10 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EmployeeChartComponent } from './employee-chart/employee-chart.component';
-import { ProfitHistoryComponent } from '../../@shared/dashboard/profit-history/profit-history.component';
 import { ProfitHistoryModule } from '../../@shared/dashboard/profit-history/profit-history.module';
+import { OrganizationEmployeesComponent } from './organization-employees/organization-employees.component';
+import { SingleStatisticModule } from '../../@shared/single-statistic/single-statistic.module';
+import { EmployeeStatisticsComponent } from './employee-statistics/employee-statistics.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -44,6 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbTreeGridModule,
 		NbIconModule,
 		NbTooltipModule,
+		NbSpinnerModule,
 		ProfitHistoryModule,
 		TranslateModule.forChild({
 			loader: {
@@ -53,9 +56,15 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		}),
 		ChartModule,
-		NbSpinnerModule
+		NbSpinnerModule,
+		SingleStatisticModule
 	],
-	declarations: [DashboardComponent, EmployeeChartComponent],
+	declarations: [
+		DashboardComponent,
+		EmployeeChartComponent,
+		OrganizationEmployeesComponent,
+		EmployeeStatisticsComponent
+	],
 	providers: [IncomeService, ExpensesService, AuthService]
 })
 export class DashboardModule {}

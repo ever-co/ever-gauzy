@@ -1,21 +1,11 @@
-import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
-import {
-	NbCardModule,
-	NbButtonModule,
-	NbInputModule,
-	NbIconModule,
-	NbBadgeModule
-} from '@nebular/theme';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { NgModule } from '@angular/core';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { AuthRoutingModule } from './auth-routing.module';
-import { ProfileComponent } from './profile/profile.component';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { RoleService } from '../../@core/services/role.service';
+import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit-profile-form.module';
+import { ThemeModule } from '../../@theme/theme.module';
+import { AuthRoutingModule } from './auth-routing.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -25,13 +15,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	imports: [
 		AuthRoutingModule,
 		ThemeModule,
-		NbCardModule,
-		NgSelectModule,
-		ReactiveFormsModule,
-		FormsModule,
-		NbButtonModule,
-		NbInputModule,
-		NbIconModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -39,10 +22,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		ImageUploaderModule,
-		NbBadgeModule
+		EditProfileFormModule
 	],
-	declarations: [ProfileComponent],
 	providers: [RoleService]
 })
 export class AuthModule {}

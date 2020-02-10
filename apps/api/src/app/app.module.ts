@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule, UserService, User } from './user';
+import { UserModule } from './user';
 import { EmployeeModule } from './employee';
 import { RoleModule } from './role';
 import { OrganizationModule } from './organization';
@@ -10,7 +10,7 @@ import { IncomeModule } from './income';
 import { ExpenseModule } from './expense';
 import { EmployeeSettingModule } from './employee-setting';
 import { CoreModule } from './core';
-import { AuthModule, AuthService } from './auth';
+import { AuthModule } from './auth';
 import { SeedDataService } from './core/seeds/SeedDataService';
 import { UserOrganizationModule } from './user-organization';
 import { EmployeeStatisticsModule } from './employee-statistics';
@@ -22,6 +22,12 @@ import { OrganizationPositionsModule } from './organization-positions';
 import { OrganizationProjectsModule } from './organization-projects';
 import { OrganizationVendorsModule } from './organization-vendors';
 import { OrganizationTeamsModule } from './organization-teams';
+import { ProposalModule } from './proposal';
+import { CountryModule } from './country';
+import { InviteModule } from './invite';
+import { EmailModule } from './email-templates';
+import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
+import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 
 @Module({
 	imports: [
@@ -79,6 +85,30 @@ import { OrganizationTeamsModule } from './organization-teams';
 					{
 						path: '/organization-teams',
 						module: OrganizationTeamsModule
+					},
+					{
+						path: '/proposal',
+						module: ProposalModule
+					},
+					{
+						path: '/country',
+						module: CountryModule
+					},
+					{
+						path: '/invite',
+						module: InviteModule
+					},
+					{
+						path: '/email',
+						module: EmailModule
+					},
+					{
+						path: 'time-off-policy',
+						module: TimeOffPolicyModule
+					},
+					{
+						path: 'role-permissions',
+						module: RolePermissionsModule
 					}
 				]
 			}
@@ -101,7 +131,13 @@ import { OrganizationTeamsModule } from './organization-teams';
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
 		EmployeeRecurringExpenseModule,
-		OrganizationTeamsModule
+		OrganizationTeamsModule,
+		ProposalModule,
+		EmailModule,
+		CountryModule,
+		InviteModule,
+		TimeOffPolicyModule,
+		RolePermissionsModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

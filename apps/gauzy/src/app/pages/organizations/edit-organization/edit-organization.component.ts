@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
@@ -40,6 +40,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 	private _ngDestroy$ = new Subject<void>();
 
+	loading = true;
+
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
@@ -75,6 +77,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 				this.loadEmployeesCount();
 				this._loadOrgRecurringExpense();
 				this.store.selectedOrganization = this.selectedOrg;
+				this.store.selectedEmployee = null;
 
 				this.store.selectedOrganization$
 					.pipe(takeUntil(this._ngDestroy$))
@@ -117,6 +120,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			this._loadOrgRecurringExpense();
 			this.clearMutationCard();
 		} catch (error) {
+			// TODO translate
 			this.toastrService.danger(
 				'Please fill all the required fields',
 				'Name, Value and Date are required'
@@ -198,7 +202,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			const month = ('0' + editExpense.month).slice(-2);
 			this.date = `${editExpense.year}-${month}`;
 			this.editExpenseId = editExpense.id;
-
+			this.selectedCurrency =
+				editExpense.currency || this.selectedOrg.currency;
 			this.showAddCard = true;
 		}
 	}
@@ -214,14 +219,14 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 	private async _loadOrgRecurringExpense() {
 		if (this.selectedOrg && this.selectedDate) {
-			this.selectedOrgRecurringExpense = (await this.organizationRecurringExpenseService.getAll(
-				[],
-				{
+			this.selectedOrgRecurringExpense = (
+				await this.organizationRecurringExpenseService.getAll([], {
 					orgId: this.selectedOrg.id,
 					year: this.selectedDate.getFullYear(),
 					month: this.selectedDate.getMonth() + 1
-				}
-			)).items;
+				})
+			).items;
+			this.loading = false;
 		}
 	}
 

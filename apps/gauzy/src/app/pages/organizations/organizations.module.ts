@@ -27,7 +27,6 @@ import { HttpClient } from '@angular/common/http';
 import { EditOrganizationSettingsModule } from './edit-organization/edit-organization-settings/edit-organization-settings.module';
 import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
-import { EmployeeModule } from 'apps/api/src/app/employee';
 
 @NgModule({
 	imports: [

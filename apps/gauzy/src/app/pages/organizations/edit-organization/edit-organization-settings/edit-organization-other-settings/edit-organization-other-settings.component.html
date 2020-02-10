@@ -1,0 +1,292 @@
+<form class="main-form" [formGroup]="form" *ngIf="form">
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.GENERAL_SETTINGS' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'FORM.LABELS.CHOOSE_TIME_ZONE' | translate
+							}}</label>
+							<ng-select
+								[(items)]="listOfZones"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE'
+										| translate
+								}}"
+								[searchable]="true"
+								formControlName="timeZone"
+							>
+								<ng-template
+									ng-option-tmp
+									let-item="item"
+									let-index="index"
+								>
+									{{ getTimeWithOffset(item) }}
+								</ng-template>
+								<ng-template ng-label-tmp let-item="item">
+									{{ getTimeWithOffset(item) }}
+								</ng-template>
+							</ng-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label" for="startWeekOnSelect">{{
+								'FORM.LABELS.START_WEEK_ON' | translate
+							}}</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="startWeekOn"
+								id="startWeekOnSelect"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.START_WEEK_ON'
+										| translate
+								}}"
+								fullWidth="true"
+							>
+								<nb-option
+									*ngFor="let weekday of weekdays"
+									[value]="weekday"
+								>
+									{{ 'SM_TABLE.' + weekday | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'FORM.LABELS.DATE_TYPE' | translate
+							}}</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="defaultValueDateType"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.DATE_TYPE' | translate
+								}}"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let type of defaultValueDateTypes"
+									[value]="type"
+								>
+									{{ 'SM_TABLE.' + type | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'ORGANIZATIONS_PAGE.EDIT.REGIONS' | translate
+							}}</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.REGIONS' | translate
+								}}"
+								formControlName="regionCode"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let code of regionCodes"
+									[value]="code"
+								>
+									{{ 'SM_TABLE.REGION.' + code | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'FORM.PLACEHOLDERS.NUMBER_FORMAT' | translate
+							}}</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.NUMBER_FORMAT'
+										| translate
+								}}"
+								formControlName="numberFormat"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let numFormat of numberFormats"
+									[value]="numFormat"
+								>
+									{{ numberFormatPreview(numFormat) }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.DATE_FORMAT' | translate }}
+							</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="dateFormat"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CHOOSE_FORMAT'
+										| translate
+								}}"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let format of listOfDateFormats"
+									[value]="format"
+								>
+									{{ dateFormatPreview(format) }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.DESIGN' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.BRAND_COLOR' | translate }}
+							</label>
+							<input
+								fullWidth
+								id="brandColorInput"
+								nbInput
+								formControlName="brandColor"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_COLOR' | translate
+								}}"
+								[colorPicker]="form.get('brandColor').value"
+								[style.background]="
+									form.get('brandColor').value
+								"
+								[value]="form.get('brandColor').value"
+								(colorPickerChange)="
+									form.get('brandColor').setValue($event)
+								"
+							/>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.LOGO_ALIGNMENT' | translate }}
+							</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="defaultAlignmentType"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ALIGN_LOGO_TO'
+										| translate
+								}}"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let type of defaultAlignmentTypes"
+									[value]="type.toUpperCase()"
+								>
+									{{ type }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.BONUS' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.TYPE_OF_BONUS' | translate }}
+							</label>
+							<nb-select
+								class="d-block"
+								size="medium"
+								formControlName="bonusType"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
+										| translate
+								}}"
+								(selectedChange)="
+									loadDefaultBonusPercentage($event)
+								"
+								fullWidth
+							>
+								<nb-option
+									*ngFor="let type of defaultBonusTypes"
+									[value]="type"
+								>
+									{{ 'SM_TABLE.' + type | translate }}
+								</nb-option>
+							</nb-select>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{ 'FORM.LABELS.BONUS_PERCENTAGE' | translate }}
+							</label>
+							<input
+								nbInput
+								type="number"
+								formControlName="bonusPercentage"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.BONUS_PERCENTAGE'
+										| translate
+								}}"
+								fullWidth
+								class="d-block"
+								[ngClass]="{
+									'status-danger': form.get('bonusPercentage')
+										.invalid
+								}"
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+	<div class="actions">
+		<button
+			[disabled]="this.form.invalid"
+			(click)="updateOrganizationSettings()"
+			nbButton
+			status="success"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</div>
+</form>

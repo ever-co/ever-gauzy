@@ -1,19 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import {
-	CurrenciesEnum,
-	Organization,
-	DefaultValueDateTypeEnum
-} from '@gauzy/models';
+import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
-
 @Component({
 	selector: 'ngx-organizations-mutation',
 	templateUrl: './organizations-mutation.component.html',
 	styleUrls: [
 		'./organizations-mutation.component.scss',
-		'../../../pages/employees/edit-employee/edit-employee-profile/edit-employee-profile.component.scss'
+		'../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	]
 })
 export class OrganizationsMutationComponent implements OnInit {

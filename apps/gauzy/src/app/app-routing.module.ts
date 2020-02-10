@@ -12,6 +12,9 @@ import { AuthGuard } from './@core/auth/auth.guard';
 import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
 import { SignInSuccessModule } from './auth/signin-success/signin-success-login-google.module';
 import { AppModuleGuard } from './app.module.guards';
+import { AcceptInvitePage } from './auth/accept-invite/accept-invite.component';
+import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
+import { NoAuthGuard } from './@core/auth/no-auth.guard';
 
 const routes: Routes = [
 	{
@@ -27,15 +30,18 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				component: NbLoginComponent
+				component: NbLoginComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'login',
-				component: NbLoginComponent
+				component: NbLoginComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'register',
-				component: NbRegisterComponent
+				component: NbRegisterComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'logout',
@@ -43,11 +49,18 @@ const routes: Routes = [
 			},
 			{
 				path: 'request-password',
-				component: NbRequestPasswordComponent
+				component: NbRequestPasswordComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'reset-password',
-				component: NbResetPasswordComponent
+				component: NbResetPasswordComponent,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'accept-invite',
+				component: AcceptInvitePage,
+				canActivate: [NoAuthGuard]
 			}
 		]
 	},
@@ -65,7 +78,11 @@ const config: ExtraOptions = {
 };
 
 @NgModule({
-	imports: [RouterModule.forRoot(routes, config), SignInSuccessModule],
+	imports: [
+		RouterModule.forRoot(routes, config),
+		SignInSuccessModule,
+		AcceptInviteModule
+	],
 	exports: [RouterModule]
 })
 export class AppRoutingModule {}

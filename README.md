@@ -1,20 +1,51 @@
 # Gauzy
 
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
+[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gauzy)
+[![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ - Fair Profits Sharing Open-Source Platform
+Gauzy™ - Open-Source Profits Sharing Platform for freelancers, modern agencies, studios and in-house teams. 
 
 -   **Open-Source Software** solving **fair sharing of technology**.
 -   **Stock Options** solving **fair sharing of profits _in the future_**.
 -   **Gauzy** solving **fair sharing of profits _today_**.
 
-Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your agency or studio.
+Gauzy supports following schemas for Employee (company worker, contractor or freelancer) Bonus calculations:
+
+-  **Profit-based**, when employees get bonuses based on company profits from work done by given employee or team.
+
+-  **Revenue-based**, when employees get bonuses based on company revenue (gross income) from work done by given employee or team.
+
+In order to allow bonuses calculations, Gauzy Platform includes multiple features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
+- Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
+- Employees Management (register of company employees / contractors, rates of employees, etc.)
+- Employees Onboarding (WIP)
+- Income / Expenses Management
+- Proposals
+- Sales Pipelines (WIP)
+- Multiple Organizations Management
+- Organization Departments and Teams
+- Organization Clients and Vendors
+- Days Off Management
+- Equipment Sharing (WIP)
+- Project Management (WIP)
+- Invoicing (WIP)
+- Billing (WIP)
+- Payments (WIP)
+- Time Management/Tracking (WIP)
+- Multi-currency
+
+So, while the primary purpose of Gauzy Platform is to allow transparent and fair bonuses calculation, you can also use Gauzy software as the **Platform to run your outsourcing/freelance agency or studio business**. 
+
+In addition, we encourage individual **Freelancers** to join our "Gauzy" revolution and use the platform to jump start your business!
+
+Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your freelance business, agency, studio or in-house teams.
 
 Feel free to test:
 
-- Gauzy Platform Demo at <https://demo.gauzy.co> (login with `admin@ever.co` and password: `admin`)
-- Gauzy Platform SaaS at <https://app.gauzy.co> (WIP, planned)
-- Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev>
+- Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as demo, login with `admin@ever.co` and password: `admin`)
+- Gauzy Platform Demo at <https://demo.gauzy.co> (temporary shutdown)
+- Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary shutdown)
 
 ## Quick Start
 
@@ -92,12 +123,14 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 #### Developers (alphabetical order)
 
 -   Aleksandar Tasev ([AlexTasev](https://github.com/AlexTasev))
+-   Aleksander Savov ([sunk0](https://github.com/sunk0))
 -   Alish Meklyov ([Alish](https://github.com/AlishMekliov931))
 -   Blagovest Gerov ([BlagovestGerov](https://github.com/BlagovestGerov))
 -   Boyan Stanchev ([boyanstanchev](https://github.com/boyanstanchev))
 -   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
+-   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
 #### Designers & QA
 
@@ -105,6 +138,8 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 ### Contributors
 
+-   Rachit Magon ([rmagon](https://github.com/rmagon))
+-   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
 -   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
 
 View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
@@ -145,4 +180,12 @@ You should have received a copy of the relevant GNU Licenses along with this pro
 Gauzy™ is a trademark of Ever Co. LTD.  
 All other brand and product names are trademarks, registered trademarks or service marks of their respective holders.
 
-#### Copyright © 2019, Ever Co. LTD. All rights reserved.
+#### Copyright © 2019-present, Ever Co. LTD. All rights reserved.
+
+[![Circle CI](https://circleci.com/gh/ever-co/gauzy.svg?style=svg)](https://circleci.com/gh/ever-co/gauzy)
+[![codecov](https://codecov.io/gh/ever-co/gauzy/branch/master/graph/badge.svg)](https://codecov.io/gh/ever-co/gauzy)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8e0f1c13c3d94f18b1523b896d4500aa)](https://www.codacy.com/manual/Ever/gauzy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ever-co/gauzy&amp;utm_campaign=Badge_Grade)
+[![DeepScan grade](https://deepscan.io/api/teams/3293/projects/8540/branches/103786/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=3293&pid=8540&bid=103786)
+[![Known Vulnerabilities](https://snyk.io/test/github/ever-co/gauzy/badge.svg)](https://snyk.io/test/github/ever-co/gauzy)
+[![Greenkeeper badge](https://badges.greenkeeper.io/ever-co/gauzy.svg)](https://greenkeeper.io)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)

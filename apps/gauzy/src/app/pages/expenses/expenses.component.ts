@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { RolesEnum, Expense } from '@gauzy/models';
-import { first, takeUntil } from 'rxjs/operators';
+import { Expense, PermissionsEnum } from '@gauzy/models';
+import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { Store } from '../../@core/services/store.service';
@@ -12,17 +12,29 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 
 export interface ExpenseViewModel {
 	id: string;
 	valueDate: Date;
 	vendorId: string;
 	vendorName: string;
+	typeOfExpense: string;
 	categoryId: string;
 	categoryName: string;
+	clientId: string;
+	clientName: string;
+	projectId: string;
+	projectName: string;
 	currency: string;
 	amount: number;
 	notes: string;
+	purpose: string;
+	taxType: string;
+	taxLabel: string;
+	rateValue: number;
+	receipt: string;
 }
 
 interface SelectedRowModel {
@@ -41,17 +53,18 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 	selectedEmployeeId: string;
 	selectedDate: Date;
 
-	hasRole: boolean;
-
 	smartTableSource = new LocalDataSource();
 
 	selectedExpense: SelectedRowModel;
 	showTable: boolean;
 	employeeName: string;
 	loading = true;
+	hasEditPermission = false;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
+
+	@ViewChild('expensesTable', { static: false }) expensesTable;
 
 	loadSettingsSmartTable() {
 		this.smartTableSettings = {
@@ -62,7 +75,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				valueDate: {
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
-					width: '20%',
+					width: '10%',
 					renderComponent: DateViewComponent,
 					filter: false
 				},
@@ -76,12 +89,17 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
-					type: 'number',
-					width: '15%',
-					filter: false
+					type: 'custom',
+					width: '10%',
+					filter: false,
+					renderComponent: IncomeAmountComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
+					type: 'string'
+				},
+				purpose: {
+					title: 'Purpose',
 					type: 'string'
 				}
 			}
@@ -95,6 +113,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		private expenseService: ExpensesService,
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
+		private errorHandler: ErrorHandlingService,
 		private translateService: TranslateService
 	) {}
 
@@ -102,10 +121,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
+			});
 
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -116,7 +138,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					this._loadTableData();
 				} else {
 					if (this._selectedOrganizationId) {
-						this._loadTableData(this._selectedOrganizationId);
+						this._loadTableData(null, this._selectedOrganizationId);
 					}
 				}
 			});
@@ -130,11 +152,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				} else {
 					if (this._selectedOrganizationId) {
 						this.selectedEmployeeId = null;
-						this._loadTableData(this._selectedOrganizationId);
-
-						this.expenseService.getAll().then((data) => {
-							this.smartTableSource.load(data.items);
-						});
+						this._loadTableData(null, this._selectedOrganizationId);
 					}
 				}
 			});
@@ -144,6 +162,17 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			.subscribe((org) => {
 				if (org) {
 					this._selectedOrganizationId = org.id;
+					if (this.loading) {
+						this._loadTableData(
+							this.store.selectedEmployee
+								? this.store.selectedEmployee.id
+								: null,
+							this.store.selectedEmployee &&
+								this.store.selectedEmployee.id
+								? null
+								: this._selectedOrganizationId
+						);
+					}
 				}
 			});
 
@@ -158,6 +187,60 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		this.loading = false;
 	}
 
+	canShowTable() {
+		if (this.expensesTable) {
+			this.expensesTable.grid.dataSet.willSelect = 'false';
+		}
+		return this.showTable;
+	}
+
+	getFormData(formData) {
+		return {
+			amount: formData.amount,
+			categoryId: formData.category.categoryId,
+			categoryName: formData.category.categoryName,
+			vendorId: formData.vendor.vendorId,
+			vendorName: formData.vendor.vendorName,
+			typeOfExpense: formData.typeOfExpense,
+			clientId: formData.client.clientId,
+			clientName: formData.client.clientName,
+			projectId: formData.project.projectId,
+			projectName: formData.project.projectName,
+			valueDate: formData.valueDate,
+			notes: formData.notes,
+			currency: formData.currency,
+			purpose: formData.purpose,
+			taxType: formData.taxType,
+			taxLabel: formData.taxLabel,
+			rateValue: formData.rateValue,
+			receipt: formData.receipt
+		};
+	}
+
+	async addExpense(completedForm, formData) {
+		try {
+			await this.expenseService.create({
+				...completedForm,
+				employeeId: formData.employee.id,
+				orgId: this.store.selectedOrganization.id
+			});
+
+			this.toastrService.primary(
+				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
+					name: this.employeeName
+				}),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this._loadTableData();
+			this.store.selectedEmployee = formData.employee.id
+				? formData.employee
+				: null;
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
 	openAddExpenseDialog() {
 		if (!this.store.selectedDate) {
 			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
@@ -168,35 +251,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				if (formData) {
-					try {
-						await this.expenseService.create({
-							employeeId: formData.employee.id,
-							orgId: this.store.selectedOrganization.id,
-							amount: formData.amount,
-							categoryId: formData.category.categoryId,
-							categoryName: formData.category.categoryName,
-							vendorId: formData.vendor.vendorId,
-							vendorName: formData.vendor.vendorName,
-							valueDate: formData.valueDate,
-							notes: formData.notes,
-							currency: formData.currency
-						});
-
-						this.toastrService.primary(
-							'Expense added for ' + this.employeeName,
-							'Success'
-						);
-
-						this._loadTableData();
-						this.store.selectedEmployee = formData.employee.id
-							? formData.employee
-							: null;
-					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
-					}
+					const completedForm = this.getFormData(formData);
+					this.addExpense(completedForm, formData);
 				}
 			});
 	}
@@ -212,28 +268,50 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			.subscribe(async (formData) => {
 				if (formData) {
 					try {
-						await this.expenseService.update(formData.id, {
-							amount: formData.amount,
-							categoryId: formData.category.categoryId,
-							categoryName: formData.category.categoryName,
-							vendorId: formData.vendor.vendorId,
-							vendorName: formData.vendor.vendorName,
-							valueDate: formData.valueDate,
-							notes: formData.notes,
-							currency: formData.currency
-						});
-
+						await this.expenseService.update(
+							formData.id,
+							this.getFormData(formData)
+						);
 						this.toastrService.primary(
-							'Expense edited for ' + this.employeeName,
-							'Success'
+							this.getTranslation(
+								'NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG',
+								{
+									name: this.employeeName
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadTableData();
+
+						this._loadTableData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
+				}
+			});
+	}
+
+	openDuplicateExpenseDialog() {
+		if (!this.store.selectedDate) {
+			this.store.selectedDate = this.store.getDateFromOrganizationSettings();
+		}
+
+		this.dialogService
+			.open(ExpensesMutationComponent, {
+				context: {
+					expense: this.selectedExpense.data,
+					duplicate: true
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (formData) => {
+				if (formData) {
+					const completedForm = this.getFormData(formData);
+					this.addExpense(completedForm, formData);
 				}
 			});
 	}
@@ -256,16 +334,23 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							'Expense deleted for ' + this.employeeName,
-							'Success'
+							this.getTranslation(
+								'NOTES.EXPENSES.DELETE_EXPENSE',
+								{
+									name: this.employeeName
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
-						this._loadTableData();
+						this._loadTableData(
+							this.selectedEmployeeId,
+							this.selectedEmployeeId
+								? null
+								: this._selectedOrganizationId
+						);
 						this.selectedExpense = null;
 					} catch (error) {
-						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
-						);
+						this.errorHandler.handleError(error);
 					}
 				}
 			});
@@ -275,9 +360,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		this.selectedExpense = ev;
 	}
 
-	private async _loadTableData(orgId?: string) {
+	private async _loadTableData(
+		employeeId = this.selectedEmployeeId,
+		orgId?: string
+	) {
 		let findObj;
 		this.showTable = false;
+		this.selectedExpense = null;
 
 		if (orgId) {
 			findObj = {
@@ -302,7 +391,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		} else {
 			findObj = {
 				employee: {
-					id: this.selectedEmployeeId
+					id: employeeId
 				}
 			};
 
@@ -322,12 +411,22 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					valueDate: i.valueDate,
 					vendorId: i.vendorId,
 					vendorName: i.vendorName,
+					typeOfExpense: i.typeOfExpense,
 					categoryId: i.categoryId,
 					categoryName: i.categoryName,
+					clientId: i.clientId,
+					clientName: i.clientName,
+					projectId: i.projectId,
+					projectName: i.projectName,
 					amount: i.amount,
 					notes: i.notes,
 					currency: i.currency,
-					employee: i.employee
+					employee: i.employee,
+					purpose: i.purpose,
+					taxType: i.taxType,
+					taxLabel: i.taxLabel,
+					rateValue: i.rateValue,
+					receipt: i.receipt
 				};
 			});
 
@@ -335,8 +434,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			this.showTable = true;
 		} catch (error) {
 			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
+				this.getTranslation('NOTES.EXPENSES.EXPENSES_ERROR', {
+					error: error.error.message || error.message
+				}),
+				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
 		this.employeeName = (
@@ -346,9 +447,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		).trim();
 	}
 
-	getTranslation(prefix: string) {
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
+		this.translateService.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 

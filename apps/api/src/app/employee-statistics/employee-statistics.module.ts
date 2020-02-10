@@ -1,18 +1,28 @@
 import { Module } from '@nestjs/common';
-import { EmployeeStatisticsController } from './employee-statistics.controller';
-import { IncomeService, Income } from '../income';
-import { ExpenseService, Expense } from '../expense';
-import { EmployeeStatisticsService } from './employee-statistics.service';
+import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Employee, EmployeeService } from '../employee';
+import { Expense, ExpenseService } from '../expense';
+import { Income, IncomeService } from '../income';
+import { EmployeeStatisticsController } from './employee-statistics.controller';
+import { EmployeeStatisticsService } from './employee-statistics.service';
+import { Organization, OrganizationService } from '../organization';
+import { QueryHandlers } from './queries/handlers';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Income, Expense]),
-    ],
-    controllers: [EmployeeStatisticsController],
-    providers: [EmployeeStatisticsService, IncomeService, ExpenseService],
-    exports: [EmployeeStatisticsService],
+	imports: [
+		TypeOrmModule.forFeature([Income, Expense, Employee, Organization]),
+		CqrsModule
+	],
+	controllers: [EmployeeStatisticsController],
+	providers: [
+		EmployeeStatisticsService,
+		IncomeService,
+		ExpenseService,
+		EmployeeService,
+		OrganizationService,
+		...QueryHandlers
+	],
+	exports: [EmployeeStatisticsService]
 })
-export class EmployeeStatisticsModule {
-
-}
+export class EmployeeStatisticsModule {}

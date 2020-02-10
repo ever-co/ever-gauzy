@@ -1,0 +1,100 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h3>
+			{{
+				'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL'
+					| translate
+			}}
+		</h3>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.AUTHOR'
+								| translate
+						}}</label>
+						<div>{{ proposal.author }}</div>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_URL'
+								| translate
+						}}</label>
+						<input
+							nbInput
+							fullWidth
+							type="text"
+							placeholder="{{
+								'PROPOSALS_PAGE.EDIT_PROPOSAL.PLACEHOLDER.JOB_POST_URL'
+									| translate
+							}}"
+							formControlName="jobPostUrl"
+							autocomplete="on"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_SENT_ON'
+								| translate
+						}}</label>
+						<div>{{ proposal.valueDate | date: 'shortDate' }}</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.JOB_POST_CONTENT'
+								| translate
+						}}</label>
+						<ckeditor
+							formControlName="jobPostContent"
+							[config]="{
+								width: '100%',
+								height: '320',
+								extraPlugins: 'divarea'
+							}"
+						>
+						</ckeditor>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="label">{{
+							'PROPOSALS_PAGE.EDIT_PROPOSAL.PROPOSAL_CONTENT'
+								| translate
+						}}</label>
+						<ckeditor
+							formControlName="proposalContent"
+							[config]="{
+								width: '100%',
+								height: '320',
+								extraPlugins: 'divarea'
+							}"
+						></ckeditor>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="editProposal()"
+			class="edit-btn"
+			status="success"
+			nbButton
+		>
+		{{
+			'PROPOSALS_PAGE.EDIT_PROPOSAL.EDIT_PROPOSAL_BUTTON'
+				| translate
+		}}
+		</button>
+	</nb-card-footer>
+</nb-card>

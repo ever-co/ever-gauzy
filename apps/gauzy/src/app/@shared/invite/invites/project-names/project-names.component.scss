@@ -1,0 +1,10 @@
+@import '../../../../@theme//styles/styles.scss';
+
+@include nb-install-component() {
+	.project-badge {
+		display: inline-block;
+		border-radius: 0.25rem;
+		padding: 0.25rem 0.4rem;
+		background-color: nb-theme(color-primary-default);
+	}
+}

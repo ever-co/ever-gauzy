@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Store } from '../../@core/services/store.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import 'rxjs/add/operator/filter';

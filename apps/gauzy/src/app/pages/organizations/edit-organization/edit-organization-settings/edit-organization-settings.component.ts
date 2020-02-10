@@ -1,13 +1,13 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { takeUntil, first } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { Organization } from '@gauzy/models';
-import { OrganizationsService } from '../../../../@core/services/organizations.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Params } from '@angular/router';
+import { Country, Organization } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { Location } from '@angular/common';
-import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { TranslateService } from '@ngx-translate/core';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+import { CountryService } from '../../../../@core/services/country.service';
+import { OrganizationsService } from '../../../../@core/services/organizations.service';
 
 export enum ListsInputType {
 	DEPARTMENTS = 'DEPARTMENTS',
@@ -20,62 +20,105 @@ export enum ListsInputType {
 	templateUrl: './edit-organization-settings.component.html',
 	styleUrls: [
 		'./edit-organization-settings.component.scss',
-		'../../../employees/edit-employee/edit-employee-profile/edit-employee-profile.component.scss'
-	]
+		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
+	],
+	providers: [CountryService]
 })
 export class EditOrganizationSettingsComponent implements OnInit {
-	@ViewChild('main', { static: false })
-	main: EditOrganizationMainComponent;
-
-	imageUrl: string;
-
 	organization: Organization;
-	hoverState: boolean;
+
 	departments: string[] = [];
 	positions: string[] = [];
 	vendors: string[] = [];
 	employeesCount: number;
+	countries: Country[] = [];
 
-	private _activeTabName = 'Main';
 	private _ngOnDestroy$ = new Subject();
+	routeParams: Params;
+	tabs: any[];
 
 	constructor(
 		private route: ActivatedRoute,
 		private organizationService: OrganizationsService,
+		private countryService: CountryService,
 		private toastrService: NbToastrService,
-		private employeesService: EmployeesService,
-		private location: Location
+		private translateService: TranslateService,
+		private organizationEditStore: OrganizationEditStore
 	) {}
-
-	get activeTabName() {
-		return this._activeTabName.toLowerCase();
-	}
-
-	tabChange(e) {
-		this._activeTabName = e.tabTitle.toLowerCase();
-		const currentURL = window.location.href;
-
-		if (
-			!currentURL.endsWith('/settings') ||
-			this._activeTabName.toLowerCase() !== 'main'
-		) {
-			window.location.href =
-				currentURL.substring(0, currentURL.indexOf('/settings') + 9) +
-				`/${this._activeTabName}`;
-		}
-	}
 
 	ngOnInit() {
 		this.route.params
 			.pipe(takeUntil(this._ngOnDestroy$))
 			.subscribe((params) => {
-				const tabName = params.tab;
-				if (tabName) {
-					this._activeTabName = tabName;
-				}
-
+				this.routeParams = params;
 				this._loadOrganization(params.id);
 			});
+
+		this.loadTabs();
+		this._applyTranslationOnTabs();
+	}
+
+	getRoute(tabName: string) {
+		return `/pages/organizations/edit/${this.routeParams.id}/settings/${tabName}`;
+	}
+
+	loadTabs() {
+		this.tabs = [
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.MAIN'),
+				icon: 'person-outline',
+				responsive: true,
+				route: this.getRoute('main')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.LOCATION'),
+				icon: 'pin-outline',
+				responsive: true,
+				route: this.getRoute('location')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.DEPARTMENTS'),
+				icon: 'briefcase-outline',
+				responsive: true,
+				route: this.getRoute('departments')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.CLIENTS'),
+				icon: 'briefcase-outline',
+				responsive: true,
+				route: this.getRoute('clients')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.POSITIONS'),
+				icon: 'award-outline',
+				responsive: true,
+				route: this.getRoute('positions')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
+				icon: 'car-outline',
+				responsive: true,
+				route: this.getRoute('vendors')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.PROJECTS'),
+				icon: 'book-outline',
+				responsive: true,
+				route: this.getRoute('projects')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS'),
+				icon: 'people-outline',
+				responsive: true,
+				route: this.getRoute('teams')
+			},
+			{
+				title: this.getTranslation('ORGANIZATIONS_PAGE.SETTINGS'),
+				icon: 'settings-outline',
+				responsive: true,
+				route: this.getRoute('settings')
+			}
+		];
 	}
 
 	goBack() {
@@ -86,34 +129,14 @@ export class EditOrganizationSettingsComponent implements OnInit {
 		);
 	}
 
-	async updateOrganizationSettings() {
-		this.organizationService.update(this.organization.id, {
-			imageUrl: this.imageUrl,
-			...this.main.mainUpdateObj
-		});
-
-		this.toastrService.primary(
-			this.organization.name + ' organization main info updeted.',
-			'Success'
-		);
-
-		this.goBack();
-	}
-
-	handleImageUploadError(event: any) {}
-
-	updateImageUrl(url: string) {
-		this.imageUrl = url;
-	}
-
 	private async _loadOrganization(id: string) {
 		try {
 			this.organization = await this.organizationService
 				.getById(id)
 				.pipe(first())
 				.toPromise();
-			this.imageUrl = this.organization.imageUrl;
-			this.loadEmployeesCount();
+
+			this.organizationEditStore.selectedOrganization = this.organization;
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,
@@ -122,12 +145,19 @@ export class EditOrganizationSettingsComponent implements OnInit {
 		}
 	}
 
-	private async loadEmployeesCount() {
-		const { total } = await this.employeesService
-			.getAll([], { organization: { id: this.organization.id } })
-			.pipe(first())
-			.toPromise();
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translateService.get(prefix).subscribe((res) => {
+			result = res;
+		});
+		return result;
+	}
 
-		this.employeesCount = total;
+	private _applyTranslationOnTabs() {
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngOnDestroy$))
+			.subscribe(() => {
+				this.loadTabs();
+			});
 	}
 }

@@ -4,9 +4,10 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	ManyToMany
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
-import { ApiModelProperty, ApiModelPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
 	IsString,
@@ -15,7 +16,6 @@ import {
 	IsEnum
 } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { Organization } from '../organization/organization.entity';
 import {
 	OrganizationProjects as IOrganizationProjects,
 	CurrenciesEnum
@@ -26,20 +26,20 @@ import { Employee } from '../employee';
 @Entity('organization_projects')
 export class OrganizationProjects extends Base
 	implements IOrganizationProjects {
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	name: string;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	organizationId: string;
 
-	@ApiModelPropertyOptional({ type: OrganizationClients })
+	@ApiPropertyOptional({ type: OrganizationClients })
 	@ManyToOne((type) => OrganizationClients, (client) => client.projects, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -47,33 +47,34 @@ export class OrganizationProjects extends Base
 	@JoinColumn()
 	client?: OrganizationClients;
 
-	@ApiModelPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	startDate?: Date;
 
-	@ApiModelPropertyOptional({ type: Date })
+	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
 	endDate?: Date;
 
-	@ApiModelProperty({ type: String })
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Column()
 	type: string;
 
-	@ApiModelProperty({ type: String, enum: CurrenciesEnum })
+	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
 	@Column()
 	currency: string;
 
-	@ApiModelPropertyOptional({ type: Employee, isArray: true })
-	@ManyToMany((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	team?: Employee[];
+	@ManyToMany((type) => Employee, { cascade: ['update'] })
+	@JoinTable({
+		name: 'organization_project_employee'
+	})
+	members?: Employee[];
 }

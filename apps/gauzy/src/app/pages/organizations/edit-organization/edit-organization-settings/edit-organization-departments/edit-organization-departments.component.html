@@ -9,56 +9,25 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="showAddCard" class="row m-0">
-			<input
-				#addInput
-				class="col-8"
-				nbInput
-				type="text"
-				placeholder="{{
-					'FORM.PLACEHOLDERS.ADD_DEPARTMENT' | translate
-				}}"
-				fullWidth
-			/>
-			<span class="col-2 pl-2 pr-1"
-				><button
-					class="w-100"
-					(click)="addDepartment(addInput.value)"
-					nbButton
-					status="success"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button></span
-			>
-			<span class="col-2 pl-1 pr-0"
-				><button
-					class="w-100"
-					(click)="showAddCard = !showAddCard"
-					nbButton
-					status="danger"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button></span
-			>
-		</div>
+		<ga-edit-organization-departments-mutation
+			*ngIf="showAddCard"
+			[employees]="employees"
+			[organizationId]="organizationId"
+			[department]="departmentToEdit"
+			(canceled)="cancel()"
+			(addOrEditDepartment)="addOrEditDepartment($event)"
+		>
+		</ga-edit-organization-departments-mutation>
 	</nb-card-header>
-	<nb-card-body *ngIf="departments?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'ORGANIZATIONS_PAGE.EDIT.DEPARTMENT_NAME' | translate
-			}}</strong>
-		</div>
-		<nb-card *ngFor="let d of departments">
-			<nb-card-body>
-				{{ d.name }}
-				<nb-actions class="float-right" e="medium">
-					<nb-action
-						(click)="removeDepartment(d.id, d.name)"
-						class="d-inline pr-0"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
+
+	<nb-card-body class="card-container" *ngIf="departments?.length">
+		<ga-entity-with-members-card
+			*ngFor="let d of departments"
+			[entityWithMembers]="d"
+			(remove)="removeDepartment(d.id, d.name)"
+			(edit)="editDepartment(d)"
+			class="member-card"
+		>
+		</ga-entity-with-members-card>
 	</nb-card-body>
 </nb-card>

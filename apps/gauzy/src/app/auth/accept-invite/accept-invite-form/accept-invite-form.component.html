@@ -1,0 +1,128 @@
+<form [formGroup]="form" *ngIf="form" class="accept-invite-form">
+	<div class="row form-input">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="fullNameInput" class="label">{{
+					'ACCEPT_INVITE.ACCEPT_INVITE_FORM.FULL_NAME' | translate
+				}}</label>
+				<input
+					placeholder="{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.ENTER_YOUR_FULL_NAME'
+							| translate
+					}}"
+					fullWidth
+					id="fullNameInput"
+					nbInput
+					formControlName="fullName"
+					fieldSize="large"
+					[ngClass]="{
+						'status-danger':
+							fullName.invalid &&
+							(fullName.dirty || fullName.touched),
+						'status-success':
+							fullName.valid &&
+							(fullName.dirty || fullName.touched)
+					}"
+				/>
+			</div>
+		</div>
+	</div>
+
+	<div class="row form-input">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label class="label" for="passwordInput"
+					>{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate
+					}}
+				</label>
+				<input
+					fullWidth
+					id="passwordInput"
+					type="password"
+					nbInput
+					formControlName="password"
+					placeholder="{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate
+					}}"
+					fieldSize="large"
+					[ngClass]="{
+						'status-danger':
+							password.invalid &&
+							(password.dirty || password.touched),
+						'status-success':
+							password.valid &&
+							(password.dirty || password.touched)
+					}"
+				/>
+			</div>
+		</div>
+	</div>
+
+	<div class="row form-input">
+		<div class="col">
+			<div class="form-group">
+				<label class="label" for="repeatPasswordInput">{{
+					'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD'
+						| translate
+				}}</label>
+				<input
+					fullWidth
+					id="repeatPasswordInput"
+					type="password"
+					nbInput
+					formControlName="repeatPassword"
+					placeholder="{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD'
+							| translate
+					}}"
+					fieldSize="large"
+					[ngClass]="{
+						'status-danger':
+							repeatPassword.invalid &&
+							(repeatPassword.dirty || repeatPassword.touched),
+						'status-success':
+							repeatPassword.valid &&
+							(repeatPassword.dirty || repeatPassword.touched)
+					}"
+				/>
+				<span *ngIf="!!repeatPasswordErrorMsg">
+					<strong class="text-danger">
+						{{ repeatPasswordErrorMsg }}</strong
+					></span
+				>
+			</div>
+		</div>
+	</div>
+
+	<div class="row form-input">
+		<div class="col">
+			<div class="form-group">
+				<nb-checkbox formControlName="agreeTerms"
+					>{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.AGREE_TO' | translate
+					}}
+					<a href="#" target="_blank">{{
+						'ACCEPT_INVITE.ACCEPT_INVITE_FORM.TERMS_AND_CONDITIONS'
+							| translate
+					}}</a></nb-checkbox
+				>
+			</div>
+		</div>
+	</div>
+
+	<div class="actions">
+		<button
+			[disabled]="form.invalid || !matchPassword"
+			(click)="saveInvites()"
+			nbButton
+			fullWidth
+			status="success"
+		>
+			{{
+				'ACCEPT_INVITE.ACCEPT_INVITE_FORM.COMPLETE_REGISTRATION'
+					| translate
+			}}
+		</button>
+	</div>
+</form>

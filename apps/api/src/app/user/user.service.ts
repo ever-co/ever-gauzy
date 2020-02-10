@@ -55,4 +55,10 @@ export class UserService extends CrudService<User> {
 	async createOne(user: User): Promise<InsertResult> {
 		return await this.repository.insert(user);
 	}
+
+	async changePassword(id: string, hash: string) {
+		const user = await this.findOne(id);
+		user.hash = hash;
+		return await this.repository.save(user);
+	}
 }

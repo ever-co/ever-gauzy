@@ -1,5 +1,5 @@
 import { Controller, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
-import { ApiUseTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IncomeService } from './income.service';
 import { Income } from './income.entity';
 import { CrudController } from '../core/crud/crud.controller';
@@ -8,7 +8,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { IncomeCreateCommand } from './commands/income.create.command';
 import { IPagination } from '../core';
 
-@ApiUseTags('Income')
+@ApiTags('Income')
 @Controller()
 export class IncomeController extends CrudController<Income> {
 	constructor(
@@ -18,7 +18,7 @@ export class IncomeController extends CrudController<Income> {
 		super(incomeService);
 	}
 
-	@ApiOperation({ title: 'Find all income.' })
+	@ApiOperation({ summary: 'Find all income.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found income',
@@ -39,7 +39,7 @@ export class IncomeController extends CrudController<Income> {
 		);
 	}
 
-	@ApiOperation({ title: 'Create new record' })
+	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'The record has been successfully created.' /*, type: T*/

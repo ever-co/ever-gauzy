@@ -1,0 +1,48 @@
+.register-btn {
+	margin: 20px;
+}
+
+.upload-btn {
+	margin-top: 20px;
+}
+
+.wrapper-top {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	grid-gap: 3em;
+	text-align: center;
+
+	.prop-card {
+		align-items: center;
+		padding: 2em;
+	}
+
+	@media (max-width: 1120px) {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	@media (max-width: 600px) {
+		display: block;
+	}
+}
+
+.wrapper-bottom {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-gap: 2em;
+	text-align: left;
+	height: fit-content;
+
+	h6 {
+		text-align: center;
+		padding: 1em;
+	}
+
+	p {
+		padding: 0 2em;
+	}
+
+	@media (max-width: 900px) {
+		display: block;
+	}
+}
