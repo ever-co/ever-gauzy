@@ -12,6 +12,7 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { SelectorService } from '../../../@core/utils/selector.service';
+import { PermissionsEnum } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-header',
@@ -19,6 +20,7 @@ import { SelectorService } from '../../../@core/utils/selector.service';
 	templateUrl: './header.component.html'
 })
 export class HeaderComponent implements OnInit, OnDestroy {
+	hasEditPermission: PermissionsEnum;
 	@Input() position = 'normal';
 
 	showEmployeesSelector = true;

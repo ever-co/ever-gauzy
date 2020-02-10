@@ -9,6 +9,7 @@
 				(click)="submitForm()"
 				nbButton
 				status="success"
+				[disabled]="!form.valid"
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>

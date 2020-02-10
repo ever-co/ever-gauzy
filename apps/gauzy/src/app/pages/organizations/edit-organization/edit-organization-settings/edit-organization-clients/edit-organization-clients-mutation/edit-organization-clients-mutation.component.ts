@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	Employee,
 	OrganizationClients,
@@ -50,9 +50,15 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 		}
 
 		this.form = this.fb.group({
-			name: [this.client ? this.client.name : ''],
-			primaryEmail: [this.client ? this.client.primaryEmail : ''],
-			primaryPhone: [this.client ? this.client.primaryPhone : ''],
+			name: [this.client ? this.client.name : '', Validators.required],
+			primaryEmail: [
+				this.client ? this.client.primaryEmail : '',
+				[Validators.required, Validators.email]
+			],
+			primaryPhone: [
+				this.client ? this.client.primaryPhone : '',
+				Validators.required
+			],
 			country: [this.client ? this.client.country : ''],
 			city: [this.client ? this.client.city : ''],
 			street: [this.client ? this.client.street : ''],
@@ -102,6 +108,9 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 				street: '',
 				selectProjects: []
 			});
+		} else {
+			if (this.form.value['primaryEmail']) {
+			}
 		}
 	}
 }
