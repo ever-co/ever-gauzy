@@ -1,12 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IncomeService } from '../../../@core/services/income.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { ExpensesService } from '../../../@core/services/expenses.service';
 import { AuthService } from '../../../@core/services/auth.service';
 import {
-	RolesEnum,
 	Income,
 	Expense,
 	EmployeeRecurringExpense,
@@ -42,7 +41,6 @@ export interface ViewDashboardExpenseHistory {
 })
 export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	hasRole: boolean;
 	loading = true;
 
 	selectedDate: Date;
@@ -78,11 +76,6 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
-
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((emp) => {

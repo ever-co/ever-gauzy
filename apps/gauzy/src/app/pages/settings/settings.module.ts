@@ -7,7 +7,9 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbToggleModule
+	NbToggleModule,
+	NbIconModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -33,6 +35,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NbToggleModule,
 		NbSpinnerModule,
+		NbIconModule,
+		NbTooltipModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

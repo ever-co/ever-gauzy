@@ -376,10 +376,14 @@
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
 			"POLICY_VIEW": "View Time Off Policy",
 			"POLICY_EDIT": "Edit Time Off Policy",
+			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
+			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
+			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"GROUPS": {
 				"GENERAL": "General",
 				"ADMINISTRATION": "Administration"
-			}
+			},
+			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin"
 		}
 	},
 	"PROPOSALS_PAGE": {

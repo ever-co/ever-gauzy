@@ -7,12 +7,13 @@ import {
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { SelectorService } from '../../../@core/utils/selector.service';
 import { PermissionsEnum } from '@gauzy/models';
+import { User } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-header',
@@ -28,10 +29,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	hasPermissionPEdit = false;
 
 	@Input() position = 'normal';
+	@Input() user: User;
+	@Input() showEmployeesSelector;
+	@Input() showOrganizationsSelector;
 
-	showEmployeesSelector = true;
 	showDateSelector = true;
-	showOrganizationsSelector = true;
+	organizationSelected = false;
 	theme: string;
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
@@ -53,14 +56,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this.showSelectors(this.router.url);
+		// this.showSelectors(this.router.url);
 
-		this.router.events
-			.pipe(filter((event) => event instanceof NavigationEnd))
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((e) => {
-				this.showSelectors(e['url']);
-			});
+		// this.router.events
+		// 	.pipe(filter((event) => event instanceof NavigationEnd))
+		// 	.pipe(takeUntil(this._ngDestroy$))
+		// 	.subscribe((e) => {
+		// 		this.showSelectors(e['url']);
+		// 	});
 
 		this.menuService
 			.onItemClick()
@@ -94,12 +97,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		this._applyTranslationOnSmartTable();
 	}
 
-	showSelectors(url: string) {
-		const selectors = this.selectorService.showSelectors(url);
-		this.showDateSelector = selectors.showDateSelector;
-		this.showEmployeesSelector = selectors.showEmployeesSelector;
-		this.showOrganizationsSelector = selectors.showOrganizationsSelector;
-	}
+	// showSelectors(url: string) {
+	// 	const selectors = this.selectorService.showSelectors(url);
+	// 	this.showDateSelector = selectors.showDateSelector;
+	// 	this.showEmployeesSelector = selectors.showEmployeesSelector;
+	// 	this.showOrganizationsSelector = selectors.showOrganizationsSelector;
+	// }
 
 	toggleSidebar(): boolean {
 		if (this.showExtraActions) {
