@@ -6,7 +6,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { AuthService } from '../../../@core/services/auth.service';
-import { RolesEnum, Employee } from '@gauzy/models';
+import { RolesEnum, Employee, PermissionsEnum } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -60,6 +60,7 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	selectedPolicyId: string;
 	showTable: boolean;
 	loading = false;
+	hasEditPermission = false;
 
 	@ViewChild('timeOffPolicyTable', { static: false }) timeOffPolicyTable;
 
@@ -67,6 +68,13 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.POLICY_EDIT
+				);
+			});
 		this.hasRole = await this.authService
 			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
 			.pipe(first())
