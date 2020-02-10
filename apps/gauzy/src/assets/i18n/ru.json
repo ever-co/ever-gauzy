@@ -545,7 +545,7 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
 			"PERMISSION_UPDATED": "Права доступа {{ permissionName }} изменены для {{ roleName }}",
 			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!"
+			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Требуется сотрудник!"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -573,18 +573,18 @@
 			"EXPENSES_ERROR": "{{ error }}"
 		},
 		"PROPOSALS": {
-			"EDIT_PROPOSAL": "Proposal successfuly updated",
-			"REGISTER_PROPOSAL": "New proposal registered",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Please select an employee from the dropdown menu.",
+			"EDIT_PROPOSAL": "Предложение успешно обновлено",
+			"REGISTER_PROPOSAL": "Новое предложение зарегистрировано",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}"
 		},
 		"POLICY": {
-			"ADD_POLICY": "New Time off Policy created!",
-			"EDIT_POLICY": "Time off policy edited",
-			"DELETE_POLICY": "Policy deleted"
+			"ADD_POLICY": "Новое время отключения политики создана!",
+			"EDIT_POLICY": "Политика отключения изменена",
+			"DELETE_POLICY": "Политика удалена"
 		},
 		"USER": {
-			"EDIT_PROFILE": "Your profile has been updated successfully."
+			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
 		}
 	}
 }
