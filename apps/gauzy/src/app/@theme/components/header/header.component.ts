@@ -20,7 +20,13 @@ import { PermissionsEnum } from '@gauzy/models';
 	templateUrl: './header.component.html'
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-	hasEditPermission: PermissionsEnum;
+	hasPermissionE = false;
+	hasPermissionI = false;
+	hasPermissionP = false;
+	hasPermissionIEdit = false;
+	hasPermissionEEdit = false;
+	hasPermissionPEdit = false;
+
 	@Input() position = 'normal';
 
 	showEmployeesSelector = true;
@@ -131,33 +137,61 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	}
 
 	loadItems() {
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasPermissionE = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_VIEW
+				);
+				this.hasPermissionI = this.store.hasPermission(
+					PermissionsEnum.ORG_INCOMES_VIEW
+				);
+				this.hasPermissionP = this.store.hasPermission(
+					PermissionsEnum.ORG_PROPOSALS_VIEW
+				);
+				this.hasPermissionEEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
+				this.hasPermissionIEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_INCOMES_EDIT
+				);
+				this.hasPermissionPEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_PROPOSALS_EDIT
+				);
+			});
+
 		this.createContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.TIMER'),
 				icon: 'clock-outline',
 				link: '#'
+				//hidden: this.hasEditPermission
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
 				icon: 'plus-circle-outline',
-				link: 'pages/income'
+				link: 'pages/income',
+				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
 				icon: 'minus-circle-outline',
-				link: 'pages/expenses'
+				link: 'pages/expenses',
+				hidden: !this.hasPermissionE || !this.hasPermissionEEdit
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.INVOICE'),
 				icon: 'archive-outline',
 				link: '#'
+				//hidden: this.hasEditPermission
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
 				icon: 'paper-plane-outline',
-				link: 'pages/proposals/register'
+				link: 'pages/proposals/register',
+				hidden: !this.hasPermissionP || !this.hasPermissionPEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
