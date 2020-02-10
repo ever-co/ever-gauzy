@@ -67,7 +67,7 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 			]
 		});
 
-		console.log(this.form.value);
+		// console.log(this.form.value);
 	}
 
 	onMembersSelected(members: string[]) {
@@ -108,9 +108,6 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 				street: '',
 				selectProjects: []
 			});
-		} else {
-			if (this.form.value['primaryEmail']) {
-			}
 		}
 	}
 }
