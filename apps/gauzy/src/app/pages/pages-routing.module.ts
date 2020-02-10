@@ -30,112 +30,110 @@ const routes: Routes = [
 			{
 				path: 'income',
 				loadChildren: () =>
-					import('./income/income.module').then(
-						(m) => m.IncomeModule
-					),
-				canActivate: [RoleGuard],
-				data: {
-					expectedRole: [
-						// RolesEnum.DATA_ENTRY,
-						// RolesEnum.EMPLOYEE,
-						RolesEnum.ADMIN
-					]
-				}
+					import('./income/income.module').then((m) => m.IncomeModule)
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		// RolesEnum.DATA_ENTRY,
+				// 		// RolesEnum.EMPLOYEE,
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
 			},
 			{
 				path: 'expenses',
 				loadChildren: () =>
 					import('./expenses/expenses.module').then(
 						(m) => m.ExpensesModule
-					),
-				canActivate: [RoleGuard],
-				data: {
-					expectedRole: [
-						// RolesEnum.DATA_ENTRY,
-						// RolesEnum.EMPLOYEE,
-						RolesEnum.ADMIN
-					]
-				}
+					)
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		// RolesEnum.DATA_ENTRY,
+				// 		// RolesEnum.EMPLOYEE,
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
 			},
 			{
 				path: 'proposals',
 				loadChildren: () =>
 					import('./proposals/proposals.module').then(
 						(m) => m.ProposalsModule
-					),
-				canActivate: [RoleGuard],
-				data: {
-					expectedRole: [
-						// RolesEnum.DATA_ENTRY,
-						// RolesEnum.EMPLOYEE,
-						RolesEnum.ADMIN
-					]
-				}
+					)
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		// RolesEnum.DATA_ENTRY,
+				// 		// RolesEnum.EMPLOYEE,
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
 			},
 			{
 				path: 'time-off',
 				loadChildren: () =>
 					import('./time-off/time-off.module').then(
 						(m) => m.TimeOffModule
-					),
-				canActivate: [RoleGuard],
-				data: {
-					expectedRole: [
-						// RolesEnum.EMPLOYEE,
-						RolesEnum.ADMIN
-					]
-				}
+					)
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		// RolesEnum.EMPLOYEE,
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
 			},
 			{
 				path: 'help',
 				loadChildren: () =>
-					import('./help/help.module').then((m) => m.HelpModule),
-				canActivate: [RoleGuard],
-				data: {
-					expectedRole: [
-						// RolesEnum.DATA_ENTRY,
-						// RolesEnum.EMPLOYEE,
-						RolesEnum.ADMIN
-					]
-				}
+					import('./help/help.module').then((m) => m.HelpModule)
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		// RolesEnum.DATA_ENTRY,
+				// 		// RolesEnum.EMPLOYEE,
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
 			},
 			{
 				path: 'about',
 				loadChildren: () =>
-					import('./about/about.module').then((m) => m.AboutModule),
-				canActivate: [RoleGuard],
-				data: {
-					expectedRole: [
-						// RolesEnum.DATA_ENTRY,
-						// RolesEnum.EMPLOYEE,
-						RolesEnum.ADMIN
-					]
-				}
+					import('./about/about.module').then((m) => m.AboutModule)
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		// RolesEnum.DATA_ENTRY,
+				// 		// RolesEnum.EMPLOYEE,
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
 			},
 			{
 				path: 'employees',
 				loadChildren: () =>
 					import('./employees/employees.module').then(
 						(m) => m.EmployeesModule
-					),
-				canActivate: [RoleGuard],
-				data: { expectedRole: [RolesEnum.ADMIN] }
+					)
+				// canActivate: [RoleGuard],
+				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
 				path: 'users',
 				loadChildren: () =>
-					import('./users/users.module').then((m) => m.UsersModule),
-				canActivate: [RoleGuard],
-				data: { expectedRole: [RolesEnum.ADMIN] }
+					import('./users/users.module').then((m) => m.UsersModule)
+				// canActivate: [RoleGuard],
+				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
 				path: 'organizations',
 				loadChildren: () =>
 					import('./organizations/organizations.module').then(
 						(m) => m.OrganizationsModule
-					),
-				canActivate: [RoleGuard],
-				data: { expectedRole: [RolesEnum.ADMIN] }
+					)
+				// canActivate: [RoleGuard],
+				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
 				path: 'auth',

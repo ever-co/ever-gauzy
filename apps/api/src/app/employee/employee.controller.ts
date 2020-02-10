@@ -19,11 +19,7 @@ import {
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand } from './commands';
-import { RoleGuard } from '../shared/guards/auth/role.guard';
-import { Roles } from '../shared/decorators/roles';
 
-@UseGuards(RoleGuard)
-@Roles(RolesEnum.ADMIN)
 @ApiTags('Employee')
 @Controller()
 export class EmployeeController extends CrudController<Employee> {

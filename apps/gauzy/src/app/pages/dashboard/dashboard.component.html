@@ -1,10 +1,14 @@
-<div
-	*ngIf="
-		selectedEmployee && selectedEmployee.id;
-		then employeeStats;
-		else orgEmployees
-	"
-></div>
+<nb-spinner *ngIf="loading"> </nb-spinner>
+
+<div *ngIf="!loading">
+	<div
+		*ngIf="
+			selectedEmployee && selectedEmployee.id;
+			then employeeStats;
+			else orgEmployees
+		"
+	></div>
+</div>
 
 <ng-template #employeeStats>
 	<ga-employee-statistics> </ga-employee-statistics>

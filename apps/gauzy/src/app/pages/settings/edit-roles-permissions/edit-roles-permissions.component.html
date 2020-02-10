@@ -59,10 +59,21 @@
 				</div>
 				<div class="col-6">
 					<nb-card>
-						<nb-card-header>{{
-							'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.ADMINISTRATION'
-								| translate
-						}}</nb-card-header>
+						<nb-card-header
+							>{{
+								'ORGANIZATIONS_PAGE.PERMISSIONS.GROUPS.ADMINISTRATION'
+									| translate
+							}}
+							<nb-icon
+								nbTooltip="{{
+									'ORGANIZATIONS_PAGE.PERMISSIONS.ONLY_ADMIN'
+										| translate
+								}}"
+								class="mr-1"
+								icon="question-mark-circle-outline"
+							>
+							</nb-icon>
+						</nb-card-header>
 						<nb-card-body class="permission-items-col">
 							<nb-toggle
 								*ngFor="
@@ -75,11 +86,15 @@
 								labelPosition="start"
 								status="basic"
 								[(checked)]="enabledPermissions[permission]"
+								(checkedChange)="
+									permissionChanged(permission, $event)
+								"
+								disabled
 								>{{
 									'ORGANIZATIONS_PAGE.PERMISSIONS.' +
 										permission | translate
-								}}</nb-toggle
-							>
+								}}
+							</nb-toggle>
 						</nb-card-body>
 					</nb-card>
 				</div>

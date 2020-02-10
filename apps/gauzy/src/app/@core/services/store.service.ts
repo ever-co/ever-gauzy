@@ -57,7 +57,6 @@ export class Store {
 
 	set selectedOrganization(organization: Organization) {
 		this.selectedOrganization$.next(organization);
-		this.selectedEmployee = null;
 		this._selectedOrganization = organization;
 	}
 

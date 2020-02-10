@@ -77,6 +77,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 				this.loadEmployeesCount();
 				this._loadOrgRecurringExpense();
 				this.store.selectedOrganization = this.selectedOrg;
+				this.store.selectedEmployee = null;
 
 				this.store.selectedOrganization$
 					.pipe(takeUntil(this._ngDestroy$))

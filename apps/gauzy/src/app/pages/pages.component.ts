@@ -227,7 +227,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/settings/roles',
 					data: {
 						translated: false,
-						translationKey: 'MENU.ROLES'
+						translationKey: 'MENU.ROLES',
+						permissionKeys: [
+							PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+						]
 					}
 				}
 			]

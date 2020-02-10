@@ -46,6 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbTreeGridModule,
 		NbIconModule,
 		NbTooltipModule,
+		NbSpinnerModule,
 		ProfitHistoryModule,
 		TranslateModule.forChild({
 			loader: {

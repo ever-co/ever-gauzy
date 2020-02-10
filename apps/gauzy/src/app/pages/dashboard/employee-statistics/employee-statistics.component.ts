@@ -42,7 +42,6 @@ export interface ViewDashboardExpenseHistory {
 })
 export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	hasRole: boolean;
 	loading = true;
 
 	selectedDate: Date;
@@ -78,11 +77,6 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
-
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((emp) => {
