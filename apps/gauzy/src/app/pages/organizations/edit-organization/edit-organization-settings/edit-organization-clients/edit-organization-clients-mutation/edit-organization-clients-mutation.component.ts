@@ -66,8 +66,6 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 				this.client ? (this.client.projects || []).map((m) => m.id) : []
 			]
 		});
-
-		// console.log(this.form.value);
 	}
 
 	onMembersSelected(members: string[]) {
