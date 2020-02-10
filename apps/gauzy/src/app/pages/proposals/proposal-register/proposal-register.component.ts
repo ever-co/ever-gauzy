@@ -5,6 +5,7 @@ import { Store } from '../../../@core/services/store.service';
 import { Proposal, ProposalStatusEnum } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -19,7 +20,8 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 		private store: Store,
 		private router: Router,
 		private proposalsService: ProposalsService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private translateService: TranslateService
 	) {}
 
 	@ViewChild('employeeSelector', { static: false })
@@ -43,6 +45,15 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 				this._selectedOrganizationId = org.id;
 			}
 		});
+	}
+
+	getTranslation(prefix: string, params?: Object) {
+		let result = '';
+		this.translateService.get(prefix, params).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
 	}
 
 	private _initializeForm() {
@@ -73,21 +84,32 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 
 					// TODO translate
 					this.toastrService.primary(
-						'New proposal registered',
-						'Success'
+						this.getTranslation(
+							'NOTES.PROPOSALS.REGISTER_PROPOSAL'
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 
 					this.router.navigate(['/pages/proposals']);
 				} else {
 					this.toastrService.primary(
-						'Please select an employee from the dropdown menu.',
-						'Employee is required!'
+						this.getTranslation(
+							'NOTES.PROPOSALS.REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED'
+						),
+						this.getTranslation(
+							'TOASTR.MESSAGE.REGISTER_PROPOSAL_NO_EMPLOEE_MSG'
+						)
 					);
 				}
 			} catch (error) {
 				this.toastrService.danger(
-					error.message || error.message,
-					'Error'
+					this.getTranslation(
+						'NOTES.PROPOSALS.REGISTER_PROPOSAL_ERROR',
+						{
+							error: error.message || error.message
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
 			}
 		}

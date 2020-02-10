@@ -434,8 +434,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			this.showTable = true;
 		} catch (error) {
 			this.toastrService.danger(
-				error.error.message || error.message,
-				'Error'
+				this.getTranslation('NOTES.EXPENSES.EXPENSES_ERROR', {
+					error: error.error.message || error.message
+				}),
+				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
 		this.employeeName = (

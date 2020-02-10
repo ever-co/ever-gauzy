@@ -143,8 +143,8 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 				await this.tymeOffService.create(formData);
 
 				this.toastrService.primary(
-					'New Time off Policy created!',
-					'Success'
+					this.getTranslation('NOTES.POLICY.ADD_POLICY'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 			} catch (err) {
 				console.log(err);
@@ -177,7 +177,10 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 					this.selectedPolicyId,
 					formData
 				);
-				this.toastrService.primary('Time off policy edited', 'Success');
+				this.toastrService.primary(
+					this.getTranslation('NOTES.POLICY.EDIT_POLICY'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
 
 				this._loadTableData(this._selectedOrganizationId);
 			} catch (error) {
@@ -201,7 +204,10 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 							this.selectedPolicy.data.id
 						);
 
-						this.toastrService.primary('Policy deleted', 'Success');
+						this.toastrService.primary(
+							this.getTranslation('NOTES.POLICY.DELETE_POLICY'),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
 						this._loadTableData(this._selectedOrganizationId);
 						this.selectedPolicy = null;
 					} catch (error) {
@@ -254,9 +260,9 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	getTranslation(prefix: string) {
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
+		this.translateService.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 
