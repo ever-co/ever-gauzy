@@ -28,6 +28,7 @@ import { InviteModule } from './invite';
 import { EmailModule } from './email-templates';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
+import { TenantModule } from './tenant/tenant.module';
 
 @Module({
 	imports: [
@@ -109,6 +110,10 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 					{
 						path: 'role-permissions',
 						module: RolePermissionsModule
+					},
+					{
+						path: '/tenant',
+						module: TenantModule
 					}
 				]
 			}
@@ -137,7 +142,8 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
-		RolePermissionsModule
+		RolePermissionsModule,
+		TenantModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

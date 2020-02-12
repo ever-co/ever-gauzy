@@ -30,6 +30,8 @@ import { OrganizationTeams } from '../../organization-teams';
 import { Country } from '../../country';
 import { createTeams } from '../../organization-teams/organization-teams.seed';
 import { RolePermissions, createRolePermissions } from '../../role-permissions';
+import { Tenant } from '../../tenant';
+import { createTenants } from '../../tenant/tenant.seed';
 
 const allEntities = [
 	User,
@@ -42,7 +44,8 @@ const allEntities = [
 	OrganizationTeams,
 	UserOrganization,
 	Country,
-	RolePermissions
+	RolePermissions,
+	Tenant
 ];
 
 @Injectable()
@@ -162,6 +165,7 @@ export class SeedDataService {
 			);
 
 			await createCountries(this.connection);
+			await createTenants(this.connection);
 
 			await createRolePermissions(this.connection, roles);
 
