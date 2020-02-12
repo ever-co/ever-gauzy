@@ -4,6 +4,12 @@
 	*ngIf="selectedEmployee && selectedEmployee.id; else orgEmployees"
 >
 	<nb-card-header class="header">
+		<nb-alert outline="danger" *ngIf="incomePermissionsError">
+			{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.INSUFFICIENT' | translate }}
+			<span *ngIf="incomePermissionsError">{{
+				'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_INCOMES_VIEW' | translate
+			}}</span>
+		</nb-alert>
 		<div class="header-container" *ngIf="selectedDate; else noDate">
 			<div class="employee-info">
 				<img

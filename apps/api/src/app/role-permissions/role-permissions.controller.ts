@@ -1,17 +1,21 @@
+import { PermissionsEnum } from '@gauzy/models';
 import {
+	Body,
 	Controller,
 	Get,
-	HttpStatus,
-	Query,
 	HttpCode,
-	Body,
+	HttpStatus,
+	Param,
 	Post,
 	Put,
-	Param
+	Query,
+	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
+import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { RolePermissions } from './role-permissions.entity';
 import { RolePermissionsService } from './role-permissions.service';
 
@@ -53,6 +57,8 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	async create(
@@ -76,6 +82,8 @@ export class RolePermissionsController extends CrudController<RolePermissions> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(

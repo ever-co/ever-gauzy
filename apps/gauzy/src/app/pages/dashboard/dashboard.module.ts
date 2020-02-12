@@ -10,7 +10,8 @@ import {
 	NbTreeGridModule,
 	NbIconModule,
 	NbTooltipModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbAlertModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
@@ -47,6 +48,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbTooltipModule,
 		NbSpinnerModule,
+		NbAlertModule,
 		ProfitHistoryModule,
 		TranslateModule.forChild({
 			loader: {

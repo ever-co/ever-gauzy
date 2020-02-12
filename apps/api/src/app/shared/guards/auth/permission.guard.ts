@@ -1,22 +1,15 @@
 import { environment as env } from '@env-api/environment';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { InjectRepository } from '@nestjs/typeorm';
 import { verify } from 'jsonwebtoken';
-import { Repository } from 'typeorm';
 import { RequestContext } from '../../../core/context';
-import { User } from '../../../user';
-
+import { UserService } from '../../../user';
 @Injectable()
 export class PermissionGuard implements CanActivate {
-	userRepository: Repository<User>;
-
 	constructor(
 		private readonly _reflector: Reflector,
-		@InjectRepository(User) userRepository: Repository<User>
-	) {
-		this.userRepository = userRepository;
-	}
+		private readonly userService: UserService
+	) {}
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const permissions = this._reflector.get<string[]>(
@@ -36,12 +29,11 @@ export class PermissionGuard implements CanActivate {
 				role: string;
 			};
 
-			const user = await this.userRepository.find({
-				where: { id },
+			const user = await this.userService.findOne(id, {
 				relations: ['role', 'role.rolePermissions']
 			});
 
-			isAuthorized = !!user[0].role.rolePermissions.find(
+			isAuthorized = !!user.role.rolePermissions.find(
 				(p) => permissions.indexOf(p.permission) > -1 && p.enabled
 			);
 
