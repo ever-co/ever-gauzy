@@ -361,10 +361,10 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
-			"ORG_EXPENSES_VIEW": "View Expenses Page",
+			"ORG_EXPENSES_VIEW": "View All Expenses",
 			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
 			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
-			"ORG_INCOMES_VIEW": "View Incomes Page",
+			"ORG_INCOMES_VIEW": "View All Incomes",
 			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
 			"ORG_PROPOSALS_VIEW": "View Proposals Page",
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
@@ -383,7 +383,8 @@
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Administration"
 			},
-			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin"
+			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
 		}
 	},
 	"PROPOSALS_PAGE": {
