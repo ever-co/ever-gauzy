@@ -237,7 +237,8 @@
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни",
 		"USERS": "Users",
-		"ROLES": "Roles & Permissions"
+		"ROLES": "Roles & Permissions",
+		"DOWNLOAD_DATA": "Download all data"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
