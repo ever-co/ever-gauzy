@@ -21,6 +21,7 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
 import { PermissionsEnum } from '@gauzy/models';
+import { NO_EMPLOYEE_SELECTED } from '../../components/header/selectors/employee/employee.component';
 
 @Component({
 	selector: 'ngx-one-column-layout',
@@ -102,13 +103,16 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 				.getAll([], { user: this.user })
 				.pipe(first())
 				.toPromise();
-
-			this.store.selectedEmployee = {
-				id: emp[0].id,
-				firstName: this.user.firstName,
-				lastName: this.user.lastName,
-				imageUrl: this.user.imageUrl
-			};
+			if (emp && emp.length > 0) {
+				this.store.selectedEmployee = {
+					id: emp[0].id,
+					firstName: this.user.firstName,
+					lastName: this.user.lastName,
+					imageUrl: this.user.imageUrl
+				};
+			} else {
+				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+			}
 		}
 	}
 }

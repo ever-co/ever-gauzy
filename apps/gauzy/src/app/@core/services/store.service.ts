@@ -38,15 +38,6 @@ export class Store {
 	}
 
 	set selectedEmployee(employee: SelectedEmployee) {
-		if (!employee) {
-			employee = {
-				id: null,
-				firstName: 'All Employees',
-				lastName: '',
-				imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
-			};
-		}
-
 		this._selectedEmployee = employee;
 		this.selectedEmployee$.next(employee);
 	}

@@ -4,12 +4,37 @@ import { first, takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 
+//TODO: Currently the whole application assumes that if employee or id is null then you need to get data for All Employees
+//That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
+//we need to handle cases where No Employee is selected too
 export interface SelectedEmployee {
 	id: string;
 	firstName: string;
 	lastName: string;
 	imageUrl: string;
+	defaultType?: DEFAULT_TYPE;
 }
+
+export enum DEFAULT_TYPE {
+	ALL_EMPLOYEE = 'ALL_EMPLOYEE',
+	NO_EMPLOYEE = 'NO_EMPLOYEE'
+}
+
+export const ALL_EMPLOYEES_SELECTED: SelectedEmployee = {
+	id: null,
+	firstName: 'All Employees',
+	lastName: '',
+	imageUrl: 'https://i.imgur.com/XwA2T62.jpg',
+	defaultType: DEFAULT_TYPE.ALL_EMPLOYEE
+};
+
+export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
+	id: null,
+	firstName: '',
+	lastName: '',
+	imageUrl: '',
+	defaultType: DEFAULT_TYPE.NO_EMPLOYEE
+};
 
 @Component({
 	selector: 'ga-employee-selector',
@@ -52,7 +77,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 	selectEmployee(employee: SelectedEmployee) {
 		if (!this.skipGlobalChange) {
-			this.store.selectedEmployee = employee;
+			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}
 	}
 
@@ -86,12 +111,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 		const load = (loadItems) => {
 			this.people = [
-				{
-					id: null,
-					firstName: 'All Employees',
-					lastName: '',
-					imageUrl: 'https://i.imgur.com/XwA2T62.jpg'
-				},
+				ALL_EMPLOYEES_SELECTED,
 				...loadItems.map((e) => {
 					return {
 						id: e.id,
@@ -117,13 +137,14 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 		);
 
 		if (items.length > 0 && !this.store.selectedEmployee) {
-			this.store.selectedEmployee = this.people[0];
+			this.store.selectedEmployee =
+				this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 
 		if (!this.selectedEmployee) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
-			this.selectedEmployee = this.people[0];
+			this.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 			this.store.selectedEmployee.id = null;
 		}
 	}
