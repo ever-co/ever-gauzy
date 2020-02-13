@@ -181,8 +181,8 @@
 			"INCLUDE_DELETED": "Включать удаленные"
 		},
 		"DELETE_CONFIRMATION": {
-			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
-			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
+			"DELETE_ACCOUNT": "Вы уверены, что хотите удалить свою учетную запись?",
 			"SURE": "Вы уверены, что хотите удалить",
 			"RECORD": "запись",
 			"EMPLOYEE": "служащий",
@@ -240,7 +240,7 @@
 		"GENERAL": "Генеральная",
 		"USERS": "Пользователи",
 		"ROLES": "Роли и Разрешения",
-		"DANGER_ZONE": "Danger Zone",
+		"DANGER_ZONE": "Опасная зона",
 		"DOWNLOAD_DATA": "Скачать все данные"
 	},
 	"SETTINGS_MENU": {
@@ -558,10 +558,10 @@
 			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку",
 			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Требуется сотрудник!",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
-			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
-			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
-			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
-			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
+			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
+			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
+			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
+			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input"
 		}
 	},
@@ -594,9 +594,9 @@
 			"REGISTER_PROPOSAL": "Новое предложение зарегистрировано",
 			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
 			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
-			"DELETE_PROPOSAL": "Proposal deleted successfuly",
-			"PROPOSAL_ACCEPTED": "Proposal status updated to Accepted",
-			"PROPOSAL_SENT": "Proposal status updated to Sent"
+			"DELETE_PROPOSAL": "Предложение успешно удалено",
+			"PROPOSAL_ACCEPTED": "Статус предложения обновлен для принятия",
+			"PROPOSAL_SENT": "Статус предложения обновлен для отправки"
 		},
 		"POLICY": {
 			"ADD_POLICY": "Новое время отключения политики создана!",
@@ -608,47 +608,47 @@
 			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
 		},
 		"ORGANIZATIONS": {
-			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
-			"DELETE_ORGANIZATION": "{{ name }} organization deleted.",
-			"ADD_NEW_USER_TO_ORGANIZATION": "{{ username }} added to {{ orgname }}",
-			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} set as inactive.",
+			"ADD_NEW_ORGANIZATION": "Организация {{ name }} создана.",
+			"DELETE_ORGANIZATION": "Организация {{ name }} удалена.",
+			"ADD_NEW_USER_TO_ORGANIZATION": "{{ username }} добавлен в {{ orgname }}",
+			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} установлен как неактивный.",
 			"DATA_ERROR": "{{ error }}",
 			"EDIT_ORGANIZATIONS_PROJECTS": {
-				"ADD_PROJECT": "New project {{ name }} successfully added!",
-				"REMOVE_PROJECT": "Project {{ name }} successfully removed!",
-				"INVALID_PROJECT_NAME": "Please fill in the name of your project"
+				"ADD_PROJECT": "Проект {{ name }} успешно добавлен!",
+				"REMOVE_PROJECT": "Проект {{ name }} успешно удален!",
+				"INVALID_PROJECT_NAME": "Пожалуйста, введите название вашего проекта"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
-				"ADD_NEW_TEAM": "New team {{ name }} successfully added!",
-				"EDIT_EXISTING_TEAM": "Team {{ name }} successfully updated!",
-				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
-				"REMOVE_TEAM": "Team {{ name }} successfully removed!"
+				"ADD_NEW_TEAM": "Новая команда {{ name }} успешно добавлена!",
+				"EDIT_EXISTING_TEAM": "Команда {{ name }} успешно обновлена!",
+				"INVALID_TEAM_NAME": "Пожалуйста, добавьте название команды и хотя бы одного участника",
+				"REMOVE_TEAM": "Команда {{ name }} успешно удалена!"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
-				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
-				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
-				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
+				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
+				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
-				"ADD_POSITION": "New position {{ name }} successfully added!",
-				"REMOVE_POSITION": "Position {{ name }} successfully removed!",
-				"INVALID_POSITION_NAME": "Please add a Position name"
+				"ADD_POSITION": "Новая позиция {{ name }} успешно добавлена!",
+				"REMOVE_POSITION": "Должность {{ name }} успешно удалена!",
+				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
-				"ADD_DEPARTMENT": "{{ name }} Department successfully added!",
-				"REMOVE_DEPARTMENT": "{{ name }} Department successfully removed!",
-				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
+				"ADD_DEPARTMENT": "{{ name }} Департамент успешно добавлен!",
+				"REMOVE_DEPARTMENT": "Департамент {{ name }} успешно удален!",
+				"INVALID_DEPARTMENT_NAME": "Пожалуйста, добавьте название департамента"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
-				"ADD_CLIENT": "New client {{ name }} successfully added!",
-				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
-				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
+				"ADD_CLIENT": "Новый клиент {{ name }} успешно добавлен!",
+				"REMOVE_CLIENT": "Клиент {{ name }} успешно удален!",
+				"INVALID_CLIENT_DATA": "Пожалуйста, проверьте имя, основной адрес электронной почты и основной телефон вашего клиента"
 			}
 		},
 		"DANGER_ZONE": {
-			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Pleace try again.",
-			"ACCOUNT_DELETED": "Your account was deleted successfully!",
-			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
+			"DELETE_ACCOUNT_WRONG_DATA": "Неправильный ввод! Повторите попытку.",
+			"ACCOUNT_DELETED": "Ваш аккаунт был успешно удален!",
+			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
 		}
 	}
 }
