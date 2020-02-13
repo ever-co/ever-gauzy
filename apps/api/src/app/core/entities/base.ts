@@ -16,9 +16,11 @@ export abstract class Base implements IBaseEntityModel {
 	@ApiPropertyOptional({ type: String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
-	@Column()
-	@Generated('uuid')
-	tenantId?: string;
+
+	// @ApiPropertyOptional({ type: String })
+	// @Column()
+	// @Generated('uuid')
+	// tenantId?: string;
 
 	@ApiProperty({
 		type: 'string',

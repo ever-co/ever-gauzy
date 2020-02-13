@@ -31,7 +31,7 @@ export const createExpenses = async (
 					(emp) => emp.user.email === seedExpense.email
 				);
 
-				expense.employee = foundEmployee;
+				// expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
 				expense.amount = Math.abs(seedExpense.amount);
 				expense.vendorName = seedExpense.vendorName;

@@ -119,9 +119,15 @@ export class SeedDataService {
 				randomOrganizations
 			} = await createOrganizations(this.connection);
 
+			const tenants = await createTenants(this.connection);
+
 			const employees = await createEmployees(
 				this.connection,
-				{ org: defaultOrganization, users: [...defaultUsers] },
+				{
+					tenant: [...tenants],
+					org: defaultOrganization,
+					users: [...defaultUsers]
+				},
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
 
@@ -165,7 +171,6 @@ export class SeedDataService {
 			);
 
 			await createCountries(this.connection);
-			await createTenants(this.connection);
 
 			await createRolePermissions(this.connection, roles);
 

@@ -31,7 +31,7 @@ export const createIncomes = async (
 					(emp) => emp.user.email === seedIncome.email
 				);
 
-				income.employee = foundEmployee;
+				// income.employee = foundEmployee;
 				income.clientName = seedIncome.clientName;
 				income.organization = defaultData.org;
 				income.amount = seedIncome.amount;

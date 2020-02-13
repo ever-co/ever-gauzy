@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { User as IUser } from '@gauzy/models';
+import { User as IUser, Employee } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
@@ -19,13 +19,24 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	RelationId
+	RelationId,
+	OneToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role';
+import { Tenant } from '../tenant';
 
 @Entity('user')
 export class User extends Base implements IUser {
+	// @ApiProperty({ type: Tenant })
+	// @ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	// @JoinColumn()
+	// tenant: Tenant;
+
+	// @ApiProperty({ type: String, readOnly: true })
+	// @RelationId((user: User) => user.tenant )
+
+	readonly tenantId?: string;
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index()
@@ -84,4 +95,9 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
+
+	// @ApiProperty({ type: Tenant })
+	// @OneToOne((type) => Tenant, { nullable: false, onDelete: 'CASCADE' })
+	// @JoinColumn()
+	// tenant: Tenant;
 }

@@ -1,3 +1,4 @@
+import { Tenant } from './../../../../apps/api/src/app/tenant/tenant.entity';
 import { User } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
@@ -17,6 +18,7 @@ export interface Employee extends IBaseEntityModel {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	tenant: Tenant;
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {

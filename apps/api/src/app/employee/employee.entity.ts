@@ -19,6 +19,7 @@ import { Base } from '../core/entities/base';
 import { Organization } from '../organization';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 import { User } from '../user';
+import { Tenant } from '../tenant';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
@@ -30,6 +31,15 @@ export class Employee extends Base implements IEmployee {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.user)
 	readonly userId: string;
+
+	@ApiProperty({ type: Tenant })
+	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	tenant: Tenant;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((employee: Employee) => employee.tenant)
+	readonly tenantId?: string;
 
 	@ApiProperty({ type: Organization })
 	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
