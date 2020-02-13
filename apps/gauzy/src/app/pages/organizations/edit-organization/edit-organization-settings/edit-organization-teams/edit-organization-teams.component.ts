@@ -10,6 +10,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 
@@ -35,7 +36,8 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		private employeesService: EmployeesService,
 		private readonly toastrService: NbToastrService,
 		private dialogService: NbDialogService,
-		private readonly organizationEditStore: OrganizationEditStore
+		private readonly organizationEditStore: OrganizationEditStore,
+		private translateService: TranslateService
 	) {}
 
 	async ngOnInit() {
@@ -60,8 +62,13 @@ export class EditOrganizationTeamsComponent implements OnInit {
 					);
 
 					this.toastrService.primary(
-						`Team ${team.name} successfully updated!`,
-						'Success'
+						this.getTranslation(
+							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
+							{
+								name: team.name
+							}
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 
 					this.loadTeams();
@@ -75,8 +82,13 @@ export class EditOrganizationTeamsComponent implements OnInit {
 					await this.organizationTeamsService.create(team);
 
 					this.toastrService.primary(
-						`New team ${team.name} successfully added!`,
-						'Success'
+						this.getTranslation(
+							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM',
+							{
+								name: team.name
+							}
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 
 					this.loadTeams();
@@ -87,8 +99,12 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				'Please add a Team name and at least one member',
-				'Team name and members are required'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.INVALID_TEAM_NAME'
+				),
+				this.getTranslation(
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_TEAM_INVALID_NAME'
+				)
 			);
 		}
 
@@ -111,8 +127,13 @@ export class EditOrganizationTeamsComponent implements OnInit {
 				await this.organizationTeamsService.delete(id);
 
 				this.toastrService.primary(
-					`Team ${name} successfully removed!`,
-					'Success'
+					this.getTranslation(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
+						{
+							name: name
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 
 				this.loadTeams();
@@ -163,5 +184,14 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		}
 
 		this.loading = false;
+	}
+
+	getTranslation(prefix: string, params?: Object) {
+		let result = '';
+		this.translateService.get(prefix, params).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
 	}
 }

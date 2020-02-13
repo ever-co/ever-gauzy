@@ -33,6 +33,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
+	entryComponents: [],
 	declarations: [PagesComponent],
 	providers: [AuthService, RoleGuard]
 })
