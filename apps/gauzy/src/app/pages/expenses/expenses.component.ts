@@ -440,11 +440,13 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
-		this.employeeName = (
-			this.store.selectedEmployee.firstName +
-			' ' +
-			this.store.selectedEmployee.lastName
-		).trim();
+		this.employeeName = this.store.selectedEmployee
+			? (
+					this.store.selectedEmployee.firstName +
+					' ' +
+					this.store.selectedEmployee.lastName
+			  ).trim()
+			: '';
 	}
 
 	getTranslation(prefix: string, params?: Object) {
