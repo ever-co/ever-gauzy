@@ -34,8 +34,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			home: true,
 			data: {
 				translated: false,
-				translationKey: 'MENU.DASHBOARD',
-				permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW]
+				translationKey: 'MENU.DASHBOARD'
 			}
 		},
 		{

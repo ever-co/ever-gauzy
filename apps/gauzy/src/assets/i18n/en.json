@@ -278,7 +278,9 @@
 			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
 			"NOTE": "Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments",
 			"BONUS": "Bonus"
-		}
+		},
+		"ADD_INCOME": "Add New Income Entry",
+		"ADD_EXPENSE": "Add New Expense Entry"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Income",
