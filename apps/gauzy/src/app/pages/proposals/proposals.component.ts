@@ -158,8 +158,10 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							'Proposal deleted successfuly',
-							'Success'
+							this.getTranslation(
+								'NOTES.PROPOSALS.DELETE_PROPOSAL'
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this._loadTableData();
 						this.selectedProposal = null;
@@ -189,8 +191,10 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						);
 						// TODO translate
 						this.toastrService.primary(
-							'Proposal status updated to Accepted',
-							'Success'
+							this.getTranslation(
+								'NOTES.PROPOSALS.PROPOSAL_ACCEPTED'
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this.selectedProposal = null;
 						this._loadTableData();
@@ -220,8 +224,10 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							'Proposal status updated to Sent',
-							'Success'
+							this.getTranslation(
+								'NOTES.PROPOSALS.PROPOSAL_SENT'
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 						this.selectedProposal = null;
 						this._loadTableData();
@@ -380,9 +386,9 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	getTranslation(prefix: string) {
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
+		this.translateService.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 

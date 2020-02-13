@@ -181,6 +181,8 @@
 			"INCLUDE_DELETED": "Include Deleted"
 		},
 		"DELETE_CONFIRMATION": {
+			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
+			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
 			"SURE": "Are you sure you want to delete",
 			"RECORD": "record",
 			"EMPLOYEE": "employee",
@@ -238,6 +240,7 @@
 		"GENERAL": "General",
 		"USERS": "Users",
 		"ROLES": "Roles & Permissions",
+		"DANGER_ZONE": "Danger Zone",
 		"DOWNLOAD_DATA": "Download all data"
 	},
 	"SETTINGS_MENU": {
@@ -553,7 +556,13 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
 			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
 			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!"
+			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!",
+			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
+			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
+			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
+			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
+			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
+			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -584,15 +593,62 @@
 			"EDIT_PROPOSAL": "Proposal successfuly updated",
 			"REGISTER_PROPOSAL": "New proposal registered",
 			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Please select an employee from the dropdown menu.",
-			"REGISTER_PROPOSAL_ERROR": "{{ error }}"
+			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
+			"DELETE_PROPOSAL": "Proposal deleted successfuly",
+			"PROPOSAL_ACCEPTED": "Proposal status updated to Accepted",
+			"PROPOSAL_SENT": "Proposal status updated to Sent"
 		},
 		"POLICY": {
 			"ADD_POLICY": "New Time off Policy created!",
 			"EDIT_POLICY": "Time off policy edited",
-			"DELETE_POLICY": "Policy deleted"
+			"DELETE_POLICY": "Policy deleted",
+			"ERROR": "{{ error }}"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
+		},
+		"ORGANIZATIONS": {
+			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
+			"DELETE_ORGANIZATION": "{{ name }} organization deleted.",
+			"ADD_NEW_USER_TO_ORGANIZATION": "{{ username }} added to {{ orgname }}",
+			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} set as inactive.",
+			"DATA_ERROR": "{{ error }}",
+			"EDIT_ORGANIZATIONS_PROJECTS": {
+				"ADD_PROJECT": "New project {{ name }} successfully added!",
+				"REMOVE_PROJECT": "Project {{ name }} successfully removed!",
+				"INVALID_PROJECT_NAME": "Please fill in the name of your project"
+			},
+			"EDIT_ORGANIZATIONS_TEAM": {
+				"ADD_NEW_TEAM": "New team {{ name }} successfully added!",
+				"EDIT_EXISTING_TEAM": "Team {{ name }} successfully updated!",
+				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
+				"REMOVE_TEAM": "Team {{ name }} successfully removed!"
+			},
+			"EDIT_ORGANIZATIONS_VENDOR": {
+				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
+				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
+				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+			},
+			"EDIT_ORGANIZATIONS_POSITIONS": {
+				"ADD_POSITION": "New position {{ name }} successfully added!",
+				"REMOVE_POSITION": "Position {{ name }} successfully removed!",
+				"INVALID_POSITION_NAME": "Please add a Position name"
+			},
+			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
+				"ADD_DEPARTMENT": "{{ name }} Department successfully added!",
+				"REMOVE_DEPARTMENT": "{{ name }} Department successfully removed!",
+				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
+			},
+			"EDIT_ORGANIZATIONS_CLIENTS": {
+				"ADD_CLIENT": "New client {{ name }} successfully added!",
+				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
+				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
+			}
+		},
+		"DANGER_ZONE": {
+			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Pleace try again.",
+			"ACCOUNT_DELETED": "Your account was deleted successfully!",
+			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		}
 	}
 }

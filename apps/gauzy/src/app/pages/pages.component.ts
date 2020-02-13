@@ -242,6 +242,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 							PermissionsEnum.CHANGE_ROLES_PERMISSIONS
 						]
 					}
+				},
+				{
+					title: 'Danger Zone',
+					link: '/pages/settings/danger-zone',
+					data: {
+						translated: false,
+						translationKey: 'MENU.DANGER_ZONE'
+					}
 				}
 			]
 		}
