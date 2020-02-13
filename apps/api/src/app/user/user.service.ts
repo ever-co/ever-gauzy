@@ -52,6 +52,20 @@ export class UserService extends CrudService<User> {
 		return count > 0;
 	}
 
+	async getIfExists(id: string): Promise<User> {
+		return await this.repository
+			.createQueryBuilder('user')
+			.where('user.id = :id', { id })
+			.getOne();
+	}
+
+	async getIfExistsThirdParty(thirdPartyId: string): Promise<User> {
+		return await this.repository
+			.createQueryBuilder('user')
+			.where('user.thirdPartyId = :thirdPartyId', { thirdPartyId })
+			.getOne();
+	}
+
 	async createOne(user: User): Promise<InsertResult> {
 		return await this.repository.insert(user);
 	}

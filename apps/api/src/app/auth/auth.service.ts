@@ -1,11 +1,11 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { get, post, Response } from 'request';
-import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import { User, UserService } from '../user';
 import { environment as env, environment } from '@env-api/environment';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
+import { get, post, Response } from 'request';
 import { EmailService } from '../email-templates/email.service';
+import { User, UserService } from '../user';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -115,6 +115,15 @@ export class AuthService {
 		this.emailService.welcomeUser(input.user);
 
 		return user;
+	}
+
+	async getAuthenticatedUser(
+		id: string,
+		thirdPartyId?: string
+	): Promise<User> {
+		return thirdPartyId
+			? this.userService.getIfExistsThirdParty(thirdPartyId)
+			: this.userService.getIfExists(id);
 	}
 
 	async isAuthenticated(token: string): Promise<boolean> {

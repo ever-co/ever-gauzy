@@ -5,11 +5,15 @@ import { OrganizationDepartmentController } from './organization-department.cont
 import { OrganizationDepartmentService } from './organization-department.service';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
+import { User, UserService } from '../user';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([OrganizationDepartment]), CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([OrganizationDepartment, User]),
+		CqrsModule
+	],
 	controllers: [OrganizationDepartmentController],
-	providers: [OrganizationDepartmentService, ...CommandHandlers],
+	providers: [OrganizationDepartmentService, UserService, ...CommandHandlers],
 	exports: [OrganizationDepartmentService]
 })
 export class OrganizationDepartmentModule {}

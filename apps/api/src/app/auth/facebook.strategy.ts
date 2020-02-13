@@ -1,17 +1,13 @@
+import { environment as env } from '@env-api/environment';
 import { Injectable } from '@nestjs/common';
 import { use } from 'passport';
-import { environment as env } from '@env-api/environment';
 import { AuthService } from './auth.service';
-import { RoleService } from '../role/role.service';
 
 const FacebookTokenStrategy = require('passport-facebook-token');
 
 @Injectable()
 export class FacebookStrategy {
-	constructor(
-		private readonly _authService: AuthService,
-		private readonly _roleService: RoleService
-	) {
+	constructor(private readonly _authService: AuthService) {
 		this.init();
 	}
 

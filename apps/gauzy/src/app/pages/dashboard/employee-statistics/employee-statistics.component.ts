@@ -1,18 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IncomeService } from '../../../@core/services/income.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { ExpensesService } from '../../../@core/services/expenses.service';
-import { AuthService } from '../../../@core/services/auth.service';
 import {
-	RolesEnum,
 	Income,
 	Expense,
 	EmployeeRecurringExpense,
 	OrganizationRecurringExpense,
 	BonusTypeEnum,
-	Organization
+	Organization,
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import {
@@ -42,7 +41,6 @@ export interface ViewDashboardExpenseHistory {
 })
 export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	hasRole: boolean;
 	loading = true;
 
 	selectedDate: Date;
@@ -66,10 +64,11 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	expenseCurrency: string;
 	defaultCurrency: string;
 
+	incomePermissionsError = false;
+
 	constructor(
 		private incomeService: IncomeService,
 		private expenseService: ExpensesService,
-		private authService: AuthService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeStatisticsService: EmployeeStatisticsService,
@@ -78,11 +77,6 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
-
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((emp) => {
@@ -151,21 +145,35 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployeeTotalIncome() {
-		const { items } = await this.incomeService.getAll(
-			['employee', 'organization'],
-			{
-				employee: {
-					id: this.selectedEmployee.id
-				}
-			},
-			this.selectedDate
-		);
+		try {
+			const { items } = this.store.hasPermission(
+				PermissionsEnum.ORG_INCOMES_VIEW
+			)
+				? await this.incomeService.getAll(
+						['employee', 'organization'],
+						{
+							employee: {
+								id: this.selectedEmployee.id
+							}
+						},
+						this.selectedDate
+				  )
+				: await this.incomeService.getMyAll(
+						['employee', 'organization'],
+						{},
+						this.selectedDate
+				  );
 
-		this.incomeData = items;
-		this.totalIncome = items.reduce((a, b) => a + +b.amount, 0);
+			this.incomeData = items;
+		} catch (error) {
+			this.incomeData = [];
+			this.incomePermissionsError = true;
+		}
 
-		if (items.length && this.totalIncome !== 0) {
-			const firstItem = items[0];
+		this.totalIncome = this.incomeData.reduce((a, b) => a + +b.amount, 0);
+
+		if (this.incomeData.length && this.totalIncome !== 0) {
+			const firstItem = this.incomeData[0];
 
 			this.incomeCurrency = firstItem.currency;
 			this.defaultCurrency = firstItem.organization.currency;

@@ -356,11 +356,13 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			findObj,
 			this.selectedDate
 		);
-		this.employeeName = (
-			this.store.selectedEmployee.firstName +
-			' ' +
-			this.store.selectedEmployee.lastName
-		).trim();
+		this.employeeName = this.store.selectedEmployee
+			? (
+					this.store.selectedEmployee.firstName +
+					' ' +
+					this.store.selectedEmployee.lastName
+			  ).trim()
+			: '';
 		this.smartTableSource.load(items);
 		this.showTable = true;
 	}

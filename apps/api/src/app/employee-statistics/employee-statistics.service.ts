@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
 import {
-	EmployeeStatisticsFindInput,
+	BonusTypeEnum,
 	EmployeeStatistics,
-	BonusTypeEnum
+	EmployeeStatisticsFindInput
 } from '@gauzy/models';
-import { IncomeService } from '../income';
+import { Injectable } from '@nestjs/common';
+import { EmployeeService } from '../employee/employee.service';
 import { ExpenseService } from '../expense';
+import { IncomeService } from '../income';
 @Injectable()
 export class EmployeeStatisticsService {
 	private _monthNames = [
@@ -25,7 +26,8 @@ export class EmployeeStatisticsService {
 
 	constructor(
 		private incomeService: IncomeService,
-		private expenseService: ExpenseService
+		private expenseService: ExpenseService,
+		private employeeService: EmployeeService
 	) {}
 
 	async getStatisticsByEmployeeId(
@@ -127,10 +129,10 @@ export class EmployeeStatisticsService {
 
 		const {
 			organization: { bonusType, bonusPercentage }
-		} = await this.incomeService.findOne({
-			where: { employee: { id: employeeId } },
+		} = await this.employeeService.findOne(employeeId, {
 			relations: ['organization']
 		});
+
 		let profitStatistics = [];
 		let bonusStatistics = [];
 

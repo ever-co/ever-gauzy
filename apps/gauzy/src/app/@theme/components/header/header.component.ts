@@ -7,12 +7,13 @@ import {
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { SelectorService } from '../../../@core/utils/selector.service';
 import { PermissionsEnum } from '@gauzy/models';
+import { User } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-header',
@@ -20,12 +21,20 @@ import { PermissionsEnum } from '@gauzy/models';
 	templateUrl: './header.component.html'
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-	hasEditPermission: PermissionsEnum;
-	@Input() position = 'normal';
+	hasPermissionE = false;
+	hasPermissionI = false;
+	hasPermissionP = false;
+	hasPermissionIEdit = false;
+	hasPermissionEEdit = false;
+	hasPermissionPEdit = false;
 
-	showEmployeesSelector = true;
+	@Input() position = 'normal';
+	@Input() user: User;
+	@Input() showEmployeesSelector;
+	@Input() showOrganizationsSelector;
+
 	showDateSelector = true;
-	showOrganizationsSelector = true;
+	organizationSelected = false;
 	theme: string;
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
@@ -47,14 +56,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this.showSelectors(this.router.url);
+		// this.showSelectors(this.router.url);
 
-		this.router.events
-			.pipe(filter((event) => event instanceof NavigationEnd))
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((e) => {
-				this.showSelectors(e['url']);
-			});
+		// this.router.events
+		// 	.pipe(filter((event) => event instanceof NavigationEnd))
+		// 	.pipe(takeUntil(this._ngDestroy$))
+		// 	.subscribe((e) => {
+		// 		this.showSelectors(e['url']);
+		// 	});
 
 		this.menuService
 			.onItemClick()
@@ -88,12 +97,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		this._applyTranslationOnSmartTable();
 	}
 
-	showSelectors(url: string) {
-		const selectors = this.selectorService.showSelectors(url);
-		this.showDateSelector = selectors.showDateSelector;
-		this.showEmployeesSelector = selectors.showEmployeesSelector;
-		this.showOrganizationsSelector = selectors.showOrganizationsSelector;
-	}
+	// showSelectors(url: string) {
+	// 	const selectors = this.selectorService.showSelectors(url);
+	// 	this.showDateSelector = selectors.showDateSelector;
+	// 	this.showEmployeesSelector = selectors.showEmployeesSelector;
+	// 	this.showOrganizationsSelector = selectors.showOrganizationsSelector;
+	// }
 
 	toggleSidebar(): boolean {
 		if (this.showExtraActions) {
@@ -131,33 +140,61 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	}
 
 	loadItems() {
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasPermissionE = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_VIEW
+				);
+				this.hasPermissionI = this.store.hasPermission(
+					PermissionsEnum.ORG_INCOMES_VIEW
+				);
+				this.hasPermissionP = this.store.hasPermission(
+					PermissionsEnum.ORG_PROPOSALS_VIEW
+				);
+				this.hasPermissionEEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
+				this.hasPermissionIEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_INCOMES_EDIT
+				);
+				this.hasPermissionPEdit = this.store.hasPermission(
+					PermissionsEnum.ORG_PROPOSALS_EDIT
+				);
+			});
+
 		this.createContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.TIMER'),
 				icon: 'clock-outline',
 				link: '#'
+				//hidden: this.hasEditPermission
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
 				icon: 'plus-circle-outline',
-				link: 'pages/income'
+				link: 'pages/income',
+				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
 				icon: 'minus-circle-outline',
-				link: 'pages/expenses'
+				link: 'pages/expenses',
+				hidden: !this.hasPermissionE || !this.hasPermissionEEdit
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.INVOICE'),
 				icon: 'archive-outline',
 				link: '#'
+				//hidden: this.hasEditPermission
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
 				icon: 'paper-plane-outline',
-				link: 'pages/proposals/register'
+				link: 'pages/proposals/register',
+				hidden: !this.hasPermissionP || !this.hasPermissionPEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),

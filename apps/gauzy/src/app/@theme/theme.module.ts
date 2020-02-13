@@ -48,6 +48,8 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 import { SelectorService } from '../@core/utils/selector.service';
+import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
+import { OrganizationsService } from '../@core/services/organizations.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -99,7 +101,12 @@ const PIPES = [
 	imports: [CommonModule, ...NB_MODULES],
 	exports: [CommonModule, ...PIPES, ...COMPONENTS],
 	declarations: [...COMPONENTS, ...PIPES],
-	providers: [UsersService, SelectorService]
+	providers: [
+		UsersService,
+		SelectorService,
+		UsersOrganizationsService,
+		OrganizationsService
+	]
 })
 export class ThemeModule {
 	static forRoot(): ModuleWithProviders {

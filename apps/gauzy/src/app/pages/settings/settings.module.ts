@@ -11,7 +11,8 @@ import {
 	NbIconModule,
 	NbDialogModule,
 	NbListModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -34,7 +35,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		SettingsRoutingModule,
 		ThemeModule,
 		NbCardModule,
-		// DangerZoneMutationModule,
 		UserFormsModule,
 		FormsModule,
 		NbButtonModule,
@@ -47,6 +47,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbListModule,
 		NbTabsetModule,
 		ReactiveFormsModule,
+		NbTooltipModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

@@ -16,6 +16,12 @@ import { UsersService } from '../../../@core/services/users.service';
 
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { Store } from '../../../@core/services/store.service';
+import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { first } from 'rxjs/operators';
+import { EmployeesService } from '../../../@core/services';
+import { PermissionsEnum } from '@gauzy/models';
+import { NO_EMPLOYEE_SELECTED } from '../../components/header/selectors/employee/employee.component';
 
 @Component({
 	selector: 'ngx-one-column-layout',
@@ -27,12 +33,17 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		@Inject(PLATFORM_ID) private platformId,
 		private windowModeBlockScrollService: WindowModeBlockScrollService,
 		private usersService: UsersService,
+		private usersOrganizationsService: UsersOrganizationsService,
+		private organizationsService: OrganizationsService,
+		private employeesService: EmployeesService,
 		private store: Store,
 		private directionService: NbLayoutDirectionService
 	) {}
 	@ViewChild(NbLayoutComponent, { static: false }) layout: NbLayoutComponent;
 
 	user: any;
+	showOrganizationsSelector = false;
+	showEmployeesSelector = false;
 
 	userMenu = [
 		{ title: 'Profile', link: '/pages/auth/profile' },
@@ -65,11 +76,43 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		this.user = items[0];
 		this.store.userRolePermissions = items[0].role.rolePermissions;
 
-		// We did not doing nothing with the result?
-		// Also if user still did not have organization?
-		// const { orgId } = await this.usersOrganizationsService.findOne({ userId: id }).pipe(first()).toPromise();
+		if (
+			this.store.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
+			)
+		) {
+			this.showOrganizationsSelector = true;
+		} else {
+			const {
+				items: userOrg
+			} = await this.usersOrganizationsService.getAll([], { userId: id });
+			const org = await this.organizationsService
+				.getById(userOrg[0].orgId)
+				.pipe(first())
+				.toPromise();
+			this.store.selectedOrganization = org;
+		}
 
-		// TODO: Fix me!
-		// this.store.selectedOrganizationId = orgId;
+		if (
+			this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+		) {
+			this.showEmployeesSelector = true;
+			this.store.selectedEmployee = null;
+		} else {
+			const { items: emp } = await this.employeesService
+				.getAll([], { user: this.user })
+				.pipe(first())
+				.toPromise();
+			if (emp && emp.length > 0) {
+				this.store.selectedEmployee = {
+					id: emp[0].id,
+					firstName: this.user.firstName,
+					lastName: this.user.lastName,
+					imageUrl: this.user.imageUrl
+				};
+			} else {
+				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
+			}
+		}
 	}
 }

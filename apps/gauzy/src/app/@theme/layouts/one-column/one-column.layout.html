@@ -1,6 +1,9 @@
 <nb-layout windowMode>
 	<nb-layout-header fixed>
-		<ngx-header></ngx-header>
+		<ngx-header
+			[showEmployeesSelector]="showEmployeesSelector"
+			[showOrganizationsSelector]="showOrganizationsSelector"
+		></ngx-header>
 	</nb-layout-header>
 
 	<nb-sidebar
