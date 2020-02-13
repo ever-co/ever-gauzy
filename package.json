@@ -136,6 +136,7 @@
 		"angular-tree-component": "^8.4.0",
 		"angular2-chartjs": "^0.5.1",
 		"angular2-toaster": "^7.0.0",
+		"archiver": "^3.1.1",
 		"bcrypt": "^3.0.7",
 		"bootstrap": "^4.3.1",
 		"chart.js": "^2.8.0",

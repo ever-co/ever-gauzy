@@ -207,6 +207,17 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Download all data',
+			icon: 'arrow-circle-down-outline',
+			link: '/pages/download',
+			data: {
+				translated: false,
+				//permissionKeys: false,
+				translationKey: 'MENU.DOWNLOAD_DATA'
+			}
+		},
+
+		{
 			title: 'Settings',
 			icon: 'settings-outline',
 			data: {
