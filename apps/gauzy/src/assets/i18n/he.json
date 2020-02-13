@@ -237,7 +237,8 @@
 		"SETTINGS": "הגדרות",
 		"GENERAL": "כללי",
 		"USERS": "Users",
-		"ROLES": "Roles & Permissions"
+		"ROLES": "Roles & Permissions",
+		"DOWNLOAD_DATA": "Download all data"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
