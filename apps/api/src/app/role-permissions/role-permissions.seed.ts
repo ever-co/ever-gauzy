@@ -23,7 +23,12 @@ const defaultRolePermissions = [
 			PermissionsEnum.ORG_USERS_VIEW,
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.ALL_ORG_EDIT
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.POLICY_EDIT,
+			PermissionsEnum.POLICY_VIEW,
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
+			PermissionsEnum.CHANGE_ROLES_PERMISSIONS
 		]
 	},
 	{
@@ -33,6 +38,14 @@ const defaultRolePermissions = [
 			PermissionsEnum.ORG_EXPENSES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,
 			PermissionsEnum.ORG_INCOMES_VIEW
+		]
+	},
+	{
+		role: RolesEnum.EMPLOYEE,
+		defaultEnabledPermissions: [
+			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ORG_PROPOSALS_VIEW,
+			PermissionsEnum.ORG_TIME_OFF_VIEW
 		]
 	}
 ];

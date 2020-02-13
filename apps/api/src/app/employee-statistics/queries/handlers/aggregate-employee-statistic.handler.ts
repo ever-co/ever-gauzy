@@ -4,6 +4,8 @@ import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statisti
 import { IncomeService } from '../../../income';
 import { ExpenseService } from '../../../expense';
 import { EmployeeService } from '../../../employee/employee.service';
+import { OrganizationService } from '../../../organization/organization.service';
+import { EmployeeStatisticsService } from './../../employee-statistics.service';
 
 /**
  * Finds income, expense, profit and bonus for all employees for the given month.
@@ -15,7 +17,9 @@ export class AggregateOrganizationQueryHandler
 	constructor(
 		private employeeService: EmployeeService,
 		private incomeService: IncomeService,
-		private expenseService: ExpenseService
+		private expenseService: ExpenseService,
+		private organizationService: OrganizationService,
+		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
 	public async execute(
@@ -30,41 +34,61 @@ export class AggregateOrganizationQueryHandler
 			bonus: 0
 		};
 
-		const incomes = (await this.incomeService.findAll(
-			{
+		const incomes = (
+			await this.incomeService.findAll(
+				{
+					where: {
+						organization: {
+							id: input.organizationId
+						}
+					}
+				},
+				input.filterDate ? input.filterDate.toString() : null
+			)
+		).items.reduce(this.aggregateAmountByEmployeeId, {});
+
+		const expenses = (
+			await this.expenseService.findAll(
+				{
+					where: {
+						organization: {
+							id: input.organizationId
+						}
+					}
+				},
+				input.filterDate ? input.filterDate.toString() : null
+			)
+		).items.reduce(this.aggregateAmountByEmployeeId, {});
+
+		const {
+			bonusType,
+			bonusPercentage
+		} = await this.organizationService.findOne({
+			id: input.organizationId
+		});
+
+		const employees = (
+			await this.employeeService.findAll({
 				where: {
 					organization: {
 						id: input.organizationId
 					}
-				}
-			},
-			input.filterDate ? input.filterDate.toString() : null
-		)).items.reduce(this.aggregateAmountByEmployeeId, {});
-
-		const expenses = (await this.expenseService.findAll(
-			{
-				where: {
-					organization: {
-						id: input.organizationId
-					}
-				}
-			},
-			input.filterDate ? input.filterDate.toString() : null
-		)).items.reduce(this.aggregateAmountByEmployeeId, {});
-
-		const employees = (await this.employeeService.findAll({
-			where: {
-				organization: {
-					id: input.organizationId
-				}
-			},
-			relations: ['user']
-		})).items
+				},
+				relations: ['user']
+			})
+		).items
 			.map((employee) => {
 				const income = Math.floor(incomes[employee.id]) || 0;
 				const expense = Math.floor(expenses[employee.id]) || 0;
 				const profit = Math.floor(income - expense);
-				const bonus = Math.floor((profit * 75) / 100);
+				const bonus = Math.floor(
+					this.employeeStatisticsService.calculateEmployeeBonus(
+						bonusType,
+						bonusPercentage,
+						income,
+						profit
+					)
+				);
 
 				total.income += income;
 				total.expense += expense;

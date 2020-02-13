@@ -1,16 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IncomeService } from '../../../@core/services/income.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { ExpensesService } from '../../../@core/services/expenses.service';
-import { AuthService } from '../../../@core/services/auth.service';
 import {
-	RolesEnum,
 	Income,
 	Expense,
 	EmployeeRecurringExpense,
-	OrganizationRecurringExpense
+	OrganizationRecurringExpense,
+	BonusTypeEnum,
+	Organization,
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import {
@@ -40,17 +41,17 @@ export interface ViewDashboardExpenseHistory {
 })
 export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	hasRole: boolean;
 	loading = true;
 
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
-
+	selectedOrganization: Organization;
 	totalIncome = 0;
 	totalExpense = 0;
 	difference = 0;
 	bonus = 0;
 	bonusPercentage = 0;
+	bonusType: string;
 
 	avarageBonus: number;
 
@@ -63,10 +64,11 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	expenseCurrency: string;
 	defaultCurrency: string;
 
+	incomePermissionsError = false;
+
 	constructor(
 		private incomeService: IncomeService,
 		private expenseService: ExpensesService,
-		private authService: AuthService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeStatisticsService: EmployeeStatisticsService,
@@ -75,11 +77,6 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	) {}
 
 	async ngOnInit() {
-		this.hasRole = await this.authService
-			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
-			.pipe(first())
-			.toPromise();
-
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((emp) => {
@@ -104,6 +101,16 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				if (this.selectedEmployee) {
 					this._loadEmployeeTotalIncome();
 					this._loadEmployeeTotalExpense();
+				}
+			});
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				this.selectedOrganization = organization;
+
+				if (this.selectedOrganization) {
+					this.bonusType = this.selectedOrganization.bonusType;
+					this.bonusPercentage = this.selectedOrganization.bonusPercentage;
 				}
 			});
 
@@ -138,21 +145,35 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployeeTotalIncome() {
-		const { items } = await this.incomeService.getAll(
-			['employee', 'organization'],
-			{
-				employee: {
-					id: this.selectedEmployee.id
-				}
-			},
-			this.selectedDate
-		);
+		try {
+			const { items } = this.store.hasPermission(
+				PermissionsEnum.ORG_INCOMES_VIEW
+			)
+				? await this.incomeService.getAll(
+						['employee', 'organization'],
+						{
+							employee: {
+								id: this.selectedEmployee.id
+							}
+						},
+						this.selectedDate
+				  )
+				: await this.incomeService.getMyAll(
+						['employee', 'organization'],
+						{},
+						this.selectedDate
+				  );
 
-		this.incomeData = items;
-		this.totalIncome = items.reduce((a, b) => a + +b.amount, 0);
+			this.incomeData = items;
+		} catch (error) {
+			this.incomeData = [];
+			this.incomePermissionsError = true;
+		}
 
-		if (items.length && this.totalIncome !== 0) {
-			const firstItem = items[0];
+		this.totalIncome = this.incomeData.reduce((a, b) => a + +b.amount, 0);
+
+		if (this.incomeData.length && this.totalIncome !== 0) {
+			const firstItem = this.incomeData[0];
 
 			this.incomeCurrency = firstItem.currency;
 			this.defaultCurrency = firstItem.organization.currency;
@@ -161,9 +182,14 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	private async _loadEmployeeTotalExpense() {
 		await this._loadExpense();
-		this.difference = this.totalIncome - Math.abs(this.totalExpense);
-		this.bonus = (this.difference * 75) / 100;
-		this.bonusPercentage = (this.bonus / this.difference) * 100;
+		const profit = this.totalIncome - Math.abs(this.totalExpense);
+		this.difference = profit;
+		this.bonus = this.calculateEmployeeBonus(
+			this.bonusType,
+			this.bonusPercentage,
+			this.totalIncome,
+			profit
+		);
 	}
 
 	private async _loadExpense() {
@@ -176,19 +202,25 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		);
 
 		const employeeRecurringexpense = this.selectedDate
-			? (await this.employeeRecurringExpenseService.getAll([], {
-					employeeId: this.selectedEmployee.id,
-					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth() + 1
-			  })).items
+			? (
+					await this.employeeRecurringExpenseService.getAll([], {
+						employeeId: this.selectedEmployee.id,
+						year: this.selectedDate.getFullYear(),
+						month: this.selectedDate.getMonth() + 1
+					})
+			  ).items
 			: [];
 
 		const orgRecurringexpense = this.selectedDate
-			? (await this.organizationRecurringExpenseService.getForEmployee({
-					orgId: this.store.selectedOrganization.id,
-					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth() + 1
-			  })).items
+			? (
+					await this.organizationRecurringExpenseService.getForEmployee(
+						{
+							orgId: this.store.selectedOrganization.id,
+							year: this.selectedDate.getFullYear(),
+							month: this.selectedDate.getMonth() + 1
+						}
+					)
+			  ).items
 			: [];
 
 		const totalExpense = items.reduce((a, b) => a + +b.amount, 0);
@@ -267,6 +299,22 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 		return viewDashboardExpenseHistory;
 	}
+
+	calculateEmployeeBonus = (
+		bonusType: string,
+		bonusPercentage: number,
+		income: number,
+		profit: number
+	) => {
+		switch (bonusType) {
+			case BonusTypeEnum.PROFIT_BASED_BONUS:
+				return (profit * bonusPercentage) / 100;
+			case BonusTypeEnum.REVENUE_BASED_BONUS:
+				return (income * bonusPercentage) / 100;
+			default:
+				return 0;
+		}
+	};
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

@@ -4,16 +4,17 @@
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ - Open-Source Profits Sharing Platform for modern agencies, studios and in-house teams. 
+Gauzy™ - Open-Source Profits Sharing Platform for freelancers, modern agencies, studios and in-house teams. 
 
 -   **Open-Source Software** solving **fair sharing of technology**.
 -   **Stock Options** solving **fair sharing of profits _in the future_**.
 -   **Gauzy** solving **fair sharing of profits _today_**.
 
-Gauzy supports following schemas for Employee Bonus calculations:
+Gauzy supports following schemas for Employee (company worker, contractor or freelancer) Bonus calculations:
 
--  **Profit-based**, when employees get bonuses based on profits of the company from work done by given employee. 
--  **Revenue-based**, when employees get bonuses based on revenue (gross income) from work done by given employee.
+-  **Profit-based**, when employees get bonuses based on company profits from work done by given employee or team.
+
+-  **Revenue-based**, when employees get bonuses based on company revenue (gross income) from work done by given employee or team.
 
 In order to allow bonuses calculations, Gauzy Platform includes multiple features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
 - Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
@@ -34,9 +35,11 @@ In order to allow bonuses calculations, Gauzy Platform includes multiple feature
 - Time Management/Tracking (WIP)
 - Multi-currency
 
-So, while the primary purpose of Gauzy Platform is to allow transparent and fair bonuses calculation, you can also use Gauzy software as a **Platform to run your outsourcing/freelance agency or studio business**. 
+So, while the primary purpose of Gauzy Platform is to allow transparent and fair bonuses calculation, you can also use Gauzy software as the **Platform to run your outsourcing/freelance agency or studio business**. 
 
-Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your agency, studio or in-house teams
+In addition, we encourage individual **Freelancers** to join our "Gauzy" revolution and use the platform to jump start your business!
+
+Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your freelance business, agency, studio or in-house teams.
 
 Feel free to test:
 
@@ -120,12 +123,14 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 #### Developers (alphabetical order)
 
 -   Aleksandar Tasev ([AlexTasev](https://github.com/AlexTasev))
+-   Aleksander Savov ([sunk0](https://github.com/sunk0))
 -   Alish Meklyov ([Alish](https://github.com/AlishMekliov931))
 -   Blagovest Gerov ([BlagovestGerov](https://github.com/BlagovestGerov))
 -   Boyan Stanchev ([boyanstanchev](https://github.com/boyanstanchev))
 -   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
+-   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
 #### Designers & QA
 
@@ -134,6 +139,7 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 ### Contributors
 
 -   Rachit Magon ([rmagon](https://github.com/rmagon))
+-   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
 -   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
 
 View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).

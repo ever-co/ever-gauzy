@@ -6,7 +6,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { AuthService } from '../../../@core/services/auth.service';
-import { RolesEnum, Employee } from '@gauzy/models';
+import { RolesEnum, Employee, PermissionsEnum } from '@gauzy/models';
 import { first, takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -60,6 +60,7 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 	selectedPolicyId: string;
 	showTable: boolean;
 	loading = false;
+	hasEditPermission = false;
 
 	@ViewChild('timeOffPolicyTable', { static: false }) timeOffPolicyTable;
 
@@ -67,6 +68,13 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.POLICY_EDIT
+				);
+			});
 		this.hasRole = await this.authService
 			.hasRole([RolesEnum.ADMIN, RolesEnum.DATA_ENTRY])
 			.pipe(first())
@@ -135,8 +143,8 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 				await this.tymeOffService.create(formData);
 
 				this.toastrService.primary(
-					'New Time off Policy created!',
-					'Success'
+					this.getTranslation('NOTES.POLICY.ADD_POLICY'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 			} catch (err) {
 				console.log(err);
@@ -169,7 +177,10 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 					this.selectedPolicyId,
 					formData
 				);
-				this.toastrService.primary('Time off policy edited', 'Success');
+				this.toastrService.primary(
+					this.getTranslation('NOTES.POLICY.EDIT_POLICY'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
 
 				this._loadTableData(this._selectedOrganizationId);
 			} catch (error) {
@@ -193,7 +204,10 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 							this.selectedPolicy.data.id
 						);
 
-						this.toastrService.primary('Policy deleted', 'Success');
+						this.toastrService.primary(
+							this.getTranslation('NOTES.POLICY.DELETE_POLICY'),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
 						this._loadTableData(this._selectedOrganizationId);
 						this.selectedPolicy = null;
 					} catch (error) {
@@ -246,9 +260,9 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	getTranslation(prefix: string) {
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
+		this.translateService.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 

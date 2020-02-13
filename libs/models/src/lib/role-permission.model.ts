@@ -32,5 +32,39 @@ export enum PermissionsEnum {
 	ORG_USERS_VIEW = 'ORG_USERS_VIEW',
 	ORG_USERS_EDIT = 'ORG_USERS_EDIT',
 	ALL_ORG_VIEW = 'ALL_ORG_VIEW',
-	ALL_ORG_EDIT = 'ALL_ORG_EDIT'
+	ALL_ORG_EDIT = 'ALL_ORG_EDIT',
+	POLICY_VIEW = 'POLICY_VIEW',
+	POLICY_EDIT = 'POLICY_EDIT',
+	CHANGE_SELECTED_EMPLOYEE = 'CHANGE_SELECTED_EMPLOYEE',
+	CHANGE_SELECTED_ORGANIZATION = 'CHANGE_SELECTED_ORGANIZATION',
+	CHANGE_ROLES_PERMISSIONS = 'CHANGE_ROLES_PERMISSIONS'
 }
+
+export const PermissionGroups = {
+	//Permissions which can be given to any role
+	GENERAL: [
+		PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+		PermissionsEnum.ORG_EXPENSES_VIEW,
+		PermissionsEnum.ORG_EXPENSES_EDIT,
+		PermissionsEnum.ORG_INCOMES_EDIT,
+		PermissionsEnum.ORG_INCOMES_VIEW,
+		PermissionsEnum.ORG_PROPOSALS_EDIT,
+		PermissionsEnum.ORG_PROPOSALS_VIEW,
+    PermissionsEnum.ORG_TIME_OFF_VIEW,
+    PermissionsEnum.POLICY_VIEW,
+    PermissionsEnum.POLICY_EDIT
+	],
+
+	//Readonly permissions, are only enabled for admin role
+	ADMINISTRATION: [
+		PermissionsEnum.ORG_EMPLOYEES_VIEW,
+		PermissionsEnum.ORG_EMPLOYEES_EDIT,
+		PermissionsEnum.ORG_USERS_VIEW,
+		PermissionsEnum.ORG_USERS_EDIT,
+		PermissionsEnum.ALL_ORG_VIEW,
+		PermissionsEnum.ALL_ORG_EDIT,
+		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
+		PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
+		PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+	]
+};

@@ -374,10 +374,16 @@
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
+			"POLICY_VIEW": "Просмотр политики отключения",
+			"POLICY_EDIT": "Редактировать политику отключения",
+			"CHANGE_SELECTED_EMPLOYEE": "Изменить выбранного сотрудника",
+			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
+			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
-			}
+			},
+			"ONLY_ADMIN": "Эти разрешения доступны только для чтения и включены только для администратора"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -542,7 +548,8 @@
 			"CANCEL": "Отменить",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
 			"PERMISSION_UPDATED": "Права доступа {{ permissionName }} изменены для {{ roleName }}",
-			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку"
+			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Требуется сотрудник!"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -554,6 +561,34 @@
 			"AGREE_TO": "Согласен с",
 			"TERMS_AND_CONDITIONS": "Условия использования",
 			"COMPLETE_REGISTRATION": "Завершить регистрацию"
+		}
+	},
+	"NOTES": {
+		"INCOME": {
+			"ADD_INCOME": "Доход добавлен для {{ name }}",
+			"EDIT_INCOME": "Доход отредактирован для {{ name }}",
+			"DELETE_INCOME": "Доход удален для {{ name }}",
+			"INCOME_ERROR": "{{ error }}"
+		},
+		"EXPENSES": {
+			"ADD_EXPENSE": "Добавлены расходы на {{ name }}",
+			"OPEN_EDIT_EXPENSE_DIALOG": "Расход отредактирован для {{ name }}",
+			"DELETE_EXPENSE": "Расход удален для {{ name }}",
+			"EXPENSES_ERROR": "{{ error }}"
+		},
+		"PROPOSALS": {
+			"EDIT_PROPOSAL": "Предложение успешно обновлено",
+			"REGISTER_PROPOSAL": "Новое предложение зарегистрировано",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
+			"REGISTER_PROPOSAL_ERROR": "{{ error }}"
+		},
+		"POLICY": {
+			"ADD_POLICY": "Новое время отключения политики создана!",
+			"EDIT_POLICY": "Политика отключения изменена",
+			"DELETE_POLICY": "Политика удалена"
+		},
+		"USER": {
+			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
 		}
 	}
 }

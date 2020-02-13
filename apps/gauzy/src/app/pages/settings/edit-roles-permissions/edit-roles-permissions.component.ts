@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	Organization,
-	PermissionsEnum,
 	RolePermissions,
-	RolesEnum
+	RolesEnum,
+	PermissionGroups
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,26 +29,7 @@ export class EditRolesPermissionsComponent implements OnInit, OnDestroy {
 
 	loading = true;
 
-	permissionGroups = {
-		GENERAL: [
-			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
-			PermissionsEnum.ORG_EXPENSES_VIEW,
-			PermissionsEnum.ORG_EXPENSES_EDIT,
-			PermissionsEnum.ORG_INCOMES_EDIT,
-			PermissionsEnum.ORG_INCOMES_VIEW,
-			PermissionsEnum.ORG_PROPOSALS_EDIT,
-			PermissionsEnum.ORG_PROPOSALS_VIEW,
-			PermissionsEnum.ORG_TIME_OFF_VIEW
-		],
-		ADMINISTRATION: [
-			PermissionsEnum.ORG_EMPLOYEES_VIEW,
-			PermissionsEnum.ORG_EMPLOYEES_EDIT,
-			PermissionsEnum.ORG_USERS_VIEW,
-			PermissionsEnum.ORG_USERS_EDIT,
-			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.ALL_ORG_EDIT
-		]
-	};
+	permissionGroups = PermissionGroups;
 
 	enabledPermissions = {};
 	allPermissions: RolePermissions[] = [];

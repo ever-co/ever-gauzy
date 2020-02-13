@@ -12,6 +12,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	selectedEmployee: SelectedEmployee;
+	loading = true;
 
 	constructor(private store: Store) {}
 
@@ -20,6 +21,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((emp) => {
 				if (emp) {
+					this.loading = false;
 					this.selectedEmployee = emp;
 				}
 			});

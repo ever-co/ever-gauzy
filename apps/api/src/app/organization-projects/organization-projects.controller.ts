@@ -1,4 +1,4 @@
-import { EditEntityByMemberInput } from '@gauzy/models';
+import { EditEntityByMemberInput, PermissionsEnum } from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -7,7 +7,9 @@ import {
 	HttpStatus,
 	Param,
 	Put,
-	Query
+	Query,
+	UseGuards,
+	Request
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -16,8 +18,12 @@ import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationProjectEditByEmployeeCommand } from './commands/organization-project.edit-by-employee.command';
 import { OrganizationProjects } from './organization-projects.entity';
 import { OrganizationProjectsService } from './organization-projects.service';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators/permissions';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Projects')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationProjectsController extends CrudController<
 	OrganizationProjects
@@ -62,10 +68,10 @@ export class OrganizationProjectsController extends CrudController<
 	})
 	@Get()
 	async findAllEmployees(
-		@Query('data') data: string
+		@Query('data') data: string,
+		@Request() req
 	): Promise<IPagination<OrganizationProjects>> {
 		const { relations, findInput } = JSON.parse(data);
-
 		return this.organizationProjectsService.findAll({
 			where: findInput,
 			relations
@@ -87,6 +93,8 @@ export class OrganizationProjectsController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
 	async updateEmployee(
 		@Body() entity: EditEntityByMemberInput

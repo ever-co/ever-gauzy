@@ -361,10 +361,10 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
-			"ORG_EXPENSES_VIEW": "View Expenses Page",
+			"ORG_EXPENSES_VIEW": "View All Expenses",
 			"ORG_EXPENSES_EDIT": "Create/Edit/Delete Expenses",
 			"ORG_INCOMES_EDIT": "Create/Edit/Delete Incomes",
-			"ORG_INCOMES_VIEW": "View Incomes Page",
+			"ORG_INCOMES_VIEW": "View All Incomes",
 			"ORG_PROPOSALS_EDIT": "Create/Edit/Delete Proposals",
 			"ORG_PROPOSALS_VIEW": "View Proposals Page",
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
@@ -374,10 +374,17 @@
 			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
+			"POLICY_VIEW": "View Time Off Policy",
+			"POLICY_EDIT": "Edit Time Off Policy",
+			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
+			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
+			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"GROUPS": {
 				"GENERAL": "General",
 				"ADMINISTRATION": "Administration"
-			}
+			},
+			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
+			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -542,7 +549,8 @@
 			"CANCEL": "Cancel",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
 			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
-			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again"
+			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -554,6 +562,34 @@
 			"AGREE_TO": "Agree to",
 			"TERMS_AND_CONDITIONS": "Terms & Conditions",
 			"COMPLETE_REGISTRATION": "Complete Registration"
+		}
+	},
+	"NOTES": {
+		"INCOME": {
+			"ADD_INCOME": "Income added for {{ name }}",
+			"EDIT_INCOME": "Income edited for {{ name }}",
+			"DELETE_INCOME": "Income deleted for {{ name }}",
+			"INCOME_ERROR": "{{ error }}"
+		},
+		"EXPENSES": {
+			"ADD_EXPENSE": "Expense added for {{ name }}",
+			"OPEN_EDIT_EXPENSE_DIALOG": "Expense edited for {{ name }}",
+			"DELETE_EXPENSE": "Expense deleted for {{ name }}",
+			"EXPENSES_ERROR": "{{ error }}"
+		},
+		"PROPOSALS": {
+			"EDIT_PROPOSAL": "Proposal successfuly updated",
+			"REGISTER_PROPOSAL": "New proposal registered",
+			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Please select an employee from the dropdown menu.",
+			"REGISTER_PROPOSAL_ERROR": "{{ error }}"
+		},
+		"POLICY": {
+			"ADD_POLICY": "New Time off Policy created!",
+			"EDIT_POLICY": "Time off policy edited",
+			"DELETE_POLICY": "Policy deleted"
+		},
+		"USER": {
+			"EDIT_PROFILE": "Your profile has been updated successfully."
 		}
 	}
 }

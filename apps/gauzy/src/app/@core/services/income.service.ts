@@ -19,6 +19,21 @@ export class IncomeService {
 			.toPromise();
 	}
 
+	getMyAll(
+		relations?: string[],
+		findInput?: IIncomeFindInput,
+		filterDate?: Date
+	): Promise<{ items: Income[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput, filterDate });
+
+		return this.http
+			.get<{ items: Income[]; total: number }>(`/api/income/me`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAll(
 		relations?: string[],
 		findInput?: IIncomeFindInput,

@@ -29,6 +29,7 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	selectOrganiztion(organization: Organization) {
 		if (organization) {
 			this.store.selectedOrganization = organization;
+			this.store.selectedEmployee = null;
 		}
 	}
 

@@ -13,10 +13,12 @@ export class Store {
 	private _selectedOrganization: Organization;
 	private _selectedProposal: ProposalViewModel;
 	private _userRolePermissions: RolePermissions[];
+	Permissions: boolean;
 
 	selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(
 		this.selectedOrganization
 	);
+
 	private _selectedEmployee: SelectedEmployee;
 	selectedEmployee$: BehaviorSubject<SelectedEmployee> = new BehaviorSubject(
 		this.selectedEmployee
@@ -55,7 +57,6 @@ export class Store {
 
 	set selectedOrganization(organization: Organization) {
 		this.selectedOrganization$.next(organization);
-		this.selectedEmployee = null;
 		this._selectedOrganization = organization;
 	}
 

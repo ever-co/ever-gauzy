@@ -1,6 +1,7 @@
 import {
 	EditEntityByMemberInput,
-	OrganizationDepartmentCreateInput
+	OrganizationDepartmentCreateInput,
+	PermissionsEnum
 } from '@gauzy/models';
 import {
 	Body,
@@ -10,7 +11,8 @@ import {
 	HttpStatus,
 	Param,
 	Put,
-	Query
+	Query,
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -20,6 +22,8 @@ import { OrganizationDepartmentEditByEmployeeCommand } from './commands/organiza
 import { OrganizationDepartmentUpdateCommand } from './commands/organization-department.update.command';
 import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('Organization-Department')
 @Controller()
@@ -91,6 +95,8 @@ export class OrganizationDepartmentController extends CrudController<
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
 	async updateEmployee(
 		@Body() entity: EditEntityByMemberInput
