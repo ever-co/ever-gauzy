@@ -7,8 +7,7 @@ import {
 	Query,
 	Put,
 	Param,
-	HttpCode,
-	UseGuards
+	HttpCode
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -22,9 +21,6 @@ import {
 } from '@gauzy/models';
 import { IPagination } from '../core';
 import { TimeOffPolicyService } from './time-off-policy.service';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { PermissionsEnum } from '@gauzy/models';
-import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('Policy')
 @Controller()
