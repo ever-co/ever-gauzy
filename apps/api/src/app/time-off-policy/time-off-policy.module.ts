@@ -4,11 +4,12 @@ import { TimeOffPolicyService } from './time-off-policy.service';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { Employee } from '../employee';
 import { TimeOffPolicyControler } from './time-off-policy.controller';
+import { User, UserService } from '../user';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([TimeOffPolicy, Employee])],
+	imports: [TypeOrmModule.forFeature([User, TimeOffPolicy, Employee])],
 	controllers: [TimeOffPolicyControler],
-	providers: [TimeOffPolicyService],
-	exports: [TypeOrmModule]
+	providers: [TimeOffPolicyService, UserService],
+	exports: [TypeOrmModule, UserService]
 })
 export class TimeOffPolicyModule {}

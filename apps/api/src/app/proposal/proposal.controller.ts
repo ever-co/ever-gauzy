@@ -1,4 +1,12 @@
-import { Controller, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Post,
+	Body,
+	Get,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
@@ -8,6 +16,9 @@ import {
 	Proposal as IProposal
 } from '@gauzy/models';
 import { IPagination } from '../core';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { PermissionsEnum } from '@gauzy/models';
+import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('Proposal')
 @Controller()
@@ -27,6 +38,8 @@ export class ProposalController extends CrudController<Proposal> {
 		description: 'Record not found'
 	})
 	@Get()
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	async findAllProposals(
 		@Query('data') data: string
 	): Promise<IPagination<IProposal>> {
@@ -49,6 +62,8 @@ export class ProposalController extends CrudController<Proposal> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/create')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 	async createOrganizationTeam(
 		@Body() entity: IProposalCreateInput,
 		...options: any[]
