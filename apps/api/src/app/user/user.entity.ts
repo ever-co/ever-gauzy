@@ -28,15 +28,15 @@ import { Tenant } from '../tenant';
 
 @Entity('user')
 export class User extends Base implements IUser {
-	// @ApiProperty({ type: Tenant })
-	// @ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	// @JoinColumn()
-	// tenant: Tenant;
+	@ApiProperty({ type: Tenant })
+	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	tenant: Tenant;
 
-	// @ApiProperty({ type: String, readOnly: true })
-	// @RelationId((user: User) => user.tenant )
-
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((user: User) => user.tenant)
 	readonly tenantId?: string;
+
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index()

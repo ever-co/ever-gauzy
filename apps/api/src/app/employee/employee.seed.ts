@@ -42,20 +42,21 @@ const createDefaultEmployees = async (
 	const employees: Employee[] = [];
 	const defaultUsers = defaultData.users;
 	const defaultOrg = defaultData.org;
-
 	const defaultTenants = defaultData.tenant;
 
+	console.dir(defaultTenants);
+	let counter = 0;
 	for (const user of defaultUsers) {
 		employee = new Employee();
 		employee.organization = defaultOrg;
 		employee.user = user;
-		employee.tenant = defaultTenants[1];
-
+		employee.tenant = defaultTenants[counter];
 		await insertEmployee(connection, employee);
-
 		employees.push(employee);
+		counter++;
 	}
 
+	console.dir(employees);
 	return employees;
 };
 

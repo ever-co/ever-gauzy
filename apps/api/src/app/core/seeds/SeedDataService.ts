@@ -1,3 +1,4 @@
+import { Tenant } from './../../tenant/tenant.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
@@ -30,7 +31,6 @@ import { OrganizationTeams } from '../../organization-teams';
 import { Country } from '../../country';
 import { createTeams } from '../../organization-teams/organization-teams.seed';
 import { RolePermissions, createRolePermissions } from '../../role-permissions';
-import { Tenant } from '../../tenant';
 import { createTenants } from '../../tenant/tenant.seed';
 
 const allEntities = [
@@ -108,18 +108,18 @@ export class SeedDataService {
 					} DATABASE...`
 				)
 			);
+			const tenants = await createTenants(this.connection);
 
 			const roles: Role[] = await createRoles(this.connection);
 			const { adminUsers, defaultUsers, randomUsers } = await createUsers(
 				this.connection,
-				roles
+				roles,
+				tenants
 			);
 			const {
 				defaultOrganization,
 				randomOrganizations
-			} = await createOrganizations(this.connection);
-
-			const tenants = await createTenants(this.connection);
+			} = await createOrganizations(this.connection, tenants);
 
 			const employees = await createEmployees(
 				this.connection,
