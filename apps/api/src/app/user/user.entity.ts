@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { User as IUser, Employee } from '@gauzy/models';
+import { User as IUser } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
@@ -19,12 +19,11 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	RelationId,
-	OneToOne
+	RelationId
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role';
-import { Tenant } from '../tenant';
+import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('user')
 export class User extends Base implements IUser {
