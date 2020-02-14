@@ -26,7 +26,6 @@ export interface Expense extends IBaseEntityModel {
 	taxLabel?: string;
 	rateValue?: number;
 	receipt?: string;
-	tenant: Tenant;
 }
 
 export interface ExpenseCreateInput {

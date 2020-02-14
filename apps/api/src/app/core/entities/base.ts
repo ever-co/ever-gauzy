@@ -5,9 +5,7 @@
 import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
-	CreateDateColumn,
-	Column,
-	Generated
+	CreateDateColumn
 } from 'typeorm';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/models';
