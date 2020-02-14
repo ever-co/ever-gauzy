@@ -8,6 +8,7 @@ import { NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 
@@ -31,7 +32,8 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		private readonly employeesService: EmployeesService
+		private readonly employeesService: EmployeesService,
+		private translateService: TranslateService
 	) {}
 
 	ngOnInit() {
@@ -67,8 +69,13 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 	async removeDepartment(id: string, name: string) {
 		await this.organizationDepartmentsService.delete(id);
 		this.toastrService.primary(
-			name + ' Department successfully removed!',
-			'Success'
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.REMOVE_DEPARTMENT',
+				{
+					name: name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 		this.loadDepartments();
 	}
@@ -92,14 +99,23 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 			this.cancel();
 
 			this.toastrService.primary(
-				input.name + ' Department successfully added!',
-				'Success'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.ADD_DEPARTMENT',
+					{
+						name: input.name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 			this.loadDepartments();
 		} else {
 			this.toastrService.danger(
-				'Please add a Department name',
-				'Department name is required'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_DEPARTMENTS.INVALID_DEPARTMENT_NAME'
+				),
+				this.getTranslation(
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME'
+				)
 			);
 		}
 	}
@@ -118,5 +134,14 @@ export class EditOrganizationDepartmentsComponent implements OnInit {
 		if (res) {
 			this.departments = res.items;
 		}
+	}
+
+	getTranslation(prefix: string, params?: Object) {
+		let result = '';
+		this.translateService.get(prefix, params).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
 	}
 }

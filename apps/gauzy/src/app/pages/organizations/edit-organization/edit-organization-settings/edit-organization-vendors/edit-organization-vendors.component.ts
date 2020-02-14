@@ -3,6 +3,7 @@ import { OrganizationVendors } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -22,7 +23,8 @@ export class EditOrganizationVendorsComponent implements OnInit {
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore
+		private readonly organizationEditStore: OrganizationEditStore,
+		private translateService: TranslateService
 	) {}
 
 	ngOnInit(): void {
@@ -40,8 +42,13 @@ export class EditOrganizationVendorsComponent implements OnInit {
 		await this.organizationVendorsService.delete(id);
 
 		this.toastrService.primary(
-			`Vendor ${name} successfully removed!`,
-			'Success'
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
+				{
+					name: name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 
 		this.loadVendors();
@@ -55,8 +62,13 @@ export class EditOrganizationVendorsComponent implements OnInit {
 			});
 
 			this.toastrService.primary(
-				`New vendor ${name} successfully added!`,
-				'Success'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
 			this.showAddCard = !this.showAddCard;
@@ -64,8 +76,12 @@ export class EditOrganizationVendorsComponent implements OnInit {
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				'Please add a Vendor name',
-				'Vendor name is required'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.INVALID_VENDOR_NAME'
+				),
+				this.getTranslation(
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_INVALID_NAME'
+				)
 			);
 		}
 	}
@@ -81,5 +97,14 @@ export class EditOrganizationVendorsComponent implements OnInit {
 		if (res) {
 			this.vendors = res.items;
 		}
+	}
+
+	getTranslation(prefix: string, params?: Object) {
+		let result = '';
+		this.translateService.get(prefix, params).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
 	}
 }

@@ -181,6 +181,8 @@
 			"INCLUDE_DELETED": "Включать удаленные"
 		},
 		"DELETE_CONFIRMATION": {
+			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
+			"DELETE_ACCOUNT": "Вы уверены, что хотите удалить свою учетную запись?",
 			"SURE": "Вы уверены, что хотите удалить",
 			"RECORD": "запись",
 			"EMPLOYEE": "служащий",
@@ -237,7 +239,9 @@
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
 		"USERS": "Пользователи",
-		"ROLES": "Роли и Разрешения"
+		"ROLES": "Роли и Разрешения",
+		"DANGER_ZONE": "Опасная зона",
+		"DOWNLOAD_DATA": "Скачать все данные"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -277,7 +281,9 @@
 			"PROFIT_CALC": "Прибыль (доход без дохода) = Общий доход - Общие расходы",
 			"NOTE": "Примечание: отрицательные бонусы должны вычитаться в предстоящие месяцы из положительных бонусов до финальных бонусных платежей",
 			"BONUS": "Бонус"
-		}
+		},
+		"ADD_INCOME": "Добавить запись о поступлении",
+		"ADD_EXPENSE": "Добавить запись расхода"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Доход",
@@ -361,10 +367,10 @@
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",
-			"ORG_EXPENSES_VIEW": "Страница расходов",
+			"ORG_EXPENSES_VIEW": "Посмотреть все расходы",
 			"ORG_EXPENSES_EDIT": "Создание/Редактирование/Удаление расходов",
 			"ORG_INCOMES_EDIT": "Создание/Изменить/Удалить доходы",
-			"ORG_INCOMES_VIEW": "Просмотр страницы доходов",
+			"ORG_INCOMES_VIEW": "Посмотреть все доходы",
 			"ORG_PROPOSALS_EDIT": "Создание/Изменить/Удалить предложения",
 			"ORG_PROPOSALS_VIEW": "Показать страницу предложений",
 			"ORG_TIME_OFF_VIEW": "Показать время на странице",
@@ -383,7 +389,8 @@
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
 			},
-			"ONLY_ADMIN": "Эти разрешения доступны только для чтения и включены только для администратора"
+			"ONLY_ADMIN": "Эти разрешения доступны только для чтения и включены только для администратора",
+			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:"
 		}
 	},
 	"PROPOSALS_PAGE": {
@@ -549,7 +556,13 @@
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
 			"PERMISSION_UPDATED": "Права доступа {{ permissionName }} изменены для {{ roleName }}",
 			"PERMISSION_UPDATE_ERROR": "Произошла ошибка при обновлении разрешений, пожалуйста, обновите и повторите попытку",
-			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Требуется сотрудник!"
+			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Требуется сотрудник!",
+			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
+			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
+			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
+			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
+			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
+			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -580,15 +593,62 @@
 			"EDIT_PROPOSAL": "Предложение успешно обновлено",
 			"REGISTER_PROPOSAL": "Новое предложение зарегистрировано",
 			"REGISTER_PROPOSAL_NO_EMPLOEE_SELECTED": "Пожалуйста, выберите сотрудника из выпадающего меню.",
-			"REGISTER_PROPOSAL_ERROR": "{{ error }}"
+			"REGISTER_PROPOSAL_ERROR": "{{ error }}",
+			"DELETE_PROPOSAL": "Предложение успешно удалено",
+			"PROPOSAL_ACCEPTED": "Статус предложения обновлен для принятия",
+			"PROPOSAL_SENT": "Статус предложения обновлен для отправки"
 		},
 		"POLICY": {
 			"ADD_POLICY": "Новое время отключения политики создана!",
 			"EDIT_POLICY": "Политика отключения изменена",
-			"DELETE_POLICY": "Политика удалена"
+			"DELETE_POLICY": "Политика удалена",
+			"ERROR": "{{ error }}"
 		},
 		"USER": {
 			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
+		},
+		"ORGANIZATIONS": {
+			"ADD_NEW_ORGANIZATION": "Организация {{ name }} создана.",
+			"DELETE_ORGANIZATION": "Организация {{ name }} удалена.",
+			"ADD_NEW_USER_TO_ORGANIZATION": "{{ username }} добавлен в {{ orgname }}",
+			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} установлен как неактивный.",
+			"DATA_ERROR": "{{ error }}",
+			"EDIT_ORGANIZATIONS_PROJECTS": {
+				"ADD_PROJECT": "Проект {{ name }} успешно добавлен!",
+				"REMOVE_PROJECT": "Проект {{ name }} успешно удален!",
+				"INVALID_PROJECT_NAME": "Пожалуйста, введите название вашего проекта"
+			},
+			"EDIT_ORGANIZATIONS_TEAM": {
+				"ADD_NEW_TEAM": "Новая команда {{ name }} успешно добавлена!",
+				"EDIT_EXISTING_TEAM": "Команда {{ name }} успешно обновлена!",
+				"INVALID_TEAM_NAME": "Пожалуйста, добавьте название команды и хотя бы одного участника",
+				"REMOVE_TEAM": "Команда {{ name }} успешно удалена!"
+			},
+			"EDIT_ORGANIZATIONS_VENDOR": {
+				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
+				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
+				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
+			},
+			"EDIT_ORGANIZATIONS_POSITIONS": {
+				"ADD_POSITION": "Новая позиция {{ name }} успешно добавлена!",
+				"REMOVE_POSITION": "Должность {{ name }} успешно удалена!",
+				"INVALID_POSITION_NAME": "Пожалуйста, добавьте название позиции"
+			},
+			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
+				"ADD_DEPARTMENT": "{{ name }} Департамент успешно добавлен!",
+				"REMOVE_DEPARTMENT": "Департамент {{ name }} успешно удален!",
+				"INVALID_DEPARTMENT_NAME": "Пожалуйста, добавьте название департамента"
+			},
+			"EDIT_ORGANIZATIONS_CLIENTS": {
+				"ADD_CLIENT": "Новый клиент {{ name }} успешно добавлен!",
+				"REMOVE_CLIENT": "Клиент {{ name }} успешно удален!",
+				"INVALID_CLIENT_DATA": "Пожалуйста, проверьте имя, основной адрес электронной почты и основной телефон вашего клиента"
+			}
+		},
+		"DANGER_ZONE": {
+			"DELETE_ACCOUNT_WRONG_DATA": "Неправильный ввод! Повторите попытку.",
+			"ACCOUNT_DELETED": "Ваш аккаунт был успешно удален!",
+			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
 		}
 	}
 }
