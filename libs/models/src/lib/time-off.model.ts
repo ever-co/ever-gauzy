@@ -1,6 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee } from './employee.model';
-import { Tenant } from './tenant.model';
 
 export interface TimeOffPolicy extends IBaseEntityModel {
 	employees?: Employee[];
@@ -9,7 +8,6 @@ export interface TimeOffPolicy extends IBaseEntityModel {
 	name?: string;
 	requiresApproval?: boolean;
 	paid?: boolean;
-	tenant: Tenant;
 }
 
 export interface TimeOffPolicyCreateInput extends IBaseEntityModel {
