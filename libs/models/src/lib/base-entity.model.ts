@@ -1,6 +1,7 @@
 export interface BaseEntityModel {
-    id?: string;
-    
-    readonly createdAt?: Date;
-    readonly updatedAt?: Date;
+	id?: string;
+	tenantId?: string;
+
+	readonly createdAt?: Date;
+	readonly updatedAt?: Date;
 }

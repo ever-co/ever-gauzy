@@ -29,6 +29,7 @@ import { Invite } from '../invite';
 import { EmailTemplate } from '../email-templates';
 import { TimeOffPolicy } from '../time-off-policy';
 import { RolePermissions } from '../role-permissions';
+import { Tenant } from './../tenant/tenant.entity';
 
 const entities = [
 	Invite,
@@ -52,7 +53,8 @@ const entities = [
 	Country,
 	EmailTemplate,
 	TimeOffPolicy,
-	RolePermissions
+	RolePermissions,
+	Tenant
 ];
 
 @Module({

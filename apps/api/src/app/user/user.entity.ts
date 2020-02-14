@@ -23,9 +23,19 @@ import {
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role';
+import { Tenant } from '../tenant/tenant.entity';
 
 @Entity('user')
 export class User extends Base implements IUser {
+	@ApiProperty({ type: Tenant })
+	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	tenant: Tenant;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((user: User) => user.tenant)
+	readonly tenantId?: string;
+
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@Index()
@@ -84,4 +94,9 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
+
+	// @ApiProperty({ type: Tenant })
+	// @OneToOne((type) => Tenant, { nullable: false, onDelete: 'CASCADE' })
+	// @JoinColumn()
+	// tenant: Tenant;
 }

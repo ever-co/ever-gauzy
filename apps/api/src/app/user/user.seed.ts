@@ -10,10 +10,12 @@ import { DefaultUser, RolesEnum } from '@gauzy/models';
 import { Role } from '../role';
 import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
+import { Tenant } from '../tenant';
 
 export const seedAdminUsers = async (
 	connection: Connection,
-	roles: Role[]
+	roles: Role[],
+	tenant: Tenant[]
 ): Promise<User[]> => {
 	const admins: User[] = [];
 	let adminUser: User;
@@ -23,7 +25,7 @@ export const seedAdminUsers = async (
 
 	// Generate default admins
 	for (const admin of defaultAdmins) {
-		adminUser = await generateDefaultUser(admin, adminRole);
+		adminUser = await generateDefaultUser(admin, adminRole, tenant[0]);
 		await insertUser(connection, adminUser);
 		admins.push(adminUser);
 	}
@@ -33,7 +35,8 @@ export const seedAdminUsers = async (
 
 export const createUsers = async (
 	connection: Connection,
-	roles: Role[]
+	roles: Role[],
+	tenant: Tenant[]
 ): Promise<{
 	adminUsers: User[];
 	defaultUsers: User[];
@@ -43,7 +46,7 @@ export const createUsers = async (
 	const randomUsers: User[] = [];
 	let user: User;
 
-	const adminUsers: User[] = await seedAdminUsers(connection, roles);
+	const adminUsers: User[] = await seedAdminUsers(connection, roles, tenant);
 	// users = [...adminUsers];
 
 	const employeeRole = roles.filter(
@@ -51,11 +54,17 @@ export const createUsers = async (
 	)[0];
 	const defaultEmployees = env.defaultEmployees || [];
 
+	let counter = 0;
 	// Generate default users
 	for (const employee of defaultEmployees) {
-		user = await generateDefaultUser(employee, employeeRole);
+		user = await generateDefaultUser(
+			employee,
+			employeeRole,
+			tenant[counter]
+		);
 		await insertUser(connection, user);
 		defaultUsers.push(user);
+		counter++;
 	}
 
 	// Generate 50 random users
@@ -70,7 +79,8 @@ export const createUsers = async (
 
 const generateDefaultUser = async (
 	defaultUser: DefaultUser,
-	role: Role
+	role: Role,
+	tenant: Tenant
 ): Promise<User> => {
 	const user = new User();
 	const { firstName, lastName, email, imageUrl } = defaultUser;
@@ -79,9 +89,9 @@ const generateDefaultUser = async (
 	user.firstName = firstName;
 	user.lastName = lastName;
 	user.role = role;
-
 	user.imageUrl = getUserDummyImage(user);
 	user.imageUrl = imageUrl;
+	user.tenant = tenant;
 
 	user.hash = await bcrypt.hash(
 		defaultUser.password,
