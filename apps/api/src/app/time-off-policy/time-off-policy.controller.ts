@@ -40,8 +40,8 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 		description: 'Record not found'
 	})
 	@Get()
-	//@UseGuards(PermissionGuard)
-	//@Permissions(PermissionsEnum.POLICY_VIEW)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.POLICY_VIEW)
 	async findAllTimeOffPolicies(
 		@Query('data') data: string
 	): Promise<IPagination<ITimeOffPolicy>> {
@@ -64,8 +64,8 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/create')
-	//@UseGuards(PermissionGuard)
-	//@Permissions(PermissionsEnum.POLICY_EDIT)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.POLICY_EDIT)
 	async createTimeOffPolicy(
 		@Body() entity: ITimeOffPolicyCreateInput,
 		...options: any[]
@@ -89,8 +89,8 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	//@UseGuards(PermissionGuard)
-	//@Permissions(PermissionsEnum.POLICY_VIEW)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.POLICY_EDIT)
 	async updateOrganizationTeam(
 		@Param('id') id: string,
 		@Body() entity: ITimeOffPolicyUpdateInput,
