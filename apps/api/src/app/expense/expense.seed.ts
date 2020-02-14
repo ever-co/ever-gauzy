@@ -27,9 +27,9 @@ export const createExpenses = async (
 		.on('end', () => {
 			defaultExpenses.map(async (seedExpense) => {
 				const expense = new Expense();
-				const foundEmployee = defaultData.employees.find(
-					(emp) => emp.user.email === seedExpense.email
-				);
+				// const foundEmployee = defaultData.employees.find(
+				// 	(emp) => emp.user.email === seedExpense.email
+				// );
 
 				// expense.employee = foundEmployee;
 				expense.organization = defaultData.org;

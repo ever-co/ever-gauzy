@@ -8,6 +8,8 @@ import { User } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
+// tslint:disable-next-line: nx-enforce-module-boundaries
+import { Tenant } from 'libs/models/src/lib/tenant.model';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -140,8 +142,9 @@ export class AuthStrategy extends NbAuthStrategy {
 		password: string;
 		confirmPassword: string;
 		terms: boolean;
+		tenant: Tenant;
 	}): Observable<NbAuthResult> {
-		const { email, fullName, password, confirmPassword } = args;
+		const { email, fullName, password, confirmPassword, tenant } = args;
 
 		if (password !== confirmPassword) {
 			return Observable.of(
@@ -165,7 +168,8 @@ export class AuthStrategy extends NbAuthStrategy {
 							.slice(-1)
 							.join(' ')
 					: null,
-				email
+				email,
+				tenant
 			},
 			password
 		};
