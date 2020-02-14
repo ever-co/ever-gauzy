@@ -27,9 +27,9 @@ export const createIncomes = async (
 		.on('end', () => {
 			defaultIncomes.map(async (seedIncome) => {
 				const income = new Income();
-				const foundEmployee = defaultData.employees.find(
-					(emp) => emp.user.email === seedIncome.email
-				);
+				// const foundEmployee = defaultData.employees.find(
+				// 	(emp) => emp.user.email === seedIncome.email
+				// );
 
 				// income.employee = foundEmployee;
 				income.clientName = seedIncome.clientName;

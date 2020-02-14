@@ -1,4 +1,3 @@
-import { Tenant } from './../../../../apps/api/src/app/tenant/tenant.entity';
 import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';

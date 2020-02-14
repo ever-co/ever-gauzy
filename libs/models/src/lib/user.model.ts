@@ -17,7 +17,6 @@ export interface User extends IBaseEntityModel {
 	hash?: string;
 	imageUrl?: string;
 	startedWorkOn?: string;
-	tenant: Tenant;
 }
 
 export interface UserFindInput extends IBaseEntityModel {

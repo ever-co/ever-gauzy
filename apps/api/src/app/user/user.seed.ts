@@ -84,7 +84,7 @@ const generateDefaultUser = async (
 ): Promise<User> => {
 	const user = new User();
 	const { firstName, lastName, email, imageUrl } = defaultUser;
-	let counter = 0;
+
 	user.email = email;
 	user.firstName = firstName;
 	user.lastName = lastName;
@@ -97,7 +97,7 @@ const generateDefaultUser = async (
 		defaultUser.password,
 		env.USER_PASSWORD_BCRYPT_SALT_ROUNDS
 	);
-	counter++;
+
 	return user;
 };
 
