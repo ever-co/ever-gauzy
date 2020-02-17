@@ -47,7 +47,7 @@ export class EmailService extends CrudService<IEmail> {
 				});
 
 				if (!emailTemplate || emailTemplate.length < 1) {
-					resolve('');
+					return resolve('');
 				}
 
 				const template = Handlebars.compile(emailTemplate[0].template);
