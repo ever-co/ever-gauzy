@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as Email from 'email-templates';
-import * as nodemailer from 'nodemailer';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core';
-import { User } from '../user';
 import { EmailTemplate as IEmailTemplate } from './email-template.entity';
 
 @Injectable()
