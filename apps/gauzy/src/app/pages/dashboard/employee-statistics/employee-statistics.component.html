@@ -10,6 +10,12 @@
 				'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_INCOMES_VIEW' | translate
 			}}</span>
 		</nb-alert>
+		<nb-alert outline="danger" *ngIf="expensePermissionError">
+			{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.INSUFFICIENT' | translate }}
+			<span *ngIf="expensePermissionError">{{
+				'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_EXPENSES_VIEW' | translate
+			}}</span>
+		</nb-alert>
 		<div class="header-container" *ngIf="selectedDate; else noDate">
 			<div class="employee-info">
 				<img

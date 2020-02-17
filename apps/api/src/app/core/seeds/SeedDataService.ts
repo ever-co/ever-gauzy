@@ -177,7 +177,7 @@ export class SeedDataService {
 
 			await createRolePermissions(this.connection, roles);
 
-			await createEmailTemplates(this.connection);
+			// await createEmailTemplates(this.connection);
 
 			this.log(
 				chalk.green(
