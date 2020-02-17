@@ -25,10 +25,11 @@ import { OrganizationTeamsModule } from './organization-teams';
 import { ProposalModule } from './proposal';
 import { CountryModule } from './country';
 import { InviteModule } from './invite';
-import { EmailModule } from './email-templates';
+import { EmailModule } from './email';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
+import { EmailTemplateModule } from './email-template';
 
 @Module({
 	imports: [
@@ -143,7 +144,8 @@ import { TenantModule } from './tenant/tenant.module';
 		InviteModule,
 		TimeOffPolicyModule,
 		RolePermissionsModule,
-		TenantModule
+		TenantModule,
+		EmailTemplateModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

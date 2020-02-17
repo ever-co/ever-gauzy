@@ -1,17 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import * as nodemailer from 'nodemailer';
 import * as Email from 'email-templates';
-import { User } from '../user';
-import { EmailTemplate } from './email.entity';
+import * as Handlebars from 'handlebars';
+import * as nodemailer from 'nodemailer';
+import { Repository } from 'typeorm';
 import { CrudService } from '../core';
+import { EmailTemplate } from '../email-template';
+import { User } from '../user';
+import { Email as IEmail } from './email.entity';
 
 @Injectable()
-export class EmailService extends CrudService<EmailTemplate> {
+export class EmailService extends CrudService<IEmail> {
 	constructor(
+		@InjectRepository(IEmail)
+		private readonly emailRepository: Repository<IEmail>,
 		@InjectRepository(EmailTemplate)
-		private readonly emailRepository: Repository<EmailTemplate>
+		private readonly emailTemplateRepository: Repository<EmailTemplate>
 	) {
 		super(emailRepository);
 	}
@@ -34,6 +38,22 @@ export class EmailService extends CrudService<EmailTemplate> {
 				app: 'firefox',
 				wait: false
 			}
+		},
+		render: (view, locals) => {
+			return new Promise(async (resolve, reject) => {
+				const emailTemplate = await this.emailTemplateRepository.find({
+					name: view,
+					languageCode: locals.locale || 'en'
+				});
+
+				if (!emailTemplate || emailTemplate.length < 1) {
+					return resolve('');
+				}
+
+				const template = Handlebars.compile(emailTemplate[0].template);
+				const html = template(locals);
+				resolve(html);
+			});
 		}
 	});
 
@@ -44,49 +64,51 @@ export class EmailService extends CrudService<EmailTemplate> {
 
 		this.email
 			.send({
-				template: `../apps/api/src/app/email-templates/views/welcome-user/${this.languageCode}`,
+				template: 'welcome-user',
 				message: {
 					to: `${user.email}`,
 					subject: 'Welcome to Gauzy'
 				},
 				locals: {
+					locale: this.languageCode,
 					email: user.email
 				}
 			})
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage);
+				this.createEmailRecord(res.originalMessage, this.languageCode);
 			})
 			.catch(console.error);
 	}
 
-	requestPassword(user: User, url: string) {
-		this.languageCode = 'bg';
+	async requestPassword(user: User, url: string) {
+		this.languageCode = 'he';
 
 		this.email
 			.send({
-				template: `../apps/api/src/app/email-templates/views/password/${this.languageCode}`,
+				template: 'password',
 				message: {
 					to: `${user.email}`,
 					subject: 'Forgotten Password'
 				},
 				locals: {
+					locale: this.languageCode,
 					generatedUrl: url
 				}
 			})
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage);
+				this.createEmailRecord(res.originalMessage, this.languageCode);
 			})
 			.catch(console.error);
 	}
 
-	createEmailRecord(message): Promise<EmailTemplate> {
+	createEmailRecord(message, languageCode): Promise<IEmail> {
 		console.log(message);
 
-		const email = new EmailTemplate();
+		const email = new IEmail();
 
 		email.name = message.subject;
 		email.content = message.html;
-		email.languageCode = 'en';
+		email.languageCode = languageCode;
 
 		return this.emailRepository.save(email);
 	}

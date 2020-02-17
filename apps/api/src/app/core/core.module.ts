@@ -26,10 +26,11 @@ import { OrganizationTeams } from '../organization-teams';
 import { Proposal } from '../proposal';
 import { Country } from '../country';
 import { Invite } from '../invite';
-import { EmailTemplate } from '../email-templates';
+import { Email } from '../email';
 import { TimeOffPolicy } from '../time-off-policy';
 import { RolePermissions } from '../role-permissions';
 import { Tenant } from './../tenant/tenant.entity';
+import { EmailTemplate } from '../email-template';
 
 const entities = [
 	Invite,
@@ -51,10 +52,11 @@ const entities = [
 	OrganizationTeams,
 	Proposal,
 	Country,
-	EmailTemplate,
+	Email,
 	TimeOffPolicy,
 	RolePermissions,
-	Tenant
+	Tenant,
+	EmailTemplate
 ];
 
 @Module({

@@ -4,7 +4,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { get, post, Response } from 'request';
-import { EmailService } from '../email-templates/email.service';
+import { EmailService } from '../email/email.service';
 import { User, UserService } from '../user';
 
 export enum Provider {
