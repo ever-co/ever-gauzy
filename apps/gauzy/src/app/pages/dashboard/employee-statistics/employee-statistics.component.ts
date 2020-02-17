@@ -56,6 +56,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	avarageBonus: number;
 
 	incomeData: Income[];
+	expensesData: Expense[];
 	expenseData: ViewDashboardExpenseHistory[];
 	employeeRecurringexpense: EmployeeRecurringExpense[];
 	orgRecurringexpense: OrganizationRecurringExpense[];
@@ -65,6 +66,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	defaultCurrency: string;
 
 	incomePermissionsError = false;
+	expensePermissionError = false;
 
 	constructor(
 		private incomeService: IncomeService,
@@ -181,6 +183,30 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployeeTotalExpense() {
+		try {
+			const { items } = this.store.hasPermission(
+				PermissionsEnum.ORG_EXPENSES_VIEW
+			)
+				? await this.expenseService.getAll(
+						['employee', 'organization'],
+						{
+							employee: {
+								id: this.selectedEmployee.id
+							}
+						},
+						this.selectedDate
+				  )
+				: await this.expenseService.getMyAll(
+						['employee', 'organization'],
+						{},
+						this.selectedDate
+				  );
+
+			this.expensesData = items;
+		} catch (error) {
+			this.expensesData = [];
+			this.expensePermissionError = true;
+		}
 		await this._loadExpense();
 		const profit = this.totalIncome - Math.abs(this.totalExpense);
 		this.difference = profit;

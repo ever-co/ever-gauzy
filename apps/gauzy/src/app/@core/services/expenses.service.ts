@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, forwardRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
     Expense,
@@ -13,11 +13,28 @@ import { first } from 'rxjs/operators';
 })
 export class ExpensesService {
 
-    constructor(private http: HttpClient) { }
+    constructor(
+        private http: HttpClient
+        ) { }
 
     create(createInput: IExpenseCreateInput): Promise<any> {
         return this.http.post<Expense>('/api/expense/create', createInput).pipe(first()).toPromise();
     }
+
+    getMyAll(
+		relations?: string[],
+		findInput?: IExpenseFindInput,
+		filterDate?: Date
+	): Promise<{ items: Expense[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput, filterDate });
+
+		return this.http
+			.get<{ items: Expense[]; total: number }>(`/api/expense/me`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
 
     getAll(relations?: string[], findInput?: IExpenseFindInput, filterDate?: Date): Promise<{ items: Expense[], total: number }> {
         const data = JSON.stringify({ relations, findInput, filterDate });

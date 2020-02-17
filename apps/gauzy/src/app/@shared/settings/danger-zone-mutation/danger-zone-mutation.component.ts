@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { NbToastrService } from '@nebular/theme';
@@ -11,6 +11,8 @@ import { NbToastrService } from '@nebular/theme';
 export class DangerZoneMutationComponent {
 	recordType: string;
 
+	@Output() emitData: EventEmitter<string> = new EventEmitter<string>();
+
 	data: string;
 
 	constructor(
@@ -21,6 +23,10 @@ export class DangerZoneMutationComponent {
 
 	close() {
 		this.dialogRef.close();
+	}
+
+	sendData() {
+		this.emitData.emit(this.data);
 	}
 
 	delete() {
