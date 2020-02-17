@@ -2,7 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { authenticate } from 'passport';
-import { EmailModule, EmailService } from '../email-templates';
+import { EmailModule, EmailService } from '../email';
 import { User, UserService } from '../user';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';

@@ -1,3 +1,3 @@
 export { EmailModule } from './email.module';
-export { EmailTemplate } from './email.entity';
+export { Email } from './email.entity';
 export { EmailService } from './email.service';

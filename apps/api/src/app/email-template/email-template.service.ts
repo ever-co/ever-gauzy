@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import * as nodemailer from 'nodemailer';
 import * as Email from 'email-templates';
-import { User } from '../user';
-import { EmailTemplate } from './email.entity';
+import * as nodemailer from 'nodemailer';
+import { Repository } from 'typeorm';
 import { CrudService } from '../core';
+import { User } from '../user';
+import { EmailTemplate as IEmailTemplate } from './email-template.entity';
 
 @Injectable()
-export class EmailService extends CrudService<EmailTemplate> {
+export class EmailTemplateService extends CrudService<IEmailTemplate> {
 	constructor(
-		@InjectRepository(EmailTemplate)
-		private readonly emailRepository: Repository<EmailTemplate>
+		@InjectRepository(IEmailTemplate)
+		private readonly emailRepository: Repository<IEmailTemplate>
 	) {
 		super(emailRepository);
 	}
@@ -44,7 +44,7 @@ export class EmailService extends CrudService<EmailTemplate> {
 
 		this.email
 			.send({
-				template: `../apps/api/src/app/email-templates/views/welcome-user/${this.languageCode}`,
+				template: `../apps/api/src/app/email/views/welcome-user/${this.languageCode}`,
 				message: {
 					to: `${user.email}`,
 					subject: 'Welcome to Gauzy'
@@ -64,7 +64,7 @@ export class EmailService extends CrudService<EmailTemplate> {
 
 		this.email
 			.send({
-				template: `../apps/api/src/app/email-templates/views/password/${this.languageCode}`,
+				template: `../apps/api/src/app/email/views/password/${this.languageCode}`,
 				message: {
 					to: `${user.email}`,
 					subject: 'Forgotten Password'
@@ -79,13 +79,13 @@ export class EmailService extends CrudService<EmailTemplate> {
 			.catch(console.error);
 	}
 
-	createEmailRecord(message): Promise<EmailTemplate> {
+	createEmailRecord(message): Promise<IEmailTemplate> {
 		console.log(message);
 
-		const email = new EmailTemplate();
+		const email = new IEmailTemplate();
 
 		email.name = message.subject;
-		email.content = message.html;
+		email.template = message.html;
 		email.languageCode = 'en';
 
 		return this.emailRepository.save(email);
