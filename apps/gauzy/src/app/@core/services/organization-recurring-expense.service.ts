@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
 	OrganizationRecurringExpense,
-	OrganizationRecurringExpenseFindInput
+	OrganizationRecurringExpenseFindInput,
+	RecurringExpenseDeleteInput
 } from '@gauzy/models';
 
 @Injectable({
@@ -22,7 +23,67 @@ export class OrganizationRecurringExpenseService {
 			.toPromise();
 	}
 
+	// getAll(
+	// 	relations?: string[],
+	// 	findInput?: OrganizationRecurringExpenseFindInput
+	// ): Promise<{
+	// 	items: OrganizationRecurringExpense[];
+	// 	total: number;
+	// }> {
+	// 	const data = JSON.stringify({ relations, findInput });
+
+	// 	return this.http
+	// 		.get<{
+	// 			items: OrganizationRecurringExpense[];
+	// 			total: number;
+	// 		}>('/api/organization-recurring-expense', {
+	// 			params: { data }
+	// 		})
+	// 		.pipe(first())
+	// 		.toPromise();
+	// }
+
 	getAll(
+		findInput?: OrganizationRecurringExpenseFindInput
+	): Promise<{
+		items: OrganizationRecurringExpense[];
+		total: number;
+	}> {
+		const data = JSON.stringify({ findInput });
+
+		return this.http
+			.get<{
+				items: OrganizationRecurringExpense[];
+				total: number;
+			}>('/api/organization-recurring-expense/month', {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	delete(id: string, deleteInput: RecurringExpenseDeleteInput): Promise<any> {
+		const data = JSON.stringify({ deleteInput });
+
+		return this.http
+			.delete(`/api/organization-recurring-expense/${id}`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	update(
+		id: string,
+		updateInput: OrganizationRecurringExpense
+	): Promise<any> {
+		return this.http
+			.put(`/api/organization-recurring-expense/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllByMonth(
 		relations?: string[],
 		findInput?: OrganizationRecurringExpenseFindInput
 	): Promise<{
@@ -35,45 +96,9 @@ export class OrganizationRecurringExpenseService {
 			.get<{
 				items: OrganizationRecurringExpense[];
 				total: number;
-			}>('/api/organization-recurring-expense', {
+			}>('/api/employee-recurring-expense/month', {
 				params: { data }
 			})
-			.pipe(first())
-			.toPromise();
-	}
-
-	getForEmployee(
-		findInput?: OrganizationRecurringExpenseFindInput
-	): Promise<{
-		items: OrganizationRecurringExpense[];
-		total: number;
-	}> {
-		const data = JSON.stringify({ findInput });
-
-		return this.http
-			.get<{
-				items: OrganizationRecurringExpense[];
-				total: number;
-			}>('/api/organization-recurring-expense/employee', {
-				params: { data }
-			})
-			.pipe(first())
-			.toPromise();
-	}
-
-	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/organization-recurring-expense/${id}`)
-			.pipe(first())
-			.toPromise();
-	}
-
-	update(
-		id: string,
-		updateInput: OrganizationRecurringExpense
-	): Promise<any> {
-		return this.http
-			.put(`/api/organization-recurring-expense/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

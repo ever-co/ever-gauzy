@@ -62,13 +62,9 @@
 				</span>
 			</div>
 			<div>
-				<span *ngIf="!showAddCard">
+				<span>
 					<button
-						(click)="
-							showAddCard = !showAddCard;
-							date = getDefaultDate();
-							selectedCurrency = selectedOrg.currency
-						"
+						(click)="addOrganizationRecurringExpense()"
 						nbButton
 						status="success"
 					>
@@ -76,100 +72,6 @@
 						>{{ 'BUTTONS.ADD' | translate }}
 					</button>
 				</span>
-			</div>
-		</div>
-
-		<div *ngIf="showAddCard" class="setting-block mutation-card mb-5">
-			<div class="block-content w-100">
-				<div class="block-info w-100">
-					<div class="row">
-						<div class="col-2">
-							<input
-								type="text"
-								[(ngModel)]="name"
-								nbInput
-								fullWidth
-								placeholder="{{
-									'FORM.PLACEHOLDERS.NAME' | translate
-								}}"
-							/>
-						</div>
-						<div class="col-3">
-							<input
-								type="month"
-								[(ngModel)]="date"
-								nbInput
-								fullWidth
-								placeholder="{{
-									'FORM.PLACEHOLDERS.DATE' | translate
-								}}"
-							/>
-						</div>
-						<div class="col-2">
-							<input
-								type="number"
-								[(ngModel)]="expenseValue"
-								nbInput
-								fullWidth
-								placeholder="{{
-									'FORM.PLACEHOLDERS.VALUE' | translate
-								}}"
-							/>
-						</div>
-
-						<div class="col-2">
-							<nb-select
-								class="d-block"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.SELECT_CURRENCY'
-										| translate
-								}}"
-								[(selected)]="selectedCurrency"
-								disabled
-							>
-								<nb-option
-									*ngFor="let currency of currencies"
-									value="{{ currency }}"
-									>{{ currency }}</nb-option
-								>
-							</nb-select>
-						</div>
-						<div class="col-3 row m-0">
-							<div class="pr-2 pl-0 col-6">
-								<button
-									(click)="
-										addOrgRecurringExpense({
-											orgId: selectedOrg.id,
-											month: getDateValue(date).month,
-											year: getDateValue(date).year,
-											categoryName: name,
-											value: expenseValue,
-											currency: selectedCurrency
-										})
-									"
-									class="w-100"
-									nbButton
-									status="success"
-								>
-									{{ 'BUTTONS.SAVE' | translate }}
-								</button>
-							</div>
-							<div class="pl-2 pr-0 col-6">
-								<button
-									class="w-100"
-									(click)="
-										showAddCard = !showAddCard;
-										clearMutationCard()
-									"
-									nbButton
-									status="danger"
-								>
-									{{ 'BUTTONS.CANCEL' | translate }}
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
 			</div>
 		</div>
 
@@ -196,8 +98,8 @@
 					<div class="row">
 						<div class="col">{{ setting.categoryName }}</div>
 						<div class="col">
-							{{ getMonthString(setting.month) }}
-							{{ setting.year }}
+							{{ getMonthString(setting.startMonth) }}
+							{{ setting.startYear }}
 						</div>
 						<div class="col">
 							<span class="block-amount"
@@ -256,7 +158,10 @@
 					width: selectedRowIndexToShow === i ? '150px' : '0'
 				}"
 			>
-				<div (click)="showEditCard(i)" class="single-setting">
+				<div
+					(click)="editOrganizationRecurringExpense(i)"
+					class="single-setting"
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="19"

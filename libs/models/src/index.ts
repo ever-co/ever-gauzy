@@ -13,7 +13,7 @@ export * from './lib/organization-positions.model';
 export * from './lib/organization-projects.model';
 export * from './lib/organization-vendors.model';
 export * from './lib/organization-teams-model';
-export * from './lib/organization-recurring-expense';
+export * from './lib/organization-recurring-expense.model';
 export * from './lib/employee-recurring-expense';
 export * from './lib/country.model';
 export * from './lib/invite.model';
@@ -22,6 +22,7 @@ export * from './lib/time-off.model';
 export * from './lib/entity-with-members.model';
 export * from './lib/role-permission.model';
 export * from './lib/email-template.model';
+export * from './lib/recurring-expense.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
