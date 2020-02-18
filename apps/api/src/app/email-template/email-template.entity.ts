@@ -1,11 +1,11 @@
-import { Email as IEmail } from '@gauzy/models';
+import { EmailTemplate as IEmailTemplate } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { Column, Entity, Index } from 'typeorm';
 import { Base } from '../core/entities/base';
 
 @Entity('email_template')
-export class EmailTemplate extends Base implements IEmail {
+export class EmailTemplate extends Base implements IEmailTemplate {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -18,12 +18,17 @@ export class EmailTemplate extends Base implements IEmail {
 	@IsNotEmpty()
 	@Index()
 	@Column()
-	template: string;
+	languageCode: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	@IsOptional()
+	mjml: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
 	@Column()
-	languageCode: string;
+	hbs: string;
 }

@@ -8,6 +8,7 @@ import { CrudService } from '../core';
 import { EmailTemplate } from '../email-template';
 import { User } from '../user';
 import { Email as IEmail } from './email.entity';
+import { environment } from '@env-api/environment';
 
 @Injectable()
 export class EmailService extends CrudService<IEmail> {
@@ -50,28 +51,28 @@ export class EmailService extends CrudService<IEmail> {
 					return resolve('');
 				}
 
-				const template = Handlebars.compile(emailTemplate[0].template);
+				const template = Handlebars.compile(emailTemplate[0].hbs);
 				const html = template(locals);
-				resolve(html);
+				return resolve(html);
 			});
 		}
 	});
 
 	languageCode: string;
 
-	welcomeUser(user: User) {
-		this.languageCode = 'he';
+	welcomeUser(user: User, originUrl?: string) {
+		this.languageCode = 'en';
 
 		this.email
 			.send({
 				template: 'welcome-user',
 				message: {
-					to: `${user.email}`,
-					subject: 'Welcome to Gauzy'
+					to: `${user.email}`
 				},
 				locals: {
 					locale: this.languageCode,
-					email: user.email
+					email: user.email,
+					host: originUrl || environment.host
 				}
 			})
 			.then((res) => {
@@ -80,8 +81,8 @@ export class EmailService extends CrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	async requestPassword(user: User, url: string) {
-		this.languageCode = 'he';
+	requestPassword(user: User, url: string, originUrl?: string) {
+		this.languageCode = 'en';
 
 		this.email
 			.send({
@@ -92,7 +93,8 @@ export class EmailService extends CrudService<IEmail> {
 				},
 				locals: {
 					locale: this.languageCode,
-					generatedUrl: url
+					generatedUrl: url,
+					host: originUrl || environment.host
 				}
 			})
 			.then((res) => {
@@ -102,8 +104,6 @@ export class EmailService extends CrudService<IEmail> {
 	}
 
 	createEmailRecord(message, languageCode): Promise<IEmail> {
-		console.log(message);
-
 		const email = new IEmail();
 
 		email.name = message.subject;

@@ -21,6 +21,7 @@ export * from './lib/email.model';
 export * from './lib/time-off.model';
 export * from './lib/entity-with-members.model';
 export * from './lib/role-permission.model';
+export * from './lib/email-template.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

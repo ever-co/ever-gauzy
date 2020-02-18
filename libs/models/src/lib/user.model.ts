@@ -35,6 +35,7 @@ export interface UserFindInput extends IBaseEntityModel {
 export interface UserRegistrationInput {
 	user: User;
 	password?: string;
+	originalUrl?: string;
 }
 
 export interface UserCreateInput {
