@@ -1,3 +1,4 @@
+import { Tag } from '../tags';
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
@@ -56,7 +57,8 @@ const entities = [
 	TimeOffPolicy,
 	RolePermissions,
 	Tenant,
-	EmailTemplate
+	EmailTemplate,
+	Tag
 ];
 
 @Module({

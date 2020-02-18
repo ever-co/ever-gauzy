@@ -1,3 +1,4 @@
+import { TagModule } from './tags/tag.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
@@ -145,7 +146,8 @@ import { EmailTemplateModule } from './email-template';
 		TimeOffPolicyModule,
 		RolePermissionsModule,
 		TenantModule,
-		EmailTemplateModule
+		EmailTemplateModule,
+		TagModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
