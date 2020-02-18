@@ -1,0 +1,44 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-image
+					width="100px"
+					src="{{host}}/assets/images/logos/logo_Gauzy.svg"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text font-size="20px" font-family="helvetica"
+					>Welcome to Gauzy!</mj-text
+				>
+				<mj-text font-size="16px" font-family="helvetica">
+					<p>Dear {{email}},</p>
+					<p>
+						Thank you for your registration in Gauzy™ - Fair Profits
+						Sharing Open-Source Platform
+					</p>
+					<p>We are happy to have you on board!</p>
+					<p>Best regards,</p>
+					<p>Gauzy Team</p>
+				</mj-text>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text align="center" font-size="12px" font-family="helvetica"
+					>© 2019,
+					<a href="https://app.gauzy.co/." style="color:#598bff"
+						>Gauzy</a
+					>
+					by
+					<a href="https://ever.co/" style="color:#598bff"
+						>Ever Co. LTD.</a
+					>
+					All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

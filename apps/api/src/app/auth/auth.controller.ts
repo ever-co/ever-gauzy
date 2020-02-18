@@ -20,6 +20,7 @@ import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
 import { getUserDummyImage } from '../core';
 import { environment as env } from '@env-api/environment';
 import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
 
 @ApiTags('Auth')
 @Controller()
@@ -61,11 +62,13 @@ export class AuthController {
 	@Post('/register')
 	async create(
 		@Body() entity: IUserRegistrationInput,
+		@Req() request: Request,
 		...options: any[]
 	): Promise<IUser> {
 		if (!entity.user.imageUrl) {
 			entity.user.imageUrl = getUserDummyImage(entity.user);
 		}
+		entity.originalUrl = request.get('Origin');
 		return this.commandBus.execute(new AuthRegisterCommand(entity));
 	}
 
@@ -86,9 +89,13 @@ export class AuthController {
 	@Post('/request-password')
 	async requestPass(
 		@Body() findObj,
+		@Req() request: Request,
 		...options: any[]
 	): Promise<{ id: string; token: string } | null> {
-		return await this.authService.requestPassword(findObj);
+		return await this.authService.requestPassword(
+			findObj,
+			request.get('Origin')
+		);
 	}
 
 	@Get('google')

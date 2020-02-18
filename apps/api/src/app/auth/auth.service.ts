@@ -54,7 +54,8 @@ export class AuthService {
 	}
 
 	async requestPassword(
-		findObj: any
+		findObj: any,
+		originUrl?: string
 	): Promise<{ id: string; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
 			relations: ['role']
@@ -69,7 +70,7 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
-				this.emailService.requestPassword(user, url);
+				this.emailService.requestPassword(user, url, originUrl);
 
 				return {
 					id: user.id,
@@ -112,7 +113,7 @@ export class AuthService {
 				: {})
 		});
 
-		this.emailService.welcomeUser(input.user);
+		this.emailService.welcomeUser(input.user, input.originalUrl);
 
 		return user;
 	}
