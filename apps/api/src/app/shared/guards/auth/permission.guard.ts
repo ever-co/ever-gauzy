@@ -3,7 +3,8 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { verify } from 'jsonwebtoken';
 import { RequestContext } from '../../../core/context';
-import { UserService } from '../../../user';
+import { UserService } from '../../../user/user.service';
+
 @Injectable()
 export class PermissionGuard implements CanActivate {
 	constructor(
