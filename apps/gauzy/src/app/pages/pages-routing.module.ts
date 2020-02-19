@@ -85,6 +85,11 @@ const routes: Routes = [
 				// }
 			},
 			{
+				path: 'tags',
+				loadChildren: () =>
+					import('./tags/tags.module').then((m) => m.TagsModule)
+			},
+			{
 				path: 'help',
 				loadChildren: () =>
 					import('./help/help.module').then((m) => m.HelpModule)

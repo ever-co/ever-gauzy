@@ -241,7 +241,8 @@
 		"USERS": "Users",
 		"ROLES": "Roles & Permissions",
 		"DANGER_ZONE": "Danger Zone",
-		"DOWNLOAD_DATA": "Download all data"
+		"DOWNLOAD_DATA": "Download all data",
+		"TAGS": "Tags"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -452,6 +453,9 @@
 			"REQUIRES_APPROVAL": "Requires Approval",
 			"PAID": "Paid"
 		}
+	},
+	"TAGS_PAGE": {
+		"HEADER": "Tags"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
