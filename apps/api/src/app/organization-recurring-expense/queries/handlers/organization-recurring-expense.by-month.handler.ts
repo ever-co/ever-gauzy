@@ -1,14 +1,14 @@
-import { OrganizationRecurringExpense } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { IPagination } from '../../../core';
 import { FindRecurringExpenseByMonthHandler } from '../../../shared/handlers';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseByMonthQuery } from '../organization-recurring-expense.by-month.query';
+import { OrganizationRecurringExpense } from '../../organization-recurring-expense.entity';
 
 @QueryHandler(OrganizationRecurringExpenseByMonthQuery)
 export class OrganizationRecurringExpenseByMonthHandler
-	extends FindRecurringExpenseByMonthHandler
+	extends FindRecurringExpenseByMonthHandler<OrganizationRecurringExpense>
 	implements IQueryHandler<OrganizationRecurringExpenseByMonthQuery> {
 	constructor(
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService

@@ -1,17 +1,16 @@
-import { OrganizationRecurringExpense } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DeleteResult, UpdateResult } from 'typeorm';
 
 import { RecurringExpenseDeleteHandler } from '../../../shared/handlers/recurring-expense.delete.handler';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseDeleteCommand } from '../organization-recurring-expense.delete.command';
-
+import { OrganizationRecurringExpense } from '../../organization-recurring-expense.entity';
 /**
  * Deletes a OrganizationRecurringExpense based on RecurringExpenseDeleteHandler
  */
 @CommandHandler(OrganizationRecurringExpenseDeleteCommand)
 export class OrganizationRecurringExpenseDeleteHandler
-	extends RecurringExpenseDeleteHandler
+	extends RecurringExpenseDeleteHandler<OrganizationRecurringExpense>
 	implements ICommandHandler<OrganizationRecurringExpenseDeleteCommand> {
 	constructor(
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
@@ -19,9 +18,10 @@ export class OrganizationRecurringExpenseDeleteHandler
 		super(organizationRecurringExpenseService);
 	}
 
+	//TODO: Fix typescript return <any>
 	public async execute(
 		command: OrganizationRecurringExpenseDeleteCommand
-	): Promise<OrganizationRecurringExpense | UpdateResult | DeleteResult> {
+	): Promise<any> {
 		const { id, deleteInput } = command;
 
 		return await this.executeCommand(id, deleteInput);

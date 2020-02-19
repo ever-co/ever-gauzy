@@ -1,7 +1,10 @@
 import { CrudService } from '../../core';
 import { EmployeeRecurringExpense } from '../../employee-recurring-expense';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense';
-import { RecurringExpenseEditInput } from '@gauzy/models';
+import {
+	RecurringExpenseEditInput,
+	RecurringExpenseModel
+} from '@gauzy/models';
 
 /**
  * This edits the value of a recurring expense.
@@ -9,12 +12,10 @@ import { RecurringExpenseEditInput } from '@gauzy/models';
  * 1. Change the end date of the original expense so that old value is not modified for previous expense.
  * 2. Create a new expense to have new values for all future dates.
  */
-export abstract class RecurringExpenseEditHandler {
-	constructor(
-		private readonly crudService: CrudService<
-			EmployeeRecurringExpense | OrganizationRecurringExpense
-		>
-	) {}
+export abstract class RecurringExpenseEditHandler<
+	T extends RecurringExpenseModel
+> {
+	constructor(private readonly crudService: CrudService<T>) {}
 
 	public async executeCommand(
 		id: string,
@@ -29,19 +30,25 @@ export abstract class RecurringExpenseEditHandler {
 		);
 
 		if (originalExpense.startDate.getTime() === inputDate.getTime()) {
-			return await this.crudService.update(id, input);
+			const inputObject: any = {
+				...input
+			};
+			return await this.crudService.update(id, inputObject);
 		}
 
 		const endMonth = input.startMonth > 1 ? input.startMonth - 1 : 12;
 		const endYear =
 			input.startMonth > 1 ? input.startYear : input.startYear - 1;
 
-		await this.crudService.update(id, {
+		//TODO: Fix typescript
+		const updateObject: any = {
 			endDay: input.startDay,
 			endMonth, //Because from input.startMonth the new value will be considered
 			endYear,
 			endDate: new Date(endYear, endMonth - 1, input.startDay)
-		});
+		};
+
+		await this.crudService.update(id, updateObject);
 
 		const createObject: any = {
 			startDay: input.startDay,

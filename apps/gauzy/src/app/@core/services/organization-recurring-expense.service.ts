@@ -83,6 +83,25 @@ export class OrganizationRecurringExpenseService {
 			.toPromise();
 	}
 
+	getForEmployee(
+		findInput?: OrganizationRecurringExpenseFindInput
+	): Promise<{
+		items: OrganizationRecurringExpense[];
+		total: number;
+	}> {
+		const data = JSON.stringify({ findInput });
+
+		return this.http
+			.get<{
+				items: OrganizationRecurringExpense[];
+				total: number;
+			}>('/api/organization-recurring-expense/employee', {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAllByMonth(
 		relations?: string[],
 		findInput?: OrganizationRecurringExpenseFindInput

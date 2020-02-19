@@ -2,6 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseEditCommand } from '../organization-recurring-expense.edit.command';
 import { RecurringExpenseEditHandler } from '../../../shared/handlers/recurring-expense.edit.handler';
+import { OrganizationRecurringExpense } from '../../organization-recurring-expense.entity';
 
 /**
  * This edits the value of a recurring expense.
@@ -11,7 +12,7 @@ import { RecurringExpenseEditHandler } from '../../../shared/handlers/recurring-
  */
 @CommandHandler(OrganizationRecurringExpenseEditCommand)
 export class OrganizationRecurringExpenseEditHandler
-	extends RecurringExpenseEditHandler
+	extends RecurringExpenseEditHandler<OrganizationRecurringExpense>
 	implements ICommandHandler<OrganizationRecurringExpenseEditCommand> {
 	constructor(
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService

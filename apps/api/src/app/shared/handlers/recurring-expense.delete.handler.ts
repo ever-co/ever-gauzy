@@ -17,13 +17,12 @@ import { EmployeeRecurringExpense } from '../../employee-recurring-expense';
  * 2. FUTURE : Delete only current and future events (By reducing the end date)
  * 3. CURRENT : Delete only one month (By splitting the expense into two)
  *
+ * TODO: Fix typescript, remove usage of :any
  */
-export abstract class RecurringExpenseDeleteHandler {
-	constructor(
-		private readonly crudService: CrudService<
-			OrganizationRecurringExpense | EmployeeRecurringExpense
-		>
-	) {}
+export abstract class RecurringExpenseDeleteHandler<
+	T extends RecurringExpenseModel
+> {
+	constructor(private readonly crudService: CrudService<T>) {}
 
 	public async executeCommand(
 		id: string,
@@ -32,9 +31,10 @@ export abstract class RecurringExpenseDeleteHandler {
 		let result;
 		switch (deleteInput.deletionType) {
 			case RecurringExpenseDeletionEnum.ALL:
-				result = await this.crudService.delete({
+				const deleteId: any = {
 					id
-				});
+				};
+				result = await this.crudService.delete(deleteId);
 				break;
 			case RecurringExpenseDeletionEnum.FUTURE:
 				result = await this.updateEndDateToLastMonth(id, deleteInput);
@@ -70,6 +70,9 @@ export abstract class RecurringExpenseDeleteHandler {
 		const originalExpense = await this.crudService.findOne(id);
 
 		const deleteDate = new Date(deleteInput.year, deleteInput.month - 1);
+		const deleteId: any = {
+			id
+		};
 
 		if (
 			deleteDate.getTime() === originalExpense.startDate.getTime() &&
@@ -77,16 +80,12 @@ export abstract class RecurringExpenseDeleteHandler {
 			originalExpense.endDate.getTime() === deleteDate.getTime()
 		) {
 			//Only delete
-			return await this.crudService.delete({
-				id
-			});
+			return await this.crudService.delete(deleteId);
 		} else if (
 			deleteDate.getTime() === originalExpense.startDate.getTime()
 		) {
 			//Delete and create for next month onwards
-			await this.crudService.delete({
-				id
-			});
+			await this.crudService.delete(deleteId);
 			return await this.createExpenseFromNextMonth(
 				deleteInput,
 				originalExpense
@@ -106,22 +105,17 @@ export abstract class RecurringExpenseDeleteHandler {
 	private async updateEndDateToLastMonth(
 		id: string,
 		deleteInput: RecurringExpenseDeleteInput
-	): Promise<
-		| OrganizationRecurringExpense
-		| EmployeeRecurringExpense
-		| UpdateResult
-		| DeleteResult
-	> {
+	): Promise<any> {
 		const endMonth = deleteInput.month > 1 ? deleteInput.month - 1 : 12; //Because input.startMonth needs to be deleted
 		const endYear =
 			deleteInput.month > 1 ? deleteInput.year : deleteInput.year - 1;
-
-		return await this.crudService.update(id, {
+		const updateOptions: any = {
 			endDay: 1,
 			endMonth,
 			endYear,
 			endDate: new Date(endYear, endMonth - 1, 1)
-		});
+		};
+		return await this.crudService.update(id, updateOptions);
 	}
 
 	/**
