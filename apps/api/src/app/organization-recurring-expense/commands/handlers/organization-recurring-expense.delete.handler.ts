@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { RecurringExpenseDeleteHandler } from '../../../shared/handlers/recurring-expense.delete.handler';
+import { RecurringExpenseDeleteHandler } from '../../../shared';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseDeleteCommand } from '../organization-recurring-expense.delete.command';

@@ -1,5 +1,4 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { RecurringExpenseDeletionEnum } from './employee-recurring-expense';
 
 export interface RecurringExpenseModel extends IBaseEntityModel {
 	startDay: number;
@@ -39,4 +38,10 @@ export interface RecurringExpenseDeleteInput {
 	deletionType: RecurringExpenseDeletionEnum;
 	month: number;
 	year: number;
+}
+
+export enum RecurringExpenseDeletionEnum {
+	CURRENT = 'current',
+	FUTURE = 'future',
+	ALL = 'all'
 }

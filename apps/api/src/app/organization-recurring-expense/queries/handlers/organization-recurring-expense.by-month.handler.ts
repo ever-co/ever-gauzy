@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { IPagination } from '../../../core';
-import { FindRecurringExpenseByMonthHandler } from '../../../shared/handlers';
+import { FindRecurringExpenseByMonthHandler } from '../../../shared';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseByMonthQuery } from '../organization-recurring-expense.by-month.query';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense.entity';

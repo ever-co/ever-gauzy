@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { RecurringExpenseEditHandler } from '../../../shared/handlers/recurring-expense.edit.handler';
+import { RecurringExpenseEditHandler } from '../../../shared';
 import { EmployeeRecurringExpense } from '../../employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from '../../employee-recurring-expense.service';
 import { EmployeeRecurringExpenseEditCommand } from '../employee-recurring-expense.edit.command';
@@ -24,6 +24,6 @@ export class EmployeeRecurringExpenseEditHandler
 		command: EmployeeRecurringExpenseEditCommand
 	): Promise<any> {
 		const { id, input } = command;
-		return this.executeCommand(id, input);
+		return await this.executeCommand(id, input);
 	}
 }

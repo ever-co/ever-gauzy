@@ -1,4 +1,4 @@
-import { OrganizationRecurringExpenseEditInput } from '@gauzy/models';
+import { RecurringExpenseEditInput } from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -123,7 +123,7 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: OrganizationRecurringExpenseEditInput
+		@Body() entity: RecurringExpenseEditInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationRecurringExpenseEditCommand(id, entity)

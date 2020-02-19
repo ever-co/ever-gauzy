@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseEditCommand } from '../organization-recurring-expense.edit.command';
-import { RecurringExpenseEditHandler } from '../../../shared/handlers/recurring-expense.edit.handler';
+import { RecurringExpenseEditHandler } from '../../../shared';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense.entity';
 
 /**

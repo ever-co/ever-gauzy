@@ -1,4 +1,4 @@
-import { EmployeeRecurringExpenseEditInput as IExpenseEditInput } from '@gauzy/models';
+import { RecurringExpenseEditInput as IExpenseEditInput } from '@gauzy/models';
 import { ICommand } from '@nestjs/cqrs';
 
 export class EmployeeRecurringExpenseEditCommand implements ICommand {

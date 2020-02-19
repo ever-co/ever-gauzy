@@ -152,7 +152,6 @@ export abstract class RecurringExpenseDeleteHandler<
 			} else if (originalExpense.employeeId) {
 				createOptions.employeeId = originalExpense.employeeId;
 			}
-			console.log('I will creaate expense', createOptions);
 			//Create new expense for the remaining time
 			return await this.crudService.create(createOptions);
 		}
