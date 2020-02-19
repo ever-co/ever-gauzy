@@ -11,6 +11,11 @@ import { first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 
+export enum COMPONENT_TYPE {
+	EMPLOYEE = 'EMPLOYEE',
+	ORGANIZATION = 'ORGANIZATION'
+}
+
 @Component({
 	selector: 'ga-recurring-expense-mutation',
 	templateUrl: './recurring-expense-mutation.component.html',
@@ -18,8 +23,31 @@ import { Store } from '../../../@core/services/store.service';
 })
 export class RecurringExpenseMutationComponent implements OnInit {
 	public form: FormGroup;
-	categoryNames = ['Salary', 'Salary Taxes', 'Extra Bonus'];
+	categoryNames = [];
+	defaultCategories: {
+		name: string;
+		types: COMPONENT_TYPE[];
+	}[] = [
+		{
+			name: 'Salary',
+			types: [COMPONENT_TYPE.EMPLOYEE]
+		},
+		{
+			name: 'Salary Taxes',
+			types: [COMPONENT_TYPE.EMPLOYEE]
+		},
+		{
+			name: 'Rent',
+			types: [COMPONENT_TYPE.ORGANIZATION]
+		},
+		{
+			name: 'Extra Bonus',
+			types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
+		}
+	];
+
 	recurringExpense?: RecurringExpenseModel;
+	componentType: COMPONENT_TYPE;
 	currencies = Object.values(CurrenciesEnum);
 
 	constructor(
@@ -34,6 +62,9 @@ export class RecurringExpenseMutationComponent implements OnInit {
 	}
 
 	ngOnInit() {
+		this.categoryNames = this.defaultCategories
+			.filter((c) => c.types.indexOf(this.componentType) > -1)
+			.map((i) => i.name);
 		this.recurringExpense
 			? this._initializeForm(this.recurringExpense)
 			: this._initializeForm();

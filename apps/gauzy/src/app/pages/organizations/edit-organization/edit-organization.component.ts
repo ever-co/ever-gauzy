@@ -16,7 +16,10 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { Store } from '../../../@core/services/store.service';
 import { monthNames } from '../../../@core/utils/date';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
-import { RecurringExpenseMutationComponent } from '../../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
+import {
+	RecurringExpenseMutationComponent,
+	COMPONENT_TYPE
+} from '../../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
 
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -174,7 +177,11 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 	async addOrganizationRecurringExpense() {
 		const result = await this.dialogService
-			.open(RecurringExpenseMutationComponent)
+			.open(RecurringExpenseMutationComponent, {
+				context: {
+					componentType: COMPONENT_TYPE.ORGANIZATION
+				}
+			})
 			.onClose.pipe(first())
 			.toPromise();
 
@@ -213,7 +220,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 		const result = await this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {
-					recurringExpense: this.selectedOrgRecurringExpense[index]
+					recurringExpense: this.selectedOrgRecurringExpense[index],
+					componentType: COMPONENT_TYPE.ORGANIZATION
 				}
 			})
 			.onClose.pipe(first())

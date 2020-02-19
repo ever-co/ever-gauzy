@@ -1,21 +1,27 @@
 <nb-card>
 	<nb-card-header>
-		{{ 'ORGANIZATIONS_PAGE.RECURRING_EXPENSE' | translate }}
+		{{
+			(componentType === 'EMPLOYEE'
+				? 'EMPLOYEES_PAGE.RECURRING_EXPENSE'
+				: 'ORGANIZATIONS_PAGE.RECURRING_EXPENSE'
+			) | translate
+		}}
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<input
+						<ng-select
+							[items]="categoryNames"
+							[addTag]="true"
 							id="positionInput"
-							nbInput
 							fullWidth
 							placeholder="{{
 								'POP_UPS.CATEGORY_NAME' | translate
 							}}"
 							formControlName="categoryName"
-						/>
+						></ng-select>
 					</div>
 				</div>
 			</div>

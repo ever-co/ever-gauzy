@@ -13,9 +13,12 @@ import { EmployeesService } from '../../../@core/services/employees.service';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { monthNames } from '../../../@core/utils/date';
-import { EmployeeRecurringExpenseMutationComponent } from '../../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.component';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
+import {
+	RecurringExpenseMutationComponent,
+	COMPONENT_TYPE
+} from '../../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
 
 @Component({
 	selector: 'ngx-edit-employee',
@@ -105,7 +108,11 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 		// TODO get currency from the page dropdown
 
 		const result = await this.dialogService
-			.open(EmployeeRecurringExpenseMutationComponent)
+			.open(RecurringExpenseMutationComponent, {
+				context: {
+					componentType: COMPONENT_TYPE.EMPLOYEE
+				}
+			})
 			.onClose.pipe(first())
 			.toPromise();
 
@@ -153,11 +160,13 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 
 	async editEmployeeRecurringExpense(index: number) {
 		const result = await this.dialogService
-			.open(EmployeeRecurringExpenseMutationComponent, {
+			.open(RecurringExpenseMutationComponent, {
 				// TODO
 				context: {
-					employeeRecurringExpense: this
-						.selectedEmployeeRecurringExpense[index]
+					recurringExpense: this.selectedEmployeeRecurringExpense[
+						index
+					],
+					componentType: COMPONENT_TYPE.EMPLOYEE
 				}
 			})
 			.onClose.pipe(first())
