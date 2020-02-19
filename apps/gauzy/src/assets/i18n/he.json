@@ -337,6 +337,7 @@
 		"LOCATION": "Location",
 		"SETTINGS": "הגדרות",
 		"ROLES": "Roles",
+		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
