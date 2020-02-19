@@ -1,8 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import {
-	RecurringExpenseDeletionEnum,
-	RecurringExpenseModel
-} from './recurring-expense.model';
+import { RecurringExpenseModel } from './recurring-expense.model';
 
 export interface EmployeeRecurringExpense extends RecurringExpenseModel {
 	employeeId: string;
