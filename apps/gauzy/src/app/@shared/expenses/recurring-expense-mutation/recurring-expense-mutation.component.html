@@ -1,25 +1,27 @@
 <nb-card>
 	<nb-card-header>
-		{{ 'EMPLOYEES_PAGE.RECURRING_EXPENSE' | translate }}
+		{{
+			(componentType === 'EMPLOYEE'
+				? 'EMPLOYEES_PAGE.RECURRING_EXPENSE'
+				: 'ORGANIZATIONS_PAGE.RECURRING_EXPENSE'
+			) | translate
+		}}
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="col-6">
+				<div class="col">
 					<div class="form-group">
-						<label class="label" for="valueDateInput">{{
-							'POP_UPS.CATEGORY_NAME' | translate
-						}}</label>
 						<ng-select
-							id="positionInput"
 							[items]="categoryNames"
-							[searchable]="false"
+							[addTag]="true"
+							id="positionInput"
+							fullWidth
 							placeholder="{{
 								'POP_UPS.CATEGORY_NAME' | translate
 							}}"
 							formControlName="categoryName"
-						>
-						</ng-select>
+						></ng-select>
 					</div>
 				</div>
 			</div>
@@ -69,7 +71,7 @@
 					type="submit"
 					nbButton
 					status="success"
-					*ngIf="!employeeRecurringExpense"
+					*ngIf="!recurringExpense"
 					nbTooltip="{{
 						'EMPLOYEES_PAGE.RECURRING_EXPENSE_ADD' | translate
 					}}"
@@ -82,7 +84,7 @@
 					type="submit"
 					nbButton
 					status="success"
-					*ngIf="employeeRecurringExpense"
+					*ngIf="recurringExpense"
 					nbTooltip="{{
 						'EMPLOYEES_PAGE.RECURRING_EXPENSE_EDIT' | translate
 					}}"

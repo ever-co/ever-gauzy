@@ -1,7 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
-export interface EmployeeRecurringExpense extends IBaseEntityModel {
-	employeeId: string;
+export interface RecurringExpenseModel extends IBaseEntityModel {
 	startDay: number;
 	startMonth: number;
 	startYear: number;
@@ -15,11 +14,18 @@ export interface EmployeeRecurringExpense extends IBaseEntityModel {
 	currency: string;
 }
 
+export interface RecurringExpenseByMonthFindInput extends IBaseEntityModel {
+	employeeId?: string;
+	orgId?: string;
+	month?: number;
+	year?: number;
+}
+
 /**
  * categoryName, value and currency are the new values.
  * startDay, startMonth, startYear represent the date when this was edited.
  */
-export interface EmployeeRecurringExpenseEditInput extends IBaseEntityModel {
+export interface RecurringExpenseEditInput extends IBaseEntityModel {
 	startDay: number;
 	startMonth: number;
 	startYear: number;
@@ -28,14 +34,7 @@ export interface EmployeeRecurringExpenseEditInput extends IBaseEntityModel {
 	currency: string;
 }
 
-export interface EmployeeRecurringExpenseByMonthFindInput
-	extends IBaseEntityModel {
-	employeeId?: string;
-	month?: number;
-	year?: number;
-}
-
-export interface EmployeeRecurringExpenseDeleteInput {
+export interface RecurringExpenseDeleteInput {
 	deletionType: RecurringExpenseDeletionEnum;
 	month: number;
 	year: number;

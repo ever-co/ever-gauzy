@@ -1,21 +1,22 @@
-import { ThemeModule } from '../../../@theme/theme.module';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
-	NbCardModule,
 	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
 	NbIconModule,
 	NbInputModule,
-	NbDatepickerModule,
 	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { EmployeeRecurringExpenseMutationComponent } from './employee-recurring-expense-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+
+import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { ThemeModule } from '../../../@theme/theme.module';
+import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -42,9 +43,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	exports: [EmployeeRecurringExpenseMutationComponent],
-	declarations: [EmployeeRecurringExpenseMutationComponent],
-	entryComponents: [EmployeeRecurringExpenseMutationComponent],
+	exports: [RecurringExpenseMutationComponent],
+	declarations: [RecurringExpenseMutationComponent],
+	entryComponents: [RecurringExpenseMutationComponent],
 	providers: [OrganizationsService]
 })
-export class EmployeeRecurringExpenseMutationModule {}
+export class RecurringExpenseMutationModule {}
