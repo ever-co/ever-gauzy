@@ -161,8 +161,21 @@ export class EditOrganizationOtherSettingsComponent
 			bonusPercentage: [
 				this.organization.bonusPercentage || 75,
 				[Validators.min(0), Validators.max(100)]
+			],
+			invitesAllowed: [this.organization.invitesAllowed || false],
+			inviteExpiryPeriod: [
+				{
+					value: this.organization.inviteExpiryPeriod || 7,
+					disabled: !this.organization.invitesAllowed
+				},
+				[Validators.min(1)]
 			]
 		});
+	}
+
+	toggleExpiry(checked) {
+		const inviteExpiryControl = this.form.get('inviteExpiryPeriod');
+		checked ? inviteExpiryControl.enable() : inviteExpiryControl.disable();
 	}
 
 	ngOnDestroy() {

@@ -16,7 +16,13 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3" *ngIf="hasEditPermission">
-			<button nbButton status="primary" (click)="invite()" class="mr-2">
+			<button
+				nbButton
+				*ngIf="hasInviteEditPermission"
+				status="primary"
+				(click)="invite()"
+				class="mr-2"
+			>
 				<nb-icon class="mr-1" icon="email-outline"></nb-icon
 				>{{ 'BUTTONS.INVITE' | translate }}
 			</button>
