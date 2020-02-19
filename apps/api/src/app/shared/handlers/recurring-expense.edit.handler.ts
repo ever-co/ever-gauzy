@@ -1,10 +1,9 @@
-import { CrudService } from '../../core';
-import { EmployeeRecurringExpense } from '../../employee-recurring-expense';
-import { OrganizationRecurringExpense } from '../../organization-recurring-expense';
 import {
 	RecurringExpenseEditInput,
 	RecurringExpenseModel
 } from '@gauzy/models';
+
+import { CrudService } from '../../core';
 
 /**
  * This edits the value of a recurring expense.

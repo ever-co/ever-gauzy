@@ -8,7 +8,6 @@ import { BadRequestException } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
 
 import { CrudService } from '../../core';
-import { EmployeeRecurringExpense } from '../../employee-recurring-expense';
 
 /**
  * Deletes a OrganizationRecurringExpense based on command.deleteInput.deletionType:
