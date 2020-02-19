@@ -37,9 +37,9 @@ export class ProposalController extends CrudController<Proposal> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
+	@Get()
 	async findAllProposals(
 		@Query('data') data: string
 	): Promise<IPagination<IProposal>> {
@@ -61,9 +61,9 @@ export class ProposalController extends CrudController<Proposal> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/create')
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
+	@Post('/create')
 	async createOrganizationTeam(
 		@Body() entity: IProposalCreateInput,
 		...options: any[]
