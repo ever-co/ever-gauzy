@@ -1,3 +1,4 @@
+import { Tag } from './../../tags';
 import { Tenant } from './../../tenant/tenant.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
@@ -48,7 +49,8 @@ const allEntities = [
 	Country,
 	RolePermissions,
 	Tenant,
-	EmailTemplate
+	EmailTemplate,
+	Tag
 ];
 
 @Injectable()
@@ -177,7 +179,7 @@ export class SeedDataService {
 
 			await createRolePermissions(this.connection, roles);
 
-			// await createEmailTemplates(this.connection);
+			await createEmailTemplates(this.connection);
 
 			this.log(
 				chalk.green(

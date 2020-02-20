@@ -94,9 +94,4 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
-
-	// @ApiProperty({ type: Tenant })
-	// @OneToOne((type) => Tenant, { nullable: false, onDelete: 'CASCADE' })
-	// @JoinColumn()
-	// tenant: Tenant;
 }
