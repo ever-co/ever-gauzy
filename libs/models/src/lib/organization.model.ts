@@ -27,6 +27,8 @@ export interface Organization extends IBaseEntityModel {
 	bonusType?: string;
 	bonusPercentage?: number;
 	tenant: Tenant;
+	invitesAllowed?: boolean;
+	inviteExpiryPeriod?: number;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {

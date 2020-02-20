@@ -13,7 +13,8 @@ import {
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -82,6 +83,7 @@ import { EditOrganizationProjectsMutationComponent } from './edit-organization-p
 		NbTabsetModule,
 		NbRouteTabsetModule,
 		NbDatepickerModule,
+		NbToggleModule,
 		EmployeeSelectorsModule,
 		EntityWithMembersModule,
 		EmployeeMultiSelectModule

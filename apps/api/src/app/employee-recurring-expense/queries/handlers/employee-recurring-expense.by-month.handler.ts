@@ -1,7 +1,7 @@
-import { EmployeeRecurringExpense } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { IPagination } from '../../../core';
+import { FindRecurringExpenseByMonthHandler } from '../../../shared';
+import { EmployeeRecurringExpense } from '../../employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from '../../employee-recurring-expense.service';
 import { EmployeeRecurringExpenseByMonthQuery } from '../employee-recurring-expense.by-month.query';
 
@@ -15,32 +15,19 @@ import { EmployeeRecurringExpenseByMonthQuery } from '../employee-recurring-expe
  */
 @QueryHandler(EmployeeRecurringExpenseByMonthQuery)
 export class EmployeeRecurringExpenseByMonthHandler
+	extends FindRecurringExpenseByMonthHandler<EmployeeRecurringExpense>
 	implements IQueryHandler<EmployeeRecurringExpenseByMonthQuery> {
 	constructor(
 		private readonly employeeRecurringExpenseService: EmployeeRecurringExpenseService
-	) {}
+	) {
+		super(employeeRecurringExpenseService);
+	}
 
 	public async execute(
 		command: EmployeeRecurringExpenseByMonthQuery
 	): Promise<IPagination<EmployeeRecurringExpense>> {
 		const { input } = command;
 
-		const inputStartDate = new Date(input.year, input.month - 1, 1);
-		const expenses = await this.employeeRecurringExpenseService.findAll({
-			where: [
-				{
-					employeeId: input.employeeId,
-					startDate: LessThanOrEqual(inputStartDate),
-					endDate: IsNull()
-				},
-				{
-					employeeId: input.employeeId,
-					startDate: LessThanOrEqual(inputStartDate),
-					endDate: MoreThanOrEqual(inputStartDate)
-				}
-			]
-		});
-
-		return expenses;
+		return await this.executeCommand(input);
 	}
 }

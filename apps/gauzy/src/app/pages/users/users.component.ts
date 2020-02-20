@@ -44,6 +44,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 
 	loading = true;
 	hasEditPermission = false;
+	hasInviteEditPermission = false;
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -75,6 +76,9 @@ export class UsersComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_USERS_EDIT
+				);
+				this.hasInviteEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_INVITE_EDIT
 				);
 			});
 

@@ -118,7 +118,10 @@
 			"ADD_NEW_DEPARTMENT": "Add New Department",
 			"EDIT_DEPARTMENT": "Edit Department",
 			"TYPE_OF_BONUS": "Bonus Type",
-			"BONUS_PERCENTAGE": "Bonus Percentage"
+			"BONUS_PERCENTAGE": "Bonus Percentage",
+			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
+			"ALLOW_USER_INVITES": "Allow Users to send invites",
+			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -171,7 +174,9 @@
 			"VALUE": "Стойност",
 			"SELECT_CURRENCY": "Select Currency",
 			"TYPE_OF_BONUS": "Type of Bonus",
-			"BONUS_PERCENTAGE": "Bonus Percentage"
+			"BONUS_PERCENTAGE": "Bonus Percentage",
+			"ENABLE_INVITES": "Enable Invites",
+			"INVITE_EXPIRY_PERIOD": "Invites valid upto"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -337,6 +342,7 @@
 		"LOCATION": "Location",
 		"SETTINGS": "Настройки",
 		"ROLES": "Roles",
+		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
@@ -360,6 +366,7 @@
 			"GENERAL_SETTINGS": "General Settings",
 			"DESIGN": "Design",
 			"BONUS": "Бонус",
+			"INVITE": "Invites",
 			"CLICK_EMPLOYEE": "Click to edit employee",
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
@@ -378,6 +385,8 @@
 			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
 			"ORG_USERS_VIEW": "View Organization Users",
 			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
+			"ORG_INVITE_VIEW": "View Organization Invites",
+			"ORG_INVITE_EDIT": "Create/Resend/Delete Invites",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
 			"POLICY_VIEW": "View Time Off Policy",

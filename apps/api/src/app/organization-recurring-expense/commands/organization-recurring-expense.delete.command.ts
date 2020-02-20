@@ -1,8 +1,8 @@
 import { RecurringExpenseDeleteInput } from '@gauzy/models';
 import { ICommand } from '@nestjs/cqrs';
 
-export class EmployeeRecurringExpenseDeleteCommand implements ICommand {
-	static readonly type = '[EmployeeRecurringExpense] Delete';
+export class OrganizationRecurringExpenseDeleteCommand implements ICommand {
+	static readonly type = '[OrganizationRecurringExpense] Delete';
 
 	constructor(
 		public readonly id: string,

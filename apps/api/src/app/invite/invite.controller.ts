@@ -2,7 +2,8 @@ import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
 	InviteAcceptInput,
-	InviteResendInput
+	InviteResendInput,
+	PermissionsEnum
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -12,7 +13,10 @@ import {
 	HttpCode,
 	HttpStatus,
 	Post,
-	Query
+	Query,
+	UseGuards,
+	Delete,
+	Param
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -24,6 +28,8 @@ import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { InviteResendCommand } from './commands/invite.resend.command';
+import { Permissions } from './../shared/decorators/permissions';
+import { PermissionGuard } from './../shared/guards/auth/permission.guard';
 
 @ApiTags('Invite')
 @Controller()
@@ -47,6 +53,8 @@ export class InviteController extends CrudController<Invite> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post('/emails')
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	async createManyWithEmailsId(
 		@Body() entity: CreateEmailInvitesInput
 	): Promise<CreateEmailInvitesOutput> {
@@ -143,10 +151,29 @@ export class InviteController extends CrudController<Invite> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
 	async resendInvite(
 		@Body() entity: InviteResendInput
 	): Promise<UpdateResult | Invite> {
 		return this.commandBus.execute(new InviteResendCommand(entity));
+	}
+
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
+	@Delete(':id')
+	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
+		return this.inviteService.delete(id);
 	}
 }
