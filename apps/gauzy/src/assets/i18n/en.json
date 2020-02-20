@@ -72,6 +72,8 @@
 		"EXPIRE_DATE": "Expires",
 		"CLIENTS": "Clients",
 		"DEPARTMENTS": "Departments",
+		"DESCRIPTION": "Description",
+	
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",

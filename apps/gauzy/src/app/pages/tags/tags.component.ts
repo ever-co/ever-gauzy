@@ -1,5 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from '../../@core/services/store.service';
+import { TranslateService } from '@ngx-translate/core';
+import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component'
+import { first } from 'rxjs/operators';
+import { NbDialogService } from '@nebular/theme';
+// import { TagsService } from '../../@core/services/tags.service';
 
 @Component({
 	selector: 'ngx-tags',
@@ -7,28 +11,59 @@ import { Store } from '../../@core/services/store.service';
 	styleUrls: ['./tags.component.scss']
 })
 export class TagsComponent implements OnInit, OnDestroy {
-	// constructor(
-	//   private store: Store
-	// ) { }
+	settingsSmartTable: object;
+	
+	
+
+	constructor(
+		private translate: TranslateService,
+		private dialogService: NbDialogService,
+		// private tagsService: TagsService,
+	) {}
 	loading = false;
-	settings = {
-		columns: {
-			id: {
-				title: 'ID'
-			},
-			name: {
-				title: 'Full Name'
-			},
-			username: {
-				title: 'User Name'
-			},
-			email: {
-				title: 'Email'
+	
+	async ngOnInit() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				fullName: {
+					title: 'Full Name',
+					type: 'string'
+				},
+				description: {
+					title: 'Descpription',
+					type: 'string'
+				},
+				color: {
+					 title: "Color",
+					 type: 'string'
+				}
 			}
-		}
-	};
+		};
 
-	ngOnInit() {}
 
+	}
+	async add(){
+		  
+		// this.dialogService.open(TagsMutationComponent);
+
+	
+	}
+	async delete(){
+
+	}
+	async edit(){
+
+	}
+
+	
+
+	getTranslation(prefix: string) {
+		let result = '';
+		this.translate.get(prefix).subscribe((res) => {
+			result = res;
+		});
+		return result;
+	}
 	ngOnDestroy() {}
 }
