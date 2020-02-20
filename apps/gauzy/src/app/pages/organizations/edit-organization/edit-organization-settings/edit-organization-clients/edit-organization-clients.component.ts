@@ -6,11 +6,12 @@ import {
 	OrganizationProjects
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/translation-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 
@@ -19,7 +20,8 @@ import { first, takeUntil } from 'rxjs/operators';
 	templateUrl: './edit-organization-clients.component.html',
 	styleUrls: ['./edit-organization-clients.component.scss']
 })
-export class EditOrganizationClientsComponent implements OnInit {
+export class EditOrganizationClientsComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	organizationId: string;
@@ -42,8 +44,10 @@ export class EditOrganizationClientsComponent implements OnInit {
 		private readonly toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly employeesService: EmployeesService,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.organizationEditStore.selectedOrganization$
@@ -159,14 +163,5 @@ export class EditOrganizationClientsComponent implements OnInit {
 		await this.loadProjectsWithoutClients();
 		this.clientToEdit = null;
 		this.showAddCard = true;
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 }
