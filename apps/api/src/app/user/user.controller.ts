@@ -8,7 +8,10 @@ import {
 	HttpStatus,
 	Param,
 	Query,
-	UseGuards
+	UseGuards,
+	HttpCode,
+	Post,
+	Body
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
@@ -19,12 +22,35 @@ import { UserService } from './user.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { RequestContext } from '../core/context';
+import { CommandBus } from '@nestjs/cqrs';
+import { UserCreateCommand } from './commands';
+import { UserCreateInput as IUserCreateInput } from '@gauzy/models';
 
 @ApiTags('User')
 @Controller()
 export class UserController extends CrudController<User> {
-	constructor(private readonly userService: UserService) {
+	constructor(
+		private readonly userService: UserService,
+		private readonly commandBus: CommandBus
+	) {
 		super(userService);
+	}
+
+	@ApiOperation({ summary: 'Find current user.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found current user',
+		type: User
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/me')
+	async findCurrentUser(): Promise<User> {
+		const currentUser = RequestContext.currentUser().id;
+		return this.userService.findOne(currentUser);
 	}
 
 	@ApiOperation({ summary: 'Find User by id.' })
@@ -37,8 +63,6 @@ export class UserController extends CrudController<User> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get(':id')
 	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<User> {
 		return this.userService.findOne(id);
@@ -65,5 +89,25 @@ export class UserController extends CrudController<User> {
 			where: findInput,
 			relations
 		});
+	}
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	async create(
+		@Body() entity: IUserCreateInput,
+		...options: any[]
+	): Promise<User> {
+		return this.commandBus.execute(new UserCreateCommand(entity));
 	}
 }
