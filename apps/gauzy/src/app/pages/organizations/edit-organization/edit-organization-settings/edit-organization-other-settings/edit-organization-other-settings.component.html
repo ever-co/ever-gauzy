@@ -279,6 +279,66 @@
 			</div>
 		</nb-card-body>
 	</nb-card>
+
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.INVITE' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<label class="label">
+								{{
+									'FORM.LABELS.ENABLE_DISABLE_INVITES'
+										| translate
+								}}
+							</label>
+							<nb-toggle
+								class="d-block"
+								formControlName="invitesAllowed"
+								status="primary"
+								labelPosition="start"
+								(checkedChange)="toggleExpiry($event)"
+							>
+								{{
+									'FORM.LABELS.ALLOW_USER_INVITES' | translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								{{
+									'FORM.LABELS.INVITE_EXPIRY_PERIOD'
+										| translate
+								}}
+							</label>
+							<input
+								nbInput
+								type="number"
+								formControlName="inviteExpiryPeriod"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.INVITE_EXPIRY_PERIOD'
+										| translate
+								}}"
+								fullWidth
+								class="d-block"
+								[ngClass]="{
+									'status-danger': form.get(
+										'inviteExpiryPeriod'
+									).invalid
+								}"
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
 	<div class="actions">
 		<button
 			[disabled]="this.form.invalid"
