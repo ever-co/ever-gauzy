@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 /**
  * Extends this class to use the getTranslation method
  */
-@Component({ template: '' })
 export abstract class TranslationBaseComponent {
 	constructor(public translateService: TranslateService) {}
 
