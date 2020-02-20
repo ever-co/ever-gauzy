@@ -118,7 +118,10 @@
 			"ADD_NEW_DEPARTMENT": "Добавить новый отдел",
 			"EDIT_DEPARTMENT": "Редактировать отдел",
 			"TYPE_OF_BONUS": "Тип бонуса",
-			"BONUS_PERCENTAGE": "Бонус Процент"
+			"BONUS_PERCENTAGE": "Бонус Процент",
+			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
+			"ALLOW_USER_INVITES": "Allow Users to send invites",
+			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -171,7 +174,9 @@
 			"VALUE": "Стоимость",
 			"SELECT_CURRENCY": "Выберите валюту",
 			"TYPE_OF_BONUS": "Тип бонуса",
-			"BONUS_PERCENTAGE": "Бонус Процент"
+			"BONUS_PERCENTAGE": "Бонус Процент",
+			"ENABLE_INVITES": "Enable Invites",
+			"INVITE_EXPIRY_PERIOD": "Invites valid upto"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -361,6 +366,7 @@
 			"GENERAL_SETTINGS": "Общие настройки",
 			"DESIGN": "Дизайн",
 			"BONUS": "Бонус",
+			"INVITE": "Invites",
 			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
 			"EDIT_PROJECT": "Редактировать проект",
 			"REGIONS": "Регионы",
@@ -379,6 +385,8 @@
 			"ORG_EMPLOYEES_EDIT": "Создать/Редактировать/Удалить Сотрудников Организации",
 			"ORG_USERS_VIEW": "Просмотр пользователей организации",
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
+			"ORG_INVITE_VIEW": "View Organization Invites",
+			"ORG_INVITE_EDIT": "Create/Resend/Delete Invites",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
 			"POLICY_VIEW": "Просмотр политики отключения",
