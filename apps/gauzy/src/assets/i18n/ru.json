@@ -246,7 +246,8 @@
 		"USERS": "Пользователи",
 		"ROLES": "Роли и Разрешения",
 		"DANGER_ZONE": "Опасная зона",
-		"DOWNLOAD_DATA": "Скачать все данные"
+		"DOWNLOAD_DATA": "Скачать все данные",
+		"TAGS": "Теги"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -461,6 +462,9 @@
 			"REQUIRES_APPROVAL": "Требует одобрения",
 			"PAID": "Оплачено"
 		}
+	},
+	"TAGS_PAGE": {
+		"HEADER": "Теги"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
