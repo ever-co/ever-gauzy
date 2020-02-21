@@ -3,7 +3,7 @@
 		"ADD": "Добавяне",
 		"CREATE": "Създаване",
 		"REGISTER": "Регистриране",
-		"ADD_NOTE": "Add note",
+		"ADD_NOTE": "Добави бележка",
 		"EDIT": "Редактиране",
 		"MANAGE": "Управление",
 		"DETAILS": "Детайли",
@@ -18,9 +18,9 @@
 		"CLOSE": "Затваряне",
 		"INVITE": "Покана",
 		"SELECT_ALL": "Селектиране на всички",
-		"COPY_LINK": "Copy Link",
-		"MANAGE_INVITES": "Manage Invites",
-		"RESEND": "Resend"
+		"COPY_LINK": "Копирай линка",
+		"MANAGE_INVITES": "Управлявай поканите",
+		"RESEND": "Преизпрати"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -39,7 +39,7 @@
 		"EXPENSES": "Разходи (Средно)",
 		"BONUS": "Бонус",
 		"BONUS_AVG": "Бонус (Средно)",
-		"PROFIT_BASED_BONUS": "Profit Based Bonus",
+		"PROFIT_BASED_BONUS": "Бонус въз основа на печалбата",
 		"REVENUE_BASED_BONUS": "Revenue Based Bonus",
 		"STATUS": "Статус",
 		"WORK_STATUS": "Работен статус",
