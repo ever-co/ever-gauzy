@@ -100,17 +100,17 @@ export class InviteService extends CrudService<Invite> {
 			invitedById
 		} = emailInvites;
 
-		// const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
-		// 	projectIds || []
-		// );
+		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
+			projectIds || []
+		);
 
-		// const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findByIds(
-		// 	departmentIds || []
-		// );
+		const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findByIds(
+			departmentIds || []
+		);
 
-		// const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
-		// 	clientIds || []
-		// );
+		const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
+			clientIds || []
+		);
 
 		const organization: Organization = await this.organizationRepository.findOne(
 			organizationId
