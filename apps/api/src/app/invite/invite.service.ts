@@ -3,9 +3,9 @@ import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
 	InviteStatusEnum,
-	OrganizationProjects as IOrganizationProjects,
-	OrganizationClients as IOrganizationClients,
-	OrganizationDepartment as IOrganizationDepartment
+	// OrganizationProjects as IOrganizationProjects,
+	// OrganizationClients as IOrganizationClients,
+	// OrganizationDepartment as IOrganizationDepartment
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -84,9 +84,9 @@ export class InviteService extends CrudService<Invite> {
 		const {
 			emailIds,
 			roleId,
-			projectIds,
-			clientIds,
-			departmentIds,
+			// projectIds,
+			// clientIds,
+			// departmentIds,
 			organizationId,
 			invitedById
 		} = emailInvites;
