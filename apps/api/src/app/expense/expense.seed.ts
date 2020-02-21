@@ -78,7 +78,7 @@ export const createExpenses = async (
 		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
 
 		expense.organization = randomData.orgs[index % 5];
-		expense.employee = randomData.employees[currentIndex];
+		// expense.employee = randomData.employees[currentIndex];
 		expense.amount = faker.random.number({ min: 10, max: 999 });
 		expense.vendorName = vendorsArray[currentIndex];
 		expense.vendorId = faker.random
