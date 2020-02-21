@@ -93,17 +93,17 @@ export class InviteService extends CrudService<Invite> {
 		const expireDate = new Date();
 		expireDate.setDate(expireDate.getDate() + 7);
 
-		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
-			projectIds || []
-		);
+		// const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
+		// 	projectIds || []
+		// );
 
-		const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findByIds(
-			departmentIds || []
-		);
+		// const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findByIds(
+		// 	departmentIds || []
+		// );
 
-		const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
-			clientIds || []
-		);
+		// const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
+		// 	clientIds || []
+		// );
 
 		const existingInvites = (await this.repository
 			.createQueryBuilder('invite')
