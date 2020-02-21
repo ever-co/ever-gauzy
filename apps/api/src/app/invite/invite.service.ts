@@ -17,6 +17,7 @@ import { Invite } from './invite.entity';
 import * as nodemailer from 'nodemailer';
 import { OrganizationClients } from '../organization-clients';
 import { OrganizationDepartment } from '../organization-department';
+import { Organization } from '../organization';
 
 @Injectable()
 export class InviteService extends CrudService<Invite> {
@@ -35,7 +36,9 @@ export class InviteService extends CrudService<Invite> {
 		@InjectRepository(OrganizationDepartment)
 		private readonly organizationDepartmentRepository: Repository<
 			OrganizationDepartment
-		>
+		>,
+		@InjectRepository(Organization)
+		private readonly organizationRepository: Repository<Organization>
 	) {
 		super(inviteRepository);
 	}
@@ -90,8 +93,6 @@ export class InviteService extends CrudService<Invite> {
 			organizationId,
 			invitedById
 		} = emailInvites;
-		const expireDate = new Date();
-		expireDate.setDate(expireDate.getDate() + 7);
 
 		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
 			projectIds || []
@@ -105,11 +106,25 @@ export class InviteService extends CrudService<Invite> {
 			clientIds || []
 		);
 
-		const existingInvites = (await this.repository
-			.createQueryBuilder('invite')
-			.select('invite.email')
-			.where('invite.email IN (:...emails)', { emails: emailIds })
-			.getMany()).map((invite) => invite.email);
+		const organization: Organization = await this.organizationRepository.findOne(
+			organizationId
+		);
+
+		const inviteExpiryPeriod =
+			organization && organization.inviteExpiryPeriod
+				? organization.inviteExpiryPeriod
+				: 7;
+
+		const expireDate = new Date();
+		expireDate.setDate(expireDate.getDate() + inviteExpiryPeriod);
+
+		const existingInvites = (
+			await this.repository
+				.createQueryBuilder('invite')
+				.select('invite.email')
+				.where('invite.email IN (:...emails)', { emails: emailIds })
+				.getMany()
+		).map((invite) => invite.email);
 
 		const invitesToCreate = emailIds.filter(
 			(email) => existingInvites.indexOf(email) < 0
