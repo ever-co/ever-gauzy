@@ -466,7 +466,8 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags"
+		"HEADER": "Tags",
+		"ADD_TAGS": "Add Tags"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
