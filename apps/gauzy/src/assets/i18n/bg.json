@@ -319,13 +319,13 @@
 		"BACK_TO_WORK": "Връщане на работа",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
 		"EDIT_EMPLOYEE": {
-			"HEADER": "Редактирай служител",
+			"HEADER": "Редактирай служителя",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция",
-			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителите:",
-			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:"
+			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
+			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
+			"EMPLOYEE_CLIENTS": "Клиенти на служителя:"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
