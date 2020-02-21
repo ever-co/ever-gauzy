@@ -317,15 +317,15 @@
 		"RECURRING_EXPENSE_EDIT": "Редактирай текущите и всички бъдещи разходи. Няма да има промяна по ...",
 		"RECURRING_EXPENSE_ADD": "Това ще добави разход повтарящи се ежемесечно.",
 		"BACK_TO_WORK": "Връщане на работа",
-		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
 		"EDIT_EMPLOYEE": {
-			"HEADER": "Manage Employee",
+			"HEADER": "Редактирай служителя",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция",
-			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
-			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:"
+			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
+			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
+			"EMPLOYEE_CLIENTS": "Клиенти на служителя:"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
