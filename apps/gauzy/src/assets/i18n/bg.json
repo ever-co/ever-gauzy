@@ -288,22 +288,22 @@
 			"NOTE": "Забележка: отрицателните бонуси трябва да се приспадат през следващите месеци от положителните бонуси преди окончателните плащания на бонуси",
 			"BONUS": "Бонус"
 		},
-		"ADD_INCOME": "Add New Income Entry",
-		"ADD_EXPENSE": "Add New Expense Entry"
+		"ADD_INCOME": "Добавете ново въвеждане на доходи",
+		"ADD_EXPENSE": "Добавете ново въвеждане на разходи"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Доход",
-		"BONUS_HELP": "If set, company % fee will NOT be applied to the Bonus Income",
-		"BONUS_TOOLTIP": "This is a direct bonus"
+		"BONUS_HELP": "Ако е зададено, процента такса от компанията няма да бъде добавен към бонуса",
+		"BONUS_TOOLTIP": "Това е директен бонус"
 	},
 	"EXPENSES_PAGE": {
 		"EXPENSES": "Разходи",
 		"MUTATION": {
-			"CLIENT_IS_REQUIRED!": "Client is required!",
-			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Please select a Client from the dropdown menu below or change Expense type setting.",
-			"ASSIGN_TO": "Assign to",
-			"INCLUDE_TAXES": "Include Taxes",
-			"ATTACH_A_RECEIPT": "Attach a receipt"
+			"CLIENT_IS_REQUIRED!": "Клиентът е задължителен!",
+			"PLEASE_SELECT_A_CLIENT_OR_CHANGE_EXPENSE_TYPE": "Моля селектирай клиент от падащото меню по-долу или промени ...",
+			"ASSIGN_TO": "Възложи на",
+			"INCLUDE_TAXES": "Включете такси",
+			"ATTACH_A_RECEIPT": "Приложете разписка"
 		}
 	},
 	"EMPLOYEES_PAGE": {
@@ -312,7 +312,7 @@
 		"ACTIVE": "Активен",
 		"END_WORK": "Край на работа",
 		"WORK_ENDED": "Завършена работа",
-		"DELETED": "Deleted",
+		"DELETED": "Изтрит",
 		"RECURRING_EXPENSE": "Employee Recurring Expense",
 		"RECURRING_EXPENSE_EDIT": "Edit the current & all future expenses. There will be no change to any past expense.",
 		"RECURRING_EXPENSE_ADD": "This will add an expense recurring every month.",
