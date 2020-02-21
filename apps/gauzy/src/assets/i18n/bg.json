@@ -253,8 +253,8 @@
 		"THEMES": "Теми",
 		"LIGHT": "Светла",
 		"DARK": "Тъмна",
-		"COSMIC": "Cosmic",
-		"CORPORATE": "Corporate",
+		"COSMIC": "Космическа",
+		"CORPORATE": "Корпоративна",
 		"LANGUAGE": "Език (Language)",
 		"ENGLISH": "English",
 		"BULGARIAN": "Български",
@@ -264,27 +264,27 @@
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
-		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
+		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Добави текст за неаутентикирани потребители",
 		"PROFIT_HISTORY": {
-			"PROFIT_REPORT": "Profit Report",
+			"PROFIT_REPORT": "Репорт на печалбата",
 			"TOTAL_EXPENSES": "Общи разходи",
 			"TOTAL_INCOME": "Общ доход",
-			"TOTAL_PROFIT": "Total Profit"
+			"TOTAL_PROFIT": "Печалба Общо"
 		},
 		"TITLE": {
-			"PROFIT_REPORT": "Profit Report",
+			"PROFIT_REPORT": "Репорт на Печалбата",
 			"TOTAL_EXPENSES": "Общи разходи",
 			"TOTAL_INCOME": "Общ доход",
 			"PROFIT": "Печалба",
-			"TOTAL_BONUS": "Total Bonus"
+			"TOTAL_BONUS": "Бонус Общо"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
-			"AVERAGE_BONUS": "Average Monthly Bonus",
+			"AVERAGE_BONUS": "Средно Месечен Бонус",
 			"TOTAL_INCOME": "Общ доход",
 			"TOTAL_EXPENSES": "Общи разходи",
 			"PROFIT": "Печалба",
-			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
+			"PROFIT_CALC": "Печалба (НЕТО) = Общо Печалба - Общо Разходи",
 			"NOTE": "Забележка: отрицателните бонуси трябва да се приспадат през следващите месеци от положителните бонуси преди окончателните плащания на бонуси",
 			"BONUS": "Бонус"
 		},
