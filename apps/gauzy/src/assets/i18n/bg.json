@@ -244,10 +244,10 @@
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни",
 		"USERS": "Потребители",
-		"ROLES": "Roles & Permissions",
-		"DANGER_ZONE": "Danger Zone",
-		"DOWNLOAD_DATA": "Download all data",
-		"TAGS": "Tags"
+		"ROLES": "Роли и Позволения",
+		"DANGER_ZONE": "Опасна Зона",
+		"DOWNLOAD_DATA": "Изтегли всички данни",
+		"TAGS": "Тагове"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
