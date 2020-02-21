@@ -18,7 +18,6 @@ import { of, throwError } from 'rxjs';
 import { Base } from '../entities/base';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
-
 import { environment as env } from '@env-api/environment';
 import * as bcrypt from 'bcrypt';
 

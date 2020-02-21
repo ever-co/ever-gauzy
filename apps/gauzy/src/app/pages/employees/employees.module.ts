@@ -22,7 +22,6 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { EmployeeEndWorkModule } from '../../@shared/employee/employee-end-work-popup/employee-end-work.module';
 import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation/employee-mutation.module';
-import { EmployeeRecurringExpenseMutationModule } from '../../@shared/employee/employee-recurring-expense-mutation/employee-recurring-expense-mutation.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
@@ -45,6 +44,7 @@ import { EditEmployeeDepartmentComponent } from './edit-employee/edit-employee-p
 import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-employee-membership-form/edit-employee-membership-form.module';
 import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
 import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
+import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -85,7 +85,7 @@ const COMPONENTS = [
 		NbTooltipModule,
 		NgSelectModule,
 		NbSelectModule,
-		EmployeeRecurringExpenseMutationModule,
+		RecurringExpenseMutationModule,
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,

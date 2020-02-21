@@ -315,7 +315,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 			data.orgRecurringexpense.length
 		) {
 			viewDashboardExpenseHistory = data.orgRecurringexpense.map((e) => ({
-				valueDate: new Date(e.year, e.month),
+				valueDate: new Date(e.startYear, e.startMonth),
 				categoryName: e.categoryName,
 				amount: e.value,
 				recurring: true,

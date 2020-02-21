@@ -2,13 +2,14 @@ import { Component, Output, EventEmitter } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { NbToastrService } from '@nebular/theme';
+import { TranslationBaseComponent } from '../../translation-base/translation-base.component';
 
 @Component({
 	selector: 'ga-danger-zone-mutation',
 	templateUrl: './danger-zone-mutation.component.html',
 	styleUrls: ['./danger-zone-mutation.component.scss']
 })
-export class DangerZoneMutationComponent {
+export class DangerZoneMutationComponent extends TranslationBaseComponent {
 	recordType: string;
 
 	@Output() emitData: EventEmitter<string> = new EventEmitter<string>();
@@ -19,7 +20,9 @@ export class DangerZoneMutationComponent {
 		protected dialogRef: NbDialogRef<DangerZoneMutationComponent>,
 		private translate: TranslateService,
 		private toastrService: NbToastrService
-	) {}
+	) {
+		super(translate);
+	}
 
 	close() {
 		this.dialogRef.close();
@@ -40,13 +43,5 @@ export class DangerZoneMutationComponent {
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translate.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 }

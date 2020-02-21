@@ -1,0 +1,23 @@
+<nb-card
+	class="tags-component"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
+	<nb-card-header>
+		<h4>
+			{{ 'TAGS_PAGE.HEADER' | translate }}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<button nbButton status="info" class="mr-2">
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button nbButton status="danger" class="mr-2">
+			<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+		<ngx-search-input class="search"></ngx-search-input>
+	</nb-card-body>
+</nb-card>
