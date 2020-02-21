@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 @Component({
 	selector: 'ngx-tags-mutation',

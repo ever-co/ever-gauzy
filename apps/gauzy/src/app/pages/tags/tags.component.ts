@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component'
-import { first } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 // import { TagsService } from '../../@core/services/tags.service';
@@ -13,7 +12,7 @@ import { Subject } from 'rxjs';
 })
 export class TagsComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	private _ngDEstroy$ = new Subject<void>()
+	// private _ngDEstroy$ = new Subject<void>()
 	
 	
 

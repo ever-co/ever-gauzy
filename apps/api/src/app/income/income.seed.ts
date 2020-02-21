@@ -63,7 +63,7 @@ export const createIncomes = async (
 		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
 
 		income.organization = randomData.orgs[index % 5];
-		income.employee = randomData.employees[currentIndex];
+		// income.employee = randomData.employees[currentIndex];
 		income.clientName = clientsArray[currentIndex];
 		income.amount = faker.random.number({ min: 10, max: 9999 });
 		income.clientId = faker.random

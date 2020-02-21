@@ -127,9 +127,9 @@ export class InviteService extends CrudService<Invite> {
 			invite.invitedById = invitedById;
 			invite.status = InviteStatusEnum.INVITED;
 			invite.expireDate = expireDate;
-			invite.projects = projects;
-			invite.departments = departments;
-			invite.clients = clients;
+			// invite.projects = projects;
+			// invite.departments = departments;
+			// invite.clients = clients;
 
 			invites.push(invite);
 		}
