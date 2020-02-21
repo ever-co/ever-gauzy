@@ -28,10 +28,36 @@
 					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.NAME' | translate
 					}}"
+					[status]="
+						form.controls.name.touched
+							? form.controls.name.value == 0
+								? 'danger'
+								: 'basic'
+							: 'basic'
+					"
+					[attr.aria-invalid]="
+						form.controls.name.invalid && form.controls.name.touched
+							? true
+							: null
+					"
 				/>
+				<ng-container
+					*ngIf="
+						form.controls.name.invalid && form.controls.name.touched
+					"
+				>
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryEmail.errors?.required"
+					>
+						Name is required!
+					</p>
+				</ng-container>
 			</div>
 			<div class="form-group col-4">
 				<input
+					autofocus
+					pattern=".+@.+\..+"
 					type="email"
 					#email
 					nbInput
@@ -40,10 +66,43 @@
 					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
 					}}"
+					[status]="
+						form.controls.primaryEmail.dirty
+							? form.controls.primaryEmail.invalid
+								? 'danger'
+								: 'basic'
+							: 'basic'
+					"
+					[attr.aria-invalid]="
+						form.controls.primaryEmail.invalid &&
+						form.controls.primaryEmail.touched
+							? true
+							: null
+					"
 				/>
+				<ng-container
+					*ngIf="
+						form.controls.primaryEmail.invalid &&
+						form.controls.primaryEmail.touched
+					"
+				>
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryEmail.errors?.required"
+					>
+						Email is required!
+					</p>
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryEmail.errors?.pattern"
+					>
+						Email should be a real one!
+					</p>
+				</ng-container>
 			</div>
 			<div class="form-group col-4">
 				<input
+					pattern="[0-9]{0,30}"
 					type="text"
 					#phone
 					nbInput
@@ -52,7 +111,39 @@
 					placeholder="{{
 						'ORGANIZATIONS_PAGE.EDIT.PHONE' | translate
 					}}"
+					[status]="
+						form.controls.primaryPhone.dirty
+							? form.controls.primaryPhone.invalid
+								? 'danger'
+								: 'basic'
+							: 'basic'
+					"
+					[attr.aria-invalid]="
+						form.controls.primaryPhone.invalid &&
+						form.controls.primaryPhone.touched
+							? true
+							: null
+					"
 				/>
+				<ng-container
+					*ngIf="
+						form.controls.primaryPhone.invalid &&
+						form.controls.primaryPhone.touched
+					"
+				>
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryPhone.errors?.required"
+					>
+						Phone is required!
+					</p>
+					<p
+						class="caption status-danger"
+						*ngIf="form.controls.primaryPhone.errors?.pattern"
+					>
+						Phone should only contain numbers!
+					</p>
+				</ng-container>
 			</div>
 			<div class="form-group col-4">
 				<input
