@@ -49,7 +49,7 @@ const pathToEmailTemplate = async (
 	fullPath: string
 ): Promise<EmailTemplate> => {
 	const template = new EmailTemplate();
-	const templatePath = path.split('/');
+	const templatePath = path.replace(/\\/g, '/').split('/');
 	if (templatePath.length !== 3) {
 		return;
 	}
