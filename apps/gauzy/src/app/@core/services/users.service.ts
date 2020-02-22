@@ -34,4 +34,11 @@ export class UsersService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	delete(userId, user) {
+		return this.http
+			.delete(`/api/user/${userId}`, user)
+			.pipe(first())
+			.toPromise();
+	}
 }

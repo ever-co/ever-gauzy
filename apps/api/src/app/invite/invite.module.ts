@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from '../auth';
+import { EmailModule } from '../email/email.module';
+import { EmailService } from '../email/email.service';
 import { Employee, EmployeeService } from '../employee';
 import {
 	OrganizationClients,
@@ -21,8 +23,6 @@ import {
 	UserOrganization,
 	UserOrganizationService
 } from '../user-organization';
-import { EmailModule } from '../email-templates/email.module';
-import { EmailService } from '../email-templates/email.service';
 import { CommandHandlers } from './commands/handlers';
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';

@@ -1,27 +1,27 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { AuthController } from './auth.controller';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserService, User } from '../user';
+import { authenticate } from 'passport';
+import { EmailModule, EmailService } from '../email';
+import { User, UserService } from '../user';
+import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
-import { CqrsModule } from '@nestjs/cqrs';
-import { RoleService, Role } from '../role';
-import { GoogleStrategy } from './google.strategy';
-import { authenticate } from 'passport';
 import { FacebookStrategy } from './facebook.strategy';
-import { EmailService, EmailModule } from '../email-templates';
+import { GoogleStrategy } from './google.strategy';
+import { JwtStrategy } from './jwt.strategy';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([User, Role]), EmailModule, CqrsModule],
+	imports: [TypeOrmModule.forFeature([User]), EmailModule, CqrsModule],
 	controllers: [AuthController],
 	providers: [
 		AuthService,
 		UserService,
-		RoleService,
 		EmailService,
 		...CommandHandlers,
 		GoogleStrategy,
-		FacebookStrategy
+		FacebookStrategy,
+		JwtStrategy
 	],
 	exports: [AuthService]
 })

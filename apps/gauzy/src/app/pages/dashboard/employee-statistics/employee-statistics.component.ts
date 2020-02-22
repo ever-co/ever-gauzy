@@ -4,14 +4,14 @@ import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { ExpensesService } from '../../../@core/services/expenses.service';
-import { AuthService } from '../../../@core/services/auth.service';
 import {
 	Income,
 	Expense,
 	EmployeeRecurringExpense,
 	OrganizationRecurringExpense,
 	BonusTypeEnum,
-	Organization
+	Organization,
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import {
@@ -56,6 +56,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	avarageBonus: number;
 
 	incomeData: Income[];
+	expensesData: Expense[];
 	expenseData: ViewDashboardExpenseHistory[];
 	employeeRecurringexpense: EmployeeRecurringExpense[];
 	orgRecurringexpense: OrganizationRecurringExpense[];
@@ -64,10 +65,12 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	expenseCurrency: string;
 	defaultCurrency: string;
 
+	incomePermissionsError = false;
+	expensePermissionError = false;
+
 	constructor(
 		private incomeService: IncomeService,
 		private expenseService: ExpensesService,
-		private authService: AuthService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeStatisticsService: EmployeeStatisticsService,
@@ -144,21 +147,35 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployeeTotalIncome() {
-		const { items } = await this.incomeService.getAll(
-			['employee', 'organization'],
-			{
-				employee: {
-					id: this.selectedEmployee.id
-				}
-			},
-			this.selectedDate
-		);
+		try {
+			const { items } = this.store.hasPermission(
+				PermissionsEnum.ORG_INCOMES_VIEW
+			)
+				? await this.incomeService.getAll(
+						['employee', 'organization'],
+						{
+							employee: {
+								id: this.selectedEmployee.id
+							}
+						},
+						this.selectedDate
+				  )
+				: await this.incomeService.getMyAll(
+						['employee', 'organization'],
+						{},
+						this.selectedDate
+				  );
 
-		this.incomeData = items;
-		this.totalIncome = items.reduce((a, b) => a + +b.amount, 0);
+			this.incomeData = items;
+		} catch (error) {
+			this.incomeData = [];
+			this.incomePermissionsError = true;
+		}
 
-		if (items.length && this.totalIncome !== 0) {
-			const firstItem = items[0];
+		this.totalIncome = this.incomeData.reduce((a, b) => a + +b.amount, 0);
+
+		if (this.incomeData.length && this.totalIncome !== 0) {
+			const firstItem = this.incomeData[0];
 
 			this.incomeCurrency = firstItem.currency;
 			this.defaultCurrency = firstItem.organization.currency;
@@ -166,6 +183,30 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployeeTotalExpense() {
+		try {
+			const { items } = this.store.hasPermission(
+				PermissionsEnum.ORG_EXPENSES_VIEW
+			)
+				? await this.expenseService.getAll(
+						['employee', 'organization'],
+						{
+							employee: {
+								id: this.selectedEmployee.id
+							}
+						},
+						this.selectedDate
+				  )
+				: await this.expenseService.getMyAll(
+						['employee', 'organization'],
+						{},
+						this.selectedDate
+				  );
+
+			this.expensesData = items;
+		} catch (error) {
+			this.expensesData = [];
+			this.expensePermissionError = true;
+		}
 		await this._loadExpense();
 		const profit = this.totalIncome - Math.abs(this.totalExpense);
 		this.difference = profit;
@@ -274,7 +315,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 			data.orgRecurringexpense.length
 		) {
 			viewDashboardExpenseHistory = data.orgRecurringexpense.map((e) => ({
-				valueDate: new Date(e.year, e.month),
+				valueDate: new Date(e.startYear, e.startMonth),
 				categoryName: e.categoryName,
 				amount: e.value,
 				recurring: true,

@@ -1,90 +1,107 @@
-import { Connection } from "typeorm";
+import { Tenant } from '../tenant';
+import { Connection } from 'typeorm';
 import { Employee } from './employee.entity';
 import { Organization } from '../organization';
 import { User } from '../user';
 
 export const createEmployees = async (
-    connection: Connection,
-    defaultData: {
-        org: Organization
-        users: User[]
-    },
-    randomData: {
-        orgs: Organization[]
-        users: User[]
-    }
-): Promise<{ defaultEmployees: Employee[], randomEmployees: Employee[] }> => {
-    const defaultEmployees: Employee[] = await createDefaultEmployees(
-        connection, defaultData
-    );
+	connection: Connection,
+	defaultData: {
+		tenant: Tenant[];
+		org: Organization;
+		users: User[];
+	},
+	randomData: {
+		orgs: Organization[];
+		users: User[];
+		// tenant: Tenant[];
+	}
+): Promise<{ defaultEmployees: Employee[]; randomEmployees: Employee[] }> => {
+	const defaultEmployees: Employee[] = await createDefaultEmployees(
+		connection,
+		defaultData
+	);
 
-    const randomEmployees: Employee[] = await createRandomEmployees(
-        connection, randomData
-    );
+	const randomEmployees: Employee[] = await createRandomEmployees(
+		connection,
+		randomData
+	);
 
-    return { defaultEmployees, randomEmployees }
+	return { defaultEmployees, randomEmployees };
 };
 
-const createDefaultEmployees = async (connection: Connection,
-    defaultData: {
-        org: Organization
-        users: User[]
-    }): Promise<Employee[]> => {
-    let employee: Employee;
-    const employees: Employee[] = [];
-    const defaultUsers = defaultData.users;
-    const defaultOrg = defaultData.org;
+const createDefaultEmployees = async (
+	connection: Connection,
+	defaultData: {
+		tenant: Tenant[];
+		org: Organization;
+		users: User[];
+	}
+): Promise<Employee[]> => {
+	let employee: Employee;
+	const employees: Employee[] = [];
+	const defaultUsers = defaultData.users;
+	const defaultOrg = defaultData.org;
+	const defaultTenants = defaultData.tenant;
 
-    for (const user of defaultUsers) {
-        employee = new Employee();
-        employee.organization = defaultOrg;
-        employee.user = user;
+	console.dir(defaultTenants);
+	let counter = 0;
+	for (const user of defaultUsers) {
+		employee = new Employee();
+		employee.organization = defaultOrg;
+		employee.user = user;
+		employee.tenant = defaultTenants[counter];
+		await insertEmployee(connection, employee);
+		employees.push(employee);
+		counter++;
+	}
 
-        await insertEmployee(connection, employee);
+	console.dir(employees);
+	return employees;
+};
 
-        employees.push(employee);
-    }
+const createRandomEmployees = async (
+	connection: Connection,
+	randomData: {
+		orgs: Organization[];
+		users: User[];
+	}
+): Promise<Employee[]> => {
+	let employee: Employee;
+	const employees: Employee[] = [];
+	const randomUsers = randomData.users;
+	const randomOrgs = randomData.orgs;
 
-    return employees;
-}
+	const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
 
-const createRandomEmployees = async (connection: Connection,
-    randomData: {
-        orgs: Organization[]
-        users: User[]
-    }): Promise<Employee[]> => {
-    let employee: Employee;
-    const employees: Employee[] = [];
-    const randomUsers = randomData.users;
-    const randomOrgs = randomData.orgs;
+	for (const orgs of randomOrgs) {
+		if (randomUsers.length) {
+			for (let index = 0; index < averageUsersCount; index++) {
+				employee = new Employee();
+				employee.organization = orgs;
+				employee.user = randomUsers.pop();
+				employee.isActive = true;
+				employee.endWork = null;
 
-    const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
+				if (employee.user) {
+					await insertEmployee(connection, employee);
+					employees.push(employee);
+				}
+			}
+		}
+	}
 
-    for (const orgs of randomOrgs) {
-        if (randomUsers.length) {
-            for (let index = 0; index < averageUsersCount; index++) {
-                employee = new Employee();
-                employee.organization = orgs;
-                employee.user = randomUsers.pop();
-                employee.isActive = true;
-                employee.endWork = null;
+	return employees;
+};
 
-                if (employee.user) {
-                    await insertEmployee(connection, employee);
-                    employees.push(employee);
-                }
-            }
-        }
-    }
-
-    return employees;
-}
-
-const insertEmployee = async (connection: Connection, employee: Employee): Promise<void> => {
-    await connection
-        .createQueryBuilder()
-        .insert()
-        .into(Employee)
-        .values(employee)
-        .execute();
-}
+const insertEmployee = async (
+	connection: Connection,
+	employee: Employee
+): Promise<void> => {
+	await connection
+		.createQueryBuilder()
+		.insert()
+		.into(Employee)
+		.values(employee)
+		.execute();
+};

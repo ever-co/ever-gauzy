@@ -44,6 +44,7 @@ export class UsersComponent implements OnInit, OnDestroy {
 
 	loading = true;
 	hasEditPermission = false;
+	hasInviteEditPermission = false;
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -75,6 +76,9 @@ export class UsersComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_USERS_EDIT
+				);
+				this.hasInviteEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_INVITE_EDIT
 				);
 			});
 
@@ -112,10 +116,14 @@ export class UsersComponent implements OnInit, OnDestroy {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
 			}
 			this.toastrService.primary(
-				this.userName.trim() +
-					' added to ' +
-					this.store.selectedOrganization.name,
-				'Success'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
+					{
+						username: this.userName.trim(),
+						orgname: this.store.selectedOrganization.name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
 			this.loadPage();
@@ -161,15 +169,25 @@ export class UsersComponent implements OnInit, OnDestroy {
 						);
 
 						this.toastrService.primary(
-							this.userName + ' set as inactive.',
-							'Success'
+							this.getTranslation(
+								'NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION',
+								{
+									username: this.userName
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
 
 						this.loadPage();
 					} catch (error) {
 						this.toastrService.danger(
-							error.error.message || error.message,
-							'Error'
+							this.getTranslation(
+								'NOTES.ORGANIZATIONS.DATA_ERROR',
+								{
+									error: error.error.message || error.message
+								}
+							),
+							this.getTranslation('TOASTR.TITLE.ERROR')
 						);
 					}
 				}
@@ -248,9 +266,9 @@ export class UsersComponent implements OnInit, OnDestroy {
 		};
 	}
 
-	getTranslation(prefix: string) {
+	getTranslation(prefix: string, params?: Object) {
 		let result = '';
-		this.translate.get(prefix).subscribe((res) => {
+		this.translate.get(prefix, params).subscribe((res) => {
 			result = res;
 		});
 		return result;

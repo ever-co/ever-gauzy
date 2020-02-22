@@ -6,10 +6,12 @@ import {
 	OrganizationProjects
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/translation-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 
@@ -18,7 +20,8 @@ import { first, takeUntil } from 'rxjs/operators';
 	templateUrl: './edit-organization-clients.component.html',
 	styleUrls: ['./edit-organization-clients.component.scss']
 })
-export class EditOrganizationClientsComponent implements OnInit {
+export class EditOrganizationClientsComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	organizationId: string;
@@ -40,8 +43,11 @@ export class EditOrganizationClientsComponent implements OnInit {
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		private readonly employeesService: EmployeesService
-	) {}
+		private readonly employeesService: EmployeesService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.organizationEditStore.selectedOrganization$
@@ -60,8 +66,13 @@ export class EditOrganizationClientsComponent implements OnInit {
 		await this.organizationClientsService.delete(id);
 
 		this.toastrService.primary(
-			`Client ${name} successfully removed!`,
-			'Success'
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.REMOVE_CLIENT',
+				{
+					name: name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 
 		this.loadClients();
@@ -75,15 +86,24 @@ export class EditOrganizationClientsComponent implements OnInit {
 			this.selectProjects = [];
 
 			this.toastrService.primary(
-				`New client ${client.name} successfully added!`,
-				'Success'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					{
+						name: client.name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
 			this.loadClients();
 		} else {
 			this.toastrService.danger(
-				'Please check the Name, Primary Email and Primary Phone of your client',
-				'Invalid input'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.INVALID_CLIENT_DATA'
+				),
+				this.getTranslation(
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_CLIENT_INVALID_DATA'
+				)
 			);
 		}
 	}

@@ -34,8 +34,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			home: true,
 			data: {
 				translated: false,
-				translationKey: 'MENU.DASHBOARD',
-				permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW]
+				translationKey: 'MENU.DASHBOARD'
 			}
 		},
 		{
@@ -77,6 +76,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translated: false,
 				translationKey: 'MENU.TIME_OFF',
 				permissionKeys: [PermissionsEnum.POLICY_VIEW]
+			}
+		},
+		{
+			title: 'Tags',
+			icon: 'pricetags-outline',
+			link: '/pages/tags',
+			data: {
+				translated: false,
+				translationKey: 'MENU.TAGS'
+				//   permissionKeys: [],
 			}
 		},
 		{
@@ -207,6 +216,17 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Download all data',
+			icon: 'arrow-circle-down-outline',
+			link: '/pages/download',
+			data: {
+				translated: false,
+				//permissionKeys: false,
+				translationKey: 'MENU.DOWNLOAD_DATA'
+			}
+		},
+
+		{
 			title: 'Settings',
 			icon: 'settings-outline',
 			data: {
@@ -231,6 +251,14 @@ export class PagesComponent implements OnInit, OnDestroy {
 						permissionKeys: [
 							PermissionsEnum.CHANGE_ROLES_PERMISSIONS
 						]
+					}
+				},
+				{
+					title: 'Danger Zone',
+					link: '/pages/settings/danger-zone',
+					data: {
+						translated: false,
+						translationKey: 'MENU.DANGER_ZONE'
 					}
 				}
 			]

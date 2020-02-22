@@ -2,7 +2,8 @@
 	<nb-card-header>{{
 		(project
 			? 'ORGANIZATIONS_PAGE.EDIT.EDIT_PROJECT'
-			: 'ORGANIZATIONS_PAGE.EDIT.NEW_PROJECT') | translate
+			: 'ORGANIZATIONS_PAGE.EDIT.NEW_PROJECT'
+		) | translate
 	}}</nb-card-header>
 	<nb-card-body>
 		<div class="form-group">
@@ -58,7 +59,6 @@
 					fullWidth
 					placeholder="{{ 'FORM.PLACEHOLDERS.CURRENCY' | translate }}"
 					formControlName="currency"
-					disabled
 				>
 					<nb-option
 						*ngFor="let currency of currencies"
@@ -100,6 +100,9 @@
 				>
 				</ga-employee-multi-select>
 			</div>
+			<!-- <div class="form-group col-4">
+				<input type="checkbox"  formControlName="Private" checked="Private">Private?
+			</div> -->
 		</form>
 	</nb-card-body>
 </nb-card>

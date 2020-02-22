@@ -1,11 +1,11 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { get, post, Response } from 'request';
-import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
-import { User, UserService } from '../user';
 import { environment as env, environment } from '@env-api/environment';
 import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
-import { EmailService } from '../email-templates/email.service';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
+import { get, post, Response } from 'request';
+import { EmailService } from '../email/email.service';
+import { User, UserService } from '../user';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -54,7 +54,8 @@ export class AuthService {
 	}
 
 	async requestPassword(
-		findObj: any
+		findObj: any,
+		originUrl?: string
 	): Promise<{ id: string; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
 			relations: ['role']
@@ -69,7 +70,7 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
-				this.emailService.requestPassword(user, url);
+				this.emailService.requestPassword(user, url, originUrl);
 
 				return {
 					id: user.id,
@@ -112,9 +113,18 @@ export class AuthService {
 				: {})
 		});
 
-		this.emailService.welcomeUser(input.user);
+		this.emailService.welcomeUser(input.user, input.originalUrl);
 
 		return user;
+	}
+
+	async getAuthenticatedUser(
+		id: string,
+		thirdPartyId?: string
+	): Promise<User> {
+		return thirdPartyId
+			? this.userService.getIfExistsThirdParty(thirdPartyId)
+			: this.userService.getIfExists(id);
 	}
 
 	async isAuthenticated(token: string): Promise<boolean> {

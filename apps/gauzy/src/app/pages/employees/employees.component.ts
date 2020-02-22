@@ -62,6 +62,7 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	includeDeleted = false;
 	loading = true;
 	hasEditPermission = false;
+	hasInviteEditPermission = false;
 
 	@ViewChild('employeesTable', { static: false }) employeesTable;
 
@@ -83,6 +84,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_EMPLOYEES_EDIT
+				);
+				this.hasInviteEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_INVITE_EDIT
 				);
 			});
 

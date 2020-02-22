@@ -28,7 +28,9 @@ const defaultRolePermissions = [
 			PermissionsEnum.POLICY_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
-			PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+			PermissionsEnum.CHANGE_ROLES_PERMISSIONS,
+			PermissionsEnum.ORG_INVITE_VIEW,
+			PermissionsEnum.ORG_INVITE_EDIT
 		]
 	},
 	{

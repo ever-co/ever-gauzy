@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import {
 	EmployeeRecurringExpense,
 	EmployeeRecurringExpenseByMonthFindInput,
-	EmployeeRecurringExpenseDeleteInput
+	RecurringExpenseDeleteInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -43,10 +43,7 @@ export class EmployeeRecurringExpenseService {
 			.toPromise();
 	}
 
-	delete(
-		id: string,
-		deleteInput: EmployeeRecurringExpenseDeleteInput
-	): Promise<any> {
+	delete(id: string, deleteInput: RecurringExpenseDeleteInput): Promise<any> {
 		const data = JSON.stringify({ deleteInput });
 
 		return this.http

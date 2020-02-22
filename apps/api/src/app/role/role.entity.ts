@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsEnum } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Role as IRole, RolesEnum } from '@gauzy/models';
-import { RolePermissions } from '../role-permissions';
+import { RolePermissions } from '../role-permissions/role-permissions.entity';
 
 @Entity('role')
 export class Role extends Base implements IRole {

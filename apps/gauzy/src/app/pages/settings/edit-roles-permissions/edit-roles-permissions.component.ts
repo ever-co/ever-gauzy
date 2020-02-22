@@ -11,13 +11,15 @@ import { RolePermissionsService } from 'apps/gauzy/src/app/@core/services/role-p
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../../@shared/translation-base/translation-base.component';
 
 @Component({
 	selector: 'ga-edit-org-roles-permissions',
 	templateUrl: './edit-roles-permissions.component.html',
 	styleUrls: ['./edit-roles-permissions.component.scss']
 })
-export class EditRolesPermissionsComponent implements OnInit, OnDestroy {
+export class EditRolesPermissionsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: Organization;
@@ -35,11 +37,13 @@ export class EditRolesPermissionsComponent implements OnInit, OnDestroy {
 	allPermissions: RolePermissions[] = [];
 
 	constructor(
-		private readonly translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private readonly toastrService: NbToastrService,
 		private readonly rolePermissionsService: RolePermissionsService,
 		private readonly rolesService: RoleService
-	) {}
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.loadPermissionsForSelectedRole();
@@ -127,15 +131,6 @@ export class EditRolesPermissionsComponent implements OnInit, OnDestroy {
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 
 	ngOnDestroy() {

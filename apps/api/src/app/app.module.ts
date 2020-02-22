@@ -1,3 +1,4 @@
+import { TagModule } from './tags/tag.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
@@ -25,9 +26,11 @@ import { OrganizationTeamsModule } from './organization-teams';
 import { ProposalModule } from './proposal';
 import { CountryModule } from './country';
 import { InviteModule } from './invite';
-import { EmailModule } from './email-templates';
+import { EmailModule } from './email';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
+import { TenantModule } from './tenant/tenant.module';
+import { EmailTemplateModule } from './email-template';
 
 @Module({
 	imports: [
@@ -109,6 +112,10 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 					{
 						path: 'role-permissions',
 						module: RolePermissionsModule
+					},
+					{
+						path: '/tenant',
+						module: TenantModule
 					}
 				]
 			}
@@ -137,7 +144,10 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
-		RolePermissionsModule
+		RolePermissionsModule,
+		TenantModule,
+		EmailTemplateModule,
+		TagModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

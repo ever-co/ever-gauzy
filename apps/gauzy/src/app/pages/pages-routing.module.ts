@@ -85,6 +85,11 @@ const routes: Routes = [
 				// }
 			},
 			{
+				path: 'tags',
+				loadChildren: () =>
+					import('./tags/tags.module').then((m) => m.TagsModule)
+			},
+			{
 				path: 'help',
 				loadChildren: () =>
 					import('./help/help.module').then((m) => m.HelpModule)
@@ -134,6 +139,13 @@ const routes: Routes = [
 					)
 				// canActivate: [RoleGuard],
 				// data: { expectedRole: [RolesEnum.ADMIN] }
+			},
+			{
+				path: 'download',
+				loadChildren: () =>
+					import('./download-all/download.module').then(
+						(m) => m.DownloadModule
+					)
 			},
 			{
 				path: 'auth',

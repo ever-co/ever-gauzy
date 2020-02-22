@@ -1,0 +1,27 @@
+<nb-card class="center">
+	<nb-card-header>
+		<h6>{{ 'FORM.CONFIRM' | translate }}</h6>
+	</nb-card-header>
+	<nb-card-body>
+		<span>
+			{{ 'FORM.DELETE_CONFIRMATION.DELETE_ACCOUNT' | translate }}
+			<br />
+			{{ recordType }}
+		</span>
+		<br /><br />
+		<input
+			[(ngModel)]="data"
+			(input)="sendData()"
+			type="text"
+			class="form-control border border-danger"
+		/>
+	</nb-card-body>
+	<nb-card-footer>
+		<button (click)="delete()" class="mr-3" status="danger" nbButton>
+			OK
+		</button>
+		<button (click)="close()" status="info" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

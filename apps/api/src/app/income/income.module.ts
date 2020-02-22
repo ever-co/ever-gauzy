@@ -8,7 +8,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { EmployeeService } from '../employee/employee.service';
 import { Employee } from '../employee';
 import { Organization, OrganizationService } from '../organization';
-import { User } from '../user';
+import { User, UserService } from '../user';
 
 @Module({
 	imports: [
@@ -20,6 +20,7 @@ import { User } from '../user';
 		IncomeService,
 		EmployeeService,
 		OrganizationService,
+		UserService,
 		...CommandHandlers
 	],
 	exports: [IncomeService]

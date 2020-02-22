@@ -1,3 +1,4 @@
+import { Tenant } from './../../../../../../../../libs/models/src/lib/tenant.model';
 import { Component, ViewChild, ElementRef, Input, OnInit } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
 import { User, RolesEnum } from '@gauzy/models';
@@ -33,6 +34,7 @@ export class BasicInfoFormComponent implements OnInit {
 	password: any;
 	off: any;
 	role: any;
+	tenant: Tenant;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -122,7 +124,8 @@ export class BasicInfoFormComponent implements OnInit {
 						username: this.username.value || null,
 						imageUrl: this.imageUrl.value,
 						role,
-						startedWorkOn: startedWorkOn.value
+						startedWorkOn: startedWorkOn.value,
+						tenant: this.tenant
 					},
 					password: this.password.value
 				})

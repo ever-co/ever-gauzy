@@ -1,3 +1,5 @@
+import { Tag } from './../../tags';
+import { Tenant } from './../../tenant/tenant.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
@@ -30,6 +32,9 @@ import { OrganizationTeams } from '../../organization-teams';
 import { Country } from '../../country';
 import { createTeams } from '../../organization-teams/organization-teams.seed';
 import { RolePermissions, createRolePermissions } from '../../role-permissions';
+import { createTenants } from '../../tenant/tenant.seed';
+import { EmailTemplate } from '../../email-template';
+import { createEmailTemplates } from '../../email-template/email-template.seed';
 
 const allEntities = [
 	User,
@@ -42,7 +47,10 @@ const allEntities = [
 	OrganizationTeams,
 	UserOrganization,
 	Country,
-	RolePermissions
+	RolePermissions,
+	Tenant,
+	EmailTemplate,
+	Tag
 ];
 
 @Injectable()
@@ -105,20 +113,26 @@ export class SeedDataService {
 					} DATABASE...`
 				)
 			);
+			const tenants = await createTenants(this.connection);
 
 			const roles: Role[] = await createRoles(this.connection);
 			const { adminUsers, defaultUsers, randomUsers } = await createUsers(
 				this.connection,
-				roles
+				roles,
+				tenants
 			);
 			const {
 				defaultOrganization,
 				randomOrganizations
-			} = await createOrganizations(this.connection);
+			} = await createOrganizations(this.connection, tenants);
 
 			const employees = await createEmployees(
 				this.connection,
-				{ org: defaultOrganization, users: [...defaultUsers] },
+				{
+					tenant: [...tenants],
+					org: defaultOrganization,
+					users: [...defaultUsers]
+				},
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
 
@@ -164,6 +178,8 @@ export class SeedDataService {
 			await createCountries(this.connection);
 
 			await createRolePermissions(this.connection, roles);
+
+			await createEmailTemplates(this.connection);
 
 			this.log(
 				chalk.green(

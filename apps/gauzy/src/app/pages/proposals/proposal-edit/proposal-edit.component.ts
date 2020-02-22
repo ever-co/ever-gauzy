@@ -5,6 +5,7 @@ import { FormGroup, FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-proposal-edit',
@@ -17,7 +18,8 @@ export class ProposalEditComponent implements OnInit {
 		private fb: FormBuilder,
 		private router: Router,
 		private toastrService: NbToastrService,
-		private proposalsService: ProposalsService
+		private proposalsService: ProposalsService,
+		private translate: TranslateService
 	) {}
 
 	proposal: ProposalViewModel;
@@ -55,17 +57,30 @@ export class ProposalEditComponent implements OnInit {
 
 				// TODO translate
 				this.toastrService.primary(
-					'Proposal successfuly updated',
-					'Success'
+					this.getTranslation('NOTES.PROPOSALS.EDIT_PROPOSAL'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 
 				this.router.navigate([`/pages/proposals`]);
 			} catch (error) {
 				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
+					this.getTranslation(
+						'NOTES.PROPOSALS.REGISTER_PROPOSAL_ERROR',
+						{
+							error: error.error.message || error.message
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
 			}
 		}
+	}
+
+	getTranslation(prefix: string, params?: Object) {
+		let result = prefix;
+		this.translate.get(prefix, params).subscribe((res) => {
+			result = res;
+		});
+		return result;
 	}
 }

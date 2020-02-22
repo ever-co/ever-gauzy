@@ -1,4 +1,12 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Tenant } from './../tenant/';
+import {
+	Column,
+	Entity,
+	Index,
+	ManyToOne,
+	JoinColumn,
+	RelationId
+} from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -8,7 +16,8 @@ import {
 	IsEnum,
 	IsNumber,
 	Min,
-	Max
+	Max,
+	IsBoolean
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import {
@@ -21,6 +30,15 @@ import {
 
 @Entity('organization')
 export class Organization extends Base implements IOrganization {
+	@ApiProperty({ type: Tenant })
+	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	tenant: Tenant;
+
+	@ApiProperty()
+	@RelationId((organization: Organization) => organization.tenant)
+	readonly tenantId?: string;
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -152,4 +170,14 @@ export class Organization extends Base implements IOrganization {
 	@Max(100)
 	@Column({ nullable: true })
 	bonusPercentage?: number;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	invitesAllowed?: boolean;
+
+	@ApiProperty({ type: Number })
+	@IsNumber()
+	@Column({ nullable: true })
+	inviteExpiryPeriod?: number;
 }

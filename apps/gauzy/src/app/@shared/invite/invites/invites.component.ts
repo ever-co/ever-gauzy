@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { InvitationTypeEnum, RolesEnum } from '@gauzy/models';
+import { InvitationTypeEnum, RolesEnum, PermissionsEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -50,6 +50,8 @@ export class InvitesComponent implements OnInit, OnDestroy {
 
 	loading = true;
 
+	hasInviteEditPermission = false;
+
 	@ViewChild('employeesTable', { static: false }) employeesTable;
 
 	constructor(
@@ -68,6 +70,13 @@ export class InvitesComponent implements OnInit, OnDestroy {
 					this.selectedOrganizationId = organization.id;
 					this.loadPage();
 				}
+			});
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasInviteEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_INVITE_EDIT
+				);
 			});
 
 		this._loadSmartTableSettings();

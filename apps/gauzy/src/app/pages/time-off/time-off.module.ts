@@ -19,7 +19,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TimeOffComponent } from './time-off.component';

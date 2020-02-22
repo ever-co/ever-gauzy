@@ -7,20 +7,22 @@ import {
 	Query,
 	Put,
 	Param,
-	HttpCode
+	HttpCode,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Permissions } from '../shared/decorators/permissions';
 import { CrudController } from '../core/crud/crud.controller';
-
 import { TimeOffPolicy } from './time-off-policy.entity';
-
 import {
 	TimeOffPolicyCreateInput as ITimeOffPolicyCreateInput,
 	TimeOffPolicyUpdateInput as ITimeOffPolicyUpdateInput,
-	TimeOffPolicy as ITimeOffPolicy
+	TimeOffPolicy as ITimeOffPolicy,
+	PermissionsEnum
 } from '@gauzy/models';
 import { IPagination } from '../core';
 import { TimeOffPolicyService } from './time-off-policy.service';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 
 @ApiTags('Policy')
 @Controller()
@@ -39,6 +41,8 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.POLICY_VIEW)
 	@Get()
 	async findAllTimeOffPolicies(
 		@Query('data') data: string
@@ -61,6 +65,8 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.POLICY_EDIT)
 	@Post('/create')
 	async createTimeOffPolicy(
 		@Body() entity: ITimeOffPolicyCreateInput,
@@ -84,6 +90,8 @@ export class TimeOffPolicyControler extends CrudController<TimeOffPolicy> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.POLICY_EDIT)
 	@Put(':id')
 	async updateOrganizationTeam(
 		@Param('id') id: string,

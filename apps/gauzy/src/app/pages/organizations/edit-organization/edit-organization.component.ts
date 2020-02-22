@@ -1,19 +1,25 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil, first } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
 import {
+	CurrenciesEnum,
 	Organization,
 	OrganizationRecurringExpense,
-	CurrenciesEnum
+	RecurringExpenseDeletionEnum
 } from '@gauzy/models';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { Subject } from 'rxjs';
+import { first, takeUntil } from 'rxjs/operators';
+
 import { EmployeesService } from '../../../@core/services';
 import { OrganizationRecurringExpenseService } from '../../../@core/services/organization-recurring-expense.service';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { Store } from '../../../@core/services/store.service';
 import { monthNames } from '../../../@core/utils/date';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { RecurringExpenseDeleteConfirmationComponent } from '../../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
+import {
+	RecurringExpenseMutationComponent,
+	COMPONENT_TYPE
+} from '../../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
 
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -23,10 +29,6 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 	]
 })
 export class EditOrganizationComponent implements OnInit, OnDestroy {
-	name: string;
-	date: string;
-	expenseValue: number;
-
 	selectedOrg: Organization;
 	selectedDate: Date;
 	selectedOrgFromHeader: Organization;
@@ -34,8 +36,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	selectedOrgRecurringExpense: OrganizationRecurringExpense[];
 	selectedRowIndexToShow: number;
 	currencies = Object.values(CurrenciesEnum);
-	selectedCurrency: string;
-	showAddCard: boolean;
 	editExpenseId: string;
 
 	private _ngDestroy$ = new Subject<void>();
@@ -73,7 +73,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 					.pipe(first())
 					.toPromise();
 				this.selectedOrgFromHeader = this.selectedOrg;
-				this.selectedCurrency = this.selectedOrg.currency;
 				this.loadEmployeesCount();
 				this._loadOrgRecurringExpense();
 				this.store.selectedOrganization = this.selectedOrg;
@@ -98,36 +97,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 		]);
 	}
 
-	async addOrgRecurringExpense(expense: OrganizationRecurringExpense) {
-		try {
-			if (this.editExpenseId) {
-				await this.organizationRecurringExpenseService.update(
-					this.editExpenseId,
-					expense
-				);
-			} else {
-				await this.organizationRecurringExpenseService.create(expense);
-			}
-
-			this.showAddCard = !this.showAddCard;
-
-			this.toastrService.primary(
-				`${this.selectedOrg.name} organization recurring expense ${
-					this.editExpenseId ? 'updated' : 'set'
-				}.`,
-				'Success'
-			);
-			this._loadOrgRecurringExpense();
-			this.clearMutationCard();
-		} catch (error) {
-			// TODO translate
-			this.toastrService.danger(
-				'Please fill all the required fields',
-				'Name, Value and Date are required'
-			);
-		}
-	}
-
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
@@ -135,7 +104,6 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 
 	getMonthString(month: number) {
 		const months = monthNames;
-
 		return months[month - 1];
 	}
 
@@ -159,52 +127,131 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	async deleteOrgRecurringExpense(i) {
-		const result = await this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: { recordType: 'Organization recurring expense' }
+	async deleteOrgRecurringExpense(index: number) {
+		const selectedExpense = this.selectedOrgRecurringExpense[index];
+		const result: RecurringExpenseDeletionEnum = await this.dialogService
+			.open(RecurringExpenseDeleteConfirmationComponent, {
+				context: {
+					recordType: 'Organization recurring expense',
+					start: `${this.getMonthString(
+						selectedExpense.startMonth
+					)}, ${selectedExpense.startYear}`,
+					current: `${this.getMonthString(
+						this.selectedDate.getMonth() + 1
+					)}, ${this.selectedDate.getFullYear()}`,
+					end: selectedExpense.endMonth
+						? `${this.getMonthString(selectedExpense.endMonth)}, ${
+								selectedExpense.endYear
+						  }`
+						: 'end'
+				}
 			})
 			.onClose.pipe(first())
 			.toPromise();
 
 		if (result) {
 			try {
-				const deleteExpense = this.selectedOrgRecurringExpense[i];
-				if (deleteExpense) {
-					await this.organizationRecurringExpenseService.delete(
-						deleteExpense.id
-					);
-				} else {
-					throw new Error('Recurring monthly expense not found');
-				}
-
+				const id = selectedExpense.id;
+				await this.organizationRecurringExpenseService.delete(id, {
+					deletionType: result,
+					month: this.selectedDate.getMonth() + 1,
+					year: this.selectedDate.getFullYear()
+				});
 				this.selectedRowIndexToShow = null;
+
 				this.toastrService.primary(
-					this.selectedOrg.name +
-						' organization recurring expense deleted.',
+					this.selectedOrg.name + ' recurring expense deleted.',
 					'Success'
 				);
-				this._loadOrgRecurringExpense();
+				setTimeout(() => {
+					this._loadOrgRecurringExpense();
+				}, 100);
 			} catch (error) {
 				this.toastrService.danger(
-					error.error ? error.error.message : error.message,
+					error.error.message || error.message,
 					'Error'
 				);
 			}
 		}
 	}
 
-	showEditCard(i) {
-		const editExpense = this.selectedOrgRecurringExpense[i];
-		if (editExpense) {
-			this.name = editExpense.categoryName;
-			this.expenseValue = editExpense.value;
-			const month = ('0' + editExpense.month).slice(-2);
-			this.date = `${editExpense.year}-${month}`;
-			this.editExpenseId = editExpense.id;
-			this.selectedCurrency =
-				editExpense.currency || this.selectedOrg.currency;
-			this.showAddCard = true;
+	async addOrganizationRecurringExpense() {
+		const result = await this.dialogService
+			.open(RecurringExpenseMutationComponent, {
+				context: {
+					componentType: COMPONENT_TYPE.ORGANIZATION
+				}
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			try {
+				await this.organizationRecurringExpenseService.create({
+					orgId: this.selectedOrg.id,
+					categoryName: result.categoryName,
+					value: result.value,
+					startDay: 1,
+					startYear: this.selectedDate.getFullYear(),
+					startMonth: this.selectedDate.getMonth() + 1,
+					startDate: new Date(
+						this.selectedDate.getFullYear(),
+						this.selectedDate.getMonth(),
+						1
+					),
+					currency: result.currency
+				});
+
+				this.toastrService.primary(
+					this.selectedOrg.name + ' recurring expense set.',
+					'Success'
+				);
+				this._loadOrgRecurringExpense();
+			} catch (error) {
+				this.toastrService.danger(
+					error.error.message || error.message,
+					'Error'
+				);
+			}
+		}
+	}
+
+	async editOrganizationRecurringExpense(index: number) {
+		const result = await this.dialogService
+			.open(RecurringExpenseMutationComponent, {
+				context: {
+					recurringExpense: this.selectedOrgRecurringExpense[index],
+					componentType: COMPONENT_TYPE.ORGANIZATION
+				}
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			try {
+				const id = this.selectedOrgRecurringExpense[index].id;
+				await this.organizationRecurringExpenseService.update(id, {
+					...result,
+					startDay: 1,
+					startMonth: this.selectedDate.getMonth() + 1,
+					startYear: this.selectedDate.getFullYear()
+				});
+				this.selectedRowIndexToShow = null;
+				this._loadOrgRecurringExpense();
+
+				this.toastrService.primary(
+					this.selectedOrg.name + ' recurring expense edited.',
+					'Success'
+				);
+				setTimeout(() => {
+					this._loadOrgRecurringExpense();
+				}, 300);
+			} catch (error) {
+				this.toastrService.danger(
+					error.error.message || error.message,
+					'Error'
+				);
+			}
 		}
 	}
 
@@ -220,7 +267,7 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	private async _loadOrgRecurringExpense() {
 		if (this.selectedOrg && this.selectedDate) {
 			this.selectedOrgRecurringExpense = (
-				await this.organizationRecurringExpenseService.getAll([], {
+				await this.organizationRecurringExpenseService.getAll({
 					orgId: this.selectedOrg.id,
 					year: this.selectedDate.getFullYear(),
 					month: this.selectedDate.getMonth() + 1
@@ -228,14 +275,5 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			).items;
 			this.loading = false;
 		}
-	}
-
-	private clearMutationCard() {
-		this.name = null;
-		this.date = null;
-		this.expenseValue = null;
-
-		this.selectedRowIndexToShow = null;
-		this.editExpenseId = null;
 	}
 }

@@ -1,4 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Tenant } from './tenant.model';
 
 export interface Organization extends IBaseEntityModel {
 	name: string;
@@ -25,6 +26,9 @@ export interface Organization extends IBaseEntityModel {
 	numberFormat?: string;
 	bonusType?: string;
 	bonusPercentage?: number;
+	tenant: Tenant;
+	invitesAllowed?: boolean;
+	inviteExpiryPeriod?: number;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {

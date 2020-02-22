@@ -1,9 +1,25 @@
-import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { RecurringExpenseEditInput } from '@gauzy/models';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Put,
+	Query
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+
+import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
+import { OrganizationRecurringExpenseDeleteCommand } from './commands/organization-recurring-expense.delete.command';
+import { OrganizationRecurringExpenseEditCommand } from './commands/organization-recurring-expense.edit.command';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
-import { IPagination } from '../core';
+import { OrganizationRecurringExpenseByMonthQuery } from './queries/organization-recurring-expense.by-month.query';
 
 @ApiTags('OrganizationRecurringExpense')
 @Controller()
@@ -11,9 +27,33 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	OrganizationRecurringExpense
 > {
 	constructor(
+		private readonly commandBus: CommandBus,
+		private readonly queryBus: QueryBus,
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
 	) {
 		super(organizationRecurringExpenseService);
+	}
+
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(
+		@Param('id') id: string,
+		@Query('data') data: string
+	): Promise<any> {
+		const { deleteInput } = JSON.parse(data);
+
+		return this.commandBus.execute(
+			new OrganizationRecurringExpenseDeleteCommand(id, deleteInput)
+		);
 	}
 
 	@ApiOperation({
@@ -63,5 +103,51 @@ export class OrganizationRecurringExpenseController extends CrudController<
 
 		// TODO get the count on employees in such org and divide values
 		return res;
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	async update(
+		@Param('id') id: string,
+		@Body() entity: RecurringExpenseEditInput
+	): Promise<any> {
+		return this.commandBus.execute(
+			new OrganizationRecurringExpenseEditCommand(id, entity)
+		);
+	}
+
+	@ApiOperation({ summary: 'Find all organization recurring expense.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found organization recurring expense',
+		type: OrganizationRecurringExpense
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/month')
+	async findAllExpenses(
+		@Query('data') data: string
+	): Promise<IPagination<OrganizationRecurringExpense>> {
+		const { findInput } = JSON.parse(data);
+
+		return this.queryBus.execute(
+			new OrganizationRecurringExpenseByMonthQuery(findInput)
+		);
 	}
 }

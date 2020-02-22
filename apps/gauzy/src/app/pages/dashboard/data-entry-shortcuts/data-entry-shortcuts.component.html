@@ -1,0 +1,45 @@
+<nb-card>
+	<nb-card-header class="header">Data Entry Shortcuts</nb-card-header>
+	<nb-card-body class="body">
+		<div class="row">
+			<div class="col-4" *ngIf="hasPermissionI && hasPermissionIEdit">
+				<nb-card
+					status="success"
+					class="shortcut-card"
+					(click)="addIncome()"
+				>
+					<nb-card-header>
+						<nb-icon icon="plus-circle"></nb-icon>
+						{{ 'MENU.INCOME' | translate }}
+					</nb-card-header>
+					<nb-card-body>
+						<div class="shortcut">
+							<div>
+								{{ 'DASHBOARD_PAGE.ADD_INCOME' | translate }}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+			<div class="col-4" *ngIf="hasPermissionE && hasPermissionEEdit">
+				<nb-card
+					status="danger"
+					class="shortcut-card"
+					(click)="addExpense()"
+				>
+					<nb-card-header>
+						<nb-icon icon="minus-circle"></nb-icon>
+						{{ 'MENU.EXPENSES' | translate }}
+					</nb-card-header>
+					<nb-card-body>
+						<div class="shortcut" class="shortcut">
+							<div>
+								{{ 'DASHBOARD_PAGE.ADD_EXPENSE' | translate }}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

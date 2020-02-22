@@ -40,6 +40,7 @@ import { APIInterceptor } from './@core/api.interceptor';
 import { ServerConnectionService } from './@core/services/server-connection.service';
 import { Store } from './@core/services/store.service';
 import { AppModuleGuard } from './app.module.guards';
+import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -55,6 +56,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
+		DangerZoneMutationModule,
 		AppRoutingModule,
 		NbCalendarModule,
 		NbCalendarKitModule,

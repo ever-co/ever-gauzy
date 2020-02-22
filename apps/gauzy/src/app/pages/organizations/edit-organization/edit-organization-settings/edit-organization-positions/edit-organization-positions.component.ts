@@ -3,6 +3,7 @@ import { OrganizationPositions } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -22,7 +23,8 @@ export class EditOrganizationPositionsComponent implements OnInit {
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore
+		private readonly organizationEditStore: OrganizationEditStore,
+		private translateService: TranslateService
 	) {}
 
 	ngOnInit(): void {
@@ -40,8 +42,13 @@ export class EditOrganizationPositionsComponent implements OnInit {
 		await this.organizationPositionsService.delete(id);
 
 		this.toastrService.primary(
-			`Position ${name} successfully removed!`,
-			'Success'
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.REMOVE_POSITION',
+				{
+					name: name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 
 		this.loadPositions();
@@ -55,8 +62,13 @@ export class EditOrganizationPositionsComponent implements OnInit {
 			});
 
 			this.toastrService.primary(
-				`New position ${name} successfully added!`,
-				'Success'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ADD_POSITION',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
 			this.showAddCard = !this.showAddCard;
@@ -64,8 +76,12 @@ export class EditOrganizationPositionsComponent implements OnInit {
 		} else {
 			// TODO translate
 			this.toastrService.danger(
-				'Please add a Position name',
-				'Position name is required'
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.INVALID_POSITION_NAME'
+				),
+				this.getTranslation(
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_POSITION_INVALID_NAME'
+				)
 			);
 		}
 	}
@@ -77,5 +93,14 @@ export class EditOrganizationPositionsComponent implements OnInit {
 		if (res) {
 			this.positions = res.items;
 		}
+	}
+
+	getTranslation(prefix: string, params?: Object) {
+		let result = '';
+		this.translateService.get(prefix, params).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
 	}
 }

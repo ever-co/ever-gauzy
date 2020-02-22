@@ -3,6 +3,7 @@ import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
+import { Tenant } from './tenant.model';
 
 export interface Employee extends IBaseEntityModel {
 	endWork?: any;
@@ -17,6 +18,7 @@ export interface Employee extends IBaseEntityModel {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	tenant: Tenant;
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {

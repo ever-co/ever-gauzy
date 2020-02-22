@@ -5,11 +5,15 @@ import { OrganizationProjectsController } from './organization-projects.controll
 import { OrganizationProjectsService } from './organization-projects.service';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
+import { User, UserService } from '../user';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([OrganizationProjects]), CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([OrganizationProjects, User]),
+		CqrsModule
+	],
 	controllers: [OrganizationProjectsController],
-	providers: [OrganizationProjectsService, ...CommandHandlers],
+	providers: [OrganizationProjectsService, UserService, ...CommandHandlers],
 	exports: [OrganizationProjectsService]
 })
 export class OrganizationProjectsModule {}

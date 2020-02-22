@@ -17,6 +17,7 @@ import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service'
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { Tenant } from 'libs/models/src/lib/tenant.model';
 
 @Component({
 	selector: 'ga-accept-invite-form',
@@ -40,6 +41,7 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 	password: AbstractControl;
 	repeatPassword: AbstractControl;
 	agreeTerms: AbstractControl;
+	tenant: Tenant;
 
 	matchPassword: boolean;
 	repeatPasswordErrorMsg: string;
@@ -149,7 +151,8 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 								.join(' ')
 						: null,
 					email: this.invitation.email,
-					role: this.invitation.role
+					role: this.invitation.role,
+					tenant: this.tenant
 				},
 				password: this.password.value
 			});
