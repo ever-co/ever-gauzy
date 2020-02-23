@@ -1,22 +1,16 @@
-# Gauzy
+# Gauzy Platform
 
 [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gauzy)
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ - Open-Source Profits Sharing Platform for freelancers, modern agencies, studios and in-house teams. 
+Gauzy™ Platform - Open-Source ERP Platform focused on Fairness and Transparency for freelancers, modern agencies, studios and in-house teams. 
 
 -   **Open-Source Software** solving **fair sharing of technology**.
 -   **Stock Options** solving **fair sharing of profits _in the future_**.
--   **Gauzy** solving **fair sharing of profits _today_**.
+-   **Gauzy Platform** solving **fair and transparent sharing of profits _today_**.
 
-Gauzy supports following schemas for Employee (company worker, contractor or freelancer) Bonus calculations:
-
--  **Profit-based**, when employees get bonuses based on company profits from work done by given employee or team.
-
--  **Revenue-based**, when employees get bonuses based on company revenue (gross income) from work done by given employee or team.
-
-In order to allow bonuses calculations, Gauzy Platform includes multiple features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
+Gauzy Platform includes multiple ERP features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
 - Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
 - Employees Management (register of company employees / contractors, rates of employees, etc.)
 - Employees Onboarding (WIP)
@@ -35,7 +29,7 @@ In order to allow bonuses calculations, Gauzy Platform includes multiple feature
 - Time Management/Tracking (WIP)
 - Multi-currency
 
-So, while the primary purpose of Gauzy Platform is to allow transparent and fair bonuses calculation, you can also use Gauzy software as the **Platform to run your outsourcing/freelance agency or studio business**. 
+So, while the primary purpose of Gauzy Platform is to allow transparent and fair accounting, profits sharing and bonuses calculation, you can also use Gauzy software as the **Platform to run your outsourcing/freelance agency or studio business**. 
 
 In addition, we encourage individual **Freelancers** to join our "Gauzy" revolution and use the platform to jump start your business!
 
@@ -46,6 +40,12 @@ Feel free to test:
 - Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as demo, login with `admin@ever.co` and password: `admin`)
 - Gauzy Platform Demo at <https://demo.gauzy.co> (temporary shutdown)
 - Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary shutdown)
+
+Gauzy supports following schemas for Employee (company worker, contractor or freelancer) Bonus calculations:
+
+-  **Profit-based**, when employees get bonuses based on company profits from work done by given employee or team.
+
+-  **Revenue-based**, when employees get bonuses based on company revenue (gross income) from work done by given employee or team.
 
 ## Quick Start
 
