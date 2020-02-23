@@ -7,7 +7,7 @@ import { PermissionsEnum } from '@gauzy/models';
 @Injectable()
 export class InviteGuard implements CanActivate {
 	hasPermission = false;
-
+	organizationInvitesAllowed = false;
 	constructor(
 		private readonly router: Router,
 		private readonly store: Store
@@ -21,8 +21,16 @@ export class InviteGuard implements CanActivate {
 				this.store.hasPermission(permission)
 			);
 		});
+		this.store.selectedOrganization$
+			.pipe(first())
+			.subscribe((organization) => {
+				if (organization) {
+					this.organizationInvitesAllowed =
+						organization.invitesAllowed;
+				}
+			});
 
-		if (this.hasPermission) {
+		if (this.organizationInvitesAllowed && this.hasPermission) {
 			return true;
 		}
 
