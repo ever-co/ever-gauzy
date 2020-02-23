@@ -27,6 +27,7 @@ export const createOrganizations = async (
 	defaultOrganization.defaultValueDateType = defaultValueDateType;
 	defaultOrganization.imageUrl = imageUrl;
 	defaultOrganization.tenant = tenant[0];
+	defaultOrganization.invitesAllowed = true;
 
 	await insertOrganization(connection, defaultOrganization);
 
@@ -44,6 +45,7 @@ export const createOrganizations = async (
 			defaultDateTypes[(index % defaultDateTypes.length) + 1 - 1];
 		organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
 		organization.tenant = tenant[index];
+		organization.invitesAllowed = true;
 
 		await insertOrganization(connection, organization);
 		randomOrganizations.push(organization);

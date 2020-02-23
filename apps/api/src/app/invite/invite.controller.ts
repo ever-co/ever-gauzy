@@ -21,7 +21,12 @@ import {
 	Put
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiOperation,
+	ApiResponse,
+	ApiTags,
+	ApiExcludeEndpoint
+} from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
 import { IPagination } from '../core';
 import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.command';
@@ -181,6 +186,7 @@ export class InviteController {
 		return this.inviteService.delete(id);
 	}
 
+	@ApiExcludeEndpoint()
 	@Put()
 	async update(@Param('id') id: string, ...options: any[]): Promise<any> {
 		throw new BadRequestException('Invalid route');
