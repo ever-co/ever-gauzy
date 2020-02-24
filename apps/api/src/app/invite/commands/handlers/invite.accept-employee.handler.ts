@@ -5,6 +5,7 @@ import { AuthService } from '../../../auth';
 import { getUserDummyImage } from '../../../core';
 import { Employee } from '../../../employee';
 import { EmployeeService } from '../../../employee/employee.service';
+import { OrganizationService } from '../../../organization';
 import { OrganizationClientsService } from '../../../organization-clients';
 import { OrganizationDepartmentService } from '../../../organization-department';
 import { OrganizationProjectsService } from '../../../organization-projects';
@@ -22,6 +23,7 @@ export class InviteAcceptEmployeeHandler
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly employeeService: EmployeeService,
+		private readonly organizationService: OrganizationService,
 		private readonly organizationProjectService: OrganizationProjectsService,
 		private readonly organizationClientService: OrganizationClientsService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentService,
@@ -47,6 +49,12 @@ export class InviteAcceptEmployeeHandler
 
 		if (!invite) {
 			throw Error('Invite does not exist');
+		}
+		const organization = await this.organizationService.findOne(
+			input.organization.id
+		);
+		if (!organization.invitesAllowed) {
+			throw Error('Organization no longer allows invites');
 		}
 
 		if (!input.user.imageUrl) {

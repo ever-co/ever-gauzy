@@ -3,6 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
 import { UsersComponent } from './users.component';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
+import { InviteGuard } from '../../@core/role/invite.guard';
+import { PermissionsEnum } from '@gauzy/models';
 
 const routes: Routes = [
 	{
@@ -15,7 +17,14 @@ const routes: Routes = [
 	},
 	{
 		path: 'invites',
-		component: ManageUserInviteComponent
+		component: ManageUserInviteComponent,
+		canActivate: [InviteGuard],
+		data: {
+			expectedPermissions: [
+				PermissionsEnum.ORG_INVITE_EDIT,
+				PermissionsEnum.ORG_INVITE_VIEW
+			]
+		}
 	}
 ];
 

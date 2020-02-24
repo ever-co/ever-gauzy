@@ -1,3 +1,4 @@
+import { AuthGuard } from '@nestjs/passport';
 import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
@@ -16,13 +17,18 @@ import {
 	Query,
 	UseGuards,
 	Delete,
-	Param
+	Param,
+	Put
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiOperation,
+	ApiResponse,
+	ApiTags,
+	ApiExcludeEndpoint
+} from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
 import { IPagination } from '../core';
-import { CrudController } from '../core/crud/crud.controller';
 import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.command';
 import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
 import { Invite } from './invite.entity';
@@ -33,13 +39,11 @@ import { PermissionGuard } from './../shared/guards/auth/permission.guard';
 
 @ApiTags('Invite')
 @Controller()
-export class InviteController extends CrudController<Invite> {
+export class InviteController {
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly commandBus: CommandBus
-	) {
-		super(inviteService);
-	}
+	) {}
 
 	@ApiOperation({ summary: 'Create email invites' })
 	@ApiResponse({
@@ -52,9 +56,9 @@ export class InviteController extends CrudController<Invite> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Post('/emails')
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
+	@Post('/emails')
 	async createManyWithEmailsId(
 		@Body() entity: CreateEmailInvitesInput
 	): Promise<CreateEmailInvitesOutput> {
@@ -95,6 +99,11 @@ export class InviteController extends CrudController<Invite> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@Permissions(
+		PermissionsEnum.ORG_INVITE_VIEW,
+		PermissionsEnum.ORG_INVITE_EDIT
+	)
 	@Get('all')
 	async findAllInvites(
 		@Query('data') data: string
@@ -151,7 +160,7 @@ export class InviteController extends CrudController<Invite> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
 	async resendInvite(
@@ -170,10 +179,16 @@ export class InviteController extends CrudController<Invite> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete(':id')
 	async delete(@Param('id') id: string, ...options: any[]): Promise<any> {
 		return this.inviteService.delete(id);
+	}
+
+	@ApiExcludeEndpoint()
+	@Put()
+	async update(@Param('id') id: string, ...options: any[]): Promise<any> {
+		throw new BadRequestException('Invalid route');
 	}
 }

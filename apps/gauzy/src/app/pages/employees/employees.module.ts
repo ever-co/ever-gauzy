@@ -1,3 +1,4 @@
+import { InviteGuard } from './../../@core/role/invite.guard';
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -114,6 +115,6 @@ const COMPONENTS = [
 		EmployeeWorkStatusComponent,
 		ManageEmployeeInviteComponent
 	],
-	providers: [OrganizationsService]
+	providers: [OrganizationsService, InviteGuard]
 })
 export class EmployeesModule {}
