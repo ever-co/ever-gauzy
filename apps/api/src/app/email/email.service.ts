@@ -28,6 +28,7 @@ export class EmailService extends CrudService<IEmail> {
 		transport: {
 			jsonTransport: true
 		},
+		send: true,
 		i18n: {},
 		views: {
 			options: {
@@ -128,7 +129,8 @@ export class EmailService extends CrudService<IEmail> {
 
 		this.email
 			.send({
-				template: 'welcome-user',
+				template:
+					'../core/seeds/data/default-email-templates/welcome-user',
 				message: {
 					to: `${user.email}`
 				},
@@ -149,7 +151,7 @@ export class EmailService extends CrudService<IEmail> {
 
 		this.email
 			.send({
-				template: 'password',
+				template: '../core/seeds/data/default-email-templates/password',
 				message: {
 					to: `${user.email}`,
 					subject: 'Forgotten Password'
