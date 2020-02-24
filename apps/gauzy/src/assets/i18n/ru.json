@@ -575,7 +575,12 @@
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
-			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input"
+			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NAME_REQUIRED": "Требуется имя!",
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
+			"PHONE_REQUIRED": "Требуется указать телефон!",
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!"
 		}
 	},
 	"ACCEPT_INVITE": {
