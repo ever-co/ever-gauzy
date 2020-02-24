@@ -7,6 +7,17 @@ import { first } from 'rxjs/operators';
 export class UsersService {
 	constructor(private http: HttpClient) {}
 
+	getMe(relations?: string[]): Promise<{ items: User[]; total: number }> {
+		const data = JSON.stringify({ relations });
+
+		return this.http
+			.get<{ items: User[]; total: number }>(`/api/user/me`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
 	getUserById(id: string): Promise<User> {
 		return this.http
 			.get<User>(`/api/user/${id}`)

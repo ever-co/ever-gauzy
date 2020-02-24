@@ -26,9 +26,11 @@ import { RequestContext } from '../core/context';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserCreateCommand } from './commands';
 import { UserCreateInput as IUserCreateInput } from '@gauzy/models';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('User')
 @Controller()
+@UseGuards(AuthGuard('jwt'))
 export class UserController extends CrudController<User> {
 	constructor(
 		private readonly userService: UserService,
@@ -48,9 +50,12 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@Get('/me')
-	async findCurrentUser(): Promise<User> {
-		const currentUser = RequestContext.currentUser().id;
-		return this.userService.findOne(currentUser);
+	async findCurrentUser(@Query('data') data: string): Promise<User> {
+		const { relations } = JSON.parse(data);
+		const currentUserId = RequestContext.currentUser().id;
+		return this.userService.findOne(currentUserId, {
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Find User by id.' })
