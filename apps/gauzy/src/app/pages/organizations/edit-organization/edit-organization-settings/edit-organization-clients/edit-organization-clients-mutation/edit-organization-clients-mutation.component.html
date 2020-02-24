@@ -46,11 +46,8 @@
 						form.controls.name.invalid && form.controls.name.touched
 					"
 				>
-					<p
-						class="caption status-danger"
-						*ngIf="form.controls.primaryEmail.errors?.required"
-					>
-						Name is required!
+					<p class="caption status-danger">
+						{{ 'TOASTR.MESSAGE.NAME_REQUIRED' | translate }}
 					</p>
 				</ng-container>
 			</div>
@@ -90,13 +87,13 @@
 						class="caption status-danger"
 						*ngIf="form.controls.primaryEmail.errors?.required"
 					>
-						Email is required!
+						{{ 'TOASTR.MESSAGE.EMAIL_REQUIRED' | translate }}
 					</p>
 					<p
 						class="caption status-danger"
 						*ngIf="form.controls.primaryEmail.errors?.pattern"
 					>
-						Email should be a real one!
+						{{ 'TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL' | translate }}
 					</p>
 				</ng-container>
 			</div>
@@ -135,13 +132,16 @@
 						class="caption status-danger"
 						*ngIf="form.controls.primaryPhone.errors?.required"
 					>
-						Phone is required!
+						{{ 'TOASTR.MESSAGE.PHONE_REQUIRED' | translate }}
 					</p>
 					<p
 						class="caption status-danger"
 						*ngIf="form.controls.primaryPhone.errors?.pattern"
 					>
-						Phone should only contain numbers!
+						{{
+							'TOASTR.MESSAGE.PHONE_CONTAINS_ONLY_NUMBERS'
+								| translate
+						}}
 					</p>
 				</ng-container>
 			</div>
