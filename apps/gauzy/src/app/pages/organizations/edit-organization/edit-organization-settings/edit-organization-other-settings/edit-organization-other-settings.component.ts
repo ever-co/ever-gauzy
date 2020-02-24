@@ -16,6 +16,7 @@ import * as timezone from 'moment-timezone';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
+import { formatDate } from '@angular/common';
 
 @Component({
 	selector: 'ga-edit-org-other-settings',
@@ -169,6 +170,20 @@ export class EditOrganizationOtherSettingsComponent
 					disabled: !this.organization.invitesAllowed
 				},
 				[Validators.min(1)]
+			],
+			fiscalStartDate: [
+				formatDate(
+					new Date(`01/01/${new Date().getFullYear()}`),
+					'yyyy-MM-dd',
+					'en'
+				)
+			],
+			fiscalEndDate: [
+				formatDate(
+					new Date(`12/31/${new Date().getFullYear()}`),
+					'yyyy-MM-dd',
+					'en'
+				)
 			]
 		});
 	}
