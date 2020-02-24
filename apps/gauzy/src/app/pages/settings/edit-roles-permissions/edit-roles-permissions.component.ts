@@ -11,7 +11,7 @@ import { RolePermissionsService } from 'apps/gauzy/src/app/@core/services/role-p
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/translation-base/translation-base.component';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-edit-org-roles-permissions',
