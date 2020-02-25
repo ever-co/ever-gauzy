@@ -27,11 +27,11 @@ export const createExpenses = async (
 		.on('end', () => {
 			defaultExpenses.map(async (seedExpense) => {
 				const expense = new Expense();
-				// const foundEmployee = defaultData.employees.find(
-				// 	(emp) => emp.user.email === seedExpense.email
-				// );
+				const foundEmployee = defaultData.employees.find(
+					(emp) => emp.user.email === seedExpense.email
+				);
 
-				// expense.employee = foundEmployee;
+				expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
 				expense.amount = Math.abs(seedExpense.amount);
 				expense.vendorName = seedExpense.vendorName;
@@ -78,7 +78,7 @@ export const createExpenses = async (
 		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
 
 		expense.organization = randomData.orgs[index % 5];
-		// expense.employee = randomData.employees[currentIndex];
+		expense.employee = randomData.employees[currentIndex];
 		expense.amount = faker.random.number({ min: 10, max: 999 });
 		expense.vendorName = vendorsArray[currentIndex];
 		expense.vendorId = faker.random

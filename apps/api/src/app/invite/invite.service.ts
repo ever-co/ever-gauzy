@@ -112,22 +112,6 @@ export class InviteService extends CrudService<Invite> {
 			clientIds || []
 		);
 
-		const organization: Organization = await this.organizationRepository.findOne(
-			organizationId
-		);
-
-		const role: IOrganizationRole = await this.roleRpository.findOne(
-			roleId
-		);
-
-		const inviteExpiryPeriod =
-			organization && organization.inviteExpiryPeriod
-				? organization.inviteExpiryPeriod
-				: 7;
-
-		const expireDate = new Date();
-		expireDate.setDate(expireDate.getDate() + inviteExpiryPeriod);
-
 		const existingInvites = (
 			await this.repository
 				.createQueryBuilder('invite')
@@ -152,9 +136,9 @@ export class InviteService extends CrudService<Invite> {
 			invite.invitedById = invitedById;
 			invite.status = InviteStatusEnum.INVITED;
 			invite.expireDate = expireDate;
-			// invite.projects = projects;
-			// invite.departments = departments;
-			// invite.clients = clients;
+			invite.projects = projects;
+			invite.departments = departments;
+			invite.clients = clients;
 
 			invites.push(invite);
 		}
