@@ -3,12 +3,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Invite, RolesEnum, UserRegistrationInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { InviteService } from '../../@core/services/invite.service';
+import { TranslateService } from '@ngx-translate/core';
+import { SetLanguageBaseComponent } from '../../@shared/language-base/set-language-base.component';
 
 @Component({
 	styleUrls: ['./accept-invite.component.scss'],
 	templateUrl: 'accept-invite.component.html'
 })
-export class AcceptInvitePage implements OnInit, OnDestroy {
+export class AcceptInvitePage extends SetLanguageBaseComponent
+	implements OnInit, OnDestroy {
 	invitation: Invite;
 	loading = true;
 	inviteLoadErrorMessage = '';
@@ -17,8 +20,11 @@ export class AcceptInvitePage implements OnInit, OnDestroy {
 		private readonly router: Router,
 		private toastrService: NbToastrService,
 		private inviteService: InviteService,
-		private route: ActivatedRoute
-	) {}
+		private route: ActivatedRoute,
+		private translate: TranslateService
+	) {
+		super(translate);
+	}
 
 	ngOnInit(): void {
 		this.route.queryParams.subscribe(async ({ email, token }) => {

@@ -180,4 +180,16 @@ export class Organization extends Base implements IOrganization {
 	@IsNumber()
 	@Column({ nullable: true })
 	inviteExpiryPeriod?: number;
+
+	@ApiProperty({ type: Date })
+	@Column({ nullable: true })
+	@IsOptional()
+	@IsDate()
+	fiscalStartDate?: Date;
+
+	@ApiProperty({ type: Date })
+	@Column({ nullable: true })
+	@IsOptional()
+	@IsDate()
+	fiscalEndDate?: Date;
 }

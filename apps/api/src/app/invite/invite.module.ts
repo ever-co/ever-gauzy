@@ -27,6 +27,7 @@ import { CommandHandlers } from './commands/handlers';
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
+import { OrganizationService, Organization } from '../organization';
 
 @Module({
 	imports: [
@@ -37,7 +38,8 @@ import { InviteService } from './invite.service';
 			UserOrganization,
 			OrganizationProjects,
 			OrganizationClients,
-			OrganizationDepartment
+			OrganizationDepartment,
+			Organization
 		]),
 		SharedModule,
 		CqrsModule,
@@ -54,7 +56,8 @@ import { InviteService } from './invite.service';
 		EmailService,
 		OrganizationProjectsService,
 		OrganizationClientsService,
-		OrganizationDepartmentService
+		OrganizationDepartmentService,
+		OrganizationService
 	],
 	exports: [InviteService]
 })

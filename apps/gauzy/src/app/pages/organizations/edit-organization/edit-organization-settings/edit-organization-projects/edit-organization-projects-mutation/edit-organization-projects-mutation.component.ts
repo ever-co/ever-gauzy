@@ -33,6 +33,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 	selectedEmployeeIds: string[];
 	types: string[] = Object.values(ProjectTypeEnum);
 	currencies: string[] = Object.values(CurrenciesEnum);
+	defaultCurrency: string;
 
 	constructor(private readonly fb: FormBuilder) {}
 
@@ -51,7 +52,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 			);
 		}
 
-		const defaultCurrency = this.organization.currency || 'USD';
+		this.defaultCurrency = this.organization.currency || 'USD';
 
 		this.form = this.fb.group({
 			name: [this.project ? this.project.name : ''],
@@ -61,7 +62,14 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 					: ''
 			],
 			type: [this.project ? this.project.type : 'RATE'],
-			currency: [this.project ? this.project.currency : defaultCurrency],
+			currency: [
+				{
+					value: this.project
+						? this.project.currency
+						: this.defaultCurrency,
+					disabled: true
+				}
+			],
 			startDate: [this.project ? this.project.startDate : null],
 			endDate: [this.project ? this.project.endDate : null]
 		});
@@ -85,7 +93,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 					(c) => c.id === this.form.value['client']
 				),
 				type: this.form.value['type'],
-				currency: this.form.value['currency'],
+				currency: this.form.value['currency'] || this.defaultCurrency,
 				startDate: this.form.value['startDate'],
 				endDate: this.form.value['endDate'],
 				members: (this.members || this.selectedEmployeeIds || [])

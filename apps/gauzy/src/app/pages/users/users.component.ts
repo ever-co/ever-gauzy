@@ -45,6 +45,8 @@ export class UsersComponent implements OnInit, OnDestroy {
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
+	hasInviteViewOrEditPermission = false;
+	organizationInvitesAllowed = false;
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -64,6 +66,8 @@ export class UsersComponent implements OnInit, OnDestroy {
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
+					this.organizationInvitesAllowed =
+						organization.invitesAllowed;
 					this.loadPage();
 				}
 			});
@@ -80,6 +84,9 @@ export class UsersComponent implements OnInit, OnDestroy {
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
+				this.hasInviteViewOrEditPermission =
+					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
+					this.hasInviteEditPermission;
 			});
 
 		this.route.queryParamMap

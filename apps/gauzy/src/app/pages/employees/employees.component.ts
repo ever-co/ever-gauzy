@@ -63,6 +63,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
+	hasInviteViewOrEditPermission = false;
+	organizationInvitesAllowed = false;
 
 	@ViewChild('employeesTable', { static: false }) employeesTable;
 
@@ -88,6 +90,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
+				this.hasInviteViewOrEditPermission =
+					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
+					this.hasInviteEditPermission;
 			});
 
 		this.store.selectedOrganization$
@@ -95,6 +100,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
+					this.organizationInvitesAllowed =
+						organization.invitesAllowed;
 					this.loadPage();
 				}
 			});
