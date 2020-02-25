@@ -397,7 +397,7 @@
 			"CHANGE_ROLES_PERMISSIONS": "Промени ролите и Позволенията",
 			"GROUPS": {
 				"GENERAL": "Основни",
-				"ADMINISTRATION": "Administration"
+				"ADMINISTRATION": "Администрация"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
