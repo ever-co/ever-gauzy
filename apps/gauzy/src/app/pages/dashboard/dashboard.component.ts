@@ -32,14 +32,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 				this.store.selectedEmployee$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((emp) => {
-						if (emp) {
-							this._loadDashboard(emp);
-						}
+						this._loadDashboard(emp);
 					});
 			});
 	}
 
-	_loadDashboard(emp: SelectedEmployee) {
+	_loadDashboard(emp?: SelectedEmployee) {
 		if (this.store.hasPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW)) {
 			this.selectedEmployee = emp;
 			this.dashboardType =
