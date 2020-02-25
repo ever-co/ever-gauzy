@@ -209,7 +209,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					clientName: result.client.clientName,
 					clientId: result.client.clientId,
 					valueDate: result.valueDate,
-					employeeId: result.employee.id,
+					employeeId: result.employee ? result.employee.id : null,
 					orgId: this.store.selectedOrganization.id,
 					notes: result.notes,
 					currency: result.currency,
@@ -224,13 +224,13 @@ export class IncomeComponent implements OnInit, OnDestroy {
 				);
 
 				this._loadEmployeeIncomeData();
-				this.store.selectedEmployee = result.employee.id
+				this.store.selectedEmployee = result.employee
 					? result.employee
 					: null;
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
-						error: error.error.message || error.message
+						error: error.error ? error.error.message : error.message
 					}),
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);

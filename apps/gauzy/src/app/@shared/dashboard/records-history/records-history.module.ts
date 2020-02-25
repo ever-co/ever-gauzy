@@ -3,12 +3,13 @@ import { RecordsHistoryComponent } from './records-history.component';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { IncomeModule } from '../../../pages/income/income.module';
 import { NbIconModule } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 
 @NgModule({
 	imports: [Ng2SmartTableModule, IncomeModule, NbIconModule],
 	exports: [RecordsHistoryComponent],
 	declarations: [RecordsHistoryComponent],
 	entryComponents: [RecordsHistoryComponent],
-	providers: []
+	providers: [TranslateService]
 })
 export class RecordsHistoryModule {}

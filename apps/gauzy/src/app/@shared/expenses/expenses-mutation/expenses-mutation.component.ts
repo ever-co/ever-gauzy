@@ -214,7 +214,8 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 				taxType: [this.expense.taxType],
 				taxLabel: [this.expense.taxLabel],
 				rateValue: [this.expense.rateValue],
-				receipt: [this.expense.receipt]
+				receipt: [this.expense.receipt],
+				splitExpense: [this.expense.splitExpense]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -234,7 +235,8 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 				taxType: [TaxTypesEnum.PERCENTAGE],
 				taxLabel: [''],
 				rateValue: [0],
-				receipt: [this.defaultImage]
+				receipt: [this.defaultImage],
+				splitExpense: [false]
 			});
 
 			this._loadDefaultCurrency();
