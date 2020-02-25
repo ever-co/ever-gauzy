@@ -27,11 +27,11 @@ export const createIncomes = async (
 		.on('end', () => {
 			defaultIncomes.map(async (seedIncome) => {
 				const income = new Income();
-				// const foundEmployee = defaultData.employees.find(
-				// 	(emp) => emp.user.email === seedIncome.email
-				// );
+				const foundEmployee = defaultData.employees.find(
+					(emp) => emp.user.email === seedIncome.email
+				);
 
-				// income.employee = foundEmployee;
+				income.employee = foundEmployee;
 				income.clientName = seedIncome.clientName;
 				income.organization = defaultData.org;
 				income.amount = seedIncome.amount;
@@ -63,7 +63,7 @@ export const createIncomes = async (
 		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
 
 		income.organization = randomData.orgs[index % 5];
-		// income.employee = randomData.employees[currentIndex];
+		income.employee = randomData.employees[currentIndex];
 		income.clientName = clientsArray[currentIndex];
 		income.amount = faker.random.number({ min: 10, max: 9999 });
 		income.clientId = faker.random

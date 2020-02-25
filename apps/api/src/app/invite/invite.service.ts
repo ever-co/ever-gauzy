@@ -3,9 +3,9 @@ import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
 	InviteStatusEnum,
-	// OrganizationProjects as IOrganizationProjects,
-	// OrganizationClients as IOrganizationClients,
-	// OrganizationDepartment as IOrganizationDepartment
+	OrganizationProjects as IOrganizationProjects,
+	OrganizationClients as IOrganizationClients,
+	OrganizationDepartment as IOrganizationDepartment
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -84,26 +84,26 @@ export class InviteService extends CrudService<Invite> {
 		const {
 			emailIds,
 			roleId,
-			// projectIds,
-			// clientIds,
-			// departmentIds,
+			projectIds,
+			clientIds,
+			departmentIds,
 			organizationId,
 			invitedById
 		} = emailInvites;
 		const expireDate = new Date();
 		expireDate.setDate(expireDate.getDate() + 7);
 
-		// const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
-		// 	projectIds || []
-		// );
+		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
+			projectIds || []
+		);
 
-		// const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findByIds(
-		// 	departmentIds || []
-		// );
+		const departments: IOrganizationDepartment[] = await this.organizationDepartmentRepository.findByIds(
+			departmentIds || []
+		);
 
-		// const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
-		// 	clientIds || []
-		// );
+		const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
+			clientIds || []
+		);
 
 		const existingInvites = (await this.repository
 			.createQueryBuilder('invite')
@@ -127,9 +127,9 @@ export class InviteService extends CrudService<Invite> {
 			invite.invitedById = invitedById;
 			invite.status = InviteStatusEnum.INVITED;
 			invite.expireDate = expireDate;
-			// invite.projects = projects;
-			// invite.departments = departments;
-			// invite.clients = clients;
+			invite.projects = projects;
+			invite.departments = departments;
+			invite.clients = clients;
 
 			invites.push(invite);
 		}
