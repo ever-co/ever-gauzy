@@ -9,6 +9,8 @@ import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-e
 import { EditEmployeeDepartmentComponent } from './edit-employee/edit-employee-profile/edit-employee-department/edit-employee-department.component';
 import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
 import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
+import { PermissionsEnum } from '@gauzy/models';
+import { InviteGuard } from '../../@core/role/invite.guard';
 
 const routes: Routes = [
 	{
@@ -52,7 +54,14 @@ const routes: Routes = [
 	},
 	{
 		path: 'invites',
-		component: ManageEmployeeInviteComponent
+		component: ManageEmployeeInviteComponent,
+		canActivate: [InviteGuard],
+		data: {
+			expectedPermissions: [
+				PermissionsEnum.ORG_INVITE_EDIT,
+				PermissionsEnum.ORG_INVITE_VIEW
+			]
+		}
 	}
 ];
 

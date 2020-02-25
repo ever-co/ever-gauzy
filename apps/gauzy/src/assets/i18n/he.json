@@ -246,7 +246,8 @@
 		"USERS": "Users",
 		"ROLES": "Roles & Permissions",
 		"DANGER_ZONE": "Danger Zone",
-		"DOWNLOAD_DATA": "Download all data"
+		"DOWNLOAD_DATA": "Download all data",
+		"TAGS": "Tags"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -462,6 +463,9 @@
 			"PAID": "Paid"
 		}
 	},
+	"TAGS_PAGE": {
+		"HEADER": "Tags"
+	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
@@ -571,7 +575,12 @@
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
-			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input"
+			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NAME_REQUIRED": "Name is required!",
+			"EMAIL_REQUIRED": "Email is required!",
+			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
+			"PHONE_REQUIRED": "Phone is required!",
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!"
 		}
 	},
 	"ACCEPT_INVITE": {

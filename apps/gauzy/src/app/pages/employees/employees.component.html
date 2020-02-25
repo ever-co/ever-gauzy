@@ -5,7 +5,11 @@
 				{{ 'EMPLOYEES_PAGE.HEADER' | translate }} {{ organizationName }}
 			</h4>
 			<button
-				*ngIf="hasEditPermission"
+				*ngIf="
+					organizationInvitesAllowed &&
+					hasInviteViewOrEditPermission &&
+					hasEditPermission
+				"
 				nbButton
 				status="primary"
 				(click)="manageInvites()"
@@ -18,7 +22,7 @@
 		<div class="mb-3" *ngIf="hasEditPermission">
 			<button
 				nbButton
-				*ngIf="hasInviteEditPermission"
+				*ngIf="organizationInvitesAllowed && hasInviteEditPermission"
 				status="primary"
 				(click)="invite()"
 				class="mr-2"
