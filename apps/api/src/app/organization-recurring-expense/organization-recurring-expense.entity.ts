@@ -11,7 +11,8 @@ import {
 	IsOptional,
 	IsString,
 	Max,
-	Min
+	Min,
+	IsBoolean
 } from 'class-validator';
 import { Column, Entity, Index } from 'typeorm';
 
@@ -103,4 +104,10 @@ export class OrganizationRecurringExpense extends Base
 	@Index()
 	@Column()
 	currency: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@IsOptional()
+	@Column({ nullable: true })
+	splitExpense: boolean;
 }

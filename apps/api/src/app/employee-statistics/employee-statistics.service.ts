@@ -1,7 +1,9 @@
 import {
 	BonusTypeEnum,
 	EmployeeStatistics,
-	EmployeeStatisticsFindInput
+	EmployeeStatisticsFindInput,
+	DEFAULT_PROFIT_BASED_BONUS,
+	DEFAULT_REVENUE_BASED_BONUS
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { EmployeeService } from '../employee/employee.service';
@@ -195,11 +197,19 @@ export class EmployeeStatisticsService {
 		income: number,
 		profit: number
 	) => {
+		bonusType = bonusType ? bonusType : BonusTypeEnum.PROFIT_BASED_BONUS;
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
-				return (profit * bonusPercentage) / 100;
+				return (
+					(profit * (bonusPercentage || DEFAULT_PROFIT_BASED_BONUS)) /
+					100
+				);
 			case BonusTypeEnum.REVENUE_BASED_BONUS:
-				return (income * bonusPercentage) / 100;
+				return (
+					(income *
+						(bonusPercentage || DEFAULT_REVENUE_BASED_BONUS)) /
+					100
+				);
 			default:
 				return 0;
 		}

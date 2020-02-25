@@ -3,13 +3,16 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
-	RecurringExpenseModel
+	RecurringExpenseModel,
+	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { first } from 'rxjs/operators';
 
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -21,27 +24,33 @@ export enum COMPONENT_TYPE {
 	templateUrl: './recurring-expense-mutation.component.html',
 	styleUrls: ['./recurring-expense-mutation.component.scss']
 })
-export class RecurringExpenseMutationComponent implements OnInit {
+export class RecurringExpenseMutationComponent extends TranslationBaseComponent
+	implements OnInit {
 	public form: FormGroup;
-	categoryNames = [];
+
+	defaultFilteredCategories: {
+		label: string;
+		value: string;
+	}[] = [];
+
 	defaultCategories: {
-		name: string;
+		category: string;
 		types: COMPONENT_TYPE[];
 	}[] = [
 		{
-			name: 'Salary',
+			category: RecurringExpenseDefaultCategoriesEnum.SALARY,
 			types: [COMPONENT_TYPE.EMPLOYEE]
 		},
 		{
-			name: 'Salary Taxes',
+			category: RecurringExpenseDefaultCategoriesEnum.SALARY_TAXES,
 			types: [COMPONENT_TYPE.EMPLOYEE]
 		},
 		{
-			name: 'Rent',
+			category: RecurringExpenseDefaultCategoriesEnum.RENT,
 			types: [COMPONENT_TYPE.ORGANIZATION]
 		},
 		{
-			name: 'Extra Bonus',
+			category: RecurringExpenseDefaultCategoriesEnum.EXTRA_BONUS,
 			types: [COMPONENT_TYPE.EMPLOYEE, COMPONENT_TYPE.ORGANIZATION]
 		}
 	];
@@ -54,20 +63,25 @@ export class RecurringExpenseMutationComponent implements OnInit {
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<RecurringExpenseMutationComponent>,
 		private organizationsService: OrganizationsService,
-		private store: Store
-	) {}
+		private store: Store,
+		private translate: TranslateService
+	) {
+		super(translate);
+	}
 
 	get currency() {
 		return this.form.get('currency');
 	}
 
 	ngOnInit() {
-		this.categoryNames = this.defaultCategories
+		this.defaultFilteredCategories = this.defaultCategories
 			.filter((c) => c.types.indexOf(this.componentType) > -1)
-			.map((i) => i.name);
-		this.recurringExpense
-			? this._initializeForm(this.recurringExpense)
-			: this._initializeForm();
+			.map((i) => ({
+				value: i.category,
+				label: this.getTranslatedExpenseCategory(i.category)
+			}));
+
+		this._initializeForm(this.recurringExpense);
 	}
 
 	submitForm() {
@@ -76,7 +90,17 @@ export class RecurringExpenseMutationComponent implements OnInit {
 		}
 	}
 
-	private _initializeForm(recurringExpense?: RecurringExpenseModel) {
+	getTranslatedExpenseCategory(categoryName) {
+		return this.getTranslation(
+			`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+		);
+	}
+
+	addCustomCategoryName(term) {
+		return { value: term, label: term };
+	}
+
+	private _initializeForm(recurringExpense?: any) {
 		this.form = this.fb.group({
 			categoryName: [
 				recurringExpense ? recurringExpense.categoryName : '',
@@ -89,9 +113,29 @@ export class RecurringExpenseMutationComponent implements OnInit {
 			currency: [
 				recurringExpense ? recurringExpense.currency : '',
 				Validators.required
+			],
+			splitExpense: [
+				recurringExpense && recurringExpense.splitExpense
+					? recurringExpense.splitExpense
+					: false
 			]
 		});
 
+		if (
+			recurringExpense &&
+			!(
+				recurringExpense.categoryName in
+				RecurringExpenseDefaultCategoriesEnum
+			)
+		) {
+			this.defaultFilteredCategories = [
+				{
+					value: recurringExpense.categoryName,
+					label: recurringExpense.categoryName
+				},
+				...this.defaultFilteredCategories
+			];
+		}
 		this._loadDefaultCurrency();
 	}
 

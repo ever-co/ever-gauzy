@@ -45,3 +45,10 @@ export enum RecurringExpenseDeletionEnum {
 	FUTURE = 'future',
 	ALL = 'all'
 }
+
+export enum RecurringExpenseDefaultCategoriesEnum {
+	SALARY = 'SALARY',
+	SALARY_TAXES = 'SALARY_TAXES',
+	RENT = 'RENT',
+	EXTRA_BONUS = 'EXTRA_BONUS'
+}

@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { RecurringExpenseDefaultCategoriesEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 
 export enum HistoryType {
@@ -13,7 +15,8 @@ export enum HistoryType {
 	templateUrl: './records-history.component.html',
 	styleUrls: ['./records-history.component.scss']
 })
-export class RecordsHistoryComponent implements OnInit {
+export class RecordsHistoryComponent extends TranslationBaseComponent
+	implements OnInit {
 	type: HistoryType;
 	recordsData: any;
 	smartTableSource = new LocalDataSource();
@@ -21,7 +24,9 @@ export class RecordsHistoryComponent implements OnInit {
 
 	smartTableSettings: Object;
 
-	constructor(private translateService: TranslateService) {}
+	constructor(translateService: TranslateService) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		let viewModel: any;
@@ -141,7 +146,10 @@ export class RecordsHistoryComponent implements OnInit {
 						},
 						categoryName: {
 							title: this.getTranslation('SM_TABLE.CATEGORY'),
-							type: 'string'
+							type: 'html',
+							valuePrepareFunction: (_, e) =>
+								`${this.getCategoryName(_)}`,
+							filter: false
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
@@ -163,13 +171,12 @@ export class RecordsHistoryComponent implements OnInit {
 		}
 	}
 
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
+	getCategoryName(categoryName: string) {
+		return categoryName in RecurringExpenseDefaultCategoriesEnum
+			? this.getTranslation(
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
+			: categoryName;
 	}
 
 	_applyTranslationOnSmartTable() {

@@ -13,7 +13,8 @@ import {
 	IsNumber,
 	IsOptional,
 	IsDate,
-	IsEnum
+	IsEnum,
+	IsBoolean
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
@@ -154,4 +155,10 @@ export class Expense extends Base implements IExpense {
 	@IsOptional()
 	@Column({ nullable: true })
 	receipt?: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@IsOptional()
+	@Column({ nullable: true })
+	splitExpense: boolean;
 }

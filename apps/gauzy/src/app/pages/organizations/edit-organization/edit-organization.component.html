@@ -96,7 +96,9 @@
 			<div class="block-content">
 				<div class="block-info">
 					<div class="row">
-						<div class="col">{{ setting.categoryName }}</div>
+						<div class="col">
+							{{ getCategoryName(setting.categoryName) }}
+						</div>
 						<div class="col">
 							{{ getMonthString(setting.startMonth) }}
 							{{ setting.startYear }}
@@ -106,6 +108,15 @@
 								>{{
 									setting.value | currency: setting.currency
 								}}
+								<nb-icon
+									*ngIf="setting.splitExpense"
+									nbTooltip="{{
+										'EXPENSES_PAGE.SPLIT_WILL_BE_TOOLTIP'
+											| translate
+									}}"
+									icon="pricetags-outline"
+								>
+								</nb-icon>
 							</span>
 						</div>
 					</div>

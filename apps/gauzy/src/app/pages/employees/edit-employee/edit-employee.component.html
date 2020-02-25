@@ -123,7 +123,9 @@
 			<div class="block-content">
 				<div class="block-info">
 					<div class="row">
-						<div class="col">{{ setting.categoryName }}</div>
+						<div class="col">
+							{{ getCategoryName(setting.categoryName) }}
+						</div>
 						<div class="col">
 							{{ setting.startDay }}
 							{{ getMonthString(setting.startMonth) }}

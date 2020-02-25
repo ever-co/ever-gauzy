@@ -35,6 +35,7 @@ export interface ExpenseViewModel {
 	taxLabel: string;
 	rateValue: number;
 	receipt: string;
+	splitExpense: boolean;
 }
 
 interface SelectedRowModel {
@@ -213,7 +214,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			taxType: formData.taxType,
 			taxLabel: formData.taxLabel,
 			rateValue: formData.rateValue,
-			receipt: formData.receipt
+			receipt: formData.receipt,
+			splitExpense: formData.splitExpense
 		};
 	}
 
@@ -426,7 +428,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					taxType: i.taxType,
 					taxLabel: i.taxLabel,
 					rateValue: i.rateValue,
-					receipt: i.receipt
+					receipt: i.receipt,
+					splitExpense: i.splitExpense
 				};
 			});
 

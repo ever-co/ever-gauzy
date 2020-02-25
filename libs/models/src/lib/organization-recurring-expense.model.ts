@@ -3,6 +3,7 @@ import { RecurringExpenseModel } from './recurring-expense.model';
 
 export interface OrganizationRecurringExpense extends RecurringExpenseModel {
 	orgId: string;
+	splitExpense: boolean;
 }
 
 export interface OrganizationRecurringExpenseFindInput
