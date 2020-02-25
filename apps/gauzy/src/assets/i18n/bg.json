@@ -387,17 +387,17 @@
 			"ORG_USERS_VIEW": "Виж потребителите в организацията",
 			"ORG_USERS_EDIT": "Създай/Редактирай/Изтрии потребители на организацията",
 			"ORG_INVITE_VIEW": "Виж покани на организацията",
-			"ORG_INVITE_EDIT": "Create/Resend/Delete Invites",
-			"ALL_ORG_VIEW": "View All Organizations",
-			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
-			"POLICY_VIEW": "View Time Off Policy",
-			"POLICY_EDIT": "Edit Time Off Policy",
-			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
-			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
-			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
+			"ORG_INVITE_EDIT": "Създай/Преизпрати/Изтрии покани",
+			"ALL_ORG_VIEW": "Виж всички организации",
+			"ALL_ORG_EDIT": "Създай/Редактирай/Изтрии всички организации",
+			"POLICY_VIEW": "Виж Time Off политиката",
+			"POLICY_EDIT": "Редактирай Time Off политиката",
+			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
+			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
+			"CHANGE_ROLES_PERMISSIONS": "Промени ролите и Позволенията",
 			"GROUPS": {
 				"GENERAL": "Основни",
-				"ADMINISTRATION": "Administration"
+				"ADMINISTRATION": "Администрация"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
