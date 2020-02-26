@@ -579,7 +579,7 @@
 			"OK": "OK",
 			"CANCEL": "Отказ",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
-			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
+			"PERMISSION_UPDATED": "разрешения обновени за",
 			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again",
 			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
@@ -587,7 +587,7 @@
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
-			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -608,9 +608,9 @@
 	},
 	"NOTES": {
 		"INCOME": {
-			"ADD_INCOME": "Income added for {{ name }}",
-			"EDIT_INCOME": "Income edited for {{ name }}",
-			"DELETE_INCOME": "Income deleted for {{ name }}",
+			"ADD_INCOME": "Доход добавен за",
+			"EDIT_INCOME": "Доход обновен за",
+			"DELETE_INCOME": "Доход изтрит за",
 			"INCOME_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
@@ -649,10 +649,10 @@
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
-				"ADD_NEW_TEAM": "New team {{ name }} successfully added!",
-				"EDIT_EXISTING_TEAM": "Team {{ name }} successfully updated!",
+				"ADD_NEW_TEAM": "Нов екип успешно добавен!",
+				"EDIT_EXISTING_TEAM": "Екип успешно обновен!",
 				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
-				"REMOVE_TEAM": "Team {{ name }} successfully removed!"
+				"REMOVE_TEAM": "Екип успешно премахнат!"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
