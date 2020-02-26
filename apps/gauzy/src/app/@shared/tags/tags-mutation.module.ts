@@ -7,7 +7,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TagsMutationComponent } from './tags-mutation.component';
-
+import { TagsService } from '../../@core/services/tags.service';
 
 @NgModule({
 	imports: [
@@ -34,7 +34,7 @@ import { TagsMutationComponent } from './tags-mutation.component';
 	],
 	declarations: [TagsMutationComponent],
 	entryComponents: [TagsMutationComponent],
-	// providers: []	
+	providers: [TagsService]	
 
 })
 

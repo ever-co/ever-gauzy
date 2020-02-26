@@ -55,6 +55,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	private _selectedOrganizationId: string;
 
 	async ngOnInit() {
+		
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 

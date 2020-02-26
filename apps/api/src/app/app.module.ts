@@ -32,6 +32,7 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
 
+
 @Module({
 	imports: [
 		RouterModule.forRoutes([
@@ -116,6 +117,10 @@ import { EmailTemplateModule } from './email-template';
 					{
 						path: '/tenant',
 						module: TenantModule
+					},
+					{
+						path:'/tags',
+						module:TagModule
 					}
 				]
 			}
@@ -147,7 +152,8 @@ import { EmailTemplateModule } from './email-template';
 		RolePermissionsModule,
 		TenantModule,
 		EmailTemplateModule,
-		TagModule
+		TagModule,
+		
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

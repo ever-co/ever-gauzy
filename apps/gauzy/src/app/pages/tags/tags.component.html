@@ -26,7 +26,11 @@
 			<ngx-search-input class="search"></ngx-search-input>
 		</div>
 
-		<ng2-smart-table class="tags-table" [settings]="settingsSmartTable">
+		<ng2-smart-table class="tags-table" 
+		[settings]="settingsSmartTable"
+		[source]="smartTableSource"
+
+		>
 		</ng2-smart-table>
 	</nb-card-body>
 </nb-card>
