@@ -20,6 +20,8 @@ import {
 	RecurringExpenseMutationComponent,
 	COMPONENT_TYPE
 } from '../../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -28,7 +30,8 @@ import {
 		'../../dashboard/dashboard.component.scss'
 	]
 })
-export class EditOrganizationComponent implements OnInit, OnDestroy {
+export class EditOrganizationComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	selectedOrg: Organization;
 	selectedDate: Date;
 	selectedOrgFromHeader: Organization;
@@ -50,8 +53,11 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private store: Store,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService
-	) {}
+		private toastrService: NbToastrService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	async ngOnInit() {
 		this.selectedDate = this.store.selectedDate;

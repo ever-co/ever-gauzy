@@ -18,6 +18,7 @@ import { Store } from '../../../@core/services/store.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { RequestApprovalIcon } from '../table-components/request-approval-icon';
 import { PaidIcon } from '../table-components/paid-icon';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 export interface TimeOffPolicyVM {
 	id: string;
@@ -39,7 +40,8 @@ interface SelectedRowModel {
 	templateUrl: './time-off-settings.component.html',
 	styleUrls: ['./time-off-settings.component.scss']
 })
-export class TimeOffSettingsComponent implements OnInit, OnDestroy {
+export class TimeOffSettingsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	constructor(
 		private dialogService: NbDialogService,
 		private authService: AuthService,
@@ -47,8 +49,10 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 		private tymeOffService: TimeOffService,
 		private store: Store,
 		private errorHandler: ErrorHandler,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
@@ -260,15 +264,6 @@ export class TimeOffSettingsComponent implements OnInit, OnDestroy {
 				);
 			}
 		}
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 
 	_applyTranslationOnSmartTable() {

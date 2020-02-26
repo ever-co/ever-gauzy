@@ -7,13 +7,16 @@ import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organiz
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CountryService } from 'apps/gauzy/src/app/@core/services/country.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-edit-org-location',
 	templateUrl: './edit-organization-location.component.html',
 	styleUrls: ['./edit-organization-location.component.scss']
 })
-export class EditOrganizationLocationComponent implements OnInit {
+export class EditOrganizationLocationComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: Organization;
@@ -25,8 +28,11 @@ export class EditOrganizationLocationComponent implements OnInit {
 		private organizationService: OrganizationsService,
 		private toastrService: NbToastrService,
 		private organizationEditStore: OrganizationEditStore,
-		private countryService: CountryService
-	) {}
+		private countryService: CountryService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.organizationEditStore.selectedOrganization$

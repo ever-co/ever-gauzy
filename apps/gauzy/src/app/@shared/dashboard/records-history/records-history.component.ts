@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 export enum HistoryType {
 	INCOME = 'INCOME',
@@ -13,7 +14,8 @@ export enum HistoryType {
 	templateUrl: './records-history.component.html',
 	styleUrls: ['./records-history.component.scss']
 })
-export class RecordsHistoryComponent implements OnInit {
+export class RecordsHistoryComponent extends TranslationBaseComponent
+	implements OnInit {
 	type: HistoryType;
 	recordsData: any;
 	smartTableSource = new LocalDataSource();
@@ -21,7 +23,9 @@ export class RecordsHistoryComponent implements OnInit {
 
 	smartTableSettings: Object;
 
-	constructor(private translateService: TranslateService) {}
+	constructor(readonly translateService: TranslateService) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		let viewModel: any;
@@ -161,15 +165,6 @@ export class RecordsHistoryComponent implements OnInit {
 				};
 				break;
 		}
-	}
-
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 
 	_applyTranslationOnSmartTable() {

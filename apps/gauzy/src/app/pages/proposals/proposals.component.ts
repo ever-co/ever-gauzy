@@ -14,6 +14,7 @@ import { ProposalStatusComponent } from './table-components/proposal-status/prop
 import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 export interface ProposalViewModel {
 	id: string;
@@ -40,7 +41,8 @@ interface SelectedRowModel {
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent implements OnInit, OnDestroy {
+export class ProposalsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private router: Router,
@@ -48,8 +50,10 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private errorHandler: ErrorHandlingService,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -384,15 +388,6 @@ export class ProposalsComponent implements OnInit, OnDestroy {
 		} catch (error) {
 			this.toastrService.danger(error.message || error.message, 'Error');
 		}
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 
 	_applyTranslationOnSmartTable() {

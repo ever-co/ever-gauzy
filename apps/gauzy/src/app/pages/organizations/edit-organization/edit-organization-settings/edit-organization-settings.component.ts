@@ -8,6 +8,7 @@ import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../../@core/services/country.service';
 import { OrganizationsService } from '../../../../@core/services/organizations.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 export enum ListsInputType {
 	DEPARTMENTS = 'DEPARTMENTS',
@@ -24,7 +25,8 @@ export enum ListsInputType {
 	],
 	providers: [CountryService]
 })
-export class EditOrganizationSettingsComponent implements OnInit {
+export class EditOrganizationSettingsComponent extends TranslationBaseComponent
+	implements OnInit {
 	organization: Organization;
 
 	departments: string[] = [];
@@ -42,9 +44,11 @@ export class EditOrganizationSettingsComponent implements OnInit {
 		private organizationService: OrganizationsService,
 		private countryService: CountryService,
 		private toastrService: NbToastrService,
-		private translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private organizationEditStore: OrganizationEditStore
-	) {}
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.route.params
@@ -143,14 +147,6 @@ export class EditOrganizationSettingsComponent implements OnInit {
 				'Error'
 			);
 		}
-	}
-
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 
 	private _applyTranslationOnTabs() {

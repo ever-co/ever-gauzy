@@ -8,21 +8,25 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-proposal-register',
 	templateUrl: './proposal-register.component.html',
 	styleUrls: ['././proposal-register.component.scss']
 })
-export class ProposalRegisterComponent implements OnInit, OnDestroy {
+export class ProposalRegisterComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	constructor(
 		private fb: FormBuilder,
 		private store: Store,
 		private router: Router,
 		private proposalsService: ProposalsService,
 		private toastrService: NbToastrService,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
@@ -45,15 +49,6 @@ export class ProposalRegisterComponent implements OnInit, OnDestroy {
 				this._selectedOrganizationId = org.id;
 			}
 		});
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 
 	private _initializeForm() {
