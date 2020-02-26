@@ -566,7 +566,7 @@
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
 			"INVITES_LOAD": "Could Not Load Invites",
-			"INVITES_RESEND": "Invite has been resent to {{ email }}.",
+			"INVITES_RESEND": "Поканата е изпратена до {{ email }}.",
 			"EMPLOYEE_DEPARTMENT_ADDED": "Employee added to department",
 			"EMPLOYEE_DEPARTMENT_REMOVED": "Employee removed from department",
 			"EMPLOYEE_PROJECT_ADDED": "Employee added to project",
@@ -614,9 +614,9 @@
 			"INCOME_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
-			"ADD_EXPENSE": "Expense added for {{ name }}",
-			"OPEN_EDIT_EXPENSE_DIALOG": "Expense edited for {{ name }}",
-			"DELETE_EXPENSE": "Expense deleted for {{ name }}",
+			"ADD_EXPENSE": "Разход добавен за",
+			"OPEN_EDIT_EXPENSE_DIALOG": "Разход променен за",
+			"DELETE_EXPENSE": "Разход изтрит за",
 			"EXPENSES_ERROR": "{{ error }}"
 		},
 		"PROPOSALS": {
