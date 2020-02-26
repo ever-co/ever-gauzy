@@ -463,7 +463,7 @@
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
-			"DENIED": "Denied",
+			"DENIED": "Отказан",
 			"ALL": "All"
 		},
 		"POLICY": {
@@ -528,8 +528,8 @@
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
 		},
-		"SENT": "{{total}} Invites Sent.",
-		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
+		"SENT": "покани изпратени.",
+		"IGNORED": "общо покани изпратени. бяха вече поканени и бяха игнорирани.",
 		"STATUS": {
 			"INVITED": "Invited",
 			"EXPIRED": "Expired",
