@@ -4,7 +4,8 @@ import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	BonusTypeEnum
+	BonusTypeEnum,
+	DEFAULT_PROFIT_BASED_BONUS
 } from '@gauzy/models';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 @Component({
@@ -68,12 +69,9 @@ export class OrganizationsMutationComponent implements OnInit {
 				Validators.required
 			], // TODO: fix that when the internet is here!
 			defaultValueDateType: ['', Validators.required],
-			bonusType: [''],
+			bonusType: [BonusTypeEnum.PROFIT_BASED_BONUS],
 			bonusPercentage: [
-				{
-					value: null,
-					disabled: true
-				},
+				DEFAULT_PROFIT_BASED_BONUS,
 				[Validators.min(0), Validators.max(100)]
 			]
 		});
