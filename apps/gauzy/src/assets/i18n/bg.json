@@ -640,12 +640,12 @@
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
 			"DELETE_ORGANIZATION": "{{ name }} organization deleted.",
-			"ADD_NEW_USER_TO_ORGANIZATION": "{{ username }} added to {{ orgname }}",
-			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} set as inactive.",
+			"ADD_NEW_USER_TO_ORGANIZATION": "добавен към",
+			"DELETE_USER_FROM_ORGANIZATION": "зададен като неактивен.",
 			"DATA_ERROR": "{{ error }}",
 			"EDIT_ORGANIZATIONS_PROJECTS": {
-				"ADD_PROJECT": "New project {{ name }} successfully added!",
-				"REMOVE_PROJECT": "Project {{ name }} successfully removed!",
+				"ADD_PROJECT": "Нов проект успешно добавен!",
+				"REMOVE_PROJECT": "Проект успешно премахнат!",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
@@ -655,8 +655,8 @@
 				"REMOVE_TEAM": "Team {{ name }} successfully removed!"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
-				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
-				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
+				"ADD_VENDOR": "Нов доставчик успешно добавен!",
+				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
