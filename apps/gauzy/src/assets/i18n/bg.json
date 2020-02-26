@@ -228,7 +228,8 @@
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Сигурни ли сте, че искате да изпратите отново поканата",
 		"OK": "Добре",
 		"CANCEL": "Отказ",
-		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Сигурен ли си, че искаш да промениш"
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Сигурен ли си, че искаш да промениш",
+		"RECURRING_EXPENSE": "This is a recurring expense"
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
@@ -276,7 +277,9 @@
 			"TOTAL_EXPENSES": "Общи разходи",
 			"TOTAL_INCOME": "Общ доход",
 			"PROFIT": "Печалба",
-			"TOTAL_BONUS": "Бонус Общо"
+			"TOTAL_BONUS": "Бонус Общо",
+			"TOTAL_DIRECT_INCOME": "Direct Income",
+			"SALARY": "Total Salary"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
@@ -304,7 +307,16 @@
 			"ASSIGN_TO": "Възложи на",
 			"INCLUDE_TAXES": "Включете такси",
 			"ATTACH_A_RECEIPT": "Приложете разписка"
-		}
+		},
+		"DEFAULT_CATEGORY": {
+			"SALARY": "Salary",
+			"SALARY_TAXES": "Salary Taxes",
+			"RENT": "Rent",
+			"EXTRA_BONUS": "Extra Bonus"
+		},
+		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
+		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
+		"SPLIT_EXPENSE": "Split Expense"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление на служителите в ",

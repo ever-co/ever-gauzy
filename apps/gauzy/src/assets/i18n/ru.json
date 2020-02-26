@@ -228,7 +228,8 @@
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 		"OK": "ОК",
 		"CANCEL": "Отменить",
-		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить"
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
+		"RECURRING_EXPENSE": "Это периодические расходы"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
@@ -276,7 +277,9 @@
 			"TOTAL_EXPENSES": "Всего расходов",
 			"TOTAL_INCOME": "Общий доход",
 			"PROFIT": "Прибыль",
-			"TOTAL_BONUS": "Общий бонус"
+			"TOTAL_BONUS": "Общий бонус",
+			"TOTAL_DIRECT_INCOME": "Прямой доход",
+			"SALARY": "Общая зарплата"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
@@ -304,7 +307,16 @@
 			"ASSIGN_TO": "Назначить",
 			"INCLUDE_TAXES": "Включить налоги",
 			"ATTACH_A_RECEIPT": "Добавить квитанцию"
-		}
+		},
+		"DEFAULT_CATEGORY": {
+			"SALARY": "Зарплата",
+			"SALARY_TAXES": "Налоги на зарплату",
+			"RENT": "Аренда",
+			"EXTRA_BONUS": "Дополнительный бонус"
+		},
+		"SPLIT_HELP": "Если установлено, то эти расходы будут распределены между всеми сотрудниками компании и учитываться при каждом расходе.",
+		"SPLIT_WILL_BE_TOOLTIP": "Эти расходы будут в равной степени разделены между всеми сотрудниками",
+		"SPLIT_EXPENSE": "Разделить расход"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление сотрудниками для",
