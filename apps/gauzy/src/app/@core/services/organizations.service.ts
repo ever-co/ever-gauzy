@@ -25,6 +25,7 @@ export class OrganizationsService {
 
     getAll(): Promise<{ items: Organization[], total: number }> {
         return this.http.get<{ items: Organization[], total: number }>(`/api/organization`).pipe(first()).toPromise();
+        
     }
     
     getById(id: string = '', select?: OrganizationSelectInput[]): Observable<Organization> {

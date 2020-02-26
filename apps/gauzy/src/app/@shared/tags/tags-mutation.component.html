@@ -8,18 +8,14 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body class="body">
+		<form [formGroup]="form">
 		<div class="select">
-			<nb-select
-				class="select-user"
-				placeholder="Select User"
-			>
-				<nb-option *ngFor="let user of selectedUser">
-					{{ user.userName }}
-				</nb-option>
-			</nb-select>
+			
+			<input formControlName="name" class = "select-name" type="text" nbInput placeholder="Add name" >
 			<nb-select
 				class="select-color"
 				placeholder="Select Color"
+				formControlName="color"
 			>
 				<nb-option *ngFor="let user of selectedColor">
 					{{ user.color }}
@@ -27,14 +23,15 @@
 			</nb-select>
 		</div>
 		<div>
-			<textarea nbInput fullWidth class="description" placeholder="Description"></textarea>
+			<textarea formControlName="description" nbInput fullWidth class="description" placeholder="Description"></textarea>
 		</div>
+	</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button status="success" nbButton>
+		<button (click)="addTag()" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

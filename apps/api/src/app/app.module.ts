@@ -33,6 +33,7 @@ import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
 import { DownloadAllModule } from './download-all';
 
+
 @Module({
 	imports: [
 		RouterModule.forRoutes([
@@ -119,6 +120,10 @@ import { DownloadAllModule } from './download-all';
 					{
 						path: '/tenant',
 						module: TenantModule
+					},
+					{
+						path:'/tags',
+						module:TagModule
 					}
 				]
 			}
@@ -151,7 +156,8 @@ import { DownloadAllModule } from './download-all';
 		RolePermissionsModule,
 		TenantModule,
 		EmailTemplateModule,
-		TagModule
+		TagModule,
+		
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

@@ -59,6 +59,7 @@ export class IncomeComponent extends TranslationBaseComponent
 	private _selectedOrganizationId: string;
 
 	async ngOnInit() {
+		
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 

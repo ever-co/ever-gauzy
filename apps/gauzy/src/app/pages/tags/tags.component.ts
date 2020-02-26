@@ -1,8 +1,22 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component'
+import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-// import { TagsService } from '../../@core/services/tags.service';
+import { Subject } from 'rxjs';
+import { Store } from '../../@core/services/store.service';
+import { LocalDataSource } from 'ng2-smart-table';
+import { TagsService } from '../../@core/services/tags.service';
+import { Tag } from '@gauzy/models';
+import { first } from 'rxjs/operators';
+
+
+export interface SelectedTag{
+	name: string;
+	color: string;
+	description: string;
+}
+
+
 
 @Component({
 	selector: 'ngx-tags',
@@ -11,18 +25,34 @@ import { NbDialogService } from '@nebular/theme';
 })
 export class TagsComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	// private _ngDEstroy$ = new Subject<void>()
-	
-	
+	loading = false;
+	private _ngDestroy$ = new Subject<void>();
+	selectedTag: SelectedTag;
+	smartTableSource = new LocalDataSource();
+	tag: Tag;
 
 	constructor(
 		private translate: TranslateService,
 		private dialogService: NbDialogService,
-		// private tagsService: TagsService,
+		private store: Store,
+		private tagsService: TagsService
 	) {}
-	loading = false;
+
+	ngOnInit() {
+		
+		this.loadSmartTable();
 	
-	async ngOnInit() {
+		this.loadSettings();
+		
+	}
+	
+	async add() {
+		this.dialogService.open(TagsMutationComponent);
+	}
+	async delete() {}
+	async edit() {}
+
+	loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
@@ -35,28 +65,21 @@ export class TagsComponent implements OnInit, OnDestroy {
 					type: 'string'
 				},
 				color: {
-					 title: "Color",
-					 type: 'string'
+					title: 'Color',
+					type: 'string'
 				}
 			}
 		};
-
-
 	}
-	async add(){
-		  
-		this.dialogService.open(TagsMutationComponent);
-
+	async loadSettings(){
 	
-	}
-	async delete(){
+		const {items} = await this.tagsService.getAllTags();
+		console.warn(items);
+		this.smartTableSource.load(items);
+		
+			
+	 }
 
-	}
-	async edit(){
-
-	}
-
-	
 
 	getTranslation(prefix: string) {
 		let result = '';

@@ -1,15 +1,17 @@
-
-.body{
-    width: 505px;
+.body {
+	width: 505px;
 }
-.description{
-    margin-top: 10px;
-    height: 198px;
+.description {
+	margin-top: 10px;
+	height: 198px;
 }
-
-.select-user{
-    width: 50%;
+.select-name {
+	width: 50%;
 }
-.select-color{
-    width: 50%;
+.select-color {
+	width: 50%;
+}
+.select {
+	display: flex;
+	justify-content: space-between;
 }
