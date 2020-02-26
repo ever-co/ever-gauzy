@@ -12,7 +12,7 @@ import { IncomeService } from '../../@core/services/income.service';
 import { Store } from '../../@core/services/store.service';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
+import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
@@ -164,7 +164,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					type: 'custom',
 					width: '15%',
 					filter: false,
-					renderComponent: IncomeAmountComponent
+					renderComponent: IncomeExpenseAmountComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),

@@ -4,7 +4,8 @@ import { first } from 'rxjs/operators';
 import {
 	OrganizationRecurringExpense,
 	OrganizationRecurringExpenseFindInput,
-	RecurringExpenseDeleteInput
+	RecurringExpenseDeleteInput,
+	OrganizationRecurringExpenseForEmployeeOutput
 } from '@gauzy/models';
 
 @Injectable({
@@ -84,18 +85,19 @@ export class OrganizationRecurringExpenseService {
 	}
 
 	getForEmployee(
+		orgId: string,
 		findInput?: OrganizationRecurringExpenseFindInput
 	): Promise<{
-		items: OrganizationRecurringExpense[];
+		items: OrganizationRecurringExpenseForEmployeeOutput[];
 		total: number;
 	}> {
 		const data = JSON.stringify({ findInput });
 
 		return this.http
 			.get<{
-				items: OrganizationRecurringExpense[];
+				items: OrganizationRecurringExpenseForEmployeeOutput[];
 				total: number;
-			}>('/api/organization-recurring-expense/employee', {
+			}>(`/api/organization-recurring-expense/employee/${orgId}`, {
 				params: { data }
 			})
 			.pipe(first())

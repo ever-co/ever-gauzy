@@ -1,6 +1,7 @@
 import {
 	ExpenseCreateInput as IExpenseCreateInput,
-	PermissionsEnum
+	PermissionsEnum,
+	SplitExpenseOutput
 } from '@gauzy/models';
 import {
 	Body,
@@ -26,6 +27,7 @@ import { ExpenseCreateCommand } from './commands/expense.create.command';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
+import { OrganizationService } from '../organization';
 
 @ApiTags('Expense')
 @UseGuards(AuthGuard('jwt'))
@@ -34,6 +36,7 @@ export class ExpenseController extends CrudController<Expense> {
 	constructor(
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
+		private readonly organizationService: OrganizationService,
 		private readonly commandBus: CommandBus
 	) {
 		super(expenseService);
@@ -88,6 +91,54 @@ export class ExpenseController extends CrudController<Expense> {
 			{ where: findInput, relations },
 			filterDate
 		);
+	}
+
+	@ApiOperation({ summary: 'Find all split expense for an organization.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found split expenses'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('split/:orgId')
+	async findAllSplitExpenses(
+		@Query('data') data: string,
+		@Param('orgId') orgId: string
+	): Promise<IPagination<SplitExpenseOutput>> {
+		const { relations, findInput, filterDate } = JSON.parse(data);
+
+		const organization = await this.organizationService.findOne(orgId);
+
+		const { items, total } = await this.expenseService.findAll(
+			{
+				where: {
+					...findInput,
+					organization: organization,
+					splitExpense: true
+				},
+				relations
+			},
+			filterDate
+		);
+
+		const orgEmployees = await this.employeeService.findAll({
+			where: {
+				organization
+			}
+		});
+
+		const splitItems = items.map((e) => ({
+			...e,
+			amount: +(
+				e.amount / (orgEmployees.total !== 0 ? orgEmployees.total : 1)
+			).toFixed(2),
+			originalValue: +e.amount,
+			employeeCount: orgEmployees.total
+		}));
+
+		return { items: splitItems, total };
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

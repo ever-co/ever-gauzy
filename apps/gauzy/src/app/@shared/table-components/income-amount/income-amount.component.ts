@@ -12,9 +12,29 @@ import { Component, Input } from '@angular/core';
 			>
 			</nb-icon>
 			<nb-icon
-				*ngIf="rowData?.splitExpense"
+				*ngIf="
+					rowData?.splitExpense &&
+					!(rowData?.originalValue && rowData?.employeeCount)
+				"
 				nbTooltip="{{
 					'EXPENSES_PAGE.SPLIT_WILL_BE_TOOLTIP' | translate
+				}}"
+				icon="pricetags-outline"
+			>
+			</nb-icon>
+			<nb-icon
+				*ngIf="
+					rowData?.splitExpense &&
+					rowData?.originalValue &&
+					rowData?.employeeCount
+				"
+				nbTooltip="{{
+					'POP_UPS.SPLIT_EXPENSE_WITH_INFO'
+						| translate
+							: {
+									originalValue: rowData.originalValue,
+									employeeCount: rowData.employeeCount
+							  }
 				}}"
 				icon="pricetags-outline"
 			>
@@ -23,7 +43,7 @@ import { Component, Input } from '@angular/core';
 	`,
 	styles: []
 })
-export class IncomeAmountComponent {
+export class IncomeExpenseAmountComponent {
 	@Input() value: Date;
 
 	@Input()

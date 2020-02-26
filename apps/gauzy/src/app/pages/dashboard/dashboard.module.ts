@@ -29,6 +29,7 @@ import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-s
 import { EmployeeChartComponent } from './employee-chart/employee-chart.component';
 import { EmployeeStatisticsComponent } from './employee-statistics/employee-statistics.component';
 import { OrganizationEmployeesComponent } from './organization-employees/organization-employees.component';
+import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -60,7 +61,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		ChartModule,
 		NbSpinnerModule,
-		SingleStatisticModule
+		SingleStatisticModule,
+		InfoBlockModule
 	],
 	declarations: [
 		DashboardComponent,
