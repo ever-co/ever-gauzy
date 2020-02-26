@@ -18,6 +18,7 @@ import * as nodemailer from 'nodemailer';
 import { OrganizationClients } from '../organization-clients';
 import { OrganizationDepartment } from '../organization-department';
 import { Organization } from '../organization';
+import { EmailService } from '../email';
 
 @Injectable()
 export class InviteService extends CrudService<Invite> {
@@ -38,7 +39,8 @@ export class InviteService extends CrudService<Invite> {
 			OrganizationDepartment
 		>,
 		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>
+		private readonly organizationRepository: Repository<Organization>,
+		private emailService: EmailService
 	) {
 		super(inviteRepository);
 	}
