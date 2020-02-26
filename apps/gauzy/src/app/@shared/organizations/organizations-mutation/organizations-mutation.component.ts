@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import {
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	BonusTypeEnum
+} from '@gauzy/models';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 @Component({
 	selector: 'ngx-organizations-mutation',
@@ -16,7 +20,7 @@ export class OrganizationsMutationComponent implements OnInit {
 	hoverState: boolean;
 	currencies: string[] = Object.values(CurrenciesEnum);
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
-
+	defaultBonusTypes: string[] = Object.values(BonusTypeEnum);
 	constructor(
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<OrganizationsMutationComponent>,
@@ -36,6 +40,25 @@ export class OrganizationsMutationComponent implements OnInit {
 		this.toastrService.danger(error, 'Error');
 	}
 
+	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
+		const bonusPercentageControl = this.form.get('bonusPercentage');
+
+		switch (bonusType) {
+			case BonusTypeEnum.PROFIT_BASED_BONUS:
+				bonusPercentageControl.setValue(75);
+				bonusPercentageControl.enable();
+				break;
+			case BonusTypeEnum.REVENUE_BASED_BONUS:
+				bonusPercentageControl.setValue(10);
+				bonusPercentageControl.enable();
+				break;
+			default:
+				bonusPercentageControl.setValue(null);
+				bonusPercentageControl.disable();
+				break;
+		}
+	}
+
 	private _initializedForm() {
 		this.form = this.fb.group({
 			currency: ['', Validators.required],
@@ -44,7 +67,15 @@ export class OrganizationsMutationComponent implements OnInit {
 				'https://dummyimage.com/330x300/8b72ff/ffffff.jpg&text',
 				Validators.required
 			], // TODO: fix that when the internet is here!
-			defaultValueDateType: ['', Validators.required]
+			defaultValueDateType: ['', Validators.required],
+			bonusType: [''],
+			bonusPercentage: [
+				{
+					value: null,
+					disabled: true
+				},
+				[Validators.min(0), Validators.max(100)]
+			]
 		});
 	}
 }
