@@ -45,6 +45,8 @@ export interface OrganizationCreateInput {
 	imageUrl: string;
 	currency: CurrenciesEnum;
 	defaultValueDateType: DefaultValueDateTypeEnum;
+	bonusType: BonusTypeEnum;
+	bonusPercentage: number;
 }
 
 export enum OrganizationSelectInput {
