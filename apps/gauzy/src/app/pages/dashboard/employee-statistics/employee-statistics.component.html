@@ -141,7 +141,7 @@
 					</div>
 				</div>
 
-				<div class="bonus">
+				<div *ngIf="selectedOrganization?.bonusType" class="bonus">
 					<div class="bonus-value">
 						<div>
 							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}

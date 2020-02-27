@@ -173,7 +173,7 @@
 			"DATE": "Date",
 			"VALUE": "Value",
 			"SELECT_CURRENCY": "Select Currency",
-			"TYPE_OF_BONUS": "Type of Bonus",
+			"TYPE_OF_BONUS": "Select Type of Bonus",
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto"
