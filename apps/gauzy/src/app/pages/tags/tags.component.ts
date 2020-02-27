@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
 import { NbDialogService } from '@nebular/theme';
-import { Subject } from 'rxjs';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TagsService } from '../../@core/services/tags.service';
 import { Tag } from '@gauzy/models';
@@ -37,9 +36,7 @@ export class TagsComponent implements OnInit, OnDestroy {
 
 	async add() {
 		const dialog = this.dialogService.open(TagsMutationComponent, {
-			context: {
-
-			}
+			context: {}
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
@@ -62,10 +59,7 @@ export class TagsComponent implements OnInit, OnDestroy {
 			this.loadSettings();
 		}
 	}
-	async edit() {
-      
-
-	}
+	async edit() {}
 
 	loadSmartTable() {
 		this.settingsSmartTable = {
@@ -86,10 +80,10 @@ export class TagsComponent implements OnInit, OnDestroy {
 			}
 		};
 	}
+
 	async loadSettings() {
 		const { items } = await this.tagsService.getAllTags();
 		this.smartTableSource.load(items);
-		
 	}
 
 	ngOnDestroy() {}

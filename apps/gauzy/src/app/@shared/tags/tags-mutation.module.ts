@@ -1,29 +1,29 @@
-import { ThemeModule } from '../../@theme/theme.module';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbCardModule, NbButtonModule, NbIconModule, NbDatepickerModule, NbInputModule, NbSelectModule, NbCheckboxModule, NbTooltipModule } from '@nebular/theme';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { EmployeeSelectorsModule, HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { TagsMutationComponent } from './tags-mutation.component';
+import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbInputModule,
+	NbSelectModule,
+	NbIconModule
+} from '@nebular/theme';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TagsService } from '../../@core/services/tags.service';
+import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
+import { ThemeModule } from '../../@theme/theme.module';
+import { TagsMutationComponent } from './tags-mutation.component';
 
 @NgModule({
 	imports: [
 		ThemeModule,
 		FormsModule,
 		NbCardModule,
+		NbIconModule,
 		ReactiveFormsModule,
 		NbButtonModule,
-		NbIconModule,
-		NgSelectModule,
-		NbDatepickerModule,
 		NbInputModule,
 		NbSelectModule,
-		NbCheckboxModule,
-		NbTooltipModule,
-		EmployeeSelectorsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -34,8 +34,6 @@ import { TagsService } from '../../@core/services/tags.service';
 	],
 	declarations: [TagsMutationComponent],
 	entryComponents: [TagsMutationComponent],
-	providers: [TagsService]	
-
+	providers: [TagsService]
 })
-
-export class TagsMutationModule{}
+export class TagsMutationModule {}

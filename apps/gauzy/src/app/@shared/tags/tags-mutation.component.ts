@@ -38,7 +38,6 @@ export class TagsMutationComponent implements OnInit {
 	ngOnInit() {
 		this.seedFakeData();
 		this.initializeForm();
-		
 	}
 
 	async addTag() {
@@ -48,10 +47,8 @@ export class TagsMutationComponent implements OnInit {
 				name: this.form.value.name,
 				description: this.form.value.description,
 				color: this.form.value.color.color
-				
 			})
 		);
-	
 	}
 
 	async closeDialog() {
@@ -64,19 +61,9 @@ export class TagsMutationComponent implements OnInit {
 			description: [''],
 			color: ['']
 		});
-		
 	}
 
 	async seedFakeData() {
-		if (!this.selectedUser.length) {
-			const fakeUsers = ['Employee', 'User', 'Organization'];
-
-			fakeUsers.forEach((name) => {
-				this.selectedUser.push({
-					userName: name
-				});
-			});
-		}
 		if (!this.selectedColor.length) {
 			const selectedColor = ['Critical', 'Important', 'Archived'];
 

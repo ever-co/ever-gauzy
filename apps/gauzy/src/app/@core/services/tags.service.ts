@@ -24,6 +24,7 @@ export class TagsService {
 			.pipe(first())
 			.toPromise();
 	}
+
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/tags/${id}`)
