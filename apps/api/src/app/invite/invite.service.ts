@@ -112,6 +112,22 @@ export class InviteService extends CrudService<Invite> {
 			clientIds || []
 		);
 
+		const organization: Organization = await this.organizationRepository.findOne(
+			organizationId
+		);
+
+		const role: IOrganizationRole = await this.roleRpository.findOne(
+			roleId
+		);
+
+		const inviteExpiryPeriod =
+			organization && organization.inviteExpiryPeriod
+				? organization.inviteExpiryPeriod
+				: 7;
+
+		const expireDate = new Date();
+		expireDate.setDate(expireDate.getDate() + inviteExpiryPeriod);
+
 		const existingInvites = (
 			await this.repository
 				.createQueryBuilder('invite')
