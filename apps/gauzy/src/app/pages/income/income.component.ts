@@ -14,6 +14,7 @@ import { IncomeMutationComponent } from '../../@shared/income/income-mutation/in
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 interface SelectedRowModel {
 	data: Income;
@@ -26,7 +27,8 @@ interface SelectedRowModel {
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent implements OnInit, OnDestroy {
+export class IncomeComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	constructor(
 		private authService: AuthService,
 		private store: Store,
@@ -35,8 +37,10 @@ export class IncomeComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	smartTableSettings: object;
 	selectedEmployeeId: string;
@@ -176,15 +180,6 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
 	selectIncome(ev: SelectedRowModel) {
 		this.selectedIncome = ev;
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 
 	_applyTranslationOnSmartTable() {

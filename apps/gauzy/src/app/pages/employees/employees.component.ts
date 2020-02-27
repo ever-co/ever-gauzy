@@ -21,6 +21,7 @@ import { EmployeeAverageIncomeComponent } from './table-components/employee-aver
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -34,7 +35,8 @@ interface EmployeeViewModel {
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent implements OnInit, OnDestroy {
+export class EmployeesComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -78,7 +80,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		private translate: TranslateService,
 		private errorHandler: ErrorHandlingService,
 		private employeeStatisticsService: EmployeeStatisticsService
-	) {}
+	) {
+		super(translate);
+	}
 
 	async ngOnInit() {
 		this.store.userRolePermissions$
@@ -453,14 +457,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
 		this.loadPage();
-	}
-
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translate.get(prefix).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 
 	private _applyTranslationOnSmartTable() {
