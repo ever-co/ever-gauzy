@@ -183,7 +183,7 @@
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Include Deleted"
+			"INCLUDE_DELETED": "Показване на изтритите"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -229,7 +229,7 @@
 		"OK": "Добре",
 		"CANCEL": "Отказ",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Сигурен ли си, че искаш да промениш",
-		"RECURRING_EXPENSE": "This is a recurring expense"
+		"RECURRING_EXPENSE": "Това е повтарящ се разход"
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
@@ -278,7 +278,7 @@
 			"TOTAL_INCOME": "Общ доход",
 			"PROFIT": "Печалба",
 			"TOTAL_BONUS": "Бонус Общо",
-			"TOTAL_DIRECT_INCOME": "Direct Income",
+			"TOTAL_DIRECT_INCOME": "Изтриване на доход",
 			"SALARY": "Total Salary"
 		},
 		"DEVELOPER": {
@@ -309,10 +309,10 @@
 			"ATTACH_A_RECEIPT": "Приложете разписка"
 		},
 		"DEFAULT_CATEGORY": {
-			"SALARY": "Salary",
+			"SALARY": "Заплата",
 			"SALARY_TAXES": "Salary Taxes",
 			"RENT": "Rent",
-			"EXTRA_BONUS": "Extra Bonus"
+			"EXTRA_BONUS": "Допълнителен бонус"
 		},
 		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
 		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
@@ -660,8 +660,8 @@
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
-				"ADD_POSITION": "New position {{ name }} successfully added!",
-				"REMOVE_POSITION": "Position {{ name }} successfully removed!",
+				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",
+				"REMOVE_POSITION": "Позиция {{ name }} успешно премахната!",
 				"INVALID_POSITION_NAME": "Please add a Position name"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
