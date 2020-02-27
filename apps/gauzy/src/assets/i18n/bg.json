@@ -72,6 +72,7 @@
 		"EXPIRE_DATE": "Изтича",
 		"CLIENTS": "Клиенти",
 		"DEPARTMENTS": "Отдели",
+		"DESCRIPTION": "Description",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -486,7 +487,8 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags"
+		"HEADER": "Tags",
+		"ADD_TAGS": "Add Tags"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
