@@ -13,8 +13,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Hi!</p>
 					<p>
-						You have been invited to {{organization.name}} as a
-						{{role}}
+						You have been invited to {{organization}} as a {{role}}
 					</p>
 					<p>To accept your invitation</p>
 				</mj-text>
@@ -31,7 +30,7 @@
 						If you have any qusetions, you can reply to this email.
 					</p>
 					<p>Best regards,</p>
-					<p>The {{organization.name}} Team</p>
+					<p>The {{organization}} Team</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"

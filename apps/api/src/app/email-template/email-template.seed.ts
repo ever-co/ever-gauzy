@@ -48,34 +48,39 @@ const pathToEmailTemplate = async (
 	path: string,
 	fullPath: string
 ): Promise<EmailTemplate> => {
-	const template = new EmailTemplate();
-	const templatePath = path.replace(/\\/g, '/').split('/');
-	if (templatePath.length !== 3) {
-		return;
-	}
-	const fileName = templatePath[2].split('.', 2);
-	const fileExtension = fileName[1];
-	const fileNameWithoutExtension = fileName[0];
-	template.languageCode = templatePath[1];
-	template.name = `${templatePath[0]}/${fileNameWithoutExtension}`;
-	const fileContent = fs.readFileSync(fullPath, 'utf8');
+	try {
+		const template = new EmailTemplate();
+		const templatePath = path.replace(/\\/g, '/').split('/');
+		if (templatePath.length !== 3) {
+			return;
+		}
+		const fileName = templatePath[2].split('.', 2);
+		const fileExtension = fileName[1];
+		const fileNameWithoutExtension = fileName[0];
+		template.languageCode = templatePath[1];
+		template.name = `${templatePath[0]}/${fileNameWithoutExtension}`;
+		const fileContent = fs.readFileSync(fullPath, 'utf8');
 
-	switch (fileExtension) {
-		case 'mjml':
-			template.mjml = fileContent;
-			template.hbs = mjml2html(fileContent).html;
-			break;
-		case 'hbs':
-			template.hbs = fileContent;
-			break;
-		default:
-			console.log(
-				`Warning: ${path} Will be ignored. Only .hbs and .mjml files are supported!`
-			);
-			break;
-	}
-	if (!template.hbs) {
+		switch (fileExtension) {
+			case 'mjml':
+				template.mjml = fileContent;
+				template.hbs = mjml2html(fileContent).html;
+				break;
+			case 'hbs':
+				template.hbs = fileContent;
+				break;
+			default:
+				console.log(
+					`Warning: ${path} Will be ignored. Only .hbs and .mjml files are supported!`
+				);
+				break;
+		}
+		if (!template.hbs) {
+			return;
+		}
+		return template;
+	} catch (error) {
+		console.log('Something went wrong', path, error);
 		return;
 	}
-	return template;
 };

@@ -42,17 +42,19 @@ export class EmailService extends CrudService<IEmail> {
 		},
 		render: (view, locals) => {
 			return new Promise(async (resolve, reject) => {
+				view = view.replace('\\', '/');
 				const emailTemplate = await this.emailTemplateRepository.find({
 					name: view,
 					languageCode: locals.locale || 'en'
 				});
-
+				console.log('Email Template', emailTemplate);
 				if (!emailTemplate || emailTemplate.length < 1) {
 					return resolve('');
 				}
 
 				const template = Handlebars.compile(emailTemplate[0].hbs);
 				const html = template(locals);
+
 				return resolve(html);
 			});
 		}
@@ -60,13 +62,18 @@ export class EmailService extends CrudService<IEmail> {
 
 	languageCode: string;
 
-	inviteUser(email: string, role, organization, originUrl?: string) {
+	inviteUser(
+		email: string,
+		role,
+		organization,
+		registerUrl,
+		originUrl?: string
+	) {
 		this.languageCode = 'en';
 
 		this.email
 			.send({
-				template:
-					'../core/seeds/data/default-email-templates/invite-user',
+				template: 'invite-user',
 				message: {
 					to: `${email}`
 				},
@@ -74,10 +81,12 @@ export class EmailService extends CrudService<IEmail> {
 					locale: this.languageCode,
 					role: role,
 					organization: organization,
+					generatedUrl: registerUrl,
 					host: originUrl || environment.host
 				}
 			})
 			.then((res) => {
+				console.log(res);
 				this.createEmailRecord(res.originalMessage, this.languageCode);
 			})
 			.catch(console.error);
@@ -85,6 +94,7 @@ export class EmailService extends CrudService<IEmail> {
 
 	inviteEmployee(
 		email: string,
+		registerUrl,
 		project?,
 		client?,
 		department?,
@@ -94,8 +104,7 @@ export class EmailService extends CrudService<IEmail> {
 
 		this.email
 			.send({
-				template:
-					'../core/seeds/data/default-email-templates/invite-employee',
+				template: 'invite-employee',
 				message: {
 					to: `${email}`
 				},
@@ -104,6 +113,7 @@ export class EmailService extends CrudService<IEmail> {
 					role: project,
 					organization: client,
 					department: department,
+					generatedUrl: registerUrl,
 					host: originUrl || environment.host
 				}
 			})

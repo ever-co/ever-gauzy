@@ -208,6 +208,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 			this.expensePermissionError = true;
 		}
 		await this._loadExpense();
+
 		const profit = this.totalIncome - Math.abs(this.totalExpense);
 		this.difference = profit;
 		this.bonus = this.calculateEmployeeBonus(
@@ -219,7 +220,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadExpense() {
-		const { items } = await this.expenseService.getAll(
+		const { items } = await this.expenseService.getMyAll(
 			['employee', 'organization'],
 			{
 				employee: { id: this.selectedEmployee.id }

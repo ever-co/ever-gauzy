@@ -13,7 +13,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Здравствуйте!</p>
 					<p>
-						Вы были приглашены {{organization_projects.name}}
+						Вы были приглашены {{organization_projects}}
 					</p>
 					<p>Используйте кнопку ниже, чтобы зарегистрироваться:</p>
 				</mj-text>
@@ -31,7 +31,7 @@
 						с нами, ответив на это письмо.
 					</p>
 					<p>Поздравления,</p>
-					<p>Команда {{organization.name}}</p>
+					<p>Команда {{organization}}</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
