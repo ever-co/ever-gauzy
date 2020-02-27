@@ -11,6 +11,14 @@ import { Component, Input } from '@angular/core';
 				icon="gift-outline"
 			>
 			</nb-icon>
+			<nb-icon
+				*ngIf="rowData?.splitExpense"
+				nbTooltip="{{
+					'EXPENSES_PAGE.SPLIT_WILL_BE_TOOLTIP' | translate
+				}}"
+				icon="pricetags-outline"
+			>
+			</nb-icon>
 		</span>
 	`,
 	styles: []

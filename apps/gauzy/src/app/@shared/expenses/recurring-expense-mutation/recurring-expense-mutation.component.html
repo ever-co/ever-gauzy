@@ -13,15 +13,32 @@
 				<div class="col">
 					<div class="form-group">
 						<ng-select
-							[items]="categoryNames"
-							[addTag]="true"
+							[items]="defaultFilteredCategories"
+							[addTag]="addCustomCategoryName"
 							id="positionInput"
 							fullWidth
 							placeholder="{{
 								'POP_UPS.CATEGORY_NAME' | translate
 							}}"
 							formControlName="categoryName"
+							bindValue="value"
 						></ng-select>
+					</div>
+				</div>
+			</div>
+			<div class="row" *ngIf="componentType === 'ORGANIZATION'">
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox formControlName="splitExpense">
+							<span
+								nbTooltip="{{
+									'EXPENSES_PAGE.SPLIT_HELP' | translate
+								}}"
+								>{{
+									'EXPENSES_PAGE.SPLIT_EXPENSE' | translate
+								}}</span
+							>
+						</nb-checkbox>
 					</div>
 				</div>
 			</div>

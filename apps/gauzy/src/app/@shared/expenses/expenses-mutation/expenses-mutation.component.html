@@ -32,6 +32,31 @@
 					>{{ expenseType }}
 				</nb-radio>
 			</nb-radio-group>
+			<div
+				class="row"
+				*ngIf="
+					!(
+						employeeSelector &&
+						employeeSelector.selectedEmployee &&
+						employeeSelector.selectedEmployee.id
+					)
+				"
+			>
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox formControlName="splitExpense">
+							<span
+								nbTooltip="{{
+									'EXPENSES_PAGE.SPLIT_HELP' | translate
+								}}"
+								>{{
+									'EXPENSES_PAGE.SPLIT_EXPENSE' | translate
+								}}</span
+							>
+						</nb-checkbox>
+					</div>
+				</div>
+			</div>
 			<div class="row">
 				<div class="col-sm-6">
 					<input

@@ -173,7 +173,7 @@
 			"DATE": "תאריך",
 			"VALUE": "ערך",
 			"SELECT_CURRENCY": "Select Currency",
-			"TYPE_OF_BONUS": "Type of Bonus",
+			"TYPE_OF_BONUS": "Select Type of Bonus",
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto"
@@ -228,7 +228,8 @@
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 		"OK": "OK",
 		"CANCEL": "בטל",
-		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
+		"RECURRING_EXPENSE": "This is a recurring expense"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
@@ -276,7 +277,9 @@
 			"TOTAL_EXPENSES": "סך ההוצאות",
 			"TOTAL_INCOME": "הכנסה כוללת",
 			"PROFIT": "רווח",
-			"TOTAL_BONUS": "Total Bonus"
+			"TOTAL_BONUS": "Total Bonus",
+			"TOTAL_DIRECT_INCOME": "Direct Income",
+			"SALARY": "Total Salary"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "מפתח",
@@ -304,7 +307,16 @@
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
 			"ATTACH_A_RECEIPT": "Attach a receipt"
-		}
+		},
+		"DEFAULT_CATEGORY": {
+			"SALARY": "Salary",
+			"SALARY_TAXES": "Salary Taxes",
+			"RENT": "Rent",
+			"EXTRA_BONUS": "Extra Bonus"
+		},
+		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
+		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
+		"SPLIT_EXPENSE": "Split Expense"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "נהל עובדים עבור ",

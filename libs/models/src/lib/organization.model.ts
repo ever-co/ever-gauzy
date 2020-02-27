@@ -45,6 +45,8 @@ export interface OrganizationCreateInput {
 	imageUrl: string;
 	currency: CurrenciesEnum;
 	defaultValueDateType: DefaultValueDateTypeEnum;
+	bonusType: BonusTypeEnum;
+	bonusPercentage: number;
 }
 
 export enum OrganizationSelectInput {
@@ -103,3 +105,6 @@ export enum BonusTypeEnum {
 	PROFIT_BASED_BONUS = 'PROFIT_BASED_BONUS',
 	REVENUE_BASED_BONUS = 'REVENUE_BASED_BONUS'
 }
+
+export const DEFAULT_PROFIT_BASED_BONUS = 75;
+export const DEFAULT_REVENUE_BASED_BONUS = 10;

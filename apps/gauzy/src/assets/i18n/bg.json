@@ -173,7 +173,7 @@
 			"DATE": "Дата",
 			"VALUE": "Стойност",
 			"SELECT_CURRENCY": "Избери валута",
-			"TYPE_OF_BONUS": "Тип бонус",
+			"TYPE_OF_BONUS": "Select Type of Bonus",
 			"BONUS_PERCENTAGE": "Бонус процентен",
 			"ENABLE_INVITES": "Позволи поканите",
 			"INVITE_EXPIRY_PERIOD": "Покани валидни до"
@@ -183,7 +183,7 @@
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Include Deleted"
+			"INCLUDE_DELETED": "Показване на изтритите"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -228,7 +228,8 @@
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Сигурни ли сте, че искате да изпратите отново поканата",
 		"OK": "Добре",
 		"CANCEL": "Отказ",
-		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Сигурен ли си, че искаш да промениш"
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Сигурен ли си, че искаш да промениш",
+		"RECURRING_EXPENSE": "Това е повтарящ се разход"
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
@@ -276,7 +277,9 @@
 			"TOTAL_EXPENSES": "Общи разходи",
 			"TOTAL_INCOME": "Общ доход",
 			"PROFIT": "Печалба",
-			"TOTAL_BONUS": "Бонус Общо"
+			"TOTAL_BONUS": "Бонус Общо",
+			"TOTAL_DIRECT_INCOME": "Изтриване на доход",
+			"SALARY": "Total Salary"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
@@ -304,7 +307,16 @@
 			"ASSIGN_TO": "Възложи на",
 			"INCLUDE_TAXES": "Включете такси",
 			"ATTACH_A_RECEIPT": "Приложете разписка"
-		}
+		},
+		"DEFAULT_CATEGORY": {
+			"SALARY": "Заплата",
+			"SALARY_TAXES": "Salary Taxes",
+			"RENT": "Rent",
+			"EXTRA_BONUS": "Допълнителен бонус"
+		},
+		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
+		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
+		"SPLIT_EXPENSE": "Split Expense"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление на служителите в ",
@@ -451,7 +463,7 @@
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
-			"DENIED": "Denied",
+			"DENIED": "Отказан",
 			"ALL": "All"
 		},
 		"POLICY": {
@@ -516,8 +528,8 @@
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
 		},
-		"SENT": "{{total}} Invites Sent.",
-		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
+		"SENT": "покани изпратени.",
+		"IGNORED": "общо покани изпратени. бяха вече поканени и бяха игнорирани.",
 		"STATUS": {
 			"INVITED": "Invited",
 			"EXPIRED": "Expired",
@@ -554,7 +566,7 @@
 			"PROJECT_LOAD": "Could Not Load Projects",
 			"COPIED": "Link copied to clipboard",
 			"INVITES_LOAD": "Could Not Load Invites",
-			"INVITES_RESEND": "Invite has been resent to {{ email }}.",
+			"INVITES_RESEND": "Поканата е изпратена до {{ email }}.",
 			"EMPLOYEE_DEPARTMENT_ADDED": "Employee added to department",
 			"EMPLOYEE_DEPARTMENT_REMOVED": "Employee removed from department",
 			"EMPLOYEE_PROJECT_ADDED": "Employee added to project",
@@ -567,7 +579,7 @@
 			"OK": "OK",
 			"CANCEL": "Отказ",
 			"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
-			"PERMISSION_UPDATED": "{{ permissionName }} permission updated for {{ roleName }}",
+			"PERMISSION_UPDATED": "разрешения обновени за",
 			"PERMISSION_UPDATE_ERROR": "There was an error in updating the permissions, please refresh & try again",
 			"REGISTER_PROPOSAL_NO_EMPLOEE_MSG": "Employee is required!",
 			"NEW_ORGANIZATION_PROJECT_INVALID_NAME": "Invalid input",
@@ -575,7 +587,7 @@
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
-			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -596,15 +608,15 @@
 	},
 	"NOTES": {
 		"INCOME": {
-			"ADD_INCOME": "Income added for {{ name }}",
-			"EDIT_INCOME": "Income edited for {{ name }}",
-			"DELETE_INCOME": "Income deleted for {{ name }}",
+			"ADD_INCOME": "Доход добавен за",
+			"EDIT_INCOME": "Доход обновен за",
+			"DELETE_INCOME": "Доход изтрит за",
 			"INCOME_ERROR": "{{ error }}"
 		},
 		"EXPENSES": {
-			"ADD_EXPENSE": "Expense added for {{ name }}",
-			"OPEN_EDIT_EXPENSE_DIALOG": "Expense edited for {{ name }}",
-			"DELETE_EXPENSE": "Expense deleted for {{ name }}",
+			"ADD_EXPENSE": "Разход добавен за",
+			"OPEN_EDIT_EXPENSE_DIALOG": "Разход променен за",
+			"DELETE_EXPENSE": "Разход изтрит за",
 			"EXPENSES_ERROR": "{{ error }}"
 		},
 		"PROPOSALS": {
@@ -628,38 +640,38 @@
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
 			"DELETE_ORGANIZATION": "{{ name }} organization deleted.",
-			"ADD_NEW_USER_TO_ORGANIZATION": "{{ username }} added to {{ orgname }}",
-			"DELETE_USER_FROM_ORGANIZATION": "{{ username }} set as inactive.",
+			"ADD_NEW_USER_TO_ORGANIZATION": "добавен към",
+			"DELETE_USER_FROM_ORGANIZATION": "зададен като неактивен.",
 			"DATA_ERROR": "{{ error }}",
 			"EDIT_ORGANIZATIONS_PROJECTS": {
-				"ADD_PROJECT": "New project {{ name }} successfully added!",
-				"REMOVE_PROJECT": "Project {{ name }} successfully removed!",
+				"ADD_PROJECT": "Нов проект успешно добавен!",
+				"REMOVE_PROJECT": "Проект успешно премахнат!",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project"
 			},
 			"EDIT_ORGANIZATIONS_TEAM": {
-				"ADD_NEW_TEAM": "New team {{ name }} successfully added!",
-				"EDIT_EXISTING_TEAM": "Team {{ name }} successfully updated!",
+				"ADD_NEW_TEAM": "Нов екип успешно добавен!",
+				"EDIT_EXISTING_TEAM": "Екип успешно обновен!",
 				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
-				"REMOVE_TEAM": "Team {{ name }} successfully removed!"
+				"REMOVE_TEAM": "Екип успешно премахнат!"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
-				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
-				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
+				"ADD_VENDOR": "Нов доставчик успешно добавен!",
+				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
-				"ADD_POSITION": "New position {{ name }} successfully added!",
-				"REMOVE_POSITION": "Position {{ name }} successfully removed!",
+				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",
+				"REMOVE_POSITION": "Позиция {{ name }} успешно премахната!",
 				"INVALID_POSITION_NAME": "Please add a Position name"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
-				"ADD_DEPARTMENT": "{{ name }} Department successfully added!",
-				"REMOVE_DEPARTMENT": "{{ name }} Department successfully removed!",
+				"ADD_DEPARTMENT": "{{ name }} отдел успешно създаден!",
+				"REMOVE_DEPARTMENT": "{{ name }} отдел успешно премахнат!",
 				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
-				"ADD_CLIENT": "New client {{ name }} successfully added!",
-				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
+				"ADD_CLIENT": "Нов клиент {{ name }} успешно добавен!",
+				"REMOVE_CLIENT": "Клиентът {{ name }} е успешно премахнат!",
 				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
 			}
 		},

@@ -4,7 +4,8 @@ import {
 	CurrenciesEnum,
 	Organization,
 	OrganizationRecurringExpense,
-	RecurringExpenseDeletionEnum
+	RecurringExpenseDeletionEnum,
+	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -40,7 +41,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	selectedRowIndexToShow: number;
 	currencies = Object.values(CurrenciesEnum);
 	editExpenseId: string;
-
 	private _ngDestroy$ = new Subject<void>();
 
 	loading = true;
@@ -111,6 +111,14 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	getMonthString(month: number) {
 		const months = monthNames;
 		return months[month - 1];
+	}
+
+	getCategoryName(categoryName: string) {
+		return categoryName in RecurringExpenseDefaultCategoriesEnum
+			? this.getTranslation(
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
+			: categoryName;
 	}
 
 	showMenu(index: number) {
@@ -205,7 +213,8 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 						this.selectedDate.getMonth(),
 						1
 					),
-					currency: result.currency
+					currency: result.currency,
+					splitExpense: result.splitExpense
 				});
 
 				this.toastrService.primary(

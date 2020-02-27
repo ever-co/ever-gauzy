@@ -31,6 +31,7 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
+import { DownloadAllModule } from './download-all';
 
 @Module({
 	imports: [
@@ -40,11 +41,13 @@ import { EmailTemplateModule } from './email-template';
 				children: [
 					{ path: '/auth', module: AuthModule },
 					{ path: '/user', module: UserModule },
+					{ path: '/employee', module: EmployeeModule },
+					{ path: '/download', module: DownloadAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
-					{ path: '/employee', module: EmployeeModule },
+
 					{
 						path: '/employee-settings',
 						module: EmployeeSettingModule
@@ -124,6 +127,7 @@ import { EmailTemplateModule } from './email-template';
 		AuthModule,
 		UserModule,
 		EmployeeModule,
+		DownloadAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		RoleModule,

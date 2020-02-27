@@ -1,8 +1,8 @@
 <nb-card>
 	<nb-card-body>
 		<div class="content">
-			<div class="employee-container">
-				<div class="employee-photo">
+			<div class="organization-container">
+				<div class="organization-photo">
 					<ngx-image-uploader
 						(changeHoverState)="hoverState = $event"
 						(uploadedImageUrl)="
@@ -61,7 +61,7 @@
 				</div>
 			</div>
 
-			<div class="employee-form">
+			<div class="organization-form">
 				<form [formGroup]="form" *ngIf="form">
 					<div class="fields">
 						<div class="row">
@@ -109,7 +109,7 @@
 						</div>
 
 						<div class="row">
-							<div class="col">
+							<div class="col-6">
 								<div class="form-group">
 									<label class="label">{{
 										'FORM.LABELS.DATE_TYPE' | translate
@@ -134,65 +134,70 @@
 									</nb-select>
 								</div>
 							</div>
-							<div class="col">
-								<!-- <div class="form-group">
-                  <label class="label">Departments</label>
-                  <input
-                    nbInput
-                    type="text"
-                    placeholder="Add Departments"
-                    (change)="departmentsInputHandler($event)"
-                  />
-                  <div *ngIf="departments.length > 0">
-                    <nb-list>
-                      <nb-list-item
-                        *ngFor="let dep of departments; let i = index"
-                      >
-                        <div>
-                          <span>{{ dep }}</span>
-                          <nb-icon
-                            class="ml-auto mt-1 close"
-                            (click)="deleteDepartmentFromList(i)"
-                            icon="close-outline"
-                          ></nb-icon>
-                        </div>
-                      </nb-list-item>
-                    </nb-list>
-                  </div>
-                </div> -->
+						</div>
+						<div class="row">
+							<div class="col-6">
+								<div class="form-group">
+									<label class="label">
+										{{
+											'FORM.LABELS.TYPE_OF_BONUS'
+												| translate
+										}}
+									</label>
+									<nb-select
+										class="d-block"
+										size="medium"
+										formControlName="bonusType"
+										placeholder="{{
+											'FORM.PLACEHOLDERS.TYPE_OF_BONUS'
+												| translate
+										}}"
+										(selectedChange)="
+											loadDefaultBonusPercentage($event)
+										"
+										fullWidth
+									>
+										<nb-option [value]="null">
+											{{ 'SM_TABLE.NONE' | translate }}
+										</nb-option>
+										<nb-option
+											*ngFor="
+												let type of defaultBonusTypes
+											"
+											[value]="type"
+										>
+											{{ 'SM_TABLE.' + type | translate }}
+										</nb-option>
+									</nb-select>
+								</div>
+							</div>
+							<div class="col-6">
+								<div class="form-group">
+									<label class="label">
+										{{
+											'FORM.LABELS.BONUS_PERCENTAGE'
+												| translate
+										}}
+									</label>
+									<input
+										nbInput
+										type="number"
+										formControlName="bonusPercentage"
+										placeholder="{{
+											'FORM.PLACEHOLDERS.BONUS_PERCENTAGE'
+												| translate
+										}}"
+										fullWidth
+										class="d-block"
+										[ngClass]="{
+											'status-danger': form.get(
+												'bonusPercentage'
+											).invalid
+										}"
+									/>
+								</div>
 							</div>
 						</div>
-
-						<!-- <div class="row">
-              <div class="col">
-                <div class="form-group">
-                    <label class="label">Positions</label>
-                    <input
-                      nbInput
-                      type="text"
-                      placeholder="Add Positions"
-                      (change)="positionsInputHandler($event)"
-                    />
-                    <div *ngIf="positions.length > 0">
-                      <nb-list>
-                        <nb-list-item
-                          *ngFor="let pos of positions; let i = index"
-                        >
-                          <div>
-                            <span>{{ pos }}</span>
-                            <nb-icon
-                              class="ml-auto mt-1 close"
-                              (click)="deleteDepartmentFromList(i)"
-                              icon="close-outline"
-                            ></nb-icon>
-                          </div>
-                        </nb-list-item>
-                      </nb-list>
-                    </div>
-                </div>
-              </div>
-              <div class="col"></div>
-            </div> -->
 					</div>
 
 					<div class="actions">

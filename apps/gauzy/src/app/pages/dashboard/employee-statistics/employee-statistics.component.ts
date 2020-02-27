@@ -11,7 +11,9 @@ import {
 	OrganizationRecurringExpense,
 	BonusTypeEnum,
 	Organization,
-	PermissionsEnum
+	PermissionsEnum,
+	DEFAULT_PROFIT_BASED_BONUS,
+	DEFAULT_REVENUE_BASED_BONUS
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import {
@@ -333,11 +335,16 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		income: number,
 		profit: number
 	) => {
+		bonusType = bonusType ? bonusType : BonusTypeEnum.PROFIT_BASED_BONUS;
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
-				return (profit * bonusPercentage) / 100;
+				this.bonusPercentage =
+					bonusPercentage || DEFAULT_PROFIT_BASED_BONUS;
+				return (profit * this.bonusPercentage) / 100;
 			case BonusTypeEnum.REVENUE_BASED_BONUS:
-				return (income * bonusPercentage) / 100;
+				this.bonusPercentage =
+					bonusPercentage || DEFAULT_REVENUE_BASED_BONUS;
+				return (income * this.bonusPercentage) / 100;
 			default:
 				return 0;
 		}

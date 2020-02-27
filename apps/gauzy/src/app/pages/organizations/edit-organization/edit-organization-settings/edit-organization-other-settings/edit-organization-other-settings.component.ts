@@ -136,12 +136,20 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
+		const bonusPercentageControl = this.form.get('bonusPercentage');
+
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
-				this.form.get('bonusPercentage').setValue(75);
+				bonusPercentageControl.setValue(75);
+				bonusPercentageControl.enable();
 				break;
 			case BonusTypeEnum.REVENUE_BASED_BONUS:
-				this.form.get('bonusPercentage').setValue(10);
+				bonusPercentageControl.setValue(10);
+				bonusPercentageControl.enable();
+				break;
+			default:
+				bonusPercentageControl.setValue(null);
+				bonusPercentageControl.disable();
 				break;
 		}
 	}
@@ -162,11 +170,12 @@ export class EditOrganizationOtherSettingsComponent
 			timeZone: [this.organization.timeZone],
 			startWeekOn: [this.organization.startWeekOn],
 			numberFormat: [this.organization.numberFormat],
-			bonusType: [
-				this.organization.bonusType || BonusTypeEnum.PROFIT_BASED_BONUS
-			],
+			bonusType: [this.organization.bonusType],
 			bonusPercentage: [
-				this.organization.bonusPercentage || 75,
+				{
+					value: this.organization.bonusPercentage,
+					disabled: !this.organization.bonusType
+				},
 				[Validators.min(0), Validators.max(100)]
 			],
 			invitesAllowed: [this.organization.invitesAllowed || false],

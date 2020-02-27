@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { RecurringExpenseDefaultCategoriesEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
@@ -145,7 +147,10 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 						},
 						categoryName: {
 							title: this.getTranslation('SM_TABLE.CATEGORY'),
-							type: 'string'
+							type: 'html',
+							valuePrepareFunction: (_, e) =>
+								`${this.getCategoryName(_)}`,
+							filter: false
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
@@ -167,6 +172,14 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 		}
 	}
 
+	getCategoryName(categoryName: string) {
+		return categoryName in RecurringExpenseDefaultCategoriesEnum
+			? this.getTranslation(
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
+			: categoryName;
+	}
+    
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSettingsSmartTable();

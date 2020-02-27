@@ -8,7 +8,9 @@ import {
 	NbInputModule,
 	NbDatepickerModule,
 	NbSelectModule,
-	NbRadioModule
+	NbRadioModule,
+	NbCheckboxModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { ExpensesMutationComponent } from './expenses-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -39,6 +41,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NbRadioModule,
 		EmployeeSelectorsModule,
+		NbCheckboxModule,
+		NbTooltipModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

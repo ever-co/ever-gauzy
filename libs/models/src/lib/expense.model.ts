@@ -25,6 +25,7 @@ export interface Expense extends IBaseEntityModel {
 	taxLabel?: string;
 	rateValue?: number;
 	receipt?: string;
+	splitExpense?: boolean;
 }
 
 export interface ExpenseCreateInput {
@@ -48,6 +49,7 @@ export interface ExpenseCreateInput {
 	taxLabel?: string;
 	rateValue?: number;
 	receipt?: string;
+	splitExpense?: boolean;
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {
@@ -71,6 +73,7 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	taxLabel?: string;
 	rateValue?: number;
 	receipt?: string;
+	splitExpense?: boolean;
 }
 
 export interface ExpenseUpdateInput {
@@ -94,6 +97,7 @@ export interface ExpenseUpdateInput {
 	taxLabel?: string;
 	rateValue?: number;
 	receipt?: string;
+	splitExpense?: boolean;
 }
 
 export enum ExpenseTypesEnum {
