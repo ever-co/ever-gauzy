@@ -229,7 +229,8 @@
 		"OK": "ОК",
 		"CANCEL": "Отменить",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
-		"RECURRING_EXPENSE": "Это периодические расходы"
+		"RECURRING_EXPENSE": "Это периодические расходы",
+		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
@@ -279,7 +280,16 @@
 			"PROFIT": "Прибыль",
 			"TOTAL_BONUS": "Общий бонус",
 			"TOTAL_DIRECT_INCOME": "Прямой доход",
-			"SALARY": "Общая зарплата"
+			"SALARY": "Зарплата",
+			"TOTAL_DIRECT_INCOME_INFO": "Доход от прямого бонуса",
+			"TOTAL_INCOME_CALC": "Общий доход = Поступления + Прямой доход",
+			"TOTAL_PROFIT_BONUS": "Общий бонус к прибыли",
+			"TOTAL_DIRECT_BONUS": "Бонус прямого дохода",
+			"TOTAL_DIRECT_BONUS_INFO": "Это равно прямому доходу",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% прибыли",
+			"TOTAL_INCOME_BONUS": "Общий бонус к доходам",
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% дохода",
+			"TOTAL_EXPENSE_CALC": "Всего = Расходы работников + Сплит Расходы + Повторяющиеся + зарплата"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
