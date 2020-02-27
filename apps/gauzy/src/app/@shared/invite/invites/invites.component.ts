@@ -14,6 +14,7 @@ import moment = require('moment-timezone');
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 interface InviteViewModel {
 	email: string;
@@ -34,7 +35,8 @@ interface InviteViewModel {
 	templateUrl: './invites.component.html',
 	styleUrls: ['./invites.component.scss']
 })
-export class InvitesComponent implements OnInit, OnDestroy {
+export class InvitesComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -60,7 +62,9 @@ export class InvitesComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private translate: TranslateService,
 		private inviteService: InviteService
-	) {}
+	) {
+		super(translate);
+	}
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
@@ -323,14 +327,6 @@ export class InvitesComponent implements OnInit, OnDestroy {
 					}
 				}
 			});
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translate.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 
 	private _applyTranslationOnSmartTable() {

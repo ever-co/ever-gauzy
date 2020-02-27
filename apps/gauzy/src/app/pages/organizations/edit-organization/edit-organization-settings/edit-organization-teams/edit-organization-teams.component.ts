@@ -13,13 +13,15 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-edit-org-teams',
 	templateUrl: './edit-organization-teams.component.html',
 	styleUrls: ['./edit-organization-teams.component.scss']
 })
-export class EditOrganizationTeamsComponent implements OnInit {
+export class EditOrganizationTeamsComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	selectedOrg: Organization;
@@ -37,8 +39,10 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		private readonly toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	async ngOnInit() {
 		this.organizationEditStore.selectedOrganization$
@@ -184,14 +188,5 @@ export class EditOrganizationTeamsComponent implements OnInit {
 		}
 
 		this.loading = false;
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 }

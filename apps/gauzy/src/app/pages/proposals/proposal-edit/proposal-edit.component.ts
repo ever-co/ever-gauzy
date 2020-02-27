@@ -6,13 +6,15 @@ import { Router } from '@angular/router';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ngx-proposal-edit',
 	templateUrl: './proposal-edit.component.html',
 	styleUrls: ['./proposal-edit.component.scss']
 })
-export class ProposalEditComponent implements OnInit {
+export class ProposalEditComponent extends TranslationBaseComponent
+	implements OnInit {
 	constructor(
 		private store: Store,
 		private fb: FormBuilder,
@@ -20,7 +22,9 @@ export class ProposalEditComponent implements OnInit {
 		private toastrService: NbToastrService,
 		private proposalsService: ProposalsService,
 		private translate: TranslateService
-	) {}
+	) {
+		super(translate);
+	}
 
 	proposal: ProposalViewModel;
 	form: FormGroup;
@@ -74,13 +78,5 @@ export class ProposalEditComponent implements OnInit {
 				);
 			}
 		}
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = prefix;
-		this.translate.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 }

@@ -7,13 +7,16 @@ import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { EmployeesService } from '../../../../../@core/services';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-edit-org-main',
 	templateUrl: './edit-organization-main.component.html',
 	styleUrls: ['./edit-organization-main.component.scss']
 })
-export class EditOrganizationMainComponent implements OnInit {
+export class EditOrganizationMainComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: Organization;
@@ -28,8 +31,11 @@ export class EditOrganizationMainComponent implements OnInit {
 		private employeesService: EmployeesService,
 		private organizationService: OrganizationsService,
 		private toastrService: NbToastrService,
-		private organizationEditStore: OrganizationEditStore
-	) {}
+		private organizationEditStore: OrganizationEditStore,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	updateImageUrl(url: string) {
 		this.imageUrl = url;

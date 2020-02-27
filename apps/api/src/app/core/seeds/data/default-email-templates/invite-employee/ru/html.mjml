@@ -1,0 +1,54 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-image
+					width="100px"
+					src="{{host}}/assets/images/logos/logo_Gauzy.svg"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text font-size="16px" font-family="helvetica">
+					<p>Здравствуйте!</p>
+					<p>
+						Вы были приглашены {{organization_projects}}
+					</p>
+					<p>Используйте кнопку ниже, чтобы зарегистрироваться:</p>
+				</mj-text>
+				<mj-button
+					href="{{generatedUrl}}"
+					font-family="Helvetica"
+					background-color="#3366ff"
+					color="white"
+				>
+					Кликните сюда
+				</mj-button>
+				<mj-text font-size="16px" font-family="helvetica">
+					<p>
+						Если у вас есть какие-либо вопросы, вы можете связаться
+						с нами, ответив на это письмо.
+					</p>
+					<p>Поздравления,</p>
+					<p>Команда {{organization}}</p>
+				</mj-text>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text align="center" font-size="12px" font-family="helvetica"
+					>© 2019,
+					<a href="https://app.gauzy.co/." style="color:#598bff"
+						>Gauzy</a
+					>
+					by
+					<a href="https://ever.co/" style="color:#598bff"
+						>Ever Co. LTD.</a
+					>
+					All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

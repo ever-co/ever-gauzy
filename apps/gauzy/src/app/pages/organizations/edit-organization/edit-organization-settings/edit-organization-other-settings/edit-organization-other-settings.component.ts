@@ -17,6 +17,8 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { formatDate } from '@angular/common';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-edit-org-other-settings',
@@ -24,6 +26,7 @@ import { formatDate } from '@angular/common';
 	styleUrls: ['./edit-organization-other-settings.component.scss']
 })
 export class EditOrganizationOtherSettingsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -54,8 +57,11 @@ export class EditOrganizationOtherSettingsComponent
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
 		private toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore
-	) {}
+		private readonly organizationEditStore: OrganizationEditStore,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	getTimeWithOffset(zone: string) {
 		let cutZone = zone;

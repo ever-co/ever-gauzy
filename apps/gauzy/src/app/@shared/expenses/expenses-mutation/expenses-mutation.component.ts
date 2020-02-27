@@ -63,6 +63,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		this.loadClients();
 		this.loadProjects();
 		this._initializeForm();
+		this.form.get('currency').disable();
 	}
 
 	get currency() {

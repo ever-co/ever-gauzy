@@ -12,13 +12,15 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { EmailInviteFormComponent } from '../forms/email-invite-form/email-invite-form.component';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-invite-mutation',
 	templateUrl: './invite-mutation.component.html',
 	styleUrls: ['./invite-mutation.component.scss']
 })
-export class InviteMutationComponent implements OnInit {
+export class InviteMutationComponent extends TranslationBaseComponent
+	implements OnInit {
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -40,9 +42,11 @@ export class InviteMutationComponent implements OnInit {
 		private organizationProjectsService: OrganizationProjectsService,
 		private organizationClientsService: OrganizationClientsService,
 		private organizationDepartmentsService: OrganizationDepartmentsService,
-		private translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private toastrService: NbToastrService
-	) {}
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.loadOrganizationData();
@@ -124,14 +128,5 @@ export class InviteMutationComponent implements OnInit {
 				'Error'
 			);
 		}
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 }

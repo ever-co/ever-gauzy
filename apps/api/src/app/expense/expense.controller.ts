@@ -1,7 +1,7 @@
-import { 
+import {
 	ExpenseCreateInput as IExpenseCreateInput,
 	PermissionsEnum
- } from '@gauzy/models';
+} from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -53,7 +53,7 @@ export class ExpenseController extends CrudController<Expense> {
 	async findMyExpense(
 		@Query('data') data: string
 	): Promise<IPagination<Expense>> {
-		const { relations, findInput, filterDate} = JSON.parse(data);
+		const { relations, findInput, filterDate } = JSON.parse(data);
 
 		//If user is not an employee, then this will return 404
 		const employee = await this.employeeService.findOne({
@@ -65,6 +65,7 @@ export class ExpenseController extends CrudController<Expense> {
 			filterDate
 		);
 	}
+
 	@ApiOperation({ summary: 'Find all expense.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
