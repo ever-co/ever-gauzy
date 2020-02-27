@@ -665,13 +665,13 @@
 				"INVALID_POSITION_NAME": "Please add a Position name"
 			},
 			"EDIT_ORGANIZATIONS_DEPARTMENTS": {
-				"ADD_DEPARTMENT": "{{ name }} Department successfully added!",
-				"REMOVE_DEPARTMENT": "{{ name }} Department successfully removed!",
+				"ADD_DEPARTMENT": "{{ name }} отдел успешно създаден!",
+				"REMOVE_DEPARTMENT": "{{ name }} отдел успешно премахнат!",
 				"INVALID_DEPARTMENT_NAME": "Please add a Department name"
 			},
 			"EDIT_ORGANIZATIONS_CLIENTS": {
-				"ADD_CLIENT": "New client {{ name }} successfully added!",
-				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
+				"ADD_CLIENT": "Нов клиент {{ name }} успешно добавен!",
+				"REMOVE_CLIENT": "Клиентът {{ name }} е успешно премахнат!",
 				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
 			}
 		},
