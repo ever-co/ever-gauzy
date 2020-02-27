@@ -8,15 +8,23 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { Employee, EmployeeService } from '../employee';
 import { Organization, OrganizationService } from '../organization';
 import { UserModule, UserService, User } from '../user';
+import { QueryHandlers } from './queries/handlers';
 
 @Module({
-    imports: [
-        UserModule,
-        TypeOrmModule.forFeature([Expense, Employee, Organization, User]),
-        CqrsModule
-    ],
-    controllers: [ExpenseController],
-    providers: [ExpenseService, EmployeeService, OrganizationService, ...CommandHandlers, UserService],
-    exports: [ExpenseService],
+	imports: [
+		UserModule,
+		TypeOrmModule.forFeature([Expense, Employee, Organization, User]),
+		CqrsModule
+	],
+	controllers: [ExpenseController],
+	providers: [
+		ExpenseService,
+		EmployeeService,
+		OrganizationService,
+		UserService,
+		...CommandHandlers,
+		...QueryHandlers
+	],
+	exports: [ExpenseService]
 })
-export class ExpenseModule { }
+export class ExpenseModule {}

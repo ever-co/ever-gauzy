@@ -101,8 +101,14 @@ export interface ExpenseUpdateInput {
 }
 
 export interface SplitExpenseOutput extends Expense {
-	originalValue: number;
-	employeeCount: number;
+	originalValue?: number;
+	employeeCount?: number;
+}
+
+export interface SplitExpenseFindInput {
+	relations?: string[];
+	filterDate?: string;
+	employeeId: string;
 }
 
 export enum ExpenseTypesEnum {

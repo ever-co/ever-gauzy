@@ -15,7 +15,8 @@ import {
 	DEFAULT_PROFIT_BASED_BONUS,
 	DEFAULT_REVENUE_BASED_BONUS,
 	OrganizationRecurringExpenseForEmployeeOutput,
-	SplitExpenseOutput
+	SplitExpenseOutput,
+	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import {
@@ -59,6 +60,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	bonusPercentage = 0; //%age which needs to be calculated
 	totalBonus = 0; //calculatedBonus + totalBonusIncome
 	bonusType: string; //either income or profit based
+	totalSalary = 0; //filtered from employee recurring expenses with category name SALARY
 
 	//Total Income = nonBonusIncome + totalBonusIncome
 	totalNonBonusIncome = 0;
@@ -67,12 +69,13 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	nonBonusIncomeData: Income[]; //Filtered from allIncomeData
 	bonusIncomeData: Income[]; //Filtered from allIncomeData
 	allIncomeData: Income[]; //Populated from GET call
+	salaryData: ViewDashboardExpenseHistory[];
 
 	avarageBonus: number;
 	expensesData: Expense[];
 	expenseData: ViewDashboardExpenseHistory[];
-	employeeRecurringexpense: EmployeeRecurringExpense[];
-	orgRecurringexpense: OrganizationRecurringExpense[];
+	employeeRecurringExpense: EmployeeRecurringExpense[];
+	orgRecurringExpense: OrganizationRecurringExpense[];
 
 	incomeCurrency: string;
 	expenseCurrency: string;
@@ -158,6 +161,8 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				return this.allIncomeData;
 			case HistoryType.EXPENSES:
 				return this.expenseData;
+			case HistoryType.SALARY:
+				return this.salaryData;
 			default:
 				return [];
 		}
@@ -244,22 +249,17 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 			const { items } = this.store.hasPermission(
 				PermissionsEnum.ORG_EXPENSES_VIEW
 			)
-				? await this.expenseService.getAll(
+				? await this.expenseService.getAllWithSplitExpenses(
+						this.selectedEmployee.id,
 						['employee', 'organization'],
-						{
-							employee: {
-								id: this.selectedEmployee.id
-							}
-						},
 						this.selectedDate
 				  )
-				: await this.expenseService.getMyAll(
+				: await this.expenseService.getMyAllWithSplitExpenses(
 						['employee', 'organization'],
-						{},
 						this.selectedDate
 				  );
 
-			const employeeRecurringexpense = this.selectedDate
+			const employeeRecurringExpense = this.selectedDate
 				? (
 						await this.employeeRecurringExpenseService.getAll([], {
 							employeeId: this.selectedEmployee.id,
@@ -269,9 +269,9 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				  ).items
 				: [];
 
-			const orgRecurringexpense = this.selectedDate
+			const orgRecurringExpense = this.selectedDate
 				? (
-						await this.organizationRecurringExpenseService.getForEmployee(
+						await this.organizationRecurringExpenseService.getSplitExpensesForEmployee(
 							this.store.selectedOrganization.id,
 							{
 								year: this.selectedDate.getFullYear(),
@@ -281,47 +281,40 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				  ).items
 				: [];
 
-			const employeeSplitExpense = this.selectedDate
-				? (
-						await await this.expenseService.getAllSplitExpenses(
-							this.selectedOrganization.id,
-							['employee', 'organization'],
-							{},
-							this.selectedDate
-						)
-				  ).items
-				: [];
-
 			const totalExpense = items.reduce((a, b) => a + +b.amount, 0);
-			const totalEmployeeRecurringexpense = employeeRecurringexpense.reduce(
+			const totalEmployeeRecurringExpense = employeeRecurringExpense.reduce(
 				(a, b) => a + +b.value,
 				0
 			);
-			const totalOrgRecurringexpense = orgRecurringexpense.reduce(
+			const totalOrgRecurringExpense = orgRecurringExpense.reduce(
 				(a, b) => a + +b.value,
-				0
-			);
-			const totalEmployeeSplitExpense = employeeSplitExpense.reduce(
-				(a, b) => a + +b.amount,
 				0
 			);
 
 			this.expenseData = [
 				...this.getViewDashboardExpenseHistory({ expense: items }),
 				...this.getViewDashboardExpenseHistory({
-					employeeRecurringexpense
+					employeeRecurringExpense
 				}),
-				...this.getViewDashboardExpenseHistory({ orgRecurringexpense }),
-				...this.getViewDashboardExpenseHistory({
-					splitExpense: employeeSplitExpense
-				})
+				...this.getViewDashboardExpenseHistory({ orgRecurringExpense })
 			];
+
+			const onlySalary = employeeRecurringExpense.filter(
+				(e) =>
+					e.categoryName ===
+					RecurringExpenseDefaultCategoriesEnum.SALARY
+			);
+
+			this.salaryData = this.getViewDashboardExpenseHistory({
+				employeeRecurringExpense: onlySalary
+			});
+
+			this.totalSalary = onlySalary.reduce((a, b) => a + +b.value, 0);
 
 			this.totalExpense =
 				totalExpense +
-				totalEmployeeRecurringexpense +
-				totalOrgRecurringexpense +
-				totalEmployeeSplitExpense;
+				totalEmployeeRecurringExpense +
+				totalOrgRecurringExpense;
 
 			if (items.length && this.totalExpense !== 0) {
 				const firstItem = items[0];
@@ -330,16 +323,16 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				this.defaultCurrency = firstItem.organization.currency;
 			}
 		} catch (error) {
+			console.log(error);
 			this.expensesData = [];
 			this.expensePermissionError = true;
 		}
 	}
 
 	private getViewDashboardExpenseHistory(data: {
-		expense?: Expense[];
-		employeeRecurringexpense?: EmployeeRecurringExpense[];
-		orgRecurringexpense?: OrganizationRecurringExpenseForEmployeeOutput[];
-		splitExpense?: SplitExpenseOutput[];
+		expense?: SplitExpenseOutput[];
+		employeeRecurringExpense?: EmployeeRecurringExpense[];
+		orgRecurringExpense?: OrganizationRecurringExpenseForEmployeeOutput[];
 	}): ViewDashboardExpenseHistory[] {
 		let viewDashboardExpenseHistory = [];
 
@@ -351,13 +344,16 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				amount: e.amount,
 				notes: e.notes,
 				recurring: false,
-				source: 'employee'
+				source: 'employee',
+				splitExpense: e.splitExpense,
+				originalValue: e.originalValue,
+				employeeCount: e.employeeCount
 			}));
 		} else if (
-			data.employeeRecurringexpense &&
-			data.employeeRecurringexpense.length
+			data.employeeRecurringExpense &&
+			data.employeeRecurringExpense.length
 		) {
-			viewDashboardExpenseHistory = data.employeeRecurringexpense.map(
+			viewDashboardExpenseHistory = data.employeeRecurringExpense.map(
 				(e) => ({
 					valueDate: new Date(e.startYear, e.startMonth),
 					categoryName: e.categoryName,
@@ -367,10 +363,10 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				})
 			);
 		} else if (
-			data.orgRecurringexpense &&
-			data.orgRecurringexpense.length
+			data.orgRecurringExpense &&
+			data.orgRecurringExpense.length
 		) {
-			viewDashboardExpenseHistory = data.orgRecurringexpense.map((e) => ({
+			viewDashboardExpenseHistory = data.orgRecurringExpense.map((e) => ({
 				valueDate: new Date(e.startYear, e.startMonth),
 				categoryName: e.categoryName,
 				amount: e.value,
@@ -380,21 +376,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				originalValue: e.originalValue,
 				employeeCount: e.employeeCount
 			}));
-		} else if (data.splitExpense && data.splitExpense.length) {
-			viewDashboardExpenseHistory = data.splitExpense.map((e) => ({
-				valueDate: e.valueDate,
-				vendorName: e.vendorName,
-				categoryName: e.categoryName,
-				amount: e.amount,
-				notes: e.notes,
-				recurring: false,
-				source: 'employee',
-				splitExpense: e.splitExpense,
-				originalValue: e.originalValue,
-				employeeCount: e.employeeCount
-			}));
 		}
-
 		return viewDashboardExpenseHistory;
 	}
 

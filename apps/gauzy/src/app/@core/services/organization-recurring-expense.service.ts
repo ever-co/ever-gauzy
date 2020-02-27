@@ -84,7 +84,7 @@ export class OrganizationRecurringExpenseService {
 			.toPromise();
 	}
 
-	getForEmployee(
+	getSplitExpensesForEmployee(
 		orgId: string,
 		findInput?: OrganizationRecurringExpenseFindInput
 	): Promise<{

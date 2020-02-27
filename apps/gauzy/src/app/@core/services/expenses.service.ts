@@ -1,5 +1,5 @@
-import { Injectable, Inject, forwardRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import {
 	Expense,
 	ExpenseCreateInput as IExpenseCreateInput,
@@ -22,32 +22,33 @@ export class ExpensesService {
 			.toPromise();
 	}
 
-	getMyAll(
+	getMyAllWithSplitExpenses(
 		relations?: string[],
-		findInput?: IExpenseFindInput,
 		filterDate?: Date
-	): Promise<{ items: Expense[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput, filterDate });
+	): Promise<{ items: SplitExpenseOutput[]; total: number }> {
+		const data = JSON.stringify({ relations, filterDate });
 
 		return this.http
-			.get<{ items: Expense[]; total: number }>(`/api/expense/me`, {
-				params: { data }
-			})
+			.get<{ items: SplitExpenseOutput[]; total: number }>(
+				`/api/expense/me`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getAllSplitExpenses(
-		orgId: string,
+	getAllWithSplitExpenses(
+		employeeId: string,
 		relations?: string[],
-		findInput?: IExpenseFindInput,
 		filterDate?: Date
 	): Promise<{ items: SplitExpenseOutput[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput, filterDate });
+		const data = JSON.stringify({ relations, filterDate });
 
 		return this.http
 			.get<{ items: SplitExpenseOutput[]; total: number }>(
-				`/api/expense/split/${orgId}`,
+				`/api/expense/include-split/${employeeId}`,
 				{
 					params: { data }
 				}

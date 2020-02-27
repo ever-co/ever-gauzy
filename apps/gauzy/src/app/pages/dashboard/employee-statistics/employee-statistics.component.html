@@ -115,8 +115,23 @@
 				</ga-info-block>
 
 				<ga-info-block
+					*ngIf="totalSalary !== 0"
+					title="{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}"
+					value="{{
+						expenseCurrency
+							? (totalSalary | currency: expenseCurrency)
+							: totalSalary
+					}}"
+					(openInfo)="openHistoryDialog('SALARY')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
 					title="{{
 						'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSE_CALC' | translate
 					}}"
 					value="{{
 						expenseCurrency

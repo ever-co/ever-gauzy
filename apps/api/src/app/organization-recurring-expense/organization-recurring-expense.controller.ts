@@ -1,6 +1,6 @@
 import {
-	RecurringExpenseEditInput,
-	OrganizationRecurringExpenseForEmployeeOutput
+	OrganizationRecurringExpenseForEmployeeOutput,
+	RecurringExpenseEditInput
 } from '@gauzy/models';
 import {
 	Body,
@@ -19,13 +19,12 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { EmployeeService } from '../employee';
 import { OrganizationRecurringExpenseDeleteCommand } from './commands/organization-recurring-expense.delete.command';
 import { OrganizationRecurringExpenseEditCommand } from './commands/organization-recurring-expense.edit.command';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import { OrganizationRecurringExpenseByMonthQuery } from './queries/organization-recurring-expense.by-month.query';
-import { OrganizationService } from '../organization/organization.service';
+import { OrganizationRecurringExpenseFindSplitExpenseQuery } from './queries/organization-recurring-expense.find-split-expense.query';
 
 @ApiTags('OrganizationRecurringExpense')
 @Controller()
@@ -36,9 +35,7 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
-		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService,
-		private readonly employeeService: EmployeeService,
-		private organizationService: OrganizationService
+		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
 	) {
 		super(organizationRecurringExpenseService);
 	}
@@ -89,7 +86,8 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	}
 
 	@ApiOperation({
-		summary: 'Find all organization recurring expenses for given employee.'
+		summary:
+			'Find all organization recurring expenses for given employee, also known as split recurring expenses.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -100,39 +98,18 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		description: 'Record not found'
 	})
 	@Get('/employee/:orgId')
-	async getForEmployee(
+	async getSplitExpensesForEmployee(
 		@Query('data') data: string,
 		@Param('orgId') orgId: string
 	): Promise<IPagination<OrganizationRecurringExpenseForEmployeeOutput>> {
 		const { findInput } = JSON.parse(data);
 
-		const {
-			items,
-			total
-		} = await this.organizationRecurringExpenseService.findAll({
-			where: { ...findInput, splitExpense: true, orgId }
-		});
-
-		const organization = await this.organizationService.findOne({
-			id: orgId
-		});
-
-		const orgEmployees = await this.employeeService.findAll({
-			where: {
-				organization
-			}
-		});
-
-		const splitItems = items.map((e) => ({
-			...e,
-			value: +(
-				e.value / (orgEmployees.total !== 0 ? orgEmployees.total : 1)
-			).toFixed(2),
-			originalValue: +e.value,
-			employeeCount: orgEmployees.total
-		}));
-
-		return { items: splitItems, total };
+		return this.queryBus.execute(
+			new OrganizationRecurringExpenseFindSplitExpenseQuery(
+				orgId,
+				findInput
+			)
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
