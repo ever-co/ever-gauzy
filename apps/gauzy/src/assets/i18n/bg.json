@@ -72,6 +72,7 @@
 		"EXPIRE_DATE": "Изтича",
 		"CLIENTS": "Клиенти",
 		"DEPARTMENTS": "Отдели",
+		"DESCRIPTION": "Description",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -229,7 +230,8 @@
 		"OK": "Добре",
 		"CANCEL": "Отказ",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Сигурен ли си, че искаш да промениш",
-		"RECURRING_EXPENSE": "Това е повтарящ се разход"
+		"RECURRING_EXPENSE": "Това е повтарящ се разход",
+		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}"
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
@@ -279,7 +281,16 @@
 			"PROFIT": "Печалба",
 			"TOTAL_BONUS": "Бонус Общо",
 			"TOTAL_DIRECT_INCOME": "Изтриване на доход",
-			"SALARY": "Total Salary"
+			"SALARY": "Salary",
+			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
+			"TOTAL_INCOME_CALC": "Total Income = Income + Direct Income",
+			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
+			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
+			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit",
+			"TOTAL_INCOME_BONUS": "Total Income Bonus",
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income",
+			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
@@ -476,7 +487,8 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags"
+		"HEADER": "Tags",
+		"ADD_TAGS": "Add Tags"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",

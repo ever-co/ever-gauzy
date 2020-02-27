@@ -72,6 +72,7 @@
 		"EXPIRE_DATE": "Expires",
 		"CLIENTS": "לקוחות",
 		"DEPARTMENTS": "מחלקות",
+		"DESCRIPTION": "Description",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -229,7 +230,8 @@
 		"OK": "OK",
 		"CANCEL": "בטל",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
-		"RECURRING_EXPENSE": "This is a recurring expense"
+		"RECURRING_EXPENSE": "This is a recurring expense",
+		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
@@ -279,7 +281,16 @@
 			"PROFIT": "רווח",
 			"TOTAL_BONUS": "Total Bonus",
 			"TOTAL_DIRECT_INCOME": "Direct Income",
-			"SALARY": "Total Salary"
+			"SALARY": "Salary",
+			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
+			"TOTAL_INCOME_CALC": "Total Income = Income + Direct Income",
+			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
+			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
+			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit",
+			"TOTAL_INCOME_BONUS": "Total Income Bonus",
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income",
+			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "מפתח",
@@ -476,7 +487,8 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags"
+		"HEADER": "Tags",
+		"ADD_TAGS": "Add Tags"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
