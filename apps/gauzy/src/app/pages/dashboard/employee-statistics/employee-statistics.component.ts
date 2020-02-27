@@ -216,7 +216,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 			0
 		);
 
-		this.totalBonusIncome = this.bonusIncomeData.reduce(
+		this.totalBonusIncome = (this.bonusIncomeData || []).reduce(
 			(a, b) => a + +b.amount,
 			0
 		);
