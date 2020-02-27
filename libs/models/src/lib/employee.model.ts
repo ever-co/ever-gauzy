@@ -1,4 +1,4 @@
-import { User } from '..';
+import { User, Tag } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
@@ -19,6 +19,7 @@ export interface Employee extends IBaseEntityModel {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	tenant: Tenant;
+	tags: Tag[];
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {

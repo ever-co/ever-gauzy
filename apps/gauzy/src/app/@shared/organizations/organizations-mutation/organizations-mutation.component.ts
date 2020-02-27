@@ -7,7 +7,7 @@ import {
 	BonusTypeEnum,
 	DEFAULT_PROFIT_BASED_BONUS
 } from '@gauzy/models';
-import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
+
 @Component({
 	selector: 'ngx-organizations-mutation',
 	templateUrl: './organizations-mutation.component.html',
@@ -25,8 +25,7 @@ export class OrganizationsMutationComponent implements OnInit {
 	constructor(
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<OrganizationsMutationComponent>,
-		private toastrService: NbToastrService,
-		private orgDepartmentService: OrganizationDepartmentsService
+		private toastrService: NbToastrService
 	) {}
 
 	async ngOnInit() {

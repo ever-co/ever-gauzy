@@ -112,6 +112,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	selectOrganization(data: SelectedRow) {
 		if (data.isSelected) {
 			this.selectedOrganization = data.data;
+		
 		} else {
 			this.selectedOrganization = null;
 		}
