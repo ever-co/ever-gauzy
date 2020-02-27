@@ -1,22 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
 import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { Store } from '../../@core/services/store.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TagsService } from '../../@core/services/tags.service';
 import { Tag } from '@gauzy/models';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
 
-
-export interface SelectedTag{
-	name: string;
-	color: string;
-	description: string;
+export interface SelectedTag {
+	data: Tag;
+	isSelected: boolean;
 }
-
-
 
 @Component({
 	selector: 'ngx-tags',
@@ -26,37 +21,57 @@ export interface SelectedTag{
 export class TagsComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = false;
-	private _ngDestroy$ = new Subject<void>();
 	selectedTag: SelectedTag;
 	smartTableSource = new LocalDataSource();
 	tag: Tag;
 
 	constructor(
-		private translate: TranslateService,
 		private dialogService: NbDialogService,
-		private store: Store,
 		private tagsService: TagsService
 	) {}
 
 	ngOnInit() {
-		
 		this.loadSmartTable();
-	
 		this.loadSettings();
-		
 	}
-	
+
 	async add() {
-		this.dialogService.open(TagsMutationComponent);
+		const dialog = this.dialogService.open(TagsMutationComponent, {
+			context: {
+
+			}
+		});
+
+		await dialog.onClose.pipe(first()).toPromise();
+		this.loadSettings();
 	}
-	async delete() {}
-	async edit() {}
+
+	selectTag(data: SelectedTag) {
+		if (data.isSelected) {
+			this.tag = data.data;
+		}
+	}
+	async delete() {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.tagsService.delete(this.tag.id);
+			this.loadSettings();
+		}
+	}
+	async edit() {
+      
+
+	}
 
 	loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				fullName: {
+				name: {
 					title: 'Full Name',
 					type: 'string'
 				},
@@ -71,22 +86,11 @@ export class TagsComponent implements OnInit, OnDestroy {
 			}
 		};
 	}
-	async loadSettings(){
-	
-		const {items} = await this.tagsService.getAllTags();
-		console.warn(items);
+	async loadSettings() {
+		const { items } = await this.tagsService.getAllTags();
 		this.smartTableSource.load(items);
 		
-			
-	 }
-
-
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translate.get(prefix).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
+
 	ngOnDestroy() {}
 }

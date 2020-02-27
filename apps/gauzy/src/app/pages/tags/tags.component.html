@@ -29,6 +29,8 @@
 		<ng2-smart-table class="tags-table" 
 		[settings]="settingsSmartTable"
 		[source]="smartTableSource"
+		(userRowSelect)="selectTag($event)"
+		style="cursor: pointer;"
 
 		>
 		</ng2-smart-table>

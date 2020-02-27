@@ -17,8 +17,10 @@
 				placeholder="Select Color"
 				formControlName="color"
 			>
-				<nb-option *ngFor="let user of selectedColor">
-					{{ user.color }}
+				<nb-option *ngFor="let color of selectedColor"
+				[value]="color"
+				>
+					{{color.color}}
 				</nb-option>
 			</nb-select>
 		</div>

@@ -13,14 +13,12 @@ export class TagsMutationComponent implements OnInit {
 	selectedColor: { color: string }[] = [];
 	form: FormGroup;
 	tag: Tag;
-    
 
 	constructor(
 		protected dialogRef: NbDialogRef<TagsMutationComponent>,
 		private tagsService: TagsService,
 		private fb: FormBuilder
 	) {}
-
 
 	// get name() {
 	// 	return this.form.get('name').value;
@@ -36,40 +34,38 @@ export class TagsMutationComponent implements OnInit {
 	// set description(value) {
 	// 	this.form.setValue(value)
 	// }
-     
+
 	ngOnInit() {
 		this.seedFakeData();
 		this.initializeForm();
-		console.warn(this.form);
+		
 	}
 
-async addTag(){
-	this.dialogRef.close()
-	this.tagsService.insertTag(Object.assign({
-		name: this.form.value.name,
-		description: this.form.value.description,
-		color: this.form.value.color,
-	}))
-
-}
-
-
-
-
+	async addTag() {
+		this.dialogRef.close();
+		this.tagsService.insertTag(
+			Object.assign({
+				name: this.form.value.name,
+				description: this.form.value.description,
+				color: this.form.value.color.color
+				
+			})
+		);
+	
+	}
 
 	async closeDialog() {
 		this.dialogRef.close();
 	}
-	
+
 	async initializeForm() {
 		this.form = this.fb.group({
-			name:["pesho"],
-			description:["TEST TEST TEST"],
-			color:["red"]
+			name: [''],
+			description: [''],
+			color: ['']
 		});
 		
 	}
-	
 
 	async seedFakeData() {
 		if (!this.selectedUser.length) {

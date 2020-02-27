@@ -26,7 +26,6 @@ export class OrganizationsMutationComponent implements OnInit {
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<OrganizationsMutationComponent>,
 		private toastrService: NbToastrService,
-		private orgDepartmentService: OrganizationDepartmentsService
 	) {}
 
 	async ngOnInit() {
