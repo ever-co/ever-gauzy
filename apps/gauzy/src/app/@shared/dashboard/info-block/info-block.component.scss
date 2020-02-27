@@ -1,0 +1,41 @@
+.info-block {
+	&:hover {
+		box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+		transform: translateY(-1px);
+	}
+
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 20px;
+	width: 100%;
+	height: 46px;
+	border-radius: 4px;
+	padding: 29px;
+	background-color: #f6f9fc;
+	cursor: pointer;
+	.info-text,
+	.info-value {
+		display: flex;
+		font-size: 18px;
+		color: #333333;
+	}
+
+	.info-text {
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.info-value {
+		flex-direction: row;
+		align-items: center;
+
+		span {
+			font-size: 20px;
+			margin-right: 12px;
+		}
+	}
+
+	.meta-text {
+		font-size: 10px;
+	}
+}

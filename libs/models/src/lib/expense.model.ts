@@ -100,6 +100,17 @@ export interface ExpenseUpdateInput {
 	splitExpense?: boolean;
 }
 
+export interface SplitExpenseOutput extends Expense {
+	originalValue?: number;
+	employeeCount?: number;
+}
+
+export interface SplitExpenseFindInput {
+	relations?: string[];
+	filterDate?: string;
+	employeeId: string;
+}
+
 export enum ExpenseTypesEnum {
 	TAX_DEDUCTIBLE = 'Tax Deductible',
 	NOT_TAX_DEDUCTIBLE = 'Not Tax Deductible',

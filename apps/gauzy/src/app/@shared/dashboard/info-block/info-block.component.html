@@ -1,0 +1,19 @@
+<div class="info-block" (click)="handleClick()">
+	<div class="info-text">
+		{{ title }}
+		<div *ngIf="meta" class="meta-text">
+			{{ meta }}
+		</div>
+	</div>
+
+	<div class="info-value">
+		<span [style.color]="color">{{ value }}</span>
+		<nb-icon
+			class="ml-2"
+			icon="link-2-outline"
+			nbTooltip="Open Records History"
+			nbTooltipTrigger="hover"
+		>
+		</nb-icon>
+	</div>
+</div>

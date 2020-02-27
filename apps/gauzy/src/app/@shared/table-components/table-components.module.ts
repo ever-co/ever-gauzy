@@ -5,7 +5,7 @@ import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/selectors.module';
 import { DateViewComponent } from './date-view/date-view.component';
-import { IncomeAmountComponent } from './income-amount/income-amount.component';
+import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 
 @NgModule({
 	imports: [
@@ -20,8 +20,8 @@ import { IncomeAmountComponent } from './income-amount/income-amount.component';
 			}
 		})
 	],
-	entryComponents: [DateViewComponent, IncomeAmountComponent],
-	declarations: [DateViewComponent, IncomeAmountComponent],
+	entryComponents: [DateViewComponent, IncomeExpenseAmountComponent],
+	declarations: [DateViewComponent, IncomeExpenseAmountComponent],
 	providers: []
 })
 export class TableComponentsModule {}

@@ -13,8 +13,8 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -95,7 +95,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					type: 'custom',
 					width: '10%',
 					filter: false,
-					renderComponent: IncomeAmountComponent
+					renderComponent: IncomeExpenseAmountComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),

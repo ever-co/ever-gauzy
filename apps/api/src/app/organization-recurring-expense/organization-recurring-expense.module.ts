@@ -7,15 +7,24 @@ import { OrganizationRecurringExpenseController } from './organization-recurring
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import { QueryHandlers } from './queries/handlers';
+import { EmployeeService, Employee } from '../employee';
+import { Organization } from '../organization/organization.entity';
+import { OrganizationService } from '../organization/organization.service';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([OrganizationRecurringExpense]),
+		TypeOrmModule.forFeature([
+			OrganizationRecurringExpense,
+			Organization,
+			Employee
+		]),
 		CqrsModule
 	],
 	controllers: [OrganizationRecurringExpenseController],
 	providers: [
 		OrganizationRecurringExpenseService,
+		EmployeeService,
+		OrganizationService,
 		...QueryHandlers,
 		...CommandHandlers
 	],

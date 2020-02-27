@@ -22,3 +22,9 @@ export interface OrganizationRecurringExpenseByMonthFindInput
 	month?: number;
 	year?: number;
 }
+
+export interface OrganizationRecurringExpenseForEmployeeOutput
+	extends OrganizationRecurringExpense {
+	originalValue: number;
+	employeeCount: number;
+}

@@ -21,6 +21,7 @@ export class OrganizationRecurringExpenseByMonthHandler
 	): Promise<IPagination<OrganizationRecurringExpense>> {
 		const { input } = command;
 
-		return await this.executeCommand(input);
+		const recurringExpenses = await this.executeCommand(input);
+		return recurringExpenses;
 	}
 }

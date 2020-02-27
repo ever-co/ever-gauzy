@@ -49,118 +49,194 @@
 	<nb-card-body class="body">
 		<div class="half-content">
 			<div *ngIf="selectedDate; else notSelected">
-				<div
-					class="info-block open"
-					(click)="openHistoryDialog('INCOME')"
+				<ga-info-block
+					*ngIf="totalBonusIncome !== 0"
+					title="{{ 'INCOME_PAGE.INCOME' | translate }}"
+					value="{{
+						incomeCurrency
+							? (totalNonBonusIncome | currency: incomeCurrency)
+							: totalNonBonusIncome
+					}}"
+					color="#089c17"
+					(openInfo)="openHistoryDialog('NON_BONUS_INCOME')"
 				>
-					<div class="info-text">
-						{{
-							'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate
-						}}
-					</div>
+				</ga-info-block>
 
-					<div class="info-value">
-						<span *ngIf="incomeCurrency" class="income-color">{{
-							totalIncome | currency: incomeCurrency
-						}}</span>
-						<span *ngIf="!incomeCurrency" class="income-color">{{
-							totalIncome
-						}}</span>
-						<nb-icon
-							class="ml-2"
-							icon="link-2-outline"
-							nbTooltip="Open Records History"
-							nbTooltipTrigger="hover"
-						>
-						</nb-icon>
-					</div>
-				</div>
-
-				<div
-					class="info-block open"
-					(click)="openHistoryDialog('EXPENSES')"
+				<ga-info-block
+					*ngIf="totalBonusIncome !== 0"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME_INFO'
+							| translate
+					}}"
+					value="{{
+						incomeCurrency
+							? (totalBonusIncome | currency: incomeCurrency)
+							: totalBonusIncome
+					}}"
+					color="#089c17"
+					(openInfo)="openHistoryDialog('BONUS_INCOME')"
 				>
-					<div class="info-text">
-						{{
-							'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES'
-								| translate
-						}}
-					</div>
+				</ga-info-block>
 
-					<div class="info-value">
-						<span *ngIf="expenseCurrency" class="expense-color">{{
-							totalExpense | currency: expenseCurrency
-						}}</span>
-						<span *ngIf="!expenseCurrency" class="expense-color">{{
-							totalExpense
-						}}</span>
-						<nb-icon
-							nbTooltip="Open Records History"
-							nbTooltipTrigger="hover"
-							class="ml-2"
-							icon="link-2-outline"
-						>
-						</nb-icon>
-					</div>
-				</div>
-				<!-- POPUP GOES HERE -->
-				<div class="info-block" (click)="openProfitDialog()">
-					<div class="info-text">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
-						<div style="font-size: 10px">
-							{{
-								'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC'
-									| translate
-							}}
-						</div>
-					</div>
-					<div class="info-value">
-						<span
-							*ngIf="defaultCurrency"
-							[ngClass]="{
-								'profit-positive-color': bonus >= 0,
-								'profit-negative-color': bonus < 0
-							}"
-							>{{ difference | currency: defaultCurrency }}</span
-						>
-						<span
-							*ngIf="!defaultCurrency"
-							[ngClass]="{
-								'profit-positive-color': bonus >= 0,
-								'profit-negative-color': bonus < 0
-							}"
-							>{{ difference }}</span
-						>
-						<nb-icon
-							nbTooltip="Open Records History"
-							nbTooltipTrigger="hover"
-							class="ml-2"
-							icon="link-2-outline"
-						>
-						</nb-icon>
-					</div>
-				</div>
+				<ga-info-block
+					*ngIf="totalBonusIncome !== 0"
+					title="{{
+						'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_CALC' | translate
+					}}"
+					value="{{
+						incomeCurrency
+							? (totalAllIncome | currency: incomeCurrency)
+							: totalAllIncome
+					}}"
+					color="#089c17"
+					(openInfo)="openHistoryDialog('INCOME')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="totalBonusIncome == 0"
+					title="{{
+						'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate
+					}}"
+					value="{{
+						incomeCurrency
+							? (totalAllIncome | currency: incomeCurrency)
+							: totalAllIncome
+					}}"
+					color="#089c17"
+					(openInfo)="openHistoryDialog('INCOME')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="totalSalary !== 0"
+					title="{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}"
+					value="{{
+						expenseCurrency
+							? (totalSalary | currency: expenseCurrency)
+							: totalSalary
+					}}"
+					(openInfo)="openHistoryDialog('SALARY')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					title="{{
+						'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSE_CALC' | translate
+					}}"
+					value="{{
+						expenseCurrency
+							? (totalExpense | currency: expenseCurrency)
+							: totalExpense
+					}}"
+					color="#dbc300"
+					(openInfo)="openHistoryDialog('EXPENSES')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					title="{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}"
+					meta="{{
+						'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC' | translate
+					}}"
+					value="{{
+						defaultCurrency
+							? (difference | currency: defaultCurrency)
+							: difference
+					}}"
+					color="{{ difference >= 0 ? '#66de0b' : '#ff7b00' }}"
+					(openInfo)="openProfitDialog()"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="totalBonusIncome !== 0"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS_INFO'
+							| translate
+					}}"
+					value="{{
+						incomeCurrency
+							? (totalBonusIncome | currency: incomeCurrency)
+							: totalBonusIncome
+					}}"
+					color="#66de0b"
+					(openInfo)="openHistoryDialog('BONUS_INCOME')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="bonusType === 'PROFIT_BASED_BONUS' || !bonusType"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO'
+							| translate: { bonusPercentage: bonusPercentage }
+					}}"
+					value="{{
+						defaultCurrency
+							? (calculatedBonus | currency: defaultCurrency)
+							: calculatedBonus
+					}}"
+					color="{{ calculatedBonus >= 0 ? '#66de0b' : '#ff7b00' }}"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="bonusType === 'REVENUE_BASED_BONUS'"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
+							| translate: { bonusPercentage: bonusPercentage }
+					}}"
+					value="{{
+						defaultCurrency
+							? (calculatedBonus | currency: defaultCurrency)
+							: calculatedBonus
+					}}"
+					color="{{ calculatedBonus >= 0 ? '#66de0b' : '#ff7b00' }}"
+				>
+				</ga-info-block>
+				<!-- End of info blocks -->
 
 				<div *ngIf="selectedOrganization?.bonusType" class="bonus">
 					<div class="bonus-value">
 						<div>
-							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
-							{{ bonusPercentage || 0 }} %
+							{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}
 						</div>
 						<div
 							*ngIf="defaultCurrency"
-							[ngClass]="{ 'negative-bonus-color': bonus < 0 }"
+							[ngClass]="{
+								'negative-bonus-color': totalBonus < 0
+							}"
 						>
-							{{ bonus | currency: defaultCurrency }}
+							{{ totalBonus | currency: defaultCurrency }}
 						</div>
 						<div
 							*ngIf="!defaultCurrency"
-							[ngClass]="{ 'negative-bonus-color': bonus < 0 }"
+							[ngClass]="{
+								'negative-bonus-color': totalBonus < 0
+							}"
 						>
-							{{ bonus }}
+							{{ totalBonus }}
 						</div>
 					</div>
-					<div class="bonus-disclaimer" *ngIf="bonus < 0">
+					<div class="bonus-disclaimer" *ngIf="totalBonus < 0">
 						{{ 'DASHBOARD_PAGE.DEVELOPER.NOTE' | translate }}
 					</div>
 				</div>

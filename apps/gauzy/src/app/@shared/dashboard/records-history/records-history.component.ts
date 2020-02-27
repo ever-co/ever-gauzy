@@ -4,10 +4,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
 
 export enum HistoryType {
+	NON_BONUS_INCOME = 'NON_BONUS_INCOME',
+	BONUS_INCOME = 'BONUS_INCOME',
 	INCOME = 'INCOME',
-	EXPENSES = 'EXPENSES'
+	EXPENSES = 'EXPENSES',
+	SALARY = 'SALARY'
 }
 
 @Component({
@@ -35,6 +39,8 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 
 		switch (this.type) {
 			case HistoryType.INCOME:
+			case HistoryType.BONUS_INCOME:
+			case HistoryType.NON_BONUS_INCOME:
 				viewModel = this.recordsData.map((i) => {
 					return {
 						id: i.id,
@@ -42,7 +48,8 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 						clientName: i.clientName,
 						clientId: i.clientId,
 						amount: i.amount,
-						notes: i.notes
+						notes: i.notes,
+						isBonus: i.isBonus
 					};
 				});
 				this.translatedType = this.getTranslation(
@@ -51,6 +58,7 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 				break;
 
 			case HistoryType.EXPENSES:
+			case HistoryType.SALARY:
 				viewModel = this.recordsData.map((i) => {
 					return {
 						id: i.id,
@@ -62,7 +70,10 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 						amount: i.amount,
 						notes: i.notes,
 						recurring: i.recurring,
-						source: i.source
+						source: i.source,
+						originalValue: i.originalValue,
+						employeeCount: i.employeeCount,
+						splitExpense: i.splitExpense
 					};
 				});
 				this.translatedType = this.getTranslation(
@@ -77,6 +88,8 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 	loadSettingsSmartTable() {
 		switch (this.type) {
 			case HistoryType.INCOME:
+			case HistoryType.BONUS_INCOME:
+			case HistoryType.NON_BONUS_INCOME:
 				this.smartTableSettings = {
 					actions: false,
 					mode: 'external',
@@ -96,9 +109,10 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
-							type: 'number',
+							type: 'custom',
 							width: '15%',
-							filter: false
+							filter: false,
+							renderComponent: IncomeExpenseAmountComponent
 						},
 						notes: {
 							title: this.getTranslation('SM_TABLE.NOTES'),
@@ -112,6 +126,7 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 				};
 				break;
 			case HistoryType.EXPENSES:
+			case HistoryType.SALARY:
 				this.smartTableSettings = {
 					actions: false,
 					editable: true,
@@ -153,9 +168,9 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
-							type: 'number',
+							type: 'custom',
 							width: '15%',
-							filter: false
+							renderComponent: IncomeExpenseAmountComponent
 						},
 						notes: {
 							title: this.getTranslation('SM_TABLE.NOTES'),
