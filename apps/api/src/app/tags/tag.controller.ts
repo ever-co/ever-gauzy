@@ -1,8 +1,8 @@
-import { Tag } from './tag.entity';
-import { CrudController, IPagination } from '../core';
-import { TagService } from './tag.service';
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { CrudController } from '../core';
+import { Tag } from './tag.entity';
+import { TagService } from './tag.service';
 @ApiTags('Tags')
 @Controller()
 export class TagController extends CrudController<Tag> {

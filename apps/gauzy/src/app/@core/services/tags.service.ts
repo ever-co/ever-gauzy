@@ -15,10 +15,6 @@ export class TagsService {
 	}
 
 	getAllTags(): Promise<{ items: Tag[] }> {
-		const test = this.http
-			.get<{ items: Tag[] }>(`/api/tags`)
-			.pipe(first())
-			.toPromise();
 		return this.http
 			.get<{ items: Tag[] }>(`/api/tags`)
 			.pipe(first())
