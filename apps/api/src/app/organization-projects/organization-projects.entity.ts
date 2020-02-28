@@ -13,7 +13,8 @@ import {
 	IsString,
 	IsOptional,
 	IsDate,
-	IsEnum
+	IsEnum,
+	IsBoolean
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import {
@@ -40,10 +41,14 @@ export class OrganizationProjects extends Base
 	organizationId: string;
 
 	@ApiPropertyOptional({ type: OrganizationClients })
-	@ManyToOne((type) => OrganizationClients, (client) => client.projects, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
+	@ManyToOne(
+		(type) => OrganizationClients,
+		(client) => client.projects,
+		{
+			nullable: true,
+			onDelete: 'CASCADE'
+		}
+	)
 	@JoinColumn()
 	client?: OrganizationClients;
 
@@ -71,6 +76,11 @@ export class OrganizationProjects extends Base
 	@Index()
 	@Column()
 	currency: string;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column()
+	public: boolean;
 
 	@ManyToMany((type) => Employee, { cascade: ['update'] })
 	@JoinTable({

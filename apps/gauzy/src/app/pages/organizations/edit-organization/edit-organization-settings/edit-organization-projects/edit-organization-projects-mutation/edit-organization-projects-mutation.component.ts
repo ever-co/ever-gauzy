@@ -34,6 +34,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 	types: string[] = Object.values(ProjectTypeEnum);
 	currencies: string[] = Object.values(CurrenciesEnum);
 	defaultCurrency: string;
+	public: boolean = true;
 
 	constructor(private readonly fb: FormBuilder) {}
 
@@ -55,6 +56,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 		this.defaultCurrency = this.organization.currency || 'USD';
 
 		this.form = this.fb.group({
+			public: this.public || false,
 			name: [this.project ? this.project.name : ''],
 			client: [
 				this.project && this.project.client
@@ -75,6 +77,11 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 		});
 	}
 
+	togglePublic(state: boolean) {
+		this.public = state;
+		console.log(this.public);
+	}
+
 	onMembersSelected(members: string[]) {
 		this.members = members;
 	}
@@ -86,6 +93,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 	async submitForm() {
 		if (this.form.valid) {
 			this.addOrEditProject.emit({
+				public: this.public || false,
 				id: this.project ? this.project.id : undefined,
 				organizationId: this.organization.id,
 				name: this.form.value['name'],

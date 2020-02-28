@@ -13,6 +13,7 @@ export interface OrganizationProjects extends IBaseEntityWithMembers {
 	type: string;
 	currency: string;
 	members?: Employee[];
+	public: boolean;
 }
 
 export interface OrganizationProjectsFindInput extends IBaseEntityModel {
@@ -20,6 +21,7 @@ export interface OrganizationProjectsFindInput extends IBaseEntityModel {
 	organizationId?: string;
 	client?: OrganizationClients;
 	members?: Employee[];
+	public?: boolean;
 }
 
 export interface OrganizationProjectsCreateInput {
@@ -31,4 +33,5 @@ export interface OrganizationProjectsCreateInput {
 	type?: ProjectTypeEnum;
 	currency?: CurrenciesEnum;
 	members?: Employee[];
+	public?: boolean;
 }
