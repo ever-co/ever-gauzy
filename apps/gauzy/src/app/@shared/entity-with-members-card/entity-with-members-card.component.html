@@ -1,18 +1,6 @@
 <nb-card style="padding: 0 !important" class="card-body">
 	<nb-card-header style="padding: 0.5rem;">
 		<div class="header-container">
-			<div *ngIf="entityWithMembers.public; else notPublic">
-				<nb-icon
-					class="ml-auto mt-1 close float-left"
-					icon="eye-outline"
-				></nb-icon>
-			</div>
-			<ng-template #notPublic>
-				<nb-icon
-					class="ml-auto mt-1 close float-left"
-					icon="eye-off-outline"
-				></nb-icon>
-			</ng-template>
 			<div>{{ entityWithMembers.name }}</div>
 			<div class="members-count">
 				{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
