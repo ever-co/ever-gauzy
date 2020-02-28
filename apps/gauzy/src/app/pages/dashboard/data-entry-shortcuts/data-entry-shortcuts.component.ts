@@ -50,6 +50,14 @@ export class DataEntryShortcutsComponent implements OnInit, OnDestroy {
 		this.router.navigateByUrl('pages/expenses?openAddDialog=true');
 	}
 
+	async addOrganizationRecurringExpense() {
+		this.router.navigateByUrl('pages/organizations');
+	}
+
+	async addEmployeeRecurringExpense() {
+		this.router.navigateByUrl('pages/employees');
+	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

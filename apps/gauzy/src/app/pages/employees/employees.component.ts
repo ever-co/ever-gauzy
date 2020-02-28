@@ -64,6 +64,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 	includeDeleted = false;
 	loading = true;
 	hasEditPermission = false;
+	hasEditExpensePermission = false;
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
@@ -97,6 +98,10 @@ export class EmployeesComponent extends TranslationBaseComponent
 				this.hasInviteViewOrEditPermission =
 					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
 					this.hasInviteEditPermission;
+
+				this.hasEditExpensePermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
 			});
 
 		this.store.selectedOrganization$

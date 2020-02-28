@@ -305,7 +305,10 @@
 			"BONUS": "Bonus"
 		},
 		"ADD_INCOME": "Add New Income Entry",
-		"ADD_EXPENSE": "Add New Expense Entry"
+		"ADD_EXPENSE": "Add New Expense Entry",
+		"RECURRING_EXPENSES": "Recurring Expenses",
+		"ADD_ORGANIZATION_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Organization",
+		"ADD_EMPLOYEE_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Employee"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Income",

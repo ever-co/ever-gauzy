@@ -20,7 +20,7 @@
 				</div>
 			</div>
 
-			<div class="org-info">
+			<div *ngIf="hasEditPermission" class="org-info">
 				<div class="org-details edit-icon">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -64,6 +64,7 @@
 			<div>
 				<span>
 					<button
+						*ngIf="hasEditPermission || hasEditExpensePermission"
 						(click)="addOrganizationRecurringExpense()"
 						nbButton
 						status="success"

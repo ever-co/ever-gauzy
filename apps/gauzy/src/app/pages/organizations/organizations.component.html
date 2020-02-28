@@ -3,12 +3,13 @@
 		<h4>{{ 'ORGANIZATIONS_PAGE.ORGANIZATIONS' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3" *ngIf="hasEditPermission">
+		<div class="mb-3">
 			<button
 				nbButton
 				status="success"
 				(click)="addOrganization()"
 				class="mr-2"
+				*ngIf="hasEditPermission"
 			>
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
@@ -20,6 +21,7 @@
 				(click)="editOrganization()"
 				status="info"
 				class="mr-2"
+				*ngIf="hasEditPermission || hasEditExpensesPermission"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 				>{{ 'BUTTONS.MANAGE' | translate }}
@@ -30,6 +32,7 @@
 				(click)="deleteOrganization()"
 				status="danger"
 				class="mr-2"
+				*ngIf="hasEditPermission"
 			>
 				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
 				>{{ 'BUTTONS.DELETE' | translate }}
