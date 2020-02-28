@@ -73,7 +73,7 @@
 		"CLIENTS": "Clients",
 		"DEPARTMENTS": "Departments",
 		"DESCRIPTION": "Description",
-	
+
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -178,7 +178,8 @@
 			"TYPE_OF_BONUS": "Select Type of Bonus",
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_INVITES": "Enable Invites",
-			"INVITE_EXPIRY_PERIOD": "Invites valid upto"
+			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
+			"SWITCH_PROJECT_STATE": "Public"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
