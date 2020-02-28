@@ -284,7 +284,7 @@
 			"TOTAL_DIRECT_INCOME": "Direct Income",
 			"SALARY": "Salary",
 			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
-			"TOTAL_INCOME_CALC": "Total Income = Income + Direct Income",
+			"TOTAL_INCOME_CALC": "Total Income = Income {{ totalNonBonusIncome }} + Direct Income {{ totalBonusIncome }}",
 			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
 			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
 			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
@@ -299,7 +299,7 @@
 			"TOTAL_INCOME": "הכנסה כוללת",
 			"TOTAL_EXPENSES": "סך ההוצאות",
 			"PROFIT": "רווח",
-			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
+			"PROFIT_CALC": "Profit (Net Income) = Total Income {{ totalAllIncome }} - Total Expenses {{ totalExpense }}",
 			"NOTE": "הערה: יש לנכות את הבונוסים השליליים בחודשים הקרובים מהבונוסים החיוביים לפני תשלומי הבונוס הסופיים",
 			"BONUS": "בונוס"
 		},
