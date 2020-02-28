@@ -78,13 +78,14 @@
 				<div class="col-sm-6" *ngIf="vendors.length">
 					<div class="form-group">
 						<ng-select
-							nbInput
-							type="text"
+							[addTag]="addNewVendor"
+							bindLabel="vendorName"
 							[items]="vendors"
 							[searchable]="true"
 							placeholder="{{
 								'POP_UPS.ALL_VENDORS' | translate
 							}}"
+							formControlName="vendor"
 						>
 						</ng-select>
 					</div>
@@ -334,3 +335,5 @@
 		</button>
 	</nb-card-footer>
 </nb-card>
+
+<!-- [disabled]="form.invalid" -->
