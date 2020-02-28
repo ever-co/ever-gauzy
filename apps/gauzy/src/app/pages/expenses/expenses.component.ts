@@ -227,7 +227,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 		try {
 			await this.expenseService.create({
 				...completedForm,
-				employeeId: formData.employee.id,
+				employeeId: formData.employee ? formData.employee.id : null,
 				orgId: this.store.selectedOrganization.id
 			});
 
@@ -239,7 +239,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			);
 
 			this._loadTableData();
-			this.store.selectedEmployee = formData.employee.id
+			this.store.selectedEmployee = formData.employee
 				? formData.employee
 				: null;
 		} catch (error) {
@@ -453,7 +453,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					' ' +
 					this.store.selectedEmployee.lastName
 			  ).trim()
-			: '';
+			: 'All Employees';
 	}
 
 	_applyTranslationOnSmartTable() {

@@ -171,6 +171,10 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		);
 	}
 
+	addNewVendor(vendorName) {
+		return { vendorName: vendorName, tag: true, vendorId: null };
+	}
+
 	showNotesInput() {
 		return (this.showNotes = !this.showNotes);
 	}
