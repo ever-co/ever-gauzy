@@ -177,7 +177,8 @@
 			"TYPE_OF_BONUS": "Выберите тип бонуса",
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_INVITES": "Включить приглашения",
-			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до"
+			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
+			"SWITCH_PROJECT_STATE": "Публичный"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
