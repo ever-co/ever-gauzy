@@ -304,7 +304,10 @@
 			"BONUS": "Бонус"
 		},
 		"ADD_INCOME": "Добавете ново въвеждане на доходи",
-		"ADD_EXPENSE": "Добавете ново въвеждане на разходи"
+		"ADD_EXPENSE": "Добавете ново въвеждане на разходи",
+		"RECURRING_EXPENSES": "Recurring Expenses",
+		"ADD_ORGANIZATION_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Organization",
+		"ADD_EMPLOYEE_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Employee"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Доход",
