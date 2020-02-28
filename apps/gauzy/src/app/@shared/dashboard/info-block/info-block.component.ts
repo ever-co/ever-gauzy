@@ -10,6 +10,7 @@ export class InfoBlockComponent {
 	@Input() meta: string;
 	@Input() value: string;
 	@Input() color: string;
+	@Input() blockType: boolean;
 
 	@Output() openInfo = new EventEmitter<void>();
 

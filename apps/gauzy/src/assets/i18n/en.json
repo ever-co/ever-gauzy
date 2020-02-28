@@ -285,7 +285,7 @@
 			"TOTAL_DIRECT_INCOME": "Direct Income",
 			"SALARY": "Salary",
 			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
-			"TOTAL_INCOME_CALC": "Total Income = Income + Direct Income",
+			"TOTAL_INCOME_CALC": "Total Income = Income {{ totalNonBonusIncome }} + Direct Income {{ totalBonusIncome }}",
 			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
 			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
 			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
@@ -300,7 +300,7 @@
 			"TOTAL_INCOME": "Total Income",
 			"TOTAL_EXPENSES": "Total Expenses",
 			"PROFIT": "Profit",
-			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
+			"PROFIT_CALC": "Profit (Net Income) = Total Income {{ totalAllIncome }} - Total Expenses {{ totalExpense }}",
 			"NOTE": "Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments",
 			"BONUS": "Bonus"
 		},
