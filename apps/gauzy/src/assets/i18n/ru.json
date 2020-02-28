@@ -284,7 +284,7 @@
 			"TOTAL_DIRECT_INCOME": "Прямой доход",
 			"SALARY": "Зарплата",
 			"TOTAL_DIRECT_INCOME_INFO": "Доход от прямого бонуса",
-			"TOTAL_INCOME_CALC": "Общий доход = Поступления + Прямой доход",
+			"TOTAL_INCOME_CALC": "Общий доход = Доход {{ totalNonBonusIncome }} + Прямой доход {{ totalBonusIncome }}",
 			"TOTAL_PROFIT_BONUS": "Общий бонус к прибыли",
 			"TOTAL_DIRECT_BONUS": "Бонус прямого дохода",
 			"TOTAL_DIRECT_BONUS_INFO": "Это равно прямому доходу",
@@ -299,7 +299,7 @@
 			"TOTAL_INCOME": "Общий доход",
 			"TOTAL_EXPENSES": "Всего расходов",
 			"PROFIT": "Прибыль",
-			"PROFIT_CALC": "Прибыль (доход без дохода) = Общий доход - Общие расходы",
+			"PROFIT_CALC": "Прибыль (Недоход) = Общий доход {{ totalAllIncome }} - Общие расходы {{ totalExpense }}",
 			"NOTE": "Примечание: отрицательные бонусы должны вычитаться в предстоящие месяцы из положительных бонусов до финальных бонусных платежей",
 			"BONUS": "Бонус"
 		},
