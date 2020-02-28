@@ -29,7 +29,6 @@ export class DownloadAllService {
 				console.log('error');
 			} else {
 				throw err;
-				console.log('error1');
 			}
 		});
 
