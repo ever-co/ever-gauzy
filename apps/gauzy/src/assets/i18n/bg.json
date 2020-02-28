@@ -284,7 +284,7 @@
 			"TOTAL_DIRECT_INCOME": "Изтриване на доход",
 			"SALARY": "Salary",
 			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
-			"TOTAL_INCOME_CALC": "Total Income = Income + Direct Income",
+			"TOTAL_INCOME_CALC": "Total Income = Income {{ totalNonBonusIncome }} + Direct Income {{ totalBonusIncome }}",
 			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
 			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
 			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
@@ -299,7 +299,7 @@
 			"TOTAL_INCOME": "Общ доход",
 			"TOTAL_EXPENSES": "Общи разходи",
 			"PROFIT": "Печалба",
-			"PROFIT_CALC": "Печалба (НЕТО) = Общо Печалба - Общо Разходи",
+			"PROFIT_CALC": "Profit (Net Income) = Total Income {{ totalAllIncome }} - Total Expenses {{ totalExpense }}",
 			"NOTE": "Забележка: отрицателните бонуси трябва да се приспадат през следващите месеци от положителните бонуси преди окончателните плащания на бонуси",
 			"BONUS": "Бонус"
 		},
