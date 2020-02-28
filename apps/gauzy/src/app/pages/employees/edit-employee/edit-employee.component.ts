@@ -4,7 +4,8 @@ import {
 	Employee,
 	EmployeeRecurringExpense,
 	RecurringExpenseDeletionEnum,
-	RecurringExpenseDefaultCategoriesEnum
+	RecurringExpenseDefaultCategoriesEnum,
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -40,6 +41,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 	selectedEmployeeRecurringExpense: EmployeeRecurringExpense[];
 	selectedRowIndexToShow: number;
 	employeeName = 'Employee';
+	hasEditPermission = false;
+	hasEditExpensePermission = false;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -64,6 +67,17 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				if (this.selectedEmployeeFromHeader) {
 					this._loadEmployeeRecurringExpense();
 				}
+			});
+
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EMPLOYEES_EDIT
+				);
+				this.hasEditExpensePermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
 			});
 
 		this.route.params

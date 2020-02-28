@@ -5,7 +5,8 @@ import {
 	Organization,
 	OrganizationRecurringExpense,
 	RecurringExpenseDeletionEnum,
-	RecurringExpenseDefaultCategoriesEnum
+	RecurringExpenseDefaultCategoriesEnum,
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -41,6 +42,8 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	selectedRowIndexToShow: number;
 	currencies = Object.values(CurrenciesEnum);
 	editExpenseId: string;
+	hasEditPermission = false;
+	hasEditExpensePermission = false;
 	private _ngDestroy$ = new Subject<void>();
 
 	loading = true;
@@ -67,6 +70,17 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 			.subscribe((date) => {
 				this.selectedDate = date;
 				this._loadOrgRecurringExpense();
+			});
+
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ALL_ORG_EDIT
+				);
+				this.hasEditExpensePermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
 			});
 
 		this.route.params
