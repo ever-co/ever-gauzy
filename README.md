@@ -1,22 +1,36 @@
-# Gauzy
+#### !!! Hiring: remote TypeScript / NestJS / Angular developers. Send CV to jobs@ever.co !!!
+
+# Gauzy Platform
 
 [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gauzy)
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ - Open-Source Profits Sharing Platform for freelancers, modern agencies, studios and in-house teams. 
+Gauzy™ Platform - **Open-Source ERP Platform** focused on **Fairness** and **Transparency** for freelancers, modern agencies, studios and in-house teams. 
 
+What Gauzy will support for Transparency:
+- sharing important company (or freelance) business metrics with customers, employees and contractors
+- sharing employees compensation and bonuses amounts ("open salaries", yeah!)
+- sharing equipment easy between employees (e.g. company cars or guest house)
+- sharing time tracking information with customers
+- sharing information easy between employees (e.g. who working on what, announcements and so on)
+
+What Gauzy will support for Fairness:
+- fair employees compensations (bonuses / profits sharing)
+- fair clients billing (strictly based on employees / freelancers time tracking information and public price lists)
+
+Why we believe Transparency and Fairness are important?
+- "... It's More Important To Be Nice!" (to customers, partners, employees, contractors ...)
+- Establishes Trust and Expands Relationships
+- Increases Productivity, Engagement and Commitment
+- Increases Motivation and Loyalty, Decrease Turnover
+
+So:
 -   **Open-Source Software** solving **fair sharing of technology**.
 -   **Stock Options** solving **fair sharing of profits _in the future_**.
--   **Gauzy** solving **fair sharing of profits _today_**.
+-   **Gauzy Platform** solving **fair and transparent sharing of business and profits _today_**. 
 
-Gauzy supports following schemas for Employee (company worker, contractor or freelancer) Bonus calculations:
-
--  **Profit-based**, when employees get bonuses based on company profits from work done by given employee or team.
-
--  **Revenue-based**, when employees get bonuses based on company revenue (gross income) from work done by given employee or team.
-
-In order to allow bonuses calculations, Gauzy Platform includes multiple features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
+Gauzy Platform includes multiple ERP features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
 - Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
 - Employees Management (register of company employees / contractors, rates of employees, etc.)
 - Employees Onboarding (WIP)
@@ -35,9 +49,9 @@ In order to allow bonuses calculations, Gauzy Platform includes multiple feature
 - Time Management/Tracking (WIP)
 - Multi-currency
 
-So, while the primary purpose of Gauzy Platform is to allow transparent and fair bonuses calculation, you can also use Gauzy software as the **Platform to run your outsourcing/freelance agency or studio business**. 
+So, while the primary purpose of Gauzy Platform is to allow transparent and fair accounting, profits sharing and bonuses calculation, you can also use Gauzy software as the platform to run your **Outsourcing/Freelance Agency or Studio business** in a completely new, open way.
 
-In addition, we encourage individual **Freelancers** to join our "Gauzy" revolution and use the platform to jump start your business!
+In addition, we encourage individual **Freelancers** to join our "Gauzy" revolution and use the platform to jump start your open business!
 
 Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your freelance business, agency, studio or in-house teams.
 
@@ -46,6 +60,12 @@ Feel free to test:
 - Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as demo, login with `admin@ever.co` and password: `admin`)
 - Gauzy Platform Demo at <https://demo.gauzy.co> (temporary shutdown)
 - Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary shutdown)
+
+Gauzy supports following schemas for Employee (company worker, contractor or freelancer) Bonus calculations:
+
+-  **Profit-based**, when employees get bonuses based on company profits from work done by given employee or team.
+
+-  **Revenue-based**, when employees get bonuses based on company revenue (gross income) from work done by given employee or team.
 
 ## Quick Start
 
@@ -130,6 +150,7 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 -   Elvis Arabadjiyski ([Dreemsuncho](https://github.com/Dreemsuncho))
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
+-   Lubomir Petrov ([lpetrv](https://github.com/lpetrv))
 -   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
 #### Designers & QA
@@ -189,3 +210,5 @@ All other brand and product names are trademarks, registered trademarks or servi
 [![Known Vulnerabilities](https://snyk.io/test/github/ever-co/gauzy/badge.svg)](https://snyk.io/test/github/ever-co/gauzy)
 [![Greenkeeper badge](https://badges.greenkeeper.io/ever-co/gauzy.svg)](https://greenkeeper.io)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
+
+#### !!! Hiring: remote TypeScript / NestJS / Angular developers. Send CV to jobs@ever.co !!!

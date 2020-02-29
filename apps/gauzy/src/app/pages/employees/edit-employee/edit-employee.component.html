@@ -43,7 +43,10 @@
 						<strong>{{ selectedEmployee.user.email }}</strong>
 					</div>
 				</div>
-				<div class="employee-details edit-icon">
+				<div
+					*ngIf="hasEditPermission"
+					class="employee-details edit-icon"
+				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="36"
@@ -87,7 +90,7 @@
 					{{ 'POP_UPS.RECURRING_EXPENSES' | translate }}
 				</span>
 			</div>
-			<div>
+			<div *ngIf="hasEditPermission || hasEditExpensePermission">
 				<button
 					(click)="addEmployeeRecurringExpense()"
 					nbButton
@@ -123,7 +126,9 @@
 			<div class="block-content">
 				<div class="block-info">
 					<div class="row">
-						<div class="col">{{ setting.categoryName }}</div>
+						<div class="col">
+							{{ getCategoryName(setting.categoryName) }}
+						</div>
 						<div class="col">
 							{{ setting.startDay }}
 							{{ getMonthString(setting.startMonth) }}

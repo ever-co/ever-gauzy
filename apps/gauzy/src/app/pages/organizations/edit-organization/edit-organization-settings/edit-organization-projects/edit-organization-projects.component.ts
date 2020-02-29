@@ -15,13 +15,15 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-edit-org-projects',
 	templateUrl: './edit-organization-projects.component.html',
 	styleUrls: ['./edit-organization-projects.component.scss']
 })
-export class EditOrganizationProjectsComponent implements OnInit {
+export class EditOrganizationProjectsComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: Organization;
@@ -38,8 +40,10 @@ export class EditOrganizationProjectsComponent implements OnInit {
 		private store: Store,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly employeesService: EmployeesService,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.organizationEditStore.selectedOrganization$
@@ -149,14 +153,5 @@ export class EditOrganizationProjectsComponent implements OnInit {
 	async editProject(project: OrganizationProjects) {
 		this.projectToEdit = project;
 		this.showAddCard = true;
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 }

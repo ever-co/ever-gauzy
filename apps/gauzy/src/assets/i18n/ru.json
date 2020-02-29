@@ -72,6 +72,7 @@
 		"EXPIRE_DATE": "Истекает",
 		"CLIENTS": "Клиенты",
 		"DEPARTMENTS": "Департаменты",
+		"DESCRIPTION": "Описание",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "Русский (Соединенные Штаты)",
@@ -173,10 +174,11 @@
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
 			"SELECT_CURRENCY": "Выберите валюту",
-			"TYPE_OF_BONUS": "Тип бонуса",
+			"TYPE_OF_BONUS": "Выберите тип бонуса",
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_INVITES": "Включить приглашения",
-			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до"
+			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
+			"SWITCH_PROJECT_STATE": "Публичный"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -228,7 +230,9 @@
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 		"OK": "ОК",
 		"CANCEL": "Отменить",
-		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить"
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
+		"RECURRING_EXPENSE": "Это периодические расходы",
+		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
@@ -276,7 +280,18 @@
 			"TOTAL_EXPENSES": "Всего расходов",
 			"TOTAL_INCOME": "Общий доход",
 			"PROFIT": "Прибыль",
-			"TOTAL_BONUS": "Общий бонус"
+			"TOTAL_BONUS": "Общий бонус",
+			"TOTAL_DIRECT_INCOME": "Прямой доход",
+			"SALARY": "Зарплата",
+			"TOTAL_DIRECT_INCOME_INFO": "Доход от прямого бонуса",
+			"TOTAL_INCOME_CALC": "Общий доход = Доход {{ totalNonBonusIncome }} + Прямой доход {{ totalBonusIncome }}",
+			"TOTAL_PROFIT_BONUS": "Общий бонус к прибыли",
+			"TOTAL_DIRECT_BONUS": "Бонус прямого дохода",
+			"TOTAL_DIRECT_BONUS_INFO": "Это равно прямому доходу",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% прибыли",
+			"TOTAL_INCOME_BONUS": "Общий бонус к доходам",
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% дохода",
+			"TOTAL_EXPENSE_CALC": "Всего = Расходы работников + Сплит Расходы + Повторяющиеся + зарплата"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
@@ -284,12 +299,15 @@
 			"TOTAL_INCOME": "Общий доход",
 			"TOTAL_EXPENSES": "Всего расходов",
 			"PROFIT": "Прибыль",
-			"PROFIT_CALC": "Прибыль (доход без дохода) = Общий доход - Общие расходы",
+			"PROFIT_CALC": "Прибыль (Недоход) = Общий доход {{ totalAllIncome }} - Общие расходы {{ totalExpense }}",
 			"NOTE": "Примечание: отрицательные бонусы должны вычитаться в предстоящие месяцы из положительных бонусов до финальных бонусных платежей",
 			"BONUS": "Бонус"
 		},
 		"ADD_INCOME": "Добавить запись о поступлении",
-		"ADD_EXPENSE": "Добавить запись расхода"
+		"ADD_EXPENSE": "Добавить запись расхода",
+		"RECURRING_EXPENSES": "Периодические расходы",
+		"ADD_ORGANIZATION_RECURRING_EXPENSE": "Добавить новую запись периодических расходов для организации",
+		"ADD_EMPLOYEE_RECURRING_EXPENSE": "Добавить новую запись периодических расходов для сотрудника"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Доход",
@@ -304,7 +322,16 @@
 			"ASSIGN_TO": "Назначить",
 			"INCLUDE_TAXES": "Включить налоги",
 			"ATTACH_A_RECEIPT": "Добавить квитанцию"
-		}
+		},
+		"DEFAULT_CATEGORY": {
+			"SALARY": "Зарплата",
+			"SALARY_TAXES": "Налоги на зарплату",
+			"RENT": "Аренда",
+			"EXTRA_BONUS": "Дополнительный бонус"
+		},
+		"SPLIT_HELP": "Если установлено, то эти расходы будут распределены между всеми сотрудниками компании и учитываться при каждом расходе.",
+		"SPLIT_WILL_BE_TOOLTIP": "Эти расходы будут в равной степени разделены между всеми сотрудниками",
+		"SPLIT_EXPENSE": "Разделить расход"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление сотрудниками для",
@@ -464,7 +491,8 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Теги"
+		"HEADER": "Теги",
+		"ADD_TAGS": "Добавить теги"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
@@ -575,7 +603,12 @@
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
-			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input"
+			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NAME_REQUIRED": "Требуется имя!",
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
+			"PHONE_REQUIRED": "Требуется указать телефон!",
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!"
 		}
 	},
 	"ACCEPT_INVITE": {

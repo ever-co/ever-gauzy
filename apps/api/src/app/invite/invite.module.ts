@@ -27,17 +27,21 @@ import { CommandHandlers } from './commands/handlers';
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
+import { OrganizationService, Organization } from '../organization';
+import { Role, RoleService } from '../role';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
+			Role,
 			Invite,
 			Employee,
 			User,
 			UserOrganization,
 			OrganizationProjects,
 			OrganizationClients,
-			OrganizationDepartment
+			OrganizationDepartment,
+			Organization
 		]),
 		SharedModule,
 		CqrsModule,
@@ -48,13 +52,15 @@ import { InviteService } from './invite.service';
 		InviteService,
 		...CommandHandlers,
 		EmployeeService,
+		RoleService,
 		UserService,
 		AuthService,
 		UserOrganizationService,
 		EmailService,
 		OrganizationProjectsService,
 		OrganizationClientsService,
-		OrganizationDepartmentService
+		OrganizationDepartmentService,
+		OrganizationService
 	],
 	exports: [InviteService]
 })

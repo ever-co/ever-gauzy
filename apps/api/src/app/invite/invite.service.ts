@@ -1,11 +1,12 @@
-import { environment as env } from '@env-api/environment';
+import { environment as env, environment } from '@env-api/environment';
 import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
 	InviteStatusEnum,
 	OrganizationProjects as IOrganizationProjects,
 	OrganizationClients as IOrganizationClients,
-	OrganizationDepartment as IOrganizationDepartment
+	OrganizationDepartment as IOrganizationDepartment,
+	Role as IOrganizationRole
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,6 +18,9 @@ import { Invite } from './invite.entity';
 import * as nodemailer from 'nodemailer';
 import { OrganizationClients } from '../organization-clients';
 import { OrganizationDepartment } from '../organization-department';
+import { Organization } from '../organization';
+import { EmailService } from '../email';
+import { Role } from '../role';
 
 @Injectable()
 export class InviteService extends CrudService<Invite> {
@@ -35,41 +39,46 @@ export class InviteService extends CrudService<Invite> {
 		@InjectRepository(OrganizationDepartment)
 		private readonly organizationDepartmentRepository: Repository<
 			OrganizationDepartment
-		>
+		>,
+		@InjectRepository(Organization)
+		private readonly organizationRepository: Repository<Organization>,
+		@InjectRepository(Role)
+		private readonly roleRpository: Repository<Role>,
+		private emailService: EmailService
 	) {
 		super(inviteRepository);
 	}
 
-	async sendInvitationMail(email: string, token: string): Promise<any> {
-		const url = `${env.host}:4200/#/auth/accept-invite?email=${email}&token=${token}`;
+	// async sendInvitationMail(email: string, token: string): Promise<any> {
+	// 	const url = `${env.host}:4200/#/auth/accept-invite?email=${email}&token=${token}`;
 
-		const testAccount = await nodemailer.createTestAccount();
+	// 	const testAccount = await nodemailer.createTestAccount();
 
-		const transporter = nodemailer.createTransport({
-			host: 'smtp.ethereal.email',
-			port: 587,
-			secure: false, // true for 465, false for other ports
-			auth: {
-				user: testAccount.user,
-				pass: testAccount.pass
-			}
-		});
+	// 	const transporter = nodemailer.createTransport({
+	// 		host: 'smtp.ethereal.email',
+	// 		port: 587,
+	// 		secure: false, // true for 465, false for other ports
+	// 		auth: {
+	// 			user: testAccount.user,
+	// 			pass: testAccount.pass
+	// 		}
+	// 	});
 
-		const info = await transporter.sendMail({
-			from: 'Gauzy',
-			to: email,
-			subject: 'Invitation',
-			text: 'Invitation to Gauzy',
-			html:
-				'Hello! <br><br> You have been invited to Gauzy<br><br>To accept your invitation & create your account<br><br>' +
-				'<a href=' +
-				url +
-				'>Click here</a>'
-		});
+	// 	const info = await transporter.sendMail({
+	// 		from: 'Gauzy',
+	// 		to: email,
+	// 		subject: 'Invitation',
+	// 		text: 'Invitation to Gauzy',
+	// 		html:
+	// 			'Hello! <br><br> You have been invited to Gauzy<br><br>To accept your invitation & create your account<br><br>' +
+	// 			'<a href=' +
+	// 			url +
+	// 			'>Click here</a>'
+	// 	});
 
-		console.log('Message sent: %s', info.messageId);
-		console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-	}
+	// 	console.log('Message sent: %s', info.messageId);
+	// 	console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+	// }
 
 	/**
 	 * Creates all invites. If an email Id already exists, this function will first delete
@@ -90,8 +99,6 @@ export class InviteService extends CrudService<Invite> {
 			organizationId,
 			invitedById
 		} = emailInvites;
-		const expireDate = new Date();
-		expireDate.setDate(expireDate.getDate() + 7);
 
 		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
 			projectIds || []
@@ -105,11 +112,29 @@ export class InviteService extends CrudService<Invite> {
 			clientIds || []
 		);
 
-		const existingInvites = (await this.repository
-			.createQueryBuilder('invite')
-			.select('invite.email')
-			.where('invite.email IN (:...emails)', { emails: emailIds })
-			.getMany()).map((invite) => invite.email);
+		const organization: Organization = await this.organizationRepository.findOne(
+			organizationId
+		);
+
+		const role: IOrganizationRole = await this.roleRpository.findOne(
+			roleId
+		);
+
+		const inviteExpiryPeriod =
+			organization && organization.inviteExpiryPeriod
+				? organization.inviteExpiryPeriod
+				: 7;
+
+		const expireDate = new Date();
+		expireDate.setDate(expireDate.getDate() + inviteExpiryPeriod);
+
+		const existingInvites = (
+			await this.repository
+				.createQueryBuilder('invite')
+				.select('invite.email')
+				.where('invite.email IN (:...emails)', { emails: emailIds })
+				.getMany()
+		).map((invite) => invite.email);
 
 		const invitesToCreate = emailIds.filter(
 			(email) => existingInvites.indexOf(email) < 0
@@ -135,9 +160,28 @@ export class InviteService extends CrudService<Invite> {
 		}
 
 		const items = await this.repository.save(invites);
-		items.forEach((item) =>
-			this.sendInvitationMail(item.email, item.token)
-		);
+		items.forEach((item) => {
+			// this.sendInvitationMail(item.email, item.token);
+			if (emailInvites.inviteType.indexOf('/pages/users') > -1) {
+				this.emailService.inviteUser(
+					item.email,
+					role.name,
+					organization.name,
+					environment.host + '/auth/register'
+				);
+			} else if (
+				emailInvites.inviteType.indexOf('/pages/employees') > -1
+			) {
+				this.emailService.inviteEmployee(
+					item.email,
+					environment.host + '/auth/register',
+					projects,
+					clients,
+					departments
+				);
+			}
+		});
+
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 

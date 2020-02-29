@@ -221,6 +221,47 @@
 
 	<nb-card>
 		<nb-card-header>
+			Accounting
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								Fiscal Year Start Date
+							</label>
+							<input
+								fullWidth
+								id="fiscalStartDate"
+								type="date"
+								nbInput
+								value="2017-06-01"
+								formControlName="fiscalStartDate"
+							/>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">
+								Fiscal Year End Date
+							</label>
+							<input
+								fullWidth
+								type="date"
+								id="fiscalEndDate"
+								nbInput
+								formControlName="fiscalEndDate"
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
+	<nb-card>
+		<nb-card-header>
 			{{ 'ORGANIZATIONS_PAGE.EDIT.BONUS' | translate }}
 		</nb-card-header>
 		<nb-card-body>
@@ -244,6 +285,9 @@
 								"
 								fullWidth
 							>
+								<nb-option [value]="null">
+									{{ 'SM_TABLE.NONE' | translate }}
+								</nb-option>
 								<nb-option
 									*ngFor="let type of defaultBonusTypes"
 									[value]="type"

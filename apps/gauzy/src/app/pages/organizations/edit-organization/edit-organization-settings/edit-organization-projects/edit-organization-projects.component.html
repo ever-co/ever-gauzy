@@ -28,6 +28,20 @@
 			(edit)="editProject(p)"
 			class="member-card"
 		>
+			<div class="public-icon">
+				<div *ngIf="p.public; else notPublic">
+					<nb-icon
+						class="ml-auto mt-1 close float-left"
+						icon="eye-outline"
+					></nb-icon>
+				</div>
+				<ng-template #notPublic>
+					<nb-icon
+						class="ml-auto mt-1 close float-left"
+						icon="eye-off-outline"
+					></nb-icon>
+				</ng-template>
+			</div>
 			<div class="client-info">
 				<div class="info-line">
 					<div class="info-meta">

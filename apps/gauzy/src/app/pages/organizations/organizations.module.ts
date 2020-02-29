@@ -10,7 +10,8 @@ import {
 	NbListModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbTabsetModule
+	NbTabsetModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -53,6 +54,7 @@ import { OrganizationsStatusComponent } from './table-components/organizations-s
 		EditOrganizationSettingsModule,
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
+		NbTooltipModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

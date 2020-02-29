@@ -7,13 +7,15 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { UsersService } from '../../../@core/services';
 import { Store } from '../../../@core/services/store.service';
 import { Router } from '@angular/router';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-danger-zone',
 	templateUrl: './danger-zone.component.html',
 	styleUrls: ['./danger-zone.component.scss']
 })
-export class DangerZoneComponent implements OnInit {
+export class DangerZoneComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -23,7 +25,9 @@ export class DangerZoneComponent implements OnInit {
 		private store: Store,
 		private toastrService: NbToastrService,
 		private router: Router
-	) {}
+	) {
+		super(translate);
+	}
 
 	async deleteAccount() {
 		this.dialogService
@@ -80,14 +84,6 @@ export class DangerZoneComponent implements OnInit {
 	}
 
 	ngOnInit() {}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translate.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-		return result;
-	}
 
 	ngOnDestroy() {
 		clearTimeout();

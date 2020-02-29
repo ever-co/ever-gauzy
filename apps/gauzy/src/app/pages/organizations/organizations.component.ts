@@ -16,6 +16,7 @@ import { OrganizationsCurrencyComponent } from './table-components/organizations
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 interface SelectedRow {
 	data: Organization;
@@ -28,17 +29,20 @@ interface SelectedRow {
 	templateUrl: './organizations.component.html',
 	styleUrls: ['./organizations.component.scss']
 })
-export class OrganizationsComponent implements OnInit, OnDestroy {
+export class OrganizationsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	constructor(
 		private organizationsService: OrganizationsService,
 		private toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private router: Router,
 		private employeesService: EmployeesService,
-		private translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
 		private store: Store
-	) {}
+	) {
+		super(translateService);
+	}
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -50,7 +54,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 
 	loading = true;
 	hasEditPermission = false;
-
+	hasEditExpensesPermission = false;
 	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -102,24 +106,19 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ALL_ORG_EDIT
 				);
+				this.hasEditExpensesPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
 			});
 	}
 
 	selectOrganization(data: SelectedRow) {
 		if (data.isSelected) {
 			this.selectedOrganization = data.data;
+		
 		} else {
 			this.selectedOrganization = null;
 		}
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 
 	_applyTranslationOnSmartTable() {

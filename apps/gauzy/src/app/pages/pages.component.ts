@@ -126,7 +126,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/employees',
 			data: {
 				translated: false,
-				permissionKeys: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
+				permissionKeys: [
+					PermissionsEnum.ORG_EMPLOYEES_VIEW,
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				],
 				translationKey: 'MENU.EMPLOYEES'
 			}
 		},
@@ -211,7 +214,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/organizations',
 			data: {
 				translated: false,
-				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+				permissionKeys: [
+					PermissionsEnum.ALL_ORG_VIEW,
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				],
 				translationKey: 'MENU.ORGANIZATIONS'
 			}
 		},

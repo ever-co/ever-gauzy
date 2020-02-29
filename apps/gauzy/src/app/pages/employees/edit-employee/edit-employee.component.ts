@@ -3,7 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
 	Employee,
 	EmployeeRecurringExpense,
-	RecurringExpenseDeletionEnum
+	RecurringExpenseDeletionEnum,
+	RecurringExpenseDefaultCategoriesEnum,
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -19,6 +21,8 @@ import {
 	RecurringExpenseMutationComponent,
 	COMPONENT_TYPE
 } from '../../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ngx-edit-employee',
@@ -28,7 +32,8 @@ import {
 		'../../dashboard/dashboard.component.scss'
 	]
 })
-export class EditEmployeeComponent implements OnInit, OnDestroy {
+export class EditEmployeeComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedEmployee: Employee;
 	selectedDate: Date;
@@ -36,6 +41,8 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 	selectedEmployeeRecurringExpense: EmployeeRecurringExpense[];
 	selectedRowIndexToShow: number;
 	employeeName = 'Employee';
+	hasEditPermission = false;
+	hasEditExpensePermission = false;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -45,8 +52,11 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
-		private toastrService: NbToastrService
-	) {}
+		private toastrService: NbToastrService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	async ngOnInit() {
 		this.store.selectedDate$
@@ -57,6 +67,17 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 				if (this.selectedEmployeeFromHeader) {
 					this._loadEmployeeRecurringExpense();
 				}
+			});
+
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EMPLOYEES_EDIT
+				);
+				this.hasEditExpensePermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
 			});
 
 		this.route.params
@@ -152,6 +173,14 @@ export class EditEmployeeComponent implements OnInit, OnDestroy {
 		const months = monthNames;
 
 		return months[month - 1];
+	}
+
+	getCategoryName(categoryName: string) {
+		return categoryName in RecurringExpenseDefaultCategoriesEnum
+			? this.getTranslation(
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
+			: categoryName;
 	}
 
 	showMenu(index: number) {

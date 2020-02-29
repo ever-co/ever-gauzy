@@ -42,23 +42,86 @@ export class EmailService extends CrudService<IEmail> {
 		},
 		render: (view, locals) => {
 			return new Promise(async (resolve, reject) => {
+				view = view.replace('\\', '/');
 				const emailTemplate = await this.emailTemplateRepository.find({
 					name: view,
 					languageCode: locals.locale || 'en'
 				});
-
+				console.log('Email Template', emailTemplate);
 				if (!emailTemplate || emailTemplate.length < 1) {
 					return resolve('');
 				}
 
 				const template = Handlebars.compile(emailTemplate[0].hbs);
 				const html = template(locals);
+
 				return resolve(html);
 			});
 		}
 	});
 
 	languageCode: string;
+
+	inviteUser(
+		email: string,
+		role,
+		organization,
+		registerUrl,
+		originUrl?: string
+	) {
+		this.languageCode = 'en';
+
+		this.email
+			.send({
+				template: 'invite-user',
+				message: {
+					to: `${email}`
+				},
+				locals: {
+					locale: this.languageCode,
+					role: role,
+					organization: organization,
+					generatedUrl: registerUrl,
+					host: originUrl || environment.host
+				}
+			})
+			.then((res) => {
+				console.log(res);
+				this.createEmailRecord(res.originalMessage, this.languageCode);
+			})
+			.catch(console.error);
+	}
+
+	inviteEmployee(
+		email: string,
+		registerUrl,
+		project?,
+		client?,
+		department?,
+		originUrl?: string
+	) {
+		this.languageCode = 'en';
+
+		this.email
+			.send({
+				template: 'invite-employee',
+				message: {
+					to: `${email}`
+				},
+				locals: {
+					locale: this.languageCode,
+					role: project,
+					organization: client,
+					department: department,
+					generatedUrl: registerUrl,
+					host: originUrl || environment.host
+				}
+			})
+			.then((res) => {
+				this.createEmailRecord(res.originalMessage, this.languageCode);
+			})
+			.catch(console.error);
+	}
 
 	welcomeUser(user: User, originUrl?: string) {
 		this.languageCode = 'en';

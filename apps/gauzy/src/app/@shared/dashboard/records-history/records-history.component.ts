@@ -1,11 +1,17 @@
 import { Component, OnInit } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { RecurringExpenseDefaultCategoriesEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'ng2-smart-table';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
 
 export enum HistoryType {
+	NON_BONUS_INCOME = 'NON_BONUS_INCOME',
+	BONUS_INCOME = 'BONUS_INCOME',
 	INCOME = 'INCOME',
-	EXPENSES = 'EXPENSES'
+	EXPENSES = 'EXPENSES',
+	SALARY = 'SALARY'
 }
 
 @Component({
@@ -13,7 +19,8 @@ export enum HistoryType {
 	templateUrl: './records-history.component.html',
 	styleUrls: ['./records-history.component.scss']
 })
-export class RecordsHistoryComponent implements OnInit {
+export class RecordsHistoryComponent extends TranslationBaseComponent
+	implements OnInit {
 	type: HistoryType;
 	recordsData: any;
 	smartTableSource = new LocalDataSource();
@@ -21,7 +28,9 @@ export class RecordsHistoryComponent implements OnInit {
 
 	smartTableSettings: Object;
 
-	constructor(private translateService: TranslateService) {}
+	constructor(readonly translateService: TranslateService) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		let viewModel: any;
@@ -30,6 +39,8 @@ export class RecordsHistoryComponent implements OnInit {
 
 		switch (this.type) {
 			case HistoryType.INCOME:
+			case HistoryType.BONUS_INCOME:
+			case HistoryType.NON_BONUS_INCOME:
 				viewModel = this.recordsData.map((i) => {
 					return {
 						id: i.id,
@@ -37,7 +48,8 @@ export class RecordsHistoryComponent implements OnInit {
 						clientName: i.clientName,
 						clientId: i.clientId,
 						amount: i.amount,
-						notes: i.notes
+						notes: i.notes,
+						isBonus: i.isBonus
 					};
 				});
 				this.translatedType = this.getTranslation(
@@ -46,6 +58,7 @@ export class RecordsHistoryComponent implements OnInit {
 				break;
 
 			case HistoryType.EXPENSES:
+			case HistoryType.SALARY:
 				viewModel = this.recordsData.map((i) => {
 					return {
 						id: i.id,
@@ -57,7 +70,10 @@ export class RecordsHistoryComponent implements OnInit {
 						amount: i.amount,
 						notes: i.notes,
 						recurring: i.recurring,
-						source: i.source
+						source: i.source,
+						originalValue: i.originalValue,
+						employeeCount: i.employeeCount,
+						splitExpense: i.splitExpense
 					};
 				});
 				this.translatedType = this.getTranslation(
@@ -72,6 +88,8 @@ export class RecordsHistoryComponent implements OnInit {
 	loadSettingsSmartTable() {
 		switch (this.type) {
 			case HistoryType.INCOME:
+			case HistoryType.BONUS_INCOME:
+			case HistoryType.NON_BONUS_INCOME:
 				this.smartTableSettings = {
 					actions: false,
 					mode: 'external',
@@ -91,9 +109,10 @@ export class RecordsHistoryComponent implements OnInit {
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
-							type: 'number',
+							type: 'custom',
 							width: '15%',
-							filter: false
+							filter: false,
+							renderComponent: IncomeExpenseAmountComponent
 						},
 						notes: {
 							title: this.getTranslation('SM_TABLE.NOTES'),
@@ -107,6 +126,7 @@ export class RecordsHistoryComponent implements OnInit {
 				};
 				break;
 			case HistoryType.EXPENSES:
+			case HistoryType.SALARY:
 				this.smartTableSettings = {
 					actions: false,
 					editable: true,
@@ -141,13 +161,16 @@ export class RecordsHistoryComponent implements OnInit {
 						},
 						categoryName: {
 							title: this.getTranslation('SM_TABLE.CATEGORY'),
-							type: 'string'
+							type: 'html',
+							valuePrepareFunction: (_, e) =>
+								`${this.getCategoryName(_)}`,
+							filter: false
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
-							type: 'number',
+							type: 'custom',
 							width: '15%',
-							filter: false
+							renderComponent: IncomeExpenseAmountComponent
 						},
 						notes: {
 							title: this.getTranslation('SM_TABLE.NOTES'),
@@ -163,13 +186,12 @@ export class RecordsHistoryComponent implements OnInit {
 		}
 	}
 
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
+	getCategoryName(categoryName: string) {
+		return categoryName in RecurringExpenseDefaultCategoriesEnum
+			? this.getTranslation(
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
+			: categoryName;
 	}
 
 	_applyTranslationOnSmartTable() {

@@ -32,6 +32,31 @@
 					>{{ expenseType }}
 				</nb-radio>
 			</nb-radio-group>
+			<div
+				class="row"
+				*ngIf="
+					!(
+						employeeSelector &&
+						employeeSelector.selectedEmployee &&
+						employeeSelector.selectedEmployee.id
+					)
+				"
+			>
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox formControlName="splitExpense">
+							<span
+								nbTooltip="{{
+									'EXPENSES_PAGE.SPLIT_HELP' | translate
+								}}"
+								>{{
+									'EXPENSES_PAGE.SPLIT_EXPENSE' | translate
+								}}</span
+							>
+						</nb-checkbox>
+					</div>
+				</div>
+			</div>
 			<div class="row">
 				<div class="col-sm-6">
 					<input
@@ -53,16 +78,14 @@
 				<div class="col-sm-6" *ngIf="vendors.length">
 					<div class="form-group">
 						<ng-select
-							nbInput
-							type="text"
-							[items]="vendors"
+							[addTag]="addNewVendor"
 							bindLabel="vendorName"
+							[items]="vendors"
 							[searchable]="true"
-							autocomplete="on"
-							formControlName="vendor"
 							placeholder="{{
 								'POP_UPS.ALL_VENDORS' | translate
 							}}"
+							formControlName="vendor"
 						>
 						</ng-select>
 					</div>
@@ -91,11 +114,7 @@
 					</div>
 				</div>
 				<div class="col-sm-6">
-					<nb-select
-						class="d-block"
-						formControlName="currency"
-						disabled
-					>
+					<nb-select class="d-block" formControlName="currency">
 						<nb-option
 							*ngFor="let currency of currencies"
 							value="{{ currency }}"
@@ -316,3 +335,5 @@
 		</button>
 	</nb-card-footer>
 </nb-card>
+
+<!-- [disabled]="form.invalid" -->

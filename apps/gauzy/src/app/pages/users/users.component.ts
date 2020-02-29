@@ -17,6 +17,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 interface UserViewModel {
 	fullName: string;
@@ -30,7 +31,8 @@ interface UserViewModel {
 	templateUrl: './users.component.html',
 	styleUrls: ['./users.component.scss']
 })
-export class UsersComponent implements OnInit, OnDestroy {
+export class UsersComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -45,6 +47,8 @@ export class UsersComponent implements OnInit, OnDestroy {
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
+	hasInviteViewOrEditPermission = false;
+	organizationInvitesAllowed = false;
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -56,7 +60,9 @@ export class UsersComponent implements OnInit, OnDestroy {
 		private route: ActivatedRoute,
 		private translate: TranslateService,
 		private userOrganizationsService: UsersOrganizationsService
-	) {}
+	) {
+		super(translate);
+	}
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
@@ -64,6 +70,8 @@ export class UsersComponent implements OnInit, OnDestroy {
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
+					this.organizationInvitesAllowed =
+						organization.invitesAllowed;
 					this.loadPage();
 				}
 			});
@@ -80,6 +88,9 @@ export class UsersComponent implements OnInit, OnDestroy {
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
+				this.hasInviteViewOrEditPermission =
+					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
+					this.hasInviteEditPermission;
 			});
 
 		this.route.queryParamMap
@@ -264,14 +275,6 @@ export class UsersComponent implements OnInit, OnDestroy {
 				perPage: 8
 			}
 		};
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translate.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 
 	private _applyTranslationOnSmartTable() {

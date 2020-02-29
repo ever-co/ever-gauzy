@@ -6,12 +6,14 @@ import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/or
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-edit-org-vendors',
 	templateUrl: './edit-organization-vendors.component.html'
 })
-export class EditOrganizationVendorsComponent implements OnInit {
+export class EditOrganizationVendorsComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	organizationId: string;
@@ -24,8 +26,10 @@ export class EditOrganizationVendorsComponent implements OnInit {
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		this.organizationEditStore.selectedOrganization$
@@ -97,14 +101,5 @@ export class EditOrganizationVendorsComponent implements OnInit {
 		if (res) {
 			this.vendors = res.items;
 		}
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 }

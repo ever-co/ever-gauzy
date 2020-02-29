@@ -31,7 +31,7 @@
 				></ga-single-statistic>
 			</div>
 
-			<div class="col">
+			<div *ngIf="selectedOrganization?.bonusType" class="col">
 				<ga-single-statistic
 					title="{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}"
 					[value]="aggregatedEmployeeStatistics?.total?.bonus"
@@ -62,7 +62,7 @@
 				<div class="col">
 					{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}
 				</div>
-				<div class="col">
+				<div *ngIf="selectedOrganization?.bonusType" class="col">
 					{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
 				</div>
 			</div>
@@ -100,7 +100,10 @@
 							{{ selectedOrganization?.currency }}
 							{{ employeeExpense.profit || 0 }}
 						</div>
-						<div class="col">
+						<div
+							*ngIf="selectedOrganization?.bonusType"
+							class="col"
+						>
 							{{ selectedOrganization?.currency }}
 							{{ employeeExpense.bonus || 0 }}
 						</div>

@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../@core/services/store.service';
+import { DownloadAllService } from '../../@core/services/downloadAll.service';
 
 @Component({
 	selector: 'ngx-download',
@@ -7,9 +8,14 @@ import { Store } from '../../@core/services/store.service';
 	styleUrls: ['./download-all.component.scss']
 })
 export class DownloadComponent implements OnInit, OnDestroy {
-	constructor(private store: Store) {}
+	constructor(
+		private store: Store,
+		private downloadAll: DownloadAllService
+	) {}
 
-	ngOnInit() {}
+	ngOnInit() {
+		this.downloadAll.downloadAllData();
+	}
 
 	ngOnDestroy() {}
 }

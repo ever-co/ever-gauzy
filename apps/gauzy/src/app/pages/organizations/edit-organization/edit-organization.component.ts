@@ -4,7 +4,9 @@ import {
 	CurrenciesEnum,
 	Organization,
 	OrganizationRecurringExpense,
-	RecurringExpenseDeletionEnum
+	RecurringExpenseDeletionEnum,
+	RecurringExpenseDefaultCategoriesEnum,
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -20,6 +22,8 @@ import {
 	RecurringExpenseMutationComponent,
 	COMPONENT_TYPE
 } from '../../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	templateUrl: './edit-organization.component.html',
@@ -28,7 +32,8 @@ import {
 		'../../dashboard/dashboard.component.scss'
 	]
 })
-export class EditOrganizationComponent implements OnInit, OnDestroy {
+export class EditOrganizationComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	selectedOrg: Organization;
 	selectedDate: Date;
 	selectedOrgFromHeader: Organization;
@@ -37,7 +42,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	selectedRowIndexToShow: number;
 	currencies = Object.values(CurrenciesEnum);
 	editExpenseId: string;
-
+	hasEditPermission = false;
+	hasEditExpensePermission = false;
 	private _ngDestroy$ = new Subject<void>();
 
 	loading = true;
@@ -50,8 +56,11 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private store: Store,
 		private dialogService: NbDialogService,
-		private toastrService: NbToastrService
-	) {}
+		private toastrService: NbToastrService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	async ngOnInit() {
 		this.selectedDate = this.store.selectedDate;
@@ -61,6 +70,17 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 			.subscribe((date) => {
 				this.selectedDate = date;
 				this._loadOrgRecurringExpense();
+			});
+
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasEditPermission = this.store.hasPermission(
+					PermissionsEnum.ALL_ORG_EDIT
+				);
+				this.hasEditExpensePermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
 			});
 
 		this.route.params
@@ -105,6 +125,14 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 	getMonthString(month: number) {
 		const months = monthNames;
 		return months[month - 1];
+	}
+
+	getCategoryName(categoryName: string) {
+		return categoryName in RecurringExpenseDefaultCategoriesEnum
+			? this.getTranslation(
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
+			: categoryName;
 	}
 
 	showMenu(index: number) {
@@ -199,7 +227,8 @@ export class EditOrganizationComponent implements OnInit, OnDestroy {
 						this.selectedDate.getMonth(),
 						1
 					),
-					currency: result.currency
+					currency: result.currency,
+					splitExpense: result.splitExpense
 				});
 
 				this.toastrService.primary(

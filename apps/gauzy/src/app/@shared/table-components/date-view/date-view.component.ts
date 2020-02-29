@@ -5,8 +5,13 @@ import { Component, Input } from '@angular/core';
 	template: `
 		<span
 			>{{ value | date: 'shortDate' }}
-			<i *ngIf="rowData?.recurring" class="fas fa-sync"></i
-		></span>
+			<nb-icon
+				*ngIf="rowData?.recurring"
+				nbTooltip="{{ 'POP_UPS.RECURRING_EXPENSE' | translate }}"
+				icon="sync-outline"
+			>
+			</nb-icon>
+		</span>
 	`,
 	styles: []
 })

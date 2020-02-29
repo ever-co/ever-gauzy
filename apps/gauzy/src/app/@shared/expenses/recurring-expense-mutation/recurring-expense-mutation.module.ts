@@ -8,7 +8,8 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbSelectModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -35,6 +36,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NgSelectModule,
 		NbSelectModule,
 		NbTooltipModule,
+		NbCheckboxModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

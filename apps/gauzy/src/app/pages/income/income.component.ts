@@ -6,14 +6,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { AuthService } from '../../@core/services/auth.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { Store } from '../../@core/services/store.service';
 import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
+import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 interface SelectedRowModel {
 	data: Income;
@@ -26,17 +26,19 @@ interface SelectedRowModel {
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent implements OnInit, OnDestroy {
+export class IncomeComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	constructor(
-		private authService: AuthService,
 		private store: Store,
 		private incomeService: IncomeService,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	smartTableSettings: object;
 	selectedEmployeeId: string;
@@ -55,6 +57,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	private _selectedOrganizationId: string;
 
 	async ngOnInit() {
+		
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
@@ -160,7 +163,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					type: 'custom',
 					width: '15%',
 					filter: false,
-					renderComponent: IncomeAmountComponent
+					renderComponent: IncomeExpenseAmountComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
@@ -176,15 +179,6 @@ export class IncomeComponent implements OnInit, OnDestroy {
 
 	selectIncome(ev: SelectedRowModel) {
 		this.selectedIncome = ev;
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -209,7 +203,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					clientName: result.client.clientName,
 					clientId: result.client.clientId,
 					valueDate: result.valueDate,
-					employeeId: result.employee.id,
+					employeeId: result.employee ? result.employee.id : null,
 					orgId: this.store.selectedOrganization.id,
 					notes: result.notes,
 					currency: result.currency,
@@ -224,13 +218,13 @@ export class IncomeComponent implements OnInit, OnDestroy {
 				);
 
 				this._loadEmployeeIncomeData();
-				this.store.selectedEmployee = result.employee.id
+				this.store.selectedEmployee = result.employee
 					? result.employee
 					: null;
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
-						error: error.error.message || error.message
+						error: error.error ? error.error.message : error.message
 					}),
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
@@ -239,6 +233,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	}
 
 	async editIncome() {
+		
 		this.dialogService
 			.open(IncomeMutationComponent, {
 				context: {
@@ -283,6 +278,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 	}
 
 	async deleteIncome() {
+		
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -292,9 +288,11 @@ export class IncomeComponent implements OnInit, OnDestroy {
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
 				if (result) {
+					debugger;
 					try {
 						await this.incomeService.delete(
 							this.selectedIncome.data.id
+							
 						);
 
 						this.toastrService.primary(
@@ -315,6 +313,7 @@ export class IncomeComponent implements OnInit, OnDestroy {
 					}
 				}
 			});
+			
 	}
 
 	private async _loadEmployeeIncomeData(

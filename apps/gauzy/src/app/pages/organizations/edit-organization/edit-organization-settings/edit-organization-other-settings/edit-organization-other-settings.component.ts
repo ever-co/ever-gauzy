@@ -16,6 +16,9 @@ import * as timezone from 'moment-timezone';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
+import { formatDate } from '@angular/common';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-edit-org-other-settings',
@@ -23,6 +26,7 @@ import { OrganizationsService } from '../../../../../@core/services/organization
 	styleUrls: ['./edit-organization-other-settings.component.scss']
 })
 export class EditOrganizationOtherSettingsComponent
+	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -53,8 +57,11 @@ export class EditOrganizationOtherSettingsComponent
 		private fb: FormBuilder,
 		private organizationService: OrganizationsService,
 		private toastrService: NbToastrService,
-		private readonly organizationEditStore: OrganizationEditStore
-	) {}
+		private readonly organizationEditStore: OrganizationEditStore,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	getTimeWithOffset(zone: string) {
 		let cutZone = zone;
@@ -129,12 +136,20 @@ export class EditOrganizationOtherSettingsComponent
 	}
 
 	loadDefaultBonusPercentage(bonusType: BonusTypeEnum) {
+		const bonusPercentageControl = this.form.get('bonusPercentage');
+
 		switch (bonusType) {
 			case BonusTypeEnum.PROFIT_BASED_BONUS:
-				this.form.get('bonusPercentage').setValue(75);
+				bonusPercentageControl.setValue(75);
+				bonusPercentageControl.enable();
 				break;
 			case BonusTypeEnum.REVENUE_BASED_BONUS:
-				this.form.get('bonusPercentage').setValue(10);
+				bonusPercentageControl.setValue(10);
+				bonusPercentageControl.enable();
+				break;
+			default:
+				bonusPercentageControl.setValue(null);
+				bonusPercentageControl.disable();
 				break;
 		}
 	}
@@ -155,11 +170,12 @@ export class EditOrganizationOtherSettingsComponent
 			timeZone: [this.organization.timeZone],
 			startWeekOn: [this.organization.startWeekOn],
 			numberFormat: [this.organization.numberFormat],
-			bonusType: [
-				this.organization.bonusType || BonusTypeEnum.PROFIT_BASED_BONUS
-			],
+			bonusType: [this.organization.bonusType],
 			bonusPercentage: [
-				this.organization.bonusPercentage || 75,
+				{
+					value: this.organization.bonusPercentage,
+					disabled: !this.organization.bonusType
+				},
 				[Validators.min(0), Validators.max(100)]
 			],
 			invitesAllowed: [this.organization.invitesAllowed || false],
@@ -169,6 +185,20 @@ export class EditOrganizationOtherSettingsComponent
 					disabled: !this.organization.invitesAllowed
 				},
 				[Validators.min(1)]
+			],
+			fiscalStartDate: [
+				formatDate(
+					new Date(`01/01/${new Date().getFullYear()}`),
+					'yyyy-MM-dd',
+					'en'
+				)
+			],
+			fiscalEndDate: [
+				formatDate(
+					new Date(`12/31/${new Date().getFullYear()}`),
+					'yyyy-MM-dd',
+					'en'
+				)
 			]
 		});
 	}

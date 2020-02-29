@@ -72,6 +72,8 @@
 		"EXPIRE_DATE": "Expires",
 		"CLIENTS": "Clients",
 		"DEPARTMENTS": "Departments",
+		"DESCRIPTION": "Description",
+
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -173,10 +175,11 @@
 			"DATE": "Date",
 			"VALUE": "Value",
 			"SELECT_CURRENCY": "Select Currency",
-			"TYPE_OF_BONUS": "Type of Bonus",
+			"TYPE_OF_BONUS": "Select Type of Bonus",
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_INVITES": "Enable Invites",
-			"INVITE_EXPIRY_PERIOD": "Invites valid upto"
+			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
+			"SWITCH_PROJECT_STATE": "Public"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -228,7 +231,9 @@
 		"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 		"OK": "OK",
 		"CANCEL": "Cancel",
-		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the"
+		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
+		"RECURRING_EXPENSE": "This is a recurring expense",
+		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}"
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
@@ -276,7 +281,18 @@
 			"TOTAL_EXPENSES": "Total Expenses",
 			"TOTAL_INCOME": "Total Income",
 			"PROFIT": "Profit",
-			"TOTAL_BONUS": "Total Bonus"
+			"TOTAL_BONUS": "Total Bonus",
+			"TOTAL_DIRECT_INCOME": "Direct Income",
+			"SALARY": "Salary",
+			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
+			"TOTAL_INCOME_CALC": "Total Income = Income {{ totalNonBonusIncome }} + Direct Income {{ totalBonusIncome }}",
+			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
+			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
+			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit",
+			"TOTAL_INCOME_BONUS": "Total Income Bonus",
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income",
+			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Developer",
@@ -284,12 +300,15 @@
 			"TOTAL_INCOME": "Total Income",
 			"TOTAL_EXPENSES": "Total Expenses",
 			"PROFIT": "Profit",
-			"PROFIT_CALC": "Profit (Net Income) = Total Income - Total Expenses",
+			"PROFIT_CALC": "Profit (Net Income) = Total Income {{ totalAllIncome }} - Total Expenses {{ totalExpense }}",
 			"NOTE": "Note: negative bonuses should be deducted in the upcoming months from the positive bonuses before final bonus payments",
 			"BONUS": "Bonus"
 		},
 		"ADD_INCOME": "Add New Income Entry",
-		"ADD_EXPENSE": "Add New Expense Entry"
+		"ADD_EXPENSE": "Add New Expense Entry",
+		"RECURRING_EXPENSES": "Recurring Expenses",
+		"ADD_ORGANIZATION_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Organization",
+		"ADD_EMPLOYEE_RECURRING_EXPENSE": "Add New Recurring Expense Entry for Employee"
 	},
 	"INCOME_PAGE": {
 		"INCOME": "Income",
@@ -304,7 +323,16 @@
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
 			"ATTACH_A_RECEIPT": "Attach a receipt"
-		}
+		},
+		"DEFAULT_CATEGORY": {
+			"SALARY": "Salary",
+			"SALARY_TAXES": "Salary Taxes",
+			"RENT": "Rent",
+			"EXTRA_BONUS": "Extra Bonus"
+		},
+		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
+		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
+		"SPLIT_EXPENSE": "Split Expense"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Manage Employees for ",
@@ -464,7 +492,8 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags"
+		"HEADER": "Tags",
+		"ADD_TAGS": "Add Tags"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
@@ -575,7 +604,12 @@
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
-			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input"
+			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NAME_REQUIRED": "Name is required!",
+			"EMAIL_REQUIRED": "Email is required!",
+			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
+			"PHONE_REQUIRED": "Phone is required!",
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!"
 		}
 	},
 	"ACCEPT_INVITE": {

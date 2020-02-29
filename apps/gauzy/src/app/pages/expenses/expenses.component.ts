@@ -13,7 +13,8 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { IncomeAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -35,6 +36,7 @@ export interface ExpenseViewModel {
 	taxLabel: string;
 	rateValue: number;
 	receipt: string;
+	splitExpense: boolean;
 }
 
 interface SelectedRowModel {
@@ -48,7 +50,8 @@ interface SelectedRowModel {
 	templateUrl: './expenses.component.html',
 	styleUrls: ['./expenses.component.scss']
 })
-export class ExpensesComponent implements OnInit, OnDestroy {
+export class ExpensesComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	smartTableSettings: object;
 	selectedEmployeeId: string;
 	selectedDate: Date;
@@ -92,7 +95,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					type: 'custom',
 					width: '10%',
 					filter: false,
-					renderComponent: IncomeAmountComponent
+					renderComponent: IncomeExpenseAmountComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
@@ -114,8 +117,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
-		private translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	async ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -213,7 +218,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			taxType: formData.taxType,
 			taxLabel: formData.taxLabel,
 			rateValue: formData.rateValue,
-			receipt: formData.receipt
+			receipt: formData.receipt,
+			splitExpense: formData.splitExpense
 		};
 	}
 
@@ -221,7 +227,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 		try {
 			await this.expenseService.create({
 				...completedForm,
-				employeeId: formData.employee.id,
+				employeeId: formData.employee ? formData.employee.id : null,
 				orgId: this.store.selectedOrganization.id
 			});
 
@@ -233,7 +239,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 			);
 
 			this._loadTableData();
-			this.store.selectedEmployee = formData.employee.id
+			this.store.selectedEmployee = formData.employee
 				? formData.employee
 				: null;
 		} catch (error) {
@@ -426,7 +432,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					taxType: i.taxType,
 					taxLabel: i.taxLabel,
 					rateValue: i.rateValue,
-					receipt: i.receipt
+					receipt: i.receipt,
+					splitExpense: i.splitExpense
 				};
 			});
 
@@ -446,16 +453,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 					' ' +
 					this.store.selectedEmployee.lastName
 			  ).trim()
-			: '';
-	}
-
-	getTranslation(prefix: string, params?: Object) {
-		let result = '';
-		this.translateService.get(prefix, params).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
+			: 'All Employees';
 	}
 
 	_applyTranslationOnSmartTable() {

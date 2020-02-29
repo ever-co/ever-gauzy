@@ -21,6 +21,7 @@ import { EmployeeAverageIncomeComponent } from './table-components/employee-aver
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -34,7 +35,8 @@ interface EmployeeViewModel {
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent implements OnInit, OnDestroy {
+export class EmployeesComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	organizationName: string;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
@@ -62,7 +64,10 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	includeDeleted = false;
 	loading = true;
 	hasEditPermission = false;
+	hasEditExpensePermission = false;
 	hasInviteEditPermission = false;
+	hasInviteViewOrEditPermission = false;
+	organizationInvitesAllowed = false;
 
 	@ViewChild('employeesTable', { static: false }) employeesTable;
 
@@ -76,7 +81,9 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 		private translate: TranslateService,
 		private errorHandler: ErrorHandlingService,
 		private employeeStatisticsService: EmployeeStatisticsService
-	) {}
+	) {
+		super(translate);
+	}
 
 	async ngOnInit() {
 		this.store.userRolePermissions$
@@ -88,6 +95,13 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
+				this.hasInviteViewOrEditPermission =
+					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
+					this.hasInviteEditPermission;
+
+				this.hasEditExpensePermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				);
 			});
 
 		this.store.selectedOrganization$
@@ -95,6 +109,8 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
+					this.organizationInvitesAllowed =
+						organization.invitesAllowed;
 					this.loadPage();
 				}
 			});
@@ -446,14 +462,6 @@ export class EmployeesComponent implements OnInit, OnDestroy {
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
 		this.loadPage();
-	}
-
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translate.get(prefix).subscribe((res) => {
-			result = res;
-		});
-		return result;
 	}
 
 	private _applyTranslationOnSmartTable() {

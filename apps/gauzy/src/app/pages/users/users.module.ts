@@ -30,6 +30,7 @@ import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
+import { InviteGuard } from '../../@core/role/invite.guard';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -75,6 +76,6 @@ const COMPONENTS = [
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [UserFullNameComponent],
-	providers: [OrganizationsService, UsersOrganizationsService]
+	providers: [OrganizationsService, UsersOrganizationsService, InviteGuard]
 })
 export class UsersModule {}
