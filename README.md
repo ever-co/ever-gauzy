@@ -8,28 +8,6 @@
 
 Gauzy™ Platform - **Open-Source ERP Platform** focused on **Fairness** and **Transparency** for freelancers, modern agencies, studios and in-house teams. 
 
-What Gauzy will support for Transparency:
-- sharing important company (or freelance) business metrics with customers, employees and contractors
-- sharing employees compensation and bonuses amounts ("open salaries", yeah!)
-- sharing equipment easy between employees (e.g. company cars or guest house)
-- sharing time tracking information with customers
-- sharing information easy between employees (e.g. who working on what, announcements and so on)
-
-What Gauzy will support for Fairness:
-- fair employees compensations (bonuses / profits sharing)
-- fair clients billing (strictly based on employees / freelancers time tracking information and public price lists)
-
-Why we believe Transparency and Fairness are important?
-- "... It's More Important To Be Nice!" (to customers, partners, employees, contractors ...)
-- Establishes Trust and Expands Relationships
-- Increases Productivity, Engagement and Commitment
-- Increases Motivation and Loyalty, Decrease Turnover
-
-So:
--   **Open-Source Software** solving **fair sharing of technology**.
--   **Stock Options** solving **fair sharing of profits _in the future_**.
--   **Gauzy Platform** solving **fair and transparent sharing of business and profits _today_**. 
-
 Gauzy Platform includes multiple ERP features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
 - Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
 - Employees Management (register of company employees / contractors, rates of employees, etc.)
@@ -55,17 +33,13 @@ In addition, we encourage individual **Freelancers** to join our "Gauzy" revolut
 
 Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [How to use it](https://github.com/ever-co/gauzy/wiki/How-to-use-Gauzy) at your freelance business, agency, studio or in-house teams.
 
+## Demos & Testing
+
 Feel free to test:
 
-- Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as demo, login with `admin@ever.co` and password: `admin`)
+- Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as single tenant demo, login with `admin@ever.co` and password: `admin`)
 - Gauzy Platform Demo at <https://demo.gauzy.co> (temporary shutdown)
 - Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary shutdown)
-
-Gauzy supports following schemas for Employee (company worker, contractor or freelancer) Bonus calculations:
-
--  **Profit-based**, when employees get bonuses based on company profits from work done by given employee or team.
-
--  **Revenue-based**, when employees get bonuses based on company revenue (gross income) from work done by given employee or team.
 
 ## Quick Start
 
