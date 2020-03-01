@@ -20,7 +20,9 @@
 		"SELECT_ALL": "Select All",
 		"COPY_LINK": "Copy Link",
 		"MANAGE_INVITES": "Manage Invites",
-		"RESEND": "Resend"
+		"RESEND": "Resend",
+		"NEXT": "Next",
+		"PREVIOUS": "Previous"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
