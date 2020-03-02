@@ -9,7 +9,9 @@ import {
 	NbDatepickerModule,
 	NbSelectModule,
 	NbToastrModule,
-	NbListModule
+	NbListModule,
+	NbStepperModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrganizationsMutationComponent } from './organizations-mutation.component';
@@ -19,6 +21,7 @@ import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { CountryService } from '../../../@core/services/country.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -39,6 +42,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NbToastrModule.forRoot(),
 		NbListModule,
+		NbStepperModule,
+		NbToggleModule,
 		RemoveLodashModule,
 		TranslateModule.forChild({
 			loader: {
@@ -50,6 +55,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [OrganizationsMutationComponent],
 	entryComponents: [OrganizationsMutationComponent],
-	providers: [OrganizationDepartmentsService]
+	providers: [OrganizationDepartmentsService, CountryService]
 })
 export class OrganizationsMutationModule {}
