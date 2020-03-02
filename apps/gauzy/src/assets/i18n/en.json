@@ -573,7 +573,8 @@
 	},
 	"FOOTER": {
 		"BY": "by",
-		"RIGHTS_RECERVED": "All rights reserved."
+		"RIGHTS_RECERVED": "All rights reserved.",
+		"PRESENT": "Present"
 	},
 	"TOASTR": {
 		"TITLE": {
