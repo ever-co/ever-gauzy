@@ -572,7 +572,8 @@
 	},
 	"FOOTER": {
 		"BY": "от",
-		"RIGHTS_RECERVED": "Всички права запазени."
+		"RIGHTS_RECERVED": "Всички права запазени.",
+		"PRESENT": "Present"
 	},
 	"TOASTR": {
 		"TITLE": {
