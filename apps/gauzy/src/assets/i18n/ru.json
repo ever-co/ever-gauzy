@@ -572,7 +572,8 @@
 	},
 	"FOOTER": {
 		"BY": "по",
-		"RIGHTS_RECERVED": "Все права защищены."
+		"RIGHTS_RECERVED": "Все права защищены.",
+		"PRESENT": "Подарочный"
 	},
 	"TOASTR": {
 		"TITLE": {
