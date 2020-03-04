@@ -11,7 +11,8 @@ export enum HistoryType {
 	BONUS_INCOME = 'BONUS_INCOME',
 	INCOME = 'INCOME',
 	EXPENSES = 'EXPENSES',
-	SALARY = 'SALARY'
+	SALARY = 'SALARY',
+	EXPENSES_WITHOUT_SALARY = 'EXPENSES_WITHOUT_SALARY'
 }
 
 @Component({
@@ -58,6 +59,7 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 				break;
 
 			case HistoryType.EXPENSES:
+			case HistoryType.EXPENSES_WITHOUT_SALARY:
 			case HistoryType.SALARY:
 				viewModel = this.recordsData.map((i) => {
 					return {
@@ -127,6 +129,7 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 				break;
 			case HistoryType.EXPENSES:
 			case HistoryType.SALARY:
+			case HistoryType.EXPENSES_WITHOUT_SALARY:
 				this.smartTableSettings = {
 					actions: false,
 					editable: true,

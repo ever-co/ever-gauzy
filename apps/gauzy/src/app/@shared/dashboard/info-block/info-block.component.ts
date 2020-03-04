@@ -1,4 +1,13 @@
-import { Component, Output, EventEmitter, Input } from '@angular/core';
+import {
+	Component,
+	Output,
+	EventEmitter,
+	Input,
+	ElementRef,
+	ViewChild,
+	AfterViewInit,
+	OnInit
+} from '@angular/core';
 
 @Component({
 	selector: 'ga-info-block',
@@ -11,6 +20,8 @@ export class InfoBlockComponent {
 	@Input() value: string;
 	@Input() color: string;
 	@Input() blockType: boolean;
+	@Input() accordion: boolean;
+	@Input() listItem: boolean;
 
 	@Output() openInfo = new EventEmitter<void>();
 
