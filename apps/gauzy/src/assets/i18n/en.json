@@ -125,7 +125,10 @@
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
-			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)"
+			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
+			"OFFER_DATE": "Offer Date (optional)",
+			"ACCEPT_DATE": "Accespt Date (optional)",
+			"REJECT_DATE": "Reject Date (optional)"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",

@@ -161,6 +161,61 @@
 				</div>
 			</div>
 
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label for="offerDateInput" class="label">{{
+							'FORM.LABELS.OFFER_DATE' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="offerDateInput"
+							formControlName="offerDate"
+							nbInput
+							[nbDatepicker]="offertDatePicker"
+							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						/>
+						<nb-datepicker #offertDatePicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col">
+					<div class="form-group">
+						<label for="acceptDateInput" class="label">{{
+							'FORM.LABELS.ACCEPT_DATE' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="acceptDateInput"
+							formControlName="acceptDate"
+							nbInput
+							[nbDatepicker]="acceptDatePicker"
+							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						/>
+						<nb-datepicker #acceptDatePicker></nb-datepicker>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label for="rejectDateInput" class="label">{{
+							'FORM.LABELS.REJECT_DATE' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="rejectDateInput"
+							formControlName="rejectDate"
+							nbInput
+							[nbDatepicker]="rejectDatePicker"
+							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						/>
+						<nb-datepicker #rejectDatePicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col"></div>
+			</div>
+
 			<div class="actions">
 				<button
 					[disabled]="form.invalid"

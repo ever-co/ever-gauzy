@@ -14,7 +14,8 @@ import {
 	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule,
-	NbActionsModule
+	NbActionsModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -103,7 +104,8 @@ const COMPONENTS = [
 		InviteTableModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbActionsModule,
-		EditEmployeeMembershipFormModule
+		EditEmployeeMembershipFormModule,
+		NbDatepickerModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
