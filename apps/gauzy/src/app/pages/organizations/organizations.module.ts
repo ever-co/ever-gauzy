@@ -31,6 +31,7 @@ import { OrganizationsCurrencyComponent } from './table-components/organizations
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
+import { OrganizationEmpTypesService } from '../../@core/services/organization-emp-types.service';
 
 @NgModule({
 	imports: [
@@ -78,6 +79,7 @@ import { OrganizationsStatusComponent } from './table-components/organizations-s
 		EditOrganizationComponent,
 		OrganizationsEmployeesComponent,
 		OrganizationsCurrencyComponent
-	]
+	],
+	providers: [OrganizationEmpTypesService]
 })
 export class OrganizationsModule {}

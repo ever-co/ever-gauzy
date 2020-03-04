@@ -2,11 +2,13 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { Employee } from '@gauzy/models';
+import { Employee, EmployeeTypesCreateInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+// import { EmployeesService } from '@gauzy/src/app/@core/services';
+import { EmployeesService } from '../../../../../@core/services/employees.service';
+import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
 
 @Component({
 	selector: 'ga-edit-employee-main',
@@ -24,12 +26,14 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	selectedEmployee: Employee;
 	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
+	employeeTypes: EmployeeTypesCreateInput[];
 
 	constructor(
 		private fb: FormBuilder,
 		private location: Location,
 		private toastrService: NbToastrService,
-		private employeeStore: EmployeeStore
+		private employeeStore: EmployeeStore,
+		private employeeService: EmployeesService
 	) {}
 
 	ngOnInit() {
@@ -39,9 +43,14 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
 					this._initializeForm(this.selectedEmployee);
+					this.employeeService
+						.getEmpTypes(this.selectedEmployee.orgId)
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((data) => {
+							this.employeeTypes = data;
+						});
 				}
 			});
-
 		this.getFakeData();
 	}
 
@@ -96,7 +105,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			email: [employee.user.email, Validators.required],
 			firstName: [employee.user.firstName, Validators.required],
 			lastName: [employee.user.lastName, Validators.required],
-			imageUrl: [employee.user.imageUrl, Validators.required]
+			imageUrl: [employee.user.imageUrl, Validators.required],
+			empTypes: [['']]
 		});
 	}
 

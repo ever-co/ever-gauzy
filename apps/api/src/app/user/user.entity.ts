@@ -19,11 +19,14 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	RelationId
+	RelationId,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role';
 import { Tenant } from '../tenant/tenant.entity';
+import { EmployeeTypes } from '../employee-types/employee-types.entity';
 
 @Entity('user')
 export class User extends Base implements IUser {

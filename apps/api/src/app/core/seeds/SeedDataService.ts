@@ -35,6 +35,8 @@ import { RolePermissions, createRolePermissions } from '../../role-permissions';
 import { createTenants } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
+import { seedEmpTypes } from '../../organization/employee-types.seed';
+import { EmployeeTypes } from '../../employee-types/employee-types.entity';
 
 const allEntities = [
 	User,
@@ -50,7 +52,8 @@ const allEntities = [
 	RolePermissions,
 	Tenant,
 	EmailTemplate,
-	Tag
+	Tag,
+	EmployeeTypes
 ];
 
 @Injectable()
@@ -180,6 +183,8 @@ export class SeedDataService {
 			await createRolePermissions(this.connection, roles);
 
 			await createEmailTemplates(this.connection);
+
+			// await seedEmpTypes(this.connection);
 
 			this.log(
 				chalk.green(
