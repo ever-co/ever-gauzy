@@ -63,6 +63,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		this.loadClients();
 		this.loadProjects();
 		this._initializeForm();
+		this.form.get('currency').disable();
 	}
 
 	get currency() {
@@ -168,6 +169,10 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 				this.form.value
 			)
 		);
+	}
+
+	addNewVendor(vendorName) {
+		return { vendorName: vendorName, tag: true, vendorId: null };
 	}
 
 	showNotesInput() {

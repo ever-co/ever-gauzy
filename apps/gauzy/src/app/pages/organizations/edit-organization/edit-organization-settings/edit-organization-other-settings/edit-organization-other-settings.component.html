@@ -285,6 +285,9 @@
 								"
 								fullWidth
 							>
+								<nb-option [value]="null">
+									{{ 'SM_TABLE.NONE' | translate }}
+								</nb-option>
 								<nb-option
 									*ngFor="let type of defaultBonusTypes"
 									[value]="type"

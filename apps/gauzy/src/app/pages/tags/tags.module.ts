@@ -23,6 +23,7 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsRoutingModule } from './tags-routing.module';
+import { TagsMutationModule } from '../../@shared/tags/tags-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -48,6 +49,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
+		TagsMutationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -57,7 +59,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	entryComponents: [],
+	entryComponents: [TagsComponent],
 	declarations: [TagsComponent]
 })
 export class TagsModule {}

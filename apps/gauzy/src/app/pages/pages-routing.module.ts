@@ -141,9 +141,9 @@ const routes: Routes = [
 				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
-				path: 'download',
+				path: 'import-export',
 				loadChildren: () =>
-					import('./download-all/download.module').then(
+					import('./import-export/import-export.module').then(
 						(m) => m.DownloadModule
 					)
 			},

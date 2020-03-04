@@ -21,9 +21,17 @@ import { OrganizationTeams } from '../organization-teams/organization-teams.enti
 import { User } from '../user';
 import { Tenant } from '../tenant';
 import { EmployeeTypes } from '../employee-types/employee-types.entity';
+import { Tag } from '../tags';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
+	
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tags_employee'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, { nullable: false, onDelete: 'CASCADE' })
 	@JoinColumn()

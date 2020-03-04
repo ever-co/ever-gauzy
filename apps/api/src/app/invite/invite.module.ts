@@ -28,10 +28,12 @@ import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { OrganizationService, Organization } from '../organization';
+import { Role, RoleService } from '../role';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
+			Role,
 			Invite,
 			Employee,
 			User,
@@ -50,6 +52,7 @@ import { OrganizationService, Organization } from '../organization';
 		InviteService,
 		...CommandHandlers,
 		EmployeeService,
+		RoleService,
 		UserService,
 		AuthService,
 		UserOrganizationService,

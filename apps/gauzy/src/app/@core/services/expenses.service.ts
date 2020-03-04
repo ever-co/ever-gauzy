@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import {
 	Expense,
 	ExpenseCreateInput as IExpenseCreateInput,
 	ExpenseFindInput as IExpenseFindInput,
-	ExpenseUpdateInput as IExpenseUpdateInput
+	ExpenseUpdateInput as IExpenseUpdateInput,
+	SplitExpenseOutput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -19,19 +21,39 @@ export class ExpensesService {
 			.post<Expense>('/api/expense/create', createInput)
 			.pipe(first())
 			.toPromise();
-	}
+  }
 
-	getMyAll(
+	getMyAllWithSplitExpenses(
 		relations?: string[],
-		findInput?: IExpenseFindInput,
 		filterDate?: Date
-	): Promise<{ items: Expense[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput, filterDate });
+	): Promise<{ items: SplitExpenseOutput[]; total: number }> {
+		const data = JSON.stringify({ relations, filterDate });
 
 		return this.http
-			.get<{ items: Expense[]; total: number }>(`/api/expense/me`, {
-				params: { data }
-			})
+			.get<{ items: SplitExpenseOutput[]; total: number }>(
+				`/api/expense/me`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllWithSplitExpenses(
+		employeeId: string,
+		relations?: string[],
+		filterDate?: Date
+	): Promise<{ items: SplitExpenseOutput[]; total: number }> {
+		const data = JSON.stringify({ relations, filterDate });
+
+		return this.http
+			.get<{ items: SplitExpenseOutput[]; total: number }>(
+				`/api/expense/include-split/${employeeId}`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}

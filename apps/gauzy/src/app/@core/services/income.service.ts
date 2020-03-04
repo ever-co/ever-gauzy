@@ -13,6 +13,7 @@ export class IncomeService {
 	constructor(private http: HttpClient) {}
 
 	create(createInput: IIncomeCreateInput): Promise<Income> {
+		
 		return this.http
 			.post<Income>('/api/income/create', createInput)
 			.pipe(first())

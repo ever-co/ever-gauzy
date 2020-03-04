@@ -26,6 +26,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	constructor(private store: Store) {}
 
 	ngOnInit(): void {
+		
 		this.store.userRolePermissions$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {

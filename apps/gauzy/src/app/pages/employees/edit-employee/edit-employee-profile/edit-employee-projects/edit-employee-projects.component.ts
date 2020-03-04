@@ -10,12 +10,14 @@ import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-edit-employee-departments',
 	templateUrl: './edit-employee-projects.component.html'
 })
-export class EditEmployeeProjectsComponent implements OnInit {
+export class EditEmployeeProjectsComponent extends TranslationBaseComponent
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
 	organizationProjects: OrganizationProjects[] = [];
@@ -27,8 +29,10 @@ export class EditEmployeeProjectsComponent implements OnInit {
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private readonly employeeStore: EmployeeStore,
-		private readonly translateService: TranslateService
-	) {}
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
@@ -94,14 +98,5 @@ export class EditEmployeeProjectsComponent implements OnInit {
 		});
 
 		return res ? res.items : [];
-	}
-
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translateService.get(prefix).subscribe((res) => {
-			result = res;
-		});
-
-		return result;
 	}
 }

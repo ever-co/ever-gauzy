@@ -7,7 +7,8 @@ import { getDummyImage } from '../core';
 import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	EmployeeTypesCreateInput
+	EmployeeTypesCreateInput,
+	BonusTypeEnum
 } from '@gauzy/models';
 
 export const createOrganizations = async (
@@ -32,6 +33,8 @@ export const createOrganizations = async (
 	defaultOrganization.imageUrl = imageUrl;
 	defaultOrganization.tenant = tenant[0];
 	defaultOrganization.invitesAllowed = true;
+	defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
+	defaultOrganization.bonusPercentage = 10;
 
 	await insertOrganization(connection, defaultOrganization);
 
@@ -50,6 +53,10 @@ export const createOrganizations = async (
 		organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
 		organization.tenant = tenant[index];
 		organization.invitesAllowed = true;
+
+		const { bonusType, bonusPercentage } = randomBonus();
+		organization.bonusType = bonusType;
+		organization.bonusPercentage = bonusPercentage;
 
 		await insertOrganization(connection, organization);
 		randomOrganizations.push(organization);
@@ -89,4 +96,18 @@ const _extractLogoAbbreviation = (companyName: string) => {
 	}
 
 	return logoAbbreviation;
+};
+
+const randomBonus = () => {
+	const randomNumberBetween = (min, max) =>
+		Math.floor(Math.random() * (max - min + 1) + min);
+
+	const bonusType = Object.values(BonusTypeEnum)[randomNumberBetween(0, 1)];
+
+	const bonusPercentage =
+		bonusType === BonusTypeEnum.PROFIT_BASED_BONUS
+			? randomNumberBetween(65, 75)
+			: randomNumberBetween(5, 10);
+
+	return { bonusType, bonusPercentage };
 };

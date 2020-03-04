@@ -32,6 +32,7 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
 import { EmployeeTypesModule } from './employee-types/employee-types.module';
+import { DownloadAllModule } from './download-all';
 
 @Module({
 	imports: [
@@ -41,11 +42,13 @@ import { EmployeeTypesModule } from './employee-types/employee-types.module';
 				children: [
 					{ path: '/auth', module: AuthModule },
 					{ path: '/user', module: UserModule },
+					{ path: '/employee', module: EmployeeModule },
+					{ path: '/download', module: DownloadAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
-					{ path: '/employee', module: EmployeeModule },
+
 					{
 						path: '/employee-settings',
 						module: EmployeeSettingModule
@@ -117,6 +120,10 @@ import { EmployeeTypesModule } from './employee-types/employee-types.module';
 					{
 						path: '/tenant',
 						module: TenantModule
+					},
+					{
+						path:'/tags',
+						module:TagModule
 					}
 				]
 			}
@@ -125,6 +132,7 @@ import { EmployeeTypesModule } from './employee-types/employee-types.module';
 		AuthModule,
 		UserModule,
 		EmployeeModule,
+		DownloadAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		RoleModule,
@@ -148,7 +156,8 @@ import { EmployeeTypesModule } from './employee-types/employee-types.module';
 		RolePermissionsModule,
 		TenantModule,
 		EmailTemplateModule,
-		TagModule
+		TagModule,
+		
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

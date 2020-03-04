@@ -80,6 +80,22 @@
 				}}</nb-checkbox
 			>
 		</div>
+		<div
+			class="mb-3"
+			*ngIf="!hasEditPermission && hasEditExpensePermission"
+		>
+			<button
+				nbButton
+				[disabled]="!selectedEmployee"
+				(click)="edit()"
+				status="info"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</div>
+
 		<ng2-smart-table
 			class="employees-table"
 			style="cursor: pointer;"
