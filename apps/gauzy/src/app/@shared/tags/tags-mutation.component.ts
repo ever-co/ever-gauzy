@@ -10,7 +10,7 @@ import { Tag } from '@gauzy/models';
 })
 export class TagsMutationComponent implements OnInit {
 	selectedUser: { userName: string }[] = [];
-	selectedColor: { color: string }[] = [];
+	selectedColor: string[] = [];
 	form: FormGroup;
 	tag: Tag;
 
@@ -46,18 +46,19 @@ export class TagsMutationComponent implements OnInit {
 			Object.assign({
 				name: this.form.value.name,
 				description: this.form.value.description,
-				color: this.form.value.color.color
+				color: this.form.value.color
 			})
 		);
 	}
-	async editTag(){
-		await this.tagsService.update(this.tag.id,
+	async editTag() {
+		await this.tagsService.update(
+			this.tag.id,
 			Object.assign({
 				name: this.form.value.name,
 				description: this.form.value.description,
-				color: this.form.value.color.color
+				color: this.form.value.color
 			})
-		)
+		);
 		this.closeDialog();
 	}
 
@@ -79,18 +80,13 @@ export class TagsMutationComponent implements OnInit {
 				color: ['']
 			});
 		}
-		
 	}
 
 	async seedFakeData() {
 		if (!this.selectedColor.length) {
 			const selectedColor = ['Critical', 'Important', 'Archived'];
 
-			selectedColor.forEach((color) =>
-				this.selectedColor.push({
-					color: color
-				})
-			);
+			selectedColor.forEach((color) => this.selectedColor.push(color));
 		}
 	}
 }
