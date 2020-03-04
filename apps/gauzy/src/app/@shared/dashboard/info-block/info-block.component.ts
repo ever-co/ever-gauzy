@@ -11,6 +11,8 @@ export class InfoBlockComponent {
 	@Input() value: string;
 	@Input() color: string;
 	@Input() blockType: boolean;
+	@Input() accordion: boolean;
+	@Input() listItem: boolean;
 
 	@Output() openInfo = new EventEmitter<void>();
 

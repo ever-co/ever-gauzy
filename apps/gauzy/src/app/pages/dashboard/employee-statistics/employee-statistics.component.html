@@ -46,7 +46,10 @@
 					{{ totalSalary }}
 				</div>
 
-				<div *ngIf="avarageBonus" class="employee-details">
+				<div
+					*ngIf="selectedOrganization?.bonusType && avarageBonus"
+					class="employee-details"
+				>
 					{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
 					{{ avarageBonus | currency: defaultCurrency }}
 				</div>
@@ -63,38 +66,7 @@
 			<div *ngIf="selectedDate; else notSelected">
 				<ga-info-block
 					*ngIf="totalBonusIncome !== 0"
-					title="{{ 'INCOME_PAGE.INCOME' | translate }}"
-					value="{{
-						incomeCurrency
-							? (totalNonBonusIncome | currency: incomeCurrency)
-							: totalNonBonusIncome
-					}}"
-					color="#089c17"
-					(openInfo)="openHistoryDialog('NON_BONUS_INCOME')"
-				>
-				</ga-info-block>
-
-				<ga-info-block
-					*ngIf="totalBonusIncome !== 0"
-					title="{{
-						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME' | translate
-					}}"
-					meta="{{
-						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME_INFO'
-							| translate
-					}}"
-					value="{{
-						incomeCurrency
-							? (totalBonusIncome | currency: incomeCurrency)
-							: totalBonusIncome
-					}}"
-					color="#089c17"
-					(openInfo)="openHistoryDialog('BONUS_INCOME')"
-				>
-				</ga-info-block>
-
-				<ga-info-block
-					*ngIf="totalBonusIncome !== 0"
+					accordion="true"
 					title="{{
 						'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate
 					}}"
@@ -120,6 +92,41 @@
 					color="#089c17"
 					(openInfo)="openHistoryDialog('INCOME')"
 				>
+					<ga-info-block
+						*ngIf="totalBonusIncome !== 0"
+						listItem="true"
+						title="{{ 'INCOME_PAGE.INCOME' | translate }}"
+						value="{{
+							incomeCurrency
+								? (totalNonBonusIncome
+								  | currency: incomeCurrency)
+								: totalNonBonusIncome
+						}}"
+						color="#089c17"
+						(openInfo)="openHistoryDialog('NON_BONUS_INCOME')"
+					>
+					</ga-info-block>
+
+					<ga-info-block
+						*ngIf="totalBonusIncome !== 0"
+						listItem="true"
+						title="{{
+							'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME'
+								| translate
+						}}"
+						meta="{{
+							'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME_INFO'
+								| translate
+						}}"
+						value="{{
+							incomeCurrency
+								? (totalBonusIncome | currency: incomeCurrency)
+								: totalBonusIncome
+						}}"
+						color="#089c17"
+						(openInfo)="openHistoryDialog('BONUS_INCOME')"
+					>
+					</ga-info-block>
 				</ga-info-block>
 
 				<ga-info-block
@@ -134,6 +141,26 @@
 					}}"
 					color="#089c17"
 					(openInfo)="openHistoryDialog('INCOME')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY'
+							| translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY_CALC'
+							| translate
+					}}"
+					value="{{
+						expenseCurrency
+							? (totalExpense - totalSalary
+							  | currency: expenseCurrency)
+							: totalExpense - totalSalary
+					}}"
+					color="#dbc300"
+					(openInfo)="openHistoryDialog('EXPENSES_WITHOUT_SALARY')"
 				>
 				</ga-info-block>
 
@@ -210,7 +237,14 @@
 					}}"
 					meta="{{
 						'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO'
-							| translate: { bonusPercentage: bonusPercentage }
+							| translate
+								: {
+										bonusPercentage: bonusPercentage,
+										difference: defaultCurrency
+											? (difference
+											  | currency: defaultCurrency)
+											: difference
+								  }
 					}}"
 					value="{{
 						defaultCurrency
@@ -231,7 +265,14 @@
 					}}"
 					meta="{{
 						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
-							| translate: { bonusPercentage: bonusPercentage }
+							| translate
+								: {
+										bonusPercentage: bonusPercentage,
+										totalIncome: incomeCurrency
+											? (totalAllIncome
+											  | currency: incomeCurrency)
+											: totalAllIncome
+								  }
 					}}"
 					value="{{
 						defaultCurrency
@@ -246,13 +287,35 @@
 				<div *ngIf="selectedOrganization?.bonusType" class="bonus">
 					<div class="bonus-value">
 						<div *ngIf="totalBonusIncome !== 0">
-							{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}
+							{{
+								'DASHBOARD_PAGE.TITLE.TOTAL_BONUS_CALC'
+									| translate
+										: {
+												totalBonusIncome: incomeCurrency
+													? (totalBonusIncome
+													  | currency
+															: incomeCurrency)
+													: totalBonusIncome,
+												calculatedBonus: incomeCurrency
+													? (calculatedBonus
+													  | currency
+															: incomeCurrency)
+													: calculatedBonus
+										  }
+							}}
 						</div>
 						<div *ngIf="totalBonusIncome === 0">
 							{{
 								'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
 									| translate
-										: { bonusPercentage: bonusPercentage }
+										: {
+												bonusPercentage: bonusPercentage,
+												totalIncome: incomeCurrency
+													? (totalAllIncome
+													  | currency
+															: incomeCurrency)
+													: totalAllIncome
+										  }
 							}}
 						</div>
 						<div
