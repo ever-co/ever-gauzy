@@ -9,6 +9,8 @@ import { BaseEntityWithMembers } from '@gauzy/models';
 export class EntityWithMembersCardComponent {
 	@Input() entityWithMembers: BaseEntityWithMembers;
 
+	@Input() public: BaseEntityWithMembers;
+
 	@Output() remove = new EventEmitter();
 
 	@Output() edit = new EventEmitter();

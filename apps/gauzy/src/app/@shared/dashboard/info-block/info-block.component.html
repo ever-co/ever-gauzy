@@ -1,4 +1,7 @@
-<div class="info-block" (click)="handleClick()">
+<div
+	class="info-block {{ blockType && 'info-block--' + blockType }}"
+	(click)="handleClick()"
+>
 	<div class="info-text">
 		{{ title }}
 		<div *ngIf="meta" class="meta-text">

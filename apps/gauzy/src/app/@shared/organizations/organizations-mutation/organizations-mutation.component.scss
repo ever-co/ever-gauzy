@@ -1,6 +1,11 @@
 nb-card-body {
 	padding: 50px 70px;
 
+	.stepper-buttons {
+		display: flex;
+		justify-content: space-evenly;
+	}
+
 	.organization-container {
 		padding-right: 70px;
 		padding-top: 35px;

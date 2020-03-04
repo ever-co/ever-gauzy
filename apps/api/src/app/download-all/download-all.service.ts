@@ -6,8 +6,7 @@ import * as archiver from 'archiver';
 export class DownloadAllService {
 	async archiveAndDownload() {
 		const output = fs.createWriteStream(
-			'C:/Coding/gauzy/apps/api/src/app/download-all' +
-				'/alldata/export.zip'
+			'./apps/api/src/app/download-all/alldata/export.zip'
 		);
 		const archive = archiver('zip', {
 			zlib: { level: 9 }
@@ -29,7 +28,6 @@ export class DownloadAllService {
 				console.log('error');
 			} else {
 				throw err;
-				console.log('error1');
 			}
 		});
 
@@ -40,8 +38,7 @@ export class DownloadAllService {
 		archive.pipe(output);
 
 		archive.directory(
-			'C:/Coding/gauzy/apps/api/src/app/download-all/' +
-				'downloaded-data/',
+			'./apps/api/src/app/download-all/downloaded-data/',
 			false
 		);
 

@@ -86,7 +86,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 
 	submitForm() {
 		if (this.form.valid) {
-			this.dialogRef.close(this.form.value);
+			this.dialogRef.close(this.form.getRawValue());
 		}
 	}
 
@@ -111,7 +111,10 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 				Validators.required
 			],
 			currency: [
-				recurringExpense ? recurringExpense.currency : '',
+				{
+					value: recurringExpense ? recurringExpense.currency : '',
+					disabled: true
+				},
 				Validators.required
 			],
 			splitExpense: [

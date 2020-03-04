@@ -30,14 +30,26 @@
 						{{ selectedEmployee.lastName }}</span
 					>
 					<div class="employee-position">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }}
+						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }} |
+						Level A
 					</div>
 				</div>
 			</div>
 
-			<div *ngIf="avarageBonus" class="employee-details">
-				{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
-				{{ avarageBonus | currency: defaultCurrency }}
+			<div>
+				<div
+					*ngIf="totalSalary !== 0"
+					class="employee-details employee-salary"
+				>
+					{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}:
+					{{ expenseCurrency }}
+					{{ totalSalary }}
+				</div>
+
+				<div *ngIf="avarageBonus" class="employee-details">
+					{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
+					{{ avarageBonus | currency: defaultCurrency }}
+				</div>
 			</div>
 		</div>
 
@@ -87,7 +99,18 @@
 						'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate
 					}}"
 					meta="{{
-						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_CALC' | translate
+						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_CALC'
+							| translate
+								: {
+										totalNonBonusIncome: incomeCurrency
+											? (totalNonBonusIncome
+											  | currency: incomeCurrency)
+											: totalNonBonusIncome,
+										totalBonusIncome: incomeCurrency
+											? (totalBonusIncome
+											  | currency: incomeCurrency)
+											: totalBonusIncome
+								  }
 					}}"
 					value="{{
 						incomeCurrency
@@ -115,18 +138,6 @@
 				</ga-info-block>
 
 				<ga-info-block
-					*ngIf="totalSalary !== 0"
-					title="{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}"
-					value="{{
-						expenseCurrency
-							? (totalSalary | currency: expenseCurrency)
-							: totalSalary
-					}}"
-					(openInfo)="openHistoryDialog('SALARY')"
-				>
-				</ga-info-block>
-
-				<ga-info-block
 					title="{{
 						'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate
 					}}"
@@ -146,14 +157,26 @@
 				<ga-info-block
 					title="{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}"
 					meta="{{
-						'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC' | translate
+						'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC'
+							| translate
+								: {
+										totalAllIncome: incomeCurrency
+											? (totalAllIncome
+											  | currency: incomeCurrency)
+											: totalAllIncome,
+										totalExpense: expenseCurrency
+											? (totalExpense
+											  | currency: expenseCurrency)
+											: totalExpense
+								  }
 					}}"
 					value="{{
 						defaultCurrency
 							? (difference | currency: defaultCurrency)
 							: difference
 					}}"
-					color="{{ difference >= 0 ? '#66de0b' : '#ff7b00' }}"
+					color="{{ difference >= 0 ? '#089c17' : '#ff7b00' }}"
+					blockType="highlight"
 					(openInfo)="openProfitDialog()"
 				>
 				</ga-info-block>
@@ -178,7 +201,10 @@
 				</ga-info-block>
 
 				<ga-info-block
-					*ngIf="bonusType === 'PROFIT_BASED_BONUS' || !bonusType"
+					*ngIf="
+						(bonusType === 'PROFIT_BASED_BONUS' || !bonusType) &&
+						totalBonusIncome !== 0
+					"
 					title="{{
 						'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS' | translate
 					}}"
@@ -196,7 +222,10 @@
 				</ga-info-block>
 
 				<ga-info-block
-					*ngIf="bonusType === 'REVENUE_BASED_BONUS'"
+					*ngIf="
+						bonusType === 'REVENUE_BASED_BONUS' &&
+						totalBonusIncome !== 0
+					"
 					title="{{
 						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS' | translate
 					}}"
@@ -216,8 +245,15 @@
 
 				<div *ngIf="selectedOrganization?.bonusType" class="bonus">
 					<div class="bonus-value">
-						<div>
+						<div *ngIf="totalBonusIncome !== 0">
 							{{ 'DASHBOARD_PAGE.TITLE.TOTAL_BONUS' | translate }}
+						</div>
+						<div *ngIf="totalBonusIncome === 0">
+							{{
+								'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
+									| translate
+										: { bonusPercentage: bonusPercentage }
+							}}
 						</div>
 						<div
 							*ngIf="defaultCurrency"

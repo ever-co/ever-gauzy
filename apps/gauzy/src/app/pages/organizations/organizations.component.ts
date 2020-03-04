@@ -54,7 +54,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	loading = true;
 	hasEditPermission = false;
-
+	hasEditExpensesPermission = false;
 	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -105,6 +105,9 @@ export class OrganizationsComponent extends TranslationBaseComponent
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ALL_ORG_EDIT
+				);
+				this.hasEditExpensesPermission = this.store.hasPermission(
+					PermissionsEnum.ORG_EXPENSES_EDIT
 				);
 			});
 	}

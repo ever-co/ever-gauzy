@@ -5,7 +5,7 @@ import {
 	ExpenseCreateInput as IExpenseCreateInput,
 	ExpenseFindInput as IExpenseFindInput,
 	ExpenseUpdateInput as IExpenseUpdateInput,
-  SplitExpenseOutput
+	SplitExpenseOutput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 

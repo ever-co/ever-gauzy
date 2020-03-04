@@ -39,7 +39,8 @@ const defaultRolePermissions = [
 			PermissionsEnum.ORG_EXPENSES_EDIT,
 			PermissionsEnum.ORG_EXPENSES_VIEW,
 			PermissionsEnum.ORG_INCOMES_EDIT,
-			PermissionsEnum.ORG_INCOMES_VIEW
+			PermissionsEnum.ORG_INCOMES_VIEW,
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION
 		]
 	},
 	{
