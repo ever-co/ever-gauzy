@@ -32,6 +32,7 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 	clients: OrganizationClients[];
 	employees: Employee[] = [];
 	projectToEdit: OrganizationProjects;
+	showPrivateProjects: [];
 
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
@@ -133,7 +134,25 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 			}
 		);
 		if (res) {
-			this.projects = res.items;
+			let canView = [];
+			if (this.store.userRolePermissions$.value[21].enabled) {
+				this.projects = res.items;
+			} else {
+				for (let i = 0; i < res.items.length; i++) {
+					if (res.items[i].public) {
+						canView.push(res.items[i]);
+					} else {
+						for (let j = 0; j < res.items[i].members.length; j++) {
+							if (
+								this.store.userId === res.items[i].members[j].id
+							) {
+								canView.push(res.items[i]);
+							}
+						}
+					}
+				}
+				this.projects = canView;
+			}
 		}
 	}
 

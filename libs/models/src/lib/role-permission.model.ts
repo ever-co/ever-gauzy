@@ -39,7 +39,8 @@ export enum PermissionsEnum {
 	POLICY_EDIT = 'POLICY_EDIT',
 	CHANGE_SELECTED_EMPLOYEE = 'CHANGE_SELECTED_EMPLOYEE',
 	CHANGE_SELECTED_ORGANIZATION = 'CHANGE_SELECTED_ORGANIZATION',
-	CHANGE_ROLES_PERMISSIONS = 'CHANGE_ROLES_PERMISSIONS'
+	CHANGE_ROLES_PERMISSIONS = 'CHANGE_ROLES_PERMISSIONS',
+	ACCESS_PRIVATE_PROJECTS = 'ACCESS_PRIVATE_PROJECTS'
 }
 
 export const PermissionGroups = {
@@ -56,7 +57,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_INVITE_VIEW,
 		PermissionsEnum.ORG_INVITE_EDIT,
 		PermissionsEnum.POLICY_VIEW,
-		PermissionsEnum.POLICY_EDIT
+		PermissionsEnum.POLICY_EDIT,
+		PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 	],
 
 	//Readonly permissions, are only enabled for admin role
