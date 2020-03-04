@@ -99,6 +99,12 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 				icon: 'book-open-outline',
 				responsive: true,
 				route: `/pages/employees/edit/${this.routeParams.id}/profile/clients`
+			},
+			{
+				title: 'Hiring',
+				icon: 'briefcase-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/hiring`
 			}
 		];
 	}
@@ -108,6 +114,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	}
 
 	private async submitEmployeeForm(value: EmployeeUpdateInput) {
+		console.log(value);
 		if (value) {
 			try {
 				await this.employeeService.update(

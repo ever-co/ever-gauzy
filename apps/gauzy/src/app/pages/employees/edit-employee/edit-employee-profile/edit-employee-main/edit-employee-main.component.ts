@@ -97,10 +97,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			email: [employee.user.email, Validators.required],
 			firstName: [employee.user.firstName, Validators.required],
 			lastName: [employee.user.lastName, Validators.required],
-			imageUrl: [employee.user.imageUrl, Validators.required],
-			offerDate: [employee.offerDate || ''],
-			acceptDate: [employee.acceptDate || ''],
-			rejectDate: [employee.rejectDate || '']
+			imageUrl: [employee.user.imageUrl, Validators.required]
 		});
 	}
 

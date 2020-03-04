@@ -11,6 +11,7 @@ import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-pro
 import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
 import { PermissionsEnum } from '@gauzy/models';
 import { InviteGuard } from '../../@core/role/invite.guard';
+import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
 
 const routes: Routes = [
 	{
@@ -49,6 +50,10 @@ const routes: Routes = [
 			{
 				path: 'clients',
 				component: EditEmployeeClientComponent
+			},
+			{
+				path: 'hiring',
+				component: EditEmployeeHiringComponent
 			}
 		]
 	},

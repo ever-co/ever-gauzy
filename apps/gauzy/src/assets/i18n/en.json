@@ -127,7 +127,7 @@
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
 			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
 			"OFFER_DATE": "Offer Date (optional)",
-			"ACCEPT_DATE": "Accespt Date (optional)",
+			"ACCEPT_DATE": "Accept Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)"
 		},
 		"PLACEHOLDERS": {
