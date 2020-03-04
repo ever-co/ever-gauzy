@@ -294,10 +294,13 @@
 			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
 			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
 			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
-			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit {{ difference }}",
 			"TOTAL_INCOME_BONUS": "Total Income Bonus",
-			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income",
-			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary"
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income {{ totalIncome }}",
+			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary",
+			"TOTAL_EXPENSES_WITHOUT_SALARY": "Total Expense without salary",
+			"TOTAL_EXPENSES_WITHOUT_SALARY_CALC": "Expense = Employee Expenses + Split Expenses + Recurring",
+			"TOTAL_BONUS_CALC": "Total Bonus = Direct Income Bonus {{ totalBonusIncome }} + Bonus {{ calculatedBonus }}"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "מפתח",
@@ -428,6 +431,7 @@
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
+			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"GROUPS": {
 				"GENERAL": "כללי",
 				"ADMINISTRATION": "Administration"
@@ -498,7 +502,8 @@
 	},
 	"TAGS_PAGE": {
 		"HEADER": "Tags",
-		"ADD_TAGS": "Add Tags"
+		"ADD_TAGS": "Add Tags",
+		"EDIT_TAGS": "Edit Tags"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
