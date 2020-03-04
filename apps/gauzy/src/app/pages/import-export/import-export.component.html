@@ -1,0 +1,23 @@
+<div class="import_export_wrapper">
+	<button
+		class="button-export"
+		nbButton
+		outline
+		status="primary"
+		size="large"
+		(click)="onDownloadAll()"
+	>
+		<nb-icon icon="arrow-circle-down-outline"></nb-icon
+		>{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
+	</button>
+	<button
+		class="button-import"
+		outline
+		status="primary"
+		size="large"
+		nbButton
+	>
+		<nb-icon icon="arrow-circle-up-outline"></nb-icon
+		>{{ 'MENU.IMPORT_EXPORT.IMPORT' | translate }}
+	</button>
+</div>
