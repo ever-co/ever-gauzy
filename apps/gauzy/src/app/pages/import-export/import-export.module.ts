@@ -1,14 +1,19 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
-import { NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbInputModule,
+	NbIconModule
+} from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { DownloadComponent } from './download.component';
-import { DownloadRoutingModule } from './download-routing.module';
+import { ImportExportComponent } from './import-export.component';
+import { ImportExportRoutingModule } from './import-export-routing.module';
 
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { DownloadAllService } from '../../@core/services/downloadAll.service';
+import { ExportAllService } from '../../@core/services/exportAll.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -16,11 +21,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
-		DownloadRoutingModule,
+		ImportExportRoutingModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
+		NbIconModule,
 		NbInputModule,
 		TranslateModule.forChild({
 			loader: {
@@ -30,7 +36,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [DownloadComponent],
-	providers: [DownloadAllService]
+	declarations: [ImportExportComponent],
+	providers: [ExportAllService]
 })
 export class DownloadModule {}

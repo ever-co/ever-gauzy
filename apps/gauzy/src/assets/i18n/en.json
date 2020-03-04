@@ -253,7 +253,11 @@
 		"USERS": "Users",
 		"ROLES": "Roles & Permissions",
 		"DANGER_ZONE": "Danger Zone",
-		"DOWNLOAD_DATA": "Download all data",
+		"IMPORT_EXPORT": {
+			"IMPORT_EXPORT": "Import/Export",
+			"IMPORT": "Import",
+			"EXPORT": "Export"
+		},
 		"TAGS": "Tags"
 	},
 	"SETTINGS_MENU": {

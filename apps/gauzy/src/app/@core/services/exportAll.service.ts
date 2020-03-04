@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 
 @Injectable()
-export class DownloadAllService {
+export class ExportAllService {
 	constructor(private http: HttpClient) {}
 
 	downloadAllData(): Promise<{}> {

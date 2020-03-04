@@ -221,16 +221,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.ORGANIZATIONS'
 			}
 		},
-		{
-			title: 'Download all data',
-			icon: 'arrow-circle-down-outline',
-			link: '/pages/download',
-			data: {
-				translated: false,
-				//permissionKeys: false,
-				translationKey: 'MENU.DOWNLOAD_DATA'
-			}
-		},
 
 		{
 			title: 'Settings',
@@ -265,6 +255,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.DANGER_ZONE'
+					}
+				},
+				{
+					title: 'Import/Export',
+					icon: 'arrow-circle-down-outline',
+					link: '/pages/import-export',
+					data: {
+						translated: false,
+						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
 					}
 				}
 			]
