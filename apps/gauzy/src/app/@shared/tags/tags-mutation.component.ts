@@ -9,31 +9,17 @@ import { Tag } from '@gauzy/models';
 	styleUrls: ['./tags-mutation.component.scss']
 })
 export class TagsMutationComponent implements OnInit {
-	selectedUser: { userName: string }[] = [];
 	selectedColor: string[] = [];
 	form: FormGroup;
 	tag: Tag;
-
+	
+	public color1: string = '#2889e9';
 	constructor(
 		protected dialogRef: NbDialogRef<TagsMutationComponent>,
 		private tagsService: TagsService,
 		private fb: FormBuilder
 	) {}
 
-	// get name() {
-	// 	return this.form.get('name').value;
-	// }
-
-	// set name(value) {
-	// 	this.form.setValue(value);
-	// }
-
-	// get description() {
-	// 	return this.form.get('description').value;
-	// }
-	// set description(value) {
-	// 	this.form.setValue(value)
-	// }
 
 	ngOnInit() {
 		this.seedFakeData();
@@ -69,15 +55,15 @@ export class TagsMutationComponent implements OnInit {
 	async initializeForm() {
 		if (this.tag) {
 			this.form = this.fb.group({
-				name: this.tag.name,
-				color: this.tag.color,
-				description: this.tag.description
+				name: [this.tag.name],
+				color: [this.tag.color],
+				description: [this.tag.description]
 			});
 		} else {
 			this.form = this.fb.group({
 				name: [''],
 				description: [''],
-				color: ['']
+				color: ['ASDDAS']
 			});
 		}
 	}
