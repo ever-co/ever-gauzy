@@ -209,7 +209,10 @@
 				</ga-info-block>
 
 				<ga-info-block
-					*ngIf="totalBonusIncome !== 0"
+					*ngIf="
+						selectedOrganization?.bonusType &&
+						totalBonusIncome !== 0
+					"
 					title="{{
 						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS' | translate
 					}}"
@@ -229,7 +232,7 @@
 
 				<ga-info-block
 					*ngIf="
-						(bonusType === 'PROFIT_BASED_BONUS' || !bonusType) &&
+						bonusType === 'PROFIT_BASED_BONUS' &&
 						totalBonusIncome !== 0
 					"
 					title="{{
