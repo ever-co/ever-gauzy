@@ -159,6 +159,27 @@
 						/>
 					</div>
 				</div>
+
+				<div class="col">
+					<div class="form-group">
+						<label for="employeeType" class="label"
+							>Employeement Types</label
+						>
+						<nb-select
+							id="employeeType"
+							fullWidth
+							multiple
+							placeholder="Select Employee Types"
+							formControlName="empTypes"
+						>
+							<nb-option
+								*ngFor="let opt of this.employeeTypes"
+								[value]="opt.name"
+								>{{ opt.name }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</div>
 			</div>
 
 			<div class="actions">

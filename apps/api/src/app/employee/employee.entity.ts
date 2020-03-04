@@ -20,6 +20,7 @@ import { Organization } from '../organization';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 import { User } from '../user';
 import { Tenant } from '../tenant';
+import { EmployeeTypes } from '../employee-types/employee-types.entity';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
@@ -95,4 +96,10 @@ export class Employee extends Base implements IEmployee {
 		name: 'organization_team_employee'
 	})
 	teams?: OrganizationTeams[];
+
+	@ManyToMany((type) => EmployeeTypes, { cascade: true })
+	@JoinTable({
+		name: 'employee_employeeTypes'
+	})
+	empTypes?: EmployeeTypes[];
 }

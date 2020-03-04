@@ -117,6 +117,12 @@ export class EditOrganizationSettingsComponent implements OnInit {
 				icon: 'settings-outline',
 				responsive: true,
 				route: this.getRoute('settings')
+			},
+			{
+				title: 'Employment Types',
+				icon: 'settings-outline',
+				responsive: true,
+				route: this.getRoute('employeeTypes')
 			}
 		];
 	}

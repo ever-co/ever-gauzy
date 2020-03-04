@@ -4,6 +4,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { Tenant } from './tenant.model';
+import { EmployeeTypes } from './employee-types.model';
 
 export interface Employee extends IBaseEntityModel {
 	endWork?: any;
@@ -47,4 +48,9 @@ export enum PayPeriodEnum {
 	WEEKLY = 'WEEKLY',
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
+}
+
+export interface EmployeeTypesCreateInput {
+	name: string;
+	organizationId: string;
 }
