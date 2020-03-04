@@ -35,7 +35,7 @@ import { RolePermissions, createRolePermissions } from '../../role-permissions';
 import { createTenants } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
-import { seedEmpTypes } from '../../organization/employee-types.seed';
+// import { seedEmpTypes } from '../../organization/employee-types.seed';
 import { EmployeeTypes } from '../../employee-types/employee-types.entity';
 
 const allEntities = [

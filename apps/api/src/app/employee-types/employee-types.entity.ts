@@ -1,11 +1,4 @@
-import {
-	Entity,
-	PrimaryGeneratedColumn,
-	Column,
-	ManyToMany,
-	JoinTable
-} from 'typeorm';
-import { User } from '../user';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
 export class EmployeeTypes {

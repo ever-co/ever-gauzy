@@ -6,7 +6,6 @@ import { Employee, EmployeeTypesCreateInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-// import { EmployeesService } from '@gauzy/src/app/@core/services';
 import { EmployeesService } from '../../../../../@core/services/employees.service';
 import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
 

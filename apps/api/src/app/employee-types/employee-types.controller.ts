@@ -7,8 +7,7 @@ import {
 	Get,
 	Param,
 	Delete,
-	Patch,
-	Put
+	Patch
 } from '@nestjs/common';
 import { CrudController } from '../core/crud';
 import { EmployeeTypes } from './employee-types.entity';
@@ -41,7 +40,6 @@ export class EmployeeTypesController extends CrudController<EmployeeTypes> {
 
 	@Patch('updateType/:id')
 	async updateType(@Body() empType, @Param() params) {
-		console.log(params);
 		return this.employeeTypesService.update(params.id, empType);
 	}
 }

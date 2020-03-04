@@ -1,4 +1,4 @@
-export enum EmployeeTypes {
+export enum GenericEmployeeTypes {
 	INTERN = 'Intern',
 	CONTRACT = 'Contract',
 	PROBATION = 'Probation',

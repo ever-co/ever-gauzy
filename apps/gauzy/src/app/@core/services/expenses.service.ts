@@ -1,4 +1,3 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
@@ -21,7 +20,7 @@ export class ExpensesService {
 			.post<Expense>('/api/expense/create', createInput)
 			.pipe(first())
 			.toPromise();
-  }
+	}
 
 	getMyAllWithSplitExpenses(
 		relations?: string[],

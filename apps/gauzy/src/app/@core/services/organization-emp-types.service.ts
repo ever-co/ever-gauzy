@@ -12,7 +12,6 @@ export class OrganizationEmpTypesService {
 	}
 
 	update(empType) {
-		console.log(empType);
 		return this.http.patch(
 			`http://localhost:3000/api/empTypes/updateType/${empType.id}`,
 			empType
