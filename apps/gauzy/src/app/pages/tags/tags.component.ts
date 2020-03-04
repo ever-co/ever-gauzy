@@ -6,10 +6,11 @@ import { TagsService } from '../../@core/services/tags.service';
 import { Tag } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
+import { FormGroup } from '@angular/forms';
 
 export interface SelectedTag {
 	data: Tag;
-	isSelected: boolean;
+	isSelected: false;
 }
 
 @Component({
@@ -23,6 +24,9 @@ export class TagsComponent implements OnInit, OnDestroy {
 	selectedTag: SelectedTag;
 	smartTableSource = new LocalDataSource();
 	tag: Tag;
+	form: FormGroup;
+	data: SelectedTag;
+	disableButton = true;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -40,13 +44,16 @@ export class TagsComponent implements OnInit, OnDestroy {
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
+		this.selectedTag = null;
 		this.loadSettings();
 	}
 
-	selectTag(data: SelectedTag) {
+	async selectTag(data) {
 		if (data.isSelected) {
 			this.tag = data.data;
 		}
+		this.disableButton = false;
+		console.log(data);
 	}
 	async delete() {
 		const result = await this.dialogService
@@ -59,7 +66,18 @@ export class TagsComponent implements OnInit, OnDestroy {
 			this.loadSettings();
 		}
 	}
-	async edit() {}
+	async edit() {
+		const dialog = this.dialogService.open(TagsMutationComponent, {
+			context: {
+				tag: this.tag
+			}
+		});
+
+		await dialog.onClose.pipe(first()).toPromise();
+		// this.selectedTag = null;
+		this.disableButton = false;
+		this.loadSettings();
+	}
 
 	loadSmartTable() {
 		this.settingsSmartTable = {
@@ -82,6 +100,7 @@ export class TagsComponent implements OnInit, OnDestroy {
 	}
 
 	async loadSettings() {
+		this.selectedTag = null;
 		const { items } = await this.tagsService.getAllTags();
 		this.smartTableSource.load(items);
 	}

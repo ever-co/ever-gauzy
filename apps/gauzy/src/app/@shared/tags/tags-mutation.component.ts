@@ -50,17 +50,36 @@ export class TagsMutationComponent implements OnInit {
 			})
 		);
 	}
+	async editTag(){
+		await this.tagsService.update(this.tag.id,
+			Object.assign({
+				name: this.form.value.name,
+				description: this.form.value.description,
+				color: this.form.value.color.color
+			})
+		)
+		this.closeDialog();
+	}
 
 	async closeDialog() {
 		this.dialogRef.close();
 	}
 
 	async initializeForm() {
-		this.form = this.fb.group({
-			name: [''],
-			description: [''],
-			color: ['']
-		});
+		if (this.tag) {
+			this.form = this.fb.group({
+				name: this.tag.name,
+				color: this.tag.color,
+				description: this.tag.description
+			});
+		} else {
+			this.form = this.fb.group({
+				name: [''],
+				description: [''],
+				color: ['']
+			});
+		}
+		
 	}
 
 	async seedFakeData() {
