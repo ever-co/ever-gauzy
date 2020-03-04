@@ -20,7 +20,9 @@
 		"SELECT_ALL": "Выделить все",
 		"COPY_LINK": "Скопировать ссылку",
 		"MANAGE_INVITES": "Управление приглашениями",
-		"RESEND": "Переслать"
+		"RESEND": "Переслать",
+		"NEXT": "Следующий",
+		"PREVIOUS": "Предыдущий"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -250,7 +252,11 @@
 		"USERS": "Пользователи",
 		"ROLES": "Роли и Разрешения",
 		"DANGER_ZONE": "Опасная зона",
-		"DOWNLOAD_DATA": "Скачать все данные",
+		"IMPORT_EXPORT": {
+			"IMPORT_EXPORT": "Импорт/Экспорт",
+			"IMPORT": "Импорт",
+			"EXPORT": "Экспорт"
+		},
 		"TAGS": "Теги"
 	},
 	"SETTINGS_MENU": {
@@ -570,7 +576,8 @@
 	},
 	"FOOTER": {
 		"BY": "по",
-		"RIGHTS_RECERVED": "Все права защищены."
+		"RIGHTS_RECERVED": "Все права защищены.",
+		"PRESENT": "Подарочный"
 	},
 	"TOASTR": {
 		"TITLE": {

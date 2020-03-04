@@ -45,8 +45,22 @@ export interface OrganizationCreateInput {
 	imageUrl: string;
 	currency: CurrenciesEnum;
 	defaultValueDateType: DefaultValueDateTypeEnum;
+	dateFormat?: string;
+	timeZone?: string;
+	officialName?: string;
+	startWeekOn?: string;
+	taxId?: string;
+	country?: string;
+	city?: string;
+	address?: string;
+	address2?: string;
+	postcode?: string;
+	regionCode?: string;
+	numberFormat?: string;
 	bonusType: BonusTypeEnum;
-	bonusPercentage: number;
+	bonusPercentage?: number;
+	invitesAllowed?: boolean;
+	inviteExpiryPeriod?: number;
 }
 
 export enum OrganizationSelectInput {

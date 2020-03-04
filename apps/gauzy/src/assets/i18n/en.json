@@ -20,7 +20,9 @@
 		"SELECT_ALL": "Select All",
 		"COPY_LINK": "Copy Link",
 		"MANAGE_INVITES": "Manage Invites",
-		"RESEND": "Resend"
+		"RESEND": "Resend",
+		"NEXT": "Next",
+		"PREVIOUS": "Previous"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -251,7 +253,11 @@
 		"USERS": "Users",
 		"ROLES": "Roles & Permissions",
 		"DANGER_ZONE": "Danger Zone",
-		"DOWNLOAD_DATA": "Download all data",
+		"IMPORT_EXPORT": {
+			"IMPORT_EXPORT": "Import/Export",
+			"IMPORT": "Import",
+			"EXPORT": "Export"
+		},
 		"TAGS": "Tags"
 	},
 	"SETTINGS_MENU": {
@@ -572,7 +578,8 @@
 	},
 	"FOOTER": {
 		"BY": "by",
-		"RIGHTS_RECERVED": "All rights reserved."
+		"RIGHTS_RECERVED": "All rights reserved.",
+		"PRESENT": "Present"
 	},
 	"TOASTR": {
 		"TITLE": {
