@@ -3,6 +3,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { TagsService } from '../../@core/services/tags.service';
 import { Tag } from '@gauzy/models';
+
 @Component({
 	selector: 'ngx-tags-mutation',
 	templateUrl: './tags-mutation.component.html',
@@ -13,7 +14,7 @@ export class TagsMutationComponent implements OnInit {
 	form: FormGroup;
 	tag: Tag;
 	
-	public color1: string = '#2889e9';
+	public color: string = '#2889e9';
 	constructor(
 		protected dialogRef: NbDialogRef<TagsMutationComponent>,
 		private tagsService: TagsService,
@@ -32,7 +33,7 @@ export class TagsMutationComponent implements OnInit {
 			Object.assign({
 				name: this.form.value.name,
 				description: this.form.value.description,
-				color: this.form.value.color
+				color: this.color
 			})
 		);
 	}
@@ -56,14 +57,14 @@ export class TagsMutationComponent implements OnInit {
 		if (this.tag) {
 			this.form = this.fb.group({
 				name: [this.tag.name],
-				color: [this.tag.color],
+				color: [this.color],
 				description: [this.tag.description]
 			});
 		} else {
 			this.form = this.fb.group({
 				name: [''],
 				description: [''],
-				color: ['ASDDAS']
+				color: ['']
 			});
 		}
 	}

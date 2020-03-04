@@ -7,6 +7,8 @@ import { Tag } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
+import { ColorPickerModule } from 'ngx-color-picker';
+import {TagsColorComponent} from './tags-color/tags-color.component'
 
 export interface SelectedTag {
 	data: Tag;
@@ -99,7 +101,8 @@ export class TagsComponent implements OnInit, OnDestroy {
 				},
 				color: {
 					title: 'Color',
-					type: 'string'
+					type: 'string',
+					 
 				}
 			}
 		};
