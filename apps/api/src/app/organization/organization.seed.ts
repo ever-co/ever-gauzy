@@ -4,7 +4,11 @@ import { environment as env } from '@env-api/environment';
 import { Organization } from './organization.entity';
 import * as faker from 'faker';
 import { getDummyImage } from '../core';
-import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import {
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	EmployeeTypesCreateInput
+} from '@gauzy/models';
 
 export const createOrganizations = async (
 	connection: Connection,

@@ -4,7 +4,6 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { Tenant } from './tenant.model';
-import { EmployeeTypes } from './employee-types.model';
 
 export interface Employee extends IBaseEntityModel {
 	endWork?: any;
