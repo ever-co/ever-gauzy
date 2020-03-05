@@ -1,5 +1,12 @@
 import { Tenant } from './../../../../../../../../libs/models/src/lib/tenant.model';
-import { Component, ViewChild, ElementRef, Input, OnInit } from '@angular/core';
+import {
+	Component,
+	ViewChild,
+	ElementRef,
+	Input,
+	OnInit,
+	AfterViewInit
+} from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
 import { User, RolesEnum } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
@@ -12,7 +19,7 @@ import { TranslateService } from '@ngx-translate/core';
 	templateUrl: 'basic-info-form.component.html',
 	styleUrls: ['basic-info-form.component.scss']
 })
-export class BasicInfoFormComponent implements OnInit {
+export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	UPLOADER_PLACEHOLDER: string = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
 	@ViewChild('imagePreview', { static: false })
@@ -89,7 +96,10 @@ export class BasicInfoFormComponent implements OnInit {
 				])
 			],
 			startedWorkOn: ['', this.isEmployee ? Validators.required : null],
-			role: ['', this.isEmployee ? null : Validators.required]
+			role: ['', this.isEmployee ? null : Validators.required],
+			offerDate: [''],
+			acceptDate: [''],
+			rejectDate: ['']
 		});
 
 		this.imageUrl = this.form.get('imageUrl');
@@ -105,7 +115,7 @@ export class BasicInfoFormComponent implements OnInit {
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(defaultRoleName: RolesEnum): Promise<User> {
+	async registerUser(defaultRoleName: RolesEnum) {
 		const startedWorkOn = this.form.get('startedWorkOn');
 
 		if (this.form.valid) {
@@ -115,6 +125,7 @@ export class BasicInfoFormComponent implements OnInit {
 				})
 				.pipe(first())
 				.toPromise();
+
 			return this.authService
 				.register({
 					user: {

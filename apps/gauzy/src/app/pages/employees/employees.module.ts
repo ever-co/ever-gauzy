@@ -14,7 +14,8 @@ import {
 	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule,
-	NbActionsModule
+	NbActionsModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -46,6 +47,7 @@ import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-em
 import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
 import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
 import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
+import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -66,7 +68,8 @@ const COMPONENTS = [
 	ManageEmployeeInviteComponent,
 	EditEmployeeDepartmentComponent,
 	EditEmployeeProjectsComponent,
-	EditEmployeeClientComponent
+	EditEmployeeClientComponent,
+	EditEmployeeHiringComponent
 ];
 
 @NgModule({
@@ -103,7 +106,8 @@ const COMPONENTS = [
 		InviteTableModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbActionsModule,
-		EditEmployeeMembershipFormModule
+		EditEmployeeMembershipFormModule,
+		NbDatepickerModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

@@ -20,6 +20,9 @@ export interface Employee extends IBaseEntityModel {
 	reWeeklyLimit?: number;
 	tenant: Tenant;
 	tags: Tag[];
+	offerDate?: Date;
+	acceptDate?: Date;
+	rejectDate?: Date;
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {
@@ -34,6 +37,9 @@ export interface EmployeeUpdateInput {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	offerDate?: Date;
+	acceptDate?: Date;
+	rejectDate?: Date;
 }
 
 export interface EmployeeCreateInput {
