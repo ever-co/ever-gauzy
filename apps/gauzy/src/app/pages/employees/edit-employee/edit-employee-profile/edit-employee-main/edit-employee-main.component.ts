@@ -91,7 +91,6 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 
 	private _initializeForm(employee: Employee) {
 		// TODO: Implement Departments and Positions!
-		console.log(employee);
 		this.form = this.fb.group({
 			username: [employee.user.username],
 			email: [employee.user.email, Validators.required],
