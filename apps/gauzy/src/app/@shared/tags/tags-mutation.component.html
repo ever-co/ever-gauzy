@@ -17,18 +17,16 @@
 					nbInput
 					placeholder="Add name"
 				/>
-				<nb-select
+				<input
 					class="select-color"
+					nbInput
 					placeholder="Select Color"
 					formControlName="color"
-				>
-					<nb-option
-						*ngFor="let color of selectedColor"
-						[value]="color"
-					>
-						{{ color }}
-					</nb-option>
-				</nb-select>
+					[(colorPicker)]="color"
+					[value]="color"
+					[style.background]="color"
+
+				/>	
 			</div>
 			<div>
 				<textarea

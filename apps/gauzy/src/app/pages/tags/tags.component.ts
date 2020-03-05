@@ -7,6 +7,7 @@ import { Tag } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
+import {TagsColorComponent} from './tags-color/tags-color.component'
 
 export interface SelectedTag {
 	data: Tag;
@@ -45,14 +46,17 @@ export class TagsComponent implements OnInit, OnDestroy {
 
 		await dialog.onClose.pipe(first()).toPromise();
 		this.selectedTag = null;
+		this.disableButton = true;
 		this.loadSettings();
 	}
 
 	async selectTag(data) {
 		if (data.isSelected) {
 			this.tag = data.data;
+			this.disableButton = false;
+		}else{
+			this.disableButton = true;
 		}
-		this.disableButton = false;
 		console.log(data);
 	}
 	async delete() {
@@ -65,6 +69,7 @@ export class TagsComponent implements OnInit, OnDestroy {
 			await this.tagsService.delete(this.tag.id);
 			this.loadSettings();
 		}
+		this.disableButton = true;
 	}
 	async edit() {
 		const dialog = this.dialogService.open(TagsMutationComponent, {
@@ -74,8 +79,8 @@ export class TagsComponent implements OnInit, OnDestroy {
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
-		// this.selectedTag = null;
-		this.disableButton = false;
+		
+		this.disableButton = true;
 		this.loadSettings();
 	}
 
@@ -84,16 +89,19 @@ export class TagsComponent implements OnInit, OnDestroy {
 			actions: false,
 			columns: {
 				name: {
-					title: 'Full Name',
+					title: 'Name',
 					type: 'string'
 				},
 				description: {
-					title: 'Descpription',
+					title: 'Description',
 					type: 'string'
 				},
 				color: {
 					title: 'Color',
-					type: 'string'
+					type: 'custom',
+					class: 'text-center',	
+					renderComponent:TagsColorComponent
+					 
 				}
 			}
 		};
