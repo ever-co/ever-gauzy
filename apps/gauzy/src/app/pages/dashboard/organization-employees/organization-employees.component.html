@@ -74,7 +74,17 @@
 				let employeeExpense of aggregatedEmployeeStatistics?.employees
 			"
 		>
-			<div class="block-content">
+			<div
+				class="block-content"
+				(click)="
+					selectEmployee(
+						employeeExpense.employee,
+						employeeExpense.employee.user.firstName,
+						employeeExpense.employee.user.lastName,
+						employeeExpense.employee.user.imageUrl
+					)
+				"
+			>
 				<div class="block-info">
 					<div class="row">
 						<div class="col">
