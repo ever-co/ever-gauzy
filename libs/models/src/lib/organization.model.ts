@@ -6,6 +6,7 @@ export interface Organization extends IBaseEntityModel {
 	valueDate?: Date;
 	totalEmployees?: number;
 	status?: string;
+	// Organization logo Url
 	imageUrl?: string;
 	currency: string;
 	isActive: boolean;
@@ -29,6 +30,11 @@ export interface Organization extends IBaseEntityModel {
 	tenant: Tenant;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
+	website?: string;
+	// used in invoice headers to display organization details
+	fiscalInformation?: string;
+	// "left" and "right" values, used to know where to put currency symbol relative to amount
+	currencyPosition?: string;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
@@ -61,6 +67,9 @@ export interface OrganizationCreateInput {
 	bonusPercentage?: number;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
+	website?: string;
+	// used in invoice headers to display organization details
+	fiscalInformation?: string;
 }
 
 export enum OrganizationSelectInput {

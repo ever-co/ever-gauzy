@@ -10,13 +10,19 @@ export interface OrganizationClients extends IBaseEntityWithMembers {
 	emailAddresses?: string[];
 	primaryPhone: string;
 	phones?: string[];
-	country: string;
-	street: string;
-	city: string;
-	zipCode?: number;
+	fax?: string;
+	// used in invoice headers to display client details
+	fiscalInformation?: string;
+	website?: string;
+	country?: string;
+	street?: string; // TODO: rename to `address`
+	address2?: string;
+	city?: string;
+	zipCode?: number; // TODO: rename to `postcode`
 	state?: string;
 	projects?: OrganizationProjects[];
 	notes?: string;
+	imageUrl?: string;
 	members?: Employee[];
 }
 
@@ -25,8 +31,13 @@ export interface OrganizationClientsFindInput extends IBaseEntityModel {
 	organizationId?: string;
 	primaryEmail?: string;
 	primaryPhone?: string;
+	fax?: string;
+	// used in invoice headers to display client details
+	fiscalInformation?: string;
+	website?: string;
 	country?: string;
 	street?: string;
+	address2?: string;
 	city?: string;
 	zipCode?: number;
 	state?: string;
@@ -40,11 +51,17 @@ export interface OrganizationClientsCreateInput extends IBaseEntityModel {
 	emailAddresses?: string[];
 	primaryPhone: string;
 	phones?: string[];
+	fax?: string;
+	// used in invoice headers to display client details
+	fiscalInformation?: string;
+	website?: string;
 	country: string;
 	street: string;
+	address2?: string;
 	city: string;
 	zipCode?: number;
 	state?: string;
 	projects?: OrganizationProjects[];
 	notes?: string;
+	imageUrl?: string;
 }
