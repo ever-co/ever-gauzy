@@ -21,8 +21,8 @@
 		"COPY_LINK": "Копирай линка",
 		"MANAGE_INVITES": "Управлявай поканите",
 		"RESEND": "Преизпрати",
-		"NEXT": "Next",
-		"PREVIOUS": "Previous"
+		"NEXT": "Следващ",
+		"PREVIOUS": "Предишен"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -74,7 +74,7 @@
 		"EXPIRE_DATE": "Изтича",
 		"CLIENTS": "Клиенти",
 		"DEPARTMENTS": "Отдели",
-		"DESCRIPTION": "Description",
+		"DESCRIPTION": "Описание",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
