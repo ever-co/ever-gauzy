@@ -7,7 +7,6 @@ import { Tag } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
-import { ColorPickerModule } from 'ngx-color-picker';
 import {TagsColorComponent} from './tags-color/tags-color.component'
 
 export interface SelectedTag {
@@ -55,11 +54,9 @@ export class TagsComponent implements OnInit, OnDestroy {
 		if (data.isSelected) {
 			this.tag = data.data;
 			this.disableButton = false;
-			
 		}else{
 			this.disableButton = true;
 		}
-	
 		console.log(data);
 	}
 	async delete() {
@@ -101,7 +98,9 @@ export class TagsComponent implements OnInit, OnDestroy {
 				},
 				color: {
 					title: 'Color',
-					type: 'string',
+					type: 'custom',
+					class: 'text-center',	
+					renderComponent:TagsColorComponent
 					 
 				}
 			}
