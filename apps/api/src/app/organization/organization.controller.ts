@@ -6,7 +6,6 @@ import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
 import { UUIDValidationPipe } from '../shared';
 import { EmployeeTypesCreateInput } from '@gauzy/models';
-import * as fs from 'fs';
 import { getConnection, Connection } from 'typeorm';
 import { EmployeeTypes } from '../employee-types/employee-types.entity';
 
