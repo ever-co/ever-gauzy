@@ -174,6 +174,6 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 			}
 		});
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		await dialog.onClose.pipe(first()).toPromise();
 	}
 }

@@ -1,13 +1,11 @@
 import {
 	OrganizationClients,
-	InviteStatusEnum,
 	ClientOrganizationInviteStatus
 } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationClientsInviteCommand } from '../organization-clients.invite.command';
 import { OrganizationClientsService } from '../../organization-clients.service';
 import { EmailService } from '../../../email';
-import { Exception } from 'handlebars';
 
 /**
  * Sends an invitation email to the organization client's primaryEmail
@@ -24,7 +22,7 @@ export class OrganizationClientsInviteHandler
 		command: OrganizationClientsInviteCommand
 	): Promise<OrganizationClients> {
 		const {
-			input: { id, originalUrl, inviterUser }
+			input: { id }
 		} = command;
 
 		const organizationClient = await this.organizationClientsService.findOne(

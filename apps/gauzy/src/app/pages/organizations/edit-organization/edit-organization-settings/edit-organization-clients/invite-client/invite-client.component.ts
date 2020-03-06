@@ -3,7 +3,6 @@ import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormBuilder, Validators } from '@angular/forms';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { OrganizationClients } from '@gauzy/models';
 
