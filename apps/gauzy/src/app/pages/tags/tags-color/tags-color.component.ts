@@ -9,6 +9,7 @@ import { ViewCell } from 'ng2-smart-table';
 })
 export class TagsColorComponent implements ViewCell {
 
+  
   @Input()
   value: string | number;
   rowData: any;

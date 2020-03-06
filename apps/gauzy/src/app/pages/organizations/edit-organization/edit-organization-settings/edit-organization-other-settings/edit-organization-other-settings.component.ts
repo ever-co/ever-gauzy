@@ -31,7 +31,6 @@ export class EditOrganizationOtherSettingsComponent
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: Organization;
-
 	form: FormGroup;
 
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
