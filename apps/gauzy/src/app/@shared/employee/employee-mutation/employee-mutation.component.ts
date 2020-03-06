@@ -40,8 +40,15 @@ export class EmployeeMutationComponent implements OnInit {
 				RolesEnum.EMPLOYEE
 			);
 			const organization = this.store.selectedOrganization;
+
+			const newEmployee = {
+				user,
+				organization,
+				...this.userBasicInfo.form.value
+			};
+
 			const employee = await this.employeesService
-				.create({ user, organization })
+				.create(newEmployee)
 				.pipe(first())
 				.toPromise();
 

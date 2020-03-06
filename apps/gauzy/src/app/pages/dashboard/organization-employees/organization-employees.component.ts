@@ -4,6 +4,10 @@ import { EmployeeStatisticsService } from '../../../@core/services/employee-stat
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { AggregatedEmployeeStatistic, Organization } from '@gauzy/models';
+import {
+	SelectedEmployee,
+	ALL_EMPLOYEES_SELECTED
+} from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
 	selector: 'ga-organization-employees',
@@ -19,6 +23,7 @@ export class OrganizationEmployeesComponent implements OnInit, OnDestroy {
 	aggregatedEmployeeStatistics: AggregatedEmployeeStatistic;
 	selectedDate: Date;
 	selectedOrganization: Organization;
+	selectedEmployee: SelectedEmployee;
 
 	constructor(
 		private store: Store,
@@ -54,6 +59,18 @@ export class OrganizationEmployeesComponent implements OnInit, OnDestroy {
 			);
 		}
 	};
+
+	selectEmployee(
+		employee: SelectedEmployee,
+		firstName: string,
+		lastName: string,
+		imageUrl: string
+	) {
+		this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+		this.store.selectedEmployee.firstName = firstName;
+		this.store.selectedEmployee.lastName = lastName;
+		this.store.selectedEmployee.imageUrl = imageUrl;
+	}
 
 	ngOnDestroy(): void {
 		this._ngDestroy$.next();

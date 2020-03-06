@@ -24,7 +24,6 @@ import { Tag } from '../tags';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
-	
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tags_employee'
@@ -103,4 +102,22 @@ export class Employee extends Base implements IEmployee {
 		name: 'organization_team_employee'
 	})
 	teams?: OrganizationTeams[];
+
+	@ApiPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	offerDate?: Date;
+
+	@ApiPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	acceptDate?: Date;
+
+	@ApiPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	rejectDate?: Date;
 }

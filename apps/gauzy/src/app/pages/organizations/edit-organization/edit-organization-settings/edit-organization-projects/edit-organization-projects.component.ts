@@ -4,7 +4,8 @@ import {
 	Organization,
 	OrganizationClients,
 	OrganizationProjects,
-	OrganizationProjectsCreateInput
+	OrganizationProjectsCreateInput,
+	PermissionsEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -32,6 +33,7 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 	clients: OrganizationClients[];
 	employees: Employee[] = [];
 	projectToEdit: OrganizationProjects;
+	viewPrivateProjects: boolean;
 
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
@@ -55,6 +57,13 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 					this.loadEmployees();
 					this.loadClients();
 				}
+			});
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.viewPrivateProjects = this.store.hasPermission(
+					PermissionsEnum.ACCESS_PRIVATE_PROJECTS
+				);
 			});
 	}
 
@@ -133,7 +142,23 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 			}
 		);
 		if (res) {
-			this.projects = res.items;
+			const canView = [];
+			if (this.viewPrivateProjects) {
+				this.projects = res.items;
+			} else {
+				res.items.filter((item) => {
+					if (item.public) {
+						canView.push(item);
+					} else {
+						item.members.filter((member) => {
+							if (member.id === this.store.userId) {
+								canView.push(item);
+							}
+						});
+					}
+				});
+				this.projects = canView;
+			}
 		}
 	}
 
