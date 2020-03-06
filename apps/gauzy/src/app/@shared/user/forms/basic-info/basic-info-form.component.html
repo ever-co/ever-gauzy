@@ -190,6 +190,9 @@
 					[nbDatepicker]="acceptDatePicker"
 					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 					[autocomplete]="off"
+					[ngClass]="{
+						'status-danger': acceptDate.dirty && !acceptDate.valid
+					}"
 				/>
 				<nb-datepicker #acceptDatePicker></nb-datepicker>
 			</div>
@@ -210,6 +213,9 @@
 					[nbDatepicker]="rejectDatePicker"
 					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 					[autocomplete]="off"
+					[ngClass]="{
+						'status-danger': rejectDate.dirty && !rejectDate.valid
+					}"
 				/>
 				<nb-datepicker #rejectDatePicker></nb-datepicker>
 			</div>
