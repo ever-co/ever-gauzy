@@ -7,7 +7,6 @@ import { getDummyImage } from '../core';
 import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	EmployeeTypesCreateInput,
 	BonusTypeEnum
 } from '@gauzy/models';
 
