@@ -191,7 +191,7 @@
 					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 					[autocomplete]="off"
 					[ngClass]="{
-						'status-danger': acceptDate.dirty && !acceptDate.valid
+						'status-danger': !acceptDate.valid
 					}"
 				/>
 				<nb-datepicker #acceptDatePicker></nb-datepicker>
@@ -214,7 +214,7 @@
 					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 					[autocomplete]="off"
 					[ngClass]="{
-						'status-danger': rejectDate.dirty && !rejectDate.valid
+						'status-danger': !rejectDate.valid
 					}"
 				/>
 				<nb-datepicker #rejectDatePicker></nb-datepicker>

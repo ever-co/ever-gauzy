@@ -34,9 +34,8 @@
 							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 							autocomplete="off"
 							[ngClass]="{
-								'status-danger':
-									form.controls['acceptDate'].dirty &&
-									!form.controls['acceptDate'].valid
+								'status-danger': !form.controls['acceptDate']
+									.valid
 							}"
 						/>
 						<nb-datepicker #acceptDatePicker></nb-datepicker>
@@ -59,9 +58,8 @@
 							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 							autocomplete="off"
 							[ngClass]="{
-								'status-danger':
-									form.controls['rejectDate'].dirty &&
-									!form.controls['rejectDate'].valid
+								'status-danger': !form.controls['rejectDate']
+									.valid
 							}"
 						/>
 						<nb-datepicker #rejectDatePicker></nb-datepicker>

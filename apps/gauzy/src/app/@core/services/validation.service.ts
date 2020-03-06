@@ -11,11 +11,11 @@ export class ValidationService {
 		const acceptDate = form.get('acceptDate');
 		const rejectDate = form.get('rejectDate');
 
-		if (acceptDate.value < offerDate.value && acceptDate.value !== '') {
+		if (acceptDate.value && acceptDate.value < offerDate.value) {
 			acceptDate.setErrors({ invalid: true });
 		}
 
-		if (rejectDate.value < offerDate.value && rejectDate.value !== '') {
+		if (rejectDate.value && rejectDate.value < offerDate.value) {
 			rejectDate.setErrors({ invalid: true });
 		}
 	}
