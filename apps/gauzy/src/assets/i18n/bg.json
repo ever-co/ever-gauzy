@@ -506,7 +506,13 @@
 	"TAGS_PAGE": {
 		"HEADER": "Тагове",
 		"ADD_TAGS": "Добавяне на таг",
-		"EDIT_TAGS": "Редактиране на таг"
+		"EDIT_TAGS": "Редактиране на таг",
+		"TAGS_NAME": "Име",
+		"TAGS_DESCRIPTION": "Description",
+		"TAGS_COLOR": "Color",
+		"TAGS_ADD_TAG": "Tag added",
+		"TAGS_EDIT_TAG": "Tag edited",
+		"TAGS_DELETE_TAG": "Tag deleted"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
