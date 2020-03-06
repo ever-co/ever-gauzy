@@ -127,7 +127,8 @@
 			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
-			"REJECT_DATE": "Reject Date (optional)"
+			"REJECT_DATE": "Reject Date (optional)",
+			"EMAIL_INVITATION": "Enter email to send invitation"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -383,6 +384,8 @@
 		"SETTINGS": "הגדרות",
 		"ROLES": "Roles",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
+		"INVITE_CLIENT": "Invite Client",
+		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
