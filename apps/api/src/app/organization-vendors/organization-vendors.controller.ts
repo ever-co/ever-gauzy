@@ -1,11 +1,13 @@
-import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationVendorsService } from './organization-vendors.service';
 import { OrganizationVendors } from './organization-vendors.entity';
 import { IPagination } from '../core';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Vendors')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationVendorsController extends CrudController<
 	OrganizationVendors
@@ -16,7 +18,9 @@ export class OrganizationVendorsController extends CrudController<
 		super(organizationVendorsService);
 	}
 
-	@ApiOperation({ summary: 'Find all organization vendors recurring expense.' })
+	@ApiOperation({
+		summary: 'Find all organization vendors recurring expense.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found vendors recurring expense',

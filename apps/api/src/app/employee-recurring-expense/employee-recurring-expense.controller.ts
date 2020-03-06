@@ -1,4 +1,4 @@
-import { RecurringExpenseEditInput } from '@gauzy/models';
+import { RecurringExpenseEditInput, PermissionsEnum } from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -8,7 +8,8 @@ import {
 	HttpStatus,
 	Param,
 	Put,
-	Query
+	Query,
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -19,8 +20,12 @@ import { EmployeeRecurringExpenseEditCommand } from './commands/employee-recurri
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import { EmployeeRecurringExpenseByMonthQuery } from './queries/employee-recurring-expense.by-month.query';
+import { AuthGuard } from '@nestjs/passport';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('EmployeeRecurringExpense')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeRecurringExpenseController extends CrudController<
 	EmployeeRecurringExpense
@@ -43,6 +48,8 @@ export class EmployeeRecurringExpenseController extends CrudController<
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Delete(':id')
 	async delete(
 		@Param('id') id: string,

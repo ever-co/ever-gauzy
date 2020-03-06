@@ -5,18 +5,26 @@ import {
 	Query,
 	Post,
 	Body,
-	Param
+	Param,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
 import { Employee } from './employee.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
-import { EmployeeCreateInput as IEmployeeCreateInput } from '@gauzy/models';
+import {
+	EmployeeCreateInput as IEmployeeCreateInput,
+	PermissionsEnum
+} from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand } from './commands';
+import { AuthGuard } from '@nestjs/passport';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('Employee')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
@@ -36,6 +44,8 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get()
 	async findAllEmployees(
 		@Query('data') data: string
@@ -54,6 +64,8 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<Employee> {
 		return this.employeeService.findOne(id);
@@ -69,6 +81,8 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/create')
 	async create(
 		@Body() entity: IEmployeeCreateInput,

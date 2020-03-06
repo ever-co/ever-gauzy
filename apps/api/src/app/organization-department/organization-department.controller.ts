@@ -24,8 +24,10 @@ import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Department')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationDepartmentController extends CrudController<
 	OrganizationDepartment

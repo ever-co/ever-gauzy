@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -7,7 +7,7 @@ import { Tag } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
-import {TagsColorComponent} from './tags-color/tags-color.component'
+import { TagsColorComponent } from './tags-color/tags-color.component';
 
 export interface SelectedTag {
 	data: Tag;
@@ -54,7 +54,7 @@ export class TagsComponent implements OnInit, OnDestroy {
 		if (data.isSelected) {
 			this.tag = data.data;
 			this.disableButton = false;
-		}else{
+		} else {
 			this.disableButton = true;
 		}
 		console.log(data);
@@ -79,7 +79,7 @@ export class TagsComponent implements OnInit, OnDestroy {
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
-		
+
 		this.disableButton = true;
 		this.loadSettings();
 	}
@@ -99,9 +99,8 @@ export class TagsComponent implements OnInit, OnDestroy {
 				color: {
 					title: 'Color',
 					type: 'custom',
-					class: 'text-center',	
-					renderComponent:TagsColorComponent
-					 
+					class: 'text-center',
+					renderComponent: TagsColorComponent
 				}
 			}
 		};

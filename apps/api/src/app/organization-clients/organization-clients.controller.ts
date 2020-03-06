@@ -19,8 +19,10 @@ import { OrganizationClients } from './organization-clients.entity';
 import { OrganizationClientsService } from './organization-clients.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Clients')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationClientsController extends CrudController<
 	OrganizationClients
