@@ -14,8 +14,7 @@ import { Employee } from './employee.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
 import {
-	EmployeeCreateInput as IEmployeeCreateInput,
-	EmployeeTypesCreateInput
+	EmployeeCreateInput as IEmployeeCreateInput
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand } from './commands';
