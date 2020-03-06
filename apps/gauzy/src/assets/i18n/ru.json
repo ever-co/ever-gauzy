@@ -506,7 +506,13 @@
 	"TAGS_PAGE": {
 		"HEADER": "Теги",
 		"ADD_TAGS": "Добавить теги",
-		"EDIT_TAGS": "Изменить теги"
+		"EDIT_TAGS": "Изменить теги",
+		"TAGS_NAME": "Имя",
+		"TAGS_DESCRIPTION": "Описание",
+		"TAGS_COLOR": "Цвет",
+		"TAGS_ADD_TAG": "Тег добавлен",
+		"TAGS_EDIT_TAG": "Тег отредактирован",
+		"TAGS_DELETE_TAG": "Метка удалена"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
