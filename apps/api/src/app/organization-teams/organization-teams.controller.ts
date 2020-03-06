@@ -7,7 +7,8 @@ import {
 	Body,
 	HttpCode,
 	Put,
-	Param
+	Param,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -18,7 +19,10 @@ import {
 	OrganizationTeams as IIOrganizationTeams
 } from '@gauzy/models';
 import { OrganizationTeams } from './organization-teams.entity';
+import { AuthGuard } from '@nestjs/passport';
+
 @ApiTags('Organization-Teams')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationTeamsController extends CrudController<
 	OrganizationTeams

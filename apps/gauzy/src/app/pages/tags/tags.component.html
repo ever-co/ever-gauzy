@@ -15,11 +15,23 @@
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
-			<button nbButton status="info" (click)="edit()" class="mr-2" [disabled]="disableButton">
+			<button
+				nbButton
+				status="info"
+				(click)="edit()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
-			<button nbButton status="danger" (click)="delete()" class="mr-2" [disabled]="disableButton">
+			<button
+				nbButton
+				status="danger"
+				(click)="delete()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
 				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 				{{ 'BUTTONS.DELETE' | translate }}
 			</button>

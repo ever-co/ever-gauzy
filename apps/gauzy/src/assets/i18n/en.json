@@ -509,8 +509,8 @@
 		"ADD_TAGS": "Add Tags",
 		"EDIT_TAGS": "Edit Tags",
 		"TAGS_NAME": "Name",
-		"TAGS_DESCRIPTION":"Description",
-		"TAGS_COLOR":"Color",
+		"TAGS_DESCRIPTION": "Description",
+		"TAGS_COLOR": "Color",
 		"TAGS_ADD_TAG": "Tag added",
 		"TAGS_EDIT_TAG": "Tag edited",
 		"TAGS_DELETE_TAG": "Tag deleted"
