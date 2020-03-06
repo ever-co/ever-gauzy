@@ -3,24 +3,29 @@ import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { TagsService } from '../../@core/services/tags.service';
 import { Tag } from '@gauzy/models';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../language-base/translation-base.component';
 
 @Component({
 	selector: 'ngx-tags-mutation',
 	templateUrl: './tags-mutation.component.html',
 	styleUrls: ['./tags-mutation.component.scss']
 })
-export class TagsMutationComponent implements OnInit {
+export class TagsMutationComponent extends TranslationBaseComponent
+	implements OnInit {
 	selectedColor: string[] = [];
 	form: FormGroup;
 	tag: Tag;
-	
-	public color: string = '#2889e9';
+
+	public color: string = '';
 	constructor(
 		protected dialogRef: NbDialogRef<TagsMutationComponent>,
 		private tagsService: TagsService,
-		private fb: FormBuilder
-	) {}
-
+		private fb: FormBuilder,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.seedFakeData();
@@ -28,36 +33,37 @@ export class TagsMutationComponent implements OnInit {
 	}
 
 	async addTag() {
-		this.dialogRef.close();
-		this.tagsService.insertTag(
+		const tag = await this.tagsService.insertTag(
 			Object.assign({
 				name: this.form.value.name,
 				description: this.form.value.description,
 				color: this.color
 			})
 		);
+		this.closeDialog(tag);
 	}
 	async editTag() {
-		await this.tagsService.update(
+		const tag = await this.tagsService.update(
 			this.tag.id,
 			Object.assign({
 				name: this.form.value.name,
 				description: this.form.value.description,
-				color: this.form.value.color
+				color: this.color
 			})
 		);
-		this.closeDialog();
+		this.closeDialog(tag);
 	}
 
-	async closeDialog() {
-		this.dialogRef.close();
+	async closeDialog(tag?: Tag) {
+		this.dialogRef.close(tag);
 	}
 
 	async initializeForm() {
 		if (this.tag) {
+			this.color = this.tag.color;
 			this.form = this.fb.group({
 				name: [this.tag.name],
-				color: [this.color],
+				color: [this.tag.color],
 				description: [this.tag.description]
 			});
 		} else {

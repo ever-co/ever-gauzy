@@ -504,9 +504,9 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags",
-		"ADD_TAGS": "Add Tags",
-		"EDIT_TAGS": "Edit Tags"
+		"HEADER": "Тагове",
+		"ADD_TAGS": "Добавяне на таг",
+		"EDIT_TAGS": "Редактиране на таг"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
@@ -670,7 +670,7 @@
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
-			"DELETE_ORGANIZATION": "{{ name }} organization deleted.",
+			"DELETE_ORGANIZATION": "{{ name }} организация е изтрита",
 			"ADD_NEW_USER_TO_ORGANIZATION": "добавен към",
 			"DELETE_USER_FROM_ORGANIZATION": "зададен като неактивен.",
 			"DATA_ERROR": "{{ error }}",
@@ -688,7 +688,7 @@
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
 				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
-				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",
