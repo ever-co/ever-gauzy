@@ -31,7 +31,6 @@ export class EditOrganizationOtherSettingsComponent
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: Organization;
-	public brandColor: string = '#2889e9';
 	form: FormGroup;
 
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);

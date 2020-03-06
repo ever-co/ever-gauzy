@@ -170,8 +170,7 @@
 						<div class="form-group">
 							<label class="label">
 								{{ 'FORM.LABELS.BRAND_COLOR' | translate }}
-							</label>
-                            <div class="">
+							</label>     
 							<input
 								fullWidth
 								id="brandColorInput"
@@ -180,7 +179,7 @@
 								placeholder="{{
 									'FORM.PLACEHOLDERS.ADD_COLOR' | translate
 								}}"
-								[(colorPicker)]="form.get('brandColor').value"
+								[colorPicker]="form.get('brandColor').value"
 								[style.background]="
 									form.get('brandColor').value
 								"
@@ -189,7 +188,7 @@
 									form.get('brandColor').setValue($event)
 								"
 							/>
-						</div>
+						
 						</div>
 					</div>
 					<div class="col-6">

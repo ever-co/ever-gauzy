@@ -199,7 +199,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EmployeeMutationComponent);
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
-		console.warn(data);
+
 		if (data) {
 			if (data.user.firstName || data.user.lastName) {
 				this.employeeName =
