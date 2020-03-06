@@ -127,7 +127,8 @@
 			"INVITE_EXPIRY_PERIOD": "Период на изтичане на поканите (в дни)",
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
-			"REJECT_DATE": "Reject Date (optional)"
+			"REJECT_DATE": "Reject Date (optional)",
+			"EMAIL_INVITATION": "Enter email to send invitation"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -383,6 +384,8 @@
 		"SETTINGS": "Настройки",
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Задължителни разходи в организацията",
+		"INVITE_CLIENT": "Invite Client",
+		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
