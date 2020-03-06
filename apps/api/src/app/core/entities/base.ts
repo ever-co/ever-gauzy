@@ -6,8 +6,7 @@ import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
 	CreateDateColumn,
-	ManyToMany,
-	JoinTable
+	ManyToMany
 } from 'typeorm';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/models';
