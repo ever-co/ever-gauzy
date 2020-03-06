@@ -52,9 +52,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCheckboxModule,
 		TagsMutationModule,
 		ColorPickerModule,
-		
-		
-
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
