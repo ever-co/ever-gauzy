@@ -14,7 +14,9 @@
 							nbInput
 							[nbDatepicker]="offertDatePicker"
 							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							autocomplete="off"
 						/>
+
 						<nb-datepicker #offertDatePicker></nb-datepicker>
 					</div>
 				</div>
@@ -30,6 +32,11 @@
 							nbInput
 							[nbDatepicker]="acceptDatePicker"
 							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							autocomplete="off"
+							[ngClass]="{
+								'status-danger': !form.controls['acceptDate']
+									.valid
+							}"
 						/>
 						<nb-datepicker #acceptDatePicker></nb-datepicker>
 					</div>
@@ -49,6 +56,11 @@
 							nbInput
 							[nbDatepicker]="rejectDatePicker"
 							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							autocomplete="off"
+							[ngClass]="{
+								'status-danger': !form.controls['rejectDate']
+									.valid
+							}"
 						/>
 						<nb-datepicker #rejectDatePicker></nb-datepicker>
 					</div>

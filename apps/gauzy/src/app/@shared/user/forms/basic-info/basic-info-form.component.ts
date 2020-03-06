@@ -8,11 +8,12 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { User, RolesEnum } from '@gauzy/models';
+import { RolesEnum } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -42,12 +43,16 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	off: any;
 	role: any;
 	tenant: Tenant;
+	offerDate: any;
+	acceptDate: any;
+	rejectDate: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly authService: AuthService,
 		private readonly roleService: RoleService,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		private readonly validatorService: ValidationService
 	) {}
 
 	ngOnInit(): void {
@@ -69,38 +74,46 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	}
 
 	loadFormData = () => {
-		this.form = this.fb.group({
-			username: [''],
-			firstName: [''],
-			lastName: [''],
-			email: [
-				'',
-				Validators.compose([Validators.required, Validators.email])
-			],
-			imageUrl: [
-				'',
-				Validators.compose([
-					Validators.pattern(
-						new RegExp(
-							`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
-							'g'
+		this.form = this.fb.group(
+			{
+				username: [''],
+				firstName: [''],
+				lastName: [''],
+				email: [
+					'',
+					Validators.compose([Validators.required, Validators.email])
+				],
+				imageUrl: [
+					'',
+					Validators.compose([
+						Validators.pattern(
+							new RegExp(
+								`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
+								'g'
+							)
 						)
-					)
-				])
-			],
-			password: [
-				'',
-				Validators.compose([
-					Validators.required,
-					Validators.minLength(4)
-				])
-			],
-			startedWorkOn: ['', this.isEmployee ? Validators.required : null],
-			role: ['', this.isEmployee ? null : Validators.required],
-			offerDate: [''],
-			acceptDate: [''],
-			rejectDate: ['']
-		});
+					])
+				],
+				password: [
+					'',
+					Validators.compose([
+						Validators.required,
+						Validators.minLength(4)
+					])
+				],
+				startedWorkOn: [
+					'',
+					this.isEmployee ? Validators.required : null
+				],
+				role: ['', this.isEmployee ? null : Validators.required],
+				offerDate: [''],
+				acceptDate: [''],
+				rejectDate: ['']
+			},
+			{
+				validator: this.validatorService.validateDate
+			}
+		);
 
 		this.imageUrl = this.form.get('imageUrl');
 		this.username = this.form.get('username');
@@ -109,6 +122,9 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		this.email = this.form.get('email');
 		this.password = this.form.get('password');
 		this.role = this.form.get('role');
+		this.offerDate = this.form.get('offerDate');
+		this.acceptDate = this.form.get('acceptDate');
+		this.rejectDate = this.form.get('rejectDate');
 	};
 
 	get showImageMeta() {

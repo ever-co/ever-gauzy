@@ -6,6 +6,7 @@ import { Subject, Subscription } from 'rxjs';
 import { Params } from '@angular/router';
 import { Employee } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
+import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 
 @Component({
 	selector: 'ga-edit-employee-hiring',
@@ -21,7 +22,8 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private fb: FormBuilder,
-		private employeeStore: EmployeeStore
+		private employeeStore: EmployeeStore,
+		private validationService: ValidationService
 	) {}
 
 	ngOnInit() {
@@ -44,11 +46,16 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 	}
 
 	private _initializeForm(employee: Employee) {
-		this.form = this.fb.group({
-			offerDate: [employee.offerDate],
-			acceptDate: [employee.acceptDate],
-			rejectDate: [employee.rejectDate]
-		});
+		this.form = this.fb.group(
+			{
+				offerDate: [employee.offerDate],
+				acceptDate: [employee.acceptDate],
+				rejectDate: [employee.rejectDate]
+			},
+			{
+				validator: this.validationService.validateDate
+			}
+		);
 	}
 
 	ngOnDestroy() {
