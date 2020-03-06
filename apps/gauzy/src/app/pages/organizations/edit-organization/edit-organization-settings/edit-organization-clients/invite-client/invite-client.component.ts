@@ -39,7 +39,7 @@ export class InviteClientComponent extends TranslationBaseComponent
 		});
 	}
 
-	closeDialog(organizationClient) {
+	closeDialog(organizationClient?) {
 		this.dialogRef.close(organizationClient);
 		console.log(organizationClient);
 	}
