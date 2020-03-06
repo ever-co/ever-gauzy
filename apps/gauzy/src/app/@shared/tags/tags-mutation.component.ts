@@ -54,7 +54,7 @@ export class TagsMutationComponent extends TranslationBaseComponent implements O
 		this.closeDialog(tag);
 	}
 
-	async closeDialog(tag: Tag) {
+	async closeDialog(tag?: Tag) {
 		this.dialogRef.close(tag);
 	}
 
