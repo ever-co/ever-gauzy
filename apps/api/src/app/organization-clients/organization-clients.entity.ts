@@ -5,7 +5,9 @@ import {
 	JoinColumn,
 	ManyToMany,
 	OneToMany,
-	JoinTable
+	JoinTable,
+	OneToOne,
+	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -13,12 +15,17 @@ import {
 	IsString,
 	IsEmail,
 	IsOptional,
-	IsNumber
+	IsNumber,
+	IsEnum
 } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { OrganizationClients as IOrganizationClients } from '@gauzy/models';
+import {
+	OrganizationClients as IOrganizationClients,
+	ClientOrganizationInviteStatus
+} from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects';
 import { Employee } from '../employee';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('organization_clients')
 export class OrganizationClients extends Base implements IOrganizationClients {
@@ -55,21 +62,21 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
-	@Column()
-	country: string;
+	@IsOptional()
+	@Column({ nullable: true })
+	country?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
-	@Column()
-	street: string;
+	@IsOptional()
+	@Column({ nullable: true })
+	street?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
-	@Column()
-	city: string;
+	@IsOptional()
+	@Column({ nullable: true })
+	city?: string;
 
 	@ApiPropertyOptional({ type: Number })
 	@IsNumber()
@@ -83,8 +90,27 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	@Column({ nullable: true })
 	state?: string;
 
+	@ApiProperty({ type: String, enum: ClientOrganizationInviteStatus })
+	@IsEnum(ClientOrganizationInviteStatus)
+	@IsOptional()
+	@Column({ nullable: true })
+	inviteStatus?: string;
+
+	@ApiProperty({ type: Organization })
+	@OneToOne((type) => Organization, { nullable: true, onDelete: 'SET NULL' })
+	@JoinColumn()
+	clientOrganization?: Organization;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((client: OrganizationClients) => client.clientOrganization)
+	@Column({ nullable: true })
+	readonly clientOrganizationId?: string;
+
 	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
-	@OneToMany((type) => OrganizationProjects, (projects) => projects.client)
+	@OneToMany(
+		(type) => OrganizationProjects,
+		(projects) => projects.client
+	)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
 

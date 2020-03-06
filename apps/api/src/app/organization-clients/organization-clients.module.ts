@@ -6,14 +6,26 @@ import { OrganizationClientsService } from './organization-clients.service';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
 import { User, UserService } from '../user';
+import { EmailService, Email } from '../email';
+import { EmailTemplate } from '../email-template';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([OrganizationClients, User]),
+		TypeOrmModule.forFeature([
+			OrganizationClients,
+			User,
+			Email,
+			EmailTemplate
+		]),
 		CqrsModule
 	],
 	controllers: [OrganizationClientsController],
-	providers: [OrganizationClientsService, UserService, ...CommandHandlers],
+	providers: [
+		OrganizationClientsService,
+		UserService,
+		EmailService,
+		...CommandHandlers
+	],
 	exports: [OrganizationClientsService]
 })
 export class OrganizationClientsModule {}
