@@ -1,5 +1,4 @@
 import { EmployeeTypesCreateInput } from '@gauzy/models';
-import * as fs from 'fs';
 import { Connection } from 'typeorm';
 import { EmployeeTypes } from '../employee-types/employee-types.entity';
 import { GenericEmployeeTypes } from '../../app/employee-types/employee-types.model';
