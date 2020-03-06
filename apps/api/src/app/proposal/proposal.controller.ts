@@ -19,8 +19,10 @@ import { IPagination } from '../core';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Proposal')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ProposalController extends CrudController<Proposal> {
 	constructor(private readonly proposalService: ProposalService) {

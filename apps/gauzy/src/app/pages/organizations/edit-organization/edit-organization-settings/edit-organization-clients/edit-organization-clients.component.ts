@@ -5,7 +5,7 @@ import {
 	OrganizationClientsCreateInput,
 	OrganizationProjects
 } from '@gauzy/models';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
@@ -14,6 +14,7 @@ import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/o
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
+import { InviteClientComponent } from './invite-client/invite-client.component';
 
 @Component({
 	selector: 'ga-edit-org-clients',
@@ -44,7 +45,8 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		private readonly employeesService: EmployeesService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -163,5 +165,15 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 		await this.loadProjectsWithoutClients();
 		this.clientToEdit = null;
 		this.showAddCard = true;
+	}
+
+	async invite() {
+		const dialog = this.dialogService.open(InviteClientComponent, {
+			context: {
+				organizationId: this.organizationId
+			}
+		});
+
+		const data = await dialog.onClose.pipe(first()).toPromise();
 	}
 }

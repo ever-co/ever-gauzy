@@ -8,7 +8,8 @@ import {
 	Param,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	Req
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -19,8 +20,12 @@ import { OrganizationClients } from './organization-clients.entity';
 import { OrganizationClientsService } from './organization-clients.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
+import { OrganizationClientsInviteCommand } from './commands/organization-clients.invite.command';
+import { Request } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Clients')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationClientsController extends CrudController<
 	OrganizationClients
@@ -73,6 +78,36 @@ export class OrganizationClientsController extends CrudController<
 			where: findInput,
 			relations
 		});
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
+	@Put('invite/:id')
+	async inviteClient(
+		@Param('id') id: string,
+		@Req() request: Request
+	): Promise<any> {
+		console.log(request);
+		return this.commandBus.execute(
+			new OrganizationClientsInviteCommand({
+				id
+			})
+		);
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })

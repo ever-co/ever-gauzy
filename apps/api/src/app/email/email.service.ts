@@ -9,6 +9,7 @@ import { EmailTemplate } from '../email-template';
 import { User } from '../user';
 import { Email as IEmail } from './email.entity';
 import { environment } from '@env-api/environment';
+import { OrganizationClients } from '../organization-clients';
 
 @Injectable()
 export class EmailService extends CrudService<IEmail> {
@@ -61,6 +62,31 @@ export class EmailService extends CrudService<IEmail> {
 	});
 
 	languageCode: string;
+
+	inviteOrganizationClient(
+		organizationClient: OrganizationClients,
+		originUrl?: string
+	) {
+		this.languageCode = 'en';
+
+		this.email
+			.send({
+				template: 'invite-organization-client',
+				message: {
+					to: `${organizationClient.primaryEmail}`
+				},
+				locals: {
+					locale: this.languageCode,
+					email: organizationClient.primaryEmail,
+					host: originUrl || environment.host,
+					id: organizationClient.id
+				}
+			})
+			.then((res) => {
+				this.createEmailRecord(res.originalMessage, this.languageCode);
+			})
+			.catch(console.error);
+	}
 
 	inviteUser(
 		email: string,

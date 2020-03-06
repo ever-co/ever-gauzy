@@ -32,13 +32,13 @@ export class TagsComponent extends TranslationBaseComponent
 	data: SelectedTag;
 	disableButton = true;
 
-	@ViewChild('tagsTable', {static: false}) tagsTable;
+	@ViewChild('tagsTable', { static: false }) tagsTable;
 
 	constructor(
 		private dialogService: NbDialogService,
 		private tagsService: TagsService,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService,
+		private toastrService: NbToastrService
 	) {
 		super(translateService);
 	}
@@ -60,7 +60,6 @@ export class TagsComponent extends TranslationBaseComponent
 		console.log(data);
 	}
 
-
 	async add() {
 		const dialog = this.dialogService.open(TagsMutationComponent, {
 			context: {}
@@ -69,10 +68,11 @@ export class TagsComponent extends TranslationBaseComponent
 		this.selectedTag = null;
 		this.disableButton = true;
 		console.warn(addData);
-        if(addData){
+		if (addData) {
 			this.toastrService.primary(
 				this.getTranslation('TAGS_PAGE.TAGS_ADD_TAG'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS'))
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 		}
 		this.loadSettings();
 	}
@@ -89,11 +89,9 @@ export class TagsComponent extends TranslationBaseComponent
 			this.toastrService.primary(
 				this.getTranslation('TAGS_PAGE.TAGS_DELETE_TAG'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			)
-
+			);
 		}
 		this.disableButton = true;
-	
 	}
 	async edit() {
 		const dialog = this.dialogService.open(TagsMutationComponent, {
@@ -106,11 +104,13 @@ export class TagsComponent extends TranslationBaseComponent
 
 		this.disableButton = true;
 
-		if(editData){
-			this.toastrService.primary(this.getTranslation('TAGS_PAGE.TAGS_EDIT_TAG'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS'))
+		if (editData) {
+			this.toastrService.primary(
+				this.getTranslation('TAGS_PAGE.TAGS_EDIT_TAG'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 		}
-		
+
 		this.loadSettings();
 	}
 
@@ -121,16 +121,16 @@ export class TagsComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
 					type: 'string',
-					width:"10%",
+					width: '10%'
 				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
 					type: 'string',
-					filter:false,
+					filter: false
 				},
 				color: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_COLOR'),
-					width:'10%',
+					width: '10%',
 					filter: false,
 					type: 'custom',
 					class: 'text-center',
@@ -145,7 +145,7 @@ export class TagsComponent extends TranslationBaseComponent
 		const { items } = await this.tagsService.getAllTags();
 		this.smartTableSource.load(items);
 	}
-	
+
 	ngOnDestroy() {}
 
 	_applyTranslationOnSmartTable() {

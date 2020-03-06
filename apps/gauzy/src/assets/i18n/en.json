@@ -128,7 +128,8 @@
 			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
-			"REJECT_DATE": "Reject Date (optional)"
+			"REJECT_DATE": "Reject Date (optional)",
+			"EMAIL_INVITATION": "Enter email to send invitation"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -384,6 +385,8 @@
 		"SETTINGS": "Settings",
 		"ROLES": "Roles",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
+		"INVITE_CLIENT": "Invite Client",
+		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "Client",
@@ -509,8 +512,8 @@
 		"ADD_TAGS": "Add Tags",
 		"EDIT_TAGS": "Edit Tags",
 		"TAGS_NAME": "Name",
-		"TAGS_DESCRIPTION":"Description",
-		"TAGS_COLOR":"Color",
+		"TAGS_DESCRIPTION": "Description",
+		"TAGS_COLOR": "Color",
 		"TAGS_ADD_TAG": "Tag added",
 		"TAGS_EDIT_TAG": "Tag edited",
 		"TAGS_DELETE_TAG": "Tag deleted"
