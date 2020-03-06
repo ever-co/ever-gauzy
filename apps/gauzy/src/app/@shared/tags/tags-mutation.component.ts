@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NbDialogRef} from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { TagsService } from '../../@core/services/tags.service';
 import { Tag } from '@gauzy/models';
@@ -11,21 +11,21 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 	templateUrl: './tags-mutation.component.html',
 	styleUrls: ['./tags-mutation.component.scss']
 })
-export class TagsMutationComponent extends TranslationBaseComponent implements OnInit {
+export class TagsMutationComponent extends TranslationBaseComponent
+	implements OnInit {
 	selectedColor: string[] = [];
 	form: FormGroup;
 	tag: Tag;
-	
+
 	public color: string = '';
 	constructor(
 		protected dialogRef: NbDialogRef<TagsMutationComponent>,
 		private tagsService: TagsService,
 		private fb: FormBuilder,
-		readonly translateService: TranslateService,
+		readonly translateService: TranslateService
 	) {
-		super(translateService)
+		super(translateService);
 	}
-
 
 	ngOnInit() {
 		this.seedFakeData();
@@ -33,7 +33,7 @@ export class TagsMutationComponent extends TranslationBaseComponent implements O
 	}
 
 	async addTag() {
-	const tag =	await this.tagsService.insertTag(
+		const tag = await this.tagsService.insertTag(
 			Object.assign({
 				name: this.form.value.name,
 				description: this.form.value.description,
@@ -43,7 +43,7 @@ export class TagsMutationComponent extends TranslationBaseComponent implements O
 		this.closeDialog(tag);
 	}
 	async editTag() {
-	const tag =	await this.tagsService.update(
+		const tag = await this.tagsService.update(
 			this.tag.id,
 			Object.assign({
 				name: this.form.value.name,
@@ -60,9 +60,10 @@ export class TagsMutationComponent extends TranslationBaseComponent implements O
 
 	async initializeForm() {
 		if (this.tag) {
+			this.color = this.tag.color;
 			this.form = this.fb.group({
 				name: [this.tag.name],
-				color: [this.color],
+				color: [this.tag.color],
 				description: [this.tag.description]
 			});
 		} else {
