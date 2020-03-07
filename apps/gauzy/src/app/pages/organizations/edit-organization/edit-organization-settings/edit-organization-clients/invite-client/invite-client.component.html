@@ -109,6 +109,19 @@
 								: 'basic'
 						"
 					/>
+					<ng-container
+						*ngIf="
+							form.controls.primaryEmail.errors &&
+							form.controls.primaryEmail.errors.exists
+						"
+					>
+						<p class="caption status-danger">
+							{{
+								'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.EMAIL_EXISTS'
+									| translate
+							}}
+						</p>
+					</ng-container>
 				</div>
 			</div>
 		</form>
@@ -121,7 +134,7 @@
 			class="mr-2"
 			status="success"
 			[disabled]="form.invalid"
-			(click)="add()"
+			(click)="inviteClient()"
 			nbButton
 		>
 			{{ 'ORGANIZATIONS_PAGE.EMAIL_INVITE' | translate }}

@@ -21,7 +21,6 @@ import { OrganizationClientsService } from './organization-clients.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { OrganizationClientsInviteCommand } from './commands/organization-clients.invite.command';
-import { Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Clients')
@@ -98,14 +97,12 @@ export class OrganizationClientsController extends CrudController<
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Put('invite/:id')
-	async inviteClient(
-		@Param('id') id: string,
-		@Req() request: Request
-	): Promise<any> {
-		console.log(request);
+	async inviteClient(@Param('id') id: string, @Req() request): Promise<any> {
 		return this.commandBus.execute(
 			new OrganizationClientsInviteCommand({
-				id
+				id,
+				originalUrl: request.get('Origin'),
+				inviterUser: request.user
 			})
 		);
 	}

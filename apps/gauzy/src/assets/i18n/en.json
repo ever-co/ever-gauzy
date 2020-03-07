@@ -22,7 +22,8 @@
 		"MANAGE_INVITES": "Manage Invites",
 		"RESEND": "Resend",
 		"NEXT": "Next",
-		"PREVIOUS": "Previous"
+		"PREVIOUS": "Previous",
+		"INVITE_AGAIN": "Invite Again"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -713,7 +714,10 @@
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "New client {{ name }} successfully added!",
 				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
-				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
+				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client",
+				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
+				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
+				"EMAIL_EXISTS": "This client email already exists as a user"
 			}
 		},
 		"DANGER_ZONE": {
