@@ -167,13 +167,37 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 		this.showAddCard = true;
 	}
 
-	async invite() {
-		const dialog = this.dialogService.open(InviteClientComponent, {
-			context: {
-				organizationId: this.organizationId
-			}
-		});
+	async invite(selectedOrganizationClient?: OrganizationClients) {
+		try {
+			const dialog = this.dialogService.open(InviteClientComponent, {
+				context: {
+					organizationId: this.organizationId,
+					organizationClient: selectedOrganizationClient
+				}
+			});
 
-		await dialog.onClose.pipe(first()).toPromise();
+			const result = await dialog.onClose.pipe(first()).toPromise();
+
+			if (result) {
+				await this.loadClients();
+
+				this.toastrService.primary(
+					this.getTranslation(
+						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.INVITE_CLIENT',
+						{
+							name: result.name
+						}
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.INVITE_CLIENT_ERROR'
+				),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
 	}
 }

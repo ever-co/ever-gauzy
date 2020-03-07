@@ -5,6 +5,7 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { FormBuilder, Validators } from '@angular/forms';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { OrganizationClients } from '@gauzy/models';
+import { UsersService } from 'apps/gauzy/src/app/@core/services';
 
 @Component({
 	selector: 'ga-invite-client',
@@ -17,7 +18,8 @@ export class InviteClientComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private readonly toastrService: NbToastrService,
 		private readonly fb: FormBuilder,
-		private readonly organizationClientService: OrganizationClientsService
+		private readonly organizationClientService: OrganizationClientsService,
+		private readonly usersService: UsersService
 	) {
 		super(translateService);
 	}
@@ -32,27 +34,48 @@ export class InviteClientComponent extends TranslationBaseComponent
 	organizationClient?: OrganizationClients = undefined;
 
 	ngOnInit(): void {
-		this.form = this.fb.group({
-			name: ['', Validators.required],
-			primaryEmail: ['', [Validators.required, Validators.email]],
-			primaryPhone: ['', Validators.required]
-		});
+		this.form = this.fb.group(
+			{
+				name: [
+					this.organizationClient ? this.organizationClient.name : '',
+					Validators.required
+				],
+				primaryEmail: [
+					this.organizationClient
+						? this.organizationClient.primaryEmail
+						: '',
+					[Validators.required, Validators.email]
+				],
+				primaryPhone: [
+					this.organizationClient
+						? this.organizationClient.primaryPhone
+						: '',
+					Validators.required
+				]
+			},
+			{
+				asyncValidators: async (form) => {
+					const user = await this.usersService.getUserByEmail(
+						form.get('primaryEmail').value
+					);
+					if (user) {
+						form.get('primaryEmail').setErrors({ invalid: true });
+						form.get('primaryEmail').setErrors({ exists: true });
+					}
+				}
+			}
+		);
 	}
 
 	closeDialog(organizationClient?) {
 		this.dialogRef.close(organizationClient);
-		console.log(organizationClient);
 	}
 
-	async add() {
+	async inviteClient() {
+		const organizationClient = await this.addOrEditClient();
+
 		try {
-			if (this.form.valid) {
-				const organizationClient = this.organizationClient
-					? this.organizationClient
-					: await this.organizationClientService.create({
-							organizationId: this.organizationId,
-							...this.form.getRawValue()
-					  });
+			if (organizationClient) {
 				const invited = await this.organizationClientService.invite(
 					organizationClient.id
 				);
@@ -64,5 +87,27 @@ export class InviteClientComponent extends TranslationBaseComponent
 				'Error'
 			);
 		}
+	}
+
+	async addOrEditClient(): Promise<OrganizationClients> {
+		try {
+			if (this.organizationClient) {
+				return await this.organizationClientService.create({
+					...this.organizationClient,
+					...this.form.getRawValue()
+				});
+			} else if (this.form.valid) {
+				return await this.organizationClientService.create({
+					organizationId: this.organizationId,
+					...this.form.getRawValue()
+				});
+			}
+		} catch (error) {
+			this.toastrService.danger(
+				error.error ? error.error.message : error.message,
+				'Error'
+			);
+		}
+		return null;
 	}
 }

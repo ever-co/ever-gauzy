@@ -8,11 +8,14 @@ import { CommandHandlers } from './commands/handlers';
 import { User, UserService } from '../user';
 import { EmailService, Email } from '../email';
 import { EmailTemplate } from '../email-template';
+import { OrganizationService } from '../organization/organization.service';
+import { Organization } from '../organization';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([
 			OrganizationClients,
+			Organization,
 			User,
 			Email,
 			EmailTemplate
@@ -24,6 +27,7 @@ import { EmailTemplate } from '../email-template';
 		OrganizationClientsService,
 		UserService,
 		EmailService,
+		OrganizationService,
 		...CommandHandlers
 	],
 	exports: [OrganizationClientsService]

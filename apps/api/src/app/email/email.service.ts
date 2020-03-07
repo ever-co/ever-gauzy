@@ -10,6 +10,7 @@ import { User } from '../user';
 import { Email as IEmail } from './email.entity';
 import { environment } from '@env-api/environment';
 import { OrganizationClients } from '../organization-clients';
+import { Organization } from '../organization';
 
 @Injectable()
 export class EmailService extends CrudService<IEmail> {
@@ -48,7 +49,6 @@ export class EmailService extends CrudService<IEmail> {
 					name: view,
 					languageCode: locals.locale || 'en'
 				});
-				console.log('Email Template', emailTemplate);
 				if (!emailTemplate || emailTemplate.length < 1) {
 					return resolve('');
 				}
@@ -65,6 +65,8 @@ export class EmailService extends CrudService<IEmail> {
 
 	inviteOrganizationClient(
 		organizationClient: OrganizationClients,
+		inviterUser: User,
+		organization: Organization,
 		originUrl?: string
 	) {
 		this.languageCode = 'en';
@@ -77,9 +79,17 @@ export class EmailService extends CrudService<IEmail> {
 				},
 				locals: {
 					locale: this.languageCode,
-					email: organizationClient.primaryEmail,
+					name: organizationClient.name,
 					host: originUrl || environment.host,
-					id: organizationClient.id
+					id: organizationClient.id,
+					inviterName: inviterUser
+						? (inviterUser.firstName || '') +
+						  (inviterUser.lastName || '')
+						: '',
+					organizationName: organization && organization.name,
+					generatedUrl:
+						originUrl +
+						`/auth/accept-client-invite/${organizationClient.id}`
 				}
 			})
 			.then((res) => {
@@ -112,7 +122,6 @@ export class EmailService extends CrudService<IEmail> {
 				}
 			})
 			.then((res) => {
-				console.log(res);
 				this.createEmailRecord(res.originalMessage, this.languageCode);
 			})
 			.catch(console.error);

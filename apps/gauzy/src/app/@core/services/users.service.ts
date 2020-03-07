@@ -18,6 +18,13 @@ export class UsersService {
 			.toPromise();
 	}
 
+	getUserByEmail(emailId: string): Promise<User> {
+		return this.http
+			.get<User>(`/api/user/email/${emailId}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getUserById(id: string): Promise<User> {
 		return this.http
 			.get<User>(`/api/user/${id}`)
