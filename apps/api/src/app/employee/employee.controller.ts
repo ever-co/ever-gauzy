@@ -18,7 +18,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
-import { EmployeeCreateCommand } from './commands';
+import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
@@ -89,5 +89,25 @@ export class EmployeeController extends CrudController<Employee> {
 		...options: any[]
 	): Promise<Employee> {
 		return this.commandBus.execute(new EmployeeCreateCommand(entity));
+	}
+
+	@ApiOperation({ summary: 'Create records in Bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Records have been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Post('/createBulk')
+	async createBulk(
+		@Body() entity: IEmployeeCreateInput[],
+		...options: any[]
+	): Promise<Employee[]> {
+		return this.commandBus.execute(new EmployeeBulkCreateCommand(entity));
 	}
 }

@@ -35,7 +35,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		this.form = this.userBasicInfo.form;
 	}
 
-	closeDialog(employee: Employee = null) {
+	closeDialog(employee: Employee[] = null) {
 		this.dialogRef.close(employee);
 	}
 
@@ -58,7 +58,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			};
 
 			const employee = await this.employeesService
-				.create(newEmployee)
+				.createBulk([newEmployee])
 				.pipe(first())
 				.toPromise();
 
