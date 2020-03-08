@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbThemeService, NbToastrService } from '@nebular/theme';
+import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
 import { Store } from '../../../@core/services/store.service';
