@@ -20,7 +20,7 @@ import { OrganizationTeams } from '../organization-teams/organization-teams.enti
 import { User } from '../user';
 import { Tenant } from '../tenant';
 import { Tag } from '../tags';
-import { LocationBase } from '../location/location-base.entity';
+import { LocationBase } from '../core/entities/location-base';
 
 @Entity('employee')
 export class Employee extends LocationBase implements IEmployee {

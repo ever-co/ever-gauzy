@@ -10,7 +10,6 @@
 				"ga" // ga = gauzy
 			],
 			"kebab-case"
-		],
-		"noUnusedLocals": true
+		]
 	}
 }

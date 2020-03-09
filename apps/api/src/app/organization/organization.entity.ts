@@ -26,7 +26,7 @@ import {
 	WeekDaysEnum,
 	BonusTypeEnum
 } from '@gauzy/models';
-import { LocationBase } from '../location/location-base.entity';
+import { LocationBase } from '../core/entities/location-base';
 
 @Entity('organization')
 export class Organization extends LocationBase implements IOrganization {

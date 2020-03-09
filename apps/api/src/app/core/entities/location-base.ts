@@ -1,4 +1,4 @@
-import { Base } from '../core/entities/base';
+import { Base } from './base';
 import { ApiProperty } from '@nestjs/swagger';
 import { Column } from 'typeorm';
 import { IsOptional } from 'class-validator';
