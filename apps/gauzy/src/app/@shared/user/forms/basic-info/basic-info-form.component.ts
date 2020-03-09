@@ -156,7 +156,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						imageUrl: this.imageUrl.value,
 						role,
 						startedWorkOn: startedWorkOn.value,
-						tenant: this.tenant
+						tenant: this.tenant,
+						tags: this.tags
 					},
 					password: this.password.value
 				})
