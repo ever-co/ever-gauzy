@@ -64,10 +64,9 @@
 						'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
 					}}"
 					[status]="
-						form.controls.primaryEmail.dirty
-							? form.controls.primaryEmail.invalid
-								? 'danger'
-								: 'basic'
+						form.controls.primaryEmail.dirty &&
+						form.controls.primaryEmail.invalid
+							? 'danger'
 							: 'basic'
 					"
 					[attr.aria-invalid]="
