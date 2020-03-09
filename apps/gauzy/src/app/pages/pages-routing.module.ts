@@ -160,6 +160,13 @@ const routes: Routes = [
 					)
 			},
 			{
+				path: 'equipment',
+				loadChildren: () =>
+					import('./equipment/equipment.module').then(
+						(m) => m.EquipmentModule
+					)
+			},
+			{
 				path: '**',
 				component: NotFoundComponent
 			}

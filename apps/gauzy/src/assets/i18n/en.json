@@ -263,7 +263,8 @@
 			"IMPORT": "Import",
 			"EXPORT": "Export"
 		},
-		"TAGS": "Tags"
+		"TAGS": "Tags",
+		"EQUIPMENT": "Equipment"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -519,6 +520,7 @@
 		"TAGS_EDIT_TAG": "Tag edited",
 		"TAGS_DELETE_TAG": "Tag deleted"
 	},
+	"EQUIPMENT_PAGE": {},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
