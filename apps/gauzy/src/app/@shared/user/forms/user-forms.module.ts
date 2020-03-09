@@ -18,6 +18,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { ActionConfirmationComponent } from './action-confirmation/action-confirmation.component';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
+import { TagsService } from '../../../@core/services/tags.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -57,6 +58,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent
 	],
-	providers: [AuthService, RoleService, IncomeService]
+	providers: [AuthService, RoleService, IncomeService, TagsService]
 })
 export class UserFormsModule {}
