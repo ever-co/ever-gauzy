@@ -14,7 +14,7 @@ import { HttpLoaderFactory } from '../../@theme/components/header/selectors/empl
 import { ThemeModule } from '../../@theme/theme.module';
 import { TagsMutationComponent } from './tags-mutation.component';
 import { ColorPickerModule } from 'ngx-color-picker';
-import { TagAddComponent } from './tag-add/tag-add.component';
+// import { TagAddComponent } from './tag-add/tag-add.component';
 
 @NgModule({
 	imports: [
@@ -35,7 +35,7 @@ import { TagAddComponent } from './tag-add/tag-add.component';
 			}
 		})
 	],
-	declarations: [TagsMutationComponent, TagAddComponent],
+	declarations: [TagsMutationComponent],
 	entryComponents: [TagsMutationComponent],
 	providers: [TagsService]
 })

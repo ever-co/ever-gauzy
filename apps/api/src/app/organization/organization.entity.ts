@@ -5,7 +5,9 @@ import {
 	Index,
 	ManyToOne,
 	JoinColumn,
-	RelationId
+	RelationId,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -27,9 +29,16 @@ import {
 	WeekDaysEnum,
 	BonusTypeEnum
 } from '@gauzy/models';
+import { Tag } from '../tags';
 
 @Entity('organization')
 export class Organization extends Base implements IOrganization {
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tags_organizations'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: Tenant })
 	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

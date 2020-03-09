@@ -1,5 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tenant } from './tenant.model';
+import { Tag } from './tag-entity.model';
 
 export interface Organization extends IBaseEntityModel {
 	name: string;
@@ -29,6 +30,7 @@ export interface Organization extends IBaseEntityModel {
 	tenant: Tenant;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
+	tags: Tag[];
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
