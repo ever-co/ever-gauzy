@@ -52,7 +52,7 @@ export class Employee extends Base implements IEmployee {
 	@ApiProperty({ type: OrganizationDepartment })
 	@ManyToOne((type) => OrganizationDepartment, { nullable: true })
 	@JoinColumn()
-	organizationDepartment: OrganizationDepartment;
+	organizationDepartment?: OrganizationDepartment;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.organizationDepartment)
