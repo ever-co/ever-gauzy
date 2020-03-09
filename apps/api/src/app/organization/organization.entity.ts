@@ -19,7 +19,6 @@ import {
 	Max,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import {
 	Organization as IOrganization,
 	CurrenciesEnum,
@@ -27,9 +26,10 @@ import {
 	WeekDaysEnum,
 	BonusTypeEnum
 } from '@gauzy/models';
+import { LocationBase } from '../core/entities/location-base';
 
 @Entity('organization')
-export class Organization extends Base implements IOrganization {
+export class Organization extends LocationBase implements IOrganization {
 	@ApiProperty({ type: Tenant })
 	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -116,42 +116,6 @@ export class Organization extends Base implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	taxId?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	country?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	city?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	address?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	address2?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	postcode?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	regionCode?: string;
 
 	@ApiProperty({ type: String })
 	@Column()

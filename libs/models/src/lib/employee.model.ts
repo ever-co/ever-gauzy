@@ -1,11 +1,12 @@
 import { User, Tag } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { Tenant } from './tenant.model';
 
-export interface Employee extends IBaseEntityModel {
+export interface Employee extends IBaseEntityModel, ILocation {
 	endWork?: any;
 	user: User;
 	userId: string;
