@@ -6,6 +6,7 @@ import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tenant } from './tenant.model';
 import { OrganizationDepartment } from './organization-department.model';
+import { OrganizationPositions } from './organization-positions.model';
 
 export interface User extends IBaseEntityModel {
 	thirdPartyId?: string;
@@ -60,4 +61,5 @@ export interface UserUpdateInput {
 	hash?: string;
 	imageUrl?: string;
 	organizationDepartment?: OrganizationDepartment;
+	organizationPosition?: OrganizationPositions;
 }

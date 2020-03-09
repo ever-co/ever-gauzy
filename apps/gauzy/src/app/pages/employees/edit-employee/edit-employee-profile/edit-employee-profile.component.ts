@@ -152,6 +152,9 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 				const organizationDepartment = value.organizationDepartment;
 				delete value.organizationDepartment;
 
+				const organizationPosition = value.organizationPosition;
+				delete value.organizationPosition;
+
 				await this.userService.update(
 					this.selectedEmployee.user.id,
 					value
@@ -159,7 +162,8 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 
 				if (organizationDepartment) {
 					this.employeeStore.employeeForm = {
-						organizationDepartment: organizationDepartment
+						organizationDepartment,
+						organizationPosition
 					};
 				} else {
 					this.toastrService.primary(
@@ -181,7 +185,10 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	private async _loadEmployeeData() {
 		const { id } = this.routeParams;
 		const { items } = await this.employeeService
-			.getAll(['user', 'organizationDepartment'], { id })
+			.getAll(
+				['user', 'organizationDepartment', 'organizationPosition'],
+				{ id }
+			)
 			.pipe(first())
 			.toPromise();
 
