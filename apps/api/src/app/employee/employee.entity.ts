@@ -15,16 +15,16 @@ import {
 	OneToOne,
 	RelationId
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { Organization } from '../organization';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 import { User } from '../user';
 import { Tenant } from '../tenant';
 import { Tag } from '../tags';
 import { OrganizationDepartment } from '../organization-department';
+import { LocationBase } from '../core/entities/location-base';
 
 @Entity('employee')
-export class Employee extends Base implements IEmployee {
+export class Employee extends LocationBase implements IEmployee {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tags_employee'
