@@ -8,9 +8,11 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { EmployeeUpdateInput, Employee } from '@gauzy/models';
+import { EmployeeUpdateInput, Employee, UserUpdateInput } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-edit-employee-profile',
@@ -20,7 +22,8 @@ import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-ha
 	],
 	providers: [EmployeeStore]
 })
-export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
+export class EditEmployeeProfileComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	paramSubscription: Subscription;
@@ -42,8 +45,11 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private employeeStore: EmployeeStore,
 		private errorHandler: ErrorHandlingService,
-		private store: Store
-	) {}
+		private store: Store,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.route.params
@@ -121,8 +127,11 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 					value
 				);
 				this.toastrService.primary(
-					this.employeeName + ' profile updated.',
-					'Success'
+					this.getTranslation(
+						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
+						{ name: this.employeeName }
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 				this._loadEmployeeData();
 			} catch (error) {
@@ -131,7 +140,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private async submitUserForm(value: any) {
+	private async submitUserForm(value: UserUpdateInput) {
 		if (value) {
 			try {
 				const organizationDepartment = value.organizationDepartment;
@@ -148,8 +157,11 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 					};
 				} else {
 					this.toastrService.primary(
-						this.employeeName + ' profile updated.',
-						'Success'
+						this.getTranslation(
+							'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
+							{ name: this.employeeName }
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}
 
