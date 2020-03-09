@@ -8,7 +8,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { UserFindInput, EmployeeUpdateInput, Employee } from '@gauzy/models';
+import { EmployeeUpdateInput, Employee } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
