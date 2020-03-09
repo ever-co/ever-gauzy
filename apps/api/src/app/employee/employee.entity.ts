@@ -15,15 +15,15 @@ import {
 	OneToOne,
 	RelationId
 } from 'typeorm';
-import { Base } from '../core/entities/base';
 import { Organization } from '../organization';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 import { User } from '../user';
 import { Tenant } from '../tenant';
 import { Tag } from '../tags';
+import { LocationBase } from '../location/location-base.entity';
 
 @Entity('employee')
-export class Employee extends Base implements IEmployee {
+export class Employee extends LocationBase implements IEmployee {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tags_employee'
@@ -120,40 +120,4 @@ export class Employee extends Base implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	country?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	city?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	address?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	address2?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	postcode?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	regionCode?: string;
 }
