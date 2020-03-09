@@ -19,7 +19,6 @@ import {
 	Max,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import {
 	Organization as IOrganization,
 	CurrenciesEnum,
