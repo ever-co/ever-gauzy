@@ -83,6 +83,12 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 				route: `/pages/employees/edit/${this.routeParams.id}/profile/main`
 			},
 			{
+				title: 'Location',
+				icon: 'pin-outline',
+				responsive: true,
+				route: `/pages/employees/edit/${this.routeParams.id}/profile/location`
+			},
+			{
 				title: 'Rates',
 				icon: 'pricetags-outline',
 				responsive: true,
