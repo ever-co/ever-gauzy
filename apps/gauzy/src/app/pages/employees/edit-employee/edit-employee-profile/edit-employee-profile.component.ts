@@ -131,17 +131,28 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private async submitUserForm(value: UserFindInput) {
+	private async submitUserForm(value: any) {
 		if (value) {
 			try {
+				const organizationDepartment = value.organizationDepartment;
+				delete value.organizationDepartment;
+
 				await this.userService.update(
 					this.selectedEmployee.user.id,
 					value
 				);
-				this.toastrService.primary(
-					this.employeeName + ' profile updated.',
-					'Success'
-				);
+
+				if (organizationDepartment) {
+					this.employeeStore.employeeForm = {
+						organizationDepartment: organizationDepartment
+					};
+				} else {
+					this.toastrService.primary(
+						this.employeeName + ' profile updated.',
+						'Success'
+					);
+				}
+
 				this._loadEmployeeData();
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -152,7 +163,7 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	private async _loadEmployeeData() {
 		const { id } = this.routeParams;
 		const { items } = await this.employeeService
-			.getAll(['user'], { id })
+			.getAll(['user', 'organizationDepartment'], { id })
 			.pipe(first())
 			.toPromise();
 

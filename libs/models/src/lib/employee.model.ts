@@ -1,4 +1,4 @@
-import { User, Tag } from '..';
+import { User, Tag, OrganizationDepartment } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { UserFindInput } from './user.model';
@@ -19,6 +19,7 @@ export interface Employee extends IBaseEntityModel {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	tenant: Tenant;
+	organizationDepartment?: OrganizationDepartment;
 	tags: Tag[];
 	offerDate?: Date;
 	acceptDate?: Date;
@@ -37,6 +38,7 @@ export interface EmployeeUpdateInput {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	organizationDepartment?: OrganizationDepartment;
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;

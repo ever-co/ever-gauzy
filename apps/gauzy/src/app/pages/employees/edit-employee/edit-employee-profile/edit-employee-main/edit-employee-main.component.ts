@@ -2,11 +2,12 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { Employee } from '@gauzy/models';
+import { Employee, OrganizationDepartment } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 
 @Component({
 	selector: 'ga-edit-employee-main',
@@ -22,14 +23,15 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	hoverState: boolean;
 	routeParams: Params;
 	selectedEmployee: Employee;
-	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
+	departments: OrganizationDepartment[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
 
 	constructor(
 		private fb: FormBuilder,
 		private location: Location,
 		private toastrService: NbToastrService,
-		private employeeStore: EmployeeStore
+		private employeeStore: EmployeeStore,
+		private readonly organizationDepartmentsService: OrganizationDepartmentsService
 	) {}
 
 	ngOnInit() {
@@ -38,6 +40,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			.subscribe((emp) => {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
+					this.getDepartments();
 					this._initializeForm(this.selectedEmployee);
 				}
 			});
@@ -47,21 +50,14 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 
 	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
 
-	private getFakeData() {
-		const fakeDepartmentNames = [
-			'Accounting',
-			'IT',
-			'Marketing',
-			'Human Resources'
-		];
-
-		fakeDepartmentNames.forEach((name) => {
-			this.fakeDepartments.push({
-				departmentName: name,
-				departmentId: this.getFakeId()
+	private getDepartments() {
+		this.organizationDepartmentsService
+			.getAllByEmployee(this.selectedEmployee.id)
+			.then((departments: OrganizationDepartment[]) => {
+				this.departments = departments;
 			});
-		});
-
+	}
+	private getFakeData() {
 		const fakePositionNames = [
 			'Developer',
 			'Project Manager',
@@ -96,7 +92,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			email: [employee.user.email, Validators.required],
 			firstName: [employee.user.firstName, Validators.required],
 			lastName: [employee.user.lastName, Validators.required],
-			imageUrl: [employee.user.imageUrl, Validators.required]
+			imageUrl: [employee.user.imageUrl, Validators.required],
+			organizationDepartment: [employee.organizationDepartment || null]
 		});
 	}
 
