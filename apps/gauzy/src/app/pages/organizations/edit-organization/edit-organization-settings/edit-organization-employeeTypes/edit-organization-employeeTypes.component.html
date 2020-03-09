@@ -1,61 +1,77 @@
 <nb-card>
-	<nb-card-body>
-		<div class="form-group">
-			<button
-				class="mr-2"
-				(click)="submitForm()"
-				nbButton
-				status="success"
-			>
-				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-		</div>
-		<form [formGroup]="form" *ngIf="form" class="row">
-			<div class="form-group col-4">
-				<label class="label" for="employmentTypeInput">{{
-					'FORM.LABELS.EMPLOYEE_TYPE' | translate
-				}}</label>
-				<input
-					id="employmentTypeInput"
-					type="text"
-					#name
-					nbInput
-					fullWidth
-					formControlName="name"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.EMPLOYEE_TYPE' | translate
-					}}"
-				/>
-			</div>
-		</form>
-	</nb-card-body>
-</nb-card>
-<nb-card size="small">
 	<nb-card-header>
-		Employment Types
-	</nb-card-header>
-	<nb-list>
-		<nb-list-item *ngFor="let empType of empTypes">
-			<input nbInput [(ngModel)]="empType.name" />
-			<div style="margin-left: 10px;">
-				<button
+		<button
+			*ngIf="!showAddCard"
+			(click)="showAddCard = !showAddCard"
+			nbButton
+			status="success"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<div *ngIf="showAddCard" class="row m-0">
+			<input
+				#addInput
+				class="col-8"
+				nbInput
+				type="text"
+				placeholder="{{
+					'FORM.PLACEHOLDERS.EMPLOYEE_TYPE' | translate
+				}}"
+				fullWidth
+			/>
+			<span class="col-2 pl-2 pr-1"
+				><button
+					class="w-100"
+					(click)="addEmployeeType(addInput.value)"
 					nbButton
-					size="small"
 					status="success"
-					(click)="update(empType)"
 				>
-					Update
-				</button>
-				<button
-					style="margin-left: 5px;"
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button></span
+			>
+			<span class="col-2 pl-1 pr-0"
+				><button
+					class="w-100"
+					(click)="showAddCard = !showAddCard"
 					nbButton
-					size="small"
 					status="danger"
-					(click)="delType(empType['id'])"
 				>
-					X
-				</button>
-			</div>
-		</nb-list-item>
-	</nb-list>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button></span
+			>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body *ngIf="empTypes?.length">
+		<div class="ml-3 mb-4">
+			<strong>{{
+				'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_TYPE' | translate
+			}}</strong>
+		</div>
+		<nb-list>
+			<nb-list-item *ngFor="let empType of empTypes">
+				<input nbInput [(ngModel)]="empType.name" />
+				<div style="margin-left: 10px;">
+					<button
+						nbButton
+						size="small"
+						status="success"
+						(click)="update(empType)"
+					>
+						Update
+					</button>
+					<button
+						style="margin-left: 5px;"
+						nbButton
+						size="small"
+						status="danger"
+						(click)="delType(empType['id'])"
+					>
+						X
+					</button>
+				</div>
+			</nb-list-item>
+		</nb-list>
+	</nb-card-body>
 </nb-card>

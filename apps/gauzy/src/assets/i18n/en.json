@@ -393,6 +393,7 @@
 			"PROJECTS": "Projects",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
+			"EMPLOYEE_TYPE": "Employee Type",
 			"NEW_PROJECT": "Add new project",
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
@@ -612,6 +613,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
+			"NEW_ORGANIZATION_INVALID_EMPLOYEE_TYPE": "Employee type is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NAME_REQUIRED": "Name is required!",
@@ -699,6 +701,11 @@
 				"ADD_CLIENT": "New client {{ name }} successfully added!",
 				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
 				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYEE_TYPE": {
+				"ADD_EMPLOYEE_TYPE": "New employee type {{ name }} successfully added!",
+				"REMOVE_EMPLOYEE_TYPE": "Employee type {{ name }} successfully removed!",
+				"INVALID_EMPLOYEE_TYPE": "Please check the type name of your employee type"
 			}
 		},
 		"DANGER_ZONE": {
