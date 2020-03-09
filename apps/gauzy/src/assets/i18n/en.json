@@ -125,7 +125,8 @@
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
-			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)"
+			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
+			"EMPLOYEE_TYPE": "Employee Type"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -181,7 +182,8 @@
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
-			"SWITCH_PROJECT_STATE": "Public"
+			"SWITCH_PROJECT_STATE": "Public",
+			"EMPLOYEE_TYPE": "Employee Type"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",

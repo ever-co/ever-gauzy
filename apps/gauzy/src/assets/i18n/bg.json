@@ -124,7 +124,8 @@
 			"BONUS_PERCENTAGE": "Процентен Бонус",
 			"ENABLE_DISABLE_INVITES": "Включване / Изключване на Поканите",
 			"ALLOW_USER_INVITES": "Позволи на юзърите да изпращат покани",
-			"INVITE_EXPIRY_PERIOD": "Период на изтичане на поканите (в дни)"
+			"INVITE_EXPIRY_PERIOD": "Период на изтичане на поканите (в дни)",
+			"EMPLOYEE_TYPE": ""
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -180,7 +181,8 @@
 			"BONUS_PERCENTAGE": "Бонус процентен",
 			"ENABLE_INVITES": "Позволи поканите",
 			"INVITE_EXPIRY_PERIOD": "Покани валидни до",
-			"SWITCH_PROJECT_STATE": "Public"
+			"SWITCH_PROJECT_STATE": "Public",
+			"EMPLOYEE_TYPE": ""
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",

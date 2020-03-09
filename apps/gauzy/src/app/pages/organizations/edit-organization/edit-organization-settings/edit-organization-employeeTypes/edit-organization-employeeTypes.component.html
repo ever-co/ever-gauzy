@@ -12,43 +12,50 @@
 		</div>
 		<form [formGroup]="form" *ngIf="form" class="row">
 			<div class="form-group col-4">
+				<label class="label" for="employmentTypeInput">{{
+					'FORM.LABELS.EMPLOYEE_TYPE' | translate
+				}}</label>
 				<input
+					id="employmentTypeInput"
 					type="text"
 					#name
 					nbInput
 					fullWidth
 					formControlName="name"
-					placeholder="{{ 'FORM.PLACEHOLDERS.NAME' | translate }}"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.EMPLOYEE_TYPE' | translate
+					}}"
 				/>
 			</div>
 		</form>
 	</nb-card-body>
-	<nb-card size="small">
-		<nb-card-header>
-			Employment Types
-		</nb-card-header>
-		<nb-list>
-			<nb-list-item *ngFor="let empType of empTypes">
-				<input nbInput [(ngModel)]="empType.name" />
-				<div style="margin-left: 10px;">
-					<button
-						nbButton
-						size="small"
-						status="success"
-						(click)="update(empType)"
-					>
-						Update
-					</button>
-					<button
-						nbButton
-						size="small"
-						status="danger"
-						(click)="delType(empType['id'])"
-					>
-						X
-					</button>
-				</div>
-			</nb-list-item>
-		</nb-list>
-	</nb-card>
+</nb-card>
+<nb-card size="small">
+	<nb-card-header>
+		Employment Types
+	</nb-card-header>
+	<nb-list>
+		<nb-list-item *ngFor="let empType of empTypes">
+			<input nbInput [(ngModel)]="empType.name" />
+			<div style="margin-left: 10px;">
+				<button
+					nbButton
+					size="small"
+					status="success"
+					(click)="update(empType)"
+				>
+					Update
+				</button>
+				<button
+					style="margin-left: 5px;"
+					nbButton
+					size="small"
+					status="danger"
+					(click)="delType(empType['id'])"
+				>
+					X
+				</button>
+			</div>
+		</nb-list-item>
+	</nb-list>
 </nb-card>

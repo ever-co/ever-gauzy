@@ -124,7 +124,8 @@
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_DISABLE_INVITES": "Включить/выключить приглашения",
 			"ALLOW_USER_INVITES": "Разрешить пользователям отправлять приглашения",
-			"INVITE_EXPIRY_PERIOD": "Срок приглашения истекает (в днях)"
+			"INVITE_EXPIRY_PERIOD": "Срок приглашения истекает (в днях)",
+			"EMPLOYEE_TYPE": ""
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -180,7 +181,8 @@
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
-			"SWITCH_PROJECT_STATE": "Публичный"
+			"SWITCH_PROJECT_STATE": "Публичный",
+			"EMPLOYEE_TYPE": ""
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
