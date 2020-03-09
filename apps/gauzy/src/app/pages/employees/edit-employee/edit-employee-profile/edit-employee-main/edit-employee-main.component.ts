@@ -13,7 +13,6 @@ import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
