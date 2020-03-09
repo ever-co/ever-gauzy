@@ -120,4 +120,40 @@ export class Employee extends Base implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	country?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	city?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	address?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	address2?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	postcode?: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
+	regionCode?: string;
 }
