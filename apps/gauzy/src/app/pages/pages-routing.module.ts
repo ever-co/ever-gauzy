@@ -90,6 +90,11 @@ const routes: Routes = [
 					import('./tags/tags.module').then((m) => m.TagsModule)
 			},
 			{
+				path: 'tasks',
+				loadChildren: () =>
+					import('./tasks/tasks.module').then((m) => m.TasksModule)
+			},
+			{
 				path: 'help',
 				loadChildren: () =>
 					import('./help/help.module').then((m) => m.HelpModule)
