@@ -32,7 +32,7 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
 import { DownloadAllModule } from './download-all';
-
+import { TaskModule } from './tasks';
 
 @Module({
 	imports: [
@@ -122,8 +122,12 @@ import { DownloadAllModule } from './download-all';
 						module: TenantModule
 					},
 					{
-						path:'/tags',
-						module:TagModule
+						path: '/tags',
+						module: TagModule
+					},
+					{
+						path: '/tasks',
+						module: TaskModule
 					}
 				]
 			}
@@ -157,7 +161,7 @@ import { DownloadAllModule } from './download-all';
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
-		
+		TaskModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

@@ -262,7 +262,8 @@
 			"IMPORT": "Импорт",
 			"EXPORT": "Экспорт"
 		},
-		"TAGS": "Теги"
+		"TAGS": "Теги",
+		"TASKS": "Задания"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -517,6 +518,19 @@
 		"TAGS_ADD_TAG": "Тег добавлен",
 		"TAGS_EDIT_TAG": "Тег отредактирован",
 		"TAGS_DELETE_TAG": "Метка удалена"
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Задания",
+		"ADD_TASKS": "Добавить задачи",
+		"EDIT_TASKS": "Изменить задачи",
+		"TASKS_TITLE": "Заглавие",
+		"TASKS_DESCRIPTION": "Описание",
+		"TASKS_LOADED": "Задачи загружены",
+		"TASK_ADDED": "Задача добавлена",
+		"TASK_UPDATED": "Задача обновлена",
+		"TASK_DELETED": "Задача удалена",
+		"TASKS_PROJECT": "Проект",
+		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
