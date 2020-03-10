@@ -1,4 +1,4 @@
-import { User, Tag, OrganizationDepartment } from '..';
+import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
@@ -21,6 +21,7 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	reWeeklyLimit?: number;
 	tenant: Tenant;
 	organizationDepartment?: OrganizationDepartment;
+	organizationPosition?: OrganizationPositions;
 	tags: Tag[];
 	offerDate?: Date;
 	acceptDate?: Date;
@@ -40,6 +41,7 @@ export interface EmployeeUpdateInput {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	organizationDepartment?: OrganizationDepartment;
+	organizationPosition?: OrganizationPositions;
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;

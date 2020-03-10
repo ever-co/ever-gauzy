@@ -22,6 +22,7 @@ import { Tenant } from '../tenant';
 import { Tag } from '../tags';
 import { OrganizationDepartment } from '../organization-department';
 import { LocationBase } from '../core/entities/location-base';
+import { OrganizationPositions } from '../organization-positions';
 
 @Entity('employee')
 export class Employee extends LocationBase implements IEmployee {
@@ -57,6 +58,15 @@ export class Employee extends LocationBase implements IEmployee {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.organizationDepartment)
 	readonly organizationDepartmentId?: string;
+
+	@ApiProperty({ type: OrganizationPositions })
+	@ManyToOne((type) => OrganizationPositions, { nullable: true })
+	@JoinColumn()
+	organizationPosition?: OrganizationPositions;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((employee: Employee) => employee.organizationPosition)
+	readonly organizationPositionId?: string;
 
 	@ApiProperty({ type: Organization })
 	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })

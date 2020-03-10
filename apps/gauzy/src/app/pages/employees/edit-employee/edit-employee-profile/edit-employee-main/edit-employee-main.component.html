@@ -113,8 +113,9 @@
 						}}</label>
 						<ng-select
 							id="positionInput"
-							[items]="fakePositions"
-							bindLabel="positionName"
+							[items]="positions"
+							formControlName="organizationPosition"
+							bindLabel="name"
 							[searchable]="false"
 							placeholder="{{
 								'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate

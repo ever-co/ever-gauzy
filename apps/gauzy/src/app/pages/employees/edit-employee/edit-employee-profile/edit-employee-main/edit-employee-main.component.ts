@@ -1,13 +1,19 @@
-import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { Employee, OrganizationDepartment } from '@gauzy/models';
+import {
+	Employee,
+	OrganizationDepartment,
+	OrganizationPositions,
+	Organization
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
+import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-employee-main',
@@ -23,15 +29,17 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	hoverState: boolean;
 	routeParams: Params;
 	selectedEmployee: Employee;
+	selectedOrganization: Organization;
 	departments: OrganizationDepartment[] = [];
-	fakePositions: { positionName: string; positionId: string }[] = [];
+	positions: OrganizationPositions[] = [];
 
 	constructor(
 		private fb: FormBuilder,
-		private location: Location,
+		private store: Store,
 		private toastrService: NbToastrService,
 		private employeeStore: EmployeeStore,
-		private readonly organizationDepartmentsService: OrganizationDepartmentsService
+		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
+		private readonly organizationPositionsService: OrganizationPositionsService
 	) {}
 
 	ngOnInit() {
@@ -45,10 +53,15 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				}
 			});
 
-		this.getFakeData();
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				this.selectedOrganization = organization;
+				if (this.selectedOrganization) {
+					this.getPositions();
+				}
+			});
 	}
-
-	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
 
 	private async getDepartments() {
 		const { items } = await this.organizationDepartmentsService.getAll([], {
@@ -57,20 +70,13 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		this.departments = items;
 	}
 
-	private getFakeData() {
-		const fakePositionNames = [
-			'Developer',
-			'Project Manager',
-			'Accounting Employee',
-			'Head of Human Resources'
-		];
-
-		fakePositionNames.forEach((name) => {
-			this.fakePositions.push({
-				positionName: name,
-				positionId: this.getFakeId()
+	private getPositions() {
+		this.organizationPositionsService
+			.getAll({ organizationId: this.selectedOrganization.id })
+			.then((data) => {
+				const { items } = data;
+				this.positions = items;
 			});
-		});
 	}
 
 	handleImageUploadError(error: any) {
@@ -93,7 +99,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			firstName: [employee.user.firstName, Validators.required],
 			lastName: [employee.user.lastName, Validators.required],
 			imageUrl: [employee.user.imageUrl, Validators.required],
-			organizationDepartment: [employee.organizationDepartment || null]
+			organizationDepartment: [employee.organizationDepartment || null],
+			organizationPosition: [employee.organizationPosition || null]
 		});
 	}
 
