@@ -220,7 +220,23 @@
 				<nb-datepicker #rejectDatePicker></nb-datepicker>
 			</div>
 		</div>
-		<div class="col"></div>
+		<div class="col-sm-6">
+			<div class="form-group">
+				<label class="label" for="addTags">
+					Add tags
+				</label>
+				<nb-select
+					multiple
+					placeholder="Select Tags"
+					fullWidth
+					id="addTags"
+				>
+					<nb-option *ngFor="let tag of tags" [value]="tag.id">
+						{{ tag.name }}
+					</nb-option>
+				</nb-select>
+			</div>
+		</div>
 	</div>
 
 	<div class="row">

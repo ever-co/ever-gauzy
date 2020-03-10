@@ -1,6 +1,7 @@
 import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Tag } from './tag-entity.model';
 
 export interface Expense extends IBaseEntityModel {
 	employee?: Employee;
@@ -26,6 +27,7 @@ export interface Expense extends IBaseEntityModel {
 	rateValue?: number;
 	receipt?: string;
 	splitExpense?: boolean;
+	tags: Tag[];
 }
 
 export interface ExpenseCreateInput {

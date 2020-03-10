@@ -1,5 +1,9 @@
-<input 
-class="color" 
-[style.background]="rowData.color"
-disabled=true;
-/>
+<div>
+	<nb-badge
+		class="color"
+		position="centered"
+		[style.background]="rowData.color"
+		text="{{ rowData.name }}"
+	>
+	</nb-badge>
+</div>

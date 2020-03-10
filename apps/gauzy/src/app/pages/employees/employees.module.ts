@@ -48,6 +48,8 @@ import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-pro
 import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
 import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
 import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
+import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
+import { CountryService } from '../../@core/services/country.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -69,7 +71,8 @@ const COMPONENTS = [
 	EditEmployeeDepartmentComponent,
 	EditEmployeeProjectsComponent,
 	EditEmployeeClientComponent,
-	EditEmployeeHiringComponent
+	EditEmployeeHiringComponent,
+	EditEmployeeLocationComponent
 ];
 
 @NgModule({
@@ -119,6 +122,6 @@ const COMPONENTS = [
 		EmployeeWorkStatusComponent,
 		ManageEmployeeInviteComponent
 	],
-	providers: [OrganizationsService, InviteGuard]
+	providers: [OrganizationsService, InviteGuard, CountryService]
 })
 export class EmployeesModule {}
