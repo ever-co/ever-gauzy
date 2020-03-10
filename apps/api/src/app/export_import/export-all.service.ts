@@ -1,13 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as archiver from 'archiver';
+import UUID from 'pure-uuid';
+import { Subject, BehaviorSubject } from 'rxjs';
 
 @Injectable()
-export class DownloadAllService {
+export class ExportAllService {
+	fileName = new Subject<string>();
 	async archiveAndDownload() {
-		const output = fs.createWriteStream(
-			'./apps/api/src/app/download-all/alldata/export.zip'
-		);
+		fs.mkdir('./export', { recursive: true }, (err) => {
+			if (err) throw err;
+		});
+
+		const id = new UUID(4).format();
+
+		const fileNameS = id + '_export.zip';
+		this.fileName.next(fileNameS);
+		const output = fs.createWriteStream(`./export/${fileNameS}`);
 		const archive = archiver('zip', {
 			zlib: { level: 9 }
 		});
@@ -37,10 +46,7 @@ export class DownloadAllService {
 
 		archive.pipe(output);
 
-		archive.directory(
-			'./apps/api/src/app/download-all/downloaded-data/',
-			false
-		);
+		archive.directory('./apps/api/src/app/export_import/all-data/', false);
 
 		archive.finalize();
 	}
