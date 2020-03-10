@@ -64,9 +64,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			.subscribe((data) => {
 				this.employeeLevels = data['items'];
 			});
-
-		this.getFakeData();
-
+		
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -75,7 +73,6 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 					this.getPositions();
 				}
 			});
-
 	}
 
 	private async getDepartments() {
@@ -108,8 +105,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _initializeForm(employee: Employee) {
-		// TODO: Implement Departments and Positions!
+	private _initializeForm(employee: Employee) {		
 		this.form = this.fb.group({
 			username: [employee.user.username],
 			email: [employee.user.email, Validators.required],
