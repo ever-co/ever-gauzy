@@ -98,5 +98,5 @@ export class User extends Base implements IUser {
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
-	empLevel?: string;
+	employeeLevel?: string;
 }

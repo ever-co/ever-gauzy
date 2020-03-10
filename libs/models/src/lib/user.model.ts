@@ -18,7 +18,7 @@ export interface User extends IBaseEntityModel {
 	imageUrl?: string;
 	startedWorkOn?: string;
 	tenant: Tenant;
-	empLevel?: string;
+	employeeLevel?: string;
 }
 
 export interface UserFindInput extends IBaseEntityModel {
@@ -31,14 +31,12 @@ export interface UserFindInput extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	empLevel?: string;
 }
 
 export interface UserRegistrationInput {
 	user: User;
 	password?: string;
 	originalUrl?: string;
-	empLevel?: string;
 }
 
 export interface UserCreateInput {
@@ -50,5 +48,4 @@ export interface UserCreateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	empLevel?: string;
 }

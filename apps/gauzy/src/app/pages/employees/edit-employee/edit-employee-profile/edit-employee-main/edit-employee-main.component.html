@@ -165,11 +165,11 @@
 						<label class="label" for="empLevelInput">
 							Employee Level
 						</label>
-						<ng-select formControlName="empLevel">
+						<ng-select formControlName="employeeLevel">
 							<ng-option
-								*ngFor="let empL of empLevels"
-								[value]="empL.empLevelName"
-								>{{ empL.empLevelName }}</ng-option
+								*ngFor="let empL of employeeLevels"
+								[value]="empL.level"
+								>{{ empL.level }}</ng-option
 							>
 						</ng-select>
 					</div>

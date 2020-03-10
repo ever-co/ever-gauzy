@@ -7,6 +7,7 @@ import { NbToastrService } from '@nebular/theme';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
 
 @Component({
 	selector: 'ga-edit-employee-main',
@@ -24,13 +25,14 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	selectedEmployee: Employee;
 	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
-	empLevels: { empLevelName: string }[] = [];
+	employeeLevels: { level: string; organizationId: string }[] = [];
 
 	constructor(
 		private fb: FormBuilder,
 		private location: Location,
 		private toastrService: NbToastrService,
-		private employeeStore: EmployeeStore
+		private employeeStore: EmployeeStore,
+		private employeeLevelService: EmployeeLevelService
 	) {}
 
 	ngOnInit() {
@@ -41,6 +43,13 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				if (this.selectedEmployee) {
 					this._initializeForm(this.selectedEmployee);
 				}
+			});
+
+		this.employeeLevelService
+			.getAll()
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((data) => {
+				this.employeeLevels = data['items'];
 			});
 
 		this.getFakeData();
@@ -76,14 +85,6 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				positionId: this.getFakeId()
 			});
 		});
-
-		const empLevelNames = ['Level A', 'Level B', 'Level C', 'Level D'];
-
-		empLevelNames.forEach((name) => {
-			this.empLevels.push({
-				empLevelName: name
-			});
-		});
 	}
 
 	handleImageUploadError(error: any) {
@@ -92,6 +93,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 
 	async submitForm() {
 		console.log(this.form);
+
 		if (this.form.valid) {
 			this.employeeStore.userForm = {
 				...this.form.value
@@ -107,7 +109,10 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			firstName: [employee.user.firstName, Validators.required],
 			lastName: [employee.user.lastName, Validators.required],
 			imageUrl: [employee.user.imageUrl, Validators.required],
-			empLevel: [employee.user.empLevel, Validators.required]
+			employeeLevel: [
+				employee.user.employeeLevel || '',
+				Validators.required
+			]
 		});
 	}
 

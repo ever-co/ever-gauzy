@@ -32,7 +32,7 @@ import { RolePermissionsModule } from './role-permissions/role-permissions.modul
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
 import { DownloadAllModule } from './download-all';
-
+import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
 
 @Module({
 	imports: [
@@ -48,6 +48,7 @@ import { DownloadAllModule } from './download-all';
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
+					{ path: '/employee-level', module: EmployeeLevelModule },
 
 					{
 						path: '/employee-settings',
@@ -122,8 +123,8 @@ import { DownloadAllModule } from './download-all';
 						module: TenantModule
 					},
 					{
-						path:'/tags',
-						module:TagModule
+						path: '/tags',
+						module: TagModule
 					}
 				]
 			}
@@ -157,7 +158,7 @@ import { DownloadAllModule } from './download-all';
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
-		
+		EmployeeLevelModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
