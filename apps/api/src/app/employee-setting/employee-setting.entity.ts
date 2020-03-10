@@ -1,13 +1,12 @@
 import { Column, Entity, Index } from 'typeorm';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
 	IsString,
 	IsNumber,
 	Min,
 	Max,
-	IsEnum,
-	IsOptional
+	IsEnum
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import {
