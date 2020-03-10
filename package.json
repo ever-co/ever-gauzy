@@ -199,7 +199,7 @@
 		"tinymce": "^5.0.9",
 		"tslib": "^1.10.0",
 		"typeface-exo": "^0.0.61",
-		"uuid": "^3.3.3",
+		"uuid": "^7.0.2",
 		"web-animations-js": "^2.3.2",
 		"zone.js": "~0.10.2"
 	},

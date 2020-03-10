@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as archiver from 'archiver';
-import UUID from 'pure-uuid';
+import { v4 as uuidv4 } from 'uuid';
+//import UUID from 'pure-uuid';
 import { Subject } from 'rxjs';
 
 @Injectable()
@@ -12,7 +13,8 @@ export class ExportAllService {
 			if (err) throw err;
 		});
 
-		const id = new UUID(4).format();
+		//const id = new UUID(4).format();
+		const id = uuidv4();
 
 		const fileNameS = id + '_export.zip';
 		this.fileName.next(fileNameS);
