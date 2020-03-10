@@ -194,7 +194,11 @@ export class EmployeeStatisticsService {
 		return `${this._monthNames[date.getMonth()]} '${date.getFullYear() -
 			2000}`;
 	}
-
+	/**
+	 * Return bonus value based on the bonus type and percentage
+	 * For revenue based bonus, bonus is calculated based on income
+	 * For profit based bonus, bonus is calculated based on profit
+	 */
 	calculateEmployeeBonus = (
 		bonusType: string,
 		bonusPercentage: number,
@@ -219,13 +223,21 @@ export class EmployeeStatisticsService {
 		}
 	};
 
+	/**
+	 * helper function to create a date range to use in SQL between condition
+	 */
 	private _beforeDateFilter = (date: Date, lastNMonths: number) =>
 		Between(
 			subMonths(startOfMonth(date), lastNMonths - 1),
 			endOfMonth(date)
 		);
 
-	// lastNMonths : 1 for current month and 12 for past 1 year income
+	/**
+	 * Gets all income records of a employee(employeeId),
+	 * in last N months(lastNMonths),
+	 * till the specified Date(searchMonth)
+	 * lastNMonths = 1, for last 1 month and 12 for an year
+	 */
 	employeeIncomeInNMonths = async (
 		employeeId: string,
 		searchMonth: Date,
@@ -251,7 +263,12 @@ export class EmployeeStatisticsService {
 			}
 		});
 
-	// lastNMonths : 1 for current month and 12 for past 1 year income
+	/**
+	 * Gets all expense records of a employee(employeeId),
+	 * in last N months(lastNMonths),
+	 * till the specified Date(searchMonth)
+	 * lastNMonths = 1, for last 1 month and 12 for an year
+	 */
 	employeeExpenseInNMonths = async (
 		employeeId: string,
 		searchMonth: Date,
@@ -277,7 +294,12 @@ export class EmployeeStatisticsService {
 			}
 		});
 
-	// lastNMonths : 1 for current month and 12 for past 1 year income
+	/**
+	 * Gets all expense records of a employee's organization(employeeId)
+	 * that were marked to be split among its employees,
+	 * in last N months(lastNMonths),till the specified Date(searchMonth)
+	 * lastNMonths = 1, for last 1 month and 12 for an year
+	 */
 	employeeSplitExpenseInNMonths = async (
 		employeeId: string,
 		searchMonth: Date,
@@ -291,7 +313,6 @@ export class EmployeeStatisticsService {
 			relations: ['organization']
 		});
 
-		console.log('employee:', employee);
 		// 2 Find split expenses for Employee's Organization in last N months
 		const { items } = await this.expenseService.findAll({
 			select: [
@@ -309,7 +330,7 @@ export class EmployeeStatisticsService {
 			}
 		});
 
-		// 3. Number of employees in Employee's organization
+		// 3. Number of employees in Employee's organization that the expense has to be split between
 		const splitAmong =
 			(await this.employeeService.count({
 				where: {
@@ -320,6 +341,9 @@ export class EmployeeStatisticsService {
 		return { items, splitAmong };
 	};
 
+	/**
+	 * Fetch all recurring expenses of the employee using employeeId
+	 */
 	employeeRecurringExpenseInNMonths = async (employeeId: string) =>
 		await this.employeeRecurringExpenseService.findAll({
 			select: [

@@ -174,6 +174,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		 * till the input date
 		 */
 		employeeRecurringExpenses.map((expense) => {
+			// Find start date based on input date and X months.
 			const inputStartDate = subMonths(
 				startOfMonth(input.valueDate),
 				input.months - 1
@@ -183,7 +184,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			 * Add recurring expense from the
 			 * expense start date
 			 * OR
-			 * past N months to each month's expense, whichever is lesser
+			 * past N months to each month's expense, whichever is more recent
 			 */
 			const requiredStartDate =
 				expense.startDate > inputStartDate
@@ -201,9 +202,11 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				const key = `${date.getMonth()}-${date.getFullYear()}`;
 				const amount = Number(expense.value);
 				if (statisticsMap.has(key)) {
+					// Update expense statistics values in map if key pre-exists
 					const stat = statisticsMap.get(key);
 					stat.expense += Number(amount.toFixed(2));
 				} else {
+					// Add a new map entry if the key(month-year) does not already exist
 					const newStat: MonthAggregatedEmployeeStatistics = {
 						month: date.getMonth(),
 						year: date.getFullYear(),
@@ -218,10 +221,20 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		});
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param statisticsMap
+	 * Fetches employee's organization expenses that were marked to be split among
+	 * its employees for past N months from given date
+	 * Updates expense statistics values in map if key pre-exists
+	 * Adds a new map entry if the key(month-year) does not already exist
+	 */
 	private async _loadEmployeeSplitExpenses(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
 	) {
+		// Fetch split expenses and the number of employees the expense need to be split among
 		const {
 			items: expenses,
 			splitAmong
@@ -235,9 +248,11 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			const key = `${expense.valueDate.getMonth()}-${expense.valueDate.getFullYear()}`;
 			const amount = expense.amount;
 			if (statisticsMap.has(key)) {
+				// Update expense statistics values in map if key pre-exists
 				const stat = statisticsMap.get(key);
 				stat.expense += Number((amount / splitAmong).toFixed(2));
 			} else {
+				// Add a new map entry if the key(month-year) does not already exist
 				const newStat: MonthAggregatedEmployeeStatistics = {
 					month: expense.valueDate.getMonth(),
 					year: expense.valueDate.getFullYear(),
@@ -251,14 +266,29 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		});
 	}
 
+	/**
+	 *
+	 * @param statisticsMap
+	 * Profit = Income - Expense
+	 * For every stat entry in the map, update profit value
+	 */
+
 	private _calculateProfit(
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
 	) {
+		// For every stat entry in the map, update profit value
 		statisticsMap.forEach((stat) => {
 			stat.profit = Number((stat.income - stat.expense).toFixed(2));
 		});
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param statisticsMap
+	 * Fetch employee's organization bonus type and percentage
+	 * For every stat entry in the map, update bonus value
+	 */
 	private async _loadEmployeeBonus(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
@@ -269,6 +299,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			relations: ['organization']
 		});
 		statisticsMap.forEach((stat) => {
+			// Get calculated bonus value for stat
 			const bonus = this.employeeStatisticsService.calculateEmployeeBonus(
 				bonusType,
 				bonusPercentage,

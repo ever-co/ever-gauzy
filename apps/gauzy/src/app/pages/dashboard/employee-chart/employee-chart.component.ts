@@ -62,9 +62,13 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 	 * is changed from the header component
 	 */
 	private async _initializeChart() {
-		if (this.selectedEmployee.id && this.selectedDate) {
+		if (
+			this.selectedEmployee &&
+			this.selectedEmployee.id &&
+			this.selectedDate
+		) {
 			try {
-				await this._loadData(this.selectedEmployee);
+				await this._loadData();
 				this._LoadChart();
 			} catch (error) {
 				this.errorHandler.handleError(error);
