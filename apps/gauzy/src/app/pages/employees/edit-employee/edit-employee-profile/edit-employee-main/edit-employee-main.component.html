@@ -159,6 +159,21 @@
 						/>
 					</div>
 				</div>
+
+				<div class="col">
+					<div class="form-group">
+						<label class="label" for="empLevelInput">
+							Employee Level
+						</label>
+						<ng-select formControlName="empLevel">
+							<ng-option
+								*ngFor="let empL of empLevels"
+								[value]="empL.empLevelName"
+								>{{ empL.empLevelName }}</ng-option
+							>
+						</ng-select>
+					</div>
+				</div>
 			</div>
 
 			<div class="actions">
