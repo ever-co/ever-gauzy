@@ -37,10 +37,10 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((emp) => {
+			.subscribe(async (emp) => {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
-					this.getDepartments();
+					await this.getDepartments();
 					this._initializeForm(this.selectedEmployee);
 				}
 			});
@@ -50,13 +50,13 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 
 	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
 
-	private getDepartments() {
-		this.organizationDepartmentsService
-			.getAllByEmployee(this.selectedEmployee.id)
-			.then((departments: OrganizationDepartment[]) => {
-				this.departments = departments;
-			});
+	private async getDepartments() {
+		const { items } = await this.organizationDepartmentsService.getAll([], {
+			organizationId: this.selectedEmployee.orgId
+		});
+		this.departments = items;
 	}
+
 	private getFakeData() {
 		const fakePositionNames = [
 			'Developer',
