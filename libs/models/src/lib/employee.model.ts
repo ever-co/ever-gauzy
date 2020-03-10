@@ -60,3 +60,8 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
+
+export interface EmployeeLevelInput {
+	level: string;
+	organizationId: string;
+}

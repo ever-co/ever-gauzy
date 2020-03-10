@@ -11,6 +11,7 @@ import { NbToastrService } from '@nebular/theme';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -29,15 +30,19 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	hoverState: boolean;
 	routeParams: Params;
 	selectedEmployee: Employee;
+	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
+	fakePositions: { positionName: string; positionId: string }[] = [];
+	employeeLevels: { level: string; organizationId: string }[] = [];
 	selectedOrganization: Organization;
 	departments: OrganizationDepartment[] = [];
 	positions: OrganizationPositions[] = [];
 
 	constructor(
-		private fb: FormBuilder,
-		private store: Store,
-		private toastrService: NbToastrService,
-		private employeeStore: EmployeeStore,
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
+		private readonly toastrService: NbToastrService,
+		private readonly employeeStore: EmployeeStore,
+		private readonly employeeLevelService: EmployeeLevelService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly organizationPositionsService: OrganizationPositionsService
 	) {}
@@ -53,6 +58,15 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				}
 			});
 
+		this.employeeLevelService
+			.getAll()
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((data) => {
+				this.employeeLevels = data['items'];
+			});
+
+		this.getFakeData();
+
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -61,6 +75,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 					this.getPositions();
 				}
 			});
+
 	}
 
 	private async getDepartments() {
@@ -84,6 +99,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
+		console.log(this.form);
+
 		if (this.form.valid) {
 			this.employeeStore.userForm = {
 				...this.form.value
@@ -99,6 +116,10 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			firstName: [employee.user.firstName, Validators.required],
 			lastName: [employee.user.lastName, Validators.required],
 			imageUrl: [employee.user.imageUrl, Validators.required],
+			employeeLevel: [
+				employee.user.employeeLevel || '',
+				Validators.required
+			],
 			organizationDepartment: [employee.organizationDepartment || null],
 			organizationPosition: [employee.organizationPosition || null]
 		});
