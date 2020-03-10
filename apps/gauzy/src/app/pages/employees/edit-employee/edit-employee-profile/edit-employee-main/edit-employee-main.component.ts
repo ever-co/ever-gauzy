@@ -57,7 +57,6 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				this.selectedOrganization = organization;
-				console.log(this.selectedOrganization);
 				if (this.selectedOrganization) {
 					this.getPositions();
 				}
