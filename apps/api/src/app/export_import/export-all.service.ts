@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as archiver from 'archiver';
 import UUID from 'pure-uuid';
-import { Subject, BehaviorSubject } from 'rxjs';
+import { Subject } from 'rxjs';
 
 @Injectable()
 export class ExportAllService {
