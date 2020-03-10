@@ -223,18 +223,43 @@
 		<div class="col-sm-6">
 			<div class="form-group">
 				<label class="label" for="addTags">
-					Add tags
+					Tags
 				</label>
-				<nb-select
-					multiple
-					placeholder="Select Tags"
-					fullWidth
-					id="addTags"
+				<ng-select
+					[(ngModel)]="selectedTags"
+					[ngModelOptions]="{ standalone: true }"
+					[items]="tags"
+					[multiple]="true"
 				>
-					<nb-option *ngFor="let tag of tags" [value]="tag.id">
-						{{ tag.name }}
-					</nb-option>
-				</nb-select>
+					<ng-template ng-label-tmp let-item="item" let-clear="clear">
+						<span class="ng-value-label"
+							><nb-badge
+								style="position: static !important;"
+								width="20px"
+								height="20px"
+								[style.background]="item.color"
+								text="{{ item.name }}"
+							></nb-badge
+						></span>
+						<span
+							class="ng-value-icon right"
+							(click)="clear(item)"
+							aria-hidden="true"
+							>×</span
+						>
+					</ng-template>
+
+					<ng-template ng-option-tmp let-item="item">
+						<nb-badge
+							style="position: static !important;"
+							width="20px"
+							height="20px"
+							[style.background]="item.color"
+							text="{{ item.name }}"
+						></nb-badge>
+					</ng-template>
+				</ng-select>
+				Selected city object: {{ selectedTags | json }}
 			</div>
 		</div>
 	</div>

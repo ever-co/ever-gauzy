@@ -7,7 +7,8 @@ import {
 	NbCardModule,
 	NbDatepickerModule,
 	NbButtonModule,
-	NbSelectModule
+	NbSelectModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -19,6 +20,7 @@ import { HttpClient } from '@angular/common/http';
 import { ActionConfirmationComponent } from './action-confirmation/action-confirmation.component';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { TagsService } from '../../../@core/services/tags.service';
+import { NgSelectComponent, NgSelectModule } from '@ng-select/ng-select';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -35,6 +37,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		FileUploaderModule,
 		NbSelectModule,
+		NgSelectModule,
+		NbBadgeModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

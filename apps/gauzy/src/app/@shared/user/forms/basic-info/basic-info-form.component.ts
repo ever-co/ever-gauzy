@@ -15,6 +15,9 @@ import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
+import { Observable } from 'rxjs';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -48,6 +51,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	acceptDate: any;
 	rejectDate: any;
 	tags: Tag[] = [];
+	selectedTags: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -55,7 +59,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		private readonly roleService: RoleService,
 		private readonly translateService: TranslateService,
 		private readonly validatorService: ValidationService,
-		private readonly tagsService: TagsService
+		private readonly tagsService: TagsService,
+		private readonly store: Store
 	) {}
 
 	ngOnInit(): void {
@@ -157,12 +162,14 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						role,
 						startedWorkOn: startedWorkOn.value,
 						tenant: this.tenant,
-						tags: this.tags
+						tags: this.selectedTags.value
 					},
 					password: this.password.value
 				})
 				.pipe(first())
 				.toPromise();
+
+			// call backend to add tags to existed employee
 		}
 
 		return;
@@ -191,6 +198,6 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	async getAllTags() {
 		const { items } = await this.tagsService.getAllTags();
 		this.tags = items;
-		debugger;
+		this.selectedTags = items;
 	}
 }

@@ -44,6 +44,9 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			const user = await this.userBasicInfo.registerUser(
 				RolesEnum.EMPLOYEE
 			);
+
+			const tags = this.userBasicInfo.selectedTags;
+			debugger;
 			const organization = this.store.selectedOrganization;
 			const offerDate = this.form.get('offerDate').value || null;
 			const acceptDate = this.form.get('acceptDate').value || null;
@@ -54,7 +57,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 				organization,
 				offerDate,
 				acceptDate,
-				rejectDate
+				rejectDate,
+				tags
 			};
 
 			const employee = await this.employeesService
