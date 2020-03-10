@@ -520,7 +520,22 @@
 		"TAGS_EDIT_TAG": "Tag edited",
 		"TAGS_DELETE_TAG": "Tag deleted"
 	},
-	"EQUIPMENT_PAGE": {},
+	"EQUIPMENT_PAGE": {
+		"HEADER": "Equipment",
+		"ADD_EQUIPMENT": "Add Equipment",
+		"EDIT_EQUIPMENT": "Edit Equipment",
+		"EQUIPMENT_NAME": "Name",
+		"EQUIPMENT_TYPE": "Type",
+		"EQUIPMENT_SN": "SN",
+		"EQUIPMENT_MANUFACTURED_YEAR": "Manufactured year",
+		"EQUIPMENT_INITIAL_COST": "Initial cost",
+		"EQUIPMENT_CURRENCY": "Currency",
+		"EQUIPMENT_MAX_SHARE_PERIOD": "Max share period",
+		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
+		"EQUIPMENT_EDITED": "Equipment edited",
+		"EQUIPMENT_DELETED": "Equipment deleted",
+		"EQUIPMENT_ADDED": "Equipment added"
+	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",

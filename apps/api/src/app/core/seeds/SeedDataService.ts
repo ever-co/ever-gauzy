@@ -35,6 +35,7 @@ import { RolePermissions, createRolePermissions } from '../../role-permissions';
 import { createTenants } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
+import { Equipment } from '../../equipment';
 
 const allEntities = [
 	User,
@@ -50,7 +51,8 @@ const allEntities = [
 	RolePermissions,
 	Tenant,
 	EmailTemplate,
-	Tag
+	Tag,
+	Equipment
 ];
 
 @Injectable()

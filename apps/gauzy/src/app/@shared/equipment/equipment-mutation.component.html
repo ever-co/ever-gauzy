@@ -1,0 +1,136 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(equipment
+					? 'EQUIPMENT_PAGE.EDIT_EQUIPMENT'
+					: 'EQUIPMENT_PAGE.ADD_EQUIPMENT'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row ">
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="text"
+						formControlName="name"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate
+						}}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="text"
+						formControlName="type"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate
+						}}"
+					/>
+				</div>
+			</div>
+
+			<div class="row ">
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="text"
+						formControlName="SN"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate
+						}}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="number"
+						formControlName="manufacturedYear"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
+								| translate
+						}}"
+					/>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="number"
+						formControlName="initialCost"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
+						}}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<nb-select class="d-block" formControlName="currency">
+						<nb-option
+							*ngFor="let currency of currencies"
+							value="{{ currency }}"
+							>{{ currency }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+
+			<div class="row ">
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="number"
+						formControlName="maxSharePeriod"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
+								| translate
+						}}"
+					/>
+				</div>
+			</div>
+
+			<div class="form-group mb-3">
+				<nb-checkbox formControlName="autoApproveShare">
+					<span>{{
+						'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE' | translate
+					}}</span>
+				</nb-checkbox>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="warning"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			[disabled]="form.invalid"
+			(click)="saveEquipment()"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

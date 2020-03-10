@@ -16,6 +16,12 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EquipmentComponent } from './equipment.component';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { EquipmentService } from '../../@core/services/equipment.service';
+import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
+import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
+export function HttpLoaderFactory(http: HttpClient) {
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
 
 @NgModule({
 	imports: [
@@ -28,18 +34,20 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 		NbIconModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
-		// ExpensesMutationModule,
+		EquipmentMutationModule,
 		// UserFormsModule,
 		TableComponentsModule,
-		// TranslateModule.forChild({
-		// 	loader: {
-		// 		provide: TranslateLoader,
-		// 		useFactory: HttpLoaderFactory,
-		// 		deps: [HttpClient]
-		// 	}
-		// }),
+		TranslateModule.forChild({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
 		NbSpinnerModule
 	],
+	providers: [EquipmentService],
+	entryComponents: [EquipmentMutationComponent],
 	declarations: [EquipmentComponent]
 })
 export class EquipmentModule {}
