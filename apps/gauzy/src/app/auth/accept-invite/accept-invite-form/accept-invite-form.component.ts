@@ -12,7 +12,7 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import { Invite, UserRegistrationInput } from '@gauzy/models';
+import { Invite, UserRegistrationInput, Tag } from '@gauzy/models';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
@@ -42,6 +42,7 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 	repeatPassword: AbstractControl;
 	agreeTerms: AbstractControl;
 	tenant: Tenant;
+	tags: Tag[];
 
 	matchPassword: boolean;
 	repeatPasswordErrorMsg: string;
@@ -152,7 +153,8 @@ export class AcceptInviteFormComponent implements OnInit, OnDestroy {
 						: null,
 					email: this.invitation.email,
 					role: this.invitation.role,
-					tenant: this.tenant
+					tenant: this.tenant,
+					tags: this.tags
 				},
 				password: this.password.value
 			});
