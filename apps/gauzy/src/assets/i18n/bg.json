@@ -127,8 +127,8 @@
 			"ALLOW_USER_INVITES": "Позволи на юзърите да изпращат покани",
 			"INVITE_EXPIRY_PERIOD": "Период на изтичане на поканите (в дни)",
 			"OFFER_DATE": "Offer Date (optional)",
-			"ACCEPT_DATE": "Accept Date (optional)",
-			"REJECT_DATE": "Reject Date (optional)",
+			"ACCEPT_DATE": "Дата на приемане (опция)",
+			"REJECT_DATE": "Дата на отказ (опция)",
 			"EMAIL_INVITATION": "Enter email to send invitation"
 		},
 		"PLACEHOLDERS": {
@@ -293,7 +293,7 @@
 			"PROFIT": "Печалба",
 			"TOTAL_BONUS": "Бонус Общо",
 			"TOTAL_DIRECT_INCOME": "Изтриване на доход",
-			"SALARY": "Salary",
+			"SALARY": "Заплата",
 			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
 			"TOTAL_INCOME_CALC": "Total Income = Income {{ totalNonBonusIncome }} + Direct Income {{ totalBonusIncome }}",
 			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
