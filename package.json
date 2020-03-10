@@ -153,6 +153,7 @@
 		"echarts": "^4.2.1",
 		"email-templates": "^6.1.1",
 		"eva-icons": "^1.1.1",
+		"file-saver": "^2.0.2",
 		"filepond": "^4.5.1",
 		"filepond-plugin-file-encode": "^2.1.0",
 		"filepond-plugin-file-validate-size": "^2.2.0",
@@ -197,7 +198,7 @@
 		"tinymce": "^5.0.9",
 		"tslib": "^1.10.0",
 		"typeface-exo": "^0.0.61",
-		"uuid": "^3.3.3",
+		"uuid": "^7.0.2",
 		"web-animations-js": "^2.3.2",
 		"zone.js": "~0.10.2"
 	},
