@@ -33,6 +33,7 @@ import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
 import { DownloadAllModule } from './download-all';
 import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
+import { ExportAllModule } from './export_import';
 
 @Module({
 	imports: [
@@ -43,7 +44,7 @@ import { EmployeeLevelModule } from './organization_employeeLevel/organization-e
 					{ path: '/auth', module: AuthModule },
 					{ path: '/user', module: UserModule },
 					{ path: '/employee', module: EmployeeModule },
-					{ path: '/download', module: DownloadAllModule },
+					{ path: '/download', module: ExportAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
@@ -133,7 +134,7 @@ import { EmployeeLevelModule } from './organization_employeeLevel/organization-e
 		AuthModule,
 		UserModule,
 		EmployeeModule,
-		DownloadAllModule,
+		ExportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		RoleModule,

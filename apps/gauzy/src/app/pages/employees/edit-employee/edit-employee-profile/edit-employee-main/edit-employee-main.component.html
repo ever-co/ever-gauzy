@@ -95,8 +95,9 @@
 						</label>
 						<ng-select
 							id="departmentInput"
-							[items]="fakeDepartments"
-							bindLabel="departmentName"
+							[items]="departments"
+							formControlName="organizationDepartment"
+							bindLabel="name"
 							[searchable]="false"
 							placeholder="{{
 								'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate
@@ -112,8 +113,9 @@
 						}}</label>
 						<ng-select
 							id="positionInput"
-							[items]="fakePositions"
-							bindLabel="positionName"
+							[items]="positions"
+							formControlName="organizationPosition"
+							bindLabel="name"
 							[searchable]="false"
 							placeholder="{{
 								'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate

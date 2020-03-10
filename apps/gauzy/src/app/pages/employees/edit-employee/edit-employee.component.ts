@@ -86,7 +86,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				const id = params.id;
 
 				const { items } = await this.employeeService
-					.getAll(['user'], { id })
+					.getAll(['user', 'organizationPosition'], { id })
 					.pipe(first())
 					.toPromise();
 
