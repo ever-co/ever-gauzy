@@ -1,8 +1,9 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tenant } from './tenant.model';
 import { Tag } from './tag-entity.model';
+import { Location as ILocation } from './location.model';
 
-export interface Organization extends IBaseEntityModel {
+export interface Organization extends IBaseEntityModel, ILocation {
 	name: string;
 	valueDate?: Date;
 	totalEmployees?: number;
@@ -18,12 +19,6 @@ export interface Organization extends IBaseEntityModel {
 	officialName?: string;
 	startWeekOn?: string;
 	taxId?: string;
-	country?: string;
-	city?: string;
-	address?: string;
-	address2?: string;
-	postcode?: string;
-	regionCode?: string;
 	numberFormat?: string;
 	bonusType?: string;
 	bonusPercentage?: number;
@@ -41,7 +36,7 @@ export interface OrganizationFindInput extends IBaseEntityModel {
 	isActive?: boolean;
 }
 
-export interface OrganizationCreateInput {
+export interface OrganizationCreateInput extends ILocation {
 	name: string;
 	valueDate?: Date;
 	imageUrl: string;
@@ -52,12 +47,6 @@ export interface OrganizationCreateInput {
 	officialName?: string;
 	startWeekOn?: string;
 	taxId?: string;
-	country?: string;
-	city?: string;
-	address?: string;
-	address2?: string;
-	postcode?: string;
-	regionCode?: string;
 	numberFormat?: string;
 	bonusType: BonusTypeEnum;
 	bonusPercentage?: number;

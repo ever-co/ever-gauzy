@@ -44,8 +44,6 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get()
 	async findAllEmployees(
 		@Query('data') data: string
@@ -64,8 +62,6 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<Employee> {
 		return this.employeeService.findOne(id);

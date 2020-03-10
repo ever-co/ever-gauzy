@@ -9,6 +9,9 @@ import { Injectable } from '@nestjs/common';
 import { EmployeeService } from '../employee/employee.service';
 import { ExpenseService } from '../expense';
 import { IncomeService } from '../income';
+import { Between } from 'typeorm';
+import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
 @Injectable()
 export class EmployeeStatisticsService {
 	private _monthNames = [
@@ -29,6 +32,7 @@ export class EmployeeStatisticsService {
 	constructor(
 		private incomeService: IncomeService,
 		private expenseService: ExpenseService,
+		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
 		private employeeService: EmployeeService
 	) {}
 
@@ -214,4 +218,119 @@ export class EmployeeStatisticsService {
 				return 0;
 		}
 	};
+
+	private _beforeDateFilter = (date: Date, lastNMonths: number) =>
+		Between(
+			subMonths(startOfMonth(date), lastNMonths - 1),
+			endOfMonth(date)
+		);
+
+	// lastNMonths : 1 for current month and 12 for past 1 year income
+	employeeIncomeInNMonths = async (
+		employeeId: string,
+		searchMonth: Date,
+		lastNMonths: number
+	) =>
+		await this.incomeService.findAll({
+			select: [
+				'valueDate',
+				'clientName',
+				'amount',
+				'currency',
+				'notes',
+				'isBonus'
+			],
+			where: {
+				employee: {
+					id: employeeId
+				},
+				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+			},
+			order: {
+				valueDate: 'DESC'
+			}
+		});
+
+	// lastNMonths : 1 for current month and 12 for past 1 year income
+	employeeExpenseInNMonths = async (
+		employeeId: string,
+		searchMonth: Date,
+		lastNMonths: number
+	) =>
+		await this.expenseService.findAll({
+			select: [
+				'valueDate',
+				'vendorName',
+				'categoryName',
+				'amount',
+				'currency',
+				'notes'
+			],
+			where: {
+				employee: {
+					id: employeeId
+				},
+				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+			},
+			order: {
+				valueDate: 'DESC'
+			}
+		});
+
+	// lastNMonths : 1 for current month and 12 for past 1 year income
+	employeeSplitExpenseInNMonths = async (
+		employeeId: string,
+		searchMonth: Date,
+		lastNMonths: number
+	) => {
+		// 1 Get Employee's Organization
+		const employee = await this.employeeService.findOne({
+			where: {
+				id: employeeId
+			},
+			relations: ['organization']
+		});
+
+		console.log('employee:', employee);
+		// 2 Find split expenses for Employee's Organization in last N months
+		const { items } = await this.expenseService.findAll({
+			select: [
+				'valueDate',
+				'vendorName',
+				'categoryName',
+				'amount',
+				'currency',
+				'notes'
+			],
+			where: {
+				organization: { id: employee.organization.id },
+				splitExpense: true,
+				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+			}
+		});
+
+		// 3. Number of employees in Employee's organization
+		const splitAmong =
+			(await this.employeeService.count({
+				where: {
+					organization: { id: employee.organization.id }
+				}
+			})) || 1;
+
+		return { items, splitAmong };
+	};
+
+	employeeRecurringExpenseInNMonths = async (employeeId: string) =>
+		await this.employeeRecurringExpenseService.findAll({
+			select: [
+				'currency',
+				'value',
+				'categoryName',
+				'startDate',
+				'endDate'
+			],
+			where: {
+				employeeId: employeeId
+			}
+		});
 }
