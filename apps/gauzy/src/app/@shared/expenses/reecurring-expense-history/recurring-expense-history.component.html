@@ -1,0 +1,9 @@
+<div class="recurring-expense-history">
+	<h6>Expense History</h6>
+	<div class="row" *ngFor="let record of recordsData">
+		<div class="col"></div>
+		<div class="col">{{ record.startMonth }} {{ record.startYear }}</div>
+		<div class="col">{{ record.value }} {{ record.currency }}</div>
+		<hr />
+	</div>
+</div>

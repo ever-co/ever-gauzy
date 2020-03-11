@@ -35,14 +35,19 @@
 		transform: translateY(-1px);
 	}
 
-	display: flex;
-	justify-content: space-between;
-	margin-bottom: 20px;
-	width: 100%;
-	height: 84px;
 	background-color: #f6f9fc;
 	border-radius: 4px 0 0 4px;
 
+	.setting-row {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 20px;
+		width: 100%;
+		height: 84px;
+	}
+
+	.setting-table {
+	}
 	.block-settings {
 		display: flex;
 		align-items: center;
@@ -58,7 +63,7 @@
 			width: 30px;
 			cursor: pointer;
 
-			svg {
+			::ng-deep svg {
 				fill: rgb(127, 127, 127);
 			}
 

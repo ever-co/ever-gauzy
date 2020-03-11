@@ -24,13 +24,20 @@ export abstract class FindRecurringExpenseByMonthHandler<
 	): Promise<IPagination<T>> {
 		const inputStartDate = new Date(input.year, input.month - 1, 1);
 
-		const whereId = input.orgId
+		let whereId: Object = input.orgId
 			? {
 					orgId: input.orgId
 			  }
 			: {
 					employeeId: input.employeeId
 			  };
+
+		if (input.parentRecurringExpenseId) {
+			whereId = {
+				...whereId,
+				parentRecurringExpenseId: input.parentRecurringExpenseId
+			};
+		}
 
 		const expenses = await this.crudService.findAll({
 			where: [

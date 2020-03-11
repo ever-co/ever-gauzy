@@ -24,27 +24,27 @@ export class OrganizationRecurringExpenseService {
 			.toPromise();
 	}
 
-	// getAll(
-	// 	relations?: string[],
-	// 	findInput?: OrganizationRecurringExpenseFindInput
-	// ): Promise<{
-	// 	items: OrganizationRecurringExpense[];
-	// 	total: number;
-	// }> {
-	// 	const data = JSON.stringify({ relations, findInput });
-
-	// 	return this.http
-	// 		.get<{
-	// 			items: OrganizationRecurringExpense[];
-	// 			total: number;
-	// 		}>('/api/organization-recurring-expense', {
-	// 			params: { data }
-	// 		})
-	// 		.pipe(first())
-	// 		.toPromise();
-	// }
-
 	getAll(
+		relations?: string[],
+		findInput?: OrganizationRecurringExpenseFindInput
+	): Promise<{
+		items: OrganizationRecurringExpense[];
+		total: number;
+	}> {
+		const data = JSON.stringify({ relations, findInput });
+
+		return this.http
+			.get<{
+				items: OrganizationRecurringExpense[];
+				total: number;
+			}>('/api/organization-recurring-expense', {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllByMonth(
 		findInput?: OrganizationRecurringExpenseFindInput
 	): Promise<{
 		items: OrganizationRecurringExpense[];
@@ -104,23 +104,23 @@ export class OrganizationRecurringExpenseService {
 			.toPromise();
 	}
 
-	getAllByMonth(
-		relations?: string[],
-		findInput?: OrganizationRecurringExpenseFindInput
-	): Promise<{
-		items: OrganizationRecurringExpense[];
-		total: number;
-	}> {
-		const data = JSON.stringify({ relations, findInput });
+	// getAllByMonth(
+	// 	relations?: string[],
+	// 	findInput?: OrganizationRecurringExpenseFindInput
+	// ): Promise<{
+	// 	items: OrganizationRecurringExpense[];
+	// 	total: number;
+	// }> {
+	// 	const data = JSON.stringify({ relations, findInput });
 
-		return this.http
-			.get<{
-				items: OrganizationRecurringExpense[];
-				total: number;
-			}>('/api/employee-recurring-expense/month', {
-				params: { data }
-			})
-			.pipe(first())
-			.toPromise();
-	}
+	// 	return this.http
+	// 		.get<{
+	// 			items: OrganizationRecurringExpense[];
+	// 			total: number;
+	// 		}>('/api/employee-recurring-expense/month', {
+	// 			params: { data }
+	// 		})
+	// 		.pipe(first())
+	// 		.toPromise();
+	// }
 }
