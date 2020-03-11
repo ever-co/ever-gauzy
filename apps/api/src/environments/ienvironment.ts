@@ -56,4 +56,7 @@ export interface IEnvironment {
 		name: string;
 		defaultMembers: string[];
 	}[];
+	sentry?: {
+		dns: string;
+	};
 }
