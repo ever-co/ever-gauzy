@@ -4,7 +4,9 @@ import {
 	Index,
 	ManyToOne,
 	RelationId,
-	JoinColumn
+	JoinColumn,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -20,9 +22,16 @@ import { Base } from '../core/entities/base';
 import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
 import { Organization } from '../organization';
 import { Employee } from '../employee';
+import { Tag } from '../tags';
 
 @Entity('expense')
 export class Expense extends Base implements IExpense {
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tags_expense'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
