@@ -16,33 +16,28 @@ export class Equipment extends Base implements IEquipment {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
 	@Column()
 	name: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
 	@Column()
 	type: string;
 
 	@ApiPropertyOptional({ type: String })
-	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	SN?: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Index()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	manufacturedYear: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Index()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	initialCost: number;
@@ -50,13 +45,11 @@ export class Equipment extends Base implements IEquipment {
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
-	@Index()
 	@Column()
 	currency: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Index()
 	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	maxSharePeriod: number;

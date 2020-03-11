@@ -1,4 +1,4 @@
-import { OnInit, Component } from '@angular/core';
+import { OnInit, Component, AfterViewInit } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Equipment, CurrenciesEnum } from '@gauzy/models';
@@ -6,7 +6,6 @@ import { NbDialogRef } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../@core/services/store.service';
-import { threadId } from 'worker_threads';
 
 @Component({
 	selector: 'ngx-equipment-mutation',
@@ -36,6 +35,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 			: this.currencies[0];
 
 		this.initializeForm();
+		this.form.get('currency').disable();
 	}
 
 	async initializeForm() {
@@ -65,15 +65,18 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 			autoApproveShare: [
 				this.equipment ? this.equipment.autoApproveShare : ''
 			],
-			id: [this.equipment ? this.equipment.id : '']
+			id: [this.equipment ? this.equipment.id : null]
 		});
 	}
 
 	async saveEquipment() {
-		if (!this.form.get('id')) {
+		if (!this.form.get('id').value) {
 			delete this.form.value['id'];
 		}
-		const equipment = await this.equipmentService.save(this.form.value);
+		const equipment = await this.equipmentService.save({
+			...this.form.value,
+			currency: this.selectedCurrency
+		});
 		this.closeDialog(equipment);
 	}
 
