@@ -1,13 +1,4 @@
-import {
-	Controller,
-	Get,
-	Body,
-	Param,
-	Post,
-	Delete,
-	Put,
-	UseGuards
-} from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { CrudController } from '../core';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { EmployeeLevelService } from './organization-employee-level.service';

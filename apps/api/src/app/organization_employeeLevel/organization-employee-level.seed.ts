@@ -1,4 +1,4 @@
-import { Connection, getConnection } from 'typeorm';
+import { Connection } from 'typeorm';
 import { EmployeeLevelInput } from '@gauzy/models';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { Organization } from '../organization/organization.entity';
