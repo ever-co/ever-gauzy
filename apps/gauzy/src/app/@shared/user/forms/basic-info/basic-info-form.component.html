@@ -220,7 +220,7 @@
 				<nb-datepicker #rejectDatePicker></nb-datepicker>
 			</div>
 		</div>
-		<div class="col-sm-6">
+		<!-- <div class="col-sm-6">
 			<div class="form-group">
 				<label class="label" for="addTags">
 					Tags
@@ -248,7 +248,6 @@
 							>×</span
 						>
 					</ng-template>
-
 					<ng-template ng-option-tmp let-item="item">
 						<nb-badge
 							style="position: static !important;"
@@ -260,7 +259,14 @@
 					</ng-template>
 				</ng-select>
 			</div>
+		</div> -->
+		<div class="col-sm-6">
+			<div class="form-group">
+				<ngx-tags-color-input id="inputTags" [items]="tags">
+				</ngx-tags-color-input>
+			</div>
 		</div>
+		{{ tags | json }}
 	</div>
 
 	<div class="row">
