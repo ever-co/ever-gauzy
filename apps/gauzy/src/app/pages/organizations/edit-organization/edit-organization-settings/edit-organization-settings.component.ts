@@ -99,6 +99,12 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('positions')
 			},
 			{
+				title: 'Employee Levels',
+				icon: 'award-outline',
+				responsive: true,
+				route: this.getRoute('employeeLevels')
+			},
+			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
 				icon: 'car-outline',
 				responsive: true,

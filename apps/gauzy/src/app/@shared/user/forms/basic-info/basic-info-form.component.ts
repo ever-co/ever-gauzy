@@ -57,8 +57,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		private readonly roleService: RoleService,
 		private readonly translateService: TranslateService,
 		private readonly validatorService: ValidationService,
-		private readonly tagsService: TagsService,
-		private readonly store: Store
+		private readonly tagsService: TagsService
 	) {}
 
 	ngOnInit(): void {
