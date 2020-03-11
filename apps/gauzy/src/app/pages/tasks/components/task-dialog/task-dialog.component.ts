@@ -25,7 +25,7 @@ export class TaskDialogComponent implements OnInit {
 	selectedTask: Task;
 
 	constructor(
-		protected dialogRef: NbDialogRef<TaskDialogComponent>,
+		public dialogRef: NbDialogRef<TaskDialogComponent>,
 		private fb: FormBuilder,
 		private _organizationsStore: Store,
 		private organizationProjectsService: OrganizationProjectsService

@@ -27,15 +27,20 @@ export class TasksService extends TranslationBaseComponent {
 	}
 
 	getAllTasks(): Observable<ITaskResponse> {
-		return this._http.get<ITaskResponse>(this.API_URL).pipe(
-			tap(() =>
-				this.toastrService.primary(
-					this.getTranslation('TASKS_PAGE.TASKS_LOADED'),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				)
-			),
-			catchError((error) => this.errorHandler(error))
-		);
+		const data = JSON.stringify({ relations: ['project'] });
+		return this._http
+			.get<ITaskResponse>(this.API_URL, {
+				params: { data }
+			})
+			.pipe(
+				tap(() =>
+					this.toastrService.primary(
+						this.getTranslation('TASKS_PAGE.TASKS_LOADED'),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					)
+				),
+				catchError((error) => this.errorHandler(error))
+			);
 	}
 
 	createTask(task): Observable<Task> {
