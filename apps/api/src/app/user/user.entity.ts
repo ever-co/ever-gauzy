@@ -19,14 +19,23 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	RelationId
+	RelationId,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role';
 import { Tenant } from '../tenant/tenant.entity';
+import { Tag } from '../tags';
 
 @Entity('user')
 export class User extends Base implements IUser {
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tags_user'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: Tenant })
 	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -94,4 +103,9 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
+
+	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@IsOptional()
+	@Column({ length: 500, nullable: true })
+	employeeLevel?: string;
 }

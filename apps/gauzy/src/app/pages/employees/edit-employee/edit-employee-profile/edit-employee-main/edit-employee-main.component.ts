@@ -1,12 +1,20 @@
-import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { Employee } from '@gauzy/models';
+import {
+	Employee,
+	OrganizationDepartment,
+	OrganizationPositions,
+	Organization
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
+import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
+import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-employee-main',
@@ -24,57 +32,69 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	selectedEmployee: Employee;
 	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
+	employeeLevels: { level: string; organizationId: string }[] = [];
+	selectedOrganization: Organization;
+	departments: OrganizationDepartment[] = [];
+	positions: OrganizationPositions[] = [];
 
 	constructor(
-		private fb: FormBuilder,
-		private location: Location,
-		private toastrService: NbToastrService,
-		private employeeStore: EmployeeStore
+		private readonly fb: FormBuilder,
+		private readonly store: Store,
+		private readonly toastrService: NbToastrService,
+		private readonly employeeStore: EmployeeStore,
+		private readonly employeeLevelService: EmployeeLevelService,
+		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
+		private readonly organizationPositionsService: OrganizationPositionsService
 	) {}
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((emp) => {
+			.subscribe(async (emp) => {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
+					await this.getDepartments();
 					this._initializeForm(this.selectedEmployee);
+					this.employeeLevelService
+						.getAll(this.selectedEmployee.orgId)
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((data) => {
+							this.employeeLevels = data['items'];
+						});
 				}
 			});
 
-		this.getFakeData();
+		this.employeeLevelService
+			.getAll('1')
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((data) => {
+				this.employeeLevels = data['items'];
+			});
+
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				this.selectedOrganization = organization;
+				if (this.selectedOrganization) {
+					this.getPositions();
+				}
+			});
 	}
 
-	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
-
-	private getFakeData() {
-		const fakeDepartmentNames = [
-			'Accounting',
-			'IT',
-			'Marketing',
-			'Human Resources'
-		];
-
-		fakeDepartmentNames.forEach((name) => {
-			this.fakeDepartments.push({
-				departmentName: name,
-				departmentId: this.getFakeId()
-			});
+	private async getDepartments() {
+		const { items } = await this.organizationDepartmentsService.getAll([], {
+			organizationId: this.selectedEmployee.orgId
 		});
+		this.departments = items;
+	}
 
-		const fakePositionNames = [
-			'Developer',
-			'Project Manager',
-			'Accounting Employee',
-			'Head of Human Resources'
-		];
-
-		fakePositionNames.forEach((name) => {
-			this.fakePositions.push({
-				positionName: name,
-				positionId: this.getFakeId()
+	private getPositions() {
+		this.organizationPositionsService
+			.getAll({ organizationId: this.selectedOrganization.id })
+			.then((data) => {
+				const { items } = data;
+				this.positions = items;
 			});
-		});
 	}
 
 	handleImageUploadError(error: any) {
@@ -82,6 +102,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
+		console.log(this.form);
+
 		if (this.form.valid) {
 			this.employeeStore.userForm = {
 				...this.form.value
@@ -90,13 +112,18 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	}
 
 	private _initializeForm(employee: Employee) {
-		// TODO: Implement Departments and Positions!
 		this.form = this.fb.group({
 			username: [employee.user.username],
 			email: [employee.user.email, Validators.required],
 			firstName: [employee.user.firstName, Validators.required],
 			lastName: [employee.user.lastName, Validators.required],
-			imageUrl: [employee.user.imageUrl, Validators.required]
+			imageUrl: [employee.user.imageUrl, Validators.required],
+			employeeLevel: [
+				employee.user.employeeLevel || '',
+				Validators.required
+			],
+			organizationDepartment: [employee.organizationDepartment || null],
+			organizationPosition: [employee.organizationPosition || null]
 		});
 	}
 
