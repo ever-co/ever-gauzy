@@ -58,9 +58,8 @@ export class TasksStoreService {
 			.pipe(
 				tap(() => {
 					const tasks = [...this.tasks];
-					const index = tasks.findIndex((t) => t.id === task.id);
-					tasks[index] = task;
-					this._tasks$.next(tasks);
+					const newState = tasks.map(t => t.id === task.id ? task : t);
+					this._tasks$.next(newState);
 				})
 			)
 			.subscribe();
