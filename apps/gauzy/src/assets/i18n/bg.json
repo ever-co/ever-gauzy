@@ -263,7 +263,8 @@
 			"EXPORT": "Export"
 		},
 		"TAGS": "Тагове",
-		"EQUIPMENT": "Equipment"
+		"EQUIPMENT": "Equipment",
+		"TASKS": "Tasks"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -535,6 +536,19 @@
 		"EQUIPMENT_DELETED": "Equipment deleted",
 		"EQUIPMENT_ADDED": "Equipment added",
 		"EQUIPMENT_SAVED": "Equipment saved"
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Tasks",
+		"ADD_TASKS": "Add Tasks",
+		"EDIT_TASKS": "Edit Tasks",
+		"TASKS_TITLE": "Title",
+		"TASKS_DESCRIPTION": "Description",
+		"TASKS_LOADED": "Tasks loaded",
+		"TASK_ADDED": "Task added",
+		"TASK_UPDATED": "Task updated",
+		"TASK_DELETED": "Task deleted",
+		"TASKS_PROJECT": "Проект",
+		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
