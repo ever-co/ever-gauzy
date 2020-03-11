@@ -31,6 +31,7 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
+import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
 import { ExportAllModule } from './export_import';
 import { SentryModule } from '@ntegral/nestjs-sentry';
@@ -51,6 +52,7 @@ import { LogLevel } from '@sentry/types';
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
+					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
 
 					{
@@ -174,7 +176,9 @@ import { LogLevel } from '@sentry/types';
 						logLevel: LogLevel.Error
 					})
 			  ]
-			: [])
+			: []),
+		EquipmentModule,
+		EmployeeLevelModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
