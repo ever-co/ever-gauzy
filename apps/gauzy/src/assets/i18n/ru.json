@@ -262,7 +262,8 @@
 			"IMPORT": "Импорт",
 			"EXPORT": "Экспорт"
 		},
-		"TAGS": "Теги"
+		"TAGS": "Теги",
+		"EQUIPMENT": "Оборудование"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -517,6 +518,23 @@
 		"TAGS_ADD_TAG": "Тег добавлен",
 		"TAGS_EDIT_TAG": "Тег отредактирован",
 		"TAGS_DELETE_TAG": "Метка удалена"
+	},
+	"EQUIPMENT_PAGE": {
+		"HEADER": "Оборудование",
+		"ADD_EQUIPMENT": "Добавить снаряжение",
+		"EDIT_EQUIPMENT": "Изменить снаряжение",
+		"EQUIPMENT_NAME": "Имя",
+		"EQUIPMENT_TYPE": "Тип",
+		"EQUIPMENT_SN": "SN",
+		"EQUIPMENT_MANUFACTURED_YEAR": "Год производства",
+		"EQUIPMENT_INITIAL_COST": "Начальные затраты",
+		"EQUIPMENT_CURRENCY": "Валюта",
+		"EQUIPMENT_MAX_SHARE_PERIOD": "Макс. срок акции",
+		"EQUIPMENT_AUTO_APPROVE": "Авто подтверждение",
+		"EQUIPMENT_EDITED": "Оборудование отредактировано",
+		"EQUIPMENT_DELETED": "Снаряжение удалено",
+		"EQUIPMENT_ADDED": "Снаряжение добавлено",
+		"EQUIPMENT_SAVED": "Оборудование сохранено"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
