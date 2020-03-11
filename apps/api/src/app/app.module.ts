@@ -33,6 +33,7 @@ import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
 import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
 import { ExportAllModule } from './export_import';
+import { TaskModule } from './tasks';
 
 @Module({
 	imports: [
@@ -125,6 +126,10 @@ import { ExportAllModule } from './export_import';
 					{
 						path: '/tags',
 						module: TagModule
+					},
+					{
+						path: '/tasks',
+						module: TaskModule
 					}
 				]
 			}
@@ -158,7 +163,8 @@ import { ExportAllModule } from './export_import';
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
-		EmployeeLevelModule
+		EmployeeLevelModule,
+		TaskModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

@@ -89,6 +89,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Tasks',
+			icon: 'browser-outline',
+			link: '/pages/tasks',
+			data: {
+				translated: false,
+				translationKey: 'MENU.TASKS'
+				//   permissionKeys: [],
+			}
+		},
+		{
 			title: 'Help',
 			icon: 'question-mark-circle-outline',
 			link: '/pages/help',

@@ -33,6 +33,7 @@ import { RolePermissions } from '../role-permissions';
 import { Tenant } from './../tenant/tenant.entity';
 import { EmailTemplate } from '../email-template';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
+import { Task } from '../tasks';
 
 const entities = [
 	Invite,
@@ -60,7 +61,8 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
-	EmployeeLevel
+	EmployeeLevel,
+	Task
 ];
 
 @Module({

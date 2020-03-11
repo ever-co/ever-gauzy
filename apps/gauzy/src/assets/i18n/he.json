@@ -262,7 +262,8 @@
 			"IMPORT": "Import",
 			"EXPORT": "Export"
 		},
-		"TAGS": "Tags"
+		"TAGS": "Tags",
+		"TASKS": "משימות"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -517,6 +518,19 @@
 		"TAGS_ADD_TAG": "Tag added",
 		"TAGS_EDIT_TAG": "Tag edited",
 		"TAGS_DELETE_TAG": "Tag deleted"
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Tasks",
+		"ADD_TASKS": "Add Tasks",
+		"EDIT_TASKS": "Edit Tasks",
+		"TASKS_TITLE": "Title",
+		"TASKS_DESCRIPTION": "Description",
+		"TASKS_LOADED": "Tasks loaded",
+		"TASK_ADDED": "Task added",
+		"TASK_UPDATED": "Task updated",
+		"TASK_DELETED": "Task deleted",
+		"TASKS_PROJECT": "Project",
+		"TASKS_STATUS": "Status"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
