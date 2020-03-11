@@ -33,8 +33,8 @@ export abstract class CrudController<T extends Base> {
 	})
 	@Get()
 	async findAll(
-		@Query('data') data?: string,
-		filter?: PaginationParams<T>
+		filter?: PaginationParams<T>,
+		@Query('data') data?: string
 	): Promise<IPagination<T>> {
 		let filters = {
 			...filter
