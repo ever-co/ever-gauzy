@@ -65,7 +65,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			});
 
 		this.employeeLevelService
-			.getAll('1')
+			.getAll(this.selectedOrganization.id)
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => {
 				this.employeeLevels = data['items'];
