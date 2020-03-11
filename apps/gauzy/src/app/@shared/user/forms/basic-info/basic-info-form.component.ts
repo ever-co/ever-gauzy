@@ -15,7 +15,6 @@ import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -57,8 +56,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		private readonly roleService: RoleService,
 		private readonly translateService: TranslateService,
 		private readonly validatorService: ValidationService,
-		private readonly tagsService: TagsService,
-		private readonly store: Store
+		private readonly tagsService: TagsService
 	) {}
 
 	ngOnInit(): void {
