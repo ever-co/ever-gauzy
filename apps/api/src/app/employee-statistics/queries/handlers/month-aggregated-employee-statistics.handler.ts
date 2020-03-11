@@ -8,6 +8,10 @@ import { EmployeeStatisticsService } from '../../employee-statistics.service';
 import { MonthAggregatedEmployeeStatisticsQuery } from '../month-aggregated-employee-statistics.query';
 import { startOfMonth, subMonths } from 'date-fns';
 
+/**
+ * Finds income, expense, profit and bonus
+ * for past N months of an employee a given value date.
+ */
 @QueryHandler(MonthAggregatedEmployeeStatisticsQuery)
 export class MonthAggregatedEmployeeStatisticsQueryHandler
 	implements IQueryHandler<MonthAggregatedEmployeeStatisticsQuery> {
@@ -21,26 +25,31 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	): Promise<MonthAggregatedEmployeeStatistics[]> {
 		const { input } = command;
 
+		/**
+		 * Map to hold income, expense, bonus and profit statistics
+		 * key formed using month-year
+		 * value will be populated with statistics
+		 */
 		const statisticsMap: Map<
 			string,
 			MonthAggregatedEmployeeStatistics
 		> = new Map();
 
-		// Income and Direct Bonus
+		// 1. Populate Income and Direct Bonus in statisticsMap
 		await this._loadEmployeeIncomeAndDirectBonus(input, statisticsMap);
 
-		// Expenses
+		// 2. Populate Expenses(One time, Recurring, and split expenses) in statisticsMap
 		await this._loadEmployeeExpenses(input, statisticsMap);
 		await this._loadEmployeeRecurringExpenses(input, statisticsMap);
 		await this._loadEmployeeSplitExpenses(input, statisticsMap);
 
-		// Profit
+		// 3. Populate Profit in statisticsMap
 		this._calculateProfit(statisticsMap);
 
-		// Bonus
+		// 4. Populate Bonus in statisticsMap
 		await this._loadEmployeeBonus(input, statisticsMap);
 
-		// Sort stats by recent first
+		// 5. statisticsMap values are sorted based on date in descending order
 		const response = [...statisticsMap.values()].sort((a, b) =>
 			a.year === b.year ? b.month - a.month : b.year - a.year
 		);
@@ -48,10 +57,19 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		return response;
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param statisticsMap
+	 * Fetches employee's incomes for past N months from given date
+	 * Updates income and bonus statistics values(in case direct bonus income) in map if key pre-exists
+	 * Adds a new map entry if the key(month-year) does not already exist
+	 */
 	private async _loadEmployeeIncomeAndDirectBonus(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
 	) {
+		// Fetch employee's incomes for past N months from given date
 		const {
 			items: incomes
 		} = await this.employeeStatisticsService.employeeIncomeInNMonths(
@@ -64,12 +82,14 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			const amount = Number(income.amount);
 
 			if (statisticsMap.has(key)) {
+				// Update income and bonus statistics values(in case direct bonus income) in map if key pre-exists
 				const stat = statisticsMap.get(key);
 				stat.income = Number((stat.income + amount).toFixed(2));
 				stat.bonus = income.isBonus
 					? Number((stat.bonus + amount).toFixed(2))
 					: stat.bonus;
 			} else {
+				// Add a new map entry if the key(month-year) does not already exist
 				const newStat: MonthAggregatedEmployeeStatistics = {
 					month: income.valueDate.getMonth(),
 					year: income.valueDate.getFullYear(),
@@ -83,10 +103,19 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		});
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param statisticsMap
+	 * Fetches employee's expenses for past N months from given date
+	 * Updates expense statistics values in map if key pre-exists
+	 * Adds a new map entry if the key(month-year) does not already exist
+	 */
 	private async _loadEmployeeExpenses(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
 	) {
+		// Fetch employee's expenses for past N months from given date
 		const {
 			items: expenses
 		} = await this.employeeStatisticsService.employeeExpenseInNMonths(
@@ -99,9 +128,11 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			const key = `${expense.valueDate.getMonth()}-${expense.valueDate.getFullYear()}`;
 			const amount = Number(expense.amount);
 			if (statisticsMap.has(key)) {
+				// Update expense statistics values in map if key pre-exists
 				const stat = statisticsMap.get(key);
 				stat.expense = Number((amount + stat.expense).toFixed(2));
 			} else {
+				// Add a new map entry if the key(month-year) does not already exist
 				const newStat: MonthAggregatedEmployeeStatistics = {
 					month: expense.valueDate.getMonth(),
 					year: expense.valueDate.getFullYear(),
@@ -115,6 +146,14 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		});
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param statisticsMap
+	 * Fetches employee's recurring expenses
+	 * Updates expense statistics values in map if key pre-exists
+	 * Adds a new map entry if the key(month-year) does not already exist
+	 */
 	private async _loadEmployeeRecurringExpenses(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
@@ -124,17 +163,29 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		} = await this.employeeStatisticsService.employeeRecurringExpenseInNMonths(
 			input.employeeId
 		);
+
+		/**
+		 * Add recurring expense from the
+		 * expense start date
+		 * OR
+		 * past N months to each month's expense, whichever is lesser
+		 * Stop adding recurring expenses at the month where it was stopped
+		 * OR
+		 * till the input date
+		 */
 		employeeRecurringExpenses.map((expense) => {
-			/*
-			 * Add recurring expense from the its start date to each month's expense
-			 * Stop adding recurring expenses at the month where it was stopped or till the input date
-			 */
+			// Find start date based on input date and X months.
 			const inputStartDate = subMonths(
 				startOfMonth(input.valueDate),
 				input.months - 1
 			);
 
-			// If recurring expense started before input date minus N months, start from input date minus N months
+			/**
+			 * Add recurring expense from the
+			 * expense start date
+			 * OR
+			 * past N months to each month's expense, whichever is more recent
+			 */
 			const requiredStartDate =
 				expense.startDate > inputStartDate
 					? expense.startDate
@@ -151,9 +202,11 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				const key = `${date.getMonth()}-${date.getFullYear()}`;
 				const amount = Number(expense.value);
 				if (statisticsMap.has(key)) {
+					// Update expense statistics values in map if key pre-exists
 					const stat = statisticsMap.get(key);
 					stat.expense += Number(amount.toFixed(2));
 				} else {
+					// Add a new map entry if the key(month-year) does not already exist
 					const newStat: MonthAggregatedEmployeeStatistics = {
 						month: date.getMonth(),
 						year: date.getFullYear(),
@@ -168,10 +221,20 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		});
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param statisticsMap
+	 * Fetches employee's organization expenses that were marked to be split among
+	 * its employees for past N months from given date
+	 * Updates expense statistics values in map if key pre-exists
+	 * Adds a new map entry if the key(month-year) does not already exist
+	 */
 	private async _loadEmployeeSplitExpenses(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
 	) {
+		// Fetch split expenses and the number of employees the expense need to be split among
 		const {
 			items: expenses,
 			splitAmong
@@ -185,9 +248,11 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			const key = `${expense.valueDate.getMonth()}-${expense.valueDate.getFullYear()}`;
 			const amount = expense.amount;
 			if (statisticsMap.has(key)) {
+				// Update expense statistics values in map if key pre-exists
 				const stat = statisticsMap.get(key);
 				stat.expense += Number((amount / splitAmong).toFixed(2));
 			} else {
+				// Add a new map entry if the key(month-year) does not already exist
 				const newStat: MonthAggregatedEmployeeStatistics = {
 					month: expense.valueDate.getMonth(),
 					year: expense.valueDate.getFullYear(),
@@ -201,14 +266,29 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		});
 	}
 
+	/**
+	 *
+	 * @param statisticsMap
+	 * Profit = Income - Expense
+	 * For every stat entry in the map, update profit value
+	 */
+
 	private _calculateProfit(
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
 	) {
+		// For every stat entry in the map, update profit value
 		statisticsMap.forEach((stat) => {
 			stat.profit = Number((stat.income - stat.expense).toFixed(2));
 		});
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param statisticsMap
+	 * Fetch employee's organization bonus type and percentage
+	 * For every stat entry in the map, update bonus value
+	 */
 	private async _loadEmployeeBonus(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
@@ -219,6 +299,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 			relations: ['organization']
 		});
 		statisticsMap.forEach((stat) => {
+			// Get calculated bonus value for stat
 			const bonus = this.employeeStatisticsService.calculateEmployeeBonus(
 				bonusType,
 				bonusPercentage,

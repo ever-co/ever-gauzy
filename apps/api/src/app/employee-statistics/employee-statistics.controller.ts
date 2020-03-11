@@ -54,7 +54,10 @@ export class EmployeeStatisticsController {
 		);
 	}
 
-	@ApiOperation({ summary: 'Find Aggregated Statistics by Employee id' })
+	@ApiOperation({
+		summary:
+			'Find Aggregated Statistics by Employee id, valueDate and past N months'
+	})
 	@ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -65,10 +68,10 @@ export class EmployeeStatisticsController {
 		@Query('data') data?: string
 	): Promise<MonthAggregatedEmployeeStatistics> {
 		const { findInput } = JSON.parse(data);
-		/* 
-		JSON parse changes Date object to String type
-		Changing Date String to Date Object using parseISO 
-		*/
+		/**
+		 * JSON parse changes Date object to String type
+		 * Changing Date String to Date Object using parseISO
+		 */
 		findInput.valueDate = parseISO(findInput.valueDate);
 
 		return this.queryBus.execute(
