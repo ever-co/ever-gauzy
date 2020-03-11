@@ -15,6 +15,7 @@ import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 
 @Component({
 	selector: 'ga-edit-employee-main',
@@ -36,6 +37,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	selectedOrganization: Organization;
 	departments: OrganizationDepartment[] = [];
 	positions: OrganizationPositions[] = [];
+	checkAnonymous: boolean;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -44,7 +46,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		private readonly employeeStore: EmployeeStore,
 		private readonly employeeLevelService: EmployeeLevelService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
-		private readonly organizationPositionsService: OrganizationPositionsService
+		private readonly organizationPositionsService: OrganizationPositionsService,
+		private readonly employeeService: EmployeesService
 	) {}
 
 	ngOnInit() {
@@ -54,6 +57,9 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
 					await this.getDepartments();
+					this.checkAnonymous = this.selectedEmployee[
+						'anonymousBonus'
+					];
 					this._initializeForm(this.selectedEmployee);
 					this.employeeLevelService
 						.getAll(this.selectedEmployee.orgId)
@@ -62,13 +68,6 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 							this.employeeLevels = data['items'];
 						});
 				}
-			});
-
-		this.employeeLevelService
-			.getAll('1')
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data) => {
-				this.employeeLevels = data['items'];
 			});
 
 		this.store.selectedOrganization$
@@ -95,6 +94,12 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				const { items } = data;
 				this.positions = items;
 			});
+	}
+
+	async toggleAnonymous(value) {
+		await this.employeeService
+			.toggleAnonymousBonus(value, this.selectedEmployee['id'])
+			.toPromise();
 	}
 
 	handleImageUploadError(error: any) {

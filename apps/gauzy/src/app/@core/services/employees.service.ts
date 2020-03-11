@@ -57,4 +57,10 @@ export class EmployeesService {
 	create(createInput: IEmployeeCreateInput): Observable<Employee> {
 		return this.http.post<Employee>('/api/employee/create', createInput);
 	}
+
+	toggleAnonymousBonus(anonymousBonus: boolean, employeeId: string) {
+		return this.http.patch(`/api/employee/anonymous/${employeeId}`, {
+			anonymousBonus: anonymousBonus
+		});
+	}
 }

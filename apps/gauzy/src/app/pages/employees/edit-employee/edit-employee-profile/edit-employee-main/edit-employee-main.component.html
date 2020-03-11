@@ -176,6 +176,17 @@
 						</ng-select>
 					</div>
 				</div>
+
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox
+							(checkedChange)="toggleAnonymous($event)"
+							[checked]="checkAnonymous"
+						>
+							Anonymous for public bonus
+						</nb-checkbox>
+					</div>
+				</div>
 			</div>
 
 			<div class="actions">

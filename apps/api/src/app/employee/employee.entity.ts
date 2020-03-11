@@ -140,4 +140,8 @@ export class Employee extends LocationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@Column({ nullable: true })
+	anonymousBonus?: boolean;
 }

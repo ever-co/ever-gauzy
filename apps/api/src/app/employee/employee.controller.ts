@@ -6,7 +6,9 @@ import {
 	Post,
 	Body,
 	Param,
-	UseGuards
+	UseGuards,
+	Patch,
+	Header
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
@@ -24,7 +26,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('Employee')
-@UseGuards(AuthGuard('jwt'))
+// @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
@@ -85,5 +87,13 @@ export class EmployeeController extends CrudController<Employee> {
 		...options: any[]
 	): Promise<Employee> {
 		return this.commandBus.execute(new EmployeeCreateCommand(entity));
+	}
+
+	@Patch('/anonymous/:id')
+	@Header('Content-Type', 'application/json')
+	async updateAnonymous(@Body() bonus: Object, @Param() params) {
+		const anonymousBonus = bonus['anonymousBonus'];
+		const employeeId = params.id;
+		return this.employeeService.update(employeeId, { anonymousBonus });
 	}
 }
