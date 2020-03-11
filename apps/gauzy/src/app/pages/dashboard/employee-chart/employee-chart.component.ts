@@ -38,6 +38,10 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 		private errorHandler: ErrorHandlingService
 	) {}
 
+	/**
+	 * Loads or reloads chart statistics and chart when employee or date
+	 * is changed from the header component
+	 */
 	async ngOnInit() {
 		this.store.selectedDate$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -53,11 +57,18 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 				await this._initializeChart();
 			});
 	}
-
+	/**
+	 * Loads or reloads chart statistics and chart when employee or date
+	 * is changed from the header component
+	 */
 	private async _initializeChart() {
-		if (this.selectedEmployee.id && this.selectedDate) {
+		if (
+			this.selectedEmployee &&
+			this.selectedEmployee.id &&
+			this.selectedDate
+		) {
 			try {
-				await this._loadData(this.selectedEmployee);
+				await this._loadData();
 				this._LoadChart();
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -145,10 +156,20 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 				};
 			});
 	}
-
-	private async _loadData(emp: SelectedEmployee) {
+	/**
+	 * Fetches selected employee's statistics for chosen date for past X months.
+	 * Populates the local statistics variables with fetched data.
+	 */
+	private async _loadData() {
+		/**
+		 * Fetches selected employee's statistics for chosen date for past X months.
+		 */
 		const employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
-			{ employeeId: emp.id, valueDate: this.selectedDate, months: 12 }
+			{
+				employeeId: this.selectedEmployee.id,
+				valueDate: this.selectedDate,
+				months: 12
+			}
 		);
 		this.labels = [];
 		this.incomeStatistics = [];
@@ -156,6 +177,9 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 		this.profitStatistics = [];
 		this.bonusStatistics = [];
 
+		/**
+		 * Populates the local statistics variables with fetched data.
+		 */
 		employeeStatistics.map((stat) => {
 			const labelValue = `${monthNames[stat.month]} '${stat.year
 				.toString(10)
