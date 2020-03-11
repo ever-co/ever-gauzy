@@ -5,13 +5,15 @@ import {
 	Param,
 	Post,
 	Delete,
-	Put
+	Put,
+	UseGuards
 } from '@nestjs/common';
 import { CrudController } from '../core';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { EmployeeLevelService } from './organization-employee-level.service';
-import { EmployeeLevelInput } from '@gauzy/models';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeLevelController extends CrudController<EmployeeLevel> {
 	constructor(private employeeLevelService: EmployeeLevelService) {
@@ -24,25 +26,5 @@ export class EmployeeLevelController extends CrudController<EmployeeLevel> {
 		return await this.employeeLevelService.findAll({
 			where: { organizationId: orgId }
 		});
-	}
-
-	@Post()
-	async createEmployeeLevel(@Body() employeeLevel: EmployeeLevelInput) {
-		return await this.employeeLevelService.create(employeeLevel);
-	}
-
-	@Delete(':id')
-	async deleteEmployeeLevel(@Param() params) {
-		const id = params.id;
-		return await this.employeeLevelService.delete(id);
-	}
-
-	@Put(':id')
-	async updateEmployeeLevel(
-		@Param() params,
-		@Body() employeeLevel: EmployeeLevelInput
-	) {
-		const id = params.id;
-		return await this.employeeLevelService.update(id, employeeLevel);
 	}
 }

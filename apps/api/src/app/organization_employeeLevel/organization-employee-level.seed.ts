@@ -1,4 +1,4 @@
-import { Connection } from 'typeorm';
+import { Connection, getConnection } from 'typeorm';
 import { EmployeeLevelInput } from '@gauzy/models';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { Organization } from '../organization/organization.entity';
@@ -6,28 +6,35 @@ import { Organization } from '../organization/organization.entity';
 export const createEmployeeLevels = async (
 	connection: Connection
 ): Promise<EmployeeLevelInput[]> => {
-	const employeeLevels: EmployeeLevelInput[] = [
-		{
-			level: 'Level A',
-			organizationId: '1'
-		},
-		{
-			level: 'Level B',
-			organizationId: '1'
-		},
-		{
-			level: 'Level C',
-			organizationId: '1'
-		},
-		{
-			level: 'Level D',
-			organizationId: '1'
-		}
-	];
+	let employeeLevels: EmployeeLevelInput[] = [];
 
-	const orgIds = await getOrganizations(connection);
+	const organizations = await connection
+		.createQueryBuilder()
+		.select('organization')
+		.from(Organization, 'organization')
+		.getMany();
 
-	console.log(orgIds);
+	for (let i = 0; i < organizations.length; i++) {
+		const orgArray = [
+			{
+				level: 'Level A',
+				organizationId: organizations[i]['id']
+			},
+			{
+				level: 'Level B',
+				organizationId: organizations[i]['id']
+			},
+			{
+				level: 'Level C',
+				organizationId: organizations[i]['id']
+			},
+			{
+				level: 'Level D',
+				organizationId: organizations[i]['id']
+			}
+		];
+		employeeLevels = employeeLevels.concat(orgArray);
+	}
 
 	for (let i = 0; i < employeeLevels.length; i++) {
 		await insertLevel(connection, employeeLevels[i]);
@@ -46,12 +53,4 @@ const insertLevel = async (
 		.into(EmployeeLevel)
 		.values(employeeLevel)
 		.execute();
-};
-
-const getOrganizations = async (connection: Connection) => {
-	await connection
-		.createQueryBuilder()
-		.select('org'['id'])
-		.from(Organization, 'org')
-		.getMany();
 };
