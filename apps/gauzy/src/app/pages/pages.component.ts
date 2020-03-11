@@ -221,6 +221,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.ORGANIZATIONS'
 			}
 		},
+		{
+			title: 'Equipment',
+			icon: 'shopping-bag-outline',
+			link: '/pages/equipment',
+			data: {
+				translated: false,
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+				translationKey: 'MENU.EQUIPMENT'
+			}
+		},
 
 		{
 			title: 'Settings',

@@ -31,6 +31,7 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
+import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
 import { ExportAllModule } from './export_import';
 
@@ -48,6 +49,7 @@ import { ExportAllModule } from './export_import';
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
+					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
 
 					{
@@ -158,6 +160,7 @@ import { ExportAllModule } from './export_import';
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
+		EquipmentModule,
 		EmployeeLevelModule
 	],
 	controllers: [AppController],
