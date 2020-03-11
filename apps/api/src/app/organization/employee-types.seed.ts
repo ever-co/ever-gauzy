@@ -1,18 +1,24 @@
-import { EmployeeTypesCreateInput } from '@gauzy/models';
+import { EmployeeTypesCreateInput, GenericEmployeeTypes } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { EmployeeTypes } from '../employee-types/employee-types.entity';
-import { GenericEmployeeTypes } from '../../app/employee-types/employee-types.model';
+import { Organization } from './organization.entity';
 
-export const seedEmpTypes = async (connection: Connection) => {
-	let genericEmployeeTypes: EmployeeTypesCreateInput[];
-	genericEmployeeTypes = Object.values(GenericEmployeeTypes).map((t) => {
-		const newType = {
-			name: t,
-			organizationId: `generic${t}`
-		};
-		return newType;
+export const seedEmpTypes = async (
+	connection: Connection,
+	organizations: Organization[]
+) => {
+	organizations.forEach(({ id: organizationId }) => {
+		const genericEmployeeTypes: EmployeeTypesCreateInput[] = Object.values(
+			GenericEmployeeTypes
+		).map((name) => {
+			const newType = {
+				name,
+				organizationId
+			};
+			return newType;
+		});
+		insertEmpTypes(connection, genericEmployeeTypes);
 	});
-	insertEmpTypes(connection, genericEmployeeTypes);
 };
 const insertEmpTypes = async (
 	connection: Connection,

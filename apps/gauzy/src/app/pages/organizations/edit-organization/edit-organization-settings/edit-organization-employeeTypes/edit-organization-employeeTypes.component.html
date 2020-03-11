@@ -15,6 +15,7 @@
 				class="col-8"
 				nbInput
 				type="text"
+				(keyup)="onKeyEnter($event)"
 				placeholder="{{
 					'FORM.PLACEHOLDERS.EMPLOYEE_TYPE' | translate
 				}}"
@@ -46,32 +47,21 @@
 	<nb-card-body *ngIf="empTypes?.length">
 		<div class="ml-3 mb-4">
 			<strong>{{
-				'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_TYPE' | translate
+				'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_TYPES' | translate
 			}}</strong>
 		</div>
-		<nb-list>
-			<nb-list-item *ngFor="let empType of empTypes">
-				<input nbInput [(ngModel)]="empType.name" />
-				<div style="margin-left: 10px;">
-					<button
-						nbButton
-						size="small"
-						status="success"
-						(click)="update(empType)"
-					>
-						Update
-					</button>
-					<button
-						style="margin-left: 5px;"
-						nbButton
-						size="small"
-						status="danger"
-						(click)="delType(empType['id'])"
-					>
-						X
-					</button>
-				</div>
-			</nb-list-item>
-		</nb-list>
+
+		<nb-card *ngFor="let empType of empTypes">
+			<nb-card-body>
+				{{ empType['name'] }}
+				<nb-actions class="float-right" e="medium">
+					<nb-action
+						(click)="delType(empType['id'], empType['name'])"
+						class="d-inline pr-0"
+						icon="close"
+					></nb-action>
+				</nb-actions>
+			</nb-card-body>
+		</nb-card>
 	</nb-card-body>
 </nb-card>

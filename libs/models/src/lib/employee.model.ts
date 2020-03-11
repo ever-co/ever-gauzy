@@ -50,6 +50,12 @@ export enum PayPeriodEnum {
 	MONTHLY = 'MONTHLY'
 }
 
+export interface EmployeeTypes {
+	id?: string;
+	name: string;
+	organizationId?: string;
+}
+
 export interface EmployeeTypesCreateInput {
 	name: string;
 	organizationId: string;

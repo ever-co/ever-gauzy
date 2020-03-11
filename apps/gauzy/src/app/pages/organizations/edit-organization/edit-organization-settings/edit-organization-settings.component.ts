@@ -42,7 +42,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	constructor(
 		private route: ActivatedRoute,
 		private organizationService: OrganizationsService,
-		private countryService: CountryService,
 		private toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private organizationEditStore: OrganizationEditStore
@@ -123,7 +122,9 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('settings')
 			},
 			{
-				title: 'Employment Types',
+				title: this.getTranslation(
+					'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES'
+				),
 				icon: 'settings-outline',
 				responsive: true,
 				route: this.getRoute('employeeTypes')

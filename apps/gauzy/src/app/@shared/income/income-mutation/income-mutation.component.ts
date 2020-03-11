@@ -91,7 +91,6 @@ export class IncomeMutationComponent implements OnInit {
 	ngOnInit() {
 		this._initializeForm();
 		this.form.get('currency').disable();
-		console.log(this.form.value)
 	}
 
 	addOrEditIncome() {
@@ -100,20 +99,16 @@ export class IncomeMutationComponent implements OnInit {
 				Object.assign(
 					{ employee: this.employeeSelector.selectedEmployee },
 					this.form.value
-					
 				)
-				
 			);
-			
 		}
 	}
-        
+
 	close() {
 		this.dialogRef.close();
 	}
 
 	private _initializeForm() {
-		
 		if (this.income) {
 			this.form = this.fb.group({
 				valueDate: [

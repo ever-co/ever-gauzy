@@ -1,20 +1,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { first } from 'rxjs/operators';
 
 @Injectable()
 export class OrganizationEmpTypesService {
 	constructor(private http: HttpClient) {}
 
-	delType(id: string) {
-		return this.http.delete(
-			`http://localhost:3000/api/empTypes/delType/${id}`
-		);
+	deleteEmployeeType(id: number): Promise<any> {
+		return this.http
+			.delete(`/api/empTypes/delType/${id}`)
+			.pipe(first())
+			.toPromise();
 	}
 
-	update(empType) {
-		return this.http.patch(
-			`http://localhost:3000/api/empTypes/updateType/${empType.id}`,
-			empType
-		);
+	update(empType): Promise<any> {
+		return this.http
+			.patch(`/api/empTypes/updateType/${empType.id}`, empType)
+			.pipe(first())
+			.toPromise();
 	}
 }

@@ -19,7 +19,7 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 	templateUrl: './edit-organization-employeeTypes.component.html'
 })
 export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	showAddCard: boolean;
@@ -61,6 +61,12 @@ export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
 		});
 	}
 
+	private async onKeyEnter($event) {
+		if ($event.code === 'Enter') {
+			this.addEmployeeType($event.target.value);
+		}
+	}
+
 	private async addEmployeeType(name: string) {
 		if (name) {
 			const newEmpType = {
@@ -73,7 +79,6 @@ export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
 				.subscribe((data) => {
 					this.empTypes.push(data);
 				});
-
 			this.toastrService.primary(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_TYPE.ADD_EMPLOYEE_TYPE',
@@ -83,11 +88,8 @@ export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-
 			this.showAddCard = !this.showAddCard;
-			// this.loadPositions();
 		} else {
-			// TODO translate
 			this.toastrService.danger(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_TYPE.INVALID_EMPLOYEE_TYPE'
@@ -114,19 +116,22 @@ export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
 		this.form.reset();
 	}
 
-	delType(id) {
-		this.organizationEmpTypesService
-			.delType(id)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe();
+	async delType(id, name) {
+		await this.organizationEmpTypesService.deleteEmployeeType(id);
+		this.toastrService.primary(
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_TYPE.DELETE_EMPLOYEE_TYPE',
+				{
+					name: name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
 		this.empTypes = this.empTypes.filter((t) => t['id'] !== id);
 	}
 
-	update(empType) {
-		this.organizationEmpTypesService
-			.update(empType)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe();
+	async update(empType) {
+		await this.organizationEmpTypesService.update(empType);
 	}
 
 	ngOnDestroy() {

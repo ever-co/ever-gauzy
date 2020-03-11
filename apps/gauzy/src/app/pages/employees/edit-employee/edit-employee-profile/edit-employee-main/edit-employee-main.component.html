@@ -170,11 +170,11 @@
 							fullWidth
 							multiple
 							placeholder="Select Employee Types"
-							formControlName="empTypes"
+							formControlName="employeeTypes"
 						>
 							<nb-option
 								*ngFor="let opt of this.employeeTypes"
-								[value]="opt.name"
+								[value]="opt.id"
 								>{{ opt.name }}</nb-option
 							>
 						</nb-select>

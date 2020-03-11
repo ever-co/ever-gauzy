@@ -79,7 +79,6 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 
 	togglePublic(state: boolean) {
 		this.public = state;
-		console.log(this.public);
 	}
 
 	onMembersSelected(members: string[]) {
