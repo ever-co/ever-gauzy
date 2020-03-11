@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	Employee,
 	Organization,
-	EmployeeTypesCreateInput
+	EmploymentTypesCreateInput
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
@@ -16,16 +16,16 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 
 @Component({
 	selector: 'ga-edit-org-emptypes',
-	templateUrl: './edit-organization-employeeTypes.component.html'
+	templateUrl: './edit-organization-employmentTypes.component.html'
 })
-export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
+export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	showAddCard: boolean;
 	selectedEmployee: Employee;
 	organization: Organization;
-	empTypes: EmployeeTypesCreateInput[];
+	empTypes: EmploymentTypesCreateInput[];
 
 	constructor(
 		private fb: FormBuilder,
@@ -63,11 +63,11 @@ export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
 
 	private async onKeyEnter($event) {
 		if ($event.code === 'Enter') {
-			this.addEmployeeType($event.target.value);
+			this.addEmploymentType($event.target.value);
 		}
 	}
 
-	private async addEmployeeType(name: string) {
+	private async addEmploymentType(name: string) {
 		if (name) {
 			const newEmpType = {
 				name,
@@ -81,7 +81,7 @@ export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
 				});
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_TYPE.ADD_EMPLOYEE_TYPE',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ADD_EMPLOYMENT_TYPE',
 					{
 						name: name
 					}
@@ -92,10 +92,10 @@ export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
 		} else {
 			this.toastrService.danger(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_TYPE.INVALID_EMPLOYEE_TYPE'
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.INVALID_EMPLOYMENT_TYPE'
 				),
 				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_INVALID_EMPLOYEE_TYPE'
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE'
 				)
 			);
 		}
@@ -117,10 +117,10 @@ export class EditOrganizationEmployeeTypes extends TranslationBaseComponent
 	}
 
 	async delType(id, name) {
-		await this.organizationEmpTypesService.deleteEmployeeType(id);
+		await this.organizationEmpTypesService.deleteEmploymentType(id);
 		this.toastrService.primary(
 			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_TYPE.DELETE_EMPLOYEE_TYPE',
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.DELETE_EMPLOYMENT_TYPE',
 				{
 					name: name
 				}

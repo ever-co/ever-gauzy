@@ -31,7 +31,7 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
-import { EmployeeTypesModule } from './employee-types/employee-types.module';
+import { EmploymentTypesModule } from './employment-types/employment-types.module';
 import { DownloadAllModule } from './download-all';
 
 @Module({
@@ -122,8 +122,8 @@ import { DownloadAllModule } from './download-all';
 						module: TenantModule
 					},
 					{
-						path:'/tags',
-						module:TagModule
+						path: '/tags',
+						module: TagModule
 					}
 				]
 			}
@@ -156,8 +156,7 @@ import { DownloadAllModule } from './download-all';
 		RolePermissionsModule,
 		TenantModule,
 		EmailTemplateModule,
-		TagModule,
-		
+		TagModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

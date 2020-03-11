@@ -126,8 +126,8 @@
 			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
 			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
-			"EMPLOYEE_TYPE": "Employee Type",
-			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employee Type"
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -184,7 +184,7 @@
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
 			"SWITCH_PROJECT_STATE": "Public",
-			"EMPLOYEE_TYPE": "Employee Type"
+			"EMPLOYMENT_TYPES": "Employment Type"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -395,7 +395,7 @@
 			"PROJECTS": "Projects",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
-			"EMPLOYEE_TYPE": "Employee Type",
+			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Add new project",
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
@@ -411,7 +411,7 @@
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
 			"ROLES_PERMISSIONS": "Roles & Permissions",
-			"EMPLOYEE_TYPES": "Employee Types"
+			"EMPLOYMENT_TYPES": "Employment Types"
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
@@ -616,7 +616,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
-			"NEW_ORGANIZATION_INVALID_EMPLOYEE_TYPE": "Employee type name is required",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NAME_REQUIRED": "Name is required!",
@@ -705,11 +705,11 @@
 				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
 				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
 			},
-			"EDIT_ORGANIZATIONS_EMPLOYEE_TYPE": {
-				"ADD_EMPLOYEE_TYPE": "New Employee type {{ name }} successfully added!",
-				"UPDATE_EMPLOYEE_TYPE": "Employee type {{ name }} has been updated",
-				"INVALID_CLIENT_DATA": "Please check the Name for Employee type input",
-				"DELETE_EMPLOYEE_TYPE": "Employee type deleted for {{ name }}"
+			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
+				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
+				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
+				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {

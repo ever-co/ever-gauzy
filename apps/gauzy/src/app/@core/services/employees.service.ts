@@ -5,7 +5,7 @@ import {
 	EmployeeFindInput,
 	EmployeeCreateInput as IEmployeeCreateInput,
 	EmployeeUpdateInput,
-	EmployeeTypesCreateInput
+	EmploymentTypesCreateInput
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -59,16 +59,16 @@ export class EmployeesService {
 		return this.http.post<Employee>('/api/employee/create', createInput);
 	}
 
-	getEmpTypes(orgId: string): Observable<EmployeeTypesCreateInput[]> {
-		return this.http.get<EmployeeTypesCreateInput[]>(
+	getEmpTypes(orgId: string): Observable<EmploymentTypesCreateInput[]> {
+		return this.http.get<EmploymentTypesCreateInput[]>(
 			`/api/empTypes/getEmpTypes/${orgId}`
 		);
 	}
 
 	addEmpType(
-		empType: EmployeeTypesCreateInput
-	): Observable<EmployeeTypesCreateInput> {
-		return this.http.post<EmployeeTypesCreateInput>(
+		empType: EmploymentTypesCreateInput
+	): Observable<EmploymentTypesCreateInput> {
+		return this.http.post<EmploymentTypesCreateInput>(
 			'http://localhost:3000/api/empTypes/addType',
 			empType
 		);

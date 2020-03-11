@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/models';
-import { EmployeeTypes } from '../../employee-types/employee-types.entity';
+import { EmploymentTypes } from '../../employment-types/employment-types.entity';
 
 export abstract class Base implements IBaseEntityModel {
 	@ApiPropertyOptional({ type: String })

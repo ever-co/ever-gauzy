@@ -32,7 +32,7 @@ import { TimeOffPolicy } from '../time-off-policy';
 import { RolePermissions } from '../role-permissions';
 import { Tenant } from './../tenant/tenant.entity';
 import { EmailTemplate } from '../email-template';
-import { EmployeeTypes } from '../employee-types/employee-types.entity';
+import { EmploymentTypes } from '../employment-types/employment-types.entity';
 
 const entities = [
 	Invite,
@@ -60,7 +60,7 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
-	EmployeeTypes
+	EmploymentTypes
 ];
 
 @Module({

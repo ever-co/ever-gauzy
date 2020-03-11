@@ -162,18 +162,18 @@
 
 				<div class="col">
 					<div class="form-group">
-						<label for="employeeType" class="label"
-							>Employeement Types</label
+						<label for="employmentType" class="label"
+							>Employment Types</label
 						>
 						<nb-select
-							id="employeeType"
+							id="employmentType"
 							fullWidth
 							multiple
-							placeholder="Select Employee Types"
-							formControlName="employeeTypes"
+							placeholder="Select Employment Types"
+							formControlName="employmentTypes"
 						>
 							<nb-option
-								*ngFor="let opt of this.employeeTypes"
+								*ngFor="let opt of this.employmentTypes"
 								[value]="opt.id"
 								>{{ opt.name }}</nb-option
 							>

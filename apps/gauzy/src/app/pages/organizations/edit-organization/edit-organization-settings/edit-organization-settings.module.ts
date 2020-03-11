@@ -51,7 +51,7 @@ import { EntityWithMembersModule } from 'apps/gauzy/src/app/@shared/entity-with-
 import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/employee-multi-select/employee-multi-select.module';
 import { EditOrganizationClientMutationComponent } from './edit-organization-clients/edit-organization-clients-mutation/edit-organization-clients-mutation.component';
 import { EditOrganizationProjectsMutationComponent } from './edit-organization-projects/edit-organization-projects-mutation/edit-organization-projects-mutation.component';
-import { EditOrganizationEmployeeTypes } from './edit-organization-employeeTypes/edit-organization-employeeTypes.component';
+import { EditOrganizationEmploymentTypes } from './edit-organization-employmentTypes/edit-organization-employmentTypes.component';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 
 @NgModule({
@@ -115,7 +115,7 @@ import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.
 		EditOrganizationDepartmentsMutationComponent,
 		EditOrganizationClientMutationComponent,
 		EditOrganizationProjectsMutationComponent,
-		EditOrganizationEmployeeTypes
+		EditOrganizationEmploymentTypes
 	]
 })
 export class EditOrganizationSettingsModule {}

@@ -13,7 +13,7 @@ import {
 	EmployeeSetting as IEmployeeSetting,
 	CurrenciesEnum
 } from '@gauzy/models';
-import { EmployeeTypes } from '../employee-types/employee-types.entity';
+import { EmploymentTypes } from '../employment-types/employment-types.entity';
 
 @Entity('employee_setting')
 export class EmployeeSetting extends Base implements IEmployeeSetting {

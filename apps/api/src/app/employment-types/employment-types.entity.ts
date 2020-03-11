@@ -8,7 +8,7 @@ import {
 import { User } from '../user';
 
 @Entity()
-export class EmployeeTypes {
+export class EmploymentTypes {
 	@PrimaryGeneratedColumn()
 	id: string;
 

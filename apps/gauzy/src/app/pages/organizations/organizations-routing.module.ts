@@ -12,7 +12,7 @@ import { EditOrganizationProjectsComponent } from './edit-organization/edit-orga
 import { EditOrganizationTeamsComponent } from './edit-organization/edit-organization-settings/edit-organization-teams/edit-organization-teams.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationMainComponent } from './edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component';
-import { EditOrganizationEmployeeTypes } from './edit-organization/edit-organization-settings/edit-organization-employeeTypes/edit-organization-employeeTypes.component';
+import { EditOrganizationEmploymentTypes } from './edit-organization/edit-organization-settings/edit-organization-employmentTypes/edit-organization-employmentTypes.component';
 
 const routes: Routes = [
 	{
@@ -69,8 +69,8 @@ const routes: Routes = [
 				component: EditOrganizationOtherSettingsComponent
 			},
 			{
-				path: 'employeeTypes',
-				component: EditOrganizationEmployeeTypes
+				path: 'employmentTypes',
+				component: EditOrganizationEmploymentTypes
 			}
 		]
 	}

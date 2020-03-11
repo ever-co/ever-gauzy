@@ -20,12 +20,11 @@ import { Organization } from '../organization';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 import { User } from '../user';
 import { Tenant } from '../tenant';
-import { EmployeeTypes } from '../employee-types/employee-types.entity';
+import { EmploymentTypes } from '../employment-types/employment-types.entity';
 import { Tag } from '../tags';
 
 @Entity('employee')
 export class Employee extends Base implements IEmployee {
-	
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tags_employee'
@@ -105,9 +104,9 @@ export class Employee extends Base implements IEmployee {
 	})
 	teams?: OrganizationTeams[];
 
-	@ManyToMany((type) => EmployeeTypes, { cascade: true })
+	@ManyToMany((type) => EmploymentTypes, { cascade: true })
 	@JoinTable({
-		name: 'employee_employeeTypes'
+		name: 'employee_employmentTypes'
 	})
-	empTypes?: EmployeeTypes[];
+	empTypes?: EmploymentTypes[];
 }

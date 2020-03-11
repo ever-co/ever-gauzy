@@ -1,4 +1,4 @@
-export enum GenericEmployeeTypes {
+export enum GenericEmploymentTypes {
 	INTERN = 'Intern',
 	CONTRACT = 'Contract',
 	PROBATION = 'Probation',
@@ -6,7 +6,7 @@ export enum GenericEmployeeTypes {
 	FULL_TIME = 'Full-time'
 }
 
-export interface EmployeeType {
+export interface EmploymentType {
 	id?: number;
 	name: string;
 	organizationId: string;

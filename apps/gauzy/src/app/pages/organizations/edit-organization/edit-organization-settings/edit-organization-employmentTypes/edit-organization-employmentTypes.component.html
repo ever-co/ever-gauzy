@@ -17,14 +17,14 @@
 				type="text"
 				(keyup)="onKeyEnter($event)"
 				placeholder="{{
-					'FORM.PLACEHOLDERS.EMPLOYEE_TYPE' | translate
+					'FORM.PLACEHOLDERS.EMPLOYMENT_TYPES' | translate
 				}}"
 				fullWidth
 			/>
 			<span class="col-2 pl-2 pr-1"
 				><button
 					class="w-100"
-					(click)="addEmployeeType(addInput.value)"
+					(click)="addEmploymentType(addInput.value)"
 					nbButton
 					status="success"
 				>
@@ -47,7 +47,7 @@
 	<nb-card-body *ngIf="empTypes?.length">
 		<div class="ml-3 mb-4">
 			<strong>{{
-				'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_TYPES' | translate
+				'ORGANIZATIONS_PAGE.EDIT.EMPLOYMENT_TYPES' | translate
 			}}</strong>
 		</div>
 

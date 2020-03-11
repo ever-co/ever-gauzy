@@ -5,13 +5,13 @@ import { CommandHandlers } from './commands/handlers';
 import { EmployeeController } from './employee.controller';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
-import { EmployeeTypesModule } from '../employee-types/employee-types.module';
+import { EmploymentTypesModule } from '../employment-types/employment-types.module';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Employee]),
 		CqrsModule,
-		EmployeeTypesModule
+		EmploymentTypesModule
 	],
 	controllers: [EmployeeController],
 	providers: [EmployeeService, ...CommandHandlers],

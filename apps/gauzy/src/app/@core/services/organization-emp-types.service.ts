@@ -6,7 +6,7 @@ import { first } from 'rxjs/operators';
 export class OrganizationEmpTypesService {
 	constructor(private http: HttpClient) {}
 
-	deleteEmployeeType(id: number): Promise<any> {
+	deleteEmploymentType(id: number): Promise<any> {
 		return this.http
 			.delete(`/api/empTypes/delType/${id}`)
 			.pipe(first())
