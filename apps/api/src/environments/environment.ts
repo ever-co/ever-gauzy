@@ -175,6 +175,6 @@ export const environment: IEnvironment = {
 		}
 	],
 	sentry: {
-		dns: 'https://597088b7991f4559b894b2d1365e25dc@sentry.io/4384862'
+		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
 	}
 };
