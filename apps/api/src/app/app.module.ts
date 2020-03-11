@@ -37,6 +37,7 @@ import { ExportAllModule } from './export_import';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
+import { TaskModule } from './tasks';
 
 @Module({
 	imports: [
@@ -130,6 +131,10 @@ import { LogLevel } from '@sentry/types';
 					{
 						path: '/tags',
 						module: TagModule
+					},
+					{
+						path: '/tasks',
+						module: TaskModule
 					}
 				]
 			}
@@ -178,7 +183,8 @@ import { LogLevel } from '@sentry/types';
 			  ]
 			: []),
 		EquipmentModule,
-		EmployeeLevelModule
+		EmployeeLevelModule,
+		TaskModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
