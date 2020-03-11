@@ -534,7 +534,8 @@
 		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
 		"EQUIPMENT_EDITED": "Equipment edited",
 		"EQUIPMENT_DELETED": "Equipment deleted",
-		"EQUIPMENT_ADDED": "Equipment added"
+		"EQUIPMENT_ADDED": "Equipment added",
+		"EQUIPMENT_SAVED": "Equipment saved"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",

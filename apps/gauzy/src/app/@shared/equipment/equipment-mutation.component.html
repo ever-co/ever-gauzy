@@ -26,6 +26,14 @@
 						placeholder="{{
 							'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate
 						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['name'].invalid &&
+								form.controls['name'].dirty,
+							'status-success':
+								form.controls['name'].valid &&
+								form.controls['name'].dirty
+						}"
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
@@ -37,6 +45,14 @@
 						placeholder="{{
 							'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate
 						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['type'].invalid &&
+								form.controls['type'].dirty,
+							'status-success':
+								form.controls['type'].valid &&
+								form.controls['type'].dirty
+						}"
 					/>
 				</div>
 			</div>
@@ -63,6 +79,14 @@
 							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
 								| translate
 						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['manufacturedYear'].invalid &&
+								form.controls['manufacturedYear'].dirty,
+							'status-success':
+								form.controls['manufacturedYear'].valid &&
+								form.controls['manufacturedYear'].dirty
+						}"
 					/>
 				</div>
 			</div>
@@ -77,10 +101,29 @@
 						placeholder="{{
 							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
 						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['initialCost'].invalid &&
+								form.controls['initialCost'].dirty,
+							'status-success':
+								form.controls['initialCost'].valid &&
+								form.controls['initialCost'].dirty
+						}"
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
-					<nb-select class="d-block" formControlName="currency">
+					<nb-select
+						class="d-block"
+						formControlName="currency"
+						[ngClass]="{
+							'status-danger':
+								form.controls['currency'].invalid &&
+								form.controls['currency'].dirty,
+							'status-success':
+								form.controls['currency'].valid &&
+								form.controls['currency'].dirty
+						}"
+					>
 						<nb-option
 							*ngFor="let currency of currencies"
 							value="{{ currency }}"
@@ -101,6 +144,14 @@
 							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
 								| translate
 						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['maxSharePeriod'].invalid &&
+								form.controls['maxSharePeriod'].dirty,
+							'status-success':
+								form.controls['maxSharePeriod'].valid &&
+								form.controls['maxSharePeriod'].dirty
+						}"
 					/>
 				</div>
 			</div>
@@ -112,6 +163,8 @@
 					}}</span>
 				</nb-checkbox>
 			</div>
+
+			<input type="hidden" formControlName="id" />
 		</form>
 	</nb-card-body>
 

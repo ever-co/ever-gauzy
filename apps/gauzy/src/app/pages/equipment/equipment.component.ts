@@ -13,6 +13,8 @@ import {
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import { first } from 'rxjs/operators';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 
 export interface SelectedEquipment {
 	data: Equipment;
@@ -24,22 +26,15 @@ export interface SelectedEquipment {
 	styleUrls: ['./equipment.component.scss']
 })
 export class EquipmentComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit {
 	settingsSmartTable: object;
 	loading = true;
 	selectedEquipment: Equipment;
 	smartTableSource = new LocalDataSource();
-	equipment: Equipment;
 	form: FormGroup;
-	//todo
-	data: SelectedTag;
 	disableButton = true;
 
 	@ViewChild('equipmentTable', { static: false }) equipmentTable;
-
-	ngOnDestroy(): void {
-		// throw new Error("Method not implemented.");
-	}
 
 	ngOnInit(): void {
 		this.loadSmartTable();
@@ -91,7 +86,6 @@ export class EquipmentComponent extends TranslationBaseComponent
 						'EQUIPMENT_PAGE.EQUIPMENT_CURRENCY'
 					),
 					type: 'string',
-
 					filter: false
 				},
 				maxSharePeriod: {
@@ -99,46 +93,71 @@ export class EquipmentComponent extends TranslationBaseComponent
 						'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
 					),
 					type: 'number',
-
 					filter: false
 				},
 				autoApproveShare: {
 					title: this.getTranslation(
 						'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE'
 					),
-					type: 'boolean',
-
-					filter: false
+					type: 'custom',
+					filter: false,
+					renderComponent: AutoApproveComponent
 				}
 			}
 		};
 	}
 
-	async add() {
+	async save() {
 		const dialog = this.dialogService.open(EquipmentMutationComponent, {
 			context: {
 				equipment: this.selectedEquipment
 			}
 		});
-		const addData = await dialog.onClose.pipe(first()).toPromise();
+		const equipment = await dialog.onClose.pipe(first()).toPromise();
 		this.selectedEquipment = null;
 		this.disableButton = true;
 
-		if (addData) {
+		if (equipment) {
 			this.toastrService.primary(
-				this.getTranslation('TAGS_PAGE.TAGS_ADD_TAG'),
+				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SAVED'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
 		this.loadSettings();
 	}
 
+	async delete() {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.equipmentService.delete(this.selectedEquipment.id);
+			this.loadSettings();
+			this.toastrService.primary(
+				this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_DELETED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+		}
+		this.disableButton = true;
+	}
+
 	async loadSettings() {
 		this.selectedEquipment = null;
-		//todo
 		const { items } = await this.equipmentService.getAll();
 		this.loading = false;
 		this.smartTableSource.load(items);
+	}
+
+	async selectEquipment($event: SelectedEquipment) {
+		if ($event.isSelected) {
+			this.selectedEquipment = $event.data;
+			this.disableButton = false;
+			this.equipmentTable.grid.dataSet.willSelect = false;
+		} else {
+			this.disableButton = true;
+		}
 	}
 
 	_applyTranslationOnSmartTable() {

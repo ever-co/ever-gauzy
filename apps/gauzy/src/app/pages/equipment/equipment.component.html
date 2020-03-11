@@ -5,11 +5,12 @@
 
 	<nb-card-body>
 		<div class="mb-3">
-			<button (click)="add()" nbButton status="success" class="mr-2">
+			<button (click)="save()" nbButton status="success" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 			<button
+				(click)="save()"
 				nbButton
 				status="info"
 				class="mr-2"
@@ -19,6 +20,7 @@
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
+				(click)="delete()"
 				nbButton
 				status="danger"
 				class="mr-2"
@@ -32,9 +34,10 @@
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
+			(userRowSelect)="selectEquipment($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
-			#tagsTable
+			#equipmentTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>

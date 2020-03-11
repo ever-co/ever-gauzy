@@ -1,4 +1,3 @@
-import { EquipmentComponent } from '../../pages/equipment/equipment.component';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -15,7 +14,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
-import { OrganizationEditStore } from '../../@core/services/organization-edit-store.service';
+import { Store } from '../../@core/services/store.service';
 
 @NgModule({
 	imports: [
@@ -38,6 +37,6 @@ import { OrganizationEditStore } from '../../@core/services/organization-edit-st
 	],
 	declarations: [EquipmentMutationComponent],
 	entryComponents: [],
-	providers: [EquipmentService, OrganizationEditStore]
+	providers: [EquipmentService, Store]
 })
 export class EquipmentMutationModule {}

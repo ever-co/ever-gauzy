@@ -19,6 +19,9 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -27,6 +30,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	imports: [
 		EquipmentRoutingModule,
 		ThemeModule,
+		UserFormsModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
@@ -35,7 +39,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
 		EquipmentMutationModule,
-		// UserFormsModule,
 		TableComponentsModule,
 		TranslateModule.forChild({
 			loader: {
@@ -47,7 +50,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSpinnerModule
 	],
 	providers: [EquipmentService],
-	entryComponents: [EquipmentMutationComponent],
-	declarations: [EquipmentComponent]
+	entryComponents: [EquipmentMutationComponent, AutoApproveComponent],
+	declarations: [EquipmentComponent, AutoApproveComponent]
 })
 export class EquipmentModule {}
