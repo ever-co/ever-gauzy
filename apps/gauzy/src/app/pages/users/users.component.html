@@ -56,6 +56,22 @@
 				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
 				>{{ 'BUTTONS.DELETE' | translate }}
 			</button> -->
+			<button
+				(click)="showAddCard = !showAddCard"
+				nbButton
+				status="warning"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD_EXISTING' | translate }}
+			</button>
+			<ga-edit-user-mutation
+				*ngIf="showAddCard"
+				[employees]="employees"
+				[organization]="organization"
+				(addOrEditUser)="addOrEditUser($event)"
+				(canceled)="cancel()"
+			>
+			</ga-edit-user-mutation>
 		</div>
 		<ng2-smart-table
 			style="cursor: pointer;"

@@ -4,7 +4,12 @@ import {
 	Role,
 	RolesEnum,
 	InvitationTypeEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	UserOrganization,
+	Employee,
+	Organization,
+	UserOrganizationFindInput,
+	UserOrganizationCreateInput
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +23,7 @@ import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mut
 import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { EmployeesService } from '../../@core/services';
 
 interface UserViewModel {
 	fullName: string;
@@ -44,11 +50,15 @@ export class UsersComponent extends TranslationBaseComponent
 
 	userName = 'User';
 
+	organization: Organization;
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
+	showAddCard: boolean;
+	userToEdit: UserOrganization;
+	employees: Employee[] = [];
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -59,7 +69,8 @@ export class UsersComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private userOrganizationsService: UsersOrganizationsService
+		private userOrganizationsService: UsersOrganizationsService,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translate);
 	}
@@ -69,6 +80,7 @@ export class UsersComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.loadEmployees();
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
@@ -203,6 +215,24 @@ export class UsersComponent extends TranslationBaseComponent
 					}
 				}
 			});
+	}
+
+	cancel() {
+		this.userToEdit = null;
+		this.showAddCard = !this.showAddCard;
+	}
+
+	private async loadEmployees() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { items } = await this.employeesService
+			.getAll(['user'], { organization: { id: this.organization.id } })
+			.pipe(first())
+			.toPromise();
+
+		this.employees = items;
 	}
 
 	private async loadPage() {

@@ -9,6 +9,8 @@
 		"DETAILS": "Details",
 		"DUPLICATE": "Duplicate",
 		"DELETE": "Delete",
+		"REMOVE": "Remove",
+		"ADD_EXISTING": "Add Existing",
 		"OK": "Ok",
 		"SAVE": "Save",
 		"BACK": "BACK",
@@ -522,6 +524,7 @@
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
+		"ADD_EXISTING_USER": "Add Existing User",
 		"ROLE": {
 			"ADMIN": "Admin",
 			"MANAGER": "Manager",
@@ -530,7 +533,8 @@
 			"EMPLOYEE": "Employee"
 		},
 		"EDIT_USER": {
-			"HEADER": "Manage User"
+			"HEADER": "Manage User",
+			"EDIT_EXISTING_USER": "Edit Existing User"
 		}
 	},
 	"CONTEXT_MENU": {
