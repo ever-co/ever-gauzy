@@ -615,6 +615,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Сотрудник добавлен к клиенту",
 			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
 			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника",
+			"EMPLOYEE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
 			"CONFIRM": "Подтвердить",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",

@@ -31,8 +31,9 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
-import { DownloadAllModule } from './download-all';
 import { EquipmentModule } from './equipment/equipment.module';
+import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
+import { ExportAllModule } from './export_import';
 
 @Module({
 	imports: [
@@ -43,12 +44,14 @@ import { EquipmentModule } from './equipment/equipment.module';
 					{ path: '/auth', module: AuthModule },
 					{ path: '/user', module: UserModule },
 					{ path: '/employee', module: EmployeeModule },
-					{ path: '/download', module: DownloadAllModule },
+					{ path: '/download', module: ExportAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
 					{ path: '/equipment', module: EquipmentModule },
+					{ path: '/employee-level', module: EmployeeLevelModule },
+
 					{
 						path: '/employee-settings',
 						module: EmployeeSettingModule
@@ -132,7 +135,7 @@ import { EquipmentModule } from './equipment/equipment.module';
 		AuthModule,
 		UserModule,
 		EmployeeModule,
-		DownloadAllModule,
+		ExportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		RoleModule,
@@ -157,7 +160,8 @@ import { EquipmentModule } from './equipment/equipment.module';
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
-		EquipmentModule
+		EquipmentModule,
+		EmployeeLevelModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-@Injectable()
-export class ExportAllService {
+@Injectable({
+	providedIn: 'root'
+})
+export class EmployeeLevelService {
 	constructor(private http: HttpClient) {}
 
-	downloadAllData() {
-		return this.http.get(`/api/download`, { responseType: 'blob' });
+	getAll() {
+		return this.http.get('/api/employee-level');
 	}
 }

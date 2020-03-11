@@ -8,12 +8,16 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum } from '@gauzy/models';
+import { RolesEnum, Tag } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
+import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
+import { Observable } from 'rxjs';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -46,17 +50,22 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	offerDate: any;
 	acceptDate: any;
 	rejectDate: any;
+	tags: Tag[] = [];
+	selectedTags: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly authService: AuthService,
 		private readonly roleService: RoleService,
 		private readonly translateService: TranslateService,
-		private readonly validatorService: ValidationService
+		private readonly validatorService: ValidationService,
+		private readonly tagsService: TagsService,
+		private readonly store: Store
 	) {}
 
 	ngOnInit(): void {
 		this.loadFormData();
+		this.getAllTags();
 	}
 
 	get uploaderPlaceholder() {
@@ -152,12 +161,15 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						imageUrl: this.imageUrl.value,
 						role,
 						startedWorkOn: startedWorkOn.value,
-						tenant: this.tenant
+						tenant: this.tenant,
+						tags: this.selectedTags.value
 					},
 					password: this.password.value
 				})
 				.pipe(first())
 				.toPromise();
+
+			// call backend to add tags to existed employee
 		}
 
 		return;
@@ -181,5 +193,11 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 				this.imageUrl.setErrors({ invalidUrl: true });
 			}
 		};
+	}
+
+	async getAllTags() {
+		const { items } = await this.tagsService.getAllTags();
+		this.tags = items;
+		this.selectedTags = items;
 	}
 }
