@@ -26,7 +26,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('Employee')
-// @UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
