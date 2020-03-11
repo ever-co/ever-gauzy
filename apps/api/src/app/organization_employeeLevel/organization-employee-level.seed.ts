@@ -1,6 +1,7 @@
 import { Connection } from 'typeorm';
 import { EmployeeLevelInput } from '@gauzy/models';
 import { EmployeeLevel } from './organization-employee-level.entity';
+import { Organization } from '../organization/organization.entity';
 
 export const createEmployeeLevels = async (
 	connection: Connection
@@ -24,6 +25,10 @@ export const createEmployeeLevels = async (
 		}
 	];
 
+	const orgIds = await getOrganizations(connection);
+
+	console.log(orgIds);
+
 	for (let i = 0; i < employeeLevels.length; i++) {
 		await insertLevel(connection, employeeLevels[i]);
 	}
@@ -41,4 +46,12 @@ const insertLevel = async (
 		.into(EmployeeLevel)
 		.values(employeeLevel)
 		.execute();
+};
+
+const getOrganizations = async (connection: Connection) => {
+	await connection
+		.createQueryBuilder()
+		.select('org'['id'])
+		.from(Organization, 'org')
+		.getMany();
 };

@@ -55,16 +55,22 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				if (this.selectedEmployee) {
 					await this.getDepartments();
 					this._initializeForm(this.selectedEmployee);
+					this.employeeLevelService
+						.getAll(this.selectedEmployee.orgId)
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((data) => {
+							this.employeeLevels = data['items'];
+						});
 				}
 			});
 
 		this.employeeLevelService
-			.getAll()
+			.getAll('1')
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => {
 				this.employeeLevels = data['items'];
 			});
-		
+
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -105,7 +111,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private _initializeForm(employee: Employee) {		
+	private _initializeForm(employee: Employee) {
 		this.form = this.fb.group({
 			username: [employee.user.username],
 			email: [employee.user.email, Validators.required],
