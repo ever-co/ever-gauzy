@@ -42,14 +42,13 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				this.selectedEmployee = emp;
 				if (this.selectedEmployee) {
 					this._initializeForm(this.selectedEmployee);
+					this.employeeLevelService
+						.getAll(this.selectedEmployee.orgId)
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((data) => {
+							this.employeeLevels = data['items'];
+						});
 				}
-			});
-
-		this.employeeLevelService
-			.getAll()
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data) => {
-				this.employeeLevels = data['items'];
 			});
 
 		this.getFakeData();

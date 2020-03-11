@@ -52,6 +52,7 @@ import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/e
 import { EditOrganizationClientMutationComponent } from './edit-organization-clients/edit-organization-clients-mutation/edit-organization-clients-mutation.component';
 import { EditOrganizationProjectsMutationComponent } from './edit-organization-projects/edit-organization-projects-mutation/edit-organization-projects-mutation.component';
 import { InviteClientComponent } from './edit-organization-clients/invite-client/invite-client.component';
+import { EditOrganizationEmployeeLevelComponent } from './edit-organization-employee-levels/edit-organization-employee-level.component';
 
 @NgModule({
 	imports: [
@@ -114,7 +115,8 @@ import { InviteClientComponent } from './edit-organization-clients/invite-client
 		EditOrganizationDepartmentsMutationComponent,
 		EditOrganizationClientMutationComponent,
 		EditOrganizationProjectsMutationComponent,
-		InviteClientComponent
+		InviteClientComponent,
+		EditOrganizationEmployeeLevelComponent
 	]
 })
 export class EditOrganizationSettingsModule {}
