@@ -1,15 +1,10 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { Equipment } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
-import { SelectedTag } from '../tags/tags.component';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	NbDialogConfig,
-	NbDialogService,
-	NbToastrService
-} from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import { first } from 'rxjs/operators';

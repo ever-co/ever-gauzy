@@ -15,8 +15,6 @@ import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
-import { Observable } from 'rxjs';
-import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({

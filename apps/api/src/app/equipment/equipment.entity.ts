@@ -1,5 +1,5 @@
 import { Equipment as IEquipment, CurrenciesEnum } from '@gauzy/models';
-import { Entity, Index, Column } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {

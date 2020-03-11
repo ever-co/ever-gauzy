@@ -1,4 +1,4 @@
-import { OnInit, Component, AfterViewInit } from '@angular/core';
+import { OnInit, Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Equipment, CurrenciesEnum } from '@gauzy/models';
@@ -20,7 +20,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 	selectedCurrency;
 
 	constructor(
-		protected dialogRef: NbDialogRef<EquipmentMutationComponent>,
+		public dialogRef: NbDialogRef<EquipmentMutationComponent>,
 		private equipmentService: EquipmentService,
 		private fb: FormBuilder,
 		readonly translationService: TranslateService,
