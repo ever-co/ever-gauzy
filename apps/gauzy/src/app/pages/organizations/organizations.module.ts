@@ -32,6 +32,7 @@ import { OrganizationsCurrencyComponent } from './table-components/organizations
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
+import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit-organization-settings/edit-organization-employee-levels/edit-organization-employee-level.component';
 
 @NgModule({
@@ -81,7 +82,8 @@ import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit
 		EditOrganizationComponent,
 		OrganizationsEmployeesComponent,
 		OrganizationsCurrencyComponent,
-		EditOrganizationEmployeeLevelComponent
-	]
+    EditOrganizationEmployeeLevelComponent
+	],
+	providers: [OrganizationEmploymentTypesService]
 })
 export class OrganizationsModule {}

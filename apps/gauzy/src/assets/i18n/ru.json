@@ -126,6 +126,7 @@
 			"ENABLE_DISABLE_INVITES": "Включить/выключить приглашения",
 			"ALLOW_USER_INVITES": "Разрешить пользователям отправлять приглашения",
 			"INVITE_EXPIRY_PERIOD": "Срок приглашения истекает (в днях)",
+			"EMPLOYMENT_TYPES": "",
 			"OFFER_DATE": "Дата предложения (опционально)",
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
@@ -185,7 +186,8 @@
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
-			"SWITCH_PROJECT_STATE": "Публичный"
+			"SWITCH_PROJECT_STATE": "Публичный",
+			"EMPLOYMENT_TYPES": ""
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
