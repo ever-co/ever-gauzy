@@ -21,7 +21,7 @@ export class Equipment extends Base implements IEquipment {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	@Column()
 	type: string;
 
@@ -32,31 +32,31 @@ export class Equipment extends Base implements IEquipment {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@IsNotEmpty()
-	@Column({ type: 'numeric' })
+	@IsOptional()
+	@Column({ nullable: true, type: 'numeric' })
 	manufacturedYear: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@IsNotEmpty()
-	@Column({ type: 'numeric' })
+	@IsOptional()
+	@Column({ nullable: true, type: 'numeric' })
 	initialCost: number;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
-	@IsNotEmpty()
+	@IsOptional()
 	@Column()
 	currency: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@IsNotEmpty()
+	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
 	maxSharePeriod: number;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@IsNotEmpty()
+	@IsOptional()
 	@Column()
 	autoApproveShare: boolean;
 }

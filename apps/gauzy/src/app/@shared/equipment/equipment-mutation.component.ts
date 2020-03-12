@@ -44,25 +44,22 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 				this.equipment ? this.equipment.name : '',
 				Validators.required
 			],
-			type: [
-				this.equipment ? this.equipment.type : '',
-				Validators.required
-			],
+			type: [this.equipment ? this.equipment.type : ''],
 			serialNumber: [this.equipment ? this.equipment.serialNumber : ''],
 			manufacturedYear: [
-				this.equipment ? this.equipment.manufacturedYear : '',
-				[Validators.required, Validators.min(1000)]
+				this.equipment ? this.equipment.manufacturedYear : null,
+				[Validators.min(1000)]
 			],
 			initialCost: [
-				this.equipment ? this.equipment.initialCost : '',
-				[Validators.required, Validators.min(0)]
+				this.equipment ? this.equipment.initialCost : null,
+				[Validators.min(0)]
 			],
 			currency: [this.selectedCurrency, Validators.required],
 			maxSharePeriod: [
 				this.equipment ? this.equipment.maxSharePeriod : null
 			],
 			autoApproveShare: [
-				this.equipment ? this.equipment.autoApproveShare : ''
+				this.equipment ? this.equipment.autoApproveShare : false
 			],
 			id: [this.equipment ? this.equipment.id : null]
 		});
