@@ -1,8 +1,11 @@
-import { Tag } from '../tags';
-// Modified code from https://github.com/xmlking/ngx-starter-kit.
-// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
-// Copyright (c) 2018 Sumanth Chinthagunta
+// Copyright (c) 2019-2020 Ever Co. LTD
 
+// Modified code from https://github.com/xmlking/ngx-starter-kit.
+// Originally MIT Licensed
+// - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE 
+// - original code `Copyright (c) 2018 Sumanth Chinthagunta`
+
+import { Tag } from '../tags';
 import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
@@ -63,7 +66,7 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
-	EmploymentTypes
+	EmploymentTypes,
 	Equipment,
 	EmployeeLevel,
 	Task
