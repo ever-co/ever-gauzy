@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { ConsoleService } from '@ng-select/ng-select/lib/console.service';
 
 @Component({
 	selector: 'ga-edit-org-vendors',
