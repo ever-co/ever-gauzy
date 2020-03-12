@@ -4,7 +4,6 @@ import {
 	Column,
 	JoinColumn,
 	RelationId,
-	OneToOne,
 	ManyToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';

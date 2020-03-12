@@ -7,12 +7,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import {
-	Employee,
-	Organization,
-	UserOrganization,
-	RolesEnum
-} from '@gauzy/models';
+import { Organization, UserOrganization } from '@gauzy/models';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -59,10 +54,6 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 	}
 
 	private async _initializeForm() {
-		// if (!this.userOrganization) {
-		// 	return;
-		// }
-
 		this.form = this.fb.group({
 			users: this.users
 		});
@@ -106,21 +97,12 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 		if (this.form.valid) {
 			for (let i = 0; i < this.selectedUsersIds.length; i++) {
 				console.log(this.selectedUsersIds[i]);
-				try {
-					const organization = this.store.selectedOrganization;
-					await this.usersOrganizationsService
-						.create({
-							userId: this.selectedUsersIds[i],
-							orgId: organization.id,
-							isActive: true
-						})
-						.toPromise();
-				} catch (error) {
-					this.toastrService.danger(
-						error.error ? error.error.message : error.message,
-						'Error'
-					);
-				}
+				const organization = this.store.selectedOrganization;
+				this.addOrEditUser.emit({
+					userId: this.selectedUsersIds[i],
+					orgId: organization.id,
+					isActive: true
+				});
 			}
 		}
 	}

@@ -2,13 +2,11 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
 	Role,
-	RolesEnum,
 	InvitationTypeEnum,
 	PermissionsEnum,
 	UserOrganization,
 	Employee,
 	Organization,
-	UserOrganizationFindInput,
 	UserOrganizationCreateInput
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -153,6 +151,29 @@ export class UsersComponent extends TranslationBaseComponent
 		}
 	}
 
+	async addOrEditUser(user: UserOrganizationCreateInput) {
+		if (user.isActive) {
+			await this.userOrganizationsService
+				.create(user)
+				.pipe(first())
+				.toPromise();
+
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
+					{
+						username: this.userName.trim(),
+						orgname: this.store.selectedOrganization.name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.showAddCard = !this.showAddCard;
+			this.loadPage();
+		}
+	}
+
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
@@ -250,11 +271,7 @@ export class UsersComponent extends TranslationBaseComponent
 		const usersVm = [];
 
 		for (const orgUser of items) {
-			if (
-				orgUser.isActive &&
-				(!orgUser.user.role ||
-					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
-			) {
+			if (orgUser.isActive) {
 				usersVm.push({
 					fullName: `${orgUser.user.firstName || ''} ${orgUser.user
 						.lastName || ''}`,
