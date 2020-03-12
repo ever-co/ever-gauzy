@@ -1,4 +1,11 @@
-import { Component, OnInit, ViewChild, Input, Output } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	Input,
+	Output,
+	EventEmitter
+} from '@angular/core';
 import { Tag } from '@gauzy/models';
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgModel } from '@angular/forms';
@@ -13,17 +20,23 @@ export class TagsColorInputComponent implements OnInit {
 	shownInput: NgModel;
 
 	@Input()
-	tags: Tag[];
+	tags: any;
 
 	@Input()
-	items: string;
+	items: any;
 
 	@Input()
 	multiple: string;
 
-	@Output()
-	selectedTags: Tag[];
+	@Input()
+	ngModelOptions: any;
 
+	@Input('ngModel')
+	model: any;
+
+	@Output()
+	selectedTags: EventEmitter<any> = new EventEmitter<any>();
+	debbuger;
 	constructor(private readonly tagsService: TagsService) {}
 
 	ngOnInit() {
@@ -32,6 +45,5 @@ export class TagsColorInputComponent implements OnInit {
 	async getAllTags() {
 		const { items } = await this.tagsService.getAllTags();
 		this.tags = items;
-		console.warn(this.tags);
 	}
 }

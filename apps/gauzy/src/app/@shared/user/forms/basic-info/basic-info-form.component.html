@@ -262,11 +262,16 @@
 		</div> -->
 		<div class="col-sm-6">
 			<div class="form-group">
-				<ngx-tags-color-input id="inputTags" [items]="tags">
+				<ngx-tags-color-input
+					id="inputTags"
+					[items]="tags"
+					[multiple]="true"
+					(selectedTags)="(selectedTags)"
+				>
 				</ngx-tags-color-input>
 			</div>
 		</div>
-		{{ tags | json }}
+		{{ selectedTags | json }}
 	</div>
 
 	<div class="row">
