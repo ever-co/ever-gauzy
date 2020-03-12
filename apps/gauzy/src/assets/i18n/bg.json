@@ -264,7 +264,7 @@
 		},
 		"TAGS": "Тагове",
 		"EQUIPMENT": "Equipment",
-		"TASKS": "Задачи"
+		"TASKS": "Tasks"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -538,15 +538,15 @@
 		"EQUIPMENT_SAVED": "Equipment saved"
 	},
 	"TASKS_PAGE": {
-		"HEADER": "Задачи",
-		"ADD_TASKS": "Добавете задачи",
-		"EDIT_TASKS": "Редактиране на задачи",
-		"TASKS_TITLE": "Заглавие",
-		"TASKS_DESCRIPTION": "Описание",
-		"TASKS_LOADED": "Задачите са заредени",
+		"HEADER": "Tasks",
+		"ADD_TASKS": "Add Tasks",
+		"EDIT_TASKS": "Edit Tasks",
+		"TASKS_TITLE": "Title",
+		"TASKS_DESCRIPTION": "Description",
+		"TASKS_LOADED": "Tasks loaded",
 		"TASK_ADDED": "Task added",
-		"TASK_UPDATED": "Задачата е добавена",
-		"TASK_DELETED": "Задачата е изтрита",
+		"TASK_UPDATED": "Task updated",
+		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
 		"TASKS_STATUS": "Статус"
 	},
