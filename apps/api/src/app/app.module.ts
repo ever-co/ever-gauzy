@@ -34,6 +34,10 @@ import { EmailTemplateModule } from './email-template';
 import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
 import { ExportAllModule } from './export_import';
+import { SentryModule } from '@ntegral/nestjs-sentry';
+import { environment } from '@env-api/environment';
+import { LogLevel } from '@sentry/types';
+import { TaskModule } from './tasks';
 
 @Module({
 	imports: [
@@ -127,6 +131,10 @@ import { ExportAllModule } from './export_import';
 					{
 						path: '/tags',
 						module: TagModule
+					},
+					{
+						path: '/tasks',
+						module: TaskModule
 					}
 				]
 			}
@@ -160,8 +168,23 @@ import { ExportAllModule } from './export_import';
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
+		EmployeeLevelModule,
+		...(environment.sentry
+			? [
+					SentryModule.forRoot({
+						dsn: environment.sentry.dns,
+						debug: true,
+						environment: environment.production
+							? 'production'
+							: 'development', //production, development
+						//release: null, // must create a release in sentry.io dashboard
+						logLevel: LogLevel.Error
+					})
+			  ]
+			: []),
 		EquipmentModule,
-		EmployeeLevelModule
+		EmployeeLevelModule,
+		TaskModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
