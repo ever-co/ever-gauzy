@@ -35,6 +35,7 @@ import { EmailTemplate } from '../email-template';
 import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
+import { EquipmentSharing } from '../equipment-sharing';
 
 const entities = [
 	Invite,
@@ -63,6 +64,7 @@ const entities = [
 	EmailTemplate,
 	Tag,
 	Equipment,
+	EquipmentSharing,
 	EmployeeLevel,
 	Task
 ];

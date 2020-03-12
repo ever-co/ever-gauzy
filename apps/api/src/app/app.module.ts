@@ -38,6 +38,7 @@ import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
+import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 
 @Module({
 	imports: [
@@ -135,6 +136,10 @@ import { TaskModule } from './tasks';
 					{
 						path: '/tasks',
 						module: TaskModule
+					},
+					{
+						path: '/equipment-sharing',
+						module: EquipmentSharingModule
 					}
 				]
 			}
@@ -183,6 +188,7 @@ import { TaskModule } from './tasks';
 			  ]
 			: []),
 		EquipmentModule,
+		EquipmentSharingModule,
 		EmployeeLevelModule,
 		TaskModule
 	],
