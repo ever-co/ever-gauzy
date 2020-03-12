@@ -27,19 +27,19 @@ export class Equipment extends Base implements IEquipment {
 
 	@ApiPropertyOptional({ type: String })
 	@IsOptional()
-	@Column({ nullable: true })
-	SN?: string;
+	@Column()
+	serialNumber?: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@IsNotEmpty()
+	@Column({ type: 'numeric' })
 	manufacturedYear: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@IsOptional()
-	@Column({ nullable: true, type: 'numeric' })
+	@IsNotEmpty()
+	@Column({ type: 'numeric' })
 	initialCost: number;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
@@ -50,13 +50,13 @@ export class Equipment extends Base implements IEquipment {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@IsOptional()
+	@IsNotEmpty()
 	@Column({ nullable: true, type: 'numeric' })
 	maxSharePeriod: number;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@IsOptional()
-	@Column({ nullable: true })
+	@IsNotEmpty()
+	@Column()
 	autoApproveShare: boolean;
 }

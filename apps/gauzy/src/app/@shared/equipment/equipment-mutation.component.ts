@@ -48,7 +48,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 				this.equipment ? this.equipment.type : '',
 				Validators.required
 			],
-			SN: [this.equipment ? this.equipment.SN : ''],
+			serialNumber: [this.equipment ? this.equipment.serialNumber : ''],
 			manufacturedYear: [
 				this.equipment ? this.equipment.manufacturedYear : '',
 				[Validators.required, Validators.min(1000)]
@@ -59,8 +59,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 			],
 			currency: [this.selectedCurrency, Validators.required],
 			maxSharePeriod: [
-				this.equipment ? this.equipment.maxSharePeriod : '',
-				[Validators.required, Validators.min(0)]
+				this.equipment ? this.equipment.maxSharePeriod : null
 			],
 			autoApproveShare: [
 				this.equipment ? this.equipment.autoApproveShare : ''
