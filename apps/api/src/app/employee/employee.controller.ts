@@ -6,9 +6,7 @@ import {
 	Post,
 	Body,
 	Param,
-	UseGuards,
-	Patch,
-	Header
+	UseGuards	
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
