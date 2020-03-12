@@ -113,6 +113,7 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 #### Core
 
 -   Ruslan Konviser ([Evereq](https://github.com/evereq))
+-   Rachit Magon ([rmagon](https://github.com/rmagon))
 
 #### Developers (alphabetical order)
 
@@ -125,6 +126,8 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
 -   Lubomir Petrov ([lpetrv](https://github.com/lpetrv))
+-   Nikolay Monov ([ntmonov](https://github.com/ntmonov))
+-   Tsvetelina Yordanova ([tsvetelina-e-y](https://github.com/tsvetelina-e-y))
 -   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
 #### Designers & QA
@@ -133,7 +136,6 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 ### Contributors
 
--   Rachit Magon ([rmagon](https://github.com/rmagon))
 -   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
 -   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
 

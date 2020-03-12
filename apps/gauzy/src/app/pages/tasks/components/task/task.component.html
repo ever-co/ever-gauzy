@@ -1,0 +1,54 @@
+<nb-card
+	class="tasks-component"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
+	<nb-card-header>
+		<h4>
+			{{ 'TASKS_PAGE.HEADER' | translate }}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3">
+			<button
+				nbButton
+				status="success"
+				(click)="createTaskDialog()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="editTaskDIalog()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="danger"
+				(click)="deleteTask()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+
+		<ng2-smart-table
+			[settings]="settingsSmartTable"
+			[source]="tasks$ | async"
+			(userRowSelect)="selectTask($event)"
+			style="cursor: pointer;"
+			#tasksTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>

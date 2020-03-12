@@ -125,4 +125,13 @@
 			background-color: nb-theme(background-basic-color-3) !important;
 		}
 	}
+
+	nb-route-tabset {
+		nb-icon {
+			margin-right: 10px;
+		}
+		.tab-link {
+			outline: none;
+		}
+	}
 }

@@ -89,6 +89,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Tasks',
+			icon: 'browser-outline',
+			link: '/pages/tasks',
+			data: {
+				translated: false,
+				translationKey: 'MENU.TASKS'
+				//   permissionKeys: [],
+			}
+		},
+		{
 			title: 'Help',
 			icon: 'question-mark-circle-outline',
 			link: '/pages/help',
@@ -219,6 +229,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 					PermissionsEnum.ORG_EXPENSES_EDIT
 				],
 				translationKey: 'MENU.ORGANIZATIONS'
+			}
+		},
+		{
+			title: 'Equipment',
+			icon: 'shopping-bag-outline',
+			link: '/pages/equipment',
+			data: {
+				translated: false,
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+				translationKey: 'MENU.EQUIPMENT'
 			}
 		},
 

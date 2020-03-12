@@ -4,7 +4,8 @@ import {
 	Employee,
 	EmployeeFindInput,
 	EmployeeCreateInput as IEmployeeCreateInput,
-	EmployeeUpdateInput
+	EmployeeUpdateInput,
+	EmploymentTypesCreateInput
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -58,9 +59,11 @@ export class EmployeesService {
 		return this.http.post<Employee>('/api/employee/create', createInput);
 	}
 
-	toggleAnonymousBonus(anonymousBonus: boolean, employeeId: string) {
-		return this.http.patch(`/api/employee/anonymous/${employeeId}`, {
-			anonymousBonus: anonymousBonus
-		});
+	getEmploymentTypes(
+		orgId: string
+	): Observable<EmploymentTypesCreateInput[]> {
+		return this.http.get<EmploymentTypesCreateInput[]>(
+			`/api/employmentTypes/getEmploymentTypes/${orgId}`
+		);
 	}
 }
