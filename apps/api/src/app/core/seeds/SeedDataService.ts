@@ -195,13 +195,12 @@ export class SeedDataService {
 			]);
 
 			await createEmployeeLevels(this.connection);
-      
+
 			this.log(
 				chalk.green(
 					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`
 				)
 			);
-
 		} catch (error) {
 			this.handleError(error);
 		}
@@ -258,6 +257,6 @@ export class SeedDataService {
 				`🛑 ERROR: ${!!message ? message : 'Unable to seed database'}`
 			)
 		);
-		throw new Error(`🛑  ${error}`);
+		throw error;
 	}
 }

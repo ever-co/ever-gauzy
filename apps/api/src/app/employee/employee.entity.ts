@@ -126,7 +126,7 @@ export class Employee extends LocationBase implements IEmployee {
 
 	@ManyToMany((type) => EmploymentTypes, { cascade: true })
 	@JoinTable({
-		name: 'employee_employmentTypes'
+		name: 'employee_employment_types'
 	})
 	employmentTypes?: EmploymentTypes[];
 
@@ -147,5 +147,4 @@ export class Employee extends LocationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
-
 }
