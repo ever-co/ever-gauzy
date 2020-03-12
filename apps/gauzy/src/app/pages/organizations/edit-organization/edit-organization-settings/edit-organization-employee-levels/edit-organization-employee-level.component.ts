@@ -80,7 +80,6 @@ export class EditOrganizationEmployeeLevelComponent
 			this.showAddCard = !this.showAddCard;
 			this.loadEmployeeLevels();
 		} else {
-			// TODO translate
 			this.toastrService.danger(
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.INVALID_POSITION_NAME'
@@ -99,7 +98,7 @@ export class EditOrganizationEmployeeLevelComponent
 		};
 		await this.employeeLevlesService.update(id, employeeLevel).toPromise();
 
-		this.toastrService.primary('Employee Level successfuly updated');
+		this.toastrService.primary('Successfully updated');
 	}
 
 	private async loadEmployeeLevels() {

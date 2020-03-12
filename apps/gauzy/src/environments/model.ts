@@ -16,4 +16,5 @@ export interface Environment {
 	FACEBOOK_AUTH_LINK: string;
 	LINKEDIN_AUTH_LINK: string;
 	NO_INTERNET_LOGO: string;
+	SENTRY_DNS?: string;
 }

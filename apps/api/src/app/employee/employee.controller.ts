@@ -6,7 +6,7 @@ import {
 	Post,
 	Body,
 	Param,
-	UseGuards
+	UseGuards	
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
@@ -85,5 +85,5 @@ export class EmployeeController extends CrudController<Employee> {
 		...options: any[]
 	): Promise<Employee> {
 		return this.commandBus.execute(new EmployeeCreateCommand(entity));
-	}
+	}	
 }

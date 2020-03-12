@@ -34,6 +34,7 @@
 		"@nestjs/websockets": "^6.10.12",
 		"@nestjsx/crud": "^4.2.0",
 		"@nestjsx/crud-typeorm": "^4.2.0",
+		"@ntegral/nestjs-sentry": "1.0.0",
 		"bcrypt": "^3.0.6",
 		"cache-manager": "^2.10.0",
 		"class-transformer": "^0.2.3",

@@ -19,6 +19,7 @@ import { Organization } from '../organization';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 import { User } from '../user';
 import { Tenant } from '../tenant';
+import { EmploymentTypes } from '../employment-types/employment-types.entity';
 import { Tag } from '../tags';
 import { OrganizationDepartment } from '../organization-department';
 import { LocationBase } from '../core/entities/location-base';
@@ -123,6 +124,12 @@ export class Employee extends LocationBase implements IEmployee {
 	})
 	teams?: OrganizationTeams[];
 
+	@ManyToMany((type) => EmploymentTypes, { cascade: true })
+	@JoinTable({
+		name: 'employee_employmentTypes'
+	})
+	employmentTypes?: EmploymentTypes[];
+
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
@@ -140,4 +147,5 @@ export class Employee extends LocationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
+
 }
