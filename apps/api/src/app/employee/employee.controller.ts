@@ -87,13 +87,5 @@ export class EmployeeController extends CrudController<Employee> {
 		...options: any[]
 	): Promise<Employee> {
 		return this.commandBus.execute(new EmployeeCreateCommand(entity));
-	}
-
-	@Patch('/anonymous/:id')
-	@Header('Content-Type', 'application/json')
-	async updateAnonymous(@Body() bonus: Object, @Param() params) {
-		const anonymousBonus = bonus['anonymousBonus'];
-		const employeeId = params.id;
-		return this.employeeService.update(employeeId, { anonymousBonus });
-	}
+	}	
 }
