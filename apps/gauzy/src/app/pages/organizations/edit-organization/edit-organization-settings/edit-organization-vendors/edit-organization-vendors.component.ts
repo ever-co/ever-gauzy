@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ConsoleService } from '@ng-select/ng-select/lib/console.service';
 
 @Component({
 	selector: 'ga-edit-org-vendors',
@@ -19,8 +20,11 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 	organizationId: string;
 
 	showAddCard: boolean;
+	showEditDiv: boolean;
 
 	vendors: OrganizationVendors[];
+
+	selectedVendor: OrganizationVendors;
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -42,6 +46,11 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 			});
 	}
 
+	showEditCard(vendor: OrganizationVendors) {
+		this.showEditDiv = true;
+		this.selectedVendor = vendor;
+	}
+
 	async removeVendor(id: string, name: string) {
 		await this.organizationVendorsService.delete(id);
 
@@ -56,6 +65,13 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 		);
 
 		this.loadVendors();
+	}
+
+	async editVendor(id: string, name: string) {
+		await this.organizationVendorsService.update(id, { name });
+		this.loadVendors();
+		this.toastrService.success('Successfully updated');
+		this.showEditDiv = !this.showEditDiv;
 	}
 
 	private async addVendor(name: string) {
