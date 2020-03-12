@@ -547,8 +547,8 @@
 		"TASK_ADDED": "Task added",
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
-		"TASKS_PROJECT": "Project",
-		"TASKS_STATUS": "Status"
+		"TASKS_PROJECT": "פרויקטים",
+		"TASKS_STATUS": "עבודה"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
