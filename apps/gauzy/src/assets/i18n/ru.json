@@ -126,6 +126,8 @@
 			"ENABLE_DISABLE_INVITES": "Включить/выключить приглашения",
 			"ALLOW_USER_INVITES": "Разрешить пользователям отправлять приглашения",
 			"INVITE_EXPIRY_PERIOD": "Срок приглашения истекает (в днях)",
+			"EMPLOYMENT_TYPES": "Тип занятости",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
 			"OFFER_DATE": "Дата предложения (опционально)",
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
@@ -185,7 +187,8 @@
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
-			"SWITCH_PROJECT_STATE": "Публичный"
+			"SWITCH_PROJECT_STATE": "Публичный",
+			"EMPLOYMENT_TYPES": "Employment Type"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -387,6 +390,7 @@
 		"SETTINGS": "Настройки",
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Организационные периодические расходы",
+		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Пригласить клиента",
 		"EMAIL_INVITE": "Приглашение",
 		"EDIT": {
@@ -402,6 +406,7 @@
 			"PROJECTS": "Проекты",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
+			"EMPLOYMENT_TYPES": "Employment Types",
 			"NEW_PROJECT": "Добавить новый проект",
 			"START_DATE": "Дата начала",
 			"END_DATE": "Дата окончания",
@@ -660,6 +665,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NAME_REQUIRED": "Требуется имя!",
@@ -750,6 +756,12 @@
 				"INVITE_CLIENT": "Письмо с приглашением отправлено {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Произошла ошибка при попытке пригласить клиента.",
 				"EMAIL_EXISTS": "Этот адрес электронной почты уже существует в качестве пользователя"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
+				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
+				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
+				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {
