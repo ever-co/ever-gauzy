@@ -40,8 +40,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	departments: OrganizationDepartment[] = [];
 	positions: OrganizationPositions[] = [];  
 
-	constructor(
-    private readonly location: Location,
+	constructor(    
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
 		private readonly toastrService: NbToastrService,
