@@ -45,7 +45,7 @@
 
 		<nb-card *ngFor="let v of vendors">
 			<nb-card-body>
-				{{ v.name }}
+				{{ selectedVendor === v ? '' : v.name }}
 				<div
 					*ngIf="showEditDiv && v === selectedVendor"
 					class="row m-0"
@@ -73,7 +73,7 @@
 					<span class="col-2 pl-1 pr-0">
 						<button
 							class="w-100"
-							(click)="showEditDiv = !showEditDiv"
+							(click)="cancel()"
 							nbButton
 							status="danger"
 						>
@@ -81,7 +81,11 @@
 						</button></span
 					>
 				</div>
-				<nb-actions class="float-right" e="medium">
+				<nb-actions
+					*ngIf="v !== selectedVendor"
+					class="float-right"
+					e="medium"
+				>
 					<nb-action
 						(click)="showEditCard(v)"
 						class="d-inline pr-0"

@@ -50,6 +50,11 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 		this.selectedVendor = vendor;
 	}
 
+	cancel() {
+		this.showEditDiv = !this.showEditDiv;
+		this.selectedVendor = null;
+	}
+
 	async removeVendor(id: string, name: string) {
 		await this.organizationVendorsService.delete(id);
 
