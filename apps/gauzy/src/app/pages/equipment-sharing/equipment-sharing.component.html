@@ -1,1 +1,41 @@
-test
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<h4>{{ 'EQUIPMENT_SHARING_PAGE.HEADER' | translate }}</h4>
+	</nb-card-header>
+
+	<nb-card-body>
+		<div class="mb-3">
+			<button nbButton status="success" class="mr-2">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.REQUEST' | translate }}
+			</button>
+			<button
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+
+		<ng2-smart-table
+			class="tags-table"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			style="cursor: pointer;"
+			#equipmentSharingTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>

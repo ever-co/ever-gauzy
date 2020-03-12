@@ -23,7 +23,8 @@
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
-		"INVITE_AGAIN": "Invite Again"
+		"INVITE_AGAIN": "Invite Again",
+		"REQUEST": "Request"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -538,6 +539,15 @@
 		"EQUIPMENT_DELETED": "Equipment deleted",
 		"EQUIPMENT_ADDED": "Equipment added",
 		"EQUIPMENT_SAVED": "Equipment saved"
+	},
+	"EQUIPMENT_SHARING_PAGE": {
+		"HEADER": "Equipment Sharing",
+		"REQUEST": "Request",
+		"EQUIPMENT_NAME": "Equipment name",
+		"SHARE_REQUIEST_DATE": "Share requst date",
+		"SHARE_START_DATE": "Share start date",
+		"SHARE_END_DATE": "Share end date",
+		"STATUS": "Status"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

@@ -16,9 +16,9 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EquipmentSharingComponent } from './equipment-sharing.component';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -46,7 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	providers: [EquipmentService],
+	providers: [EquipmentSharingService],
 	entryComponents: [],
 	declarations: [EquipmentSharingComponent]
 })
