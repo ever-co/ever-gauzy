@@ -5,6 +5,8 @@ import { EquipmentSharing } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
+import { NbDialogService } from '@nebular/theme';
+import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
 
 @Component({
 	templateUrl: './equipment-sharing.component.html',
@@ -24,7 +26,8 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 
 	constructor(
 		readonly translateService: TranslateService,
-		private equipmentSharingService: EquipmentSharingService
+		private equipmentSharingService: EquipmentSharingService,
+		private dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -55,23 +58,33 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'EQUIPMENT_SHARING_PAGE.SHARE_START_DATE'
 					),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				shareEndDate: {
 					title: this.getTranslation(
 						'EQUIPMENT_SHARING_PAGE.SHARE_END_DATE'
 					),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				status: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.STATUS'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				}
 			}
 		};
 	}
 
-	async save() {}
+	async save() {
+		const dialog = this.dialogService.open(
+			EquipmentSharingMutationComponent,
+			{
+				context: {}
+			}
+		);
+	}
 
 	async delete() {}
 

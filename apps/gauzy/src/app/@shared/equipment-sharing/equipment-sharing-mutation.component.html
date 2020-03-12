@@ -1,0 +1,116 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(equipmentSharing
+					? 'EQUIPMENT_SHARING_PAGE.EDIT_EQUIPMENT_REQUEST'
+					: 'EQUIPMENT_SHARING_PAGE.ADD_EQUIPMENT_REQUEST'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<nb-select class="d-block" formControlName="equipmentItem">
+						<nb-option
+							*ngFor="let item of equipmentItems"
+							value="{{ item.id }}"
+							>{{ item.name }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<nb-select class="d-block" formControlName="employee">
+						<nb-option
+							*ngFor="let employee of employees"
+							value="{{ employee.id }}"
+							>{{ employee.user.firstName }}</nb-option
+						>
+					</nb-select>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<nb-select class="d-block" formControlName="team">
+						<!-- //todo -->
+						<nb-option
+							*ngFor="let team of teams"
+							value="{{ team.id }}"
+							>{{ team }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<input
+							fullWidth
+							formControlName="shareRequestDate"
+							nbInput
+							[nbDatepicker]="shareRequestDatePicker"
+							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						/>
+						<nb-datepicker #shareRequestDatePicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<input
+							fullWidth
+							formControlName="shareStartDate"
+							nbInput
+							[nbDatepicker]="shareStartDatePicker"
+							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						/>
+						<nb-datepicker #shareStartDatePicker></nb-datepicker>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<input
+							fullWidth
+							formControlName="shareEndDate"
+							nbInput
+							[nbDatepicker]="shareEndDatePicker"
+							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+						/>
+						<nb-datepicker #shareEndDatePicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<nb-select class="d-block" formControlName="equipmentItem">
+						<nb-option
+							*ngFor="let item of equipmentItems"
+							value="{{ item.id }}"
+							>{{ item.name }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="warning"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button [disabled]="form.invalid" status="success" nbButton>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

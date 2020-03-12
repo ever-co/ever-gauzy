@@ -542,9 +542,12 @@
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
+		"ADD_EQUIPMENT_REQUEST": "Create equipment request",
+		"EDIT_EQUIPMENT_REQUEST": "Edit equipment request",
+		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
 		"REQUEST": "Request",
 		"EQUIPMENT_NAME": "Equipment name",
-		"SHARE_REQUIEST_DATE": "Share requst date",
+		"SHARE_REQUIEST_DATE": "Share request date",
 		"SHARE_START_DATE": "Share start date",
 		"SHARE_END_DATE": "Share end date",
 		"STATUS": "Status"

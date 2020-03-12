@@ -7,7 +7,8 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -16,9 +17,10 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EquipmentSharingComponent } from './equipment-sharing.component';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
+import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
+import { EquipmentSharingMutationModule } from '../../@shared/equipment-sharing/equipment-sharing-mutation.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -35,8 +37,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
-		EquipmentMutationModule,
+		EquipmentSharingMutationModule,
 		TableComponentsModule,
+		NbDatepickerModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -47,7 +50,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSpinnerModule
 	],
 	providers: [EquipmentSharingService],
-	entryComponents: [],
+	entryComponents: [EquipmentSharingMutationComponent],
 	declarations: [EquipmentSharingComponent]
 })
 export class EquipmentSharingModule {}
