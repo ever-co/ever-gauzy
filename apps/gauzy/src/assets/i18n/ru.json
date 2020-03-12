@@ -127,7 +127,7 @@
 			"ALLOW_USER_INVITES": "Разрешить пользователям отправлять приглашения",
 			"INVITE_EXPIRY_PERIOD": "Срок приглашения истекает (в днях)",
 			"EMPLOYMENT_TYPES": "Тип занятости",
-			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Добавить новый тип занятости",
 			"OFFER_DATE": "Дата предложения (опционально)",
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
@@ -188,7 +188,7 @@
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
 			"SWITCH_PROJECT_STATE": "Публичный",
-			"EMPLOYMENT_TYPES": "Employment Type"
+			"EMPLOYMENT_TYPES": "Тип занятости"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -390,7 +390,7 @@
 		"SETTINGS": "Настройки",
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Организационные периодические расходы",
-		"EMPLOYMENT_TYPES": "Employment Types",
+		"EMPLOYMENT_TYPES": "Типы занятости",
 		"INVITE_CLIENT": "Пригласить клиента",
 		"EMAIL_INVITE": "Приглашение",
 		"EDIT": {
@@ -406,7 +406,7 @@
 			"PROJECTS": "Проекты",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
-			"EMPLOYMENT_TYPES": "Employment Types",
+			"EMPLOYMENT_TYPES": "Типы занятости",
 			"NEW_PROJECT": "Добавить новый проект",
 			"START_DATE": "Дата начала",
 			"END_DATE": "Дата окончания",
@@ -665,7 +665,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
-			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NAME_REQUIRED": "Требуется имя!",
@@ -758,10 +758,10 @@
 				"EMAIL_EXISTS": "Этот адрес электронной почты уже существует в качестве пользователя"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
-				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
-				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
-				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
+				"ADD_EMPLOYMENT_TYPE": "Новый тип занятости {{ name }} успешно добавлен!",
+				"UPDATE_EMPLOYMENT_TYPE": "Занятость {{ name }} была обновлена",
+				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
+				"DELETE_EMPLOYMENT_TYPE": "Тип занятости удален для {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {
