@@ -35,6 +35,7 @@ export interface UserFindInput extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	employmentTypes?: any[];
 }
 
 export interface UserRegistrationInput {

@@ -329,7 +329,6 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				this.defaultCurrency = firstItem.organization.currency;
 			}
 		} catch (error) {
-			console.log(error);
 			this.expensesData = [];
 			this.expensePermissionError = true;
 		}

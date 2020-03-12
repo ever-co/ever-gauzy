@@ -235,9 +235,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 			}
 		});
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
-
-		console.log('Data', data);
+		await dialog.onClose.pipe(first()).toPromise();
 	}
 
 	async delete() {

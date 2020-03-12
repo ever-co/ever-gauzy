@@ -42,7 +42,6 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	constructor(
 		private route: ActivatedRoute,
 		private organizationService: OrganizationsService,
-		private countryService: CountryService,
 		private toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private organizationEditStore: OrganizationEditStore
@@ -99,6 +98,12 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('positions')
 			},
 			{
+				title: 'Employee Levels',
+				icon: 'award-outline',
+				responsive: true,
+				route: this.getRoute('employeeLevels')
+			},
+			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.VENDORS'),
 				icon: 'car-outline',
 				responsive: true,
@@ -121,6 +126,14 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				icon: 'settings-outline',
 				responsive: true,
 				route: this.getRoute('settings')
+			},
+			{
+				title: this.getTranslation(
+					'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES'
+				),
+				icon: 'settings-outline',
+				responsive: true,
+				route: this.getRoute('employmentTypes')
 			}
 		];
 	}

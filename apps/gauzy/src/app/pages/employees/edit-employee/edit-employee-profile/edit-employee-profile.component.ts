@@ -160,20 +160,10 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 					value
 				);
 
-				if (organizationDepartment) {
-					this.employeeStore.employeeForm = {
-						organizationDepartment,
-						organizationPosition
-					};
-				} else {
-					this.toastrService.primary(
-						this.getTranslation(
-							'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
-							{ name: this.employeeName }
-						),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
-				}
+				this.employeeStore.employeeForm = {
+					organizationDepartment,
+					organizationPosition
+				};
 
 				this._loadEmployeeData();
 			} catch (error) {

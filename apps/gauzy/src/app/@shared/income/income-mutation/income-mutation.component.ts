@@ -95,7 +95,6 @@ export class IncomeMutationComponent implements OnInit {
 	ngOnInit() {
 		this._initializeForm();
 		this.form.get('currency').disable();
-		console.log(this.form.value);
 		this._getClients();
 	}
 
