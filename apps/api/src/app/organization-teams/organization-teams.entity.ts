@@ -5,7 +5,7 @@ import { Base } from '../core/entities/base';
 import { OrganizationTeams as IOrganizationTeams } from '@gauzy/models';
 import { Employee } from '../employee';
 
-@Entity('organization_teams')
+@Entity('organization_team')
 export class OrganizationTeams extends Base implements IOrganizationTeams {
 	@ApiProperty({ type: String })
 	@IsString()

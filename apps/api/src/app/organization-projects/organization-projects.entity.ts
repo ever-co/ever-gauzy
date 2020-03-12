@@ -24,7 +24,7 @@ import {
 import { OrganizationClients } from '../organization-clients';
 import { Employee } from '../employee';
 
-@Entity('organization_projects')
+@Entity('organization_project')
 export class OrganizationProjects extends Base
 	implements IOrganizationProjects {
 	@ApiProperty({ type: String })

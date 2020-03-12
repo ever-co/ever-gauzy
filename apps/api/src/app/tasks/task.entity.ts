@@ -4,7 +4,7 @@ import { Task as ITask } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { OrganizationProjects } from '../organization-projects';
 
-@Entity('tasks')
+@Entity('task')
 export class Task extends Base implements ITask {
 	@ApiProperty({ type: String })
 	@Column()

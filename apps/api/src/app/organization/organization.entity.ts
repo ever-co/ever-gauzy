@@ -35,7 +35,7 @@ import { LocationBase } from '../core/entities/location-base';
 export class Organization extends LocationBase implements IOrganization {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
-		name: 'tags_organizations'
+		name: 'tag_organizations'
 	})
 	tags: Tag[];
 

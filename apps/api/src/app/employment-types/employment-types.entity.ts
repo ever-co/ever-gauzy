@@ -1,13 +1,6 @@
-import {
-	Entity,
-	PrimaryGeneratedColumn,
-	Column,
-	ManyToMany,
-	JoinTable
-} from 'typeorm';
-import { Employee } from '../employee';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity()
+@Entity('employment_type')
 export class EmploymentTypes {
 	@PrimaryGeneratedColumn()
 	id: string;
@@ -17,10 +10,4 @@ export class EmploymentTypes {
 
 	@Column()
 	organizationId: string;
-
-	@ManyToMany((type) => Employee, { cascade: ['update'] })
-	@JoinTable({
-		name: 'employee_employment_types'
-	})
-	employees?: Employee[];
 }
