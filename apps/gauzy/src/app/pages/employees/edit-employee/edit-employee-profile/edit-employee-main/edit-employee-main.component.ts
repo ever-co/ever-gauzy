@@ -43,7 +43,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				if (this.selectedEmployee) {
 					this._initializeForm(this.selectedEmployee);
 					this.employeeService
-						.getEmpTypes(this.selectedEmployee.orgId)
+						.getEmploymentTypes(this.selectedEmployee.orgId)
 						.pipe(takeUntil(this._ngDestroy$))
 						.subscribe((data) => {
 							this.employmentTypes = data;

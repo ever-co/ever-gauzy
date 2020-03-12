@@ -11,13 +11,13 @@ export class EmploymentTypesService extends CrudService<EmploymentTypes> {
 
 	constructor(
 		@InjectRepository(EmploymentTypes)
-		private readonly empTypesRepo: Repository<EmploymentTypes>
+		private readonly employmentTypesRepo: Repository<EmploymentTypes>
 	) {
-		super(empTypesRepo);
+		super(employmentTypesRepo);
 	}
 
 	async retrieve(orgId: string) {
-		this.employmentTypes = await this.empTypesRepo.find({
+		this.employmentTypes = await this.employmentTypesRepo.find({
 			where: { organizationId: orgId }
 		});
 		return this.employmentTypes;

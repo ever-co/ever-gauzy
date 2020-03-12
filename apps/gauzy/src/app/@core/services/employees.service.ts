@@ -59,18 +59,11 @@ export class EmployeesService {
 		return this.http.post<Employee>('/api/employee/create', createInput);
 	}
 
-	getEmpTypes(orgId: string): Observable<EmploymentTypesCreateInput[]> {
+	getEmploymentTypes(
+		orgId: string
+	): Observable<EmploymentTypesCreateInput[]> {
 		return this.http.get<EmploymentTypesCreateInput[]>(
-			`/api/empTypes/getEmpTypes/${orgId}`
-		);
-	}
-
-	addEmpType(
-		empType: EmploymentTypesCreateInput
-	): Observable<EmploymentTypesCreateInput> {
-		return this.http.post<EmploymentTypesCreateInput>(
-			'http://localhost:3000/api/empTypes/addType',
-			empType
+			`/api/employmentTypes/getEmploymentTypes/${orgId}`
 		);
 	}
 }

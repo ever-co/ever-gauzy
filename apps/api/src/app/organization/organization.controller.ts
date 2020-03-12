@@ -5,9 +5,6 @@ import { Organization } from './organization.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
 import { UUIDValidationPipe } from '../shared';
-import { EmploymentTypesCreateInput } from '@gauzy/models';
-import { getConnection, Connection } from 'typeorm';
-import { EmploymentTypes } from '../employment-types/employment-types.entity';
 
 @ApiTags('Organization')
 @Controller()

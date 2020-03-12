@@ -150,7 +150,9 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 					this.getTranslation('NOTES.POLICY.ADD_POLICY'),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
-			} catch (err) {}
+			} catch (err) {
+				console.log(err);
+			}
 		}
 	}
 

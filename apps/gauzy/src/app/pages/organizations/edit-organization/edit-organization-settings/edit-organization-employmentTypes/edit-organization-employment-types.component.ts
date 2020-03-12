@@ -1,7 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { EmployeesService } from '../../../../../@core/services/employees.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	Employee,
@@ -10,13 +9,13 @@ import {
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
-import { OrganizationEmpTypesService } from '../../../../../@core/services/organization-emp-types.service';
+import { OrganizationEmploymentTypesService } from '../../../../../@core/services/organization-employment-types.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 @Component({
-	selector: 'ga-edit-org-emptypes',
-	templateUrl: './edit-organization-employmentTypes.component.html'
+	selector: 'ga-edit-org-employment-types',
+	templateUrl: './edit-organization-employment-types.component.html'
 })
 export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 	implements OnInit {
@@ -25,14 +24,13 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 	showAddCard: boolean;
 	selectedEmployee: Employee;
 	organization: Organization;
-	empTypes: EmploymentTypesCreateInput[];
+	employmentTypes: EmploymentTypesCreateInput[];
 
 	constructor(
 		private fb: FormBuilder,
-		private employeeService: EmployeesService,
 		private readonly toastrService: NbToastrService,
 		private organizationEditStore: OrganizationEditStore,
-		private organizationEmpTypesService: OrganizationEmpTypesService,
+		private organizationEmploymentTypesService: OrganizationEmploymentTypesService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -45,11 +43,11 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 			.subscribe((data) => {
 				this.organization = data;
 				if (this.organization) {
-					this.employeeService
-						.getEmpTypes(this.organization.id)
+					this.organizationEmploymentTypesService
+						.getEmploymentTypes(this.organization.id)
 						.pipe(takeUntil(this._ngDestroy$))
 						.subscribe((types) => {
-							this.empTypes = types;
+							this.employmentTypes = types;
 						});
 				}
 			});
@@ -69,15 +67,15 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 
 	private async addEmploymentType(name: string) {
 		if (name) {
-			const newEmpType = {
+			const newEmploymentType = {
 				name,
 				organizationId: this.organization.id
 			};
-			this.employeeService
-				.addEmpType(newEmpType)
+			this.organizationEmploymentTypesService
+				.addEmploymentType(newEmploymentType)
 				.pipe(takeUntil(this._ngDestroy$))
 				.subscribe((data) => {
-					this.empTypes.push(data);
+					this.employmentTypes.push(data);
 				});
 			this.toastrService.primary(
 				this.getTranslation(
@@ -103,21 +101,21 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 
 	submitForm() {
 		const name = this.form.controls['name'].value;
-		const newEmpType = {
+		const newEmploymentType = {
 			name,
 			organizationId: this.organization.id
 		};
-		this.employeeService
-			.addEmpType(newEmpType)
+		this.organizationEmploymentTypesService
+			.addEmploymentType(newEmploymentType)
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => {
-				this.empTypes.push(data);
+				this.employmentTypes.push(data);
 			});
 		this.form.reset();
 	}
 
-	async delType(id, name) {
-		await this.organizationEmpTypesService.deleteEmploymentType(id);
+	async deleteEmploymentType(id, name) {
+		await this.organizationEmploymentTypesService.deleteEmploymentType(id);
 		this.toastrService.primary(
 			this.getTranslation(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.DELETE_EMPLOYMENT_TYPE',
@@ -127,11 +125,9 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 			),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
-		this.empTypes = this.empTypes.filter((t) => t['id'] !== id);
-	}
-
-	async update(empType) {
-		await this.organizationEmpTypesService.update(empType);
+		this.employmentTypes = this.employmentTypes.filter(
+			(t) => t['id'] !== id
+		);
 	}
 
 	ngOnDestroy() {

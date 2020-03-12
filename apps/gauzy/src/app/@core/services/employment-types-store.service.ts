@@ -21,13 +21,16 @@ export class EmploymentTypesStore {
 	}
 
 	create(employmentType: EmploymentType) {
-		const empTypes = [...this._employmentTypes$.getValue(), employmentType];
-		this._employmentTypes$.next(empTypes);
+		const employmentTypes = [
+			...this._employmentTypes$.getValue(),
+			employmentType
+		];
+		this._employmentTypes$.next(employmentTypes);
 	}
 
 	delete(id: number) {
-		const empTypes = [...this._employmentTypes$.getValue()];
-		const newValue = empTypes.filter((e) => e.id !== id);
+		const employmentTypes = [...this._employmentTypes$.getValue()];
+		const newValue = employmentTypes.filter((e) => e.id !== id);
 		this._employmentTypes$.next(newValue);
 	}
 }

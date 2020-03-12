@@ -35,7 +35,7 @@ import { RolePermissions, createRolePermissions } from '../../role-permissions';
 import { createTenants } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
-import { seedEmpTypes } from '../../organization/employment-types.seed';
+import { seedEmploymentTypes } from '../../organization/employment-types.seed';
 import { EmploymentTypes } from '../../employment-types/employment-types.entity';
 
 const allEntities = [
@@ -184,7 +184,7 @@ export class SeedDataService {
 
 			await createEmailTemplates(this.connection);
 
-			await seedEmpTypes(this.connection, [
+			await seedEmploymentTypes(this.connection, [
 				...randomOrganizations,
 				defaultOrganization
 			]);

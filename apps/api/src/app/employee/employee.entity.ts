@@ -108,5 +108,5 @@ export class Employee extends Base implements IEmployee {
 	@JoinTable({
 		name: 'employee_employmentTypes'
 	})
-	empTypes?: EmploymentTypes[];
+	employmentTypes?: EmploymentTypes[];
 }

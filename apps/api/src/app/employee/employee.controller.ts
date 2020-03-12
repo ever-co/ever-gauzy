@@ -5,17 +5,14 @@ import {
 	Query,
 	Post,
 	Body,
-	Param,
-	Header
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
 import { Employee } from './employee.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
-import {
-	EmployeeCreateInput as IEmployeeCreateInput
-} from '@gauzy/models';
+import { EmployeeCreateInput as IEmployeeCreateInput } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand } from './commands';
 

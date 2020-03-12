@@ -19,9 +19,7 @@ import {
 	Index,
 	JoinColumn,
 	ManyToOne,
-	RelationId,
-	ManyToMany,
-	JoinTable
+	RelationId
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role';

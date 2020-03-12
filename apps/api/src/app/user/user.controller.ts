@@ -11,8 +11,7 @@ import {
 	UseGuards,
 	HttpCode,
 	Post,
-	Body,
-	Put
+	Body
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
@@ -28,7 +27,6 @@ import { CommandBus } from '@nestjs/cqrs';
 import { UserCreateCommand } from './commands';
 import { UserCreateInput as IUserCreateInput } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @ApiTags('User')
 @Controller()
@@ -58,6 +56,21 @@ export class UserController extends CrudController<User> {
 		return this.userService.findOne(currentUserId, {
 			relations
 		});
+	}
+
+	@ApiOperation({ summary: 'Find user by email address.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found user by email address',
+		type: User
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/email/:email')
+	async findByEmail(@Param('email') email: string): Promise<User> {
+		return this.userService.getUserByEmail(email);
 	}
 
 	@ApiOperation({ summary: 'Find User by id.' })
@@ -116,29 +129,5 @@ export class UserController extends CrudController<User> {
 		...options: any[]
 	): Promise<User> {
 		return this.commandBus.execute(new UserCreateCommand(entity));
-	}
-
-	@ApiOperation({ summary: 'Update an existing record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
-	async update(
-		@Param('id') id: string,
-		@Body() entity: QueryDeepPartialEntity<User>,
-		...options: any[]
-	): Promise<any> {
-		return this.userService.update(id, entity); // FIXME: https://github.com/typeorm/typeorm/issues/1544
 	}
 }

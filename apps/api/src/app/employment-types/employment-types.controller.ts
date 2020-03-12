@@ -6,8 +6,7 @@ import {
 	Body,
 	Get,
 	Param,
-	Delete,
-	Patch
+	Delete
 } from '@nestjs/common';
 import { CrudController } from '../core/crud';
 import { EmploymentTypes } from './employment-types.entity';
@@ -15,7 +14,7 @@ import { EmploymentTypesService } from './employment-types.service';
 import { EmploymentTypesCreateInput } from '@gauzy/models';
 
 @ApiTags('EmploymentTypes')
-@Controller('empTypes')
+@Controller('employmentTypes')
 export class EmploymentTypesController extends CrudController<EmploymentTypes> {
 	constructor(
 		private readonly employmentTypesService: EmploymentTypesService
@@ -23,25 +22,20 @@ export class EmploymentTypesController extends CrudController<EmploymentTypes> {
 		super(employmentTypesService);
 	}
 
-	@Post('addType')
+	@Post('add')
 	@Header('Content-Type', 'application/json')
-	createEmpType(@Body() empType: EmploymentTypesCreateInput) {
-		return this.employmentTypesService.create(empType);
+	createEmploymentType(@Body() employmentType: EmploymentTypesCreateInput) {
+		return this.employmentTypesService.create(employmentType);
 	}
 
-	@Get('getEmpTypes/:orgId')
+	@Get('getEmploymentTypes/:orgId')
 	@Header('Content-Type', 'application/json')
-	async retrieveAllEmpTypes(@Param() params) {
+	async retrieveAllEmploymentTypes(@Param() params) {
 		return this.employmentTypesService.retrieve(params.orgId);
 	}
 
-	@Delete('delType/:id')
-	async delType(@Param() params) {
+	@Delete('deleteEmploymentType/:id')
+	async deleteEmploymentType(@Param() params) {
 		return this.employmentTypesService.delete(params.id);
-	}
-
-	@Patch('updateType/:id')
-	async updateType(@Body() empType, @Param() params) {
-		return this.employmentTypesService.update(params.id, empType);
 	}
 }

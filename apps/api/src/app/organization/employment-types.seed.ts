@@ -6,7 +6,7 @@ import { Connection } from 'typeorm';
 import { EmploymentTypes } from '../employment-types/employment-types.entity';
 import { Organization } from './organization.entity';
 
-export const seedEmpTypes = async (
+export const seedEmploymentTypes = async (
 	connection: Connection,
 	organizations: Organization[]
 ) => {
@@ -20,17 +20,17 @@ export const seedEmpTypes = async (
 			};
 			return newType;
 		});
-		insertEmpTypes(connection, genericEmploymentTypes);
+		insertEmploymentTypes(connection, genericEmploymentTypes);
 	});
 };
-const insertEmpTypes = async (
+const insertEmploymentTypes = async (
 	connection: Connection,
-	empTypesArray: EmploymentTypesCreateInput[]
+	employmentTypesArray: EmploymentTypesCreateInput[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(EmploymentTypes)
-		.values(empTypesArray)
+		.values(employmentTypesArray)
 		.execute();
 };

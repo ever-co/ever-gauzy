@@ -5,12 +5,10 @@
 import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
-	CreateDateColumn,
-	ManyToMany
+	CreateDateColumn
 } from 'typeorm';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/models';
-import { EmploymentTypes } from '../../employment-types/employment-types.entity';
 
 export abstract class Base implements IBaseEntityModel {
 	@ApiPropertyOptional({ type: String })

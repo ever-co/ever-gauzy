@@ -31,7 +31,6 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
-import { EmploymentTypesModule } from './employment-types/employment-types.module';
 import { DownloadAllModule } from './download-all';
 
 @Module({

@@ -44,19 +44,24 @@
 		</div>
 	</nb-card-header>
 
-	<nb-card-body *ngIf="empTypes?.length">
+	<nb-card-body *ngIf="employmentTypes?.length">
 		<div class="ml-3 mb-4">
 			<strong>{{
 				'ORGANIZATIONS_PAGE.EDIT.EMPLOYMENT_TYPES' | translate
 			}}</strong>
 		</div>
 
-		<nb-card *ngFor="let empType of empTypes">
+		<nb-card *ngFor="let employmentType of employmentTypes">
 			<nb-card-body>
-				{{ empType['name'] }}
+				{{ employmentType['name'] }}
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="delType(empType['id'], empType['name'])"
+						(click)="
+							deleteEmploymentType(
+								employmentType['id'],
+								employmentType['name']
+							)
+						"
 						class="d-inline pr-0"
 						icon="close"
 					></nb-action>

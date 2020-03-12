@@ -6,6 +6,7 @@ import {
 	JoinTable
 } from 'typeorm';
 import { User } from '../user';
+import { Employee } from '../employee';
 
 @Entity()
 export class EmploymentTypes {
@@ -18,9 +19,9 @@ export class EmploymentTypes {
 	@Column()
 	organizationId: string;
 
-	@ManyToMany((type) => User, { cascade: ['update'] })
+	@ManyToMany((type) => Employee, { cascade: ['update'] })
 	@JoinTable({
-		name: 'employee_employee_types'
+		name: 'employee_employment_types'
 	})
-	users?: User[];
+	employees?: Employee[];
 }
