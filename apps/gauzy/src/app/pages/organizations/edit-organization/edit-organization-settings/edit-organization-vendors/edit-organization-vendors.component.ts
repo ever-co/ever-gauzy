@@ -19,8 +19,11 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 	organizationId: string;
 
 	showAddCard: boolean;
+	showEditDiv: boolean;
 
 	vendors: OrganizationVendors[];
+
+	selectedVendor: OrganizationVendors;
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -42,6 +45,16 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 			});
 	}
 
+	showEditCard(vendor: OrganizationVendors) {
+		this.showEditDiv = true;
+		this.selectedVendor = vendor;
+	}
+
+	cancel() {
+		this.showEditDiv = !this.showEditDiv;
+		this.selectedVendor = null;
+	}
+
 	async removeVendor(id: string, name: string) {
 		await this.organizationVendorsService.delete(id);
 
@@ -56,6 +69,13 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 		);
 
 		this.loadVendors();
+	}
+
+	async editVendor(id: string, name: string) {
+		await this.organizationVendorsService.update(id, { name });
+		this.loadVendors();
+		this.toastrService.success('Successfully updated');
+		this.showEditDiv = !this.showEditDiv;
 	}
 
 	private async addVendor(name: string) {

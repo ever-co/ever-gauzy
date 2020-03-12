@@ -3,14 +3,16 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import {
 	Employee,
+  EmploymentTypes,
 	OrganizationDepartment,
 	OrganizationPositions,
 	Organization
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
-import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { EmployeesService } from '../../../../../@core/services/employees.service';
+import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
@@ -32,16 +34,18 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	selectedEmployee: Employee;
 	fakeDepartments: { departmentName: string; departmentId: string }[] = [];
 	fakePositions: { positionName: string; positionId: string }[] = [];
+	employmentTypes: EmploymentTypes[];
 	employeeLevels: { level: string; organizationId: string }[] = [];
 	selectedOrganization: Organization;
 	departments: OrganizationDepartment[] = [];
-	positions: OrganizationPositions[] = [];
+	positions: OrganizationPositions[] = [];  
 
-	constructor(
+	constructor(    
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
 		private readonly toastrService: NbToastrService,
 		private readonly employeeStore: EmployeeStore,
+    private readonly employeeService: EmployeesService,
 		private readonly employeeLevelService: EmployeeLevelService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly organizationPositionsService: OrganizationPositionsService
@@ -52,35 +56,45 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (emp) => {
 				this.selectedEmployee = emp;
+      
 				if (this.selectedEmployee) {
 					await this.getDepartments();
 					this._initializeForm(this.selectedEmployee);
-					this.employeeLevelService
+
+					this.employeeService
+						.getEmploymentTypes(this.selectedEmployee.orgId)
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe((data) => {
+							this.employmentTypes = data;
+						});
+          
+          this.employeeLevelService
 						.getAll(this.selectedEmployee.orgId)
 						.pipe(takeUntil(this._ngDestroy$))
 						.subscribe((data) => {
 							this.employeeLevels = data['items'];
-						});
+						});                              
 				}
-			});
+      
+      	this.employeeLevelService
+			     .getAll(this.selectedOrganization.id)
+			     .pipe(takeUntil(this._ngDestroy$))
+			     .subscribe((data) => {
+				    this.employeeLevels = data['items'];
+			    });
 
-		this.employeeLevelService
-			.getAll(this.selectedOrganization.id)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data) => {
-				this.employeeLevels = data['items'];
-			});
-
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization) => {
-				this.selectedOrganization = organization;
-				if (this.selectedOrganization) {
-					this.getPositions();
-				}
-			});
+		    this.store.selectedOrganization$
+			    .pipe(takeUntil(this._ngDestroy$))
+			    .subscribe((organization) => {
+				    this.selectedOrganization = organization;
+				    if (this.selectedOrganization) {
+					    this.getPositions();
+				    }
+			  });
+      
+			});    		
 	}
-
+		
 	private async getDepartments() {
 		const { items } = await this.organizationDepartmentsService.getAll([], {
 			organizationId: this.selectedEmployee.orgId
@@ -118,10 +132,12 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			firstName: [employee.user.firstName, Validators.required],
 			lastName: [employee.user.lastName, Validators.required],
 			imageUrl: [employee.user.imageUrl, Validators.required],
+			employmentTypes: [['']],
 			employeeLevel: [
 				employee.user.employeeLevel || '',
 				Validators.required
 			],
+			anonymousBonus: [employee.user['anonymousBonus']],
 			organizationDepartment: [employee.organizationDepartment || null],
 			organizationPosition: [employee.organizationPosition || null]
 		});

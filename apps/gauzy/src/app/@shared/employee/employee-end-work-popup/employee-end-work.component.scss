@@ -1,16 +1,16 @@
-@import '../../../@theme/styles/themes.scss';
+@import 'var';
 
 @include nb-install-component() {
-    nb-card{
-        nb-card-header {
-            nb-icon.close { 
-                cursor: pointer;
-            }
-        }
-        nb-card-footer {
-            button {
-                margin-left: 8px;
-            }
-        }
-    }
+	nb-card {
+		nb-card-header {
+			nb-icon.close {
+				cursor: pointer;
+			}
+		}
+		nb-card-footer {
+			button {
+				margin-left: 8px;
+			}
+		}
+	}
 }
