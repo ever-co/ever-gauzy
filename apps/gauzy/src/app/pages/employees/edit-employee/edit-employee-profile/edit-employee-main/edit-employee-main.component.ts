@@ -76,19 +76,19 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 						});
 				}
 
-				this.employeeLevelService
-					.getAll(this.selectedOrganization.id)
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((data) => {
-						this.employeeLevels = data['items'];
-					});
-
 				this.store.selectedOrganization$
 					.pipe(takeUntil(this._ngDestroy$))
 					.subscribe((organization) => {
 						this.selectedOrganization = organization;
 						if (this.selectedOrganization) {
 							this.getPositions();
+
+							this.employeeLevelService
+								.getAll(this.selectedOrganization.id)
+								.pipe(takeUntil(this._ngDestroy$))
+								.subscribe((data) => {
+									this.employeeLevels = data['items'];
+								});
 						}
 					});
 			});
