@@ -264,7 +264,7 @@
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
-		"TASKS": "Задания"
+		"TASKS": "Задачи"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -538,10 +538,10 @@
 		"EQUIPMENT_SAVED": "Оборудование сохранено"
 	},
 	"TASKS_PAGE": {
-		"HEADER": "Задания",
+		"HEADER": "Задачи",
 		"ADD_TASKS": "Добавить задачи",
-		"EDIT_TASKS": "Изменить задачи",
-		"TASKS_TITLE": "Заглавие",
+		"EDIT_TASKS": "Редактировать задачи",
+		"TASKS_TITLE": "Заголовок",
 		"TASKS_DESCRIPTION": "Описание",
 		"TASKS_LOADED": "Задачи загружены",
 		"TASK_ADDED": "Задача добавлена",
