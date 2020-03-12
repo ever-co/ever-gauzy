@@ -27,4 +27,11 @@ export class TagsService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	update(id: string, updateInput: Tag) {
+		return this.http
+			.put(`/api/tags/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
 }

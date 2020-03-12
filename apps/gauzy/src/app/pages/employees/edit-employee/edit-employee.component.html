@@ -22,9 +22,7 @@
 						{{ selectedEmployee.user.lastName }}</span
 					>
 					<div class="employee-position">
-						{{
-							'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DEVELOPER' | translate
-						}}
+						{{ selectedEmployee.organizationPosition?.name }}
 					</div>
 				</div>
 			</div>

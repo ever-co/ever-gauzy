@@ -21,8 +21,9 @@
 		"COPY_LINK": "Копирай линка",
 		"MANAGE_INVITES": "Управлявай поканите",
 		"RESEND": "Преизпрати",
-		"NEXT": "Next",
-		"PREVIOUS": "Previous"
+		"NEXT": "Следващ",
+		"PREVIOUS": "Предишен",
+		"INVITE_AGAIN": "Invite Again"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -74,7 +75,7 @@
 		"EXPIRE_DATE": "Изтича",
 		"CLIENTS": "Клиенти",
 		"DEPARTMENTS": "Отдели",
-		"DESCRIPTION": "Description",
+		"DESCRIPTION": "Описание",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -125,7 +126,11 @@
 			"ENABLE_DISABLE_INVITES": "Включване / Изключване на Поканите",
 			"ALLOW_USER_INVITES": "Позволи на юзърите да изпращат покани",
 			"INVITE_EXPIRY_PERIOD": "Период на изтичане на поканите (в дни)",
-			"EMPLOYMENT_TYPES": ""
+			"EMPLOYMENT_TYPES": "",
+			"OFFER_DATE": "Offer Date (optional)",
+			"ACCEPT_DATE": "Дата на приемане (опция)",
+			"REJECT_DATE": "Дата на отказ (опция)",
+			"EMAIL_INVITATION": "Enter email to send invitation"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -254,8 +259,14 @@
 		"USERS": "Потребители",
 		"ROLES": "Роли и Позволения",
 		"DANGER_ZONE": "Опасна Зона",
-		"DOWNLOAD_DATA": "Изтегли всички данни",
-		"TAGS": "Тагове"
+		"IMPORT_EXPORT": {
+			"IMPORT_EXPORT": "Import/Export",
+			"IMPORT": "Import",
+			"EXPORT": "Export"
+		},
+		"TAGS": "Тагове",
+		"EQUIPMENT": "Equipment",
+		"TASKS": "Tasks"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -286,16 +297,19 @@
 			"PROFIT": "Печалба",
 			"TOTAL_BONUS": "Бонус Общо",
 			"TOTAL_DIRECT_INCOME": "Изтриване на доход",
-			"SALARY": "Salary",
+			"SALARY": "Заплата",
 			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
 			"TOTAL_INCOME_CALC": "Total Income = Income {{ totalNonBonusIncome }} + Direct Income {{ totalBonusIncome }}",
 			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
 			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
 			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
-			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit {{ difference }}",
 			"TOTAL_INCOME_BONUS": "Total Income Bonus",
-			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income",
-			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary"
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% от доходи {{ totalIncome }}",
+			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary",
+			"TOTAL_EXPENSES_WITHOUT_SALARY": "Total Expense without salary",
+			"TOTAL_EXPENSES_WITHOUT_SALARY_CALC": "Expense = Employee Expenses + Split Expenses + Recurring",
+			"TOTAL_BONUS_CALC": "Total Bonus = Direct Income Bonus {{ totalBonusIncome }} + Bonus {{ calculatedBonus }}"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
@@ -375,6 +389,8 @@
 		"SETTINGS": "Настройки",
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Задължителни разходи в организацията",
+		"INVITE_CLIENT": "Invite Client",
+		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
@@ -426,6 +442,7 @@
 			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
 			"CHANGE_ROLES_PERMISSIONS": "Промени ролите и Позволенията",
+			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Администрация"
@@ -495,8 +512,45 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags",
-		"ADD_TAGS": "Add Tags"
+		"HEADER": "Тагове",
+		"ADD_TAGS": "Добавяне на таг",
+		"EDIT_TAGS": "Редактиране на таг",
+		"TAGS_NAME": "Име",
+		"TAGS_DESCRIPTION": "Description",
+		"TAGS_COLOR": "Color",
+		"TAGS_ADD_TAG": "Tag added",
+		"TAGS_EDIT_TAG": "Tag edited",
+		"TAGS_DELETE_TAG": "Tag deleted"
+	},
+	"EQUIPMENT_PAGE": {
+		"HEADER": "Equipment",
+		"ADD_EQUIPMENT": "Add Equipment",
+		"EDIT_EQUIPMENT": "Edit Equipment",
+		"EQUIPMENT_NAME": "Име",
+		"EQUIPMENT_TYPE": "Тип",
+		"EQUIPMENT_SN": "SN",
+		"EQUIPMENT_MANUFACTURED_YEAR": "Manufactured year",
+		"EQUIPMENT_INITIAL_COST": "Initial cost",
+		"EQUIPMENT_CURRENCY": "Валута",
+		"EQUIPMENT_MAX_SHARE_PERIOD": "Max share period",
+		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
+		"EQUIPMENT_EDITED": "Equipment edited",
+		"EQUIPMENT_DELETED": "Equipment deleted",
+		"EQUIPMENT_ADDED": "Equipment added",
+		"EQUIPMENT_SAVED": "Equipment saved"
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Tasks",
+		"ADD_TASKS": "Add Tasks",
+		"EDIT_TASKS": "Edit Tasks",
+		"TASKS_TITLE": "Title",
+		"TASKS_DESCRIPTION": "Description",
+		"TASKS_LOADED": "Tasks loaded",
+		"TASK_ADDED": "Task added",
+		"TASK_UPDATED": "Task updated",
+		"TASK_DELETED": "Task deleted",
+		"TASKS_PROJECT": "Проект",
+		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
@@ -595,6 +649,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
+			"EMPLOYEE_PROFILE_UPDATE": "{{name}} profile updated.",
 			"CONFIRM": "Потвърждение",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
@@ -660,7 +715,7 @@
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
-			"DELETE_ORGANIZATION": "{{ name }} organization deleted.",
+			"DELETE_ORGANIZATION": "{{ name }} организация е изтрита",
 			"ADD_NEW_USER_TO_ORGANIZATION": "добавен към",
 			"DELETE_USER_FROM_ORGANIZATION": "зададен като неактивен.",
 			"DATA_ERROR": "{{ error }}",
@@ -678,7 +733,7 @@
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
 				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
-				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",
@@ -693,7 +748,10 @@
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Нов клиент {{ name }} успешно добавен!",
 				"REMOVE_CLIENT": "Клиентът {{ name }} е успешно премахнат!",
-				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
+				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client",
+				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
+				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
+				"EMAIL_EXISTS": "This client email already exists as a user"
 			}
 		},
 		"DANGER_ZONE": {

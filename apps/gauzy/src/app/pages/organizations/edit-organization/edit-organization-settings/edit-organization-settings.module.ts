@@ -53,6 +53,7 @@ import { EditOrganizationClientMutationComponent } from './edit-organization-cli
 import { EditOrganizationProjectsMutationComponent } from './edit-organization-projects/edit-organization-projects-mutation/edit-organization-projects-mutation.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization-employmentTypes/edit-organization-employment-types.component';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
+import { InviteClientComponent } from './edit-organization-clients/invite-client/invite-client.component';
 
 @NgModule({
 	imports: [
@@ -98,6 +99,7 @@ import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.
 		OrganizationEditStore,
 		EmployeeStore
 	],
+	entryComponents: [InviteClientComponent],
 	declarations: [
 		EditOrganizationSettingsComponent,
 		EditOrganizationMainComponent,
@@ -115,7 +117,8 @@ import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.
 		EditOrganizationDepartmentsMutationComponent,
 		EditOrganizationClientMutationComponent,
 		EditOrganizationProjectsMutationComponent,
-		EditOrganizationEmploymentTypes
+		EditOrganizationEmploymentTypes,
+		InviteClientComponent
 	]
 })
 export class EditOrganizationSettingsModule {}

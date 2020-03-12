@@ -1,18 +1,27 @@
 import { Tenant } from './../../../../../../../../libs/models/src/lib/tenant.model';
-import { Component, ViewChild, ElementRef, Input, OnInit } from '@angular/core';
+import {
+	Component,
+	ViewChild,
+	ElementRef,
+	Input,
+	OnInit,
+	AfterViewInit
+} from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { User, RolesEnum } from '@gauzy/models';
+import { RolesEnum, Tag } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
+import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
 	templateUrl: 'basic-info-form.component.html',
 	styleUrls: ['basic-info-form.component.scss']
 })
-export class BasicInfoFormComponent implements OnInit {
+export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	UPLOADER_PLACEHOLDER: string = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
 	@ViewChild('imagePreview', { static: false })
@@ -35,16 +44,24 @@ export class BasicInfoFormComponent implements OnInit {
 	off: any;
 	role: any;
 	tenant: Tenant;
+	offerDate: any;
+	acceptDate: any;
+	rejectDate: any;
+	tags: Tag[] = [];
+	selectedTags: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly authService: AuthService,
 		private readonly roleService: RoleService,
-		private readonly translateService: TranslateService
+		private readonly translateService: TranslateService,
+		private readonly validatorService: ValidationService,
+		private readonly tagsService: TagsService
 	) {}
 
 	ngOnInit(): void {
 		this.loadFormData();
+		this.getAllTags();
 	}
 
 	get uploaderPlaceholder() {
@@ -62,35 +79,46 @@ export class BasicInfoFormComponent implements OnInit {
 	}
 
 	loadFormData = () => {
-		this.form = this.fb.group({
-			username: [''],
-			firstName: [''],
-			lastName: [''],
-			email: [
-				'',
-				Validators.compose([Validators.required, Validators.email])
-			],
-			imageUrl: [
-				'',
-				Validators.compose([
-					Validators.pattern(
-						new RegExp(
-							`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
-							'g'
+		this.form = this.fb.group(
+			{
+				username: [''],
+				firstName: [''],
+				lastName: [''],
+				email: [
+					'',
+					Validators.compose([Validators.required, Validators.email])
+				],
+				imageUrl: [
+					'',
+					Validators.compose([
+						Validators.pattern(
+							new RegExp(
+								`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
+								'g'
+							)
 						)
-					)
-				])
-			],
-			password: [
-				'',
-				Validators.compose([
-					Validators.required,
-					Validators.minLength(4)
-				])
-			],
-			startedWorkOn: ['', this.isEmployee ? Validators.required : null],
-			role: ['', this.isEmployee ? null : Validators.required]
-		});
+					])
+				],
+				password: [
+					'',
+					Validators.compose([
+						Validators.required,
+						Validators.minLength(4)
+					])
+				],
+				startedWorkOn: [
+					'',
+					this.isEmployee ? Validators.required : null
+				],
+				role: ['', this.isEmployee ? null : Validators.required],
+				offerDate: [''],
+				acceptDate: [''],
+				rejectDate: ['']
+			},
+			{
+				validator: this.validatorService.validateDate
+			}
+		);
 
 		this.imageUrl = this.form.get('imageUrl');
 		this.username = this.form.get('username');
@@ -99,13 +127,16 @@ export class BasicInfoFormComponent implements OnInit {
 		this.email = this.form.get('email');
 		this.password = this.form.get('password');
 		this.role = this.form.get('role');
+		this.offerDate = this.form.get('offerDate');
+		this.acceptDate = this.form.get('acceptDate');
+		this.rejectDate = this.form.get('rejectDate');
 	};
 
 	get showImageMeta() {
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(defaultRoleName: RolesEnum): Promise<User> {
+	async registerUser(defaultRoleName: RolesEnum) {
 		const startedWorkOn = this.form.get('startedWorkOn');
 
 		if (this.form.valid) {
@@ -115,6 +146,7 @@ export class BasicInfoFormComponent implements OnInit {
 				})
 				.pipe(first())
 				.toPromise();
+
 			return this.authService
 				.register({
 					user: {
@@ -125,12 +157,15 @@ export class BasicInfoFormComponent implements OnInit {
 						imageUrl: this.imageUrl.value,
 						role,
 						startedWorkOn: startedWorkOn.value,
-						tenant: this.tenant
+						tenant: this.tenant,
+						tags: this.selectedTags.value
 					},
 					password: this.password.value
 				})
 				.pipe(first())
 				.toPromise();
+
+			// call backend to add tags to existed employee
 		}
 
 		return;
@@ -154,5 +189,11 @@ export class BasicInfoFormComponent implements OnInit {
 				this.imageUrl.setErrors({ invalidUrl: true });
 			}
 		};
+	}
+
+	async getAllTags() {
+		const { items } = await this.tagsService.getAllTags();
+		this.tags = items;
+		this.selectedTags = items;
 	}
 }

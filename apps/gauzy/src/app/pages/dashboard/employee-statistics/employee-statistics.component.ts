@@ -54,7 +54,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	selectedEmployee: SelectedEmployee;
 	selectedOrganization: Organization;
 
-	totalExpense = 0;
+	totalExpense = 0; //Employee Expenses + Org Recurring Expenses + Employee Recurring Expenses
 	difference = 0; //the profit = totalAllIncome - totalExpense
 	calculatedBonus = 0; //%age of income or profit depending on the settings
 	bonusPercentage = 0; //%age which needs to be calculated
@@ -163,6 +163,12 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				return this.expenseData;
 			case HistoryType.SALARY:
 				return this.salaryData;
+			case HistoryType.EXPENSES_WITHOUT_SALARY:
+				return this.expenseData.filter(
+					(d) =>
+						d.categoryName !==
+						RecurringExpenseDefaultCategoriesEnum.SALARY
+				);
 			default:
 				return [];
 		}

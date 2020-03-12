@@ -37,6 +37,9 @@ import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
 import { seedEmploymentTypes } from '../../organization/employment-types.seed';
 import { EmploymentTypes } from '../../employment-types/employment-types.entity';
+import { Equipment } from '../../equipment';
+import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
+import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 
 const allEntities = [
 	User,
@@ -53,7 +56,9 @@ const allEntities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
-	EmploymentTypes
+	EmploymentTypes,
+	Equipment,
+	EmployeeLevel
 ];
 
 @Injectable()
@@ -189,11 +194,14 @@ export class SeedDataService {
 				defaultOrganization
 			]);
 
+			await createEmployeeLevels(this.connection);
+      
 			this.log(
 				chalk.green(
 					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`
 				)
 			);
+
 		} catch (error) {
 			this.handleError(error);
 		}

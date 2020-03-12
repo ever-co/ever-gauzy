@@ -1,11 +1,12 @@
-import { User, Tag } from '..';
+import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { Tenant } from './tenant.model';
 
-export interface Employee extends IBaseEntityModel {
+export interface Employee extends IBaseEntityModel, ILocation {
 	endWork?: any;
 	user: User;
 	userId: string;
@@ -19,7 +20,12 @@ export interface Employee extends IBaseEntityModel {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	tenant: Tenant;
+	organizationDepartment?: OrganizationDepartment;
+	organizationPosition?: OrganizationPositions;
 	tags: Tag[];
+	offerDate?: Date;
+	acceptDate?: Date;
+	rejectDate?: Date;
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {
@@ -34,6 +40,11 @@ export interface EmployeeUpdateInput {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	organizationDepartment?: OrganizationDepartment;
+	organizationPosition?: OrganizationPositions;
+	offerDate?: Date;
+	acceptDate?: Date;
+	rejectDate?: Date;
 }
 
 export interface EmployeeCreateInput {
@@ -57,6 +68,10 @@ export interface EmploymentTypes {
 }
 
 export interface EmploymentTypesCreateInput {
-	name: string;
-	organizationId: string;
+	name: string; 
+}
+
+export interface EmployeeLevelInput {
+	level: string;
+  organizationId: string;
 }

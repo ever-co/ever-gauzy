@@ -7,6 +7,7 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 
 @Component({
 	selector: 'ngx-income-mutation',
@@ -21,6 +22,8 @@ export class IncomeMutationComponent implements OnInit {
 	currencies = Object.values(CurrenciesEnum);
 
 	form: FormGroup;
+
+	clients: Object[] = [];
 
 	fakeClients = [
 		{
@@ -85,12 +88,24 @@ export class IncomeMutationComponent implements OnInit {
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<IncomeMutationComponent>,
 		private organizationsService: OrganizationsService,
-		private store: Store
+		private store: Store,
+		private clientService: OrganizationClientsService
 	) {}
 
 	ngOnInit() {
 		this._initializeForm();
 		this.form.get('currency').disable();
+		this._getClients();
+	}
+
+	private async _getClients() {
+		const items = await this.clientService.getAll();
+		items['items'].forEach((i) => {
+			this.clients = [
+				...this.clients,
+				{ clientName: i.name, clientId: i.id }
+			];
+		});
 	}
 
 	addOrEditIncome() {
@@ -139,7 +154,6 @@ export class IncomeMutationComponent implements OnInit {
 				currency: '',
 				isBonus: false
 			});
-
 			this._loadDefaultCurrency();
 		}
 	}

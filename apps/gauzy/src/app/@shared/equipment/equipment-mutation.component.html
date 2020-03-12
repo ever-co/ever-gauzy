@@ -1,0 +1,189 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(equipment
+					? 'EQUIPMENT_PAGE.EDIT_EQUIPMENT'
+					: 'EQUIPMENT_PAGE.ADD_EQUIPMENT'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row ">
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="text"
+						formControlName="name"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['name'].invalid &&
+								form.controls['name'].dirty,
+							'status-success':
+								form.controls['name'].valid &&
+								form.controls['name'].dirty
+						}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="text"
+						formControlName="type"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['type'].invalid &&
+								form.controls['type'].dirty,
+							'status-success':
+								form.controls['type'].valid &&
+								form.controls['type'].dirty
+						}"
+					/>
+				</div>
+			</div>
+
+			<div class="row ">
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="text"
+						formControlName="serialNumber"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate
+						}}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="number"
+						formControlName="manufacturedYear"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
+								| translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['manufacturedYear'].invalid &&
+								form.controls['manufacturedYear'].dirty,
+							'status-success':
+								form.controls['manufacturedYear'].valid &&
+								form.controls['manufacturedYear'].dirty
+						}"
+					/>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="number"
+						formControlName="initialCost"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['initialCost'].invalid &&
+								form.controls['initialCost'].dirty,
+							'status-success':
+								form.controls['initialCost'].valid &&
+								form.controls['initialCost'].dirty
+						}"
+					/>
+				</div>
+				<div class="col-sm-6 mb-3">
+					<nb-select
+						class="d-block"
+						formControlName="currency"
+						[ngClass]="{
+							'status-danger':
+								form.controls['currency'].invalid &&
+								form.controls['currency'].dirty,
+							'status-success':
+								form.controls['currency'].valid &&
+								form.controls['currency'].dirty
+						}"
+					>
+						<nb-option
+							*ngFor="let currency of currencies"
+							value="{{ currency }}"
+							>{{ currency }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+
+			<div class="row ">
+				<div class="col-sm-6 mb-3">
+					<input
+						nbInput
+						type="number"
+						formControlName="maxSharePeriod"
+						fullWidth
+						placeholder="{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
+								| translate
+						}}"
+						[ngClass]="{
+							'status-danger':
+								form.controls['maxSharePeriod'].invalid &&
+								form.controls['maxSharePeriod'].dirty,
+							'status-success':
+								form.controls['maxSharePeriod'].valid &&
+								form.controls['maxSharePeriod'].dirty
+						}"
+					/>
+				</div>
+			</div>
+
+			<div class="form-group mb-3">
+				<nb-checkbox formControlName="autoApproveShare">
+					<span>{{
+						'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE' | translate
+					}}</span>
+				</nb-checkbox>
+			</div>
+
+			<input type="hidden" formControlName="id" />
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="warning"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			[disabled]="form.invalid"
+			(click)="saveEquipment()"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

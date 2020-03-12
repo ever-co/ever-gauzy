@@ -30,7 +30,8 @@ const defaultRolePermissions = [
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			PermissionsEnum.CHANGE_ROLES_PERMISSIONS,
 			PermissionsEnum.ORG_INVITE_VIEW,
-			PermissionsEnum.ORG_INVITE_EDIT
+			PermissionsEnum.ORG_INVITE_EDIT,
+			PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 		]
 	},
 	{

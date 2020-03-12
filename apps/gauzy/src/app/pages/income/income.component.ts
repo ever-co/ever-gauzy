@@ -288,7 +288,6 @@ export class IncomeComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
 				if (result) {
-					debugger;
 					try {
 						await this.incomeService.delete(
 							this.selectedIncome.data.id

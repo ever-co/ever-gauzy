@@ -11,7 +11,8 @@ import {
 	NbSelectModule,
 	NbSpinnerModule,
 	NbTabsetModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbActionsModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -32,6 +33,7 @@ import { OrganizationsEmployeesComponent } from './table-components/organization
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
+import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit-organization-settings/edit-organization-employee-levels/edit-organization-employee-level.component';
 
 @NgModule({
 	imports: [
@@ -63,7 +65,8 @@ import { OrganizationEmploymentTypesService } from '../../@core/services/organiz
 				deps: [HttpClient]
 			}
 		}),
-		NbSpinnerModule
+		NbSpinnerModule,
+		NbActionsModule
 	],
 	entryComponents: [
 		OrganizationsFullnameComponent,
@@ -78,7 +81,8 @@ import { OrganizationEmploymentTypesService } from '../../@core/services/organiz
 		OrganizationsStatusComponent,
 		EditOrganizationComponent,
 		OrganizationsEmployeesComponent,
-		OrganizationsCurrencyComponent
+		OrganizationsCurrencyComponent,
+    EditOrganizationEmployeeLevelComponent
 	],
 	providers: [OrganizationEmploymentTypesService]
 })

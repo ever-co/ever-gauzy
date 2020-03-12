@@ -10,6 +10,20 @@ export interface EmployeeStatistics {
 	profitStatistics: number[];
 	bonusStatistics: number[];
 }
+export interface MonthAggregatedEmployeeStatisticsFindInput {
+	employeeId: string;
+	valueDate: Date;
+	months: number;
+}
+
+export interface MonthAggregatedEmployeeStatistics {
+	month: number;
+	year: number;
+	expense: number;
+	income: number;
+	profit: number;
+	bonus: number;
+}
 
 export interface AggregatedEmployeeStatisticFindInput {
 	organizationId: string;

@@ -31,7 +31,13 @@ import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
 import { EmailTemplateModule } from './email-template';
-import { DownloadAllModule } from './download-all';
+import { EquipmentModule } from './equipment/equipment.module';
+import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
+import { ExportAllModule } from './export_import';
+import { SentryModule } from '@ntegral/nestjs-sentry';
+import { environment } from '@env-api/environment';
+import { LogLevel } from '@sentry/types';
+import { TaskModule } from './tasks';
 
 @Module({
 	imports: [
@@ -42,11 +48,13 @@ import { DownloadAllModule } from './download-all';
 					{ path: '/auth', module: AuthModule },
 					{ path: '/user', module: UserModule },
 					{ path: '/employee', module: EmployeeModule },
-					{ path: '/download', module: DownloadAllModule },
+					{ path: '/download', module: ExportAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
+					{ path: '/equipment', module: EquipmentModule },
+					{ path: '/employee-level', module: EmployeeLevelModule },
 
 					{
 						path: '/employee-settings',
@@ -123,6 +131,10 @@ import { DownloadAllModule } from './download-all';
 					{
 						path: '/tags',
 						module: TagModule
+					},
+					{
+						path: '/tasks',
+						module: TaskModule
 					}
 				]
 			}
@@ -131,7 +143,7 @@ import { DownloadAllModule } from './download-all';
 		AuthModule,
 		UserModule,
 		EmployeeModule,
-		DownloadAllModule,
+		ExportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		RoleModule,
@@ -155,7 +167,24 @@ import { DownloadAllModule } from './download-all';
 		RolePermissionsModule,
 		TenantModule,
 		EmailTemplateModule,
-		TagModule
+		TagModule,
+		EmployeeLevelModule,
+		...(environment.sentry
+			? [
+					SentryModule.forRoot({
+						dsn: environment.sentry.dns,
+						debug: true,
+						environment: environment.production
+							? 'production'
+							: 'development', //production, development
+						//release: null, // must create a release in sentry.io dashboard
+						logLevel: LogLevel.Error
+					})
+			  ]
+			: []),
+		EquipmentModule,
+		EmployeeLevelModule,
+		TaskModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

@@ -22,7 +22,8 @@
 		"MANAGE_INVITES": "Manage Invites",
 		"RESEND": "Resend",
 		"NEXT": "Next",
-		"PREVIOUS": "Previous"
+		"PREVIOUS": "Previous",
+		"INVITE_AGAIN": "Invite Again"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -127,7 +128,11 @@
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
 			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
 			"EMPLOYMENT_TYPES": "Employment Type",
-			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type"
+			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
+			"OFFER_DATE": "Offer Date (optional)",
+			"ACCEPT_DATE": "Accept Date (optional)",
+			"REJECT_DATE": "Reject Date (optional)",
+			"EMAIL_INVITATION": "Enter email to send invitation"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -261,7 +266,9 @@
 			"IMPORT": "Import",
 			"EXPORT": "Export"
 		},
-		"TAGS": "Tags"
+		"TAGS": "Tags",
+		"EQUIPMENT": "Equipment",
+		"TASKS": "Tasks"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -298,10 +305,13 @@
 			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
 			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
 			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
-			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit {{ difference }}",
 			"TOTAL_INCOME_BONUS": "Total Income Bonus",
-			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income",
-			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary"
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income {{ totalIncome }}",
+			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary",
+			"TOTAL_EXPENSES_WITHOUT_SALARY": "Total Expense without salary",
+			"TOTAL_EXPENSES_WITHOUT_SALARY_CALC": "Expense = Employee Expenses + Split Expenses + Recurring",
+			"TOTAL_BONUS_CALC": "Total Bonus = Direct Income Bonus {{ totalBonusIncome }} + Bonus {{ calculatedBonus }}"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Developer",
@@ -382,6 +392,8 @@
 		"ROLES": "Roles",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
 		"EMPLOYMENT_TYPES": "Employment Types",
+		"INVITE_CLIENT": "Invite Client",
+		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "Client",
@@ -435,6 +447,7 @@
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
+			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"GROUPS": {
 				"GENERAL": "General",
 				"ADMINISTRATION": "Administration"
@@ -505,7 +518,44 @@
 	},
 	"TAGS_PAGE": {
 		"HEADER": "Tags",
-		"ADD_TAGS": "Add Tags"
+		"ADD_TAGS": "Add Tags",
+		"EDIT_TAGS": "Edit Tags",
+		"TAGS_NAME": "Name",
+		"TAGS_DESCRIPTION": "Description",
+		"TAGS_COLOR": "Color",
+		"TAGS_ADD_TAG": "Tag added",
+		"TAGS_EDIT_TAG": "Tag edited",
+		"TAGS_DELETE_TAG": "Tag deleted"
+	},
+	"EQUIPMENT_PAGE": {
+		"HEADER": "Equipment",
+		"ADD_EQUIPMENT": "Add Equipment",
+		"EDIT_EQUIPMENT": "Edit Equipment",
+		"EQUIPMENT_NAME": "Name",
+		"EQUIPMENT_TYPE": "Type",
+		"EQUIPMENT_SN": "SN",
+		"EQUIPMENT_MANUFACTURED_YEAR": "Manufactured year",
+		"EQUIPMENT_INITIAL_COST": "Initial cost",
+		"EQUIPMENT_CURRENCY": "Currency",
+		"EQUIPMENT_MAX_SHARE_PERIOD": "Max share period",
+		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
+		"EQUIPMENT_EDITED": "Equipment edited",
+		"EQUIPMENT_DELETED": "Equipment deleted",
+		"EQUIPMENT_ADDED": "Equipment added",
+		"EQUIPMENT_SAVED": "Equipment saved"
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Tasks",
+		"ADD_TASKS": "Add Tasks",
+		"EDIT_TASKS": "Edit Tasks",
+		"TASKS_TITLE": "Title",
+		"TASKS_DESCRIPTION": "Description",
+		"TASKS_LOADED": "Tasks loaded",
+		"TASK_ADDED": "Task added",
+		"TASK_UPDATED": "Task updated",
+		"TASK_DELETED": "Task deleted",
+		"TASKS_PROJECT": "Project",
+		"TASKS_STATUS": "Status"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
@@ -604,6 +654,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
+			"EMPLOYEE_PROFILE_UPDATE": "{{name}} profile updated.",
 			"CONFIRM": "Confirm",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
@@ -703,13 +754,16 @@
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "New client {{ name }} successfully added!",
 				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
-				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
+				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client",
+        "INVITE_CLIENT": "Invitation email sent to {{ name }}.",
+				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
+				"EMAIL_EXISTS": "This client email already exists as a user"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
 				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"				
 			}
 		},
 		"DANGER_ZONE": {

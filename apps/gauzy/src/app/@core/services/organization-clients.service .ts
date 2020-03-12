@@ -23,6 +23,16 @@ export class OrganizationClientsService {
 			.toPromise();
 	}
 
+	invite(organizationClientId: string): Promise<OrganizationClients> {
+		return this.http
+			.put<OrganizationClients>(
+				`/api/organization-clients/invite/${organizationClientId}`,
+				{}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAllByEmployee(id: string): Promise<OrganizationClients[]> {
 		return this.http
 			.get<OrganizationClients[]>(

@@ -24,7 +24,8 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsRoutingModule } from './tags-routing.module';
 import { TagsMutationModule } from '../../@shared/tags/tags-mutation.module';
-
+import { ColorPickerModule } from 'ngx-color-picker';
+import { TagsColorComponent } from './tags-color/tags-color.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -50,6 +51,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbRouteTabsetModule,
 		NbCheckboxModule,
 		TagsMutationModule,
+		ColorPickerModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -59,7 +61,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	entryComponents: [TagsComponent],
-	declarations: [TagsComponent]
+
+	entryComponents: [TagsComponent, TagsColorComponent],
+	declarations: [TagsComponent, TagsColorComponent]
 })
 export class TagsModule {}
