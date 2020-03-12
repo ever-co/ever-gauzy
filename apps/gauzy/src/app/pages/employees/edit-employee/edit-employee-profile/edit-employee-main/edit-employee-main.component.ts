@@ -137,6 +137,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 				employee.user.employeeLevel || '',
 				Validators.required
 			],
+			anonymousBonus: [employee.user['anonymousBonus']],
 			organizationDepartment: [employee.organizationDepartment || null],
 			organizationPosition: [employee.organizationPosition || null]
 		});
