@@ -66,9 +66,7 @@
 			</button>
 			<ga-edit-user-mutation
 				*ngIf="showAddCard"
-				[employees]="employees"
 				[organization]="organization"
-				(addOrEditUser)="addOrEditUser($event)"
 				(canceled)="cancel()"
 			>
 			</ga-edit-user-mutation>

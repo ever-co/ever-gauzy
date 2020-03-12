@@ -244,6 +244,7 @@ export class UsersComponent extends TranslationBaseComponent
 				orgId: this.selectedOrganizationId
 			}
 		);
+		console.log(items);
 
 		const { name } = this.store.selectedOrganization;
 		const usersVm = [];

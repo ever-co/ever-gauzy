@@ -1,13 +1,18 @@
 <nb-card>
 	<nb-card-header>{{
-		(users
+		(!users
 			? 'USERS_PAGE.EDIT_USER.EDIT_EXISTING_USER'
 			: 'USERS_PAGE.ADD_EXISTING_USER'
 		) | translate
 	}}</nb-card-header>
 	<nb-card-body>
 		<div class="form-group">
-			<button class="mr-2" nbButton status="success">
+			<button
+				class="mr-2"
+				nbButton
+				(click)="submitForm()"
+				status="success"
+			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 			<button (click)="cancel()" nbButton status="danger">
@@ -22,30 +27,6 @@
 					(selectedChange)="onUsersSelected($event)"
 				>
 				</ga-employee-multi-select>
-				<!-- <nb-select
-					formControlName="users"
-					multiple
-					[selected]="selectedEmployeeIds"
-					(selectedChange)="onUsersSelected($event)"
-					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate
-					}}"
-				>
-					<nb-option
-						*ngFor="let user of users"
-						[value]="user.id"
-					>
-						<img
-							src="{{ user.imageUrl }}"
-							alt="Smiley face"
-							height="40"
-							width="40"
-							style="margin-right:10px"
-						/>
-						{{ user.fullName }}
-					</nb-option> -->
-				<!-- </nb-select> -->
 			</div>
 		</form>
 	</nb-card-body>
