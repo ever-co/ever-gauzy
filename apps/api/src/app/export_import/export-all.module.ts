@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, HttpModule } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ExportAllController } from './export-all.controller';
 import { ExportAllService } from './export-all.service';
+
 @Module({
-	imports: [CqrsModule],
+	imports: [CqrsModule, HttpModule],
 	controllers: [ExportAllController],
 	providers: [ExportAllService],
 	exports: [ExportAllService]

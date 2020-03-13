@@ -27,6 +27,10 @@ export class ExportAllController implements OnDestroy {
 		this.sub = this.downloadAllService.fileName.subscribe((filename) => {
 			fileName = filename;
 		});
+		await this.downloadAllService.downloadAllCountries().subscribe(() => {
+			return null;
+		});
+		await this.downloadAllService.downloadAllCountries().toPromise();
 		this.downloadAllService.archiveAndDownload();
 
 		setTimeout(function() {

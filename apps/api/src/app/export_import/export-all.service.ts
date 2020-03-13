@@ -1,15 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpService } from '@nestjs/common';
 import * as fs from 'fs';
 import * as archiver from 'archiver';
 import { v4 as uuidv4 } from 'uuid';
 import { Subject } from 'rxjs';
+import { env } from '../../../../../../gauzy/.scripts/env';
 
 @Injectable()
 export class ExportAllService {
 	fileName = new Subject<string>();
+	constructor(private httpService: HttpService) {}
 	async archiveAndDownload() {
-		fs.mkdir('./export', { recursive: true }, (err) => {
-			if (err) throw err;
+		fs.access('./export', (error) => {
+			if (!error) {
+				return null;
+			} else {
+				fs.mkdir('./export', { recursive: true }, (err) => {
+					if (err) throw err;
+				});
+			}
+		});
+		fs.access('./export/csv', (error) => {
+			if (!error) {
+				return null;
+			} else {
+				fs.mkdir('./export/csv', { recursive: true }, (err) => {
+					if (err) throw err;
+				});
+			}
 		});
 
 		const id = uuidv4();
@@ -45,8 +62,11 @@ export class ExportAllService {
 
 		archive.pipe(output);
 
-		archive.directory('./apps/api/src/app/export_import/all-data/', false);
+		archive.directory('./export/csv', false);
 
 		archive.finalize();
+	}
+	downloadAllCountries() {
+		return this.httpService.get(env.API_BASE_URL + '/api/country');
 	}
 }
