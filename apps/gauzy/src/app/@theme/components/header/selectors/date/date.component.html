@@ -15,13 +15,14 @@
 	>
 	<nb-card class="calendar" *ngIf="loadCalendar">
 		<nb-calendar-year-picker
-			[year]="date"
+			[year]="this.date"
 			[max]="max"
 			(yearChange)="handleDateChange($event)"
 		>
 		</nb-calendar-year-picker>
 		<nb-calendar-month-picker
-			[month]="date"
+			#month
+			[month]="this.date"
 			[max]="max"
 			(monthChange)="handleDateChange($event)"
 		>
