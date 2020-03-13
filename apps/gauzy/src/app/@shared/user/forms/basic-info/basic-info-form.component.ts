@@ -197,9 +197,4 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 			}
 		};
 	}
-
-	// async getAllTags() {
-	// 	const { items } = await this.tagsService.getAllTags();
-	// 	this.tags = items;
-	// }
 }

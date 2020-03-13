@@ -11,7 +11,16 @@ import { ViewCell } from 'ng2-smart-table';
 				{{ rowData.fullName }}
 			</div>
 		</div>
-		<!-- <div class="tags">HELLO</div> -->
+		<div class="tags">
+			<nb-badge
+				*ngFor="let tag of rowData?.tag"
+				class="color"
+				position="centered"
+				[style.background]="tag.color"
+				text="{{ tag.name }}"
+			>
+			</nb-badge>
+		</div>
 	`,
 	styles: [
 		`
@@ -21,8 +30,17 @@ import { ViewCell } from 'ng2-smart-table';
 				display: flex;
 				justify-content: center;
 			}
+
+			.color {
+				position: static;
+				margin-top: 5px;
+				margin-right: 5px;
+				display: inline-block;
+			}
 			.tags {
-				display: block !important;
+				display: flex;
+				width: 200px;
+				flex-wrap: wrap;
 			}
 
 			img {

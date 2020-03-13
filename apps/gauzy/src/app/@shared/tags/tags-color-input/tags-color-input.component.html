@@ -5,7 +5,7 @@
 	[items]="tags"
 	[(ngModel)]="selectedTags"
 	multiple="true"
-	(change)="onChange($event)"
+	(change)="onChange()"
 >
 	<ng-template ng-label-tmp let-item="item" let-clear="clear">
 		<span class="ng-value-label"
