@@ -1,13 +1,5 @@
 import { OrganizationEmploymentTypeCreateInput } from '@gauzy/models';
-import {
-	Body,
-	Controller,
-	Header,
-	Post,
-	HttpStatus,
-	Get,
-	Query
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core/crud';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';

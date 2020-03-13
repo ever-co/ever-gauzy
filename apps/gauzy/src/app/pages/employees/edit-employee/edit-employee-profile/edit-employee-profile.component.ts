@@ -88,7 +88,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: 'Employment',
-				icon: 'person-outline',
+				icon: 'browser-outline',
 				responsive: true,
 				route: this.getRoute('employment')
 			},
@@ -158,21 +158,10 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	private async submitUserForm(value: UserUpdateInput) {
 		if (value) {
 			try {
-				// const organizationDepartment = value.organizationDepartment;
-				// delete value.organizationDepartment;
-
-				// const organizationPosition = value.organizationPosition;
-				// delete value.organizationPosition;
-
 				await this.userService.update(
 					this.selectedEmployee.user.id,
 					value
 				);
-
-				// this.employeeStore.employeeForm = {
-				// 	organizationDepartment,
-				// 	organizationPosition
-				// };
 
 				this.toastrService.primary(
 					this.getTranslation(
