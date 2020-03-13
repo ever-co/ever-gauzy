@@ -46,7 +46,6 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			);
 
 			const tags = this.userBasicInfo.selectedTags;
-			debugger;
 			const organization = this.store.selectedOrganization;
 			const offerDate = this.form.get('offerDate').value || null;
 			const acceptDate = this.form.get('acceptDate').value || null;
