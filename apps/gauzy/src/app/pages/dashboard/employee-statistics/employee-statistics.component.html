@@ -27,8 +27,14 @@
 				<div class="employee-details">
 					<span class="employee-name"
 						>{{ selectedEmployee.firstName }}
-						{{ selectedEmployee.lastName }}</span
-					>
+						{{ selectedEmployee.lastName }}
+						<nb-icon
+							class="mr-1 edit-icon"
+							icon="edit-outline"
+							(click)="edit()"
+						></nb-icon
+					></span>
+
 					<div class="employee-position">
 						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }} |
 						{{ selectedEmployee['user']?.employeeLevel }}
