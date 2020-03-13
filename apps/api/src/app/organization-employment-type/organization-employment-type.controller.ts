@@ -28,7 +28,7 @@ export class OrganizationEmploymentTypeController extends CrudController<
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllOrganizationDepartments(
+	async findAllOrganizationEmploymentTypes(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationEmploymentType>> {
 		const { findInput, relations } = JSON.parse(data);
