@@ -36,8 +36,11 @@
 					></span>
 
 					<div class="employee-position">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }} |
-						{{ selectedEmployee['user']?.employeeLevel }}
+						<!-- When we have employee position we will check this way for example: *ngIf="selectedEmployee['user'].employeeLevel && selectedEmployee['user'].employeePosition" -->
+						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }}
+						<span *ngIf="selectedEmployee['user'].employeeLevel">
+							| </span
+						>{{ selectedEmployee['user']?.employeeLevel }}
 					</div>
 				</div>
 			</div>
