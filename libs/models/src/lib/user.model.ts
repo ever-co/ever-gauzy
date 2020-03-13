@@ -34,7 +34,6 @@ export interface UserFindInput extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	organizationEmploymentTypes?: any[];
 }
 
 export interface UserRegistrationInput {
@@ -63,6 +62,4 @@ export interface UserUpdateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	organizationDepartment?: OrganizationDepartment;
-	organizationPosition?: OrganizationPositions;
 }
