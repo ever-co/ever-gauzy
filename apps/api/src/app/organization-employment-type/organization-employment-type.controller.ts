@@ -1,4 +1,3 @@
-import { OrganizationEmploymentTypeCreateInput } from '@gauzy/models';
 import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core/crud';
