@@ -21,6 +21,7 @@ import { ActionConfirmationComponent } from './action-confirmation/action-confir
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -39,6 +40,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NgSelectModule,
 		NbBadgeModule,
+		TagsColorInputModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
