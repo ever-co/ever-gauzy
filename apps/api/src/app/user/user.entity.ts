@@ -103,13 +103,4 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
-
-	@ApiPropertyOptional({ type: String, maxLength: 500 })
-	@IsOptional()
-	@Column({ length: 500, nullable: true })
-	employeeLevel?: string;
-
-	@ApiPropertyOptional({ type: Boolean })
-	@Column({ nullable: true })
-	anonymousBonus?: boolean;
 }

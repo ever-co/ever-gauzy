@@ -21,7 +21,6 @@ export interface User extends IBaseEntityModel {
 	imageUrl?: string;
 	startedWorkOn?: string;
 	tenant: Tenant;
-	employeeLevel?: string;
 	tags: Tag[];
 }
 
@@ -35,7 +34,7 @@ export interface UserFindInput extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	employmentTypes?: any[];
+	organizationEmploymentTypes?: any[];
 }
 
 export interface UserRegistrationInput {

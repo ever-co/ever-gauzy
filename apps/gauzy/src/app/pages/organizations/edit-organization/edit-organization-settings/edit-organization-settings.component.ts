@@ -133,7 +133,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				),
 				icon: 'settings-outline',
 				responsive: true,
-				route: this.getRoute('employmentTypes')
+				route: this.getRoute('employment-types')
 			}
 		];
 	}

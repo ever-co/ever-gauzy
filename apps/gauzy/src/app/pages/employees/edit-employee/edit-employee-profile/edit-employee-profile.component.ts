@@ -2,17 +2,17 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
+import { Employee, EmployeeUpdateInput, UserUpdateInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { EmployeeUpdateInput, Employee, UserUpdateInput } from '@gauzy/models';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-edit-employee-profile',
@@ -74,49 +74,53 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 		this.loadTabs();
 	}
 
+	getRoute(tab: string): string {
+		return `/pages/employees/edit/${this.routeParams.id}/profile/${tab}`;
+	}
+
 	loadTabs() {
 		this.tabs = [
 			{
-				title: 'Main',
+				title: 'Account',
 				icon: 'person-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/main`
+				route: this.getRoute('account')
+			},
+			{
+				title: 'Employment',
+				icon: 'person-outline',
+				responsive: true,
+				route: this.getRoute('employment')
 			},
 			{
 				title: 'Location',
 				icon: 'pin-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/location`
+				route: this.getRoute('location')
 			},
 			{
 				title: 'Rates',
 				icon: 'pricetags-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/rates`
-			},
-			{
-				title: 'Departments',
-				icon: 'briefcase-outline',
-				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/departments`
+				route: this.getRoute('rates')
 			},
 			{
 				title: 'Projects',
 				icon: 'book-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/projects`
+				route: this.getRoute('projects')
 			},
 			{
 				title: 'Clients',
 				icon: 'book-open-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/clients`
+				route: this.getRoute('clients')
 			},
 			{
 				title: 'Hiring',
 				icon: 'map-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/hiring`
+				route: this.getRoute('hiring')
 			}
 		];
 	}
@@ -132,6 +136,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 					this.selectedEmployee.id,
 					value
 				);
+
 				this.toastrService.primary(
 					this.getTranslation(
 						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
@@ -146,24 +151,28 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 		}
 	}
 
+	/**
+	 * This is to update the User details of an Employee.
+	 * Do NOT use this function to update any details which are NOT stored in the User Entity.
+	 */
 	private async submitUserForm(value: UserUpdateInput) {
 		if (value) {
 			try {
-				const organizationDepartment = value.organizationDepartment;
-				delete value.organizationDepartment;
+				// const organizationDepartment = value.organizationDepartment;
+				// delete value.organizationDepartment;
 
-				const organizationPosition = value.organizationPosition;
-				delete value.organizationPosition;
+				// const organizationPosition = value.organizationPosition;
+				// delete value.organizationPosition;
 
 				await this.userService.update(
 					this.selectedEmployee.user.id,
 					value
 				);
 
-				this.employeeStore.employeeForm = {
-					organizationDepartment,
-					organizationPosition
-				};
+				// this.employeeStore.employeeForm = {
+				// 	organizationDepartment,
+				// 	organizationPosition
+				// };
 
 				this.toastrService.primary(
 					this.getTranslation(
@@ -184,7 +193,12 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 		const { id } = this.routeParams;
 		const { items } = await this.employeeService
 			.getAll(
-				['user', 'organizationDepartment', 'organizationPosition'],
+				[
+					'user',
+					'organizationDepartments',
+					'organizationPosition',
+					'organizationEmploymentTypes'
+				],
 				{ id }
 			)
 			.pipe(first())

@@ -36,7 +36,7 @@ import { createTenants } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
 import { seedEmploymentTypes } from '../../organization/employment-types.seed';
-import { EmploymentTypes } from '../../employment-types/employment-types.entity';
+import { OrganizationEmploymentType } from '../../organization-employment-type';
 import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
@@ -56,7 +56,7 @@ const allEntities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
-	EmploymentTypes,
+	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel
 ];

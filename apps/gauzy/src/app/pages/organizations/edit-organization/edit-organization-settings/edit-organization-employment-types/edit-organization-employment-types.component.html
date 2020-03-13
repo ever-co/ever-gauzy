@@ -44,14 +44,14 @@
 		</div>
 	</nb-card-header>
 
-	<nb-card-body *ngIf="employmentTypes?.length">
+	<nb-card-body *ngIf="organizationEmploymentTypes?.length">
 		<div class="ml-3 mb-4">
 			<strong>{{
 				'ORGANIZATIONS_PAGE.EDIT.EMPLOYMENT_TYPES' | translate
 			}}</strong>
 		</div>
 
-		<nb-card *ngFor="let employmentType of employmentTypes">
+		<nb-card *ngFor="let employmentType of organizationEmploymentTypes">
 			<nb-card-body>
 				{{ employmentType['name'] }}
 				<nb-actions class="float-right" e="medium">
