@@ -12,6 +12,6 @@ export class CountryController extends CrudController<Country> {
 	}
 	@Get()
 	async getALLCountries() {
-		return this.countryService.convertToCsv();
+		return this.countryService.getAsCsv();
 	}
 }
