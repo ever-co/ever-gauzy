@@ -61,6 +61,16 @@ export enum PayPeriodEnum {
 	MONTHLY = 'MONTHLY'
 }
 
+export interface EmploymentTypes {
+	id?: string;
+	name: string;
+	organizationId?: string;
+}
+
+export interface EmploymentTypesCreateInput {
+	name: string;
+}
+
 export interface EmployeeLevelInput {
 	level: string;
 	organizationId: string;

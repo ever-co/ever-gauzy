@@ -32,6 +32,7 @@ import { OrganizationsCurrencyComponent } from './table-components/organizations
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
 import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
+import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit-organization-settings/edit-organization-employee-levels/edit-organization-employee-level.component';
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/reecurring-expense-history/recurring-expense-history.module';
 
@@ -84,6 +85,7 @@ import { RecurringExpenseHistoryModule } from '../../@shared/expenses/reecurring
 		OrganizationsEmployeesComponent,
 		OrganizationsCurrencyComponent,
 		EditOrganizationEmployeeLevelComponent
-	]
+	],
+	providers: [OrganizationEmploymentTypesService]
 })
 export class OrganizationsModule {}

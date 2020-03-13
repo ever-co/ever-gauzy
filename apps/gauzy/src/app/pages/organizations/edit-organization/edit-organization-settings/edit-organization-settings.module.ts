@@ -18,6 +18,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
@@ -42,6 +43,7 @@ import { EditOrganizationClientsComponent } from './edit-organization-clients/ed
 import { InviteClientComponent } from './edit-organization-clients/invite-client/invite-client.component';
 import { EditOrganizationDepartmentsMutationComponent } from './edit-organization-departments/edit-organization-departments-mutation/edit-organization-departments-mutation.component';
 import { EditOrganizationDepartmentsComponent } from './edit-organization-departments/edit-organization-departments.component';
+import { EditOrganizationEmploymentTypes } from './edit-organization-employmentTypes/edit-organization-employment-types.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
@@ -94,7 +96,8 @@ import { EditOrganizationVendorsComponent } from './edit-organization-vendors/ed
 		OrganizationVendorsService,
 		OrganizationPositionsService,
 		OrganizationClientsService,
-		OrganizationEditStore
+		OrganizationEditStore,
+		EmployeeStore
 	],
 	entryComponents: [InviteClientComponent],
 	declarations: [
@@ -114,6 +117,7 @@ import { EditOrganizationVendorsComponent } from './edit-organization-vendors/ed
 		EditOrganizationDepartmentsMutationComponent,
 		EditOrganizationClientMutationComponent,
 		EditOrganizationProjectsMutationComponent,
+		EditOrganizationEmploymentTypes,
 		InviteClientComponent
 	]
 })

@@ -13,7 +13,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Hi!</p>
 					<p>
-						You have been invited to {{organization_projects}}
+						You have been invited to {{organization_project}}
 					</p>
 					<p>To accept your invitation</p>
 				</mj-text>

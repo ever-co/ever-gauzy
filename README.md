@@ -6,26 +6,27 @@
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ Platform - **Open-Source ERP Platform** focused on **Fairness** and **Transparency** for freelancers, modern agencies, studios and in-house teams. 
+Gauzy™ Platform - **Open-Source ERP Platform** focused on **Fairness** and **Transparency** for freelancers, modern agencies, studios and in-house teams.
 
-Gauzy Platform includes multiple ERP features, usually available in the *accounting*, *invoicing*, *time management* and *project management* software:
-- Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
-- Employees Management (register of company employees / contractors, rates of employees, etc.)
-- Employees Onboarding (WIP)
-- Income / Expenses Management
-- Proposals
-- Sales Pipelines (WIP)
-- Multiple Organizations Management
-- Organization Departments and Teams
-- Organization Clients and Vendors
-- Days Off Management
-- Equipment Sharing (WIP)
-- Project Management (WIP)
-- Invoicing (WIP)
-- Billing (WIP)
-- Payments (WIP)
-- Time Management/Tracking (WIP)
-- Multi-currency
+Gauzy Platform includes multiple ERP features, usually available in the _accounting_, _invoicing_, _time management_ and _project management_ software:
+
+-   Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
+-   Employees Management (register of company employees / contractors, rates of employees, etc.)
+-   Employees Onboarding (WIP)
+-   Income / Expenses Management
+-   Proposals
+-   Sales Pipelines (WIP)
+-   Multiple Organizations Management
+-   Organization Departments and Teams
+-   Organization Clients and Vendors
+-   Days Off Management
+-   Equipment Sharing (WIP)
+-   Project Management (WIP)
+-   Invoicing (WIP)
+-   Billing (WIP)
+-   Payments (WIP)
+-   Time Management/Tracking (WIP)
+-   Multi-currency
 
 So, while the primary purpose of Gauzy Platform is to allow transparent and fair accounting, profits sharing and bonuses calculation, you can also use Gauzy software as the platform to run your **Outsourcing/Freelance Agency or Studio business** in a completely new, open way.
 
@@ -37,9 +38,9 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 Feel free to test:
 
-- Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as single tenant demo, login with `admin@ever.co` and password: `admin`)
-- Gauzy Platform Demo at <https://demo.gauzy.co> (temporary shutdown)
-- Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary shutdown)
+-   Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as single tenant demo, login with `admin@ever.co` and password: `admin`)
+-   Gauzy Platform Demo at <https://demo.gauzy.co> (temporary shutdown)
+-   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary shutdown)
 
 ## Quick Start
 
@@ -113,6 +114,7 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 #### Core
 
 -   Ruslan Konviser ([Evereq](https://github.com/evereq))
+-   Rachit Magon ([rmagon](https://github.com/rmagon))
 
 #### Developers (alphabetical order)
 
@@ -125,6 +127,8 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
 -   Lubomir Petrov ([lpetrv](https://github.com/lpetrv))
+-   Nikolay Monov ([ntmonov](https://github.com/ntmonov))
+-   Tsvetelina Yordanova ([tsvetelina-e-y](https://github.com/tsvetelina-e-y))
 -   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
 #### Designers & QA
@@ -133,7 +137,6 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 ### Contributors
 
--   Rachit Magon ([rmagon](https://github.com/rmagon))
 -   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
 -   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
 
@@ -179,7 +182,7 @@ All other brand and product names are trademarks, registered trademarks or servi
 
 [![Circle CI](https://circleci.com/gh/ever-co/gauzy.svg?style=svg)](https://circleci.com/gh/ever-co/gauzy)
 [![codecov](https://codecov.io/gh/ever-co/gauzy/branch/master/graph/badge.svg)](https://codecov.io/gh/ever-co/gauzy)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8e0f1c13c3d94f18b1523b896d4500aa)](https://www.codacy.com/manual/Ever/gauzy?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ever-co/gauzy&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8e0f1c13c3d94f18b1523b896d4500aa)](https://www.codacy.com/manual/Ever/gauzy?utm_source=github.com&utm_medium=referral&utm_content=ever-co/gauzy&utm_campaign=Badge_Grade)
 [![DeepScan grade](https://deepscan.io/api/teams/3293/projects/8540/branches/103786/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=3293&pid=8540&bid=103786)
 [![Known Vulnerabilities](https://snyk.io/test/github/ever-co/gauzy/badge.svg)](https://snyk.io/test/github/ever-co/gauzy)
 [![Greenkeeper badge](https://badges.greenkeeper.io/ever-co/gauzy.svg)](https://greenkeeper.io)

@@ -12,6 +12,7 @@ import { EditOrganizationProjectsComponent } from './edit-organization/edit-orga
 import { EditOrganizationTeamsComponent } from './edit-organization/edit-organization-settings/edit-organization-teams/edit-organization-teams.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization/edit-organization-settings/edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationMainComponent } from './edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component';
+import { EditOrganizationEmploymentTypes } from './edit-organization/edit-organization-settings/edit-organization-employmentTypes/edit-organization-employment-types.component';
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit-organization-settings/edit-organization-employee-levels/edit-organization-employee-level.component';
 
 const routes: Routes = [
@@ -67,6 +68,10 @@ const routes: Routes = [
 			{
 				path: 'settings',
 				component: EditOrganizationOtherSettingsComponent
+			},
+			{
+				path: 'employmentTypes',
+				component: EditOrganizationEmploymentTypes
 			},
 			{
 				path: 'employeeLevels',

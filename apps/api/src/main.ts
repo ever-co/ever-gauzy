@@ -3,9 +3,13 @@ import * as helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SentryService } from '@ntegral/nestjs-sentry';
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create(AppModule, {
+		logger: ['error', 'warn']
+	});
+	app.useLogger(app.get(SentryService));
 	app.enableCors();
 
 	// TODO: enable csurf
@@ -17,7 +21,7 @@ async function bootstrap() {
 
 	const options = new DocumentBuilder()
 		.setTitle('Gauzy API')
-    .setVersion('1.0')
+		.setVersion('1.0')
 		//.setBasePath('api/')
 		.build();
 

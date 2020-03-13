@@ -32,7 +32,7 @@ import { Tag } from '../tags';
 export class User extends Base implements IUser {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
-		name: 'tags_user'
+		name: 'tag_user'
 	})
 	tags: Tag[];
 
@@ -108,4 +108,8 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	employeeLevel?: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@Column({ nullable: true })
+	anonymousBonus?: boolean;
 }

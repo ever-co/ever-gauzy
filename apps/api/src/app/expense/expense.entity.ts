@@ -28,7 +28,7 @@ import { Tag } from '../tags';
 export class Expense extends Base implements IExpense {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
-		name: 'tags_expense'
+		name: 'tag_expense'
 	})
 	tags: Tag[];
 

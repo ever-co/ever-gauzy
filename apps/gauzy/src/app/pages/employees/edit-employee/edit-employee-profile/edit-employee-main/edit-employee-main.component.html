@@ -161,9 +161,28 @@
 						/>
 					</div>
 				</div>
+			</div>
 
-				<div class="col">
+			<div class="row">
+				<div class="col-md-6">
 					<div class="form-group">
+						<label for="employmentType" class="label"
+							>Employment Types</label
+						>
+						<nb-select
+							id="employmentType"
+							fullWidth
+							multiple
+							placeholder="Select Employment Types"
+							formControlName="employmentTypes"
+						>
+							<nb-option
+								*ngFor="let opt of this.employmentTypes"
+								[value]="opt.id"
+								>{{ opt.name }}</nb-option
+							>
+						</nb-select>
+
 						<label class="label" for="empLevelInput">
 							Employee Level
 						</label>
@@ -174,6 +193,16 @@
 								>{{ empL.level }}</ng-option
 							>
 						</ng-select>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox formControlName="anonymousBonus">
+							Display bonus Anonymously
+						</nb-checkbox>
 					</div>
 				</div>
 			</div>
