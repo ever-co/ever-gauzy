@@ -16,6 +16,8 @@ import { HttpLoaderFactory } from '../../@theme/components/header/selectors/empl
 import { Store } from '../../@core/services/store.service';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
+import { EquipmentService } from '../../@core/services/equipment.service';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @NgModule({
 	imports: [
@@ -30,6 +32,7 @@ import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.
 		NbInputModule,
 		NbSelectModule,
 		NbDatepickerModule,
+		NgSelectModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -40,6 +43,6 @@ import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.
 	],
 	declarations: [EquipmentSharingMutationComponent],
 	entryComponents: [],
-	providers: [EquipmentSharingService, Store]
+	providers: [EquipmentSharingService, Store, EquipmentService]
 })
 export class EquipmentSharingMutationModule {}

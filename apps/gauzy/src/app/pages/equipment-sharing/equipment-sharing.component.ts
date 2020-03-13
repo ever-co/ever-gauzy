@@ -7,6 +7,7 @@ import { FormGroup } from '@angular/forms';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { NbDialogService } from '@nebular/theme';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing/equipment-sharing-mutation.component';
+import { first } from 'rxjs/operators';
 
 @Component({
 	templateUrl: './equipment-sharing.component.html',
@@ -84,6 +85,9 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 				context: {}
 			}
 		);
+
+		const equipmentSharing = await dialog.onClose.pipe(first()).toPromise();
+		console.log(equipmentSharing);
 	}
 
 	async delete() {}

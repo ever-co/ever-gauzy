@@ -17,8 +17,14 @@
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="col-sm-6 mb-3">
-					<nb-select class="d-block" formControlName="equipmentItem">
+				<div class="col-sm-9 mb-4">
+					<nb-select
+						class="d-block"
+						formControlName="equipmentItem"
+						placeholder="{{
+							'FORM.LABELS.SELECT_EQUIPMENT' | translate
+						}}"
+					>
 						<nb-option
 							*ngFor="let item of equipmentItems"
 							value="{{ item.id }}"
@@ -26,16 +32,50 @@
 						>
 					</nb-select>
 				</div>
+				<div class="col-sm-4">
+					<div class="status-label">
+						ACTIVE
+					</div>
+				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-6 mb-3">
-					<nb-select class="d-block" formControlName="employee">
-						<nb-option
-							*ngFor="let employee of employees"
-							value="{{ employee.id }}"
-							>{{ employee.user.firstName }}</nb-option
+					<ng-select
+						formControlName="employee"
+						[searchable]="true"
+						[items]="employees"
+						bindName="employee"
+						placeholder="{{
+							'FORM.LABELS.SELECT_EMPLOYEE' | translate
+						}}"
+					>
+						<ng-template
+							ng-option-tmp
+							let-item="item"
+							let-index="index"
 						>
-					</nb-select>
+							<img
+								*ngIf="item.imageUrl"
+								[src]="item.imageUrl"
+								width="40"
+								height="40"
+							/>
+							{{ getName(item.firstName, item.lastName) }}
+						</ng-template>
+						<ng-template ng-label-tmp let-item="item">
+							<div class="selector-template">
+								<img
+									*ngIf="item.imageUrl"
+									height="25"
+									width="25"
+									[src]="item.imageUrl"
+								/>
+								<span>{{
+									getName(item.firstName, item.lastName)
+								}}</span>
+							</div>
+						</ng-template>
+					</ng-select>
 				</div>
 				<div class="col-sm-6 mb-3">
 					<nb-select class="d-block" formControlName="team">
@@ -53,10 +93,13 @@
 					<div class="form-group">
 						<input
 							fullWidth
-							formControlName="shareRequestDate"
+							formControlName="shareRequestDay"
 							nbInput
 							[nbDatepicker]="shareRequestDatePicker"
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							placeholder="{{
+								'FORM.LABELS.SELECT_SHARE_REQUEST_DATE'
+									| translate
+							}}"
 						/>
 						<nb-datepicker #shareRequestDatePicker></nb-datepicker>
 					</div>
@@ -65,10 +108,13 @@
 					<div class="form-group">
 						<input
 							fullWidth
-							formControlName="shareStartDate"
+							formControlName="shareStartDay"
 							nbInput
 							[nbDatepicker]="shareStartDatePicker"
-							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							placeholder="{{
+								'FORM.LABELS.SELECT_SHARE_START_DATE'
+									| translate
+							}}"
 						/>
 						<nb-datepicker #shareStartDatePicker></nb-datepicker>
 					</div>
@@ -79,22 +125,16 @@
 					<div class="form-group">
 						<input
 							fullWidth
-							formControlName="shareEndDate"
+							formControlName="shareEndDay"
 							nbInput
 							[nbDatepicker]="shareEndDatePicker"
 							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							placeholder="{{
+								'FORM.LABELS.SELECT_SHARE_END_DATE' | translate
+							}}"
 						/>
 						<nb-datepicker #shareEndDatePicker></nb-datepicker>
 					</div>
-				</div>
-				<div class="col-sm-6 mb-3">
-					<nb-select class="d-block" formControlName="equipmentItem">
-						<nb-option
-							*ngFor="let item of equipmentItems"
-							value="{{ item.id }}"
-							>{{ item.name }}</nb-option
-						>
-					</nb-select>
 				</div>
 			</div>
 		</form>
@@ -109,7 +149,12 @@
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button [disabled]="form.invalid" status="success" nbButton>
+		<button
+			[disabled]="form.invalid"
+			status="success"
+			nbButton
+			(click)="onSaveRequest()"
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

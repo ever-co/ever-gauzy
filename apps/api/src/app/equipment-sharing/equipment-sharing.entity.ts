@@ -4,7 +4,8 @@ import {
 	RelationId,
 	Column,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	JoinColumn
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import {
@@ -17,10 +18,11 @@ import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
 import { Employee } from '../employee';
 import { OrganizationTeams } from '../organization-teams';
 
-@Entity('equipmentsharing')
+@Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@ApiProperty({ type: Equipment })
 	@OneToOne((type) => Equipment)
+	@JoinColumn()
 	equipment?: Equipment;
 
 	@ApiProperty({ type: String })

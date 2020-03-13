@@ -131,7 +131,13 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
-			"EMAIL_INVITATION": "Enter email to send invitation"
+			"EMAIL_INVITATION": "Enter email to send invitation",
+			"SELECT_EQUIPMENT": "Select equipment",
+			"SELECT_SHARE_REQUEST_DATE": "Select request date",
+			"SELECT_SHARE_START_DATE": "Select start date",
+			"SELECT_SHARE_END_DATE": "Select end date",
+			"SELECT_EMPLOYEE": "Select employee",
+			"SELECT_TEAM": "Select team"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -542,7 +548,7 @@
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
-		"ADD_EQUIPMENT_REQUEST": "Create equipment request",
+		"ADD_EQUIPMENT_REQUEST": "Request equipment",
 		"EDIT_EQUIPMENT_REQUEST": "Edit equipment request",
 		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
 		"REQUEST": "Request",
