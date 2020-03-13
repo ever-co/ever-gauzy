@@ -187,8 +187,8 @@
 			</div>
 			<div
 				class="block-settings"
-				[ngStyle]="{
-					width: selectedRowIndexToShow === i ? '150px' : '0'
+				[ngClass]="{
+					active: selectedRowIndexToShow === i
 				}"
 			>
 				<div

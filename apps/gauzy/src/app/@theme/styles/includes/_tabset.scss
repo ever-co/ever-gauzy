@@ -1,0 +1,20 @@
+@import 'var';
+
+nb-route-tabset {
+	ul.route-tabset {
+		padding: 0;
+	}
+	.tab-link {
+		@include respond(dsk) {
+			padding: 1rem 1.4rem;
+		}
+		nb-icon {
+			margin-right: 10px;
+			@include respond(dsk) {
+				display: block;
+				margin: auto;
+				margin-bottom: 8px;
+			}
+		}
+	}
+}
