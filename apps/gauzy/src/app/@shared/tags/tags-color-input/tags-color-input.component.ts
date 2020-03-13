@@ -6,7 +6,6 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
-import { Tag } from '@gauzy/models';
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgModel } from '@angular/forms';
 
