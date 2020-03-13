@@ -2,10 +2,10 @@
 	Tags
 </label>
 <ng-select
-	[(ngModel)]="selectedTags"
-	[ngModelOptions]="{ standalone: true }"
 	[items]="tags"
-	[multiple]="true"
+	[(ngModel)]="selectedTags"
+	multiple="true"
+	(change)="onChange($event)"
 >
 	<ng-template ng-label-tmp let-item="item" let-clear="clear">
 		<span class="ng-value-label"

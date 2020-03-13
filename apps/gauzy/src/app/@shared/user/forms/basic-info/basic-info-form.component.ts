@@ -62,7 +62,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 
 	ngOnInit(): void {
 		this.loadFormData();
-		console.warn(this.selectedTags);
+
 		// this.getAllTags();
 	}
 
@@ -132,7 +132,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		this.offerDate = this.form.get('offerDate');
 		this.acceptDate = this.form.get('acceptDate');
 		this.rejectDate = this.form.get('rejectDate');
-		// this.tags = this.form.get('tags');
+		this.selectedTags = this.form.get('selectedTags');
 	};
 
 	get showImageMeta() {
@@ -176,6 +176,10 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 
 	deleteImg() {
 		this.imageUrl.setValue('');
+	}
+
+	selectedTagsHandler(ev) {
+		this.selectedTags = ev;
 	}
 
 	ngAfterViewInit() {

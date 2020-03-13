@@ -220,58 +220,14 @@
 				<nb-datepicker #rejectDatePicker></nb-datepicker>
 			</div>
 		</div>
-		<!-- <div class="col-sm-6">
-			<div class="form-group">
-				<label class="label" for="addTags">
-					Tags
-				</label>
-				<ng-select
-					[(ngModel)]="selectedTags"
-					[ngModelOptions]="{ standalone: true }"
-					[items]="tags"
-					[multiple]="true"
-				>
-					<ng-template ng-label-tmp let-item="item" let-clear="clear">
-						<span class="ng-value-label"
-							><nb-badge
-								style="position: static !important;"
-								width="20px"
-								height="20px"
-								[style.background]="item.color"
-								text="{{ item.name }}"
-							></nb-badge
-						></span>
-						<span
-							class="ng-value-icon right"
-							(click)="clear(item)"
-							aria-hidden="true"
-							>×</span
-						>
-					</ng-template>
-					<ng-template ng-option-tmp let-item="item">
-						<nb-badge
-							style="position: static !important;"
-							width="20px"
-							height="20px"
-							[style.background]="item.color"
-							text="{{ item.name }}"
-						></nb-badge>
-					</ng-template>
-				</ng-select>
-			</div>
-		</div> -->
 		<div class="col-sm-6">
 			<div class="form-group">
 				<ngx-tags-color-input
-					id="inputTags"
-					[items]="tags"
-					[multiple]="true"
-					(selectedTags)="(selectedTags)"
+					(selectedTagsEvent)="selectedTagsHandler($event)"
 				>
 				</ngx-tags-color-input>
 			</div>
 		</div>
-		{{ selectedTags | json }}
 	</div>
 
 	<div class="row">

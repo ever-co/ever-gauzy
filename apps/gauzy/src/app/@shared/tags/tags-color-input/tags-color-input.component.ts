@@ -19,25 +19,20 @@ export class TagsColorInputComponent implements OnInit {
 	@ViewChild('shownInput', { static: true })
 	shownInput: NgModel;
 
-	@Input()
+	@Input('tags')
 	tags: any;
 
-	@Input()
-	items: any;
-
-	@Input()
-	multiple: string;
-
-	@Input()
-	ngModelOptions: any;
-
-	@Input('ngModel')
-	model: any;
+	@Input('selectedTags')
+	selectedTags: any;
 
 	@Output()
-	selectedTags: EventEmitter<any> = new EventEmitter<any>();
-	debbuger;
+	selectedTagsEvent: EventEmitter<any> = new EventEmitter<any>();
+
 	constructor(private readonly tagsService: TagsService) {}
+
+	onChange() {
+		this.selectedTagsEvent.emit(this.selectedTags);
+	}
 
 	ngOnInit() {
 		this.getAllTags();
