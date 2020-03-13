@@ -371,7 +371,8 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
-			"EMPLOYEE_CLIENTS": "Клиенти на служителя:"
+			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
+			"EMPLOYMENT_TYPE": "Employment Type"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
