@@ -31,12 +31,23 @@ export class DateSelectorComponent implements OnInit {
 		this.dateInputValue = this.formatDateMMMMyy(this.date);
 	}
 
-	handleDateChange(event: Date) {
-		this.store.selectedDate = event;
-		this.date = event;
+	handleDateChange(chosenDate: Date) {
+		/**
+		 * Selecting a month from previous year which is unavailable for current year
+		 * and then selecting current year, makes the unavailable month selected for current year
+		 * Ensure that chosenDate does not exceed the max limit
+		 */
+		chosenDate =
+			chosenDate > this.monthRef.max ? this.monthRef.max : chosenDate;
 
-		// Refresh Months when Year is changed
-		this.monthRef.month = event;
+		this.store.selectedDate = chosenDate;
+		this.date = chosenDate;
+
+		/**
+		 * nb-calendar-month-picker component does not get updated when the year is changed
+		 * manually refresh the month picker component
+		 */
+		this.monthRef.month = chosenDate;
 		this.monthRef.initMonths();
 
 		this.dateInputValue = this.formatDateMMMMyy(this.date);
