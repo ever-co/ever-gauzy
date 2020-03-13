@@ -1,12 +1,8 @@
-import { Component, OnInit, Input, ViewChild } from '@angular/core';
-import {
-	NbCalendarMonthCellComponent,
-	NbCalendarMonthPickerComponent,
-	NbCalendarYearPickerComponent
-} from '@nebular/theme';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NbCalendarMonthPickerComponent } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { monthNames } from '../../../../../@core/utils/date';
-
+import { min } from 'date-fns';
 @Component({
 	selector: 'ga-date-selector',
 	templateUrl: './date.component.html',
@@ -16,7 +12,6 @@ import { monthNames } from '../../../../../@core/utils/date';
 	}
 })
 export class DateSelectorComponent implements OnInit {
-	monthCellComponent = NbCalendarMonthCellComponent;
 	loadCalendar = false;
 	dateInputValue: string;
 	date = new Date();
@@ -37,8 +32,7 @@ export class DateSelectorComponent implements OnInit {
 		 * and then selecting current year, makes the unavailable month selected for current year
 		 * Ensure that chosenDate does not exceed the max limit
 		 */
-		chosenDate =
-			chosenDate > this.monthRef.max ? this.monthRef.max : chosenDate;
+		chosenDate = min([chosenDate, this.max]);
 
 		this.store.selectedDate = chosenDate;
 		this.date = chosenDate;
