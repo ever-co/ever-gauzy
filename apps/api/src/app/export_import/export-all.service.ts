@@ -1,15 +1,15 @@
-import { Injectable, HttpService } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as archiver from 'archiver';
 import { v4 as uuidv4 } from 'uuid';
 import { Subject } from 'rxjs';
-import { env } from '../../../../../.scripts/env';
+import { CountryService } from '../country';
 
 @Injectable()
 export class ExportAllService {
 	fileName = new Subject<string>();
 
-	constructor(private httpService: HttpService) {}
+	constructor(private countryService: CountryService) {}
 
 	async archiveAndDownload() {
 		fs.access('./export', (error) => {
@@ -70,6 +70,6 @@ export class ExportAllService {
 	}
 
 	exportAllCountries() {
-		return this.httpService.get(env.API_BASE_URL + '/api/country');
+		return this.countryService.getAsCsv();
 	}
 }
