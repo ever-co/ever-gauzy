@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import {
 	Employee,
-  EmploymentTypes,
+	EmploymentTypes,
 	OrganizationDepartment,
 	OrganizationPositions,
 	Organization
@@ -38,14 +38,14 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	employeeLevels: { level: string; organizationId: string }[] = [];
 	selectedOrganization: Organization;
 	departments: OrganizationDepartment[] = [];
-	positions: OrganizationPositions[] = [];  
+	positions: OrganizationPositions[] = [];
 
-	constructor(    
+	constructor(
 		private readonly fb: FormBuilder,
 		private readonly store: Store,
 		private readonly toastrService: NbToastrService,
 		private readonly employeeStore: EmployeeStore,
-    private readonly employeeService: EmployeesService,
+		private readonly employeeService: EmployeesService,
 		private readonly employeeLevelService: EmployeeLevelService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly organizationPositionsService: OrganizationPositionsService
@@ -56,7 +56,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (emp) => {
 				this.selectedEmployee = emp;
-      
+
 				if (this.selectedEmployee) {
 					await this.getDepartments();
 					this._initializeForm(this.selectedEmployee);
@@ -67,34 +67,33 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 						.subscribe((data) => {
 							this.employmentTypes = data;
 						});
-          
-          this.employeeLevelService
+
+					this.employeeLevelService
 						.getAll(this.selectedEmployee.orgId)
 						.pipe(takeUntil(this._ngDestroy$))
 						.subscribe((data) => {
 							this.employeeLevels = data['items'];
-						});                              
+						});
 				}
-      
-      	this.employeeLevelService
-			     .getAll(this.selectedOrganization.id)
-			     .pipe(takeUntil(this._ngDestroy$))
-			     .subscribe((data) => {
-				    this.employeeLevels = data['items'];
-			    });
 
-		    this.store.selectedOrganization$
-			    .pipe(takeUntil(this._ngDestroy$))
-			    .subscribe((organization) => {
-				    this.selectedOrganization = organization;
-				    if (this.selectedOrganization) {
-					    this.getPositions();
-				    }
-			  });
-      
-			});    		
+				this.store.selectedOrganization$
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe((organization) => {
+						this.selectedOrganization = organization;
+						if (this.selectedOrganization) {
+							this.getPositions();
+
+							this.employeeLevelService
+								.getAll(this.selectedOrganization.id)
+								.pipe(takeUntil(this._ngDestroy$))
+								.subscribe((data) => {
+									this.employeeLevels = data['items'];
+								});
+						}
+					});
+			});
 	}
-		
+
 	private async getDepartments() {
 		const { items } = await this.organizationDepartmentsService.getAll([], {
 			organizationId: this.selectedEmployee.orgId
@@ -116,8 +115,6 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
-		console.log(this.form);
-
 		if (this.form.valid) {
 			this.employeeStore.userForm = {
 				...this.form.value

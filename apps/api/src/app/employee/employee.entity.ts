@@ -29,7 +29,7 @@ import { OrganizationPositions } from '../organization-positions';
 export class Employee extends LocationBase implements IEmployee {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
-		name: 'tags_employee'
+		name: 'tag_employee'
 	})
 	tags: Tag[];
 
@@ -126,7 +126,7 @@ export class Employee extends LocationBase implements IEmployee {
 
 	@ManyToMany((type) => EmploymentTypes, { cascade: true })
 	@JoinTable({
-		name: 'employee_employmentTypes'
+		name: 'employee_employment_type'
 	})
 	employmentTypes?: EmploymentTypes[];
 
@@ -147,5 +147,4 @@ export class Employee extends LocationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
-
 }

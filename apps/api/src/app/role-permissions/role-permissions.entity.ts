@@ -9,7 +9,7 @@ import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role/role.entity';
 
-@Entity('role_permissions')
+@Entity('role_permission')
 export class RolePermissions extends Base implements IRolePermissions {
 	@ApiProperty({ type: String, enum: RolesEnum })
 	@IsEnum(RolesEnum)

@@ -165,6 +165,14 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 					organizationPosition
 				};
 
+				this.toastrService.primary(
+					this.getTranslation(
+						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
+						{ name: this.employeeName }
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+
 				this._loadEmployeeData();
 			} catch (error) {
 				this.errorHandler.handleError(error);

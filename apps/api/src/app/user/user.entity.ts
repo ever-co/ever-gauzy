@@ -32,7 +32,7 @@ import { Tag } from '../tags';
 export class User extends Base implements IUser {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
-		name: 'tags_user'
+		name: 'tag_user'
 	})
 	tags: Tag[];
 
