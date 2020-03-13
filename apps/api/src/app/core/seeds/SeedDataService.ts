@@ -40,6 +40,7 @@ import { EmploymentTypes } from '../../employment-types/employment-types.entity'
 import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
+import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
 
 const allEntities = [
 	User,
@@ -195,6 +196,11 @@ export class SeedDataService {
 			]);
 
 			await createEmployeeLevels(this.connection);
+
+			await createDefaultTimeOffPolicy(this.connection, {
+				org: defaultOrganization,
+				employees: [...employees.defaultEmployees]
+			});
 
 			this.log(
 				chalk.green(
