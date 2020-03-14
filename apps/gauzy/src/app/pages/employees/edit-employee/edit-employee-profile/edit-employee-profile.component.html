@@ -33,10 +33,7 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="navigate" (click)="goBack()">
-			<nb-icon icon="arrow-back-outline"></nb-icon>
-			<span>{{ 'BUTTONS.BACK' | translate }}</span>
-		</div>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
 
 		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
 	</nb-card-body>
