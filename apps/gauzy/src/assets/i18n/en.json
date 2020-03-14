@@ -132,7 +132,9 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
-			"EMAIL_INVITATION": "Enter email to send invitation"
+			"EMAIL_INVITATION": "Enter email to send invitation",
+			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
+			"ALLOW_FUTURE_DATE": "Allow switching to future periods"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -424,7 +426,7 @@
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
 			"ROLES_PERMISSIONS": "Roles & Permissions",
-			"EMPLOYMENT_TYPES": "Employment Types"
+			"DATE_LIMIT": "Date Limit"
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
