@@ -30,15 +30,17 @@ export class ExportAllController implements OnDestroy {
 		});
 
 		await this.exportService.exportAllCountries();
-		this.exportService.archiveAndDownload();
+		await this.exportService.archiveAndDownload();
+		await res.download(`./export/${fileName}`);
 
-		setTimeout(function() {
-			res.download(`./export/${fileName}`);
-		}, 2000);
-
-		await setTimeout(function() {
-			fs.removeSync(`./export/${fileName}`);
-		}, 5000);
+		fs.access(`./export/${fileName}`, (error) => {
+			if (!error) {
+				fs.removeSync(`./export/${fileName}`);
+			} else {
+				console.log(`File ${fileName} doesnt exist.`);
+				return null;
+			}
+		});
 	}
 
 	ngOnDestroy() {
