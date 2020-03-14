@@ -1,27 +1,29 @@
 import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	Post,
-	Body,
-	Param,
-	UseGuards
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { EmployeeService } from './employee.service';
-import { Employee } from './employee.entity';
-import { CrudController } from '../core/crud/crud.controller';
-import { IPagination } from '../core';
-import {
 	EmployeeCreateInput as IEmployeeCreateInput,
 	PermissionsEnum
 } from '@gauzy/models';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IPagination } from '../core';
+import { CrudController } from '../core/crud/crud.controller';
 import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Employee } from './employee.entity';
+import { EmployeeService } from './employee.service';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -34,6 +36,39 @@ export class EmployeeController extends CrudController<Employee> {
 		super(employeeService);
 	}
 
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	async update(
+		@Param('id') id: string,
+		@Body() entity: Employee
+	): Promise<any> {
+		//We are using create here because create calls the method save()
+		//We need save() to save ManyToMany relations
+		try {
+			return this.employeeService.create({
+				id,
+				...entity
+			});
+		} catch (error) {
+			console.log(error);
+			return;
+		}
+	}
+
 	@ApiOperation({ summary: 'Find all employees.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -44,8 +79,6 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get()
 	async findAllEmployees(
 		@Query('data') data: string
@@ -64,8 +97,6 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<Employee> {
 		return this.employeeService.findOne(id);

@@ -126,6 +126,8 @@
 			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
 			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
@@ -185,7 +187,8 @@
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
-			"SWITCH_PROJECT_STATE": "Public"
+			"SWITCH_PROJECT_STATE": "Public",
+			"EMPLOYMENT_TYPES": "Employment Type"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -262,7 +265,9 @@
 			"IMPORT": "Import",
 			"EXPORT": "Export"
 		},
-		"TAGS": "Tags"
+		"TAGS": "Tags",
+		"EQUIPMENT": "Equipment",
+		"TASKS": "Tasks"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -366,7 +371,8 @@
 			"POSITION": "עמדה",
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:"
+			"EMPLOYEE_CLIENTS": "Employee's Clients:",
+			"EMPLOYMENT_TYPE": "Employment Type"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -385,6 +391,7 @@
 		"SETTINGS": "הגדרות",
 		"ROLES": "Roles",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
+		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
@@ -400,6 +407,7 @@
 			"PROJECTS": "פרויקטים",
 			"DEPARTMENT_NAME": "שם מחלקה",
 			"POSITION_NAME": "שם המיקום",
+			"EMPLOYMENT_TYPES": "Employment Types",
 			"NEW_PROJECT": "הוסף פרויקט חדש",
 			"START_DATE": "תאריך התחלה",
 			"END_DATE": "תאריך סיום",
@@ -518,6 +526,36 @@
 		"TAGS_EDIT_TAG": "Tag edited",
 		"TAGS_DELETE_TAG": "Tag deleted"
 	},
+	"EQUIPMENT_PAGE": {
+		"HEADER": "Equipment",
+		"ADD_EQUIPMENT": "Add Equipment",
+		"EDIT_EQUIPMENT": "Edit Equipment",
+		"EQUIPMENT_NAME": "שם",
+		"EQUIPMENT_TYPE": "סוג",
+		"EQUIPMENT_SN": "SN",
+		"EQUIPMENT_MANUFACTURED_YEAR": "Manufactured year",
+		"EQUIPMENT_INITIAL_COST": "Initial cost",
+		"EQUIPMENT_CURRENCY": "מטבע",
+		"EQUIPMENT_MAX_SHARE_PERIOD": "Max share period",
+		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
+		"EQUIPMENT_EDITED": "Equipment edited",
+		"EQUIPMENT_DELETED": "Equipment deleted",
+		"EQUIPMENT_ADDED": "Equipment added",
+		"EQUIPMENT_SAVED": "Equipment saved"
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Tasks",
+		"ADD_TASKS": "Add Tasks",
+		"EDIT_TASKS": "Edit Tasks",
+		"TASKS_TITLE": "Title",
+		"TASKS_DESCRIPTION": "Description",
+		"TASKS_LOADED": "Tasks loaded",
+		"TASK_ADDED": "Task added",
+		"TASK_UPDATED": "Task updated",
+		"TASK_DELETED": "Task deleted",
+		"TASKS_PROJECT": "פרויקטים",
+		"TASKS_STATUS": "עבודה"
+	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
@@ -615,6 +653,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
+			"EMPLOYEE_PROFILE_UPDATE": "{{name}} profile updated.",
 			"CONFIRM": "אשר",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
@@ -627,6 +666,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NAME_REQUIRED": "Name is required!",
@@ -717,6 +757,12 @@
 				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
+				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
+				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
+				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {

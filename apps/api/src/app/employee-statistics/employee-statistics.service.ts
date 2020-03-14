@@ -9,6 +9,9 @@ import { Injectable } from '@nestjs/common';
 import { EmployeeService } from '../employee/employee.service';
 import { ExpenseService } from '../expense';
 import { IncomeService } from '../income';
+import { Between } from 'typeorm';
+import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
 @Injectable()
 export class EmployeeStatisticsService {
 	private _monthNames = [
@@ -29,6 +32,7 @@ export class EmployeeStatisticsService {
 	constructor(
 		private incomeService: IncomeService,
 		private expenseService: ExpenseService,
+		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
 		private employeeService: EmployeeService
 	) {}
 
@@ -190,7 +194,11 @@ export class EmployeeStatisticsService {
 		return `${this._monthNames[date.getMonth()]} '${date.getFullYear() -
 			2000}`;
 	}
-
+	/**
+	 * Return bonus value based on the bonus type and percentage
+	 * For revenue based bonus, bonus is calculated based on income
+	 * For profit based bonus, bonus is calculated based on profit
+	 */
 	calculateEmployeeBonus = (
 		bonusType: string,
 		bonusPercentage: number,
@@ -214,4 +222,139 @@ export class EmployeeStatisticsService {
 				return 0;
 		}
 	};
+
+	/**
+	 * helper function to create a date range to use in SQL between condition
+	 */
+	private _beforeDateFilter = (date: Date, lastNMonths: number) =>
+		Between(
+			subMonths(startOfMonth(date), lastNMonths - 1),
+			endOfMonth(date)
+		);
+
+	/**
+	 * Gets all income records of a employee(employeeId),
+	 * in last N months(lastNMonths),
+	 * till the specified Date(searchMonth)
+	 * lastNMonths = 1, for last 1 month and 12 for an year
+	 */
+	employeeIncomeInNMonths = async (
+		employeeId: string,
+		searchMonth: Date,
+		lastNMonths: number
+	) =>
+		await this.incomeService.findAll({
+			select: [
+				'valueDate',
+				'clientName',
+				'amount',
+				'currency',
+				'notes',
+				'isBonus'
+			],
+			where: {
+				employee: {
+					id: employeeId
+				},
+				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+			},
+			order: {
+				valueDate: 'DESC'
+			}
+		});
+
+	/**
+	 * Gets all expense records of a employee(employeeId),
+	 * in last N months(lastNMonths),
+	 * till the specified Date(searchMonth)
+	 * lastNMonths = 1, for last 1 month and 12 for an year
+	 */
+	employeeExpenseInNMonths = async (
+		employeeId: string,
+		searchMonth: Date,
+		lastNMonths: number
+	) =>
+		await this.expenseService.findAll({
+			select: [
+				'valueDate',
+				'vendorName',
+				'categoryName',
+				'amount',
+				'currency',
+				'notes'
+			],
+			where: {
+				employee: {
+					id: employeeId
+				},
+				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+			},
+			order: {
+				valueDate: 'DESC'
+			}
+		});
+
+	/**
+	 * Gets all expense records of a employee's organization(employeeId)
+	 * that were marked to be split among its employees,
+	 * in last N months(lastNMonths),till the specified Date(searchMonth)
+	 * lastNMonths = 1, for last 1 month and 12 for an year
+	 */
+	employeeSplitExpenseInNMonths = async (
+		employeeId: string,
+		searchMonth: Date,
+		lastNMonths: number
+	) => {
+		// 1 Get Employee's Organization
+		const employee = await this.employeeService.findOne({
+			where: {
+				id: employeeId
+			},
+			relations: ['organization']
+		});
+
+		// 2 Find split expenses for Employee's Organization in last N months
+		const { items } = await this.expenseService.findAll({
+			select: [
+				'valueDate',
+				'vendorName',
+				'categoryName',
+				'amount',
+				'currency',
+				'notes'
+			],
+			where: {
+				organization: { id: employee.organization.id },
+				splitExpense: true,
+				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
+			}
+		});
+
+		// 3. Number of employees in Employee's organization that the expense has to be split between
+		const splitAmong =
+			(await this.employeeService.count({
+				where: {
+					organization: { id: employee.organization.id }
+				}
+			})) || 1;
+
+		return { items, splitAmong };
+	};
+
+	/**
+	 * Fetch all recurring expenses of the employee using employeeId
+	 */
+	employeeRecurringExpenseInNMonths = async (employeeId: string) =>
+		await this.employeeRecurringExpenseService.findAll({
+			select: [
+				'currency',
+				'value',
+				'categoryName',
+				'startDate',
+				'endDate'
+			],
+			where: {
+				employeeId: employeeId
+			}
+		});
 }

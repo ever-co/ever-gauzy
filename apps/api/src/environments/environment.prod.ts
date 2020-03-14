@@ -167,5 +167,8 @@ export const environment: IEnvironment = {
 				'dimana@ever.co'
 			]
 		}
-	]
+	],
+	sentry: {
+		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+	}
 };

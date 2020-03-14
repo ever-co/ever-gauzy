@@ -24,6 +24,10 @@ export * from './lib/role-permission.model';
 export * from './lib/email-template.model';
 export * from './lib/tag-entity.model';
 export * from './lib/recurring-expense.model';
+export * from './lib/organization-employment-type.model';
+export * from './lib/equipment.model';
+export * from './lib/location.model';
+export * from './lib/task-entity.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

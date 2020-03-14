@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import 'rxjs/add/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { User } from '@gauzy/models';
+import { User, Tag } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
@@ -143,8 +143,16 @@ export class AuthStrategy extends NbAuthStrategy {
 		confirmPassword: string;
 		terms: boolean;
 		tenant: Tenant;
+		tags: Tag[];
 	}): Observable<NbAuthResult> {
-		const { email, fullName, password, confirmPassword, tenant } = args;
+		const {
+			email,
+			fullName,
+			password,
+			confirmPassword,
+			tenant,
+			tags
+		} = args;
 
 		if (password !== confirmPassword) {
 			return Observable.of(
@@ -169,7 +177,8 @@ export class AuthStrategy extends NbAuthStrategy {
 							.join(' ')
 					: null,
 				email,
-				tenant
+				tenant,
+				tags
 			},
 			password
 		};

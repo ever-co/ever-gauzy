@@ -126,6 +126,8 @@
 			"ENABLE_DISABLE_INVITES": "Включить/выключить приглашения",
 			"ALLOW_USER_INVITES": "Разрешить пользователям отправлять приглашения",
 			"INVITE_EXPIRY_PERIOD": "Срок приглашения истекает (в днях)",
+			"EMPLOYMENT_TYPES": "Тип занятости",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Добавить новый тип занятости",
 			"OFFER_DATE": "Дата предложения (опционально)",
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
@@ -185,7 +187,8 @@
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
-			"SWITCH_PROJECT_STATE": "Публичный"
+			"SWITCH_PROJECT_STATE": "Публичный",
+			"EMPLOYMENT_TYPES": "Тип занятости"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -262,7 +265,9 @@
 			"IMPORT": "Импорт",
 			"EXPORT": "Экспорт"
 		},
-		"TAGS": "Теги"
+		"TAGS": "Теги",
+		"EQUIPMENT": "Оборудование",
+		"TASKS": "Задачи"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -366,7 +371,8 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Кафедры работника:",
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
-			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:"
+			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
+			"EMPLOYMENT_TYPE": "Тип занятости"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -385,6 +391,7 @@
 		"SETTINGS": "Настройки",
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Организационные периодические расходы",
+		"EMPLOYMENT_TYPES": "Типы занятости",
 		"INVITE_CLIENT": "Пригласить клиента",
 		"EMAIL_INVITE": "Приглашение",
 		"EDIT": {
@@ -400,6 +407,7 @@
 			"PROJECTS": "Проекты",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
+			"EMPLOYMENT_TYPES": "Типы занятости",
 			"NEW_PROJECT": "Добавить новый проект",
 			"START_DATE": "Дата начала",
 			"END_DATE": "Дата окончания",
@@ -518,6 +526,36 @@
 		"TAGS_EDIT_TAG": "Тег отредактирован",
 		"TAGS_DELETE_TAG": "Метка удалена"
 	},
+	"EQUIPMENT_PAGE": {
+		"HEADER": "Оборудование",
+		"ADD_EQUIPMENT": "Добавить снаряжение",
+		"EDIT_EQUIPMENT": "Изменить снаряжение",
+		"EQUIPMENT_NAME": "Имя",
+		"EQUIPMENT_TYPE": "Тип",
+		"EQUIPMENT_SN": "SN",
+		"EQUIPMENT_MANUFACTURED_YEAR": "Год производства",
+		"EQUIPMENT_INITIAL_COST": "Начальные затраты",
+		"EQUIPMENT_CURRENCY": "Валюта",
+		"EQUIPMENT_MAX_SHARE_PERIOD": "Макс. срок акции",
+		"EQUIPMENT_AUTO_APPROVE": "Авто подтверждение",
+		"EQUIPMENT_EDITED": "Оборудование отредактировано",
+		"EQUIPMENT_DELETED": "Снаряжение удалено",
+		"EQUIPMENT_ADDED": "Снаряжение добавлено",
+		"EQUIPMENT_SAVED": "Оборудование сохранено"
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Задачи",
+		"ADD_TASKS": "Добавить задачи",
+		"EDIT_TASKS": "Редактировать задачи",
+		"TASKS_TITLE": "Заголовок",
+		"TASKS_DESCRIPTION": "Описание",
+		"TASKS_LOADED": "Задачи загружены",
+		"TASK_ADDED": "Задача добавлена",
+		"TASK_UPDATED": "Задача обновлена",
+		"TASK_DELETED": "Задача удалена",
+		"TASKS_PROJECT": "Проект",
+		"TASKS_STATUS": "Статус"
+	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
 		"ADD_USER": "Добавить пользователя",
@@ -615,6 +653,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Сотрудник добавлен к клиенту",
 			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
 			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника",
+			"EMPLOYEE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
 			"CONFIRM": "Подтвердить",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",
@@ -627,6 +666,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NAME_REQUIRED": "Требуется имя!",
@@ -717,6 +757,12 @@
 				"INVITE_CLIENT": "Письмо с приглашением отправлено {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Произошла ошибка при попытке пригласить клиента.",
 				"EMAIL_EXISTS": "Этот адрес электронной почты уже существует в качестве пользователя"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
+				"ADD_EMPLOYMENT_TYPE": "Новый тип занятости {{ name }} успешно добавлен!",
+				"UPDATE_EMPLOYMENT_TYPE": "Занятость {{ name }} была обновлена",
+				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
+				"DELETE_EMPLOYMENT_TYPE": "Тип занятости удален для {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {

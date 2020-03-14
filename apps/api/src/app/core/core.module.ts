@@ -1,8 +1,11 @@
-import { Tag } from '../tags';
-// Modified code from https://github.com/xmlking/ngx-starter-kit.
-// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
-// Copyright (c) 2018 Sumanth Chinthagunta
+// Copyright (c) 2019-2020 Ever Co. LTD
 
+// Modified code from https://github.com/xmlking/ngx-starter-kit.
+// Originally MIT Licensed
+// - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
+// - original code `Copyright (c) 2018 Sumanth Chinthagunta`
+
+import { Tag } from '../tags';
 import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
@@ -32,6 +35,10 @@ import { TimeOffPolicy } from '../time-off-policy';
 import { RolePermissions } from '../role-permissions';
 import { Tenant } from './../tenant/tenant.entity';
 import { EmailTemplate } from '../email-template';
+import { OrganizationEmploymentType } from '../organization-employment-type';
+import { Equipment } from '../equipment';
+import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
+import { Task } from '../tasks';
 
 const entities = [
 	Invite,
@@ -58,7 +65,11 @@ const entities = [
 	RolePermissions,
 	Tenant,
 	EmailTemplate,
-	Tag
+	Tag,
+	OrganizationEmploymentType,
+	Equipment,
+	EmployeeLevel,
+	Task
 ];
 
 @Module({

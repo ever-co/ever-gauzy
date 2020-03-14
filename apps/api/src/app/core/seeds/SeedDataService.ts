@@ -35,6 +35,12 @@ import { RolePermissions, createRolePermissions } from '../../role-permissions';
 import { createTenants } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
+import { seedEmploymentTypes } from '../../organization/employment-types.seed';
+import { OrganizationEmploymentType } from '../../organization-employment-type';
+import { Equipment } from '../../equipment';
+import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
+import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
+import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
 
 const allEntities = [
 	User,
@@ -50,7 +56,10 @@ const allEntities = [
 	RolePermissions,
 	Tenant,
 	EmailTemplate,
-	Tag
+	Tag,
+	OrganizationEmploymentType,
+	Equipment,
+	EmployeeLevel
 ];
 
 @Injectable()
@@ -181,6 +190,18 @@ export class SeedDataService {
 
 			await createEmailTemplates(this.connection);
 
+			await seedEmploymentTypes(this.connection, [
+				...randomOrganizations,
+				defaultOrganization
+			]);
+
+			await createEmployeeLevels(this.connection);
+
+			await createDefaultTimeOffPolicy(this.connection, {
+				org: defaultOrganization,
+				employees: [...employees.defaultEmployees]
+			});
+
 			this.log(
 				chalk.green(
 					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''} DATABASE`
@@ -242,6 +263,6 @@ export class SeedDataService {
 				`🛑 ERROR: ${!!message ? message : 'Unable to seed database'}`
 			)
 		);
-		throw new Error(`🛑  ${error}`);
+		throw error;
 	}
 }

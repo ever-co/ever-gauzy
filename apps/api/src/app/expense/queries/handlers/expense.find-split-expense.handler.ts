@@ -62,8 +62,6 @@ export class FindSplitExpenseHandler
 			}
 		});
 
-		console.log(items, total);
-
 		//3. Divide the value of the expense found in 1 to the no. of employees found in 2.
 		const splitItems = items.map((e) =>
 			e.splitExpense

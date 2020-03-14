@@ -7,7 +7,8 @@ import {
 	NbCardModule,
 	NbDatepickerModule,
 	NbButtonModule,
-	NbSelectModule
+	NbSelectModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -18,6 +19,9 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { ActionConfirmationComponent } from './action-confirmation/action-confirmation.component';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
+import { TagsService } from '../../../@core/services/tags.service';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -34,6 +38,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		FileUploaderModule,
 		NbSelectModule,
+		NgSelectModule,
+		NbBadgeModule,
+		TagsColorInputModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -57,6 +64,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent
 	],
-	providers: [AuthService, RoleService, IncomeService]
+	providers: [AuthService, RoleService, IncomeService, TagsService]
 })
 export class UserFormsModule {}

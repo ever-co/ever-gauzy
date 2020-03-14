@@ -220,7 +220,14 @@
 				<nb-datepicker #rejectDatePicker></nb-datepicker>
 			</div>
 		</div>
-		<div class="col"></div>
+		<div class="col-sm-6">
+			<div class="form-group">
+				<ngx-tags-color-input
+					(selectedTagsEvent)="selectedTagsHandler($event)"
+				>
+				</ngx-tags-color-input>
+			</div>
+		</div>
 	</div>
 
 	<div class="row">

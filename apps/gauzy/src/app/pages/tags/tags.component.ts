@@ -120,21 +120,15 @@ export class TagsComponent extends TranslationBaseComponent
 			columns: {
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
-					type: 'string',
-					width: '10%'
+					type: 'custom',
+					width: '20%',
+					class: 'text-center',
+					renderComponent: TagsColorComponent
 				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
 					type: 'string',
 					filter: false
-				},
-				color: {
-					title: this.getTranslation('TAGS_PAGE.TAGS_COLOR'),
-					width: '10%',
-					filter: false,
-					type: 'custom',
-					class: 'text-center',
-					renderComponent: TagsColorComponent
 				}
 			}
 		};

@@ -27,11 +27,20 @@
 				<div class="employee-details">
 					<span class="employee-name"
 						>{{ selectedEmployee.firstName }}
-						{{ selectedEmployee.lastName }}</span
-					>
+						{{ selectedEmployee.lastName }}
+						<nb-icon
+							class="mr-1 edit-icon"
+							icon="edit-outline"
+							(click)="edit()"
+						></nb-icon
+					></span>
+
 					<div class="employee-position">
-						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }} |
-						Level A
+						<!-- When we have employee position we will check this way for example: *ngIf="selectedEmployee['user'].employeeLevel && selectedEmployee['user'].employeePosition" -->
+						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }}
+						<span *ngIf="selectedEmployee['employeeLevel']">
+							| </span
+						>{{ selectedEmployee['employeeLevel'] }}
 					</div>
 				</div>
 			</div>

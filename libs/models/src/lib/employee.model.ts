@@ -1,11 +1,13 @@
-import { User, Tag } from '..';
+import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { Tenant } from './tenant.model';
+import { OrganizationEmploymentType } from './organization-employment-type.model';
 
-export interface Employee extends IBaseEntityModel {
+export interface Employee extends IBaseEntityModel, ILocation {
 	endWork?: any;
 	user: User;
 	userId: string;
@@ -19,10 +21,15 @@ export interface Employee extends IBaseEntityModel {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	tenant: Tenant;
+	organizationDepartments?: OrganizationDepartment[];
+	organizationPosition?: OrganizationPositions;
 	tags: Tag[];
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
+	employeeLevel?: string;
+	anonymousBonus?: boolean;
+	organizationEmploymentTypes?: OrganizationEmploymentType[];
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {
@@ -37,6 +44,8 @@ export interface EmployeeUpdateInput {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	organizationDepartment?: OrganizationDepartment;
+	organizationPosition?: OrganizationPositions;
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
@@ -54,4 +63,9 @@ export enum PayPeriodEnum {
 	WEEKLY = 'WEEKLY',
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
+}
+
+export interface EmployeeLevelInput {
+	level: string;
+	organizationId: string;
 }
