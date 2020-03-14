@@ -411,7 +411,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
-					type: 'email'
+					type: 'email',
+					class: 'email-column'
 				},
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),

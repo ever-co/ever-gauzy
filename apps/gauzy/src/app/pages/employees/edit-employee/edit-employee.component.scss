@@ -45,16 +45,22 @@
 		align-items: center;
 		background-color: #333;
 		justify-content: space-evenly;
-		overflow: hidden;
 		transition: width 0.2s ease-in;
-
+		//padding: 10px;
+		width: 0;
+		flex-shrink: 0;
+		overflow: hidden;
+		&.active {
+			width: auto;
+		}
 		.single-setting {
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-			width: 30px;
+			width: 46px;
 			cursor: pointer;
-
+			margin: 0 5px;
+			padding: 5px;
 			svg {
 				fill: rgb(127, 127, 127);
 			}
@@ -118,7 +124,7 @@
 	.block-value {
 		display: flex;
 		justify-content: space-between;
-		width: 204px;
+		//width: 204px;
 
 		align-items: center;
 		padding-right: 30px;
