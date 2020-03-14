@@ -371,7 +371,8 @@
 			"POSITION": "עמדה",
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:"
+			"EMPLOYEE_CLIENTS": "Employee's Clients:",
+			"EMPLOYMENT_TYPE": "Employment Type"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {

@@ -6,8 +6,6 @@ import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tenant } from './tenant.model';
 import { Tag } from './tag-entity.model';
-import { OrganizationDepartment } from './organization-department.model';
-import { OrganizationPositions } from './organization-positions.model';
 
 export interface User extends IBaseEntityModel {
 	thirdPartyId?: string;
@@ -21,7 +19,6 @@ export interface User extends IBaseEntityModel {
 	imageUrl?: string;
 	startedWorkOn?: string;
 	tenant: Tenant;
-	employeeLevel?: string;
 	tags: Tag[];
 }
 
@@ -35,7 +32,6 @@ export interface UserFindInput extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	employmentTypes?: any[];
 }
 
 export interface UserRegistrationInput {
@@ -64,6 +60,4 @@ export interface UserUpdateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	organizationDepartment?: OrganizationDepartment;
-	organizationPosition?: OrganizationPositions;
 }

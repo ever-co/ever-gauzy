@@ -372,7 +372,8 @@
 			"POSITION": "Position",
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:"
+			"EMPLOYEE_CLIENTS": "Employee's Clients:",
+			"EMPLOYMENT_TYPE": "Employment Type"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -755,7 +756,7 @@
 				"ADD_CLIENT": "New client {{ name }} successfully added!",
 				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
 				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client",
-        "INVITE_CLIENT": "Invitation email sent to {{ name }}.",
+				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
 			},
@@ -763,7 +764,7 @@
 				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"				
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {

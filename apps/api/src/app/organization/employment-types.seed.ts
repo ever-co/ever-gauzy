@@ -1,9 +1,9 @@
 import {
-	EmploymentTypesCreateInput,
-	GenericEmploymentTypes
+	GenericEmploymentTypes,
+	OrganizationEmploymentTypeCreateInput
 } from '@gauzy/models';
 import { Connection } from 'typeorm';
-import { EmploymentTypes } from '../employment-types/employment-types.entity';
+import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { Organization } from './organization.entity';
 
 export const seedEmploymentTypes = async (
@@ -11,7 +11,7 @@ export const seedEmploymentTypes = async (
 	organizations: Organization[]
 ) => {
 	organizations.forEach(({ id: organizationId }) => {
-		const genericEmploymentTypes: EmploymentTypesCreateInput[] = Object.values(
+		const genericEmploymentTypes: OrganizationEmploymentTypeCreateInput[] = Object.values(
 			GenericEmploymentTypes
 		).map((name) => {
 			const newType = {
@@ -25,12 +25,12 @@ export const seedEmploymentTypes = async (
 };
 const insertEmploymentTypes = async (
 	connection: Connection,
-	employmentTypesArray: EmploymentTypesCreateInput[]
+	employmentTypesArray: OrganizationEmploymentTypeCreateInput[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
-		.into(EmploymentTypes)
+		.into(OrganizationEmploymentType)
 		.values(employmentTypesArray)
 		.execute();
 };
