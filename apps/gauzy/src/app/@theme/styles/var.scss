@@ -11,6 +11,11 @@ $break-xl: 1199px;
 $break-xxl: 1280px;
 $break-dsk: 1532px;
 
+@function px2rem($px, $default: 14px) {
+	$em: $px/$default;
+	@return #{$em}rem;
+}
+
 @mixin respond($media) {
 	@if $media==xs {
 		@media only screen and (max-width: $break-xs) {

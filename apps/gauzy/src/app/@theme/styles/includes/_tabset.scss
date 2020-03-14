@@ -5,9 +5,7 @@ nb-route-tabset {
 		padding: 0;
 	}
 	.tab-link {
-		@include respond(dsk) {
-			padding: 1rem 1.4rem;
-		}
+		outline: none;
 		nb-icon {
 			margin-right: 10px;
 			@include respond(dsk) {
