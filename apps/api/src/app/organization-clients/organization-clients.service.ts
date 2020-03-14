@@ -19,8 +19,8 @@ export class OrganizationClientsService extends CrudService<
 
 	async findByEmployee(id: string): Promise<any> {
 		return await this.organizationClientsRepository
-			.createQueryBuilder('organization_clients')
-			.leftJoin('organization_clients.members', 'member')
+			.createQueryBuilder('organization_client')
+			.leftJoin('organization_client.members', 'member')
 			.where('member.id = :id', { id })
 			.getMany();
 	}

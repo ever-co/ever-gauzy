@@ -332,7 +332,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		this.selectedEmployee = null;
 
 		const { items } = await this.employeesService
-			.getAll(['user'], {
+			.getAll(['user', 'tags'], {
 				organization: { id: this.selectedOrganizationId }
 			})
 			.pipe(first())
@@ -359,6 +359,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 					  new Date(emp.endWork).getFullYear()
 					: '',
 				imageUrl: emp.user.imageUrl,
+				tag: emp.tags,
 				// TODO: laod real bonus and bonusDate
 				bonus: this.bonusForSelectedMonth,
 				averageIncome: Math.floor(this.averageIncome),
@@ -366,6 +367,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 				averageBonus: Math.floor(this.averageBonus),
 				bonusDate: Date.now()
 			});
+			console.warn(emp.tags);
 		}
 
 		if (!this.includeDeleted) {
@@ -409,7 +411,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
-					type: 'email'
+					type: 'email',
+					class: 'email-column'
 				},
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),

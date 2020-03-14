@@ -16,20 +16,34 @@ import * as mjml2html from 'mjml';
 export const createEmailTemplates = async (
 	connection: Connection
 ): Promise<any> => {
-	const templates: string[] = [];
+	return new Promise((resolve, reject) => {
+		const config: any = {
+			root: './apps/api/src/app/core/seeds/data/default-email-templates',
+			depth: 2
+		};
 
-	const files = await readdirp.promise(
-		'./apps/api/src/app/core/seeds/data/default-email-templates',
-		{ depth: 2 }
-	);
-	for (const file of files) {
-		const template = await pathToEmailTemplate(file.path, file.fullPath);
-		if (template && template.hbs) {
-			await insertTemplate(connection, template);
-		}
-	}
+		const files = [];
 
-	return templates;
+		readdirp(config)
+			.on('data', (entry) => {
+				files.push(entry);
+			})
+			.on('error', (error) => {
+				reject(error);
+			})
+			.on('end', async () => {
+				for (const file of files) {
+					const template = await pathToEmailTemplate(
+						file.path,
+						file.fullPath
+					);
+					if (template && template.hbs) {
+						await insertTemplate(connection, template);
+					}
+				}
+				resolve();
+			});
+	});
 };
 
 const insertTemplate = async (

@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
 @Controller()
 export class ExportAllController implements OnDestroy {
 	private sub: Subscription;
-	constructor(private readonly downloadAllService: ExportAllService) {}
+	constructor(private readonly exportService: ExportAllService) {}
 
 	@ApiTags('Download')
 	@ApiOperation({ summary: 'Find all employees.' })
@@ -22,20 +22,27 @@ export class ExportAllController implements OnDestroy {
 		description: 'Record not found'
 	})
 	@Get()
-	async downloadAll(@Res() res) {
+	async exportAll(@Res() res) {
 		let fileName = '';
-		this.sub = this.downloadAllService.fileName.subscribe((filename) => {
+
+		this.sub = this.exportService.fileName.subscribe((filename) => {
 			fileName = filename;
 		});
-		this.downloadAllService.archiveAndDownload();
 
-		setTimeout(function() {
-			res.download(`./export/${fileName}`);
-		}, 2000);
-		await setTimeout(function() {
-			fs.removeSync(`./export/${fileName}`);
-		}, 5000);
+		await this.exportService.exportAllCountries();
+		await this.exportService.archiveAndDownload();
+		await res.download(`./export/${fileName}`);
+
+		fs.access(`./export/${fileName}`, (error) => {
+			if (!error) {
+				fs.removeSync(`./export/${fileName}`);
+			} else {
+				console.log(`File ${fileName} doesnt exist.`);
+				return null;
+			}
+		});
 	}
+
 	ngOnDestroy() {
 		this.sub.unsubscribe();
 	}

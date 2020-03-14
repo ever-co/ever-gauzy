@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	Employee,
 	Organization,
-	EmploymentTypesCreateInput
+	OrganizationEmploymentType
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { OrganizationEditStore } from '../../../../../@core/services/organization-edit-store.service';
@@ -24,7 +24,7 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 	showAddCard: boolean;
 	selectedEmployee: Employee;
 	organization: Organization;
-	employmentTypes: EmploymentTypesCreateInput[];
+	organizationEmploymentTypes: OrganizationEmploymentType[];
 
 	constructor(
 		private fb: FormBuilder,
@@ -44,10 +44,12 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 				this.organization = data;
 				if (this.organization) {
 					this.organizationEmploymentTypesService
-						.getEmploymentTypes(this.organization.id)
+						.getAll([], {
+							organizationId: this.organization.id
+						})
 						.pipe(takeUntil(this._ngDestroy$))
 						.subscribe((types) => {
-							this.employmentTypes = types;
+							this.organizationEmploymentTypes = types.items;
 						});
 				}
 			});
@@ -75,7 +77,7 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 				.addEmploymentType(newEmploymentType)
 				.pipe(takeUntil(this._ngDestroy$))
 				.subscribe((data) => {
-					this.employmentTypes.push(data);
+					this.organizationEmploymentTypes.push(data);
 				});
 			this.toastrService.primary(
 				this.getTranslation(
@@ -109,7 +111,7 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 			.addEmploymentType(newEmploymentType)
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((data) => {
-				this.employmentTypes.push(data);
+				this.organizationEmploymentTypes.push(data);
 			});
 		this.form.reset();
 	}
@@ -125,7 +127,7 @@ export class EditOrganizationEmploymentTypes extends TranslationBaseComponent
 			),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
-		this.employmentTypes = this.employmentTypes.filter(
+		this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter(
 			(t) => t['id'] !== id
 		);
 	}

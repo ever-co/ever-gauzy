@@ -101,7 +101,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get()
-	async findAllEmployees(
+	async findAllUsers(
 		@Query('data') data: string
 	): Promise<IPagination<User>> {
 		const { relations, findInput } = JSON.parse(data);
