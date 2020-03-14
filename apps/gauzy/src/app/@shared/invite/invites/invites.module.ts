@@ -26,6 +26,7 @@ import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
+import { SharedModule } from '../../shared.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -41,6 +42,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		SharedModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,
