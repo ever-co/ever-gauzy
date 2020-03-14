@@ -29,7 +29,7 @@ export class ExportAllController implements OnDestroy {
 			fileName = filename;
 		});
 
-		await this.exportService.exportAllCountries();
+		await this.exportService.exportCountries();
 		await this.exportService.archiveAndDownload();
 		await res.download(`./export/${fileName}`);
 
