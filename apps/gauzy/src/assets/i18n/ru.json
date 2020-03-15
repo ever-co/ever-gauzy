@@ -131,7 +131,10 @@
 			"OFFER_DATE": "Дата предложения (опционально)",
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
-			"EMAIL_INVITATION": "Введите email для отправки приглашения"
+			"EMAIL_INVITATION": "Введите email для отправки приглашения",
+			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
+			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
+			"REGISTRATION_DATE": "Дата регистрации"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -188,7 +191,8 @@
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
 			"SWITCH_PROJECT_STATE": "Публичный",
-			"EMPLOYMENT_TYPES": "Тип занятости"
+			"EMPLOYMENT_TYPES": "Тип занятости",
+			"REGISTRATION_DATE": "Дата регистрации организации"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -376,7 +380,16 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Кафедры работника:",
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
-			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:"
+			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
+			"EMPLOYMENT_TYPE": "Тип занятости"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Шаг 1",
+			"STEP_2": "Шаг2",
+			"ADD_ANOTHER_EMPLOYEE": "Добавить другого сотрудника",
+			"FINISHED_ADDING": "Я добавил все текущие сотрудники",
+			"NEXT": "Следующий",
+			"PREVIOUS": "Предыдущий"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -411,7 +424,7 @@
 			"PROJECTS": "Проекты",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
-			"EMPLOYMENT_TYPES": "Типы занятости",
+			"EMPLOYMENT_TYPES": "Тип занятости",
 			"NEW_PROJECT": "Добавить новый проект",
 			"START_DATE": "Дата начала",
 			"END_DATE": "Дата окончания",
@@ -426,7 +439,8 @@
 			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
 			"EDIT_PROJECT": "Редактировать проект",
 			"REGIONS": "Регионы",
-			"ROLES_PERMISSIONS": "Роли и Разрешения"
+			"ROLES_PERMISSIONS": "Роли и Разрешения",
+			"DATE_LIMIT": "Ограничение даты"
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",

@@ -39,6 +39,7 @@ import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { OrganizationEmploymentTypeModule } from './organization-employment-type';
 
 @Module({
 	imports: [
@@ -136,6 +137,10 @@ import { IntegrationsModule } from './integrations/integrations.module';
 					{
 						path: '/tasks',
 						module: TaskModule
+					},
+					{
+						path: '/organization-employment-type',
+						module: OrganizationEmploymentTypeModule
 					}
 				]
 			}
@@ -186,7 +191,8 @@ import { IntegrationsModule } from './integrations/integrations.module';
 		EquipmentModule,
 		EmployeeLevelModule,
 		TaskModule,
-		IntegrationsModule
+		IntegrationsModule,
+		OrganizationEmploymentTypeModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

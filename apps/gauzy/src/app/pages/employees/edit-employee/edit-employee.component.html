@@ -82,6 +82,8 @@
 			selectedEmployeeFromHeader.id
 		"
 	>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+
 		<div class="body-header">
 			<div>
 				<span class="setting-name">
@@ -187,8 +189,8 @@
 			</div>
 			<div
 				class="block-settings"
-				[ngStyle]="{
-					width: selectedRowIndexToShow === i ? '150px' : '0'
+				[ngClass]="{
+					active: selectedRowIndexToShow === i
 				}"
 			>
 				<div

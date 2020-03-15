@@ -5,6 +5,7 @@ import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { Tenant } from './tenant.model';
+import { OrganizationEmploymentType } from './organization-employment-type.model';
 
 export interface Employee extends IBaseEntityModel, ILocation {
 	endWork?: any;
@@ -20,12 +21,15 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	tenant: Tenant;
-	organizationDepartment?: OrganizationDepartment;
+	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
 	tags: Tag[];
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
+	employeeLevel?: string;
+	anonymousBonus?: boolean;
+	organizationEmploymentTypes?: OrganizationEmploymentType[];
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {
@@ -50,6 +54,10 @@ export interface EmployeeUpdateInput {
 export interface EmployeeCreateInput {
 	user: User;
 	organization: Organization;
+	password?: string;
+	offerDate?: Date;
+	acceptDate?: Date;
+	rejectDate?: Date;
 	members?: Employee[];
 }
 
@@ -61,17 +69,7 @@ export enum PayPeriodEnum {
 	MONTHLY = 'MONTHLY'
 }
 
-export interface EmploymentTypes {
-	id?: string;
-	name: string;
-	organizationId?: string;
-}
-
-export interface EmploymentTypesCreateInput {
-	name: string; 
-}
-
 export interface EmployeeLevelInput {
 	level: string;
-  organizationId: string;
+	organizationId: string;
 }

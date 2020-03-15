@@ -1,5 +1,9 @@
+@import 'var';
 nb-card-body {
 	padding: 50px 70px;
+	@include respond(dsk) {
+		padding: 30px 40px;
+	}
 
 	.navigate {
 		display: flex;

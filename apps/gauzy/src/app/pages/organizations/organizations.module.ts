@@ -82,7 +82,7 @@ import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit
 		EditOrganizationComponent,
 		OrganizationsEmployeesComponent,
 		OrganizationsCurrencyComponent,
-    EditOrganizationEmployeeLevelComponent
+		EditOrganizationEmployeeLevelComponent
 	],
 	providers: [OrganizationEmploymentTypesService]
 })

@@ -29,6 +29,7 @@ import { TimeOffService } from '../../@core/services/time-off.service';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { RequestApprovalIcon } from './table-components/request-approval-icon';
 import { PaidIcon } from './table-components/paid-icon';
+import { SharedModule } from '../../@shared/shared.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -36,6 +37,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		SharedModule,
 		TimeOffRoutingModule,
 		ThemeModule,
 		UserFormsModule,

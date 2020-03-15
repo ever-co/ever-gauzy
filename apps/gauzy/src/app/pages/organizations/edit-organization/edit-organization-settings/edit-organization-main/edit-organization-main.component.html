@@ -138,6 +138,27 @@
 					</div>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col-6">
+					<div class="form-group">
+						<label class="label" for="registrationDate">{{
+							'FORM.LABELS.REGISTRATION_DATE' | translate
+						}}</label>
+						<input
+							nbInput
+							fullWidth
+							id="registrationDate"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.REGISTRATION_DATE'
+									| translate
+							}}"
+							[nbDatepicker]="registrationDate"
+							formControlName="registrationDate"
+						/>
+						<nb-datepicker #registrationDate></nb-datepicker>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<div class="actions">

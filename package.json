@@ -148,6 +148,7 @@
 		"cloudinary-core": "^2.7.4",
 		"core-js": "^3.2.1",
 		"csv-parser": "^2.3.2",
+		"csv-writer": "^1.6.0",
 		"d3": "4.13.0",
 		"d3-selection-multi": "1.0.1",
 		"date-fns": "~2.0.1",

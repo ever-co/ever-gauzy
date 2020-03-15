@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { Country } from './country.entity';
@@ -10,4 +10,6 @@ export class CountryController extends CrudController<Country> {
 	constructor(private readonly countryService: CountryService) {
 		super(countryService);
 	}
+	@Get()
+	async getALLCountries() {}
 }

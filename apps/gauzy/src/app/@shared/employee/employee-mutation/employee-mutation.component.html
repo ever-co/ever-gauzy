@@ -8,20 +8,64 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-user-basic-info-form
-			#userBasicInfo
-			[isEmployee]="true"
-		></ga-user-basic-info-form>
+		<nb-stepper #stepper>
+			<nb-step [label]="step1">
+				<ng-template #step1>{{
+					'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_1' | translate
+				}}</ng-template>
+				<ga-user-basic-info-form
+					#userBasicInfo
+					[isEmployee]="true"
+				></ga-user-basic-info-form>
+				<div class="text-right">
+					<button
+						status="success"
+						[disabled]="userBasicInfo.form.invalid"
+						nbButton
+						nbStepperNext
+					>
+						{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.NEXT' | translate }}
+					</button>
+				</div>
+			</nb-step>
+			<nb-step [label]="step2">
+				<ng-template #step2>{{
+					'EMPLOYEES_PAGE.ADD_EMPLOYEES.STEP_2' | translate
+				}}</ng-template>
+
+				<div class="button-container">
+					<button status="primary" nbButton nbStepperPrevious>
+						{{
+							'EMPLOYEES_PAGE.ADD_EMPLOYEES.PREVIOUS' | translate
+						}}
+					</button>
+					<button
+						status="success"
+						[disabled]="userBasicInfo.form.invalid"
+						nbButton
+						nbStepperNext
+					>
+						{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.NEXT' | translate }}
+					</button>
+				</div>
+			</nb-step>
+
+			<nb-step [label]="step2" [hidden]="true">
+				<div class="step-container button-container">
+					<button nbButton (click)="addEmployee()">
+						{{
+							'EMPLOYEES_PAGE.ADD_EMPLOYEES.ADD_ANOTHER_EMPLOYEE'
+								| translate
+						}}
+					</button>
+					<button status="success" (click)="add()" nbButton>
+						{{
+							'EMPLOYEES_PAGE.ADD_EMPLOYEES.FINISHED_ADDING'
+								| translate
+						}}
+					</button>
+				</div>
+			</nb-step>
+		</nb-stepper>
 	</nb-card-body>
-	<nb-card-footer class="text-right">
-		<button
-			[disabled]="userBasicInfo.form.invalid"
-			status="success"
-			(click)="add()"
-			nbButton
-		>
-			<!-- TODO Add translates -->
-			Add
-		</button>
-	</nb-card-footer>
 </nb-card>
