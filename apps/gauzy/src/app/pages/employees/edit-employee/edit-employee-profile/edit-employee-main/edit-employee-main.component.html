@@ -87,48 +87,6 @@
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label class="label">
-							{{
-								'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DEPARTMENT'
-									| translate
-							}}
-						</label>
-						<ng-select
-							id="departmentInput"
-							[items]="departments"
-							formControlName="organizationDepartment"
-							bindLabel="name"
-							[searchable]="false"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.ALL_DEPARTMENTS' | translate
-							}}"
-						>
-						</ng-select>
-					</div>
-				</div>
-				<div class="col">
-					<div class="form-group">
-						<label for="positionInput" class="label">{{
-							'EMPLOYEES_PAGE.EDIT_EMPLOYEE.POSITION' | translate
-						}}</label>
-						<ng-select
-							id="positionInput"
-							[items]="positions"
-							formControlName="organizationPosition"
-							bindLabel="name"
-							[searchable]="false"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.ALL_POSITIONS' | translate
-							}}"
-						>
-						</ng-select>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
 						<label class="label" for="firstNameInput">{{
 							'FORM.LABELS.FIRST_NAME' | translate
 						}}</label>
@@ -159,50 +117,6 @@
 								'FORM.PLACEHOLDERS.LAST_NAME' | translate
 							}}"
 						/>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-md-6">
-					<div class="form-group">
-						<label for="employmentType" class="label"
-							>Employment Types</label
-						>
-						<nb-select
-							id="employmentType"
-							fullWidth
-							multiple
-							placeholder="Select Employment Types"
-							formControlName="employmentTypes"
-						>
-							<nb-option
-								*ngFor="let opt of this.employmentTypes"
-								[value]="opt.id"
-								>{{ opt.name }}</nb-option
-							>
-						</nb-select>
-
-						<label class="label" for="empLevelInput">
-							Employee Level
-						</label>
-						<ng-select formControlName="employeeLevel">
-							<ng-option
-								*ngFor="let empL of employeeLevels"
-								[value]="empL.level"
-								>{{ empL.level }}</ng-option
-							>
-						</ng-select>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col">
-					<div class="form-group">
-						<nb-checkbox formControlName="anonymousBonus">
-							Display bonus Anonymously
-						</nb-checkbox>
 					</div>
 				</div>
 			</div>

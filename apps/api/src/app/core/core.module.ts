@@ -35,7 +35,7 @@ import { TimeOffPolicy } from '../time-off-policy';
 import { RolePermissions } from '../role-permissions';
 import { Tenant } from './../tenant/tenant.entity';
 import { EmailTemplate } from '../email-template';
-import { EmploymentTypes } from '../employment-types/employment-types.entity';
+import { OrganizationEmploymentType } from '../organization-employment-type';
 import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
@@ -66,7 +66,7 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
-	EmploymentTypes,
+	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,
 	Task

@@ -43,7 +43,6 @@ import { EditOrganizationClientsComponent } from './edit-organization-clients/ed
 import { InviteClientComponent } from './edit-organization-clients/invite-client/invite-client.component';
 import { EditOrganizationDepartmentsMutationComponent } from './edit-organization-departments/edit-organization-departments-mutation/edit-organization-departments-mutation.component';
 import { EditOrganizationDepartmentsComponent } from './edit-organization-departments/edit-organization-departments.component';
-import { EditOrganizationEmploymentTypes } from './edit-organization-employmentTypes/edit-organization-employment-types.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
@@ -54,6 +53,7 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 import { EditOrganizationTeamsMutationComponent } from './edit-organization-teams/edit-organization-teams-mutation/edit-organization-teams-mutation.component';
 import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
 import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
+import { EditOrganizationEmploymentTypes } from './edit-organization-employment-types/edit-organization-employment-types.component';
 
 @NgModule({
 	imports: [

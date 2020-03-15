@@ -49,6 +49,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	rejectDate: any;
 	tags: Tag[] = [];
 	selectedTags: any;
+	items: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -61,7 +62,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 
 	ngOnInit(): void {
 		this.loadFormData();
-		this.getAllTags();
+
+		// this.getAllTags();
 	}
 
 	get uploaderPlaceholder() {
@@ -130,6 +132,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		this.offerDate = this.form.get('offerDate');
 		this.acceptDate = this.form.get('acceptDate');
 		this.rejectDate = this.form.get('rejectDate');
+		this.selectedTags = this.form.get('selectedTags');
 	};
 
 	get showImageMeta() {
@@ -158,7 +161,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						role,
 						startedWorkOn: startedWorkOn.value,
 						tenant: this.tenant,
-						tags: this.selectedTags.value
+						tags: this.selectedTags
 					},
 					password: this.password.value
 				})
@@ -175,6 +178,10 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		this.imageUrl.setValue('');
 	}
 
+	selectedTagsHandler(ev) {
+		this.selectedTags = ev;
+	}
+
 	ngAfterViewInit() {
 		this._setupLogoUrlValidation();
 	}
@@ -189,11 +196,5 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 				this.imageUrl.setErrors({ invalidUrl: true });
 			}
 		};
-	}
-
-	async getAllTags() {
-		const { items } = await this.tagsService.getAllTags();
-		this.tags = items;
-		this.selectedTags = items;
 	}
 }

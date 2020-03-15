@@ -131,7 +131,9 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Дата на приемане (опция)",
 			"REJECT_DATE": "Дата на отказ (опция)",
-			"EMAIL_INVITATION": "Enter email to send invitation"
+			"EMAIL_INVITATION": "Enter email to send invitation",
+			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
+			"ALLOW_FUTURE_DATE": "Allow switching to future periods"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -371,7 +373,16 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
-			"EMPLOYEE_CLIENTS": "Клиенти на служителя:"
+			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
+			"EMPLOYMENT_TYPE": "Employment Type"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
+			"FINISHED_ADDING": "I’ve Added All Current Employees",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -406,7 +417,7 @@
 			"PROJECTS": "Проекти",
 			"DEPARTMENT_NAME": "Име на отдела",
 			"POSITION_NAME": "Название на позиция",
-			"EMPLOYMENT_TYPES": "Employment Types",
+			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Добавяне на нов проект",
 			"START_DATE": "Начална дата",
 			"END_DATE": "Крайна дата",
@@ -421,7 +432,8 @@
 			"CLICK_EMPLOYEE": "Кликни за редакция на служителя",
 			"EDIT_PROJECT": "Редактирай Проекта",
 			"REGIONS": "Области",
-			"ROLES_PERMISSIONS": "Роли и Позволения"
+			"ROLES_PERMISSIONS": "Роли и Позволения",
+			"DATE_LIMIT": "Date Limit"
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Виж Административното Табло",

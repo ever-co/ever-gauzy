@@ -6,13 +6,13 @@ import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-prof
 import { EditEmployeeMainComponent } from './edit-employee/edit-employee-profile/edit-employee-main/edit-employee-main.component';
 import { EditEmployeeRatesComponent } from './edit-employee/edit-employee-profile/edit-employee-rate/edit-employee-rate.component';
 import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-employee-invite.component';
-import { EditEmployeeDepartmentComponent } from './edit-employee/edit-employee-profile/edit-employee-department/edit-employee-department.component';
 import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
 import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
 import { PermissionsEnum } from '@gauzy/models';
 import { InviteGuard } from '../../@core/role/invite.guard';
 import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
 import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
+import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
 
 const routes: Routes = [
 	{
@@ -29,20 +29,16 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				redirectTo: 'main',
+				redirectTo: 'account',
 				pathMatch: 'full'
 			},
 			{
-				path: 'main',
+				path: 'account',
 				component: EditEmployeeMainComponent
 			},
 			{
 				path: 'rates',
 				component: EditEmployeeRatesComponent
-			},
-			{
-				path: 'departments',
-				component: EditEmployeeDepartmentComponent
 			},
 			{
 				path: 'projects',
@@ -59,6 +55,10 @@ const routes: Routes = [
 			{
 				path: 'hiring',
 				component: EditEmployeeHiringComponent
+			},
+			{
+				path: 'employment',
+				component: EditEmployeeEmploymentComponent
 			}
 		]
 	},

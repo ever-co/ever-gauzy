@@ -26,6 +26,7 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
 	tags: Tag[];
+	futureDateAllowed?: boolean;
 }
 
 export interface OrganizationFindInput extends IBaseEntityModel {
