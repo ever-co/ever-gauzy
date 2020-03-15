@@ -14,6 +14,10 @@ export class UserService extends CrudService<User> {
 		super(userRepository);
 	}
 
+	async findOneOrFail(condition) {
+		return await this.repository.findOneOrFail(condition);
+	}
+
 	async getUserByEmail(email: string): Promise<User> {
 		const user = await this.repository
 			.createQueryBuilder('user')

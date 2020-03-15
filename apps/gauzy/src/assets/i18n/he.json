@@ -248,6 +248,8 @@
 		"DASHBOARD": "לוח מחוונים",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
+		"INTEGRATIONS": "שילובים",
+		"UPWORK": "עבודת יד",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"HELP": "עזרה",
@@ -280,6 +282,9 @@
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian"
+	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "התווספה עסקת עבודה"
 	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",

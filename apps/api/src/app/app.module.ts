@@ -38,6 +38,7 @@ import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
+import { IntegrationsModule } from './integrations/integrations.module';
 
 @Module({
 	imports: [
@@ -184,7 +185,8 @@ import { TaskModule } from './tasks';
 			: []),
 		EquipmentModule,
 		EmployeeLevelModule,
-		TaskModule
+		TaskModule,
+		IntegrationsModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

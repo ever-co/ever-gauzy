@@ -58,6 +58,25 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Integrations',
+			icon: 'settings-outline',
+			link: '/pages/integrations',
+			data: {
+				translated: false,
+				translationKey: 'MENU.INTEGRATIONS'
+			},
+			children: [
+				{
+					title: 'Upwork',
+					link: '/pages/integrations/upwork',
+					data: {
+						translated: false,
+						translationKey: 'MENU.UPWORK'
+					}
+				}
+			]
+		},
+		{
 			title: 'Proposals',
 			icon: 'paper-plane-outline',
 			link: '/pages/proposals',

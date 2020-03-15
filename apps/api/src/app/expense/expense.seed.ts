@@ -55,14 +55,16 @@ export const createExpenses = async (
 		'Benefit Systems',
 		'Udemy',
 		'Google',
-		'CoShare'
+		'CoShare',
+		'Upwork'
 	];
 	const categoryArray = [
 		'Software',
 		'Employees Benefits',
 		'Courses',
 		'Subscriptions',
-		'Rent'
+		'Rent',
+		'Service Fee'
 	];
 	const notesArray = [
 		'Windows 10',

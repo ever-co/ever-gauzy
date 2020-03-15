@@ -28,6 +28,7 @@ export interface IncomeCreateInput {
 	notes?: string;
 	orgId?: string;
 	isBonus?: boolean;
+	reference?: string;
 }
 
 export interface IncomeUpdateInput {

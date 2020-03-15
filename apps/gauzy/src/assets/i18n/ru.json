@@ -248,6 +248,8 @@
 		"DASHBOARD": "Приборная доска",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
+		"INTEGRATIONS": "Интеграции",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
 		"HELP": "Помогите",
@@ -280,6 +282,9 @@
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
+	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Добавлена ​​транзакция Upwork"
 	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
