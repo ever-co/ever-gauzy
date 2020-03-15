@@ -94,7 +94,12 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
 			officialName: [this.organization.officialName],
-			taxId: [this.organization.taxId]
+			taxId: [this.organization.taxId],
+			registrationDate: [
+				this.organization.registrationDate
+					? new Date(this.organization.registrationDate)
+					: null
+			]
 		});
 	}
 }

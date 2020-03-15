@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbCalendarMonthPickerComponent } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { monthNames } from '../../../../../@core/utils/date';
-import { min, addYears } from 'date-fns';
+import { min, addYears, subYears } from 'date-fns';
 @Component({
 	selector: 'ga-date-selector',
 	templateUrl: './date.component.html',
@@ -16,6 +16,7 @@ export class DateSelectorComponent implements OnInit {
 	dateInputValue: string;
 	date = new Date();
 	max;
+	min;
 	@ViewChild('month', { static: false })
 	monthRef: NbCalendarMonthPickerComponent<any, any>;
 
@@ -65,6 +66,13 @@ export class DateSelectorComponent implements OnInit {
 			this.store.selectedOrganization.futureDateAllowed
 				? addYears(currentDate.setMonth(11), 10)
 				: currentDate;
+
+		this.min =
+			this.store.selectedOrganization &&
+			this.store.selectedOrganization.registrationDate
+				? new Date(this.store.selectedOrganization.registrationDate)
+				: subYears(currentDate.setMonth(11), 15);
+
 		this.loadCalendar = true;
 	}
 	clear() {

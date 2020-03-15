@@ -17,6 +17,7 @@
 		<nb-calendar-year-picker
 			[year]="date"
 			[max]="max"
+			[min]="min"
 			(yearChange)="handleDateChange($event)"
 		>
 		</nb-calendar-year-picker>
@@ -24,6 +25,7 @@
 			#month
 			[month]="date"
 			[max]="max"
+			[min]="min"
 			(monthChange)="handleDateChange($event)"
 		>
 		</nb-calendar-month-picker>
