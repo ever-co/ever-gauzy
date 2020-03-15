@@ -375,6 +375,14 @@
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
 			"EMPLOYEE_CLIENTS": "Employee's Clients:",
 			"EMPLOYMENT_TYPE": "Employment Type"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
+			"FINISHED_ADDING": "I’ve Added All Current Employees",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
