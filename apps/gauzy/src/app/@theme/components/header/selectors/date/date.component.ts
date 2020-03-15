@@ -1,8 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import {
-	NbCalendarMonthPickerComponent,
-	NbCalendarYearPickerComponent
-} from '@nebular/theme';
+import { NbCalendarMonthPickerComponent } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { monthNames } from '../../../../../@core/utils/date';
 import { min, addYears, subYears } from 'date-fns';
