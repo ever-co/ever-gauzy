@@ -34,7 +34,11 @@ export class Employee extends LocationBase implements IEmployee {
 	tags: Tag[];
 
 	@ApiProperty({ type: User })
-	@OneToOne((type) => User, { nullable: false, onDelete: 'CASCADE' })
+	@OneToOne((type) => User, {
+		nullable: false,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	user: User;
 

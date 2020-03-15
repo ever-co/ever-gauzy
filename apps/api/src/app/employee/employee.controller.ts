@@ -18,7 +18,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
+import { IPagination, getUserDummyImage } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
@@ -136,9 +136,19 @@ export class EmployeeController extends CrudController<Employee> {
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/createBulk')
 	async createBulk(
-		@Body() entity: IEmployeeCreateInput[],
+		@Body() input: IEmployeeCreateInput[],
 		...options: any[]
 	): Promise<Employee[]> {
-		return this.commandBus.execute(new EmployeeBulkCreateCommand(entity));
+		/**
+		 * Use a dummy image avatar if no image is uploaded for any of the employees in the list
+		 */
+		input
+			.filter((entity) => !entity.user.imageUrl)
+			.map(
+				(entity) =>
+					(entity.user.imageUrl = getUserDummyImage(entity.user))
+			);
+
+		return this.commandBus.execute(new EmployeeBulkCreateCommand(input));
 	}
 }
