@@ -39,6 +39,13 @@ import { OrganizationEmploymentType } from '../organization-employment-type';
 import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
+import {
+	TimeSlot,
+	Timesheet,
+	TimeLog,
+	Activity,
+	Screenshot
+} from '../timesheet';
 
 const entities = [
 	Invite,
@@ -69,7 +76,12 @@ const entities = [
 	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,
-	Task
+	Task,
+	TimeSlot,
+	Timesheet,
+	TimeLog,
+	Activity,
+	Screenshot
 ];
 
 @Module({

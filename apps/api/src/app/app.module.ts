@@ -39,6 +39,7 @@ import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type';
+import { TimesheetModule } from './timesheet/timesheet.module';
 
 @Module({
 	imports: [
@@ -190,7 +191,8 @@ import { OrganizationEmploymentTypeModule } from './organization-employment-type
 		EquipmentModule,
 		EmployeeLevelModule,
 		TaskModule,
-		OrganizationEmploymentTypeModule
+		OrganizationEmploymentTypeModule,
+		TimesheetModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
