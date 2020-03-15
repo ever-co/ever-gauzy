@@ -375,6 +375,14 @@
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
 			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
 			"EMPLOYMENT_TYPE": "Тип занятости"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Шаг 1",
+			"STEP_2": "Шаг2",
+			"ADD_ANOTHER_EMPLOYEE": "Добавить другого сотрудника",
+			"FINISHED_ADDING": "Я добавил все текущие сотрудники",
+			"NEXT": "Следующий",
+			"PREVIOUS": "Предыдущий"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
