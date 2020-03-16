@@ -9,7 +9,7 @@ export class InvoicesComponent {
 	constructor(private dialogService: NbDialogService) {}
 
 	async add() {
-		const dialog = this.dialogService.open(InvoicesMutationComponent, {
+		this.dialogService.open(InvoicesMutationComponent, {
 			context: {}
 		});
 		// const addData = await dialog.onClose.pipe(first()).toPromise();
