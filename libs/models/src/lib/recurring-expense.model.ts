@@ -41,6 +41,10 @@ export interface RecurringExpenseDeleteInput {
 	year: number;
 }
 
+export interface RecurringExpenseOrderFields {
+	startDate?: 'ASC' | 'DESC';
+}
+
 export enum RecurringExpenseDeletionEnum {
 	CURRENT = 'current',
 	FUTURE = 'future',

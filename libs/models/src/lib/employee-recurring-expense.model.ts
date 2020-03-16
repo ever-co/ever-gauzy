@@ -11,3 +11,9 @@ export interface EmployeeRecurringExpenseByMonthFindInput
 	month?: number;
 	year?: number;
 }
+
+export interface EmployeeRecurringExpenseFindInput {
+	month?: number;
+	year?: number;
+	parentRecurringExpenseId?: string;
+}
