@@ -248,7 +248,8 @@
 		"RECURRING_EXPENSE": "This is a recurring expense",
 		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}",
 		"STARTS_ON": "Starts On",
-		"EXPENSE_HISTORY": "Expense History"
+		"EXPENSE_HISTORY": "Expense History",
+		"NEW_EXPENSE_VALUE": "New Expense Value"
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
