@@ -1,4 +1,4 @@
-import { Injectable, Res } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as archiver from 'archiver';
@@ -65,6 +65,7 @@ export class ExportAllService implements OnDestroy {
 
 				archive.on('warning', function(err) {
 					if (err.code === 'ENOENT') {
+						reject(err);
 					} else {
 						reject(err);
 					}
@@ -119,12 +120,14 @@ export class ExportAllService implements OnDestroy {
 	async downloadToUser(res): Promise<any> {
 		return new Promise((resolve, reject) => {
 			let fileName = '';
+
 			this.idZip
 				.pipe(takeUntil(this._ngDestroy$))
 				.subscribe((filename) => {
 					fileName = filename;
 				});
 			res.download(`./export/${fileName}`);
+
 			resolve();
 		});
 	}
@@ -132,9 +135,11 @@ export class ExportAllService implements OnDestroy {
 	async deleteCsvFiles(): Promise<any> {
 		return new Promise((resolve, reject) => {
 			let id$ = '';
+
 			this.idCsv.pipe(takeUntil(this._ngDestroy$)).subscribe((id) => {
 				id$ = id;
 			});
+
 			fs.access(`./export/${id$}`, (error) => {
 				if (!error) {
 					fse.removeSync(`./export/${id$}`);
@@ -153,6 +158,7 @@ export class ExportAllService implements OnDestroy {
 				.subscribe((fileName$) => {
 					fileName = fileName$;
 				});
+
 			fs.access(`./export/${fileName}`, (error) => {
 				if (!error) {
 					fse.removeSync(`./export/${fileName}`);
