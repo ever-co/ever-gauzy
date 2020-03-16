@@ -67,7 +67,7 @@ export class ExportAllService implements OnDestroy {
 					if (err.code === 'ENOENT') {
 						reject(err);
 					} else {
-						reject(err);
+						console.log('Unexpected error!');
 					}
 				});
 
