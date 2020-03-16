@@ -45,7 +45,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	hasEditPermission = false;
 	hasEditExpensePermission = false;
 	private _ngDestroy$ = new Subject<void>();
-	historyOpen: Object = {};
 	fetchedHistories: Object = {};
 
 	loading = true;
@@ -296,6 +295,8 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	}
 
 	private async _loadOrgRecurringExpense() {
+		this.fetchedHistories = {};
+
 		if (this.selectedOrg && this.selectedDate) {
 			this.selectedOrgRecurringExpense = (
 				await this.organizationRecurringExpenseService.getAllByMonth({
@@ -308,15 +309,19 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		}
 	}
 
-	public async openHistoryTable(i: number) {
+	public async fetchHistory(i: number) {
 		this.fetchedHistories[i] = (
-			await this.organizationRecurringExpenseService.getAll([], {
-				parentRecurringExpenseId: this.selectedOrgRecurringExpense[i]
-					.parentRecurringExpenseId,
-				year: this.selectedDate.getFullYear(),
-				month: this.selectedDate.getMonth() + 1
-			})
+			await this.organizationRecurringExpenseService.getAll(
+				[],
+				{
+					parentRecurringExpenseId: this.selectedOrgRecurringExpense[
+						i
+					].parentRecurringExpenseId
+				},
+				{
+					startDate: 'ASC'
+				}
+			)
 		).items;
-		this.historyOpen[i] = true;
 	}
 }

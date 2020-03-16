@@ -1,10 +1,8 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { RecurringExpenseModel } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { monthNames } from '../../../@core/utils/date';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { DateViewComponent } from '../../table-components/date-view/date-view.component';
-import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
 
 @Component({
 	selector: 'ga-recurring-expense-history',
@@ -16,9 +14,20 @@ export class RecurringExpenseHistoryComponent extends TranslationBaseComponent
 	@Input()
 	recordsData: RecurringExpenseModel[] = [];
 
+	@Output()
+	closeHistory = new EventEmitter<void>();
+
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
+	emitClose = () => {
+		this.closeHistory.emit();
+	};
+
 	ngOnInit() {}
+
+	getMonthString(month: number) {
+		return monthNames[month - 1];
+	}
 }

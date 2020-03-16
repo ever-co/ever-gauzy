@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { NbIconModule } from '@nebular/theme';
+import { NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
@@ -8,7 +8,8 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
 import { TableComponentsModule } from '../../table-components/table-components.module';
-import { RecurringExpenseHistoryComponent } from './recurring-expense-history.component';
+import { RecurringExpenseHistoryModule } from '../reecurring-expense-history/recurring-expense-history.module';
+import { RecurringExpenseBlockComponent } from './recurring-expense-block.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -20,6 +21,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		TableComponentsModule,
 		NbIconModule,
+		NbTooltipModule,
+		RecurringExpenseHistoryModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -28,13 +31,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	exports: [RecurringExpenseHistoryComponent],
-	declarations: [RecurringExpenseHistoryComponent],
+	exports: [RecurringExpenseBlockComponent],
+	declarations: [RecurringExpenseBlockComponent],
 	entryComponents: [
-		RecurringExpenseHistoryComponent,
+		RecurringExpenseBlockComponent,
 		DateViewComponent,
 		IncomeExpenseAmountComponent
 	],
 	providers: []
 })
-export class RecurringExpenseHistoryModule {}
+export class RecurringExpenseBlockModule {}

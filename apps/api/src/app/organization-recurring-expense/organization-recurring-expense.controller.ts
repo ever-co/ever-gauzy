@@ -101,10 +101,11 @@ export class OrganizationRecurringExpenseController extends CrudController<
 	async findAllRecurringExpenses(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationRecurringExpense>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput, order = {} } = JSON.parse(data);
 
 		return this.organizationRecurringExpenseService.findAll({
-			where: findInput
+			where: findInput,
+			order: order
 		});
 	}
 
@@ -160,7 +161,9 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		);
 	}
 
-	@ApiOperation({ summary: 'Find all organization recurring expense.' })
+	@ApiOperation({
+		summary: 'Find all organization recurring expense by month.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found organization recurring expense',
