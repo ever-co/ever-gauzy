@@ -10,6 +10,4 @@ export class CountryController extends CrudController<Country> {
 	constructor(private readonly countryService: CountryService) {
 		super(countryService);
 	}
-	@Get()
-	async getALLCountries() {}
 }
