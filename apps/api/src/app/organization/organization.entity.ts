@@ -165,4 +165,15 @@ export class Organization extends LocationBase implements IOrganization {
 	@IsOptional()
 	@IsDate()
 	fiscalEndDate?: Date;
+
+	@ApiProperty({ type: Date })
+	@Column({ nullable: true })
+	@IsOptional()
+	@IsDate()
+	registrationDate?: Date;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	futureDateAllowed?: boolean;
 }

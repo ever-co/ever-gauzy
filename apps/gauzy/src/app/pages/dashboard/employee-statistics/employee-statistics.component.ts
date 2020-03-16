@@ -28,6 +28,7 @@ import { EmployeeStatisticsService } from '../../../@core/services/employee-stat
 import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../../../@core/services/organization-recurring-expense.service';
 import { ProfitHistoryComponent } from '../../../@shared/dashboard/profit-history/profit-history.component';
+import { Router } from '@angular/router';
 
 export interface ViewDashboardExpenseHistory {
 	valueDate?: Date;
@@ -89,6 +90,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		private expenseService: ExpensesService,
 		private store: Store,
 		private dialogService: NbDialogService,
+		private router: Router,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService
@@ -405,6 +407,12 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				return 0;
 		}
 	};
+
+	edit() {
+		this.router.navigate([
+			'/pages/employees/edit/' + this.selectedEmployee.id
+		]);
+	}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

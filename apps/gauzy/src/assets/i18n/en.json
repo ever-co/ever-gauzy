@@ -132,7 +132,10 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
-			"EMAIL_INVITATION": "Enter email to send invitation"
+			"EMAIL_INVITATION": "Enter email to send invitation",
+			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
+			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
+			"REGISTRATION_DATE": "Registration Date"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -189,7 +192,8 @@
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
 			"SWITCH_PROJECT_STATE": "Public",
-			"EMPLOYMENT_TYPES": "Employment Type"
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"REGISTRATION_DATE": "Organization Registration Date"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -372,7 +376,16 @@
 			"POSITION": "Position",
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:"
+			"EMPLOYEE_CLIENTS": "Employee's Clients:",
+			"EMPLOYMENT_TYPE": "Employment Type"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
+			"FINISHED_ADDING": "I’ve Added All Current Employees",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -423,7 +436,7 @@
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
 			"ROLES_PERMISSIONS": "Roles & Permissions",
-			"EMPLOYMENT_TYPES": "Employment Types"
+			"DATE_LIMIT": "Date Limit"
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
@@ -755,7 +768,7 @@
 				"ADD_CLIENT": "New client {{ name }} successfully added!",
 				"REMOVE_CLIENT": "Client {{ name }} successfully removed!",
 				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client",
-        "INVITE_CLIENT": "Invitation email sent to {{ name }}.",
+				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
 			},
@@ -763,7 +776,7 @@
 				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
-				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"				
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {

@@ -1,35 +1,45 @@
-import { InviteGuard } from './../../@core/role/invite.guard';
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
+	NbActionsModule,
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
+	NbDatepickerModule,
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbTooltipModule,
-	NbActionsModule,
-	NbDatepickerModule
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { CountryService } from '../../@core/services/country.service';
+import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
+import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-employee-membership-form/edit-employee-membership-form.module';
 import { EmployeeEndWorkModule } from '../../@shared/employee/employee-end-work-popup/employee-end-work.module';
 import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation/employee-mutation.module';
+import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
+import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { ThemeModule } from '../../@theme/theme.module';
+import { InviteGuard } from './../../@core/role/invite.guard';
+import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
+import { EditEmployeeEmploymentComponent } from './edit-employee/edit-employee-profile/edit-employee-employment/edit-employee-employment.component';
+import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
+import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
 import { EditEmployeeMainComponent } from './edit-employee/edit-employee-profile/edit-employee-main/edit-employee-main.component';
 import { EditEmployeeProfileComponent } from './edit-employee/edit-employee-profile/edit-employee-profile.component';
+import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
 import { EditEmployeeRatesComponent } from './edit-employee/edit-employee-profile/edit-employee-rate/edit-employee-rate.component';
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
 import { EmployeesRoutingModule } from './employees-routing.module';
@@ -41,15 +51,7 @@ import { EmployeeAverageIncomeComponent } from './table-components/employee-aver
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
-import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
-import { EditEmployeeDepartmentComponent } from './edit-employee/edit-employee-profile/edit-employee-department/edit-employee-department.component';
-import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-employee-membership-form/edit-employee-membership-form.module';
-import { EditEmployeeProjectsComponent } from './edit-employee/edit-employee-profile/edit-employee-projects/edit-employee-projects.component';
-import { EditEmployeeClientComponent } from './edit-employee/edit-employee-profile/edit-employee-client/edit-employee-client.component';
-import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
-import { EditEmployeeHiringComponent } from './edit-employee/edit-employee-profile/edit-employee-hiring/edit-employee-hiring.component';
-import { EditEmployeeLocationComponent } from './edit-employee/edit-employee-profile/edit-employee-location/edit-employee-location.component';
-import { CountryService } from '../../@core/services/country.service';
+import { SharedModule } from '../../@shared/shared.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -68,15 +70,16 @@ const COMPONENTS = [
 	EditEmployeeMainComponent,
 	EditEmployeeRatesComponent,
 	ManageEmployeeInviteComponent,
-	EditEmployeeDepartmentComponent,
 	EditEmployeeProjectsComponent,
 	EditEmployeeClientComponent,
 	EditEmployeeHiringComponent,
-	EditEmployeeLocationComponent
+	EditEmployeeLocationComponent,
+	EditEmployeeEmploymentComponent
 ];
 
 @NgModule({
 	imports: [
+		SharedModule,
 		EmployeesRoutingModule,
 		ThemeModule,
 		NbCardModule,
@@ -122,6 +125,11 @@ const COMPONENTS = [
 		EmployeeWorkStatusComponent,
 		ManageEmployeeInviteComponent
 	],
-	providers: [OrganizationsService, InviteGuard, CountryService]
+	providers: [
+		OrganizationsService,
+		InviteGuard,
+		CountryService,
+		OrganizationEmploymentTypesService
+	]
 })
 export class EmployeesModule {}

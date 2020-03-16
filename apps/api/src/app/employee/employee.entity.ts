@@ -15,15 +15,15 @@ import {
 	OneToOne,
 	RelationId
 } from 'typeorm';
-import { Organization } from '../organization';
-import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
-import { User } from '../user';
-import { Tenant } from '../tenant';
-import { EmploymentTypes } from '../employment-types/employment-types.entity';
-import { Tag } from '../tags';
-import { OrganizationDepartment } from '../organization-department';
 import { LocationBase } from '../core/entities/location-base';
+import { Organization } from '../organization';
+import { OrganizationDepartment } from '../organization-department';
+import { OrganizationEmploymentType } from '../organization-employment-type';
 import { OrganizationPositions } from '../organization-positions';
+import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { Tag } from '../tags';
+import { Tenant } from '../tenant';
+import { User } from '../user';
 
 @Entity('employee')
 export class Employee extends LocationBase implements IEmployee {
@@ -34,7 +34,11 @@ export class Employee extends LocationBase implements IEmployee {
 	tags: Tag[];
 
 	@ApiProperty({ type: User })
-	@OneToOne((type) => User, { nullable: false, onDelete: 'CASCADE' })
+	@OneToOne((type) => User, {
+		nullable: false,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	user: User;
 
@@ -50,15 +54,6 @@ export class Employee extends LocationBase implements IEmployee {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.tenant)
 	readonly tenantId?: string;
-
-	@ApiProperty({ type: OrganizationDepartment })
-	@ManyToOne((type) => OrganizationDepartment, { nullable: true })
-	@JoinColumn()
-	organizationDepartment?: OrganizationDepartment;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((employee: Employee) => employee.organizationDepartment)
-	readonly organizationDepartmentId?: string;
 
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
@@ -124,12 +119,6 @@ export class Employee extends LocationBase implements IEmployee {
 	})
 	teams?: OrganizationTeams[];
 
-	@ManyToMany((type) => EmploymentTypes, { cascade: true })
-	@JoinTable({
-		name: 'employee_employment_type'
-	})
-	employmentTypes?: EmploymentTypes[];
-
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
@@ -147,4 +136,27 @@ export class Employee extends LocationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	rejectDate?: Date;
+
+	@ManyToMany(
+		(type) => OrganizationDepartment,
+		(organizationDepartment) => organizationDepartment.members,
+		{ cascade: true }
+	)
+	organizationDepartments?: OrganizationDepartment[];
+
+	@ManyToMany(
+		(type) => OrganizationEmploymentType,
+		(organizationEmploymentType) => organizationEmploymentType.members,
+		{ cascade: true }
+	)
+	organizationEmploymentTypes?: OrganizationEmploymentType[];
+
+	@ApiPropertyOptional({ type: String, maxLength: 500 })
+	@IsOptional()
+	@Column({ length: 500, nullable: true })
+	employeeLevel?: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@Column({ nullable: true })
+	anonymousBonus?: boolean;
 }

@@ -1,0 +1,36 @@
+<label class="label" for="addTags">
+	Tags
+</label>
+<ng-select
+	[items]="tags"
+	[(ngModel)]="selectedTags"
+	multiple="true"
+	(change)="onChange()"
+>
+	<ng-template ng-label-tmp let-item="item" let-clear="clear">
+		<span class="ng-value-label"
+			><nb-badge
+				style="position: static !important;"
+				width="20px"
+				height="20px"
+				[style.background]="item.color"
+				text="{{ item.name }}"
+			></nb-badge
+		></span>
+		<span
+			class="ng-value-icon right"
+			(click)="clear(item)"
+			aria-hidden="true"
+			>×</span
+		>
+	</ng-template>
+	<ng-template ng-option-tmp let-item="item">
+		<nb-badge
+			style="position: static !important;"
+			width="20px"
+			height="20px"
+			[style.background]="item.color"
+			text="{{ item.name }}"
+		></nb-badge>
+	</ng-template>
+</ng-select>
