@@ -23,7 +23,8 @@
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
-		"INVITE_AGAIN": "Invite Again"
+		"INVITE_AGAIN": "Invite Again",
+		"HISTORY": "History"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -246,7 +247,10 @@
 		"CANCEL": "בטל",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
 		"RECURRING_EXPENSE": "This is a recurring expense",
-		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}"
+		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}",
+		"STARTS_ON": "Starts On",
+		"EXPENSE_HISTORY": "Expense History",
+		"NEW_EXPENSE_VALUE": "New Expense Value"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
