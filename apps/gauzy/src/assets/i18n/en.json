@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ADD_EXISTING_USER": "Add Existing User",
+		"ADD_NEW": "Add New",
 		"ADD": "Add",
 		"CREATE": "Create",
 		"REGISTER": "Register",
@@ -185,6 +187,7 @@
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Image",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"DATE": "Date",
 			"VALUE": "Value",
 			"SELECT_CURRENCY": "Select Currency",

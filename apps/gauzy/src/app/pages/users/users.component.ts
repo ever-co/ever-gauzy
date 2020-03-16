@@ -7,7 +7,9 @@ import {
 	UserOrganization,
 	Employee,
 	Organization,
-	UserOrganizationCreateInput
+	UserOrganizationCreateInput,
+	RolesEnum,
+	User
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -57,6 +59,7 @@ export class UsersComponent extends TranslationBaseComponent
 	showAddCard: boolean;
 	userToEdit: UserOrganization;
 	employees: Employee[] = [];
+	users: User[] = [];
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -78,7 +81,7 @@ export class UsersComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
-					this.loadEmployees();
+					this.loadUsers();
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
@@ -169,7 +172,7 @@ export class UsersComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
-			this.showAddCard = !this.showAddCard;
+			this.showAddCard = false;
 			this.loadPage();
 		}
 	}
@@ -243,17 +246,16 @@ export class UsersComponent extends TranslationBaseComponent
 		this.showAddCard = !this.showAddCard;
 	}
 
-	private async loadEmployees() {
+	private async loadUsers() {
 		if (!this.organization) {
 			return;
 		}
 
-		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: this.organization.id } })
-			.pipe(first())
-			.toPromise();
+		const { items } = await this.userOrganizationsService.getAll(['user'], {
+			orgId: this.organization.id
+		});
 
-		this.employees = items;
+		this.users = items.map((user) => user.user);
 	}
 
 	private async loadPage() {
@@ -265,13 +267,16 @@ export class UsersComponent extends TranslationBaseComponent
 				orgId: this.selectedOrganizationId
 			}
 		);
-		console.log(items);
 
 		const { name } = this.store.selectedOrganization;
 		const usersVm = [];
 
 		for (const orgUser of items) {
-			if (orgUser.isActive) {
+			if (
+				orgUser.isActive &&
+				(!orgUser.user.role ||
+					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
+			) {
 				usersVm.push({
 					fullName: `${orgUser.user.firstName || ''} ${orgUser.user
 						.lastName || ''}`,

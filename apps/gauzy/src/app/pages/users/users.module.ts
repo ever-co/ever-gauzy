@@ -32,7 +32,7 @@ import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invit
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { InviteGuard } from '../../@core/role/invite.guard';
-import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/employee-multi-select/employee-multi-select.module';
+import { UserMultiSelectModule } from '../../@shared/user/user-multi-select/user-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -49,7 +49,7 @@ const COMPONENTS = [
 @NgModule({
 	imports: [
 		UsersRoutingModule,
-		EmployeeMultiSelectModule,
+		UserMultiSelectModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,

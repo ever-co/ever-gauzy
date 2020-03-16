@@ -1,0 +1,19 @@
+<nb-select
+	multiple
+	[selected]="selectedUserIds"
+	(selectedChange)="onMembersSelected($event)"
+	fullWidth
+	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_USERS' | translate }}"
+>
+	<nb-option *ngFor="let user of allUsers" [value]="user.id">
+		<img
+			src="{{ user.imageUrl }}"
+			alt="Smiley face"
+			height="40"
+			width="40"
+			style="margin-right:10px"
+		/>
+		{{ user.firstName }}
+		{{ user.lastName }}
+	</nb-option>
+</nb-select>

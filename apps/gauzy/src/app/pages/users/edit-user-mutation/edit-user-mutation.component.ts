@@ -72,8 +72,8 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 			(item) => !existedUsers.includes(item.userId)
 		)) {
 			usersVm.push({
-				fullName: `${orgUser.user.firstName || ''} ${orgUser.user
-					.lastName || ''}`,
+				firstName: orgUser.user.firstName || '',
+				lastName: orgUser.user.lastName || '',
 				email: orgUser.user.email,
 				id: orgUser.userId,
 				isActive: orgUser.isActive,
@@ -96,7 +96,6 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 	async submitForm() {
 		if (this.form.valid) {
 			for (let i = 0; i < this.selectedUsersIds.length; i++) {
-				console.log(this.selectedUsersIds[i]);
 				const organization = this.store.selectedOrganization;
 				this.addOrEditUser.emit({
 					userId: this.selectedUsersIds[i],
