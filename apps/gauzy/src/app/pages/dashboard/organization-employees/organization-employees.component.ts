@@ -13,7 +13,7 @@ import {
 	selector: 'ga-organization-employees',
 	templateUrl: './organization-employees.component.html',
 	styleUrls: [
-		'../../employees/edit-employee/edit-employee.component.scss',
+		'../../organizations/edit-organization/edit-organization.component.scss',
 		'./organization-employees.component.scss'
 	]
 })

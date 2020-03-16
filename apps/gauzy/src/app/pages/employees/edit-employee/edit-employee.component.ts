@@ -13,7 +13,6 @@ import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { monthNames } from '../../../@core/utils/date';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
@@ -28,7 +27,7 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 	selector: 'ngx-edit-employee',
 	templateUrl: './edit-employee.component.html',
 	styleUrls: [
-		'./edit-employee.component.scss',
+		'../../organizations/edit-organization/edit-organization.component.scss',
 		'../../dashboard/dashboard.component.scss'
 	]
 })
@@ -43,12 +42,12 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 	employeeName = 'Employee';
 	hasEditPermission = false;
 	hasEditExpensePermission = false;
+	fetchedHistories: Object = {};
 
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
 		private employeeService: EmployeesService,
-		private organizationsService: OrganizationsService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
@@ -289,12 +288,29 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 	}
 
 	private async _loadEmployeeRecurringExpense() {
+		this.fetchedHistories = {};
 		this.selectedEmployeeRecurringExpense = (
-			await this.employeeRecurringExpenseService.getAll([], {
+			await this.employeeRecurringExpenseService.getAllByMonth([], {
 				employeeId: this.selectedEmployee.id,
 				year: this.selectedDate.getFullYear(),
 				month: this.selectedDate.getMonth() + 1
 			})
+		).items;
+	}
+
+	public async fetchHistory(i: number) {
+		this.fetchedHistories[i] = (
+			await this.employeeRecurringExpenseService.getAll(
+				[],
+				{
+					parentRecurringExpenseId: this
+						.selectedEmployeeRecurringExpense[i]
+						.parentRecurringExpenseId
+				},
+				{
+					startDate: 'ASC'
+				}
+			)
 		).items;
 	}
 

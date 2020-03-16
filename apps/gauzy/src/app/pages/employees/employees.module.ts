@@ -52,6 +52,7 @@ import { EmployeeBonusComponent } from './table-components/employee-bonus/employ
 import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { SharedModule } from '../../@shared/shared.module';
+import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -113,7 +114,8 @@ const COMPONENTS = [
 		RecurringExpenseDeleteConfirmationModule,
 		NbActionsModule,
 		EditEmployeeMembershipFormModule,
-		NbDatepickerModule
+		NbDatepickerModule,
+		RecurringExpenseBlockModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

@@ -12,7 +12,8 @@ import {
 	Param,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	Post
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
@@ -25,6 +26,7 @@ import { OrganizationRecurringExpense } from './organization-recurring-expense.e
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import { OrganizationRecurringExpenseByMonthQuery } from './queries/organization-recurring-expense.by-month.query';
 import { OrganizationRecurringExpenseFindSplitExpenseQuery } from './queries/organization-recurring-expense.find-split-expense.query';
+import { OrganizationRecurringExpenseCreateCommand } from './commands/organization-recurring-expense.create.command';
 
 @ApiTags('OrganizationRecurringExpense')
 @Controller()
@@ -38,6 +40,26 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
 	) {
 		super(organizationRecurringExpenseService);
+	}
+
+	@ApiOperation({ summary: 'Create new expense' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The expense has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	async create(
+		@Body() entity: OrganizationRecurringExpense
+	): Promise<OrganizationRecurringExpense> {
+		return this.commandBus.execute(
+			new OrganizationRecurringExpenseCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -75,13 +97,14 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAllRecurringExpenses(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationRecurringExpense>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput, order = {} } = JSON.parse(data);
 
 		return this.organizationRecurringExpenseService.findAll({
-			where: findInput
+			where: findInput,
+			order: order
 		});
 	}
 
@@ -137,7 +160,9 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		);
 	}
 
-	@ApiOperation({ summary: 'Find all organization recurring expense.' })
+	@ApiOperation({
+		summary: 'Find all organization recurring expense by month.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found organization recurring expense',

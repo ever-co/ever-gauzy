@@ -14,6 +14,7 @@ export interface OrganizationRecurringExpenseFindInput
 	categoryName?: string;
 	value?: number;
 	currency?: string;
+	parentRecurringExpenseId?: string;
 }
 
 export interface OrganizationRecurringExpenseByMonthFindInput

@@ -1,0 +1,26 @@
+<div class="recurring-expense-history">
+	<div class="history">
+		<h6>{{ 'POP_UPS.EXPENSE_HISTORY' | translate }}</h6>
+		<div class="row">
+			<div class="col">
+				<b>{{ 'POP_UPS.STARTS_ON' | translate }}</b>
+			</div>
+			<div class="col">
+				<b>{{ 'POP_UPS.NEW_EXPENSE_VALUE' | translate }}</b>
+			</div>
+			<hr />
+		</div>
+		<div class="row" *ngFor="let record of recordsData">
+			<div class="col">
+				{{ getMonthString(record.startMonth) }} {{ record.startYear }}
+			</div>
+			<div class="col">
+				{{ record.value | currency: record.currency }}
+			</div>
+			<hr />
+		</div>
+	</div>
+	<div class="close-icon" (click)="emitClose()">
+		<nb-icon icon="close-outline"></nb-icon>
+	</div>
+</div>

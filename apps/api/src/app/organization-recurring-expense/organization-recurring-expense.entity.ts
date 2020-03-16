@@ -110,4 +110,10 @@ export class OrganizationRecurringExpense extends Base
 	@IsOptional()
 	@Column({ nullable: true })
 	splitExpense: boolean;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	parentRecurringExpenseId?: string;
 }
