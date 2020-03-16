@@ -56,6 +56,21 @@ const routes: Routes = [
 				// }
 			},
 			{
+				path: 'invoices',
+				loadChildren: () =>
+					import('./invoices/invoices.module').then(
+						(m) => m.InvoicesModule
+					)
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		// RolesEnum.DATA_ENTRY,
+				// 		// RolesEnum.EMPLOYEE,
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
+			},
+			{
 				path: 'proposals',
 				loadChildren: () =>
 					import('./proposals/proposals.module').then(

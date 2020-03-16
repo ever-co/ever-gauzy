@@ -1,0 +1,159 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			Invoices
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form">
+			<div class="row">
+				<div class="col-sm-6">
+					<label for="invoiceDate">Invoice Date</label>
+					<div>
+						<input
+							nbInput
+							placeholder="Pick Date"
+							[nbDatepicker]="formcontrol1"
+							formControlName="invoiceDate"
+							id="invoiceDate"
+						/>
+						<nb-datepicker #formcontrol1></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label for="invoiceNum">Invoice Number</label>
+					<input
+						nbInput
+						placeholder="Invoice Number"
+						id="invoiceNum"
+						formControlName="invoiceNumber"
+					/>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6">
+					<label for="dueDate">Due Date</label>
+					<div>
+						<input
+							nbInput
+							placeholder="Pick Due Date"
+							[nbDatepicker]="formcontrol2"
+							formControlName="dueDate"
+							id="dueDate"
+						/>
+						<nb-datepicker #formcontrol2></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label for="currency">Currency</label>
+					<nb-select
+						class="d-block"
+						formControlName="currency"
+						id="currency"
+					>
+						<nb-option
+							*ngFor="let currency of currencies"
+							value="{{ currency }}"
+							>{{ currency }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6">
+					<label for="discVal">Discount Value</label>
+					<div>
+						<input
+							nbInput
+							placeholder="Discount Vaue"
+							type="number"
+							formControlName="discountValue"
+							id="discVal"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label for="discType">Discount Type</label>
+					<nb-select
+						class="d-block"
+						formControlName="discountType"
+						id="discType"
+					>
+						<nb-option
+							*ngFor="let discountType of discountTypes"
+							value="{{ discountType }}"
+							>{{ discountType }}</nb-option
+						>
+					</nb-select>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6">
+					<label for="paid">Paid</label>
+					<div>
+						<nb-checkbox
+							formControlName="paid"
+							id="paid"
+						></nb-checkbox>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<label for="tax">Tax</label>
+					<div>
+						<input
+							nbInput
+							placeholder="Tax"
+							type="number"
+							formControlName="tax"
+							id="tax"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12">
+					<label for="terms">Terms</label>
+					<div>
+						<textarea
+							fullWidth
+							nbInput
+							formControlName="terms"
+							id="terms"
+						></textarea>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6">
+					<label for="total">Total value</label>
+					<div>
+						<input
+							nbInput
+							formControlName="totalValue"
+							id="total"
+						/>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
+			Cancel
+		</button>
+		<button (click)="tag ? editTag() : addTag()" status="success" nbButton>
+			Save
+		</button>
+	</nb-card-footer>
+</nb-card>

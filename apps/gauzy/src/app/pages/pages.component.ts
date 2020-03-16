@@ -58,6 +58,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Invoices',
+			icon: 'minus-circle-outline',
+			link: '/pages/invoices',
+			data: {
+				translated: false,
+				translationKey: 'Invoices',
+				permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
+			}
+		},
+		{
 			title: 'Proposals',
 			icon: 'paper-plane-outline',
 			link: '/pages/proposals',
