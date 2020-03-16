@@ -52,8 +52,12 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 	emitFetchHistory() {
 		if (!this.showHistory) {
 			this.fetchRecurringExpenseHistory.emit();
+			this.showHistory = true;
+			this.showMenu = true;
+		} else {
+			this.showHistory = false;
+			this.showMenu = false;
 		}
-		this.showHistory = !this.showHistory;
 	}
 
 	getMonthString(month: number) {
