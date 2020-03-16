@@ -9,9 +9,9 @@ export class EquipmentSharingService {
 
 	constructor(private http: HttpClient) {}
 
-	getAll(): Promise<{ items: EquipmentSharing[] }> {
+	getAll(): Promise<EquipmentSharing[]> {
 		return this.http
-			.get<{ items: EquipmentSharing[] }>(this.EQUIPMENT_SHARING_URL)
+			.get<EquipmentSharing[]>(`${this.EQUIPMENT_SHARING_URL}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -23,9 +23,9 @@ export class EquipmentSharingService {
 			.toPromise();
 	}
 
-	create(equipmentSharing: EquipmentSharingRequest): Promise<any> {
+	create(equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
 		return this.http
-			.post<EquipmentSharingRequest>(
+			.post<EquipmentSharing>(
 				this.EQUIPMENT_SHARING_URL,
 				equipmentSharing
 			)

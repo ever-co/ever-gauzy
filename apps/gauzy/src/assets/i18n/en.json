@@ -556,7 +556,9 @@
 		"SHARE_REQUIEST_DATE": "Share request date",
 		"SHARE_START_DATE": "Share start date",
 		"SHARE_END_DATE": "Share end date",
-		"STATUS": "Status"
+		"STATUS": "Status",
+		"REQUEST_SAVED": "Request saved",
+		"REQUEST_DELETED": "Request deleted"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

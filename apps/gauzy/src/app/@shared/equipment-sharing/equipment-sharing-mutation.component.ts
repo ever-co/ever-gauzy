@@ -1,9 +1,8 @@
 import { OnInit, Component, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
 	EquipmentSharing,
-	Employee,
 	Equipment,
 	EquipmentSharingStatusEnum
 } from '@gauzy/models';
@@ -12,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EmployeesService } from '../../@core/services/employees.service';
-import { first, take, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
 
@@ -42,6 +41,9 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	selectedOrgId;
 	requestStatus;
 
+	selectedEmployees: string[] = [];
+	selectedTeams: string[] = [];
+
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -61,30 +63,62 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.getEquipmentItems();
 		this.setSelectedOrganization();
 		this.getEmployees();
+		console.log(this.equipmentSharing);
 	}
 
 	async initializeForm() {
 		this.form = this.fb.group({
-			equipmentItem: [''],
-			employee: [''],
+			equipment: [
+				this.equipmentSharing ? this.equipmentSharing.equipment.id : '',
+				Validators.required
+			],
+			employees: [
+				this.equipmentSharing
+					? this.equipmentSharing.employees.map((emp) => emp.id)
+					: []
+			],
 			team: [''],
-			shareRequestDay: [new Date(Date.now())],
-			shareStartDay: [null],
-			shareEndDay: [null],
+			shareRequestDay: [
+				this.equipmentSharing
+					? new Date(this.equipmentSharing.shareRequestDay)
+					: new Date(Date.now())
+			],
+			shareStartDay: [
+				this.equipmentSharing
+					? new Date(this.equipmentSharing.shareStartDay)
+					: ''
+			],
+			shareEndDay: [
+				this.equipmentSharing
+					? new Date(this.equipmentSharing.shareEndDay)
+					: ''
+			],
 			status: [EquipmentSharingStatusEnum.REQUESTED]
 		});
 	}
 
 	async onSaveRequest() {
+		console.log(
+			this.employees.filter((emp) => {
+				return this.selectedEmployees.includes(emp.id);
+			})
+		);
 		const shareRequest = {
-			equipmentId: this.form.value['equipmentItem'],
-			employee: this.form.value['employee'].id,
-			team: this.form.value['team'].id,
+			equipmentId: this.form.value['equipment'],
+			equipment: this.equipmentItems.find(
+				(eq) => eq.id === this.form.value['equipment']
+			),
+			employees: this.employees.filter((emp) => {
+				return this.selectedEmployees.includes(emp.id);
+			}),
+			teams: null,
 			shareRequestDay: this.form.value['shareRequestDay'],
 			shareStartDay: this.form.value['shareStartDay'],
 			shareEndDay: this.form.value['shareEndDay'],
 			status: this.form.value['status']
 		};
+
+		console.log(shareRequest);
 		const equipmentSharing = await this.equipmentSharingService.create(
 			shareRequest
 		);
@@ -153,6 +187,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	onEmployeesSelected(employeeSelection: string[]) {
+		this.selectedEmployees = employeeSelection;
 	}
 
 	//todo disable either org or emp

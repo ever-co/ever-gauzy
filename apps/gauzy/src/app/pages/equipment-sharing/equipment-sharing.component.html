@@ -14,6 +14,7 @@
 				status="info"
 				class="mr-2"
 				[disabled]="disableButton"
+				(click)="save()"
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
@@ -23,6 +24,7 @@
 				status="danger"
 				class="mr-2"
 				[disabled]="disableButton"
+				(click)="delete()"
 			>
 				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 				{{ 'BUTTONS.DELETE' | translate }}
@@ -32,6 +34,7 @@
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
+			(userRowSelect)="selectEquipmentSharing($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
 			#equipmentSharingTable

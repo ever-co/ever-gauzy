@@ -5,7 +5,8 @@ import {
 	Column,
 	ManyToMany,
 	JoinTable,
-	JoinColumn
+	JoinColumn,
+	ManyToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import {
@@ -21,9 +22,9 @@ import { OrganizationTeams } from '../organization-teams';
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@ApiProperty({ type: Equipment })
-	@OneToOne((type) => Equipment)
+	@ManyToOne((type) => Equipment)
 	@JoinColumn()
-	equipment?: Equipment;
+	equipment: Equipment;
 
 	@ApiProperty({ type: String })
 	@RelationId(
