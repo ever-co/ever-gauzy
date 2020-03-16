@@ -1,7 +1,7 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h5>
-			Invoices
+			New Invoice
 		</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
@@ -25,18 +25,7 @@
 						<nb-datepicker #formcontrol1></nb-datepicker>
 					</div>
 				</div>
-				<div class="col-sm-6">
-					<label for="invoiceNum">Invoice Number</label>
-					<input
-						nbInput
-						placeholder="Invoice Number"
-						id="invoiceNum"
-						formControlName="invoiceNumber"
-					/>
-				</div>
-			</div>
 
-			<div class="row">
 				<div class="col-sm-6">
 					<label for="dueDate">Due Date</label>
 					<div>
@@ -50,19 +39,17 @@
 						<nb-datepicker #formcontrol2></nb-datepicker>
 					</div>
 				</div>
+			</div>
+
+			<div class="row">
 				<div class="col-sm-6">
-					<label for="currency">Currency</label>
-					<nb-select
-						class="d-block"
-						formControlName="currency"
-						id="currency"
-					>
-						<nb-option
-							*ngFor="let currency of currencies"
-							value="{{ currency }}"
-							>{{ currency }}</nb-option
-						>
-					</nb-select>
+					<label for="invoiceNum">Invoice Number</label>
+					<input
+						nbInput
+						placeholder="Invoice Number"
+						id="invoiceNum"
+						formControlName="invoiceNumber"
+					/>
 				</div>
 			</div>
 
@@ -97,15 +84,6 @@
 
 			<div class="row">
 				<div class="col-sm-6">
-					<label for="paid">Paid</label>
-					<div>
-						<nb-checkbox
-							formControlName="paid"
-							id="paid"
-						></nb-checkbox>
-					</div>
-				</div>
-				<div class="col-sm-6">
 					<label for="tax">Tax</label>
 					<div>
 						<input
@@ -135,6 +113,20 @@
 
 			<div class="row">
 				<div class="col-sm-6">
+					<label for="currency">Currency</label>
+					<nb-select
+						class="d-block"
+						formControlName="currency"
+						id="currency"
+					>
+						<nb-option
+							*ngFor="let currency of currencies"
+							value="{{ currency }}"
+							>{{ currency }}</nb-option
+						>
+					</nb-select>
+				</div>
+				<div class="col-sm-6">
 					<label for="total">Total value</label>
 					<div>
 						<input
@@ -142,6 +134,17 @@
 							formControlName="totalValue"
 							id="total"
 						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<label for="paid">Paid</label>
+					<div>
+						<nb-checkbox
+							formControlName="paid"
+							id="paid"
+						></nb-checkbox>
 					</div>
 				</div>
 			</div>
