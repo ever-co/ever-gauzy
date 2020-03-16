@@ -1,7 +1,6 @@
 import {
 	OrganizationRecurringExpenseForEmployeeOutput,
-	RecurringExpenseEditInput,
-	RecurringExpenseModel
+	RecurringExpenseEditInput
 } from '@gauzy/models';
 import {
 	Body,
