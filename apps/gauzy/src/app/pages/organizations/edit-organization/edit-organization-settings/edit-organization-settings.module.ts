@@ -54,6 +54,7 @@ import { EditOrganizationTeamsMutationComponent } from './edit-organization-team
 import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-organization-teams.component';
 import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization-employment-types/edit-organization-employment-types.component';
+import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color-input/tags-color-input.module';
 
 @NgModule({
 	imports: [
@@ -89,7 +90,8 @@ import { EditOrganizationEmploymentTypes } from './edit-organization-employment-
 		NbToggleModule,
 		EmployeeSelectorsModule,
 		EntityWithMembersModule,
-		EmployeeMultiSelectModule
+		EmployeeMultiSelectModule,
+		TagsColorInputModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

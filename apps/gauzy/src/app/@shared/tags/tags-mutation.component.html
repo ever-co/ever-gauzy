@@ -13,32 +13,65 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
-			<div class="select">
-				<input
-					formControlName="name"
-					class="select-name"
-					type="text"
-					nbInput
-					placeholder="Add name"
-				/>
-				<input
-					class="select-color"
-					nbInput
-					placeholder="Select Color"
-					formControlName="color"
-					[(colorPicker)]="color"
-					[value]="color"
-					[style.background]="color"
-				/>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputName" class="label">{{
+							'TAGS_PAGE.TAGS_SELECT_NAME' | translate
+						}}</label>
+						<input
+							formControlName="name"
+							class="select-name"
+							type="text"
+							nbInput
+							placeholder="{{
+								'TAGS_PAGE.TAGS_SELECT_NAME' | translate
+							}}"
+							id="inputName"
+							fullWidth
+						/>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputColor" class="label">{{
+							'TAGS_PAGE.TAGS_SELECT_COLOR' | translate
+						}}</label>
+						<input
+							class="select-color"
+							nbInput
+							placeholder="{{
+								'TAGS_PAGE.TAGS_SELECT_COLOR' | translate
+							}}"
+							formControlName="color"
+							[(colorPicker)]="color"
+							[value]="color"
+							[style.background]="color"
+							id="inputColor"
+							fullWidth
+						/>
+					</div>
+				</div>
 			</div>
-			<div>
-				<textarea
-					formControlName="description"
-					nbInput
-					fullWidth
-					class="description"
-					placeholder="Description"
-				></textarea>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label for="inputDescription" class="label">{{
+							'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate
+						}}</label>
+						<textarea
+							formControlName="description"
+							nbInput
+							fullWidth
+							class="description"
+							placeholder="{{
+								'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate
+							}}"
+							id="inputDescription"
+							fullWidth
+						></textarea>
+					</div>
+				</div>
 			</div>
 		</form>
 	</nb-card-body>
