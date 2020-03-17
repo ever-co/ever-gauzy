@@ -9,17 +9,17 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
-	selector: 'ngx-employee-chart',
+	selector: 'ngx-employee-doughnut-chart',
 	template: `
 		<chart
 			style="height: 500px; width: 500px;"
-			type="horizontalBar"
+			type="doughnut"
 			[data]="data"
 			[options]="options"
 		></chart>
 	`
 })
-export class EmployeeChartComponent implements OnInit, OnDestroy {
+export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
@@ -57,10 +57,10 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 				await this._initializeChart();
 			});
 	}
-	/**
-	 * Loads or reloads chart statistics and chart when employee or date
-	 * is changed from the header component
-	 */
+	// /**
+	//  * Loads or reloads chart statistics and chart when employee or date
+	//  * is changed from the header component
+	//  */
 	private async _initializeChart() {
 		if (
 			this.selectedEmployee &&
@@ -156,10 +156,10 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 				};
 			});
 	}
-	/**
-	 * Fetches selected employee's statistics for chosen date for past X months.
-	 * Populates the local statistics variables with fetched data.
-	 */
+	// /**
+	//  * Fetches selected employee's statistics for chosen date for past X months.
+	//  * Populates the local statistics variables with fetched data.
+	//  */
 	private async _loadData() {
 		/**
 		 * Fetches selected employee's statistics for chosen date for past X months.

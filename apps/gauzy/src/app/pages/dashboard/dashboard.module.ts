@@ -10,7 +10,8 @@ import {
 	NbInputModule,
 	NbSpinnerModule,
 	NbTooltipModule,
-	NbTreeGridModule
+	NbTreeGridModule,
+	NbSelectModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -30,6 +31,7 @@ import { EmployeeChartComponent } from './employee-chart/employee-chart.componen
 import { EmployeeStatisticsComponent } from './employee-statistics/employee-statistics.component';
 import { OrganizationEmployeesComponent } from './organization-employees/organization-employees.component';
 import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.module';
+import { EmployeeDoughnutChartComponent } from './employee-doughnut-chart/employee-doughnut-chart.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -50,6 +52,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbTooltipModule,
 		NbSpinnerModule,
+		NbSelectModule,
 		NbAlertModule,
 		ProfitHistoryModule,
 		TranslateModule.forChild({
@@ -67,6 +70,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	declarations: [
 		DashboardComponent,
 		EmployeeChartComponent,
+		EmployeeDoughnutChartComponent,
 		OrganizationEmployeesComponent,
 		EmployeeStatisticsComponent,
 		DataEntryShortcutsComponent

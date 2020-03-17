@@ -29,6 +29,7 @@ import { EmployeeRecurringExpenseService } from '../../../@core/services/employe
 import { OrganizationRecurringExpenseService } from '../../../@core/services/organization-recurring-expense.service';
 import { ProfitHistoryComponent } from '../../../@shared/dashboard/profit-history/profit-history.component';
 import { Router } from '@angular/router';
+import Chart from 'chart.js';
 
 export interface ViewDashboardExpenseHistory {
 	valueDate?: Date;
@@ -41,7 +42,6 @@ export interface ViewDashboardExpenseHistory {
 	originalValue?: number;
 	employeeCount?: number;
 }
-
 @Component({
 	selector: 'ga-employee-statistics',
 	templateUrl: './employee-statistics.component.html',
@@ -84,6 +84,8 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	incomePermissionsError = false;
 	expensePermissionError = false;
+
+	selectedChart = '';
 
 	constructor(
 		private incomeService: IncomeService,
@@ -415,6 +417,10 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		this.router.navigate([
 			'/pages/employees/edit/' + this.selectedEmployee.id
 		]);
+	}
+	onChartSelected(selectedChart: string) {
+		this.selectedChart = selectedChart;
+		console.log(this.selectedChart);
 	}
 
 	ngOnDestroy() {
