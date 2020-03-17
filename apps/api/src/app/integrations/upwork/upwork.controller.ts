@@ -8,12 +8,12 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
-import { IntegrationsService } from './integrations.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UpworkService } from './upwork.service';
 
-@Controller('integrations')
-export class IntegrationsController {
-	constructor(private _integrationsService: IntegrationsService) {}
+@Controller()
+export class UpworkController {
+	constructor(private _upworkService: UpworkService) {}
 
 	@ApiOperation({ summary: 'Upload Upwork transaction.' })
 	@ApiResponse({
@@ -31,12 +31,12 @@ export class IntegrationsController {
 	@Post('/upwork-transactions')
 	@UseInterceptors(FileInterceptor('file'))
 	async create(@UploadedFile() file, @Body() organizationDto): Promise<any> {
-		const filePath = `./apps/api/src/app/integrations/csv/${file.originalname}`;
+		const filePath = `./apps/api/src/app/integrations/upwork/csv/${file.originalname}`;
 		const csvData = file.buffer.toString();
 
 		fs.writeFileSync(filePath, csvData);
 
-		return await this._integrationsService.handleTransactions(
+		return await this._upworkService.handleTransactions(
 			filePath,
 			organizationDto
 		);

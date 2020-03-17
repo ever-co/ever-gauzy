@@ -51,3 +51,7 @@ export interface IncomeFindInput extends IBaseEntityModel {
 	valueDate?: Date;
 	currency?: string;
 }
+
+export enum IncomeTypeEnum {
+	HOURLY = 'Hourly'
+}

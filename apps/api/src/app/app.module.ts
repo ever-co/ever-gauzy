@@ -40,6 +40,7 @@ import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type';
+import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 
 @Module({
 	imports: [
@@ -141,6 +142,10 @@ import { OrganizationEmploymentTypeModule } from './organization-employment-type
 					{
 						path: '/organization-employment-type',
 						module: OrganizationEmploymentTypeModule
+					},
+					{
+						path: '/integrations',
+						module: IntegrationsModule
 					}
 				]
 			}
@@ -192,7 +197,8 @@ import { OrganizationEmploymentTypeModule } from './organization-employment-type
 		EmployeeLevelModule,
 		TaskModule,
 		IntegrationsModule,
-		OrganizationEmploymentTypeModule
+		OrganizationEmploymentTypeModule,
+		ExpenseCategoriesModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

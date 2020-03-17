@@ -39,6 +39,7 @@ import { OrganizationEmploymentType } from '../organization-employment-type';
 import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
+import { ExpenseCategory } from '../expense-categories';
 
 const entities = [
 	Invite,
@@ -69,7 +70,8 @@ const entities = [
 	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,
-	Task
+	Task,
+	ExpenseCategory
 ];
 
 @Module({

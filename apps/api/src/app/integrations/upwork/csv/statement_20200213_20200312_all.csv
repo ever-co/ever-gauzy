@@ -1,0 +1,5 @@
+Date,Ref ID,Type,Description,Agency,Freelancer,Team,Account Name,PO,Amount,Amount in local currency,Currency,Balance
+18-Mar-20,289613151,Service Fee,Service Fee for Hourly - Ref ID 289613147,,Roger Rippin,Ever Co. LTD,Jhon Doe,,-7.2,,,
+18-Mar-20,289613147,Hourly,Invoice for 03/02/2020-03/08/2020 - 8:00 hrs @ $4.50/hr,,Roger Rippin,Ever Co. LTD,Jhon Doe,,36,,,
+13-Feb-20,284854537,Payment,Paid from MasterCard 333,,,,Jhon Doe,,14.99,,,0.01
+13-Feb-20,284854536,Membership Fee,Subscription Renewal Charges,,,,Jhon Doe,,-14.99,,,-14.98
