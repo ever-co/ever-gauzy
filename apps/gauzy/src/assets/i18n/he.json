@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ADD_EXISTING_USER": "Add Existing User",
+		"ADD_NEW": "Add New",
 		"ADD": "הוסף",
 		"CREATE": "צור",
 		"REGISTER": "Register",
@@ -9,6 +11,8 @@
 		"DETAILS": "Details",
 		"DUPLICATE": "Duplicate",
 		"DELETE": "מחק",
+		"REMOVE": "Remove",
+		"ADD_EXISTING": "Add Existing",
 		"OK": "בסדר",
 		"SAVE": "לשמור",
 		"BACK": "חזור",
@@ -191,6 +195,7 @@
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "תמונה",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"DATE": "תאריך",
 			"VALUE": "ערך",
 			"SELECT_CURRENCY": "Select Currency",
@@ -600,6 +605,7 @@
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
+		"ADD_EXISTING_USER": "Add Existing User",
 		"ROLE": {
 			"ADMIN": "מנהל",
 			"MANAGER": "Manager",
@@ -608,7 +614,8 @@
 			"EMPLOYEE": "עובד"
 		},
 		"EDIT_USER": {
-			"HEADER": "Manage User"
+			"HEADER": "Manage User",
+			"EDIT_EXISTING_USER": "Edit Existing User"
 		}
 	},
 	"CONTEXT_MENU": {
