@@ -34,6 +34,7 @@ export const createOrganizations = async (
 	defaultOrganization.invitesAllowed = true;
 	defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
 	defaultOrganization.bonusPercentage = 10;
+	defaultOrganization.registrationDate = faker.date.past(5);
 
 	await insertOrganization(connection, defaultOrganization);
 
@@ -56,6 +57,9 @@ export const createOrganizations = async (
 		const { bonusType, bonusPercentage } = randomBonus();
 		organization.bonusType = bonusType;
 		organization.bonusPercentage = bonusPercentage;
+		organization.registrationDate = faker.date.past(
+			Math.floor(Math.random() * 10) + 1
+		);
 
 		await insertOrganization(connection, organization);
 		randomOrganizations.push(organization);

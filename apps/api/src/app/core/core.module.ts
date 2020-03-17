@@ -2,7 +2,7 @@
 
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // Originally MIT Licensed
-// - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE 
+// - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`
 
 import { Tag } from '../tags';
@@ -35,10 +35,11 @@ import { TimeOffPolicy } from '../time-off-policy';
 import { RolePermissions } from '../role-permissions';
 import { Tenant } from './../tenant/tenant.entity';
 import { EmailTemplate } from '../email-template';
-import { EmploymentTypes } from '../employment-types/employment-types.entity';
+import { OrganizationEmploymentType } from '../organization-employment-type';
 import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
+import { EquipmentSharing } from '../equipment-sharing';
 
 const entities = [
 	Invite,
@@ -66,8 +67,9 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
-	EmploymentTypes,
+	OrganizationEmploymentType,
 	Equipment,
+	EquipmentSharing,
 	EmployeeLevel,
 	Task
 ];

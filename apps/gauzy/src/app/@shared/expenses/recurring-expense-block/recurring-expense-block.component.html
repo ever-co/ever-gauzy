@@ -1,0 +1,78 @@
+<div class="setting-block">
+	<div class="setting-row">
+		<div class="block-content">
+			<div class="block-info">
+				<div class="row">
+					<div class="col">
+						{{ getCategoryName(recurringExpense?.categoryName) }}
+					</div>
+					<div class="col">
+						{{ getMonthString(recurringExpense?.startMonth) }}
+						{{ recurringExpense?.startYear }}
+					</div>
+					<div class="col">
+						<span class="block-amount" (click)="emitFetchHistory()"
+							>{{
+								recurringExpense?.value
+									| currency: recurringExpense?.currency
+							}}
+							<nb-icon
+								*ngIf="splitExpense"
+								nbTooltip="{{
+									'EXPENSES_PAGE.SPLIT_WILL_BE_TOOLTIP'
+										| translate
+								}}"
+								icon="pricetags-outline"
+							>
+							</nb-icon>
+						</span>
+					</div>
+				</div>
+			</div>
+			<div class="block-value">
+				<nb-icon
+					class="hide-menu"
+					icon="log-in-outline"
+					*ngIf="showMenu"
+					(click)="showMenu = false"
+				></nb-icon>
+				<small (click)="showMenu = false" *ngIf="showMenu">{{
+					'BUTTONS.CLOSE' | translate
+				}}</small>
+				<span *ngIf="!showMenu" class="block-actions open">
+					<nb-icon
+						icon="settings-2-outline"
+						(click)="showMenu = true"
+					>
+					</nb-icon>
+				</span>
+			</div>
+		</div>
+		<div
+			class="block-settings"
+			[ngStyle]="{
+				width: showMenu ? '150px' : '0'
+			}"
+		>
+			<div (click)="emitEdit()" class="single-setting">
+				<nb-icon icon="edit-outline"> </nb-icon>
+				<span>{{ 'BUTTONS.EDIT' | translate }}</span>
+			</div>
+			<div class="single-setting" (click)="emitFetchHistory()">
+				<nb-icon icon="link-2-outline"> </nb-icon>
+				<span>{{ 'BUTTONS.HISTORY' | translate }}</span>
+			</div>
+			<div (click)="emitDelete()" class="single-setting">
+				<nb-icon icon="close-outline"> </nb-icon>
+				<span>{{ 'BUTTONS.DELETE' | translate }}</span>
+			</div>
+		</div>
+	</div>
+	<div class="setting-table" *ngIf="showHistory">
+		<ga-recurring-expense-history
+			[recordsData]="fetchedHistories"
+			(closeHistory)="this.showHistory = false"
+		>
+		</ga-recurring-expense-history>
+	</div>
+</div>

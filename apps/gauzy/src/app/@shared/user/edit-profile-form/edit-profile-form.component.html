@@ -99,22 +99,8 @@
 							</div>
 						</div>
 					</div>
-					<div class="row">
-						<div class="col">
-							<div class="form-group">
-								<label class="label" for="emailInput"
-									>{{ 'PROFILE_PAGE.EMAIL' | translate }}
-								</label>
-								<input
-									fullWidth
-									id="emailInput"
-									type="email"
-									nbInput
-									formControlName="email"
-								/>
-							</div>
-						</div>
 
+					<div class="row">
 						<div class="col">
 							<div class="form-group">
 								<label class="label" for="passwordInput">{{
@@ -129,9 +115,7 @@
 								/>
 							</div>
 						</div>
-					</div>
 
-					<div class="row">
 						<div class="col">
 							<div class="form-group">
 								<label
@@ -157,6 +141,26 @@
 								>
 							</div>
 						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-6">
+							<div class="form-group">
+								<label class="label" for="emailInput"
+									>{{ 'PROFILE_PAGE.EMAIL' | translate }}
+								</label>
+								<input
+									fullWidth
+									id="emailInput"
+									type="email"
+									nbInput
+									formControlName="email"
+								/>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
 						<div class="col-sm-6" *ngIf="allowRoleChange">
 							<div class="form-group">
 								<label for="startedWork" class="label">{{

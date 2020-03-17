@@ -145,7 +145,9 @@ export abstract class RecurringExpenseDeleteHandler<
 				endDate: originalExpense.endDate,
 				categoryName: originalExpense.categoryName,
 				currency: originalExpense.currency,
-				value: originalExpense.value
+				value: originalExpense.value,
+				parentRecurringExpenseId:
+					originalExpense.parentRecurringExpenseId
 			};
 			if (originalExpense.orgId) {
 				createOptions.orgId = originalExpense.orgId;
