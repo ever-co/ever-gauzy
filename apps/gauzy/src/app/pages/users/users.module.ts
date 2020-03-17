@@ -20,6 +20,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { UserMutationModule } from '../../@shared/user/user-mutation/user-mutation.module';
 import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
+import { EditUserMutationComponent } from './edit-user-mutation/edit-user-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -31,6 +32,7 @@ import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invit
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { InviteGuard } from '../../@core/role/invite.guard';
+import { UserMultiSelectModule } from '../../@shared/user/user-multi-select/user-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -40,12 +42,14 @@ const COMPONENTS = [
 	UsersComponent,
 	UserFullNameComponent,
 	EditUserProfileComponent,
-	ManageUserInviteComponent
+	ManageUserInviteComponent,
+	EditUserMutationComponent
 ];
 
 @NgModule({
 	imports: [
 		UsersRoutingModule,
+		UserMultiSelectModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,

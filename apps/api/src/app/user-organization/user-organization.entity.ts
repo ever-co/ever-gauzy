@@ -4,7 +4,7 @@ import {
 	Column,
 	JoinColumn,
 	RelationId,
-	OneToOne
+	ManyToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { UserOrganization as IUserOrganization } from '@gauzy/models';
@@ -15,7 +15,7 @@ import { User } from '../user';
 @Entity('user_organization')
 export class UserOrganization extends Base implements IUserOrganization {
 	@ApiProperty({ type: User })
-	@OneToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne((type) => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	user?: User;
 
