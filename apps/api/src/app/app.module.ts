@@ -141,6 +141,10 @@ import { TimesheetModule } from './timesheet/timesheet.module';
 					{
 						path: '/organization-employment-type',
 						module: OrganizationEmploymentTypeModule
+					},
+					{
+						path: '/timesheet',
+						module: TimesheetModule
 					}
 				]
 			}

@@ -1,0 +1,46 @@
+<div class="timer-container">
+	<div class="is_billable">
+		<button
+			nbButton
+			title="Is Billable"
+			(click)="isBillable = !isBillable"
+			size="small"
+			[status]="isBillable ? 'primary' : 'basic'"
+		>
+			$
+		</button>
+	</div>
+	<div class="time">{{ time }}</div>
+	<div class="actions">
+		<div class="toggle">
+			<button
+				class="btn btn-rounded"
+				[ngClass]="{ 'btn-danger': interval, 'btn-success': !interval }"
+				(click)="toggle()"
+			>
+				<nb-icon *ngIf="!interval" icon="play-circle-outline"></nb-icon>
+				<nb-icon *ngIf="interval" icon="pause-circle-outline"></nb-icon>
+			</button>
+		</div>
+		<div class="mode">
+			<button
+				title="Timer"
+				nbButton
+				(click)="timeType = 'TRAKED'"
+				size="tiny"
+				[status]="timeType == 'TRAKED' ? 'primary' : 'basic'"
+			>
+				<nb-icon icon="clock-outline"></nb-icon>
+			</button>
+			<button
+				title="Manual"
+				nbButton
+				(click)="timeType = 'MANUAL'"
+				size="tiny"
+				[status]="timeType == 'MANUAL' ? 'primary' : 'basic'"
+			>
+				<nb-icon icon="menu-outline"></nb-icon>
+			</button>
+		</div>
+	</div>
+</div>

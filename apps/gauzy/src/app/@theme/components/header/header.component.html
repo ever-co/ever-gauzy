@@ -82,6 +82,9 @@
 			(click)="toggleSettings()"
 		></nb-action>
 
+		<nb-action *ngIf="getWindowWidth() > largeBreakpoint">
+			<ngx-time-tracker></ngx-time-tracker>
+		</nb-action>
 		<!-- <nb-action class="control-item" icon="bell-outline"></nb-action>
     <nb-action class="control-item" icon="email-outline"></nb-action>
     <nb-action class="control-item">

@@ -1,6 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from './employee.model';
-import { Tag, Task } from '..';
+import { Tag, Task, Employee } from '..';
 import { OrganizationClients } from './organization-clients.model';
 import { OrganizationProjects } from './organization-projects.model';
 
@@ -41,6 +40,7 @@ export interface TimeLog extends IBaseEntityModel {
 	description?: string;
 	duration: number;
 	isBilled: boolean;
+	isBillable: boolean;
 }
 
 export enum TimeLogType {
@@ -50,7 +50,6 @@ export enum TimeLogType {
 
 export interface TimeSlot extends IBaseEntityModel {
 	name: string;
-	employee?: Employee;
 	timesheet?: Timesheet;
 	project?: OrganizationProjects;
 	duration?: number;
@@ -80,4 +79,15 @@ export interface Screenshot extends IBaseEntityModel {
 	fullUrl: string;
 	thumbUrl?: string;
 	recordedAt?: Date;
+}
+
+export interface ITimerToggleInput {
+	timesheetId?: string;
+	projectId?: string;
+	taskId?: string;
+	clientId?: string;
+	description?: string;
+	logType?: TimeLogType;
+	tags?: string[];
+	isBillable?: boolean;
 }

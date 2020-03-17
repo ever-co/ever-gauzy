@@ -107,4 +107,9 @@ export class TimeLog extends Base implements ITimeLog {
 	@IsBoolean()
 	@Column({ default: false })
 	isBilled: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: false })
+	isBillable: boolean;
 }
