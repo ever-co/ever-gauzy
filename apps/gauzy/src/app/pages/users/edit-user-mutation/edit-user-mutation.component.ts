@@ -7,7 +7,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Organization, UserOrganization } from '@gauzy/models';
+import { Organization, UserOrganization, RolesEnum } from '@gauzy/models';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -60,7 +60,10 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 	}
 
 	private async _loadUsers() {
-		const { items } = await this.usersOrganizationsService.getAll(['user']);
+		const { items } = await this.usersOrganizationsService.getAll([
+			'user',
+			'user.role'
+		]);
 
 		const usersVm = [];
 
@@ -71,18 +74,29 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 		for (const orgUser of items.filter(
 			(item) => !existedUsers.includes(item.userId)
 		)) {
-			usersVm.push({
-				firstName: orgUser.user.firstName || '',
-				lastName: orgUser.user.lastName || '',
-				email: orgUser.user.email,
-				id: orgUser.userId,
-				isActive: orgUser.isActive,
-				imageUrl: orgUser.user.imageUrl,
-				user: orgUser.user
-			});
+			if (
+				orgUser.isActive &&
+				orgUser.user.role.name !== RolesEnum.EMPLOYEE
+			) {
+				usersVm.push({
+					firstName: orgUser.user.firstName || '',
+					lastName: orgUser.user.lastName || '',
+					email: orgUser.user.email,
+					id: orgUser.userId,
+					isActive: orgUser.isActive,
+					imageUrl: orgUser.user.imageUrl,
+					user: orgUser.user
+				});
+			}
 		}
 
-		this.users = usersVm;
+		const distinct = usersVm.reduce(
+			(acc, curr) =>
+				acc.some((user) => user.id === curr.id) ? acc : [...acc, curr],
+			[]
+		);
+
+		this.users = distinct;
 	}
 
 	onUsersSelected(users: string[]) {

@@ -58,7 +58,6 @@ export class UsersComponent extends TranslationBaseComponent
 	organizationInvitesAllowed = false;
 	showAddCard: boolean;
 	userToEdit: UserOrganization;
-	employees: Employee[] = [];
 	users: User[] = [];
 
 	@ViewChild('usersTable', { static: false }) usersTable;
