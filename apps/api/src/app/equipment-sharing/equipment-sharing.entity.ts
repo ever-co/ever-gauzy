@@ -1,6 +1,5 @@
 import {
 	Entity,
-	OneToOne,
 	RelationId,
 	Column,
 	ManyToMany,
