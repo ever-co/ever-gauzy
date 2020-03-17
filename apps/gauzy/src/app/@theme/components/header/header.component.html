@@ -76,15 +76,24 @@
 			class="toggle-layout"
 			[nbContextMenu]="supportContextMenu"
 		></nb-action>
+
+		<nb-action
+			icon="clock-outline"
+			class="toggle-layout"
+			[nbPopover]="timerCard"
+			[nbContextMenu]="supportContextMenu"
+		></nb-action>
+
+		<ng-template #timerCard>
+			<ngx-time-tracker></ngx-time-tracker>
+		</ng-template>
+
 		<nb-action
 			icon="settings-2-outline"
 			class="toggle-layout"
 			(click)="toggleSettings()"
 		></nb-action>
 
-		<nb-action *ngIf="getWindowWidth() > largeBreakpoint">
-			<ngx-time-tracker></ngx-time-tracker>
-		</nb-action>
 		<!-- <nb-action class="control-item" icon="bell-outline"></nb-action>
     <nb-action class="control-item" icon="email-outline"></nb-action>
     <nb-action class="control-item">

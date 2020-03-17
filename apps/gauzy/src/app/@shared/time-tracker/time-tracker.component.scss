@@ -1,4 +1,7 @@
+@import 'var';
 :host {
+	display: block;
+	padding: 10px;
 	.timer-container {
 		display: flex;
 		align-items: center;
@@ -26,6 +29,7 @@
 			flex-direction: column;
 			justify-content: center;
 			padding-left: 10px;
+			padding-right: 10px;
 			button {
 				margin: 2px;
 				padding: 3px;
@@ -39,6 +43,13 @@
 					width: 16px;
 				}
 			}
+		}
+
+		[nbButton].appearance-filled.status-primary[disabled] {
+			background-color: nb-theme(text-primary-active-color);
+			border-color: nb-theme(text-primary-active-color);
+			color: #ffffff;
+			opacity: 0.4;
 		}
 	}
 }

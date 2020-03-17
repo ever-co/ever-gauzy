@@ -2,10 +2,11 @@
 	<div class="is_billable">
 		<button
 			nbButton
-			title="Is Billable"
-			(click)="isBillable = !isBillable"
+			(click)="$event.stopPropagation(); isBillable = !isBillable"
 			size="small"
 			[status]="isBillable ? 'primary' : 'basic'"
+			nbTooltip="Is Billable"
+			[disabled]="running"
 		>
 			$
 		</button>
@@ -15,29 +16,32 @@
 		<div class="toggle">
 			<button
 				class="btn btn-rounded"
-				[ngClass]="{ 'btn-danger': interval, 'btn-success': !interval }"
-				(click)="toggle()"
+				[ngClass]="{ 'btn-danger': running, 'btn-success': !running }"
+				(click)="$event.stopPropagation(); toggle()"
+				nbTooltip="{{ running ? 'Stop' : 'Start' }} Timer"
 			>
-				<nb-icon *ngIf="!interval" icon="play-circle-outline"></nb-icon>
-				<nb-icon *ngIf="interval" icon="pause-circle-outline"></nb-icon>
+				<nb-icon *ngIf="!running" icon="play-circle-outline"></nb-icon>
+				<nb-icon *ngIf="running" icon="pause-circle-outline"></nb-icon>
 			</button>
 		</div>
 		<div class="mode">
 			<button
-				title="Timer"
 				nbButton
-				(click)="setTimeType('TRACKED')"
+				(click)="$event.stopPropagation(); setTimeType('TRACKED')"
 				size="tiny"
 				[status]="timeType == 'TRACKED' ? 'primary' : 'basic'"
+				nbTooltip="Timer"
+				[disabled]="running"
 			>
 				<nb-icon icon="clock-outline"></nb-icon>
 			</button>
 			<button
-				title="Manual"
 				nbButton
-				(click)="setTimeType('MANUAL')"
+				(click)="$event.stopPropagation(); setTimeType('MANUAL')"
 				size="tiny"
 				[status]="timeType == 'MANUAL' ? 'primary' : 'basic'"
+				nbTooltip="Manual"
+				[disabled]="running"
 			>
 				<nb-icon icon="menu-outline"></nb-icon>
 			</button>
