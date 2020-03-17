@@ -556,7 +556,10 @@
 		"TAGS_COLOR": "Цвет",
 		"TAGS_ADD_TAG": "Тег добавлен",
 		"TAGS_EDIT_TAG": "Тег отредактирован",
-		"TAGS_DELETE_TAG": "Метка удалена"
+		"TAGS_DELETE_TAG": "Метка удалена",
+		"TAGS_SELECT_NAME": "Имя тега",
+		"TAGS_SELECT_COLOR": "Цвет тега",
+		"TAGS_SELECT_DESCRIPTION": "Описание метки"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
