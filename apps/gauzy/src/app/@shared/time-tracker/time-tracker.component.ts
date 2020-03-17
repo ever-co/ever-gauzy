@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from './time-tracker.service';
 import { TimeLog, TimeLogType } from '@gauzy/models';
-import moment from 'moment';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -12,7 +12,7 @@ export class TimeTrackerComponent implements OnInit {
 	time: string = '00:00:00';
 	subscription: any;
 	interval: any;
-	timeType: TimeLogType = TimeLogType.TRAKED;
+	timeType: TimeLogType = TimeLogType.TRACKED;
 	isBillable: boolean = true;
 
 	private _dueration: number = 0;
@@ -21,21 +21,7 @@ export class TimeTrackerComponent implements OnInit {
 	}
 	public set dueration(totalSeconds: number) {
 		this._dueration = totalSeconds;
-
-		if (totalSeconds > 0) {
-			const hours = Math.floor(totalSeconds / 3600);
-			totalSeconds %= 3600;
-			const minutes = Math.floor(totalSeconds / 60);
-			const seconds = totalSeconds % 60;
-			this.time =
-				hours.toString().padStart(2, '0') +
-				':' +
-				minutes.toString().padStart(2, '0') +
-				':' +
-				seconds.toString().padStart(2, '0');
-		} else {
-			this.time = '00:00:00';
-		}
+		this.time = moment.utc(totalSeconds * 1000).format('HH:mm:ss');
 	}
 
 	constructor(private timeTrackerService: TimeTrackerService) {}

@@ -44,7 +44,7 @@ export interface TimeLog extends IBaseEntityModel {
 }
 
 export enum TimeLogType {
-	TRAKED = 'TRAKED',
+	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL'
 }
 

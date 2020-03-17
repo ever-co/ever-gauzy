@@ -57,7 +57,7 @@ export class TimerService {
 				projectId: request.projectId || null,
 				taskId: request.taskId || null,
 				clientId: request.clientId || null,
-				logType: request.logType || TimeLogType.TRAKED,
+				logType: request.logType || TimeLogType.TRACKED,
 				description: request.description || '',
 				isBillable: request.isBillable || false
 			});

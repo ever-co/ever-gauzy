@@ -38,7 +38,7 @@ export class TimeLog extends Base implements ITimeLog {
 	employee: Employee;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeSlot: TimeLog) => timeSlot.employee)
+	@RelationId((timeLog: TimeLog) => timeLog.employee)
 	readonly employeeId?: string;
 
 	@ApiProperty({ type: Timesheet })
@@ -47,7 +47,7 @@ export class TimeLog extends Base implements ITimeLog {
 	timesheet: Timesheet;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeSlot: TimeLog) => timeSlot.timesheet)
+	@RelationId((timeLog: TimeLog) => timeLog.timesheet)
 	readonly timesheetId?: string;
 
 	@ApiProperty({ type: OrganizationProjects })
@@ -56,7 +56,7 @@ export class TimeLog extends Base implements ITimeLog {
 	project?: OrganizationProjects;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeSlot: TimeLog) => timeSlot.project)
+	@RelationId((timeLog: TimeLog) => timeLog.project)
 	readonly projectId?: string;
 
 	@ApiProperty({ type: Task })
@@ -65,7 +65,7 @@ export class TimeLog extends Base implements ITimeLog {
 	task?: Task;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeSlot: TimeLog) => timeSlot.task)
+	@RelationId((timeLog: TimeLog) => timeLog.task)
 	readonly taskId?: string;
 
 	@ApiProperty({ type: OrganizationClients })
@@ -74,7 +74,7 @@ export class TimeLog extends Base implements ITimeLog {
 	client?: OrganizationClients;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeSlot: TimeLog) => timeSlot.client)
+	@RelationId((timeLog: TimeLog) => timeLog.client)
 	readonly clientId?: string;
 
 	@ApiProperty({ type: Date })
@@ -90,7 +90,7 @@ export class TimeLog extends Base implements ITimeLog {
 	@ApiProperty({ type: String, enum: TimeLogType })
 	@IsEnum(TimeLogType)
 	@IsString()
-	@Column({ default: TimeLogType.TRAKED })
+	@Column({ default: TimeLogType.TRACKED })
 	logType: string;
 
 	@ApiProperty({ type: String })
