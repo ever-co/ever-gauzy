@@ -57,4 +57,8 @@ export class TimeTrackerComponent implements OnInit {
 		clearInterval(this.interval);
 		this.interval = null;
 	}
+	setTimeType(type: string) {
+		this.timeType =
+			type == 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
+	}
 }
