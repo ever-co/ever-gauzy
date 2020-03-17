@@ -11,7 +11,6 @@ import { Router } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
-import { SelectorService } from '../../../@core/utils/selector.service';
 import { PermissionsEnum } from '@gauzy/models';
 import { User } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
