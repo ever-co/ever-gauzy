@@ -24,6 +24,7 @@
 		"NEXT": "Следващ",
 		"PREVIOUS": "Предишен",
 		"INVITE_AGAIN": "Invite Again",
+		"REQUEST": "Request",
 		"HISTORY": "History"
 	},
 	"SM_TABLE": {
@@ -133,6 +134,12 @@
 			"ACCEPT_DATE": "Дата на приемане (опция)",
 			"REJECT_DATE": "Дата на отказ (опция)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
+			"SELECT_EQUIPMENT": "Select equipment",
+			"SELECT_SHARE_REQUEST_DATE": "Select request date",
+			"SELECT_SHARE_START_DATE": "Select start date",
+			"SELECT_SHARE_END_DATE": "Select end date",
+			"SELECT_EMPLOYEE": "Select employee",
+			"SELECT_TEAM": "Select team",
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date"
@@ -192,6 +199,8 @@
 			"ENABLE_INVITES": "Позволи поканите",
 			"INVITE_EXPIRY_PERIOD": "Покани валидни до",
 			"SWITCH_PROJECT_STATE": "Public",
+			"CHOOSE_EMPLOYEES": "Choose employee/s",
+			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date"
 		},
@@ -275,6 +284,7 @@
 		},
 		"TAGS": "Тагове",
 		"EQUIPMENT": "Equipment",
+		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"TASKS": "Tasks"
 	},
 	"SETTINGS_MENU": {
@@ -559,6 +569,20 @@
 		"EQUIPMENT_DELETED": "Equipment deleted",
 		"EQUIPMENT_ADDED": "Equipment added",
 		"EQUIPMENT_SAVED": "Equipment saved"
+	},
+	"EQUIPMENT_SHARING_PAGE": {
+		"HEADER": "Equipment Sharing",
+		"ADD_EQUIPMENT_REQUEST": "Request equipment",
+		"EDIT_EQUIPMENT_REQUEST": "Edit equipment request",
+		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
+		"REQUEST": "Request",
+		"EQUIPMENT_NAME": "Equipment name",
+		"SHARE_REQUIEST_DATE": "Share request date",
+		"SHARE_START_DATE": "Share start date",
+		"SHARE_END_DATE": "Share end date",
+		"STATUS": "Статус",
+		"REQUEST_SAVED": "Request saved",
+		"REQUEST_DELETED": "Request deleted"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
