@@ -420,7 +420,6 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	}
 	onChartSelected(selectedChart: string) {
 		this.selectedChart = selectedChart;
-		console.log(this.selectedChart);
 	}
 
 	ngOnDestroy() {
