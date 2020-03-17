@@ -14,6 +14,8 @@ import { Store } from '../../../@core/services/store.service';
 import { SelectorService } from '../../../@core/utils/selector.service';
 import { PermissionsEnum } from '@gauzy/models';
 import { User } from '@gauzy/models';
+import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ngx-header',
@@ -43,6 +45,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
+	timerDueration: string;
 
 	constructor(
 		private sidebarService: NbSidebarService,
@@ -52,7 +55,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private translate: TranslateService,
 		private store: Store,
-		private selectorService: SelectorService
+		private timeTrackerService: TimeTrackerService
 	) {}
 
 	ngOnInit() {
@@ -64,6 +67,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		// 	.subscribe((e) => {
 		// 		this.showSelectors(e['url']);
 		// 	});
+
+		this.timeTrackerService.$dueration
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((time) => {
+				this.timerDueration = moment
+					.utc(time * 1000)
+					.format('HH:mm:ss');
+			});
 
 		this.menuService
 			.onItemClick()

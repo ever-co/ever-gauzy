@@ -77,12 +77,16 @@
 			[nbContextMenu]="supportContextMenu"
 		></nb-action>
 
-		<nb-action
+		<!-- <nb-action
 			icon="clock-outline"
 			class="toggle-layout"
 			[nbPopover]="timerCard"
-			[nbContextMenu]="supportContextMenu"
-		></nb-action>
+		></nb-action> -->
+
+		<nb-action [nbPopover]="timerCard">
+			<nb-icon class="mr-3" icon="clock-outline"></nb-icon>
+			{{ timerDueration }}
+		</nb-action>
 
 		<ng-template #timerCard>
 			<ngx-time-tracker></ngx-time-tracker>

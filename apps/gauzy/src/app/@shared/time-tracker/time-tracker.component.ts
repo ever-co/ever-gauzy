@@ -45,7 +45,7 @@ export class TimeTrackerComponent implements OnInit {
 			});
 	}
 
-	toggle(type: string) {
+	toggle() {
 		this.timeTrackerService.toggle();
 	}
 
