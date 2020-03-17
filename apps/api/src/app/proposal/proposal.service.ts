@@ -56,3 +56,4 @@ export class ProposalService extends CrudService<Proposal> {
 		return this.proposalRepository.save(proposal);
 	}
 }
+// test
