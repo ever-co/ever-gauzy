@@ -24,6 +24,7 @@
 		"NEXT": "Следующий",
 		"PREVIOUS": "Предыдущий",
 		"INVITE_AGAIN": "Пригласить ещё раз",
+		"REQUEST": "Запросить",
 		"HISTORY": "История"
 	},
 	"SM_TABLE": {
@@ -133,6 +134,12 @@
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
 			"EMAIL_INVITATION": "Введите email для отправки приглашения",
+			"SELECT_EQUIPMENT": "Выберите оборудование",
+			"SELECT_SHARE_REQUEST_DATE": "Выберите дату запроса",
+			"SELECT_SHARE_START_DATE": "Выберите дату начала",
+			"SELECT_SHARE_END_DATE": "Выберите дату окончания",
+			"SELECT_EMPLOYEE": "Выберите сотрудника",
+			"SELECT_TEAM": "Выберите команду",
 			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
 			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
 			"REGISTRATION_DATE": "Дата регистрации"
@@ -192,6 +199,8 @@
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
 			"SWITCH_PROJECT_STATE": "Публичный",
+			"CHOOSE_EMPLOYEES": "Выберите сотрудника/с",
+			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации"
 		},
@@ -275,6 +284,7 @@
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
+		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
 		"TASKS": "Задачи"
 	},
 	"SETTINGS_MENU": {
@@ -559,6 +569,20 @@
 		"EQUIPMENT_DELETED": "Снаряжение удалено",
 		"EQUIPMENT_ADDED": "Снаряжение добавлено",
 		"EQUIPMENT_SAVED": "Оборудование сохранено"
+	},
+	"EQUIPMENT_SHARING_PAGE": {
+		"HEADER": "Совместное использование снаряжения",
+		"ADD_EQUIPMENT_REQUEST": "Запросить оборудование",
+		"EDIT_EQUIPMENT_REQUEST": "Изменить запрос на оборудование",
+		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на оборудование",
+		"REQUEST": "Запросить",
+		"EQUIPMENT_NAME": "Название оборудования",
+		"SHARE_REQUIEST_DATE": "Поделиться датой запроса",
+		"SHARE_START_DATE": "Поделиться датой начала",
+		"SHARE_END_DATE": "Поделиться датой окончания",
+		"STATUS": "Статус",
+		"REQUEST_SAVED": "Запрос сохранен",
+		"REQUEST_DELETED": "Запрос удален"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
