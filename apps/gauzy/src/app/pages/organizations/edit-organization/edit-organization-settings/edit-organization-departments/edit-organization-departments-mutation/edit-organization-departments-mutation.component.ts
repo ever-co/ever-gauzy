@@ -3,7 +3,8 @@ import { Employee, OrganizationDepartment } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-organization-departments-mutation',
-	templateUrl: './edit-organization-departments-mutation.component.html'
+	templateUrl: './edit-organization-departments-mutation.component.html',
+	styleUrls: ['./edit-organization-departments-mutation.component.scss']
 })
 export class EditOrganizationDepartmentsMutationComponent implements OnInit {
 	@Input()

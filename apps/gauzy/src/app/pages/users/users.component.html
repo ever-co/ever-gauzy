@@ -33,9 +33,17 @@
 
 			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-				>{{ 'BUTTONS.ADD' | translate }}
+				>{{ 'BUTTONS.ADD_NEW' | translate }}
 			</button>
-
+			<button
+				(click)="showAddCard = !showAddCard"
+				nbButton
+				status="warning"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD_EXISTING' | translate }}
+			</button>
 			<button
 				nbButton
 				[disabled]="!selectedUser"
@@ -56,6 +64,13 @@
 				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
 				>{{ 'BUTTONS.DELETE' | translate }}
 			</button> -->
+			<ga-edit-user-mutation
+				*ngIf="showAddCard"
+				[organization]="organization"
+				(addOrEditUser)="addOrEditUser($event)"
+				(canceled)="cancel()"
+			>
+			</ga-edit-user-mutation>
 		</div>
 		<ng2-smart-table
 			style="cursor: pointer;"

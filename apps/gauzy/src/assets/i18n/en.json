@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ADD_EXISTING_USER": "Add Existing User",
+		"ADD_NEW": "Add New",
 		"ADD": "Add",
 		"CREATE": "Create",
 		"REGISTER": "Register",
@@ -9,6 +11,8 @@
 		"DETAILS": "Details",
 		"DUPLICATE": "Duplicate",
 		"DELETE": "Delete",
+		"REMOVE": "Remove",
+		"ADD_EXISTING": "Add Existing",
 		"OK": "Ok",
 		"SAVE": "Save",
 		"BACK": "BACK",
@@ -192,6 +196,7 @@
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Image",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"DATE": "Date",
 			"VALUE": "Value",
 			"SELECT_CURRENCY": "Select Currency",
@@ -552,7 +557,10 @@
 		"TAGS_COLOR": "Color",
 		"TAGS_ADD_TAG": "Tag added",
 		"TAGS_EDIT_TAG": "Tag edited",
-		"TAGS_DELETE_TAG": "Tag deleted"
+		"TAGS_DELETE_TAG": "Tag deleted",
+		"TAGS_SELECT_NAME": "Tag name",
+		"TAGS_SELECT_COLOR": "Tag color",
+		"TAGS_SELECT_DESCRIPTION": "Tag description"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
@@ -601,6 +609,7 @@
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
+		"ADD_EXISTING_USER": "Add Existing User",
 		"ROLE": {
 			"ADMIN": "Admin",
 			"MANAGER": "Manager",
@@ -609,7 +618,8 @@
 			"EMPLOYEE": "Employee"
 		},
 		"EDIT_USER": {
-			"HEADER": "Manage User"
+			"HEADER": "Manage User",
+			"EDIT_EXISTING_USER": "Edit Existing User"
 		}
 	},
 	"CONTEXT_MENU": {
