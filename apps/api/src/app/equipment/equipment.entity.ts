@@ -21,14 +21,14 @@ export class Equipment extends Base implements IEquipment {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	@Column()
 	type: string;
 
 	@ApiPropertyOptional({ type: String })
 	@IsOptional()
-	@Column({ nullable: true })
-	SN?: string;
+	@Column()
+	serialNumber?: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
@@ -44,7 +44,7 @@ export class Equipment extends Base implements IEquipment {
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
-	@IsNotEmpty()
+	@IsOptional()
 	@Column()
 	currency: string;
 
@@ -57,6 +57,6 @@ export class Equipment extends Base implements IEquipment {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column({ nullable: true })
+	@Column()
 	autoApproveShare: boolean;
 }

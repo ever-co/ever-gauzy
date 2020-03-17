@@ -78,19 +78,19 @@ export class Invite extends Base implements IInvite {
 
 	@ManyToMany((type) => OrganizationProjects)
 	@JoinTable({
-		name: 'invite_organization_projects'
+		name: 'invite_organization_project'
 	})
 	projects?: OrganizationProjects[];
 
 	@ManyToMany((type) => OrganizationClients)
 	@JoinTable({
-		name: 'invite_organization_clients'
+		name: 'invite_organization_client'
 	})
 	clients?: OrganizationClients[];
 
 	@ManyToMany((type) => OrganizationDepartment)
 	@JoinTable({
-		name: 'invite_organization_departments'
+		name: 'invite_organization_department'
 	})
 	departments?: OrganizationDepartment[];
 }

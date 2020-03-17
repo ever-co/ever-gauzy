@@ -1,11 +1,19 @@
-@import '../../../@theme/styles/themes.scss';
+@import 'var';
 
 @include nb-install-component() {
-    nb-card{
-        nb-card-header {
-            nb-icon.close { 
-                cursor: pointer;
-            }
-        }
-    }
+	nb-card {
+		nb-card-header {
+			nb-icon.close {
+				cursor: pointer;
+			}
+		}
+	}
+}
+
+.button-container {
+	display: flex;
+	justify-content: space-evenly;
+	button {
+		margin: 0 1rem 0 1rem;
+	}
 }

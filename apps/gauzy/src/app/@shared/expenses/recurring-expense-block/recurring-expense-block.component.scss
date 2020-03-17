@@ -1,44 +1,23 @@
-.edit-icon {
-	margin-left: 30px;
-	position: relative;
-	width: 36px;
-
-	svg {
-		position: absolute;
-	}
-
-	nb-icon {
-		position: absolute;
-	}
-}
-
-.setting-name {
-	font-size: 24px;
-	color: inherit;
-	font-weight: bold;
-}
-
-.body-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 35px;
-}
-
 .setting-block {
 	&:hover {
 		box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
 		transform: translateY(-1px);
 	}
 
-	display: flex;
-	justify-content: space-between;
-	margin-bottom: 20px;
-	width: 100%;
-	height: 84px;
-	background-color: inherit;
+	background-color: #f6f9fc;
 	border-radius: 4px 0 0 4px;
-	color: inherit;
+	margin-bottom: 20px;
+
+	.setting-row {
+		display: flex;
+		justify-content: space-between;
+		width: 100%;
+		height: 84px;
+	}
+
+	.setting-table {
+		border-top: 1px solid #ccc;
+	}
 
 	.block-settings {
 		display: flex;
@@ -55,7 +34,7 @@
 			width: 30px;
 			cursor: pointer;
 
-			svg {
+			::ng-deep svg {
 				fill: rgb(127, 127, 127);
 			}
 
@@ -68,24 +47,10 @@
 	}
 }
 
-.transparent {
-	opacity: 0.7;
-}
-
-.settings-body {
-	padding: 35px;
-}
-
-.sub-header {
-	margin-bottom: 20px;
-	font-weight: bold;
-}
-
 .block-content {
 	display: flex;
 	justify-content: space-between;
 	width: 100%;
-	color: inherit;
 
 	.block-info {
 		display: flex;
@@ -99,7 +64,7 @@
 		}
 
 		span {
-			color: inherit;
+			color: #18213a;
 			font-size: 16px;
 		}
 
@@ -112,6 +77,7 @@
 			display: flex;
 			align-items: center;
 			padding-right: 24px;
+			cursor: pointer;
 		}
 	}
 
@@ -127,13 +93,11 @@
 		.block-actions.open {
 			cursor: pointer;
 			margin-left: auto;
-			fill: #909090;
 		}
 
 		small {
 			cursor: pointer;
 		}
-
 		svg {
 			width: 24px;
 			height: fit-content;

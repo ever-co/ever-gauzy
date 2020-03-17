@@ -383,6 +383,38 @@
 		</nb-card-body>
 	</nb-card>
 
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<label class="label">
+								{{
+									'FORM.LABELS.ENABLE_DISABLE_FUTURE_DATE'
+										| translate
+								}}
+							</label>
+							<nb-toggle
+								class="d-block"
+								formControlName="futureDateAllowed"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'FORM.LABELS.ALLOW_FUTURE_DATE' | translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
 	<div class="actions">
 		<button
 			[disabled]="this.form.invalid"

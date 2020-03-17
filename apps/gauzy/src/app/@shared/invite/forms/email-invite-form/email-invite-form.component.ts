@@ -132,8 +132,6 @@ export class EmailInviteFormComponent implements OnInit {
 	async saveInvites(): Promise<CreateEmailInvitesOutput> {
 		const inviteType = 'user';
 
-		console.log(this.router.url);
-
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({

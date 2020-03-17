@@ -1,61 +1,65 @@
 <nb-card>
 	<nb-card-header>
-		<h4>{{
-			'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS'
-				| translate
-		}}</h4>
+		<h4>
+			{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
+		</h4>
 		<button nbButton (click)="edit()" status="info" class="mr-2">
-			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{
-				'PROPOSALS_PAGE.PROPOSAL_DETAILS.EDIT'
-					| translate
-			}}
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.EDIT' | translate }}
 		</button>
 	</nb-card-header>
 
 	<nb-card-body class="card-container">
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
 		<div class="wrapper-top">
 			<nb-card class="prop-card">
-				<h6>{{
-					'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR'
-						| translate
-				}}</h6>
+				<h6>
+					{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR' | translate }}
+				</h6>
 				<p>{{ author }}</p>
 			</nb-card>
 			<nb-card class="prop-card">
-				<h6>{{
-					'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_URL'
-						| translate
-				}}</h6>
+				<h6>
+					{{
+						'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_URL'
+							| translate
+					}}
+				</h6>
 				<p [innerHTML]="jobPostLink"></p>
 			</nb-card>
 			<nb-card class="prop-card">
-				<h6>{{
-					'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON'
-						| translate
-				}}</h6>
+				<h6>
+					{{
+						'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON'
+							| translate
+					}}
+				</h6>
 				{{ proposal.valueDate | date: 'shortDate' }}
 			</nb-card>
 			<nb-card class="prop-card">
-				<h6>{{
-					'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS'
-						| translate
-				}}</h6>
+				<h6>
+					{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS' | translate }}
+				</h6>
 				<ga-propsal-status [rowData]="proposal"></ga-propsal-status>
 			</nb-card>
 		</div>
 		<div class="wrapper-bottom">
 			<nb-card class="prop-card">
-				<h6>{{
-					'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT'
-						| translate
-				}}</h6>
+				<h6>
+					{{
+						'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT'
+							| translate
+					}}
+				</h6>
 				<div class="px-5" [innerHTML]="jobPostContent"></div>
 			</nb-card>
 			<nb-card class="prop-card">
-				<h6>{{
-					'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT'
-						| translate
-				}}</h6>
+				<h6>
+					{{
+						'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT'
+							| translate
+					}}
+				</h6>
 				<div class="px-5" [innerHTML]="proposalContent"></div>
 			</nb-card>
 		</div>

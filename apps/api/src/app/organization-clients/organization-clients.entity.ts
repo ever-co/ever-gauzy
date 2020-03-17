@@ -27,7 +27,7 @@ import { OrganizationProjects } from '../organization-projects';
 import { Employee } from '../employee';
 import { Organization } from '../organization/organization.entity';
 
-@Entity('organization_clients')
+@Entity('organization_client')
 export class OrganizationClients extends Base implements IOrganizationClients {
 	@ApiProperty({ type: String })
 	@IsString()
@@ -122,7 +122,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ManyToMany((type) => Employee, { cascade: ['update'] })
 	@JoinTable({
-		name: 'organization_clients_employee'
+		name: 'organization_client_employee'
 	})
 	members?: Employee[];
 }

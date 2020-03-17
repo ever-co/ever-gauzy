@@ -9,7 +9,8 @@ import {
 	Param,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	Post
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -23,6 +24,7 @@ import { EmployeeRecurringExpenseByMonthQuery } from './queries/employee-recurri
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
+import { EmployeeRecurringExpenseCreateCommand } from './commands/employee-recurring-expense.create.command';
 
 @ApiTags('EmployeeRecurringExpense')
 @UseGuards(AuthGuard('jwt'))
@@ -36,6 +38,26 @@ export class EmployeeRecurringExpenseController extends CrudController<
 		private readonly commandBus: CommandBus
 	) {
 		super(employeeRecurringExpenseService);
+	}
+
+	@ApiOperation({ summary: 'Create new expense' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The expense has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	async create(
+		@Body() entity: EmployeeRecurringExpense
+	): Promise<EmployeeRecurringExpense> {
+		return this.commandBus.execute(
+			new EmployeeRecurringExpenseCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -106,5 +128,31 @@ export class EmployeeRecurringExpenseController extends CrudController<
 		return this.queryBus.execute(
 			new EmployeeRecurringExpenseByMonthQuery(findInput)
 		);
+	}
+
+	@ApiOperation({
+		summary: 'Find all employee recurring expenses.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee recurring expense',
+		type: EmployeeRecurringExpense
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAllRecurringExpenses(
+		@Query('data') data: string
+	): Promise<IPagination<EmployeeRecurringExpense>> {
+		const { findInput, order = {} } = JSON.parse(data);
+
+		console.log(findInput);
+
+		return this.employeeRecurringExpenseService.findAll({
+			where: findInput,
+			order: order
+		});
 	}
 }

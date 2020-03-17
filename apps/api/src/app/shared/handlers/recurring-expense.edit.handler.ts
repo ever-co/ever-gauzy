@@ -64,7 +64,8 @@ export abstract class RecurringExpenseEditHandler<
 			endDate: originalExpense.endDate,
 			value: input.value,
 			categoryName: originalExpense.categoryName,
-			currency: originalExpense.currency
+			currency: originalExpense.currency,
+			parentRecurringExpenseId: originalExpense.parentRecurringExpenseId
 		};
 		if (originalExpense.employeeId) {
 			createObject.employeeId = originalExpense.employeeId;

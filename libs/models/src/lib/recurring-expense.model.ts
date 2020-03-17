@@ -12,6 +12,7 @@ export interface RecurringExpenseModel extends IBaseEntityModel {
 	categoryName: string;
 	value: number;
 	currency: string;
+	parentRecurringExpenseId?: string;
 }
 
 export interface RecurringExpenseByMonthFindInput extends IBaseEntityModel {
@@ -38,6 +39,10 @@ export interface RecurringExpenseDeleteInput {
 	deletionType: RecurringExpenseDeletionEnum;
 	month: number;
 	year: number;
+}
+
+export interface RecurringExpenseOrderFields {
+	startDate?: 'ASC' | 'DESC';
 }
 
 export enum RecurringExpenseDeletionEnum {

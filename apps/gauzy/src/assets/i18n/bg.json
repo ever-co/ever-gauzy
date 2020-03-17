@@ -126,10 +126,15 @@
 			"ENABLE_DISABLE_INVITES": "Включване / Изключване на Поканите",
 			"ALLOW_USER_INVITES": "Позволи на юзърите да изпращат покани",
 			"INVITE_EXPIRY_PERIOD": "Период на изтичане на поканите (в дни)",
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Дата на приемане (опция)",
 			"REJECT_DATE": "Дата на отказ (опция)",
-			"EMAIL_INVITATION": "Enter email to send invitation"
+			"EMAIL_INVITATION": "Enter email to send invitation",
+			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
+			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
+			"REGISTRATION_DATE": "Registration Date"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -185,7 +190,9 @@
 			"BONUS_PERCENTAGE": "Бонус процентен",
 			"ENABLE_INVITES": "Позволи поканите",
 			"INVITE_EXPIRY_PERIOD": "Покани валидни до",
-			"SWITCH_PROJECT_STATE": "Public"
+			"SWITCH_PROJECT_STATE": "Public",
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"REGISTRATION_DATE": "Organization Registration Date"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -368,7 +375,16 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
-			"EMPLOYEE_CLIENTS": "Клиенти на служителя:"
+			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
+			"EMPLOYMENT_TYPE": "Employment Type"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
+			"FINISHED_ADDING": "I’ve Added All Current Employees",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -387,6 +403,7 @@
 		"SETTINGS": "Настройки",
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Задължителни разходи в организацията",
+		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
@@ -402,6 +419,7 @@
 			"PROJECTS": "Проекти",
 			"DEPARTMENT_NAME": "Име на отдела",
 			"POSITION_NAME": "Название на позиция",
+			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Добавяне на нов проект",
 			"START_DATE": "Начална дата",
 			"END_DATE": "Крайна дата",
@@ -416,7 +434,8 @@
 			"CLICK_EMPLOYEE": "Кликни за редакция на служителя",
 			"EDIT_PROJECT": "Редактирай Проекта",
 			"REGIONS": "Области",
-			"ROLES_PERMISSIONS": "Роли и Позволения"
+			"ROLES_PERMISSIONS": "Роли и Позволения",
+			"DATE_LIMIT": "Date Limit"
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Виж Административното Табло",
@@ -660,6 +679,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
 			"NAME_REQUIRED": "Name is required!",
@@ -750,6 +770,12 @@
 				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
+				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
+				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
+				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {

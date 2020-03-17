@@ -1,4 +1,4 @@
-@import '../../../@theme/styles/themes';
+@import 'themes';
 
 @include nb-install-component() {
 	ngx-echarts-pie,

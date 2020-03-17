@@ -39,6 +39,7 @@ import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
+import { OrganizationEmploymentTypeModule } from './organization-employment-type';
 
 @Module({
 	imports: [
@@ -140,6 +141,10 @@ import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.mo
 					{
 						path: '/equipment-sharing',
 						module: EquipmentSharingModule
+					},
+					{
+						path: '/organization-employment-type',
+						module: OrganizationEmploymentTypeModule
 					}
 				]
 			}
@@ -190,7 +195,8 @@ import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.mo
 		EquipmentModule,
 		EquipmentSharingModule,
 		EmployeeLevelModule,
-		TaskModule
+		TaskModule,
+		OrganizationEmploymentTypeModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

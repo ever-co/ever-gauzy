@@ -3,7 +3,7 @@ import { Base } from '../core/entities/base';
 import { Entity, Column, Index } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-@Entity('tenants')
+@Entity('tenant')
 export class Tenant extends Base {
 	@ApiProperty({ type: String })
 	@Index()

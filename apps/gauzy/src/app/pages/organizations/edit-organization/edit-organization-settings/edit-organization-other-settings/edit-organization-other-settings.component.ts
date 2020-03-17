@@ -198,7 +198,8 @@ export class EditOrganizationOtherSettingsComponent
 					'yyyy-MM-dd',
 					'en'
 				)
-			]
+			],
+			futureDateAllowed: [this.organization.futureDateAllowed || false]
 		});
 	}
 

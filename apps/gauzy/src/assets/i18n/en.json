@@ -24,7 +24,8 @@
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
 		"INVITE_AGAIN": "Invite Again",
-		"REQUEST": "Request"
+		"REQUEST": "Request",
+		"HISTORY": "History"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -128,6 +129,8 @@
 			"ENABLE_DISABLE_INVITES": "Enable/Disable Invites",
 			"ALLOW_USER_INVITES": "Allow Users to send invites",
 			"INVITE_EXPIRY_PERIOD": "Invite Expiry Period (in Days)",
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
@@ -137,7 +140,10 @@
 			"SELECT_SHARE_START_DATE": "Select start date",
 			"SELECT_SHARE_END_DATE": "Select end date",
 			"SELECT_EMPLOYEE": "Select employee",
-			"SELECT_TEAM": "Select team"
+			"SELECT_TEAM": "Select team",
+			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
+			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
+			"REGISTRATION_DATE": "Registration Date"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -195,7 +201,9 @@
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
 			"SWITCH_PROJECT_STATE": "Public",
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
-			"CHOOSE_TEAMS": "Choose team/s"
+			"CHOOSE_TEAMS": "Choose team/s",
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"REGISTRATION_DATE": "Organization Registration Date"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -249,7 +257,10 @@
 		"CANCEL": "Cancel",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
 		"RECURRING_EXPENSE": "This is a recurring expense",
-		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}"
+		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}",
+		"STARTS_ON": "Starts On",
+		"EXPENSE_HISTORY": "Expense History",
+		"NEW_EXPENSE_VALUE": "New Expense Value"
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
@@ -379,7 +390,16 @@
 			"POSITION": "Position",
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
-			"EMPLOYEE_CLIENTS": "Employee's Clients:"
+			"EMPLOYEE_CLIENTS": "Employee's Clients:",
+			"EMPLOYMENT_TYPE": "Employment Type"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
+			"FINISHED_ADDING": "I’ve Added All Current Employees",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -398,6 +418,7 @@
 		"SETTINGS": "Settings",
 		"ROLES": "Roles",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
+		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
@@ -413,6 +434,7 @@
 			"PROJECTS": "Projects",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
+			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Add new project",
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
@@ -427,7 +449,8 @@
 			"CLICK_EMPLOYEE": "Click to edit employee",
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
-			"ROLES_PERMISSIONS": "Roles & Permissions"
+			"ROLES_PERMISSIONS": "Roles & Permissions",
+			"DATE_LIMIT": "Date Limit"
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
@@ -685,6 +708,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NAME_REQUIRED": "Name is required!",
@@ -775,6 +799,12 @@
 				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
 				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
 				"EMAIL_EXISTS": "This client email already exists as a user"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
+				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
+				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
+				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {

@@ -1,0 +1,14 @@
+:host {
+	display: inline;
+	.navigate {
+		display: flex;
+		margin-bottom: 35px;
+		cursor: pointer;
+
+		span {
+			margin-left: 7px;
+			font-size: 14px;
+			color: #2a2c39;
+		}
+	}
+}
