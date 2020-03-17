@@ -29,6 +29,8 @@
 							}}"
 							id="inputName"
 							fullWidth
+							required
+							[(ngModel)]="name"
 						/>
 					</div>
 				</div>
@@ -79,7 +81,12 @@
 		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="tag ? editTag() : addTag()" status="success" nbButton>
+		<button
+			[disabled]="!name"
+			(click)="tag ? editTag() : addTag()"
+			status="success"
+			nbButton
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
