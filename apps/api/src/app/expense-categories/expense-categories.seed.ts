@@ -1,4 +1,4 @@
-import { Role, ExpenseCategoriesEnum, Expense } from '@gauzy/models';
+import { ExpenseCategoriesEnum } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { ExpenseCategory } from './expense-category.entity';
 
