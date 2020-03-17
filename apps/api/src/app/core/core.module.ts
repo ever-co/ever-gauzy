@@ -46,6 +46,7 @@ import {
 	Activity,
 	Screenshot
 } from '../timesheet';
+import { EquipmentSharing } from '../equipment-sharing';
 
 const entities = [
 	Invite,
@@ -75,6 +76,7 @@ const entities = [
 	Tag,
 	OrganizationEmploymentType,
 	Equipment,
+	EquipmentSharing,
 	EmployeeLevel,
 	Task,
 	TimeSlot,

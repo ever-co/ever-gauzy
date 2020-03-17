@@ -269,11 +269,14 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 			const employeeRecurringExpense = this.selectedDate
 				? (
-						await this.employeeRecurringExpenseService.getAll([], {
-							employeeId: this.selectedEmployee.id,
-							year: this.selectedDate.getFullYear(),
-							month: this.selectedDate.getMonth() + 1
-						})
+						await this.employeeRecurringExpenseService.getAllByMonth(
+							[],
+							{
+								employeeId: this.selectedEmployee.id,
+								year: this.selectedDate.getFullYear(),
+								month: this.selectedDate.getMonth() + 1
+							}
+						)
 				  ).items
 				: [];
 

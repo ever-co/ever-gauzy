@@ -54,6 +54,10 @@ export interface EmployeeUpdateInput {
 export interface EmployeeCreateInput {
 	user: User;
 	organization: Organization;
+	password?: string;
+	offerDate?: Date;
+	acceptDate?: Date;
+	rejectDate?: Date;
 	members?: Employee[];
 }
 

@@ -58,7 +58,9 @@ export class TasksStoreService {
 			.pipe(
 				tap(() => {
 					const tasks = [...this.tasks];
-					const newState = tasks.map(t => t.id === task.id ? task : t);
+					const newState = tasks.map((t) =>
+						t.id === task.id ? task : t
+					);
 					this._tasks$.next(newState);
 				})
 			)

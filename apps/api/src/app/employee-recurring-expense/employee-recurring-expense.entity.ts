@@ -103,4 +103,10 @@ export class EmployeeRecurringExpense extends Base
 	@Index()
 	@Column()
 	currency: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Index()
+	@Column({ nullable: true })
+	parentRecurringExpenseId?: string;
 }

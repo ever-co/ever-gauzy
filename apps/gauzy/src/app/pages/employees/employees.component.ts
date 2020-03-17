@@ -198,19 +198,21 @@ export class EmployeesComponent extends TranslationBaseComponent
 	async add() {
 		const dialog = this.dialogService.open(EmployeeMutationComponent);
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
+		const response = await dialog.onClose.pipe(first()).toPromise();
 
-		if (data) {
-			if (data.user.firstName || data.user.lastName) {
-				this.employeeName =
-					data.user.firstName + ' ' + data.user.lastName;
-			}
-			this.toastrService.primary(
-				this.employeeName.trim() +
-					' added to ' +
-					data.organization.name,
-				'Success'
-			);
+		if (response) {
+			response.map((data) => {
+				if (data.user.firstName || data.user.lastName) {
+					this.employeeName =
+						data.user.firstName + ' ' + data.user.lastName;
+				}
+				this.toastrService.primary(
+					this.employeeName.trim() +
+						' added to ' +
+						data.organization.name,
+					'Success'
+				);
+			});
 
 			this.loadPage();
 		}

@@ -133,7 +133,8 @@
 			"REJECT_DATE": "Дата на отказ (опция)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
-			"ALLOW_FUTURE_DATE": "Allow switching to future periods"
+			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
+			"REGISTRATION_DATE": "Registration Date"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -190,7 +191,8 @@
 			"ENABLE_INVITES": "Позволи поканите",
 			"INVITE_EXPIRY_PERIOD": "Покани валидни до",
 			"SWITCH_PROJECT_STATE": "Public",
-			"EMPLOYMENT_TYPES": "Employment Type"
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"REGISTRATION_DATE": "Organization Registration Date"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -375,6 +377,14 @@
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
 			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
 			"EMPLOYMENT_TYPE": "Employment Type"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
+			"FINISHED_ADDING": "I’ve Added All Current Employees",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {

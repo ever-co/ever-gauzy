@@ -38,6 +38,7 @@ import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
+import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type';
 import { TimesheetModule } from './timesheet/timesheet.module';
 
@@ -139,6 +140,10 @@ import { TimesheetModule } from './timesheet/timesheet.module';
 						module: TaskModule
 					},
 					{
+						path: '/equipment-sharing',
+						module: EquipmentSharingModule
+					},
+					{
 						path: '/organization-employment-type',
 						module: OrganizationEmploymentTypeModule
 					},
@@ -193,6 +198,7 @@ import { TimesheetModule } from './timesheet/timesheet.module';
 			  ]
 			: []),
 		EquipmentModule,
+		EquipmentSharingModule,
 		EmployeeLevelModule,
 		TaskModule,
 		OrganizationEmploymentTypeModule,

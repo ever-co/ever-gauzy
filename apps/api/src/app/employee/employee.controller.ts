@@ -15,13 +15,13 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IPagination } from '../core';
+import { IPagination, getUserDummyImage } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { EmployeeCreateCommand } from './commands';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 
@@ -120,5 +120,35 @@ export class EmployeeController extends CrudController<Employee> {
 		...options: any[]
 	): Promise<Employee> {
 		return this.commandBus.execute(new EmployeeCreateCommand(entity));
+	}
+
+	@ApiOperation({ summary: 'Create records in Bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Records have been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Post('/createBulk')
+	async createBulk(
+		@Body() input: IEmployeeCreateInput[],
+		...options: any[]
+	): Promise<Employee[]> {
+		/**
+		 * Use a dummy image avatar if no image is uploaded for any of the employees in the list
+		 */
+		input
+			.filter((entity) => !entity.user.imageUrl)
+			.map(
+				(entity) =>
+					(entity.user.imageUrl = getUserDummyImage(entity.user))
+			);
+
+		return this.commandBus.execute(new EmployeeBulkCreateCommand(input));
 	}
 }
