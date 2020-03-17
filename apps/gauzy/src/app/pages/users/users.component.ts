@@ -5,7 +5,6 @@ import {
 	InvitationTypeEnum,
 	PermissionsEnum,
 	UserOrganization,
-	Employee,
 	Organization,
 	UserOrganizationCreateInput,
 	RolesEnum,
