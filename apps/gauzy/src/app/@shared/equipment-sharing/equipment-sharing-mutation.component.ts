@@ -4,13 +4,16 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
 	EquipmentSharing,
 	Equipment,
-	EquipmentSharingStatusEnum
+	EquipmentSharingStatusEnum,
+	Employee,
+	OrganizationTeams
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EquipmentSharingService } from '../../@core/services/equipment-sharing.service';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { EmployeesService } from '../../@core/services/employees.service';
+import { OrganizationTeamsService } from '../../@core/services/organization-teams.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Store } from '../../@core/services/store.service';
@@ -32,17 +35,18 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
 	equipmentSharing: EquipmentSharing;
-	//todo
-	employees: any[];
+	employees: Employee[];
 	disabled: boolean;
-	teams: any[];
-	equipmentItems: Equipment[];
-	requestStatuses = Object.values(EquipmentSharingStatusEnum);
-	selectedOrgId;
-	requestStatus;
+	selectedOrgId: string;
+	requestStatus: string;
+	participants = 'employees';
 
+	teams: OrganizationTeams[];
+	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
+
+	requestStatuses = Object.values(EquipmentSharingStatusEnum);
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -53,17 +57,24 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		private store: Store,
 		private fb: FormBuilder,
 		readonly translationService: TranslateService,
-		private employeesService: EmployeesService
+		private employeesService: EmployeesService,
+		private organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translationService);
 	}
 
 	ngOnInit(): void {
 		this.initializeForm();
-		this.getEquipmentItems();
-		this.setSelectedOrganization();
-		this.getEmployees();
-		console.log(this.equipmentSharing);
+		this.loadEquipmentItems();
+		this.loadSelectedOrganization();
+		this.loadEmployees();
+		this.loadTeams();
+		this.loadRequestStatus();
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 
 	async initializeForm() {
@@ -77,7 +88,11 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 					? this.equipmentSharing.employees.map((emp) => emp.id)
 					: []
 			],
-			team: [''],
+			teams: [
+				this.equipmentSharing
+					? this.equipmentSharing.teams.map((team) => team.id)
+					: []
+			],
 			shareRequestDay: [
 				this.equipmentSharing
 					? new Date(this.equipmentSharing.shareRequestDay)
@@ -86,23 +101,18 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			shareStartDay: [
 				this.equipmentSharing
 					? new Date(this.equipmentSharing.shareStartDay)
-					: ''
+					: null
 			],
 			shareEndDay: [
 				this.equipmentSharing
 					? new Date(this.equipmentSharing.shareEndDay)
-					: ''
+					: null
 			],
-			status: [EquipmentSharingStatusEnum.REQUESTED]
+			status: [this.requestStatus]
 		});
 	}
 
 	async onSaveRequest() {
-		console.log(
-			this.employees.filter((emp) => {
-				return this.selectedEmployees.includes(emp.id);
-			})
-		);
 		const shareRequest = {
 			equipmentId: this.form.value['equipment'],
 			equipment: this.equipmentItems.find(
@@ -111,17 +121,27 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 			employees: this.employees.filter((emp) => {
 				return this.selectedEmployees.includes(emp.id);
 			}),
-			teams: null,
+			teams: this.teams.filter((team) => {
+				return this.selectedTeams.includes(team.id);
+			}),
 			shareRequestDay: this.form.value['shareRequestDay'],
 			shareStartDay: this.form.value['shareStartDay'],
 			shareEndDay: this.form.value['shareEndDay'],
-			status: this.form.value['status']
+			status: this.requestStatus
 		};
 
-		console.log(shareRequest);
-		const equipmentSharing = await this.equipmentSharingService.create(
-			shareRequest
-		);
+		let equipmentSharing: EquipmentSharing;
+
+		if (this.equipmentSharing) {
+			equipmentSharing = await this.equipmentSharingService.update(
+				this.equipmentSharing.id,
+				shareRequest
+			);
+		} else {
+			equipmentSharing = await this.equipmentSharingService.create(
+				shareRequest
+			);
+		}
 
 		this.closeDialog(equipmentSharing);
 	}
@@ -130,46 +150,56 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.dialogRef.close(equipmentSharing);
 	}
 
-	async getEquipmentItems() {
+	async loadEquipmentItems() {
 		this.equipmentItems = (await this.equipmentService.getAll()).items;
 	}
 
-	async getSelectedOrganization() {}
-
-	async getEmployees() {
+	async loadEmployees() {
 		this.employeesService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
-				this.employees = employees.items
-					.filter((emp) => {
-						return (
-							emp.orgId === this.selectedOrgId ||
-							this.selectedOrgId === ''
-						);
-					})
-					.map((emp) => {
-						return {
-							id: emp.id,
-							firstName: emp.user.firstName,
-							lastName: emp.user.lastName,
-							imageUrl: emp.user.imageUrl,
-							organizationId: emp.orgId
-						};
-					});
+				this.employees = employees.items.filter((emp) => {
+					return (
+						emp.orgId === this.selectedOrgId ||
+						this.selectedOrgId === ''
+					);
+				});
 			});
 	}
 
-	async setSelectedOrganization() {
+	async loadTeams() {
+		this.teams = (
+			await this.organizationTeamsService.getAll(['members'])
+		).items.filter((org) => {
+			return org.id === this.selectedOrgId || this.selectedOrgId === '';
+		});
+	}
+
+	async loadSelectedOrganization() {
 		this.selectedOrgId = this.store.selectedOrganization
 			? this.store.selectedOrganization.id
 			: '';
 	}
 
-	private setRequestStatus($event: any) {
+	loadRequestStatus() {
+		this.requestStatus = this.equipmentSharing
+			? this.equipmentSharing.status
+			: EquipmentSharingStatusEnum.REQUESTED;
+	}
+
+	setRequestStatus(statusValue: string) {
 		const selectedItem = this.equipmentItems.find((item) => {
-			return item.id === $event.id;
+			return item.id === statusValue;
 		});
+
+		if (
+			this.equipmentSharing &&
+			this.equipmentSharing.status === EquipmentSharingStatusEnum.ACTIVE
+		) {
+			this.requestStatus = EquipmentSharingStatusEnum.ACTIVE;
+			return;
+		}
 
 		if (selectedItem.autoApproveShare) {
 			this.requestStatus = EquipmentSharingStatusEnum.APPROVED;
@@ -178,21 +208,15 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	getName(firstName: string, lastName: string) {
-		return firstName && lastName
-			? firstName + ' ' + lastName
-			: firstName || lastName;
-	}
-
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
-
 	onEmployeesSelected(employeeSelection: string[]) {
 		this.selectedEmployees = employeeSelection;
 	}
 
-	//todo disable either org or emp
-	//status updated based on item
+	onTeamsSelected(teamsSelection: string[]) {
+		this.selectedTeams = teamsSelection;
+	}
+
+	onParticipantsChange(participants: string) {
+		this.participants = participants;
+	}
 }

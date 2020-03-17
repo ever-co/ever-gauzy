@@ -1,5 +1,5 @@
 import { CrudService } from '../core';
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,11 +16,20 @@ export class EquipmentSharingService extends CrudService<EquipmentSharing> {
 	}
 
 	async findAllEquipmentSharings(): Promise<any> {
-		return await this.equipmentSharingRepository
-			.createQueryBuilder('equipment_sharing')
-			.leftJoinAndSelect('equipment_sharing.equipment', 'equipment')
-			.leftJoinAndSelect('equipment_sharing.employees', 'employee')
-			.leftJoinAndSelect('equipment_sharing.teams', 'team')
-			.getMany();
+		return await this.equipmentSharingRepository.find({
+			relations: ['equipment', 'employees', 'teams']
+		});
+	}
+
+	async update(
+		id: string,
+		equipmentSharing: EquipmentSharing
+	): Promise<EquipmentSharing> {
+		try {
+			await this.equipmentSharingRepository.delete(id);
+			return this.equipmentSharingRepository.save(equipmentSharing);
+		} catch (err) {
+			throw new BadRequestException(err);
+		}
 	}
 }

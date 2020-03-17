@@ -21,6 +21,7 @@
 					<nb-select
 						class="d-block"
 						formControlName="equipment"
+						(selectedChange)="setRequestStatus($event)"
 						placeholder="{{
 							'FORM.LABELS.SELECT_EQUIPMENT' | translate
 						}}"
@@ -32,14 +33,35 @@
 						>
 					</nb-select>
 				</div>
-				<div class="col-sm-4">
-					<div class="status-label">
-						ACTIVE
+				<div class="col-sm-3 mb-4">
+					<div
+						class="status-label"
+						[ngClass]="{
+							active: requestStatus === requestStatuses[0],
+							requested: requestStatus === requestStatuses[1],
+							approved: requestStatus === requestStatuses[2]
+						}"
+					>
+						<h4>{{ requestStatus }}</h4>
 					</div>
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6 mb-3">
+				<div class="col-sm-12 mb-3">
+					<nb-radio-group
+						(valueChange)="onParticipantsChange($event)"
+						[value]="participants"
+					>
+						<nb-radio [value]="'employees'">Employees </nb-radio>
+						<nb-radio [value]="'teams'">Teams </nb-radio>
+					</nb-radio-group>
+				</div>
+			</div>
+			<div class="row">
+				<div
+					class="col-sm-12 mb-3"
+					*ngIf="participants === 'employees'"
+				>
 					<nb-select
 						formControlName="employees"
 						multiple
@@ -47,7 +69,7 @@
 						(selectedChange)="onEmployeesSelected($event)"
 						fullWidth
 						placeholder="{{
-							'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate
+							'FORM.PLACEHOLDERS.CHOOSE_EMPLOYEES' | translate
 						}}"
 					>
 						<nb-option
@@ -55,24 +77,30 @@
 							[value]="employee.id"
 						>
 							<img
-								src="{{ employee.imageUrl }}"
+								src="{{ employee.user.imageUrl }}"
 								alt="Employee picture"
 								height="40"
 								width="40"
 								style="margin-right:10px"
 							/>
-							{{ employee.firstName }}
-							{{ employee.lastName }}</nb-option
+							{{ employee.user.firstName }}
+							{{ employee.user.lastName }}</nb-option
 						>
 					</nb-select>
 				</div>
-				<div class="col-sm-6 mb-3">
-					<nb-select class="d-block" formControlName="team">
-						<!-- //todo -->
-						<nb-option
-							*ngFor="let team of teams"
-							value="{{ team.id }}"
-							>{{ team }}</nb-option
+				<div class="col-sm-12 mb-3" *ngIf="participants === 'teams'">
+					<nb-select
+						formControlName="teams"
+						multiple
+						[selected]="selectedTeams"
+						(selectedChange)="onTeamsSelected($event)"
+						fullWidth
+						placeholder="{{
+							'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
+						}}"
+					>
+						<nb-option *ngFor="let team of teams" [value]="team.id">
+							{{ team.name }}</nb-option
 						>
 					</nb-select>
 				</div>

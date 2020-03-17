@@ -193,7 +193,9 @@
 			"BONUS_PERCENTAGE": "Bonus Percentage",
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
-			"SWITCH_PROJECT_STATE": "Public"
+			"SWITCH_PROJECT_STATE": "Public",
+			"CHOOSE_EMPLOYEES": "Choose employee/s",
+			"CHOOSE_TEAMS": "Choose team/s"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",

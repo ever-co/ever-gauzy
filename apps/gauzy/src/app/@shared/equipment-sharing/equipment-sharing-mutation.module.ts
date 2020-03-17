@@ -8,7 +8,8 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbCheckboxModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -33,6 +34,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 		NbSelectModule,
 		NbDatepickerModule,
 		NgSelectModule,
+		NbRadioModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

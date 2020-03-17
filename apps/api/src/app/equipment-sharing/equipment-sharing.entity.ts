@@ -40,7 +40,7 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 
 	@ApiProperty({ type: Date })
 	@IsDate()
-	@Column()
+	@Column({ nullable: true })
 	shareStartDay: Date;
 
 	@ApiProperty({ type: Date })
@@ -53,13 +53,13 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@Column()
 	status: string;
 
-	@ManyToMany((type) => Employee)
+	@ManyToMany((type) => Employee, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_employees'
 	})
 	employees: Employee[];
 
-	@ManyToMany((type) => OrganizationTeams)
+	@ManyToMany((type) => OrganizationTeams, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_teams'
 	})

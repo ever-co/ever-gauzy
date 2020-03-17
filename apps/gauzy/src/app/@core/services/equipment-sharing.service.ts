@@ -32,4 +32,17 @@ export class EquipmentSharingService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	update(
+		id: string,
+		equipmentSharing: EquipmentSharing
+	): Promise<EquipmentSharing> {
+		return this.http
+			.put<EquipmentSharing>(
+				`${this.EQUIPMENT_SHARING_URL}/${id}`,
+				equipmentSharing
+			)
+			.pipe(first())
+			.toPromise();
+	}
 }

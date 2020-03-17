@@ -146,14 +146,12 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	async loadSettings() {
 		this.selectedEquipmentSharing = null;
 		const equipmentItems = await this.equipmentSharingService.getAll();
-		console.log(equipmentItems);
 		this.loading = false;
 		this.smartTableSource.load(equipmentItems);
 	}
 
 	_formatDate(date): string {
 		if (date) {
-			//todo
 			return new DatePipe('en').transform(date, 'dd/MM/yyyy');
 		}
 
