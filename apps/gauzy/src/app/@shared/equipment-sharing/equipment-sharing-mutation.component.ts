@@ -64,7 +64,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	participants = 'employees';
 
 	teams: OrganizationTeams[];
-	equipmentItems: any[];
+	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
 
@@ -128,8 +128,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 					? new Date(this.equipmentSharing.shareEndDay)
 					: null
 			],
-			status: [this.requestStatus],
-			rangeDate: [new Date(Date.now())]
+			status: [this.requestStatus]
 		});
 	}
 
@@ -173,7 +172,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 	async loadEquipmentItems() {
 		this.equipmentItems = (await this.equipmentService.getAll()).items;
-		console.log(this.equipmentItems);
 	}
 
 	async loadEmployees() {
