@@ -2,9 +2,13 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
 	Role,
-	RolesEnum,
 	InvitationTypeEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	UserOrganization,
+	Organization,
+	UserOrganizationCreateInput,
+	RolesEnum,
+	User
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +22,7 @@ import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mut
 import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { EmployeesService } from '../../@core/services';
 
 interface UserViewModel {
 	fullName: string;
@@ -44,11 +49,15 @@ export class UsersComponent extends TranslationBaseComponent
 
 	userName = 'User';
 
+	organization: Organization;
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
+	showAddCard: boolean;
+	userToEdit: UserOrganization;
+	users: User[] = [];
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -59,7 +68,8 @@ export class UsersComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private userOrganizationsService: UsersOrganizationsService
+		private userOrganizationsService: UsersOrganizationsService,
+		private readonly employeesService: EmployeesService
 	) {
 		super(translate);
 	}
@@ -69,6 +79,7 @@ export class UsersComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.loadUsers();
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
@@ -141,6 +152,29 @@ export class UsersComponent extends TranslationBaseComponent
 		}
 	}
 
+	async addOrEditUser(user: UserOrganizationCreateInput) {
+		if (user.isActive) {
+			await this.userOrganizationsService
+				.create(user)
+				.pipe(first())
+				.toPromise();
+
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
+					{
+						username: this.userName.trim(),
+						orgname: this.store.selectedOrganization.name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.showAddCard = false;
+			this.loadPage();
+		}
+	}
+
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
@@ -203,6 +237,23 @@ export class UsersComponent extends TranslationBaseComponent
 					}
 				}
 			});
+	}
+
+	cancel() {
+		this.userToEdit = null;
+		this.showAddCard = !this.showAddCard;
+	}
+
+	private async loadUsers() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { items } = await this.userOrganizationsService.getAll(['user'], {
+			orgId: this.organization.id
+		});
+
+		this.users = items.map((user) => user.user);
 	}
 
 	private async loadPage() {

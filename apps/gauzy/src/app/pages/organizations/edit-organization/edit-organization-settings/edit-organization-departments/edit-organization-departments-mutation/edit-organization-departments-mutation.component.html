@@ -2,9 +2,10 @@
 	<nb-card-header>{{
 		(department
 			? 'FORM.LABELS.EDIT_DEPARTMENT'
-			: 'FORM.LABELS.ADD_NEW_DEPARTMENT') | translate
+			: 'FORM.LABELS.ADD_NEW_DEPARTMENT'
+		) | translate
 	}}</nb-card-header>
-	<nb-card-body>
+	<nb-card-body id="temporary">
 		<div class="form-group">
 			<button
 				class="mr-2"
@@ -20,6 +21,9 @@
 		</div>
 		<form class="row">
 			<div class="form-group col-4">
+				<label class="label">{{
+					'SM_TABLE.DEPARTMENTS' | translate
+				}}</label>
 				<input
 					type="text"
 					[(ngModel)]="name"
@@ -32,12 +36,18 @@
 				/>
 			</div>
 			<div class="form-group col-4">
+				<label class="label">{{
+					'SM_TABLE.EMPLOYEES' | translate
+				}}</label>
 				<ga-employee-multi-select
 					[selectedEmployeeIds]="selectedEmployeeIds"
 					[allEmployees]="employees"
 					(selectedChange)="onMembersSelected($event)"
 				>
 				</ga-employee-multi-select>
+			</div>
+			<div class="form-group col-4">
+				<ngx-tags-color-input> </ngx-tags-color-input>
 			</div>
 		</form>
 	</nb-card-body>
