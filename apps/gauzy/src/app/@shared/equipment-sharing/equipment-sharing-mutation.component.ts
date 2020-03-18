@@ -1,9 +1,4 @@
-import {
-	OnInit,
-	Component,
-	OnDestroy,
-	ɵbypassSanitizationTrustResourceUrl
-} from '@angular/core';
+import { OnInit, Component, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import {
 	FormGroup,
