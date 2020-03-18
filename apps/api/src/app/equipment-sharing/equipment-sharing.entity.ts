@@ -21,7 +21,10 @@ import { OrganizationTeams } from '../organization-teams';
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
 	@ApiProperty({ type: Equipment })
-	@ManyToOne((type) => Equipment)
+	@ManyToOne(
+		(type) => Equipment,
+		(equipment) => equipment.equipmentSharings
+	)
 	@JoinColumn()
 	equipment: Equipment;
 
