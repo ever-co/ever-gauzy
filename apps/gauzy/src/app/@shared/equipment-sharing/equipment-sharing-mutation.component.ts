@@ -1,6 +1,16 @@
-import { OnInit, Component, OnDestroy } from '@angular/core';
+import {
+	OnInit,
+	Component,
+	OnDestroy,
+	ɵbypassSanitizationTrustResourceUrl
+} from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import {
+	FormGroup,
+	FormBuilder,
+	Validators,
+	AbstractControl
+} from '@angular/forms';
 import {
 	EquipmentSharing,
 	Equipment,
@@ -33,23 +43,6 @@ export interface RequestEmployee {
 })
 export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	form: FormGroup;
-	equipmentSharing: EquipmentSharing;
-	employees: Employee[];
-	disabled: boolean;
-	selectedOrgId: string;
-	requestStatus: string;
-	participants = 'employees';
-
-	teams: OrganizationTeams[];
-	equipmentItems: Equipment[];
-	selectedEmployees: string[] = [];
-	selectedTeams: string[] = [];
-
-	requestStatuses = Object.values(EquipmentSharingStatusEnum);
-
-	private _ngDestroy$ = new Subject<void>();
-
 	constructor(
 		public dialogRef: NbDialogRef<EquipmentSharingMutationComponent>,
 		private equipmentSharingService: EquipmentSharingService,
@@ -62,6 +55,32 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	) {
 		super(translationService);
 	}
+	form: FormGroup;
+	equipmentSharing: EquipmentSharing;
+	employees: Employee[];
+	disabled: boolean;
+	selectedOrgId: string;
+	requestStatus: string;
+	participants = 'employees';
+
+	teams: OrganizationTeams[];
+	equipmentItems: any[];
+	selectedEmployees: string[] = [];
+	selectedTeams: string[] = [];
+
+	requestStatuses = Object.values(EquipmentSharingStatusEnum);
+
+	private _ngDestroy$ = new Subject<void>();
+
+	date1 = new Date();
+	date2 = new Date();
+	filter = this.datePickerFilterPredicate.bind(this);
+
+	periodsUnderUse = [];
+	selectedItem: Equipment;
+	shareRequestDay: AbstractControl;
+	shareStartDay: AbstractControl;
+	shareEndDay: AbstractControl;
 
 	ngOnInit(): void {
 		this.initializeForm();
@@ -70,6 +89,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.loadEmployees();
 		this.loadTeams();
 		this.loadRequestStatus();
+		this.validateForm();
 	}
 
 	ngOnDestroy() {
@@ -108,7 +128,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 					? new Date(this.equipmentSharing.shareEndDay)
 					: null
 			],
-			status: [this.requestStatus]
+			status: [this.requestStatus],
+			rangeDate: [new Date(Date.now())]
 		});
 	}
 
@@ -152,6 +173,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 	async loadEquipmentItems() {
 		this.equipmentItems = (await this.equipmentService.getAll()).items;
+		console.log(this.equipmentItems);
 	}
 
 	async loadEmployees() {
@@ -218,5 +240,140 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 
 	onParticipantsChange(participants: string) {
 		this.participants = participants;
+	}
+
+	validateForm(): void {
+		if (this.equipmentSharing) {
+			this.selectedItem = this.equipmentSharing.equipment;
+		}
+
+		this.shareRequestDay = this.form.get('shareRequestDay');
+		this.shareStartDay = this.form.get('shareStartDay');
+		this.shareEndDay = this.form.get('shareEndDay');
+
+		// hours * minutes * seconds * milliseconds
+		const oneDay = 24 * 60 * 60 * 1000;
+
+		this.form
+			.get('equipment')
+			.valueChanges.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((valueId) => {
+				this.selectedItem = this.equipmentItems.find((item) => {
+					return item.id === valueId;
+				});
+
+				this.periodsUnderUse = [];
+				this.selectedItem.equipmentSharings.forEach(
+					(equipmentSharing) => {
+						this.periodsUnderUse.push({
+							startDate: new Date(equipmentSharing.shareStartDay),
+							endDate: new Date(equipmentSharing.shareEndDay)
+						});
+					}
+				);
+			});
+
+		this.form.valueChanges
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((form) => {
+				//check if start day is after share request day
+				if (this.shareStartDay.value <= this.shareRequestDay.value) {
+					this.shareStartDay.setErrors({
+						invalid: true,
+						beforeRequestDay: true,
+						beforeRequestDayMsg: this.getTranslation(
+							'EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_REQUEST_DAY_ERR'
+						)
+					});
+				}
+
+				//check if user selects longer period than allowed
+				const diffDays = Math.ceil(
+					Math.abs(
+						(this.shareEndDay.value - this.shareStartDay.value) /
+							oneDay
+					)
+				);
+
+				if (
+					this.selectedItem &&
+					this.selectedItem.maxSharePeriod &&
+					diffDays + 1 > this.selectedItem.maxSharePeriod
+				) {
+					this.shareEndDay.setErrors({
+						invalid: true,
+						exceedAllowedDays: true,
+						exceedAllowedDaysMsg:
+							this.getTranslation(
+								'EQUIPMENT_SHARING_PAGE.MESSAGES.EXCEED_PERIOD_ERR'
+							) + this.selectedItem.maxSharePeriod
+					});
+				}
+
+				// check of share end date after share start date
+				if (this.shareEndDay.value < this.shareStartDay.value) {
+					this.shareEndDay.setErrors({
+						invalid: true,
+						beforeStartDate: true,
+						beforeStartDateMsg: this.getTranslation(
+							'EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_START_DATE_ERR'
+						)
+					});
+				}
+
+				//check if end date is after period in use
+				//
+				//find nearest period in use and get start date
+				const followingPeriods = this.periodsUnderUse
+					.sort((a, b) => a.startDate - b.startDate)
+					.filter((period) => {
+						return period.startDate > this.shareStartDay.value;
+					});
+
+				const dateItemToBeReturned =
+					followingPeriods.length > 0
+						? followingPeriods[0].startDate
+						: null;
+
+				if (
+					dateItemToBeReturned &&
+					this.shareEndDay.value > dateItemToBeReturned
+				) {
+					this.shareEndDay.setErrors({
+						invalid: true,
+						itemInUse: true,
+						itemInUseMsg:
+							this.getTranslation(
+								'EQUIPMENT_SHARING_PAGE.MESSAGES.ITEM_RETURNED_BEFORE_ERR'
+							) +
+							dateItemToBeReturned.toLocaleString().split(',')[0]
+					});
+				}
+			});
+	}
+
+	checkIfDateBetweenPeriods(
+		periods: { startDate: Date; endDate: Date }[],
+		dateForCheck: Date
+	): boolean {
+		let dateIsInGivenPeriods = false;
+		periods.forEach((period) => {
+			if (
+				dateForCheck >= period.startDate &&
+				dateForCheck <= period.endDate
+			) {
+				dateIsInGivenPeriods = true;
+			}
+		});
+
+		return dateIsInGivenPeriods;
+	}
+
+	datePickerFilterPredicate(date: Date): boolean {
+		if (!this.selectedItem) {
+			return true;
+		}
+
+		return !this.checkIfDateBetweenPeriods(this.periodsUnderUse, date);
 	}
 }

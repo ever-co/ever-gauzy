@@ -132,8 +132,27 @@
 								'FORM.LABELS.SELECT_SHARE_START_DATE'
 									| translate
 							}}"
+							[ngClass]="{
+								'status-danger':
+									shareStartDay.invalid &&
+									shareStartDay.touched
+							}"
 						/>
-						<nb-datepicker #shareStartDatePicker></nb-datepicker>
+						<nb-datepicker
+							#shareStartDatePicker
+							[(date)]="date1"
+							[filter]="filter"
+						></nb-datepicker>
+						<div
+							class="text-danger"
+							*ngIf="
+								shareStartDay.dirty &&
+								shareStartDay.errors &&
+								shareStartDay.errors.beforeRequestDay
+							"
+						>
+							{{ shareStartDay.errors.beforeRequestDayMsg }}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -149,8 +168,36 @@
 							placeholder="{{
 								'FORM.LABELS.SELECT_SHARE_END_DATE' | translate
 							}}"
+							[ngClass]="{
+								'status-danger':
+									shareEndDay.invalid && shareEndDay.touched
+							}"
 						/>
-						<nb-datepicker #shareEndDatePicker></nb-datepicker>
+						<nb-datepicker
+							#shareEndDatePicker
+							[(date)]="date2"
+							[filter]="filter"
+						></nb-datepicker>
+						<div *ngIf="shareEndDay.dirty && shareEndDay.errors">
+							<div
+								class="text-danger"
+								*ngIf="shareEndDay.errors.exceedAllowedDays"
+							>
+								{{ shareEndDay.errors.exceedAllowedDaysMsg }}
+							</div>
+							<div
+								class="text-danger"
+								*ngIf="shareEndDay.errors.beforeStartDate"
+							>
+								{{ shareEndDay.errors.beforeStartDateMsg }}
+							</div>
+							<div
+								class="text-danger"
+								*ngIf="shareEndDay.errors.itemInUse"
+							>
+								{{ shareEndDay.errors.itemInUseMsg }}
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
