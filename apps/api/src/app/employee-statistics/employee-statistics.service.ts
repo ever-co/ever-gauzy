@@ -12,6 +12,7 @@ import { IncomeService } from '../income';
 import { Between } from 'typeorm';
 import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
+import { OrganizationRecurringExpenseService } from '../organization-recurring-expense';
 @Injectable()
 export class EmployeeStatisticsService {
 	private _monthNames = [
@@ -33,7 +34,8 @@ export class EmployeeStatisticsService {
 		private incomeService: IncomeService,
 		private expenseService: ExpenseService,
 		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
-		private employeeService: EmployeeService
+		private employeeService: EmployeeService,
+		private organizationRecurringExpenseService: OrganizationRecurringExpenseService
 	) {}
 
 	async getStatisticsByEmployeeId(
@@ -344,7 +346,7 @@ export class EmployeeStatisticsService {
 	/**
 	 * Fetch all recurring expenses of the employee using employeeId
 	 */
-	employeeRecurringExpenseInNMonths = async (employeeId: string) =>
+	employeeRecurringExpenses = async (employeeId: string) =>
 		await this.employeeRecurringExpenseService.findAll({
 			select: [
 				'currency',
@@ -357,4 +359,44 @@ export class EmployeeStatisticsService {
 				employeeId: employeeId
 			}
 		});
+
+	/**
+	 * Fetch all recurring split expenses of the employee's Organization
+	 */
+	organizationRecurringSplitExpenses = async (employeeId: string) => {
+		// 1 Get Employee's Organization
+		const employee = await this.employeeService.findOne({
+			where: {
+				id: employeeId
+			},
+			relations: ['organization']
+		});
+
+		// 2 Fetch all split recurring expenses of the Employee's Organization
+		const {
+			items
+		} = await this.organizationRecurringExpenseService.findAll({
+			select: [
+				'currency',
+				'value',
+				'categoryName',
+				'startDate',
+				'endDate'
+			],
+			where: {
+				orgId: employee.organization.id,
+				splitExpense: true
+			}
+		});
+
+		// 3. Number of employees in Employee's organization that the expense has to be split between
+		const splitAmong =
+			(await this.employeeService.count({
+				where: {
+					organization: { id: employee.organization.id }
+				}
+			})) || 1;
+
+		return { items, splitAmong };
+	};
 }
