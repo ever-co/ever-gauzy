@@ -27,11 +27,12 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
 import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-shortcuts.component';
-import { EmployeeChartComponent } from './employee-chart/employee-chart.component';
 import { EmployeeStatisticsComponent } from './employee-statistics/employee-statistics.component';
 import { OrganizationEmployeesComponent } from './organization-employees/organization-employees.component';
 import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.module';
-import { EmployeeDoughnutChartComponent } from './employee-doughnut-chart/employee-doughnut-chart.component';
+import { EmployeeHorizontalBarChartComponent } from './employee-charts/employee-horizontal-bar-chart/employee-horizontal-bar-chart.component';
+import { EmployeeDoughnutChartComponent } from './employee-charts/employee-doughnut-chart/employee-doughnut-chart.component';
+import { EmployeeStackedBarChartComponent } from './employee-charts/employee-stacked-bar-chart/employee-stacked-bar-chart.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -69,7 +70,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [
 		DashboardComponent,
-		EmployeeChartComponent,
+		EmployeeHorizontalBarChartComponent,
+		EmployeeStackedBarChartComponent,
 		EmployeeDoughnutChartComponent,
 		OrganizationEmployeesComponent,
 		EmployeeStatisticsComponent,

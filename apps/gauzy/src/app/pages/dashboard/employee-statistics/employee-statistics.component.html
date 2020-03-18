@@ -368,14 +368,18 @@
 			>
 				<nb-option value="1">Doughnut chart</nb-option>
 				<nb-option value="2">Bar chart</nb-option>
+				<nb-option value="3">Stacked Bar</nb-option>
 			</nb-select>
 			<div class="chart-wrap">
-				<ngx-employee-chart
+				<ngx-employee-horizontal-bar-chart
 					*ngIf="selectedChart === '2'"
-				></ngx-employee-chart>
+				></ngx-employee-horizontal-bar-chart>
 				<ngx-employee-doughnut-chart
 					*ngIf="selectedChart === '1'"
 				></ngx-employee-doughnut-chart>
+				<ngx-employee-stacked-bar-chart
+					*ngIf="selectedChart === '3'"
+				></ngx-employee-stacked-bar-chart>
 			</div>
 		</div>
 

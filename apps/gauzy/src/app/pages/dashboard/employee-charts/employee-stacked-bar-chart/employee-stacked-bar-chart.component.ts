@@ -1,28 +1,29 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
-import { Store } from '../../../@core/services/store.service';
+import { EmployeeStatisticsService } from '../../../../@core/services/employee-statistics.serivce';
+import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { monthNames } from '../../../@core/utils/date';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { monthNames } from '../../../../@core/utils/date';
+import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
+import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
-	selector: 'ngx-employee-doughnut-chart',
+	selector: 'ngx-employee-stacked-bar-chart',
 	template: `
 		<chart
 			style="height: 500px; width: 500px;"
-			type="doughnut"
+			type="horizontalBar"
 			[data]="data"
 			[options]="options"
 		></chart>
 	`
 })
-export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
+export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
+	proportion: number;
 	incomeStatistics: number[] = [];
 	expenseStatistics: number[] = [];
 	profitStatistics: number[] = [];
@@ -57,10 +58,10 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 				await this._initializeChart();
 			});
 	}
-	// /**
-	//  * Loads or reloads chart statistics and chart when employee or date
-	//  * is changed from the header component
-	//  */
+	/**
+	 * Loads or reloads chart statistics and chart when employee or date
+	 * is changed from the header component
+	 */
 	private async _initializeChart() {
 		if (
 			this.selectedEmployee &&
@@ -93,15 +94,14 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 					labels: this.labels,
 					datasets: [
 						{
-							label: 'Revenue',
-							backgroundColor: '#089c17',
-							borderWidth: 1,
-							data: this.incomeStatistics
-						},
-						{
 							label: 'Expenses',
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
+						},
+						{
+							label: 'Bonus',
+							backgroundColor: bonusColors,
+							data: this.bonusStatistics
 						},
 						{
 							label: 'Profit',
@@ -109,9 +109,10 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 							data: this.profitStatistics
 						},
 						{
-							label: 'Bonus',
-							backgroundColor: bonusColors,
-							data: this.bonusStatistics
+							label: 'Revenue',
+							backgroundColor: '#089c17',
+							borderWidth: 1,
+							data: this.incomeStatistics
 						}
 					]
 				};
@@ -132,7 +133,8 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 								},
 								ticks: {
 									fontColor: chartjs.textColor
-								}
+								},
+								stacked: true
 							}
 						],
 						yAxes: [
@@ -143,7 +145,8 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 								},
 								ticks: {
 									fontColor: chartjs.textColor
-								}
+								},
+								stacked: true
 							}
 						]
 					},
@@ -156,10 +159,10 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 				};
 			});
 	}
-	// /**
-	//  * Fetches selected employee's statistics for chosen date for past X months.
-	//  * Populates the local statistics variables with fetched data.
-	//  */
+	/**
+	 * Fetches selected employee's statistics for chosen date for past X months.
+	 * Populates the local statistics variables with fetched data.
+	 */
 	private async _loadData() {
 		/**
 		 * Fetches selected employee's statistics for chosen date for past X months.
@@ -185,10 +188,19 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 				.toString(10)
 				.substring(2)}`;
 			this.labels.push(labelValue);
-			this.incomeStatistics.push(stat.income);
-			this.expenseStatistics.push(stat.expense);
-			this.profitStatistics.push(stat.profit);
-			this.bonusStatistics.push(stat.bonus);
+
+			this.proportion =
+				(stat.expense + stat.profit + stat.bonus) / stat.income;
+			this.expenseStatistics.push(stat.expense / this.proportion);
+			this.bonusStatistics.push(
+				(stat.bonus - stat.expense) / this.proportion
+			);
+			this.profitStatistics.push(
+				(stat.profit - stat.bonus) / this.proportion
+			);
+			this.incomeStatistics.push(
+				(stat.income - stat.profit) / this.proportion
+			);
 		});
 	}
 
