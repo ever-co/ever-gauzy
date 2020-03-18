@@ -395,7 +395,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
 			"EMPLOYEE_CLIENTS": "Employee's Clients:",
-			"EMPLOYMENT_TYPE": "Employment Type"
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"PROJECTS": "Projects",
+			"CLIENTS": "Clients",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

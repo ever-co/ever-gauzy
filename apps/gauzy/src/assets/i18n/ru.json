@@ -395,7 +395,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Кафедры работника:",
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
 			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
-			"EMPLOYMENT_TYPE": "Тип занятости"
+			"EMPLOYMENT_TYPE": "Тип занятости",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"PROJECTS": "Projects",
+			"CLIENTS": "Clients",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",
