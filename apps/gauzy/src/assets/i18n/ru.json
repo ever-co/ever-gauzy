@@ -396,12 +396,12 @@
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
 			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
 			"EMPLOYMENT_TYPE": "Тип занятости",
-			"ACCOUNT": "Account",
-			"EMPLOYMENT": "Employment",
-			"LOCATION": "Location",
-			"RATES": "Rates",
-			"PROJECTS": "Projects",
-			"CLIENTS": "Clients",
+			"ACCOUNT": "Аккаунт",
+			"EMPLOYMENT": "Занятость",
+			"LOCATION": "Местоположение",
+			"RATES": "Тарифы",
+			"PROJECTS": "Проекты",
+			"CLIENTS": "Клиенты",
 			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
@@ -597,7 +597,13 @@
 		"SHARE_END_DATE": "Поделиться датой окончания",
 		"STATUS": "Статус",
 		"REQUEST_SAVED": "Запрос сохранен",
-		"REQUEST_DELETED": "Запрос удален"
+		"REQUEST_DELETED": "Запрос удален",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Дата должна быть после дня запроса.",
+			"EXCEED_PERIOD_ERR": "Максимально допустимые дни для этого элемента ",
+			"BEFORE_START_DATE_ERR": "Дата окончания не может быть раньше даты начала. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Товар должен быть возвращен до "
+		}
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
