@@ -22,21 +22,15 @@ import { OrganizationClients } from '../organization-clients';
 
 @Entity('timesheet')
 export class Timesheet extends Base implements ITimesheet {
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	name: string;
-
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
-	employee?: Employee;
+	employee: Employee;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timesheet: Timesheet) => timesheet.employee)
-	readonly employeeId?: string;
+	@Column()
+	readonly employeeId: string;
 
 	@ApiProperty({ type: OrganizationClients })
 	@ManyToOne(() => OrganizationClients, { nullable: true })
@@ -45,6 +39,7 @@ export class Timesheet extends Base implements ITimesheet {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timesheet: Timesheet) => timesheet.approvedBy)
+	@Column({ nullable: true })
 	readonly approvedById?: string;
 
 	@ApiProperty({ type: Number })

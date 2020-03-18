@@ -15,13 +15,6 @@ import { TimeLog } from './time-log.entity';
 
 @Entity('time_slot')
 export class TimeSlot extends Base implements ITimeSlot {
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	name: string;
-
 	@ApiProperty({ type: TimeLog })
 	@ManyToOne(() => TimeLog, { nullable: true })
 	@JoinColumn()
@@ -29,6 +22,7 @@ export class TimeSlot extends Base implements ITimeSlot {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeSlot: TimeSlot) => timeSlot.timeLog)
+	@Column({ nullable: true })
 	readonly timeLogId?: string;
 
 	@ApiProperty({ type: Task })
@@ -38,6 +32,7 @@ export class TimeSlot extends Base implements ITimeSlot {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeSlot: TimeSlot) => timeSlot.task)
+	@Column({ nullable: true })
 	readonly taskId?: string;
 
 	@ApiProperty({ type: Number })

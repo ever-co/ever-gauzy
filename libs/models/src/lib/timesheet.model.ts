@@ -4,8 +4,7 @@ import { OrganizationClients } from './organization-clients.model';
 import { OrganizationProjects } from './organization-projects.model';
 
 export interface Timesheet extends IBaseEntityModel {
-	name: string;
-	employee?: Employee;
+	employee: Employee;
 	approvedBy?: OrganizationClients;
 	duration?: number;
 	keyboard?: number;
@@ -29,9 +28,8 @@ export enum TimesheetStatus {
 }
 
 export interface TimeLog extends IBaseEntityModel {
-	name: string;
 	employee: Employee;
-	timesheet: Timesheet;
+	timesheet?: Timesheet;
 	task?: Task;
 	project?: OrganizationProjects;
 	startedAt?: Date;
@@ -39,7 +37,6 @@ export interface TimeLog extends IBaseEntityModel {
 	logType: string;
 	description?: string;
 	duration: number;
-	isBilled: boolean;
 	isBillable: boolean;
 }
 
@@ -49,8 +46,7 @@ export enum TimeLogType {
 }
 
 export interface TimeSlot extends IBaseEntityModel {
-	name: string;
-	timesheet?: Timesheet;
+	timeLog?: TimeLog;
 	project?: OrganizationProjects;
 	duration?: number;
 	keyboard?: number;
@@ -81,8 +77,14 @@ export interface Screenshot extends IBaseEntityModel {
 	recordedAt?: Date;
 }
 
+export interface TimerStatus {
+	duration: number;
+	running: boolean;
+	lastLog?: TimeLog;
+}
+
 export interface ITimerToggleInput {
-	timesheetId?: string;
+	//timesheetId?: string;
 	projectId?: string;
 	taskId?: string;
 	clientId?: string;

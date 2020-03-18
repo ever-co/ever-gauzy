@@ -1,12 +1,19 @@
-import { Controller, UseGuards, HttpStatus, Post, Body } from '@nestjs/common';
+import {
+	Controller,
+	UseGuards,
+	HttpStatus,
+	Post,
+	Body,
+	Get
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { ITimerToggleInput, TimeLog } from '@gauzy/models';
+import { ITimerToggleInput, TimeLog, TimerStatus } from '@gauzy/models';
 import { TimerService } from './timer.service';
 
 @ApiTags('Timer')
 @UseGuards(AuthGuard('jwt'))
-@Controller()
+@Controller('timer')
 export class TimerController {
 	constructor(private readonly timerService: TimerService) {}
 
@@ -20,8 +27,8 @@ export class TimerController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('/status')
-	async getTimerStatus(): Promise<TimeLog> {
+	@Get('/status')
+	async getTimerStatus(): Promise<TimerStatus> {
 		return this.timerService.getTimerStatus();
 	}
 

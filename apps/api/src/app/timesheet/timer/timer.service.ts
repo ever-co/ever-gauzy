@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan, Between } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee';
-import { TimeLogType } from '@gauzy/models';
+import { TimeLogType, TimerStatus } from '@gauzy/models';
+import * as moment from 'moment';
+import { Timesheet } from '../timesheet.entity';
 
 @Injectable()
 export class TimerService {
@@ -12,25 +14,53 @@ export class TimerService {
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 
+		@InjectRepository(Timesheet)
+		private readonly timesheetRepository: Repository<Timesheet>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
 	) {}
 
-	async getTimerStatus(): Promise<TimeLog> {
+	async getTimerStatus(): Promise<TimerStatus> {
 		const user = RequestContext.currentUser();
 		const employee = await this.employeeRepository.findOne({
 			userId: user.id
 		});
-		const lastLog = await this.timeLogRepository.findOne({
+
+		const todayLog = await this.timeLogRepository.find({
 			where: {
-				employeeId: employee.id
+				employeeId: employee.id,
+				startedAt: MoreThan(moment().format('YYYY-MM-DD'))
 			},
 			order: {
 				startedAt: 'DESC'
 			}
 		});
 
-		return lastLog;
+		console.log(todayLog);
+
+		let stauts: TimerStatus = {
+			duration: 0,
+			running: false,
+			lastLog: null
+		};
+		if (todayLog.length > 0) {
+			const lastLog = todayLog[0];
+			stauts.lastLog = lastLog;
+
+			if (lastLog.stoppedAt) {
+				stauts.running = false;
+			} else {
+				stauts.running = true;
+				stauts.duration = Math.abs(
+					(lastLog.startedAt.getTime() - new Date().getTime()) / 1000
+				);
+			}
+			for (let index = 0; index < todayLog.length; index++) {
+				stauts.duration += todayLog[index].duration;
+			}
+		}
+		return stauts;
 	}
 
 	async toggleTimeLog(request): Promise<TimeLog> {
@@ -46,14 +76,16 @@ export class TimerService {
 				startedAt: 'DESC'
 			}
 		});
+
+		const timesheet = await this.createOrFindTimeSheet(employee);
 		let newTimeLog: TimeLog;
-		if (lastLog.stoppedAt) {
-			newTimeLog = await this.timeLogRepository.create({
+		if (!lastLog || lastLog.stoppedAt) {
+			newTimeLog = await this.timeLogRepository.save({
 				duration: 0,
+				timesheetId: timesheet.id,
 				isBilled: false,
 				startedAt: new Date(),
 				employeeId: employee.id,
-				timesheetId: null,
 				projectId: request.projectId || null,
 				taskId: request.taskId || null,
 				clientId: request.clientId || null,
@@ -66,13 +98,36 @@ export class TimerService {
 			const diffTime = Math.abs(
 				stoppedAt.getTime() - lastLog.startedAt.getTime()
 			);
-			const duration = Math.ceil(diffTime / (1000 * 60));
+			const duration = Math.ceil(diffTime / 1000);
 			await this.timeLogRepository.update(lastLog.id, {
 				stoppedAt,
 				duration
 			});
+
+			await this.timesheetRepository.update(timesheet.id, { duration });
 			newTimeLog = await this.timeLogRepository.findOne(lastLog.id);
 		}
 		return newTimeLog;
+	}
+
+	private async createOrFindTimeSheet(employee) {
+		const from_date = moment().startOf('week');
+		const to_date = moment().endOf('week');
+
+		let timesheet = await this.timesheetRepository.findOne({
+			where: {
+				startedAt: Between(from_date, to_date),
+				employeeId: employee.id
+			}
+		});
+
+		if (!timesheet) {
+			timesheet = await this.timesheetRepository.save({
+				employeeId: employee.id,
+				startedAt: from_date.toISOString(),
+				stoppedAt: from_date.toISOString()
+			});
+		}
+		return timesheet;
 	}
 }

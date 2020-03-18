@@ -14,6 +14,7 @@ export class Activity extends Base implements IActivity {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((activity: Activity) => activity.timeSlot)
+	@Column()
 	readonly timeSlotId: string;
 
 	@ApiProperty({ type: String })

@@ -25,13 +25,6 @@ import { Task } from '../tasks';
 
 @Entity('time_log')
 export class TimeLog extends Base implements ITimeLog {
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	name: string;
-
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
@@ -39,15 +32,17 @@ export class TimeLog extends Base implements ITimeLog {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.employee)
-	readonly employeeId?: string;
+	@Column()
+	readonly employeeId: string;
 
 	@ApiProperty({ type: Timesheet })
 	@ManyToOne(() => Timesheet, { nullable: true })
 	@JoinColumn()
-	timesheet: Timesheet;
+	timesheet?: Timesheet;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.timesheet)
+	@Column({ nullable: true })
 	readonly timesheetId?: string;
 
 	@ApiProperty({ type: OrganizationProjects })
@@ -57,6 +52,7 @@ export class TimeLog extends Base implements ITimeLog {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.project)
+	@Column({ nullable: true })
 	readonly projectId?: string;
 
 	@ApiProperty({ type: Task })
@@ -66,6 +62,7 @@ export class TimeLog extends Base implements ITimeLog {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.task)
+	@Column({ nullable: true })
 	readonly taskId?: string;
 
 	@ApiProperty({ type: OrganizationClients })
@@ -75,6 +72,7 @@ export class TimeLog extends Base implements ITimeLog {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.client)
+	@Column({ nullable: true })
 	readonly clientId?: string;
 
 	@ApiProperty({ type: Date })
@@ -102,11 +100,6 @@ export class TimeLog extends Base implements ITimeLog {
 	@IsNumber()
 	@Column({ default: 0 })
 	duration: number;
-
-	@ApiProperty({ type: Boolean })
-	@IsBoolean()
-	@Column({ default: false })
-	isBilled: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()

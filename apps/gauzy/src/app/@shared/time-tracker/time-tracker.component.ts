@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from './time-tracker.service';
-import { TimeLog, TimeLogType } from '@gauzy/models';
+import { TimeLog, TimeLogType, TimerStatus } from '@gauzy/models';
 import * as moment from 'moment';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -14,25 +14,30 @@ export class TimeTrackerComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 	time: string = '00:00:00';
 	running: boolean;
-	timeType: TimeLogType = TimeLogType.TRACKED;
-	isBillable: boolean = true;
 
 	constructor(private timeTrackerService: TimeTrackerService) {}
 
-	ngOnInit() {
-		this.timeTrackerService.getTimerStatus().then((timeLog: TimeLog) => {
-			if (!timeLog.stoppedAt) {
-				var stillUtc = moment.utc(timeLog.startedAt).toDate();
-				var localStartedAt = moment(stillUtc)
-					.local()
-					.toDate();
-				this.timeTrackerService.dueration = moment().diff(
-					localStartedAt,
-					'seconds'
-				);
-			}
-		});
+	public get isBillable(): boolean {
+		return this.timeTrackerService.timerConfig.isBillable;
+	}
+	public set isBillable(value: boolean) {
+		this.timeTrackerService.timerConfig = {
+			...this.timeTrackerService.timerConfig,
+			isBillable: value
+		};
+	}
 
+	public get timeType(): TimeLogType {
+		return this.timeTrackerService.timerConfig.logType;
+	}
+	public set timeType(value: TimeLogType) {
+		this.timeTrackerService.timerConfig = {
+			...this.timeTrackerService.timerConfig,
+			logType: value
+		};
+	}
+
+	ngOnInit() {
 		this.timeTrackerService.$dueration
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((time) => {
