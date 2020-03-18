@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from './time-tracker.service';
-import { TimeLog, TimeLogType, TimerStatus } from '@gauzy/models';
+import { TimeLogType } from '@gauzy/models';
 import * as moment from 'moment';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';

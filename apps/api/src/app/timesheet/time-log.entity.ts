@@ -1,17 +1,9 @@
-import {
-	Entity,
-	Index,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeLog as ITimeLog, TimeLogType } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsString,
-	IsNotEmpty,
 	IsBoolean,
 	IsDateString,
 	IsEnum,

@@ -1,15 +1,8 @@
-import {
-	Entity,
-	Index,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeSlot as ITimeSlot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsNumber, IsDateString } from 'class-validator';
+import { IsNumber, IsDateString } from 'class-validator';
 import { Task } from '../tasks';
 import { TimeLog } from './time-log.entity';
 
