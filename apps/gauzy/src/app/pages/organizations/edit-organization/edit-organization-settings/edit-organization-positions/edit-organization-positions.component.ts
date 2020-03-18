@@ -26,6 +26,8 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 
 	showEditDiv: boolean;
 
+	positionsExist: boolean;
+
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly toastrService: NbToastrService,
@@ -117,6 +119,12 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 		});
 		if (res) {
 			this.positions = res.items;
+
+			if (this.positions.length <= 0) {
+				this.positionsExist = false;
+			} else {
+				this.positionsExist = true;
+			}
 		}
 	}
 }
