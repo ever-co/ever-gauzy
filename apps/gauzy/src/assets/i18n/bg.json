@@ -395,7 +395,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
 			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
-			"EMPLOYMENT_TYPE": "Employment Type"
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"PROJECTS": "Projects",
+			"CLIENTS": "Clients",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
