@@ -1,10 +1,9 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import {
 	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
-	NbMenuItem,
-	NbPopoverDirective
+	NbMenuItem
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';

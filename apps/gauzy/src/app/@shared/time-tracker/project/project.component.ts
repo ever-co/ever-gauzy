@@ -1,12 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	Output,
-	EventEmitter,
-	forwardRef
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { OrganizationProjects } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';

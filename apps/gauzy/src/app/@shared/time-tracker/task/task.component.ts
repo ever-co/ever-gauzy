@@ -1,13 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	Output,
-	EventEmitter,
-	forwardRef,
-	HostBinding
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { Subject } from 'rxjs';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { Task } from '@gauzy/models';
