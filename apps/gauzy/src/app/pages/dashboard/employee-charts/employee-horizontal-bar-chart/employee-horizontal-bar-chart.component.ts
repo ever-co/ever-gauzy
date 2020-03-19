@@ -81,7 +81,6 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
-				// const colors: any = config.variables;
 				const chartjs: any = config.variables.chartjs;
 				const bonusColors = this.bonusStatistics.map((val) =>
 					val < 0 ? 'red' : '#0091ff'

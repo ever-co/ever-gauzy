@@ -356,10 +356,10 @@
 
 		<div
 			*ngIf="selectedDate && selectedEmployee && selectedEmployee.id"
-			class="half-content"
+			class="half-content charts"
 		>
 			<nb-select
-				placeholder="Select charts"
+				placeholder="Select chart"
 				class="select-charts"
 				filled
 				status="success"
@@ -368,7 +368,7 @@
 			>
 				<nb-option value="1">Doughnut chart</nb-option>
 				<nb-option value="2">Bar chart</nb-option>
-				<nb-option value="3">Stacked Bar</nb-option>
+				<nb-option value="3">Stacked bar chart</nb-option>
 			</nb-select>
 			<div class="chart-wrap">
 				<ngx-employee-horizontal-bar-chart

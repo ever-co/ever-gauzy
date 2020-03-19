@@ -4,7 +4,6 @@ import { Subject } from 'rxjs';
 import { EmployeeStatisticsService } from '../../../../@core/services/employee-statistics.serivce';
 import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { monthNames } from '../../../../@core/utils/date';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 
@@ -81,7 +80,6 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
-				// const colors: any = config.variables;
 				const chartjs: any = config.variables.chartjs;
 				const bonusColors = this.bonusStatistics.map((val) =>
 					val < 0 ? 'red' : '#0091ff'

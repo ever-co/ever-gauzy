@@ -4,7 +4,6 @@ import { Subject } from 'rxjs';
 import { EmployeeStatisticsService } from '../../../../@core/services/employee-statistics.serivce';
 import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { monthNames } from '../../../../@core/utils/date';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 
@@ -82,6 +81,7 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
+				const proportion = this.proportion;
 				// const colors: any = config.variables;
 				const chartjs: any = config.variables.chartjs;
 				const bonusColors = this.bonusStatistics.map((val) =>
@@ -107,12 +107,6 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 							label: 'Profit',
 							backgroundColor: profitColors,
 							data: this.profitStatistics
-						},
-						{
-							label: 'Revenue',
-							backgroundColor: '#089c17',
-							borderWidth: 1,
-							data: this.incomeStatistics
 						}
 					]
 				};
@@ -151,9 +145,24 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 						]
 					},
 					legend: {
+						onClick: (e) => e.stopPropagation(),
 						position: 'right',
 						labels: {
 							fontColor: chartjs.textColor
+						}
+					},
+					tooltips: {
+						callbacks: {
+							label: function(tooltipItem, data) {
+								let label =
+									data.datasets[tooltipItem.datasetIndex]
+										.label || '';
+								if (label) {
+									label += ': ';
+								}
+								label += tooltipItem.xLabel * proportion;
+								return label;
+							}
 						}
 					}
 				};
@@ -184,23 +193,12 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 		 * Populates the local statistics variables with fetched data.
 		 */
 		employeeStatistics.map((stat) => {
-			const labelValue = `${monthNames[stat.month]} '${stat.year
-				.toString(10)
-				.substring(2)}`;
-			this.labels.push(labelValue);
-
+			this.labels.push('Revenue');
 			this.proportion =
 				(stat.expense + stat.profit + stat.bonus) / stat.income;
 			this.expenseStatistics.push(stat.expense / this.proportion);
-			this.bonusStatistics.push(
-				(stat.bonus - stat.expense) / this.proportion
-			);
-			this.profitStatistics.push(
-				(stat.profit - stat.bonus) / this.proportion
-			);
-			this.incomeStatistics.push(
-				(stat.income - stat.profit) / this.proportion
-			);
+			this.bonusStatistics.push(stat.bonus / this.proportion);
+			this.profitStatistics.push(stat.profit / this.proportion);
 		});
 	}
 
