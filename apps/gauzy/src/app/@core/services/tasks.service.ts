@@ -33,12 +33,12 @@ export class TasksService extends TranslationBaseComponent {
 				params: { data }
 			})
 			.pipe(
-				tap(() =>
-					this.toastrService.primary(
-						this.getTranslation('TASKS_PAGE.TASKS_LOADED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					)
-				),
+				// tap(() =>
+				// 	this.toastrService.primary(
+				// 		this.getTranslation('TASKS_PAGE.TASKS_LOADED'),
+				// 		this.getTranslation('TOASTR.TITLE.SUCCESS')
+				// 	)
+				// ),
 				catchError((error) => this.errorHandler(error))
 			);
 	}

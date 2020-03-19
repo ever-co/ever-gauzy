@@ -37,6 +37,26 @@ export class TimeTrackerComponent implements OnInit {
 		};
 	}
 
+	public get taskId(): string {
+		return this.timeTrackerService.timerConfig.taskId;
+	}
+	public set taskId(value: string) {
+		this.timeTrackerService.timerConfig = {
+			...this.timeTrackerService.timerConfig,
+			taskId: value
+		};
+	}
+
+	public get projectId(): string {
+		return this.timeTrackerService.timerConfig.projectId;
+	}
+	public set projectId(value: string) {
+		this.timeTrackerService.timerConfig = {
+			...this.timeTrackerService.timerConfig,
+			projectId: value
+		};
+	}
+
 	ngOnInit() {
 		this.timeTrackerService.$dueration
 			.pipe(takeUntil(this._ngDestroy$))

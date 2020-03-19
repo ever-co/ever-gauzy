@@ -1,11 +1,11 @@
-<div class="timer-container">
+<div class="timer-container form-group">
 	<div class="is_billable">
 		<button
 			nbButton
 			(click)="$event.stopPropagation(); isBillable = !isBillable"
 			size="small"
 			[status]="isBillable ? 'primary' : 'basic'"
-			nbTooltip="Is Billable"
+			[nbTooltip]="'TIMER_TRACKER.IS_BILLABLE' | translate"
 			[disabled]="running"
 		>
 			$
@@ -18,7 +18,12 @@
 				class="btn btn-rounded"
 				[ngClass]="{ 'btn-danger': running, 'btn-success': !running }"
 				(click)="$event.stopPropagation(); toggle()"
-				nbTooltip="{{ running ? 'Stop' : 'Start' }} Timer"
+				nbTooltip="{{
+					(running
+						? 'TIMER_TRACKER.STOP_TIMER'
+						: 'TIMER_TRACKER.START_TIMER'
+					) | translate
+				}}"
 			>
 				<nb-icon *ngIf="!running" icon="play-circle-outline"></nb-icon>
 				<nb-icon *ngIf="running" icon="pause-circle-outline"></nb-icon>
@@ -30,7 +35,7 @@
 				(click)="$event.stopPropagation(); setTimeType('TRACKED')"
 				size="tiny"
 				[status]="timeType == 'TRACKED' ? 'primary' : 'basic'"
-				nbTooltip="Timer"
+				nbTooltip="'TIMER_TRACKER.TIMER' | translate"
 				[disabled]="running"
 			>
 				<nb-icon icon="clock-outline"></nb-icon>
@@ -40,11 +45,28 @@
 				(click)="$event.stopPropagation(); setTimeType('MANUAL')"
 				size="tiny"
 				[status]="timeType == 'MANUAL' ? 'primary' : 'basic'"
-				nbTooltip="Manual"
+				nbTooltip="'TIMER_TRACKER.MANUAL' | translate"
 				[disabled]="running"
 			>
 				<nb-icon icon="menu-outline"></nb-icon>
 			</button>
 		</div>
 	</div>
+</div>
+
+<div class="project-autocomplete form-group">
+	<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
+	<ga-project-selector
+		name="projectId"
+		[disabled]="running"
+		[(ngModel)]="projectId"
+	></ga-project-selector>
+</div>
+<div class="task-autocomplete form-group">
+	<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
+	<ga-task-selector
+		name="taskId"
+		[disabled]="running"
+		[(ngModel)]="taskId"
+	></ga-task-selector>
 </div>
