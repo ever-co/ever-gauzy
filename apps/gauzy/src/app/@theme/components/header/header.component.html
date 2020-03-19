@@ -83,13 +83,30 @@
 			[nbPopover]="timerCard"
 		></nb-action> -->
 
-		<nb-action [nbPopover]="timerCard">
+		<nb-action
+			class="timer-action"
+			[nbPopover]="timerCard"
+			#timerPopover="nbPopover"
+			(click)="timerPopover.toggle()"
+			nbPopoverTrigger="noop"
+		>
 			<nb-icon class="mr-3" icon="clock-outline"></nb-icon>
 			{{ timerDueration }}
 		</nb-action>
 
 		<ng-template #timerCard>
-			<ngx-time-tracker></ngx-time-tracker>
+			<div class="timer-card">
+				<button
+					class="btn-close"
+					size="large"
+					nbButton
+					ghost
+					(click)="timerPopover.hide()"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+				<ngx-time-tracker></ngx-time-tracker>
+			</div>
 		</ng-template>
 
 		<nb-action

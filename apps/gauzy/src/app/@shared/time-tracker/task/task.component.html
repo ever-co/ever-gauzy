@@ -1,7 +1,7 @@
 <div (click)="$event.stopPropagation()">
 	<ng-select
 		[disabled]="disabled"
-		[clearable]="false"
+		[clearable]="true"
 		[items]="tasks"
 		[(ngModel)]="taskId"
 		[placeholder]="'TIMER_TRACKER.SELECT_TASK' | translate"

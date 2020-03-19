@@ -843,6 +843,10 @@
 		"TIMER": "Timer",
 		"MANUAL": "Manual",
 		"SELECT_PROJECT": "Select Project",
-		"SELECT_TASK": "Select Task"
+		"SELECT_TASK": "Select Task",
+		"DATE": "Date",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description"
 	}
 }

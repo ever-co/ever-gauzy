@@ -108,6 +108,12 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
+	addTime(request: ITimerToggleInput): Promise<TimeLog> {
+		return this.http
+			.post<TimeLog>('/api/timesheet/timer/add', request)
+			.toPromise();
+	}
+
 	toggle() {
 		if (this.interval) {
 			this.turnOffTimer();

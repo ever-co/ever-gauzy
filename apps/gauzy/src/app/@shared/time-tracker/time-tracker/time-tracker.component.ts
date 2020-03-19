@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { TimeTrackerService } from './time-tracker.service';
+import { TimeTrackerService } from '../time-tracker.service';
 import { TimeLogType } from '@gauzy/models';
 import * as moment from 'moment';
 import { takeUntil } from 'rxjs/operators';
@@ -14,8 +14,17 @@ export class TimeTrackerComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 	time: string = '00:00:00';
 	running: boolean;
+	today: Date = new Date();
+	manualTime: any = {};
 
-	constructor(private timeTrackerService: TimeTrackerService) {}
+	constructor(private timeTrackerService: TimeTrackerService) {
+		this.manualTime = {
+			description: '',
+			startTime: null,
+			endTime: null,
+			date: moment().format('YYYY-MM-DD')
+		};
+	}
 
 	public get isBillable(): boolean {
 		return this.timeTrackerService.timerConfig.isBillable;
@@ -72,6 +81,10 @@ export class TimeTrackerComponent implements OnInit {
 
 	toggle() {
 		this.timeTrackerService.toggle();
+	}
+
+	addTime() {
+		this.timeTrackerService.addTime(this.manualTime);
 	}
 
 	setTimeType(type: string) {

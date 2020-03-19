@@ -1,0 +1,157 @@
+<form>
+	<div class="timer-container form-group">
+		<div class="time-tracker" *ngIf="timeType == 'TRACKED'">
+			<div class="is_billable">
+				<button
+					nbButton
+					(click)="$event.stopPropagation(); isBillable = !isBillable"
+					size="small"
+					[status]="isBillable ? 'primary' : 'basic'"
+					[nbTooltip]="'TIMER_TRACKER.IS_BILLABLE' | translate"
+					[disabled]="running"
+				>
+					$
+				</button>
+			</div>
+			<div class="time-count">
+				<span class="time">{{ time }}</span>
+			</div>
+			<div class="actions">
+				<div class="toggle">
+					<button
+						class="btn btn-rounded"
+						[ngClass]="{
+							'btn-danger': running,
+							'btn-success': !running
+						}"
+						(click)="$event.stopPropagation(); toggle()"
+						[nbTooltip]="
+							(running
+								? 'TIMER_TRACKER.STOP_TIMER'
+								: 'TIMER_TRACKER.START_TIMER'
+							) | translate
+						"
+					>
+						<nb-icon
+							*ngIf="!running"
+							icon="play-circle-outline"
+						></nb-icon>
+						<nb-icon
+							*ngIf="running"
+							icon="pause-circle-outline"
+						></nb-icon>
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="time-menual" *ngIf="timeType == 'MANUAL'">
+			<h6>Add Time</h6>
+			<div class="row">
+				<div class="col-12">
+					<div class="form-group">
+						<label>{{ 'TIMER_TRACKER.DATE' | translate }}</label>
+						<input
+							type="text"
+							class="form-control"
+							autocomplete="off"
+							name="date"
+							[(ngModel)]="manualTime.date"
+							[nbDatepicker]="datepicker"
+							[max]="today"
+							placeholder="YYYY-MM-DD"
+						/>
+						<nb-datepicker #datepicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col">
+					<div class="form-group">
+						<label>{{
+							'TIMER_TRACKER.START_TIME' | translate
+						}}</label>
+						<ga-timer-picker
+							name="start_time"
+							[(ngModel)]="manualTime.startTime"
+						></ga-timer-picker>
+						<!-- <input type="text" class="form-control" autocomplete="off" name="start_time" [(ngModel)]="manualTime.startTime" placeholder="00:00"> -->
+					</div>
+				</div>
+				<div class="col">
+					<div class="form-group">
+						<label>{{
+							'TIMER_TRACKER.END_TIME' | translate
+						}}</label>
+						<ga-timer-picker
+							name="end_time"
+							[(ngModel)]="manualTime.endTime"
+						></ga-timer-picker>
+						<!-- <input type="text" class="form-control" autocomplete="off" name="end_time" [(ngModel)]="manualTime.endTime" placeholder="01:00"> -->
+					</div>
+				</div>
+
+				<div class="col-12">
+					<nb-checkbox
+						[(ngModel)]="isBillable"
+						name="isBillable"
+						status="primary"
+						>{{
+							'TIMER_TRACKER.IS_BILLABLE' | translate
+						}}</nb-checkbox
+					>
+				</div>
+			</div>
+		</div>
+
+		<div class="mode">
+			<button
+				nbButton
+				(click)="$event.stopPropagation(); setTimeType('TRACKED')"
+				size="tiny"
+				[status]="timeType == 'TRACKED' ? 'primary' : 'basic'"
+				[nbTooltip]="'TIMER_TRACKER.TIMER' | translate"
+				[disabled]="running"
+			>
+				<nb-icon icon="clock-outline"></nb-icon>
+			</button>
+			<button
+				nbButton
+				(click)="$event.stopPropagation(); setTimeType('MANUAL')"
+				size="tiny"
+				[status]="timeType == 'MANUAL' ? 'primary' : 'basic'"
+				[nbTooltip]="'TIMER_TRACKER.MANUAL' | translate"
+				[disabled]="running"
+			>
+				<nb-icon icon="menu-outline"></nb-icon>
+			</button>
+		</div>
+	</div>
+
+	<div class="form-group">
+		<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
+		<ga-project-selector
+			name="projectId"
+			[disabled]="running"
+			[(ngModel)]="projectId"
+		></ga-project-selector>
+	</div>
+	<div class="form-group">
+		<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
+		<ga-task-selector
+			name="taskId"
+			[disabled]="running"
+			[(ngModel)]="taskId"
+		></ga-task-selector>
+	</div>
+	<div class="form-group" *ngIf="timeType == 'MANUAL'">
+		<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
+		<textarea
+			class="form-control"
+			rows="2"
+			[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
+			name="description"
+			[(ngModel)]="manualTime.description"
+		></textarea>
+	</div>
+	<div class="time-menual" *ngIf="timeType == 'MANUAL'">
+		<button class="btn btn-success" (click)="addTime()">Add Time</button>
+	</div>
+</form>

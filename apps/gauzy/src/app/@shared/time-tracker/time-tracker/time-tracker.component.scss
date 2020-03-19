@@ -1,19 +1,35 @@
 @import 'var';
 :host {
 	display: block;
-	padding: 10px;
+	padding: 20px;
+	width: 380px;
+	font-size: 14px;
 	.timer-container {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: flex-end;
+
+		.time-tracker {
+			width: 100%;
+			display: flex;
+			align-items: center;
+		}
 		.is_billable {
 			padding: 8px;
-			font-size: 18px;
+			button {
+				font-size: 18px;
+			}
 		}
 		.actions {
 			display: flex;
 			align-items: center;
 			padding-left: 14px;
+		}
+		.time-count {
+			font-size: 22px;
+			width: 100%;
+			padding: 0 10px;
+			text-align: center;
 		}
 		.toggle {
 			.btn {
@@ -30,7 +46,6 @@
 			flex-direction: column;
 			justify-content: center;
 			padding-left: 10px;
-			padding-right: 10px;
 			button {
 				margin: 2px;
 				padding: 3px;
@@ -51,6 +66,13 @@
 			border-color: nb-theme(text-primary-active-color);
 			color: #ffffff;
 			opacity: 0.4;
+		}
+	}
+	::ng-deep {
+		ng-select {
+			.ng-select-container {
+				width: 100%;
+			}
 		}
 	}
 }
