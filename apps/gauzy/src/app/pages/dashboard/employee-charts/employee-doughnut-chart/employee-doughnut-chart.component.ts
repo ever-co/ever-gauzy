@@ -81,12 +81,6 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
 				const chartjs: any = config.variables.chartjs;
-				const bonusColors = this.bonusStatistics.map((val) =>
-					val < 0 ? 'red' : '#0091ff'
-				);
-				const profitColors = this.profitStatistics.map((val) =>
-					val < 0 ? '#ff7b00' : '#66de0b'
-				);
 				this.data = {
 					labels: ['Revenue', 'Expenses', 'Bonus', 'Profit'],
 					datasets: [

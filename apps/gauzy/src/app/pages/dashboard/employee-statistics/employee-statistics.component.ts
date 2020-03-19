@@ -29,7 +29,6 @@ import { EmployeeRecurringExpenseService } from '../../../@core/services/employe
 import { OrganizationRecurringExpenseService } from '../../../@core/services/organization-recurring-expense.service';
 import { ProfitHistoryComponent } from '../../../@shared/dashboard/profit-history/profit-history.component';
 import { Router } from '@angular/router';
-import Chart from 'chart.js';
 
 export interface ViewDashboardExpenseHistory {
 	valueDate?: Date;
