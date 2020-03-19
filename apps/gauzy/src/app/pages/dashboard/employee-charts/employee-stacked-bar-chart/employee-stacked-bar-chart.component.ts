@@ -82,7 +82,6 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
 				const proportion = this.proportion;
-				// const colors: any = config.variables;
 				const chartjs: any = config.variables.chartjs;
 				const bonusColors = this.bonusStatistics.map((val) =>
 					val < 0 ? 'red' : '#0091ff'
