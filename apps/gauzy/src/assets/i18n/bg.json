@@ -395,7 +395,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
 			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
-			"EMPLOYMENT_TYPE": "Employment Type"
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Локация",
+			"RATES": "Rates",
+			"PROJECTS": "Проекти",
+			"CLIENTS": "Клиенти",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -590,7 +597,13 @@
 		"SHARE_END_DATE": "Share end date",
 		"STATUS": "Статус",
 		"REQUEST_SAVED": "Request saved",
-		"REQUEST_DELETED": "Request deleted"
+		"REQUEST_DELETED": "Request deleted",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
+			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
+			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+		}
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

@@ -32,15 +32,7 @@ export class TasksService extends TranslationBaseComponent {
 			.get<ITaskResponse>(this.API_URL, {
 				params: { data }
 			})
-			.pipe(
-				tap(() =>
-					this.toastrService.primary(
-						this.getTranslation('TASKS_PAGE.TASKS_LOADED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					)
-				),
-				catchError((error) => this.errorHandler(error))
-			);
+			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
 	createTask(task): Observable<Task> {
