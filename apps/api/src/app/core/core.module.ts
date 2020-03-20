@@ -5,6 +5,7 @@
 // - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`
 
+import { Invoice } from '../invoices';
 import { Tag } from '../tags';
 import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
@@ -67,6 +68,7 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
+	Invoice,
 	OrganizationEmploymentType,
 	Equipment,
 	EquipmentSharing,

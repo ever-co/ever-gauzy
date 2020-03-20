@@ -291,7 +291,8 @@
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
-		"TASKS": "Tasks"
+		"TASKS": "Tasks",
+		"INVOICES": "Invoices"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -665,6 +666,25 @@
 			"EXPIRED": "Expired",
 			"ACCEPTED": "Accepted"
 		}
+	},
+	"INVOICES_PAGE": {
+		"HEADER": "Invoices",
+		"INVOICE_NUMBER": "Invoice Number",
+		"TOTAL_VALUE": "Total Value",
+		"PAID_STATUS": "Paid Status",
+		"INVOICES_ADD_INVOICE": "Invoice Added",
+		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
+		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
+		"INVOICES_SELECT_DUE_DATE": "Due Date",
+		"INVOICES_SELECT_CURRENCY": "Currency",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
+		"INVOICES_SELECT_PAID": "Paid",
+		"INVOICES_SELECT_TAX": "Tax",
+		"INVOICES_SELECT_TERMS": "Terms",
+		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
+		"ADD_INVOICE": "Add Invoice",
+		"EDIT_INVOICE": "Edit Invoice"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",

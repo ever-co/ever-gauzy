@@ -43,6 +43,7 @@ import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
 import * as Sentry from '@sentry/browser';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
+import { InvoicesMutationModule } from './@shared/invoices/invoices-mutation.module';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -60,6 +61,7 @@ if (environment.SENTRY_DNS) {
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
+		InvoicesMutationModule,
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,

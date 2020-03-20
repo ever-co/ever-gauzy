@@ -1,3 +1,4 @@
+import { InvoicesModule } from './invoices/invoices.module';
 import { TagModule } from './tags/tag.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
@@ -145,6 +146,10 @@ import { OrganizationEmploymentTypeModule } from './organization-employment-type
 					{
 						path: '/organization-employment-type',
 						module: OrganizationEmploymentTypeModule
+					},
+					{
+						path: '/invoices',
+						module: InvoicesModule
 					}
 				]
 			}
@@ -178,6 +183,7 @@ import { OrganizationEmploymentTypeModule } from './organization-employment-type
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
+		InvoicesModule,
 		EmployeeLevelModule,
 		...(environment.sentry
 			? [
