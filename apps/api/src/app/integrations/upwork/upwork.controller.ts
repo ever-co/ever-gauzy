@@ -4,8 +4,7 @@ import {
 	Body,
 	UploadedFile,
 	UseInterceptors,
-	HttpStatus,
-	BadRequestException
+	HttpStatus
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
