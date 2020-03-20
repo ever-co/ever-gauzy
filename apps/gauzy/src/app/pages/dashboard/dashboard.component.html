@@ -1,10 +1,4 @@
-<div [ngSwitch]="dashboardType">
-	<ga-organization-employees *ngSwitchCase="'ORGANIZATION_EMPLOYEES'">
-	</ga-organization-employees>
-	<ga-employee-statistics *ngSwitchCase="'EMPLOYEE_STATISTICS'">
-	</ga-employee-statistics>
-	<ga-data-entry-shortcuts
-		*ngSwitchCase="'DATA_ENTRY_SHORTCUTS'"
-	></ga-data-entry-shortcuts>
-	<nb-spinner *ngSwitchDefault> </nb-spinner>
+<div>
+	<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
+	<nb-spinner *ngIf="loading"> </nb-spinner>
 </div>

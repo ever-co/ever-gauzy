@@ -11,7 +11,8 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule,
 	NbTreeGridModule,
-	NbSelectModule
+	NbSelectModule,
+	NbRouteTabsetModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -33,6 +34,8 @@ import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.m
 import { EmployeeHorizontalBarChartComponent } from './employee-charts/employee-horizontal-bar-chart/employee-horizontal-bar-chart.component';
 import { EmployeeDoughnutChartComponent } from './employee-charts/employee-doughnut-chart/employee-doughnut-chart.component';
 import { EmployeeStackedBarChartComponent } from './employee-charts/employee-stacked-bar-chart/employee-stacked-bar-chart.component';
+import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
+import { ProjectManagementComponent } from './project-management/project-management.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -66,7 +69,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		ChartModule,
 		NbSpinnerModule,
 		SingleStatisticModule,
-		InfoBlockModule
+		InfoBlockModule,
+		NbRouteTabsetModule
 	],
 	declarations: [
 		DashboardComponent,
@@ -75,7 +79,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeeDoughnutChartComponent,
 		OrganizationEmployeesComponent,
 		EmployeeStatisticsComponent,
-		DataEntryShortcutsComponent
+		DataEntryShortcutsComponent,
+		TimeTrackingComponent,
+		ProjectManagementComponent
 	],
 	providers: [IncomeService, ExpensesService, AuthService]
 })

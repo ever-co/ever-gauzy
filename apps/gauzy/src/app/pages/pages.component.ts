@@ -31,6 +31,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Dashboard',
 			icon: 'home-outline',
 			link: '/pages/dashboard',
+			pathMatch: 'prefix',
 			home: true,
 			data: {
 				translated: false,

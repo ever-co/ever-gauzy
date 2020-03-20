@@ -8,6 +8,7 @@ import {
 	SelectedEmployee,
 	ALL_EMPLOYEES_SELECTED
 } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ga-organization-employees',
@@ -27,6 +28,7 @@ export class OrganizationEmployeesComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private store: Store,
+		private readonly router: Router,
 		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
@@ -46,6 +48,18 @@ export class OrganizationEmployeesComponent implements OnInit, OnDestroy {
 					this.loadData(this.selectedOrganization);
 				}
 			});
+
+		this.store.selectedEmployee$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employee) => {
+				if (employee && employee.id) {
+					this.navigateToEmployeeStatistics();
+				}
+			});
+	}
+
+	navigateToEmployeeStatistics() {
+		this.router.navigate(['/pages/dashboard/hr']);
 	}
 
 	loadData = async (organization) => {
@@ -70,6 +84,7 @@ export class OrganizationEmployeesComponent implements OnInit, OnDestroy {
 		this.store.selectedEmployee.firstName = firstName;
 		this.store.selectedEmployee.lastName = lastName;
 		this.store.selectedEmployee.imageUrl = imageUrl;
+		this.navigateToEmployeeStatistics();
 	}
 
 	ngOnDestroy(): void {
