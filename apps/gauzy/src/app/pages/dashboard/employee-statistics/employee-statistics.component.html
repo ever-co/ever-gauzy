@@ -356,9 +356,31 @@
 
 		<div
 			*ngIf="selectedDate && selectedEmployee && selectedEmployee.id"
-			class="half-content"
+			class="half-content charts"
 		>
-			<ngx-employee-chart></ngx-employee-chart>
+			<nb-select
+				placeholder="Select chart"
+				class="select-charts"
+				filled
+				status="success"
+				[selected]="selectedChart"
+				(selectedChange)="onChartSelected($event)"
+			>
+				<nb-option value="1">Doughnut chart</nb-option>
+				<nb-option value="2">Bar chart</nb-option>
+				<nb-option value="3">Stacked bar chart</nb-option>
+			</nb-select>
+			<div class="chart-wrap">
+				<ngx-employee-horizontal-bar-chart
+					*ngIf="selectedChart === '2'"
+				></ngx-employee-horizontal-bar-chart>
+				<ngx-employee-doughnut-chart
+					*ngIf="selectedChart === '1'"
+				></ngx-employee-doughnut-chart>
+				<ngx-employee-stacked-bar-chart
+					*ngIf="selectedChart === '3'"
+				></ngx-employee-stacked-bar-chart>
+			</div>
 		</div>
 
 		<ng-template #notSelected>

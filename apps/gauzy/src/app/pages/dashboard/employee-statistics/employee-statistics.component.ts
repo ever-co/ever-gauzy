@@ -41,7 +41,6 @@ export interface ViewDashboardExpenseHistory {
 	originalValue?: number;
 	employeeCount?: number;
 }
-
 @Component({
 	selector: 'ga-employee-statistics',
 	templateUrl: './employee-statistics.component.html',
@@ -84,6 +83,8 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	incomePermissionsError = false;
 	expensePermissionError = false;
+
+	selectedChart = '';
 
 	constructor(
 		private incomeService: IncomeService,
@@ -415,6 +416,9 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		this.router.navigate([
 			'/pages/employees/edit/' + this.selectedEmployee.id
 		]);
+	}
+	onChartSelected(selectedChart: string) {
+		this.selectedChart = selectedChart;
 	}
 
 	ngOnDestroy() {

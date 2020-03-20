@@ -187,6 +187,13 @@ const routes: Routes = [
 					)
 			},
 			{
+				path: 'equipment-sharing',
+				loadChildren: () =>
+					import('./equipment-sharing/equipment-sharing.module').then(
+						(m) => m.EquipmentSharingModule
+					)
+			},
+			{
 				path: '**',
 				component: NotFoundComponent
 			}

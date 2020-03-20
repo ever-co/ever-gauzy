@@ -40,6 +40,7 @@ import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
 import { ExpenseCategory } from '../expense-categories';
+import { EquipmentSharing } from '../equipment-sharing';
 
 const entities = [
 	Invite,
@@ -69,6 +70,7 @@ const entities = [
 	Tag,
 	OrganizationEmploymentType,
 	Equipment,
+	EquipmentSharing,
 	EmployeeLevel,
 	Task,
 	ExpenseCategory

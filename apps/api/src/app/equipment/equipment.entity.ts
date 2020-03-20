@@ -1,5 +1,5 @@
 import { Equipment as IEquipment, CurrenciesEnum } from '@gauzy/models';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -10,6 +10,7 @@ import {
 	IsEnum,
 	IsBoolean
 } from 'class-validator';
+import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
 
 @Entity('equipment')
 export class Equipment extends Base implements IEquipment {
@@ -59,4 +60,10 @@ export class Equipment extends Base implements IEquipment {
 	@IsOptional()
 	@Column()
 	autoApproveShare: boolean;
+
+	@OneToMany(
+		(type) => EquipmentSharing,
+		(equipmentSharing) => equipmentSharing.equipment
+	)
+	equipmentSharings: EquipmentSharing[];
 }

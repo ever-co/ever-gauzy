@@ -260,6 +260,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.EQUIPMENT'
 			}
 		},
+		{
+			title: 'Equipment Sharing',
+			icon: 'shopping-cart-outline',
+			link: '/pages/equipment-sharing',
+			data: {
+				translated: false,
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+				translationKey: 'MENU.EQUIPMENT_SHARING'
+			}
+		},
 
 		{
 			title: 'Settings',

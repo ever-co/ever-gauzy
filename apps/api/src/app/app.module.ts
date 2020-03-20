@@ -39,6 +39,7 @@ import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 
@@ -140,6 +141,10 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 						module: TaskModule
 					},
 					{
+						path: '/equipment-sharing',
+						module: EquipmentSharingModule
+					},
+					{
 						path: '/organization-employment-type',
 						module: OrganizationEmploymentTypeModule
 					},
@@ -194,6 +199,7 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 			  ]
 			: []),
 		EquipmentModule,
+		EquipmentSharingModule,
 		EmployeeLevelModule,
 		TaskModule,
 		IntegrationsModule,

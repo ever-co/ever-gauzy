@@ -18,6 +18,7 @@ export class TagsMutationComponent extends TranslationBaseComponent
 	tag: Tag;
 
 	public color: string = '';
+	public name: string = '';
 	constructor(
 		protected dialogRef: NbDialogRef<TagsMutationComponent>,
 		private tagsService: TagsService,
