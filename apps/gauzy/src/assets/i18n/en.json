@@ -293,7 +293,8 @@
 		"RUSSIAN": "Russian"
 	},
 	"INTEGRATIONS": {
-		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction"
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Employee Statistics",

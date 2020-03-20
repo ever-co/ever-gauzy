@@ -4,7 +4,8 @@ import {
 	Body,
 	UploadedFile,
 	UseInterceptors,
-	HttpStatus
+	HttpStatus,
+	BadRequestException
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
@@ -35,7 +36,6 @@ export class UpworkController {
 		const csvData = file.buffer.toString();
 
 		fs.writeFileSync(filePath, csvData);
-
 		return await this._upworkService.handleTransactions(
 			filePath,
 			organizationDto

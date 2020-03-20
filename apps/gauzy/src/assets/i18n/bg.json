@@ -288,7 +288,8 @@
 		"RUSSIAN": "Руски"
 	},
 	"INTEGRATIONS": {
-		"ADDED_UPWORK_TRANSACTION": "Добавена Upwork транзакция"
+		"ADDED_UPWORK_TRANSACTION": "Добавена Upwork транзакция",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Транзакциите с общ разход успяват: {{ totalExpenses }}. Сделките с общ доход успяват: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",

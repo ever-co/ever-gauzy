@@ -14,6 +14,9 @@ import {
 	ExpenseCategoriesEnum,
 	IncomeTypeEnum
 } from '@gauzy/models';
+import { Expense } from '../../expense';
+import { Income } from '../../income';
+import { reflect } from '../../core';
 
 @Injectable()
 export class UpworkService {
@@ -56,11 +59,13 @@ export class UpworkService {
 
 		return new Promise((resolve, reject) => {
 			csvReader.on('end', async () => {
-				results.forEach(async (result) => {
-					if (
-						result.Type === IncomeTypeEnum.HOURLY ||
-						result.Type === ExpenseCategoriesEnum.SERVICE_FEE
-					) {
+				const transactions = await results
+					.filter(
+						(result) =>
+							result.Type === IncomeTypeEnum.HOURLY ||
+							result.Type === ExpenseCategoriesEnum.SERVICE_FEE
+					)
+					.map(async (result) => {
 						const {
 							Date: date,
 							Amount,
@@ -70,91 +75,148 @@ export class UpworkService {
 						} = result;
 						const [firstName, lastName] = Freelancer.split(' ');
 
-						try {
-							const {
-								record: user
-							} = await this._findRecordOrThrow(
-								this._userService,
-								{
-									where: {
-										firstName,
-										lastName
-									}
-								},
-								`User ${Freelancer} not found`
-							);
+						const { record: user } = await this._findRecordOrThrow(
+							this._userService,
+							{
+								where: {
+									firstName,
+									lastName
+								}
+							},
+							`User: ${Freelancer} not found`
+						);
 
-							const {
-								record: employee
-							} = await this._findRecordOrThrow(
-								this._employeeService,
-								{ where: { user } },
-								`Employee not found`
-							);
+						const {
+							record: employee
+						} = await this._findRecordOrThrow(
+							this._employeeService,
+							{ where: { user } },
+							`Employee ${Freelancer} not found`
+						);
 
-							const {
-								record: category
-							} = await this._findRecordOrThrow(
-								this._expenseCategoryService,
-								{
-									where: {
-										name: ExpenseCategoriesEnum.SERVICE_FEE
-									}
-								},
-								`Category ${ExpenseCategoriesEnum.SERVICE_FEE} not found`
-							);
+						const {
+							record: category
+						} = await this._findRecordOrThrow(
+							this._expenseCategoryService,
+							{
+								where: {
+									name: ExpenseCategoriesEnum.SERVICE_FEE
+								}
+							},
+							`Category: ${ExpenseCategoriesEnum.SERVICE_FEE} not found`
+						);
 
-							const {
-								record: vendor
-							} = await this._findRecordOrThrow(
-								this._orgVendorService,
-								{
-									where: {
-										name: OrganizationVendorsEnum.UPWORK,
-										organizationId: orgId
-									}
-								},
-								`Vendor ${OrganizationVendorsEnum.UPWORK} not found`
-							);
+						const {
+							record: vendor
+						} = await this._findRecordOrThrow(
+							this._orgVendorService,
+							{
+								where: {
+									name: OrganizationVendorsEnum.UPWORK,
+									organizationId: orgId
+								}
+							},
+							`Vendor: ${OrganizationVendorsEnum.UPWORK} not found`
+						);
 
-							const {
-								record: client
-							} = await this._findRecordOrThrow(
-								this._orgClientService,
-								{
-									where: { name: Team, organizationId: orgId }
-								},
-								`Client ${Team} not found`
-							);
+						const {
+							record: client
+						} = await this._findRecordOrThrow(
+							this._orgClientService,
+							{
+								where: { name: Team, organizationId: orgId }
+							},
+							`Client: ${Team} not found`
+						);
 
-							const dto = {
-								amount: Amount as number,
-								reference: result['Ref ID'],
-								valueDate: new Date(date),
-								employeeId: employee.id,
-								currency: Currency,
-								orgId
-							};
+						const dto = {
+							amount: Amount as number,
+							reference: result['Ref ID'],
+							valueDate: new Date(date),
+							employeeId: employee.id,
+							currency: Currency,
+							orgId
+						};
 
-							const cmd = this.commandBusMapper[result.Type];
+						const cmd = this.commandBusMapper[result.Type];
 
-							await this.commandBus.execute(
-								cmd.command({
-									dto,
-									client,
-									vendor,
-									category
-								})
-							);
+						return await this.commandBus.execute(
+							cmd.command({
+								dto,
+								client,
+								vendor,
+								category
+							})
+						);
+					});
 
-							resolve(true);
-						} catch (error) {
-							reject(error);
-						}
-					}
-				});
+				const processedTransactions = await Promise.all(
+					transactions.map(reflect)
+				);
+				const {
+					rejectedTransactions,
+					totalExpenses,
+					totalIncomes
+				} = this._proccessTransactions(processedTransactions);
+
+				if (rejectedTransactions.length) {
+					const errors = rejectedTransactions.map(
+						({ error }) => error.response.message
+					);
+					const message = this._formatErrorMesage(
+						[...new Set(errors)],
+						totalExpenses,
+						totalIncomes
+					);
+
+					reject(new BadRequestException(message));
+				}
+				resolve({ totalExpenses, totalIncomes });
 			});
 		});
+	}
+
+	private _formatErrorMesage(errors, totalExpenses, totalIncomes): string {
+		return `Total succeed expenses transactions: ${totalExpenses}.
+			Total succeed incomes transactions: ${totalIncomes}.
+			Failed transactions: ${errors.join(', ')}
+		`;
+	}
+
+	private _proccessTransactions(processedTransactions) {
+		const {
+			rejectedTransactions,
+			totalExpenses,
+			totalIncomes
+		} = processedTransactions.reduce(
+			(prev, current) => {
+				return {
+					rejectedTransactions:
+						current.status === 'rejected'
+							? prev.rejectedTransactions.concat(current)
+							: prev.rejectedTransactions,
+					totalExpenses:
+						current.item instanceof Expense
+							? (prev.totalExpenses++, prev.totalExpenses)
+							: prev.totalExpenses,
+					totalIncomes:
+						current.item instanceof Income
+							? (prev.totalIncomes++, prev.totalIncomes)
+							: prev.totalIncomes
+				};
+			},
+			{
+				rejectedTransactions: [],
+				totalExpenses: 0,
+				totalIncomes: 0
+			}
+		);
+
+		return {
+			rejectedTransactions,
+			totalExpenses,
+			totalIncomes
+		};
 	}
 
 	private async _findRecordOrThrow(service, condition, errorMsg) {

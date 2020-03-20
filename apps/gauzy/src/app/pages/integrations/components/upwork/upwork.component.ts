@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { IntegrationsService } from '../../../../@core/services/integrations.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -51,19 +51,23 @@ export class UpworkComponent extends TranslationBaseComponent
 		formData.append('orgId', this._selectedOrganizationId);
 		this._integrationsService
 			.uploadUpworkTransaction(formData)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(
+				takeUntil(this._ngDestroy$),
+				tap(() => (this.file = null))
+			)
 			.subscribe(
-				() => {
-					this.file = null;
+				({ totalExpenses, totalIncomes }) => {
 					this.toastrService.primary(
 						this.getTranslation(
-							'INTEGRATIONS.ADDED_UPWORK_TRANSACTION'
+							'INTEGRATIONS.TOTAL_UPWORK_TRANSACTIONS_SUCCEED',
+							{ totalExpenses, totalIncomes }
 						),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				},
 				(err) => {
-					this.errorHandler.handleError(err);
+					// added infinite duration to error toastr, error message can be too long to read in 3 sec
+					this.errorHandler.handleError(err, 0);
 				}
 			);
 	}
