@@ -142,7 +142,19 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				(calculatedBonus) => (this.avarageBonus = calculatedBonus)
 			);
 
+		this.store.selectedEmployee$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employee) => {
+				if (!employee || !employee.id) {
+					this.navigateToOrganizationEmployees();
+				}
+			});
+
 		this.loading = false;
+	}
+
+	navigateToOrganizationEmployees() {
+		this.router.navigate(['/pages/dashboard/accounting']);
 	}
 
 	openHistoryDialog(type: HistoryType) {
@@ -190,6 +202,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	private async _loadEmployeeTotalIncome() {
 		try {
+			this.incomePermissionsError = false;
 			const { items } = this.store.hasPermission(
 				PermissionsEnum.ORG_INCOMES_VIEW
 			)
@@ -255,6 +268,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	private async _loadExpense() {
 		try {
+			this.expensePermissionError = false;
 			const { items } = this.store.hasPermission(
 				PermissionsEnum.ORG_EXPENSES_VIEW
 			)

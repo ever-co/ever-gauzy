@@ -1,17 +1,17 @@
 <nb-card
 	[nbSpinner]="loading"
 	nbSpinnerStatus="primary"
-	*ngIf="selectedEmployee && selectedEmployee.id; else orgEmployees"
+	*ngIf="selectedEmployee && selectedEmployee.id"
 >
 	<nb-card-header class="header">
-		<nb-alert outline="danger" *ngIf="incomePermissionsError">
+		<nb-alert
+			outline="danger"
+			*ngIf="incomePermissionsError || expensePermissionError"
+		>
 			{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.INSUFFICIENT' | translate }}
 			<span *ngIf="incomePermissionsError">{{
 				'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_INCOMES_VIEW' | translate
 			}}</span>
-		</nb-alert>
-		<nb-alert outline="danger" *ngIf="expensePermissionError">
-			{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.INSUFFICIENT' | translate }}
 			<span *ngIf="expensePermissionError">{{
 				'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_EXPENSES_VIEW' | translate
 			}}</span>
@@ -397,6 +397,3 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template #orgEmployees>
-	<ga-organization-employees> </ga-organization-employees>
-</ng-template>
