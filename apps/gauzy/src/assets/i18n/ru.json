@@ -305,6 +305,10 @@
 		"RUSSIAN": "Русский"
 	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Бухгалтер",
+		"HUMAN_RESOURCES": "Людские ресурсы",
+		"TIME_TRACKING": "Время отслеживания",
+		"PROJECT_MANAGEMENT": "Управление проектом",
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
