@@ -270,7 +270,7 @@
 		"DASHBOARD": "לוח מחוונים",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
-    "INTEGRATIONS": "שילובים",
+		"INTEGRATIONS": "Integrations",
 		"UPWORK": "Upwork",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
@@ -307,8 +307,8 @@
 		"RUSSIAN": "Russian"
 	},
 	"INTEGRATIONS": {
-		"ADDED_UPWORK_TRANSACTION": "התווספה עסקת עבודה",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "סך כל עסקאות ההוצאות מצליחות: {{ totalExpenses }}. סך כל עסקאות ההכנסה מצליחות: {{ totalIncomes }}"
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

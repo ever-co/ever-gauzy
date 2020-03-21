@@ -271,7 +271,7 @@
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
 		"INTEGRATIONS": "Интеграции",
-		"UPWORK": "Upwork",
+		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
 		"HELP": "Помогите",
@@ -307,7 +307,7 @@
 		"RUSSIAN": "Русский"
 	},
 	"INTEGRATIONS": {
-		"ADDED_UPWORK_TRANSACTION": "Добавлена транзакция Upwork",
+		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {

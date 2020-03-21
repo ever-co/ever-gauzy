@@ -270,7 +270,7 @@
 		"DASHBOARD": "Табло",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
-		"INTEGRATIONS": "Интеграции",
+		"INTEGRATIONS": "Integrations",
 		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Почивка",
@@ -307,8 +307,8 @@
 		"RUSSIAN": "Руски"
 	},
 	"INTEGRATIONS": {
-		"ADDED_UPWORK_TRANSACTION": "Добавена Upwork транзакция",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Транзакциите с общ разход успяват: {{ totalExpenses }}. Сделките с общ доход успяват: {{ totalIncomes }}"
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
