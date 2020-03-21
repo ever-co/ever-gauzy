@@ -270,6 +270,8 @@
 		"DASHBOARD": "Табло",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Почивка",
 		"HELP": "Помощ",
@@ -303,6 +305,10 @@
 		"BULGARIAN": "Български",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Руски"
+	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -449,7 +455,6 @@
 			"PROJECTS": "Проекти",
 			"DEPARTMENT_NAME": "Име на отдела",
 			"POSITION_NAME": "Название на позиция",
-			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Добавяне на нов проект",
 			"START_DATE": "Начална дата",
 			"END_DATE": "Крайна дата",
