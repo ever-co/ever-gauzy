@@ -366,20 +366,44 @@
 				[selected]="selectedChart"
 				(selectedChange)="onChartSelected($event)"
 			>
-				<nb-option value="1">Doughnut chart</nb-option>
-				<nb-option value="2">Bar chart</nb-option>
-				<nb-option value="3">Stacked bar chart</nb-option>
+				<nb-option value="1"
+					><img
+						width="auto"
+						height="24"
+						style="margin-right:10px"
+						src="assets/images/others/bar-chart.svg"
+					/>
+					<span class="chart-option">Bar</span></nb-option
+				>
+				<nb-option value="2"
+					><img
+						width="auto"
+						height="24"
+						style="margin-right:10px"
+						src="assets/images/others/doughnut.svg"
+					/>
+					Doughnut
+				</nb-option>
+				<nb-option value="3"
+					><img
+						width="auto"
+						height="24"
+						style="margin-right:10px"
+						src="assets/images/others/stacked-bar-chart.svg"
+					/>
+					Stacked bar</nb-option
+				>
 			</nb-select>
-			<div class="chart-wrap">
-				<ngx-employee-horizontal-bar-chart
-					*ngIf="selectedChart === '2'"
-				></ngx-employee-horizontal-bar-chart>
+			<div class="chart-wrap" [ngSwitch]="selectedChart">
 				<ngx-employee-doughnut-chart
-					*ngIf="selectedChart === '1'"
+					*ngSwitchCase="2"
 				></ngx-employee-doughnut-chart>
 				<ngx-employee-stacked-bar-chart
-					*ngIf="selectedChart === '3'"
+					*ngSwitchCase="3"
 				></ngx-employee-stacked-bar-chart>
+				<ngx-employee-horizontal-bar-chart
+					*ngSwitchDefault
+				></ngx-employee-horizontal-bar-chart>
 			</div>
 		</div>
 

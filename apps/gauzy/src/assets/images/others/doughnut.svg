@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 57.1 (83088) - https://sketch.com -->
+    <title>doughnut</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <circle id="path-1" cx="100.5" cy="100.5" r="84.5"></circle>
+    </defs>
+    <g id="doughnut" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <mask id="mask-2" fill="white">
+            <use xlink:href="#path-1"></use>
+        </mask>
+        <use id="Oval" stroke="#979797" fill="#D8D8D8" xlink:href="#path-1"></use>
+        <rect id="Rectangle" fill="#007AFF" mask="url(#mask-2)" x="0" y="0" width="100" height="116"></rect>
+        <rect id="Rectangle" fill="#FF3B30" mask="url(#mask-2)" x="100" y="0" width="100" height="116"></rect>
+        <rect id="Rectangle" fill="#DCC300" mask="url(#mask-2)" x="0" y="116" width="217" height="116"></rect>
+        <circle id="Oval" stroke="#979797" fill="#F6F6F6" mask="url(#mask-2)" cx="100.5" cy="100.5" r="53.5"></circle>
+    </g>
+</svg>
