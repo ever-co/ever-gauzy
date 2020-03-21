@@ -20,6 +20,7 @@ import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import { environment as env } from '@env-api/environment';
 import * as bcrypt from 'bcrypt';
+import { ITryRequest } from './try-request';
 
 export abstract class CrudService<T extends Base> implements ICrudService<T> {
 	saltRounds: number;
@@ -36,6 +37,27 @@ export abstract class CrudService<T extends Base> implements ICrudService<T> {
 		const total = await this.repository.count(filter);
 		const items = await this.repository.find(filter);
 		return { items, total };
+	}
+
+	public async findOneOrFail(
+		id: string | number | FindOneOptions<T> | FindConditions<T>,
+		options?: FindOneOptions<T>
+	): Promise<ITryRequest> {
+		try {
+			const record = await this.repository.findOneOrFail(
+				id as any,
+				options
+			);
+			return {
+				success: true,
+				record
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error
+			};
+		}
 	}
 
 	public async findOne(

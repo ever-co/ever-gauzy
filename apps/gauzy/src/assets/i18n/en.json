@@ -271,6 +271,8 @@
 		"DASHBOARD": "Dashboard",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"HELP": "Help",
@@ -304,6 +306,10 @@
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian"
+	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -450,7 +456,6 @@
 			"PROJECTS": "Projects",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
-			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Add new project",
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
