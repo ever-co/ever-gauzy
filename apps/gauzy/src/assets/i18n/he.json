@@ -270,6 +270,8 @@
 		"DASHBOARD": "לוח מחוונים",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
+		"INTEGRATIONS": "שילובים",
+		"UPWORK": "עבודת יד",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"HELP": "עזרה",
@@ -303,6 +305,10 @@
 		"BULGARIAN": "Bulgarian",
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian"
+	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "התווספה עסקת עבודה",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "סך כל עסקאות ההוצאות מצליחות: {{ totalExpenses }}. סך כל עסקאות ההכנסה מצליחות: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

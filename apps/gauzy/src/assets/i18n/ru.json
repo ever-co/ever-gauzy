@@ -270,6 +270,8 @@
 		"DASHBOARD": "Приборная доска",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
+		"INTEGRATIONS": "Интеграции",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
 		"HELP": "Помогите",
@@ -303,6 +305,10 @@
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
+	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Добавлена ​​транзакция Upwork",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Успешные транзакции: {{ totalExpenses }}. Общий доход транзакций успешен: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
