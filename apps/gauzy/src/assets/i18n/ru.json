@@ -270,6 +270,8 @@
 		"DASHBOARD": "Приборная доска",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
+		"INTEGRATIONS": "Интеграции",
+		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
 		"HELP": "Помогите",
@@ -303,6 +305,10 @@
 		"BULGARIAN": "Болгарский",
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
+	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
@@ -449,7 +455,6 @@
 			"PROJECTS": "Проекты",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
-			"EMPLOYMENT_TYPES": "Тип занятости",
 			"NEW_PROJECT": "Добавить новый проект",
 			"START_DATE": "Дата начала",
 			"END_DATE": "Дата окончания",
