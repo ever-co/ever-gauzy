@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
 import { TimeLogType } from '@gauzy/models';
 import * as moment from 'moment';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, ignoreElements } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -17,13 +17,65 @@ export class TimeTrackerComponent implements OnInit {
 	today: Date = new Date();
 	manualTime: any = {};
 
+	minSlotStartTime: string;
+	maxSlotStartTime: string;
+	maxSlotEndTime: string;
+	minSlotEndTime: string;
+
 	constructor(private timeTrackerService: TimeTrackerService) {
-		this.manualTime = {
-			description: '',
-			startTime: null,
-			endTime: null,
-			date: moment().format('YYYY-MM-DD')
-		};
+		this.updateTimePickerLimit(new Date());
+	}
+
+	updateEndTimeSlot(time: string) {
+		this.minSlotEndTime = moment(time, 'HH:mm')
+			.add(10, 'minutes')
+			.format('HH:mm');
+		if (
+			!moment(time, 'HH:mm').isBefore(
+				moment(this.manualTime.endTime, 'HH:mm')
+			)
+		) {
+			this.manualTime.endTime = moment(this.manualTime.startTime, 'HH:mm')
+				.add(30, 'minutes')
+				.format('HH:mm');
+		}
+	}
+
+	updateTimePickerLimit(date: Date) {
+		let mTime = moment(date);
+
+		if (mTime.isSame(new Date(), 'day')) {
+			mTime = mTime.set({
+				hour: moment().get('hour'),
+				minute: moment().get('minute') - (moment().minutes() % 10),
+				second: 0,
+				millisecond: 0
+			});
+
+			this.manualTime = {
+				description: '',
+				startTime: mTime
+					.clone()
+					.subtract(30, 'minutes')
+					.format('HH:mm'),
+				endTime: mTime.format('HH:mm'),
+				date: mTime.toDate()
+			};
+		}
+
+		if (mTime.isSame(new Date(), 'day')) {
+			this.minSlotStartTime = '00:00';
+			this.maxSlotStartTime = mTime
+				.clone()
+				.subtract(10, 'minutes')
+				.format('HH:mm');
+			this.maxSlotEndTime = mTime.format('HH:mm');
+		} else {
+			this.minSlotStartTime = '00:00';
+			this.maxSlotStartTime = '23:59';
+			this.maxSlotEndTime = '23:59';
+		}
+		this.updateEndTimeSlot(this.manualTime.startTime);
 	}
 
 	public get isBillable(): boolean {

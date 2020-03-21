@@ -57,10 +57,13 @@
 							name="date"
 							[(ngModel)]="manualTime.date"
 							[nbDatepicker]="datepicker"
-							[max]="today"
 							placeholder="YYYY-MM-DD"
 						/>
-						<nb-datepicker #datepicker></nb-datepicker>
+						<nb-datepicker
+							[max]="today"
+							(dateChange)="updateTimePickerLimit($event)"
+							#datepicker
+						></nb-datepicker>
 					</div>
 				</div>
 				<div class="col">
@@ -70,6 +73,9 @@
 						}}</label>
 						<ga-timer-picker
 							name="start_time"
+							[min]="minSlotStartTime"
+							[max]="maxSlotStartTime"
+							(change)="updateEndTimeSlot($event)"
 							[(ngModel)]="manualTime.startTime"
 						></ga-timer-picker>
 						<!-- <input type="text" class="form-control" autocomplete="off" name="start_time" [(ngModel)]="manualTime.startTime" placeholder="00:00"> -->
@@ -82,6 +88,8 @@
 						}}</label>
 						<ga-timer-picker
 							name="end_time"
+							[min]="minSlotEndTime"
+							[max]="maxSlotEndTime"
 							[(ngModel)]="manualTime.endTime"
 						></ga-timer-picker>
 						<!-- <input type="text" class="form-control" autocomplete="off" name="end_time" [(ngModel)]="manualTime.endTime" placeholder="01:00"> -->

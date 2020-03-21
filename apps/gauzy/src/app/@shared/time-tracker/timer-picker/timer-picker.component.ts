@@ -1,4 +1,11 @@
-import { Component, OnInit, Input, forwardRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	Input,
+	forwardRef,
+	Output,
+	EventEmitter
+} from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
 
@@ -15,14 +22,32 @@ import * as moment from 'moment';
 	]
 })
 export class TimerPickerComponent implements OnInit {
+	private _max: string = '23:59';
+	private _min: string = '00:00';
+
 	timeSlots: { value: string; label: string }[] = [];
 	onChange: any = () => {};
 	onTouched: any = () => {};
 	val: any;
-
 	@Input() disabled = false;
-	@Input() min: string = '00:00';
-	@Input() max: string = '23:59';
+	@Input()
+	public get min(): string {
+		return this._min;
+	}
+	public set min(value: string) {
+		this._min = value;
+		this.updateSlots();
+	}
+	@Input()
+	public get max(): string {
+		return this._max;
+	}
+	public set max(value: string) {
+		this._max = value;
+		this.updateSlots();
+	}
+
+	@Output() change: EventEmitter<string> = new EventEmitter();
 
 	constructor() {}
 
@@ -30,6 +55,7 @@ export class TimerPickerComponent implements OnInit {
 		this.val = val;
 		this.onChange(val);
 		this.onTouched(val);
+		this.change.emit(val);
 	}
 
 	get selectedTime() {
@@ -46,7 +72,7 @@ export class TimerPickerComponent implements OnInit {
 		let endTime = moment(this.max, 'HH:mm');
 
 		let times = [];
-		while (slotTime < endTime) {
+		while (slotTime <= endTime) {
 			times.push({
 				value: slotTime.format('HH:mm'),
 				label: slotTime.format('hh:mm A')

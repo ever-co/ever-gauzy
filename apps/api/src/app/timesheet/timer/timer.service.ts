@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, Between } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee';
-import { TimeLogType, TimerStatus } from '@gauzy/models';
+import { TimeLogType, TimerStatus, IManualTimeInput } from '@gauzy/models';
 import * as moment from 'moment';
 import { Timesheet } from '../timesheet.entity';
 
@@ -110,9 +110,59 @@ export class TimerService {
 		return newTimeLog;
 	}
 
-	private async createOrFindTimeSheet(employee) {
-		const from_date = moment().startOf('week');
-		const to_date = moment().endOf('week');
+	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
+		const user = RequestContext.currentUser();
+		const employee = await this.employeeRepository.findOne({
+			userId: user.id
+		});
+		const confict = await this.timeLogRepository.findOne({
+			where: {
+				employeeId: employee.id,
+				1: [
+					{
+						startedAt: Between(request.startedAt, request.stoppedAt)
+					},
+					{
+						stoppedAt: Between(request.startedAt, request.stoppedAt)
+					}
+				]
+			}
+		});
+
+		console.log({ confict });
+
+		const timesheet = await this.createOrFindTimeSheet(
+			employee,
+			request.startedAt
+		);
+		let newTimeLog: TimeLog;
+		if (!confict) {
+			const diffTime = Math.abs(
+				request.startedAt.getTime() - request.stoppedAt.getTime()
+			);
+			newTimeLog = await this.timeLogRepository.save({
+				duration: Math.ceil(diffTime / 1000),
+				timesheetId: timesheet.id,
+				isBilled: false,
+				startedAt: request.startedAt,
+				stoppedAt: request.stoppedAt,
+				employeeId: employee.id,
+				projectId: request.projectId || null,
+				taskId: request.taskId || null,
+				clientId: request.clientId || null,
+				logType: TimeLogType.MANUAL,
+				description: request.description || '',
+				isBillable: request.isBillable || false
+			});
+			return newTimeLog;
+		} else {
+			return null;
+		}
+	}
+
+	private async createOrFindTimeSheet(employee, date: Date = new Date()) {
+		const from_date = moment(date).startOf('week');
+		const to_date = moment(date).endOf('week');
 
 		let timesheet = await this.timesheetRepository.findOne({
 			where: {

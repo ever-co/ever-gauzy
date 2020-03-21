@@ -93,3 +93,14 @@ export interface ITimerToggleInput {
 	tags?: string[];
 	isBillable?: boolean;
 }
+
+export interface IManualTimeInput {
+	projectId?: string;
+	taskId?: string;
+	clientId?: string;
+	description?: string;
+	startedAt?: Date;
+	stoppedAt?: Date;
+	tags?: string[];
+	isBillable?: boolean;
+}
