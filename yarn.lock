@@ -3629,6 +3629,13 @@
     "@types/long" "*"
     "@types/node" "*"
 
+"@types/chart.js@^2.9.15":
+  version "2.9.15"
+  resolved "https://registry.yarnpkg.com/@types/chart.js/-/chart.js-2.9.15.tgz#a6dba99e25258dbc0799000f11e57ed1f93ea5d9"
+  integrity sha512-PRxv/KYzmeVXDgp9nHJBoIQh9iJEyBm/OocnSrIEU9VZSNW5lcbXVkYjkb4V78VGGJESf57tk7KxK1LBAccOAQ==
+  dependencies:
+    moment "^2.10.2"
+
 "@types/color-name@^1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@types/color-name/-/color-name-1.1.1.tgz#1c1261bbeaa10a8055bbc5d8ab84b7b2afc846a0"
@@ -6357,7 +6364,7 @@ charenc@~0.0.1:
   resolved "https://registry.yarnpkg.com/charenc/-/charenc-0.0.2.tgz#c0a1d2f3a7092e03774bfa83f14c0fc5790a8667"
   integrity sha1-wKHS86cJLgN3S/qD8UwPxXkKhmc=
 
-chart.js@^2.1.5, chart.js@^2.3.0, chart.js@^2.8.0:
+chart.js@^2.1.5, chart.js@^2.3.0, chart.js@^2.9.3:
   version "2.9.3"
   resolved "https://registry.yarnpkg.com/chart.js/-/chart.js-2.9.3.tgz#ae3884114dafd381bc600f5b35a189138aac1ef7"
   integrity sha512-+2jlOobSk52c1VU6fzkh3UwqHMdSlgH1xFv9FKMqHiNCpXsGPQa/+81AFa+i3jZ253Mq9aAycPwDjnn1XbRNNw==

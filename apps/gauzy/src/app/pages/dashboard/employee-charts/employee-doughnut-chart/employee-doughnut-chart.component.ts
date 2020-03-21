@@ -1,25 +1,24 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
-import { Store } from '../../../@core/services/store.service';
+import { EmployeeStatisticsService } from '../../../../@core/services/employee-statistics.serivce';
+import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { monthNames } from '../../../@core/utils/date';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
+import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
-	selector: 'ngx-employee-chart',
+	selector: 'ngx-employee-doughnut-chart',
 	template: `
 		<chart
-			style="height: 620px"
-			type="horizontalBar"
+			style="height: 500px; width: 500px;"
+			type="doughnut"
 			[data]="data"
 			[options]="options"
 		></chart>
 	`
 })
-export class EmployeeChartComponent implements OnInit, OnDestroy {
+export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
@@ -57,10 +56,10 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 				await this._initializeChart();
 			});
 	}
-	/**
-	 * Loads or reloads chart statistics and chart when employee or date
-	 * is changed from the header component
-	 */
+	// /**
+	//  * Loads or reloads chart statistics and chart when employee or date
+	//  * is changed from the header component
+	//  */
 	private async _initializeChart() {
 		if (
 			this.selectedEmployee &&
@@ -81,37 +80,25 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
-				// const colors: any = config.variables;
 				const chartjs: any = config.variables.chartjs;
-				const bonusColors = this.bonusStatistics.map((val) =>
-					val < 0 ? 'red' : '#0091ff'
-				);
-				const profitColors = this.profitStatistics.map((val) =>
-					val < 0 ? '#ff7b00' : '#66de0b'
-				);
 				this.data = {
-					labels: this.labels,
+					labels: ['Revenue', 'Expenses', 'Bonus', 'Profit'],
 					datasets: [
 						{
-							label: 'Revenue',
-							backgroundColor: '#089c17',
-							borderWidth: 1,
-							data: this.incomeStatistics
-						},
-						{
-							label: 'Expenses',
-							backgroundColor: '#dbc300',
-							data: this.expenseStatistics
-						},
-						{
-							label: 'Profit',
-							backgroundColor: profitColors,
-							data: this.profitStatistics
-						},
-						{
-							label: 'Bonus',
-							backgroundColor: bonusColors,
-							data: this.bonusStatistics
+							data: [
+								this.incomeStatistics,
+								this.expenseStatistics,
+								this.bonusStatistics,
+								this.profitStatistics
+							],
+							backgroundColor: [
+								'#089c17',
+								'#dbc300',
+								'#66de0b',
+								'#0091ff'
+							],
+							hoverBorderColor: 'rgba(0, 0, 0, 0)',
+							borderWidth: 1
 						}
 					]
 				};
@@ -123,30 +110,7 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 							borderWidth: 2
 						}
 					},
-					scales: {
-						xAxes: [
-							{
-								gridLines: {
-									display: true,
-									color: chartjs.axisLineColor
-								},
-								ticks: {
-									fontColor: chartjs.textColor
-								}
-							}
-						],
-						yAxes: [
-							{
-								gridLines: {
-									display: false,
-									color: chartjs.axisLineColor
-								},
-								ticks: {
-									fontColor: chartjs.textColor
-								}
-							}
-						]
-					},
+					scales: {},
 					legend: {
 						position: 'right',
 						labels: {
@@ -156,10 +120,10 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 				};
 			});
 	}
-	/**
-	 * Fetches selected employee's statistics for chosen date for past X months.
-	 * Populates the local statistics variables with fetched data.
-	 */
+	// /**
+	//  * Fetches selected employee's statistics for chosen date for past X months.
+	//  * Populates the local statistics variables with fetched data.
+	//  */
 	private async _loadData() {
 		/**
 		 * Fetches selected employee's statistics for chosen date for past X months.
@@ -171,7 +135,6 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 				months: 12
 			}
 		);
-		this.labels = [];
 		this.incomeStatistics = [];
 		this.expenseStatistics = [];
 		this.profitStatistics = [];
@@ -181,10 +144,6 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 		 * Populates the local statistics variables with fetched data.
 		 */
 		employeeStatistics.map((stat) => {
-			const labelValue = `${monthNames[stat.month]} '${stat.year
-				.toString(10)
-				.substring(2)}`;
-			this.labels.push(labelValue);
 			this.incomeStatistics.push(stat.income);
 			this.expenseStatistics.push(stat.expense);
 			this.profitStatistics.push(stat.profit);

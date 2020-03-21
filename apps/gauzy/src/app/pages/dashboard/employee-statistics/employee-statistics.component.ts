@@ -41,7 +41,6 @@ export interface ViewDashboardExpenseHistory {
 	originalValue?: number;
 	employeeCount?: number;
 }
-
 @Component({
 	selector: 'ga-employee-statistics',
 	templateUrl: './employee-statistics.component.html',
@@ -84,6 +83,8 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	incomePermissionsError = false;
 	expensePermissionError = false;
+
+	selectedChart = '';
 
 	constructor(
 		private incomeService: IncomeService,
@@ -141,7 +142,19 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 				(calculatedBonus) => (this.avarageBonus = calculatedBonus)
 			);
 
+		this.store.selectedEmployee$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employee) => {
+				if (!employee || !employee.id) {
+					this.navigateToOrganizationEmployees();
+				}
+			});
+
 		this.loading = false;
+	}
+
+	navigateToOrganizationEmployees() {
+		this.router.navigate(['/pages/dashboard/accounting']);
 	}
 
 	openHistoryDialog(type: HistoryType) {
@@ -189,6 +202,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	private async _loadEmployeeTotalIncome() {
 		try {
+			this.incomePermissionsError = false;
 			const { items } = this.store.hasPermission(
 				PermissionsEnum.ORG_INCOMES_VIEW
 			)
@@ -254,6 +268,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 
 	private async _loadExpense() {
 		try {
+			this.expensePermissionError = false;
 			const { items } = this.store.hasPermission(
 				PermissionsEnum.ORG_EXPENSES_VIEW
 			)
@@ -415,6 +430,9 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		this.router.navigate([
 			'/pages/employees/edit/' + this.selectedEmployee.id
 		]);
+	}
+	onChartSelected(selectedChart: string) {
+		this.selectedChart = selectedChart;
 	}
 
 	ngOnDestroy() {
