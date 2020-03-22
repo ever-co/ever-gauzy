@@ -47,6 +47,15 @@ export interface CreateEmailInvitesInput {
 	inviteType: any;
 }
 
+export interface CreateOrganizationClientInviteInput {
+	emailId: string;
+	clientId: string;
+	organizationId: string;
+	roleId: string;
+	invitedById: string;
+	originalUrl: string;
+}
+
 export interface CreateEmailInvitesOutput {
 	items: Invite[];
 	total: number;

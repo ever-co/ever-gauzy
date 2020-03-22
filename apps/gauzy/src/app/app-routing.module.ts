@@ -61,6 +61,11 @@ const routes: Routes = [
 				path: 'accept-invite',
 				component: AcceptInvitePage,
 				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'accept-client-invite',
+				component: AcceptInvitePage,
+				canActivate: [NoAuthGuard]
 			}
 		]
 	},

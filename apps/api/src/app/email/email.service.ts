@@ -11,6 +11,7 @@ import { Email as IEmail } from './email.entity';
 import { environment } from '@env-api/environment';
 import { OrganizationClients } from '../organization-clients';
 import { Organization } from '../organization';
+import { Invite } from '../invite';
 
 @Injectable()
 export class EmailService extends CrudService<IEmail> {
@@ -67,6 +68,7 @@ export class EmailService extends CrudService<IEmail> {
 		organizationClient: OrganizationClients,
 		inviterUser: User,
 		organization: Organization,
+		invite: Invite,
 		originUrl?: string
 	) {
 		this.languageCode = 'en';
@@ -89,7 +91,7 @@ export class EmailService extends CrudService<IEmail> {
 					organizationName: organization && organization.name,
 					generatedUrl:
 						originUrl +
-						`/auth/accept-client-invite/${organizationClient.id}`
+						`#/auth/accept-client-invite?email=${organizationClient.primaryEmail}&token=${invite.token}`
 				}
 			})
 			.then((res) => {
