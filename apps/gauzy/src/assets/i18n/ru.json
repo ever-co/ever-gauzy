@@ -866,6 +866,7 @@
 		"DATE": "Дата",
 		"START_TIME": "Время начала",
 		"END_TIME": "Конец времени",
-		"DESCRIPTION": "Описание"
+		"DESCRIPTION": "Описание",
+		"ADD_TIME_SUCCESS": "Время успешно добавлено"
 	}
 }
