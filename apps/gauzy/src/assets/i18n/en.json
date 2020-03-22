@@ -323,7 +323,12 @@
 			"BAR": "Bar",
 			"DOUGHNUT": "Doughnut",
 			"STACKED_BAR": "Stacked Bar",
-			"CHART_TYPE": "Chart Type"
+			"CHART_TYPE": "Chart Type",
+			"REVENUE": "Revenue",
+			"EXPENSES": "Expenses",
+			"PROFIT": "Profit",
+			"BONUS": "Bonus",
+			"NO_MONTH_DATA": "No Data for this month"
 		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
