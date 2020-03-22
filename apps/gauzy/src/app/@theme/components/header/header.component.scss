@@ -126,3 +126,18 @@
 		padding-bottom: 20px;
 	}
 }
+
+.timer-action {
+	cursor: pointer;
+}
+.timer-card {
+	position: relative;
+	padding-top: 12px;
+
+	.btn-close {
+		position: absolute;
+		right: 5px;
+		top: 0px;
+		padding: 2px;
+	}
+}

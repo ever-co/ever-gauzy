@@ -41,6 +41,7 @@ import { TaskModule } from './tasks';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type';
+import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 
 @Module({
@@ -149,6 +150,10 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 						module: OrganizationEmploymentTypeModule
 					},
 					{
+						path: '/timesheet',
+						module: TimesheetModule
+          },
+          {
 						path: '/integrations',
 						module: IntegrationsModule
 					}
@@ -199,11 +204,11 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 			  ]
 			: []),
 		EquipmentModule,
-		EquipmentSharingModule,
-		EmployeeLevelModule,
+		EquipmentSharingModule,		
 		TaskModule,
-		IntegrationsModule,
 		OrganizationEmploymentTypeModule,
+		TimesheetModule,
+		IntegrationsModule,		
 		ExpenseCategoriesModule
 	],
 	controllers: [AppController],
