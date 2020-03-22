@@ -39,6 +39,13 @@ import { OrganizationEmploymentType } from '../organization-employment-type';
 import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
+import {
+	TimeSlot,
+	Timesheet,
+	TimeLog,
+	Activity,
+	Screenshot
+} from '../timesheet';
 import { ExpenseCategory } from '../expense-categories';
 import { EquipmentSharing } from '../equipment-sharing';
 
@@ -73,6 +80,11 @@ const entities = [
 	EquipmentSharing,
 	EmployeeLevel,
 	Task,
+	TimeSlot,
+	Timesheet,
+	TimeLog,
+	Activity,
+	Screenshot,
 	ExpenseCategory
 ];
 

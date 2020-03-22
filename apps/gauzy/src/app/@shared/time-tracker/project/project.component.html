@@ -1,0 +1,32 @@
+<div (click)="$event.stopPropagation()">
+	<ng-select
+		[clearable]="true"
+		[disabled]="disabled"
+		[items]="projects"
+		[(ngModel)]="projectId"
+		[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
+		bindValue="id"
+		bindLabel="name"
+	>
+		<!-- <ng-template ng-option-tmp let-item="item" let-index="index">
+			<img
+				*ngIf="item.imageUrl"
+				[src]="item.imageUrl"
+				width="40"
+				height="40"
+			/>
+			{{ item.name }}
+		</ng-template>
+		<ng-template ng-label-tmp let-item="item">
+			<div class="selector-template">
+				<img
+					*ngIf="item.imageUrl"
+					height="25"
+					width="25"
+					[src]="item.imageUrl"
+				/>
+				<span>{{ item.name }}</span>
+			</div>
+		</ng-template> -->
+	</ng-select>
+</div>

@@ -1,0 +1,183 @@
+import { Injectable } from '@nestjs/common';
+import { TimeLog } from '../time-log.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, MoreThan, Between } from 'typeorm';
+import { RequestContext } from '../../core/context';
+import { Employee } from '../../employee';
+import { TimeLogType, TimerStatus, IManualTimeInput } from '@gauzy/models';
+import * as moment from 'moment';
+import { Timesheet } from '../timesheet.entity';
+
+@Injectable()
+export class TimerService {
+	constructor(
+		@InjectRepository(TimeLog)
+		private readonly timeLogRepository: Repository<TimeLog>,
+
+		@InjectRepository(Timesheet)
+		private readonly timesheetRepository: Repository<Timesheet>,
+
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>
+	) {}
+
+	async getTimerStatus(): Promise<TimerStatus> {
+		const user = RequestContext.currentUser();
+		const employee = await this.employeeRepository.findOne({
+			userId: user.id
+		});
+
+		const todayLog = await this.timeLogRepository.find({
+			where: {
+				employeeId: employee.id,
+				startedAt: MoreThan(moment().format('YYYY-MM-DD'))
+			},
+			order: {
+				startedAt: 'DESC'
+			}
+		});
+
+		console.log(todayLog);
+
+		let stauts: TimerStatus = {
+			duration: 0,
+			running: false,
+			lastLog: null
+		};
+		if (todayLog.length > 0) {
+			const lastLog = todayLog[0];
+			stauts.lastLog = lastLog;
+
+			if (lastLog.stoppedAt) {
+				stauts.running = false;
+			} else {
+				stauts.running = true;
+				stauts.duration = Math.abs(
+					(lastLog.startedAt.getTime() - new Date().getTime()) / 1000
+				);
+			}
+			for (let index = 0; index < todayLog.length; index++) {
+				stauts.duration += todayLog[index].duration;
+			}
+		}
+		return stauts;
+	}
+
+	async toggleTimeLog(request): Promise<TimeLog> {
+		const user = RequestContext.currentUser();
+		const employee = await this.employeeRepository.findOne({
+			userId: user.id
+		});
+		const lastLog = await this.timeLogRepository.findOne({
+			where: {
+				employeeId: employee.id
+			},
+			order: {
+				startedAt: 'DESC'
+			}
+		});
+
+		const timesheet = await this.createOrFindTimeSheet(employee);
+		let newTimeLog: TimeLog;
+		if (!lastLog || lastLog.stoppedAt) {
+			newTimeLog = await this.timeLogRepository.save({
+				duration: 0,
+				timesheetId: timesheet.id,
+				isBilled: false,
+				startedAt: new Date(),
+				employeeId: employee.id,
+				projectId: request.projectId || null,
+				taskId: request.taskId || null,
+				clientId: request.clientId || null,
+				logType: request.logType || TimeLogType.TRACKED,
+				description: request.description || '',
+				isBillable: request.isBillable || false
+			});
+		} else {
+			const stoppedAt = new Date();
+			const diffTime = Math.abs(
+				stoppedAt.getTime() - lastLog.startedAt.getTime()
+			);
+			const duration = Math.ceil(diffTime / 1000);
+			await this.timeLogRepository.update(lastLog.id, {
+				stoppedAt,
+				duration
+			});
+
+			await this.timesheetRepository.update(timesheet.id, { duration });
+			newTimeLog = await this.timeLogRepository.findOne(lastLog.id);
+		}
+		return newTimeLog;
+	}
+
+	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
+		const user = RequestContext.currentUser();
+		const employee = await this.employeeRepository.findOne({
+			userId: user.id
+		});
+		const confict = await this.timeLogRepository.findOne({
+			where: {
+				employeeId: employee.id,
+				1: [
+					{
+						startedAt: Between(request.startedAt, request.stoppedAt)
+					},
+					{
+						stoppedAt: Between(request.startedAt, request.stoppedAt)
+					}
+				]
+			}
+		});
+
+		console.log({ confict });
+
+		const timesheet = await this.createOrFindTimeSheet(
+			employee,
+			request.startedAt
+		);
+		let newTimeLog: TimeLog;
+		if (!confict) {
+			const diffTime = Math.abs(
+				request.startedAt.getTime() - request.stoppedAt.getTime()
+			);
+			newTimeLog = await this.timeLogRepository.save({
+				duration: Math.ceil(diffTime / 1000),
+				timesheetId: timesheet.id,
+				isBilled: false,
+				startedAt: request.startedAt,
+				stoppedAt: request.stoppedAt,
+				employeeId: employee.id,
+				projectId: request.projectId || null,
+				taskId: request.taskId || null,
+				clientId: request.clientId || null,
+				logType: TimeLogType.MANUAL,
+				description: request.description || '',
+				isBillable: request.isBillable || false
+			});
+			return newTimeLog;
+		} else {
+			return null;
+		}
+	}
+
+	private async createOrFindTimeSheet(employee, date: Date = new Date()) {
+		const from_date = moment(date).startOf('week');
+		const to_date = moment(date).endOf('week');
+
+		let timesheet = await this.timesheetRepository.findOne({
+			where: {
+				startedAt: Between(from_date, to_date),
+				employeeId: employee.id
+			}
+		});
+
+		if (!timesheet) {
+			timesheet = await this.timesheetRepository.save({
+				employeeId: employee.id,
+				startedAt: from_date.toISOString(),
+				stoppedAt: from_date.toISOString()
+			});
+		}
+		return timesheet;
+	}
+}
