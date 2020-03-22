@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan, Between } from 'typeorm';
+import { Repository, MoreThan, Between, Brackets } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee';
 import { TimeLogType, TimerStatus, IManualTimeInput } from '@gauzy/models';
@@ -36,9 +36,6 @@ export class TimerService {
 				startedAt: 'DESC'
 			}
 		});
-
-		console.log(todayLog);
-
 		let stauts: TimerStatus = {
 			duration: 0,
 			running: false,
@@ -111,25 +108,27 @@ export class TimerService {
 	}
 
 	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
+		if (!request.startedAt || !request.stoppedAt) {
+			throw new BadRequestException(
+				'Please select valid Date start and end time'
+			);
+		}
+
 		const user = RequestContext.currentUser();
 		const employee = await this.employeeRepository.findOne({
 			userId: user.id
 		});
-		const confict = await this.timeLogRepository.findOne({
-			where: {
-				employeeId: employee.id,
-				1: [
-					{
-						startedAt: Between(request.startedAt, request.stoppedAt)
-					},
-					{
-						stoppedAt: Between(request.startedAt, request.stoppedAt)
-					}
-				]
-			}
-		});
-
-		console.log({ confict });
+		const confict = await this.timeLogRepository
+			.createQueryBuilder()
+			.where('"employeeId" = :employeeId', { employeeId: employee.id })
+			.andWhere(
+				`("startedAt", "stoppedAt") OVERLAPS (\'${moment(
+					request.startedAt
+				).format('YYYY-MM-DD HH:ss')}\', \'${moment(
+					request.stoppedAt
+				).format('YYYY-MM-DD HH:ss')}\')`
+			)
+			.getOne();
 
 		const timesheet = await this.createOrFindTimeSheet(
 			employee,
@@ -137,15 +136,16 @@ export class TimerService {
 		);
 		let newTimeLog: TimeLog;
 		if (!confict) {
-			const diffTime = Math.abs(
-				request.startedAt.getTime() - request.stoppedAt.getTime()
+			const duration = moment(request.stoppedAt).diff(
+				request.startedAt,
+				'seconds'
 			);
 			newTimeLog = await this.timeLogRepository.save({
-				duration: Math.ceil(diffTime / 1000),
-				timesheetId: timesheet.id,
-				isBilled: false,
+				duration,
 				startedAt: request.startedAt,
 				stoppedAt: request.stoppedAt,
+				timesheetId: timesheet.id,
+				isBilled: false,
 				employeeId: employee.id,
 				projectId: request.projectId || null,
 				taskId: request.taskId || null,
@@ -156,7 +156,9 @@ export class TimerService {
 			});
 			return newTimeLog;
 		} else {
-			return null;
+			throw new BadRequestException(
+				"You can't add add twice for same time."
+			);
 		}
 	}
 

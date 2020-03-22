@@ -54,27 +54,27 @@ export class Timesheet extends Base implements ITimesheet {
 	@Column({ default: 0 })
 	overall: number;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	startedAt: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	stoppedAt: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	approvedAt: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	submittedAt: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	lockedAt: Date;

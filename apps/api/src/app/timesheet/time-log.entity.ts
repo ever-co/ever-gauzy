@@ -67,12 +67,12 @@ export class TimeLog extends Base implements ITimeLog {
 	@Column({ nullable: true })
 	readonly clientId?: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	startedAt?: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	stoppedAt?: Date;
