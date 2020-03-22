@@ -866,6 +866,7 @@
 		"DATE": "תאריך",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
-		"DESCRIPTION": "Description"
+		"DESCRIPTION": "Description",
+		"ADD_TIME_SUCCESS": "Time Successfully added"
 	}
 }
