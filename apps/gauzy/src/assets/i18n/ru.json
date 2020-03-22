@@ -857,11 +857,15 @@
 	},
 	"TIMER_TRACKER": {
 		"IS_BILLABLE": "Оплачивается",
-		"STOP_TIMER": "Таймер остановки",
-		"START_TIMER": "Таймер запуска",
-		"TIMER": "таймер",
-		"MANUAL": "Руководство",
-		"SELECT_PROJECT": "Выберите проект",
-		"SELECT_TASK": "Выберите задачу"
+		"STOP_TIMER": "Остановить таймер",
+		"START_TIMER": "Запустить таймер",
+		"TIMER": "Таймер",
+		"MANUAL": "Ручной",
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TASK": "Выберите задачу",
+		"DATE": "Дата",
+		"START_TIME": "Время начала",
+		"END_TIME": "Конец времени",
+		"DESCRIPTION": "Описание"
 	}
 }

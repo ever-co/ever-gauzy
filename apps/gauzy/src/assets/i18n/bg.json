@@ -856,12 +856,16 @@
 		}
 	},
 	"TIMER_TRACKER": {
-		"IS_BILLABLE": "Падлягае выплаце рахунку",
-		"STOP_TIMER": "Стоп таймер",
-		"START_TIMER": "Запусціце таймер",
-		"TIMER": "Таймер",
-		"MANUAL": "Кіраўніцтва",
-		"SELECT_PROJECT": "Абярыце Праект",
-		"SELECT_TASK": "Абярыце заданне"
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Страртирай таймер",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"DATE": "Дата",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description"
 	}
 }
