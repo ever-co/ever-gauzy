@@ -856,16 +856,16 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Start Timer",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
 		"DATE": "תאריך",
 		"START_TIME": "Start Time",
 		"END_TIME": "End Time",
-		"DESCRIPTION": "Description",
-		"IS_BILLABLE": "האם ניתן לחיוב",
-		"STOP_TIMER": "עצור טיימר",
-		"START_TIMER": "הפעל טיימר",
-		"TIMER": "טיימר",
-		"MANUAL": "מדריך ל",
-		"SELECT_PROJECT": "בחר פרויקט",
-		"SELECT_TASK": "בחרו במשימה"
+		"DESCRIPTION": "Description"
 	}
 }
