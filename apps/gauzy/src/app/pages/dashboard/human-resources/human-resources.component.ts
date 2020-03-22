@@ -84,7 +84,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	incomePermissionsError = false;
 	expensePermissionError = false;
 
-	selectedChart = '';
+	selectedChart = '1';
 
 	constructor(
 		private incomeService: IncomeService,
