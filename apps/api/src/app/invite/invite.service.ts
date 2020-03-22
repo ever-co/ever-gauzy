@@ -1,4 +1,4 @@
-import { environment as env, environment } from '@env-api/environment';
+import { environment as env } from '@env-api/environment';
 import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
