@@ -318,6 +318,17 @@
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
+		"CHARTS": {
+			"BAR": "Бар",
+			"DOUGHNUT": "Ореховый",
+			"STACKED_BAR": "Панель накопления",
+			"CHART_TYPE": "Тип диаграммы",
+			"REVENUE": "Доход",
+			"EXPENSES": "Затраты",
+			"PROFIT": "Прибыль",
+			"BONUS": "Бонус",
+			"NO_MONTH_DATA": "Нет данных за этот месяц"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Отчет о прибыли",
 			"TOTAL_EXPENSES": "Всего расходов",
