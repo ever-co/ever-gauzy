@@ -3,19 +3,19 @@ import {
 	ClientOrganizationInviteStatus
 } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { OrganizationClientsInviteCommand } from '../organization-clients.invite.command';
-import { OrganizationClientsService } from '../../organization-clients.service';
 import { EmailService } from '../../../email';
 import { OrganizationService } from '../../../organization/organization.service';
 import { UserService, User } from '../../../user';
 import { InternalServerErrorException } from '@nestjs/common';
+import { InviteOrganizationClientsCommand } from '../invite.organization-clients.command';
+import { OrganizationClientsService } from '../../../organization-clients';
 
 /**
  * Sends an invitation email to the organization client's primaryEmail
  */
-@CommandHandler(OrganizationClientsInviteCommand)
-export class OrganizationClientsInviteHandler
-	implements ICommandHandler<OrganizationClientsInviteCommand> {
+@CommandHandler(InviteOrganizationClientsCommand)
+export class InviteOrganizationClientsHandler
+	implements ICommandHandler<InviteOrganizationClientsCommand> {
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
 		private readonly emailService: EmailService,
@@ -24,7 +24,7 @@ export class OrganizationClientsInviteHandler
 	) {}
 
 	public async execute(
-		command: OrganizationClientsInviteCommand
+		command: InviteOrganizationClientsCommand
 	): Promise<OrganizationClients> {
 		const {
 			input: { id, originalUrl, inviterUser }
