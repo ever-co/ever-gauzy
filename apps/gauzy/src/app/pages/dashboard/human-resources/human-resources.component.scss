@@ -70,7 +70,9 @@
 		align-items: flex-end;
 		flex-direction: column;
 	}
-
+	.chart-select-label {
+		margin-right: 10px;
+	}
 	.chart-wrap {
 		display: flex;
 		flex-direction: column;
@@ -83,6 +85,9 @@
 		margin-bottom: 20px;
 		min-width: 200px;
 		width: fit-content;
+	}
+	.chart-option {
+		margin-left: 5px;
 	}
 	.bonus {
 		display: flex;
