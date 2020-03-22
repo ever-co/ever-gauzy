@@ -854,5 +854,18 @@
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Страртирай таймер",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"DATE": "Дата",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description"
 	}
 }
