@@ -42,11 +42,11 @@ export interface ViewDashboardExpenseHistory {
 	employeeCount?: number;
 }
 @Component({
-	selector: 'ga-employee-statistics',
-	templateUrl: './employee-statistics.component.html',
-	styleUrls: ['./employee-statistics.component.scss']
+	selector: 'ga-human-resources',
+	templateUrl: './human-resources.component.html',
+	styleUrls: ['./human-resources.component.scss']
 })
-export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
+export class HumanResourcesComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	loading = true;
 
@@ -84,7 +84,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	incomePermissionsError = false;
 	expensePermissionError = false;
 
-	selectedChart = '';
+	selectedChart = '1';
 
 	constructor(
 		private incomeService: IncomeService,

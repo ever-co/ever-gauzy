@@ -1,0 +1,14 @@
+Date,Ref ID,Type,Description,Agency,Freelancer,Team,Account Name,PO,Amount,Amount in local currency,Currency,Balance
+28-Feb-20,287591802,Payment,Paid from Visa 7466,,,,Ever,,20,,,0
+28-Feb-20,287591800,Membership Fee,Subscription Renewal Charges,,,,Ever,,-20,,,-20
+26-Feb-20,287340952,Withdrawal Fee,Withdrawal Fee - Direct to Local Bank Transfer,,,,Ever,,-0.99,,,0
+26-Feb-20,287340951,Withdrawal,Direct to Local Bank Transfer to xxxx-7693,,,,Ever,,-1000,2000,BGN,0.99
+26-Feb-20,285592050,Service Fee,Service Fee for Hourly - Ref ID 285592045,Ever Technologies,Rachit Magon,Cool Company A,Ever,,-60,,,944
+26-Feb-20,285592045,Hourly,Invoice for 02/10/2020-02/16/2020 - 10:00 hrs @ $30.00/hr (magonrachit),Ever Technologies,Rachit Magon,Cool Company A,Ever,,300,,,777
+26-Feb-20,285580280,Service Fee,Service Fee for Hourly - Ref ID 285580277,Ever Technologies,Alish Meklyov,Yoyoyo Tech,Ever,,-54.25,,,777
+26-Feb-20,285580277,Hourly,Invoice for 02/10/2020-02/16/2020 - 15:30 hrs @ $35.00/hr (alishmeklyov),Ever Technologies,Alish Meklyov,Yoyoyo Tech,Ever,,542.5,,,777
+21-Feb-20,285100997,Bonus,Bonus till 16 Feb 2020,Ever Technologies,Rachit Magon,Cool Company A,Ever,,154,,,154
+11-Feb-20,284571313,Membership Fee,Fees for additional Connects (10),,,,Ever,,-1.5,,,-1.5
+9-Feb-20,283814352,Payment,Paid from Visa 7466,,,,Ever,,1.5,,,0
+9-Feb-20,283814351,Membership Fee,Fees for additional Connects (10),,,,Ever,,-1.5,,,-1.5
+5-Feb-20,283405507,Withdrawal Fee,Withdrawal Fee - Direct to Local Bank Transfer,,,,Ever,,-0.99,,,0

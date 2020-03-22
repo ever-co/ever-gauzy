@@ -36,6 +36,8 @@ export const createExpenses = async (
 				expense.amount = Math.abs(seedExpense.amount);
 				expense.vendorName = seedExpense.vendorName;
 				expense.vendorId = seedExpense.vendorId;
+				console.log(seedExpense, 'categoryName');
+				console.log(seedExpense.categoryName, 'categoryName');
 				expense.categoryName = seedExpense.categoryName;
 				expense.categoryId = faker.random
 					.number({ min: 10, max: 9999 })
@@ -55,14 +57,16 @@ export const createExpenses = async (
 		'Benefit Systems',
 		'Udemy',
 		'Google',
-		'CoShare'
+		'CoShare',
+		'Upwork'
 	];
 	const categoryArray = [
 		'Software',
 		'Employees Benefits',
 		'Courses',
 		'Subscriptions',
-		'Rent'
+		'Rent',
+		'Service Fee'
 	];
 	const notesArray = [
 		'Windows 10',
@@ -84,6 +88,7 @@ export const createExpenses = async (
 		expense.vendorId = faker.random
 			.number({ min: 10, max: 9999 })
 			.toString();
+		console.log(categoryArray[currentIndex], 'categoryName');
 		expense.categoryName = categoryArray[currentIndex];
 		expense.categoryId = faker.random
 			.number({ min: 10, max: 9999 })

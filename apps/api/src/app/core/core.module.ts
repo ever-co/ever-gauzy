@@ -46,6 +46,7 @@ import {
 	Activity,
 	Screenshot
 } from '../timesheet';
+import { ExpenseCategory } from '../expense-categories';
 import { EquipmentSharing } from '../equipment-sharing';
 
 const entities = [
@@ -83,7 +84,8 @@ const entities = [
 	Timesheet,
 	TimeLog,
 	Activity,
-	Screenshot
+	Screenshot,
+	ExpenseCategory
 ];
 
 @Module({

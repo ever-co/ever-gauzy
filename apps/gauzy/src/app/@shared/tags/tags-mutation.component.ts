@@ -62,6 +62,7 @@ export class TagsMutationComponent extends TranslationBaseComponent
 	async initializeForm() {
 		if (this.tag) {
 			this.color = this.tag.color;
+			this.name = this.tag.name;
 			this.form = this.fb.group({
 				name: [this.tag.name],
 				color: [this.tag.color],

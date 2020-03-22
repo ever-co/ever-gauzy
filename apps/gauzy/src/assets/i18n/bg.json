@@ -270,6 +270,8 @@
 		"DASHBOARD": "Табло",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Почивка",
 		"HELP": "Помощ",
@@ -304,10 +306,29 @@
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Руски"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Accounting",
+		"HUMAN_RESOURCES": "Human Resources",
+		"TIME_TRACKING": "Time Tracking",
+		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Добави текст за неаутентикирани потребители",
+		"CHARTS": {
+			"BAR": "Bar",
+			"DOUGHNUT": "Doughnut",
+			"STACKED_BAR": "Stacked Bar",
+			"CHART_TYPE": "Chart Type",
+			"REVENUE": "Revenue",
+			"EXPENSES": "Разходи",
+			"PROFIT": "Печалба",
+			"BONUS": "Бонус",
+			"NO_MONTH_DATA": "No Data for this month"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Репорт на печалбата",
 			"TOTAL_EXPENSES": "Общи разходи",
@@ -445,7 +466,6 @@
 			"PROJECTS": "Проекти",
 			"DEPARTMENT_NAME": "Име на отдела",
 			"POSITION_NAME": "Название на позиция",
-			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Добавяне на нов проект",
 			"START_DATE": "Начална дата",
 			"END_DATE": "Крайна дата",
