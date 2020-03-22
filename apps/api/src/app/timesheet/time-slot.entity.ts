@@ -48,12 +48,12 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@Column({ default: 0 })
 	overall?: number;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	startedAt?: Date;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	stoppedAt?: Date;

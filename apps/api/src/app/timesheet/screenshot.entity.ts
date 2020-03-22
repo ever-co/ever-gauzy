@@ -28,7 +28,7 @@ export class Screenshot extends Base implements IScreenshot {
 	@Column({ default: null, nullable: true })
 	thumbUrl?: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: 'timestamptz' })
 	@IsNumber()
 	@IsOptional()
 	@Column({ default: null, nullable: true })

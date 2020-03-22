@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
-import { TimeLogType } from '@gauzy/models';
+import { TimeLogType, IManualTimeInput } from '@gauzy/models';
 import * as moment from 'moment';
 import { takeUntil, ignoreElements } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { toUTC } from 'libs/utils';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -22,60 +24,11 @@ export class TimeTrackerComponent implements OnInit {
 	maxSlotEndTime: string;
 	minSlotEndTime: string;
 
-	constructor(private timeTrackerService: TimeTrackerService) {
+	constructor(
+		private timeTrackerService: TimeTrackerService,
+		private toastrService: ToastrService
+	) {
 		this.updateTimePickerLimit(new Date());
-	}
-
-	updateEndTimeSlot(time: string) {
-		this.minSlotEndTime = moment(time, 'HH:mm')
-			.add(10, 'minutes')
-			.format('HH:mm');
-		if (
-			!moment(time, 'HH:mm').isBefore(
-				moment(this.manualTime.endTime, 'HH:mm')
-			)
-		) {
-			this.manualTime.endTime = moment(this.manualTime.startTime, 'HH:mm')
-				.add(30, 'minutes')
-				.format('HH:mm');
-		}
-	}
-
-	updateTimePickerLimit(date: Date) {
-		let mTime = moment(date);
-
-		if (mTime.isSame(new Date(), 'day')) {
-			mTime = mTime.set({
-				hour: moment().get('hour'),
-				minute: moment().get('minute') - (moment().minutes() % 10),
-				second: 0,
-				millisecond: 0
-			});
-
-			this.manualTime = {
-				description: '',
-				startTime: mTime
-					.clone()
-					.subtract(30, 'minutes')
-					.format('HH:mm'),
-				endTime: mTime.format('HH:mm'),
-				date: mTime.toDate()
-			};
-		}
-
-		if (mTime.isSame(new Date(), 'day')) {
-			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = mTime
-				.clone()
-				.subtract(10, 'minutes')
-				.format('HH:mm');
-			this.maxSlotEndTime = mTime.format('HH:mm');
-		} else {
-			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = '23:59';
-			this.maxSlotEndTime = '23:59';
-		}
-		this.updateEndTimeSlot(this.manualTime.startTime);
 	}
 
 	public get isBillable(): boolean {
@@ -131,17 +84,108 @@ export class TimeTrackerComponent implements OnInit {
 			});
 	}
 
+	private resetForm() {
+		this.updateTimePickerLimit(new Date());
+	}
+
 	toggle() {
 		this.timeTrackerService.toggle();
 	}
 
 	addTime() {
-		this.timeTrackerService.addTime(this.manualTime);
+		const startedAt = toUTC(
+			moment(this.manualTime.date).format('YYYY-MM-DD') +
+				' ' +
+				this.manualTime.startTime
+		).toDate();
+		const stoppedAt = toUTC(
+			moment(this.manualTime.date).format('YYYY-MM-DD') +
+				' ' +
+				this.manualTime.endTime
+		).toDate();
+
+		let addRequestData = Object.assign({}, this.manualTime);
+		delete addRequestData.date;
+		delete addRequestData.startTime;
+		delete addRequestData.endTime;
+		addRequestData.startedAt = startedAt;
+		addRequestData.stoppedAt = stoppedAt;
+
+		this.timeTrackerService
+			.addTime(addRequestData)
+			.then((timeLog) => {
+				if (
+					moment
+						.utc(timeLog.startedAt)
+						.local()
+						.isSame(new Date(), 'day')
+				) {
+					this.timeTrackerService.dueration =
+						this.timeTrackerService.dueration + timeLog.duration;
+				}
+				this.resetForm();
+				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
+			})
+			.catch((error) => {
+				this.toastrService.danger(error);
+			});
 	}
 
 	setTimeType(type: string) {
 		this.timeType =
 			type == 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
+	}
+
+	updateTimePickerLimit(date: Date) {
+		let mTime = moment(date);
+
+		if (mTime.isSame(new Date(), 'day')) {
+			mTime = mTime.set({
+				hour: moment().get('hour'),
+				minute: moment().get('minute') - (moment().minutes() % 10),
+				second: 0,
+				millisecond: 0
+			});
+
+			this.manualTime = {
+				description: '',
+				startTime: mTime
+					.clone()
+					.subtract(30, 'minutes')
+					.format('HH:mm'),
+				endTime: mTime.format('HH:mm'),
+				date: mTime.toDate()
+			};
+		}
+
+		if (mTime.isSame(new Date(), 'day')) {
+			this.minSlotStartTime = '00:00';
+			this.maxSlotStartTime = mTime
+				.clone()
+				.subtract(10, 'minutes')
+				.format('HH:mm');
+			this.maxSlotEndTime = mTime.format('HH:mm');
+		} else {
+			this.minSlotStartTime = '00:00';
+			this.maxSlotStartTime = '23:59';
+			this.maxSlotEndTime = '23:59';
+		}
+		this.updateEndTimeSlot(this.manualTime.startTime);
+	}
+
+	updateEndTimeSlot(time: string) {
+		this.minSlotEndTime = moment(time, 'HH:mm')
+			.add(10, 'minutes')
+			.format('HH:mm');
+		if (
+			!moment(time, 'HH:mm').isBefore(
+				moment(this.manualTime.endTime, 'HH:mm')
+			)
+		) {
+			this.manualTime.endTime = moment(this.manualTime.startTime, 'HH:mm')
+				.add(30, 'minutes')
+				.format('HH:mm');
+		}
 	}
 
 	ngOnDestroy() {
