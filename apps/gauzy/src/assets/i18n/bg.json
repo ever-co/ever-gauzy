@@ -856,6 +856,10 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"DATE": "Дата",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description",
 		"IS_BILLABLE": "Падлягае выплаце рахунку",
 		"STOP_TIMER": "Стоп таймер",
 		"START_TIMER": "Запусціце таймер",

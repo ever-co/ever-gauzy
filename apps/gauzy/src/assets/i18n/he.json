@@ -856,6 +856,10 @@
 		}
 	},
 	"TIMER_TRACKER": {
+		"DATE": "תאריך",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description",
 		"IS_BILLABLE": "האם ניתן לחיוב",
 		"STOP_TIMER": "עצור טיימר",
 		"START_TIMER": "הפעל טיימר",
