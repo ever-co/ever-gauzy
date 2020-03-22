@@ -14,14 +14,14 @@ import {
 export class TimeOffService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: TimeOffPolicyCreateInput): Promise<any> {
+	createPolicy(createInput: TimeOffPolicyCreateInput): Promise<any> {
 		return this.http
 			.post<TimeOffPolicy>('/api/time-off-policy/create', createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getAll(
+	getAllPolicies(
 		relations?: string[],
 		findInput?: TimeOffPolicyFindInput
 	): Promise<{ items: TimeOffPolicy[]; total: number }> {
@@ -38,14 +38,17 @@ export class TimeOffService {
 			.toPromise();
 	}
 
-	update(id: string, updateInput: TimeOffPolicyUpdateInput): Promise<any> {
+	updatePolicy(
+		id: string,
+		updateInput: TimeOffPolicyUpdateInput
+	): Promise<any> {
 		return this.http
 			.put(`/api/time-off-policy/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	delete(id: string): Promise<any> {
+	deletePolicy(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/time-off-policy/${id}`)
 			.pipe(first())
