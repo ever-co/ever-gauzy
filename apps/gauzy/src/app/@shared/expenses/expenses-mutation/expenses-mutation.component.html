@@ -123,18 +123,14 @@
 					</nb-select>
 				</div>
 				<div class="col-sm-6">
-					<div class="form-group" *ngIf="fakeCategories.length">
-						<ng-select
-							[items]="fakeCategories"
-							bindLabel="categoryName"
-							[searchable]="false"
-							formControlName="category"
-							placeholder="{{
-								'POP_UPS.ALL_CATEGORIES' | translate
-							}}"
-						>
-						</ng-select>
-					</div>
+					<ng-select
+						[items]="expenseCategories$ | async"
+						bindLabel="name"
+						[searchable]="false"
+						formControlName="category"
+						placeholder="{{ 'POP_UPS.ALL_CATEGORIES' | translate }}"
+					>
+					</ng-select>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">

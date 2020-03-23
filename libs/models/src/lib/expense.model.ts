@@ -2,6 +2,7 @@ import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tag } from './tag-entity.model';
+import { IExpenseCategory } from './expense-category.model';
 
 export interface Expense extends IBaseEntityModel {
 	employee?: Employee;
@@ -12,8 +13,8 @@ export interface Expense extends IBaseEntityModel {
 	vendorName: string;
 	vendorId?: string;
 	typeOfExpense?: string;
-	categoryName: string;
-	categoryId?: string;
+	category: IExpenseCategory;
+	categoryId: string;
 	clientId?: string;
 	clientName?: string;
 	projectId?: string;
@@ -36,8 +37,7 @@ export interface ExpenseCreateInput {
 	vendorName: string;
 	vendorId: string;
 	typeOfExpense?: string;
-	categoryName: string;
-	categoryId: string;
+	category: IExpenseCategory;
 	clientId?: string;
 	clientName?: string;
 	projectId?: string;
@@ -85,8 +85,7 @@ export interface ExpenseUpdateInput {
 	vendorName?: string;
 	vendorId?: string;
 	typeOfExpense?: string;
-	categoryName?: string;
-	categoryId?: string;
+	category: IExpenseCategory;
 	clientId?: string;
 	clientName?: string;
 	projectId?: string;

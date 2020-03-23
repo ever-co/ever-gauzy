@@ -259,11 +259,11 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 			)
 				? await this.expenseService.getAllWithSplitExpenses(
 						this.selectedEmployee.id,
-						['employee', 'organization'],
+						['employee', 'organization', 'category'],
 						this.selectedDate
 				  )
 				: await this.expenseService.getMyAllWithSplitExpenses(
-						['employee', 'organization'],
+						['employee', 'organization', 'category'],
 						this.selectedDate
 				  );
 
@@ -345,12 +345,11 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		orgRecurringExpense?: OrganizationRecurringExpenseForEmployeeOutput[];
 	}): ViewDashboardExpenseHistory[] {
 		let viewDashboardExpenseHistory = [];
-
 		if (data.expense && data.expense.length) {
 			viewDashboardExpenseHistory = data.expense.map((e) => ({
 				valueDate: e.valueDate,
 				vendorName: e.vendorName,
-				categoryName: e.categoryName,
+				categoryName: e.category.name,
 				amount: e.amount,
 				notes: e.notes,
 				recurring: false,

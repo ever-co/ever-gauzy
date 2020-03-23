@@ -40,6 +40,7 @@ import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
 import { EquipmentSharing } from '../equipment-sharing';
+import { ExpenseCategory } from '../expense-categories';
 
 const entities = [
 	Invite,
@@ -71,7 +72,8 @@ const entities = [
 	Equipment,
 	EquipmentSharing,
 	EmployeeLevel,
-	Task
+	Task,
+	ExpenseCategory
 ];
 
 @Module({

@@ -23,6 +23,7 @@ import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
 import { Organization } from '../organization';
 import { Employee } from '../employee';
 import { Tag } from '../tags';
+import { ExpenseCategory } from '../expense-categories';
 
 @Entity('expense')
 export class Expense extends Base implements IExpense {
@@ -78,18 +79,17 @@ export class Expense extends Base implements IExpense {
 	@Column({ nullable: true })
 	typeOfExpense: string;
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	categoryName: string;
+	@ApiProperty({ type: ExpenseCategory })
+	@ManyToOne((type) => ExpenseCategory, {
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	category: ExpenseCategory;
 
-	@ApiPropertyOptional({ type: String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	categoryId?: string;
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((expense: Expense) => expense.category)
+	readonly categoryId: string;
 
 	@ApiPropertyOptional({ type: String })
 	@Index()

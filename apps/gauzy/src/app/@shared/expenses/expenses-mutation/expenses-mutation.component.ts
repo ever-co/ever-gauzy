@@ -6,7 +6,8 @@ import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
 	TaxTypesEnum,
-	ExpenseTypesEnum
+	ExpenseTypesEnum,
+	IExpenseCategory
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -16,7 +17,8 @@ import { OrganizationVendorsService } from '../../../@core/services/organization
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
-import { Subject } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
+import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
 
 @Component({
 	selector: 'ga-expenses-mutation',
@@ -35,7 +37,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 	expenseTypes = Object.values(ExpenseTypesEnum);
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
-	fakeCategories: { categoryName: string; categoryId: string }[] = [];
+	expenseCategories$: Observable<IExpenseCategory[]>;
 	vendors: { vendorName: string; vendorId: string }[] = [];
 	clients: { clientName: string; clientId: string }[] = [];
 	projects: { projectName: string; projectId: string }[] = [];
@@ -55,7 +57,8 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		private organizationVendorsService: OrganizationVendorsService,
 		private store: Store,
 		private readonly organizationClientsService: OrganizationClientsService,
-		private readonly organizationProjectsService: OrganizationProjectsService
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService
 	) {}
 
 	ngOnInit() {
@@ -73,6 +76,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
 
 	private async getDefaultData() {
+		this.expenseCategories$ = this.expenseCategoriesStore.expenseCategories$;
 		this.organizationId = this.store.selectedOrganization.id;
 		const res = await this.organizationVendorsService.getAll({
 			organizationId: this.organizationId
@@ -106,33 +110,6 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 				});
 			});
 		}
-
-		const fakeCategoryNames = [
-			'Rent',
-			'Electricity',
-			'Internet',
-			'Water Supply',
-			'Office Supplies',
-			'Parking',
-			'Employees Benefits',
-			'Insurance Premiums',
-			'Courses',
-			'Subscriptions',
-			'Repairs',
-			'Depreciable Assets',
-			'Software Products',
-			'Office Hardware',
-			'Courier Services',
-			'Business Trips',
-			'Team Buildings'
-		];
-
-		fakeCategoryNames.forEach((name) => {
-			this.fakeCategories.push({
-				categoryName: name,
-				categoryId: this.getFakeId()
-			});
-		});
 	}
 
 	addOrEditExpense() {
@@ -200,13 +177,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 					Validators.required
 				],
 				typeOfExpense: this.expense.typeOfExpense,
-				category: [
-					{
-						categoryId: this.expense.categoryId,
-						categoryName: this.expense.categoryName
-					},
-					Validators.required
-				],
+				category: [this.expense.category, Validators.required],
 				notes: [this.expense.notes],
 				currency: [this.expense.currency],
 				valueDate: [

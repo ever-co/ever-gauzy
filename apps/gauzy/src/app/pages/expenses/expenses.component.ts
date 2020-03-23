@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { Expense, PermissionsEnum } from '@gauzy/models';
+import { Expense, PermissionsEnum, IExpenseCategory } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
+import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -24,6 +25,7 @@ export interface ExpenseViewModel {
 	typeOfExpense: string;
 	categoryId: string;
 	categoryName: string;
+	category: IExpenseCategory;
 	clientId: string;
 	clientName: string;
 	projectId: string;
@@ -117,12 +119,14 @@ export class ExpensesComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private errorHandler: ErrorHandlingService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private expenseCategoriesStore: ExpenseCategoriesStoreService
 	) {
 		super(translateService);
 	}
 
 	async ngOnInit() {
+		this.expenseCategoriesStore.loadAll();
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
@@ -202,8 +206,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 	getFormData(formData) {
 		return {
 			amount: formData.amount,
-			categoryId: formData.category.categoryId,
-			categoryName: formData.category.categoryName,
+			category: formData.category,
 			vendorId: formData.vendor.vendorId,
 			vendorName: formData.vendor.vendorName,
 			typeOfExpense: formData.typeOfExpense,
@@ -257,7 +260,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				if (formData) {
+					console.log(formData, 'FORM D');
 					const completedForm = this.getFormData(formData);
+					console.log(completedForm, 'COMPL F');
 					this.addExpense(completedForm, formData);
 				}
 			});
@@ -406,7 +411,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 
 		try {
 			const { items } = await this.expenseService.getAll(
-				['employee', 'employee.user'],
+				['employee', 'employee.user', 'category'],
 				findObj,
 				this.selectedDate
 			);
@@ -419,7 +424,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 					vendorName: i.vendorName,
 					typeOfExpense: i.typeOfExpense,
 					categoryId: i.categoryId,
-					categoryName: i.categoryName,
+					categoryName: i.category.name,
+					category: i.category,
 					clientId: i.clientId,
 					clientName: i.clientName,
 					projectId: i.projectId,
