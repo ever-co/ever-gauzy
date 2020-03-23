@@ -25,6 +25,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { InvoicesValueComponent } from './invoices-value.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -60,7 +61,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		})
 	],
 	providers: [InvoicesService],
-	entryComponents: [InvoicesComponent],
-	declarations: [InvoicesComponent]
+	entryComponents: [InvoicesComponent, InvoicesValueComponent],
+	declarations: [InvoicesComponent, InvoicesValueComponent]
 })
 export class InvoicesModule {}

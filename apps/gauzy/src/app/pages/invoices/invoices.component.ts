@@ -7,6 +7,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { InvoicesMutationComponent } from '../../@shared/invoices/invoices-mutation.component';
 import { Invoice } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
+import { InvoicesValueComponent } from './invoices-value.component';
 import { first } from 'rxjs/operators';
 
 export interface SelectedInvoice {
@@ -105,7 +106,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: InvoicesValueComponent
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),

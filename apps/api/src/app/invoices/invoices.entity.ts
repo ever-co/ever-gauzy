@@ -1,15 +1,7 @@
 import { Invoice as IInvoice, CurrenciesEnum } from '@gauzy/models';
 import { Base } from '../core/entities/base';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsString,
-	IsNotEmpty,
-	IsOptional,
-	IsNumber,
-	IsEnum,
-	IsBoolean,
-	IsDate
-} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNumber, IsEnum, IsBoolean, IsDate } from 'class-validator';
 import { Entity, Column } from 'typeorm';
 
 @Entity('invoice')
@@ -17,7 +9,7 @@ export class Invoice extends Base implements IInvoice {
 	@ApiProperty({ type: Date })
 	@IsDate()
 	@Column({ nullable: true })
-	invoiceDate?: Date;
+	invoiceDate: Date;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
@@ -27,7 +19,7 @@ export class Invoice extends Base implements IInvoice {
 	@ApiProperty({ type: Date })
 	@IsDate()
 	@Column({ nullable: true })
-	dueDate?: Date;
+	dueDate: Date;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
@@ -37,7 +29,7 @@ export class Invoice extends Base implements IInvoice {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ nullable: true, type: 'numeric' })
-	discountValue?: number;
+	discountValue: number;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
@@ -47,12 +39,12 @@ export class Invoice extends Base implements IInvoice {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ nullable: true, type: 'numeric' })
-	tax?: number;
+	tax: number;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
-	terms?: string;
+	terms: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

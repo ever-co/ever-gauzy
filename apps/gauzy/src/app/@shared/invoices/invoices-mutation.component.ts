@@ -22,6 +22,7 @@ export class InvoicesMutationComponent extends TranslationBaseComponent
 	invoice: Invoice;
 	currencies = Object.values(CurrenciesEnum);
 	selectedCurrency;
+	formInvoiceNumber: number;
 
 	get currency() {
 		return this.form.get('currency');
@@ -48,7 +49,7 @@ export class InvoicesMutationComponent extends TranslationBaseComponent
 
 	async initializeForm() {
 		if (this.invoice) {
-			console.log(this.invoice);
+			this.formInvoiceNumber = this.invoice.invoiceNumber;
 			this.form = this.fb.group({
 				invoiceDate: [
 					new Date(this.invoice.invoiceDate),
@@ -71,9 +72,10 @@ export class InvoicesMutationComponent extends TranslationBaseComponent
 				id: [this.invoice.id]
 			});
 		} else {
+			this.createInvoiceNumber();
 			this.form = this.fb.group({
 				invoiceDate: ['', Validators.required],
-				invoiceNumber: ['', Validators.required],
+				invoiceNumber: [this.formInvoiceNumber, Validators.required],
 				dueDate: ['', Validators.required],
 				currency: ['', Validators.required],
 				discountValue: ['', Validators.required],
@@ -96,6 +98,15 @@ export class InvoicesMutationComponent extends TranslationBaseComponent
 			currency: this.selectedCurrency
 		});
 		this.closeDialog(invoice);
+	}
+
+	private async createInvoiceNumber() {
+		const { items } = await this.invoicesService.getAll();
+		if (items.length !== 0) {
+			this.formInvoiceNumber = +items[items.length - 1].invoiceNumber + 1;
+		} else {
+			this.formInvoiceNumber = 1;
+		}
 	}
 
 	private async _loadDefaultCurrency() {

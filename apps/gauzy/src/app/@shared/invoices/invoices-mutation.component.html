@@ -19,6 +19,26 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
+						<label for="inputInvoiceNumber" class="label">{{
+							'INVOICES_PAGE.INVOICE_NUMBER' | translate
+						}}</label>
+						<input
+							type="number"
+							nbInput
+							placeholder="{{
+								'INVOICES_PAGE.INVOICE_NUMBER' | translate
+							}}"
+							formControlName="invoiceNumber"
+							[(ngModel)]="formInvoiceNumber"
+							id="inputInvoiceNumber"
+							fullWidth
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
 						<label for="inputInvoiceDate" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
 								| translate
@@ -41,25 +61,6 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="inputInvoiceNumber" class="label">{{
-							'INVOICES_PAGE.INVOICE_NUMBER' | translate
-						}}</label>
-						<input
-							type="number"
-							nbInput
-							placeholder="{{
-								'INVOICES_PAGE.INVOICE_NUMBER' | translate
-							}}"
-							formControlName="invoiceNumber"
-							id="inputInvoiceNumber"
-							fullWidth
-						/>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
 						<label for="inputDueDate" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE' | translate
 						}}</label>
@@ -75,20 +76,6 @@
 							fullWidth
 						/>
 						<nb-datepicker #dueDatePicker></nb-datepicker>
-					</div>
-				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="inputCurrency" class="label">{{
-							'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate
-						}}</label>
-						<nb-select class="d-block" formControlName="currency">
-							<nb-option
-								*ngFor="let currency of currencies"
-								value="{{ currency }}"
-								>{{ currency }}</nb-option
-							>
-						</nb-select>
 					</div>
 				</div>
 			</div>
@@ -114,6 +101,22 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
+						<label for="inputCurrency" class="label">{{
+							'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate
+						}}</label>
+						<nb-select class="d-block" formControlName="currency">
+							<nb-option
+								*ngFor="let currency of currencies"
+								value="{{ currency }}"
+								>{{ currency }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
 						<label for="inputTax" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_TAX' | translate
 						}}</label>
@@ -129,25 +132,22 @@
 						/>
 					</div>
 				</div>
-			</div>
-			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="inputTerms" class="label">{{
-							'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate
+						<label for="inputCurrency" class="label">{{
+							'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate
 						}}</label>
-						<input
-							nbInput
-							placeholder="{{
-								'INVOICES_PAGE.INVOICES_SELECT_TERMS'
-									| translate
-							}}"
-							formControlName="terms"
-							id="inputTerms"
-							fullWidth
-						/>
+						<nb-select class="d-block" formControlName="currency">
+							<nb-option
+								*ngFor="let currency of currencies"
+								value="{{ currency }}"
+								>{{ currency }}</nb-option
+							>
+						</nb-select>
 					</div>
 				</div>
+			</div>
+			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
 						<label for="inputTotalValue" class="label">{{
@@ -167,12 +167,45 @@
 						/>
 					</div>
 				</div>
-			</div>
-			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
+						<label for="inputCurrency" class="label">{{
+							'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate
+						}}</label>
+						<nb-select class="d-block" formControlName="currency">
+							<nb-option
+								*ngFor="let currency of currencies"
+								value="{{ currency }}"
+								>{{ currency }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label for="inputTerms" class="label">{{
+							'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate
+						}}</label>
+						<textarea
+							nbInput
+							placeholder="{{
+								'INVOICES_PAGE.INVOICES_SELECT_TERMS'
+									| translate
+							}}"
+							formControlName="terms"
+							id="inputTerms"
+							fullWidth
+						></textarea>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
 						<nb-checkbox formControlName="paid">
-							<span>{{
+							<span style="margin: 0 auto;">{{
 								'INVOICES_PAGE.INVOICES_SELECT_PAID' | translate
 							}}</span>
 						</nb-checkbox>
