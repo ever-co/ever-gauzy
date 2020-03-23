@@ -52,7 +52,6 @@ export class TaskSelectorComponent
 			items = []
 		} = await this.tasksService.getAllTasks().toPromise();
 
-		console.log(items);
 		this.tasks = items;
 	}
 

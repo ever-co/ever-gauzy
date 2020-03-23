@@ -361,7 +361,6 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}): ViewDashboardExpenseHistory[] {
 		let viewDashboardExpenseHistory = [];
 		if (data.expense && data.expense.length) {
-			console.log(data, 'DATA');
 			viewDashboardExpenseHistory = data.expense.map((e) => ({
 				valueDate: e.valueDate,
 				vendorName: e.vendor.name,
