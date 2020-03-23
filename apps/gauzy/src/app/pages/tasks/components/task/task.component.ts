@@ -1,12 +1,12 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TaskDialogComponent } from '../task-dialog/task-dialog.component';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { Task } from '@gauzy/models';
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -16,34 +16,11 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 	templateUrl: './task.component.html',
 	styleUrls: ['./task.component.scss']
 })
-export class TaskComponent extends TranslationBaseComponent implements OnInit {
+export class TaskComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	@ViewChild('tasksTable', { static: false }) tasksTable;
-
-	settingsSmartTable: object = {
-		actions: false,
-		columns: {
-			title: {
-				title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
-				type: 'string',
-				width: '10%'
-			},
-			description: {
-				title: this.getTranslation('TASKS_PAGE.TASKS_DESCRIPTION'),
-				type: 'string',
-				filter: false
-			},
-			projectName: {
-				title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
-				type: 'string',
-				filter: false
-			},
-			status: {
-				title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
-				type: 'string',
-				filter: false
-			}
-		}
-	};
+	private _ngDestroy$: Subject<void> = new Subject();
+	settingsSmartTable: object;
 	loading = false;
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
@@ -60,7 +37,46 @@ export class TaskComponent extends TranslationBaseComponent implements OnInit {
 		this.tasks$ = this._store.tasks$;
 	}
 
-	ngOnInit() {}
+	ngOnInit() {
+		this._loadTableSettings();
+		this._applyTranslationOnSmartTable();
+	}
+
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this._loadTableSettings();
+			});
+	}
+
+	private _loadTableSettings() {
+		this.settingsSmartTable = {
+			actions: false,
+			columns: {
+				title: {
+					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
+					type: 'string',
+					width: '10%'
+				},
+				description: {
+					title: this.getTranslation('TASKS_PAGE.TASKS_DESCRIPTION'),
+					type: 'string',
+					filter: false
+				},
+				projectName: {
+					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
+					type: 'string',
+					filter: false
+				},
+				status: {
+					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
+					type: 'string',
+					filter: false
+				}
+			}
+		};
+	}
 
 	async createTaskDialog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
@@ -110,5 +126,10 @@ export class TaskComponent extends TranslationBaseComponent implements OnInit {
 		this.tasksTable.grid.dataSet.willSelect = false;
 		this.disableButton = !isSelected;
 		this.selectedTask = selectedTask;
+	}
+
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

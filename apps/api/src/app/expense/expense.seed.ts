@@ -63,9 +63,9 @@ export const createExpenses = async (
 		'Benefit Systems',
 		'Udemy',
 		'Google',
-		'CoShare'
+		'CoShare',
+		'Upwork'
 	];
-
 	const notesArray = [
 		'Windows 10',
 		'MultiSport Card',

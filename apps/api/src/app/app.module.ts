@@ -38,8 +38,10 @@ import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks';
+import { IntegrationsModule } from './integrations/integrations.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type';
+import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 
 @Module({
@@ -150,6 +152,14 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 					{
 						path: '/expense-categories',
 						module: ExpenseCategoriesModule
+					},
+					{
+						path: '/timesheet',
+						module: TimesheetModule
+					},
+					{
+						path: '/integrations',
+						module: IntegrationsModule
 					}
 				]
 			}
@@ -199,9 +209,10 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 			: []),
 		EquipmentModule,
 		EquipmentSharingModule,
-		EmployeeLevelModule,
 		TaskModule,
 		OrganizationEmploymentTypeModule,
+		TimesheetModule,
+		IntegrationsModule,
 		ExpenseCategoriesModule
 	],
 	controllers: [AppController],

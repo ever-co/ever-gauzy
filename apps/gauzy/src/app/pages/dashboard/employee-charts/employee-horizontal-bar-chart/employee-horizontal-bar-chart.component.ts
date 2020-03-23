@@ -1,25 +1,25 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
-import { Store } from '../../../@core/services/store.service';
+import { EmployeeStatisticsService } from '../../../../@core/services/employee-statistics.serivce';
+import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { monthNames } from '../../../@core/utils/date';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { monthNames } from '../../../../@core/utils/date';
+import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
+import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
-	selector: 'ngx-employee-chart',
+	selector: 'ngx-employee-horizontal-bar-chart',
 	template: `
 		<chart
-			style="height: 620px"
+			style="height: 500px; width: 500px;"
 			type="horizontalBar"
 			[data]="data"
 			[options]="options"
 		></chart>
 	`
 })
-export class EmployeeChartComponent implements OnInit, OnDestroy {
+export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
@@ -81,7 +81,6 @@ export class EmployeeChartComponent implements OnInit, OnDestroy {
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
-				// const colors: any = config.variables;
 				const chartjs: any = config.variables.chartjs;
 				const bonusColors = this.bonusStatistics.map((val) =>
 					val < 0 ? 'red' : '#0091ff'

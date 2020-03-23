@@ -52,6 +52,7 @@ export interface ExpenseCreateInput {
 	rateValue?: number;
 	receipt?: string;
 	splitExpense?: boolean;
+	reference?: string;
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {

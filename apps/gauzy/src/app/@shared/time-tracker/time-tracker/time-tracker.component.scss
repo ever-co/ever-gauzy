@@ -1,0 +1,78 @@
+@import 'var';
+:host {
+	display: block;
+	padding: 20px;
+	width: 380px;
+	font-size: 14px;
+	.timer-container {
+		display: flex;
+		align-items: flex-start;
+		justify-content: flex-end;
+
+		.time-tracker {
+			width: 100%;
+			display: flex;
+			align-items: center;
+		}
+		.is_billable {
+			padding: 8px;
+			button {
+				font-size: 18px;
+			}
+		}
+		.actions {
+			display: flex;
+			align-items: center;
+			padding-left: 14px;
+		}
+		.time-count {
+			font-size: 22px;
+			width: 100%;
+			padding: 0 10px;
+			text-align: center;
+		}
+		.toggle {
+			.btn {
+				border-radius: 50px;
+				padding: 8px;
+				nb-icon {
+					color: #fff;
+					font-size: 24px;
+				}
+			}
+		}
+		.mode {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			padding-left: 10px;
+			button {
+				margin: 2px;
+				padding: 3px;
+				&.status-primary {
+					nb-icon {
+						color: #fff;
+					}
+				}
+				nb-icon {
+					height: 16px;
+					width: 16px;
+				}
+			}
+		}
+
+		[nbButton].appearance-filled.status-primary[disabled] {
+			background-color: nb-theme(text-primary-active-color);
+			border-color: nb-theme(text-primary-active-color);
+			color: #ffffff;
+			opacity: 0.4;
+		}
+	}
+	::ng-deep {
+		ng-select {
+			.ng-select-container {
+				width: 100%;
+			}
+		}
+	}
+}

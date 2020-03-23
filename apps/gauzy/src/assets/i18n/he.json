@@ -219,12 +219,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
 			"RECORD": "תקליט",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "עובד",
 			"EXPENSE": "הוצאה",
 			"USER": "user",
-			"INVITATION": "invitation"
+			"INVITATION": "invitation",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {
@@ -270,6 +273,8 @@
 		"DASHBOARD": "לוח מחוונים",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"HELP": "עזרה",
@@ -304,10 +309,29 @@
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Accounting",
+		"HUMAN_RESOURCES": "Human Resources",
+		"TIME_TRACKING": "Time Tracking",
+		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
+		"CHARTS": {
+			"BAR": "Bar",
+			"DOUGHNUT": "Doughnut",
+			"STACKED_BAR": "Stacked Bar",
+			"CHART_TYPE": "Chart Type",
+			"REVENUE": "Revenue",
+			"EXPENSES": "הוצאות",
+			"PROFIT": "רווח",
+			"BONUS": "בונוס",
+			"NO_MONTH_DATA": "No Data for this month"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "סך ההוצאות",
@@ -445,7 +469,6 @@
 			"PROJECTS": "פרויקטים",
 			"DEPARTMENT_NAME": "שם מחלקה",
 			"POSITION_NAME": "שם המיקום",
-			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "הוסף פרויקט חדש",
 			"START_DATE": "תאריך התחלה",
 			"END_DATE": "תאריך סיום",
@@ -834,5 +857,19 @@
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Start Timer",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"DATE": "תאריך",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description",
+		"ADD_TIME_SUCCESS": "Time Successfully added"
 	}
 }

@@ -71,7 +71,7 @@ export class DateSelectorComponent implements OnInit {
 			this.store.selectedOrganization &&
 			this.store.selectedOrganization.registrationDate
 				? new Date(this.store.selectedOrganization.registrationDate)
-				: subYears(currentDate.setMonth(11), 15);
+				: subYears(new Date().setMonth(11), 15);
 
 		this.loadCalendar = true;
 	}

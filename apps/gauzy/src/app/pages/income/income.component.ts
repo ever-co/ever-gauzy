@@ -57,7 +57,6 @@ export class IncomeComponent extends TranslationBaseComponent
 	private _selectedOrganizationId: string;
 
 	async ngOnInit() {
-		
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
@@ -233,7 +232,6 @@ export class IncomeComponent extends TranslationBaseComponent
 	}
 
 	async editIncome() {
-		
 		this.dialogService
 			.open(IncomeMutationComponent, {
 				context: {
@@ -278,7 +276,6 @@ export class IncomeComponent extends TranslationBaseComponent
 	}
 
 	async deleteIncome() {
-		
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
@@ -291,7 +288,6 @@ export class IncomeComponent extends TranslationBaseComponent
 					try {
 						await this.incomeService.delete(
 							this.selectedIncome.data.id
-							
 						);
 
 						this.toastrService.primary(
@@ -312,7 +308,6 @@ export class IncomeComponent extends TranslationBaseComponent
 					}
 				}
 			});
-			
 	}
 
 	private async _loadEmployeeIncomeData(

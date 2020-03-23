@@ -72,6 +72,7 @@ export abstract class RecurringExpenseEditHandler<
 		}
 		if (originalExpense.orgId) {
 			createObject.orgId = originalExpense.orgId;
+			createObject.splitExpense = originalExpense.splitExpense;
 		}
 		const newExpense = await this.crudService.create(createObject);
 
