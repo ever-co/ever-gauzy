@@ -75,11 +75,11 @@
 					/>
 					<nb-datepicker #formpicker></nb-datepicker>
 				</div>
-				<div class="col-sm-6" *ngIf="vendors.length">
+				<div class="col-sm-6">
 					<div class="form-group">
 						<ng-select
 							[addTag]="addNewVendor"
-							bindLabel="vendorName"
+							bindLabel="name"
 							[items]="vendors"
 							[searchable]="true"
 							placeholder="{{

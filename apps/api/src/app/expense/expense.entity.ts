@@ -24,6 +24,7 @@ import { Organization } from '../organization';
 import { Employee } from '../employee';
 import { Tag } from '../tags';
 import { ExpenseCategory } from '../expense-categories';
+import { OrganizationVendors } from '../organization-vendors';
 
 @Entity('expense')
 export class Expense extends Base implements IExpense {
@@ -59,25 +60,24 @@ export class Expense extends Base implements IExpense {
 	@Column({ type: 'numeric' })
 	amount: number;
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	vendorName: string;
-
-	@ApiPropertyOptional({ type: String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	vendorId?: string;
-
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
 	typeOfExpense: string;
+
+	@ApiProperty({ type: OrganizationVendors })
+	@ManyToOne((type) => OrganizationVendors, {
+		nullable: false,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	vendor: OrganizationVendors;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((expense: Expense) => expense.vendor)
+	readonly vendorId: string;
 
 	@ApiProperty({ type: ExpenseCategory })
 	@ManyToOne((type) => ExpenseCategory, {

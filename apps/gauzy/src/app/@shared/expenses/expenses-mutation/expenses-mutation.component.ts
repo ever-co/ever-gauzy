@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
@@ -7,7 +7,8 @@ import {
 	OrganizationSelectInput,
 	TaxTypesEnum,
 	ExpenseTypesEnum,
-	IExpenseCategory
+	IExpenseCategory,
+	OrganizationVendors
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -19,13 +20,17 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { Subject, Observable } from 'rxjs';
 import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-expenses-mutation',
 	templateUrl: './expenses-mutation.component.html',
 	styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent implements OnInit, OnDestroy {
+export class ExpensesMutationComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('employeeSelector', { static: false })
@@ -38,7 +43,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
 	expenseCategories$: Observable<IExpenseCategory[]>;
-	vendors: { vendorName: string; vendorId: string }[] = [];
+	vendors: OrganizationVendors[];
 	clients: { clientName: string; clientId: string }[] = [];
 	projects: { projectName: string; projectId: string }[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
@@ -48,6 +53,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 	showTaxesInput = false;
 	showWarning = false;
 	disable = true;
+	loading = false;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -58,8 +64,13 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		private store: Store,
 		private readonly organizationClientsService: OrganizationClientsService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
-		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService
-	) {}
+		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
+		private readonly toastrService: NbToastrService,
+		readonly translateService: TranslateService,
+		private errorHandler: ErrorHandlingService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.getDefaultData();
@@ -73,43 +84,15 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		return this.form.get('currency');
 	}
 
-	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
-
 	private async getDefaultData() {
 		this.expenseCategories$ = this.expenseCategoriesStore.expenseCategories$;
 		this.organizationId = this.store.selectedOrganization.id;
-		const res = await this.organizationVendorsService.getAll({
-			organizationId: this.organizationId
-		});
-
-		if (res) {
-			const resultArr = res.items;
-			resultArr.forEach((vendor) => {
-				this.vendors.push({
-					vendorName: vendor.name,
-					vendorId: vendor.id
-				});
-			});
-		}
-
-		if (!this.vendors.length) {
-			const fakeVendorNames = [
-				'Microsoft',
-				'Google',
-				'CaffeeMania',
-				'CoShare',
-				'Cleaning Company',
-				'Udemy',
-				'MultiSport'
-			];
-
-			fakeVendorNames.forEach((name) => {
-				this.vendors.push({
-					vendorName: name,
-					vendorId: this.getFakeId()
-				});
-			});
-		}
+		const { items: vendors } = await this.organizationVendorsService.getAll(
+			{
+				organizationId: this.organizationId
+			}
+		);
+		this.vendors = vendors;
 	}
 
 	addOrEditExpense() {
@@ -139,7 +122,6 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 				projectId: null
 			};
 		}
-
 		this.dialogRef.close(
 			Object.assign(
 				{ employee: this.employeeSelector.selectedEmployee },
@@ -148,9 +130,25 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	addNewVendor(vendorName) {
-		return { vendorName: vendorName, tag: true, vendorId: null };
-	}
+	addNewVendor = (name: string): Promise<OrganizationVendors> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationVendorsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
 
 	showNotesInput() {
 		return (this.showNotes = !this.showNotes);
@@ -169,13 +167,7 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 			this.form = this.fb.group({
 				id: [this.expense.id],
 				amount: [this.expense.amount, Validators.required],
-				vendor: [
-					{
-						vendorId: this.expense.vendorId,
-						vendorName: this.expense.vendorName
-					},
-					Validators.required
-				],
+				vendor: [this.expense.vendor, Validators.required],
 				typeOfExpense: this.expense.typeOfExpense,
 				category: [this.expense.category, Validators.required],
 				notes: [this.expense.notes],

@@ -1,6 +1,11 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { AuthService } from '../../@core/services/auth.service';
-import { Expense, PermissionsEnum, IExpenseCategory } from '@gauzy/models';
+import {
+	Expense,
+	PermissionsEnum,
+	IExpenseCategory,
+	OrganizationVendors
+} from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
@@ -22,6 +27,7 @@ export interface ExpenseViewModel {
 	valueDate: Date;
 	vendorId: string;
 	vendorName: string;
+	vendor: OrganizationVendors;
 	typeOfExpense: string;
 	categoryId: string;
 	categoryName: string;
@@ -207,8 +213,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 		return {
 			amount: formData.amount,
 			category: formData.category,
-			vendorId: formData.vendor.vendorId,
-			vendorName: formData.vendor.vendorName,
+			vendor: formData.vendor,
 			typeOfExpense: formData.typeOfExpense,
 			clientId: formData.client.clientId,
 			clientName: formData.client.clientName,
@@ -260,9 +265,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				if (formData) {
-					console.log(formData, 'FORM D');
 					const completedForm = this.getFormData(formData);
-					console.log(completedForm, 'COMPL F');
 					this.addExpense(completedForm, formData);
 				}
 			});
@@ -411,7 +414,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 
 		try {
 			const { items } = await this.expenseService.getAll(
-				['employee', 'employee.user', 'category'],
+				['employee', 'employee.user', 'category', 'vendor'],
 				findObj,
 				this.selectedDate
 			);
@@ -421,7 +424,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 					id: i.id,
 					valueDate: i.valueDate,
 					vendorId: i.vendorId,
-					vendorName: i.vendorName,
+					vendorName: i.vendor.name,
+					vendor: i.vendor,
 					typeOfExpense: i.typeOfExpense,
 					categoryId: i.categoryId,
 					categoryName: i.category.name,

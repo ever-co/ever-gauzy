@@ -16,5 +16,10 @@ export interface OrganizationVendorsCreateInput {
 }
 
 export enum OrganizationVendorsEnum {
-	UPWORK = 'Upwork'
+	UPWORK = 'Upwork',
+	MICROSOFT = 'Microsoft',
+	BENEFIT_SYSTEMS = 'Benefit Systems',
+	UDEMY = 'Udemy',
+	GOOGLE = 'Google',
+	CO_SHARE = 'CoShare'
 }

@@ -3,6 +3,7 @@ import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tag } from './tag-entity.model';
 import { IExpenseCategory } from './expense-category.model';
+import { OrganizationVendors } from '..';
 
 export interface Expense extends IBaseEntityModel {
 	employee?: Employee;
@@ -10,8 +11,10 @@ export interface Expense extends IBaseEntityModel {
 	organization: Organization;
 	orgId: string;
 	amount: number;
-	vendorName: string;
-	vendorId?: string;
+	// vendorName: string;
+	// vendorId?: string;
+	vendor: OrganizationVendors;
+	vendorId: string;
 	typeOfExpense?: string;
 	category: IExpenseCategory;
 	categoryId: string;
@@ -34,10 +37,11 @@ export interface Expense extends IBaseEntityModel {
 export interface ExpenseCreateInput {
 	employeeId?: string;
 	amount: number;
-	vendorName: string;
-	vendorId: string;
+	// vendorName: string;
+	// vendorId: string;
 	typeOfExpense?: string;
 	category: IExpenseCategory;
+	vendor: OrganizationVendors;
 	clientId?: string;
 	clientName?: string;
 	projectId?: string;

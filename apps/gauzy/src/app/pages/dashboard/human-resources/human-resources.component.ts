@@ -274,11 +274,11 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			)
 				? await this.expenseService.getAllWithSplitExpenses(
 						this.selectedEmployee.id,
-						['employee', 'organization', 'category'],
+						['employee', 'organization', 'category', 'vendor'],
 						this.selectedDate
 				  )
 				: await this.expenseService.getMyAllWithSplitExpenses(
-						['employee', 'organization', 'category'],
+						['employee', 'organization', 'category', 'vendor'],
 						this.selectedDate
 				  );
 
@@ -361,10 +361,12 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}): ViewDashboardExpenseHistory[] {
 		let viewDashboardExpenseHistory = [];
 		if (data.expense && data.expense.length) {
+			console.log(data, 'DATA');
 			viewDashboardExpenseHistory = data.expense.map((e) => ({
 				valueDate: e.valueDate,
-				vendorName: e.vendorName,
+				vendorName: e.vendor.name,
 				categoryName: e.category.name,
+				categoryId: e.category.id,
 				amount: e.amount,
 				notes: e.notes,
 				recurring: false,

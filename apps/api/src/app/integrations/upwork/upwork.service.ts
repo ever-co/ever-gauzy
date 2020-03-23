@@ -33,8 +33,7 @@ export class UpworkService {
 			command: ({ dto, category, vendor }) =>
 				new ExpenseCreateCommand({
 					...dto,
-					vendorId: vendor.id,
-					vendorName: vendor.name,
+					vendor,
 					category
 				})
 		}

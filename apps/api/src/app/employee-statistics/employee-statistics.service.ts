@@ -277,7 +277,7 @@ export class EmployeeStatisticsService {
 		lastNMonths: number
 	) =>
 		await this.expenseService.findAll({
-			select: ['valueDate', 'vendorName', 'amount', 'currency', 'notes'],
+			select: ['valueDate', 'amount', 'currency', 'notes'],
 			where: {
 				employee: {
 					id: employeeId
@@ -310,7 +310,7 @@ export class EmployeeStatisticsService {
 
 		// 2 Find split expenses for Employee's Organization in last N months
 		const { items } = await this.expenseService.findAll({
-			select: ['valueDate', 'vendorName', 'amount', 'currency', 'notes'],
+			select: ['valueDate', 'amount', 'currency', 'notes'],
 			where: {
 				organization: { id: employee.organization.id },
 				splitExpense: true,

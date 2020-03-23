@@ -4,7 +4,6 @@ import { Expense } from '../../expense.entity';
 import { ExpenseService } from '../../expense.service';
 import { EmployeeService } from '../../../employee';
 import { OrganizationService } from '../../../organization';
-import { ExpenseCategoriesService } from '../../../expense-categories';
 
 @CommandHandler(ExpenseCreateCommand)
 export class ExpenseCreateHandler
@@ -12,8 +11,7 @@ export class ExpenseCreateHandler
 	constructor(
 		private readonly expenseService: ExpenseService,
 		private readonly employeeService: EmployeeService,
-		private readonly organizationService: OrganizationService,
-		private readonly expenseCategoryService: ExpenseCategoriesService
+		private readonly organizationService: OrganizationService
 	) {}
 
 	public async execute(command: ExpenseCreateCommand): Promise<Expense> {
@@ -26,13 +24,10 @@ export class ExpenseCreateHandler
 		const organization = await this.organizationService.findOne(
 			input.orgId
 		);
-		const category = await this.expenseCategoryService.findOne(
-			input.category.id
-		);
+
 		expense.amount = Math.abs(input.amount);
-		expense.category = category;
-		expense.vendorId = input.vendorId;
-		expense.vendorName = input.vendorName;
+		expense.category = input.category;
+		expense.vendor = input.vendor;
 		expense.typeOfExpense = input.typeOfExpense;
 		expense.clientName = input.clientName;
 		expense.clientId = input.clientId;
