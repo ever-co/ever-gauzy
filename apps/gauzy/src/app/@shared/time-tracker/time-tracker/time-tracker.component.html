@@ -145,6 +145,7 @@
 		<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
 		<ga-task-selector
 			name="taskId"
+			[projectId]="projectId"
 			[disabled]="running"
 			[(ngModel)]="taskId"
 		></ga-task-selector>
