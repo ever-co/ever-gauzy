@@ -219,12 +219,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
 			"RECORD": "תקליט",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "עובד",
 			"EXPENSE": "הוצאה",
 			"USER": "user",
-			"INVITATION": "invitation"
+			"INVITATION": "invitation",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {
