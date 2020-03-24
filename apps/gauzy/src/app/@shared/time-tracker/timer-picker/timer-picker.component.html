@@ -1,0 +1,12 @@
+<div (click)="$event.stopPropagation()">
+	<ng-select
+		[disabled]="disabled"
+		[clearable]="true"
+		[items]="timeSlots"
+		[(ngModel)]="selectedTime"
+		bindValue="value"
+		bindLabel="label"
+		placeholder="00:00 AM"
+	>
+	</ng-select>
+</div>

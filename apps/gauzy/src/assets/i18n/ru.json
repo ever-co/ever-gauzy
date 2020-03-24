@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ADD_EXISTING_USER": "Добавить существующего пользователя",
+		"ADD_NEW": "Добавить новый",
 		"ADD": "Добавить",
 		"CREATE": "Создать",
 		"REGISTER": "Регистрация",
@@ -9,6 +11,8 @@
 		"DETAILS": "Детали",
 		"DUPLICATE": "Duplicate",
 		"DELETE": "Удалить",
+		"REMOVE": "Удалить",
+		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
 		"BACK": "Обратно",
@@ -23,7 +27,9 @@
 		"RESEND": "Переслать",
 		"NEXT": "Следующий",
 		"PREVIOUS": "Предыдущий",
-		"INVITE_AGAIN": "Пригласить ещё раз"
+		"INVITE_AGAIN": "Пригласить ещё раз",
+		"REQUEST": "Запросить",
+		"HISTORY": "История"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -132,6 +138,12 @@
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
 			"EMAIL_INVITATION": "Введите email для отправки приглашения",
+			"SELECT_EQUIPMENT": "Выберите оборудование",
+			"SELECT_SHARE_REQUEST_DATE": "Выберите дату запроса",
+			"SELECT_SHARE_START_DATE": "Выберите дату начала",
+			"SELECT_SHARE_END_DATE": "Выберите дату окончания",
+			"SELECT_EMPLOYEE": "Выберите сотрудника",
+			"SELECT_TEAM": "Выберите команду",
 			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
 			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
 			"REGISTRATION_DATE": "Дата регистрации"
@@ -183,6 +195,7 @@
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
 			"SELECT_CURRENCY": "Выберите валюту",
@@ -191,6 +204,8 @@
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
 			"SWITCH_PROJECT_STATE": "Публичный",
+			"CHOOSE_EMPLOYEES": "Выберите сотрудника/с",
+			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации"
 		},
@@ -204,12 +219,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
 			"DELETE_ACCOUNT": "Вы уверены, что хотите удалить свою учетную запись?",
+			"REMOVE_USER": " от вашей организации",
 			"SURE": "Вы уверены, что хотите удалить",
 			"RECORD": "запись",
+			"USER_RECORD": "от вашей организации",
 			"EMPLOYEE": "служащий",
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
-			"INVITATION": "приглашение"
+			"INVITATION": "приглашение",
+			"DELETE_USER": " из базы данных, поскольку ее данные больше не являются частью какой-либо организации "
 		}
 	},
 	"POP_UPS": {
@@ -229,7 +247,7 @@
 		"TAX_TYPE": "Тип налога (% или значение)",
 		"TAX_RATE": "Ставка налога",
 		"RECURRING_EXPENSES": "Периодические ежемесячные расходы",
-		"PURPOSE": "Purpose",
+		"PURPOSE": "Цель",
 		"BACK_TO_WORK": "вернуться к работе",
 		"END_WORK": "Конец Работы для",
 		"AMOUNT": "Количество",
@@ -246,12 +264,17 @@
 		"CANCEL": "Отменить",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
 		"RECURRING_EXPENSE": "Это периодические расходы",
-		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}"
+		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}",
+		"STARTS_ON": "Начинается при",
+		"EXPENSE_HISTORY": "История расходов",
+		"NEW_EXPENSE_VALUE": "Новое значение расхода"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
+		"INTEGRATIONS": "Интеграции",
+		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
 		"HELP": "Помогите",
@@ -271,6 +294,7 @@
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
+		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
 		"TASKS": "Задачи"
 	},
 	"SETTINGS_MENU": {
@@ -285,10 +309,29 @@
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Бухгалтер",
+		"HUMAN_RESOURCES": "Людские ресурсы",
+		"TIME_TRACKING": "Время отслеживания",
+		"PROJECT_MANAGEMENT": "Управление проектом",
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
+		"CHARTS": {
+			"BAR": "Бар",
+			"DOUGHNUT": "Ореховый",
+			"STACKED_BAR": "Панель накопления",
+			"CHART_TYPE": "Тип диаграммы",
+			"REVENUE": "Доход",
+			"EXPENSES": "Затраты",
+			"PROFIT": "Прибыль",
+			"BONUS": "Бонус",
+			"NO_MONTH_DATA": "Нет данных за этот месяц"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Отчет о прибыли",
 			"TOTAL_EXPENSES": "Всего расходов",
@@ -376,7 +419,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Кафедры работника:",
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
 			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
-			"EMPLOYMENT_TYPE": "Тип занятости"
+			"EMPLOYMENT_TYPE": "Тип занятости",
+			"ACCOUNT": "Аккаунт",
+			"EMPLOYMENT": "Занятость",
+			"LOCATION": "Местоположение",
+			"RATES": "Тарифы",
+			"PROJECTS": "Проекты",
+			"CLIENTS": "Клиенты",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",
@@ -419,7 +469,6 @@
 			"PROJECTS": "Проекты",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
-			"EMPLOYMENT_TYPES": "Тип занятости",
 			"NEW_PROJECT": "Добавить новый проект",
 			"START_DATE": "Дата начала",
 			"END_DATE": "Дата окончания",
@@ -537,7 +586,10 @@
 		"TAGS_COLOR": "Цвет",
 		"TAGS_ADD_TAG": "Тег добавлен",
 		"TAGS_EDIT_TAG": "Тег отредактирован",
-		"TAGS_DELETE_TAG": "Метка удалена"
+		"TAGS_DELETE_TAG": "Метка удалена",
+		"TAGS_SELECT_NAME": "Имя тега",
+		"TAGS_SELECT_COLOR": "Цвет тега",
+		"TAGS_SELECT_DESCRIPTION": "Описание метки"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
@@ -556,6 +608,26 @@
 		"EQUIPMENT_ADDED": "Снаряжение добавлено",
 		"EQUIPMENT_SAVED": "Оборудование сохранено"
 	},
+	"EQUIPMENT_SHARING_PAGE": {
+		"HEADER": "Совместное использование снаряжения",
+		"ADD_EQUIPMENT_REQUEST": "Запросить оборудование",
+		"EDIT_EQUIPMENT_REQUEST": "Изменить запрос на оборудование",
+		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на оборудование",
+		"REQUEST": "Запросить",
+		"EQUIPMENT_NAME": "Название оборудования",
+		"SHARE_REQUIEST_DATE": "Поделиться датой запроса",
+		"SHARE_START_DATE": "Поделиться датой начала",
+		"SHARE_END_DATE": "Поделиться датой окончания",
+		"STATUS": "Статус",
+		"REQUEST_SAVED": "Запрос сохранен",
+		"REQUEST_DELETED": "Запрос удален",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Дата должна быть после дня запроса.",
+			"EXCEED_PERIOD_ERR": "Максимально допустимые дни для этого элемента ",
+			"BEFORE_START_DATE_ERR": "Дата окончания не может быть раньше даты начала. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Товар должен быть возвращен до "
+		}
+	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
 		"ADD_TASKS": "Добавить задачи",
@@ -572,6 +644,7 @@
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
 		"ADD_USER": "Добавить пользователя",
+		"ADD_EXISTING_USER": "Добавить существующего пользователя",
 		"ROLE": {
 			"ADMIN": "Администратор",
 			"MANAGER": "Менеджер",
@@ -580,7 +653,8 @@
 			"EMPLOYEE": "Сотрудник"
 		},
 		"EDIT_USER": {
-			"HEADER": "Управление пользователем"
+			"HEADER": "Управление пользователем",
+			"EDIT_EXISTING_USER": "Изменить существующего пользователя"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -657,7 +731,7 @@
 		"MESSAGE": {
 			"PROJECT_LOAD": "Не удалось загрузить проекты",
 			"COPIED": "Ссылка скопирована в буфер обмена",
-			"INVITES_LOAD": "Could Not Load Invites",
+			"INVITES_LOAD": "Не удалось загрузить приглашения",
 			"INVITES_RESEND": "Приглашение было отправлено на адрес {{ email }}.",
 			"EMPLOYEE_DEPARTMENT_ADDED": "Сотрудник добавлен в отдел",
 			"EMPLOYEE_DEPARTMENT_REMOVED": "Сотрудник удалён из отдела",
@@ -783,5 +857,19 @@
 			"ACCOUNT_DELETED": "Ваш аккаунт был успешно удален!",
 			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Оплачивается",
+		"STOP_TIMER": "Остановить таймер",
+		"START_TIMER": "Запустить таймер",
+		"TIMER": "Таймер",
+		"MANUAL": "Ручной",
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TASK": "Выберите задачу",
+		"DATE": "Дата",
+		"START_TIME": "Время начала",
+		"END_TIME": "Конец времени",
+		"DESCRIPTION": "Описание",
+		"ADD_TIME_SUCCESS": "Время успешно добавлено"
 	}
 }

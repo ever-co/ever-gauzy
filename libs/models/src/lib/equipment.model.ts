@@ -1,4 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { EquipmentSharing } from './equipment-sharing.model';
 
 export interface Equipment extends IBaseEntityModel {
 	name: string;
@@ -9,4 +10,5 @@ export interface Equipment extends IBaseEntityModel {
 	currency: string;
 	maxSharePeriod: number;
 	autoApproveShare: boolean;
+	equipmentSharings: EquipmentSharing[];
 }

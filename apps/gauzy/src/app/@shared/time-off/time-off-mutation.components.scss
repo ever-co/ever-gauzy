@@ -1,5 +1,6 @@
 .main {
 	width: 750px;
+	// height:750px;
 
 	nb-card-header {
 		display: flex;
@@ -11,7 +12,17 @@
 		}
 	}
 
+	// nb-select {
+	// 	margin-top: 5em;
+	// }
+
 	.checkboxes > :first-child {
 		padding-right: 15px;
 	}
+}
+
+img {
+	width: 40px;
+	height: 40px;
+	margin-right: 10px;
 }

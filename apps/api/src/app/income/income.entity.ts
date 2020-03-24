@@ -95,4 +95,9 @@ export class Income extends Base implements IIncome {
 	@IsOptional()
 	@Column({ nullable: true })
 	isBonus: boolean;
+
+	@ApiPropertyOptional({ type: String, maxLength: 256 })
+	@IsOptional()
+	@Column({ nullable: true })
+	reference?: string;
 }

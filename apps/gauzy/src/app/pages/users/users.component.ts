@@ -2,9 +2,13 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
 	Role,
-	RolesEnum,
 	InvitationTypeEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	UserOrganization,
+	Organization,
+	UserOrganizationCreateInput,
+	RolesEnum,
+	User
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +22,7 @@ import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mut
 import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { UsersService } from '../../@core/services';
 
 interface UserViewModel {
 	fullName: string;
@@ -44,11 +49,15 @@ export class UsersComponent extends TranslationBaseComponent
 
 	userName = 'User';
 
+	organization: Organization;
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
+	showAddCard: boolean;
+	userToEdit: UserOrganization;
+	users: User[] = [];
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -59,7 +68,8 @@ export class UsersComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private userOrganizationsService: UsersOrganizationsService
+		private userOrganizationsService: UsersOrganizationsService,
+		private readonly usersService: UsersService
 	) {
 		super(translate);
 	}
@@ -69,6 +79,8 @@ export class UsersComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.showAddCard = false;
+					this.loadUsers();
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
 						organization.invitesAllowed;
@@ -141,6 +153,29 @@ export class UsersComponent extends TranslationBaseComponent
 		}
 	}
 
+	async addOrEditUser(user: UserOrganizationCreateInput) {
+		if (user.isActive) {
+			await this.userOrganizationsService
+				.create(user)
+				.pipe(first())
+				.toPromise();
+
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
+					{
+						username: this.userName.trim(),
+						orgname: this.store.selectedOrganization.name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.showAddCard = false;
+			this.loadPage();
+		}
+	}
+
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
@@ -203,6 +238,123 @@ export class UsersComponent extends TranslationBaseComponent
 					}
 				}
 			});
+	}
+
+	cancel() {
+		this.userToEdit = null;
+		this.showAddCard = !this.showAddCard;
+	}
+
+	private async loadUsers() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { items } = await this.userOrganizationsService.getAll(['user'], {
+			orgId: this.organization.id
+		});
+
+		this.users = items.map((user) => user.user);
+	}
+
+	async remove() {
+		const user = await this.usersService.getUserByEmail(
+			this.selectedUser.email
+		);
+
+		const { items } = await this.userOrganizationsService.getAll([
+			'user',
+			'user.role'
+		]);
+
+		let counter = 0;
+
+		let userToRemove;
+
+		for (const orgUser of items) {
+			if (
+				orgUser.isActive &&
+				(!orgUser.user.role ||
+					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
+			) {
+				userToRemove = orgUser;
+				if (userToRemove.user.id === user.id) {
+					counter++;
+				}
+			}
+		}
+
+		if (counter - 1 < 1) {
+			this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: {
+						recordType:
+							this.selectedUser.fullName +
+							' ' +
+							this.getTranslation(
+								'FORM.DELETE_CONFIRMATION.DELETE_USER'
+							)
+					}
+				})
+				.onClose.pipe(takeUntil(this._ngDestroy$))
+				.subscribe(async (result) => {
+					if (result) {
+						try {
+							this.usersService.delete(
+								userToRemove.user.id,
+								userToRemove
+							);
+
+							this.toastrService.primary(
+								this.userName + ' was successfuly deleted.',
+								'Success'
+							);
+
+							this.loadPage();
+						} catch (error) {
+							this.toastrService.danger(
+								error.error.message || error.message,
+								'Error'
+							);
+						}
+					}
+				});
+		} else {
+			this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: {
+						recordType:
+							this.selectedUser.fullName +
+							' ' +
+							this.getTranslation(
+								'FORM.DELETE_CONFIRMATION.USER_RECORD'
+							)
+					}
+				})
+				.onClose.pipe(takeUntil(this._ngDestroy$))
+				.subscribe(async (result) => {
+					if (result) {
+						try {
+							await this.userOrganizationsService.removeUserFromOrg(
+								this.selectedUser.id
+							);
+
+							this.toastrService.primary(
+								this.userName +
+									' was successfuly removed from organization.',
+								'Success'
+							);
+
+							this.loadPage();
+						} catch (error) {
+							this.toastrService.danger(
+								error.error.message || error.message,
+								'Error'
+							);
+						}
+					}
+				});
+		}
 	}
 
 	private async loadPage() {

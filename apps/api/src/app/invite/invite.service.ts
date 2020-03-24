@@ -1,4 +1,4 @@
-import { environment as env, environment } from '@env-api/environment';
+import { environment as env } from '@env-api/environment';
 import {
 	CreateEmailInvitesInput,
 	CreateEmailInvitesOutput,
@@ -86,7 +86,8 @@ export class InviteService extends CrudService<Invite> {
 	 * @param emailInvites Emails Ids to send invite
 	 */
 	async createBulk(
-		emailInvites: CreateEmailInvitesInput
+		emailInvites: CreateEmailInvitesInput,
+		originUrl: string
 	): Promise<CreateEmailInvitesOutput> {
 		const invites: Invite[] = [];
 
@@ -161,24 +162,30 @@ export class InviteService extends CrudService<Invite> {
 
 		const items = await this.repository.save(invites);
 		items.forEach((item) => {
-			// this.sendInvitationMail(item.email, item.token);
+			const registerUrl = `${originUrl ||
+				env.host}/#/auth/accept-invite?email=${item.email}&token=${
+				item.token
+			}`;
+
 			if (emailInvites.inviteType.indexOf('/pages/users') > -1) {
-				this.emailService.inviteUser(
-					item.email,
-					role.name,
-					organization.name,
-					environment.host + '/auth/register'
-				);
+				this.emailService.inviteUser({
+					email: item.email,
+					role: role.name,
+					organization: organization.name,
+					registerUrl,
+					originUrl
+				});
 			} else if (
 				emailInvites.inviteType.indexOf('/pages/employees') > -1
 			) {
-				this.emailService.inviteEmployee(
-					item.email,
-					environment.host + '/auth/register',
-					projects,
+				this.emailService.inviteEmployee({
+					email: item.email,
+					registerUrl,
 					clients,
-					departments
-				);
+					departments,
+					originUrl,
+					organization: organization.name
+				});
 			}
 		});
 

@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ADD_EXISTING_USER": "Add Existing User",
+		"ADD_NEW": "Add New",
 		"ADD": "הוסף",
 		"CREATE": "צור",
 		"REGISTER": "Register",
@@ -9,6 +11,8 @@
 		"DETAILS": "Details",
 		"DUPLICATE": "Duplicate",
 		"DELETE": "מחק",
+		"REMOVE": "Remove",
+		"ADD_EXISTING": "Add Existing",
 		"OK": "בסדר",
 		"SAVE": "לשמור",
 		"BACK": "חזור",
@@ -23,7 +27,9 @@
 		"RESEND": "Resend",
 		"NEXT": "Next",
 		"PREVIOUS": "Previous",
-		"INVITE_AGAIN": "Invite Again"
+		"INVITE_AGAIN": "Invite Again",
+		"REQUEST": "Request",
+		"HISTORY": "History"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -132,6 +138,12 @@
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
+			"SELECT_EQUIPMENT": "Select equipment",
+			"SELECT_SHARE_REQUEST_DATE": "Select request date",
+			"SELECT_SHARE_START_DATE": "Select start date",
+			"SELECT_SHARE_END_DATE": "Select end date",
+			"SELECT_EMPLOYEE": "Select employee",
+			"SELECT_TEAM": "Select team",
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date"
@@ -183,6 +195,7 @@
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "תמונה",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
+			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"DATE": "תאריך",
 			"VALUE": "ערך",
 			"SELECT_CURRENCY": "Select Currency",
@@ -191,6 +204,8 @@
 			"ENABLE_INVITES": "Enable Invites",
 			"INVITE_EXPIRY_PERIOD": "Invites valid upto",
 			"SWITCH_PROJECT_STATE": "Public",
+			"CHOOSE_EMPLOYEES": "Choose employee/s",
+			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date"
 		},
@@ -204,12 +219,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "אתה בטוח שאתה רוצה למחוק",
 			"RECORD": "תקליט",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "עובד",
 			"EXPENSE": "הוצאה",
 			"USER": "user",
-			"INVITATION": "invitation"
+			"INVITATION": "invitation",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {
@@ -246,12 +264,17 @@
 		"CANCEL": "בטל",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Are you sure you want to change the",
 		"RECURRING_EXPENSE": "This is a recurring expense",
-		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}"
+		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}",
+		"STARTS_ON": "Starts On",
+		"EXPENSE_HISTORY": "Expense History",
+		"NEW_EXPENSE_VALUE": "New Expense Value"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"HELP": "עזרה",
@@ -271,6 +294,7 @@
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
+		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"TASKS": "Tasks"
 	},
 	"SETTINGS_MENU": {
@@ -285,10 +309,29 @@
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Accounting",
+		"HUMAN_RESOURCES": "Human Resources",
+		"TIME_TRACKING": "Time Tracking",
+		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "אנא בחר חודש ועובד מהתפריט שלמעלה",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
+		"CHARTS": {
+			"BAR": "Bar",
+			"DOUGHNUT": "Doughnut",
+			"STACKED_BAR": "Stacked Bar",
+			"CHART_TYPE": "Chart Type",
+			"REVENUE": "Revenue",
+			"EXPENSES": "הוצאות",
+			"PROFIT": "רווח",
+			"BONUS": "בונוס",
+			"NO_MONTH_DATA": "No Data for this month"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "סך ההוצאות",
@@ -376,7 +419,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
 			"EMPLOYEE_CLIENTS": "Employee's Clients:",
-			"EMPLOYMENT_TYPE": "Employment Type"
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"PROJECTS": "פרויקטים",
+			"CLIENTS": "לקוחות",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -419,7 +469,6 @@
 			"PROJECTS": "פרויקטים",
 			"DEPARTMENT_NAME": "שם מחלקה",
 			"POSITION_NAME": "שם המיקום",
-			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "הוסף פרויקט חדש",
 			"START_DATE": "תאריך התחלה",
 			"END_DATE": "תאריך סיום",
@@ -537,7 +586,10 @@
 		"TAGS_COLOR": "Color",
 		"TAGS_ADD_TAG": "Tag added",
 		"TAGS_EDIT_TAG": "Tag edited",
-		"TAGS_DELETE_TAG": "Tag deleted"
+		"TAGS_DELETE_TAG": "Tag deleted",
+		"TAGS_SELECT_NAME": "Tag name",
+		"TAGS_SELECT_COLOR": "Tag color",
+		"TAGS_SELECT_DESCRIPTION": "Tag description"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
@@ -556,6 +608,26 @@
 		"EQUIPMENT_ADDED": "Equipment added",
 		"EQUIPMENT_SAVED": "Equipment saved"
 	},
+	"EQUIPMENT_SHARING_PAGE": {
+		"HEADER": "Equipment Sharing",
+		"ADD_EQUIPMENT_REQUEST": "Request equipment",
+		"EDIT_EQUIPMENT_REQUEST": "Edit equipment request",
+		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
+		"REQUEST": "Request",
+		"EQUIPMENT_NAME": "Equipment name",
+		"SHARE_REQUIEST_DATE": "Share request date",
+		"SHARE_START_DATE": "Share start date",
+		"SHARE_END_DATE": "Share end date",
+		"STATUS": "עבודה",
+		"REQUEST_SAVED": "Request saved",
+		"REQUEST_DELETED": "Request deleted",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
+			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
+			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+		}
+	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
 		"ADD_TASKS": "Add Tasks",
@@ -572,6 +644,7 @@
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
+		"ADD_EXISTING_USER": "Add Existing User",
 		"ROLE": {
 			"ADMIN": "מנהל",
 			"MANAGER": "Manager",
@@ -580,7 +653,8 @@
 			"EMPLOYEE": "עובד"
 		},
 		"EDIT_USER": {
-			"HEADER": "Manage User"
+			"HEADER": "Manage User",
+			"EDIT_EXISTING_USER": "Edit Existing User"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -783,5 +857,19 @@
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Start Timer",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"DATE": "תאריך",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description",
+		"ADD_TIME_SUCCESS": "Time Successfully added"
 	}
 }

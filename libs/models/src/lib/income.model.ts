@@ -28,6 +28,7 @@ export interface IncomeCreateInput {
 	notes?: string;
 	orgId?: string;
 	isBonus?: boolean;
+	reference?: string;
 }
 
 export interface IncomeUpdateInput {
@@ -49,4 +50,8 @@ export interface IncomeFindInput extends IBaseEntityModel {
 	clientName?: string;
 	valueDate?: Date;
 	currency?: string;
+}
+
+export enum IncomeTypeEnum {
+	HOURLY = 'Hourly'
 }

@@ -12,6 +12,10 @@ import { Organization, OrganizationService } from '../organization';
 import { EmployeeStatisticsController } from './employee-statistics.controller';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { QueryHandlers } from './queries/handlers';
+import {
+	OrganizationRecurringExpenseService,
+	OrganizationRecurringExpense
+} from '../organization-recurring-expense';
 
 @Module({
 	imports: [
@@ -20,7 +24,8 @@ import { QueryHandlers } from './queries/handlers';
 			Expense,
 			Employee,
 			Organization,
-			EmployeeRecurringExpense
+			EmployeeRecurringExpense,
+			OrganizationRecurringExpense
 		]),
 		CqrsModule
 	],
@@ -32,6 +37,7 @@ import { QueryHandlers } from './queries/handlers';
 		EmployeeService,
 		OrganizationService,
 		EmployeeRecurringExpenseService,
+		OrganizationRecurringExpenseService,
 		...QueryHandlers
 	],
 	exports: [EmployeeStatisticsService]

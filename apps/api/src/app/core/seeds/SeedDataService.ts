@@ -41,6 +41,7 @@ import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
+import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
 
 const allEntities = [
 	User,
@@ -172,6 +173,9 @@ export class SeedDataService {
 				}
 			);
 
+			await createExpenseCategories(this.connection);
+
+			// to fill expenses with categories from DB, needs to refactor on many services
 			await createExpenses(
 				this.connection,
 				{
