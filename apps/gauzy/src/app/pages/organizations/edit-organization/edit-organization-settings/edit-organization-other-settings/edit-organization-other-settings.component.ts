@@ -199,7 +199,13 @@ export class EditOrganizationOtherSettingsComponent
 					'en'
 				)
 			],
-			futureDateAllowed: [this.organization.futureDateAllowed || false]
+			futureDateAllowed: [this.organization.futureDateAllowed || false],
+			allowModifyTime: [this.organization.allowModifyTime],
+			requireCeason: [this.organization.requireCeason],
+			requireCescription: [this.organization.requireCescription],
+			requireCroject: [this.organization.requireCroject],
+			requireClient: [this.organization.requireClient],
+			timeFormat: [this.organization.timeFormat || 12]
 		});
 	}
 

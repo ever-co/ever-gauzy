@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
-import { TimeLogType, IManualTimeInput } from '@gauzy/models';
+import { TimeLogType, IManualTimeInput, Organization } from '@gauzy/models';
 import * as moment from 'moment';
 import { takeUntil, ignoreElements } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { toUTC } from 'libs/utils';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -23,12 +24,19 @@ export class TimeTrackerComponent implements OnInit {
 	maxSlotStartTime: string;
 	maxSlotEndTime: string;
 	minSlotEndTime: string;
+	organization: Organization;
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
-		private toastrService: ToastrService
+		private toastrService: ToastrService,
+		private store: Store
 	) {
 		this.updateTimePickerLimit(new Date());
+		this.store.selectedOrganization$.subscribe(
+			(organization: Organization) => {
+				this.organization = organization;
+			}
+		);
 	}
 
 	public get isBillable(): boolean {

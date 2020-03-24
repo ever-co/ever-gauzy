@@ -8,6 +8,9 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
+import { Store } from '../../../@core/services/store.service';
+import { Organization } from '@gauzy/models';
+import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
 	selector: 'ga-timer-picker',
@@ -24,8 +27,8 @@ import * as moment from 'moment';
 export class TimerPickerComponent implements OnInit {
 	private _max: string = '23:59';
 	private _min: string = '00:00';
-
 	timeSlots: { value: string; label: string }[] = [];
+	organization: Organization;
 	onChange: any = () => {};
 	onTouched: any = () => {};
 	val: any;
