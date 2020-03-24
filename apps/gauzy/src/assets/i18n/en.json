@@ -220,12 +220,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "Are you sure you want to delete",
 			"RECORD": "record",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "employee",
 			"EXPENSE": "Expense",
 			"USER": "user",
-			"INVITATION": "invitation"
+			"INVITATION": "invitation",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {

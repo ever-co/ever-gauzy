@@ -219,12 +219,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "служители",
 			"EXPENSE": "Разходи",
 			"USER": "user",
-			"INVITATION": "покана"
+			"INVITATION": "покана",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {
