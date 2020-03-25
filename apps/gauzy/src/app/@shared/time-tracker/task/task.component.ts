@@ -23,12 +23,22 @@ export class TaskSelectorComponent
 	//@Output() change:EventEmitter<string> = new EventEmitter();
 
 	private _ngDestroy$ = new Subject<void>();
+	private _projectId;
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
 	val: any;
 
 	@Input() disabled = false;
+
+	@Input()
+	public get projectId() {
+		return this._projectId;
+	}
+	public set projectId(value) {
+		this._projectId = value;
+		this.loadTasks();
+	}
 
 	set taskId(val: string) {
 		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
@@ -43,17 +53,14 @@ export class TaskSelectorComponent
 
 	constructor(private tasksService: TasksService) {}
 
-	ngOnInit() {
-		this.loadTasks();
-	}
+	ngOnInit() {}
 
 	private async loadTasks(): Promise<void> {
-		const {
-			items = []
-		} = await this.tasksService.getAllTasks().toPromise();
-
-		console.log(items);
+		const { items = [] } = await this.tasksService
+			.getAllTasks({ projectId: this.projectId })
+			.toPromise();
 		this.tasks = items;
+		this.taskId = null;
 	}
 
 	writeValue(value: any) {
