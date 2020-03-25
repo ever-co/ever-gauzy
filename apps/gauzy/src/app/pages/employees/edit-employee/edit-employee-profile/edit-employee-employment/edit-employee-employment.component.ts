@@ -131,7 +131,8 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			employeeLevel: [employee.employeeLevel || ''],
 			anonymousBonus: [employee.anonymousBonus],
 			organizationDepartments: [employee.organizationDepartments || null],
-			organizationPosition: [employee.organizationPosition || null]
+			organizationPosition: [employee.organizationPosition || null],
+			startedWorkOn: [employee ? new Date(employee.startedWorkOn) : '']
 		});
 	}
 
