@@ -8,9 +8,7 @@ import {
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
-import { Store } from '../../../@core/services/store.service';
 import { Organization } from '@gauzy/models';
-import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
 	selector: 'ga-timer-picker',
