@@ -492,6 +492,7 @@
 				"REQUIRE_REASON": "Require Reason",
 				"REQUIRE_DESCRIPTION": "Require Description",
 				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_TASK": "Require Task",
 				"REQUIRE_CLIENT": "Require Client"
 			}
 		},

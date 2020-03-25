@@ -454,7 +454,7 @@
 						<div class="form-group invite-toggle">
 							<nb-toggle
 								class="d-block"
-								formControlName="requireCeason"
+								formControlName="requireReason"
 								status="primary"
 								labelPosition="start"
 							>
@@ -469,7 +469,7 @@
 						<div class="form-group invite-toggle">
 							<nb-toggle
 								class="d-block"
-								formControlName="requireCescription"
+								formControlName="requireDescription"
 								status="primary"
 								labelPosition="start"
 							>
@@ -484,12 +484,27 @@
 						<div class="form-group invite-toggle">
 							<nb-toggle
 								class="d-block"
-								formControlName="requireCroject"
+								formControlName="requireProject"
 								status="primary"
 								labelPosition="start"
 							>
 								{{
 									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_PROJECT'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
+								formControlName="requireTask"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_TASK'
 										| translate
 								}}
 							</nb-toggle>

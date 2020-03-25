@@ -1,4 +1,4 @@
-<form>
+<form #f="ngForm">
 	<div class="timer-container form-group">
 		<div class="time-tracker" *ngIf="timeType == 'TRACKED'">
 			<div class="is_billable">
@@ -19,12 +19,13 @@
 			<div class="actions">
 				<div class="toggle">
 					<button
+						type="submit"
 						class="btn btn-rounded"
 						[ngClass]="{
 							'btn-danger': running,
 							'btn-success': !running
 						}"
-						(click)="$event.stopPropagation(); toggle()"
+						(click)="toggle(f)"
 						[nbTooltip]="
 							(running
 								? 'TIMER_TRACKER.STOP_TIMER'
@@ -139,7 +140,16 @@
 			name="projectId"
 			[disabled]="running"
 			[(ngModel)]="projectId"
+			#projectInput="ngModel"
+			[required]="this.organization.requireProject"
 		></ga-project-selector>
+
+		<div
+			*ngIf="projectInput.invalid && f.submitted"
+			class="invalid-feedback d-block"
+		>
+			<div *ngIf="projectInput.errors.required">Please selct project</div>
+		</div>
 	</div>
 	<div class="form-group">
 		<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
@@ -148,7 +158,16 @@
 			[projectId]="projectId"
 			[disabled]="running"
 			[(ngModel)]="taskId"
+			#taskInput="ngModel"
+			[required]="this.organization.requireTask"
 		></ga-task-selector>
+
+		<div
+			*ngIf="taskInput.invalid && f.submitted"
+			class="invalid-feedback d-block"
+		>
+			<div *ngIf="taskInput.errors.required">Please selct task</div>
+		</div>
 	</div>
 	<div class="form-group" *ngIf="timeType == 'MANUAL'">
 		<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
@@ -158,9 +177,20 @@
 			[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
 			name="description"
 			[(ngModel)]="manualTime.description"
+			#descriptionInput="ngModel"
+			[required]="this.organization.requireDescription"
 		></textarea>
+
+		<div
+			*ngIf="descriptionInput.invalid && f.submitted"
+			class="invalid-feedback d-block"
+		>
+			<div *ngIf="descriptionInput.errors.required">
+				Description is required
+			</div>
+		</div>
 	</div>
 	<div class="time-menual" *ngIf="timeType == 'MANUAL'">
-		<button class="btn btn-success" (click)="addTime()">Add Time</button>
+		<button class="btn btn-success" (click)="addTime(f)">Add Time</button>
 	</div>
 </form>

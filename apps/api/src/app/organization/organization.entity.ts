@@ -185,17 +185,22 @@ export class Organization extends LocationBase implements IOrganization {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: true })
-	requireCeason?: boolean;
+	requireReason?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: true })
-	requireCescription?: boolean;
+	requireDescription?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: true })
-	requireCroject?: boolean;
+	requireProject?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireTask?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()

@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { toUTC } from 'libs/utils';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { Store } from '../../../@core/services/store.service';
+import { NgForm } from '@angular/forms';
 
 @Component({
 	selector: 'ngx-time-tracker',
@@ -96,11 +97,17 @@ export class TimeTrackerComponent implements OnInit {
 		this.updateTimePickerLimit(new Date());
 	}
 
-	toggle() {
+	toggle(f: NgForm) {
+		if (!this.running && !f.valid) {
+			return;
+		}
 		this.timeTrackerService.toggle();
 	}
 
-	addTime() {
+	addTime(f: NgForm) {
+		if (!f.valid) {
+			return;
+		}
 		const startedAt = toUTC(
 			moment(this.manualTime.date).format('YYYY-MM-DD') +
 				' ' +

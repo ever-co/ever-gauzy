@@ -201,9 +201,10 @@ export class EditOrganizationOtherSettingsComponent
 			],
 			futureDateAllowed: [this.organization.futureDateAllowed || false],
 			allowModifyTime: [this.organization.allowModifyTime],
-			requireCeason: [this.organization.requireCeason],
-			requireCescription: [this.organization.requireCescription],
-			requireCroject: [this.organization.requireCroject],
+			requireReason: [this.organization.requireReason],
+			requireDescription: [this.organization.requireDescription],
+			requireProject: [this.organization.requireProject],
+			requireTask: [this.organization.requireTask],
 			requireClient: [this.organization.requireClient],
 			timeFormat: [this.organization.timeFormat || 12]
 		});
