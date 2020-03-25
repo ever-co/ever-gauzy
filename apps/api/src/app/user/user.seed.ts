@@ -83,7 +83,7 @@ const generateDefaultUser = async (
 	tenant: Tenant
 ): Promise<User> => {
 	const user = new User();
-	const { firstName, lastName, email, imageUrl } = defaultUser;
+	const { firstName, lastName, email, imageUrl, startedWorkOn } = defaultUser;
 
 	user.email = email;
 	user.firstName = firstName;
@@ -92,6 +92,7 @@ const generateDefaultUser = async (
 	user.imageUrl = getUserDummyImage(user);
 	user.imageUrl = imageUrl;
 	user.tenant = tenant;
+	user.startedWorkOn = startedWorkOn;
 
 	user.hash = await bcrypt.hash(
 		defaultUser.password,

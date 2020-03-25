@@ -3,6 +3,7 @@ import { Connection } from 'typeorm';
 import { Employee } from './employee.entity';
 import { Organization } from '../organization';
 import { User } from '../user';
+import { environment as env } from '@env-api/environment';
 
 export const createEmployees = async (
 	connection: Connection,
@@ -38,6 +39,7 @@ const createDefaultEmployees = async (
 		users: User[];
 	}
 ): Promise<Employee[]> => {
+	const defaultEmployees = env.defaultEmployees || [];
 	let employee: Employee;
 	const employees: Employee[] = [];
 	const defaultUsers = defaultData.users;
@@ -51,6 +53,9 @@ const createDefaultEmployees = async (
 		employee.organization = defaultOrg;
 		employee.user = user;
 		employee.tenant = defaultTenants[counter];
+		employee.employeeLevel = defaultEmployees.filter(
+			(e) => e.email === employee.user.email
+		)[0].employeeLevel;
 		await insertEmployee(connection, employee);
 		employees.push(employee);
 		counter++;

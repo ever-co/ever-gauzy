@@ -4,4 +4,6 @@ export interface DefaultUser {
 	imageUrl: string;
 	firstName?: string;
 	lastName?: string;
+	startedWorkOn?: string;
+	employeeLevel?: string;
 }

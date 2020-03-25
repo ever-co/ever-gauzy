@@ -103,4 +103,10 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	startedWorkOn?: string;
 }

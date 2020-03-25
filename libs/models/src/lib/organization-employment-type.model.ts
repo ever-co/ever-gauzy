@@ -1,11 +1,13 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Employee } from './employee.model';
 
 export enum GenericEmploymentTypes {
 	INTERN = 'Intern',
 	CONTRACT = 'Contract',
 	PROBATION = 'Probation',
 	PART_TIME = 'Part-time',
-	FULL_TIME = 'Full-time'
+	FULL_TIME = 'Full-time',
+	CONTRACTOR = 'Contractor'
 }
 
 export interface OrganizationEmploymentType extends IBaseEntityModel {
