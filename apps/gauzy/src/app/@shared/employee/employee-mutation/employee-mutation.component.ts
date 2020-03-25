@@ -82,7 +82,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			organization: this.store.selectedOrganization,
 			offerDate,
 			acceptDate,
-			rejectDate
+			rejectDate,
+			tags: this.userBasicInfo.selectedTags
 		};
 		this.employees.push(newEmployee);
 
