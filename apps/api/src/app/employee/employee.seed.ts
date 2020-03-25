@@ -3,6 +3,7 @@ import { Connection } from 'typeorm';
 import { Employee } from './employee.entity';
 import { Organization } from '../organization';
 import { User } from '../user';
+import { environment as env } from '@env-api/environment';
 
 export const createEmployees = async (
 	connection: Connection,
@@ -38,6 +39,7 @@ const createDefaultEmployees = async (
 		users: User[];
 	}
 ): Promise<Employee[]> => {
+	const defaultEmployees = env.defaultEmployees || [];
 	let employee: Employee;
 	const employees: Employee[] = [];
 	const defaultUsers = defaultData.users;
@@ -51,6 +53,17 @@ const createDefaultEmployees = async (
 		employee.organization = defaultOrg;
 		employee.user = user;
 		employee.tenant = defaultTenants[counter];
+		employee.employeeLevel = defaultEmployees.filter(
+			(e) => e.email === employee.user.email
+		)[0].employeeLevel;
+		employee.startedWorkOn = getDate(
+			defaultEmployees.filter((e) => e.email === employee.user.email)[0]
+				.startedWorkOn
+		);
+		employee.endWork = getDate(
+			defaultEmployees.filter((e) => e.email === employee.user.email)[0]
+				.endWork
+		);
 		await insertEmployee(connection, employee);
 		employees.push(employee);
 		counter++;
@@ -104,4 +117,12 @@ const insertEmployee = async (
 		.into(Employee)
 		.values(employee)
 		.execute();
+};
+
+const getDate = (dateString: string): Date => {
+	if (dateString) {
+		const date = new Date(dateString);
+		return date;
+	}
+	return null;
 };
