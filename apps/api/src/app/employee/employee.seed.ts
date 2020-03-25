@@ -56,6 +56,14 @@ const createDefaultEmployees = async (
 		employee.employeeLevel = defaultEmployees.filter(
 			(e) => e.email === employee.user.email
 		)[0].employeeLevel;
+		employee.startedWorkOn = getDate(
+			defaultEmployees.filter((e) => e.email === employee.user.email)[0]
+				.startedWorkOn
+		);
+		employee.endWork = getDate(
+			defaultEmployees.filter((e) => e.email === employee.user.email)[0]
+				.endWork
+		);
 		await insertEmployee(connection, employee);
 		employees.push(employee);
 		counter++;
@@ -109,4 +117,12 @@ const insertEmployee = async (
 		.into(Employee)
 		.values(employee)
 		.execute();
+};
+
+const getDate = (dateString: string): Date => {
+	if (dateString) {
+		const date = new Date(dateString);
+		return date;
+	}
+	return null;
 };

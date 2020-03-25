@@ -77,7 +77,8 @@ export const environment: IEnvironment = {
 			firstName: 'Alish',
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			startedWorkOn: '20.03.2018',
+			startedWorkOn: '2018-03-20',
+			endWork: null,
 			employeeLevel: 'D'
 		},
 		{
@@ -86,8 +87,9 @@ export const environment: IEnvironment = {
 			firstName: 'Blagovest',
 			lastName: 'Gerov',
 			imageUrl: 'assets/images/avatars/blagovest.jpg',
-			startedWorkOn: '19.03.2018',
-			employeeLevel: 'D'
+			startedWorkOn: '2018-03-19',
+			endWork: null,
+			employeeLevel: 'C'
 		},
 		{
 			email: 'elvis@ever.co',
@@ -95,7 +97,8 @@ export const environment: IEnvironment = {
 			firstName: 'Elvis',
 			lastName: 'Arabadjiiski',
 			imageUrl: 'assets/images/avatars/elvis.jpg',
-			startedWorkOn: '25.05.2018',
+			startedWorkOn: '2018-05-25',
+			endWork: null,
 			employeeLevel: 'C'
 		},
 		{
@@ -104,7 +107,8 @@ export const environment: IEnvironment = {
 			firstName: 'Emil',
 			lastName: 'Momchilov',
 			imageUrl: 'assets/images/avatars/emil.jpg',
-			startedWorkOn: '21.01.2019',
+			startedWorkOn: '2019-01-21',
+			endWork: null,
 			employeeLevel: 'C'
 		},
 		{
@@ -113,7 +117,8 @@ export const environment: IEnvironment = {
 			firstName: 'Boyan',
 			lastName: 'Stanchev',
 			imageUrl: 'assets/images/avatars/boyan.jpg',
-			startedWorkOn: '21.01.2019',
+			startedWorkOn: '2019-01-21',
+			endWork: null,
 			employeeLevel: 'C'
 		},
 		{
@@ -122,7 +127,8 @@ export const environment: IEnvironment = {
 			firstName: 'Hristo',
 			lastName: 'Hristov',
 			imageUrl: 'assets/images/avatars/hristo.jpg',
-			startedWorkOn: '17.06.2019',
+			startedWorkOn: '2019-06-17',
+			endWork: null,
 			employeeLevel: 'B'
 		},
 		{
@@ -131,7 +137,8 @@ export const environment: IEnvironment = {
 			firstName: 'Aleksandar',
 			lastName: 'Tasev',
 			imageUrl: 'assets/images/avatars/alexander.jpg',
-			startedWorkOn: '01.08.2019',
+			startedWorkOn: '2019-08-01',
+			endWork: null,
 			employeeLevel: 'B'
 		},
 		{
@@ -140,7 +147,8 @@ export const environment: IEnvironment = {
 			firstName: 'Rachit',
 			lastName: 'Magon',
 			imageUrl: 'assets/images/avatars/rachit.png',
-			startedWorkOn: '27.11.2019',
+			startedWorkOn: '2019-11-27',
+			endWork: null,
 			employeeLevel: null
 		},
 		{
@@ -149,7 +157,8 @@ export const environment: IEnvironment = {
 			firstName: 'Atanas',
 			lastName: 'Yonkov',
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
-			startedWorkOn: '01.02.2020',
+			startedWorkOn: '2020-02-01',
+			endWork: null,
 			employeeLevel: 'A'
 		},
 		{
@@ -158,7 +167,8 @@ export const environment: IEnvironment = {
 			firstName: 'Dimana',
 			lastName: 'Tsvetkova',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
-			startedWorkOn: '26.11.2019',
+			startedWorkOn: '2019-11-26',
+			endWork: null,
 			employeeLevel: null
 		},
 		{
@@ -167,7 +177,8 @@ export const environment: IEnvironment = {
 			firstName: 'Alexander',
 			lastName: 'Savov',
 			imageUrl: 'assets/images/avatars/savov.jpg',
-			startedWorkOn: '04.02.2020',
+			startedWorkOn: '2020-02-04',
+			endWork: null,
 			employeeLevel: 'A'
 		},
 		{
@@ -176,7 +187,8 @@ export const environment: IEnvironment = {
 			firstName: 'Lubomir',
 			lastName: 'Petrov',
 			imageUrl: 'assets/images/avatars/lubomir.jpg',
-			startedWorkOn: '06.02.2020',
+			startedWorkOn: '2020-02-06',
+			endWork: null,
 			employeeLevel: 'A'
 		},
 		{
@@ -185,7 +197,8 @@ export const environment: IEnvironment = {
 			firstName: 'Pavel',
 			lastName: 'Denchev',
 			imageUrl: 'assets/images/avatars/pavel.jpg',
-			startedWorkOn: '16.03.2020',
+			startedWorkOn: '2020-03-16',
+			endWork: null,
 			employeeLevel: 'A'
 		},
 		{
@@ -194,7 +207,8 @@ export const environment: IEnvironment = {
 			firstName: 'Yavor',
 			lastName: 'Grancharov',
 			imageUrl: 'assets/images/avatars/yavor.jpg',
-			startedWorkOn: '05.02.2020',
+			startedWorkOn: '2020-02-05',
+			endWork: null,
 			employeeLevel: 'A'
 		},
 		{
@@ -203,7 +217,8 @@ export const environment: IEnvironment = {
 			firstName: 'Tsvetelina',
 			lastName: 'Yordanova',
 			imageUrl: 'assets/images/avatars/tsvetelina.jpg',
-			startedWorkOn: '02.03.2020',
+			startedWorkOn: '2020-03-02',
+			endWork: null,
 			employeeLevel: 'A'
 		},
 		{
@@ -212,7 +227,8 @@ export const environment: IEnvironment = {
 			firstName: 'Ruslan',
 			lastName: 'Konviser',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			startedWorkOn: '01.08.2018',
+			startedWorkOn: '2018-08-01',
+			endWork: null,
 			employeeLevel: 'C'
 		},
 		{
@@ -221,7 +237,8 @@ export const environment: IEnvironment = {
 			firstName: 'Muiz',
 			lastName: 'Nadeem',
 			imageUrl: 'assets/images/avatars/muiz.jpg',
-			startedWorkOn: '27.11.2019',
+			startedWorkOn: '2019-11-27',
+			endWork: null,
 			employeeLevel: null
 		},
 		{
@@ -230,7 +247,8 @@ export const environment: IEnvironment = {
 			firstName: 'Dejan',
 			lastName: 'Obradovikj',
 			imageUrl: 'assets/images/avatars/dejan.jpg',
-			startedWorkOn: '07.03.2020',
+			startedWorkOn: '2020-03-07',
+			endWork: null,
 			employeeLevel: null
 		},
 		{
@@ -239,7 +257,8 @@ export const environment: IEnvironment = {
 			firstName: 'Chetan',
 			lastName: 'Khandla',
 			imageUrl: 'assets/images/avatars/chetan.png',
-			startedWorkOn: '07.03.2020',
+			startedWorkOn: '2020-03-07',
+			endWork: null,
 			employeeLevel: null
 		},
 		{
@@ -248,7 +267,8 @@ export const environment: IEnvironment = {
 			firstName: 'Julia',
 			lastName: 'Konviser',
 			imageUrl: 'assets/images/avatars/julia.png',
-			startedWorkOn: '01.08.2018',
+			startedWorkOn: '2018-08-01',
+			endWork: null,
 			employeeLevel: 'C'
 		},
 		{
@@ -257,7 +277,8 @@ export const environment: IEnvironment = {
 			firstName: 'Milena',
 			lastName: 'Dimova',
 			imageUrl: 'assets/images/avatars/milena.png',
-			startedWorkOn: '15.07.2019',
+			startedWorkOn: '2019-07-15',
+			endWork: '2019-10-25',
 			employeeLevel: 'A'
 		}
 	],

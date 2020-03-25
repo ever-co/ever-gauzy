@@ -92,7 +92,6 @@ const generateDefaultUser = async (
 	user.imageUrl = getUserDummyImage(user);
 	user.imageUrl = imageUrl;
 	user.tenant = tenant;
-	user.startedWorkOn = startedWorkOn;
 
 	user.hash = await bcrypt.hash(
 		defaultUser.password,

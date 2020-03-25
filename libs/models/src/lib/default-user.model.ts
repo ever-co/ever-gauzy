@@ -5,5 +5,6 @@ export interface DefaultUser {
 	firstName?: string;
 	lastName?: string;
 	startedWorkOn?: string;
+	endWork?: string;
 	employeeLevel?: string;
 }
