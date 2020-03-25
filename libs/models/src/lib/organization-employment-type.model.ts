@@ -1,5 +1,4 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from './employee.model';
 
 export enum GenericEmploymentTypes {
 	INTERN = 'Intern',

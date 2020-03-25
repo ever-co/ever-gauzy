@@ -278,7 +278,7 @@ export const environment: IEnvironment = {
 			lastName: 'Dimova',
 			imageUrl: 'assets/images/avatars/milena.png',
 			startedWorkOn: '2019-07-15',
-			endWork: '2019-10-25',
+			endWork: '2019-10-15',
 			employeeLevel: 'A'
 		}
 	],

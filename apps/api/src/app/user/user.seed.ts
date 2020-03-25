@@ -83,7 +83,7 @@ const generateDefaultUser = async (
 	tenant: Tenant
 ): Promise<User> => {
 	const user = new User();
-	const { firstName, lastName, email, imageUrl, startedWorkOn } = defaultUser;
+	const { firstName, lastName, email, imageUrl } = defaultUser;
 
 	user.email = email;
 	user.firstName = firstName;

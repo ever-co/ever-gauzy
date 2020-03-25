@@ -4,13 +4,7 @@ import {
 	PayPeriodEnum
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsDate,
-	IsEnum,
-	IsNumber,
-	IsOptional,
-	IsString
-} from 'class-validator';
+import { IsDate, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import {
 	Column,
 	Entity,
