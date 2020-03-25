@@ -87,6 +87,12 @@ export class Employee extends LocationBase implements IEmployee {
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
+	startedWorkOn?: Date;
+
+	@ApiPropertyOptional({ type: Date })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
 	endWork?: Date;
 
 	@ApiProperty({ type: String, enum: PayPeriodEnum })
@@ -159,10 +165,4 @@ export class Employee extends LocationBase implements IEmployee {
 	@ApiPropertyOptional({ type: Boolean })
 	@Column({ nullable: true })
 	anonymousBonus?: boolean;
-
-	@ApiPropertyOptional({ type: Date })
-	@IsDate()
-	@IsOptional()
-	@Column({ nullable: true })
-	startedWorkOn?: Date;
 }
