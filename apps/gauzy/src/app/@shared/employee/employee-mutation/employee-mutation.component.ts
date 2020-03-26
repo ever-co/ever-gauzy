@@ -66,7 +66,6 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			lastName: this.form.get('lastName').value,
 			email: this.form.get('email').value,
 			imageUrl: this.form.get('imageUrl').value,
-			startedWorkOn: this.form.get('startedWorkOn').value,
 			tenant: null,
 			role: this.role,
 			tags: this.userBasicInfo.selectedTags
@@ -78,6 +77,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 		const newEmployee: EmployeeCreateInput = {
 			user,
+			startedWorkOn: this.form.get('startedWorkOn').value,
 			password: this.form.get('password').value,
 			organization: this.store.selectedOrganization,
 			offerDate,
@@ -86,7 +86,6 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			tags: this.userBasicInfo.selectedTags
 		};
 		this.employees.push(newEmployee);
-
 		this.userBasicInfo.loadFormData();
 		this.form = this.userBasicInfo.form;
 		this.stepper.reset();

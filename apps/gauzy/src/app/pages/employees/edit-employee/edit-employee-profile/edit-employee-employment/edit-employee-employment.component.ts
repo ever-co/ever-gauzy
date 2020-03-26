@@ -130,7 +130,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		this.tags = tags;
 	}
 
-	private _initializeForm(employee: Employee) {
+	private _initializeForm(employee: Employee) {		
 		this.form = this.fb.group({
 			organizationEmploymentTypes: [
 				employee.organizationEmploymentTypes || null
@@ -140,7 +140,12 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			anonymousBonus: [employee.anonymousBonus],
 			organizationDepartments: [employee.organizationDepartments || null],
 			organizationPosition: [employee.organizationPosition || null],
-			tags: [employee.tags]
+			tags: [employee.tags],
+			startedWorkOn: [
+				employee.startedWorkOn !== null
+					? new Date(employee.startedWorkOn)
+					: '' || ''
+			]
 		});
 
 		this.tags = employee.tags;

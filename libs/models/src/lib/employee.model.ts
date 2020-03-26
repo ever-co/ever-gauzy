@@ -9,6 +9,7 @@ import { OrganizationEmploymentType } from './organization-employment-type.model
 
 export interface Employee extends IBaseEntityModel, ILocation {
 	endWork?: any;
+	startedWorkOn?: any;
 	user: User;
 	userId: string;
 	organization: Organization;
@@ -60,6 +61,7 @@ export interface EmployeeCreateInput {
 	rejectDate?: Date;
 	members?: Employee[];
 	tags?: Tag[];
+	startedWorkOn?: any;
 }
 
 export enum PayPeriodEnum {

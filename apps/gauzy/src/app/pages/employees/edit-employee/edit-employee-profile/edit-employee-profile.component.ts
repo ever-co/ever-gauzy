@@ -99,6 +99,14 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HIRING'
+				),
+				icon: 'map-outline',
+				responsive: true,
+				route: this.getRoute('hiring')
+			},
+			{
+				title: this.getTranslation(
 					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION'
 				),
 				icon: 'pin-outline',
@@ -128,14 +136,6 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 				icon: 'book-open-outline',
 				responsive: true,
 				route: this.getRoute('clients')
-			},
-			{
-				title: this.getTranslation(
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HIRING'
-				),
-				icon: 'map-outline',
-				responsive: true,
-				route: this.getRoute('hiring')
 			}
 		];
 	}

@@ -17,7 +17,6 @@ export interface User extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	startedWorkOn?: string;
 	tenant: Tenant;
 	tags: Tag[];
 }
