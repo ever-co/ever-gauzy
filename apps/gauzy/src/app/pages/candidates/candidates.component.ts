@@ -101,28 +101,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 	private async loadPage() {
 		this.selectedCandidate = null;
 
-		const { items } = await this.employeesService
-			.getAll(['user', 'tags'], {
-				organization: { id: this.selectedOrganizationId }
-			})
-			.pipe(first())
-			.toPromise();
-		const { name } = this.store.selectedOrganization;
-
-		const candidatesVm = [];
-		const result = [];
-
-		for (const emp of items) {
-			result.push({
-				fullName: `${emp.user.firstName} ${emp.user.lastName}`,
-				email: emp.user.email,
-				id: emp.id
-			});
-			console.warn(emp.tags);
-		}
-
-		this.sourceSmartTable.load(candidatesVm);
-
 		if (this.candidatesTable) {
 			this.candidatesTable.grid.dataSet.willSelect = 'false';
 		}
