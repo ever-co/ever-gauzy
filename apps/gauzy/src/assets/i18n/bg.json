@@ -216,6 +216,9 @@
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Показване на изтритите"
 		},
+		"NOTIFICATIONS": {
+			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
