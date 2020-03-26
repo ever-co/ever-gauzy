@@ -1,0 +1,12 @@
+<div (click)="$event.stopPropagation()">
+	<ng-select
+		[clearable]="true"
+		[disabled]="disabled"
+		[items]="projects"
+		[(ngModel)]="projectId"
+		[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
+		bindValue="id"
+		bindLabel="name"
+	>
+	</ng-select>
+</div>

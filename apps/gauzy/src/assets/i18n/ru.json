@@ -219,12 +219,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
 			"DELETE_ACCOUNT": "Вы уверены, что хотите удалить свою учетную запись?",
+			"REMOVE_USER": " от вашей организации",
 			"SURE": "Вы уверены, что хотите удалить",
 			"RECORD": "запись",
+			"USER_RECORD": "от вашей организации",
 			"EMPLOYEE": "служащий",
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
-			"INVITATION": "приглашение"
+			"INVITATION": "приглашение",
+			"DELETE_USER": " из базы данных, поскольку ее данные больше не являются частью какой-либо организации "
 		}
 	},
 	"POP_UPS": {
@@ -244,7 +247,7 @@
 		"TAX_TYPE": "Тип налога (% или значение)",
 		"TAX_RATE": "Ставка налога",
 		"RECURRING_EXPENSES": "Периодические ежемесячные расходы",
-		"PURPOSE": "Purpose",
+		"PURPOSE": "Цель",
 		"BACK_TO_WORK": "вернуться к работе",
 		"END_WORK": "Конец Работы для",
 		"AMOUNT": "Количество",
@@ -270,6 +273,8 @@
 		"DASHBOARD": "Приборная доска",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
+		"INTEGRATIONS": "Интеграции",
+		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
 		"HELP": "Помогите",
@@ -305,10 +310,29 @@
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Бухгалтер",
+		"HUMAN_RESOURCES": "Людские ресурсы",
+		"TIME_TRACKING": "Время отслеживания",
+		"PROJECT_MANAGEMENT": "Управление проектом",
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
+		"CHARTS": {
+			"BAR": "Бар",
+			"DOUGHNUT": "Ореховый",
+			"STACKED_BAR": "Панель накопления",
+			"CHART_TYPE": "Тип диаграммы",
+			"REVENUE": "Доход",
+			"EXPENSES": "Затраты",
+			"PROFIT": "Прибыль",
+			"BONUS": "Бонус",
+			"NO_MONTH_DATA": "Нет данных за этот месяц"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Отчет о прибыли",
 			"TOTAL_EXPENSES": "Всего расходов",
@@ -396,7 +420,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Кафедры работника:",
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
 			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
-			"EMPLOYMENT_TYPE": "Тип занятости"
+			"EMPLOYMENT_TYPE": "Тип занятости",
+			"ACCOUNT": "Аккаунт",
+			"EMPLOYMENT": "Занятость",
+			"LOCATION": "Местоположение",
+			"RATES": "Тарифы",
+			"PROJECTS": "Проекты",
+			"CLIENTS": "Клиенты",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Шаг 1",
@@ -439,7 +470,6 @@
 			"PROJECTS": "Проекты",
 			"DEPARTMENT_NAME": "Название отдела",
 			"POSITION_NAME": "Название должности",
-			"EMPLOYMENT_TYPES": "Тип занятости",
 			"NEW_PROJECT": "Добавить новый проект",
 			"START_DATE": "Дата начала",
 			"END_DATE": "Дата окончания",
@@ -455,7 +485,16 @@
 			"EDIT_PROJECT": "Редактировать проект",
 			"REGIONS": "Регионы",
 			"ROLES_PERMISSIONS": "Роли и Разрешения",
-			"DATE_LIMIT": "Ограничение даты"
+			"DATE_LIMIT": "Ограничение даты",
+			"SETTINGS": {
+				"TIMER_SETTINGS": "Настройки таймера",
+				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
+				"REQUIRE_REASON": "Требуется причина",
+				"REQUIRE_DESCRIPTION": "Требуется описание",
+				"REQUIRE_PROJECT": "Требовать проект",
+				"REQUIRE_TASK": "Требовать задание",
+				"REQUIRE_CLIENT": "Требовать клиента"
+			}
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",
@@ -591,7 +630,13 @@
 		"SHARE_END_DATE": "Поделиться датой окончания",
 		"STATUS": "Статус",
 		"REQUEST_SAVED": "Запрос сохранен",
-		"REQUEST_DELETED": "Запрос удален"
+		"REQUEST_DELETED": "Запрос удален",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Дата должна быть после дня запроса.",
+			"EXCEED_PERIOD_ERR": "Максимально допустимые дни для этого элемента ",
+			"BEFORE_START_DATE_ERR": "Дата окончания не может быть раньше даты начала. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Товар должен быть возвращен до "
+		}
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -715,7 +760,7 @@
 		"MESSAGE": {
 			"PROJECT_LOAD": "Не удалось загрузить проекты",
 			"COPIED": "Ссылка скопирована в буфер обмена",
-			"INVITES_LOAD": "Could Not Load Invites",
+			"INVITES_LOAD": "Не удалось загрузить приглашения",
 			"INVITES_RESEND": "Приглашение было отправлено на адрес {{ email }}.",
 			"EMPLOYEE_DEPARTMENT_ADDED": "Сотрудник добавлен в отдел",
 			"EMPLOYEE_DEPARTMENT_REMOVED": "Сотрудник удалён из отдела",
@@ -841,5 +886,19 @@
 			"ACCOUNT_DELETED": "Ваш аккаунт был успешно удален!",
 			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Оплачивается",
+		"STOP_TIMER": "Остановить таймер",
+		"START_TIMER": "Запустить таймер",
+		"TIMER": "Таймер",
+		"MANUAL": "Ручной",
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TASK": "Выберите задачу",
+		"DATE": "Дата",
+		"START_TIME": "Время начала",
+		"END_TIME": "Конец времени",
+		"DESCRIPTION": "Описание",
+		"ADD_TIME_SUCCESS": "Время успешно добавлено"
 	}
 }

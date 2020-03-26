@@ -40,7 +40,9 @@
 			>
 		</div>
 	</nb-card-header>
-	<div class="ml-3 mb-4"><strong>Position name</strong></div>
+	<div class="ml-3 mb-4" *ngIf="positionsExist">
+		<strong>Position name</strong>
+	</div>
 
 	<nb-card *ngFor="let p of positions">
 		<nb-card-body>

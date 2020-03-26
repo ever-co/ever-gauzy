@@ -14,3 +14,7 @@ export interface OrganizationVendorsCreateInput {
 	name: string;
 	organizationId: string;
 }
+
+export enum OrganizationVendorsEnum {
+	UPWORK = 'Upwork'
+}

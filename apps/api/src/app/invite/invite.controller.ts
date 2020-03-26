@@ -18,7 +18,8 @@ import {
 	UseGuards,
 	Delete,
 	Param,
-	Put
+	Put,
+	Req
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -36,6 +37,7 @@ import { InviteService } from './invite.service';
 import { InviteResendCommand } from './commands/invite.resend.command';
 import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
+import { Request } from 'express';
 
 @ApiTags('Invite')
 @Controller()
@@ -60,9 +62,10 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
 	async createManyWithEmailsId(
-		@Body() entity: CreateEmailInvitesInput
+		@Body() entity: CreateEmailInvitesInput,
+		@Req() request: Request
 	): Promise<CreateEmailInvitesOutput> {
-		return this.inviteService.createBulk(entity);
+		return this.inviteService.createBulk(entity, request.get('Origin'));
 	}
 
 	@ApiOperation({ summary: 'Get invite.' })

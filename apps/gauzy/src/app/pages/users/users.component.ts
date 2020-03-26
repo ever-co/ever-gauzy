@@ -22,7 +22,7 @@ import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mut
 import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { EmployeesService } from '../../@core/services';
+import { UsersService } from '../../@core/services';
 
 interface UserViewModel {
 	fullName: string;
@@ -69,7 +69,7 @@ export class UsersComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private translate: TranslateService,
 		private userOrganizationsService: UsersOrganizationsService,
-		private readonly employeesService: EmployeesService
+		private readonly usersService: UsersService
 	) {
 		super(translate);
 	}
@@ -79,6 +79,7 @@ export class UsersComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
 				if (organization) {
+					this.showAddCard = false;
 					this.loadUsers();
 					this.selectedOrganizationId = organization.id;
 					this.organizationInvitesAllowed =
@@ -254,6 +255,106 @@ export class UsersComponent extends TranslationBaseComponent
 		});
 
 		this.users = items.map((user) => user.user);
+	}
+
+	async remove() {
+		const user = await this.usersService.getUserByEmail(
+			this.selectedUser.email
+		);
+
+		const { items } = await this.userOrganizationsService.getAll([
+			'user',
+			'user.role'
+		]);
+
+		let counter = 0;
+
+		let userToRemove;
+
+		for (const orgUser of items) {
+			if (
+				orgUser.isActive &&
+				(!orgUser.user.role ||
+					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
+			) {
+				userToRemove = orgUser;
+				if (userToRemove.user.id === user.id) {
+					counter++;
+				}
+			}
+		}
+
+		if (counter - 1 < 1) {
+			this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: {
+						recordType:
+							this.selectedUser.fullName +
+							' ' +
+							this.getTranslation(
+								'FORM.DELETE_CONFIRMATION.DELETE_USER'
+							)
+					}
+				})
+				.onClose.pipe(takeUntil(this._ngDestroy$))
+				.subscribe(async (result) => {
+					if (result) {
+						try {
+							this.usersService.delete(
+								userToRemove.user.id,
+								userToRemove
+							);
+
+							this.toastrService.primary(
+								this.userName + ' was successfuly deleted.',
+								'Success'
+							);
+
+							this.loadPage();
+						} catch (error) {
+							this.toastrService.danger(
+								error.error.message || error.message,
+								'Error'
+							);
+						}
+					}
+				});
+		} else {
+			this.dialogService
+				.open(DeleteConfirmationComponent, {
+					context: {
+						recordType:
+							this.selectedUser.fullName +
+							' ' +
+							this.getTranslation(
+								'FORM.DELETE_CONFIRMATION.USER_RECORD'
+							)
+					}
+				})
+				.onClose.pipe(takeUntil(this._ngDestroy$))
+				.subscribe(async (result) => {
+					if (result) {
+						try {
+							await this.userOrganizationsService.removeUserFromOrg(
+								this.selectedUser.id
+							);
+
+							this.toastrService.primary(
+								this.userName +
+									' was successfuly removed from organization.',
+								'Success'
+							);
+
+							this.loadPage();
+						} catch (error) {
+							this.toastrService.danger(
+								error.error.message || error.message,
+								'Error'
+							);
+						}
+					}
+				});
+		}
 	}
 
 	private async loadPage() {

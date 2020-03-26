@@ -220,12 +220,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "Are you sure you want to delete",
 			"RECORD": "record",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "employee",
 			"EXPENSE": "Expense",
 			"USER": "user",
-			"INVITATION": "invitation"
+			"INVITATION": "invitation",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {
@@ -271,6 +274,8 @@
 		"DASHBOARD": "Dashboard",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"HELP": "Help",
@@ -306,10 +311,29 @@
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Accounting",
+		"HUMAN_RESOURCES": "Human Resources",
+		"TIME_TRACKING": "Time Tracking",
+		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
+		"CHARTS": {
+			"BAR": "Bar",
+			"DOUGHNUT": "Doughnut",
+			"STACKED_BAR": "Stacked Bar",
+			"CHART_TYPE": "Chart Type",
+			"REVENUE": "Revenue",
+			"EXPENSES": "Expenses",
+			"PROFIT": "Profit",
+			"BONUS": "Bonus",
+			"NO_MONTH_DATA": "No Data for this month"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "Total Expenses",
@@ -397,7 +421,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYEE_PROJECTS": "Employee's Projects:",
 			"EMPLOYEE_CLIENTS": "Employee's Clients:",
-			"EMPLOYMENT_TYPE": "Employment Type"
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"PROJECTS": "Projects",
+			"CLIENTS": "Clients",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -440,7 +471,6 @@
 			"PROJECTS": "Projects",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
-			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Add new project",
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
@@ -456,7 +486,16 @@
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
 			"ROLES_PERMISSIONS": "Roles & Permissions",
-			"DATE_LIMIT": "Date Limit"
+			"DATE_LIMIT": "Date Limit",
+			"SETTINGS": {
+				"TIMER_SETTINGS": "Timer Settings",
+				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_TASK": "Require Task",
+				"REQUIRE_CLIENT": "Require Client"
+			}
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
@@ -592,7 +631,13 @@
 		"SHARE_END_DATE": "Share end date",
 		"STATUS": "Status",
 		"REQUEST_SAVED": "Request saved",
-		"REQUEST_DELETED": "Request deleted"
+		"REQUEST_DELETED": "Request deleted",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
+			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
+			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+		}
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -842,5 +887,19 @@
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Start Timer",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"DATE": "Date",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description",
+		"ADD_TIME_SUCCESS": "Time Successfully added"
 	}
 }

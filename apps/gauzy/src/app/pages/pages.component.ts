@@ -31,6 +31,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Dashboard',
 			icon: 'home-outline',
 			link: '/pages/dashboard',
+			pathMatch: 'prefix',
 			home: true,
 			data: {
 				translated: false,
@@ -56,6 +57,25 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.EXPENSES',
 				permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
 			}
+		},
+		{
+			title: 'Integrations',
+			icon: 'settings-outline',
+			link: '/pages/integrations',
+			data: {
+				translated: false,
+				translationKey: 'MENU.INTEGRATIONS'
+			},
+			children: [
+				{
+					title: 'Upwork',
+					link: '/pages/integrations/upwork',
+					data: {
+						translated: false,
+						translationKey: 'MENU.UPWORK'
+					}
+				}
+			]
 		},
 		{
 			title: 'Proposals',

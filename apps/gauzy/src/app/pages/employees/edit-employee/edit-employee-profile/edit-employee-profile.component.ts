@@ -72,6 +72,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 			});
 
 		this.loadTabs();
+		this._applyTranslationOnTabs();
 	}
 
 	getRoute(tab: string): string {
@@ -81,46 +82,60 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	loadTabs() {
 		this.tabs = [
 			{
-				title: 'Account',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT'
+				),
 				icon: 'person-outline',
 				responsive: true,
 				route: this.getRoute('account')
 			},
 			{
-				title: 'Employment',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT'
+				),
 				icon: 'browser-outline',
 				responsive: true,
 				route: this.getRoute('employment')
 			},
 			{
-				title: 'Location',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HIRING'
+				),
+				icon: 'map-outline',
+				responsive: true,
+				route: this.getRoute('hiring')
+			},
+			{
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION'
+				),
 				icon: 'pin-outline',
 				responsive: true,
 				route: this.getRoute('location')
 			},
 			{
-				title: 'Rates',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES'
+				),
 				icon: 'pricetags-outline',
 				responsive: true,
 				route: this.getRoute('rates')
 			},
 			{
-				title: 'Projects',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'
+				),
 				icon: 'book-outline',
 				responsive: true,
 				route: this.getRoute('projects')
 			},
 			{
-				title: 'Clients',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CLIENTS'
+				),
 				icon: 'book-open-outline',
 				responsive: true,
 				route: this.getRoute('clients')
-			},
-			{
-				title: 'Hiring',
-				icon: 'map-outline',
-				responsive: true,
-				route: this.getRoute('hiring')
 			}
 		];
 	}
@@ -203,5 +218,13 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	private _applyTranslationOnTabs() {
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadTabs();
+			});
 	}
 }

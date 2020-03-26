@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 57.1 (83088) - https://sketch.com -->
+    <title>bar-chart</title>
+    <desc>Created with Sketch.</desc>
+    <g id="bar-chart" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="#089C17" x="14" y="25" width="153" height="30"></rect>
+        <rect id="Rectangle" fill="#DCC300" x="14" y="65" width="135" height="30"></rect>
+        <rect id="Rectangle" fill="#66DF09" x="14" y="105" width="77" height="30"></rect>
+        <rect id="Rectangle" fill="#FF3B30" x="14" y="145" width="95" height="30"></rect>
+    </g>
+</svg>

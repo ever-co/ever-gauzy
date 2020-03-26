@@ -219,12 +219,15 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "служители",
 			"EXPENSE": "Разходи",
 			"USER": "user",
-			"INVITATION": "покана"
+			"INVITATION": "покана",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {
@@ -270,6 +273,8 @@
 		"DASHBOARD": "Табло",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Почивка",
 		"HELP": "Помощ",
@@ -305,10 +310,29 @@
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Руски"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Accounting",
+		"HUMAN_RESOURCES": "Human Resources",
+		"TIME_TRACKING": "Time Tracking",
+		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Добави текст за неаутентикирани потребители",
+		"CHARTS": {
+			"BAR": "Bar",
+			"DOUGHNUT": "Doughnut",
+			"STACKED_BAR": "Stacked Bar",
+			"CHART_TYPE": "Chart Type",
+			"REVENUE": "Revenue",
+			"EXPENSES": "Разходи",
+			"PROFIT": "Печалба",
+			"BONUS": "Бонус",
+			"NO_MONTH_DATA": "No Data for this month"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Репорт на печалбата",
 			"TOTAL_EXPENSES": "Общи разходи",
@@ -396,7 +420,14 @@
 			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
 			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
-			"EMPLOYMENT_TYPE": "Employment Type"
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Локация",
+			"RATES": "Rates",
+			"PROJECTS": "Проекти",
+			"CLIENTS": "Клиенти",
+			"HIRING": "Hiring"
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
@@ -439,7 +470,6 @@
 			"PROJECTS": "Проекти",
 			"DEPARTMENT_NAME": "Име на отдела",
 			"POSITION_NAME": "Название на позиция",
-			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Добавяне на нов проект",
 			"START_DATE": "Начална дата",
 			"END_DATE": "Крайна дата",
@@ -455,7 +485,16 @@
 			"EDIT_PROJECT": "Редактирай Проекта",
 			"REGIONS": "Области",
 			"ROLES_PERMISSIONS": "Роли и Позволения",
-			"DATE_LIMIT": "Date Limit"
+			"DATE_LIMIT": "Date Limit",
+			"SETTINGS": {
+				"TIMER_SETTINGS": "Timer Settings",
+				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_TASK": "Require Task",
+				"REQUIRE_CLIENT": "Require Client"
+			}
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Виж Административното Табло",
@@ -591,7 +630,13 @@
 		"SHARE_END_DATE": "Share end date",
 		"STATUS": "Статус",
 		"REQUEST_SAVED": "Request saved",
-		"REQUEST_DELETED": "Request deleted"
+		"REQUEST_DELETED": "Request deleted",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
+			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
+			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+		}
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -841,5 +886,19 @@
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Страртирай таймер",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"DATE": "Дата",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description",
+		"ADD_TIME_SUCCESS": "Time Successfully added"
 	}
 }

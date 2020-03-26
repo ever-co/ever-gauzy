@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbToastrService } from '@nebular/theme';
 import { Observable, throwError } from 'rxjs';
-import { Task } from '@gauzy/models';
+import { Task, GetTaskOptions } from '@gauzy/models';
 import { tap, catchError } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,21 +26,13 @@ export class TasksService extends TranslationBaseComponent {
 		super(translateService);
 	}
 
-	getAllTasks(): Observable<ITaskResponse> {
-		const data = JSON.stringify({ relations: ['project'] });
+	getAllTasks(findInput: GetTaskOptions = {}): Observable<ITaskResponse> {
+		const data = JSON.stringify({ relations: ['project'], findInput });
 		return this._http
 			.get<ITaskResponse>(this.API_URL, {
 				params: { data }
 			})
-			.pipe(
-				tap(() =>
-					this.toastrService.primary(
-						this.getTranslation('TASKS_PAGE.TASKS_LOADED'),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					)
-				),
-				catchError((error) => this.errorHandler(error))
-			);
+			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
 	createTask(task): Observable<Task> {
