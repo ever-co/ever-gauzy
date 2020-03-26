@@ -1,37 +1,81 @@
-<label class="label" for="addTags">
-	{{ 'TAGS_PAGE.HEADER' | translate }}
-</label>
-<ng-select
-	[items]="tags"
-	[(ngModel)]="selectedTags"
-	bindLabel="id"
-	multiple="true"
-	(change)="onChange()"
->
-	<ng-template ng-label-tmp let-item="item" let-clear="clear">
-		<span class="ng-value-label"
-			><nb-badge
+<form [formGroup]="form" *ngIf="form">
+	<label class="label" for="addTags">
+		{{ 'TAGS_PAGE.HEADER' | translate }}
+	</label>
+	<ng-select
+		formControlName="tags"
+		[items]="tags"
+		[(ngModel)]="selectedTags"
+		bindLabel="id"
+		multiple="true"
+		(change)="onChange()"
+	>
+		<ng-template ng-label-tmp let-item="item" let-clear="clear">
+			<span class="ng-value-label"
+				><nb-badge
+					style="position: static !important;"
+					width="20px"
+					height="20px"
+					[style.background]="item.color"
+					text="{{ item.name }}"
+				></nb-badge
+			></span>
+			<span
+				class="ng-value-icon right"
+				(click)="clear(item)"
+				aria-hidden="true"
+				>×</span
+			>
+		</ng-template>
+		<ng-template ng-option-tmp let-item="item">
+			<nb-badge
 				style="position: static !important;"
 				width="20px"
 				height="20px"
 				[style.background]="item.color"
 				text="{{ item.name }}"
-			></nb-badge
-		></span>
-		<span
-			class="ng-value-icon right"
-			(click)="clear(item)"
-			aria-hidden="true"
-			>×</span
-		>
-	</ng-template>
-	<ng-template ng-option-tmp let-item="item">
-		<nb-badge
-			style="position: static !important;"
-			width="20px"
-			height="20px"
-			[style.background]="item.color"
-			text="{{ item.name }}"
-		></nb-badge>
-	</ng-template>
-</ng-select>
+			></nb-badge>
+		</ng-template>
+	</ng-select>
+</form>
+
+<form *ngIf="!form">
+	<label class="label" for="addTags">
+		{{ 'TAGS_PAGE.HEADER' | translate }}
+	</label>
+	<ng-select
+		[items]="tags"
+		[(ngModel)]="selectedTags"
+		bindLabel="id"
+		multiple="true"
+		(change)="onChange()"
+		[ngModelOptions]="{ standalone: true }"
+	>
+		<ng-template ng-label-tmp let-item="item" let-clear="clear">
+			<span class="ng-value-label"
+				><nb-badge
+					style="position: static !important;"
+					width="20px"
+					height="20px"
+					[style.background]="item.color"
+					text="{{ item.name }}"
+				></nb-badge
+			></span>
+			<span
+				class="ng-value-icon right"
+				(click)="clear(item)"
+				aria-hidden="true"
+				>×</span
+			>
+		</ng-template>
+		<ng-template ng-option-tmp let-item="item">
+			<nb-badge
+				style="position: static !important;"
+				width="20px"
+				height="20px"
+				[style.background]="item.color"
+				text="{{ item.name }}"
+			></nb-badge>
+		</ng-template>
+	</ng-select>
+</form>

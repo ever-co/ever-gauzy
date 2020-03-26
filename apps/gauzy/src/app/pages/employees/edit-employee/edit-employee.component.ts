@@ -96,7 +96,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 					firstName: items[0].user.firstName,
 					lastName: items[0].user.lastName,
 					imageUrl: items[0].user.imageUrl,
-					tags: []
+					tags: items[0].user.tags
 				};
 
 				const checkUsername = this.selectedEmployee.user.username;

@@ -41,7 +41,6 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	positions: OrganizationPositions[] = [];
 	tags: Tag[] = [];
 	selectedTags: any;
-	test: any = 'PEHO';
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -127,6 +126,10 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	selectedTagsHandler(tags: Tag[]) {
+		this.tags = tags;
+	}
+
 	private _initializeForm(employee: Employee) {
 		this.form = this.fb.group({
 			organizationEmploymentTypes: [
@@ -146,8 +149,5 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
-	}
-	selectedTagsHandler(ev) {
-		this.selectedTags = ev;
 	}
 }
