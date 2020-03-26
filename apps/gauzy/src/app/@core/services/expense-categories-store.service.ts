@@ -27,4 +27,17 @@ export class ExpenseCategoriesStoreService {
 			.pipe(tap(({ items }) => this._expenseCategories$.next(items)))
 			.subscribe();
 	}
+
+	create(name): Observable<IExpenseCategory> {
+		return this.expenseCategoriesService
+			.create({ name })
+			.pipe(
+				tap((expenseCategory) =>
+					this._expenseCategories$.next([
+						...this.expenseCategories,
+						expenseCategory
+					])
+				)
+			);
+	}
 }

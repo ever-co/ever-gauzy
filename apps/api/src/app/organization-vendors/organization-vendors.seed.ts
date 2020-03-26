@@ -1,23 +1,23 @@
-import { OrganizationVendorsEnum } from '@gauzy/models';
+import { OrganizationVendorEnum } from '@gauzy/models';
 import { Connection } from 'typeorm';
-import { OrganizationVendors } from '.';
+import { OrganizationVendor } from '.';
 
 export const createOrganizationVendors = async (
 	connection: Connection,
 	organizationId: string
-): Promise<OrganizationVendors[]> => {
-	const defaultOrganizationVendors = Object.values(
-		OrganizationVendorsEnum
-	).map((name) => ({
-		name,
-		organizationId
-	}));
+): Promise<OrganizationVendor[]> => {
+	const defaultOrganizationVendor = Object.values(OrganizationVendorEnum).map(
+		(name) => ({
+			name,
+			organizationId
+		})
+	);
 	await connection
 		.createQueryBuilder()
 		.insert()
-		.into(OrganizationVendors)
-		.values(defaultOrganizationVendors)
+		.into(OrganizationVendor)
+		.values(defaultOrganizationVendor)
 		.execute();
 
-	return defaultOrganizationVendors;
+	return defaultOrganizationVendor;
 };

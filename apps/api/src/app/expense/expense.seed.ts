@@ -6,7 +6,7 @@ import {
 	Organization,
 	Employee,
 	IExpenseCategory,
-	OrganizationVendors
+	IOrganizationVendor
 } from '@gauzy/models';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
@@ -17,13 +17,13 @@ export const createExpenses = async (
 		org: Organization;
 		employees: Employee[];
 		categories: IExpenseCategory[];
-		organizationVendors: OrganizationVendors[];
+		organizationVendors: IOrganizationVendor[];
 	},
 	randomData: {
 		orgs: Organization[];
 		employees: Employee[];
 		categories: IExpenseCategory[];
-		organizationVendors: OrganizationVendors[];
+		organizationVendors: IOrganizationVendor[];
 	}
 ): Promise<{ defaultExpenses: Expense[]; randomExpenses: Expense[] }> => {
 	const currencies = Object.values(CurrenciesEnum);

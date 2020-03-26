@@ -8,7 +8,7 @@ import {
 	TaxTypesEnum,
 	ExpenseTypesEnum,
 	IExpenseCategory,
-	OrganizationVendors
+	IOrganizationVendor
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -43,7 +43,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
 	expenseCategories$: Observable<IExpenseCategory[]>;
-	vendors: OrganizationVendors[];
+	vendors: IOrganizationVendor[];
 	clients: { clientName: string; clientId: string }[] = [];
 	projects: { projectName: string; projectId: string }[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
@@ -130,7 +130,19 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		);
 	}
 
-	addNewVendor = (name: string): Promise<OrganizationVendors> => {
+	addNewCategory = async (name: string): Promise<IExpenseCategory> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return await this.expenseCategoriesStore.create(name).toPromise();
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
+
+	addNewVendor = (name: string): Promise<IOrganizationVendor> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(

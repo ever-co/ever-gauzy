@@ -2,10 +2,10 @@ import { Column, Entity, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { OrganizationVendors as IOrganizationVendors } from '@gauzy/models';
+import { IOrganizationVendor } from '@gauzy/models';
 
 @Entity('organization_vendor')
-export class OrganizationVendors extends Base implements IOrganizationVendors {
+export class OrganizationVendor extends Base implements IOrganizationVendor {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

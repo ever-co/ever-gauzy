@@ -14,4 +14,11 @@ export class ExpenseCategoriesService {
 			'/api/expense-categories'
 		);
 	}
+
+	create(createDto): Observable<IExpenseCategory> {
+		return this.http.post<IExpenseCategory>(
+			'/api/expense-categories',
+			createDto
+		);
+	}
 }

@@ -10,7 +10,7 @@ import { OrganizationVendorsService } from '../../organization-vendors';
 import { OrganizationClientsService } from '../../organization-clients';
 import { ExpenseCategoriesService } from '../../expense-categories';
 import {
-	OrganizationVendorsEnum,
+	OrganizationVendorEnum,
 	ExpenseCategoriesEnum,
 	IncomeTypeEnum
 } from '@gauzy/models';
@@ -110,11 +110,11 @@ export class UpworkService {
 							this._orgVendorService,
 							{
 								where: {
-									name: OrganizationVendorsEnum.UPWORK,
+									name: OrganizationVendorEnum.UPWORK,
 									organizationId: orgId
 								}
 							},
-							`Vendor: ${OrganizationVendorsEnum.UPWORK} not found`
+							`Vendor: ${OrganizationVendorEnum.UPWORK} not found`
 						);
 
 						const {

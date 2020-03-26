@@ -125,6 +125,8 @@
 				<div class="col-sm-6">
 					<ng-select
 						[items]="expenseCategories$ | async"
+						[searchable]="true"
+						[addTag]="addNewCategory"
 						bindLabel="name"
 						[searchable]="false"
 						formControlName="category"

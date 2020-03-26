@@ -4,7 +4,7 @@ import {
 	Expense,
 	PermissionsEnum,
 	IExpenseCategory,
-	OrganizationVendors
+	IOrganizationVendor
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -27,7 +27,7 @@ export interface ExpenseViewModel {
 	valueDate: Date;
 	vendorId: string;
 	vendorName: string;
-	vendor: OrganizationVendors;
+	vendor: IOrganizationVendor;
 	typeOfExpense: string;
 	categoryId: string;
 	categoryName: string;
