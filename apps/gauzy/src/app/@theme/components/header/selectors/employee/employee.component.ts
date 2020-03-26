@@ -27,7 +27,8 @@ export const ALL_EMPLOYEES_SELECTED: SelectedEmployee = {
 	firstName: 'All Employees',
 	lastName: '',
 	imageUrl: 'https://i.imgur.com/XwA2T62.jpg',
-	defaultType: DEFAULT_TYPE.ALL_EMPLOYEE
+	defaultType: DEFAULT_TYPE.ALL_EMPLOYEE,
+	tags: []
 };
 
 export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
@@ -35,7 +36,8 @@ export const NO_EMPLOYEE_SELECTED: SelectedEmployee = {
 	firstName: '',
 	lastName: '',
 	imageUrl: '',
-	defaultType: DEFAULT_TYPE.NO_EMPLOYEE
+	defaultType: DEFAULT_TYPE.NO_EMPLOYEE,
+	tags: []
 };
 
 @Component({
