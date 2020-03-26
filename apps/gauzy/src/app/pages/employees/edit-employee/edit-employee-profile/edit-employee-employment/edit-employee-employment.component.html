@@ -107,6 +107,8 @@
 		<div class="col-md-6">
 			<div class="form-group">
 				<ngx-tags-color-input
+					[form]="form"
+					[selectedTags]="tags"
 					(selectedTagsEvent)="selectedTagsHandler($event)"
 				>
 				</ngx-tags-color-input>
