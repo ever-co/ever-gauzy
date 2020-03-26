@@ -133,9 +133,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			organizationDepartments: [employee.organizationDepartments || null],
 			organizationPosition: [employee.organizationPosition || null],
 			startedWorkOn: [
-				employee !== null && employee
-					? new Date(employee.startedWorkOn)
-					: ''
+				employee ? new Date(employee.startedWorkOn) : '' || null
 			]
 		});
 	}
