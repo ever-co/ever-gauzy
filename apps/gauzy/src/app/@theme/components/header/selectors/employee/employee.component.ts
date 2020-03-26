@@ -3,6 +3,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
+import { Tag } from '@gauzy/models';
 
 //TODO: Currently the whole application assumes that if employee or id is null then you need to get data for All Employees
 //That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
@@ -13,6 +14,7 @@ export interface SelectedEmployee {
 	lastName: string;
 	imageUrl: string;
 	defaultType?: DEFAULT_TYPE;
+	tags: Tag[];
 }
 
 export enum DEFAULT_TYPE {

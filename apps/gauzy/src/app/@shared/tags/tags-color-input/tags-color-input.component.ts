@@ -24,6 +24,9 @@ export class TagsColorInputComponent implements OnInit {
 	@Input('selectedTags')
 	selectedTags: any;
 
+	@Input('items')
+	items: any;
+
 	@Output()
 	selectedTagsEvent: EventEmitter<any> = new EventEmitter<any>();
 
@@ -31,6 +34,7 @@ export class TagsColorInputComponent implements OnInit {
 
 	onChange() {
 		this.selectedTagsEvent.emit(this.selectedTags);
+		console.log(this.selectedTags);
 	}
 
 	ngOnInit() {

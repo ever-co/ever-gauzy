@@ -4,6 +4,7 @@
 <ng-select
 	[items]="tags"
 	[(ngModel)]="selectedTags"
+	bindLabel="id"
 	multiple="true"
 	(change)="onChange()"
 >
