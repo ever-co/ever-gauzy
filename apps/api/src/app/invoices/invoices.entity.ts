@@ -75,7 +75,7 @@ export class Invoice extends Base implements IInvoice {
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany(
 		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.invoices
+		(invoiceItem) => invoiceItem.invoice
 	)
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];

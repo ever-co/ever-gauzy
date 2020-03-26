@@ -1,5 +1,5 @@
 import { Base } from '../core/entities/base';
-import { Entity, Column, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import { InvoiceItem as IInvoiceItem } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsString, IsNotEmpty } from 'class-validator';
@@ -38,11 +38,11 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	@Column()
 	invoiceId: string;
 
-	@ApiPropertyOptional({ type: Invoice, isArray: true })
-	@OneToMany(
+	@ApiPropertyOptional({ type: Invoice })
+	@ManyToOne(
 		(type) => Invoice,
-		(invoice) => invoice.invoiceDate
+		(invoice) => invoice.invoiceItems
 	)
 	@JoinColumn()
-	invoices?: Invoice[];
+	invoice?: Invoice;
 }
