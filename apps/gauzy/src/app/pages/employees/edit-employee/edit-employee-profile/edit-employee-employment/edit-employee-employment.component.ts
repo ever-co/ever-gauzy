@@ -124,6 +124,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	}
 
 	private _initializeForm(employee: Employee) {
+		console.log('employee', employee);
 		this.form = this.fb.group({
 			organizationEmploymentTypes: [
 				employee.organizationEmploymentTypes || null
@@ -133,7 +134,9 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			organizationDepartments: [employee.organizationDepartments || null],
 			organizationPosition: [employee.organizationPosition || null],
 			startedWorkOn: [
-				employee ? new Date(employee.startedWorkOn) : '' || null
+				employee && employee.startedWorkOn !== null
+					? new Date(employee.startedWorkOn)
+					: ''
 			]
 		});
 	}
