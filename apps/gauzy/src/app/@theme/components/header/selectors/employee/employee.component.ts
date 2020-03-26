@@ -14,7 +14,7 @@ export interface SelectedEmployee {
 	lastName: string;
 	imageUrl: string;
 	defaultType?: DEFAULT_TYPE;
-	tags: Tag[];
+	tags?: Tag[];
 }
 
 export enum DEFAULT_TYPE {
