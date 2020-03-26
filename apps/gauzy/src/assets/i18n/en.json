@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Profit Based Bonus",
 		"REVENUE_BASED_BONUS": "Revenue Based Bonus",
 		"STATUS": "Status",
+		"SOURCE": "Source",
 		"WORK_STATUS": "Work Status",
 		"TODAY": "Today",
 		"END_OF_MONTH": "End Of Month",
@@ -282,6 +283,7 @@
 		"ABOUT": "About",
 		"ADMIN": "Admin",
 		"EMPLOYEES": "Employees",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Organizations",
 		"SETTINGS": "Settings",
 		"GENERAL": "General",
@@ -434,6 +436,37 @@
 			"STEP_2": "Step 2",
 			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Deleted",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "Developer",
+			"DEPARTMENT": "Department",
+			"POSITION": "Position",
+			"CANDIATE_DEPARTMENTS": "Employee's Departments:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
 		}

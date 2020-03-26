@@ -145,6 +145,15 @@ const routes: Routes = [
 				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
+				path: 'candidates',
+				loadChildren: () =>
+					import('./candidates/candidates.module').then(
+						(m) => m.CandidatesModule
+					)
+				// canActivate: [RoleGuard],
+				// data: { expectedRole: [RolesEnum.ADMIN] }
+			},
+			{
 				path: 'users',
 				loadChildren: () =>
 					import('./users/users.module').then((m) => m.UsersModule)

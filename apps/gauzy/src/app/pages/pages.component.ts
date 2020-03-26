@@ -164,6 +164,19 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Candidates',
+			icon: 'people-outline',
+			link: '/pages/candidates',
+			data: {
+				translated: false,
+				// permissionKeys: [
+				// 	PermissionsEnum.ORG_EMPLOYEES_VIEW,
+				// 	PermissionsEnum.ORG_EXPENSES_EDIT
+				// ],
+				translationKey: 'MENU.CANDIDATES'
+			}
+		},
+		{
 			title: 'Users',
 			icon: 'people-outline',
 			link: '/pages/users',
