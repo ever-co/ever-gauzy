@@ -151,6 +151,7 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 						}
 					},
 					tooltips: {
+						enabled: false,
 						callbacks: {
 							label: function(tooltipItem, data) {
 								let label =

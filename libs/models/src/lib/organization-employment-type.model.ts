@@ -5,7 +5,8 @@ export enum GenericEmploymentTypes {
 	CONTRACT = 'Contract',
 	PROBATION = 'Probation',
 	PART_TIME = 'Part-time',
-	FULL_TIME = 'Full-time'
+	FULL_TIME = 'Full-time',
+	CONTRACTOR = 'Contractor'
 }
 
 export interface OrganizationEmploymentType extends IBaseEntityModel {

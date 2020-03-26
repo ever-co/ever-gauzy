@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { TaskSelectorComponent } from './task/task.component';
 import { TimerPickerComponent } from './timer-picker/timer-picker.component';
+import { SharedModule } from '../shared.module';
 
 @NgModule({
 	declarations: [
@@ -32,7 +33,8 @@ import { TimerPickerComponent } from './timer-picker/timer-picker.component';
 		FormsModule,
 		TranslateModule,
 		NbCheckboxModule,
-		NbDatepickerModule
+		NbDatepickerModule,
+		SharedModule
 	],
 	exports: [TimeTrackerComponent]
 })

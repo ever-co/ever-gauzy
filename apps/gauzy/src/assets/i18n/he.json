@@ -484,7 +484,16 @@
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
 			"ROLES_PERMISSIONS": "Roles & Permissions",
-			"DATE_LIMIT": "Date Limit"
+			"DATE_LIMIT": "Date Limit",
+			"SETTINGS": {
+				"TIMER_SETTINGS": "Timer Settings",
+				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_TASK": "Require Task",
+				"REQUIRE_CLIENT": "Require Client"
+			}
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",

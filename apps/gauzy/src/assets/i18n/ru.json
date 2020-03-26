@@ -484,7 +484,16 @@
 			"EDIT_PROJECT": "Редактировать проект",
 			"REGIONS": "Регионы",
 			"ROLES_PERMISSIONS": "Роли и Разрешения",
-			"DATE_LIMIT": "Ограничение даты"
+			"DATE_LIMIT": "Ограничение даты",
+			"SETTINGS": {
+				"TIMER_SETTINGS": "Настройки таймера",
+				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
+				"REQUIRE_REASON": "Требуется причина",
+				"REQUIRE_DESCRIPTION": "Требуется описание",
+				"REQUIRE_PROJECT": "Требовать проект",
+				"REQUIRE_TASK": "Требовать задание",
+				"REQUIRE_CLIENT": "Требовать клиента"
+			}
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",

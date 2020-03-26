@@ -1,5 +1,70 @@
 <form class="main-form" [formGroup]="form" *ngIf="form">
 	<div class="row">
+		<div class="col-md-6">
+			<div class="form-group">
+				<label for="startedWork" class="label">
+					{{ 'FORM.LABELS.START_DATE' | translate }}
+				</label>
+				<input
+					[nbDatepicker]="datepicker"
+					nbInput
+					fullWidth
+					placeholder="{{
+						'FORM.PLACEHOLDERS.START_DATE' | translate
+					}}"
+					formControlName="startedWorkOn"
+					required
+				/>
+				<nb-datepicker #datepicker></nb-datepicker>
+			</div>
+		</div>
+		<div class="col-md-6" *ngIf="form.invalid && form.touched">
+			<div class="notes">
+				<p>
+					It's required to enter the date when the employee started
+					work to generate employee payroll, enable the employee to
+					participate in split expenses, see employee statistics, etc
+				</p>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6">
+			<div class="form-group">
+				<label for="employmentType" class="label">{{
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate
+				}}</label>
+				<ng-select
+					id="employmentType"
+					[items]="employmentTypes"
+					formControlName="organizationEmploymentTypes"
+					bindLabel="name"
+					[searchable]="false"
+					placeholder="{{
+						'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
+							| translate
+					}}"
+					multiple="true"
+				>
+				</ng-select>
+			</div>
+		</div>
+		<div class="col-md-6">
+			<div class="form-group">
+				<label class="label" for="empLevelInput">
+					Employee Level
+				</label>
+				<ng-select formControlName="employeeLevel">
+					<ng-option
+						*ngFor="let empL of employeeLevels"
+						[value]="empL.level"
+						>{{ empL.level }}</ng-option
+					>
+				</ng-select>
+			</div>
+		</div>
+	</div>
+	<div class="row">
 		<div class="col">
 			<div class="form-group">
 				<label class="label">
@@ -38,43 +103,7 @@
 			</div>
 		</div>
 	</div>
-
 	<div class="row">
-		<div class="col-md-6">
-			<div class="form-group">
-				<label for="employmentType" class="label">{{
-					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE' | translate
-				}}</label>
-				<ng-select
-					id="employmentType"
-					[items]="employmentTypes"
-					formControlName="organizationEmploymentTypes"
-					bindLabel="name"
-					[searchable]="false"
-					placeholder="{{
-						'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT_TYPE'
-							| translate
-					}}"
-					multiple="true"
-				>
-				</ng-select>
-			</div>
-		</div>
-
-		<div class="col-md-6">
-			<div class="form-group">
-				<label class="label" for="empLevelInput">
-					Employee Level
-				</label>
-				<ng-select formControlName="employeeLevel">
-					<ng-option
-						*ngFor="let empL of employeeLevels"
-						[value]="empL.level"
-						>{{ empL.level }}</ng-option
-					>
-				</ng-select>
-			</div>
-		</div>
 		<div class="col-md-6">
 			<div class="form-group">
 				<ngx-tags-color-input
@@ -84,7 +113,6 @@
 			</div>
 		</div>
 	</div>
-
 	<div class="row">
 		<div class="col">
 			<div class="form-group">
@@ -94,7 +122,6 @@
 			</div>
 		</div>
 	</div>
-
 	<div class="actions">
 		<button
 			[disabled]="form.invalid"
