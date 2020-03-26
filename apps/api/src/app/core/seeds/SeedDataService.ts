@@ -202,10 +202,12 @@ export class SeedDataService {
 
 			await createEmailTemplates(this.connection);
 
-			await seedEmploymentTypes(this.connection, [
-				...randomOrganizations,
+			await seedEmploymentTypes(
+				this.connection,
+				[...randomOrganizations, defaultOrganization],
+				employees.defaultEmployees,
 				defaultOrganization
-			]);
+			);
 
 			await createEmployeeLevels(this.connection);
 

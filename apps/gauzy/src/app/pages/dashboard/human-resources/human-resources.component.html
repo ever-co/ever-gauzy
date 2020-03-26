@@ -51,7 +51,7 @@
 					class="employee-details employee-salary"
 				>
 					{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}:
-					{{ expenseCurrency }}
+					{{ defaultCurrency }}
 					{{ totalSalary }}
 				</div>
 
@@ -336,7 +336,10 @@
 								'negative-bonus-color': totalBonus < 0
 							}"
 						>
-							{{ totalBonus | currency: defaultCurrency }}
+							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
+							:
+							{{ totalBonus }}
+							{{ defaultCurrency }}
 						</div>
 						<div
 							*ngIf="!defaultCurrency"
@@ -344,7 +347,10 @@
 								'negative-bonus-color': totalBonus < 0
 							}"
 						>
+							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
+							:
 							{{ totalBonus }}
+							{{ defaultCurrency }}
 						</div>
 					</div>
 					<div class="bonus-disclaimer" *ngIf="totalBonus < 0">
@@ -369,6 +375,7 @@
 					status="success"
 					[selected]="selectedChart"
 					(selectedChange)="onChartSelected($event)"
+					size="tiny"
 				>
 					<nb-option value="1"
 						><img

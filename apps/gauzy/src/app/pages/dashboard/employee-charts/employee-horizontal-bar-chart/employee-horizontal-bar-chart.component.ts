@@ -151,6 +151,9 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 						labels: {
 							fontColor: chartjs.textColor
 						}
+					},
+					tooltips: {
+						enabled: false
 					}
 				};
 			});

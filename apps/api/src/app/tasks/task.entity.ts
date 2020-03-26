@@ -28,5 +28,6 @@ export class Task extends Base implements ITask {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((task: Task) => task.project)
+	@Column()
 	readonly projectId?: string;
 }
