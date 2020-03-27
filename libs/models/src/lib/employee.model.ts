@@ -60,6 +60,7 @@ export interface EmployeeCreateInput {
 	acceptDate?: Date;
 	rejectDate?: Date;
 	members?: Employee[];
+	tags?: Tag[];
 	startedWorkOn?: any;
 }
 

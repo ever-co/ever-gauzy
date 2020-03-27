@@ -82,7 +82,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			organization: this.store.selectedOrganization,
 			offerDate,
 			acceptDate,
-			rejectDate
+			rejectDate,
+			tags: this.userBasicInfo.selectedTags
 		};
 		this.employees.push(newEmployee);
 		this.userBasicInfo.loadFormData();
@@ -97,7 +98,6 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 				.createBulk(this.employees)
 				.pipe(first())
 				.toPromise();
-
 			this.closeDialog(employee);
 		} catch (error) {
 			this.errorHandler.handleError(error);

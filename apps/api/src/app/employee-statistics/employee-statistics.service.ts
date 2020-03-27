@@ -7,12 +7,13 @@ import {
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { EmployeeService } from '../employee/employee.service';
-import { ExpenseService } from '../expense';
-import { IncomeService } from '../income';
+import { ExpenseService } from '../expense/expense.service';
+import { IncomeService } from '../income/income.service';
 import { Between } from 'typeorm';
 import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
-import { OrganizationRecurringExpenseService } from '../organization-recurring-expense';
+import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
+import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
+
 @Injectable()
 export class EmployeeStatisticsService {
 	private _monthNames = [
@@ -277,14 +278,7 @@ export class EmployeeStatisticsService {
 		lastNMonths: number
 	) =>
 		await this.expenseService.findAll({
-			select: [
-				'valueDate',
-				'vendorName',
-				'categoryName',
-				'amount',
-				'currency',
-				'notes'
-			],
+			select: ['valueDate', 'amount', 'currency', 'notes'],
 			where: {
 				employee: {
 					id: employeeId
@@ -317,14 +311,7 @@ export class EmployeeStatisticsService {
 
 		// 2 Find split expenses for Employee's Organization in last N months
 		const { items } = await this.expenseService.findAll({
-			select: [
-				'valueDate',
-				'vendorName',
-				'categoryName',
-				'amount',
-				'currency',
-				'notes'
-			],
+			select: ['valueDate', 'amount', 'currency', 'notes'],
 			where: {
 				organization: { id: employee.organization.id },
 				splitExpense: true,
@@ -339,7 +326,6 @@ export class EmployeeStatisticsService {
 					organization: { id: employee.organization.id }
 				}
 			})) || 1;
-
 		return { items, splitAmong };
 	};
 

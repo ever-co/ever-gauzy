@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Employee } from '../employee';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('organization_department')
 export class OrganizationDepartment extends Base

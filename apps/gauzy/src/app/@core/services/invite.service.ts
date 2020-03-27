@@ -7,7 +7,9 @@ import {
 	InviteFindInput,
 	PublicInviteFindInput,
 	InviteAcceptInput,
-	InviteResendInput
+	InviteResendInput,
+	OrganizationClients,
+	LinkClientOrganizationInviteInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -83,6 +85,30 @@ export class InviteService {
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/invite/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
+	inviteOrganizationClient(
+		organizationClientId: string
+	): Promise<OrganizationClients> {
+		return this.http
+			.put<OrganizationClients>(
+				`/api/invite/organization-client/${organizationClientId}`,
+				{}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	linkClientOrganizationInvite(
+		data: LinkClientOrganizationInviteInput
+	): Promise<OrganizationClients> {
+		return this.http
+			.put<OrganizationClients>(
+				`/api/invite/link-organization-client`,
+				data
+			)
 			.pipe(first())
 			.toPromise();
 	}

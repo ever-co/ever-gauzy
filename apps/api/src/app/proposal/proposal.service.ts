@@ -8,7 +8,7 @@ import {
 	ProposalCreateInput as IProposalCreateInput,
 	Proposal as IProposal
 } from '@gauzy/models';
-import { Employee } from '../employee';
+import { Employee } from '../employee/employee.entity';
 
 @Injectable()
 export class ProposalService extends CrudService<Proposal> {

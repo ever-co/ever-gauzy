@@ -13,17 +13,17 @@
 						'FORM.PLACEHOLDERS.START_DATE' | translate
 					}}"
 					formControlName="startedWorkOn"
-					required
 				/>
 				<nb-datepicker #datepicker></nb-datepicker>
 			</div>
 		</div>
-		<div class="col-md-6" *ngIf="form.invalid && form.touched">
+		<div
+			class="col-md-6"
+			*ngIf="form.touched && form.get('startedWorkOn').value == null"
+		>
 			<div class="notes">
 				<p>
-					It's required to enter the date when the employee started
-					work to generate employee payroll, enable the employee to
-					participate in split expenses, see employee statistics, etc
+					{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
 				</p>
 			</div>
 		</div>
@@ -107,6 +107,8 @@
 		<div class="col-md-6">
 			<div class="form-group">
 				<ngx-tags-color-input
+					[form]="form"
+					[selectedTags]="tags"
 					(selectedTagsEvent)="selectedTagsHandler($event)"
 				>
 				</ngx-tags-color-input>

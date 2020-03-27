@@ -55,6 +55,7 @@ import { EditOrganizationTeamsComponent } from './edit-organization-teams/edit-o
 import { EditOrganizationVendorsComponent } from './edit-organization-vendors/edit-organization-vendors.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization-employment-types/edit-organization-employment-types.component';
 import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color-input/tags-color-input.module';
+import { InviteService } from '../../../../@core/services/invite.service';
 
 @NgModule({
 	imports: [
@@ -99,7 +100,8 @@ import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color
 		OrganizationPositionsService,
 		OrganizationClientsService,
 		OrganizationEditStore,
-		EmployeeStore
+		EmployeeStore,
+		InviteService
 	],
 	entryComponents: [InviteClientComponent],
 	declarations: [
