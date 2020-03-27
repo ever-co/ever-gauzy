@@ -3,11 +3,13 @@ import { PermissionsEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
+import { CandidatesService } from '../../@core/services/candidates.service';
+import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -42,7 +44,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	@ViewChild('candidatesTable', { static: false }) candidatesTable;
 
 	constructor(
-		private employeesService: EmployeesService,
+		private candidatesService: CandidatesService,
 		private store: Store,
 		private translate: TranslateService
 	) {
@@ -101,6 +103,39 @@ export class CandidatesComponent extends TranslationBaseComponent
 	private async loadPage() {
 		this.selectedCandidate = null;
 
+		const { items } = await this.candidatesService
+			.getAll(['user', 'tags'], {
+				organization: { id: this.selectedOrganizationId }
+			})
+			.pipe(first())
+			.toPromise();
+		const { name } = this.store.selectedOrganization;
+
+		let candidatesVm = [];
+		const result = [];
+
+		for (const candidate of items) {
+			result.push({
+				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
+				email: candidate.user.email,
+				id: candidate.id,
+				status: candidate.status,
+				imageUrl: candidate.user.imageUrl,
+				tag: candidate.tags
+			});
+			console.warn(candidate.tags);
+		}
+
+		if (!this.includeDeleted) {
+			result.forEach((candidate) => {
+				candidatesVm.push(candidate);
+			});
+		} else {
+			candidatesVm = result;
+		}
+
+		this.sourceSmartTable.load(candidatesVm);
+
 		if (this.candidatesTable) {
 			this.candidatesTable.grid.dataSet.willSelect = 'false';
 		}
@@ -117,7 +152,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					// renderComponent: CandidateFullNameComponent,
+					renderComponent: CandidateFullNameComponent,
 					class: 'align-row'
 				},
 				email: {

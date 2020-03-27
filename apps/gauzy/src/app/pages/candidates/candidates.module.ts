@@ -1,3 +1,4 @@
+import { CandidatesService } from './../../@core/services/candidates.service';
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -28,12 +29,17 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { CandidatesComponent } from './candidates.component';
 import { CandidatesRoutingModule } from './candidates-routing.module';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
+import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
-const COMPONENTS = [CandidatesComponent, CandidateStatusComponent];
+const COMPONENTS = [
+	CandidatesComponent,
+	CandidateFullNameComponent,
+	CandidateStatusComponent
+];
 
 @NgModule({
 	imports: [
@@ -65,12 +71,13 @@ const COMPONENTS = [CandidatesComponent, CandidateStatusComponent];
 		TagsColorInputModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [CandidateStatusComponent],
+	entryComponents: [CandidateStatusComponent, CandidateFullNameComponent],
 	providers: [
 		OrganizationsService,
 		InviteGuard,
 		CountryService,
-		OrganizationEmploymentTypesService
+		OrganizationEmploymentTypesService,
+		CandidatesService
 	]
 })
 export class CandidatesModule {}

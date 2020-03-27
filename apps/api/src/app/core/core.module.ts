@@ -48,11 +48,13 @@ import {
 } from '../timesheet';
 import { ExpenseCategory } from '../expense-categories';
 import { EquipmentSharing } from '../equipment-sharing';
+import { Candidate } from '../candidate';
 
 const entities = [
 	Invite,
 	User,
 	Employee,
+	Candidate,
 	Role,
 	Organization,
 	Income,

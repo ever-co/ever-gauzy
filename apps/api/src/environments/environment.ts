@@ -282,7 +282,17 @@ export const environment: IEnvironment = {
 			employeeLevel: 'A'
 		}
 	],
-
+	defaultCandidates: [
+		{
+			email: 'alish@ever.co',
+			password: '123456',
+			firstName: 'Alish',
+			lastName: 'Meklyov',
+			imageUrl: 'assets/images/avatars/alish.jpg',
+			startedWorkOn: '2018-03-20',
+			employeeLevel: 'D'
+		}
+	],
 	defaultTeams: [
 		{
 			name: 'Employees',
@@ -306,6 +316,11 @@ export const environment: IEnvironment = {
 				'julia@ever.co'
 			]
 		},
+		{
+			name: 'Candidates',
+			defaultMembers: ['alish@ever.co']
+		},
+
 		{
 			name: 'Contractors',
 			defaultMembers: [

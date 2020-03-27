@@ -12,7 +12,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	userId: string;
 	organization: Organization;
 	orgId: string;
-	isActive: boolean;
+	status?: string;
 	teams?: OrganizationTeams[];
 	tenant: Tenant;
 	organizationDepartments?: OrganizationDepartment[];
