@@ -1,0 +1,42 @@
+<nb-card class="main">
+	<nb-card-header>
+		<h5>Request Days Off</h5>
+		<nb-icon (click)="close()" icon="close-outline"></nb-icon>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form class="row">
+			<div class="form-group col-6">
+				<ga-employee-selector
+					#employeeSelector
+					fullWidth
+					[skipGlobalChange]="true"
+					class="employees"
+				>
+				</ga-employee-selector>
+			</div>
+			<div class="form-group col-6">
+				<nb-select
+					[selected]="policy"
+					(selectedChange)="onPolicySelected($event)"
+					fullWidth
+					placeholder="Seletc Time-off Policy"
+				>
+					<nb-option
+						*ngFor="let policy of policies"
+						[value]="policy"
+						>{{ policy.name }}</nb-option
+					>
+				</nb-select>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="close()" status="danger" class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="addRequest()" status="success" nbButton>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

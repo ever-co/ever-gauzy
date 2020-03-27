@@ -42,11 +42,11 @@ export interface ViewDashboardExpenseHistory {
 	employeeCount?: number;
 }
 @Component({
-	selector: 'ga-employee-statistics',
-	templateUrl: './employee-statistics.component.html',
-	styleUrls: ['./employee-statistics.component.scss']
+	selector: 'ga-human-resources',
+	templateUrl: './human-resources.component.html',
+	styleUrls: ['./human-resources.component.scss']
 })
-export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
+export class HumanResourcesComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	loading = true;
 
@@ -84,7 +84,7 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 	incomePermissionsError = false;
 	expensePermissionError = false;
 
-	selectedChart = '';
+	selectedChart = '1';
 
 	constructor(
 		private incomeService: IncomeService,
@@ -274,11 +274,11 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 			)
 				? await this.expenseService.getAllWithSplitExpenses(
 						this.selectedEmployee.id,
-						['employee', 'organization'],
+						['employee', 'organization', 'category', 'vendor'],
 						this.selectedDate
 				  )
 				: await this.expenseService.getMyAllWithSplitExpenses(
-						['employee', 'organization'],
+						['employee', 'organization', 'category', 'vendor'],
 						this.selectedDate
 				  );
 
@@ -360,12 +360,12 @@ export class EmployeeStatisticsComponent implements OnInit, OnDestroy {
 		orgRecurringExpense?: OrganizationRecurringExpenseForEmployeeOutput[];
 	}): ViewDashboardExpenseHistory[] {
 		let viewDashboardExpenseHistory = [];
-
 		if (data.expense && data.expense.length) {
 			viewDashboardExpenseHistory = data.expense.map((e) => ({
 				valueDate: e.valueDate,
-				vendorName: e.vendorName,
-				categoryName: e.categoryName,
+				vendorName: e.vendor.name,
+				categoryName: e.category.name,
+				categoryId: e.category.id,
 				amount: e.amount,
 				notes: e.notes,
 				recurring: false,

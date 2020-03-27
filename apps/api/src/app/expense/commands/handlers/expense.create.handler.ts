@@ -26,10 +26,8 @@ export class ExpenseCreateHandler
 		);
 
 		expense.amount = Math.abs(input.amount);
-		expense.categoryId = input.categoryId;
-		expense.categoryName = input.categoryName;
-		expense.vendorId = input.vendorId;
-		expense.vendorName = input.vendorName;
+		expense.category = input.category;
+		expense.vendor = input.vendor;
 		expense.typeOfExpense = input.typeOfExpense;
 		expense.clientName = input.clientName;
 		expense.clientId = input.clientId;

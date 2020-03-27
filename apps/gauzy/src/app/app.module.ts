@@ -43,6 +43,8 @@ import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
 import * as Sentry from '@sentry/browser';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
+import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
+import { SharedModule } from './@shared/shared.module';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -86,7 +88,9 @@ if (environment.SENTRY_DNS) {
 			}
 		}),
 		CloudinaryModule.forRoot(cloudinary, cloudinaryConfiguration),
-		FileUploadModule
+		FileUploadModule,
+		TimeTrackerModule.forRoot(),
+		SharedModule.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [

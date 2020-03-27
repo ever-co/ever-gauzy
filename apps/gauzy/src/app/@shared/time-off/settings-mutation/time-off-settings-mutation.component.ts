@@ -10,7 +10,7 @@ import { TimeOffPolicyVM } from '../../../pages/time-off/time-off-settings/time-
 @Component({
 	selector: 'ngx-time-off-settings-mutation',
 	templateUrl: './time-off-settings-mutation.component.html',
-	styleUrls: ['./time-off-settings-mutation.component.scss']
+	styleUrls: ['../time-off-mutation.components.scss']
 })
 export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	constructor(

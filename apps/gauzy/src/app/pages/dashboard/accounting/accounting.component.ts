@@ -11,14 +11,14 @@ import {
 import { Router } from '@angular/router';
 
 @Component({
-	selector: 'ga-organization-employees',
-	templateUrl: './organization-employees.component.html',
+	selector: 'ga-accounting',
+	templateUrl: './accounting.component.html',
 	styleUrls: [
 		'../../organizations/edit-organization/edit-organization.component.scss',
-		'./organization-employees.component.scss'
+		'./accounting.component.scss'
 	]
 })
-export class OrganizationEmployeesComponent implements OnInit, OnDestroy {
+export class AccountingComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	aggregatedEmployeeStatistics: AggregatedEmployeeStatistic;

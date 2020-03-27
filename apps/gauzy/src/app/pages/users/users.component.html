@@ -54,16 +54,16 @@
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 				>{{ 'BUTTONS.EDIT' | translate }}
 			</button>
-			<!-- <button
+			<button
 				nbButton
 				[disabled]="!selectedUser"
-				(click)="delete()"
+				(click)="remove()"
 				status="danger"
 				class="mr-2"
 			>
 				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-				>{{ 'BUTTONS.DELETE' | translate }}
-			</button> -->
+				>{{ 'BUTTONS.REMOVE' | translate }}
+			</button>
 			<ga-edit-user-mutation
 				*ngIf="showAddCard"
 				[organization]="organization"

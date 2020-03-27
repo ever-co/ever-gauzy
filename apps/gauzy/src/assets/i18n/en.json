@@ -217,15 +217,21 @@
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"
 		},
+		"NOTIFICATIONS": {
+			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "Are you sure you want to delete",
 			"RECORD": "record",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "employee",
 			"EXPENSE": "Expense",
 			"USER": "user",
-			"INVITATION": "invitation"
+			"INVITATION": "invitation",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {
@@ -271,6 +277,8 @@
 		"DASHBOARD": "Dashboard",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Proposals",
 		"TIME_OFF": "Time Off",
 		"HELP": "Help",
@@ -305,6 +313,10 @@
 		"HEBREW": "Hebrew",
 		"RUSSIAN": "Russian"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
 		"HUMAN_RESOURCES": "Human Resources",
@@ -313,6 +325,17 @@
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Please select a month and employee from the menu above",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Insert text for not authenticated users",
+		"CHARTS": {
+			"BAR": "Bar",
+			"DOUGHNUT": "Doughnut",
+			"STACKED_BAR": "Stacked Bar",
+			"CHART_TYPE": "Chart Type",
+			"REVENUE": "Revenue",
+			"EXPENSES": "Expenses",
+			"PROFIT": "Profit",
+			"BONUS": "Bonus",
+			"NO_MONTH_DATA": "No Data for this month"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Profit Report",
 			"TOTAL_EXPENSES": "Total Expenses",
@@ -378,7 +401,8 @@
 		},
 		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
 		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
-		"SPLIT_EXPENSE": "Split Expense"
+		"SPLIT_EXPENSE": "Split Expense",
+		"ADD_EXPENSE_CATEGORY": "Add New Expense category"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Manage Employees for ",
@@ -450,7 +474,6 @@
 			"PROJECTS": "Projects",
 			"DEPARTMENT_NAME": "Department name",
 			"POSITION_NAME": "Position name",
-			"EMPLOYMENT_TYPES": "Employment Type",
 			"NEW_PROJECT": "Add new project",
 			"START_DATE": "Start Date",
 			"END_DATE": "End Date",
@@ -466,7 +489,16 @@
 			"EDIT_PROJECT": "Edit Project",
 			"REGIONS": "Regions",
 			"ROLES_PERMISSIONS": "Roles & Permissions",
-			"DATE_LIMIT": "Date Limit"
+			"DATE_LIMIT": "Date Limit",
+			"SETTINGS": {
+				"TIMER_SETTINGS": "Timer Settings",
+				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_TASK": "Require Task",
+				"REQUIRE_CLIENT": "Require Client"
+			}
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "View Admin Dashboard",
@@ -839,5 +871,19 @@
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Start Timer",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"DATE": "Date",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description",
+		"ADD_TIME_SUCCESS": "Time Successfully added"
 	}
 }

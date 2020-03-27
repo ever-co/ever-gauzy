@@ -19,7 +19,7 @@
 		align-content: center;
 
 		.header-selector {
-			width: 300px;
+			width: 360px;
 		}
 	}
 
@@ -82,11 +82,11 @@
 }
 
 .organization-selector {
-	max-width: 250px;
+	max-width: 400px;
 }
 
 .employee-selector {
-	max-width: 200px;
+	max-width: 250px;
 }
 
 .date-selector {
@@ -124,5 +124,20 @@
 		width: 100%;
 		max-width: 500px;
 		padding-bottom: 20px;
+	}
+}
+
+.timer-action {
+	cursor: pointer;
+}
+.timer-card {
+	position: relative;
+	padding-top: 12px;
+
+	.btn-close {
+		position: absolute;
+		right: 5px;
+		top: 0px;
+		padding: 2px;
 	}
 }

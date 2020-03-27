@@ -41,6 +41,7 @@ import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
 import { OrganizationClients } from '../organization-clients';
 import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-organization-clients.command';
+import { Request } from 'express';
 
 @ApiTags('Invite')
 @Controller()
@@ -65,9 +66,10 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
 	async createManyWithEmailsId(
-		@Body() entity: CreateEmailInvitesInput
+		@Body() entity: CreateEmailInvitesInput,
+		@Req() request: Request
 	): Promise<CreateEmailInvitesOutput> {
-		return this.inviteService.createBulk(entity);
+		return this.inviteService.createBulk(entity, request.get('Origin'));
 	}
 
 	@ApiOperation({ summary: 'Get invite.' })

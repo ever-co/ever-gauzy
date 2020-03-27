@@ -24,7 +24,7 @@ import { OrganizationRecurringExpense } from '../organization-recurring-expense'
 import { EmployeeRecurringExpense } from '../employee-recurring-expense';
 import { OrganizationClients } from '../organization-clients';
 import { OrganizationPositions } from '../organization-positions';
-import { OrganizationVendors } from '../organization-vendors';
+import { OrganizationVendor } from '../organization-vendors';
 import { OrganizationProjects } from '../organization-projects';
 import { OrganizationTeams } from '../organization-teams';
 import { Proposal } from '../proposal';
@@ -39,6 +39,14 @@ import { OrganizationEmploymentType } from '../organization-employment-type';
 import { Equipment } from '../equipment';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks';
+import {
+	TimeSlot,
+	Timesheet,
+	TimeLog,
+	Activity,
+	Screenshot
+} from '../timesheet';
+import { ExpenseCategory } from '../expense-categories';
 import { EquipmentSharing } from '../equipment-sharing';
 
 const entities = [
@@ -55,7 +63,7 @@ const entities = [
 	OrganizationClients,
 	OrganizationPositions,
 	OrganizationProjects,
-	OrganizationVendors,
+	OrganizationVendor,
 	OrganizationRecurringExpense,
 	EmployeeRecurringExpense,
 	OrganizationTeams,
@@ -71,7 +79,13 @@ const entities = [
 	Equipment,
 	EquipmentSharing,
 	EmployeeLevel,
-	Task
+	Task,
+	TimeSlot,
+	Timesheet,
+	TimeLog,
+	Activity,
+	Screenshot,
+	ExpenseCategory
 ];
 
 @Module({

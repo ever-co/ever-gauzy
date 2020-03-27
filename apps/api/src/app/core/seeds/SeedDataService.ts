@@ -41,6 +41,8 @@ import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
+import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
+import { createOrganizationVendors } from '../../organization-vendors/organization-vendors.seed';
 
 const allEntities = [
 	User,
@@ -172,15 +174,25 @@ export class SeedDataService {
 				}
 			);
 
+			const organizationVendors = await createOrganizationVendors(
+				this.connection,
+				defaultOrganization.id
+			);
+			const categories = await createExpenseCategories(this.connection);
+
 			await createExpenses(
 				this.connection,
 				{
 					org: defaultOrganization,
-					employees: [...employees.defaultEmployees]
+					employees: [...employees.defaultEmployees],
+					categories,
+					organizationVendors
 				},
 				{
 					orgs: randomOrganizations,
-					employees: [...employees.randomEmployees]
+					employees: [...employees.randomEmployees],
+					categories,
+					organizationVendors
 				}
 			);
 
@@ -190,10 +202,12 @@ export class SeedDataService {
 
 			await createEmailTemplates(this.connection);
 
-			await seedEmploymentTypes(this.connection, [
-				...randomOrganizations,
+			await seedEmploymentTypes(
+				this.connection,
+				[...randomOrganizations, defaultOrganization],
+				employees.defaultEmployees,
 				defaultOrganization
-			]);
+			);
 
 			await createEmployeeLevels(this.connection);
 

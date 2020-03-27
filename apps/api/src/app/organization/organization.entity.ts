@@ -176,4 +176,39 @@ export class Organization extends LocationBase implements IOrganization {
 	@IsBoolean()
 	@Column({ nullable: true })
 	futureDateAllowed?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	allowModifyTime?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireReason?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireDescription?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireProject?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireTask?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireClient?: boolean;
+
+	@ApiProperty({ enum: [12, 24] })
+	@IsBoolean()
+	@Column({ default: 12 })
+	timeFormat?: 12 | 24;
 }

@@ -6,10 +6,14 @@ import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
+import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ngx-employee-doughnut-chart',
 	template: `
+		<span>{{ displayDate }}</span>
 		<chart
 			style="height: 500px; width: 500px;"
 			type="doughnut"
@@ -18,24 +22,29 @@ import { SelectedEmployee } from '../../../../@theme/components/header/selectors
 		></chart>
 	`
 })
-export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
+export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
-	incomeStatistics: number[] = [];
-	expenseStatistics: number[] = [];
-	profitStatistics: number[] = [];
-	bonusStatistics: number[] = [];
+	incomeStatistics = 0;
+	expenseStatistics = 0;
+	profitStatistics = 0;
+	bonusStatistics = 0;
 	labels: string[] = [];
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
+	displayDate: string;
 
 	constructor(
 		private themeService: NbThemeService,
 		private employeeStatisticsService: EmployeeStatisticsService,
 		private store: Store,
-		private errorHandler: ErrorHandlingService
-	) {}
+		private errorHandler: ErrorHandlingService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	/**
 	 * Loads or reloads chart statistics and chart when employee or date
@@ -82,7 +91,12 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 			.subscribe((config) => {
 				const chartjs: any = config.variables.chartjs;
 				this.data = {
-					labels: ['Revenue', 'Expenses', 'Bonus', 'Profit'],
+					labels: [
+						this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE'),
+						this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'),
+						this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
+						this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT')
+					],
 					datasets: [
 						{
 							data: [
@@ -132,23 +146,26 @@ export class EmployeeDoughnutChartComponent implements OnInit, OnDestroy {
 			{
 				employeeId: this.selectedEmployee.id,
 				valueDate: this.selectedDate,
-				months: 12
+				months: 1
 			}
 		);
-		this.incomeStatistics = [];
-		this.expenseStatistics = [];
-		this.profitStatistics = [];
-		this.bonusStatistics = [];
-
-		/**
-		 * Populates the local statistics variables with fetched data.
-		 */
-		employeeStatistics.map((stat) => {
-			this.incomeStatistics.push(stat.income);
-			this.expenseStatistics.push(stat.expense);
-			this.profitStatistics.push(stat.profit);
-			this.bonusStatistics.push(stat.bonus);
-		});
+		this.incomeStatistics = employeeStatistics[0]
+			? employeeStatistics[0].income
+			: 0;
+		this.expenseStatistics = employeeStatistics[0]
+			? employeeStatistics[0].expense
+			: 0;
+		this.profitStatistics = employeeStatistics[0]
+			? employeeStatistics[0].profit
+			: 0;
+		this.bonusStatistics = employeeStatistics[0]
+			? employeeStatistics[0].bonus
+			: 0;
+		this.displayDate = employeeStatistics[0]
+			? monthNames[employeeStatistics[0].month] +
+			  ', ' +
+			  employeeStatistics[0].year
+			: this.getTranslation('DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA');
 	}
 
 	ngOnDestroy() {

@@ -28,8 +28,8 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
 import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-shortcuts.component';
-import { EmployeeStatisticsComponent } from './employee-statistics/employee-statistics.component';
-import { OrganizationEmployeesComponent } from './organization-employees/organization-employees.component';
+import { HumanResourcesComponent } from './human-resources/human-resources.component';
+import { AccountingComponent } from './accounting/accounting.component';
 import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.module';
 import { EmployeeHorizontalBarChartComponent } from './employee-charts/employee-horizontal-bar-chart/employee-horizontal-bar-chart.component';
 import { EmployeeDoughnutChartComponent } from './employee-charts/employee-doughnut-chart/employee-doughnut-chart.component';
@@ -77,8 +77,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeeHorizontalBarChartComponent,
 		EmployeeStackedBarChartComponent,
 		EmployeeDoughnutChartComponent,
-		OrganizationEmployeesComponent,
-		EmployeeStatisticsComponent,
+		AccountingComponent,
+		HumanResourcesComponent,
 		DataEntryShortcutsComponent,
 		TimeTrackingComponent,
 		ProjectManagementComponent

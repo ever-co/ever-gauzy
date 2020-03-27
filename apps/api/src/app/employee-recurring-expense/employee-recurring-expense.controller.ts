@@ -148,8 +148,6 @@ export class EmployeeRecurringExpenseController extends CrudController<
 	): Promise<IPagination<EmployeeRecurringExpense>> {
 		const { findInput, order = {} } = JSON.parse(data);
 
-		console.log(findInput);
-
 		return this.employeeRecurringExpenseService.findAll({
 			where: findInput,
 			order: order
