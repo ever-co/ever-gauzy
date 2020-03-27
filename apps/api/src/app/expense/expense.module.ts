@@ -9,11 +9,18 @@ import { Employee, EmployeeService } from '../employee';
 import { Organization, OrganizationService } from '../organization';
 import { UserModule, UserService, User } from '../user';
 import { QueryHandlers } from './queries/handlers';
+import { ExpenseCategory } from '../expense-categories';
 
 @Module({
 	imports: [
 		UserModule,
-		TypeOrmModule.forFeature([Expense, Employee, Organization, User]),
+		TypeOrmModule.forFeature([
+			Expense,
+			Employee,
+			Organization,
+			User,
+			ExpenseCategory
+		]),
 		CqrsModule
 	],
 	controllers: [ExpenseController],

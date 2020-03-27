@@ -75,11 +75,11 @@
 					/>
 					<nb-datepicker #formpicker></nb-datepicker>
 				</div>
-				<div class="col-sm-6" *ngIf="vendors.length">
+				<div class="col-sm-6">
 					<div class="form-group">
 						<ng-select
 							[addTag]="addNewVendor"
-							bindLabel="vendorName"
+							bindLabel="name"
 							[items]="vendors"
 							[searchable]="true"
 							placeholder="{{
@@ -123,18 +123,16 @@
 					</nb-select>
 				</div>
 				<div class="col-sm-6">
-					<div class="form-group" *ngIf="fakeCategories.length">
-						<ng-select
-							[items]="fakeCategories"
-							bindLabel="categoryName"
-							[searchable]="false"
-							formControlName="category"
-							placeholder="{{
-								'POP_UPS.ALL_CATEGORIES' | translate
-							}}"
-						>
-						</ng-select>
-					</div>
+					<ng-select
+						[items]="expenseCategories$ | async"
+						[searchable]="true"
+						[addTag]="addNewCategory"
+						bindLabel="name"
+						[searchable]="false"
+						formControlName="category"
+						placeholder="{{ 'POP_UPS.ALL_CATEGORIES' | translate }}"
+					>
+					</ng-select>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">

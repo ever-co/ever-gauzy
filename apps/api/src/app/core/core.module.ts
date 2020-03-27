@@ -24,7 +24,7 @@ import { OrganizationRecurringExpense } from '../organization-recurring-expense'
 import { EmployeeRecurringExpense } from '../employee-recurring-expense';
 import { OrganizationClients } from '../organization-clients';
 import { OrganizationPositions } from '../organization-positions';
-import { OrganizationVendors } from '../organization-vendors';
+import { OrganizationVendor } from '../organization-vendors';
 import { OrganizationProjects } from '../organization-projects';
 import { OrganizationTeams } from '../organization-teams';
 import { Proposal } from '../proposal';
@@ -63,7 +63,7 @@ const entities = [
 	OrganizationClients,
 	OrganizationPositions,
 	OrganizationProjects,
-	OrganizationVendors,
+	OrganizationVendor,
 	OrganizationRecurringExpense,
 	EmployeeRecurringExpense,
 	OrganizationTeams,

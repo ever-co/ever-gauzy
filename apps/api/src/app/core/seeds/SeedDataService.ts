@@ -42,6 +42,7 @@ import { createEmployeeLevels } from '../../organization_employeeLevel/organizat
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
 import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
+import { createOrganizationVendors } from '../../organization-vendors/organization-vendors.seed';
 
 const allEntities = [
 	User,
@@ -173,18 +174,25 @@ export class SeedDataService {
 				}
 			);
 
-			await createExpenseCategories(this.connection);
+			const organizationVendors = await createOrganizationVendors(
+				this.connection,
+				defaultOrganization.id
+			);
+			const categories = await createExpenseCategories(this.connection);
 
-			// to fill expenses with categories from DB, needs to refactor on many services
 			await createExpenses(
 				this.connection,
 				{
 					org: defaultOrganization,
-					employees: [...employees.defaultEmployees]
+					employees: [...employees.defaultEmployees],
+					categories,
+					organizationVendors
 				},
 				{
 					orgs: randomOrganizations,
-					employees: [...employees.randomEmployees]
+					employees: [...employees.randomEmployees],
+					categories,
+					organizationVendors
 				}
 			);
 
