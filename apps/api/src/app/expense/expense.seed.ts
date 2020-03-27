@@ -1,7 +1,13 @@
 import { Connection } from 'typeorm';
 import { Expense } from './expense.entity';
 import * as faker from 'faker';
-import { CurrenciesEnum, Organization, Employee } from '@gauzy/models';
+import {
+	CurrenciesEnum,
+	Organization,
+	Employee,
+	IExpenseCategory,
+	IOrganizationVendor
+} from '@gauzy/models';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
 
@@ -10,10 +16,14 @@ export const createExpenses = async (
 	defaultData: {
 		org: Organization;
 		employees: Employee[];
+		categories: IExpenseCategory[];
+		organizationVendors: IOrganizationVendor[];
 	},
 	randomData: {
 		orgs: Organization[];
 		employees: Employee[];
+		categories: IExpenseCategory[];
+		organizationVendors: IOrganizationVendor[];
 	}
 ): Promise<{ defaultExpenses: Expense[]; randomExpenses: Expense[] }> => {
 	const currencies = Object.values(CurrenciesEnum);
@@ -31,17 +41,19 @@ export const createExpenses = async (
 					(emp) => emp.user.email === seedExpense.email
 				);
 
+				const foundCategory = defaultData.categories.find(
+					(category) => seedExpense.categoryName === category.name
+				);
+
+				const foundVendor = defaultData.organizationVendors.find(
+					(vendor) => seedExpense.vendorName === vendor.name
+				);
+
 				expense.employee = foundEmployee;
 				expense.organization = defaultData.org;
 				expense.amount = Math.abs(seedExpense.amount);
-				expense.vendorName = seedExpense.vendorName;
-				expense.vendorId = seedExpense.vendorId;
-				console.log(seedExpense, 'categoryName');
-				console.log(seedExpense.categoryName, 'categoryName');
-				expense.categoryName = seedExpense.categoryName;
-				expense.categoryId = faker.random
-					.number({ min: 10, max: 9999 })
-					.toString();
+				expense.vendor = foundVendor;
+				expense.category = foundCategory;
 				expense.currency = seedExpense.currency;
 				expense.valueDate = new Date(seedExpense.valueDate);
 				expense.notes = seedExpense.notes;
@@ -52,22 +64,6 @@ export const createExpenses = async (
 
 	const randomExpenses: Expense[] = [];
 
-	const vendorsArray = [
-		'Microsoft',
-		'Benefit Systems',
-		'Udemy',
-		'Google',
-		'CoShare',
-		'Upwork'
-	];
-	const categoryArray = [
-		'Software',
-		'Employees Benefits',
-		'Courses',
-		'Subscriptions',
-		'Rent',
-		'Service Fee'
-	];
 	const notesArray = [
 		'Windows 10',
 		'MultiSport Card',
@@ -84,15 +80,11 @@ export const createExpenses = async (
 		expense.organization = randomData.orgs[index % 5];
 		expense.employee = randomData.employees[currentIndex];
 		expense.amount = faker.random.number({ min: 10, max: 999 });
-		expense.vendorName = vendorsArray[currentIndex];
-		expense.vendorId = faker.random
-			.number({ min: 10, max: 9999 })
-			.toString();
-		console.log(categoryArray[currentIndex], 'categoryName');
-		expense.categoryName = categoryArray[currentIndex];
-		expense.categoryId = faker.random
-			.number({ min: 10, max: 9999 })
-			.toString();
+		expense.vendor =
+			randomData.organizationVendors[currentIndex] ||
+			randomData.organizationVendors[0];
+		expense.category =
+			randomData.categories[currentIndex] || randomData.categories[0];
 		expense.currency = currencies[(index % currencies.length) + 1 - 1];
 		expense.valueDate = faker.date.recent(15);
 		expense.notes = notesArray[currentIndex];

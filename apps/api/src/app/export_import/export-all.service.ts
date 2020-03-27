@@ -7,6 +7,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { CountryService } from '../country';
 import * as csv from 'csv-writer';
 import { UserService } from '../user';
+import { UserOrganizationService } from '../user-organization';
 import { OnDestroy } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 
@@ -15,10 +16,16 @@ export class ExportAllService implements OnDestroy {
 	public idZip = new BehaviorSubject<string>('');
 	public idCsv = new BehaviorSubject<string>('');
 	private _ngDestroy$ = new Subject<void>();
+	private services = [
+		{ service: this.countryService, nameFile: 'countries' },
+		{ service: this.userService, nameFile: 'users' },
+		{ service: this.userOrganizationService, nameFile: 'user_organization' }
+	];
 
 	constructor(
 		private countryService: CountryService,
-		private userService: UserService
+		private userService: UserService,
+		private userOrganizationService: UserOrganizationService
 	) {}
 
 	async createFolders(): Promise<any> {
@@ -89,8 +96,10 @@ export class ExportAllService implements OnDestroy {
 		});
 	}
 
-	async getAsCsv(): Promise<any> {
-		const incommingData = (await this.countryService.findAll()).items;
+	async getAsCsv(service_count: number): Promise<any> {
+		const incommingData = (
+			await this.services[service_count].service.findAll()
+		).items;
 		return new Promise((resolve, reject) => {
 			const createCsvWriter = csv.createObjectCsvWriter;
 			const dataIn = [];
@@ -105,7 +114,7 @@ export class ExportAllService implements OnDestroy {
 				id$ = id;
 			});
 			const csvWriter = createCsvWriter({
-				path: `./export/${id$}/csv/countries.csv`,
+				path: `./export/${id$}/csv/${this.services[service_count].nameFile}.csv`,
 				header: dataIn
 			});
 
@@ -170,8 +179,13 @@ export class ExportAllService implements OnDestroy {
 		});
 	}
 
-	async exportCountries() {
-		return await this.getAsCsv();
+	async exportTables() {
+		return new Promise(async (resolve, reject) => {
+			for (const [i, value] of this.services.entries()) {
+				await this.getAsCsv(i);
+			}
+			resolve();
+		});
 	}
 
 	ngOnDestroy() {

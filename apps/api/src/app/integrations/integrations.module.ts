@@ -6,7 +6,7 @@ import { EmployeeService, Employee } from '../employee';
 import { CqrsModule } from '@nestjs/cqrs';
 import {
 	OrganizationVendorsService,
-	OrganizationVendors
+	OrganizationVendor
 } from '../organization-vendors';
 import {
 	OrganizationClientsService,
@@ -23,7 +23,7 @@ import { UpworkService } from './upwork/upwork.service';
 		TypeOrmModule.forFeature([
 			User,
 			Employee,
-			OrganizationVendors,
+			OrganizationVendor,
 			OrganizationClients,
 			ExpenseCategory
 		]),

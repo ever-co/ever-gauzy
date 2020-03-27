@@ -150,10 +150,14 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 						module: OrganizationEmploymentTypeModule
 					},
 					{
+						path: '/expense-categories',
+						module: ExpenseCategoriesModule
+					},
+					{
 						path: '/timesheet',
 						module: TimesheetModule
-          },
-          {
+					},
+					{
 						path: '/integrations',
 						module: IntegrationsModule
 					}
@@ -204,11 +208,11 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 			  ]
 			: []),
 		EquipmentModule,
-		EquipmentSharingModule,		
+		EquipmentSharingModule,
 		TaskModule,
 		OrganizationEmploymentTypeModule,
 		TimesheetModule,
-		IntegrationsModule,		
+		IntegrationsModule,
 		ExpenseCategoriesModule
 	],
 	controllers: [AppController],
