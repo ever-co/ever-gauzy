@@ -1,4 +1,5 @@
 import { InvoicesModule } from './invoices/invoices.module';
+import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
@@ -161,6 +162,10 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 					{
 						path: '/invoices',
 						module: InvoicesModule
+					},
+					{
+						path: '/invoice-item',
+						module: InvoiceItemModule
 					}
 				]
 			}
@@ -195,6 +200,7 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 		EmailTemplateModule,
 		TagModule,
 		InvoicesModule,
+		InvoiceItemModule,
 		EmployeeLevelModule,
 		...(environment.sentry
 			? [

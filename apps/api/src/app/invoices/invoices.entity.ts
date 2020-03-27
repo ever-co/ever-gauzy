@@ -2,7 +2,14 @@ import { Invoice as IInvoice, CurrenciesEnum } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNumber, IsEnum, IsBoolean, IsDate } from 'class-validator';
-import { Entity, Column, JoinColumn, OneToOne, OneToMany } from 'typeorm';
+import {
+	Entity,
+	Column,
+	JoinColumn,
+	OneToOne,
+	OneToMany,
+	ManyToOne
+} from 'typeorm';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InvoiceItem } from '../invoice-item';
@@ -60,15 +67,12 @@ export class Invoice extends Base implements IInvoice {
 	emailSent: boolean;
 
 	@ApiPropertyOptional({ type: Organization })
-	@OneToOne((type) => Organization, { nullable: true, onDelete: 'SET NULL' })
+	@ManyToOne((type) => Organization)
 	@JoinColumn()
 	fromOrganization?: Organization;
 
 	@ApiPropertyOptional({ type: OrganizationClients })
-	@OneToOne((type) => OrganizationClients, {
-		nullable: true,
-		onDelete: 'SET NULL'
-	})
+	@ManyToOne((type) => OrganizationClients)
 	@JoinColumn()
 	toClient?: OrganizationClients;
 

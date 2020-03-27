@@ -7,7 +7,8 @@ import {
 	JoinColumn,
 	RelationId,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -30,6 +31,7 @@ import {
 } from '@gauzy/models';
 import { Tag } from '../tags';
 import { LocationBase } from '../core/entities/location-base';
+import { Invoice } from '../invoices';
 
 @Entity('organization')
 export class Organization extends LocationBase implements IOrganization {
@@ -211,4 +213,12 @@ export class Organization extends LocationBase implements IOrganization {
 	@IsBoolean()
 	@Column({ default: 12 })
 	timeFormat?: 12 | 24;
+
+	@ApiPropertyOptional({ type: Invoice, isArray: true })
+	@OneToMany(
+		(type) => Invoice,
+		(invoice) => invoice.fromOrganization
+	)
+	@JoinColumn()
+	invoices?: Invoice[];
 }
