@@ -15,3 +15,14 @@
 	padding-right: 7px;
 	padding-top: 2px;
 }
+.notes {
+	text-indent: 1em;
+	max-width: 360px;
+	p {
+		margin: 0;
+		color: #eac72d;
+		font-size: 0.75rem;
+		font-weight: 300;
+		line-height: initial;
+	}
+}

@@ -108,10 +108,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						Validators.minLength(4)
 					])
 				],
-				startedWorkOn: [
-					'',
-					this.isEmployee ? Validators.required : null
-				],
+				startedWorkOn: [''],
 				role: ['', this.isEmployee ? null : Validators.required],
 				offerDate: [''],
 
