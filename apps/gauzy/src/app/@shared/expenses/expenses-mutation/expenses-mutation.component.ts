@@ -8,7 +8,8 @@ import {
 	TaxTypesEnum,
 	ExpenseTypesEnum,
 	IExpenseCategory,
-	IOrganizationVendor
+	IOrganizationVendor,
+	Tag
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -54,6 +55,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	showWarning = false;
 	disable = true;
 	loading = false;
+	tags: Tag[];
+	selectedTags: any;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -122,6 +125,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				projectId: null
 			};
 		}
+
 		this.dialogRef.close(
 			Object.assign(
 				{ employee: this.employeeSelector.selectedEmployee },
@@ -195,7 +199,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				taxLabel: [this.expense.taxLabel],
 				rateValue: [this.expense.rateValue],
 				receipt: [this.expense.receipt],
-				splitExpense: [this.expense.splitExpense]
+				splitExpense: [this.expense.splitExpense],
+				tags: [this.expense.tags]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -216,9 +221,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				taxLabel: [''],
 				rateValue: [0],
 				receipt: [this.defaultImage],
-				splitExpense: [false]
+				splitExpense: [false],
+				tags: []
 			});
-
+			this.tags = this.selectedTags;
+			console.warn();
 			this._loadDefaultCurrency();
 		}
 	}
@@ -306,6 +313,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			.subscribe((newReceipt) => {
 				this.form.value.receipt = newReceipt;
 			});
+	}
+	selectedTagsHandler(ev) {
+		console.log(ev);
+		this.form.get('tags').setValue(ev);
 	}
 
 	ngOnDestroy() {

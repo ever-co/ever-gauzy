@@ -4,7 +4,8 @@ import {
 	Expense,
 	PermissionsEnum,
 	IExpenseCategory,
-	IOrganizationVendor
+	IOrganizationVendor,
+	Tag
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -45,6 +46,7 @@ export interface ExpenseViewModel {
 	rateValue: number;
 	receipt: string;
 	splitExpense: boolean;
+	tags: Tag[];
 }
 
 interface SelectedRowModel {
@@ -227,18 +229,23 @@ export class ExpensesComponent extends TranslationBaseComponent
 			taxLabel: formData.taxLabel,
 			rateValue: formData.rateValue,
 			receipt: formData.receipt,
-			splitExpense: formData.splitExpense
+			splitExpense: formData.splitExpense,
+			tags: formData.tags
 		};
 	}
 
 	async addExpense(completedForm, formData) {
+		console.log('completedForm');
+		console.log(completedForm);
+		console.log('formData');
+		console.log(formData);
 		try {
 			await this.expenseService.create({
 				...completedForm,
 				employeeId: formData.employee ? formData.employee.id : null,
 				orgId: this.store.selectedOrganization.id
 			});
-
+			console.warn(formData.tags);
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: this.employeeName
@@ -414,7 +421,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 
 		try {
 			const { items } = await this.expenseService.getAll(
-				['employee', 'employee.user', 'category', 'vendor'],
+				['employee', 'employee.user', 'category', 'vendor', 'tags'],
 				findObj,
 				this.selectedDate
 			);
@@ -443,7 +450,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 					taxLabel: i.taxLabel,
 					rateValue: i.rateValue,
 					receipt: i.receipt,
-					splitExpense: i.splitExpense
+					splitExpense: i.splitExpense,
+					tags: i.tags
 				};
 			});
 

@@ -16,6 +16,7 @@ export class ExpensesService {
 	constructor(private http: HttpClient) {}
 
 	create(createInput: IExpenseCreateInput): Promise<any> {
+		console.log(createInput);
 		return this.http
 			.post<Expense>('/api/expense/create', createInput)
 			.pipe(first())
