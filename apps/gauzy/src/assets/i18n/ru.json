@@ -299,7 +299,7 @@
 		"EQUIPMENT": "Оборудование",
 		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
 		"TASKS": "Задачи",
-		"INVOICES": "Invoices"
+		"INVOICES": "Счета"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -716,23 +716,23 @@
 		}
 	},
 	"INVOICES_PAGE": {
-		"HEADER": "Invoices",
-		"INVOICE_NUMBER": "Invoice Number",
-		"TOTAL_VALUE": "Total Value",
-		"PAID_STATUS": "Paid Status",
-		"INVOICES_ADD_INVOICE": "Invoice Added",
-		"INVOICES_EDIT_INVOICE": "Invoice Edited",
-		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
-		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
-		"INVOICES_SELECT_DUE_DATE": "Due Date",
-		"INVOICES_SELECT_CURRENCY": "Currency",
-		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
-		"INVOICES_SELECT_PAID": "Paid",
-		"INVOICES_SELECT_TAX": "Tax",
-		"INVOICES_SELECT_TERMS": "Terms",
-		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
-		"ADD_INVOICE": "Add Invoice",
-		"EDIT_INVOICE": "Edit Invoice"
+		"HEADER": "Счета",
+		"INVOICE_NUMBER": "Номер счёта",
+		"TOTAL_VALUE": "Общая стоимость",
+		"PAID_STATUS": "Оплаченный статус",
+		"INVOICES_ADD_INVOICE": "Счет добавлен",
+		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_DELETE_INVOICE": "Счет удален",
+		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
+		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
+		"INVOICES_SELECT_CURRENCY": "Валюта",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Значение скидки",
+		"INVOICES_SELECT_PAID": "Оплачено",
+		"INVOICES_SELECT_TAX": "Налог",
+		"INVOICES_SELECT_TERMS": "Условия",
+		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
+		"ADD_INVOICE": "Добавить счет",
+		"EDIT_INVOICE": "Изменить счет"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
