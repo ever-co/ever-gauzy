@@ -6,9 +6,9 @@ import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
 	OrganizationTeams as IOrganizationTeams
 } from '@gauzy/models';
-import { Employee } from '../employee';
 import { IPagination } from '../core';
-import { User } from '../user';
+import { Employee } from '../employee/employee.entity';
+import { User } from '../user/user.entity';
 import { OrganizationTeams } from './organization-teams.entity';
 
 @Injectable()

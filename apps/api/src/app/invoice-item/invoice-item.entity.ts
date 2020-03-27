@@ -3,7 +3,7 @@ import { Entity, Column, JoinColumn, ManyToOne } from 'typeorm';
 import { InvoiceItem as IInvoiceItem } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsString, IsNotEmpty } from 'class-validator';
-import { Invoice } from '../invoices';
+import { Invoice } from '../invoice/invoice.entity';
 
 @Entity('invoice_item')
 export class InvoiceItem extends Base implements IInvoiceItem {

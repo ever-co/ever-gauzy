@@ -6,7 +6,8 @@ import {
 	Organization,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
-	OrganizationPositions
+	OrganizationPositions,
+	Tag
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee-level.service';
@@ -38,6 +39,8 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	selectedOrganization: Organization;
 	departments: OrganizationDepartment[] = [];
 	positions: OrganizationPositions[] = [];
+	tags: Tag[] = [];
+	selectedTags: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -123,17 +126,29 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	selectedTagsHandler(tags: Tag[]) {
+		this.tags = tags;
+	}
+
 	private _initializeForm(employee: Employee) {
 		this.form = this.fb.group({
 			organizationEmploymentTypes: [
 				employee.organizationEmploymentTypes || null
 			],
+
 			employeeLevel: [employee.employeeLevel || ''],
 			anonymousBonus: [employee.anonymousBonus],
 			organizationDepartments: [employee.organizationDepartments || null],
 			organizationPosition: [employee.organizationPosition || null],
-			startedWorkOn: [employee ? new Date(employee.startedWorkOn) : '']
+			tags: [employee.tags],
+			startedWorkOn: [
+				employee.startedWorkOn !== null
+					? new Date(employee.startedWorkOn)
+					: '' || ''
+			]
 		});
+
+		this.tags = employee.tags;
 	}
 
 	ngOnDestroy() {

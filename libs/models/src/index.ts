@@ -33,6 +33,7 @@ export * from './lib/expense-category.model';
 export * from './lib/equipment-sharing.model';
 export * from './lib/invoice.model';
 export * from './lib/invoice-item.model';
+export * from './lib/expense-category.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

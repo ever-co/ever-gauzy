@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
-import { InvoiceItem } from '../invoice-item';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('invoice')
 export class Invoice extends Base implements IInvoice {
@@ -82,5 +82,5 @@ export class Invoice extends Base implements IInvoice {
 		(invoiceItem) => invoiceItem.invoice
 	)
 	@JoinColumn()
-	invoiceItems?: InvoiceItem[];
+	invoiceItems: InvoiceItem[];
 }

@@ -15,12 +15,11 @@ import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects';
 import { Invite } from './invite.entity';
-import * as nodemailer from 'nodemailer';
-import { OrganizationClients } from '../organization-clients';
-import { OrganizationDepartment } from '../organization-department';
-import { Organization } from '../organization';
-import { EmailService } from '../email';
-import { Role } from '../role';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationDepartment } from '../organization-department/organization-department.entity';
+import { Organization } from '../organization/organization.entity';
+import { EmailService } from '../email/email.service';
+import { Role } from '../role/role.entity';
 
 @Injectable()
 export class InviteService extends CrudService<Invite> {

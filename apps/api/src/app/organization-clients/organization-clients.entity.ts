@@ -24,9 +24,8 @@ import {
 	ClientOrganizationInviteStatus
 } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects';
-import { Employee } from '../employee';
+import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
-import { Invoice } from '../invoices';
 
 @Entity('organization_client')
 export class OrganizationClients extends Base implements IOrganizationClients {
@@ -120,14 +119,6 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	@IsOptional()
 	@Column({ nullable: true })
 	notes?: string;
-
-	@ApiPropertyOptional({ type: Invoice, isArray: true })
-	@OneToMany(
-		(type) => Invoice,
-		(invoice) => invoice.toClient
-	)
-	@JoinColumn()
-	invoices?: Invoice[];
 
 	@ManyToMany((type) => Employee, { cascade: ['update'] })
 	@JoinTable({

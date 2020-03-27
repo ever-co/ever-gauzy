@@ -216,6 +216,9 @@
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Показване на изтритите"
 		},
+		"NOTIFICATIONS": {
+			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
@@ -398,7 +401,8 @@
 		},
 		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
 		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
-		"SPLIT_EXPENSE": "Split Expense"
+		"SPLIT_EXPENSE": "Split Expense",
+		"ADD_EXPENSE_CATEGORY": "Add New Expense category"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление на служителите в ",

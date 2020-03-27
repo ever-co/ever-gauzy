@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { OrganizationVendors } from '@gauzy/models';
+import { IOrganizationVendor } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-edit-org-vendors',
@@ -21,15 +22,16 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 	showAddCard: boolean;
 	showEditDiv: boolean;
 
-	vendors: OrganizationVendors[];
+	vendors: IOrganizationVendor[];
 
-	selectedVendor: OrganizationVendors;
+	selectedVendor: IOrganizationVendor;
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -45,7 +47,7 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 			});
 	}
 
-	showEditCard(vendor: OrganizationVendors) {
+	showEditCard(vendor: IOrganizationVendor) {
 		this.showEditDiv = true;
 		this.selectedVendor = vendor;
 	}
@@ -56,19 +58,23 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 	}
 
 	async removeVendor(id: string, name: string) {
-		await this.organizationVendorsService.delete(id);
+		try {
+			await this.organizationVendorsService.delete(id);
 
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
-				{
-					name: name
-				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
 
-		this.loadVendors();
+			this.loadVendors();
+		} catch (error) {
+			this.errorHandlingService.handleError(error);
+		}
 	}
 
 	async editVendor(id: string, name: string) {

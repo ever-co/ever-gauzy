@@ -1,15 +1,15 @@
 import { CrudService } from '../core';
-import { Invoice } from './invoices.entity';
+import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class InvoicesService extends CrudService<Invoice> {
+export class InvoiceService extends CrudService<Invoice> {
 	constructor(
 		@InjectRepository(Invoice)
-		private readonly invoicesRepository: Repository<Invoice>
+		private readonly invoiceRepository: Repository<Invoice>
 	) {
-		super(invoicesRepository);
+		super(invoiceRepository);
 	}
 }
