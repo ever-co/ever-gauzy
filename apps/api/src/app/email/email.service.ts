@@ -11,11 +11,11 @@ import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core';
-import { EmailTemplate } from '../email-template';
+import { EmailTemplate } from '../email-template/email-template.entity';
 import { Organization } from '../organization/organization.entity';
-import { User } from '../user';
+import { User } from '../user/user.entity';
 import { Email as IEmail } from './email.entity';
-import { Invite } from '../invite';
+import { Invite } from '../invite/invite.entity';
 
 export interface InviteUserModel {
 	email: string;

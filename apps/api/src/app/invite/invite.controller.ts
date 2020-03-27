@@ -39,7 +39,7 @@ import { InviteService } from './invite.service';
 import { InviteResendCommand } from './commands/invite.resend.command';
 import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
-import { OrganizationClients } from '../organization-clients';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-organization-clients.command';
 import { Request } from 'express';
 

@@ -5,12 +5,13 @@ import {
 } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { OrganizationService } from '../../../organization/organization.service';
-import { UserService, User } from '../../../user';
+import { User } from '../../../user/user.entity';
+import { UserService } from '../../../user/user.service';
 import { InternalServerErrorException } from '@nestjs/common';
 import { InviteOrganizationClientsCommand } from '../invite.organization-clients.command';
-import { OrganizationClientsService } from '../../../organization-clients';
+import { OrganizationClientsService } from '../../../organization-clients/organization-clients.service';
 import { InviteService } from '../../invite.service';
-import { RoleService } from '../../../role';
+import { RoleService } from '../../../role/role.service';
 
 /**
  * Sends an invitation email to the organization client's primaryEmail

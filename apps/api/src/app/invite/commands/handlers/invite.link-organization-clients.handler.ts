@@ -1,6 +1,6 @@
 import { OrganizationClients } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { OrganizationClientsService } from '../../../organization-clients';
+import { OrganizationClientsService } from '../../../organization-clients/organization-clients.service';
 import { InviteLinkOrganizationClientsCommand } from '../invite.link-organization-clients.command';
 import { InviteService } from '../../invite.service';
 import { BadRequestException } from '@nestjs/common';
