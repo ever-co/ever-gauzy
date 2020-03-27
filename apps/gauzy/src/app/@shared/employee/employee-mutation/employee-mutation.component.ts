@@ -97,7 +97,6 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 				.createBulk(this.employees)
 				.pipe(first())
 				.toPromise();
-
 			this.closeDialog(employee);
 		} catch (error) {
 			this.errorHandler.handleError(error);

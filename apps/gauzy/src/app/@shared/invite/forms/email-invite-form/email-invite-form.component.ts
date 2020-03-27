@@ -46,6 +46,7 @@ export class EmailInviteFormComponent implements OnInit {
 	clients: any;
 	departments: any;
 	roleName: any;
+	startedWorkOn: string;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -86,6 +87,7 @@ export class EmailInviteFormComponent implements OnInit {
 				])
 			],
 			projects: [''],
+			startedWorkOn: [''],
 			departments: [''],
 			clients: [''],
 			roleName: [
@@ -99,6 +101,7 @@ export class EmailInviteFormComponent implements OnInit {
 		this.clients = this.form.get('clients');
 		this.departments = this.form.get('departments');
 		this.roleName = this.form.get('roleName');
+		this.startedWorkOn = this.form.get('startedWork');
 	};
 
 	selectAllProjects() {
@@ -150,7 +153,8 @@ export class EmailInviteFormComponent implements OnInit {
 				roleId: role.id,
 				organizationId: this.selectedOrganizationId,
 				invitedById: this.currentUserId,
-				inviteType: this.router.url
+				inviteType: this.router.url,
+				startedWorkOn: this.startedWorkOn
 			});
 		}
 

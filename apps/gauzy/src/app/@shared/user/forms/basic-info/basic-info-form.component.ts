@@ -111,7 +111,6 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 				startedWorkOn: [''],
 				role: ['', this.isEmployee ? null : Validators.required],
 				offerDate: [''],
-
 				acceptDate: [''],
 				rejectDate: ['']
 			},
