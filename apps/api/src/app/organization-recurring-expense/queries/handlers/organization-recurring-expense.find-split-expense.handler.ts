@@ -5,7 +5,7 @@ import { EmployeeService } from '../../../employee';
 import { OrganizationService } from '../../../organization';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseFindSplitExpenseQuery } from '../organization-recurring-expense.find-split-expense.query';
-
+import { MoreThanOrEqual, IsNull, LessThanOrEqual } from 'typeorm';
 /**
  * Finds the split recurring expense for a given organization.
  *
@@ -26,14 +26,32 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 	public async execute(
 		query: OrganizationRecurringExpenseFindSplitExpenseQuery
 	): Promise<IPagination<OrganizationRecurringExpenseForEmployeeOutput>> {
-		const { orgId, findInput } = query;
+		const {
+			orgId,
+			findInput: { year, month }
+		} = query;
+
+		const filterDate = new Date(year, month, 1);
 
 		//1. Find all recurring expenses for the organization which have splitExpense = true
 		const {
 			items,
 			total
 		} = await this.organizationRecurringExpenseService.findAll({
-			where: { ...findInput, splitExpense: true, orgId }
+			where: [
+				{
+					splitExpense: true,
+					orgId,
+					startDate: LessThanOrEqual(filterDate),
+					endDate: IsNull()
+				},
+				{
+					splitExpense: true,
+					orgId,
+					startDate: LessThanOrEqual(filterDate),
+					endDate: MoreThanOrEqual(filterDate)
+				}
+			]
 		});
 
 		const organization = await this.organizationService.findOne({

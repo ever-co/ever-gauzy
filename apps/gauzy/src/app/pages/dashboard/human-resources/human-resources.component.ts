@@ -301,7 +301,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 							this.store.selectedOrganization.id,
 							{
 								year: this.selectedDate.getFullYear(),
-								month: this.selectedDate.getMonth() + 1
+								month: this.selectedDate.getMonth()
 							}
 						)
 				  ).items
