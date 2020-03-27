@@ -12,13 +12,13 @@ import {
 	RelationId
 } from 'typeorm';
 import { LocationBase } from '../core/entities/location-base';
-import { Organization } from '../organization';
 import { OrganizationDepartment } from '../organization-department';
 import { OrganizationEmploymentType } from '../organization-employment-type';
 import { OrganizationPositions } from '../organization-positions';
 import { Tag } from '../tags';
 import { Tenant } from '../tenant';
 import { User } from '../user';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('candidate')
 export class Candidate extends LocationBase implements ICandidate {

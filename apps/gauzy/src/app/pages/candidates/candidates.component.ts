@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
-import { EmployeesService } from '../../@core/services/employees.service';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
