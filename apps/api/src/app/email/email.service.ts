@@ -12,7 +12,7 @@ import * as nodemailer from 'nodemailer';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core';
 import { EmailTemplate } from '../email-template';
-import { Organization } from '../organization';
+import { Organization } from '../organization/organization.entity';
 import { User } from '../user';
 import { Email as IEmail } from './email.entity';
 import { Invite } from '../invite';

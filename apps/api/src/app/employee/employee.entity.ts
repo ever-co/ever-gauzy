@@ -16,7 +16,7 @@ import {
 	RelationId
 } from 'typeorm';
 import { LocationBase } from '../core/entities/location-base';
-import { Organization } from '../organization';
+import { Organization } from '../organization/organization.entity';
 import { OrganizationDepartment } from '../organization-department';
 import { OrganizationEmploymentType } from '../organization-employment-type';
 import { OrganizationPositions } from '../organization-positions';

@@ -5,40 +5,42 @@
 // - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`
 
-import { Tag } from '../tags';
+import { Invoice } from '../invoice/invoice.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { Tag } from '../tags/tag.entity';
 import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
 import { environment as env } from '@env-api/environment';
-import { User } from '../user';
-import { Employee } from '../employee';
-import { Role } from '../role';
-import { Organization } from '../organization';
-import { Income } from '../income';
-import { Expense } from '../expense';
+import { User } from '../user/user.entity';
+import { Employee } from '../employee/employee.entity';
+import { Role } from '../role/role.entity';
+import { Organization } from '../organization/organization.entity';
+import { Income } from '../income/income.entity';
+import { Expense } from '../expense/expense.entity';
 import { EmployeeSetting } from '../employee-setting';
 import { RequestContextMiddleware } from './context';
-import { UserOrganization } from '../user-organization';
-import { OrganizationDepartment } from '../organization-department';
-import { OrganizationRecurringExpense } from '../organization-recurring-expense';
-import { EmployeeRecurringExpense } from '../employee-recurring-expense';
-import { OrganizationClients } from '../organization-clients';
-import { OrganizationPositions } from '../organization-positions';
-import { OrganizationVendor } from '../organization-vendors';
-import { OrganizationProjects } from '../organization-projects';
-import { OrganizationTeams } from '../organization-teams';
-import { Proposal } from '../proposal';
-import { Country } from '../country';
-import { Invite } from '../invite';
-import { Email } from '../email';
-import { TimeOffPolicy } from '../time-off-policy';
-import { RolePermissions } from '../role-permissions';
+import { UserOrganization } from '../user-organization/user-organization.entity';
+import { OrganizationDepartment } from '../organization-department/organization-department.entity';
+import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
+import { EmployeeRecurringExpense } from '../employee-recurring-expense/employee-recurring-expense.entity';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
+import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { Proposal } from '../proposal/proposal.entity';
+import { Country } from '../country/country.entity';
+import { Invite } from '../invite/invite.entity';
+import { Email } from '../email/email.entity';
+import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
+import { RolePermissions } from '../role-permissions/role-permissions.entity';
 import { Tenant } from './../tenant/tenant.entity';
-import { EmailTemplate } from '../email-template';
-import { OrganizationEmploymentType } from '../organization-employment-type';
-import { Equipment } from '../equipment';
+import { EmailTemplate } from '../email-template/email-template.entity';
+import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
+import { Equipment } from '../equipment/equipment.entity';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
-import { Task } from '../tasks';
+import { Task } from '../tasks/task.entity';
 import {
 	TimeSlot,
 	Timesheet,
@@ -46,8 +48,8 @@ import {
 	Activity,
 	Screenshot
 } from '../timesheet';
-import { ExpenseCategory } from '../expense-categories';
-import { EquipmentSharing } from '../equipment-sharing';
+import { ExpenseCategory } from '../expense-categories/expense-category.entity';
+import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
 
 const entities = [
 	Invite,
@@ -75,6 +77,8 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
+	Invoice,
+	InvoiceItem,
 	OrganizationEmploymentType,
 	Equipment,
 	EquipmentSharing,

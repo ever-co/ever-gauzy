@@ -2,7 +2,7 @@ import { GenericEmploymentTypes } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { Organization } from './organization.entity';
-import { Employee } from '../employee';
+import { Employee } from '../employee/employee.entity';
 import { environment as env } from '@env-api/environment';
 
 export const seedEmploymentTypes = async (

@@ -3,7 +3,7 @@ import { IncomeCreateCommand } from '../income.create.command';
 import { IncomeService } from '../../income.service';
 import { Income } from '../../income.entity';
 import { EmployeeService } from '../../../employee/employee.service';
-import { OrganizationService } from '../../../organization';
+import { OrganizationService } from '../../../organization/organization.service';
 
 @CommandHandler(IncomeCreateCommand)
 export class IncomeCreateHandler

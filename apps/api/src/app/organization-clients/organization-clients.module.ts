@@ -9,7 +9,7 @@ import { User, UserService } from '../user';
 import { EmailService, Email } from '../email';
 import { EmailTemplate } from '../email-template';
 import { OrganizationService } from '../organization/organization.service';
-import { Organization } from '../organization';
+import { Organization } from '../organization/organization.entity';
 
 @Module({
 	imports: [
