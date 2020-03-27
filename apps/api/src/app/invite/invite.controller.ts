@@ -4,7 +4,8 @@ import {
 	CreateEmailInvitesOutput,
 	InviteAcceptInput,
 	InviteResendInput,
-	PermissionsEnum
+	PermissionsEnum,
+	LinkClientOrganizationInviteInput
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -38,6 +39,8 @@ import { InviteService } from './invite.service';
 import { InviteResendCommand } from './commands/invite.resend.command';
 import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
+import { OrganizationClients } from '../organization-clients';
+import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-organization-clients.command';
 
 @ApiTags('Invite')
 @Controller()
@@ -212,13 +215,40 @@ export class InviteController {
 	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Put('organization-client/:id')
-	async inviteClient(@Param('id') id: string, @Req() request): Promise<any> {
+	async inviteClient(
+		@Param('id') id: string,
+		@Req() request
+	): Promise<OrganizationClients> {
 		return this.commandBus.execute(
 			new InviteOrganizationClientsCommand({
 				id,
 				originalUrl: request.get('Origin'),
 				inviterUser: request.user
 			})
+		);
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put('link-organization-client')
+	async linkInviteClient(
+		@Body() input: LinkClientOrganizationInviteInput
+	): Promise<OrganizationClients> {
+		return this.commandBus.execute(
+			new InviteLinkOrganizationClientsCommand(input)
 		);
 	}
 }

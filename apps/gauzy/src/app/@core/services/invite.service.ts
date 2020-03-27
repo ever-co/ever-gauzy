@@ -8,7 +8,8 @@ import {
 	PublicInviteFindInput,
 	InviteAcceptInput,
 	InviteResendInput,
-	OrganizationClients
+	OrganizationClients,
+	LinkClientOrganizationInviteInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -95,6 +96,18 @@ export class InviteService {
 			.put<OrganizationClients>(
 				`/api/invite/organization-client/${organizationClientId}`,
 				{}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	linkClientOrganizationInvite(
+		data: LinkClientOrganizationInviteInput
+	): Promise<OrganizationClients> {
+		return this.http
+			.put<OrganizationClients>(
+				`/api/invite/link-organization-client`,
+				data
 			)
 			.pipe(first())
 			.toPromise();
