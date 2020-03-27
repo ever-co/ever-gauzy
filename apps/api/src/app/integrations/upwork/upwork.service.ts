@@ -3,6 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeService } from '../../employee/employee.service';
 import { UserService } from '../../user/user.service';
 import * as fs from 'fs';
+import * as fse from 'fs-extra';
 import * as csv from 'csv-parser';
 import { IncomeCreateCommand } from '../../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../../expense/commands/expense.create.command';
@@ -17,6 +18,7 @@ import {
 import { Expense } from '../../expense/expense.entity';
 import { Income } from '../../income/income.entity';
 import { reflect } from '../../core';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UpworkService {
@@ -47,8 +49,15 @@ export class UpworkService {
 		private commandBus: CommandBus
 	) {}
 
-	async handleTransactions(filePath, { orgId }) {
+	async handleTransactions(file, { orgId }) {
+		const uuid = uuidv4();
+		const dirPath = `./apps/api/src/app/integrations/upwork/csv/${uuid}`;
+		const csvData = file.buffer.toString();
+		const filePath = `${dirPath}/${file.originalname}`;
 		let results = [];
+
+		fs.mkdirSync(dirPath, { recursive: true });
+		fs.writeFileSync(filePath, csvData);
 
 		const csvReader = fs
 			.createReadStream(filePath)
@@ -57,6 +66,7 @@ export class UpworkService {
 
 		return new Promise((resolve, reject) => {
 			csvReader.on('end', async () => {
+				fse.removeSync(dirPath);
 				const transactions = await results
 					.filter(
 						(result) =>
@@ -166,9 +176,11 @@ export class UpworkService {
 						totalExpenses,
 						totalIncomes
 					);
-
+					console.log('REJECTING');
 					reject(new BadRequestException(message));
 				}
+				console.log('RESOLVED');
+
 				resolve({ totalExpenses, totalIncomes });
 			});
 		});
