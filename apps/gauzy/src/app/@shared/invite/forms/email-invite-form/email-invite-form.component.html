@@ -27,6 +27,35 @@
 			</div>
 		</div>
 	</div>
+	<div class="row">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="startedWork" class="label">{{
+					'FORM.LABELS.START_DATE' | translate
+				}}</label>
+				<input
+					[nbDatepicker]="datepicker"
+					nbInput
+					fullWidth
+					placeholder="{{
+						'FORM.PLACEHOLDERS.START_DATE' | translate
+					}}"
+					formControlName="startedWorkOn"
+				/>
+				<nb-datepicker #datepicker></nb-datepicker>
+				<div
+					class="notes"
+					*ngIf="
+						form.touched && form.get('startedWorkOn').value == null
+					"
+				>
+					<p>
+						{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
 	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
 		<div class="col-sm-12">
 			<div class="form-group">

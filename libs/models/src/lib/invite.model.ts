@@ -45,6 +45,7 @@ export interface CreateEmailInvitesInput {
 	roleId: string;
 	invitedById: string;
 	inviteType: any;
+	startedWorkOn: string;
 }
 
 export interface CreateEmailInvitesOutput {
