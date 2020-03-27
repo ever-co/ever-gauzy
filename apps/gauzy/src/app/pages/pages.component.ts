@@ -271,6 +271,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.EQUIPMENT_SHARING'
 			}
 		},
+		{
+			title: 'Invoices',
+			icon: 'file-text-outline',
+			link: '/pages/invoices',
+			data: {
+				translated: false,
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+				translationKey: 'MENU.INVOICES'
+			}
+		},
 
 		{
 			title: 'Settings',

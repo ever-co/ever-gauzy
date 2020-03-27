@@ -12,12 +12,12 @@ import {
 	RelationId
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Organization } from '../organization';
-import { OrganizationProjects } from '../organization-projects';
-import { Role } from '../role';
-import { User } from '../user';
-import { OrganizationClients } from '../organization-clients';
-import { OrganizationDepartment } from '../organization-department';
+import { Organization } from '../organization/organization.entity';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { Role } from '../role/role.entity';
+import { User } from '../user/user.entity';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 
 @Entity('invite')
 export class Invite extends Base implements IInvite {

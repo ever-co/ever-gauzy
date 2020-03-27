@@ -1,36 +1,39 @@
 import {
 	OrganizationClients,
-	ClientOrganizationInviteStatus
+	ClientOrganizationInviteStatus,
+	RolesEnum
 } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { OrganizationClientsInviteCommand } from '../organization-clients.invite.command';
-import { OrganizationClientsService } from '../../organization-clients.service';
-import { EmailService } from '../../../email';
 import { OrganizationService } from '../../../organization/organization.service';
 import { UserService, User } from '../../../user';
 import { InternalServerErrorException } from '@nestjs/common';
+import { InviteOrganizationClientsCommand } from '../invite.organization-clients.command';
+import { OrganizationClientsService } from '../../../organization-clients';
+import { InviteService } from '../../invite.service';
+import { RoleService } from '../../../role';
 
 /**
  * Sends an invitation email to the organization client's primaryEmail
  */
-@CommandHandler(OrganizationClientsInviteCommand)
-export class OrganizationClientsInviteHandler
-	implements ICommandHandler<OrganizationClientsInviteCommand> {
+@CommandHandler(InviteOrganizationClientsCommand)
+export class InviteOrganizationClientsHandler
+	implements ICommandHandler<InviteOrganizationClientsCommand> {
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
-		private readonly emailService: EmailService,
+		private readonly inviteService: InviteService,
 		private readonly organizationService: OrganizationService,
-		private readonly userService: UserService
+		private readonly userService: UserService,
+		private readonly roleService: RoleService
 	) {}
 
 	public async execute(
-		command: OrganizationClientsInviteCommand
+		command: InviteOrganizationClientsCommand
 	): Promise<OrganizationClients> {
 		const {
 			input: { id, originalUrl, inviterUser }
 		} = command;
 
-		const organizationClient = await this.organizationClientsService.findOne(
+		const organizationClient: OrganizationClients = await this.organizationClientsService.findOne(
 			id
 		);
 
@@ -49,16 +52,18 @@ export class OrganizationClientsInviteHandler
 			);
 		}
 
-		const organization = await this.organizationService.findOne(
-			organizationClient.organizationId
-		);
+		const { id: roleId } = await this.roleService.findOne({
+			where: { name: RolesEnum.VIEWER }
+		});
 
-		this.emailService.inviteOrganizationClient(
-			organizationClient,
-			inviterUser,
-			organization,
+		this.inviteService.createOrganizationClientInvite({
+			emailId: organizationClient.primaryEmail,
+			roleId,
+			clientId: organizationClient.id,
+			organizationId: organizationClient.organizationId,
+			invitedById: inviterUser.id,
 			originalUrl
-		);
+		});
 
 		await this.organizationClientsService.update(id, {
 			inviteStatus: ClientOrganizationInviteStatus.INVITED

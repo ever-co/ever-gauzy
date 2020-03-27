@@ -1,8 +1,8 @@
 import { AggregatedEmployeeStatistic, StatisticSum } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
-import { IncomeService } from '../../../income';
-import { ExpenseService } from '../../../expense';
+import { IncomeService } from '../../../income/income.service';
+import { ExpenseService } from '../../../expense/expense.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { EmployeeStatisticsService } from './../../employee-statistics.service';

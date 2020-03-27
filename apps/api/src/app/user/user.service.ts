@@ -10,7 +10,10 @@ import { CrudService } from '../core/crud/crud.service';
 
 @Injectable()
 export class UserService extends CrudService<User> {
-	constructor(@InjectRepository(User) userRepository: Repository<User>) {
+	constructor(
+		@InjectRepository(User)
+		userRepository: Repository<User>
+	) {
 		super(userRepository);
 	}
 
