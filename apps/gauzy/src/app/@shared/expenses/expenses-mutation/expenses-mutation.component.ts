@@ -55,7 +55,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	showWarning = false;
 	disable = true;
 	loading = false;
-	tags: Tag[];
+	tags: Tag[] = [];
 	selectedTags: any;
 
 	constructor(
@@ -180,6 +180,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		if (this.expense) {
+			this.tags = this.expense.tags;
 			this.form = this.fb.group({
 				id: [this.expense.id],
 				amount: [this.expense.amount, Validators.required],
@@ -224,8 +225,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				splitExpense: [false],
 				tags: []
 			});
-			this.tags = this.selectedTags;
-			console.warn();
+
 			this._loadDefaultCurrency();
 		}
 	}

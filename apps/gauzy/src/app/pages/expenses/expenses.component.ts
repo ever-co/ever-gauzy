@@ -22,6 +22,7 @@ import { ErrorHandlingService } from '../../@core/services/error-handling.servic
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
+import { ExpenseDescriptionComponent } from './expense-description/expense-description.component';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -109,7 +110,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
-					type: 'string'
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: ExpenseDescriptionComponent
 				},
 				purpose: {
 					title: 'Purpose',
@@ -235,17 +238,13 @@ export class ExpensesComponent extends TranslationBaseComponent
 	}
 
 	async addExpense(completedForm, formData) {
-		console.log('completedForm');
-		console.log(completedForm);
-		console.log('formData');
-		console.log(formData);
 		try {
 			await this.expenseService.create({
 				...completedForm,
 				employeeId: formData.employee ? formData.employee.id : null,
 				orgId: this.store.selectedOrganization.id
 			});
-			console.warn(formData.tags);
+
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: this.employeeName
@@ -288,6 +287,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				if (formData) {
+					console.warn(formData);
 					try {
 						await this.expenseService.update(
 							formData.id,

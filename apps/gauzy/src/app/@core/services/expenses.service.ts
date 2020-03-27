@@ -74,6 +74,7 @@ export class ExpensesService {
 	}
 
 	update(id: string, updateInput: IExpenseUpdateInput): Promise<any> {
+		console.warn(updateInput);
 		return this.http
 			.put(`/api/expense/${id}`, updateInput)
 			.pipe(first())

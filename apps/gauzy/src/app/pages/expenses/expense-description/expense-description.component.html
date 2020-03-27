@@ -1,0 +1,14 @@
+<div style="display: flex; flex-direction: column; align-items: center;">
+	<div>DESCRIPTION</div>
+
+	<div class="tags">
+		<nb-badge
+			*ngFor="let tag of rowData?.tags"
+			class="color"
+			position="centered"
+			[style.background]="tag.color"
+			text="{{ tag.name }}"
+		>
+		</nb-badge>
+	</div>
+</div>

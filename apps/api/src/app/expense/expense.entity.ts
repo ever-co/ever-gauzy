@@ -173,4 +173,9 @@ export class Expense extends Base implements IExpense {
 	@IsOptional()
 	@Column({ nullable: true })
 	reference?: string;
+
+	@ApiPropertyOptional({ type: String, maxLength: 256 })
+	@IsOptional()
+	@Column({ nullable: true })
+	expenseId?: string;
 }

@@ -44,10 +44,7 @@ export class ExpenseCreateHandler
 		expense.rateValue = input.rateValue;
 		expense.receipt = input.receipt;
 		expense.splitExpense = input.splitExpense;
-
-		if (expense.tags) {
-			expense.tags = input.tags;
-		}
+		expense.tags = input.tags;
 
 		if (!expense.currency) {
 			expense.currency = organization.currency;

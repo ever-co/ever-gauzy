@@ -149,6 +149,7 @@ export class ExpenseController extends CrudController<Expense> {
 		@Body() entity: Expense,
 		...options: any[]
 	): Promise<any> {
+		console.warn(entity);
 		return this.expenseService.update(id, entity);
 	}
 
