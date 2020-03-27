@@ -1,8 +1,8 @@
 import { OrganizationRecurringExpenseForEmployeeOutput } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { IPagination } from '../../../core';
-import { EmployeeService } from '../../../employee';
-import { OrganizationService } from '../../../organization';
+import { EmployeeService } from '../../../employee/employee.service';
+import { OrganizationService } from '../../../organization/organization.service';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseFindSplitExpenseQuery } from '../organization-recurring-expense.find-split-expense.query';
 

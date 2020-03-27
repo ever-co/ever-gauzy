@@ -11,9 +11,9 @@ import {
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { Timesheet } from './timesheet.entity';
-import { OrganizationProjects } from '../organization-projects';
-import { OrganizationClients } from '../organization-clients';
-import { Task } from '../tasks';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { Task } from '../tasks/task.entity';
 
 @Entity('time_log')
 export class TimeLog extends Base implements ITimeLog {

@@ -20,7 +20,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { RequestContext } from '../core/context';
 import { CrudController } from '../core/crud/crud.controller';
-import { EmployeeService } from '../employee';
+import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { IncomeCreateCommand } from './commands/income.create.command';
