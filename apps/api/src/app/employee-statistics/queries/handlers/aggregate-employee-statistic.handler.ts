@@ -188,7 +188,7 @@ export class AggregateOrganizationQueryHandler
 		searchInput: { valueDate: Date; months: number },
 		employeeMap: Map<string, EmployeeStatisticSum>
 	) {
-		const employeeIds = [...employeeMap.keys()] || [''];
+		const employeeIds = [...employeeMap.keys()];
 
 		// Fetch split expenses and the number of employees the expense need to be split among
 		const {
@@ -215,7 +215,7 @@ export class AggregateOrganizationQueryHandler
 		searchInput: { valueDate: Date; months: number },
 		employeeMap: Map<string, EmployeeStatisticSum>
 	) {
-		const employeeIds = [...employeeMap.keys()] || [''];
+		const employeeIds = [...employeeMap.keys()];
 
 		// Fetch split expenses and the number of employees the expense need to be split among
 		const {
@@ -286,7 +286,7 @@ export class AggregateOrganizationQueryHandler
 	private async _loadEmployeeBonus(
 		employeeMap: Map<string, EmployeeStatisticSum>
 	) {
-		const employeeIds = [...employeeMap.keys()] || [''];
+		const employeeIds = [...employeeMap.keys()];
 		const {
 			organization: { bonusType, bonusPercentage }
 		} = await this.employeeService.findOne(employeeIds[0], {
