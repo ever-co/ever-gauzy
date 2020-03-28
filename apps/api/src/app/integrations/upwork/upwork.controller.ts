@@ -7,7 +7,6 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import * as fs from 'fs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpworkService } from './upwork.service';
 
@@ -31,12 +30,8 @@ export class UpworkController {
 	@Post('/upwork-transactions')
 	@UseInterceptors(FileInterceptor('file'))
 	async create(@UploadedFile() file, @Body() organizationDto): Promise<any> {
-		const filePath = `./apps/api/src/app/integrations/upwork/csv/${file.originalname}`;
-		const csvData = file.buffer.toString();
-
-		fs.writeFileSync(filePath, csvData);
 		return await this._upworkService.handleTransactions(
-			filePath,
+			file,
 			organizationDto
 		);
 	}
