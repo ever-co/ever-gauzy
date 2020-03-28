@@ -175,12 +175,9 @@ export class UpworkService {
 						[...new Set(errors)],
 						totalExpenses,
 						totalIncomes
-					);
-					console.log('REJECTING');
+					);					
 					reject(new BadRequestException(message));
 				}
-				console.log('RESOLVED');
-
 				resolve({ totalExpenses, totalIncomes });
 			});
 		});
