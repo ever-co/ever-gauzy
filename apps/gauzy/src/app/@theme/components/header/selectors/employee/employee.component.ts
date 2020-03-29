@@ -78,7 +78,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.defaultSelected =
 			this.defaultSelected === undefined ? true : this.defaultSelected;
-		this._loadPeople();
+		this._loadEmployees();
 		this._loadEmployeeId();
 	}
 
@@ -124,7 +124,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	private async _loadPeople() {
+	private async _loadEmployees() {
 		/**
 		 * TODO: fetch only employees of selected organization,
 		 * currently all employees are fetched and filtered at the frontend
@@ -173,7 +173,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 			this.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 			this.store.selectedEmployee.id = null;
 		}
-		if (!this.defaultSelected) this.selectedEmployee = null;
+
+		if (
+			!this.defaultSelected &&
+			this.selectedEmployee === ALL_EMPLOYEES_SELECTED
+		)
+			this.selectedEmployee = null;
 	}
 
 	ngOnDestroy() {
