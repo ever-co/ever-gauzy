@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	Input,
+	Output,
+	EventEmitter
+} from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -55,6 +62,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	@Input()
 	placeholder: string;
 
+	@Output()
+	selectionChanged: EventEmitter<SelectedEmployee> = new EventEmitter();
+
 	people: SelectedEmployee[] = [];
 	selectedEmployee: SelectedEmployee;
 
@@ -89,6 +99,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}
+		this.selectionChanged.emit(employee);
 	}
 
 	getShortenedName(firstName: string, lastName: string) {
