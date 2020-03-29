@@ -50,6 +50,10 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	skipGlobalChange: boolean;
 	@Input()
 	disabled: boolean;
+	@Input()
+	defaultSelected;
+	@Input()
+	placeholder: string;
 
 	people: SelectedEmployee[] = [];
 	selectedEmployee: SelectedEmployee;
@@ -62,7 +66,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this._loadPople();
+		this.defaultSelected =
+			this.defaultSelected === undefined ? true : this.defaultSelected;
+		this._loadPeople();
 		this._loadEmployeeId();
 	}
 
@@ -107,7 +113,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	private async _loadPople() {
+	private async _loadPeople() {
+		/**
+		 * TODO: fetch only employees of selected organization,
+		 * currently all employees are fetched and filtered at the frontend
+		 */
+
 		const { items } = await this.employeesService
 			.getAll(['user'])
 			.pipe(first())
@@ -151,6 +162,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 			this.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 			this.store.selectedEmployee.id = null;
 		}
+		if (!this.defaultSelected) this.selectedEmployee = null;
 	}
 
 	ngOnDestroy() {
