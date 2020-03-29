@@ -1,6 +1,11 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
-import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import {
+	FormBuilder,
+	Validators,
+	FormGroup,
+	AbstractControl
+} from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
 	CurrenciesEnum,
@@ -54,6 +59,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	showWarning = false;
 	disable = true;
 	loading = false;
+	valueDate: AbstractControl;
+	amount: AbstractControl;
+	notes: AbstractControl;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -221,6 +229,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 			this._loadDefaultCurrency();
 		}
+		this.valueDate = this.form.get('valueDate');
+		this.amount = this.form.get('amount');
+		this.notes = this.form.get('notes');
 	}
 
 	private calculateTaxes() {
@@ -291,11 +302,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	private closeWarning() {
+	closeWarning() {
 		this.showWarning = !this.showWarning;
 	}
 
-	private attachReceipt() {
+	attachReceipt() {
 		this.dialogService
 			.open(AttachReceiptComponent, {
 				context: {
