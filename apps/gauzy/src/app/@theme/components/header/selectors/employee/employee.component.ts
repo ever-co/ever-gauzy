@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	Input,
+	Output,
+	EventEmitter
+} from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -50,6 +57,13 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	skipGlobalChange: boolean;
 	@Input()
 	disabled: boolean;
+	@Input()
+	defaultSelected;
+	@Input()
+	placeholder: string;
+
+	@Output()
+	selectionChanged: EventEmitter<SelectedEmployee> = new EventEmitter();
 
 	people: SelectedEmployee[] = [];
 	selectedEmployee: SelectedEmployee;
@@ -62,7 +76,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		this._loadPople();
+		this.defaultSelected =
+			this.defaultSelected === undefined ? true : this.defaultSelected;
+		this._loadEmployees();
 		this._loadEmployeeId();
 	}
 
@@ -83,6 +99,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}
+		this.selectionChanged.emit(employee);
 	}
 
 	getShortenedName(firstName: string, lastName: string) {
@@ -107,7 +124,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	private async _loadPople() {
+	private async _loadEmployees() {
+		/**
+		 * TODO: fetch only employees of selected organization,
+		 * currently all employees are fetched and filtered at the frontend
+		 */
+
 		const { items } = await this.employeesService
 			.getAll(['user'])
 			.pipe(first())
@@ -151,6 +173,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 			this.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 			this.store.selectedEmployee.id = null;
 		}
+
+		if (
+			!this.defaultSelected &&
+			this.selectedEmployee === ALL_EMPLOYEES_SELECTED
+		)
+			this.selectedEmployee = null;
 	}
 
 	ngOnDestroy() {
