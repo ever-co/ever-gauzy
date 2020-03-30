@@ -1,13 +1,15 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
 import {
+	IFindStartDateUpdateTypeInput,
+	IStartUpdateTypeInfo,
 	OrganizationRecurringExpense,
 	OrganizationRecurringExpenseFindInput,
-	RecurringExpenseDeleteInput,
 	OrganizationRecurringExpenseForEmployeeOutput,
+	RecurringExpenseDeleteInput,
 	RecurringExpenseOrderFields
 } from '@gauzy/models';
+import { first } from 'rxjs/operators';
 
 @Injectable({
 	providedIn: 'root'
@@ -99,6 +101,19 @@ export class OrganizationRecurringExpenseService {
 				items: OrganizationRecurringExpenseForEmployeeOutput[];
 				total: number;
 			}>(`${this.API_URL}/employee/${orgId}`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getStartDateUpdateType(
+		findInput?: IFindStartDateUpdateTypeInput
+	): Promise<IStartUpdateTypeInfo> {
+		const data = JSON.stringify({ findInput });
+
+		return this.http
+			.get<IStartUpdateTypeInfo>(`${this.API_URL}/date-update-type`, {
 				params: { data }
 			})
 			.pipe(first())
