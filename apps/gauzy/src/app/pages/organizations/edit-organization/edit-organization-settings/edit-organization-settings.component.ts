@@ -113,7 +113,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				title: this.getTranslation(
 					'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES'
 				),
-				icon: 'car-outline',
+				icon: 'list-outline',
 				responsive: true,
 				route: this.getRoute('expense-categories')
 			},
