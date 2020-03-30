@@ -191,15 +191,15 @@ export class SeedDataService {
 				},
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
-			const candidates = await createCandidates(
-				this.connection,
-				{
-					tenant: [...tenants],
-					org: defaultOrganization,
-					users: [...defaultUsers]
-				},
-				{ orgs: randomOrganizations, users: [...randomUsers] }
-			);
+			// const candidates = await createCandidates(
+			// 	this.connection,
+			// 	{
+			// 		tenant: [...tenants],
+			// 		org: defaultOrganization,
+			// 		users: [...defaultUsers]
+			// 	},
+			// 	{ orgs: randomOrganizations, users: [...randomUsers] }
+			// );
 			await createTeams(
 				this.connection,
 				defaultOrganization,
