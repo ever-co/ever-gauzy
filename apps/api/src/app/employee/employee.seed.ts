@@ -66,7 +66,6 @@ const createDefaultEmployees = async (
 		employees.push(employee);
 		counter++;
 	}
-
 	console.dir(employees);
 	return employees;
 };
@@ -102,7 +101,7 @@ const createRandomEmployees = async (
 			}
 		}
 	}
-
+	console.log(employees);
 	return employees;
 };
 

@@ -68,7 +68,7 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAllCandidades(
 		@Query('data') data: string
 	): Promise<IPagination<Candidate>> {
 		const { relations, findInput } = JSON.parse(data);

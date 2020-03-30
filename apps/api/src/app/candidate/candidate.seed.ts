@@ -58,7 +58,7 @@ const createDefaultCandidates = async (
 		candidate.tenant = defaultTenants[counter];
 		candidate.candidateLevel = defaultCandidates.filter(
 			(e) => e.email === candidate.user.email
-		)[0].employeeLevel;
+		)[0].candidateLevel;
 
 		await insertCandidate(connection, candidate);
 		candidates.push(candidate);

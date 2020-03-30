@@ -55,7 +55,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EMPLOYEES_EDIT
+					PermissionsEnum.ORG_CANDIDATES_EDIT
 				);
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
@@ -84,7 +84,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		this._applyTranslationOnSmartTable();
 	}
 
-	selectEmployeeTmp(ev: {
+	selectCandidateTmp(ev: {
 		data: CandidateViewModel;
 		isSelected: boolean;
 		selected: CandidateViewModel[];
@@ -127,6 +127,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 		if (!this.includeDeleted) {
 			result.forEach((candidate) => {
+				console.log(candidate);
 				candidatesVm.push(candidate);
 			});
 		} else {
@@ -140,6 +141,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		}
 
 		this.organizationName = name;
+		console.log(this.sourceSmartTable); ////////////////////
 
 		this.loading = false;
 	}

@@ -12,7 +12,7 @@ import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
 import { Tenant } from '../tenant';
 
-export const seedAdminUsers = async (
+export const AdminUsers = async (
 	connection: Connection,
 	roles: Role[],
 	tenant: Tenant[]

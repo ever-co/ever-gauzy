@@ -290,7 +290,7 @@ export const environment: IEnvironment = {
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
 			startedWorkOn: '2018-03-20',
-			employeeLevel: 'D'
+			candidateLevel: 'D'
 		}
 	],
 	defaultTeams: [
