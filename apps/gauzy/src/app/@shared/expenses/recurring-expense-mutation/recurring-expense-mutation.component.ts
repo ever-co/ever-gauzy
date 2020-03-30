@@ -181,7 +181,11 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			startDate: [
 				recurringExpense && recurringExpense.startDate
 					? new Date(recurringExpense.startDate)
-					: this.selectedDate
+					: new Date(
+							this.selectedDate.getFullYear(),
+							this.selectedDate.getMonth(),
+							1
+					  )
 			]
 		});
 

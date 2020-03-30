@@ -188,6 +188,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	}
 
 	async addOrganizationRecurringExpense() {
+		console.log(this.selectedDate);
 		const result = await this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {

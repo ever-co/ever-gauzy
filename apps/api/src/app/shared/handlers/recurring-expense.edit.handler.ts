@@ -206,7 +206,7 @@ export abstract class RecurringExpenseEditHandler<
 	/**
 	 * Decrease only the end date to the end of previous month without modifying any value
 	 */
-	private reduceEndDateToPreviousMonth(
+	private async reduceEndDateToPreviousMonth(
 		id: string,
 		startYear: number,
 		startMonth: number
@@ -221,7 +221,7 @@ export abstract class RecurringExpenseEditHandler<
 			endYear: newEndYear,
 			endDate: new Date(newEndYear, newEndMonth, newEndDay)
 		};
-		this.crudService.update(id, dateUpdate);
+		await this.crudService.update(id, dateUpdate);
 	}
 
 	/**
