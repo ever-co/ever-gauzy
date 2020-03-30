@@ -289,6 +289,7 @@ export const environment: IEnvironment = {
 			firstName: 'Alish',
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
+
 			startedWorkOn: '2018-03-20',
 			candidateLevel: 'D'
 		}

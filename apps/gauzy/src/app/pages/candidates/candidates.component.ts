@@ -55,7 +55,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_CANDIDATES_EDIT
+					PermissionsEnum.ORG_EMPLOYEES_EDIT
 				);
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT

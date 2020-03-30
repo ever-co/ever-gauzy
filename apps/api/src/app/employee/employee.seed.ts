@@ -101,7 +101,6 @@ const createRandomEmployees = async (
 			}
 		}
 	}
-	console.log(employees);
 	return employees;
 };
 

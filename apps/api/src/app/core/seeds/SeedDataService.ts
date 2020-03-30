@@ -65,7 +65,8 @@ import { Timesheet } from '../../timesheet/timesheet.entity';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
 import { Email } from '../../email/email.entity';
-import { Candidate, createCandidates } from '../../candidate';
+import { Candidate } from '../../candidate/candidate.entity';
+import { createCandidates } from '../../candidate/candidate.seed';
 
 const allEntities = [
 	TimeOffPolicy,

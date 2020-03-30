@@ -96,7 +96,6 @@ const createRandomCandidates = async (
 			}
 		}
 	}
-
 	return candidates;
 };
 
