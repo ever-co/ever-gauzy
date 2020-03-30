@@ -14,6 +14,7 @@ import { EditOrganizationOtherSettingsComponent } from './edit-organization/edit
 import { EditOrganizationMainComponent } from './edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component';
 import { EditOrganizationEmployeeLevelComponent } from './edit-organization/edit-organization-settings/edit-organization-employee-levels/edit-organization-employee-level.component';
 import { EditOrganizationEmploymentTypes } from './edit-organization/edit-organization-settings/edit-organization-employment-types/edit-organization-employment-types.component';
+import { EditOrganizationExpenseCategoriesComponent } from './edit-organization/edit-organization-settings/edit-organization-expense-categories/edit-organization-expense-categories.component';
 
 const routes: Routes = [
 	{
@@ -56,6 +57,10 @@ const routes: Routes = [
 			{
 				path: 'vendors',
 				component: EditOrganizationVendorsComponent
+			},
+			{
+				path: 'expense-categories',
+				component: EditOrganizationExpenseCategoriesComponent
 			},
 			{
 				path: 'projects',
