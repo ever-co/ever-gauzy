@@ -3,12 +3,12 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { AuthService } from '../../../auth';
 import { getUserDummyImage } from '../../../core';
-import { Employee } from '../../../employee';
+import { Employee } from '../../../employee/employee.entity';
 import { EmployeeService } from '../../../employee/employee.service';
-import { OrganizationService } from '../../../organization';
-import { OrganizationClientsService } from '../../../organization-clients';
-import { OrganizationDepartmentService } from '../../../organization-department';
-import { OrganizationProjectsService } from '../../../organization-projects';
+import { OrganizationService } from '../../../organization/organization.service';
+import { OrganizationClientsService } from '../../../organization-clients/organization-clients.service';
+import { OrganizationDepartmentService } from '../../../organization-department/organization-department.service';
+import { OrganizationProjectsService } from '../../../organization-projects/organization-projects.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 

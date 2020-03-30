@@ -20,14 +20,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { EmployeeService } from '../employee';
+import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { ExpenseCreateCommand } from './commands/expense.create.command';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
-import { OrganizationService } from '../organization';
+import { OrganizationService } from '../organization/organization.service';
 import { FindSplitExpenseQuery } from './queries/expense.find-split-expense.query';
 
 @ApiTags('Expense')

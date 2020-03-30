@@ -131,7 +131,6 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	}
 
 	private _initializeForm(employee: Employee) {
-		console.log('employee', employee);
 		this.form = this.fb.group({
 			organizationEmploymentTypes: [
 				employee.organizationEmploymentTypes || null

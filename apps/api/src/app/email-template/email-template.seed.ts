@@ -17,14 +17,11 @@ export const createEmailTemplates = async (
 	connection: Connection
 ): Promise<any> => {
 	return new Promise((resolve, reject) => {
-		const config: any = {
-			root: './apps/api/src/app/core/seeds/data/default-email-templates',
-			depth: 2
-		};
-
 		const files = [];
 
-		readdirp(config)
+		readdirp('./apps/api/src/app/core/seeds/data/default-email-templates', {
+			depth: 2
+		})
 			.on('data', (entry) => {
 				files.push(entry);
 			})

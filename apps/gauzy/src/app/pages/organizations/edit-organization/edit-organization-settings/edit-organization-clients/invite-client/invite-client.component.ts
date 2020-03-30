@@ -6,6 +6,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
 import { OrganizationClients } from '@gauzy/models';
 import { UsersService } from 'apps/gauzy/src/app/@core/services';
+import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 
 @Component({
 	selector: 'ga-invite-client',
@@ -19,7 +20,8 @@ export class InviteClientComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private readonly fb: FormBuilder,
 		private readonly organizationClientService: OrganizationClientsService,
-		private readonly usersService: UsersService
+		private readonly usersService: UsersService,
+		private readonly inviteService: InviteService
 	) {
 		super(translateService);
 	}
@@ -72,11 +74,10 @@ export class InviteClientComponent extends TranslationBaseComponent
 	}
 
 	async inviteClient() {
-		const organizationClient = await this.addOrEditClient();
-
+		const organizationClient: OrganizationClients = await this.addOrEditClient();
 		try {
 			if (organizationClient) {
-				const invited = await this.organizationClientService.invite(
+				const invited = this.inviteService.inviteOrganizationClient(
 					organizationClient.id
 				);
 				this.closeDialog(invited);

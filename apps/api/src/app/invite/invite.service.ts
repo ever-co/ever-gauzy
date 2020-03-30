@@ -6,7 +6,9 @@ import {
 	OrganizationProjects as IOrganizationProjects,
 	OrganizationClients as IOrganizationClients,
 	OrganizationDepartment as IOrganizationDepartment,
-	Role as IOrganizationRole
+	Role as IOrganizationRole,
+	User,
+	CreateOrganizationClientInviteInput
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,11 +18,13 @@ import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects';
 import { Invite } from './invite.entity';
 import * as nodemailer from 'nodemailer';
-import { OrganizationClients } from '../organization-clients';
-import { OrganizationDepartment } from '../organization-department';
-import { Organization } from '../organization';
-import { EmailService } from '../email';
-import { Role } from '../role';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationDepartment } from '../organization-department/organization-department.entity';
+import { Organization } from '../organization/organization.entity';
+import { EmailService } from '../email/email.service';
+import { Role } from '../role/role.entity';
+import { addDays } from 'date-fns';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class InviteService extends CrudService<Invite> {
@@ -43,8 +47,9 @@ export class InviteService extends CrudService<Invite> {
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>,
 		@InjectRepository(Role)
-		private readonly roleRpository: Repository<Role>,
-		private emailService: EmailService
+		private readonly roleRepository: Repository<Role>,
+		private readonly emailService: EmailService,
+		private readonly userService: UserService
 	) {
 		super(inviteRepository);
 	}
@@ -117,7 +122,7 @@ export class InviteService extends CrudService<Invite> {
 			organizationId
 		);
 
-		const role: IOrganizationRole = await this.roleRpository.findOne(
+		const role: IOrganizationRole = await this.roleRepository.findOne(
 			roleId
 		);
 
@@ -126,8 +131,7 @@ export class InviteService extends CrudService<Invite> {
 				? organization.inviteExpiryPeriod
 				: 7;
 
-		const expireDate = new Date();
-		expireDate.setDate(expireDate.getDate() + inviteExpiryPeriod);
+		const expireDate = addDays(new Date(), inviteExpiryPeriod);
 
 		const existingInvites = (
 			await this.repository
@@ -190,6 +194,58 @@ export class InviteService extends CrudService<Invite> {
 		});
 
 		return { items, total: items.length, ignored: existingInvites.length };
+	}
+
+	async createOrganizationClientInvite(
+		inviteInput: CreateOrganizationClientInviteInput
+	): Promise<Invite> {
+		const {
+			emailId,
+			roleId,
+			clientId,
+			organizationId,
+			invitedById,
+			originalUrl
+		} = inviteInput;
+
+		const client: IOrganizationClients = await this.organizationClientsRepository.findOne(
+			clientId
+		);
+
+		const organization: Organization = await this.organizationRepository.findOne(
+			organizationId
+		);
+
+		const inviterUser: User = await this.userService.findOne(invitedById);
+
+		const inviteExpiryPeriod =
+			organization && organization.inviteExpiryPeriod
+				? organization.inviteExpiryPeriod
+				: 7;
+
+		const expireDate = addDays(new Date(), inviteExpiryPeriod);
+
+		const invite = new Invite();
+		invite.token = this.createToken(emailId);
+		invite.email = emailId;
+		invite.roleId = roleId;
+		invite.organizationId = organizationId;
+		invite.invitedById = invitedById;
+		invite.status = InviteStatusEnum.INVITED;
+		invite.expireDate = expireDate;
+		invite.clients = [client];
+
+		const createdInvite = await this.repository.save(invite);
+
+		this.emailService.inviteOrganizationClient(
+			client,
+			inviterUser,
+			organization,
+			createdInvite,
+			originalUrl
+		);
+
+		return createdInvite;
 	}
 
 	async validate(relations, email, token): Promise<Invite> {

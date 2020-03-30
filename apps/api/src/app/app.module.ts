@@ -1,46 +1,48 @@
+import { InvoiceModule } from './invoice/invoice.module';
+import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './user';
-import { EmployeeModule } from './employee';
-import { RoleModule } from './role';
-import { OrganizationModule } from './organization';
-import { IncomeModule } from './income';
-import { ExpenseModule } from './expense';
+import { UserModule } from './user/user.module';
+import { EmployeeModule } from './employee/employee.module';
+import { RoleModule } from './role/role.module';
+import { OrganizationModule } from './organization/organization.module';
+import { IncomeModule } from './income/income.module';
+import { ExpenseModule } from './expense/expense.module';
 import { EmployeeSettingModule } from './employee-setting';
 import { CoreModule } from './core';
-import { AuthModule } from './auth';
+import { AuthModule } from './auth/auth.module';
 import { SeedDataService } from './core/seeds/SeedDataService';
-import { UserOrganizationModule } from './user-organization';
-import { EmployeeStatisticsModule } from './employee-statistics';
-import { OrganizationDepartmentModule } from './organization-department';
-import { OrganizationRecurringExpenseModule } from './organization-recurring-expense';
-import { EmployeeRecurringExpenseModule } from './employee-recurring-expense';
-import { OrganizationClientsModule } from './organization-clients';
-import { OrganizationPositionsModule } from './organization-positions';
-import { OrganizationProjectsModule } from './organization-projects';
-import { OrganizationVendorsModule } from './organization-vendors';
-import { OrganizationTeamsModule } from './organization-teams';
-import { ProposalModule } from './proposal';
-import { CountryModule } from './country';
-import { InviteModule } from './invite';
-import { EmailModule } from './email';
+import { UserOrganizationModule } from './user-organization/user-organization.module';
+import { EmployeeStatisticsModule } from './employee-statistics/employee-statistics.module';
+import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
+import { OrganizationRecurringExpenseModule } from './organization-recurring-expense/organization-recurring-expense.module';
+import { EmployeeRecurringExpenseModule } from './employee-recurring-expense/employee-recurring-expense.module';
+import { OrganizationClientsModule } from './organization-clients/organization-clients.module';
+import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
+import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
+import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
+import { OrganizationTeamsModule } from './organization-teams/organization-teams.module';
+import { ProposalModule } from './proposal/proposal.module';
+import { CountryModule } from './country/country.module';
+import { InviteModule } from './invite/invite.module';
+import { EmailModule } from './email/email.module';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionsModule } from './role-permissions/role-permissions.module';
 import { TenantModule } from './tenant/tenant.module';
-import { EmailTemplateModule } from './email-template';
+import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
-import { ExportAllModule } from './export_import';
+import { ExportAllModule } from './export_import/export-all.module';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
-import { TaskModule } from './tasks';
+import { TaskModule } from './tasks/task.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
-import { OrganizationEmploymentTypeModule } from './organization-employment-type';
+import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 
@@ -160,6 +162,14 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 					{
 						path: '/integrations',
 						module: IntegrationsModule
+					},
+					{
+						path: '/invoices',
+						module: InvoiceModule
+					},
+					{
+						path: '/invoice-item',
+						module: InvoiceItemModule
 					}
 				]
 			}
@@ -193,6 +203,8 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
+		InvoiceModule,
+		InvoiceItemModule,
 		EmployeeLevelModule,
 		...(environment.sentry
 			? [

@@ -1,7 +1,7 @@
 import { Tenant } from '../tenant';
 import { Connection } from 'typeorm';
 import { Employee } from './employee.entity';
-import { Organization } from '../organization';
+import { Organization } from '../organization/organization.entity';
 import { User } from '../user';
 import { environment as env } from '@env-api/environment';
 

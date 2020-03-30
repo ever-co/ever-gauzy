@@ -59,6 +59,11 @@ export interface OrganizationClientsInviteInput extends IBaseEntityModel {
 	inviterUser?: User;
 }
 
+export interface LinkClientOrganizationInviteInput {
+	organizationId: string;
+	inviteId: string;
+}
+
 export enum ClientOrganizationInviteStatus {
 	NOT_INVITED = 'NOT_INVITED',
 	INVITED = 'INVITED',

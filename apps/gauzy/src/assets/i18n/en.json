@@ -300,7 +300,8 @@
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
-		"TASKS": "Tasks"
+		"TASKS": "Tasks",
+		"INVOICES": "Invoices"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -717,6 +718,25 @@
 			"ACCEPTED": "Accepted"
 		}
 	},
+	"INVOICES_PAGE": {
+		"HEADER": "Invoices",
+		"INVOICE_NUMBER": "Invoice Number",
+		"TOTAL_VALUE": "Total Value",
+		"PAID_STATUS": "Paid Status",
+		"INVOICES_ADD_INVOICE": "Invoice Added",
+		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
+		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
+		"INVOICES_SELECT_DUE_DATE": "Due Date",
+		"INVOICES_SELECT_CURRENCY": "Currency",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
+		"INVOICES_SELECT_PAID": "Paid",
+		"INVOICES_SELECT_TAX": "Tax",
+		"INVOICES_SELECT_TERMS": "Terms",
+		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
+		"ADD_INVOICE": "Add Invoice",
+		"EDIT_INVOICE": "Edit Invoice"
+	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
@@ -844,9 +864,9 @@
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
-				"ADD_EXPENSE_CATEGORIES": "New vendor {{ name }} successfully added!",
-				"REMOVE_EXPENSE_CATEGORIES": "Vendor {{ name }} successfully removed!",
-				"INVALID_EXPENSE_CATEGORIES_NAME": "Please add a Vendor name"
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "New position {{ name }} successfully added!",

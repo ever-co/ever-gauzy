@@ -238,19 +238,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
 			}
 		},
-		{
-			title: 'Expense Categories',
-			icon: 'car-outline',
-			link: `/pages/organizations/`,
-			data: {
-				translated: false,
-				organizationShortcut: true,
-				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/expense categories',
-				translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES'
-			}
-		},
+
 		{
 			title: 'Organizations',
 			icon: 'globe-outline',
@@ -262,6 +250,19 @@ export class PagesComponent implements OnInit, OnDestroy {
 					PermissionsEnum.ORG_EXPENSES_EDIT
 				],
 				translationKey: 'MENU.ORGANIZATIONS'
+			}
+		},
+		{
+			title: 'Expense Categories',
+			icon: 'list-outline',
+			link: `/pages/organizations/`,
+			data: {
+				translated: false,
+				organizationShortcut: true,
+				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+				urlPrefix: `/pages/organizations/edit/`,
+				urlPostfix: '/settings/expense-categories',
+				translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES'
 			}
 		},
 		{
@@ -284,6 +285,17 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.EQUIPMENT_SHARING'
 			}
 		},
+		{
+			title: 'Invoices',
+			icon: 'file-text-outline',
+			link: '/pages/invoices',
+			data: {
+				translated: false,
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+				translationKey: 'MENU.INVOICES'
+			}
+		},
+
 		{
 			title: 'Settings',
 			icon: 'settings-outline',

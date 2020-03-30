@@ -24,7 +24,7 @@ import {
 	ClientOrganizationInviteStatus
 } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects';
-import { Employee } from '../employee';
+import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 
 @Entity('organization_client')

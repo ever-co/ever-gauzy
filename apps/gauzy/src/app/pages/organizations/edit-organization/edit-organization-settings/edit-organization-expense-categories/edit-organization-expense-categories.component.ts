@@ -1,6 +1,5 @@
 import { IOrganizationExpenseCategory } from './../../../../../../../../../libs/models/src/lib/organization-expense-category.model';
 import { Component, OnInit } from '@angular/core';
-
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 
@@ -65,7 +64,7 @@ export class EditOrganizationExpenseCategoriesComponent
 
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORIES',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
 					{
 						name: name
 					}
@@ -95,7 +94,7 @@ export class EditOrganizationExpenseCategoriesComponent
 
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORIES',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
 					{
 						name: name
 					}
@@ -109,7 +108,7 @@ export class EditOrganizationExpenseCategoriesComponent
 			// TODO translate
 			this.toastrService.danger(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORIES_NAME'
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORY_NAME'
 				),
 				this.getTranslation(
 					'TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_INVALID_NAME'

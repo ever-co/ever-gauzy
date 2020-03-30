@@ -10,7 +10,7 @@ import {
 	IsEnum
 } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
-import { OrganizationClients } from '../organization-clients';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 
 @Entity('timesheet')
 export class Timesheet extends Base implements ITimesheet {
