@@ -166,6 +166,7 @@
 			"ADD_DEPARTMENT": "הוסף מחלקה",
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "הוסף ספק",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "לקוחות",
 			"START_DATE_PROJECT": "תאריך התחלת הפרויקט",
 			"END_DATE_PROJECT": "תאריך סיום של הפרויקט",
@@ -451,6 +452,7 @@
 		"CLIENTS": "לקוחות",
 		"POSITIONS": "עמדות",
 		"VENDORS": "ספקים",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "פרויקטים",
 		"ACTIVE": "פעיל",
 		"ARCHIVED": "נשמר בארכיון",
@@ -859,6 +861,11 @@
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
 				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "New position {{ name }} successfully added!",
