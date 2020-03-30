@@ -92,23 +92,23 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 					labels: this.labels,
 					datasets: [
 						{
-							label: 'Revenue',
+							label: `Revenue: ${this.incomeStatistics}`,
 							backgroundColor: '#089c17',
 							borderWidth: 1,
 							data: this.incomeStatistics
 						},
 						{
-							label: 'Expenses',
+							label: `Expenses: ${this.expenseStatistics}`,
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
-							label: 'Profit',
+							label: `Profit: ${this.profitStatistics}`,
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						},
 						{
-							label: 'Bonus',
+							label: `Bonus: ${this.bonusStatistics}`,
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						}
