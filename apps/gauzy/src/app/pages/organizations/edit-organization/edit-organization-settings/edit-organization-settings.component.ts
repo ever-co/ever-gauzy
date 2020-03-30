@@ -110,6 +110,14 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				route: this.getRoute('vendors')
 			},
 			{
+				title: this.getTranslation(
+					'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES'
+				),
+				icon: 'car-outline',
+				responsive: true,
+				route: this.getRoute('expense-categories')
+			},
+			{
 				title: this.getTranslation('ORGANIZATIONS_PAGE.PROJECTS'),
 				icon: 'book-outline',
 				responsive: true,

@@ -239,6 +239,19 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Expense Categories',
+			icon: 'car-outline',
+			link: `/pages/organizations/`,
+			data: {
+				translated: false,
+				organizationShortcut: true,
+				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+				urlPrefix: `/pages/organizations/edit/`,
+				urlPostfix: '/settings/expense categories',
+				translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES'
+			}
+		},
+		{
 			title: 'Organizations',
 			icon: 'globe-outline',
 			link: '/pages/organizations',
@@ -271,7 +284,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.EQUIPMENT_SHARING'
 			}
 		},
-
 		{
 			title: 'Settings',
 			icon: 'settings-outline',

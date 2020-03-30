@@ -167,6 +167,7 @@
 			"ADD_DEPARTMENT": "Add Department",
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "Add vendor",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Clients",
 			"START_DATE_PROJECT": "Project Start Date (optional)",
 			"END_DATE_PROJECT": "Project End Date (optional)",
@@ -451,6 +452,7 @@
 		"CLIENTS": "Clients",
 		"POSITIONS": "Positions",
 		"VENDORS": "Vendors",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Projects",
 		"ACTIVE": "Active",
 		"ARCHIVED": "Archived",
@@ -840,6 +842,11 @@
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
 				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORIES": "New vendor {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORIES": "Vendor {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORIES_NAME": "Please add a Vendor name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "New position {{ name }} successfully added!",
