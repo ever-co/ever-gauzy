@@ -198,6 +198,7 @@
 			"UPLOADER_PLACEHOLDER": "Image",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
+			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"DATE": "Date",
 			"VALUE": "Value",
 			"SELECT_CURRENCY": "Select Currency",
@@ -209,7 +210,8 @@
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
-			"REGISTRATION_DATE": "Organization Registration Date"
+			"REGISTRATION_DATE": "Organization Registration Date",
+			"ORGANIZATIONS": "Choose Organizations"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -671,7 +673,9 @@
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
-			"EDIT_EXISTING_USER": "Edit Existing User"
+			"EDIT_EXISTING_USER": "Edit Existing User",
+			"MAIN": "Main",
+			"USER_ORGANIZATIONS": "Organizations"
 		}
 	},
 	"CONTEXT_MENU": {
