@@ -197,6 +197,7 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
+			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
 			"SELECT_CURRENCY": "Выберите валюту",
@@ -208,7 +209,8 @@
 			"CHOOSE_EMPLOYEES": "Выберите сотрудника/с",
 			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
-			"REGISTRATION_DATE": "Дата регистрации организации"
+			"REGISTRATION_DATE": "Дата регистрации организации",
+			"ORGANIZATIONS": "Выберите организации"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -670,7 +672,9 @@
 		},
 		"EDIT_USER": {
 			"HEADER": "Управление пользователем",
-			"EDIT_EXISTING_USER": "Изменить существующего пользователя"
+			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
+			"MAIN": "Главная",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
