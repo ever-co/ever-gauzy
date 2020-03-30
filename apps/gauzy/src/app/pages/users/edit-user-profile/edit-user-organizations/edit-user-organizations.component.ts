@@ -60,10 +60,6 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 	private async _loadOrganizations() {
 		const all_orgs = this.organizationsService.getAll();
 
-		const { id } = this.routeParams;
-
-		const { items } = await this.usersOrganizationService.getAll();
-
 		const allOrgs = [];
 		all_orgs.then((orgs) => {
 			for (let i = 0; i < orgs.items.length; i++) {
