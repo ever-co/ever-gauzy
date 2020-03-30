@@ -41,8 +41,11 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		// 2. Populate Expenses(One time, Recurring, and split expenses) in statisticsMap
 		await this._loadEmployeeExpenses(input, statisticsMap);
 		await this._loadEmployeeRecurringExpenses(input, statisticsMap);
-		await this._loadEmployeeSplitExpenses(input, statisticsMap);
 		await this._loadOrganizationSplitExpenses(input, statisticsMap);
+		await this._loadOrganizationRecurringSplitExpenses(
+			input,
+			statisticsMap
+		);
 
 		// 3. Populate Profit in statisticsMap
 		this._calculateProfit(statisticsMap);
@@ -74,7 +77,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		const {
 			items: incomes
 		} = await this.employeeStatisticsService.employeeIncomeInNMonths(
-			input.employeeId,
+			[input.employeeId],
 			input.valueDate,
 			input.months
 		);
@@ -120,7 +123,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 		const {
 			items: expenses
 		} = await this.employeeStatisticsService.employeeExpenseInNMonths(
-			input.employeeId,
+			[input.employeeId],
 			input.valueDate,
 			input.months
 		);
@@ -161,9 +164,9 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	) {
 		const {
 			items: employeeRecurringExpenses
-		} = await this.employeeStatisticsService.employeeRecurringExpenses(
+		} = await this.employeeStatisticsService.employeeRecurringExpenses([
 			input.employeeId
-		);
+		]);
 
 		/**
 		 * Add recurring expense from the
@@ -231,7 +234,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	 * Updates expense statistics values in map if key pre-exists
 	 * Adds a new map entry if the key(month-year) does not already exist
 	 */
-	private async _loadEmployeeSplitExpenses(
+	private async _loadOrganizationSplitExpenses(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
 	) {
@@ -277,7 +280,7 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 	 * Adds a new map entry if the key(month-year) does not already exist
 
 	 */
-	private async _loadOrganizationSplitExpenses(
+	private async _loadOrganizationRecurringSplitExpenses(
 		input: MonthAggregatedEmployeeStatisticsFindInput,
 		statisticsMap: Map<string, MonthAggregatedEmployeeStatistics>
 	) {

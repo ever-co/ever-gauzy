@@ -31,6 +31,13 @@ export class EmployeeStatisticsController {
 		@Query('data') data?: string
 	): Promise<AggregatedEmployeeStatistic[]> {
 		const { findInput } = JSON.parse(data);
+		/**
+		 * JSON parse changes Date object to String type
+		 * Changing Date String to Date Object using parseISO
+		 */
+		findInput.filterDate = findInput.filterDate
+			? parseISO(findInput.filterDate)
+			: null;
 		return this.queryBus.execute(
 			new AggregatedEmployeeStatisticQuery(findInput)
 		);
