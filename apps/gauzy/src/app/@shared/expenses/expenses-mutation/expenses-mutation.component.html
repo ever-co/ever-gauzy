@@ -15,7 +15,17 @@
 			[hidden]="expense && !duplicate"
 			[skipGlobalChange]="true"
 			class="employees"
+			placeholder="Organization"
+			[defaultSelected]="false"
+			(selectionChanged)="onEmployeeChange($event)"
 		></ga-employee-selector>
+		<span
+			*ngIf="showTooltip"
+			class="help-text"
+			nbTooltip="{{ 'EXPENSES_PAGE.SPLIT_HELP' | translate }}"
+		>
+			<nb-icon icon="alert-triangle-outline"></nb-icon>
+		</span>
 		<!-- TODO: FIX dialogRef.close() -->
 		<nb-icon
 			class="ml-auto mt-1 close"
@@ -41,22 +51,7 @@
 						employeeSelector.selectedEmployee.id
 					)
 				"
-			>
-				<div class="col">
-					<div class="form-group">
-						<nb-checkbox formControlName="splitExpense">
-							<span
-								nbTooltip="{{
-									'EXPENSES_PAGE.SPLIT_HELP' | translate
-								}}"
-								>{{
-									'EXPENSES_PAGE.SPLIT_EXPENSE' | translate
-								}}</span
-							>
-						</nb-checkbox>
-					</div>
-				</div>
-			</div>
+			></div>
 			<div class="row">
 				<div class="col-sm-6">
 					<input
@@ -75,11 +70,11 @@
 					/>
 					<nb-datepicker #formpicker></nb-datepicker>
 				</div>
-				<div class="col-sm-6" *ngIf="vendors.length">
+				<div class="col-sm-6">
 					<div class="form-group">
 						<ng-select
 							[addTag]="addNewVendor"
-							bindLabel="vendorName"
+							bindLabel="name"
 							[items]="vendors"
 							[searchable]="true"
 							placeholder="{{
@@ -123,18 +118,16 @@
 					</nb-select>
 				</div>
 				<div class="col-sm-6">
-					<div class="form-group" *ngIf="fakeCategories.length">
-						<ng-select
-							[items]="fakeCategories"
-							bindLabel="categoryName"
-							[searchable]="false"
-							formControlName="category"
-							placeholder="{{
-								'POP_UPS.ALL_CATEGORIES' | translate
-							}}"
-						>
-						</ng-select>
-					</div>
+					<ng-select
+						[items]="expenseCategories$ | async"
+						[searchable]="true"
+						[addTag]="addNewCategory"
+						bindLabel="name"
+						[searchable]="false"
+						formControlName="category"
+						placeholder="{{ 'POP_UPS.ALL_CATEGORIES' | translate }}"
+					>
+					</ng-select>
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">

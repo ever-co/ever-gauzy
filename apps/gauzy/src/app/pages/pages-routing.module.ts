@@ -56,6 +56,21 @@ const routes: Routes = [
 				// }
 			},
 			{
+				path: 'integrations',
+				loadChildren: () =>
+					import('./integrations/integrations.module').then(
+						(m) => m.IntegrationsModule
+					)
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		// RolesEnum.DATA_ENTRY,
+				// 		// RolesEnum.EMPLOYEE,
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
+			},
+			{
 				path: 'proposals',
 				loadChildren: () =>
 					import('./proposals/proposals.module').then(
@@ -176,6 +191,13 @@ const routes: Routes = [
 				loadChildren: () =>
 					import('./equipment-sharing/equipment-sharing.module').then(
 						(m) => m.EquipmentSharingModule
+					)
+			},
+			{
+				path: 'invoices',
+				loadChildren: () =>
+					import('./invoices/invoices.module').then(
+						(m) => m.InvoicesModule
 					)
 			},
 			{

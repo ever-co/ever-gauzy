@@ -144,7 +144,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	async addPolicy(formData) {
 		if (formData) {
 			try {
-				await this.tymeOffService.create(formData);
+				await this.tymeOffService.createPolicy(formData);
 
 				this.toastrService.primary(
 					this.getTranslation('NOTES.POLICY.ADD_POLICY'),
@@ -177,7 +177,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	async editPolicy(formData) {
 		if (formData) {
 			try {
-				await this.tymeOffService.update(
+				await this.tymeOffService.updatePolicy(
 					this.selectedPolicyId,
 					formData
 				);
@@ -204,7 +204,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.tymeOffService.delete(
+						await this.tymeOffService.deletePolicy(
 							this.selectedPolicy.data.id
 						);
 
@@ -238,7 +238,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 			};
 
 			try {
-				const { items } = await this.tymeOffService.getAll(
+				const { items } = await this.tymeOffService.getAllPolicies(
 					['employees'],
 					findObj
 				);

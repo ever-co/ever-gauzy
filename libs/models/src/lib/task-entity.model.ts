@@ -8,3 +8,7 @@ export interface Task extends IBaseEntityModel {
 	project?: OrganizationProjects;
 	projectId?: string;
 }
+
+export interface GetTaskOptions {
+	projectId?: string;
+}

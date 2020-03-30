@@ -2,7 +2,7 @@ import { OrganizationEmploymentType as IOrganizationEmploymentType } from '@gauz
 import { IsNotEmpty } from 'class-validator';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Employee } from '../employee';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('organization_employment_type')
 export class OrganizationEmploymentType extends Base

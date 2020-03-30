@@ -4,7 +4,8 @@ import {
 	CreateEmailInvitesOutput,
 	InviteAcceptInput,
 	InviteResendInput,
-	PermissionsEnum
+	PermissionsEnum,
+	LinkClientOrganizationInviteInput
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -18,7 +19,8 @@ import {
 	UseGuards,
 	Delete,
 	Param,
-	Put
+	Put,
+	Req
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -31,11 +33,15 @@ import { UpdateResult } from 'typeorm';
 import { IPagination } from '../core';
 import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.command';
 import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
+import { InviteOrganizationClientsCommand } from './commands/invite.organization-clients.command';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { InviteResendCommand } from './commands/invite.resend.command';
 import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-organization-clients.command';
+import { Request } from 'express';
 
 @ApiTags('Invite')
 @Controller()
@@ -60,9 +66,10 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
 	async createManyWithEmailsId(
-		@Body() entity: CreateEmailInvitesInput
+		@Body() entity: CreateEmailInvitesInput,
+		@Req() request: Request
 	): Promise<CreateEmailInvitesOutput> {
-		return this.inviteService.createBulk(entity);
+		return this.inviteService.createBulk(entity, request.get('Origin'));
 	}
 
 	@ApiOperation({ summary: 'Get invite.' })
@@ -190,5 +197,60 @@ export class InviteController {
 	@Put()
 	async update(@Param('id') id: string, ...options: any[]): Promise<any> {
 		throw new BadRequestException('Invalid route');
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
+	@Put('organization-client/:id')
+	async inviteClient(
+		@Param('id') id: string,
+		@Req() request
+	): Promise<OrganizationClients> {
+		return this.commandBus.execute(
+			new InviteOrganizationClientsCommand({
+				id,
+				originalUrl: request.get('Origin'),
+				inviterUser: request.user
+			})
+		);
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put('link-organization-client')
+	async linkInviteClient(
+		@Body() input: LinkClientOrganizationInviteInput
+	): Promise<OrganizationClients> {
+		return this.commandBus.execute(
+			new InviteLinkOrganizationClientsCommand(input)
+		);
 	}
 }

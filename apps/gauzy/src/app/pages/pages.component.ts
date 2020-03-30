@@ -59,6 +59,25 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
+			title: 'Integrations',
+			icon: 'settings-outline',
+			link: '/pages/integrations',
+			data: {
+				translated: false,
+				translationKey: 'MENU.INTEGRATIONS'
+			},
+			children: [
+				{
+					title: 'Upwork',
+					link: '/pages/integrations/upwork',
+					data: {
+						translated: false,
+						translationKey: 'MENU.UPWORK'
+					}
+				}
+			]
+		},
+		{
 			title: 'Proposals',
 			icon: 'paper-plane-outline',
 			link: '/pages/proposals',
@@ -250,6 +269,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translated: false,
 				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
 				translationKey: 'MENU.EQUIPMENT_SHARING'
+			}
+		},
+		{
+			title: 'Invoices',
+			icon: 'file-text-outline',
+			link: '/pages/invoices',
+			data: {
+				translated: false,
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+				translationKey: 'MENU.INVOICES'
 			}
 		},
 

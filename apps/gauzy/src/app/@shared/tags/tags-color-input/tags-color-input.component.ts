@@ -7,7 +7,7 @@ import {
 	EventEmitter
 } from '@angular/core';
 import { TagsService } from '../../../@core/services/tags.service';
-import { NgModel } from '@angular/forms';
+import { NgModel, FormGroup } from '@angular/forms';
 
 @Component({
 	selector: 'ngx-tags-color-input',
@@ -21,8 +21,14 @@ export class TagsColorInputComponent implements OnInit {
 	@Input('tags')
 	tags: any;
 
+	@Input('form')
+	form: FormGroup;
+
 	@Input('selectedTags')
 	selectedTags: any;
+
+	@Input('items')
+	items: any;
 
 	@Output()
 	selectedTagsEvent: EventEmitter<any> = new EventEmitter<any>();
@@ -36,6 +42,7 @@ export class TagsColorInputComponent implements OnInit {
 	ngOnInit() {
 		this.getAllTags();
 	}
+
 	async getAllTags() {
 		const { items } = await this.tagsService.getAllTags();
 		this.tags = items;

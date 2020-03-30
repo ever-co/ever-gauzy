@@ -57,7 +57,6 @@ export class TagsComponent extends TranslationBaseComponent
 		} else {
 			this.disableButton = true;
 		}
-		console.log(data);
 	}
 
 	async add() {

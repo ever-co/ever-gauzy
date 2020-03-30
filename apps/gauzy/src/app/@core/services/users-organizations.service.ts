@@ -38,6 +38,13 @@ export class UsersOrganizationsService {
 			.toPromise();
 	}
 
+	removeUserFromOrg(id: string): Promise<UserOrganization> {
+		return this.http
+			.delete<UserOrganization>(`/api/user-organization/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	create(
 		createInput: UserOrganizationCreateInput
 	): Observable<UserOrganization> {

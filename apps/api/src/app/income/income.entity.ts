@@ -20,9 +20,9 @@ import {
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Income as IIncome, CurrenciesEnum } from '@gauzy/models';
-import { Employee } from '../employee';
-import { Organization } from '../organization';
-import { Tag } from '../tags';
+import { Employee } from '../employee/employee.entity';
+import { Organization } from '../organization/organization.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('income')
 export class Income extends Base implements IIncome {
@@ -95,4 +95,9 @@ export class Income extends Base implements IIncome {
 	@IsOptional()
 	@Column({ nullable: true })
 	isBonus: boolean;
+
+	@ApiPropertyOptional({ type: String, maxLength: 256 })
+	@IsOptional()
+	@Column({ nullable: true })
+	reference?: string;
 }

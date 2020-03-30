@@ -29,7 +29,6 @@ export class TagsMutationComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.seedFakeData();
 		this.initializeForm();
 	}
 
@@ -62,6 +61,7 @@ export class TagsMutationComponent extends TranslationBaseComponent
 	async initializeForm() {
 		if (this.tag) {
 			this.color = this.tag.color;
+			this.name = this.tag.name;
 			this.form = this.fb.group({
 				name: [this.tag.name],
 				color: [this.tag.color],
@@ -73,14 +73,6 @@ export class TagsMutationComponent extends TranslationBaseComponent
 				description: [''],
 				color: ['']
 			});
-		}
-	}
-
-	async seedFakeData() {
-		if (!this.selectedColor.length) {
-			const selectedColor = ['Critical', 'Important', 'Archived'];
-
-			selectedColor.forEach((color) => this.selectedColor.push(color));
 		}
 	}
 }

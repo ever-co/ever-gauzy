@@ -1,0 +1,41 @@
+.organization-employee-header {
+	padding: 0px 45px;
+}
+
+.setting-block {
+	&:hover {
+		box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+		transform: translateY(-1px);
+	}
+
+	background-color: #f6f9fc;
+	color: #222b45;
+	border-radius: 4px 0 0 4px;
+	margin-bottom: 20px;
+	padding: 10px 0px;
+
+	.block-content {
+		.block-info {
+			width: 100%;
+		}
+		.col {
+			display: flex;
+			align-items: center;
+		}
+		.image-container {
+			width: 70px;
+			height: 63px;
+			display: inline-flex;
+			justify-content: center;
+			margin-right: 15px;
+		}
+
+		img {
+			height: 100%;
+			max-width: 70px;
+		}
+		.row {
+			cursor: pointer;
+		}
+	}
+}
