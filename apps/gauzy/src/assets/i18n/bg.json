@@ -166,6 +166,7 @@
 			"ADD_DEPARTMENT": "Добави Отдел",
 			"ADD_POSITION": "Добави позиция",
 			"ADD_VENDOR": "Добави доставчик",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Клиенти",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
 			"END_DATE_PROJECT": "Край на проекта (опция)",
@@ -451,6 +452,7 @@
 		"CLIENTS": "Клиенти",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Доставчици",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Проекти",
 		"ACTIVE": "Активна",
 		"ARCHIVED": "Архивирана",
@@ -859,6 +861,11 @@
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
 				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
 				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",
