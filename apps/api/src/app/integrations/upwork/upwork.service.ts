@@ -175,7 +175,7 @@ export class UpworkService {
 						[...new Set(errors)],
 						totalExpenses,
 						totalIncomes
-					);					
+					);
 					reject(new BadRequestException(message));
 				}
 				resolve({ totalExpenses, totalIncomes });

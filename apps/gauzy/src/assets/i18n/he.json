@@ -166,6 +166,7 @@
 			"ADD_DEPARTMENT": "הוסף מחלקה",
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "הוסף ספק",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "לקוחות",
 			"START_DATE_PROJECT": "תאריך התחלת הפרויקט",
 			"END_DATE_PROJECT": "תאריך סיום של הפרויקט",
@@ -196,6 +197,7 @@
 			"UPLOADER_PLACEHOLDER": "תמונה",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
+			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"DATE": "תאריך",
 			"VALUE": "ערך",
 			"SELECT_CURRENCY": "Select Currency",
@@ -207,7 +209,8 @@
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
-			"REGISTRATION_DATE": "Organization Registration Date"
+			"REGISTRATION_DATE": "Organization Registration Date",
+			"ORGANIZATIONS": "Choose Organizations"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -451,6 +454,7 @@
 		"CLIENTS": "לקוחות",
 		"POSITIONS": "עמדות",
 		"VENDORS": "ספקים",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "פרויקטים",
 		"ACTIVE": "פעיל",
 		"ARCHIVED": "נשמר בארכיון",
@@ -668,7 +672,9 @@
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
-			"EDIT_EXISTING_USER": "Edit Existing User"
+			"EDIT_EXISTING_USER": "Edit Existing User",
+			"MAIN": "עיקרי",
+			"USER_ORGANIZATIONS": "ארגונים"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -859,6 +865,11 @@
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
 				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "New position {{ name }} successfully added!",
