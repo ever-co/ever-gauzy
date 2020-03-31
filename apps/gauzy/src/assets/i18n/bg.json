@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Бонус въз основа на печалбата",
 		"REVENUE_BASED_BONUS": "Бонус въз основа на приходите",
 		"STATUS": "Статус",
+		"SOURCE": "Source",
 		"WORK_STATUS": "Работен статус",
 		"TODAY": "Днес",
 		"END_OF_MONTH": "В края на месеца",
@@ -287,6 +288,7 @@
 		"ABOUT": "За нас",
 		"ADMIN": "Администратор",
 		"EMPLOYEES": "Служители",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни",
@@ -445,6 +447,37 @@
 			"PREVIOUS": "Previous"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Deleted",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "Developer",
+			"DEPARTMENT": "Department",
+			"POSITION": "Position",
+			"CANDIATE_DEPARTMENTS": "Employee's Departments:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
@@ -515,6 +548,8 @@
 			"ORG_TIME_OFF_VIEW": "Виж Time Off страницата",
 			"ORG_EMPLOYEES_VIEW": "Преглед на служителите в организацията",
 			"ORG_EMPLOYEES_EDIT": "Създай/Редактирай/Изтрии служители в организацията",
+			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
+			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
 			"ORG_USERS_VIEW": "Виж потребителите в организацията",
 			"ORG_USERS_EDIT": "Създай/Редактирай/Изтрии потребители на организацията",
 			"ORG_INVITE_VIEW": "Виж покани на организацията",
@@ -524,6 +559,7 @@
 			"POLICY_VIEW": "Виж Time Off политиката",
 			"POLICY_EDIT": "Редактирай Time Off политиката",
 			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
+			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
 			"CHANGE_ROLES_PERMISSIONS": "Промени ролите и Позволенията",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
