@@ -141,7 +141,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 		}
 
 		this.organizationName = name;
-		console.log(this.sourceSmartTable); ////////////////////
 
 		this.loading = false;
 	}
