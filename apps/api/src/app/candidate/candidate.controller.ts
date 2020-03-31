@@ -75,7 +75,7 @@ export class CandidateController extends CrudController<Candidate> {
 		return this.candidateService.findAll({ where: findInput, relations });
 	}
 
-	@ApiOperation({ summary: 'Find User by id.' })
+	@ApiOperation({ summary: 'Find Candidate by id.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',
