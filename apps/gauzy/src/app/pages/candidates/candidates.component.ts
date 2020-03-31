@@ -9,6 +9,8 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidatesService } from '../../@core/services/candidates.service';
 import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
+import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -43,6 +45,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 	constructor(
 		private candidatesService: CandidatesService,
+		private dialogService: NbDialogService,
+		private toastrService: NbToastrService,
 		private store: Store,
 		private translate: TranslateService
 	) {
@@ -62,7 +66,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 				this.hasInviteViewOrEditPermission =
 					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
 					this.hasInviteEditPermission;
-	
 			});
 
 		this.store.selectedOrganization$
@@ -92,6 +95,28 @@ export class CandidatesComponent extends TranslationBaseComponent
 			this.candidateName = checkName ? checkName : 'Candidate';
 		} else {
 			this.selectedCandidate = null;
+		}
+	}
+	async add() {
+		const dialog = this.dialogService.open(CandidateMutationComponent);
+
+		const response = await dialog.onClose.pipe(first()).toPromise();
+
+		if (response) {
+			response.map((data) => {
+				if (data.user.firstName || data.user.lastName) {
+					this.candidateName =
+						data.user.firstName + ' ' + data.user.lastName;
+				}
+				this.toastrService.primary(
+					this.candidateName.trim() +
+						' added to ' +
+						data.organization.name,
+					'Success'
+				);
+			});
+
+			this.loadPage();
 		}
 	}
 
