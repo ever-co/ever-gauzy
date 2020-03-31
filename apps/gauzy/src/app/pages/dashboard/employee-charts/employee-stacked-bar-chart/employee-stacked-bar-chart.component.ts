@@ -81,7 +81,6 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
-				const proportion = this.proportion;
 				const chartjs: any = config.variables.chartjs;
 				const bonusColors = this.bonusStatistics.map((val) =>
 					val < 0 ? 'red' : '#0091ff'
@@ -154,16 +153,13 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 						}
 					},
 					tooltips: {
-						enabled: false,
+						enabled: true,
+						mode: 'dataset',
 						callbacks: {
 							label: function(tooltipItem, data) {
-								let label =
+								const label =
 									data.datasets[tooltipItem.datasetIndex]
 										.label || '';
-								if (label) {
-									label += ': ';
-								}
-								label += tooltipItem.xLabel * proportion;
 								return label;
 							}
 						}
