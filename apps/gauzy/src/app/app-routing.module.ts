@@ -15,6 +15,8 @@ import { AppModuleGuard } from './app.module.guards';
 import { AcceptInvitePage } from './auth/accept-invite/accept-invite.component';
 import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 import { NoAuthGuard } from './@core/auth/no-auth.guard';
+import { OnboardOrganizationClientModule } from './auth/onboard-organization-client/onboard-organization-client.module';
+import { AcceptClientInvitePage } from './auth/onboard-organization-client/accept-client-invite.component';
 
 const routes: Routes = [
 	{
@@ -61,6 +63,11 @@ const routes: Routes = [
 				path: 'accept-invite',
 				component: AcceptInvitePage,
 				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'accept-client-invite',
+				component: AcceptClientInvitePage,
+				canActivate: [NoAuthGuard]
 			}
 		]
 	},
@@ -81,7 +88,8 @@ const config: ExtraOptions = {
 	imports: [
 		RouterModule.forRoot(routes, config),
 		SignInSuccessModule,
-		AcceptInviteModule
+		AcceptInviteModule,
+		OnboardOrganizationClientModule
 	],
 	exports: [RouterModule]
 })

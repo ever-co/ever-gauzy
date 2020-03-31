@@ -369,7 +369,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 				averageBonus: Math.floor(this.averageBonus),
 				bonusDate: Date.now()
 			});
-			console.warn(emp.tags);
 		}
 
 		if (!this.includeDeleted) {

@@ -9,7 +9,7 @@ export class ExportAllController implements OnDestroy {
 	constructor(private readonly exportService: ExportAllService) {}
 
 	@ApiTags('Download')
-	@ApiOperation({ summary: 'Find all employees.' })
+	@ApiOperation({ summary: 'Find all exports.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tables'
@@ -21,7 +21,7 @@ export class ExportAllController implements OnDestroy {
 	@Get()
 	async exportAll(@Res() res) {
 		await this.exportService.createFolders();
-		await this.exportService.exportCountries();
+		await this.exportService.exportTables();
 		await this.exportService.archiveAndDownload();
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();

@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Profit Based Bonus",
 		"REVENUE_BASED_BONUS": "Revenue Based Bonus",
 		"STATUS": "עבודה",
+		"SOURCE": "Source",
 		"WORK_STATUS": "סטטוס עבודה",
 		"TODAY": "היום",
 		"END_OF_MONTH": "סוף חודש",
@@ -166,6 +167,7 @@
 			"ADD_DEPARTMENT": "הוסף מחלקה",
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "הוסף ספק",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "לקוחות",
 			"START_DATE_PROJECT": "תאריך התחלת הפרויקט",
 			"END_DATE_PROJECT": "תאריך סיום של הפרויקט",
@@ -196,6 +198,7 @@
 			"UPLOADER_PLACEHOLDER": "תמונה",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
+			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"DATE": "תאריך",
 			"VALUE": "ערך",
 			"SELECT_CURRENCY": "Select Currency",
@@ -207,7 +210,8 @@
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
-			"REGISTRATION_DATE": "Organization Registration Date"
+			"REGISTRATION_DATE": "Organization Registration Date",
+			"ORGANIZATIONS": "Choose Organizations"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -215,6 +219,9 @@
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Include Deleted"
+		},
+		"NOTIFICATIONS": {
+			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -281,6 +288,7 @@
 		"ABOUT": "עלינו",
 		"ADMIN": "מנהל",
 		"EMPLOYEES": "עובדים",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "ארגונים",
 		"SETTINGS": "הגדרות",
 		"GENERAL": "כללי",
@@ -295,7 +303,8 @@
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
-		"TASKS": "Tasks"
+		"TASKS": "Tasks",
+		"INVOICES": "Invoices"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -397,7 +406,8 @@
 		},
 		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
 		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
-		"SPLIT_EXPENSE": "Split Expense"
+		"SPLIT_EXPENSE": "Split Expense",
+		"ADD_EXPENSE_CATEGORY": "Add New Expense category"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "נהל עובדים עבור ",
@@ -437,6 +447,37 @@
 			"PREVIOUS": "Previous"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Deleted",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "מפתח",
+			"DEPARTMENT": "המחלקה",
+			"POSITION": "עמדה",
+			"CANDIATE_DEPARTMENTS": "Employee's Departments:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "ארגונים",
 		"EMPLOYEES": "עובדים",
@@ -446,6 +487,7 @@
 		"CLIENTS": "לקוחות",
 		"POSITIONS": "עמדות",
 		"VENDORS": "ספקים",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "פרויקטים",
 		"ACTIVE": "פעיל",
 		"ARCHIVED": "נשמר בארכיון",
@@ -506,6 +548,8 @@
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
 			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
+			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
+			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
 			"ORG_USERS_VIEW": "View Organization Users",
 			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
 			"ORG_INVITE_VIEW": "View Organization Invites",
@@ -515,6 +559,7 @@
 			"POLICY_VIEW": "View Time Off Policy",
 			"POLICY_EDIT": "Edit Time Off Policy",
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
+			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
@@ -663,7 +708,9 @@
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
-			"EDIT_EXISTING_USER": "Edit Existing User"
+			"EDIT_EXISTING_USER": "Edit Existing User",
+			"MAIN": "עיקרי",
+			"USER_ORGANIZATIONS": "ארגונים"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -709,6 +756,25 @@
 			"EXPIRED": "Expired",
 			"ACCEPTED": "Accepted"
 		}
+	},
+	"INVOICES_PAGE": {
+		"HEADER": "Invoices",
+		"INVOICE_NUMBER": "Invoice Number",
+		"TOTAL_VALUE": "Total Value",
+		"PAID_STATUS": "Paid Status",
+		"INVOICES_ADD_INVOICE": "Invoice Added",
+		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
+		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
+		"INVOICES_SELECT_DUE_DATE": "Due Date",
+		"INVOICES_SELECT_CURRENCY": "מטבע",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
+		"INVOICES_SELECT_PAID": "Paid",
+		"INVOICES_SELECT_TAX": "Tax",
+		"INVOICES_SELECT_TERMS": "Terms",
+		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
+		"ADD_INVOICE": "Add Invoice",
+		"EDIT_INVOICE": "Edit Invoice"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
@@ -835,6 +901,11 @@
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
 				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "New position {{ name }} successfully added!",

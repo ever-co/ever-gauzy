@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TagsColorInputComponent } from './tags-color-input.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NbBadgeModule } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { HttpClient } from '@angular/common/http';
@@ -14,6 +14,7 @@ import { HttpClient } from '@angular/common/http';
 		NgSelectModule,
 		NbBadgeModule,
 		FormsModule,
+		ReactiveFormsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

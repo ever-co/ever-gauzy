@@ -1,6 +1,5 @@
 import { IQuery } from '@nestjs/cqrs';
-import { FindConditions } from 'typeorm';
-import { OrganizationRecurringExpense } from '../organization-recurring-expense.entity';
+import { OrganizationRecurringExpenseFindInput } from '@gauzy/models';
 
 export class OrganizationRecurringExpenseFindSplitExpenseQuery
 	implements IQuery {
@@ -8,6 +7,6 @@ export class OrganizationRecurringExpenseFindSplitExpenseQuery
 
 	constructor(
 		public readonly orgId: string,
-		public readonly findInput: FindConditions<OrganizationRecurringExpense>
+		public readonly findInput: OrganizationRecurringExpenseFindInput
 	) {}
 }

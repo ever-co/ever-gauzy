@@ -1,5 +1,6 @@
 export * from './lib/user.model';
 export * from './lib/employee.model';
+export * from './lib/candidate.model';
 export * from './lib/organization.model';
 export * from './lib/income.model';
 export * from './lib/proposal.model';
@@ -31,6 +32,9 @@ export * from './lib/task-entity.model';
 export * from './lib/timesheet.model';
 export * from './lib/expense-category.model';
 export * from './lib/equipment-sharing.model';
+export * from './lib/invoice.model';
+export * from './lib/invoice-item.model';
+export * from './lib/expense-category.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

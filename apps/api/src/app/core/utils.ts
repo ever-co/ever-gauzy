@@ -37,3 +37,11 @@ export function reflect(promise) {
 		(error) => ({ error, status: 'rejected' })
 	);
 }
+
+/**
+ * To calculate the last day of a month, we need to set date=0 and month as the next month.
+ * So, if we want the last day of February (February is month = 1) we'll need to perform 'new Date(year, 2, 0).getDate()'
+ */
+export function getLastDayOfMonth(year, month) {
+	return new Date(year, month + 1, 0).getDate();
+}

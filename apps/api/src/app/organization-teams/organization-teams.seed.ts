@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import { Employee } from '../employee';
+import { Employee } from '../employee/employee.entity';
 import { environment as env } from '@env-api/environment';
 import { OrganizationTeams } from './organization-teams.entity';
 import { Organization } from '../organization/organization.entity';

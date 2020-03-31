@@ -12,8 +12,8 @@ import { Base } from '../core/entities/base';
 import { TimeOffPolicy as ITimeOffPolicy } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
-import { Employee } from '../employee';
-import { Organization } from '../organization';
+import { Employee } from '../employee/employee.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('time-off-policy')
 export class TimeOffPolicy extends Base implements ITimeOffPolicy {

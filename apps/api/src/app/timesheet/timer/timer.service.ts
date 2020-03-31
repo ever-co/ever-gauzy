@@ -3,7 +3,7 @@ import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, Between, Brackets } from 'typeorm';
 import { RequestContext } from '../../core/context';
-import { Employee } from '../../employee';
+import { Employee } from '../../employee/employee.entity';
 import { TimeLogType, TimerStatus, IManualTimeInput } from '@gauzy/models';
 import * as moment from 'moment';
 import { Timesheet } from '../timesheet.entity';

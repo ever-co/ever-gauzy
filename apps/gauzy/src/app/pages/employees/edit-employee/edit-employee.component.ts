@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
 	Employee,
 	EmployeeRecurringExpense,
+	Organization,
 	PermissionsEnum,
 	RecurringExpenseDefaultCategoriesEnum,
 	RecurringExpenseDeletionEnum
@@ -43,6 +44,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 	hasEditPermission = false;
 	hasEditExpensePermission = false;
 	fetchedHistories: Object = {};
+	selectedOrganization: Organization;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -85,7 +87,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				const id = params.id;
 
 				const { items } = await this.employeeService
-					.getAll(['user', 'organizationPosition'], { id })
+					.getAll(['user', 'organizationPosition', 'tags'], { id })
 					.pipe(first())
 					.toPromise();
 
@@ -95,7 +97,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 					id: items[0].id,
 					firstName: items[0].user.firstName,
 					lastName: items[0].user.lastName,
-					imageUrl: items[0].user.imageUrl
+					imageUrl: items[0].user.imageUrl,
+					tags: items[0].user.tags
 				};
 
 				const checkUsername = this.selectedEmployee.user.username;
@@ -115,6 +118,12 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 							]);
 						}
 					});
+
+				this.store.selectedOrganization$
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe((organization) => {
+						this.selectedOrganization = organization;
+					});
 			});
 	}
 
@@ -125,9 +134,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 	}
 
 	getMonthString(month: number) {
-		const months = monthNames;
-
-		return months[month - 1];
+		return monthNames[month];
 	}
 
 	getCategoryName(categoryName: string) {
@@ -148,7 +155,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 		const result = await this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {
-					componentType: COMPONENT_TYPE.EMPLOYEE
+					componentType: COMPONENT_TYPE.EMPLOYEE,
+					selectedDate: this.selectedDate
 				}
 			})
 			.onClose.pipe(first())
@@ -230,7 +238,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 						selectedExpense.startMonth
 					)}, ${selectedExpense.startYear}`,
 					current: `${this.getMonthString(
-						this.selectedDate.getMonth() + 1
+						this.selectedDate.getMonth()
 					)}, ${this.selectedDate.getFullYear()}`,
 					end: selectedExpense.endMonth
 						? `${this.getMonthString(selectedExpense.endMonth)}, ${
@@ -247,7 +255,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				const id = selectedExpense.id;
 				await this.employeeRecurringExpenseService.delete(id, {
 					deletionType: result,
-					month: this.selectedDate.getMonth() + 1,
+					month: this.selectedDate.getMonth(),
 					year: this.selectedDate.getFullYear()
 				});
 				this.selectedRowIndexToShow = null;
@@ -276,14 +284,16 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 			categoryName: result.categoryName,
 			value: result.value,
 			currency: result.currency,
-			startDay: 1,
-			startMonth: this.selectedDate.getMonth() + 1,
-			startYear: this.selectedDate.getFullYear(),
-			startDate: new Date(
-				this.selectedDate.getFullYear(),
-				this.selectedDate.getMonth(),
-				1
-			)
+			startDay: result.startDay || 1,
+			startMonth: result.startMonth || this.selectedDate.getMonth(),
+			startYear: result.startYear || this.selectedDate.getFullYear(),
+			startDate:
+				result.startDate ||
+				new Date(
+					this.selectedDate.getFullYear(),
+					this.selectedDate.getMonth(),
+					1
+				)
 		};
 	}
 
@@ -293,7 +303,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 			await this.employeeRecurringExpenseService.getAllByMonth([], {
 				employeeId: this.selectedEmployee.id,
 				year: this.selectedDate.getFullYear(),
-				month: this.selectedDate.getMonth() + 1
+				month: this.selectedDate.getMonth()
 			})
 		).items;
 	}

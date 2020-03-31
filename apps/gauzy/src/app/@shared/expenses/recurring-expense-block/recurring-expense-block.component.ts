@@ -1,10 +1,12 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
+	Organization,
 	RecurringExpenseDefaultCategoriesEnum,
 	RecurringExpenseModel
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
-import { monthNames } from '../../../@core/utils/date';
+import * as moment from 'moment';
+import { defaultDateFormat } from '../../../@core/utils/date';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @Component({
@@ -22,6 +24,9 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 
 	@Input()
 	fetchedHistories: RecurringExpenseModel[];
+
+	@Input()
+	selectedOrganization: Organization;
 
 	@Output()
 	editRecurringExpense = new EventEmitter<void>();
@@ -60,8 +65,12 @@ export class RecurringExpenseBlockComponent extends TranslationBaseComponent
 		}
 	}
 
-	getMonthString(month: number) {
-		return monthNames[month - 1];
+	getStartDate() {
+		return this.recurringExpense && this.selectedOrganization
+			? moment(this.recurringExpense.startDate).format(
+					this.selectedOrganization.dateFormat || defaultDateFormat
+			  )
+			: '';
 	}
 
 	getCategoryName(categoryName: string) {

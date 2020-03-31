@@ -1,0 +1,6 @@
+<ngx-profile
+	*ngIf="!!selectedUser"
+	[selectedUser]="selectedUser"
+	[allowRoleChange]="true"
+	(userSubmitted)="goBack()"
+></ngx-profile>

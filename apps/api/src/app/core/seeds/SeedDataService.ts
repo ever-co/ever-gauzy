@@ -14,19 +14,21 @@ import {
 } from 'typeorm';
 import chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
-import { Role, createRoles } from '../../role';
-import { User, createUsers } from '../../user';
-import { Employee, createEmployees } from '../../employee';
-import { Organization, createOrganizations } from '../../organization';
-import { Income } from '../../income';
+import { Role } from '../../role/role.entity';
+import { createRoles } from '../../role/role.seed';
+import { User } from '../../user/user.entity';
+import { createUsers } from '../../user/user.seed';
+import { Employee } from '../../employee/employee.entity';
+import { createEmployees } from '../../employee/employee.seed';
+import { Organization } from '../../organization/organization.entity';
+import { createOrganizations } from '../../organization/organization.seed';
+import { Income } from '../../income/income.entity';
 import { createIncomes } from '../../income/income.seed';
-import { Expense } from '../../expense';
+import { Expense } from '../../expense/expense.entity';
 import { createExpenses } from '../../expense/expense.seed';
 import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
-import {
-	createUsersOrganizations,
-	UserOrganization
-} from '../../user-organization';
+import { createUsersOrganizations } from '../../user-organization/user-organization.seed';
+import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { createCountries } from '../../country/country.seed';
 import { OrganizationTeams } from '../../organization-teams';
 import { Country } from '../../country';
@@ -42,20 +44,63 @@ import { createEmployeeLevels } from '../../organization_employeeLevel/organizat
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
 import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
+import { createOrganizationVendors } from '../../organization-vendors/organization-vendors.seed';
+import { Invoice } from '../../invoice/invoice.entity';
+import { InvoiceItem } from '../../invoice-item/invoice-item.entity';
+import { TimeOffPolicy } from '../../time-off-policy/time-off-policy.entity';
+import { Proposal } from '../../proposal/proposal.entity';
+import { Invite } from '../../invite/invite.entity';
+import { EmployeeRecurringExpense } from '../../employee-recurring-expense/employee-recurring-expense.entity';
+import { ExpenseCategory } from '../../expense-categories/expense-category.entity';
+import { EquipmentSharing } from '../../equipment-sharing/equipment-sharing.entity';
+import { OrganizationClients } from '../../organization-clients/organization-clients.entity';
+import { OrganizationVendor } from '../../organization-vendors/organization-vendors.entity';
+import { OrganizationDepartment } from '../../organization-department/organization-department.entity';
+import { OrganizationProjects } from '../../organization-projects/organization-projects.entity';
+import { Task } from '../../tasks/task.entity';
+import { Screenshot } from '../../timesheet/screenshot.entity';
+import { Activity } from '../../timesheet/activity.entity';
+import { TimeSlot } from '../../timesheet/time-slot.entity';
+import { Timesheet } from '../../timesheet/timesheet.entity';
+import { OrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.entity';
+import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
+import { Email } from '../../email/email.entity';
+import { Candidate } from '../../candidate/candidate.entity';
 
 const allEntities = [
+	TimeOffPolicy,
+	Proposal,
+	Invite,
+	EmployeeRecurringExpense,
+	OrganizationRecurringExpense,
+	ExpenseCategory,
+	EquipmentSharing,
 	User,
 	Employee,
+	Candidate,
 	Role,
 	Organization,
 	Income,
+	Invoice,
+	InvoiceItem,
 	Expense,
 	EmployeeSetting,
 	OrganizationTeams,
+	OrganizationClients,
+	OrganizationVendor,
+	OrganizationDepartment,
+	OrganizationPositions,
+	OrganizationProjects,
+	Task,
+	Screenshot,
+	Activity,
+	TimeSlot,
+	Timesheet,
 	UserOrganization,
 	Country,
 	RolePermissions,
 	Tenant,
+	Email,
 	EmailTemplate,
 	Tag,
 	OrganizationEmploymentType,
@@ -145,7 +190,7 @@ export class SeedDataService {
 				},
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
-
+		
 			await createTeams(
 				this.connection,
 				defaultOrganization,
@@ -173,18 +218,25 @@ export class SeedDataService {
 				}
 			);
 
-			await createExpenseCategories(this.connection);
+			const organizationVendors = await createOrganizationVendors(
+				this.connection,
+				defaultOrganization.id
+			);
+			const categories = await createExpenseCategories(this.connection);
 
-			// to fill expenses with categories from DB, needs to refactor on many services
 			await createExpenses(
 				this.connection,
 				{
 					org: defaultOrganization,
-					employees: [...employees.defaultEmployees]
+					employees: [...employees.defaultEmployees],
+					categories,
+					organizationVendors
 				},
 				{
 					orgs: randomOrganizations,
-					employees: [...employees.randomEmployees]
+					employees: [...employees.randomEmployees],
+					categories,
+					organizationVendors
 				}
 			);
 

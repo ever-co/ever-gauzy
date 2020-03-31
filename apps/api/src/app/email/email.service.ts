@@ -11,10 +11,11 @@ import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core';
-import { EmailTemplate } from '../email-template';
-import { Organization } from '../organization';
-import { User } from '../user';
+import { EmailTemplate } from '../email-template/email-template.entity';
+import { Organization } from '../organization/organization.entity';
+import { User } from '../user/user.entity';
 import { Email as IEmail } from './email.entity';
+import { Invite } from '../invite/invite.entity';
 
 export interface InviteUserModel {
 	email: string;
@@ -89,6 +90,7 @@ export class EmailService extends CrudService<IEmail> {
 		organizationClient: OrganizationClients,
 		inviterUser: User,
 		organization: Organization,
+		invite: Invite,
 		originUrl?: string
 	) {
 		this.languageCode = 'en';
@@ -111,7 +113,7 @@ export class EmailService extends CrudService<IEmail> {
 					organizationName: organization && organization.name,
 					generatedUrl:
 						originUrl +
-						`/auth/accept-client-invite/${organizationClient.id}`
+						`#/auth/accept-client-invite?email=${organizationClient.primaryEmail}&token=${invite.token}`
 				}
 			})
 			.then((res) => {
