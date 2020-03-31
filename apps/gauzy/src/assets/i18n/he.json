@@ -704,7 +704,8 @@
 			"MANAGER": "Manager",
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
-			"EMPLOYEE": "עובד"
+			"EMPLOYEE": "עובד",
+			"CANDIDATE": "Candidate"
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
