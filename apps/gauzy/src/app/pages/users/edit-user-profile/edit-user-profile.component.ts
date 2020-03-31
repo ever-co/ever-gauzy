@@ -5,6 +5,8 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { User } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 
 @Component({
@@ -14,17 +16,23 @@ import { UsersOrganizationsService } from '../../../@core/services/users-organiz
 		'../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	]
 })
-export class EditUserProfileComponent implements OnInit, OnDestroy {
+export class EditUserProfileComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	routeParams: Params;
 	selectedUser: User;
 
+	tabs: any[];
+
 	constructor(
 		private route: ActivatedRoute,
 		private location: Location,
+		readonly translateService: TranslateService,
 		private usersOrganizationsService: UsersOrganizationsService
-	) {}
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.route.params
@@ -33,10 +41,36 @@ export class EditUserProfileComponent implements OnInit, OnDestroy {
 				this.routeParams = params;
 				this._loadUserData();
 			});
+
+		this.loadTabs();
+		this._applyTranslationOnTabs();
 	}
 
 	goBack() {
 		this.location.back();
+	}
+
+	getRoute(tab: string): string {
+		return `/pages/users/edit/${this.routeParams.id}/${tab}`;
+	}
+
+	loadTabs() {
+		this.tabs = [
+			{
+				title: this.getTranslation('USERS_PAGE.EDIT_USER.MAIN'),
+				icon: 'person-outline',
+				responsive: true,
+				route: this.getRoute('')
+			},
+			{
+				title: this.getTranslation(
+					'USERS_PAGE.EDIT_USER.USER_ORGANIZATIONS'
+				),
+				icon: 'book-open-outline',
+				responsive: true,
+				route: this.getRoute('organizations')
+			}
+		];
 	}
 
 	private async _loadUserData() {
@@ -52,5 +86,13 @@ export class EditUserProfileComponent implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	private _applyTranslationOnTabs() {
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadTabs();
+			});
 	}
 }

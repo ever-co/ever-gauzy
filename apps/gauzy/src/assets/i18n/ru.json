@@ -166,6 +166,7 @@
 			"ADD_DEPARTMENT": "Добавить департамент",
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
+			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
 			"END_DATE_PROJECT": "Дата окончания (необязательно)",
@@ -196,6 +197,7 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
+			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
 			"SELECT_CURRENCY": "Выберите валюту",
@@ -207,7 +209,8 @@
 			"CHOOSE_EMPLOYEES": "Выберите сотрудника/с",
 			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
-			"REGISTRATION_DATE": "Дата регистрации организации"
+			"REGISTRATION_DATE": "Дата регистрации организации",
+			"ORGANIZATIONS": "Выберите организации"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -451,6 +454,7 @@
 		"CLIENTS": "Клиенты",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Вендоры",
+		"EXPENSE_CATEGORIES": "Категории расходов",
 		"PROJECTS": "Проекты",
 		"ACTIVE": "Активно",
 		"ARCHIVED": "Архивирован",
@@ -668,7 +672,9 @@
 		},
 		"EDIT_USER": {
 			"HEADER": "Управление пользователем",
-			"EDIT_EXISTING_USER": "Изменить существующего пользователя"
+			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
+			"MAIN": "Главная",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -859,6 +865,11 @@
 				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
 				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
 				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "Новая категория {{ name }} успешно добавлена!",
+				"REMOVE_EXPENSE_CATEGORY": "Категория {{ name }} успешно удалена!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Пожалуйста, добавьте название категории"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Новая позиция {{ name }} успешно добавлена!",

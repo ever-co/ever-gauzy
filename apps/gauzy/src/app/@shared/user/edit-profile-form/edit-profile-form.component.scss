@@ -77,12 +77,12 @@ nb-card-body {
 
 	.actions {
 		display: flex;
-		justify-content: flex-end;
+		justify-content: flex-start;
 		width: 100%;
 		margin-top: 30px;
 
-		:last-child {
-			margin-left: 40px;
-		}
+		// :last-child {
+		// 	margin-left: 40px;
+		// }
 	}
 }
