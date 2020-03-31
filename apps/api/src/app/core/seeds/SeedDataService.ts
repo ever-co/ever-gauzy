@@ -66,7 +66,6 @@ import { OrganizationRecurringExpense } from '../../organization-recurring-expen
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
-// import { createCandidates } from '../../candidate/candidate.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -191,15 +190,7 @@ export class SeedDataService {
 				},
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
-			// const candidates = await createCandidates(
-			//	this.connection,
-			//	{
-			//	tenant: [...tenants],
-			// 		org: defaultOrganization,
-			// 		users: [...defaultUsers]
-			//	},
-			//	{ orgs: randomOrganizations, users: [...randomUsers] }
-			//	 );
+		
 			await createTeams(
 				this.connection,
 				defaultOrganization,
