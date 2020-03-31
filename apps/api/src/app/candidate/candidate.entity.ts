@@ -74,10 +74,6 @@ export class Candidate extends LocationBase implements ICandidate {
 	@Column({ nullable: true })
 	valueDate?: Date;
 
-	// @ApiProperty({ type: String, readOnly: true })
-	// @RelationId((candidate: Candidate) => candidate.status)
-	// readonly status: string;
-
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
 	@IsOptional()
