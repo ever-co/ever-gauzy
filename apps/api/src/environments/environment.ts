@@ -284,13 +284,11 @@ export const environment: IEnvironment = {
 	],
 	defaultCandidates: [
 		{
-			email: 'alish@ever.co',
+			email: 'john@ever.co',
 			password: '123456',
-			firstName: 'Alish',
-			lastName: 'Meklyov',
+			firstName: 'John',
+			lastName: 'Smith',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-
-			startedWorkOn: '2018-03-20',
 			candidateLevel: 'D'
 		}
 	],
@@ -319,7 +317,7 @@ export const environment: IEnvironment = {
 		},
 		{
 			name: 'Candidates',
-			defaultMembers: ['alish@ever.co']
+			defaultMembers: ['john@ever.co']
 		},
 
 		{
