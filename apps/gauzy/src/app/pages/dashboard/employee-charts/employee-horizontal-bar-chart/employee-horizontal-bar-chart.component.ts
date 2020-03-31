@@ -153,7 +153,16 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 						}
 					},
 					tooltips: {
-						enabled: false
+						enabled: true,
+						mode: 'dataset',
+						callbacks: {
+							label: function(tooltipItem, data) {
+								const label =
+									data.datasets[tooltipItem.datasetIndex]
+										.label || '';
+								return label;
+							}
+						}
 					}
 				};
 			});
