@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Бонус на основе прибыли",
 		"REVENUE_BASED_BONUS": "Бонус на основе дохода",
 		"STATUS": "Статус",
+		"SOURCE": "Источник",
 		"WORK_STATUS": "Статус работы",
 		"TODAY": "Сегодня",
 		"END_OF_MONTH": "Конец месяца",
@@ -287,6 +288,7 @@
 		"ABOUT": "О нас",
 		"ADMIN": "Администратор",
 		"EMPLOYEES": "Сотрудники",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
@@ -445,6 +447,37 @@
 			"PREVIOUS": "Предыдущий"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Deleted",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "Developer",
+			"DEPARTMENT": "Department",
+			"POSITION": "Position",
+			"CANDIATE_DEPARTMENTS": "Employee's Departments:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
@@ -515,6 +548,8 @@
 			"ORG_TIME_OFF_VIEW": "Показать время на странице",
 			"ORG_EMPLOYEES_VIEW": "Сотрудники организации",
 			"ORG_EMPLOYEES_EDIT": "Создать/Редактировать/Удалить Сотрудников Организации",
+			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
+			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
 			"ORG_USERS_VIEW": "Просмотр пользователей организации",
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ORG_INVITE_VIEW": "Просмотреть приглашения организации",
@@ -524,6 +559,7 @@
 			"POLICY_VIEW": "Просмотр политики отключения",
 			"POLICY_EDIT": "Редактировать политику отключения",
 			"CHANGE_SELECTED_EMPLOYEE": "Изменить выбранного сотрудника",
+			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
