@@ -50,11 +50,13 @@ import {
 } from '../timesheet';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
+import { Candidate } from '../candidate';
 
 const entities = [
 	Invite,
 	User,
 	Employee,
+	Candidate,
 	Role,
 	Organization,
 	Income,

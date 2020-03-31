@@ -45,6 +45,7 @@ import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.mo
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
+import { CandidateModule } from './candidate/candidate.module';
 
 @Module({
 	imports: [
@@ -55,6 +56,7 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 					{ path: '/auth', module: AuthModule },
 					{ path: '/user', module: UserModule },
 					{ path: '/employee', module: EmployeeModule },
+					{ path: '/candidate', module: CandidateModule },
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
@@ -178,6 +180,7 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 		AuthModule,
 		UserModule,
 		EmployeeModule,
+		CandidateModule,
 		ExportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
