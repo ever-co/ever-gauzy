@@ -6,8 +6,7 @@ import {
 } from '@gauzy/models';
 import { BadRequestException } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
-
-import { CrudService } from '../../core';
+import { CrudService, getLastDayOfMonth } from '../../core';
 
 /**
  * Deletes a OrganizationRecurringExpense based on command.deleteInput.deletionType:
@@ -68,7 +67,7 @@ export abstract class RecurringExpenseDeleteHandler<
 	): Promise<OrganizationRecurringExpense | UpdateResult | DeleteResult> {
 		const originalExpense = await this.crudService.findOne(id);
 
-		const deleteDate = new Date(deleteInput.year, deleteInput.month - 1);
+		const deleteDate = new Date(deleteInput.year, deleteInput.month);
 		const deleteId: any = {
 			id
 		};
@@ -105,20 +104,22 @@ export abstract class RecurringExpenseDeleteHandler<
 		id: string,
 		deleteInput: RecurringExpenseDeleteInput
 	): Promise<any> {
-		const endMonth = deleteInput.month > 1 ? deleteInput.month - 1 : 12; //Because input.startMonth needs to be deleted
+		const endMonth = deleteInput.month > 0 ? deleteInput.month - 1 : 11; //Because input.startMonth needs to be deleted
 		const endYear =
-			deleteInput.month > 1 ? deleteInput.year : deleteInput.year - 1;
+			deleteInput.month > 0 ? deleteInput.year : deleteInput.year - 1;
+		const endDay = getLastDayOfMonth(endYear, endMonth);
 		const updateOptions: any = {
-			endDay: 1,
+			endDay,
 			endMonth,
 			endYear,
-			endDate: new Date(endYear, endMonth - 1, 1)
+			endDate: new Date(endYear, endMonth, endDay)
 		};
 		return await this.crudService.update(id, updateOptions);
 	}
 
 	/**
 	 * Creates a copy of the originalExpense but with start date are one month more than deleteInput
+	 * By default, start date is the first day of the month & end date is the last date of the month
 	 *
 	 * @param deleteInput The delete input
 	 * @param originalExpense The original (non modified) expense
@@ -127,7 +128,11 @@ export abstract class RecurringExpenseDeleteHandler<
 		deleteInput: RecurringExpenseDeleteInput,
 		originalExpense: RecurringExpenseModel | any
 	): Promise<any> {
-		const nextStartDate = new Date(deleteInput.year, deleteInput.month, 1);
+		const nextStartDate = new Date(
+			deleteInput.year,
+			deleteInput.month + 1,
+			1
+		);
 
 		// If there is still more time left after deleting one month from in between
 		if (
@@ -139,7 +144,10 @@ export abstract class RecurringExpenseDeleteHandler<
 				startMonth: deleteInput.month + 1,
 				startYear: deleteInput.year,
 				startDate: nextStartDate,
-				endDay: originalExpense.endDay,
+				endDay: getLastDayOfMonth(
+					originalExpense.endYear,
+					originalExpense.endMonth
+				),
 				endMonth: originalExpense.endMonth,
 				endYear: originalExpense.endYear,
 				endDate: originalExpense.endDate,
