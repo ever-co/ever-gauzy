@@ -118,7 +118,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 				imageUrl: candidate.user.imageUrl,
 				tag: candidate.tags
 			});
-			console.warn(candidate.tags);
 		}
 
 		if (!this.includeDeleted) {
