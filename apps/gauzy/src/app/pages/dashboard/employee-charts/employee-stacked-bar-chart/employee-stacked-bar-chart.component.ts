@@ -93,17 +93,20 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 					labels: this.labels,
 					datasets: [
 						{
-							label: 'Expenses',
+							label: `Expenses: ${+this.expenseStatistics *
+								this.proportion}`,
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
-							label: 'Bonus',
+							label: `Bonus: ${+this.bonusStatistics *
+								this.proportion}`,
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						},
 						{
-							label: 'Profit',
+							label: `Profit: ${+this.profitStatistics *
+								this.proportion}`,
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						}

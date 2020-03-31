@@ -166,6 +166,7 @@
 			"ADD_DEPARTMENT": "Добави Отдел",
 			"ADD_POSITION": "Добави позиция",
 			"ADD_VENDOR": "Добави доставчик",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Клиенти",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
 			"END_DATE_PROJECT": "Край на проекта (опция)",
@@ -196,6 +197,7 @@
 			"UPLOADER_PLACEHOLDER": "Снимка",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
+			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"DATE": "Дата",
 			"VALUE": "Стойност",
 			"SELECT_CURRENCY": "Избери валута",
@@ -207,7 +209,8 @@
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
-			"REGISTRATION_DATE": "Organization Registration Date"
+			"REGISTRATION_DATE": "Organization Registration Date",
+			"ORGANIZATIONS": "Choose Organizations"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -451,6 +454,7 @@
 		"CLIENTS": "Клиенти",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Доставчици",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Проекти",
 		"ACTIVE": "Активна",
 		"ARCHIVED": "Архивирана",
@@ -668,7 +672,9 @@
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
-			"EDIT_EXISTING_USER": "Edit Existing User"
+			"EDIT_EXISTING_USER": "Edit Existing User",
+			"MAIN": "Основни",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -859,6 +865,11 @@
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
 				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
 				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",

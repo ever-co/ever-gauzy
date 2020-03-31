@@ -7,8 +7,7 @@
 						{{ getCategoryName(recurringExpense?.categoryName) }}
 					</div>
 					<div class="col">
-						{{ getMonthString(recurringExpense?.startMonth) }}
-						{{ recurringExpense?.startYear }}
+						{{ getStartDate() }}
 					</div>
 					<div class="col">
 						<span class="block-amount" (click)="emitFetchHistory()"

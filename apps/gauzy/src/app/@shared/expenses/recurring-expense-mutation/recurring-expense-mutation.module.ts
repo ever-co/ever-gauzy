@@ -2,19 +2,20 @@ import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
+	NbAlertModule,
 	NbButtonModule,
 	NbCardModule,
+	NbCheckboxModule,
 	NbDatepickerModule,
 	NbIconModule,
 	NbInputModule,
 	NbSelectModule,
-	NbTooltipModule,
-	NbCheckboxModule
+	NbSpinnerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
@@ -37,6 +38,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NbTooltipModule,
 		NbCheckboxModule,
+		NbAlertModule,
+		NbSpinnerModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
