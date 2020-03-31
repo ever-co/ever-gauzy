@@ -32,7 +32,7 @@
 				>{{ 'BUTTONS.INVITE' | translate }}
 			</button>
 
-			<button nbButton status="success" class="mr-2">
+			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
@@ -67,10 +67,7 @@
 				}}</nb-checkbox
 			>
 		</div>
-		<div
-			class="mb-3"
-			*ngIf="!hasEditPermission"
-		>
+		<div class="mb-3" *ngIf="!hasEditPermission">
 			<button
 				nbButton
 				[disabled]="!selectedCandidate"
