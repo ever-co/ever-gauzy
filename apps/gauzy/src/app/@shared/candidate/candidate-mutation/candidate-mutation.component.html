@@ -50,6 +50,9 @@
 				</div>
 			</nb-step>
 			<nb-step [label]="step3">
+				<ng-template #step3>{{
+					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_3' | translate
+				}}</ng-template>
 				<div class="step-container button-container">
 					<button nbButton (click)="addCandidate()">
 						{{
