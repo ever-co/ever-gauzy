@@ -1,4 +1,5 @@
 import {
+	IStartUpdateTypeInfo,
 	OrganizationRecurringExpenseForEmployeeOutput,
 	RecurringExpenseEditInput
 } from '@gauzy/models';
@@ -10,23 +11,24 @@ import {
 	HttpCode,
 	HttpStatus,
 	Param,
+	Post,
 	Put,
 	Query,
-	UseGuards,
-	Post
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
+import { OrganizationRecurringExpenseCreateCommand } from './commands/organization-recurring-expense.create.command';
 import { OrganizationRecurringExpenseDeleteCommand } from './commands/organization-recurring-expense.delete.command';
 import { OrganizationRecurringExpenseEditCommand } from './commands/organization-recurring-expense.edit.command';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import { OrganizationRecurringExpenseByMonthQuery } from './queries/organization-recurring-expense.by-month.query';
 import { OrganizationRecurringExpenseFindSplitExpenseQuery } from './queries/organization-recurring-expense.find-split-expense.query';
-import { OrganizationRecurringExpenseCreateCommand } from './commands/organization-recurring-expense.create.command';
+import { OrganizationRecurringExpenseStartDateUpdateTypeQuery } from './queries/organization-recurring-expense.update-type.query';
 
 @ApiTags('OrganizationRecurringExpense')
 @Controller()
@@ -180,6 +182,29 @@ export class OrganizationRecurringExpenseController extends CrudController<
 
 		return this.queryBus.execute(
 			new OrganizationRecurringExpenseByMonthQuery(findInput)
+		);
+	}
+
+	@ApiOperation({
+		summary:
+			'Find start date update type & conflicting expenses for the update'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found start date update type'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/date-update-type')
+	async findStartDateUpdateType(
+		@Query('data') data: string
+	): Promise<IStartUpdateTypeInfo> {
+		const { findInput } = JSON.parse(data);
+
+		return this.queryBus.execute(
+			new OrganizationRecurringExpenseStartDateUpdateTypeQuery(findInput)
 		);
 	}
 }

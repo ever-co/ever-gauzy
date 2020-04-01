@@ -143,7 +143,15 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/dimana.jpeg'
 		}
 	],
-
+	defaultCandidates: [
+		{
+			email: 'alish@ever.co',
+			password: '123456',
+			firstName: 'Alish',
+			lastName: 'Meklyov',
+			imageUrl: 'assets/images/avatars/alish.jpg'
+		}
+	],
 	defaultTeams: [
 		{
 			name: 'Employees',
@@ -158,6 +166,10 @@ export const environment: IEnvironment = {
 				'alex@ever.co',
 				'milena@ever.co'
 			]
+		},
+		{
+			name: 'Candidates',
+			defaultMembers: ['alish@ever.co']
 		},
 		{
 			name: 'Contractors',

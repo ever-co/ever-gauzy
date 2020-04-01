@@ -1,4 +1,8 @@
-import { RecurringExpenseEditInput, PermissionsEnum } from '@gauzy/models';
+import {
+	IStartUpdateTypeInfo,
+	PermissionsEnum,
+	RecurringExpenseEditInput
+} from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -7,24 +11,25 @@ import {
 	HttpCode,
 	HttpStatus,
 	Param,
+	Post,
 	Put,
 	Query,
-	UseGuards,
-	Post
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
+import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { EmployeeRecurringExpenseCreateCommand } from './commands/employee-recurring-expense.create.command';
 import { EmployeeRecurringExpenseDeleteCommand } from './commands/employee-recurring-expense.delete.command';
 import { EmployeeRecurringExpenseEditCommand } from './commands/employee-recurring-expense.edit.command';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import { EmployeeRecurringExpenseByMonthQuery } from './queries/employee-recurring-expense.by-month.query';
-import { AuthGuard } from '@nestjs/passport';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
-import { EmployeeRecurringExpenseCreateCommand } from './commands/employee-recurring-expense.create.command';
+import { EmployeeRecurringExpenseStartDateUpdateTypeQuery } from './queries/employee-recurring-expense.update-type.query';
 
 @ApiTags('EmployeeRecurringExpense')
 @UseGuards(AuthGuard('jwt'))
@@ -152,5 +157,27 @@ export class EmployeeRecurringExpenseController extends CrudController<
 			where: findInput,
 			order: order
 		});
+	}
+
+	@ApiOperation({
+		summary: 'Find the start date update type for a recurring expense.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found start date update type'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/date-update-type')
+	async findStartDateUpdateType(
+		@Query('data') data: string
+	): Promise<IStartUpdateTypeInfo> {
+		const { findInput } = JSON.parse(data);
+
+		return this.queryBus.execute(
+			new EmployeeRecurringExpenseStartDateUpdateTypeQuery(findInput)
+		);
 	}
 }

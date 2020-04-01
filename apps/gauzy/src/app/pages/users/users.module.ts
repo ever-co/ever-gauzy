@@ -10,7 +10,10 @@ import {
 	NbBadgeModule,
 	NbSelectModule,
 	NbRouteTabsetModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbSidebarModule,
+	NbLayoutModule,
+	NbActionsModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UsersRoutingModule } from './users-routing.module';
@@ -33,6 +36,13 @@ import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invi
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { InviteGuard } from '../../@core/role/invite.guard';
 import { UserMultiSelectModule } from '../../@shared/user/user-multi-select/user-multi-select.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
+import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
+import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-employee-membership-form/edit-employee-membership-form.module';
+import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
+import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-organizations-multi-select/user-organizations-multi-select.module';
+import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
+import { UserIdService } from '../../@core/services/edit-user-data.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -43,13 +53,21 @@ const COMPONENTS = [
 	UserFullNameComponent,
 	EditUserProfileComponent,
 	ManageUserInviteComponent,
-	EditUserMutationComponent
+	EditUserMutationComponent,
+	EditUserOrganizationsComponent,
+	EditUserDataComponent,
+	EditUserOrganizationsMutationComponent
 ];
 
 @NgModule({
 	imports: [
+		NbSidebarModule,
+		NbLayoutModule,
 		UsersRoutingModule,
 		UserMultiSelectModule,
+		UserOrganizationsMultiSelectModule,
+		OrganizationsModule,
+		NbActionsModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,
@@ -76,10 +94,16 @@ const COMPONENTS = [
 		NbSpinnerModule,
 		EditProfileFormModule,
 		InviteMutationModule,
-		InviteTableModule
+		InviteTableModule,
+		EditEmployeeMembershipFormModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [UserFullNameComponent],
-	providers: [OrganizationsService, UsersOrganizationsService, InviteGuard]
+	providers: [
+		OrganizationsService,
+		UsersOrganizationsService,
+		InviteGuard,
+		UserIdService
+	]
 })
 export class UsersModule {}

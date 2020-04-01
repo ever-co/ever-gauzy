@@ -15,6 +15,12 @@ const routes: Routes = [
 				path: '',
 				redirectTo: 'dashboard',
 				pathMatch: 'full'
+				// canActivate: [RoleGuard],
+				// data: {
+				// 	expectedRole: [
+				// 		RolesEnum.ADMIN
+				// 	]
+				// }
 			},
 			{
 				path: 'dashboard',
@@ -22,53 +28,96 @@ const routes: Routes = [
 					import('./dashboard/dashboard.module').then(
 						(m) => m.DashboardModule
 					)
-				//   ,
-				// canActivate: [RoleGuard],
-				// data: { expectedRole: [] }
-				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
-				path: 'income',
-				loadChildren: () =>
-					import('./income/income.module').then((m) => m.IncomeModule)
-				// canActivate: [RoleGuard],
-				// data: {
-				// 	expectedRole: [
-				// 		// RolesEnum.DATA_ENTRY,
-				// 		// RolesEnum.EMPLOYEE,
-				// 		RolesEnum.ADMIN
-				// 	]
-				// }
+				path: 'accounting',
+				children: [
+					{
+						path: '',
+						redirectTo: 'invoices',
+						pathMatch: 'full'
+					},
+					{
+						path: 'income',
+						loadChildren: () =>
+							import('./income/income.module').then(
+								(m) => m.IncomeModule
+							)
+					},
+					{
+						path: 'expenses',
+						loadChildren: () =>
+							import('./expenses/expenses.module').then(
+								(m) => m.ExpensesModule
+							)
+					},
+					{
+						path: 'invoices',
+						loadChildren: () =>
+							import('./invoices/invoices.module').then(
+								(m) => m.InvoicesModule
+							)
+					},
+					{
+						path: 'recurring-invoices',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'estimates',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					}
+				]
 			},
 			{
-				path: 'expenses',
+				path: 'clients',
 				loadChildren: () =>
-					import('./expenses/expenses.module').then(
-						(m) => m.ExpensesModule
+					import('./work-in-progress/work-in-progress.module').then(
+						(m) => m.WorkInProgressModule
 					)
-				// canActivate: [RoleGuard],
-				// data: {
-				// 	expectedRole: [
-				// 		// RolesEnum.DATA_ENTRY,
-				// 		// RolesEnum.EMPLOYEE,
-				// 		RolesEnum.ADMIN
-				// 	]
-				// }
 			},
 			{
-				path: 'integrations',
+				path: 'projects',
 				loadChildren: () =>
-					import('./integrations/integrations.module').then(
-						(m) => m.IntegrationsModule
+					import('./work-in-progress/work-in-progress.module').then(
+						(m) => m.WorkInProgressModule
 					)
-				// canActivate: [RoleGuard],
-				// data: {
-				// 	expectedRole: [
-				// 		// RolesEnum.DATA_ENTRY,
-				// 		// RolesEnum.EMPLOYEE,
-				// 		RolesEnum.ADMIN
-				// 	]
-				// }
+			},
+			{
+				path: 'tasks',
+				children: [
+					{
+						path: '',
+						redirectTo: 'dashboard',
+						pathMatch: 'full'
+					},
+					{
+						path: 'dashboard',
+						loadChildren: () =>
+							import('./tasks/tasks.module').then(
+								(m) => m.TasksModule
+							)
+					},
+					{
+						path: 'me',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'team',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					}
+				]
 			},
 			{
 				path: 'proposals',
@@ -76,80 +125,132 @@ const routes: Routes = [
 					import('./proposals/proposals.module').then(
 						(m) => m.ProposalsModule
 					)
-				// canActivate: [RoleGuard],
-				// data: {
-				// 	expectedRole: [
-				// 		// RolesEnum.DATA_ENTRY,
-				// 		// RolesEnum.EMPLOYEE,
-				// 		RolesEnum.ADMIN
-				// 	]
-				// }
 			},
 			{
-				path: 'time-off',
-				loadChildren: () =>
-					import('./time-off/time-off.module').then(
-						(m) => m.TimeOffModule
-					)
-				// canActivate: [RoleGuard],
-				// data: {
-				// 	expectedRole: [
-				// 		// RolesEnum.EMPLOYEE,
-				// 		RolesEnum.ADMIN
-				// 	]
-				// }
+				path: 'employees',
+				children: [
+					{
+						path: '',
+						loadChildren: () =>
+							import('./employees/employees.module').then(
+								(m) => m.EmployeesModule
+							)
+					},
+					{
+						path: 'activity',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'timesheets',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'schedules',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'time-off',
+						loadChildren: () =>
+							import('./time-off/time-off.module').then(
+								(m) => m.TimeOffModule
+							)
+					},
+					{
+						path: 'candidates',
+						loadChildren: () =>
+							import('./candidates/candidates.module').then(
+								(m) => m.CandidatesModule
+							)
+					}
+				]
 			},
 			{
-				path: 'tags',
-				loadChildren: () =>
-					import('./tags/tags.module').then((m) => m.TagsModule)
+				path: 'organization',
+				children: [
+					{
+						path: 'equipment',
+						loadChildren: () =>
+							import('./equipment/equipment.module').then(
+								(m) => m.EquipmentModule
+							)
+					},
+					{
+						path: 'tags',
+						loadChildren: () =>
+							import('./tags/tags.module').then(
+								(m) => m.TagsModule
+							)
+					},
+					{
+						path: 'email-templates',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'equipment-sharing',
+						loadChildren: () =>
+							import(
+								'./equipment-sharing/equipment-sharing.module'
+							).then((m) => m.EquipmentSharingModule)
+					}
+				]
 			},
 			{
-				path: 'tasks',
-				loadChildren: () =>
-					import('./tasks/tasks.module').then((m) => m.TasksModule)
+				path: 'reports',
+				children: [
+					{
+						path: '',
+						redirectTo: 'time',
+						pathMatch: 'full'
+					},
+					{
+						path: 'time',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'accounting',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					}
+				]
 			},
 			{
 				path: 'help',
 				loadChildren: () =>
 					import('./help/help.module').then((m) => m.HelpModule)
-				// canActivate: [RoleGuard],
-				// data: {
-				// 	expectedRole: [
-				// 		// RolesEnum.DATA_ENTRY,
-				// 		// RolesEnum.EMPLOYEE,
-				// 		RolesEnum.ADMIN
-				// 	]
-				// }
 			},
 			{
 				path: 'about',
 				loadChildren: () =>
 					import('./about/about.module').then((m) => m.AboutModule)
-				// canActivate: [RoleGuard],
-				// data: {
-				// 	expectedRole: [
-				// 		// RolesEnum.DATA_ENTRY,
-				// 		// RolesEnum.EMPLOYEE,
-				// 		RolesEnum.ADMIN
-				// 	]
-				// }
 			},
 			{
-				path: 'employees',
+				path: 'integrations',
 				loadChildren: () =>
-					import('./employees/employees.module').then(
-						(m) => m.EmployeesModule
+					import('./integrations/integrations.module').then(
+						(m) => m.IntegrationsModule
 					)
-				// canActivate: [RoleGuard],
-				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
 				path: 'users',
 				loadChildren: () =>
 					import('./users/users.module').then((m) => m.UsersModule)
-				// canActivate: [RoleGuard],
-				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
 				path: 'organizations',
@@ -157,8 +258,6 @@ const routes: Routes = [
 					import('./organizations/organizations.module').then(
 						(m) => m.OrganizationsModule
 					)
-				// canActivate: [RoleGuard],
-				// data: { expectedRole: [RolesEnum.ADMIN] }
 			},
 			{
 				path: 'import-export',
@@ -177,27 +276,6 @@ const routes: Routes = [
 				loadChildren: () =>
 					import('./settings/settings.module').then(
 						(m) => m.SettingsModule
-					)
-			},
-			{
-				path: 'equipment',
-				loadChildren: () =>
-					import('./equipment/equipment.module').then(
-						(m) => m.EquipmentModule
-					)
-			},
-			{
-				path: 'equipment-sharing',
-				loadChildren: () =>
-					import('./equipment-sharing/equipment-sharing.module').then(
-						(m) => m.EquipmentSharingModule
-					)
-			},
-			{
-				path: 'invoices',
-				loadChildren: () =>
-					import('./invoices/invoices.module').then(
-						(m) => m.InvoicesModule
 					)
 			},
 			{

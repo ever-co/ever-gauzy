@@ -22,12 +22,14 @@ import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
 	styleUrls: ['basic-info-form.component.scss']
 })
 export class BasicInfoFormComponent implements OnInit, AfterViewInit {
-	UPLOADER_PLACEHOLDER: string = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
+	UPLOADER_PLACEHOLDER = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
 	@ViewChild('imagePreview', { static: false })
 	imagePreviewElement: ElementRef;
 
 	@Input() public isEmployee: boolean;
+	@Input() public isCandidate: boolean;
+	@Input() public isCandidateCV: boolean;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -46,6 +48,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	tenant: Tenant;
 	offerDate: any;
 	acceptDate: any;
+	appliedDate: any;
+	hiredDate: any;
 	rejectDate: any;
 	tags: Tag[] = [];
 	selectedTags: any;
@@ -109,9 +113,16 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 					])
 				],
 				startedWorkOn: [''],
-				role: ['', this.isEmployee ? null : Validators.required],
+				role: [
+					'',
+					this.isCandidate || this.isEmployee
+						? null
+						: Validators.required
+				],
 				offerDate: [''],
 				acceptDate: [''],
+				appliedDate: [''],
+				hiredDate: [''],
 				rejectDate: ['']
 			},
 			{
@@ -128,6 +139,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		this.role = this.form.get('role');
 		this.offerDate = this.form.get('offerDate');
 		this.acceptDate = this.form.get('acceptDate');
+		this.appliedDate = this.form.get('appliedDate');
+		this.hiredDate = this.form.get('hiredDate');
 		this.rejectDate = this.form.get('rejectDate');
 		this.selectedTags = this.form.get('selectedTags');
 	};

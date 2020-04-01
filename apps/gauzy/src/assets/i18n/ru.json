@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Бонус на основе прибыли",
 		"REVENUE_BASED_BONUS": "Бонус на основе дохода",
 		"STATUS": "Статус",
+		"SOURCE": "Источник",
 		"WORK_STATUS": "Статус работы",
 		"TODAY": "Сегодня",
 		"END_OF_MONTH": "Конец месяца",
@@ -166,6 +167,7 @@
 			"ADD_DEPARTMENT": "Добавить департамент",
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
+			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
 			"END_DATE_PROJECT": "Дата окончания (необязательно)",
@@ -196,6 +198,8 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
+			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
+			"ADD_ORGANIZATIONS": "Добавить организации",
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
 			"SELECT_CURRENCY": "Выберите валюту",
@@ -207,7 +211,8 @@
 			"CHOOSE_EMPLOYEES": "Выберите сотрудника/с",
 			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
-			"REGISTRATION_DATE": "Дата регистрации организации"
+			"REGISTRATION_DATE": "Дата регистрации организации",
+			"ORGANIZATIONS": "Выберите организации"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -274,6 +279,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
+		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
 		"INTEGRATIONS": "Интеграции",
@@ -284,6 +290,8 @@
 		"ABOUT": "О нас",
 		"ADMIN": "Администратор",
 		"EMPLOYEES": "Сотрудники",
+		"MANAGE": "Управлять",
+		"CANDIDATES": "Кандидаты",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
@@ -299,7 +307,21 @@
 		"EQUIPMENT": "Оборудование",
 		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
 		"TASKS": "Задачи",
-		"INVOICES": "Счета"
+		"INVOICES": "Счета",
+		"ORGANIZATION": "Организация",
+		"RECURRING_INVOICES": "Повторяющиеся счета",
+		"ESTIMATES": "Оценки",
+		"MY_TASKS": "Мои задачи",
+		"TEAM_TASKS": "Задачи команды",
+		"ACTIVITY": "Активность",
+		"TIMESHEETS": "Сроки",
+		"SCHEDULES": "Графики",
+		"EMAIL_TEMPLATES": "Шаблоны писем",
+		"REPORTS": "Отчёты",
+		"TIME_REPORTS": "Отчеты по времени",
+		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
+		"PAYMENT_GATEWAYS": "Платежные шлюзы",
+		"CUSTOM_SMTP": "Пользовательский SMTP"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -442,6 +464,37 @@
 			"PREVIOUS": "Предыдущий"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Управление Кандидатами для ",
+		"ADD_CANDIATE": "Добавить Кандидатов",
+		"APPLIED": "Применяется",
+		"HIRED": "Наклонный",
+		"REJECTED": "Отклонено",
+		"DELETED": "Удалено",
+		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Управление Кандидатом",
+			"DEVELOPER": "Разработчик",
+			"DEPARTMENT": "Департамент",
+			"POSITION": "Позиция",
+			"CANDIATE_DEPARTMENTS": "Кафедры работника:",
+			"EMPLOYMENT_TYPE": "Тип занятости",
+			"ACCOUNT": "Аккаунт",
+			"EMPLOYMENT": "Занятость",
+			"LOCATION": "Местоположение",
+			"RATES": "Тарифы",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Шаг 1",
+			"STEP_2": "Шаг2",
+			"STEP_3": "Шаг3",
+			"ADD_ANOTHER_CANDIATE": "Добавить еще один Кандидат",
+			"FINISHED_ADDING": "Я добавил все текущие Кандидаты",
+			"NEXT": "Следующий",
+			"PREVIOUS": "Предыдущий"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
@@ -451,6 +504,7 @@
 		"CLIENTS": "Клиенты",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Вендоры",
+		"EXPENSE_CATEGORIES": "Категории расходов",
 		"PROJECTS": "Проекты",
 		"ACTIVE": "Активно",
 		"ARCHIVED": "Архивирован",
@@ -490,6 +544,10 @@
 			"REGIONS": "Регионы",
 			"ROLES_PERMISSIONS": "Роли и Разрешения",
 			"DATE_LIMIT": "Ограничение даты",
+			"USER_ORGANIZATIONS": "Список организаций {{ name }}",
+			"ADDED_TO_ORGANIZATION": " организация",
+			"USER_WAS_DELETED": "{{ name }} был успешно удален.",
+			"USER_WAS_REMOVED": "{{ name }} был успешно удален из организации.",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Настройки таймера",
 				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
@@ -511,6 +569,8 @@
 			"ORG_TIME_OFF_VIEW": "Показать время на странице",
 			"ORG_EMPLOYEES_VIEW": "Сотрудники организации",
 			"ORG_EMPLOYEES_EDIT": "Создать/Редактировать/Удалить Сотрудников Организации",
+			"ORG_CANDIDATES_VIEW": "Просмотреть Кандидаты Организации",
+			"ORG_CANDIDATES_EDIT": "Создать/Редактировать/Удалить Кандидаты Организации",
 			"ORG_USERS_VIEW": "Просмотр пользователей организации",
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ORG_INVITE_VIEW": "Просмотреть приглашения организации",
@@ -520,6 +580,7 @@
 			"POLICY_VIEW": "Просмотр политики отключения",
 			"POLICY_EDIT": "Редактировать политику отключения",
 			"CHANGE_SELECTED_EMPLOYEE": "Изменить выбранного сотрудника",
+			"CHANGE_SELECTED_CANDIDATE": "Изменить выбранный Кандидат",
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
@@ -664,11 +725,14 @@
 			"MANAGER": "Менеджер",
 			"DATA_ENTRY": "Ввод данных",
 			"VIEWER": "Просмотрщик",
-			"EMPLOYEE": "Сотрудник"
+			"EMPLOYEE": "Сотрудник",
+			"CANDIDATE": "Кандидат"
 		},
 		"EDIT_USER": {
 			"HEADER": "Управление пользователем",
-			"EDIT_EXISTING_USER": "Изменить существующего пользователя"
+			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
+			"MAIN": "Главная",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -859,6 +923,11 @@
 				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
 				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
 				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "Новая категория {{ name }} успешно добавлена!",
+				"REMOVE_EXPENSE_CATEGORY": "Категория {{ name }} успешно удалена!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Пожалуйста, добавьте название категории"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Новая позиция {{ name }} успешно добавлена!",

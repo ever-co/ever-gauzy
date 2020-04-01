@@ -1,6 +1,11 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
-import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import {
+	FormBuilder,
+	Validators,
+	FormGroup,
+	AbstractControl
+} from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
 	CurrenciesEnum,
@@ -13,7 +18,11 @@ import {
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first, takeUntil } from 'rxjs/operators';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import {
+	EmployeeSelectorComponent,
+	ALL_EMPLOYEES_SELECTED,
+	SelectedEmployee
+} from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
@@ -54,6 +63,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	showWarning = false;
 	disable = true;
 	loading = false;
+	valueDate: AbstractControl;
+	amount: AbstractControl;
+	notes: AbstractControl;
+	showTooltip = false;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -122,6 +135,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				projectId: null
 			};
 		}
+
+		if (this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED)
+			this.form.value.splitExpense = true;
+
 		this.dialogRef.close(
 			Object.assign(
 				{ employee: this.employeeSelector.selectedEmployee },
@@ -221,6 +238,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 			this._loadDefaultCurrency();
 		}
+		this.valueDate = this.form.get('valueDate');
+		this.amount = this.form.get('amount');
+		this.notes = this.form.get('notes');
 	}
 
 	private calculateTaxes() {
@@ -291,11 +311,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	private closeWarning() {
+	closeWarning() {
 		this.showWarning = !this.showWarning;
 	}
 
-	private attachReceipt() {
+	attachReceipt() {
 		this.dialogService
 			.open(AttachReceiptComponent, {
 				context: {
@@ -306,6 +326,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			.subscribe((newReceipt) => {
 				this.form.value.receipt = newReceipt;
 			});
+	}
+
+	onEmployeeChange(selectedEmployee: SelectedEmployee) {
+		this.showTooltip = selectedEmployee === ALL_EMPLOYEES_SELECTED;
 	}
 
 	ngOnDestroy() {

@@ -1,0 +1,73 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<h5>{{ 'CANDIDATES_PAGE.ADD_CANDIATE' | translate }}</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-stepper #stepper>
+			<nb-step [label]="step1">
+				<ng-template #step1>{{
+					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_1' | translate
+				}}</ng-template>
+				<ga-user-basic-info-form #userBasicInfo [isCandidate]="true">
+				</ga-user-basic-info-form>
+				<div class="text-right">
+					<button
+						status="success"
+						[disabled]="userBasicInfo.form.invalid"
+						nbButton
+						nbStepperNext
+					>
+						{{ 'CANDIDATES_PAGE.ADD_CANDIATES.NEXT' | translate }}
+					</button>
+				</div>
+			</nb-step>
+			<nb-step [label]="step2">
+				<ng-template #step2>{{
+					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_2' | translate
+				}}</ng-template>
+				<div class="file-uploader">
+					<ga-user-basic-info-form
+						#userBasicInfoCV
+						[isCandidateCV]="true"
+					>
+					</ga-user-basic-info-form>
+				</div>
+
+				<div class="button-container">
+					<button status="primary" nbButton nbStepperPrevious>
+						{{
+							'CANDIDATES_PAGE.ADD_CANDIATES.PREVIOUS' | translate
+						}}
+					</button>
+					<button status="success" nbButton nbStepperNext>
+						{{ 'CANDIDATES_PAGE.ADD_CANDIATES.NEXT' | translate }}
+					</button>
+				</div>
+			</nb-step>
+			<nb-step [label]="step3">
+				<ng-template #step3>{{
+					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_3' | translate
+				}}</ng-template>
+				<div class="step-container button-container">
+					<button nbButton (click)="addCandidate()">
+						{{
+							'CANDIDATES_PAGE.ADD_CANDIATES.ADD_ANOTHER_CANDIATE'
+								| translate
+						}}
+					</button>
+					<button status="success" (click)="add()" nbButton>
+						{{
+							'CANDIDATES_PAGE.ADD_CANDIATES.FINISHED_ADDING'
+								| translate
+						}}
+					</button>
+				</div>
+			</nb-step>
+		</nb-stepper>
+	</nb-card-body>
+</nb-card>

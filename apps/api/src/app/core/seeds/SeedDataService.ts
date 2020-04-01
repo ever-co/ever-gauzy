@@ -65,6 +65,7 @@ import { Timesheet } from '../../timesheet/timesheet.entity';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
 import { Email } from '../../email/email.entity';
+import { Candidate } from '../../candidate/candidate.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -76,6 +77,7 @@ const allEntities = [
 	EquipmentSharing,
 	User,
 	Employee,
+	Candidate,
 	Role,
 	Organization,
 	Income,

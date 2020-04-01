@@ -3,7 +3,7 @@ import {
 	RecurringExpenseModel
 } from '@gauzy/models';
 import { IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { CrudService, IPagination } from '../../core';
+import { CrudService, getLastDayOfMonth, IPagination } from '../../core';
 
 /**
  * Finds income, expense, profit and bonus for all organizations for the given month.
@@ -22,7 +22,13 @@ export abstract class FindRecurringExpenseByMonthHandler<
 	public async executeCommand(
 		input: RecurringExpenseByMonthFindInput | any
 	): Promise<IPagination<T>> {
-		const inputStartDate = new Date(input.year, input.month - 1, 1);
+		const lastDayOfMonth = getLastDayOfMonth(input.year, input.month);
+		const inputStartDate = new Date(
+			input.year,
+			input.month,
+			lastDayOfMonth
+		);
+		const inputEndDate = new Date(input.year, input.month, 1);
 
 		let whereId: Object = input.orgId
 			? {
@@ -49,7 +55,7 @@ export abstract class FindRecurringExpenseByMonthHandler<
 				{
 					...whereId,
 					startDate: LessThanOrEqual(inputStartDate),
-					endDate: MoreThanOrEqual(inputStartDate)
+					endDate: MoreThanOrEqual(inputEndDate)
 				}
 			]
 		});

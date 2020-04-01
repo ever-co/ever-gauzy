@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Бонус въз основа на печалбата",
 		"REVENUE_BASED_BONUS": "Бонус въз основа на приходите",
 		"STATUS": "Статус",
+		"SOURCE": "Source",
 		"WORK_STATUS": "Работен статус",
 		"TODAY": "Днес",
 		"END_OF_MONTH": "В края на месеца",
@@ -166,6 +167,7 @@
 			"ADD_DEPARTMENT": "Добави Отдел",
 			"ADD_POSITION": "Добави позиция",
 			"ADD_VENDOR": "Добави доставчик",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Клиенти",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
 			"END_DATE_PROJECT": "Край на проекта (опция)",
@@ -196,6 +198,8 @@
 			"UPLOADER_PLACEHOLDER": "Снимка",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
+			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
+			"ADD_ORGANIZATIONS": "Add Organizations",
 			"DATE": "Дата",
 			"VALUE": "Стойност",
 			"SELECT_CURRENCY": "Избери валута",
@@ -207,7 +211,8 @@
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
-			"REGISTRATION_DATE": "Organization Registration Date"
+			"REGISTRATION_DATE": "Organization Registration Date",
+			"ORGANIZATIONS": "Choose Organizations"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -274,6 +279,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
+		"ACCOUNTING": "Accounting",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
 		"INTEGRATIONS": "Integrations",
@@ -284,6 +290,8 @@
 		"ABOUT": "За нас",
 		"ADMIN": "Администратор",
 		"EMPLOYEES": "Служители",
+		"MANAGE": "Управление",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни",
@@ -299,7 +307,21 @@
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"TASKS": "Tasks",
-		"INVOICES": "Invoices"
+		"INVOICES": "Invoices",
+		"ORGANIZATION": "Organization",
+		"RECURRING_INVOICES": "Recurring Invoices",
+		"ESTIMATES": "Estimates",
+		"MY_TASKS": "My Tasks",
+		"TEAM_TASKS": "Team's Tasks",
+		"ACTIVITY": "Activity",
+		"TIMESHEETS": "Timesheets",
+		"SCHEDULES": "Schedules",
+		"EMAIL_TEMPLATES": "Email Templates",
+		"REPORTS": "Reports",
+		"TIME_REPORTS": "Time Reports",
+		"ACCOUNTING_REPORTS": "Accounting Reports",
+		"PAYMENT_GATEWAYS": "Payment Gateways",
+		"CUSTOM_SMTP": "Custom SMTP"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -442,6 +464,37 @@
 			"PREVIOUS": "Previous"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Изтрит",
+		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "Разработчик",
+			"DEPARTMENT": "Отдел",
+			"POSITION": "Позиция",
+			"CANDIATE_DEPARTMENTS": "Отдел на Служителя:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Локация",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
@@ -451,6 +504,7 @@
 		"CLIENTS": "Клиенти",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Доставчици",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Проекти",
 		"ACTIVE": "Активна",
 		"ARCHIVED": "Архивирана",
@@ -490,6 +544,10 @@
 			"REGIONS": "Области",
 			"ROLES_PERMISSIONS": "Роли и Позволения",
 			"DATE_LIMIT": "Date Limit",
+			"USER_ORGANIZATIONS": "{{ name }}'s List of Organizations",
+			"ADDED_TO_ORGANIZATION": " the organization",
+			"USER_WAS_DELETED": "{{ name }} was successfuly deleted.",
+			"USER_WAS_REMOVED": "{{ name }} was successfuly removed from organization.",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -511,6 +569,8 @@
 			"ORG_TIME_OFF_VIEW": "Виж Time Off страницата",
 			"ORG_EMPLOYEES_VIEW": "Преглед на служителите в организацията",
 			"ORG_EMPLOYEES_EDIT": "Създай/Редактирай/Изтрии служители в организацията",
+			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
+			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
 			"ORG_USERS_VIEW": "Виж потребителите в организацията",
 			"ORG_USERS_EDIT": "Създай/Редактирай/Изтрии потребители на организацията",
 			"ORG_INVITE_VIEW": "Виж покани на организацията",
@@ -520,6 +580,7 @@
 			"POLICY_VIEW": "Виж Time Off политиката",
 			"POLICY_EDIT": "Редактирай Time Off политиката",
 			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
+			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
 			"CHANGE_ROLES_PERMISSIONS": "Промени ролите и Позволенията",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
@@ -664,11 +725,14 @@
 			"MANAGER": "Manager",
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
-			"EMPLOYEE": "Служител"
+			"EMPLOYEE": "Служител",
+			"CANDIDATE": "Candidate"
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
-			"EDIT_EXISTING_USER": "Edit Existing User"
+			"EDIT_EXISTING_USER": "Edit Existing User",
+			"MAIN": "Основни",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -859,6 +923,11 @@
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
 				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
 				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",

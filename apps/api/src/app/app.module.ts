@@ -46,6 +46,7 @@ import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
 import { UpworkModule } from './integrations/upwork/upwork.module';
 import { HubstaffModule } from './integrations/hubstaff/hubstaff.module';
+import { CandidateModule } from './candidate/candidate.module';
 
 @Module({
 	imports: [
@@ -56,6 +57,7 @@ import { HubstaffModule } from './integrations/hubstaff/hubstaff.module';
 					{ path: '/auth', module: AuthModule },
 					{ path: '/user', module: UserModule },
 					{ path: '/employee', module: EmployeeModule },
+					{ path: '/candidate', module: CandidateModule },
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
@@ -183,6 +185,7 @@ import { HubstaffModule } from './integrations/hubstaff/hubstaff.module';
 		AuthModule,
 		UserModule,
 		EmployeeModule,
+		CandidateModule,
 		ExportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
