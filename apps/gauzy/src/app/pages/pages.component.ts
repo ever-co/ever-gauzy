@@ -220,6 +220,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translationKey: 'MENU.TIME_OFF',
 						permissionKeys: [PermissionsEnum.POLICY_VIEW]
 					}
+				},
+				{
+					title: 'Candidates',
+					icon: 'person-done-outline',
+					link: '/pages/employees/candidates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.CANDIDATES'
+					}
 				}
 			]
 		},
@@ -340,15 +349,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 						urlPrefix: `/pages/organizations/edit/`,
 						urlPostfix: '/settings/teams',
 						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
-					}
-				},
-				{
-					title: 'Candidates',
-					icon: 'person-done-outline',
-					link: '/pages/organization/candidates',
-					data: {
-						translated: false,
-						translationKey: 'MENU.CANDIDATES'
 					}
 				},
 				{
