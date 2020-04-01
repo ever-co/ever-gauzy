@@ -1,12 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
-import {
-	NbCardModule,
-	NbButtonModule,
-	NbInputModule,
-	NbIconModule
-} from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
+import { NbCardModule, NbIconModule } from '@nebular/theme';
 import { WorkInProgressComponent } from './work-in-progress.component';
 import { WorkInProgressRoutingModule } from './work-in-progress-routing.module';
 
