@@ -58,7 +58,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	@Input()
 	disabled: boolean;
 	@Input()
-	defaultSelected;
+	defaultSelected: boolean;
+	@Input()
+	showAllEmployeesOption: boolean;
 	@Input()
 	placeholder: string;
 
@@ -78,6 +80,11 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.defaultSelected =
 			this.defaultSelected === undefined ? true : this.defaultSelected;
+		this.showAllEmployeesOption =
+			this.showAllEmployeesOption === undefined
+				? true
+				: this.showAllEmployeesOption;
+
 		this._loadEmployees();
 		this._loadEmployeeId();
 	}
@@ -137,7 +144,6 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 		const load = (loadItems) => {
 			this.people = [
-				ALL_EMPLOYEES_SELECTED,
 				...loadItems.map((e) => {
 					return {
 						id: e.id,
@@ -147,6 +153,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 					};
 				})
 			];
+			if (this.showAllEmployeesOption)
+				this.people.unshift(ALL_EMPLOYEES_SELECTED);
 		};
 
 		this.store.selectedOrganization$.subscribe((org) => {
