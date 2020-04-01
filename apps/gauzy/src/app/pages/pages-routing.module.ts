@@ -163,10 +163,16 @@ const routes: Routes = [
 							import('./time-off/time-off.module').then(
 								(m) => m.TimeOffModule
 							)
+					},
+					{
+						path: 'candidates',
+						loadChildren: () =>
+							import('./candidates/candidates.module').then(
+								(m) => m.CandidatesModule
+							)
 					}
 				]
 			},
-
 			{
 				path: 'organization',
 				children: [
@@ -182,13 +188,6 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./tags/tags.module').then(
 								(m) => m.TagsModule
-							)
-					},
-					{
-						path: 'candidates',
-						loadChildren: () =>
-							import('./candidates/candidates.module').then(
-								(m) => m.CandidatesModule
 							)
 					},
 					{
