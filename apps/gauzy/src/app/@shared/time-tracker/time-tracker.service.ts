@@ -4,19 +4,24 @@ import {
 	TimeLog,
 	ITimerToggleInput,
 	TimeLogType,
-	TimerStatus
+	TimerStatus,
+	IGetTimeLogInput
 } from '@gauzy/models';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { toLocal } from 'libs/utils';
+import * as moment from 'moment';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class TimeTrackerService {
 	_dueration: BehaviorSubject<number>;
+	_current_session_dueration: BehaviorSubject<number>;
 	_running: BehaviorSubject<boolean>;
 	_timerConfig: BehaviorSubject<ITimerToggleInput>;
 	dataStore: {
 		dueration: number;
+		current_session_dueration: number;
 		running: boolean;
 		timerConfig: ITimerToggleInput;
 	};
@@ -25,6 +30,7 @@ export class TimeTrackerService {
 	constructor(private http: HttpClient) {
 		this.dataStore = {
 			dueration: 0,
+			current_session_dueration: 0,
 			running: false,
 			timerConfig: {
 				isBillable: true,
@@ -48,11 +54,23 @@ export class TimeTrackerService {
 		} catch (error) {}
 
 		this._dueration = new BehaviorSubject(this.dataStore.dueration);
+		this._current_session_dueration = new BehaviorSubject(
+			this.dataStore.current_session_dueration
+		);
 		this._running = new BehaviorSubject(this.dataStore.running);
 		this._timerConfig = new BehaviorSubject(this.dataStore.timerConfig);
 
 		this.getTimerStatus().then((status: TimerStatus) => {
 			this.dueration = status.duration;
+			if (status.lastLog) {
+				this.current_session_dueration = moment().diff(
+					toLocal(status.lastLog.startedAt),
+					'seconds'
+				);
+			} else {
+				this.current_session_dueration = 0;
+			}
+
 			if (status.running) {
 				this.turnOnTimer();
 			}
@@ -68,6 +86,19 @@ export class TimeTrackerService {
 	public set dueration(value: number) {
 		this.dataStore.dueration = value;
 		this._dueration.next(this.dataStore.dueration);
+	}
+
+	public get $current_session_dueration(): Observable<number> {
+		return this._current_session_dueration.asObservable();
+	}
+	public get current_session_dueration(): number {
+		return this.dataStore.current_session_dueration;
+	}
+	public set current_session_dueration(value: number) {
+		this.dataStore.current_session_dueration = value;
+		this._current_session_dueration.next(
+			this.dataStore.current_session_dueration
+		);
 	}
 
 	public get $timerConfig(): Observable<ITimerToggleInput> {
@@ -125,9 +156,11 @@ export class TimeTrackerService {
 	}
 
 	turnOnTimer() {
+		console.log('turnOnTimer', this.running);
 		this.running = true;
 		this.interval = setInterval(() => {
 			this.dueration++;
+			this.current_session_dueration++;
 		}, 1000);
 	}
 
@@ -135,5 +168,14 @@ export class TimeTrackerService {
 		this.running = false;
 		clearInterval(this.interval);
 		this.interval = null;
+	}
+
+	getTimeLogs(request?: IGetTimeLogInput) {
+		return this.http
+			.get('/api/timesheet/timer/logs', { params: { ...request } })
+			.toPromise()
+			.then((data: TimeLog[]) => {
+				return data;
+			});
 	}
 }

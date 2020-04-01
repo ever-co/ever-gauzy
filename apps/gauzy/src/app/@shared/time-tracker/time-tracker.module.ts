@@ -16,6 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { TaskSelectorComponent } from './task/task.component';
 import { TimerPickerComponent } from './timer-picker/timer-picker.component';
 import { SharedModule } from '../shared.module';
+import { RouterModule } from '@angular/router';
 
 @NgModule({
 	declarations: [
@@ -26,6 +27,7 @@ import { SharedModule } from '../shared.module';
 	],
 	imports: [
 		CommonModule,
+		RouterModule,
 		NbIconModule,
 		NbButtonModule,
 		NbTooltipModule,

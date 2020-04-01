@@ -104,3 +104,11 @@ export interface IManualTimeInput {
 	tags?: string[];
 	isBillable?: boolean;
 }
+
+export interface IGetTimeLogInput {
+	startDate?: string;
+	endDate?: string;
+	projectId?: string[];
+	clientId?: string[];
+	employeeId?: string;
+}

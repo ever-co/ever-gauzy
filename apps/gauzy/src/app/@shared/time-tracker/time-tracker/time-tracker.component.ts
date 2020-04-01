@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
-import { TimeLogType, IManualTimeInput, Organization } from '@gauzy/models';
+import {
+	TimeLogType,
+	IManualTimeInput,
+	Organization,
+	User
+} from '@gauzy/models';
 import * as moment from 'moment';
 import { takeUntil, ignoreElements } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -16,10 +21,13 @@ import { NgForm } from '@angular/forms';
 })
 export class TimeTrackerComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
+	employeesId: string;
 	time: string = '00:00:00';
+	current_time: string = '00:00:00';
 	running: boolean;
 	today: Date = new Date();
 	manualTime: any = {};
+	user: any = {};
 
 	minSlotStartTime: string;
 	maxSlotStartTime: string;
@@ -36,8 +44,14 @@ export class TimeTrackerComponent implements OnInit {
 		this.store.selectedOrganization$.subscribe(
 			(organization: Organization) => {
 				this.organization = organization;
+
+				console.log(this.organization);
 			}
 		);
+
+		this.store.user$.subscribe((user: User) => {
+			this.user = user;
+		});
 	}
 
 	public get isBillable(): boolean {
@@ -86,6 +100,11 @@ export class TimeTrackerComponent implements OnInit {
 			.subscribe((time) => {
 				this.time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
+		this.timeTrackerService.$current_session_dueration
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((time) => {
+				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
+			});
 		this.timeTrackerService.$running
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((isRunning) => {
@@ -93,12 +112,9 @@ export class TimeTrackerComponent implements OnInit {
 			});
 	}
 
-	private resetForm() {
-		this.updateTimePickerLimit(new Date());
-	}
-
 	toggle(f: NgForm) {
 		if (!this.running && !f.valid) {
+			f.resetForm();
 			return;
 		}
 		this.timeTrackerService.toggle();
@@ -138,7 +154,8 @@ export class TimeTrackerComponent implements OnInit {
 					this.timeTrackerService.dueration =
 						this.timeTrackerService.dueration + timeLog.duration;
 				}
-				this.resetForm();
+				f.resetForm();
+				this.updateTimePickerLimit(new Date());
 				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
 			})
 			.catch((error) => {

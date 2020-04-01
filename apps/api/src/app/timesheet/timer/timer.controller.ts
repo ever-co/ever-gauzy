@@ -12,7 +12,8 @@ import {
 	ITimerToggleInput,
 	TimeLog,
 	TimerStatus,
-	IManualTimeInput
+	IManualTimeInput,
+	IGetTimeLogInput
 } from '@gauzy/models';
 import { TimerService } from './timer.service';
 
@@ -71,5 +72,16 @@ export class TimerController {
 		...options: any[]
 	): Promise<TimeLog> {
 		return this.timerService.addManualTime(entity);
+	}
+
+	@ApiOperation({ summary: 'Get Timer Logs' })
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Get('/logs')
+	async getLogs(@Body() entity: IGetTimeLogInput): Promise<TimeLog[]> {
+		return this.timerService.getLogs(entity);
 	}
 }

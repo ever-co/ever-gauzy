@@ -4,6 +4,7 @@
 			<div class="is_billable">
 				<button
 					nbButton
+					type="button"
 					(click)="$event.stopPropagation(); isBillable = !isBillable"
 					size="small"
 					[status]="isBillable ? 'primary' : 'basic'"
@@ -14,7 +15,8 @@
 				</button>
 			</div>
 			<div class="time-count">
-				<span class="time">{{ time }}</span>
+				<span class="currrent-session">{{ current_time }}</span>
+				<span class="today-time">Today: {{ time }}</span>
 			</div>
 			<div class="actions">
 				<div class="toggle">
@@ -113,6 +115,7 @@
 		<div class="mode">
 			<button
 				nbButton
+				type="button"
 				(click)="$event.stopPropagation(); setTimeType('TRACKED')"
 				size="tiny"
 				[status]="timeType == 'TRACKED' ? 'primary' : 'basic'"
@@ -123,6 +126,7 @@
 			</button>
 			<button
 				nbButton
+				type="button"
 				(click)="$event.stopPropagation(); setTimeType('MANUAL')"
 				size="tiny"
 				[status]="timeType == 'MANUAL' ? 'primary' : 'basic'"
@@ -192,5 +196,14 @@
 	</div>
 	<div class="time-menual" *ngIf="timeType == 'MANUAL'">
 		<button class="btn btn-success" (click)="addTime(f)">Add Time</button>
+	</div>
+	<div class="view-log-button" *ngIf="user?.employee?.id">
+		<a
+			nbButton
+			ghost
+			[routerLink]="['/pages/employees', user?.employee?.id, 'timesheet']"
+		>
+			View timesheet
+		</a>
 	</div>
 </form>

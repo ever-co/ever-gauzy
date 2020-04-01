@@ -6,6 +6,7 @@ import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tenant } from './tenant.model';
 import { Tag } from './tag-entity.model';
+import { Employee } from './employee.model';
 
 export interface User extends IBaseEntityModel {
 	thirdPartyId?: string;
@@ -19,6 +20,7 @@ export interface User extends IBaseEntityModel {
 	imageUrl?: string;
 	startedWorkOn?: string;
 	tenant: Tenant;
+	employee?: Employee;
 	tags: Tag[];
 }
 

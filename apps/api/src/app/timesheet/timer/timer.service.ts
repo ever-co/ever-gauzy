@@ -4,7 +4,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, Between, Brackets } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee';
-import { TimeLogType, TimerStatus, IManualTimeInput } from '@gauzy/models';
+import {
+	TimeLogType,
+	TimerStatus,
+	IManualTimeInput,
+	IGetTimeLogInput
+} from '@gauzy/models';
 import * as moment from 'moment';
 import { Timesheet } from '../timesheet.entity';
 
@@ -181,5 +186,49 @@ export class TimerService {
 			});
 		}
 		return timesheet;
+	}
+
+	async getLogs(request: IGetTimeLogInput) {
+		let startDate: any;
+		let endDate: any;
+		let employeeId: any;
+		if (request.startDate) {
+			if (moment(request.startDate).isSame(moment(request.endDate))) {
+				startDate =
+					moment(request.startDate).format('YYYY-MM-DD') +
+					' 00:00:00';
+				endDate =
+					moment(request.endDate).format('YYYY-MM-DD') + ' 23:59:59';
+			} else {
+				startDate =
+					moment(request.startDate).format('YYYY-MM-DD') +
+					' 00:00:00';
+				endDate =
+					moment(request.endDate).format('YYYY-MM-DD') + ' 23:59:59';
+			}
+		} else {
+			startDate = moment().format('YYYY-MM-DD') + ' 00:00:00';
+			endDate = moment().format('YYYY-MM-DD') + ' 23:59:59';
+		}
+
+		if (!request.employeeId) {
+			const user = RequestContext.currentUser();
+			const employee = await this.employeeRepository.findOne({
+				userId: user.id
+			});
+			employeeId = employee.id;
+		} else {
+			employeeId = request.employeeId;
+		}
+
+		let logs = await this.timeLogRepository.find({
+			where: {
+				startedAt: Between(startDate, endDate),
+				employeeId
+			},
+			relations: ['project', 'task', 'client']
+		});
+
+		return logs;
 	}
 }
