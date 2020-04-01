@@ -36,7 +36,7 @@ export class HubstaffService {
 			);
 	}
 
-	getOrganizations(token): Observable<any> {
+	getOrganizations({ token }): Observable<any> {
 		const headers = {
 			Authorization: `Bearer ${token}`
 		};

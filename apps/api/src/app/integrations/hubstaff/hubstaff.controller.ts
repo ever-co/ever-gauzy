@@ -11,8 +11,9 @@ export class HubstaffController {
 		return this._hubstaffService.getAccessTokens(body);
 	}
 
-	@Get('/organizations/:token')
-	getOrganizations(@Param('token') token): Observable<any> {
+	@Post('/organizations')
+	getOrganizations(@Body() token): Observable<any> {
+		console.log(token, 'T');
 		return this._hubstaffService.getOrganizations(token);
 	}
 }

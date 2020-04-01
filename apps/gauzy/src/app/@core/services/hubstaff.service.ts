@@ -20,8 +20,8 @@ export class HubstaffService {
 	}
 
 	getOrganizations(token): Observable<any> {
-		return this._http.get(
-			`/api/integrations/hubstaff/organizations/${token}`
-		);
+		return this._http.post(`/api/integrations/hubstaff/organizations`, {
+			token
+		});
 	}
 }
