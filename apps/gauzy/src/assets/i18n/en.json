@@ -200,6 +200,7 @@
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
+			"ADD_ORGANIZATIONS": "Add Organizations",
 			"DATE": "Date",
 			"VALUE": "Value",
 			"SELECT_CURRENCY": "Select Currency",
@@ -528,6 +529,10 @@
 			"REGIONS": "Regions",
 			"ROLES_PERMISSIONS": "Roles & Permissions",
 			"DATE_LIMIT": "Date Limit",
+			"USER_ORGANIZATIONS": "{{ name }}'s List of Organizations",
+			"ADDED_TO_ORGANIZATION": " the organization",
+			"USER_WAS_DELETED": "{{ name }} was successfuly deleted.",
+			"USER_WAS_REMOVED": "{{ name }} was successfuly removed from organization.",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
