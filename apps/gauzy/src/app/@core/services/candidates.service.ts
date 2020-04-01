@@ -43,4 +43,11 @@ export class CandidatesService {
 	create(createInput: ICandidateCreateInput): Observable<Candidate> {
 		return this.http.post<Candidate>('/api/candidate/create', createInput);
 	}
+
+	createBulk(createInput: ICandidateCreateInput[]): Observable<Candidate[]> {
+		return this.http.post<Candidate[]>(
+			'/api/candidate/createBulk',
+			createInput
+		);
+	}
 }
