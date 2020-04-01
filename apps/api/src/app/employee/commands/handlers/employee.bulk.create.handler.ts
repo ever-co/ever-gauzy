@@ -26,7 +26,6 @@ export class EmployeeBulkCreateHandler
 
 		this._sendWelcomeEmail(createdEmployees);
 
-		console.log('createdEmployees:', createdEmployees);
 		return createdEmployees;
 	}
 

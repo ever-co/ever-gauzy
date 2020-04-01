@@ -1,0 +1,132 @@
+import { IOrganizationExpenseCategory } from './../../../../../../../../../libs/models/src/lib/organization-expense-category.model';
+import { Component, OnInit } from '@angular/core';
+import { NbToastrService } from '@nebular/theme';
+import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
+
+import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
+
+@Component({
+	selector: 'ga-edit-org-expense-categories',
+	templateUrl: './edit-organization-expense-categories.component.html'
+})
+export class EditOrganizationExpenseCategoriesComponent
+	extends TranslationBaseComponent
+	implements OnInit {
+	private _ngDestroy$ = new Subject<void>();
+	expenseCategoryId: string;
+
+	showAddCard: boolean;
+	showEditDiv: boolean;
+
+	expenseCategories: IOrganizationExpenseCategory[];
+
+	selectedExpenseCategory: IOrganizationExpenseCategory;
+
+	constructor(
+		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
+		private readonly toastrService: NbToastrService,
+		private readonly organizationEditStore: OrganizationEditStore,
+		readonly translateService: TranslateService,
+		private errorHandlingService: ErrorHandlingService
+	) {
+		super(translateService);
+	}
+
+	ngOnInit(): void {
+		this.organizationEditStore.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization) => {
+				if (organization) {
+					this.expenseCategoryId = organization.id;
+					this.loadCategories();
+				}
+			});
+	}
+
+	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
+		this.showEditDiv = true;
+		this.selectedExpenseCategory = expenseCategory;
+	}
+
+	cancel() {
+		this.showEditDiv = !this.showEditDiv;
+		this.selectedExpenseCategory = null;
+	}
+
+	async removeCategory(id: string, name: string) {
+		try {
+			await this.organizationExpenseCategoryService.delete(id);
+
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.REMOVE_EXPENSE_CATEGORY',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.loadCategories();
+		} catch (error) {
+			this.errorHandlingService.handleError(error);
+		}
+	}
+
+	async editCategory(id: string, name: string) {
+		await this.organizationExpenseCategoryService.update(id, { name });
+		this.loadCategories();
+		this.toastrService.success('Successfully updated');
+		this.showEditDiv = !this.showEditDiv;
+	}
+
+	private async addCategory(name: string) {
+		if (name) {
+			await this.organizationExpenseCategoryService.create({
+				name,
+				organizationId: this.expenseCategoryId
+			});
+
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.showAddCard = !this.showAddCard;
+			this.loadCategories();
+		} else {
+			// TODO translate
+			this.toastrService.danger(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.INVALID_EXPENSE_CATEGORY_NAME'
+				),
+				this.getTranslation(
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_INVALID_NAME'
+				)
+			);
+		}
+	}
+
+	private async loadCategories() {
+		if (!this.expenseCategoryId) {
+			return;
+		}
+
+		const res = await this.organizationExpenseCategoryService.getAll({
+			organizationId: this.expenseCategoryId
+		});
+		if (res) {
+			this.expenseCategories = res.items;
+		}
+	}
+}

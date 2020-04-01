@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Бонус на основе прибыли",
 		"REVENUE_BASED_BONUS": "Бонус на основе дохода",
 		"STATUS": "Статус",
+		"SOURCE": "Источник",
 		"WORK_STATUS": "Статус работы",
 		"TODAY": "Сегодня",
 		"END_OF_MONTH": "Конец месяца",
@@ -166,6 +167,7 @@
 			"ADD_DEPARTMENT": "Добавить департамент",
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
+			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
 			"END_DATE_PROJECT": "Дата окончания (необязательно)",
@@ -196,6 +198,7 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
+			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
 			"SELECT_CURRENCY": "Выберите валюту",
@@ -207,7 +210,8 @@
 			"CHOOSE_EMPLOYEES": "Выберите сотрудника/с",
 			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
-			"REGISTRATION_DATE": "Дата регистрации организации"
+			"REGISTRATION_DATE": "Дата регистрации организации",
+			"ORGANIZATIONS": "Выберите организации"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -215,6 +219,9 @@
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Включать удаленные"
+		},
+		"NOTIFICATIONS": {
+			"STARTED_WORK_ON": "Необходимо ввести дату, когда работник начал работу для генерации заработной платы работников, позволяет работнику участвовать в разделенных расходах, видеть статистику работников"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
@@ -281,6 +288,7 @@
 		"ABOUT": "О нас",
 		"ADMIN": "Администратор",
 		"EMPLOYEES": "Сотрудники",
+		"CANDIDATES": "Кандидаты",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
@@ -295,7 +303,8 @@
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
 		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
-		"TASKS": "Задачи"
+		"TASKS": "Задачи",
+		"INVOICES": "Счета"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -397,7 +406,8 @@
 		},
 		"SPLIT_HELP": "Если установлено, то эти расходы будут распределены между всеми сотрудниками компании и учитываться при каждом расходе.",
 		"SPLIT_WILL_BE_TOOLTIP": "Эти расходы будут в равной степени разделены между всеми сотрудниками",
-		"SPLIT_EXPENSE": "Разделить расход"
+		"SPLIT_EXPENSE": "Разделить расход",
+		"ADD_EXPENSE_CATEGORY": "Добавить новую категорию расходов"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление сотрудниками для",
@@ -437,6 +447,37 @@
 			"PREVIOUS": "Предыдущий"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Управление Кандидатами для ",
+		"ADD_CANDIATE": "Добавить Кандидатов",
+		"APPLIED": "Применяется",
+		"HIRED": "Наклонный",
+		"REJECTED": "Отклонено",
+		"DELETED": "Удалено",
+		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Управление Кандидатом",
+			"DEVELOPER": "Разработчик",
+			"DEPARTMENT": "Департамент",
+			"POSITION": "Позиция",
+			"CANDIATE_DEPARTMENTS": "Кафедры работника:",
+			"EMPLOYMENT_TYPE": "Тип занятости",
+			"ACCOUNT": "Аккаунт",
+			"EMPLOYMENT": "Занятость",
+			"LOCATION": "Местоположение",
+			"RATES": "Тарифы",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Шаг 1",
+			"STEP_2": "Шаг2",
+			"STEP_3": "Шаг3",
+			"ADD_ANOTHER_CANDIATE": "Добавить еще один Кандидат",
+			"FINISHED_ADDING": "Я добавил все текущие Кандидаты",
+			"NEXT": "Следующий",
+			"PREVIOUS": "Предыдущий"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
@@ -446,6 +487,7 @@
 		"CLIENTS": "Клиенты",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Вендоры",
+		"EXPENSE_CATEGORIES": "Категории расходов",
 		"PROJECTS": "Проекты",
 		"ACTIVE": "Активно",
 		"ARCHIVED": "Архивирован",
@@ -506,6 +548,8 @@
 			"ORG_TIME_OFF_VIEW": "Показать время на странице",
 			"ORG_EMPLOYEES_VIEW": "Сотрудники организации",
 			"ORG_EMPLOYEES_EDIT": "Создать/Редактировать/Удалить Сотрудников Организации",
+			"ORG_CANDIDATES_VIEW": "Просмотреть Кандидаты Организации",
+			"ORG_CANDIDATES_EDIT": "Создать/Редактировать/Удалить Кандидаты Организации",
 			"ORG_USERS_VIEW": "Просмотр пользователей организации",
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ORG_INVITE_VIEW": "Просмотреть приглашения организации",
@@ -515,6 +559,7 @@
 			"POLICY_VIEW": "Просмотр политики отключения",
 			"POLICY_EDIT": "Редактировать политику отключения",
 			"CHANGE_SELECTED_EMPLOYEE": "Изменить выбранного сотрудника",
+			"CHANGE_SELECTED_CANDIDATE": "Изменить выбранный Кандидат",
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
@@ -659,11 +704,14 @@
 			"MANAGER": "Менеджер",
 			"DATA_ENTRY": "Ввод данных",
 			"VIEWER": "Просмотрщик",
-			"EMPLOYEE": "Сотрудник"
+			"EMPLOYEE": "Сотрудник",
+			"CANDIDATE": "Кандидат"
 		},
 		"EDIT_USER": {
 			"HEADER": "Управление пользователем",
-			"EDIT_EXISTING_USER": "Изменить существующего пользователя"
+			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
+			"MAIN": "Главная",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -709,6 +757,25 @@
 			"EXPIRED": "Истёк",
 			"ACCEPTED": "Принято"
 		}
+	},
+	"INVOICES_PAGE": {
+		"HEADER": "Счета",
+		"INVOICE_NUMBER": "Номер счёта",
+		"TOTAL_VALUE": "Общая стоимость",
+		"PAID_STATUS": "Оплаченный статус",
+		"INVOICES_ADD_INVOICE": "Счет добавлен",
+		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_DELETE_INVOICE": "Счет удален",
+		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
+		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
+		"INVOICES_SELECT_CURRENCY": "Валюта",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Значение скидки",
+		"INVOICES_SELECT_PAID": "Оплачено",
+		"INVOICES_SELECT_TAX": "Налог",
+		"INVOICES_SELECT_TERMS": "Условия",
+		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
+		"ADD_INVOICE": "Добавить счет",
+		"EDIT_INVOICE": "Изменить счет"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
@@ -835,6 +902,11 @@
 				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
 				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
 				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "Новая категория {{ name }} успешно добавлена!",
+				"REMOVE_EXPENSE_CATEGORY": "Категория {{ name }} успешно удалена!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Пожалуйста, добавьте название категории"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Новая позиция {{ name }} успешно добавлена!",

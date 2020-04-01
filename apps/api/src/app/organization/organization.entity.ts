@@ -7,7 +7,8 @@ import {
 	JoinColumn,
 	RelationId,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {

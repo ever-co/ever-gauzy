@@ -13,10 +13,10 @@ import {
 	EquipmentSharingStatusEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { Equipment } from '../equipment/equipment.entity';
 import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
-import { Employee } from '../employee';
-import { OrganizationTeams } from '../organization-teams';
+import { Equipment } from '../equipment/equipment.entity';
+import { Employee } from '../employee/employee.entity';
+import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {

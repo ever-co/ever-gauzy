@@ -263,7 +263,9 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			this.totalAllIncome,
 			profit
 		);
-		this.totalBonus = this.calculatedBonus + this.totalBonusIncome;
+		this.totalBonus =
+			Math.floor((this.calculatedBonus + this.totalBonusIncome) * 100) /
+			100;
 	}
 
 	private async _loadExpense() {
@@ -274,11 +276,11 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			)
 				? await this.expenseService.getAllWithSplitExpenses(
 						this.selectedEmployee.id,
-						['employee', 'organization'],
+						['employee', 'organization', 'category', 'vendor'],
 						this.selectedDate
 				  )
 				: await this.expenseService.getMyAllWithSplitExpenses(
-						['employee', 'organization'],
+						['employee', 'organization', 'category', 'vendor'],
 						this.selectedDate
 				  );
 
@@ -301,7 +303,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 							this.store.selectedOrganization.id,
 							{
 								year: this.selectedDate.getFullYear(),
-								month: this.selectedDate.getMonth() + 1
+								month: this.selectedDate.getMonth()
 							}
 						)
 				  ).items
@@ -360,12 +362,12 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		orgRecurringExpense?: OrganizationRecurringExpenseForEmployeeOutput[];
 	}): ViewDashboardExpenseHistory[] {
 		let viewDashboardExpenseHistory = [];
-
 		if (data.expense && data.expense.length) {
 			viewDashboardExpenseHistory = data.expense.map((e) => ({
 				valueDate: e.valueDate,
-				vendorName: e.vendorName,
-				categoryName: e.categoryName,
+				vendorName: e.vendor.name,
+				categoryName: e.category.name,
+				categoryId: e.category.id,
 				amount: e.amount,
 				notes: e.notes,
 				recurring: false,

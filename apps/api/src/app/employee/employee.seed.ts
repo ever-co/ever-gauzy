@@ -1,7 +1,7 @@
 import { Tenant } from '../tenant';
 import { Connection } from 'typeorm';
 import { Employee } from './employee.entity';
-import { Organization } from '../organization';
+import { Organization } from '../organization/organization.entity';
 import { User } from '../user';
 import { environment as env } from '@env-api/environment';
 
@@ -27,7 +27,6 @@ export const createEmployees = async (
 		connection,
 		randomData
 	);
-
 	return { defaultEmployees, randomEmployees };
 };
 
@@ -46,7 +45,6 @@ const createDefaultEmployees = async (
 	const defaultOrg = defaultData.org;
 	const defaultTenants = defaultData.tenant;
 
-	console.dir(defaultTenants);
 	let counter = 0;
 	for (const user of defaultUsers) {
 		employee = new Employee();
@@ -68,7 +66,6 @@ const createDefaultEmployees = async (
 		employees.push(employee);
 		counter++;
 	}
-
 	console.dir(employees);
 	return employees;
 };
@@ -95,6 +92,7 @@ const createRandomEmployees = async (
 				employee.user = randomUsers.pop();
 				employee.isActive = true;
 				employee.endWork = null;
+				employee.startedWorkOn = null;
 
 				if (employee.user) {
 					await insertEmployee(connection, employee);
@@ -103,7 +101,6 @@ const createRandomEmployees = async (
 			}
 		}
 	}
-
 	return employees;
 };
 

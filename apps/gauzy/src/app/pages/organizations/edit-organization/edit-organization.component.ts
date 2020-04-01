@@ -124,8 +124,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	}
 
 	getMonthString(month: number) {
-		const months = monthNames;
-		return months[month - 1];
+		return monthNames[month];
 	}
 
 	getCategoryName(categoryName: string) {
@@ -140,22 +139,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		this.selectedRowIndexToShow = index;
 	}
 
-	getDefaultDate() {
-		const month = ('0' + (this.selectedDate.getMonth() + 1)).slice(-2);
-		return `${this.selectedDate.getFullYear()}-${month}`;
-	}
-
-	getDateValue(value: string): { month: number; year: number } {
-		if (value) {
-			const res = value.split('-');
-
-			return {
-				year: +res[0],
-				month: +res[1]
-			};
-		}
-	}
-
 	async deleteOrgRecurringExpense(index: number) {
 		const selectedExpense = this.selectedOrgRecurringExpense[index];
 		const result: RecurringExpenseDeletionEnum = await this.dialogService
@@ -166,7 +149,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 						selectedExpense.startMonth
 					)}, ${selectedExpense.startYear}`,
 					current: `${this.getMonthString(
-						this.selectedDate.getMonth() + 1
+						this.selectedDate.getMonth()
 					)}, ${this.selectedDate.getFullYear()}`,
 					end: selectedExpense.endMonth
 						? `${this.getMonthString(selectedExpense.endMonth)}, ${
@@ -183,7 +166,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 				const id = selectedExpense.id;
 				await this.organizationRecurringExpenseService.delete(id, {
 					deletionType: result,
-					month: this.selectedDate.getMonth() + 1,
+					month: this.selectedDate.getMonth(),
 					year: this.selectedDate.getFullYear()
 				});
 				this.selectedRowIndexToShow = null;
@@ -205,10 +188,12 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	}
 
 	async addOrganizationRecurringExpense() {
+		console.log(this.selectedDate);
 		const result = await this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {
-					componentType: COMPONENT_TYPE.ORGANIZATION
+					componentType: COMPONENT_TYPE.ORGANIZATION,
+					selectedDate: this.selectedDate
 				}
 			})
 			.onClose.pipe(first())
@@ -218,18 +203,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 			try {
 				await this.organizationRecurringExpenseService.create({
 					orgId: this.selectedOrg.id,
-					categoryName: result.categoryName,
-					value: result.value,
-					startDay: 1,
-					startYear: this.selectedDate.getFullYear(),
-					startMonth: this.selectedDate.getMonth() + 1,
-					startDate: new Date(
-						this.selectedDate.getFullYear(),
-						this.selectedDate.getMonth(),
-						1
-					),
-					currency: result.currency,
-					splitExpense: result.splitExpense
+					...result
 				});
 
 				this.toastrService.primary(
@@ -251,7 +225,8 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 			.open(RecurringExpenseMutationComponent, {
 				context: {
 					recurringExpense: this.selectedOrgRecurringExpense[index],
-					componentType: COMPONENT_TYPE.ORGANIZATION
+					componentType: COMPONENT_TYPE.ORGANIZATION,
+					selectedDate: this.selectedDate
 				}
 			})
 			.onClose.pipe(first())
@@ -260,12 +235,10 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		if (result) {
 			try {
 				const id = this.selectedOrgRecurringExpense[index].id;
-				await this.organizationRecurringExpenseService.update(id, {
-					...result,
-					startDay: 1,
-					startMonth: this.selectedDate.getMonth() + 1,
-					startYear: this.selectedDate.getFullYear()
-				});
+				await this.organizationRecurringExpenseService.update(
+					id,
+					result
+				);
 				this.selectedRowIndexToShow = null;
 				this._loadOrgRecurringExpense();
 
@@ -302,7 +275,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 				await this.organizationRecurringExpenseService.getAllByMonth({
 					orgId: this.selectedOrg.id,
 					year: this.selectedDate.getFullYear(),
-					month: this.selectedDate.getMonth() + 1
+					month: this.selectedDate.getMonth()
 				})
 			).items;
 			this.loading = false;

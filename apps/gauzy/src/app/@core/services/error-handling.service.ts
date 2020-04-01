@@ -18,7 +18,6 @@ export class ErrorHandlingService {
 	}
 
 	private getErrorDetails(err) {
-		console.log(err, 'ERR');
 		const message: string =
 			err.error && err.error.message ? err.error.message : err.message;
 		const detail: string =
@@ -26,7 +25,6 @@ export class ErrorHandlingService {
 
 		if (message) {
 			const keywords = message.split(' ', 3).join(' ');
-			console.log(keywords);
 			switch (keywords) {
 				case 'duplicate key value':
 					this.handleDuplicateKeyError(detail);

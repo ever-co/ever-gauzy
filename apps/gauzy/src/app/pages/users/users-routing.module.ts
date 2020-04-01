@@ -5,6 +5,8 @@ import { UsersComponent } from './users.component';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
 import { InviteGuard } from '../../@core/role/invite.guard';
 import { PermissionsEnum } from '@gauzy/models';
+import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
+import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
 
 const routes: Routes = [
 	{
@@ -13,7 +15,17 @@ const routes: Routes = [
 	},
 	{
 		path: 'edit/:id',
-		component: EditUserProfileComponent
+		component: EditUserProfileComponent,
+		children: [
+			{
+				path: '',
+				component: EditUserDataComponent
+			},
+			{
+				path: 'organizations',
+				component: EditUserOrganizationsComponent
+			}
+		]
 	},
 	{
 		path: 'invites',

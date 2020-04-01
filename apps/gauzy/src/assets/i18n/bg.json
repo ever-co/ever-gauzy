@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Бонус въз основа на печалбата",
 		"REVENUE_BASED_BONUS": "Бонус въз основа на приходите",
 		"STATUS": "Статус",
+		"SOURCE": "Source",
 		"WORK_STATUS": "Работен статус",
 		"TODAY": "Днес",
 		"END_OF_MONTH": "В края на месеца",
@@ -166,6 +167,7 @@
 			"ADD_DEPARTMENT": "Добави Отдел",
 			"ADD_POSITION": "Добави позиция",
 			"ADD_VENDOR": "Добави доставчик",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Клиенти",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
 			"END_DATE_PROJECT": "Край на проекта (опция)",
@@ -196,6 +198,7 @@
 			"UPLOADER_PLACEHOLDER": "Снимка",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
+			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"DATE": "Дата",
 			"VALUE": "Стойност",
 			"SELECT_CURRENCY": "Избери валута",
@@ -207,7 +210,8 @@
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
-			"REGISTRATION_DATE": "Organization Registration Date"
+			"REGISTRATION_DATE": "Organization Registration Date",
+			"ORGANIZATIONS": "Choose Organizations"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -215,6 +219,9 @@
 		},
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Показване на изтритите"
+		},
+		"NOTIFICATIONS": {
+			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -281,6 +288,7 @@
 		"ABOUT": "За нас",
 		"ADMIN": "Администратор",
 		"EMPLOYEES": "Служители",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни",
@@ -295,7 +303,8 @@
 		"TAGS": "Тагове",
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
-		"TASKS": "Tasks"
+		"TASKS": "Tasks",
+		"INVOICES": "Invoices"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -397,7 +406,8 @@
 		},
 		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
 		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
-		"SPLIT_EXPENSE": "Split Expense"
+		"SPLIT_EXPENSE": "Split Expense",
+		"ADD_EXPENSE_CATEGORY": "Add New Expense category"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление на служителите в ",
@@ -437,6 +447,37 @@
 			"PREVIOUS": "Previous"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Изтрит",
+		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "Разработчик",
+			"DEPARTMENT": "Отдел",
+			"POSITION": "Позиция",
+			"CANDIATE_DEPARTMENTS": "Отдел на Служителя:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Локация",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
@@ -446,6 +487,7 @@
 		"CLIENTS": "Клиенти",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Доставчици",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Проекти",
 		"ACTIVE": "Активна",
 		"ARCHIVED": "Архивирана",
@@ -506,6 +548,8 @@
 			"ORG_TIME_OFF_VIEW": "Виж Time Off страницата",
 			"ORG_EMPLOYEES_VIEW": "Преглед на служителите в организацията",
 			"ORG_EMPLOYEES_EDIT": "Създай/Редактирай/Изтрии служители в организацията",
+			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
+			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
 			"ORG_USERS_VIEW": "Виж потребителите в организацията",
 			"ORG_USERS_EDIT": "Създай/Редактирай/Изтрии потребители на организацията",
 			"ORG_INVITE_VIEW": "Виж покани на организацията",
@@ -515,6 +559,7 @@
 			"POLICY_VIEW": "Виж Time Off политиката",
 			"POLICY_EDIT": "Редактирай Time Off политиката",
 			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
+			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
 			"CHANGE_ROLES_PERMISSIONS": "Промени ролите и Позволенията",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
@@ -659,11 +704,14 @@
 			"MANAGER": "Manager",
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
-			"EMPLOYEE": "Служител"
+			"EMPLOYEE": "Служител",
+			"CANDIDATE": "Candidate"
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
-			"EDIT_EXISTING_USER": "Edit Existing User"
+			"EDIT_EXISTING_USER": "Edit Existing User",
+			"MAIN": "Основни",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -709,6 +757,25 @@
 			"EXPIRED": "Expired",
 			"ACCEPTED": "Прието"
 		}
+	},
+	"INVOICES_PAGE": {
+		"HEADER": "Invoices",
+		"INVOICE_NUMBER": "Invoice Number",
+		"TOTAL_VALUE": "Total Value",
+		"PAID_STATUS": "Paid Status",
+		"INVOICES_ADD_INVOICE": "Invoice Added",
+		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
+		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
+		"INVOICES_SELECT_DUE_DATE": "Due Date",
+		"INVOICES_SELECT_CURRENCY": "Валута",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
+		"INVOICES_SELECT_PAID": "Paid",
+		"INVOICES_SELECT_TAX": "Tax",
+		"INVOICES_SELECT_TERMS": "Terms",
+		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
+		"ADD_INVOICE": "Add Invoice",
+		"EDIT_INVOICE": "Edit Invoice"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
@@ -835,6 +902,11 @@
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
 				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
 				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",

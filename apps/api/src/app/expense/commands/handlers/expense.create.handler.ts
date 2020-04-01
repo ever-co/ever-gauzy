@@ -2,8 +2,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ExpenseCreateCommand } from '../expense.create.command';
 import { Expense } from '../../expense.entity';
 import { ExpenseService } from '../../expense.service';
-import { EmployeeService } from '../../../employee';
-import { OrganizationService } from '../../../organization';
+import { EmployeeService } from '../../../employee/employee.service';
+import { OrganizationService } from '../../../organization/organization.service';
 
 @CommandHandler(ExpenseCreateCommand)
 export class ExpenseCreateHandler
@@ -26,10 +26,8 @@ export class ExpenseCreateHandler
 		);
 
 		expense.amount = Math.abs(input.amount);
-		expense.categoryId = input.categoryId;
-		expense.categoryName = input.categoryName;
-		expense.vendorId = input.vendorId;
-		expense.vendorName = input.vendorName;
+		expense.category = input.category;
+		expense.vendor = input.vendor;
 		expense.typeOfExpense = input.typeOfExpense;
 		expense.clientName = input.clientName;
 		expense.clientId = input.clientId;

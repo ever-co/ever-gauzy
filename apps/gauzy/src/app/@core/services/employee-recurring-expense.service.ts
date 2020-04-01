@@ -4,6 +4,8 @@ import {
 	EmployeeRecurringExpense,
 	EmployeeRecurringExpenseByMonthFindInput,
 	EmployeeRecurringExpenseFindInput,
+	IFindStartDateUpdateTypeInput,
+	IStartUpdateTypeInfo,
 	RecurringExpenseDeleteInput,
 	RecurringExpenseOrderFields
 } from '@gauzy/models';
@@ -79,6 +81,19 @@ export class EmployeeRecurringExpenseService {
 	update(id: string, updateInput: EmployeeRecurringExpense): Promise<any> {
 		return this.http
 			.put(`${this.API_URL}/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getStartDateUpdateType(
+		findInput?: IFindStartDateUpdateTypeInput
+	): Promise<IStartUpdateTypeInfo> {
+		const data = JSON.stringify({ findInput });
+
+		return this.http
+			.get<IStartUpdateTypeInfo>(`${this.API_URL}/date-update-type`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}

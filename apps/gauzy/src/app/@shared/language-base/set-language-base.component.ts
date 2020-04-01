@@ -14,4 +14,13 @@ export abstract class SetLanguageBaseComponent {
 			browserLang.match(/en|bg|he|ru/) ? browserLang : 'en'
 		);
 	}
+
+	getTranslation(prefix: string, params?: Object) {
+		let result = '';
+		this.translateService.get(prefix, params).subscribe((res) => {
+			result = res;
+		});
+
+		return result;
+	}
 }

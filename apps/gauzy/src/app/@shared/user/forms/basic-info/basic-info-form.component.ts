@@ -108,10 +108,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						Validators.minLength(4)
 					])
 				],
-				startedWorkOn: [
-					'',
-					this.isEmployee ? Validators.required : null
-				],
+				startedWorkOn: [''],
 				role: ['', this.isEmployee ? null : Validators.required],
 				offerDate: [''],
 				acceptDate: [''],
@@ -140,8 +137,6 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	}
 
 	async registerUser(defaultRoleName: RolesEnum) {
-		const startedWorkOn = this.form.get('startedWorkOn');
-
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
@@ -159,7 +154,6 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						username: this.username.value || null,
 						imageUrl: this.imageUrl.value,
 						role,
-						startedWorkOn: startedWorkOn.value,
 						tenant: this.tenant,
 						tags: this.selectedTags
 					},

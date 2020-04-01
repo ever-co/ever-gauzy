@@ -4,12 +4,12 @@ import { Repository, FindManyOptions } from 'typeorm';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { CrudService } from '../core/crud/crud.service';
 import { IPagination } from '../core';
+import { Employee } from '../employee/employee.entity';
 import {
 	TimeOffPolicyCreateInput as ITimeOffPolicyCreateInput,
 	TimeOffPolicyUpdateInput as ITimeOffPolicyUpdateInput,
 	TimeOffPolicy as ITimeOffPolicy
 } from '@gauzy/models';
-import { Employee } from '../employee';
 
 @Injectable()
 export class TimeOffPolicyService extends CrudService<TimeOffPolicy> {

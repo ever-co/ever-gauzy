@@ -1,29 +1,45 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
+import {
+	FormBuilder,
+	Validators,
+	FormGroup,
+	AbstractControl
+} from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
 	CurrenciesEnum,
 	OrganizationSelectInput,
 	TaxTypesEnum,
-	ExpenseTypesEnum
+	ExpenseTypesEnum,
+	IExpenseCategory,
+	IOrganizationVendor
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first, takeUntil } from 'rxjs/operators';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import {
+	EmployeeSelectorComponent,
+	ALL_EMPLOYEES_SELECTED,
+	SelectedEmployee
+} from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
-import { Subject } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
+import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-expenses-mutation',
 	templateUrl: './expenses-mutation.component.html',
 	styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent implements OnInit, OnDestroy {
+export class ExpensesMutationComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('employeeSelector', { static: false })
@@ -35,8 +51,8 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 	expenseTypes = Object.values(ExpenseTypesEnum);
 	currencies = Object.values(CurrenciesEnum);
 	taxTypes = Object.values(TaxTypesEnum);
-	fakeCategories: { categoryName: string; categoryId: string }[] = [];
-	vendors: { vendorName: string; vendorId: string }[] = [];
+	expenseCategories$: Observable<IExpenseCategory[]>;
+	vendors: IOrganizationVendor[];
 	clients: { clientName: string; clientId: string }[] = [];
 	projects: { projectName: string; projectId: string }[] = [];
 	defaultImage = './assets/images/others/invoice-template.png';
@@ -46,6 +62,11 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 	showTaxesInput = false;
 	showWarning = false;
 	disable = true;
+	loading = false;
+	valueDate: AbstractControl;
+	amount: AbstractControl;
+	notes: AbstractControl;
+	showTooltip = false;
 
 	constructor(
 		public dialogRef: NbDialogRef<ExpensesMutationComponent>,
@@ -55,8 +76,14 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		private organizationVendorsService: OrganizationVendorsService,
 		private store: Store,
 		private readonly organizationClientsService: OrganizationClientsService,
-		private readonly organizationProjectsService: OrganizationProjectsService
-	) {}
+		private readonly organizationProjectsService: OrganizationProjectsService,
+		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
+		private readonly toastrService: NbToastrService,
+		readonly translateService: TranslateService,
+		private errorHandler: ErrorHandlingService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.getDefaultData();
@@ -70,69 +97,15 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		return this.form.get('currency');
 	}
 
-	private getFakeId = () => (Math.floor(Math.random() * 101) + 1).toString();
-
 	private async getDefaultData() {
+		this.expenseCategories$ = this.expenseCategoriesStore.expenseCategories$;
 		this.organizationId = this.store.selectedOrganization.id;
-		const res = await this.organizationVendorsService.getAll({
-			organizationId: this.organizationId
-		});
-
-		if (res) {
-			const resultArr = res.items;
-			resultArr.forEach((vendor) => {
-				this.vendors.push({
-					vendorName: vendor.name,
-					vendorId: vendor.id
-				});
-			});
-		}
-
-		if (!this.vendors.length) {
-			const fakeVendorNames = [
-				'Microsoft',
-				'Google',
-				'CaffeeMania',
-				'CoShare',
-				'Cleaning Company',
-				'Udemy',
-				'MultiSport'
-			];
-
-			fakeVendorNames.forEach((name) => {
-				this.vendors.push({
-					vendorName: name,
-					vendorId: this.getFakeId()
-				});
-			});
-		}
-
-		const fakeCategoryNames = [
-			'Rent',
-			'Electricity',
-			'Internet',
-			'Water Supply',
-			'Office Supplies',
-			'Parking',
-			'Employees Benefits',
-			'Insurance Premiums',
-			'Courses',
-			'Subscriptions',
-			'Repairs',
-			'Depreciable Assets',
-			'Software Products',
-			'Office Hardware',
-			'Courier Services',
-			'Business Trips',
-			'Team Buildings'
-		];
-
-		fakeCategoryNames.forEach((name) => {
-			this.fakeCategories.push({
-				categoryName: name,
-				categoryId: this.getFakeId()
-			});
-		});
+		const { items: vendors } = await this.organizationVendorsService.getAll(
+			{
+				organizationId: this.organizationId
+			}
+		);
+		this.vendors = vendors;
 	}
 
 	addOrEditExpense() {
@@ -163,6 +136,9 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 			};
 		}
 
+		if (this.employeeSelector.selectedEmployee === ALL_EMPLOYEES_SELECTED)
+			this.form.value.splitExpense = true;
+
 		this.dialogRef.close(
 			Object.assign(
 				{ employee: this.employeeSelector.selectedEmployee },
@@ -171,9 +147,37 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	addNewVendor(vendorName) {
-		return { vendorName: vendorName, tag: true, vendorId: null };
-	}
+	addNewCategory = async (name: string): Promise<IExpenseCategory> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation('EXPENSES_PAGE.ADD_EXPENSE_CATEGORY'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return await this.expenseCategoriesStore.create(name).toPromise();
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
+
+	addNewVendor = (name: string): Promise<IOrganizationVendor> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationVendorsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
 
 	showNotesInput() {
 		return (this.showNotes = !this.showNotes);
@@ -192,21 +196,9 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 			this.form = this.fb.group({
 				id: [this.expense.id],
 				amount: [this.expense.amount, Validators.required],
-				vendor: [
-					{
-						vendorId: this.expense.vendorId,
-						vendorName: this.expense.vendorName
-					},
-					Validators.required
-				],
+				vendor: [this.expense.vendor, Validators.required],
 				typeOfExpense: this.expense.typeOfExpense,
-				category: [
-					{
-						categoryId: this.expense.categoryId,
-						categoryName: this.expense.categoryName
-					},
-					Validators.required
-				],
+				category: [this.expense.category, Validators.required],
 				notes: [this.expense.notes],
 				currency: [this.expense.currency],
 				valueDate: [
@@ -246,6 +238,9 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 
 			this._loadDefaultCurrency();
 		}
+		this.valueDate = this.form.get('valueDate');
+		this.amount = this.form.get('amount');
+		this.notes = this.form.get('notes');
 	}
 
 	private calculateTaxes() {
@@ -316,11 +311,11 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private closeWarning() {
+	closeWarning() {
 		this.showWarning = !this.showWarning;
 	}
 
-	private attachReceipt() {
+	attachReceipt() {
 		this.dialogService
 			.open(AttachReceiptComponent, {
 				context: {
@@ -331,6 +326,10 @@ export class ExpensesMutationComponent implements OnInit, OnDestroy {
 			.subscribe((newReceipt) => {
 				this.form.value.receipt = newReceipt;
 			});
+	}
+
+	onEmployeeChange(selectedEmployee: SelectedEmployee) {
+		this.showTooltip = selectedEmployee === ALL_EMPLOYEES_SELECTED;
 	}
 
 	ngOnDestroy() {

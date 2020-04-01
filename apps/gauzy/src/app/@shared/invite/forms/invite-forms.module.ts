@@ -6,7 +6,8 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbInputModule,
-	NbSelectModule
+	NbSelectModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -23,6 +24,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 @NgModule({
 	imports: [
 		ThemeModule,
+		NbDatepickerModule,
 		FormsModule,
 		ReactiveFormsModule,
 		NbInputModule,

@@ -6,20 +6,27 @@
 		width: 505px;
 	}
 
-	.close {
-		cursor: pointer;
-	}
-
 	.notes {
 		height: 60px;
 	}
 
-	nb-card-header .employees {
-		margin-left: 20px;
-		padding-left: 20px;
-		border-left: 1px solid #edf1f7;
+	nb-card-header {
+		.employees {
+			margin-left: 20px;
+			padding-left: 20px;
+			border-left: 1px solid #edf1f7;
 
-		width: 220px;
+			width: 220px;
+		}
+		.help-text {
+			width: 40px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		nb-icon {
+			cursor: pointer;
+		}
 	}
 }
 
