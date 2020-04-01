@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { HubstaffService } from './hubstaff.service';
 import { Observable } from 'rxjs';
 
@@ -13,7 +13,6 @@ export class HubstaffController {
 
 	@Post('/organizations')
 	getOrganizations(@Body() token): Observable<any> {
-		console.log(token, 'T');
 		return this._hubstaffService.getOrganizations(token);
 	}
 }

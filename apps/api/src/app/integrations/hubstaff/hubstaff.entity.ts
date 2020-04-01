@@ -1,8 +1,3 @@
-import {
-	CurrenciesEnum,
-	Employee as IEmployee,
-	PayPeriodEnum
-} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne } from 'typeorm';
 import { User } from '../../user';
