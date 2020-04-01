@@ -1,0 +1,93 @@
+<nb-card>
+	<nb-card-body>
+		<nb-stepper #stepper [selectedIndex]="stepIndex">
+			<nb-step
+				[stepControl]="authorizeForm"
+				label="Authorize Client"
+				[completed]="authorizationStepCompleted"
+			>
+				<form
+					[formGroup]="authorizeForm"
+					(ngSubmit)="authorizeHubstaff()"
+					class="step-container"
+				>
+					<div class="form-group">
+						<label for="client_id" class="label"
+							>Hubstaff Client ID</label
+						>
+						<input
+							fullWidth
+							id="client_id"
+							formControlName="client_id"
+							type="text"
+							nbInput
+							placeholder="Hubstaff Client ID"
+						/>
+					</div>
+					<div class="hint">
+						<nb-icon icon="info-outline"></nb-icon>
+						Next you will be taken to Hubstaff to grant permission
+						to Gauzy.
+					</div>
+					<button nbButton [disabled]="!authorizeForm.valid">
+						next
+					</button>
+				</form>
+			</nb-step>
+
+			<nb-step
+				[stepControl]="clientSecretForm"
+				label="Client Secret"
+				[completed]="clientSecretStepCompleted"
+			>
+				<form
+					[formGroup]="clientSecretForm"
+					(ngSubmit)="genereteAccessTokens()"
+					class="step-container"
+				>
+					<div class="form-group">
+						<label for="client_secret" class="label"
+							>Hubstaff Client Secret</label
+						>
+						<input
+							fullWidth
+							id="client_secret"
+							formControlName="client_secret"
+							type="text"
+							nbInput
+							placeholder="Hubstaff Client Secret"
+						/>
+					</div>
+					<div class="hint">
+						<nb-icon icon="info-outline"></nb-icon>
+						Enter client secret to get access token.
+					</div>
+					<button nbButton [disabled]="!clientSecretForm.valid">
+						next
+					</button>
+				</form>
+			</nb-step>
+
+			<nb-step label="Organizations">
+				<ng2-smart-table
+					[settings]="settingsSmartTable"
+					[source]="organizations"
+					(userRowSelect)="selectOrganization($event)"
+					style="cursor: pointer;"
+				>
+				</ng2-smart-table>
+				<div class="hint">
+					<nb-icon icon="info-outline"></nb-icon>
+					Select Organization and proccedd to sync data.
+				</div>
+			</nb-step>
+
+			<!-- <nb-step [hidden]="true">
+          <div class="step-container">
+            <h3>Wizard completed!</h3>
+            <button nbButton (click)="stepper.reset()">Try again</button>
+          </div>
+        </nb-step> -->
+		</nb-stepper>
+	</nb-card-body>
+</nb-card>

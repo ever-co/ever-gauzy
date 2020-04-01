@@ -40,11 +40,12 @@ import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks/task.module';
-import { IntegrationsModule } from './integrations/integrations.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
+import { UpworkModule } from './integrations/upwork/upwork.module';
+import { HubstaffModule } from './integrations/hubstaff/hubstaff.module';
 
 @Module({
 	imports: [
@@ -160,8 +161,12 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 						module: TimesheetModule
 					},
 					{
-						path: '/integrations',
-						module: IntegrationsModule
+						path: '/integrations/upwork',
+						module: UpworkModule
+					},
+					{
+						path: '/integrations/hubstaff',
+						module: HubstaffModule
 					},
 					{
 						path: '/invoices',
@@ -224,7 +229,8 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 		TaskModule,
 		OrganizationEmploymentTypeModule,
 		TimesheetModule,
-		IntegrationsModule,
+		UpworkModule,
+		HubstaffModule,
 		ExpenseCategoriesModule
 	],
 	controllers: [AppController],
