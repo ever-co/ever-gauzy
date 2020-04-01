@@ -279,6 +279,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
+		"ACCOUNTING": "Accounting",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
 		"INTEGRATIONS": "Integrations",
@@ -289,6 +290,7 @@
 		"ABOUT": "About",
 		"ADMIN": "Admin",
 		"EMPLOYEES": "Employees",
+		"MANAGE": "Manage",
 		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Organizations",
 		"SETTINGS": "Settings",
@@ -305,7 +307,21 @@
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"TASKS": "Tasks",
-		"INVOICES": "Invoices"
+		"INVOICES": "Invoices",
+		"ORGANIZATION": "Organization",
+		"RECURRING_INVOICES": "Recurring Invoices",
+		"ESTIMATES": "Estimates",
+		"MY_TASKS": "My Tasks",
+		"TEAM_TASKS": "Team's Tasks",
+		"ACTIVITY": "Activity",
+		"TIMESHEETS": "Timesheets",
+		"SCHEDULES": "Schedules",
+		"EMAIL_TEMPLATES": "Email Templates",
+		"REPORTS": "Reports",
+		"TIME_REPORTS": "Time Reports",
+		"ACCOUNTING_REPORTS": "Accounting Reports",
+		"PAYMENT_GATEWAYS": "Payment Gateways",
+		"CUSTOM_SMTP": "Custom SMTP"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
