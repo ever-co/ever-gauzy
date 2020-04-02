@@ -54,6 +54,14 @@ const defaultRolePermissions = [
 			PermissionsEnum.ORG_PROPOSALS_VIEW,
 			PermissionsEnum.ORG_TIME_OFF_VIEW
 		]
+	},
+	{
+		role: RolesEnum.CANDIDATE,
+		defaultEnabledPermissions: [
+			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ORG_PROPOSALS_VIEW,
+			PermissionsEnum.ORG_TIME_OFF_VIEW
+		]
 	}
 ];
 

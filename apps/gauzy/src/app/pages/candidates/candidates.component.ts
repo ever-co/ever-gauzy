@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, InvitationTypeEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -11,6 +11,8 @@ import { CandidatesService } from '../../@core/services/candidates.service';
 import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
+import { Router } from '@angular/router';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -48,6 +50,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private store: Store,
+		private router: Router,
 		private translate: TranslateService
 	) {
 		super(translate);
@@ -60,6 +63,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_EMPLOYEES_EDIT
 				);
+				console.log(this.hasEditPermission);
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
@@ -119,7 +123,20 @@ export class CandidatesComponent extends TranslationBaseComponent
 			this.loadPage();
 		}
 	}
+	async invite() {
+		const dialog = this.dialogService.open(InviteMutationComponent, {
+			context: {
+				invitationType: InvitationTypeEnum.CANDIDATE,
+				selectedOrganizationId: this.selectedOrganizationId,
+				currentUserId: this.store.userId
+			}
+		});
 
+		await dialog.onClose.pipe(first()).toPromise();
+	}
+	manageInvites() {
+		this.router.navigate(['/pages/candidates/invites']);
+	}
 	private async loadPage() {
 		this.selectedCandidate = null;
 

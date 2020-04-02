@@ -169,10 +169,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/candidates',
 			data: {
 				translated: false,
-				// permissionKeys: [
-				// 	PermissionsEnum.ORG_EMPLOYEES_VIEW,
-				// 	PermissionsEnum.ORG_EXPENSES_EDIT
-				// ],
+				// permissionKeys: [PermissionsEnum.ORG_CANDIDATES_VIEW],
 				translationKey: 'MENU.CANDIDATES'
 			}
 		},

@@ -256,6 +256,11 @@ export class InvitesComponent extends TranslationBaseComponent
 			delete settingsSmartTable['columns']['clients'];
 			delete settingsSmartTable['columns']['departments'];
 		}
+		if (this.invitationType === InvitationTypeEnum.CANDIDATE) {
+			delete settingsSmartTable['columns']['projects'];
+			delete settingsSmartTable['columns']['clients'];
+			delete settingsSmartTable['columns']['roleName'];
+		}
 
 		this.settingsSmartTable = settingsSmartTable;
 	}
