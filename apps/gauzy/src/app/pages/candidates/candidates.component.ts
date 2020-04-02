@@ -135,7 +135,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 	manageInvites() {
-		this.router.navigate(['/pages/candidates/invites']);
+		this.router.navigate(['/pages/employees/candidates/invites']);
 	}
 	private async loadPage() {
 		this.selectedCandidate = null;

@@ -39,40 +39,115 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
-			title: 'Income',
-			icon: 'plus-circle-outline',
-			link: '/pages/income',
+			title: 'Accounting',
+			icon: 'credit-card-outline',
 			data: {
 				translated: false,
-				translationKey: 'MENU.INCOME',
-				permissionKeys: [PermissionsEnum.ORG_INCOMES_VIEW]
-			}
-		},
-		{
-			title: 'Expenses',
-			icon: 'minus-circle-outline',
-			link: '/pages/expenses',
-			data: {
-				translated: false,
-				translationKey: 'MENU.EXPENSES',
-				permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
-			}
-		},
-		{
-			title: 'Integrations',
-			icon: 'settings-outline',
-			link: '/pages/integrations',
-			data: {
-				translated: false,
-				translationKey: 'MENU.INTEGRATIONS'
+				translationKey: 'MENU.ACCOUNTING'
 			},
 			children: [
 				{
-					title: 'Upwork',
-					link: '/pages/integrations/upwork',
+					title: 'Invoices',
+					icon: 'file-text-outline',
+					link: '/pages/accounting/invoices',
 					data: {
 						translated: false,
-						translationKey: 'MENU.UPWORK'
+						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						translationKey: 'MENU.INVOICES'
+					}
+				},
+				{
+					title: 'Recurring Invoices',
+					icon: 'flip-outline',
+					link: '/pages/accounting/recurring-invoices',
+					data: {
+						translated: false,
+						translationKey: 'MENU.RECURRING_INVOICES'
+					}
+				},
+				{
+					title: 'Estimates',
+					icon: 'file-outline',
+					link: '/pages/accounting/estimates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ESTIMATES'
+					}
+				},
+				{
+					title: 'Income',
+					icon: 'plus-circle-outline',
+					link: '/pages/accounting/income',
+					data: {
+						translated: false,
+						translationKey: 'MENU.INCOME',
+						permissionKeys: [PermissionsEnum.ORG_INCOMES_VIEW]
+					}
+				},
+				{
+					title: 'Expenses',
+					icon: 'minus-circle-outline',
+					link: '/pages/accounting/expenses',
+					data: {
+						translated: false,
+						translationKey: 'MENU.EXPENSES',
+						permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
+					}
+				}
+			]
+		},
+		{
+			title: 'Clients',
+			icon: 'book-open-outline',
+			link: '/pages/clients',
+			data: {
+				translated: false,
+				translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
+			}
+		},
+		{
+			title: 'Projects',
+			icon: 'book-outline',
+			link: '/pages/projects',
+			data: {
+				translated: false,
+				translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
+			}
+		},
+		{
+			title: 'Tasks',
+			icon: 'browser-outline',
+			link: '/pages/tasks',
+			data: {
+				translated: false,
+				translationKey: 'MENU.TASKS'
+			},
+			children: [
+				{
+					title: 'Dashboard',
+					icon: 'list-outline',
+					link: '/pages/tasks/dashboard',
+					data: {
+						translated: false,
+						translationKey: 'MENU.DASHBOARD'
+					}
+				},
+				{
+					title: 'My Tasks',
+					icon: 'person-outline',
+					link: '/pages/tasks/me',
+					data: {
+						translated: false,
+						translationKey: 'MENU.MY_TASKS'
+					}
+				},
+				{
+					title: "Team's Tasks",
+					icon: 'people-outline',
+					link: '/pages/tasks/team',
+					data: {
+						translated: false,
+						translationKey: 'MENU.TEAM_TASKS'
 					}
 				}
 			]
@@ -89,34 +164,232 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
-			title: 'Time Off',
-			icon: 'calendar-outline',
-			link: '/pages/time-off',
+			title: 'Employees',
+			icon: 'people-outline',
 			data: {
 				translated: false,
-				translationKey: 'MENU.TIME_OFF',
-				permissionKeys: [PermissionsEnum.POLICY_VIEW]
-			}
+				translationKey: 'MENU.EMPLOYEES',
+				permissionKeys: [
+					PermissionsEnum.ORG_EMPLOYEES_VIEW,
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				]
+			},
+			children: [
+				{
+					title: 'Manage',
+					icon: 'list-outline',
+					link: '/pages/employees',
+					data: {
+						translated: false,
+						translationKey: 'MENU.MANAGE'
+					}
+				},
+				{
+					title: 'Activity',
+					icon: 'trending-up-outline',
+					link: '/pages/employees/activity',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ACTIVITY'
+					}
+				},
+				{
+					title: 'Timesheets',
+					icon: 'clock-outline',
+					link: '/pages/employees/timesheets',
+					data: {
+						translated: false,
+						translationKey: 'MENU.TIMESHEETS'
+					}
+				},
+				{
+					title: 'Schedules',
+					icon: 'calendar-outline',
+					link: '/pages/employees/schedules',
+					data: {
+						translated: false,
+						translationKey: 'MENU.SCHEDULES'
+					}
+				},
+				{
+					title: 'Time Off',
+					icon: 'eye-off-2-outline',
+					link: '/pages/employees/time-off',
+					data: {
+						translated: false,
+						translationKey: 'MENU.TIME_OFF',
+						permissionKeys: [PermissionsEnum.POLICY_VIEW]
+					}
+				},
+				{
+					title: 'Candidates',
+					icon: 'person-done-outline',
+					link: '/pages/employees/candidates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.CANDIDATES'
+					}
+				}
+			]
 		},
 		{
-			title: 'Tags',
-			icon: 'pricetags-outline',
-			link: '/pages/tags',
+			title: 'Organization',
+			icon: 'globe-2-outline',
 			data: {
 				translated: false,
-				translationKey: 'MENU.TAGS'
-				//   permissionKeys: [],
-			}
+				translationKey: 'MENU.ORGANIZATION',
+				withOrganizationShortcuts: true
+			},
+			children: [
+				{
+					title: 'Manage',
+					icon: 'globe-2-outline',
+					data: {
+						translated: false,
+						organizationShortcut: true,
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						urlPrefix: `/pages/organizations/edit/`,
+						urlPostfix: '',
+						translationKey: 'MENU.MANAGE'
+					}
+				},
+				{
+					title: 'Equipment',
+					icon: 'shopping-bag-outline',
+					link: '/pages/organization/equipment',
+					data: {
+						translated: false,
+						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						translationKey: 'MENU.EQUIPMENT'
+					}
+				},
+				{
+					title: 'Tags',
+					icon: 'pricetags-outline',
+					link: '/pages/organization/tags',
+					data: {
+						translated: false,
+						translationKey: 'MENU.TAGS'
+						//   permissionKeys: [],
+					}
+				},
+				{
+					title: 'Clients',
+					icon: 'book-open-outline',
+					link: `/pages/organizations/`,
+					data: {
+						translated: false,
+						organizationShortcut: true,
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						urlPrefix: `/pages/organizations/edit/`,
+						urlPostfix: '/settings/clients',
+						translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
+					}
+				},
+				{
+					title: 'Vendors',
+					icon: 'car-outline',
+					link: `/pages/organizations/`,
+					data: {
+						translated: false,
+						organizationShortcut: true,
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						urlPrefix: `/pages/organizations/edit/`,
+						urlPostfix: '/settings/vendors',
+						translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
+					}
+				},
+				{
+					title: 'Projects',
+					icon: 'book-outline',
+					link: `/pages/organizations/`,
+					data: {
+						translated: false,
+						organizationShortcut: true,
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						urlPrefix: `/pages/organizations/edit/`,
+						urlPostfix: '/settings/projects',
+						translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
+					}
+				},
+				{
+					title: 'Positions',
+					icon: 'award-outline',
+					link: `/pages/organizations/`,
+					data: {
+						translated: false,
+						organizationShortcut: true,
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						urlPrefix: `/pages/organizations/edit/`,
+						urlPostfix: '/settings/positions',
+						translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
+					}
+				},
+				{
+					title: 'Departments',
+					icon: 'briefcase-outline',
+					link: `/pages/organizations/`,
+					data: {
+						translated: false,
+						organizationShortcut: true,
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						urlPrefix: `/pages/organizations/edit/`,
+						urlPostfix: '/settings/departments',
+						translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
+					}
+				},
+				{
+					title: 'Teams',
+					icon: 'people-outline',
+					link: `/pages/organizations/`,
+					data: {
+						translated: false,
+						organizationShortcut: true,
+						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
+						urlPrefix: `/pages/organizations/edit/`,
+						urlPostfix: '/settings/teams',
+						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
+					}
+				},
+				{
+					title: 'Email Templates',
+					icon: 'email-outline',
+					link: '/pages/organization/email-templates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.EMAIL_TEMPLATES'
+					}
+				}
+			]
 		},
 		{
-			title: 'Tasks',
-			icon: 'browser-outline',
-			link: '/pages/tasks',
+			title: 'Reports',
+			icon: 'file-text-outline',
+			link: '/pages/reports',
 			data: {
 				translated: false,
-				translationKey: 'MENU.TASKS'
-				//   permissionKeys: [],
-			}
+				translationKey: 'MENU.REPORTS'
+			},
+			children: [
+				{
+					title: 'Time Reports',
+					link: '/pages/reports/time',
+					icon: 'clock-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.TIME_REPORTS'
+					}
+				},
+				{
+					title: 'Accounting Reports',
+					link: '/pages/reports/accounting',
+					icon: 'credit-card-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ACCOUNTING_REPORTS'
+					}
+				}
+			]
 		},
 		{
 			title: 'Help',
@@ -151,29 +424,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
-			title: 'Employees',
-			icon: 'people-outline',
-			link: '/pages/employees',
-			data: {
-				translated: false,
-				permissionKeys: [
-					PermissionsEnum.ORG_EMPLOYEES_VIEW,
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				],
-				translationKey: 'MENU.EMPLOYEES'
-			}
-		},
-		{
-			title: 'Candidates',
-			icon: 'people-outline',
-			link: '/pages/candidates',
-			data: {
-				translated: false,
-				// permissionKeys: [PermissionsEnum.ORG_CANDIDATES_VIEW],
-				translationKey: 'MENU.CANDIDATES'
-			}
-		},
-		{
 			title: 'Users',
 			icon: 'people-outline',
 			link: '/pages/users',
@@ -183,72 +433,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.USERS'
 			}
 		},
-		{
-			title: 'Projects',
-			icon: 'book-outline',
-			link: `/pages/organizations/`,
-			data: {
-				translated: false,
-				organizationShortcut: true,
-				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/projects',
-				translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
-			}
-		},
-		{
-			title: 'Departments',
-			icon: 'briefcase-outline',
-			link: `/pages/organizations/`,
-			data: {
-				translated: false,
-				organizationShortcut: true,
-				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/departments',
-				translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
-			}
-		},
-		{
-			title: 'Clients',
-			icon: 'book-open-outline',
-			link: `/pages/organizations/`,
-			data: {
-				translated: false,
-				organizationShortcut: true,
-				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/clients',
-				translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
-			}
-		},
-		{
-			title: 'Positions',
-			icon: 'award-outline',
-			link: `/pages/organizations/`,
-			data: {
-				translated: false,
-				organizationShortcut: true,
-				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/positions',
-				translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
-			}
-		},
-		{
-			title: 'Vendors',
-			icon: 'car-outline',
-			link: `/pages/organizations/`,
-			data: {
-				translated: false,
-				organizationShortcut: true,
-				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/vendors',
-				translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
-			}
-		},
-
 		{
 			title: 'Organizations',
 			icon: 'globe-outline',
@@ -263,49 +447,33 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
-			title: 'Expense Categories',
-			icon: 'list-outline',
-			link: `/pages/organizations/`,
+			title: 'Import/Export',
+			icon: 'arrow-circle-down-outline',
+			link: '/pages/import-export',
 			data: {
 				translated: false,
-				organizationShortcut: true,
-				permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-				urlPrefix: `/pages/organizations/edit/`,
-				urlPostfix: '/settings/expense-categories',
-				translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES'
+				translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
 			}
 		},
 		{
-			title: 'Equipment',
-			icon: 'shopping-bag-outline',
-			link: '/pages/equipment',
+			title: 'Integrations',
+			icon: 'pantone-outline',
+			link: '/pages/integrations',
 			data: {
 				translated: false,
-				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
-				translationKey: 'MENU.EQUIPMENT'
-			}
+				translationKey: 'MENU.INTEGRATIONS'
+			},
+			children: [
+				{
+					title: 'Upwork',
+					link: '/pages/integrations/upwork',
+					data: {
+						translated: false,
+						translationKey: 'MENU.UPWORK'
+					}
+				}
+			]
 		},
-		{
-			title: 'Equipment Sharing',
-			icon: 'shopping-cart-outline',
-			link: '/pages/equipment-sharing',
-			data: {
-				translated: false,
-				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
-				translationKey: 'MENU.EQUIPMENT_SHARING'
-			}
-		},
-		{
-			title: 'Invoices',
-			icon: 'file-text-outline',
-			link: '/pages/invoices',
-			data: {
-				translated: false,
-				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
-				translationKey: 'MENU.INVOICES'
-			}
-		},
-
 		{
 			title: 'Settings',
 			icon: 'settings-outline',
@@ -320,6 +488,20 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.GENERAL'
+					}
+				},
+				{
+					title: 'Payment Gateways',
+					data: {
+						translated: false,
+						translationKey: 'MENU.PAYMENT_GATEWAYS'
+					}
+				},
+				{
+					title: 'Custom SMTP',
+					data: {
+						translated: false,
+						translationKey: 'MENU.CUSTOM_SMTP'
 					}
 				},
 				{
@@ -340,20 +522,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translated: false,
 						translationKey: 'MENU.DANGER_ZONE'
 					}
-				},
-				{
-					title: 'Import/Export',
-					icon: 'arrow-circle-down-outline',
-					link: '/pages/import-export',
-					data: {
-						translated: false,
-						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
-					}
 				}
 			]
 		}
 	];
-
 	menu: NbMenuItem[] = this.MENU_ITEMS;
 
 	constructor(

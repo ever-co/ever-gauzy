@@ -43,11 +43,13 @@ export class DataEntryShortcutsComponent implements OnInit, OnDestroy {
 	}
 
 	async addIncome() {
-		this.router.navigateByUrl('pages/income?openAddDialog=true');
+		this.router.navigateByUrl('pages/accounting/income?openAddDialog=true');
 	}
 
 	async addExpense() {
-		this.router.navigateByUrl('pages/expenses?openAddDialog=true');
+		this.router.navigateByUrl(
+			'pages/accounting/expenses?openAddDialog=true'
+		);
 	}
 
 	async addOrganizationRecurringExpense() {

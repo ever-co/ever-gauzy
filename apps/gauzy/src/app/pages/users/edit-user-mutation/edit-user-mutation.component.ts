@@ -11,7 +11,6 @@ import { Organization, UserOrganization, RolesEnum } from '@gauzy/models';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbToastrService } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
 import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/basic-info-form.component';
 
@@ -42,7 +41,6 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 		private readonly fb: FormBuilder,
 		private usersOrganizationsService: UsersOrganizationsService,
 		readonly translateService: TranslateService,
-		private readonly toastrService: NbToastrService,
 		private readonly store: Store
 	) {
 		super(translateService);
