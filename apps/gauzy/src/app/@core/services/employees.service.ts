@@ -18,7 +18,6 @@ export class EmployeesService {
 		findInput?: EmployeeFindInput
 	): Observable<{ items: Employee[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		console.log('data:', data);
 		return this.http.get<{ items: Employee[]; total: number }>(
 			`/api/employee`,
 			{
@@ -60,7 +59,6 @@ export class EmployeesService {
 	}
 
 	createBulk(createInput: IEmployeeCreateInput[]): Observable<Employee[]> {
-		console.log('createInput in employee service', createInput);
 		return this.http.post<Employee[]>(
 			'/api/employee/createBulk',
 			createInput

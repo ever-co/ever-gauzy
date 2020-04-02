@@ -9,6 +9,8 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidatesService } from '../../@core/services/candidates.service';
 import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
+import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -43,6 +45,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 	constructor(
 		private candidatesService: CandidatesService,
+		private dialogService: NbDialogService,
+		private toastrService: NbToastrService,
 		private store: Store,
 		private translate: TranslateService
 	) {
@@ -93,21 +97,40 @@ export class CandidatesComponent extends TranslationBaseComponent
 			this.selectedCandidate = null;
 		}
 	}
+	async add() {
+		const dialog = this.dialogService.open(CandidateMutationComponent);
+
+		const response = await dialog.onClose.pipe(first()).toPromise();
+
+		if (response) {
+			response.map((data) => {
+				if (data.user.firstName || data.user.lastName) {
+					this.candidateName =
+						data.user.firstName + ' ' + data.user.lastName;
+				}
+				this.toastrService.primary(
+					this.candidateName.trim() +
+						' added to ' +
+						data.organization.name,
+					'Success'
+				);
+			});
+
+			this.loadPage();
+		}
+	}
 
 	private async loadPage() {
 		this.selectedCandidate = null;
-		console.log('this.selectedOrganizationId', this.selectedOrganizationId);
 
 		const { items } = await this.candidatesService
-			.getAll(
-				['organization', 'user']
-				// , { organization: { id: this.selectedOrganizationId }
-				// }
-			)
+			.getAll(['user', 'tags'], {
+				organization: { id: this.selectedOrganizationId }
+			})
 			.pipe(first())
 			.toPromise();
 		const { name } = this.store.selectedOrganization;
-		console.log('ITEMS', items);
+
 		let candidatesVm = [];
 		const result = [];
 
@@ -129,7 +152,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 		} else {
 			candidatesVm = result;
 		}
-
 		this.sourceSmartTable.load(candidatesVm);
 
 		if (this.candidatesTable) {
@@ -156,13 +178,15 @@ export class CandidatesComponent extends TranslationBaseComponent
 					type: 'email',
 					class: 'email-column'
 				},
-				source: {
-					title: this.getTranslation('SM_TABLE.SOURCE'),
-					type: 'custom',
-					class: 'text-center',
-					width: '200px',
-					filter: false
-				},
+				//  WIP - need to fix, makes mistake when initialize
+
+				// source: {
+				// 	title: this.getTranslation('SM_TABLE.SOURCE'),
+				// 	type: 'custom',
+				// 	class: 'text-center',
+				// 	width: '200px',
+				// 	filter: false
+				// },
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
@@ -190,21 +214,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.subscribe(() => {
 				this._loadSmartTableSettings();
 			});
-	}
-	manageInvites() {
-		console.log('manageInvites');
-	}
-	delete() {
-		console.log('delete');
-	}
-	edit() {
-		console.log('edit');
-	}
-	invite() {
-		console.log('invite');
-	}
-	add() {
-		console.log('add');
 	}
 
 	ngOnDestroy() {

@@ -192,6 +192,7 @@ export class SeedDataService {
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
 			await createCandidates(this.connection, {
+				org: defaultOrganization,
 				orgs: randomOrganizations,
 				users: [...randomUsers]
 			});

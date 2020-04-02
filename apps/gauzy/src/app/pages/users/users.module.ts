@@ -10,7 +10,10 @@ import {
 	NbBadgeModule,
 	NbSelectModule,
 	NbRouteTabsetModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbSidebarModule,
+	NbLayoutModule,
+	NbActionsModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UsersRoutingModule } from './users-routing.module';
@@ -38,6 +41,8 @@ import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-or
 import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-employee-membership-form/edit-employee-membership-form.module';
 import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
 import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-organizations-multi-select/user-organizations-multi-select.module';
+import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
+import { UserIdService } from '../../@core/services/edit-user-data.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -50,15 +55,19 @@ const COMPONENTS = [
 	ManageUserInviteComponent,
 	EditUserMutationComponent,
 	EditUserOrganizationsComponent,
-	EditUserDataComponent
+	EditUserDataComponent,
+	EditUserOrganizationsMutationComponent
 ];
 
 @NgModule({
 	imports: [
+		NbSidebarModule,
+		NbLayoutModule,
 		UsersRoutingModule,
 		UserMultiSelectModule,
 		UserOrganizationsMultiSelectModule,
 		OrganizationsModule,
+		NbActionsModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,
@@ -90,6 +99,11 @@ const COMPONENTS = [
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [UserFullNameComponent],
-	providers: [OrganizationsService, UsersOrganizationsService, InviteGuard]
+	providers: [
+		OrganizationsService,
+		UsersOrganizationsService,
+		InviteGuard,
+		UserIdService
+	]
 })
 export class UsersModule {}

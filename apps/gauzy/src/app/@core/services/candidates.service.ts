@@ -4,8 +4,7 @@ import {
 	CandidateCreateInput as ICandidateCreateInput,
 	CandidateFindInput,
 	Candidate,
-	CandidateUpdateInput,
-	CandidateCreateInput
+	CandidateUpdateInput
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -19,7 +18,6 @@ export class CandidatesService {
 		findInput?: CandidateFindInput
 	): Observable<{ items: Candidate[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		// console.log('Get all candidates in service', data)
 		return this.http.get<{ items: Candidate[]; total: number }>(
 			`/api/candidate`,
 			{
@@ -45,8 +43,8 @@ export class CandidatesService {
 	create(createInput: ICandidateCreateInput): Observable<Candidate> {
 		return this.http.post<Candidate>('/api/candidate/create', createInput);
 	}
-	createBulk(createInput: CandidateCreateInput[]): Observable<Candidate[]> {
-		console.log('createInput in candidate service', createInput);
+
+	createBulk(createInput: ICandidateCreateInput[]): Observable<Candidate[]> {
 		return this.http.post<Candidate[]>(
 			'/api/candidate/createBulk',
 			createInput

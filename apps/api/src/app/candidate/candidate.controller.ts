@@ -16,16 +16,23 @@ import { IPagination, getUserDummyImage } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { CandidateService } from './candidate.service';
 import { Candidate } from './candidate.entity';
-import { PermissionsEnum, CandidateCreateInput } from '@gauzy/models';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { CandidateBulkCreateCommand } from './commands/candidate.bulk.create.command';
+import { Permissions } from '../shared/decorators/permissions';
+import {
+	PermissionsEnum,
+	CandidateCreateInput as ICandidateCreateInput
+} from '@gauzy/models';
+import { CommandBus } from '@nestjs/cqrs';
+import { CandidateCreateCommand, CandidateBulkCreateCommand } from './commands';
 
 @ApiTags('Candidate')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateController extends CrudController<Candidate> {
-	[x: string]: any;
-	constructor(private readonly candidateService: CandidateService) {
+	constructor(
+		private readonly candidateService: CandidateService,
+		private readonly commandBus: CommandBus
+	) {
 		super(candidateService);
 	}
 
@@ -77,9 +84,6 @@ export class CandidateController extends CrudController<Candidate> {
 		@Query('data') data: string
 	): Promise<IPagination<Candidate>> {
 		const { relations, findInput } = JSON.parse(data);
-		console.log('relations', relations);
-		console.log('findInput', findInput);
-		console.log('data', data);
 		return this.candidateService.findAll({ where: findInput, relations });
 	}
 
@@ -98,7 +102,26 @@ export class CandidateController extends CrudController<Candidate> {
 		return this.candidateService.findOne(id);
 	}
 
-	//
+	@ApiOperation({ summary: 'Create new record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.' /*, type: T*/
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@Post('/create')
+	async create(
+		@Body() entity: ICandidateCreateInput,
+		...options: any[]
+	): Promise<Candidate> {
+		return this.commandBus.execute(new CandidateCreateCommand(entity));
+	}
+
 	@ApiOperation({ summary: 'Create records in Bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -110,25 +133,22 @@ export class CandidateController extends CrudController<Candidate> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
-	// @new Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 	@Post('/createBulk')
 	async createBulk(
-		@Body()
-		input: // CandidateCreateInput
-		any[],
+		@Body() input: ICandidateCreateInput[],
 		...options: any[]
 	): Promise<Candidate[]> {
 		/**
-		 * Use a dummy image avatar if no image is uploaded for any of the employees in the list
+		 * Use a dummy image avatar if no image is uploaded for any of the Candidate in the list
 		 */
-		console.log('input IN CANDIDAT CONTROLLER', input);
-		// input
-		// 	.filter((entity) => !entity.user.imageUrl)
-		// 	.map(
-		// 		(entity) =>
-		// 			(entity.user.imageUrl = getUserDummyImage(entity.user))
-		// 	);
-		// this.commandBus.execute(new CandidateBulkCreateCommand(input));
-		return;
+		input
+			.filter((entity) => !entity.user.imageUrl)
+			.map(
+				(entity) =>
+					(entity.user.imageUrl = getUserDummyImage(entity.user))
+			);
+
+		return this.commandBus.execute(new CandidateBulkCreateCommand(input));
 	}
 }

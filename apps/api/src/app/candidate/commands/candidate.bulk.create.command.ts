@@ -1,11 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import {
-	EmployeeCreateInput as IEmployeeCreateInput,
-	CandidateCreateInput
-} from '@gauzy/models';
+import { CandidateCreateInput as ICandidateCreateInput } from '@gauzy/models';
 
 export class CandidateBulkCreateCommand implements ICommand {
 	static readonly type = '[Candidate] Register';
 
-	constructor(public readonly input: CandidateCreateInput[]) {}
+	constructor(public readonly input: ICandidateCreateInput[]) {}
 }

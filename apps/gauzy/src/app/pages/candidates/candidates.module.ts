@@ -30,6 +30,7 @@ import { CandidatesComponent } from './candidates.component';
 import { CandidatesRoutingModule } from './candidates-routing.module';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
+import { CandidateMutationModule } from '../../@shared/candidate/candidate-mutation/candidate-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -68,7 +69,8 @@ const COMPONENTS = [
 			}
 		}),
 		NbSpinnerModule,
-		TagsColorInputModule
+		TagsColorInputModule,
+		CandidateMutationModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [CandidateStatusComponent, CandidateFullNameComponent],

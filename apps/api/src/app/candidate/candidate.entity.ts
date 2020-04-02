@@ -64,9 +64,9 @@ export class Candidate extends LocationBase implements ICandidate {
 	@JoinColumn()
 	organization: Organization;
 
-	@ApiProperty({ type: String, readOnly: true })
+	@ApiProperty({ type: String, readOnly: false })
 	@RelationId((candidate: Candidate) => candidate.organization)
-	readonly orgId: string;
+	orgId: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -85,6 +85,12 @@ export class Candidate extends LocationBase implements ICandidate {
 	@IsOptional()
 	@Column({ nullable: true })
 	hiredDate?: Date;
+
+	@ApiPropertyOptional({ type: String })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	status?: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

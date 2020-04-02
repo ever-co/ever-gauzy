@@ -338,9 +338,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 			})
 			.pipe(first())
 			.toPromise();
-		console.log('Load page employees arguments', ['user', 'tags'], {
-			organization: { id: this.selectedOrganizationId }
-		});
 		const { name } = this.store.selectedOrganization;
 
 		let employeesVm = [];
@@ -348,7 +345,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 		for (const emp of items) {
 			await this.getEmployeeStatistics(emp.id);
-
 			result.push({
 				fullName: `${emp.user.firstName} ${emp.user.lastName}`,
 				email: emp.user.email,
@@ -382,7 +378,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 		} else {
 			employeesVm = result;
 		}
-
 		this.sourceSmartTable.load(employeesVm);
 
 		if (this.employeesTable) {

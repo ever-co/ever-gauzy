@@ -7,6 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 import { UsersOrganizationsService } from '../../../../@core/services/users-organizations.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { UserIdService } from 'apps/gauzy/src/app/@core/services/edit-user-data.service';
 
 @Component({
 	selector: 'ngx-edit-user-data',
@@ -23,7 +24,8 @@ export class EditUserDataComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private usersOrganizationsService: UsersOrganizationsService,
 		readonly translateService: TranslateService,
-		private readonly router: Router
+		private readonly router: Router,
+		private userIdService: UserIdService
 	) {
 		super(translateService);
 	}
@@ -32,6 +34,7 @@ export class EditUserDataComponent extends TranslationBaseComponent
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((params) => {
+				this.userIdService.userId = params.id;
 				this.routeParams = params;
 				this._loadUserData();
 			});
@@ -49,6 +52,10 @@ export class EditUserDataComponent extends TranslationBaseComponent
 		);
 
 		this.selectedUser = items[0].user;
+	}
+
+	get id(): string {
+		return this.userIdService.userId;
 	}
 
 	ngOnDestroy() {
