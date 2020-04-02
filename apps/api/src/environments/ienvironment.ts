@@ -44,6 +44,7 @@ export interface IEnvironment {
 	defaultAdmins: DefaultUser[];
 
 	defaultEmployees?: DefaultUser[];
+	defaultCandidates?: DefaultUser[];
 
 	defaultOrganization?: {
 		name: string;

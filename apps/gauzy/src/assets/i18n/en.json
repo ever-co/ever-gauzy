@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Profit Based Bonus",
 		"REVENUE_BASED_BONUS": "Revenue Based Bonus",
 		"STATUS": "Status",
+		"SOURCE": "Source",
 		"WORK_STATUS": "Work Status",
 		"TODAY": "Today",
 		"END_OF_MONTH": "End Of Month",
@@ -288,6 +289,7 @@
 		"ABOUT": "About",
 		"ADMIN": "Admin",
 		"EMPLOYEES": "Employees",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Organizations",
 		"SETTINGS": "Settings",
 		"GENERAL": "General",
@@ -446,6 +448,37 @@
 			"PREVIOUS": "Previous"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Deleted",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "Developer",
+			"DEPARTMENT": "Department",
+			"POSITION": "Position",
+			"CANDIATE_DEPARTMENTS": "Employee's Departments:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Organizations",
 		"EMPLOYEES": "Employees",
@@ -516,6 +549,8 @@
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
 			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
+			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
+			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
 			"ORG_USERS_VIEW": "View Organization Users",
 			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
 			"ORG_INVITE_VIEW": "View Organization Invites",
@@ -525,6 +560,7 @@
 			"POLICY_VIEW": "View Time Off Policy",
 			"POLICY_EDIT": "Edit Time Off Policy",
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
+			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",

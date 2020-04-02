@@ -199,7 +199,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EmployeeMutationComponent);
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
-
 		if (response) {
 			response.map((data) => {
 				if (data.user.firstName || data.user.lastName) {
@@ -339,6 +338,9 @@ export class EmployeesComponent extends TranslationBaseComponent
 			})
 			.pipe(first())
 			.toPromise();
+		console.log('Load page employees arguments', ['user', 'tags'], {
+			organization: { id: this.selectedOrganizationId }
+		});
 		const { name } = this.store.selectedOrganization;
 
 		let employeesVm = [];
