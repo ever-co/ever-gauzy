@@ -100,6 +100,7 @@
 			"FIRST_NAME": "Имя (необязательно)",
 			"LAST_NAME": "Фамилия (необязательно)",
 			"START_DATE": "Дата начала работы",
+			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "URL изображения (необязательно)",
 			"CV_URL": "URL CV (необязательно)",
 			"CURRENCY": "Валюта",
@@ -775,6 +776,11 @@
 			"MANAGE": "Управление приглашениями сотрудников для",
 			"HEADER": "Пригласить сотрудников",
 			"ACTION": "Пригласить сотрудников"
+		},
+		"CANDIDATE": {
+			"MANAGE": "Manage Candidate Invites for",
+			"HEADER": "Invite Candidates",
+			"ACTION": "Invite Candidates"
 		},
 		"SENT": "{{total}} приглашений отправлено.",
 		"IGNORED": "{{total}} приглашений отправлено. {{ignored}} уже были приглашены и проигнорированы.",
