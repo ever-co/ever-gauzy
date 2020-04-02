@@ -67,7 +67,12 @@ export class InviteService {
 			.pipe(first())
 			.toPromise();
 	}
-
+	acceptCandidateInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+		return this.http
+			.post(`/api/invite/candidate`, acceptInviteInput)
+			.pipe(first())
+			.toPromise();
+	}
 	acceptUserInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/user`, acceptInviteInput)
