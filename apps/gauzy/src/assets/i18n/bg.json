@@ -100,6 +100,7 @@
 			"FIRST_NAME": "Име (незадължително)",
 			"LAST_NAME": "Фамилия (незадължително)",
 			"START_DATE": "Дата на започване на работа",
+			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Снимка URL (незадължително)",
 			"CV_URL": "CV URL (optional)",
 			"CURRENCY": "Валута",
@@ -775,6 +776,11 @@
 			"MANAGE": "Manage Employee Invites for",
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
+		},
+		"CANDIDATE": {
+			"MANAGE": "Manage Candidate Invites for",
+			"HEADER": "Invite Candidates",
+			"ACTION": "Invite Candidates"
 		},
 		"SENT": "покани изпратени.",
 		"IGNORED": "общо покани изпратени. бяха вече поканени и бяха игнорирани.",
