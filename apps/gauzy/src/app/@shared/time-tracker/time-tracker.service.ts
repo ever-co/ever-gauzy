@@ -155,8 +155,7 @@ export class TimeTrackerService {
 		this.toggleTimer(this.dataStore.timerConfig);
 	}
 
-	turnOnTimer() {
-		console.log('turnOnTimer', this.running);
+	turnOnTimer() {		
 		this.running = true;
 		this.interval = setInterval(() => {
 			this.dueration++;
