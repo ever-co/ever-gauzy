@@ -1,0 +1,17 @@
+<div class="employee-row-days">
+	<div class="employee-img">
+		<img
+			src="{{ employee.user.imageUrl }}"
+			alt="Employee picture"
+			height="50"
+			width="50"
+		/>
+	</div>
+	<div class="row-days-container">
+		<ngx-day-cell
+			class="cell-row cell"
+			*ngFor="let date of visibleDates"
+			[date]="date"
+		></ngx-day-cell>
+	</div>
+</div>

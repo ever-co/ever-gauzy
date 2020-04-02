@@ -203,6 +203,13 @@ const routes: Routes = [
 							import(
 								'./equipment-sharing/equipment-sharing.module'
 							).then((m) => m.EquipmentSharingModule)
+					},
+					{
+						path: 'resource-planning',
+						loadChildren: () =>
+							import(
+								'./resource-planning/resource-planning.module'
+							).then((m) => m.ResourcePlanningModule)
 					}
 				]
 			},

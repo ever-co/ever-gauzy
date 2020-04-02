@@ -1,0 +1,112 @@
+@import 'themes';
+
+@include nb-install-component {
+	$empl-width: 100px;
+
+	.cell,
+	.cell-row {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.cell {
+		//todo
+		width: 4rem;
+		height: 4rem;
+	}
+
+	.cell-row {
+		height: 5rem;
+		width: 100%;
+		transition: 0.1s all ease-in-out;
+
+		&:hover {
+			background-color: nb-theme(color-primary-100);
+			cursor: pointer;
+		}
+	}
+
+	.cell-day-title {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+
+		.day-num {
+			color: nb-theme(calendar-weekday-text-color);
+			font-size: nb-theme(text-heading-1-font-size);
+			font-weight: nb-theme(text-heading-1-font-weight);
+			padding: 1rem 0 1rem 0;
+			justify-content: flex-start;
+			width: 100%;
+		}
+
+		.day-title {
+			margin-bottom: 0.5rem;
+			justify-content: flex-start;
+			color: nb-theme(calendar-weekday-text-color);
+			width: 100%;
+		}
+	}
+
+	.calendar-nav-container {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.nav-buttons-container,
+	.view-select-container {
+		margin: 1rem;
+	}
+
+	.calendar-header {
+		display: flex;
+		flex-direction: column;
+
+		ngx-day-title-cell,
+		ngx-day-number-cell {
+			width: 100%;
+		}
+
+		.days-title-container {
+			display: flex;
+			align-items: center;
+			flex-direction: row;
+			padding-left: $empl-width;
+			background: nb-theme(calendar-weekday-background);
+			$border: nb-theme(calendar-weekday-divider-width) solid
+				nb-theme(calendar-weekday-divider-color);
+			border-top: $border;
+			border-bottom: $border;
+			height: auto;
+		}
+	}
+
+	.employee-row-days {
+		display: flex;
+		border-bottom: 1px solid nb-theme(color-primary-transparent-default);
+
+		.employee-img {
+			width: $empl-width;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
+			img {
+				border-radius: nb-theme(border-radius);
+			}
+		}
+
+		.row-days-container {
+			width: 100%;
+			display: flex;
+			justify-content: space-between;
+		}
+	}
+
+	nb-card-header,
+	nb-card-body {
+		padding: 0;
+	}
+}

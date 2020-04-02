@@ -352,6 +352,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Resource Planning',
+					icon: 'keypad-outline',
+					link: '/pages/organization/resource-planning',
+					data: {
+						translated: false,
+						translationKey: 'MENU.RESOURCE_PLANNING'
+					}
+				},
+				{
 					title: 'Email Templates',
 					icon: 'email-outline',
 					link: '/pages/organization/email-templates',

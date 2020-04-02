@@ -1,0 +1,31 @@
+<nb-card>
+	<nb-card-header class="calendar-nav-container">
+		<div class="nav-buttons-container">
+			<ngx-calendar-nav
+				class="nav-buttons"
+				(prev)="loadPreviousWeek()"
+				(next)="loadNextWeek()"
+			></ngx-calendar-nav>
+		</div>
+		<div class="view-select-container">
+			<ngx-calendar-view-select></ngx-calendar-view-select>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="calendar-header">
+			<div class="days-title-container">
+				<ngx-day-title-cell
+					*ngFor="let date of arrDays"
+					[date]="date"
+				></ngx-day-title-cell>
+			</div>
+		</div>
+		<div class="emp-dates-row">
+			<ngx-date-row
+				*ngFor="let employee of employees"
+				[employee]="employee"
+				[visibleDates]="arrDays"
+			></ngx-date-row>
+		</div>
+	</nb-card-body>
+</nb-card>
