@@ -28,6 +28,7 @@ import { OrganizationVendor } from '../organization-vendors';
 
 @Entity('expense')
 export class Expense extends Base implements IExpense {
+	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_expense'
@@ -174,8 +175,12 @@ export class Expense extends Base implements IExpense {
 	@Column({ nullable: true })
 	reference?: string;
 
-	@ApiPropertyOptional({ type: String, maxLength: 256 })
-	@IsOptional()
-	@Column({ nullable: true })
-	expenseId?: string;
+	//IN SOME CASES THE EXPENSES ARE CRASHING BECAUZE ITS TRYING TO ADD EXPENSEID AND THERE IS NO SUCH THING
+
+	// IF THIS HAPPENS AGAIN ADD THIS
+
+	// @ApiPropertyOptional({ type: String})
+	// @IsOptional()
+	// @Column({ nullable: true })
+	// expenseId?: string;
 }

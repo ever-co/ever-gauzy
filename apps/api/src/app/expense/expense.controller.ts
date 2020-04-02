@@ -149,8 +149,16 @@ export class ExpenseController extends CrudController<Expense> {
 		@Body() entity: Expense,
 		...options: any[]
 	): Promise<any> {
-		console.warn(entity);
-		return this.expenseService.update(id, entity);
+		//NEEDS TO BE REDONE BETTER WORKS FOR NOW
+		try {
+			return this.expenseService.create({
+				id,
+				...entity
+			});
+		} catch (error) {
+			console.log(error);
+			return;
+		}
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

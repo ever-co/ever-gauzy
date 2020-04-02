@@ -16,7 +16,6 @@ export class ExpensesService {
 	constructor(private http: HttpClient) {}
 
 	create(createInput: IExpenseCreateInput): Promise<any> {
-		console.log(createInput);
 		return this.http
 			.post<Expense>('/api/expense/create', createInput)
 			.pipe(first())
@@ -74,7 +73,6 @@ export class ExpensesService {
 	}
 
 	update(id: string, updateInput: IExpenseUpdateInput): Promise<any> {
-		console.warn(updateInput);
 		return this.http
 			.put(`/api/expense/${id}`, updateInput)
 			.pipe(first())

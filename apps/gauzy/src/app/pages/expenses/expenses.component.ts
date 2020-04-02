@@ -287,7 +287,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				if (formData) {
-					console.warn(formData);
 					try {
 						await this.expenseService.update(
 							formData.id,

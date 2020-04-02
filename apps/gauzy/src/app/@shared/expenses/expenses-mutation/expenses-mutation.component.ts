@@ -314,8 +314,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				this.form.value.receipt = newReceipt;
 			});
 	}
-	selectedTagsHandler(ev) {
-		console.log(ev);
+	selectedTagsHandler(ev: any) {
 		this.form.get('tags').setValue(ev);
 	}
 
