@@ -135,12 +135,18 @@ export class TimeTrackerComponent implements OnInit {
 				this.manualTime.endTime
 		).toDate();
 
-		let addRequestData = Object.assign({}, this.manualTime);
+		let addRequestData = Object.assign(
+			{},
+			this.timeTrackerService.timerConfig,
+			this.manualTime
+		);
 		delete addRequestData.date;
 		delete addRequestData.startTime;
 		delete addRequestData.endTime;
 		addRequestData.startedAt = startedAt;
 		addRequestData.stoppedAt = stoppedAt;
+
+		console.log(addRequestData);
 
 		this.timeTrackerService
 			.addTime(addRequestData)

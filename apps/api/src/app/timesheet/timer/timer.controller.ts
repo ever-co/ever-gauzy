@@ -4,7 +4,8 @@ import {
 	HttpStatus,
 	Post,
 	Body,
-	Get
+	Get,
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -81,7 +82,7 @@ export class TimerController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/logs')
-	async getLogs(@Body() entity: IGetTimeLogInput): Promise<TimeLog[]> {
+	async getLogs(@Query() entity: IGetTimeLogInput): Promise<TimeLog[]> {
 		return this.timerService.getLogs(entity);
 	}
 }

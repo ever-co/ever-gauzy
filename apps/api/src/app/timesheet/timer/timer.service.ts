@@ -189,27 +189,12 @@ export class TimerService {
 	}
 
 	async getLogs(request: IGetTimeLogInput) {
-		let startDate: any;
-		let endDate: any;
 		let employeeId: any;
-		if (request.startDate) {
-			if (moment(request.startDate).isSame(moment(request.endDate))) {
-				startDate =
-					moment(request.startDate).format('YYYY-MM-DD') +
-					' 00:00:00';
-				endDate =
-					moment(request.endDate).format('YYYY-MM-DD') + ' 23:59:59';
-			} else {
-				startDate =
-					moment(request.startDate).format('YYYY-MM-DD') +
-					' 00:00:00';
-				endDate =
-					moment(request.endDate).format('YYYY-MM-DD') + ' 23:59:59';
-			}
-		} else {
-			startDate = moment().format('YYYY-MM-DD') + ' 00:00:00';
-			endDate = moment().format('YYYY-MM-DD') + ' 23:59:59';
-		}
+		console.log(request);
+		const startDate = moment(request.startDate).format(
+			'YYYY-MM-DD HH:mm:ss'
+		);
+		const endDate = moment(request.endDate).format('YYYY-MM-DD HH:mm:ss');
 
 		if (!request.employeeId) {
 			const user = RequestContext.currentUser();
@@ -220,6 +205,8 @@ export class TimerService {
 		} else {
 			employeeId = request.employeeId;
 		}
+
+		console.log({ startDate, endDate });
 
 		let logs = await this.timeLogRepository.find({
 			where: {
