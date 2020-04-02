@@ -190,7 +190,6 @@ export class TimerService {
 
 	async getLogs(request: IGetTimeLogInput) {
 		let employeeId: any;
-		console.log(request);
 		const startDate = moment(request.startDate).format(
 			'YYYY-MM-DD HH:mm:ss'
 		);

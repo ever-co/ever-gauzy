@@ -1,13 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
-import {
-	TimeLogType,
-	IManualTimeInput,
-	Organization,
-	User
-} from '@gauzy/models';
+import { TimeLogType, Organization, User } from '@gauzy/models';
 import * as moment from 'moment';
-import { takeUntil, ignoreElements } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { toUTC } from 'libs/utils';
 import { ToastrService } from '../../../@core/services/toastr.service';
