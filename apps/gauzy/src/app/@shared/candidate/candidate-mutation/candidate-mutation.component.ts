@@ -17,6 +17,8 @@ import { RoleService } from '../../../@core/services/role.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { CandidatesService } from '../../../@core/services/candidates.service';
 
 @Component({
 	selector: 'ga-candidate-mutation',
@@ -26,9 +28,12 @@ import { FormGroup } from '@angular/forms';
 export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	@ViewChild('userBasicInfo', { static: false })
 	userBasicInfo: BasicInfoFormComponent;
+	@ViewChild('userBasicInfoCV', { static: false })
+	userBasicInfoCV: BasicInfoFormComponent;
 	@ViewChild('stepper', { static: false })
 	stepper: NbStepperComponent;
 	form: FormGroup;
+	formCV: FormGroup;
 	role: Role;
 	candidates: CandidateCreateInput[] = [];
 	constructor(
@@ -36,13 +41,16 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		protected organizationsService: OrganizationsService,
 		private readonly roleService: RoleService,
 		protected toastrService: NbToastrService,
-		protected store: Store
+		protected store: Store,
+		protected candidatesService: CandidatesService,
+		private errorHandler: ErrorHandlingService
 	) {}
 
 	ngOnInit(): void {}
 
 	async ngAfterViewInit() {
 		this.form = this.userBasicInfo.form;
+		this.formCV = this.userBasicInfoCV.form;
 		this.role = await this.roleService
 			.getRoleByName({
 				name: RolesEnum.CANDIDATE
@@ -66,20 +74,38 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			role: this.role,
 			tags: this.userBasicInfo.selectedTags
 		};
-
+		const appliedDate = this.form.get('appliedDate').value || null;
 		const rejectDate = this.form.get('rejectDate').value || null;
+		const hiredDate = this.form.get('hiredDate').value || null;
+		const cvUrl = this.formCV.get('cvUrl').value || '';
 
 		const newCandidate: CandidateCreateInput = {
 			user,
+			cvUrl,
 			password: this.form.get('password').value,
 			organization: this.store.selectedOrganization,
-
-			rejectDate
-			// tags: this.userBasicInfo.selectedTags
+			appliedDate,
+			hiredDate,
+			rejectDate,
+			tags: this.userBasicInfo.selectedTags
 		};
 		this.candidates.push(newCandidate);
 		this.userBasicInfo.loadFormData();
+		this.userBasicInfoCV.loadFormData();
 		this.form = this.userBasicInfo.form;
+		this.formCV = this.userBasicInfoCV.form;
 		this.stepper.reset();
+	}
+	async add() {
+		this.addCandidate();
+		try {
+			const candidate = await this.candidatesService
+				.createBulk(this.candidates)
+				.pipe(first())
+				.toPromise();
+			this.closeDialog(candidate);
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 	}
 }

@@ -1,5 +1,5 @@
 <form [formGroup]="form" *ngIf="form">
-	<div class="row">
+	<div class="row" *ngIf="!isCandidateCV">
 		<div class="col-sm-6">
 			<div class="form-group">
 				<label for="inputFirstName" class="label">{{
@@ -52,7 +52,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="row">
+	<div class="row" *ngIf="!isCandidateCV">
 		<div class="col-sm-6">
 			<div class="form-group">
 				<label for="inputUsername" class="label">{{
@@ -126,7 +126,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="col-sm-6" *ngIf="!isEmployee">
+		<div class="col-sm-6" *ngIf="!(!isEmployee || !isCandidate)">
 			<div class="form-group">
 				<label for="startedWork" class="label">{{
 					'FORM.LABELS.ROLE' | translate
@@ -144,7 +144,7 @@
 				</nb-select>
 			</div>
 		</div>
-		<div class="col-sm-6">
+		<div class="col-sm-6" *ngIf="!isCandidateCV">
 			<div class="form-group">
 				<label for="inputPassword" class="label">{{
 					'FORM.PASSWORD' | translate
@@ -165,6 +165,23 @@
 							(password.dirty || password.touched)
 					}"
 				/>
+			</div>
+		</div>
+		<div class="col-sm-6" *ngIf="isCandidate">
+			<div class="form-group">
+				<label for="appliedDateInput" class="label">{{
+					'FORM.LABELS.APPLIED_DATE' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="appliedDateInput"
+					formControlName="appliedDate"
+					nbInput
+					[nbDatepicker]="appliedDatePicker"
+					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+					[autocomplete]="off"
+				/>
+				<nb-datepicker #appliedDatePicker></nb-datepicker>
 			</div>
 		</div>
 	</div>
@@ -208,8 +225,7 @@
 			</div>
 		</div>
 	</div>
-
-	<div class="row" *ngIf="isEmployee">
+	<div class="row" *ngIf="isEmployee || isCandidate">
 		<div class="col-sm-6">
 			<div class="form-group">
 				<label for="rejectDateInput" class="label">{{
@@ -239,8 +255,30 @@
 			</div>
 		</div>
 	</div>
+	<div class="row" *ngIf="isCandidate">
+		<div class="col-sm-6">
+			<div class="form-group">
+				<label for="hiredDateInput" class="label">{{
+					'FORM.LABELS.HIRED_DATE' | translate
+				}}</label>
+				<input
+					fullWidth
+					id="hiredDateInput"
+					formControlName="hiredDate"
+					nbInput
+					[nbDatepicker]="hiredDatePicker"
+					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+					[autocomplete]="off"
+					[ngClass]="{
+						'status-danger': !hiredDate.valid
+					}"
+				/>
+				<nb-datepicker #hiredDatePicker></nb-datepicker>
+			</div>
+		</div>
+	</div>
 
-	<div class="row">
+	<div class="row" *ngIf="!isCandidateCV">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="inputImageUrl" class="label">{{
@@ -277,6 +315,23 @@
 						}}"
 					></div>
 				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row" *ngIf="isCandidateCV">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="inputImageUrl" class="label">{{
+					'FORM.LABELS.CV_URL' | translate
+				}}</label>
+				<ngx-file-uploader-input
+					id="inputImageUrl"
+					[placeholder]="
+						'FORM.PLACEHOLDERS.UPLOADER_CV_PLACEHOLDER' | translate
+					"
+					[fileUrl]="imageUrl?.value"
+					(uploadedImgUrl)="imageUrl.setValue($event)"
+				></ngx-file-uploader-input>
 			</div>
 		</div>
 	</div>

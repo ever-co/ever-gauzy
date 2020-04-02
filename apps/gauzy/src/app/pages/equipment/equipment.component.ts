@@ -10,6 +10,7 @@ import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mu
 import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
+import { Router } from '@angular/router';
 
 export interface SelectedEquipment {
 	data: Equipment;
@@ -41,7 +42,8 @@ export class EquipmentComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private equipmentService: EquipmentService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private router: Router
 	) {
 		super(translateService);
 	}
@@ -100,6 +102,10 @@ export class EquipmentComponent extends TranslationBaseComponent
 				}
 			}
 		};
+	}
+
+	manageEquipmentSharing() {
+		this.router.navigate(['/pages/organization/equipment-sharing']);
 	}
 
 	async save() {

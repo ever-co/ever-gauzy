@@ -184,13 +184,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
 				icon: 'plus-circle-outline',
-				link: 'pages/income',
+				link: 'pages/accounting/income',
 				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
 				icon: 'minus-circle-outline',
-				link: 'pages/expenses',
+				link: 'pages/accounting/expenses',
 				hidden: !this.hasPermissionE || !this.hasPermissionEEdit
 			},
 			// TODO: divider
@@ -220,7 +220,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 			{
 				title: this.getTranslation('CONTEXT_MENU.TASK'),
 				icon: 'calendar-outline',
-				link: '#'
+				link: 'pages/tasks/dashboard'
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CLIENT'),

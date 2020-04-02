@@ -3,7 +3,7 @@
 	[selected]="selectedOrganizationsId"
 	(selectedChange)="onOrganizationsSelected($event)"
 	fullWidth
-	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_ORGANIZATIONS' | translate }}"
+	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_ORGANIZATIONS' | translate }}"
 >
 	<nb-option
 		*ngFor="let organization of allOrganizations"

@@ -13,7 +13,7 @@
 				<ng-template #step1>{{
 					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_1' | translate
 				}}</ng-template>
-				<ga-user-basic-info-form #userBasicInfo [isEmployee]="true">
+				<ga-user-basic-info-form #userBasicInfo [isCandidate]="true">
 				</ga-user-basic-info-form>
 				<div class="text-right">
 					<button
@@ -30,6 +30,13 @@
 				<ng-template #step2>{{
 					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_2' | translate
 				}}</ng-template>
+				<div class="file-uploader">
+					<ga-user-basic-info-form
+						#userBasicInfoCV
+						[isCandidateCV]="true"
+					>
+					</ga-user-basic-info-form>
+				</div>
 
 				<div class="button-container">
 					<button status="primary" nbButton nbStepperPrevious>
@@ -37,26 +44,23 @@
 							'CANDIDATES_PAGE.ADD_CANDIATES.PREVIOUS' | translate
 						}}
 					</button>
-					<button
-						status="success"
-						[disabled]="userBasicInfo.form.invalid"
-						nbButton
-						nbStepperNext
-					>
+					<button status="success" nbButton nbStepperNext>
 						{{ 'CANDIDATES_PAGE.ADD_CANDIATES.NEXT' | translate }}
 					</button>
 				</div>
 			</nb-step>
-
-			<nb-step [label]="step2" [hidden]="true">
+			<nb-step [label]="step3">
+				<ng-template #step3>{{
+					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_3' | translate
+				}}</ng-template>
 				<div class="step-container button-container">
 					<button nbButton (click)="addCandidate()">
 						{{
-							'CANDIDATES_PAGE.ADD_CANDIATES.ADD_ANOTHER_CANDIDATE'
+							'CANDIDATES_PAGE.ADD_CANDIATES.ADD_ANOTHER_CANDIATE'
 								| translate
 						}}
 					</button>
-					<button status="success" nbButton>
+					<button status="success" (click)="add()" nbButton>
 						{{
 							'CANDIDATES_PAGE.ADD_CANDIATES.FINISHED_ADDING'
 								| translate

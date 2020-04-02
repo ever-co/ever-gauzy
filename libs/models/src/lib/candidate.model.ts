@@ -47,7 +47,9 @@ export interface CandidateCreateInput {
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
+	cvUrl?: string;
 	members?: Candidate[];
+	tags?: Tag[];
 }
 
 export interface CandidateLevelInput {
