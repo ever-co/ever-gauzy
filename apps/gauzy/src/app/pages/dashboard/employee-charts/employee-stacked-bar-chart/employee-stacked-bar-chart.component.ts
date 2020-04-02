@@ -7,7 +7,6 @@ import { takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
-import currency from 'currency.js';
 
 @Component({
 	selector: 'ngx-employee-stacked-bar-chart',
