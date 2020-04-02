@@ -8,13 +8,6 @@ import {
 } from '@angular/core';
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgModel, FormGroup } from '@angular/forms';
-import { concat, of } from 'rxjs';
-import {
-	distinctUntilChanged,
-	tap,
-	switchMap,
-	catchError
-} from 'rxjs/operators';
 
 @Component({
 	selector: 'ngx-tags-color-input',
