@@ -100,6 +100,7 @@
 			"FIRST_NAME": "שם פרטי",
 			"LAST_NAME": "שם משפחה",
 			"START_DATE": "תאריך התחלת העבודה",
+			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "תמונה URL",
 			"CV_URL": "CV URL (optional)",
 			"CURRENCY": "מטבע",
@@ -775,6 +776,11 @@
 			"MANAGE": "Manage Employee Invites for",
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
+		},
+		"CANDIDATE": {
+			"MANAGE": "Manage Candidate Invites for",
+			"HEADER": "Invite Candidates",
+			"ACTION": "Invite Candidates"
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
