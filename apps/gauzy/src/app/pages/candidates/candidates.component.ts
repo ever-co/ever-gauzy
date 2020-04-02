@@ -63,7 +63,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				this.hasEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_EMPLOYEES_EDIT
 				);
-				console.log(this.hasEditPermission);
+				
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
