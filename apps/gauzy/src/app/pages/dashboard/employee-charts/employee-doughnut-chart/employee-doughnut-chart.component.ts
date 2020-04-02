@@ -13,8 +13,18 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
 	selector: 'ngx-employee-doughnut-chart',
 	template: `
-		<span>{{ displayDate }}</span>
+		<div
+			*ngIf="noData"
+			style="display: flex; flex-direction: column; align-items: center;"
+		>
+			<nb-icon icon="info-outline"></nb-icon>
+			<div>
+				{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
+			</div>
+		</div>
+		<span *ngIf="!noData">{{ displayDate }}</span>
 		<chart
+			*ngIf="!noData"
 			style="height: 500px; width: 500px;"
 			type="doughnut"
 			[data]="data"
@@ -35,6 +45,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
 	displayDate: string;
+	noData = false;
 
 	constructor(
 		private themeService: NbThemeService,
@@ -70,11 +81,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 	//  * is changed from the header component
 	//  */
 	private async _initializeChart() {
-		if (
-			this.selectedEmployee &&
-			this.selectedEmployee.id &&
-			this.selectedDate
-		) {
+		if (this.selectedEmployee && this.selectedEmployee.id) {
 			try {
 				await this._loadData();
 				this._LoadChart();
@@ -145,10 +152,13 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 		const employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
 			{
 				employeeId: this.selectedEmployee.id,
-				valueDate: this.selectedDate,
+				valueDate: this.selectedDate || new Date(),
 				months: 1
 			}
 		);
+
+		this.noData = !employeeStatistics[0];
+
 		this.incomeStatistics = employeeStatistics[0]
 			? employeeStatistics[0].income
 			: 0;
@@ -165,7 +175,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 			? monthNames[employeeStatistics[0].month] +
 			  ', ' +
 			  employeeStatistics[0].year
-			: this.getTranslation('DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA');
+			: '';
 	}
 
 	ngOnDestroy() {

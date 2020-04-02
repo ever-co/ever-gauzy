@@ -16,7 +16,7 @@
 				'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_EXPENSES_VIEW' | translate
 			}}</span>
 		</nb-alert>
-		<div class="header-container" *ngIf="selectedDate; else noDate">
+		<div class="header-container">
 			<div class="employee-info">
 				<img
 					class="employee-image"
@@ -64,15 +64,11 @@
 				</div>
 			</div>
 		</div>
-
-		<ng-template #noDate>
-			<h4>{{ 'DASHBOARD_PAGE.EMPLOYEE_STATISTICS' | translate }}</h4>
-		</ng-template>
 	</nb-card-header>
 
 	<nb-card-body class="body">
 		<div class="half-content">
-			<div *ngIf="selectedDate; else notSelected">
+			<div>
 				<ga-info-block
 					*ngIf="totalBonusIncome !== 0"
 					accordion="true"
@@ -361,7 +357,7 @@
 		</div>
 
 		<div
-			*ngIf="selectedDate && selectedEmployee && selectedEmployee.id"
+			*ngIf="selectedEmployee && selectedEmployee.id"
 			class="half-content charts"
 		>
 			<div>
@@ -420,12 +416,6 @@
 				></ngx-employee-horizontal-bar-chart>
 			</div>
 		</div>
-
-		<ng-template #notSelected>
-			<span>{{
-				'DASHBOARD_PAGE.SELECT_A_MONTH_AND_EMPLOYEE' | translate
-			}}</span>
-		</ng-template>
 
 		<ng-template #noRole>
 			<span>{{

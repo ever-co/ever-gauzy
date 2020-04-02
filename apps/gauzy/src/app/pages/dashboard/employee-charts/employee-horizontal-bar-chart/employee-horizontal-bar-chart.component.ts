@@ -11,7 +11,17 @@ import { SelectedEmployee } from '../../../../@theme/components/header/selectors
 @Component({
 	selector: 'ngx-employee-horizontal-bar-chart',
 	template: `
+		<div
+			*ngIf="noData"
+			style="display: flex; flex-direction: column; align-items: center;"
+		>
+			<nb-icon icon="info-outline"></nb-icon>
+			<div>
+				{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
+			</div>
+		</div>
 		<chart
+			*ngIf="!noData"
 			style="height: 500px; width: 500px;"
 			type="horizontalBar"
 			[data]="data"
@@ -30,6 +40,7 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
+	noData = false;
 
 	constructor(
 		private themeService: NbThemeService,
@@ -62,11 +73,7 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 	 * is changed from the header component
 	 */
 	private async _initializeChart() {
-		if (
-			this.selectedEmployee &&
-			this.selectedEmployee.id &&
-			this.selectedDate
-		) {
+		if (this.selectedEmployee && this.selectedEmployee.id) {
 			try {
 				await this._loadData();
 				this._LoadChart();
@@ -92,23 +99,27 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 					labels: this.labels,
 					datasets: [
 						{
-							label: `Revenue: ${this.incomeStatistics}`,
+							// label: `Revenue: ${this.incomeStatistics}`,
+							label: `Revenue`,
 							backgroundColor: '#089c17',
 							borderWidth: 1,
 							data: this.incomeStatistics
 						},
 						{
-							label: `Expenses: ${this.expenseStatistics}`,
+							// label: `Expenses: ${this.expenseStatistics}`,
+							label: `Expenses`,
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
-							label: `Profit: ${this.profitStatistics}`,
+							// label: `Profit: ${this.profitStatistics}`,
+							label: `Profit`,
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						},
 						{
-							label: `Bonus: ${this.bonusStatistics}`,
+							// label: `Bonus: ${this.bonusStatistics}`,
+							label: `Bonus`,
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						}
@@ -151,19 +162,19 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 						labels: {
 							fontColor: chartjs.textColor
 						}
-					},
-					tooltips: {
-						enabled: true,
-						mode: 'dataset',
-						callbacks: {
-							label: function(tooltipItem, data) {
-								const label =
-									data.datasets[tooltipItem.datasetIndex]
-										.label || '';
-								return label;
-							}
-						}
 					}
+					// tooltips: {
+					// 	enabled: true,
+					// 	mode: 'dataset',
+					// 	callbacks: {
+					// 		label: function(tooltipItem, data) {
+					// 			const label =
+					// 				data.datasets[tooltipItem.datasetIndex]
+					// 					.label || '';
+					// 			return label;
+					// 		}
+					// 	}
+					// }
 				};
 			});
 	}
@@ -178,8 +189,8 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 		const employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
 			{
 				employeeId: this.selectedEmployee.id,
-				valueDate: this.selectedDate,
-				months: 12
+				valueDate: this.selectedDate || new Date(),
+				months: this.selectedDate ? 1 : 12
 			}
 		);
 		this.labels = [];
@@ -188,10 +199,12 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 		this.profitStatistics = [];
 		this.bonusStatistics = [];
 
+		this.noData = !(employeeStatistics || []).length;
+
 		/**
 		 * Populates the local statistics variables with fetched data.
 		 */
-		employeeStatistics.map((stat) => {
+		(employeeStatistics || []).map((stat) => {
 			const labelValue = `${monthNames[stat.month]} '${stat.year
 				.toString(10)
 				.substring(2)}`;

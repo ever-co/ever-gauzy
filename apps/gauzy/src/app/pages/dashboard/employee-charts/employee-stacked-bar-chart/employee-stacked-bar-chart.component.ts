@@ -6,11 +6,23 @@ import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
+import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
+import currency from 'currency.js';
 
 @Component({
 	selector: 'ngx-employee-stacked-bar-chart',
 	template: `
+		<div
+			*ngIf="noData"
+			style="display: flex; flex-direction: column; align-items: center;"
+		>
+			<nb-icon icon="info-outline"></nb-icon>
+			<div>
+				{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
+			</div>
+		</div>
 		<chart
+			*ngIf="!noData"
 			style="height: 500px; width: 500px;"
 			type="horizontalBar"
 			[data]="data"
@@ -30,6 +42,7 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
+	noData = false;
 
 	constructor(
 		private themeService: NbThemeService,
@@ -62,11 +75,7 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 	 * is changed from the header component
 	 */
 	private async _initializeChart() {
-		if (
-			this.selectedEmployee &&
-			this.selectedEmployee.id &&
-			this.selectedDate
-		) {
+		if (this.selectedEmployee && this.selectedEmployee.id) {
 			try {
 				await this._loadData();
 				this._LoadChart();
@@ -92,20 +101,23 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 					labels: this.labels,
 					datasets: [
 						{
-							label: `Expenses: ${+this.expenseStatistics *
-								this.proportion}`,
+							// label: `Expenses: ${+this.expenseStatistics *
+							// 	this.proportion}`,
+							label: 'Expenses',
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
-							label: `Bonus: ${+this.bonusStatistics *
-								this.proportion}`,
+							// label: `Bonus: ${+this.bonusStatistics *
+							// 	this.proportion}`,
+							label: 'Bonus',
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						},
 						{
-							label: `Profit: ${+this.profitStatistics *
-								this.proportion}`,
+							// label: `Profit: ${+this.profitStatistics *
+							// 	this.proportion}`,
+							label: 'Profit',
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						}
@@ -151,19 +163,19 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 						labels: {
 							fontColor: chartjs.textColor
 						}
-					},
-					tooltips: {
-						enabled: true,
-						mode: 'dataset',
-						callbacks: {
-							label: function(tooltipItem, data) {
-								const label =
-									data.datasets[tooltipItem.datasetIndex]
-										.label || '';
-								return label;
-							}
-						}
 					}
+					// tooltips: {
+					// 	enabled: true,
+					// 	mode: 'dataset',
+					// 	callbacks: {
+					// 		label: function(tooltipItem, data) {
+					// 			const label =
+					// 				data.datasets[tooltipItem.datasetIndex]
+					// 					.label || '';
+					// 			return label;
+					// 		}
+					// 	}
+					// }
 				};
 			});
 	}
@@ -178,8 +190,8 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 		const employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
 			{
 				employeeId: this.selectedEmployee.id,
-				valueDate: this.selectedDate,
-				months: 12
+				valueDate: this.selectedDate || new Date(),
+				months: this.selectedDate ? 1 : 12
 			}
 		);
 		this.labels = [];
@@ -188,16 +200,27 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 		this.profitStatistics = [];
 		this.bonusStatistics = [];
 
+		this.noData = !(employeeStatistics || []).length;
+
 		/**
 		 * Populates the local statistics variables with fetched data.
 		 */
-		employeeStatistics.map((stat) => {
-			this.labels.push('Revenue');
+		(employeeStatistics || []).map((stat) => {
+			const labelValue = `${monthNames[stat.month]} '${stat.year
+				.toString(10)
+				.substring(2)}`;
+			this.labels.push(labelValue);
 			this.proportion =
 				(stat.expense + stat.profit + stat.bonus) / stat.income;
-			this.expenseStatistics.push(stat.expense / this.proportion);
-			this.bonusStatistics.push(stat.bonus / this.proportion);
-			this.profitStatistics.push(stat.profit / this.proportion);
+			this.expenseStatistics.push(
+				Math.round((stat.expense / this.proportion) * 100) / 100
+			);
+			this.bonusStatistics.push(
+				Math.round((stat.bonus / this.proportion) * 100) / 100
+			);
+			this.profitStatistics.push(
+				Math.round((stat.profit / this.proportion) * 100) / 100
+			);
 		});
 	}
 
