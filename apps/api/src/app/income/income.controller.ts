@@ -112,7 +112,10 @@ export class IncomeController extends CrudController<Income> {
 		@Body() entity: Income,
 		...options: any[]
 	): Promise<any> {
-		return this.incomeService.update(id, entity);
+		return this.incomeService.create({
+			id,
+			...entity
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

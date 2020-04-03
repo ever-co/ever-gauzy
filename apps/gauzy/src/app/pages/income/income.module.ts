@@ -7,7 +7,8 @@ import {
 	NbDatepickerModule,
 	NbIconModule,
 	NbDialogModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IncomeComponent } from './income.component';
@@ -22,6 +23,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
+import { ExpenseDescriptionComponent } from '../expenses/expense-description/expense-description.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -29,6 +31,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		NbBadgeModule,
 		IncomeRoutingModule,
 		ThemeModule,
 		NbCardModule,
@@ -53,8 +56,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	entryComponents: [],
-	declarations: [IncomeComponent],
+	entryComponents: [ExpenseDescriptionComponent],
+	declarations: [IncomeComponent, ExpenseDescriptionComponent],
 	providers: [IncomeService]
 })
 export class IncomeModule {}

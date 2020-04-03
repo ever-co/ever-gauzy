@@ -4,6 +4,7 @@ import { IncomeService } from '../../income.service';
 import { Income } from '../../income.entity';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
+import { Expense } from '../../../expense';
 
 @CommandHandler(IncomeCreateCommand)
 export class IncomeCreateHandler
@@ -35,6 +36,7 @@ export class IncomeCreateHandler
 		income.currency = input.currency;
 		income.isBonus = input.isBonus;
 		income.reference = input.reference;
+		income.tags = input.tags;
 
 		if (!income.currency) {
 			income.currency = organization.currency;
