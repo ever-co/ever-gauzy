@@ -44,6 +44,7 @@ export class ExpenseController extends CrudController<Expense> {
 		super(expenseService);
 	}
 
+  // If user is not an employee, then this will return 404
 	@ApiOperation({
 		summary:
 			'Find all expense for the logged in employee, including split expenses.'
@@ -62,8 +63,7 @@ export class ExpenseController extends CrudController<Expense> {
 		@Query('data') data: string
 	): Promise<IPagination<Expense>> {
 		const { relations, filterDate } = JSON.parse(data);
-
-		//If user is not an employee, then this will return 404
+		
 		const employee = await this.employeeService.findOne({
 			user: { id: RequestContext.currentUser().id }
 		});
@@ -148,17 +148,11 @@ export class ExpenseController extends CrudController<Expense> {
 		@Param('id') id: string,
 		@Body() entity: Expense,
 		...options: any[]
-	): Promise<any> {
-		//NEEDS TO BE REDONE BETTER WORKS FOR NOW
-		try {
+	): Promise<any> {		
 			return this.expenseService.create({
 				id,
 				...entity
-			});
-		} catch (error) {
-			console.log(error);
-			return;
-		}
+			});		
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
