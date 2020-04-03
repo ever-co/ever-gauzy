@@ -101,6 +101,7 @@
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
 			"START_DATE": "Date when started work",
+			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Image URL (optional)",
 			"CV_URL": "CV URL (optional)",
 			"CURRENCY": "Currency",
@@ -777,6 +778,11 @@
 			"MANAGE": "Manage Employee Invites for",
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
+		},
+		"CANDIDATE": {
+			"MANAGE": "Manage Candidate Invites for",
+			"HEADER": "Invite Candidates",
+			"ACTION": "Invite Candidates"
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
