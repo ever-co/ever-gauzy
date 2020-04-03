@@ -39,7 +39,6 @@ const createDefaultCandidates = async (
 		users: User[];
 	}
 ): Promise<Candidate[]> => {
-	// const defaultCandidates  = env.defaultCandidates || [];
 	let candidate: Candidate;
 	const candidates: Candidate[] = [];
 	const defaultUsers = defaultData.users;
@@ -75,7 +74,6 @@ const createRandomCandidates = async (
 	const organization = randomData.org;
 	const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
 
-	// for (const orgs of randomOrgs) {
 	for (let i = 0; i < randomOrgs.length; i++) {
 		if (randomUsers.length) {
 			for (let index = 0; index < averageUsersCount; index++) {
