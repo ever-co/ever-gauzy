@@ -47,9 +47,10 @@
 				<div class="col-sm-6">
 					<div class="form-group">
 						<ng-select
+							[addTag]="addNewClient"
 							[items]="clients"
-							bindLabel="clientName"
-							[searchable]="false"
+							bindLabel="name"
+							[searchable]="true"
 							formControlName="client"
 							placeholder="{{
 								'POP_UPS.ALL_CLIENTS' | translate
