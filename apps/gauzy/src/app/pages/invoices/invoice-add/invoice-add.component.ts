@@ -166,7 +166,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		if (tableData.length) {
 			const invoiceData = this.form.value;
 			let allItemValue = 0;
-			let invoiceItems: InvoiceItem[] = [];
 			tableData.forEach((invoiceItem) => {
 				invoiceItem.totalValue =
 					+invoiceItem.unitCost * +invoiceItem.quantity;
@@ -190,7 +189,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			});
 
 			for (const invoiceItem of tableData) {
-				const createdInvoiceItem = await this.invoiceItemService.add({
+				await this.invoiceItemService.add({
 					itemNumber: invoiceItem.itemNumber,
 					name: invoiceItem.name,
 					description: invoiceItem.description,
@@ -200,7 +199,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					taskId: invoiceItem.task.id,
 					invoiceId: createdInvoice.id
 				});
-				invoiceItems.push(createdInvoiceItem);
 			}
 
 			this.toastrService.primary(
