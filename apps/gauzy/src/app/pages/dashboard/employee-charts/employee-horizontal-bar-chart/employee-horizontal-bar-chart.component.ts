@@ -99,27 +99,31 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 					labels: this.labels,
 					datasets: [
 						{
-							// label: `Revenue: ${this.incomeStatistics}`,
-							label: `Revenue`,
+							label: this.selectedDate
+								? `Revenue: ${this.incomeStatistics}`
+								: `Revenue`,
 							backgroundColor: '#089c17',
 							borderWidth: 1,
 							data: this.incomeStatistics
 						},
 						{
-							// label: `Expenses: ${this.expenseStatistics}`,
-							label: `Expenses`,
+							label: this.selectedDate
+								? `Expenses: ${this.expenseStatistics}`
+								: `Expenses`,
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
-							// label: `Profit: ${this.profitStatistics}`,
-							label: `Profit`,
+							label: this.selectedDate
+								? `Profit: ${this.profitStatistics}`
+								: `Profit`,
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						},
 						{
-							// label: `Bonus: ${this.bonusStatistics}`,
-							label: `Bonus`,
+							label: this.selectedDate
+								? `Bonus: ${this.bonusStatistics}`
+								: `Bonus`,
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						}
@@ -162,19 +166,24 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 						labels: {
 							fontColor: chartjs.textColor
 						}
-					}
-					// tooltips: {
-					// 	enabled: true,
-					// 	mode: 'dataset',
-					// 	callbacks: {
-					// 		label: function(tooltipItem, data) {
-					// 			const label =
-					// 				data.datasets[tooltipItem.datasetIndex]
-					// 					.label || '';
-					// 			return label;
-					// 		}
-					// 	}
-					// }
+					},
+					tooltips: this.selectedDate
+						? {
+								enabled: true,
+								mode: 'dataset',
+								callbacks: {
+									label: function(tooltipItem, data) {
+										const label =
+											data.datasets[
+												tooltipItem.datasetIndex
+											].label || '';
+										return label;
+									}
+								}
+						  }
+						: {
+								enabled: true
+						  }
 				};
 			});
 	}

@@ -99,10 +99,18 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 				const chartjs: any = config.variables.chartjs;
 				this.data = {
 					labels: [
-						this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE'),
-						this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'),
-						this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
-						this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT')
+						`${this.getTranslation(
+							'DASHBOARD_PAGE.CHARTS.REVENUE'
+						)}: ${this.incomeStatistics}`,
+						`${this.getTranslation(
+							'DASHBOARD_PAGE.CHARTS.EXPENSES'
+						)}: ${this.expenseStatistics}`,
+						`${this.getTranslation(
+							'DASHBOARD_PAGE.CHARTS.BONUS'
+						)}: ${this.bonusStatistics}`,
+						`${this.getTranslation(
+							'DASHBOARD_PAGE.CHARTS.PROFIT'
+						)}: ${this.profitStatistics}`
 					],
 					datasets: [
 						{
@@ -136,6 +144,14 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 						position: 'right',
 						labels: {
 							fontColor: chartjs.textColor
+						}
+					},
+					tooltips: {
+						enabled: true,
+						callbacks: {
+							label: function(tooltipItem, data) {
+								return data.labels[tooltipItem.index] || '';
+							}
 						}
 					}
 				};

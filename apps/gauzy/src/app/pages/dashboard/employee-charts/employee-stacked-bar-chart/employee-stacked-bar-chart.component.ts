@@ -100,23 +100,35 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 					labels: this.labels,
 					datasets: [
 						{
-							// label: `Expenses: ${+this.expenseStatistics *
-							// 	this.proportion}`,
-							label: 'Expenses',
+							label: this.selectedDate
+								? `Expenses: ${Math.round(
+										+this.expenseStatistics *
+											this.proportion *
+											100
+								  ) / 100}`
+								: 'Expenses',
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
-							// label: `Bonus: ${+this.bonusStatistics *
-							// 	this.proportion}`,
-							label: 'Bonus',
+							label: this.selectedDate
+								? `Bonus: ${Math.round(
+										+this.bonusStatistics *
+											this.proportion *
+											100
+								  ) / 100}`
+								: 'Bonus',
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						},
 						{
-							// label: `Profit: ${+this.profitStatistics *
-							// 	this.proportion}`,
-							label: 'Profit',
+							label: this.selectedDate
+								? `Profit: ${Math.round(
+										+this.profitStatistics *
+											this.proportion *
+											100
+								  ) / 100}`
+								: 'Profit',
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						}
@@ -162,19 +174,24 @@ export class EmployeeStackedBarChartComponent implements OnInit, OnDestroy {
 						labels: {
 							fontColor: chartjs.textColor
 						}
-					}
-					// tooltips: {
-					// 	enabled: true,
-					// 	mode: 'dataset',
-					// 	callbacks: {
-					// 		label: function(tooltipItem, data) {
-					// 			const label =
-					// 				data.datasets[tooltipItem.datasetIndex]
-					// 					.label || '';
-					// 			return label;
-					// 		}
-					// 	}
-					// }
+					},
+					tooltips: this.selectedDate
+						? {
+								enabled: true,
+								mode: 'dataset',
+								callbacks: {
+									label: function(tooltipItem, data) {
+										const label =
+											data.datasets[
+												tooltipItem.datasetIndex
+											].label || '';
+										return label;
+									}
+								}
+						  }
+						: {
+								enabled: true
+						  }
 				};
 			});
 	}
