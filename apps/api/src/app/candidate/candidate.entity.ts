@@ -20,6 +20,8 @@ import { Tenant } from '../tenant';
 import { User } from '../user';
 import { Organization } from '../organization/organization.entity';
 
+export type Status = 'applied' | 'rejected' | 'hired';
+
 @Entity('candidate')
 export class Candidate extends LocationBase implements ICandidate {
 	@ManyToMany((type) => Tag)
@@ -86,11 +88,13 @@ export class Candidate extends LocationBase implements ICandidate {
 	@Column({ nullable: true })
 	hiredDate?: Date;
 
-	@ApiPropertyOptional({ type: String })
-	@IsDate()
 	@IsOptional()
-	@Column({ nullable: true })
-	status?: string;
+	@Column({
+		type: 'enum',
+		enum: ['applied', 'rejected', 'hired'],
+		default: 'applied'
+	})
+	status?: Status;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
