@@ -133,7 +133,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 		let candidatesVm = [];
 		const result = [];
-
 		for (const candidate of items) {
 			result.push({
 				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
