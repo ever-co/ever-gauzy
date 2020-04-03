@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgModel, FormGroup } from '@angular/forms';
-import { TagName, Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-tags-color-input',
@@ -65,11 +64,4 @@ export class TagsColorInputComponent implements OnInit {
 		const { items } = await this.tagsService.getAllTags();
 		this.tags = items;
 	}
-	addNewTag = (name: string): Promise<TagName> => {
-		console.warn(name);
-
-		return this.tagsService.insertTag({
-			name
-		});
-	};
 }
