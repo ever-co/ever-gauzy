@@ -1,0 +1,48 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			*ngIf="!showAddCard"
+			(click)="showAddCard = !showAddCard"
+			nbButton
+			status="success"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<ga-edit-user-organizations-mutation
+			*ngIf="showAddCard"
+			(canceled)="cancel()"
+			(addOrg)="addOrg($event)"
+		>
+		</ga-edit-user-organizations-mutation>
+	</nb-card-header>
+	<nb-card-body *ngIf="organizations?.length">
+		<div class="ml-3 mb-4">
+			<strong>{{
+				'ORGANIZATIONS_PAGE.EDIT.USER_ORGANIZATIONS'
+					| translate: { name: selectedUserName }
+			}}</strong>
+		</div>
+
+		<nb-card *ngFor="let item of organizations">
+			<nb-card-body>
+				<img
+					src="{{ item.imageUrl }}"
+					alt="Smiley face"
+					height="40"
+					width="40"
+					style="margin-right:10px"
+				/>
+				<strong>{{ item.name }}</strong>
+				<nb-actions class="float-right" e="medium">
+					<nb-action
+						(click)="remove()"
+						class="d-inline pr-0"
+						icon="close"
+					>
+					</nb-action>
+				</nb-actions>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

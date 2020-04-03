@@ -7,4 +7,5 @@ export interface DefaultUser {
 	startedWorkOn?: string;
 	endWork?: string;
 	employeeLevel?: string;
+	candidateLevel?: string;
 }

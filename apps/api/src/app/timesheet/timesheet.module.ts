@@ -8,6 +8,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimerController } from './timer/timer.controller';
 import { TimerService } from './timer/timer.service';
 import { Employee } from '../employee/employee.entity';
+import { TimeSheetService } from './timesheet.service';
+import {
+	ActivityService,
+	ScreenShotService,
+	TimeLogService,
+	TimeSlotService
+} from '.';
 
 @Module({
 	controllers: [TimerController],
@@ -21,7 +28,20 @@ import { Employee } from '../employee/employee.entity';
 			Employee
 		])
 	],
-	providers: [TimerService],
-	exports: []
+	providers: [
+		TimerService,
+		TimeSheetService,
+		ActivityService,
+		ScreenShotService,
+		TimeLogService,
+		TimeSlotService
+	],
+	exports: [
+		TimeSheetService,
+		ActivityService,
+		ScreenShotService,
+		TimeLogService,
+		TimeSlotService
+	]
 })
 export class TimesheetModule {}

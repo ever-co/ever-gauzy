@@ -1,6 +1,15 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<h4>{{ 'EQUIPMENT_PAGE.HEADER' | translate }}</h4>
+		<div class="main-header">
+			<h4>{{ 'EQUIPMENT_PAGE.HEADER' | translate }}</h4>
+			<button
+				nbButton
+				status="primary"
+				(click)="manageEquipmentSharing()"
+			>
+				{{ 'MENU.EQUIPMENT_SHARING' | translate }}
+			</button>
+		</div>
 	</nb-card-header>
 
 	<nb-card-body>

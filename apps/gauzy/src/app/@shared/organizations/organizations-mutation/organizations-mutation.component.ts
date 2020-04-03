@@ -17,7 +17,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CountryService } from '../../../@core/services/country.service';
 @Component({
-	selector: 'ngx-organizations-mutation',
+	selector: 'ga-organizations-mutation',
 	templateUrl: './organizations-mutation.component.html',
 	styleUrls: [
 		'./organizations-mutation.component.scss',

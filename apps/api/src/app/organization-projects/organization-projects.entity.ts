@@ -21,8 +21,8 @@ import {
 	OrganizationProjects as IOrganizationProjects,
 	CurrenciesEnum
 } from '@gauzy/models';
-import { OrganizationClients } from '../organization-clients';
-import { Employee } from '../employee';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends Base

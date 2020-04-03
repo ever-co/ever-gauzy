@@ -10,8 +10,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsDate } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Proposal as IProposal } from '@gauzy/models';
-import { Employee } from '../employee';
-import { Organization } from '../organization';
+import { Employee } from '../employee/employee.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('proposal')
 export class Proposal extends Base implements IProposal {

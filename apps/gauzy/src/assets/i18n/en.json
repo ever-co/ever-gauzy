@@ -51,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Profit Based Bonus",
 		"REVENUE_BASED_BONUS": "Revenue Based Bonus",
 		"STATUS": "Status",
+		"SOURCE": "Source",
 		"WORK_STATUS": "Work Status",
 		"TODAY": "Today",
 		"END_OF_MONTH": "End Of Month",
@@ -100,7 +101,9 @@
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
 			"START_DATE": "Date when started work",
+			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Image URL (optional)",
+			"CV_URL": "CV URL (optional)",
 			"CURRENCY": "Currency",
 			"DATE_TYPE": "Default Date Type",
 			"ADD_TEAM": "Add New Team",
@@ -137,6 +140,8 @@
 			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
+			"APPLIED_DATE": "Applied Date (optional)",
+			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
 			"SELECT_EQUIPMENT": "Select equipment",
@@ -167,6 +172,7 @@
 			"ADD_DEPARTMENT": "Add Department",
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "Add vendor",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Clients",
 			"START_DATE_PROJECT": "Project Start Date (optional)",
 			"END_DATE_PROJECT": "Project End Date (optional)",
@@ -195,8 +201,11 @@
 			"REGIONS": "Select Region",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Image",
+			"UPLOADER_CV_PLACEHOLDER": "CV",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
+			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
+			"ADD_ORGANIZATIONS": "Add Organizations",
 			"DATE": "Date",
 			"VALUE": "Value",
 			"SELECT_CURRENCY": "Select Currency",
@@ -208,7 +217,8 @@
 			"CHOOSE_EMPLOYEES": "Choose employee/s",
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
-			"REGISTRATION_DATE": "Organization Registration Date"
+			"REGISTRATION_DATE": "Organization Registration Date",
+			"ORGANIZATIONS": "Choose Organizations"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -275,6 +285,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
+		"ACCOUNTING": "Accounting",
 		"INCOME": "Income",
 		"EXPENSES": "Expenses",
 		"INTEGRATIONS": "Integrations",
@@ -285,6 +296,8 @@
 		"ABOUT": "About",
 		"ADMIN": "Admin",
 		"EMPLOYEES": "Employees",
+		"MANAGE": "Manage",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Organizations",
 		"SETTINGS": "Settings",
 		"GENERAL": "General",
@@ -299,7 +312,22 @@
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
-		"TASKS": "Tasks"
+		"TASKS": "Tasks",
+		"INVOICES": "Invoices",
+		"ORGANIZATION": "Organization",
+		"RECURRING_INVOICES": "Recurring Invoices",
+		"ESTIMATES": "Estimates",
+		"MY_TASKS": "My Tasks",
+		"TEAM_TASKS": "Team's Tasks",
+		"ACTIVITY": "Activity",
+		"TIMESHEETS": "Timesheets",
+		"SCHEDULES": "Schedules",
+		"EMAIL_TEMPLATES": "Email Templates",
+		"REPORTS": "Reports",
+		"TIME_REPORTS": "Time Reports",
+		"ACCOUNTING_REPORTS": "Accounting Reports",
+		"PAYMENT_GATEWAYS": "Payment Gateways",
+		"CUSTOM_SMTP": "Custom SMTP"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -442,6 +470,38 @@
 			"PREVIOUS": "Previous"
 		}
 	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Deleted",
+		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "Developer",
+			"DEPARTMENT": "Department",
+			"POSITION": "Position",
+			"CANDIATE_DEPARTMENTS": "Employee's Departments:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Location",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"UPLOAD_CV": "Upload CV",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Organizations",
 		"EMPLOYEES": "Employees",
@@ -451,6 +511,7 @@
 		"CLIENTS": "Clients",
 		"POSITIONS": "Positions",
 		"VENDORS": "Vendors",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Projects",
 		"ACTIVE": "Active",
 		"ARCHIVED": "Archived",
@@ -490,6 +551,10 @@
 			"REGIONS": "Regions",
 			"ROLES_PERMISSIONS": "Roles & Permissions",
 			"DATE_LIMIT": "Date Limit",
+			"USER_ORGANIZATIONS": "{{ name }}'s List of Organizations",
+			"ADDED_TO_ORGANIZATION": " the organization",
+			"USER_WAS_DELETED": "{{ name }} was successfuly deleted.",
+			"USER_WAS_REMOVED": "{{ name }} was successfuly removed from organization.",
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
@@ -511,6 +576,8 @@
 			"ORG_TIME_OFF_VIEW": "View Time Off Page",
 			"ORG_EMPLOYEES_VIEW": "View Organization Employees",
 			"ORG_EMPLOYEES_EDIT": "Create/Edit/Delete Organization Employees",
+			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
+			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
 			"ORG_USERS_VIEW": "View Organization Users",
 			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
 			"ORG_INVITE_VIEW": "View Organization Invites",
@@ -520,6 +587,7 @@
 			"POLICY_VIEW": "View Time Off Policy",
 			"POLICY_EDIT": "Edit Time Off Policy",
 			"CHANGE_SELECTED_EMPLOYEE": "Change Selected Employee",
+			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
@@ -664,11 +732,14 @@
 			"MANAGER": "Manager",
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
-			"EMPLOYEE": "Employee"
+			"EMPLOYEE": "Employee",
+			"CANDIDATE": "Candidate"
 		},
 		"EDIT_USER": {
 			"HEADER": "Manage User",
-			"EDIT_EXISTING_USER": "Edit Existing User"
+			"EDIT_EXISTING_USER": "Edit Existing User",
+			"MAIN": "Main",
+			"USER_ORGANIZATIONS": "Organizations"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -707,6 +778,11 @@
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
 		},
+		"CANDIDATE": {
+			"MANAGE": "Manage Candidate Invites for",
+			"HEADER": "Invite Candidates",
+			"ACTION": "Invite Candidates"
+		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
 		"STATUS": {
@@ -714,6 +790,25 @@
 			"EXPIRED": "Expired",
 			"ACCEPTED": "Accepted"
 		}
+	},
+	"INVOICES_PAGE": {
+		"HEADER": "Invoices",
+		"INVOICE_NUMBER": "Invoice Number",
+		"TOTAL_VALUE": "Total Value",
+		"PAID_STATUS": "Paid Status",
+		"INVOICES_ADD_INVOICE": "Invoice Added",
+		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
+		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
+		"INVOICES_SELECT_DUE_DATE": "Due Date",
+		"INVOICES_SELECT_CURRENCY": "Currency",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
+		"INVOICES_SELECT_PAID": "Paid",
+		"INVOICES_SELECT_TAX": "Tax",
+		"INVOICES_SELECT_TERMS": "Terms",
+		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
+		"ADD_INVOICE": "Add Invoice",
+		"EDIT_INVOICE": "Edit Invoice"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
@@ -840,6 +935,11 @@
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
 				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
 				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "New position {{ name }} successfully added!",

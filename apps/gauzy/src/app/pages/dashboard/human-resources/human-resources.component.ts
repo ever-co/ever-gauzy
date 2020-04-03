@@ -263,7 +263,9 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			this.totalAllIncome,
 			profit
 		);
-		this.totalBonus = this.calculatedBonus + this.totalBonusIncome;
+		this.totalBonus =
+			Math.floor((this.calculatedBonus + this.totalBonusIncome) * 100) /
+			100;
 	}
 
 	private async _loadExpense() {
@@ -301,7 +303,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 							this.store.selectedOrganization.id,
 							{
 								year: this.selectedDate.getFullYear(),
-								month: this.selectedDate.getMonth() + 1
+								month: this.selectedDate.getMonth()
 							}
 						)
 				  ).items

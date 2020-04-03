@@ -91,7 +91,7 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	) {}
 
 	openTimeOffSettings() {
-		this.router.navigate(['/pages/time-off/settings']);
+		this.router.navigate(['/pages/employees/time-off/settings']);
 	}
 
 	async requestDaysOff() {

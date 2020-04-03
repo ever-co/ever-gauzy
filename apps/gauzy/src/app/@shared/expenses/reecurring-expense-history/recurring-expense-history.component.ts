@@ -28,6 +28,6 @@ export class RecurringExpenseHistoryComponent extends TranslationBaseComponent
 	ngOnInit() {}
 
 	getMonthString(month: number) {
-		return monthNames[month - 1];
+		return monthNames[month];
 	}
 }

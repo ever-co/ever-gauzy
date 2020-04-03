@@ -27,6 +27,54 @@
 			</div>
 		</div>
 	</div>
+	<div class="row" *ngIf="invitationType !== 'CANDIDATE'">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="startedWork" class="label">{{
+					'FORM.LABELS.START_DATE' | translate
+				}}</label>
+				<input
+					[nbDatepicker]="datepicker"
+					nbInput
+					fullWidth
+					placeholder="{{
+						'FORM.PLACEHOLDERS.START_DATE' | translate
+					}}"
+					formControlName="startedWorkOn"
+				/>
+				<nb-datepicker #datepicker></nb-datepicker>
+				<div
+					class="notes"
+					*ngIf="
+						form.touched && form.get('startedWorkOn').value == null
+					"
+				>
+					<p>
+						{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row" *ngIf="invitationType === 'CANDIDATE'">
+		<div class="col-sm-12">
+			<div class="form-group">
+				<label for="appliedDate" class="label">{{
+					'FORM.LABELS.APPLIED_DATE_LABEL' | translate
+				}}</label>
+				<input
+					[nbDatepicker]="datepicker"
+					nbInput
+					fullWidth
+					placeholder="{{
+						'FORM.PLACEHOLDERS.START_DATE' | translate
+					}}"
+					formControlName="appliedDate"
+				/>
+				<nb-datepicker #datepicker></nb-datepicker>
+			</div>
+		</div>
+	</div>
 	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
 		<div class="col-sm-12">
 			<div class="form-group">
@@ -91,7 +139,10 @@
 			</div>
 		</div>
 	</div>
-	<div class="row" *ngIf="invitationType === 'EMPLOYEE'">
+	<div
+		class="row"
+		*ngIf="invitationType === 'EMPLOYEE' || invitationType === 'CANDIDATE'"
+	>
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="departmentsSelect" class="label label-with-select"
@@ -125,7 +176,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="employee-padding" *ngIf="invitationType === 'EMPLOYEE'"></div>
+	<div class="employee-padding"></div>
 	<div class="row" *ngIf="invitationType === 'USER'">
 		<div class="col-sm-6">
 			<div class="form-group">

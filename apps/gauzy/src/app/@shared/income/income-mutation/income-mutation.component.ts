@@ -1,5 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Validators, FormBuilder, FormGroup } from '@angular/forms';
+import {
+	Validators,
+	FormBuilder,
+	FormGroup,
+	AbstractControl
+} from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { Income, OrganizationSelectInput } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
@@ -22,6 +27,7 @@ export class IncomeMutationComponent implements OnInit {
 	currencies = Object.values(CurrenciesEnum);
 
 	form: FormGroup;
+	notes: AbstractControl;
 
 	clients: Object[] = [];
 
@@ -154,8 +160,10 @@ export class IncomeMutationComponent implements OnInit {
 				currency: '',
 				isBonus: false
 			});
+
 			this._loadDefaultCurrency();
 		}
+		this.notes = this.form.get('notes');
 	}
 
 	private async _loadDefaultCurrency() {

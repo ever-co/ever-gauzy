@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { OrganizationTeams as IOrganizationTeams } from '@gauzy/models';
-import { Employee } from '../employee';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('organization_team')
 export class OrganizationTeams extends Base implements IOrganizationTeams {

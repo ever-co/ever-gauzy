@@ -66,7 +66,152 @@
 					</nb-select>
 				</div>
 			</div>
+			<!-- TODO: translate -->
+			<div class="row" *ngIf="recurringExpense">
+				<div class="col">
+					<div class="form-group">
+						<label>
+							Starts On
+						</label>
+						<input
+							[nbDatepicker]="datepicker"
+							nbInput
+							fullWidth
+							placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
+							formControlName="startDate"
+							(ngModelChange)="datePickerChanged($event)"
+						/>
+						<nb-datepicker #datepicker></nb-datepicker>
 
+						<div
+							[ngSwitch]="startDateUpdateType"
+							style="margin-top:10px"
+							[nbSpinner]="startDateChangeLoading"
+							nbSpinnerStatus="danger"
+							nbSpinnerSize="large"
+							nbSpinnerMessage=""
+						>
+							<nb-alert
+								status="warning"
+								*ngSwitchCase="'REDUCE_CONFLICT'"
+							>
+								Warning: This period overlaps with an existing
+								previous record(s):
+								<span *ngFor="let conflict of conflicts">
+									{{
+										conflict.value
+											| currency: conflict.currency
+									}}: From
+									{{
+										formatToOrganizationDate(
+											conflict.startDate
+										)
+									}}
+									to
+									{{
+										formatToOrganizationDate(
+											conflict.endDate
+										)
+									}}</span
+								>The value will be overwritten from
+								{{ month(startDate) }}!
+							</nb-alert>
+							<nb-alert
+								status="danger"
+								*ngSwitchCase="'INCREASE_CONFLICT'"
+							>
+								Error: This period overlaps with existing future
+								record(s).
+								<span *ngFor="let conflict of conflicts">
+									{{
+										conflict.value
+											| currency: conflict.currency
+									}}: From
+									{{
+										formatToOrganizationDate(
+											conflict.startDate
+										)
+									}}
+									to
+									{{
+										formatToOrganizationDate(
+											conflict.endDate
+										)
+									}}</span
+								>
+								This is not supported, please edit the future
+								expenses instead.
+							</nb-alert>
+							<nb-alert
+								status="warning"
+								*ngSwitchCase="'INCREASE_SAFE_WITHIN_LIMIT'"
+							>
+								This will only edit the future value from
+								{{ formatToOrganizationDate(startDate) }},
+								existing value of
+								{{
+									recurringExpense.value
+										| currency: recurringExpense.currency
+								}}
+								started on
+								{{
+									formatToOrganizationDate(
+										recurringExpense.startDate
+									)
+								}}
+								will not be affected till
+								{{ previousMonth(startDate) }}.
+							</nb-alert>
+							<nb-alert
+								status="warning"
+								*ngSwitchCase="'INCREASE_SAFE_OUTSIDE_LIMIT'"
+							>
+								This will set the expense value
+								{{
+									value | currency: recurringExpense.currency
+								}}
+								from
+								{{ formatToOrganizationDate(startDate) }}
+								onwards and the existing value of
+								{{
+									recurringExpense.value
+										| currency: recurringExpense.currency
+								}}
+								(Started on
+								{{
+									formatToOrganizationDate(
+										recurringExpense.startDate
+									)
+								}}
+								and ending on
+								{{
+									formatToOrganizationDate(
+										recurringExpense.endDate
+									)
+								}}) will be now set till
+								{{ previousMonth(startDate) }}.
+							</nb-alert>
+							<nb-alert
+								status="warning"
+								*ngSwitchCase="'REDUCE_SAFE'"
+							>
+								This will reduce the start date and include all
+								the months from
+								{{ formatToOrganizationDate(startDate) }} for
+								expense value
+								{{ value | currency: currencyValue }}
+							</nb-alert>
+							<nb-alert
+								status="primary"
+								*ngSwitchCase="'WITHIN_MONTH'"
+							>
+								This will change the start date to
+								{{ formatToOrganizationDate(startDate) }}
+							</nb-alert>
+						</div>
+					</div>
+				</div>
+			</div>
 			<div class="actions">
 				<!-- TODO: FIX dialogRef.close() -->
 				<button
@@ -93,14 +238,14 @@
 				</button>
 				<button
 					(click)="submitForm()"
-					[disabled]="form.invalid"
+					[disabled]="
+						form.invalid ||
+						startDateUpdateType === 'INCREASE_CONFLICT'
+					"
 					type="submit"
 					nbButton
 					status="success"
 					*ngIf="recurringExpense"
-					nbTooltip="{{
-						'EMPLOYEES_PAGE.RECURRING_EXPENSE_EDIT' | translate
-					}}"
 				>
 					{{ 'BUTTONS.EDIT' | translate }}
 				</button>
