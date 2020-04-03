@@ -7,8 +7,7 @@ import {
 	CurrenciesEnum,
 	Invoice,
 	OrganizationClients,
-	Organization,
-	InvoiceItem
+	Organization
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
