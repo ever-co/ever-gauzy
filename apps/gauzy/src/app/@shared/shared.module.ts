@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { BackNavigationModule } from './back-navigation';
 import { Pipes } from './pipes';
 
-console.log(Pipes);
-
 @NgModule({
 	declarations: [...Pipes],
 	imports: [CommonModule, BackNavigationModule],

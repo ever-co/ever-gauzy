@@ -8,8 +8,9 @@ import {
 import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import { IGetTimeLogInput, TimeLog } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
-import { NbCheckboxComponent } from '@nebular/theme';
+import { NbCheckboxComponent, NbDialogService } from '@nebular/theme';
 import * as moment from 'moment';
+import { EditTimeLogDialogComponent } from '../edit-time-log-dialog/edit-time-log-dialog.component';
 
 @Component({
 	selector: 'ngx-daily',
@@ -33,7 +34,10 @@ export class DailyComponent implements OnInit {
 			title: 'Delete'
 		}
 	];
-	constructor(private timeTrackerService: TimeTrackerService) {}
+	constructor(
+		private timeTrackerService: TimeTrackerService,
+		private dialogService: NbDialogService
+	) {}
 
 	public get selectedDate(): Date {
 		return this._selectedDate;
@@ -82,6 +86,14 @@ export class DailyComponent implements OnInit {
 				this.checkAllCheckbox.checked = false;
 			}
 		}
+	}
+
+	openEdit(timeLog: TimeLog) {
+		this.dialogService.open(EditTimeLogDialogComponent, {
+			context: {
+				timeLog
+			}
+		});
 	}
 
 	onDeleteConfirm(event) {

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
-import { TimeLogType, Organization, User } from '@gauzy/models';
+import { TimeLogType, Organization, User, IDateRange } from '@gauzy/models';
 import * as moment from 'moment';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -21,9 +21,9 @@ export class TimeTrackerComponent implements OnInit {
 	current_time: string = '00:00:00';
 	running: boolean;
 	today: Date = new Date();
+	selectedRange: IDateRange = { start: null, end: null };
 	manualTime: any = {};
 	user: any = {};
-
 	minSlotStartTime: string;
 	maxSlotStartTime: string;
 	maxSlotEndTime: string;
@@ -35,12 +35,10 @@ export class TimeTrackerComponent implements OnInit {
 		private toastrService: ToastrService,
 		private store: Store
 	) {
-		this.updateTimePickerLimit(new Date());
+		//this.updateTimePickerLimit(new Date());
 		this.store.selectedOrganization$.subscribe(
 			(organization: Organization) => {
 				this.organization = organization;
-
-				console.log(this.organization);
 			}
 		);
 
@@ -119,29 +117,16 @@ export class TimeTrackerComponent implements OnInit {
 		if (!f.valid) {
 			return;
 		}
-		const startedAt = toUTC(
-			moment(this.manualTime.date).format('YYYY-MM-DD') +
-				' ' +
-				this.manualTime.startTime
-		).toDate();
-		const stoppedAt = toUTC(
-			moment(this.manualTime.date).format('YYYY-MM-DD') +
-				' ' +
-				this.manualTime.endTime
-		).toDate();
+		const startedAt = toUTC(this.selectedRange.start).toDate();
+		const stoppedAt = toUTC(this.selectedRange.end).toDate();
 
 		let addRequestData = Object.assign(
-			{},
-			this.timeTrackerService.timerConfig,
-			this.manualTime
+			{
+				startedAt,
+				stoppedAt
+			},
+			this.timeTrackerService.timerConfig
 		);
-		delete addRequestData.date;
-		delete addRequestData.startTime;
-		delete addRequestData.endTime;
-		addRequestData.startedAt = startedAt;
-		addRequestData.stoppedAt = stoppedAt;
-
-		console.log(addRequestData);
 
 		this.timeTrackerService
 			.addTime(addRequestData)
@@ -156,7 +141,7 @@ export class TimeTrackerComponent implements OnInit {
 						this.timeTrackerService.dueration + timeLog.duration;
 				}
 				f.resetForm();
-				this.updateTimePickerLimit(new Date());
+				//this.updateTimePickerLimit(new Date());
 				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
 			})
 			.catch((error) => {
@@ -167,58 +152,6 @@ export class TimeTrackerComponent implements OnInit {
 	setTimeType(type: string) {
 		this.timeType =
 			type == 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
-	}
-
-	updateTimePickerLimit(date: Date) {
-		let mTime = moment(date);
-
-		if (mTime.isSame(new Date(), 'day')) {
-			mTime = mTime.set({
-				hour: moment().get('hour'),
-				minute: moment().get('minute') - (moment().minutes() % 10),
-				second: 0,
-				millisecond: 0
-			});
-
-			this.manualTime = {
-				description: '',
-				startTime: mTime
-					.clone()
-					.subtract(30, 'minutes')
-					.format('HH:mm'),
-				endTime: mTime.format('HH:mm'),
-				date: mTime.toDate()
-			};
-		}
-
-		if (mTime.isSame(new Date(), 'day')) {
-			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = mTime
-				.clone()
-				.subtract(10, 'minutes')
-				.format('HH:mm');
-			this.maxSlotEndTime = mTime.format('HH:mm');
-		} else {
-			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = '23:59';
-			this.maxSlotEndTime = '23:59';
-		}
-		this.updateEndTimeSlot(this.manualTime.startTime);
-	}
-
-	updateEndTimeSlot(time: string) {
-		this.minSlotEndTime = moment(time, 'HH:mm')
-			.add(10, 'minutes')
-			.format('HH:mm');
-		if (
-			!moment(time, 'HH:mm').isBefore(
-				moment(this.manualTime.endTime, 'HH:mm')
-			)
-		) {
-			this.manualTime.endTime = moment(this.manualTime.startTime, 'HH:mm')
-				.add(30, 'minutes')
-				.format('HH:mm');
-		}
 	}
 
 	ngOnDestroy() {

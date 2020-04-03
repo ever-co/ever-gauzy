@@ -10,14 +10,17 @@ import {
 	NbSelectModule,
 	NbDatepickerModule,
 	NbContextMenuModule,
-	NbIconModule
+	NbIconModule,
+	NbDialogModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../../@shared/shared.module';
 import { FormsModule } from '@angular/forms';
+import { EditTimeLogDialogComponent } from './edit-time-log-dialog/edit-time-log-dialog.component';
 
 @NgModule({
 	declarations: [DailyComponent],
+	entryComponents: [EditTimeLogDialogComponent],
 	imports: [
 		CommonModule,
 		TimesheetRoutingModule,
@@ -30,7 +33,8 @@ import { FormsModule } from '@angular/forms';
 		NbDatepickerModule,
 		FormsModule,
 		NbContextMenuModule,
-		NbIconModule
+		NbIconModule,
+		NbDialogModule
 	]
 })
 export class TimesheetModule {}
