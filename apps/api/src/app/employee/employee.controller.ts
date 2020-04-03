@@ -142,6 +142,7 @@ export class EmployeeController extends CrudController<Employee> {
 		/**
 		 * Use a dummy image avatar if no image is uploaded for any of the employees in the list
 		 */
+
 		input
 			.filter((entity) => !entity.user.imageUrl)
 			.map(

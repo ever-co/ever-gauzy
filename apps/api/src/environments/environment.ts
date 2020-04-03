@@ -290,6 +290,56 @@ export const environment: IEnvironment = {
 			lastName: 'Smith',
 			imageUrl: 'assets/images/avatars/alish.jpg',
 			candidateLevel: 'D'
+		},
+		{
+			email: 'jaye@ever.co',
+			password: '123456',
+			firstName: 'Jaye',
+			lastName: 'Jeffreys',
+			imageUrl: 'assets/images/avatars/alexander.jpg',
+			startedWorkOn: '2019-08-01',
+			endWork: null,
+			employeeLevel: 'B'
+		},
+		{
+			email: 'kasey@ever.co',
+			password: '123456',
+			firstName: 'Kasey',
+			lastName: 'Kraker',
+			imageUrl: 'assets/images/avatars/rachit.png',
+			startedWorkOn: '2019-11-27',
+			endWork: null,
+			employeeLevel: null
+		},
+		{
+			email: 'norris@ever.co',
+			password: '123456',
+			firstName: 'Norris ',
+			lastName: 'Nesbit',
+			imageUrl: 'assets/images/avatars/atanas.jpeg',
+			startedWorkOn: '2020-02-01',
+			endWork: null,
+			employeeLevel: 'A'
+		},
+		{
+			email: 'estella@ever.co',
+			password: '123456',
+			firstName: 'Estella',
+			lastName: 'Ennis',
+			imageUrl: 'assets/images/avatars/dimana.jpeg',
+			startedWorkOn: '2019-11-26',
+			endWork: null,
+			employeeLevel: null
+		},
+		{
+			email: 'greg@ever.co',
+			password: '123456',
+			firstName: 'Greg ',
+			lastName: 'Grise',
+			imageUrl: 'assets/images/avatars/savov.jpg',
+			startedWorkOn: '2020-02-04',
+			endWork: null,
+			employeeLevel: 'A'
 		}
 	],
 	defaultTeams: [
