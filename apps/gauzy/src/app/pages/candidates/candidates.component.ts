@@ -61,9 +61,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EMPLOYEES_EDIT
+					PermissionsEnum.ORG_CANDIDATES_EDIT
 				);
-				console.log(this.hasEditPermission);
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
@@ -122,6 +121,11 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 			this.loadPage();
 		}
+	}
+	edit() {
+		this.router.navigate([
+			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
+		]);
 	}
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
