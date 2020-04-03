@@ -177,7 +177,9 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	}
 
 	selectedTagsHandler(ev) {
-		this.selectedTags = ev;
+		// this.selectedTags = ev;
+
+		this.form.get('selectedTags').setValue(ev);
 	}
 
 	ngAfterViewInit() {
