@@ -1,0 +1,13 @@
+<div>
+	<div>{{ rowData.notes }}</div>
+	<div class="tags">
+		<nb-badge
+			*ngFor="let tag of rowData?.tags"
+			class="color"
+			position="centered"
+			[style.background]="tag.color"
+			text="{{ tag.name }}"
+		>
+		</nb-badge>
+	</div>
+</div>

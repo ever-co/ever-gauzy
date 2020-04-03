@@ -6,3 +6,7 @@ export interface Tag extends IBaseEntityModel {
 	color?: string;
 	isSelected?: boolean;
 }
+
+export interface TagName {
+	name?: string;
+}

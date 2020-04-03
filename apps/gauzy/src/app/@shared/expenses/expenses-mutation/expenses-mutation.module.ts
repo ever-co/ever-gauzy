@@ -21,6 +21,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
+import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -28,6 +29,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		TagsColorInputModule,
 		ThemeModule,
 		NbCardModule,
 		NbButtonModule,
