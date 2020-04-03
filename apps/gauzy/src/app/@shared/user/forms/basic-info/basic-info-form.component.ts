@@ -164,9 +164,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 					password: this.password.value
 				})
 				.pipe(first())
-				.toPromise();
-
-			// call backend to add tags to existed employee
+				.toPromise();			
 		}
 
 		return;
@@ -176,9 +174,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		this.imageUrl.setValue('');
 	}
 
-	selectedTagsHandler(ev) {
-		// this.selectedTags = ev;
-
+	selectedTagsHandler(ev) {		
 		this.form.get('selectedTags').setValue(ev);
 	}
 
