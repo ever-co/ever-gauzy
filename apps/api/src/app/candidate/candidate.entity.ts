@@ -116,5 +116,4 @@ export class Candidate extends LocationBase implements ICandidate {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	candidateLevel?: string;
-	candidate: import('/Users/developer/projects/gauzy/libs/models/src/index').DefaultUser;
 }
