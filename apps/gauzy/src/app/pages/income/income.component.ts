@@ -14,7 +14,7 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { ExpenseDescriptionComponent } from '../expenses/expense-description/expense-description.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 interface SelectedRowModel {
 	data: Income;
@@ -170,7 +170,7 @@ export class IncomeComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: ExpenseDescriptionComponent
+					renderComponent: NotesWithTagsComponent
 				}
 			},
 			pager: {

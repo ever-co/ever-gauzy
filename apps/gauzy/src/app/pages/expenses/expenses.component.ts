@@ -22,7 +22,7 @@ import { ErrorHandlingService } from '../../@core/services/error-handling.servic
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
-import { ExpenseDescriptionComponent } from './expense-description/expense-description.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -112,7 +112,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: ExpenseDescriptionComponent
+					renderComponent: NotesWithTagsComponent
 				},
 				purpose: {
 					title: 'Purpose',
