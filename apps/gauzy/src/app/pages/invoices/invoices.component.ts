@@ -4,10 +4,10 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { InvoicesMutationComponent } from '../../@shared/invoices/invoices-mutation.component';
 import { Invoice } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoicesValueComponent } from './invoices-value.component';
+import { Router } from '@angular/router';
 import { first } from 'rxjs/operators';
 
 export interface SelectedInvoice {
@@ -35,7 +35,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
-		private invoicesService: InvoicesService
+		private invoicesService: InvoicesService,
+		private router: Router
 	) {
 		super(translateService);
 	}
@@ -46,20 +47,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.loadSettings();
 	}
 
-	async save() {
-		const dialog = this.dialogService.open(InvoicesMutationComponent, {
-			context: { invoice: this.selectedInvoice }
-		});
-		const addData = await dialog.onClose.pipe(first()).toPromise();
-		this.selectedInvoice = null;
-		this.disableButton = true;
-		if (addData) {
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-		}
-		this.loadSettings();
+	add() {
+		this.router.navigate(['/pages/invoices/add']);
 	}
 
 	async delete() {

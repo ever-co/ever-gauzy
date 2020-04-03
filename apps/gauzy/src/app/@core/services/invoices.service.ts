@@ -14,18 +14,18 @@ export class InvoicesService {
 			.toPromise();
 	}
 
-	save(invoice: Invoice): Promise<Invoice> {
-		if (!invoice.id) {
-			return this.http
-				.post<Invoice>('/api/invoices', invoice)
-				.pipe(first())
-				.toPromise();
-		} else {
-			return this.http
-				.put<Invoice>(`/api/invoices/${invoice.id}`, invoice)
-				.pipe(first())
-				.toPromise();
-		}
+	add(invoice: Invoice): Promise<Invoice> {
+		return this.http
+			.post<Invoice>('/api/invoices', invoice)
+			.pipe(first())
+			.toPromise();
+	}
+
+	edit(invoice: Invoice): Promise<Invoice> {
+		return this.http
+			.put<Invoice>(`/api/invoices/${invoice.id}`, invoice)
+			.pipe(first())
+			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
