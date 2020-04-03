@@ -4,7 +4,8 @@ import {
 	Expense,
 	PermissionsEnum,
 	IExpenseCategory,
-	IOrganizationVendor
+	IOrganizationVendor,
+	Tag
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -21,6 +22,7 @@ import { ErrorHandlingService } from '../../@core/services/error-handling.servic
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { ExpenseCategoriesStoreService } from '../../@core/services/expense-categories-store.service';
+import { ExpenseDescriptionComponent } from './expense-description/expense-description.component';
 
 export interface ExpenseViewModel {
 	id: string;
@@ -45,6 +47,7 @@ export interface ExpenseViewModel {
 	rateValue: number;
 	receipt: string;
 	splitExpense: boolean;
+	tags: Tag[];
 }
 
 interface SelectedRowModel {
@@ -107,7 +110,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
-					type: 'string'
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: ExpenseDescriptionComponent
 				},
 				purpose: {
 					title: 'Purpose',
@@ -227,7 +232,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 			taxLabel: formData.taxLabel,
 			rateValue: formData.rateValue,
 			receipt: formData.receipt,
-			splitExpense: formData.splitExpense
+			splitExpense: formData.splitExpense,
+			tags: formData.tags
 		};
 	}
 
@@ -414,7 +420,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 
 		try {
 			const { items } = await this.expenseService.getAll(
-				['employee', 'employee.user', 'category', 'vendor'],
+				['employee', 'employee.user', 'category', 'vendor', 'tags'],
 				findObj,
 				this.selectedDate
 			);
@@ -443,7 +449,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 					taxLabel: i.taxLabel,
 					rateValue: i.rateValue,
 					receipt: i.receipt,
-					splitExpense: i.splitExpense
+					splitExpense: i.splitExpense,
+					tags: i.tags
 				};
 			});
 

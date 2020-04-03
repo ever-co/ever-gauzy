@@ -1,3 +1,4 @@
+import { CandidatesService } from './../../@core/services/candidates.service';
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -133,6 +134,7 @@ const COMPONENTS = [
 		OrganizationsService,
 		InviteGuard,
 		CountryService,
+		CandidatesService,
 		OrganizationEmploymentTypesService
 	]
 })

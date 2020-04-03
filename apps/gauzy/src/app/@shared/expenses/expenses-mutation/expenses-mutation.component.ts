@@ -13,7 +13,8 @@ import {
 	TaxTypesEnum,
 	ExpenseTypesEnum,
 	IExpenseCategory,
-	IOrganizationVendor
+	IOrganizationVendor,
+	Tag
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -63,6 +64,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	showWarning = false;
 	disable = true;
 	loading = false;
+	tags: Tag[] = [];
+	selectedTags: any;
 	valueDate: AbstractControl;
 	amount: AbstractControl;
 	notes: AbstractControl;
@@ -193,6 +196,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		if (this.expense) {
+			this.tags = this.expense.tags;
 			this.form = this.fb.group({
 				id: [this.expense.id],
 				amount: [this.expense.amount, Validators.required],
@@ -212,7 +216,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				taxLabel: [this.expense.taxLabel],
 				rateValue: [this.expense.rateValue],
 				receipt: [this.expense.receipt],
-				splitExpense: [this.expense.splitExpense]
+				splitExpense: [this.expense.splitExpense],
+				tags: [this.expense.tags]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -233,7 +238,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				taxLabel: [''],
 				rateValue: [0],
 				receipt: [this.defaultImage],
-				splitExpense: [false]
+				splitExpense: [false],
+				tags: []
 			});
 
 			this._loadDefaultCurrency();
@@ -328,6 +334,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			});
 	}
 
+	selectedTagsHandler(ev: any) {
+		this.form.get('tags').setValue(ev);
+  }
+    
 	onEmployeeChange(selectedEmployee: SelectedEmployee) {
 		this.showTooltip = selectedEmployee === ALL_EMPLOYEES_SELECTED;
 	}

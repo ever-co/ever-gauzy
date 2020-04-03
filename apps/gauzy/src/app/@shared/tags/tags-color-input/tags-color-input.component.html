@@ -3,10 +3,11 @@
 		{{ 'TAGS_PAGE.HEADER' | translate }}
 	</label>
 	<ng-select
+		bindLabel="name"
+		[addTag]="true"
 		formControlName="tags"
 		[items]="tags"
 		[(ngModel)]="selectedTags"
-		bindLabel="id"
 		multiple="true"
 		(change)="onChange()"
 	>
