@@ -19,7 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { EditTimeLogDialogComponent } from './edit-time-log-dialog/edit-time-log-dialog.component';
 
 @NgModule({
-	declarations: [DailyComponent],
+	declarations: [DailyComponent, EditTimeLogDialogComponent],
 	entryComponents: [EditTimeLogDialogComponent],
 	imports: [
 		CommonModule,
