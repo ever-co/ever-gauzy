@@ -10,7 +10,6 @@ export class CandidateCreateHandler
 
 	public async execute(command: CandidateCreateCommand): Promise<Candidate> {
 		const { input } = command;
-
 		return await this.candidateService.create(input);
 	}
 }

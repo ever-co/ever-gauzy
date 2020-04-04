@@ -729,6 +729,7 @@
 		"ADD_USER": "Add User",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ROLE": {
+			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "Admin",
 			"MANAGER": "Manager",
 			"DATA_ENTRY": "Data Entry",

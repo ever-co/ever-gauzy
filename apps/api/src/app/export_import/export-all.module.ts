@@ -34,10 +34,61 @@ import { InviteService } from '../invite/invite.service';
 import { Invite } from '../invite/invite.entity';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
-import { OrganizationProjects } from '../organization-projects';
-import { OrganizationDepartment } from '../organization-department';
-import { Role } from '../role';
+import {
+	OrganizationProjects,
+	OrganizationProjectsService
+} from '../organization-projects';
+import {
+	OrganizationDepartment,
+	OrganizationDepartmentService
+} from '../organization-department';
+import { Role, RoleService } from '../role';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { InvoiceService } from '../invoice/invoice.service';
+import { Invoice } from '../invoice/invoice.entity';
+import { InvoiceItemService } from '../invoice-item/invoice-item.service';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
+import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
+import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import {
+	OrganizationEmploymentTypeService,
+	OrganizationEmploymentType
+} from '../organization-employment-type';
+import {
+	OrganizationPositionsService,
+	OrganizationPositions
+} from '../organization-positions';
+import {
+	OrganizationRecurringExpenseService,
+	OrganizationRecurringExpense
+} from '../organization-recurring-expense';
+import {
+	OrganizationTeamsService,
+	OrganizationTeams
+} from '../organization-teams';
+import {
+	OrganizationVendorsService,
+	OrganizationVendor
+} from '../organization-vendors';
+import { ProposalService, Proposal } from '../proposal';
+import { RolePermissionsService, RolePermissions } from '../role-permissions';
+import { TagService, Tag } from '../tags';
+import { TaskService, Task } from '../tasks';
+import { TenantService, Tenant } from '../tenant';
+import { TimeOffPolicyService, TimeOffPolicy } from '../time-off-policy';
+import {
+	Timesheet,
+	TimeSheetService,
+	TimeSlot,
+	Activity,
+	Screenshot,
+	TimeLog,
+	ActivityService,
+	ScreenShotService,
+	TimeLogService,
+	TimeSlotService
+} from '../timesheet';
 
 @Module({
 	imports: [
@@ -61,7 +112,26 @@ import { OrganizationClients } from '../organization-clients/organization-client
 			OrganizationDepartment,
 			OrganizationProjects,
 			Role,
-			OrganizationClients
+			OrganizationClients,
+			Invoice,
+			InvoiceItem,
+			EmployeeLevel,
+			OrganizationEmploymentType,
+			OrganizationPositions,
+			OrganizationRecurringExpense,
+			OrganizationTeams,
+			OrganizationVendor,
+			Proposal,
+			RolePermissions,
+			Tag,
+			Task,
+			Tenant,
+			TimeOffPolicy,
+			Timesheet,
+			TimeSlot,
+			Activity,
+			Screenshot,
+			TimeLog
 		])
 	],
 	controllers: [ExportAllController],
@@ -81,7 +151,30 @@ import { OrganizationClients } from '../organization-clients/organization-client
 		ExpenseCategoriesService,
 		IncomeService,
 		InviteService,
-		OrganizationService
+		OrganizationService,
+		InvoiceService,
+		InvoiceItemService,
+		EmployeeLevelService,
+		OrganizationClientsService,
+		OrganizationDepartmentService,
+		OrganizationEmploymentTypeService,
+		OrganizationPositionsService,
+		OrganizationProjectsService,
+		OrganizationRecurringExpenseService,
+		OrganizationTeamsService,
+		OrganizationVendorsService,
+		ProposalService,
+		RoleService,
+		RolePermissionsService,
+		TagService,
+		TaskService,
+		TenantService,
+		TimeOffPolicyService,
+		TimeSheetService,
+		ActivityService,
+		ScreenShotService,
+		TimeLogService,
+		TimeSlotService
 	],
 	exports: [
 		ExportAllService,
@@ -99,7 +192,30 @@ import { OrganizationClients } from '../organization-clients/organization-client
 		ExpenseCategoriesService,
 		IncomeService,
 		InviteService,
-		OrganizationService
+		OrganizationService,
+		InvoiceService,
+		InvoiceItemService,
+		EmployeeLevelService,
+		OrganizationClientsService,
+		OrganizationDepartmentService,
+		OrganizationEmploymentTypeService,
+		OrganizationPositionsService,
+		OrganizationProjectsService,
+		OrganizationRecurringExpenseService,
+		OrganizationTeamsService,
+		OrganizationVendorsService,
+		ProposalService,
+		RoleService,
+		RolePermissionsService,
+		TagService,
+		TaskService,
+		TenantService,
+		TimeOffPolicyService,
+		TimeSheetService,
+		ActivityService,
+		ScreenShotService,
+		TimeLogService,
+		TimeSlotService
 	]
 })
 export class ExportAllModule {}

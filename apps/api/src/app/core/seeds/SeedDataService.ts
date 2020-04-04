@@ -66,6 +66,7 @@ import { OrganizationRecurringExpense } from '../../organization-recurring-expen
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
+import { createCandidates } from '../../candidate/candidate.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -171,11 +172,14 @@ export class SeedDataService {
 			const tenants = await createTenants(this.connection);
 
 			const roles: Role[] = await createRoles(this.connection);
-			const { adminUsers, defaultUsers, randomUsers } = await createUsers(
-				this.connection,
-				roles,
-				tenants
-			);
+			const {
+				superAdminUsers,
+				adminUsers,
+				defaultUsers,
+				randomUsers,
+				defaultCandidateUser,
+				randomCandidateUser
+			} = await createUsers(this.connection, roles, tenants);
 			const {
 				defaultOrganization,
 				randomOrganizations
@@ -191,6 +195,20 @@ export class SeedDataService {
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
 
+			await createCandidates(
+				this.connection,
+				{
+					tenant: [...tenants],
+					org: defaultOrganization,
+					users: [...defaultCandidateUser]
+				},
+				{
+					org: defaultOrganization,
+					orgs: randomOrganizations,
+					users: [...randomCandidateUser]
+				}
+			);
+
 			await createTeams(
 				this.connection,
 				defaultOrganization,
@@ -201,9 +219,13 @@ export class SeedDataService {
 				this.connection,
 				{
 					org: defaultOrganization,
-					users: [...defaultUsers, ...adminUsers]
+					users: [...defaultUsers, ...adminUsers, ...superAdminUsers]
 				},
-				{ orgs: randomOrganizations, users: [...randomUsers] }
+				{
+					orgs: randomOrganizations,
+					users: randomUsers,
+					superAdminUsers
+				}
 			);
 
 			await createIncomes(

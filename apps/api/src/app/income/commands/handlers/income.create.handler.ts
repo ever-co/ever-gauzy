@@ -35,6 +35,7 @@ export class IncomeCreateHandler
 		income.currency = input.currency;
 		income.isBonus = input.isBonus;
 		income.reference = input.reference;
+		income.tags = input.tags;
 
 		if (!income.currency) {
 			income.currency = organization.currency;

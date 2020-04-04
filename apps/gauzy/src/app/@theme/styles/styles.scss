@@ -60,16 +60,18 @@
 		background: nb-theme(background-basic-color-1);
 	}
 	.ng-value-container .ng-input input {
+		background-color: nb-theme(background-basic-color-1);
 		color: nb-theme(text-basic-color);
 	}
 	.ng-dropdown-panel {
-		border-color: nb-theme(text-primary-focus-color);
 		box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
-		border: none;
 		border-bottom-left-radius: nb-theme(border-radius);
 		border-bottom-right-radius: nb-theme(border-radius);
 		box-shadow: nb-theme(shadow);
 		transform: translateY(1px);
+		border-color: nb-theme(color-primary-transparent-active-border);
+		border-width: 1px;
+		border-style: solid;
 	}
 
 	tr {
