@@ -29,7 +29,7 @@ export interface Expense extends IBaseEntityModel {
 	rateValue?: number;
 	receipt?: string;
 	splitExpense?: boolean;
-	tags: Tag[];
+	tags?: Tag[];
 }
 
 export interface ExpenseCreateInput {
@@ -53,6 +53,7 @@ export interface ExpenseCreateInput {
 	receipt?: string;
 	splitExpense?: boolean;
 	reference?: string;
+	tags?: Tag[];
 }
 
 export interface ExpenseFindInput extends IBaseEntityModel {
@@ -77,6 +78,7 @@ export interface ExpenseFindInput extends IBaseEntityModel {
 	rateValue?: number;
 	receipt?: string;
 	splitExpense?: boolean;
+	tags?: Tag[];
 }
 
 export interface ExpenseUpdateInput {
@@ -100,6 +102,7 @@ export interface ExpenseUpdateInput {
 	rateValue?: number;
 	receipt?: string;
 	splitExpense?: boolean;
+	tags?: Tag[];
 }
 
 export interface SplitExpenseOutput extends Expense {

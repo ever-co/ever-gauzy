@@ -6,7 +6,7 @@ import {
 	AbstractControl
 } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { Income, OrganizationSelectInput } from '@gauzy/models';
+import { Income, OrganizationSelectInput, Tag } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -30,6 +30,7 @@ export class IncomeMutationComponent implements OnInit {
 	notes: AbstractControl;
 
 	clients: Object[] = [];
+	tags: Tag[] = [];
 
 	fakeClients = [
 		{
@@ -131,6 +132,7 @@ export class IncomeMutationComponent implements OnInit {
 
 	private _initializeForm() {
 		if (this.income) {
+			this.tags = this.income.tags;
 			this.form = this.fb.group({
 				valueDate: [
 					new Date(this.income.valueDate),
@@ -146,7 +148,8 @@ export class IncomeMutationComponent implements OnInit {
 				],
 				notes: this.income.notes,
 				currency: this.income.currency,
-				isBonus: this.income.isBonus
+				isBonus: this.income.isBonus,
+				tags: this.income.tags
 			});
 		} else {
 			this.form = this.fb.group({
@@ -158,7 +161,8 @@ export class IncomeMutationComponent implements OnInit {
 				client: [null, Validators.required],
 				notes: '',
 				currency: '',
-				isBonus: false
+				isBonus: false,
+				tags: []
 			});
 
 			this._loadDefaultCurrency();
@@ -177,5 +181,8 @@ export class IncomeMutationComponent implements OnInit {
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);
 		}
+	}
+	selectedTagsHandler(ev: any) {
+		this.form.get('tags').setValue(ev);
 	}
 }

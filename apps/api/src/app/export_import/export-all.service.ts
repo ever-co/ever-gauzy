@@ -21,6 +21,32 @@ import { ExpenseService } from '../expense';
 import { ExpenseCategoriesService } from '../expense-categories';
 import { IncomeService } from '../income/income.service';
 import { InviteService } from '../invite/invite.service';
+import { InvoiceService } from '../invoice/invoice.service';
+import { InvoiceItemService } from '../invoice-item/invoice-item.service';
+import { OrganizationService } from '../organization/organization.service';
+import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
+import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationDepartmentService } from '../organization-department';
+import { OrganizationEmploymentTypeService } from '../organization-employment-type';
+import { OrganizationPositionsService } from '../organization-positions';
+import { OrganizationProjectsService } from '../organization-projects';
+import { OrganizationRecurringExpenseService } from '../organization-recurring-expense';
+import { OrganizationTeamsService } from '../organization-teams';
+import { OrganizationVendorsService } from '../organization-vendors';
+import { ProposalService } from '../proposal';
+import { RoleService } from '../role';
+import { RolePermissionsService } from '../role-permissions';
+import { TagService } from '../tags';
+import { TaskService } from '../tasks';
+import { TenantService } from '../tenant';
+import { TimeOffPolicyService } from '../time-off-policy';
+import {
+	TimeSheetService,
+	ActivityService,
+	ScreenShotService,
+	TimeLogService,
+	TimeSlotService
+} from '../timesheet';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {
@@ -53,7 +79,58 @@ export class ExportAllService implements OnDestroy {
 			nameFile: 'expense_category'
 		},
 		{ service: this.incomeService, nameFile: 'income' },
-		{ service: this.inviteService, nameFile: 'invite' }
+		{ service: this.inviteService, nameFile: 'invite' },
+		{ service: this.invoiceService, nameFile: 'invoice' },
+		{ service: this.invoiceItemService, nameFile: 'invoice_item' },
+		{ service: this.organizationService, nameFile: 'organization' },
+		{
+			service: this.employeeLevelService,
+			nameFile: 'organization_employee_level'
+		},
+		{
+			service: this.organizationClientsService,
+			nameFile: 'organization_client'
+		},
+		{
+			service: this.organizationDepartmentService,
+			nameFile: 'organization_department'
+		},
+		{
+			service: this.organizationEmploymentTypeService,
+			nameFile: 'organization_employment_type'
+		},
+		{
+			service: this.organizationPositionsService,
+			nameFile: 'organization_position'
+		},
+		{
+			service: this.organizationProjectsService,
+			nameFile: 'organization_project'
+		},
+		{
+			service: this.organizationRecurringExpenseService,
+			nameFile: 'organization_recurring_expense'
+		},
+		{
+			service: this.organizationTeamsService,
+			nameFile: 'organization_team'
+		},
+		{
+			service: this.organizationVendorsService,
+			nameFile: 'organization_vendor'
+		},
+		{ service: this.proposalService, nameFile: 'proposal' },
+		{ service: this.roleService, nameFile: 'role' },
+		{ service: this.rolePermissionsService, nameFile: 'role_permission' },
+		{ service: this.tagService, nameFile: 'tag' },
+		{ service: this.taskService, nameFile: 'task' },
+		{ service: this.tenantService, nameFile: 'tenant' },
+		{ service: this.timeOffPolicyService, nameFile: 'time-off-policy' },
+		{ service: this.timeSheetService, nameFile: 'timesheet' },
+		{ service: this.activityService, nameFile: 'activity' },
+		{ service: this.screenShotService, nameFile: 'screenshot' },
+		{ service: this.timeLogService, nameFile: 'time_log' },
+		{ service: this.timeSlotService, nameFile: 'time_slot' }
 	];
 
 	constructor(
@@ -70,7 +147,31 @@ export class ExportAllService implements OnDestroy {
 		private expenseService: ExpenseService,
 		private expenseCategoriesService: ExpenseCategoriesService,
 		private incomeService: IncomeService,
-		private inviteService: InviteService
+		private inviteService: InviteService,
+		private invoiceService: InvoiceService,
+		private invoiceItemService: InvoiceItemService,
+		private organizationService: OrganizationService,
+		private employeeLevelService: EmployeeLevelService,
+		private organizationClientsService: OrganizationClientsService,
+		private organizationDepartmentService: OrganizationDepartmentService,
+		private organizationEmploymentTypeService: OrganizationEmploymentTypeService,
+		private organizationPositionsService: OrganizationPositionsService,
+		private organizationProjectsService: OrganizationProjectsService,
+		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
+		private organizationTeamsService: OrganizationTeamsService,
+		private organizationVendorsService: OrganizationVendorsService,
+		private proposalService: ProposalService,
+		private roleService: RoleService,
+		private rolePermissionsService: RolePermissionsService,
+		private tagService: TagService,
+		private taskService: TaskService,
+		private tenantService: TenantService,
+		private timeOffPolicyService: TimeOffPolicyService,
+		private timeSheetService: TimeSheetService,
+		private activityService: ActivityService,
+		private screenShotService: ScreenShotService,
+		private timeLogService: TimeLogService,
+		private timeSlotService: TimeSlotService
 	) {}
 
 	async createFolders(): Promise<any> {
