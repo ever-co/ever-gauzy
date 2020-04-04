@@ -1,12 +1,18 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Validators, FormBuilder, FormGroup } from '@angular/forms';
+import {
+	Validators,
+	FormBuilder,
+	FormGroup,
+	AbstractControl
+} from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { Income, OrganizationSelectInput } from '@gauzy/models';
+import { Income, OrganizationSelectInput, Tag } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 
 @Component({
 	selector: 'ngx-income-mutation',
@@ -21,6 +27,10 @@ export class IncomeMutationComponent implements OnInit {
 	currencies = Object.values(CurrenciesEnum);
 
 	form: FormGroup;
+	notes: AbstractControl;
+
+	clients: Object[] = [];
+	tags: Tag[] = [];
 
 	fakeClients = [
 		{
@@ -85,13 +95,24 @@ export class IncomeMutationComponent implements OnInit {
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<IncomeMutationComponent>,
 		private organizationsService: OrganizationsService,
-		private store: Store
+		private store: Store,
+		private clientService: OrganizationClientsService
 	) {}
 
 	ngOnInit() {
 		this._initializeForm();
 		this.form.get('currency').disable();
-		console.log(this.form.value)
+		this._getClients();
+	}
+
+	private async _getClients() {
+		const items = await this.clientService.getAll();
+		items['items'].forEach((i) => {
+			this.clients = [
+				...this.clients,
+				{ clientName: i.name, clientId: i.id }
+			];
+		});
 	}
 
 	addOrEditIncome() {
@@ -100,21 +121,18 @@ export class IncomeMutationComponent implements OnInit {
 				Object.assign(
 					{ employee: this.employeeSelector.selectedEmployee },
 					this.form.value
-					
 				)
-				
 			);
-			
 		}
 	}
-        
+
 	close() {
 		this.dialogRef.close();
 	}
 
 	private _initializeForm() {
-		
 		if (this.income) {
+			this.tags = this.income.tags;
 			this.form = this.fb.group({
 				valueDate: [
 					new Date(this.income.valueDate),
@@ -130,7 +148,8 @@ export class IncomeMutationComponent implements OnInit {
 				],
 				notes: this.income.notes,
 				currency: this.income.currency,
-				isBonus: this.income.isBonus
+				isBonus: this.income.isBonus,
+				tags: this.income.tags
 			});
 		} else {
 			this.form = this.fb.group({
@@ -142,11 +161,13 @@ export class IncomeMutationComponent implements OnInit {
 				client: [null, Validators.required],
 				notes: '',
 				currency: '',
-				isBonus: false
+				isBonus: false,
+				tags: []
 			});
 
 			this._loadDefaultCurrency();
 		}
+		this.notes = this.form.get('notes');
 	}
 
 	private async _loadDefaultCurrency() {
@@ -160,5 +181,8 @@ export class IncomeMutationComponent implements OnInit {
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);
 		}
+	}
+	selectedTagsHandler(ev: any) {
+		this.form.get('tags').setValue(ev);
 	}
 }

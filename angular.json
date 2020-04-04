@@ -24,12 +24,15 @@
 			"architect": {
 				"build": {
 					"builder": "@angular-devkit/build-angular:browser",
-					"options": {
+					"options": {            
 						"outputPath": "dist/apps/gauzy",
 						"index": "apps/gauzy/src/index.html",
 						"main": "apps/gauzy/src/main.ts",
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
+						"stylePreprocessorOptions": {
+							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
 							"apps/gauzy/src/assets",
@@ -82,7 +85,7 @@
 							"aot": true,
 							"extractLicenses": true,
 							"vendorChunk": false,
-							"buildOptimizer": true,
+							"buildOptimizer": false,
 							"budgets": [
 								{
 									"type": "initial",

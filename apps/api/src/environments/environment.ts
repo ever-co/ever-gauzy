@@ -62,9 +62,17 @@ export const environment: IEnvironment = {
 		imageUrl: 'assets/images/logos/ever-large.jpg'
 	},
 
-	defaultAdmins: [
+	defaultSuperAdmins: [
 		{
 			email: 'admin@ever.co',
+			password: 'admin',
+			imageUrl: 'assets/images/avatars/ruslan.jpg'
+		}
+	],
+
+	defaultAdmins: [
+		{
+			email: 'local.admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg'
 		}
@@ -76,80 +84,272 @@ export const environment: IEnvironment = {
 			password: '123456',
 			firstName: 'Alish',
 			lastName: 'Meklyov',
-			imageUrl: 'assets/images/avatars/alish.jpg'
+			imageUrl: 'assets/images/avatars/alish.jpg',
+			startedWorkOn: '2018-03-20',
+			endWork: null,
+			employeeLevel: 'D'
 		},
 		{
 			email: 'blagovest@ever.co',
 			password: '123456',
 			firstName: 'Blagovest',
 			lastName: 'Gerov',
-			imageUrl: 'assets/images/avatars/blagovest.jpg'
+			imageUrl: 'assets/images/avatars/blagovest.jpg',
+			startedWorkOn: '2018-03-19',
+			endWork: null,
+			employeeLevel: 'C'
 		},
 		{
 			email: 'elvis@ever.co',
 			password: '123456',
 			firstName: 'Elvis',
 			lastName: 'Arabadjiiski',
-			imageUrl: 'assets/images/avatars/elvis.jpg'
+			imageUrl: 'assets/images/avatars/elvis.jpg',
+			startedWorkOn: '2018-05-25',
+			endWork: null,
+			employeeLevel: 'C'
 		},
 		{
 			email: 'emil@ever.co',
 			password: '123456',
 			firstName: 'Emil',
 			lastName: 'Momchilov',
-			imageUrl: 'assets/images/avatars/emil.jpg'
+			imageUrl: 'assets/images/avatars/emil.jpg',
+			startedWorkOn: '2019-01-21',
+			endWork: null,
+			employeeLevel: 'C'
 		},
 		{
 			email: 'boyan@ever.co',
 			password: '123456',
 			firstName: 'Boyan',
 			lastName: 'Stanchev',
-			imageUrl: 'assets/images/avatars/boyan.jpg'
+			imageUrl: 'assets/images/avatars/boyan.jpg',
+			startedWorkOn: '2019-01-21',
+			endWork: null,
+			employeeLevel: 'C'
 		},
 		{
 			email: 'hristo@ever.co',
 			password: '123456',
 			firstName: 'Hristo',
 			lastName: 'Hristov',
-			imageUrl: 'assets/images/avatars/hristo.jpg'
+			imageUrl: 'assets/images/avatars/hristo.jpg',
+			startedWorkOn: '2019-06-17',
+			endWork: null,
+			employeeLevel: 'B'
 		},
 		{
 			email: 'alex@ever.co',
 			password: '123456',
 			firstName: 'Aleksandar',
 			lastName: 'Tasev',
-			imageUrl: 'assets/images/avatars/alexander.jpg'
-		},
-		{
-			email: 'milena@ever.co',
-			password: '123456',
-			firstName: 'Milena',
-			lastName: 'Dimova',
-			imageUrl: 'assets/images/avatars/milena.jpg'
+			imageUrl: 'assets/images/avatars/alexander.jpg',
+			startedWorkOn: '2019-08-01',
+			endWork: null,
+			employeeLevel: 'B'
 		},
 		{
 			email: 'rachit@ever.co',
 			password: '123456',
 			firstName: 'Rachit',
 			lastName: 'Magon',
-			imageUrl: 'assets/images/avatars/rachit.png'
+			imageUrl: 'assets/images/avatars/rachit.png',
+			startedWorkOn: '2019-11-27',
+			endWork: null,
+			employeeLevel: null
 		},
 		{
 			email: 'atanas@ever.co',
 			password: '123456',
 			firstName: 'Atanas',
 			lastName: 'Yonkov',
-			imageUrl: 'assets/images/avatars/atanas.jpeg'
+			imageUrl: 'assets/images/avatars/atanas.jpeg',
+			startedWorkOn: '2020-02-01',
+			endWork: null,
+			employeeLevel: 'A'
 		},
 		{
 			email: 'dimana@ever.co',
 			password: '123456',
 			firstName: 'Dimana',
 			lastName: 'Tsvetkova',
-			imageUrl: 'assets/images/avatars/dimana.jpeg'
+			imageUrl: 'assets/images/avatars/dimana.jpeg',
+			startedWorkOn: '2019-11-26',
+			endWork: null,
+			employeeLevel: null
+		},
+		{
+			email: 'sunko@ever.co',
+			password: '123456',
+			firstName: 'Alexander',
+			lastName: 'Savov',
+			imageUrl: 'assets/images/avatars/savov.jpg',
+			startedWorkOn: '2020-02-04',
+			endWork: null,
+			employeeLevel: 'A'
+		},
+		{
+			email: 'lubomir@ever.co',
+			password: '123456',
+			firstName: 'Lubomir',
+			lastName: 'Petrov',
+			imageUrl: 'assets/images/avatars/lubomir.jpg',
+			startedWorkOn: '2020-02-06',
+			endWork: null,
+			employeeLevel: 'A'
+		},
+		{
+			email: 'pavel@ever.co',
+			password: '123456',
+			firstName: 'Pavel',
+			lastName: 'Denchev',
+			imageUrl: 'assets/images/avatars/pavel.jpg',
+			startedWorkOn: '2020-03-16',
+			endWork: null,
+			employeeLevel: 'A'
+		},
+		{
+			email: 'yavor@ever.co',
+			password: '123456',
+			firstName: 'Yavor',
+			lastName: 'Grancharov',
+			imageUrl: 'assets/images/avatars/yavor.jpg',
+			startedWorkOn: '2020-02-05',
+			endWork: null,
+			employeeLevel: 'A'
+		},
+		{
+			email: 'tsvetelina@ever.co',
+			password: '123456',
+			firstName: 'Tsvetelina',
+			lastName: 'Yordanova',
+			imageUrl: 'assets/images/avatars/tsvetelina.jpg',
+			startedWorkOn: '2020-03-02',
+			endWork: null,
+			employeeLevel: 'A'
+		},
+		{
+			email: 'everq@ever.co',
+			password: '123456',
+			firstName: 'Ruslan',
+			lastName: 'Konviser',
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			startedWorkOn: '2018-08-01',
+			endWork: null,
+			employeeLevel: 'C'
+		},
+		{
+			email: 'muiz@smooper.xyz',
+			password: '123456',
+			firstName: 'Muiz',
+			lastName: 'Nadeem',
+			imageUrl: 'assets/images/avatars/muiz.jpg',
+			startedWorkOn: '2019-11-27',
+			endWork: null,
+			employeeLevel: null
+		},
+		{
+			email: 'deko898@hotmail.com',
+			password: '123456',
+			firstName: 'Dejan',
+			lastName: 'Obradovikj',
+			imageUrl: 'assets/images/avatars/dejan.jpg',
+			startedWorkOn: '2020-03-07',
+			endWork: null,
+			employeeLevel: null
+		},
+		{
+			email: 'ckhandla94@gmail.com',
+			password: '123456',
+			firstName: 'Chetan',
+			lastName: 'Khandla',
+			imageUrl: 'assets/images/avatars/chetan.png',
+			startedWorkOn: '2020-03-07',
+			endWork: null,
+			employeeLevel: null
+		},
+		{
+			email: 'julia@ever.co',
+			password: '123456',
+			firstName: 'Julia',
+			lastName: 'Konviser',
+			imageUrl: 'assets/images/avatars/julia.png',
+			startedWorkOn: '2018-08-01',
+			endWork: null,
+			employeeLevel: 'C'
+		},
+		{
+			email: '',
+			password: '123456',
+			firstName: 'Milena',
+			lastName: 'Dimova',
+			imageUrl: 'assets/images/avatars/milena.png',
+			startedWorkOn: '2019-07-15',
+			endWork: '2019-10-15',
+			employeeLevel: 'A'
 		}
 	],
-
+	defaultCandidates: [
+		{
+			email: 'john@ever.co',
+			password: '123456',
+			firstName: 'John',
+			lastName: 'Smith',
+			imageUrl: 'assets/images/avatars/alish.jpg',
+			candidateLevel: 'D'
+		},
+		{
+			email: 'jaye@ever.co',
+			password: '123456',
+			firstName: 'Jaye',
+			lastName: 'Jeffreys',
+			imageUrl: 'assets/images/avatars/alexander.jpg',
+			startedWorkOn: '2019-08-01',
+			endWork: null,
+			employeeLevel: 'B'
+		},
+		{
+			email: 'kasey@ever.co',
+			password: '123456',
+			firstName: 'Kasey',
+			lastName: 'Kraker',
+			imageUrl: 'assets/images/avatars/rachit.png',
+			startedWorkOn: '2019-11-27',
+			endWork: null,
+			employeeLevel: null
+		},
+		{
+			email: 'norris@ever.co',
+			password: '123456',
+			firstName: 'Norris ',
+			lastName: 'Nesbit',
+			imageUrl: 'assets/images/avatars/atanas.jpeg',
+			startedWorkOn: '2020-02-01',
+			endWork: null,
+			employeeLevel: 'A'
+		},
+		{
+			email: 'estella@ever.co',
+			password: '123456',
+			firstName: 'Estella',
+			lastName: 'Ennis',
+			imageUrl: 'assets/images/avatars/dimana.jpeg',
+			startedWorkOn: '2019-11-26',
+			endWork: null,
+			employeeLevel: null
+		},
+		{
+			email: 'greg@ever.co',
+			password: '123456',
+			firstName: 'Greg ',
+			lastName: 'Grise',
+			imageUrl: 'assets/images/avatars/savov.jpg',
+			startedWorkOn: '2020-02-04',
+			endWork: null,
+			employeeLevel: 'A'
+		}
+	],
 	defaultTeams: [
 		{
 			name: 'Employees',
@@ -160,18 +360,36 @@ export const environment: IEnvironment = {
 				'elvis@ever.co',
 				'emil@ever.co',
 				'boyan@ever.co',
+				'atanas@ever.co',
 				'hristo@ever.co',
 				'alex@ever.co',
-				'milena@ever.co'
+				'milena@ever.co',
+				'sunko@ever.co',
+				'lubomir@ever.co',
+				'pavel@ever.co',
+				'yavor@ever.co',
+				'tsvetelina@ever.co',
+				'everq@ever.co',
+				'julia@ever.co'
 			]
 		},
+		{
+			name: 'Candidates',
+			defaultMembers: ['john@ever.co']
+		},
+
 		{
 			name: 'Contractors',
 			defaultMembers: [
 				'rachit@ever.co',
-				'atanas@ever.co',
-				'dimana@ever.co'
+				'dimana@ever.co',
+				'deko898@hotmail.com',
+				'muiz@smooper.xyz',
+				'ckhandla94@gmail.com'
 			]
 		}
-	]
+	],
+	sentry: {
+		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+	}
 };

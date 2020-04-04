@@ -3,8 +3,9 @@ import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { StatusTypesEnum, PermissionsEnum } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { TimeOffRequestMutationComponent } from '../../@shared/time-off/time-off-request-mutation/time-off-request--mutation.component';
 
 @Component({
 	selector: 'ngx-time-off',
@@ -90,10 +91,15 @@ export class TimeOffComponent implements OnInit, OnDestroy {
 	) {}
 
 	openTimeOffSettings() {
-		this.router.navigate(['/pages/time-off/settings']);
+		this.router.navigate(['/pages/employees/time-off/settings']);
 	}
 
-	requestDaysOff() {}
+	async requestDaysOff() {
+		const result = await this.dialogService
+			.open(TimeOffRequestMutationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+	}
 
 	addHolidays() {}
 

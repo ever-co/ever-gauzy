@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ADD_EXISTING_USER": "Добавить существующего пользователя",
+		"ADD_NEW": "Добавить новый",
 		"ADD": "Добавить",
 		"CREATE": "Создать",
 		"REGISTER": "Регистрация",
@@ -9,6 +11,8 @@
 		"DETAILS": "Детали",
 		"DUPLICATE": "Duplicate",
 		"DELETE": "Удалить",
+		"REMOVE": "Удалить",
+		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
 		"BACK": "Обратно",
@@ -20,7 +24,12 @@
 		"SELECT_ALL": "Выделить все",
 		"COPY_LINK": "Скопировать ссылку",
 		"MANAGE_INVITES": "Управление приглашениями",
-		"RESEND": "Переслать"
+		"RESEND": "Переслать",
+		"NEXT": "Следующий",
+		"PREVIOUS": "Предыдущий",
+		"INVITE_AGAIN": "Пригласить ещё раз",
+		"REQUEST": "Запросить",
+		"HISTORY": "История"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -42,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Бонус на основе прибыли",
 		"REVENUE_BASED_BONUS": "Бонус на основе дохода",
 		"STATUS": "Статус",
+		"SOURCE": "Источник",
 		"WORK_STATUS": "Статус работы",
 		"TODAY": "Сегодня",
 		"END_OF_MONTH": "Конец месяца",
@@ -90,7 +100,9 @@
 			"FIRST_NAME": "Имя (необязательно)",
 			"LAST_NAME": "Фамилия (необязательно)",
 			"START_DATE": "Дата начала работы",
+			"APPLIED_DATE_LABEL": "Дата применения",
 			"IMAGE_URL": "URL изображения (необязательно)",
+			"CV_URL": "URL CV (необязательно)",
 			"CURRENCY": "Валюта",
 			"DATE_TYPE": "Тип даты по умолчанию",
 			"ADD_TEAM": "Добавить новую команду",
@@ -122,7 +134,24 @@
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_DISABLE_INVITES": "Включить/выключить приглашения",
 			"ALLOW_USER_INVITES": "Разрешить пользователям отправлять приглашения",
-			"INVITE_EXPIRY_PERIOD": "Срок приглашения истекает (в днях)"
+			"INVITE_EXPIRY_PERIOD": "Срок приглашения истекает (в днях)",
+			"EMPLOYMENT_TYPES": "Тип занятости",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Добавить новый тип занятости",
+			"OFFER_DATE": "Дата предложения (опционально)",
+			"ACCEPT_DATE": "Дата принятия (опционально)",
+			"APPLIED_DATE": "Дата подачи заявки (опционально)",
+			"HIRED_DATE": "Дата окончания (опционально)",
+			"REJECT_DATE": "Дата отклонения (опционально)",
+			"EMAIL_INVITATION": "Введите email для отправки приглашения",
+			"SELECT_EQUIPMENT": "Выберите оборудование",
+			"SELECT_SHARE_REQUEST_DATE": "Выберите дату запроса",
+			"SELECT_SHARE_START_DATE": "Выберите дату начала",
+			"SELECT_SHARE_END_DATE": "Выберите дату окончания",
+			"SELECT_EMPLOYEE": "Выберите сотрудника",
+			"SELECT_TEAM": "Выберите команду",
+			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
+			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
+			"REGISTRATION_DATE": "Дата регистрации"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -142,6 +171,7 @@
 			"ADD_DEPARTMENT": "Добавить департамент",
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
+			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
 			"END_DATE_PROJECT": "Дата окончания (необязательно)",
@@ -170,7 +200,11 @@
 			"REGIONS": "Выберите регион",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Изображение",
+			"UPLOADER_CV_PLACEHOLDER": "CV",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
+			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
+			"ADD_ORGANIZATIONS": "Добавить организации",
 			"DATE": "Дата",
 			"VALUE": "Стоимость",
 			"SELECT_CURRENCY": "Выберите валюту",
@@ -178,7 +212,12 @@
 			"BONUS_PERCENTAGE": "Бонус Процент",
 			"ENABLE_INVITES": "Включить приглашения",
 			"INVITE_EXPIRY_PERIOD": "Приглашает действительного до",
-			"SWITCH_PROJECT_STATE": "Публичный"
+			"SWITCH_PROJECT_STATE": "Публичный",
+			"CHOOSE_EMPLOYEES": "Выберите сотрудника/с",
+			"CHOOSE_TEAMS": "Выберите команду/с",
+			"EMPLOYMENT_TYPES": "Тип занятости",
+			"REGISTRATION_DATE": "Дата регистрации организации",
+			"ORGANIZATIONS": "Выберите организации"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -187,15 +226,21 @@
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Включать удаленные"
 		},
+		"NOTIFICATIONS": {
+			"STARTED_WORK_ON": "Необходимо ввести дату, когда работник начал работу для генерации заработной платы работников, позволяет работнику участвовать в разделенных расходах, видеть статистику работников"
+		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
 			"DELETE_ACCOUNT": "Вы уверены, что хотите удалить свою учетную запись?",
+			"REMOVE_USER": " от вашей организации",
 			"SURE": "Вы уверены, что хотите удалить",
 			"RECORD": "запись",
+			"USER_RECORD": "от вашей организации",
 			"EMPLOYEE": "служащий",
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
-			"INVITATION": "приглашение"
+			"INVITATION": "приглашение",
+			"DELETE_USER": " из базы данных, поскольку ее данные больше не являются частью какой-либо организации "
 		}
 	},
 	"POP_UPS": {
@@ -215,7 +260,7 @@
 		"TAX_TYPE": "Тип налога (% или значение)",
 		"TAX_RATE": "Ставка налога",
 		"RECURRING_EXPENSES": "Периодические ежемесячные расходы",
-		"PURPOSE": "Purpose",
+		"PURPOSE": "Цель",
 		"BACK_TO_WORK": "вернуться к работе",
 		"END_WORK": "Конец Работы для",
 		"AMOUNT": "Количество",
@@ -232,26 +277,56 @@
 		"CANCEL": "Отменить",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Вы уверены, что хотите изменить",
 		"RECURRING_EXPENSE": "Это периодические расходы",
-		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}"
+		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}",
+		"STARTS_ON": "Начинается при",
+		"EXPENSE_HISTORY": "История расходов",
+		"NEW_EXPENSE_VALUE": "Новое значение расхода"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
+		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
+		"INTEGRATIONS": "Интеграции",
+		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
 		"HELP": "Помогите",
 		"ABOUT": "О нас",
 		"ADMIN": "Администратор",
 		"EMPLOYEES": "Сотрудники",
+		"MANAGE": "Управлять",
+		"CANDIDATES": "Кандидаты",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
 		"USERS": "Пользователи",
 		"ROLES": "Роли и Разрешения",
 		"DANGER_ZONE": "Опасная зона",
-		"DOWNLOAD_DATA": "Скачать все данные",
-		"TAGS": "Теги"
+		"IMPORT_EXPORT": {
+			"IMPORT_EXPORT": "Импорт/Экспорт",
+			"IMPORT": "Импорт",
+			"EXPORT": "Экспорт"
+		},
+		"TAGS": "Теги",
+		"EQUIPMENT": "Оборудование",
+		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
+		"TASKS": "Задачи",
+		"INVOICES": "Счета",
+		"ORGANIZATION": "Организация",
+		"RECURRING_INVOICES": "Повторяющиеся счета",
+		"ESTIMATES": "Оценки",
+		"MY_TASKS": "Мои задачи",
+		"TEAM_TASKS": "Задачи команды",
+		"ACTIVITY": "Активность",
+		"TIMESHEETS": "Сроки",
+		"SCHEDULES": "Графики",
+		"EMAIL_TEMPLATES": "Шаблоны писем",
+		"REPORTS": "Отчёты",
+		"TIME_REPORTS": "Отчеты по времени",
+		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
+		"PAYMENT_GATEWAYS": "Платежные шлюзы",
+		"CUSTOM_SMTP": "Пользовательский SMTP"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -265,10 +340,29 @@
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Русский"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Бухгалтер",
+		"HUMAN_RESOURCES": "Людские ресурсы",
+		"TIME_TRACKING": "Время отслеживания",
+		"PROJECT_MANAGEMENT": "Управление проектом",
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Пожалуйста, выберите месяц и сотрудника из меню выше",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Вставить текст для неавторизованных пользователей",
+		"CHARTS": {
+			"BAR": "Бар",
+			"DOUGHNUT": "Ореховый",
+			"STACKED_BAR": "Панель накопления",
+			"CHART_TYPE": "Тип диаграммы",
+			"REVENUE": "Доход",
+			"EXPENSES": "Затраты",
+			"PROFIT": "Прибыль",
+			"BONUS": "Бонус",
+			"NO_MONTH_DATA": "Нет данных за этот месяц"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Отчет о прибыли",
 			"TOTAL_EXPENSES": "Всего расходов",
@@ -288,10 +382,13 @@
 			"TOTAL_PROFIT_BONUS": "Общий бонус к прибыли",
 			"TOTAL_DIRECT_BONUS": "Бонус прямого дохода",
 			"TOTAL_DIRECT_BONUS_INFO": "Это равно прямому доходу",
-			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% прибыли",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% прибыли {{ difference }}",
 			"TOTAL_INCOME_BONUS": "Общий бонус к доходам",
-			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% дохода",
-			"TOTAL_EXPENSE_CALC": "Всего = Расходы работников + Сплит Расходы + Повторяющиеся + зарплата"
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% дохода {{ totalIncome }}",
+			"TOTAL_EXPENSE_CALC": "Всего = Расходы работников + Сплит Расходы + Повторяющиеся + зарплата",
+			"TOTAL_EXPENSES_WITHOUT_SALARY": "Общие расходы без зарплаты",
+			"TOTAL_EXPENSES_WITHOUT_SALARY_CALC": "Расход = Расходы сотрудника + Сплит Расходы + Повторяющиеся расходы",
+			"TOTAL_BONUS_CALC": "Общий бонус = прямой доход бонус {{ totalBonusIncome }} + бонус {{ calculatedBonus }}"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
@@ -331,7 +428,8 @@
 		},
 		"SPLIT_HELP": "Если установлено, то эти расходы будут распределены между всеми сотрудниками компании и учитываться при каждом расходе.",
 		"SPLIT_WILL_BE_TOOLTIP": "Эти расходы будут в равной степени разделены между всеми сотрудниками",
-		"SPLIT_EXPENSE": "Разделить расход"
+		"SPLIT_EXPENSE": "Разделить расход",
+		"ADD_EXPENSE_CATEGORY": "Добавить новую категорию расходов"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление сотрудниками для",
@@ -352,7 +450,55 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Кафедры работника:",
 			"EMPLOYEE_PROJECTS": "Проекты сотрудника:",
-			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:"
+			"EMPLOYEE_CLIENTS": "Клиенты сотрудника:",
+			"EMPLOYMENT_TYPE": "Тип занятости",
+			"ACCOUNT": "Аккаунт",
+			"EMPLOYMENT": "Занятость",
+			"LOCATION": "Местоположение",
+			"RATES": "Тарифы",
+			"PROJECTS": "Проекты",
+			"CLIENTS": "Клиенты",
+			"HIRING": "Hiring"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Шаг 1",
+			"STEP_2": "Шаг2",
+			"ADD_ANOTHER_EMPLOYEE": "Добавить другого сотрудника",
+			"FINISHED_ADDING": "Я добавил все текущие сотрудники",
+			"NEXT": "Следующий",
+			"PREVIOUS": "Предыдущий"
+		}
+	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Управление Кандидатами для ",
+		"ADD_CANDIATE": "Добавить Кандидатов",
+		"APPLIED": "Применяется",
+		"HIRED": "Наклонный",
+		"REJECTED": "Отклонено",
+		"DELETED": "Удалено",
+		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Управление Кандидатом",
+			"DEVELOPER": "Разработчик",
+			"DEPARTMENT": "Департамент",
+			"POSITION": "Позиция",
+			"CANDIATE_DEPARTMENTS": "Кафедры работника:",
+			"EMPLOYMENT_TYPE": "Тип занятости",
+			"ACCOUNT": "Аккаунт",
+			"EMPLOYMENT": "Занятость",
+			"LOCATION": "Местоположение",
+			"RATES": "Тарифы",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Шаг 1",
+			"STEP_2": "Шаг2",
+			"STEP_3": "Шаг3",
+			"UPLOAD_CV": "Загрузить CV",
+			"ADD_ANOTHER_CANDIATE": "Добавить еще один Кандидат",
+			"FINISHED_ADDING": "Я добавил все текущие Кандидаты",
+			"NEXT": "Следующий",
+			"PREVIOUS": "Предыдущий"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -364,6 +510,7 @@
 		"CLIENTS": "Клиенты",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Вендоры",
+		"EXPENSE_CATEGORIES": "Категории расходов",
 		"PROJECTS": "Проекты",
 		"ACTIVE": "Активно",
 		"ARCHIVED": "Архивирован",
@@ -371,6 +518,9 @@
 		"SETTINGS": "Настройки",
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Организационные периодические расходы",
+		"EMPLOYMENT_TYPES": "Типы занятости",
+		"INVITE_CLIENT": "Пригласить клиента",
+		"EMAIL_INVITE": "Приглашение",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -398,7 +548,21 @@
 			"CLICK_EMPLOYEE": "Нажмите, чтобы изменить сотрудника",
 			"EDIT_PROJECT": "Редактировать проект",
 			"REGIONS": "Регионы",
-			"ROLES_PERMISSIONS": "Роли и Разрешения"
+			"ROLES_PERMISSIONS": "Роли и Разрешения",
+			"DATE_LIMIT": "Ограничение даты",
+			"USER_ORGANIZATIONS": "Список организаций {{ name }}",
+			"ADDED_TO_ORGANIZATION": " организация",
+			"USER_WAS_DELETED": "{{ name }} был успешно удален.",
+			"USER_WAS_REMOVED": "{{ name }} был успешно удален из организации.",
+			"SETTINGS": {
+				"TIMER_SETTINGS": "Настройки таймера",
+				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
+				"REQUIRE_REASON": "Требуется причина",
+				"REQUIRE_DESCRIPTION": "Требуется описание",
+				"REQUIRE_PROJECT": "Требовать проект",
+				"REQUIRE_TASK": "Требовать задание",
+				"REQUIRE_CLIENT": "Требовать клиента"
+			}
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Просмотр панели администратора",
@@ -411,6 +575,8 @@
 			"ORG_TIME_OFF_VIEW": "Показать время на странице",
 			"ORG_EMPLOYEES_VIEW": "Сотрудники организации",
 			"ORG_EMPLOYEES_EDIT": "Создать/Редактировать/Удалить Сотрудников Организации",
+			"ORG_CANDIDATES_VIEW": "Просмотреть Кандидаты Организации",
+			"ORG_CANDIDATES_EDIT": "Создать/Редактировать/Удалить Кандидаты Организации",
 			"ORG_USERS_VIEW": "Просмотр пользователей организации",
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ORG_INVITE_VIEW": "Просмотреть приглашения организации",
@@ -420,8 +586,10 @@
 			"POLICY_VIEW": "Просмотр политики отключения",
 			"POLICY_EDIT": "Редактировать политику отключения",
 			"CHANGE_SELECTED_EMPLOYEE": "Изменить выбранного сотрудника",
+			"CHANGE_SELECTED_CANDIDATE": "Изменить выбранный Кандидат",
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
+			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -492,20 +660,86 @@
 	},
 	"TAGS_PAGE": {
 		"HEADER": "Теги",
-		"ADD_TAGS": "Добавить теги"
+		"ADD_TAGS": "Добавить теги",
+		"EDIT_TAGS": "Изменить теги",
+		"TAGS_NAME": "Имя",
+		"TAGS_DESCRIPTION": "Описание",
+		"TAGS_COLOR": "Цвет",
+		"TAGS_ADD_TAG": "Тег добавлен",
+		"TAGS_EDIT_TAG": "Тег отредактирован",
+		"TAGS_DELETE_TAG": "Метка удалена",
+		"TAGS_SELECT_NAME": "Имя тега",
+		"TAGS_SELECT_COLOR": "Цвет тега",
+		"TAGS_SELECT_DESCRIPTION": "Описание метки"
+	},
+	"EQUIPMENT_PAGE": {
+		"HEADER": "Оборудование",
+		"ADD_EQUIPMENT": "Добавить снаряжение",
+		"EDIT_EQUIPMENT": "Изменить снаряжение",
+		"EQUIPMENT_NAME": "Имя",
+		"EQUIPMENT_TYPE": "Тип",
+		"EQUIPMENT_SN": "SN",
+		"EQUIPMENT_MANUFACTURED_YEAR": "Год производства",
+		"EQUIPMENT_INITIAL_COST": "Начальные затраты",
+		"EQUIPMENT_CURRENCY": "Валюта",
+		"EQUIPMENT_MAX_SHARE_PERIOD": "Макс. срок акции",
+		"EQUIPMENT_AUTO_APPROVE": "Авто подтверждение",
+		"EQUIPMENT_EDITED": "Оборудование отредактировано",
+		"EQUIPMENT_DELETED": "Снаряжение удалено",
+		"EQUIPMENT_ADDED": "Снаряжение добавлено",
+		"EQUIPMENT_SAVED": "Оборудование сохранено"
+	},
+	"EQUIPMENT_SHARING_PAGE": {
+		"HEADER": "Совместное использование снаряжения",
+		"ADD_EQUIPMENT_REQUEST": "Запросить оборудование",
+		"EDIT_EQUIPMENT_REQUEST": "Изменить запрос на оборудование",
+		"DELETE_EQUIPMENT_REQUEST": "Удалить запрос на оборудование",
+		"REQUEST": "Запросить",
+		"EQUIPMENT_NAME": "Название оборудования",
+		"SHARE_REQUIEST_DATE": "Поделиться датой запроса",
+		"SHARE_START_DATE": "Поделиться датой начала",
+		"SHARE_END_DATE": "Поделиться датой окончания",
+		"STATUS": "Статус",
+		"REQUEST_SAVED": "Запрос сохранен",
+		"REQUEST_DELETED": "Запрос удален",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Дата должна быть после дня запроса.",
+			"EXCEED_PERIOD_ERR": "Максимально допустимые дни для этого элемента ",
+			"BEFORE_START_DATE_ERR": "Дата окончания не может быть раньше даты начала. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Товар должен быть возвращен до "
+		}
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Задачи",
+		"ADD_TASKS": "Добавить задачи",
+		"EDIT_TASKS": "Редактировать задачи",
+		"TASKS_TITLE": "Заголовок",
+		"TASKS_DESCRIPTION": "Описание",
+		"TASKS_LOADED": "Задачи загружены",
+		"TASK_ADDED": "Задача добавлена",
+		"TASK_UPDATED": "Задача обновлена",
+		"TASK_DELETED": "Задача удалена",
+		"TASKS_PROJECT": "Проект",
+		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Управление пользователями для ",
 		"ADD_USER": "Добавить пользователя",
+		"ADD_EXISTING_USER": "Добавить существующего пользователя",
 		"ROLE": {
+			"SUPER_ADMIN": "Супер админ",
 			"ADMIN": "Администратор",
 			"MANAGER": "Менеджер",
 			"DATA_ENTRY": "Ввод данных",
 			"VIEWER": "Просмотрщик",
-			"EMPLOYEE": "Сотрудник"
+			"EMPLOYEE": "Сотрудник",
+			"CANDIDATE": "Кандидат"
 		},
 		"EDIT_USER": {
-			"HEADER": "Управление пользователем"
+			"HEADER": "Управление пользователем",
+			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
+			"MAIN": "Главная",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -544,6 +778,11 @@
 			"HEADER": "Пригласить сотрудников",
 			"ACTION": "Пригласить сотрудников"
 		},
+		"CANDIDATE": {
+			"MANAGE": "Управление приглашениями по Кандидатам для",
+			"HEADER": "Пригласить Кандидатов",
+			"ACTION": "Пригласить Кандидатов"
+		},
 		"SENT": "{{total}} приглашений отправлено.",
 		"IGNORED": "{{total}} приглашений отправлено. {{ignored}} уже были приглашены и проигнорированы.",
 		"STATUS": {
@@ -551,6 +790,25 @@
 			"EXPIRED": "Истёк",
 			"ACCEPTED": "Принято"
 		}
+	},
+	"INVOICES_PAGE": {
+		"HEADER": "Счета",
+		"INVOICE_NUMBER": "Номер счёта",
+		"TOTAL_VALUE": "Общая стоимость",
+		"PAID_STATUS": "Оплаченный статус",
+		"INVOICES_ADD_INVOICE": "Счет добавлен",
+		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_DELETE_INVOICE": "Счет удален",
+		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
+		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
+		"INVOICES_SELECT_CURRENCY": "Валюта",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Значение скидки",
+		"INVOICES_SELECT_PAID": "Оплачено",
+		"INVOICES_SELECT_TAX": "Налог",
+		"INVOICES_SELECT_TERMS": "Условия",
+		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
+		"ADD_INVOICE": "Добавить счет",
+		"EDIT_INVOICE": "Изменить счет"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
@@ -570,7 +828,8 @@
 	},
 	"FOOTER": {
 		"BY": "по",
-		"RIGHTS_RECERVED": "Все права защищены."
+		"RIGHTS_RECERVED": "Все права защищены.",
+		"PRESENT": "Подарочный"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -581,7 +840,7 @@
 		"MESSAGE": {
 			"PROJECT_LOAD": "Не удалось загрузить проекты",
 			"COPIED": "Ссылка скопирована в буфер обмена",
-			"INVITES_LOAD": "Could Not Load Invites",
+			"INVITES_LOAD": "Не удалось загрузить приглашения",
 			"INVITES_RESEND": "Приглашение было отправлено на адрес {{ email }}.",
 			"EMPLOYEE_DEPARTMENT_ADDED": "Сотрудник добавлен в отдел",
 			"EMPLOYEE_DEPARTMENT_REMOVED": "Сотрудник удалён из отдела",
@@ -590,6 +849,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Сотрудник добавлен к клиенту",
 			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
 			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника",
+			"EMPLOYEE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
 			"CONFIRM": "Подтвердить",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",
@@ -602,6 +862,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"NAME_REQUIRED": "Требуется имя!",
@@ -675,6 +936,11 @@
 				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
 				"INVALID_VENDOR_NAME": "Пожалуйста, добавьте название поставщика"
 			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "Новая категория {{ name }} успешно добавлена!",
+				"REMOVE_EXPENSE_CATEGORY": "Категория {{ name }} успешно удалена!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Пожалуйста, добавьте название категории"
+			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Новая позиция {{ name }} успешно добавлена!",
 				"REMOVE_POSITION": "Должность {{ name }} успешно удалена!",
@@ -688,7 +954,16 @@
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Новый клиент {{ name }} успешно добавлен!",
 				"REMOVE_CLIENT": "Клиент {{ name }} успешно удален!",
-				"INVALID_CLIENT_DATA": "Пожалуйста, проверьте имя, основной адрес электронной почты и основной телефон вашего клиента"
+				"INVALID_CLIENT_DATA": "Пожалуйста, проверьте имя, основной адрес электронной почты и основной телефон вашего клиента",
+				"INVITE_CLIENT": "Письмо с приглашением отправлено {{ name }}.",
+				"INVITE_CLIENT_ERROR": "Произошла ошибка при попытке пригласить клиента.",
+				"EMAIL_EXISTS": "Этот адрес электронной почты уже существует в качестве пользователя"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
+				"ADD_EMPLOYMENT_TYPE": "Новый тип занятости {{ name }} успешно добавлен!",
+				"UPDATE_EMPLOYMENT_TYPE": "Занятость {{ name }} была обновлена",
+				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
+				"DELETE_EMPLOYMENT_TYPE": "Тип занятости удален для {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {
@@ -696,5 +971,19 @@
 			"ACCOUNT_DELETED": "Ваш аккаунт был успешно удален!",
 			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Оплачивается",
+		"STOP_TIMER": "Остановить таймер",
+		"START_TIMER": "Запустить таймер",
+		"TIMER": "Таймер",
+		"MANUAL": "Ручной",
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TASK": "Выберите задачу",
+		"DATE": "Дата",
+		"START_TIME": "Время начала",
+		"END_TIME": "Конец времени",
+		"DESCRIPTION": "Описание",
+		"ADD_TIME_SUCCESS": "Время успешно добавлено"
 	}
 }

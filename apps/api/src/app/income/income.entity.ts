@@ -4,7 +4,9 @@ import {
 	Index,
 	JoinColumn,
 	RelationId,
-	ManyToOne
+	ManyToOne,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -18,11 +20,18 @@ import {
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Income as IIncome, CurrenciesEnum } from '@gauzy/models';
-import { Employee } from '../employee';
-import { Organization } from '../organization';
+import { Employee } from '../employee/employee.entity';
+import { Organization } from '../organization/organization.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('income')
 export class Income extends Base implements IIncome {
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_income'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -86,4 +95,9 @@ export class Income extends Base implements IIncome {
 	@IsOptional()
 	@Column({ nullable: true })
 	isBonus: boolean;
+
+	@ApiPropertyOptional({ type: String, maxLength: 256 })
+	@IsOptional()
+	@Column({ nullable: true })
+	reference?: string;
 }

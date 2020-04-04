@@ -1,5 +1,7 @@
 {
 	"BUTTONS": {
+		"ADD_EXISTING_USER": "Add Existing User",
+		"ADD_NEW": "Add New",
 		"ADD": "Добавяне",
 		"CREATE": "Създаване",
 		"REGISTER": "Регистриране",
@@ -9,6 +11,8 @@
 		"DETAILS": "Детайли",
 		"DUPLICATE": "Дублиране",
 		"DELETE": "Изтриване",
+		"REMOVE": "Remove",
+		"ADD_EXISTING": "Add Existing",
 		"OK": "Да",
 		"SAVE": "Запази",
 		"BACK": "Обратно",
@@ -20,7 +24,12 @@
 		"SELECT_ALL": "Селектиране на всички",
 		"COPY_LINK": "Копирай линка",
 		"MANAGE_INVITES": "Управлявай поканите",
-		"RESEND": "Преизпрати"
+		"RESEND": "Преизпрати",
+		"NEXT": "Следващ",
+		"PREVIOUS": "Предишен",
+		"INVITE_AGAIN": "Invite Again",
+		"REQUEST": "Request",
+		"HISTORY": "History"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -42,6 +51,7 @@
 		"PROFIT_BASED_BONUS": "Бонус въз основа на печалбата",
 		"REVENUE_BASED_BONUS": "Бонус въз основа на приходите",
 		"STATUS": "Статус",
+		"SOURCE": "Source",
 		"WORK_STATUS": "Работен статус",
 		"TODAY": "Днес",
 		"END_OF_MONTH": "В края на месеца",
@@ -72,7 +82,7 @@
 		"EXPIRE_DATE": "Изтича",
 		"CLIENTS": "Клиенти",
 		"DEPARTMENTS": "Отдели",
-		"DESCRIPTION": "Description",
+		"DESCRIPTION": "Описание",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -90,7 +100,9 @@
 			"FIRST_NAME": "Име (незадължително)",
 			"LAST_NAME": "Фамилия (незадължително)",
 			"START_DATE": "Дата на започване на работа",
+			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Снимка URL (незадължително)",
+			"CV_URL": "CV URL (optional)",
 			"CURRENCY": "Валута",
 			"DATE_TYPE": "Дата по подразбиране",
 			"ADD_TEAM": "Добавяне на нов отбор",
@@ -122,7 +134,24 @@
 			"BONUS_PERCENTAGE": "Процентен Бонус",
 			"ENABLE_DISABLE_INVITES": "Включване / Изключване на Поканите",
 			"ALLOW_USER_INVITES": "Позволи на юзърите да изпращат покани",
-			"INVITE_EXPIRY_PERIOD": "Период на изтичане на поканите (в дни)"
+			"INVITE_EXPIRY_PERIOD": "Период на изтичане на поканите (в дни)",
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
+			"OFFER_DATE": "Offer Date (optional)",
+			"ACCEPT_DATE": "Дата на приемане (опция)",
+			"APPLIED_DATE": "Applied Date (optional)",
+			"HIRED_DATE": "Hired Date (optional)",
+			"REJECT_DATE": "Дата на отказ (опция)",
+			"EMAIL_INVITATION": "Enter email to send invitation",
+			"SELECT_EQUIPMENT": "Select equipment",
+			"SELECT_SHARE_REQUEST_DATE": "Select request date",
+			"SELECT_SHARE_START_DATE": "Select start date",
+			"SELECT_SHARE_END_DATE": "Select end date",
+			"SELECT_EMPLOYEE": "Select employee",
+			"SELECT_TEAM": "Select team",
+			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
+			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
+			"REGISTRATION_DATE": "Registration Date"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -142,6 +171,7 @@
 			"ADD_DEPARTMENT": "Добави Отдел",
 			"ADD_POSITION": "Добави позиция",
 			"ADD_VENDOR": "Добави доставчик",
+			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Клиенти",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
 			"END_DATE_PROJECT": "Край на проекта (опция)",
@@ -170,7 +200,11 @@
 			"REGIONS": "Избери област",
 			"REMOVE_IMAGE": "Премахни снимка",
 			"UPLOADER_PLACEHOLDER": "Снимка",
+			"UPLOADER_CV_PLACEHOLDER": "CV",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
+			"ADD_REMOVE_USERS": "Add or Remove Users",
+			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
+			"ADD_ORGANIZATIONS": "Add Organizations",
 			"DATE": "Дата",
 			"VALUE": "Стойност",
 			"SELECT_CURRENCY": "Избери валута",
@@ -178,7 +212,12 @@
 			"BONUS_PERCENTAGE": "Бонус процентен",
 			"ENABLE_INVITES": "Позволи поканите",
 			"INVITE_EXPIRY_PERIOD": "Покани валидни до",
-			"SWITCH_PROJECT_STATE": "Public"
+			"SWITCH_PROJECT_STATE": "Public",
+			"CHOOSE_EMPLOYEES": "Choose employee/s",
+			"CHOOSE_TEAMS": "Choose team/s",
+			"EMPLOYMENT_TYPES": "Employment Type",
+			"REGISTRATION_DATE": "Organization Registration Date",
+			"ORGANIZATIONS": "Choose Organizations"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -187,15 +226,21 @@
 		"CHECKBOXES": {
 			"INCLUDE_DELETED": "Показване на изтритите"
 		},
+		"NOTIFICATIONS": {
+			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
+			"REMOVE_USER": " from you organization",
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
+			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "служители",
 			"EXPENSE": "Разходи",
 			"USER": "user",
-			"INVITATION": "покана"
+			"INVITATION": "покана",
+			"DELETE_USER": " from database as it's data in no longer part of any organization "
 		}
 	},
 	"POP_UPS": {
@@ -232,26 +277,56 @@
 		"CANCEL": "Отказ",
 		"ARE_YOU_SURE_YOU_WANT_TO_CHANGE_THE": "Сигурен ли си, че искаш да промениш",
 		"RECURRING_EXPENSE": "Това е повтарящ се разход",
-		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}"
+		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}",
+		"STARTS_ON": "Starts On",
+		"EXPENSE_HISTORY": "Expense History",
+		"NEW_EXPENSE_VALUE": "New Expense Value"
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
+		"ACCOUNTING": "Accounting",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
+		"INTEGRATIONS": "Integrations",
+		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Почивка",
 		"HELP": "Помощ",
 		"ABOUT": "За нас",
 		"ADMIN": "Администратор",
 		"EMPLOYEES": "Служители",
+		"MANAGE": "Управление",
+		"CANDIDATES": "Candidates",
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни",
 		"USERS": "Потребители",
 		"ROLES": "Роли и Позволения",
 		"DANGER_ZONE": "Опасна Зона",
-		"DOWNLOAD_DATA": "Изтегли всички данни",
-		"TAGS": "Тагове"
+		"IMPORT_EXPORT": {
+			"IMPORT_EXPORT": "Import/Export",
+			"IMPORT": "Import",
+			"EXPORT": "Export"
+		},
+		"TAGS": "Тагове",
+		"EQUIPMENT": "Equipment",
+		"EQUIPMENT_SHARING": "Equipment Sharing",
+		"TASKS": "Tasks",
+		"INVOICES": "Invoices",
+		"ORGANIZATION": "Organization",
+		"RECURRING_INVOICES": "Recurring Invoices",
+		"ESTIMATES": "Estimates",
+		"MY_TASKS": "My Tasks",
+		"TEAM_TASKS": "Team's Tasks",
+		"ACTIVITY": "Activity",
+		"TIMESHEETS": "Timesheets",
+		"SCHEDULES": "Schedules",
+		"EMAIL_TEMPLATES": "Email Templates",
+		"REPORTS": "Reports",
+		"TIME_REPORTS": "Time Reports",
+		"ACCOUNTING_REPORTS": "Accounting Reports",
+		"PAYMENT_GATEWAYS": "Payment Gateways",
+		"CUSTOM_SMTP": "Custom SMTP"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -265,10 +340,29 @@
 		"HEBREW": "Иврит",
 		"RUSSIAN": "Руски"
 	},
+	"INTEGRATIONS": {
+		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+	},
 	"DASHBOARD_PAGE": {
+		"ACCOUNTING": "Accounting",
+		"HUMAN_RESOURCES": "Human Resources",
+		"TIME_TRACKING": "Time Tracking",
+		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "Статистика на служителите",
 		"SELECT_A_MONTH_AND_EMPLOYEE": "Моля, изберете един месец и служител от менюто по-горе",
 		"INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS": "Добави текст за неаутентикирани потребители",
+		"CHARTS": {
+			"BAR": "Bar",
+			"DOUGHNUT": "Doughnut",
+			"STACKED_BAR": "Stacked Bar",
+			"CHART_TYPE": "Chart Type",
+			"REVENUE": "Revenue",
+			"EXPENSES": "Разходи",
+			"PROFIT": "Печалба",
+			"BONUS": "Бонус",
+			"NO_MONTH_DATA": "No Data for this month"
+		},
 		"PROFIT_HISTORY": {
 			"PROFIT_REPORT": "Репорт на печалбата",
 			"TOTAL_EXPENSES": "Общи разходи",
@@ -282,16 +376,19 @@
 			"PROFIT": "Печалба",
 			"TOTAL_BONUS": "Бонус Общо",
 			"TOTAL_DIRECT_INCOME": "Изтриване на доход",
-			"SALARY": "Salary",
+			"SALARY": "Заплата",
 			"TOTAL_DIRECT_INCOME_INFO": "Income from direct bonus",
 			"TOTAL_INCOME_CALC": "Total Income = Income {{ totalNonBonusIncome }} + Direct Income {{ totalBonusIncome }}",
 			"TOTAL_PROFIT_BONUS": "Total Profit Bonus",
 			"TOTAL_DIRECT_BONUS": "Direct Income Bonus",
 			"TOTAL_DIRECT_BONUS_INFO": "This is equal to the direct income",
-			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit",
+			"TOTAL_PROFIT_BONUS_INFO": "{{ bonusPercentage }}% of the profit {{ difference }}",
 			"TOTAL_INCOME_BONUS": "Total Income Bonus",
-			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% of the income",
-			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary"
+			"TOTAL_INCOME_BONUS_INFO": "{{ bonusPercentage }}% от доходи {{ totalIncome }}",
+			"TOTAL_EXPENSE_CALC": "Total = Employee Expenses + Split Expenses + Recurring + Salary",
+			"TOTAL_EXPENSES_WITHOUT_SALARY": "Total Expense without salary",
+			"TOTAL_EXPENSES_WITHOUT_SALARY_CALC": "Expense = Employee Expenses + Split Expenses + Recurring",
+			"TOTAL_BONUS_CALC": "Total Bonus = Direct Income Bonus {{ totalBonusIncome }} + Bonus {{ calculatedBonus }}"
 		},
 		"DEVELOPER": {
 			"DEVELOPER": "Разработчик",
@@ -331,7 +428,8 @@
 		},
 		"SPLIT_HELP": "If set, this expense will be equally divided amongst all employees of the company & will be considered in each one's expenses.",
 		"SPLIT_WILL_BE_TOOLTIP": "This expense will be equally split amongst all employees",
-		"SPLIT_EXPENSE": "Split Expense"
+		"SPLIT_EXPENSE": "Split Expense",
+		"ADD_EXPENSE_CATEGORY": "Add New Expense category"
 	},
 	"EMPLOYEES_PAGE": {
 		"HEADER": "Управление на служителите в ",
@@ -352,7 +450,55 @@
 			"POSITION": "Позиция",
 			"EMPLOYEE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYEE_PROJECTS": "Проект на Служителя:",
-			"EMPLOYEE_CLIENTS": "Клиенти на служителя:"
+			"EMPLOYEE_CLIENTS": "Клиенти на служителя:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Локация",
+			"RATES": "Rates",
+			"PROJECTS": "Проекти",
+			"CLIENTS": "Клиенти",
+			"HIRING": "Hiring"
+		},
+		"ADD_EMPLOYEES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"ADD_ANOTHER_EMPLOYEE": "Add Another Employee",
+			"FINISHED_ADDING": "I’ve Added All Current Employees",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
+		}
+	},
+	"CANDIDATES_PAGE": {
+		"HEADER": "Manage Candidates for ",
+		"ADD_CANDIATE": "Add Candidates",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
+		"DELETED": "Изтрит",
+		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
+		"EDIT_CANDIATES": {
+			"HEADER": "Manage Candidate",
+			"DEVELOPER": "Разработчик",
+			"DEPARTMENT": "Отдел",
+			"POSITION": "Позиция",
+			"CANDIATE_DEPARTMENTS": "Отдел на Служителя:",
+			"EMPLOYMENT_TYPE": "Employment Type",
+			"ACCOUNT": "Account",
+			"EMPLOYMENT": "Employment",
+			"LOCATION": "Локация",
+			"RATES": "Rates",
+			"HIRING": "Hiring"
+		},
+		"ADD_CANDIATES": {
+			"STEP_1": "Step 1",
+			"STEP_2": "Step 2",
+			"STEP_3": "Step 3",
+			"UPLOAD_CV": "Upload CV",
+			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"FINISHED_ADDING": "I’ve Added All Current Candidates",
+			"NEXT": "Next",
+			"PREVIOUS": "Previous"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -364,6 +510,7 @@
 		"CLIENTS": "Клиенти",
 		"POSITIONS": "Позиции",
 		"VENDORS": "Доставчици",
+		"EXPENSE_CATEGORIES": "Expense Categories",
 		"PROJECTS": "Проекти",
 		"ACTIVE": "Активна",
 		"ARCHIVED": "Архивирана",
@@ -371,6 +518,9 @@
 		"SETTINGS": "Настройки",
 		"ROLES": "Роли",
 		"RECURRING_EXPENSE": "Задължителни разходи в организацията",
+		"EMPLOYMENT_TYPES": "Employment Types",
+		"INVITE_CLIENT": "Invite Client",
+		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
@@ -398,7 +548,21 @@
 			"CLICK_EMPLOYEE": "Кликни за редакция на служителя",
 			"EDIT_PROJECT": "Редактирай Проекта",
 			"REGIONS": "Области",
-			"ROLES_PERMISSIONS": "Роли и Позволения"
+			"ROLES_PERMISSIONS": "Роли и Позволения",
+			"DATE_LIMIT": "Date Limit",
+			"USER_ORGANIZATIONS": "{{ name }}'s List of Organizations",
+			"ADDED_TO_ORGANIZATION": " the organization",
+			"USER_WAS_DELETED": "{{ name }} was successfuly deleted.",
+			"USER_WAS_REMOVED": "{{ name }} was successfuly removed from organization.",
+			"SETTINGS": {
+				"TIMER_SETTINGS": "Timer Settings",
+				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"REQUIRE_REASON": "Require Reason",
+				"REQUIRE_DESCRIPTION": "Require Description",
+				"REQUIRE_PROJECT": "Require Project",
+				"REQUIRE_TASK": "Require Task",
+				"REQUIRE_CLIENT": "Require Client"
+			}
 		},
 		"PERMISSIONS": {
 			"ADMIN_DASHBOARD_VIEW": "Виж Административното Табло",
@@ -411,6 +575,8 @@
 			"ORG_TIME_OFF_VIEW": "Виж Time Off страницата",
 			"ORG_EMPLOYEES_VIEW": "Преглед на служителите в организацията",
 			"ORG_EMPLOYEES_EDIT": "Създай/Редактирай/Изтрии служители в организацията",
+			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
+			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",
 			"ORG_USERS_VIEW": "Виж потребителите в организацията",
 			"ORG_USERS_EDIT": "Създай/Редактирай/Изтрии потребители на организацията",
 			"ORG_INVITE_VIEW": "Виж покани на организацията",
@@ -420,8 +586,10 @@
 			"POLICY_VIEW": "Виж Time Off политиката",
 			"POLICY_EDIT": "Редактирай Time Off политиката",
 			"CHANGE_SELECTED_EMPLOYEE": "Промени избрания служител",
+			"CHANGE_SELECTED_CANDIDATE": "Change Selected Candidate",
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
 			"CHANGE_ROLES_PERMISSIONS": "Промени ролите и Позволенията",
+			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Администрация"
@@ -491,21 +659,87 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags",
-		"ADD_TAGS": "Add Tags"
+		"HEADER": "Тагове",
+		"ADD_TAGS": "Добавяне на таг",
+		"EDIT_TAGS": "Редактиране на таг",
+		"TAGS_NAME": "Име",
+		"TAGS_DESCRIPTION": "Description",
+		"TAGS_COLOR": "Color",
+		"TAGS_ADD_TAG": "Tag added",
+		"TAGS_EDIT_TAG": "Tag edited",
+		"TAGS_DELETE_TAG": "Tag deleted",
+		"TAGS_SELECT_NAME": "Tag name",
+		"TAGS_SELECT_COLOR": "Tag color",
+		"TAGS_SELECT_DESCRIPTION": "Tag description"
+	},
+	"EQUIPMENT_PAGE": {
+		"HEADER": "Equipment",
+		"ADD_EQUIPMENT": "Add Equipment",
+		"EDIT_EQUIPMENT": "Edit Equipment",
+		"EQUIPMENT_NAME": "Име",
+		"EQUIPMENT_TYPE": "Тип",
+		"EQUIPMENT_SN": "SN",
+		"EQUIPMENT_MANUFACTURED_YEAR": "Manufactured year",
+		"EQUIPMENT_INITIAL_COST": "Initial cost",
+		"EQUIPMENT_CURRENCY": "Валута",
+		"EQUIPMENT_MAX_SHARE_PERIOD": "Max share period",
+		"EQUIPMENT_AUTO_APPROVE": "Auto approve",
+		"EQUIPMENT_EDITED": "Equipment edited",
+		"EQUIPMENT_DELETED": "Equipment deleted",
+		"EQUIPMENT_ADDED": "Equipment added",
+		"EQUIPMENT_SAVED": "Equipment saved"
+	},
+	"EQUIPMENT_SHARING_PAGE": {
+		"HEADER": "Equipment Sharing",
+		"ADD_EQUIPMENT_REQUEST": "Request equipment",
+		"EDIT_EQUIPMENT_REQUEST": "Edit equipment request",
+		"DELETE_EQUIPMENT_REQUEST": "Delete equipment request",
+		"REQUEST": "Request",
+		"EQUIPMENT_NAME": "Equipment name",
+		"SHARE_REQUIEST_DATE": "Share request date",
+		"SHARE_START_DATE": "Share start date",
+		"SHARE_END_DATE": "Share end date",
+		"STATUS": "Статус",
+		"REQUEST_SAVED": "Request saved",
+		"REQUEST_DELETED": "Request deleted",
+		"MESSAGES": {
+			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
+			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
+			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+		}
+	},
+	"TASKS_PAGE": {
+		"HEADER": "Tasks",
+		"ADD_TASKS": "Add Tasks",
+		"EDIT_TASKS": "Edit Tasks",
+		"TASKS_TITLE": "Title",
+		"TASKS_DESCRIPTION": "Description",
+		"TASKS_LOADED": "Tasks loaded",
+		"TASK_ADDED": "Task added",
+		"TASK_UPDATED": "Task updated",
+		"TASK_DELETED": "Task deleted",
+		"TASKS_PROJECT": "Проект",
+		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
 		"HEADER": "Manage Users for ",
 		"ADD_USER": "Add User",
+		"ADD_EXISTING_USER": "Add Existing User",
 		"ROLE": {
+			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "Администратор",
 			"MANAGER": "Manager",
 			"DATA_ENTRY": "Data Entry",
 			"VIEWER": "Viewer",
-			"EMPLOYEE": "Служител"
+			"EMPLOYEE": "Служител",
+			"CANDIDATE": "Candidate"
 		},
 		"EDIT_USER": {
-			"HEADER": "Manage User"
+			"HEADER": "Manage User",
+			"EDIT_EXISTING_USER": "Edit Existing User",
+			"MAIN": "Основни",
+			"USER_ORGANIZATIONS": "Организации"
 		}
 	},
 	"CONTEXT_MENU": {
@@ -544,6 +778,11 @@
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
 		},
+		"CANDIDATE": {
+			"MANAGE": "Manage Candidate Invites for",
+			"HEADER": "Invite Candidates",
+			"ACTION": "Invite Candidates"
+		},
 		"SENT": "покани изпратени.",
 		"IGNORED": "общо покани изпратени. бяха вече поканени и бяха игнорирани.",
 		"STATUS": {
@@ -551,6 +790,25 @@
 			"EXPIRED": "Expired",
 			"ACCEPTED": "Прието"
 		}
+	},
+	"INVOICES_PAGE": {
+		"HEADER": "Invoices",
+		"INVOICE_NUMBER": "Invoice Number",
+		"TOTAL_VALUE": "Total Value",
+		"PAID_STATUS": "Paid Status",
+		"INVOICES_ADD_INVOICE": "Invoice Added",
+		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
+		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
+		"INVOICES_SELECT_DUE_DATE": "Due Date",
+		"INVOICES_SELECT_CURRENCY": "Валута",
+		"INVOICES_SELECT_DISCOUNT_VALUE": "Discount Value",
+		"INVOICES_SELECT_PAID": "Paid",
+		"INVOICES_SELECT_TAX": "Tax",
+		"INVOICES_SELECT_TERMS": "Terms",
+		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
+		"ADD_INVOICE": "Add Invoice",
+		"EDIT_INVOICE": "Edit Invoice"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
@@ -570,7 +828,8 @@
 	},
 	"FOOTER": {
 		"BY": "от",
-		"RIGHTS_RECERVED": "Всички права запазени."
+		"RIGHTS_RECERVED": "Всички права запазени.",
+		"PRESENT": "Present"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -590,6 +849,7 @@
 			"EMPLOYEE_CLIENT_ADDED": "Employee added to the client",
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
+			"EMPLOYEE_PROFILE_UPDATE": "{{name}} profile updated.",
 			"CONFIRM": "Потвърждение",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
@@ -602,6 +862,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
+			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
 			"NAME_REQUIRED": "Name is required!",
@@ -655,7 +916,7 @@
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
-			"DELETE_ORGANIZATION": "{{ name }} organization deleted.",
+			"DELETE_ORGANIZATION": "{{ name }} организация е изтрита",
 			"ADD_NEW_USER_TO_ORGANIZATION": "добавен към",
 			"DELETE_USER_FROM_ORGANIZATION": "зададен като неактивен.",
 			"DATA_ERROR": "{{ error }}",
@@ -673,7 +934,12 @@
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Нов доставчик успешно добавен!",
 				"REMOVE_VENDOR": "Доставчик успешно премахнат!",
-				"INVALID_VENDOR_NAME": "Please add a Vendor name"
+				"INVALID_VENDOR_NAME": "Моля, добавете име на доставчик"
+			},
+			"EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES": {
+				"ADD_EXPENSE_CATEGORY": "New Category {{ name }} successfully added!",
+				"REMOVE_EXPENSE_CATEGORY": "Category {{ name }} successfully removed!",
+				"INVALID_EXPENSE_CATEGORY_NAME": "Please add a Category name"
 			},
 			"EDIT_ORGANIZATIONS_POSITIONS": {
 				"ADD_POSITION": "Нова позиция {{ name }} успешно добавена!",
@@ -688,7 +954,16 @@
 			"EDIT_ORGANIZATIONS_CLIENTS": {
 				"ADD_CLIENT": "Нов клиент {{ name }} успешно добавен!",
 				"REMOVE_CLIENT": "Клиентът {{ name }} е успешно премахнат!",
-				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client"
+				"INVALID_CLIENT_DATA": "Please check the Name, Primary Email and Primary Phone of your client",
+				"INVITE_CLIENT": "Invitation email sent to {{ name }}.",
+				"INVITE_CLIENT_ERROR": "Some error occurred while trying to invite client.",
+				"EMAIL_EXISTS": "This client email already exists as a user"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES": {
+				"ADD_EMPLOYMENT_TYPE": "New Employment type {{ name }} successfully added!",
+				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
+				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
+				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
 			}
 		},
 		"DANGER_ZONE": {
@@ -696,5 +971,19 @@
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
 		}
+	},
+	"TIMER_TRACKER": {
+		"IS_BILLABLE": "Is Billable",
+		"STOP_TIMER": "Stop Timer",
+		"START_TIMER": "Страртирай таймер",
+		"TIMER": "Timer",
+		"MANUAL": "Manual",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"DATE": "Дата",
+		"START_TIME": "Start Time",
+		"END_TIME": "End Time",
+		"DESCRIPTION": "Description",
+		"ADD_TIME_SUCCESS": "Time Successfully added"
 	}
 }

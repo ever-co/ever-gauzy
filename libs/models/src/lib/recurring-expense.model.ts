@@ -12,6 +12,7 @@ export interface RecurringExpenseModel extends IBaseEntityModel {
 	categoryName: string;
 	value: number;
 	currency: string;
+	parentRecurringExpenseId?: string;
 }
 
 export interface RecurringExpenseByMonthFindInput extends IBaseEntityModel {
@@ -32,12 +33,27 @@ export interface RecurringExpenseEditInput extends IBaseEntityModel {
 	categoryName: string;
 	value: number;
 	currency: string;
+	startDateUpdateType?: string;
 }
 
 export interface RecurringExpenseDeleteInput {
 	deletionType: RecurringExpenseDeletionEnum;
 	month: number;
 	year: number;
+}
+
+export interface RecurringExpenseOrderFields {
+	startDate?: 'ASC' | 'DESC';
+}
+
+export interface IFindStartDateUpdateTypeInput {
+	newStartDate: Date;
+	recurringExpenseId: string;
+}
+
+export interface IStartUpdateTypeInfo {
+	value: StartDateUpdateTypeEnum;
+	conflicts: RecurringExpenseModel[];
 }
 
 export enum RecurringExpenseDeletionEnum {
@@ -51,4 +67,14 @@ export enum RecurringExpenseDefaultCategoriesEnum {
 	SALARY_TAXES = 'SALARY_TAXES',
 	RENT = 'RENT',
 	EXTRA_BONUS = 'EXTRA_BONUS'
+}
+
+export enum StartDateUpdateTypeEnum {
+	REDUCE_SAFE = 'REDUCE_SAFE',
+	REDUCE_CONFLICT = 'REDUCE_CONFLICT',
+	INCREASE_SAFE_WITHIN_LIMIT = 'INCREASE_SAFE_WITHIN_LIMIT',
+	INCREASE_SAFE_OUTSIDE_LIMIT = 'INCREASE_SAFE_OUTSIDE_LIMIT',
+	INCREASE_CONFLICT = 'INCREASE_CONFLICT',
+	WITHIN_MONTH = 'WITHIN_MONTH',
+	NO_CHANGE = 'NO_CHANGE'
 }

@@ -1,6 +1,10 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>{{ 'TAGS_PAGE.ADD_TAGS' | translate }}</h5>
+		<h5>
+			{{
+				(tag ? 'TAGS_PAGE.EDIT_TAGS' : 'TAGS_PAGE.ADD_TAGS') | translate
+			}}
+		</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -9,31 +13,80 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
-		<div class="select">
-			
-			<input formControlName="name" class = "select-name" type="text" nbInput placeholder="Add name" >
-			<nb-select
-				class="select-color"
-				placeholder="Select Color"
-				formControlName="color"
-			>
-				<nb-option *ngFor="let color of selectedColor"
-				[value]="color"
-				>
-					{{color.color}}
-				</nb-option>
-			</nb-select>
-		</div>
-		<div>
-			<textarea formControlName="description" nbInput fullWidth class="description" placeholder="Description"></textarea>
-		</div>
-	</form>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputName" class="label">{{
+							'TAGS_PAGE.TAGS_SELECT_NAME' | translate
+						}}</label>
+						<input
+							formControlName="name"
+							class="select-name"
+							type="text"
+							nbInput
+							placeholder="{{
+								'TAGS_PAGE.TAGS_SELECT_NAME' | translate
+							}}"
+							id="inputName"
+							fullWidth
+							required
+							[(ngModel)]="name"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputColor" class="label">{{
+							'TAGS_PAGE.TAGS_SELECT_COLOR' | translate
+						}}</label>
+						<input
+							class="select-color"
+							nbInput
+							placeholder="{{
+								'TAGS_PAGE.TAGS_SELECT_COLOR' | translate
+							}}"
+							formControlName="color"
+							[(colorPicker)]="color"
+							[value]="color"
+							[style.background]="color"
+							id="inputColor"
+							fullWidth
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label for="inputDescription" class="label">{{
+							'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate
+						}}</label>
+						<textarea
+							formControlName="description"
+							nbInput
+							fullWidth
+							class="description"
+							placeholder="{{
+								'TAGS_PAGE.TAGS_SELECT_DESCRIPTION' | translate
+							}}"
+							id="inputDescription"
+							fullWidth
+						></textarea>
+					</div>
+				</div>
+			</div>
+		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="addTag()" status="success" nbButton>
+		<button
+			[disabled]="!name"
+			(click)="tag ? editTag() : addTag()"
+			status="success"
+			nbButton
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

@@ -2,15 +2,17 @@ import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
+import { Employee, EmployeeUpdateInput, UserUpdateInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UsersService } from 'apps/gauzy/src/app/@core/services/users.service';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject, Subscription } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
-import { UserFindInput, EmployeeUpdateInput, Employee } from '@gauzy/models';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
 @Component({
 	selector: 'ngx-edit-employee-profile',
@@ -20,7 +22,8 @@ import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-ha
 	],
 	providers: [EmployeeStore]
 })
-export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
+export class EditEmployeeProfileComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	paramSubscription: Subscription;
@@ -42,8 +45,11 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 		private toastrService: NbToastrService,
 		private employeeStore: EmployeeStore,
 		private errorHandler: ErrorHandlingService,
-		private store: Store
-	) {}
+		private store: Store,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this.route.params
@@ -66,39 +72,70 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 			});
 
 		this.loadTabs();
+		this._applyTranslationOnTabs();
+	}
+
+	getRoute(tab: string): string {
+		return `/pages/employees/edit/${this.routeParams.id}/profile/${tab}`;
 	}
 
 	loadTabs() {
 		this.tabs = [
 			{
-				title: 'Main',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT'
+				),
 				icon: 'person-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/main`
+				route: this.getRoute('account')
 			},
 			{
-				title: 'Rates',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT'
+				),
+				icon: 'browser-outline',
+				responsive: true,
+				route: this.getRoute('employment')
+			},
+			{
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.HIRING'
+				),
+				icon: 'map-outline',
+				responsive: true,
+				route: this.getRoute('hiring')
+			},
+			{
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.LOCATION'
+				),
+				icon: 'pin-outline',
+				responsive: true,
+				route: this.getRoute('location')
+			},
+			{
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES'
+				),
 				icon: 'pricetags-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/rates`
+				route: this.getRoute('rates')
 			},
 			{
-				title: 'Departments',
-				icon: 'briefcase-outline',
-				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/departments`
-			},
-			{
-				title: 'Projects',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'
+				),
 				icon: 'book-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/projects`
+				route: this.getRoute('projects')
 			},
 			{
-				title: 'Clients',
+				title: this.getTranslation(
+					'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CLIENTS'
+				),
 				icon: 'book-open-outline',
 				responsive: true,
-				route: `/pages/employees/edit/${this.routeParams.id}/profile/clients`
+				route: this.getRoute('clients')
 			}
 		];
 	}
@@ -114,9 +151,13 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 					this.selectedEmployee.id,
 					value
 				);
+
 				this.toastrService.primary(
-					this.employeeName + ' profile updated.',
-					'Success'
+					this.getTranslation(
+						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
+						{ name: this.employeeName }
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 				this._loadEmployeeData();
 			} catch (error) {
@@ -125,17 +166,26 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private async submitUserForm(value: UserFindInput) {
+	/**
+	 * This is to update the User details of an Employee.
+	 * Do NOT use this function to update any details which are NOT stored in the User Entity.
+	 */
+	private async submitUserForm(value: UserUpdateInput) {
 		if (value) {
 			try {
 				await this.userService.update(
 					this.selectedEmployee.user.id,
 					value
 				);
+
 				this.toastrService.primary(
-					this.employeeName + ' profile updated.',
-					'Success'
+					this.getTranslation(
+						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
+						{ name: this.employeeName }
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
+
 				this._loadEmployeeData();
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -146,7 +196,16 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	private async _loadEmployeeData() {
 		const { id } = this.routeParams;
 		const { items } = await this.employeeService
-			.getAll(['user'], { id })
+			.getAll(
+				[
+					'user',
+					'organizationDepartments',
+					'organizationPosition',
+					'organizationEmploymentTypes',
+					'tags'
+				],
+				{ id }
+			)
 			.pipe(first())
 			.toPromise();
 
@@ -160,5 +219,13 @@ export class EditEmployeeProfileComponent implements OnInit, OnDestroy {
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
+	}
+
+	private _applyTranslationOnTabs() {
+		this.translateService.onLangChange
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadTabs();
+			});
 	}
 }

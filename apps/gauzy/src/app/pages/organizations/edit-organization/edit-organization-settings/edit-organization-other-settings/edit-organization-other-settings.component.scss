@@ -17,3 +17,12 @@
 		}
 	}
 }
+#temporary {
+	padding-bottom: 215px;
+}
+
+:host {
+	nb-card-body {
+		overflow: visible;
+	}
+}

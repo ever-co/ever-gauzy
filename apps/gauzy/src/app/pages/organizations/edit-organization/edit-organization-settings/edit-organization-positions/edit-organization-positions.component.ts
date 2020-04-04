@@ -22,6 +22,12 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 
 	positions: OrganizationPositions[];
 
+	selectedPosition: OrganizationPositions;
+
+	showEditDiv: boolean;
+
+	positionsExist: boolean;
+
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly toastrService: NbToastrService,
@@ -58,6 +64,13 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 		this.loadPositions();
 	}
 
+	async editPosition(id: string, name: string) {
+		await this.organizationPositionsService.update(id, { name });
+		this.loadPositions();
+		this.toastrService.success('Successfully updated');
+		this.showEditDiv = !this.showEditDiv;
+	}
+
 	private async addPosition(name: string) {
 		if (name) {
 			await this.organizationPositionsService.create({
@@ -90,12 +103,28 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 		}
 	}
 
+	cancel() {
+		this.showEditDiv = !this.showEditDiv;
+		this.selectedPosition = null;
+	}
+
+	showEditCard(position: OrganizationPositions) {
+		this.showEditDiv = true;
+		this.selectedPosition = position;
+	}
+
 	private async loadPositions() {
 		const res = await this.organizationPositionsService.getAll({
 			organizationId: this.organizationId
 		});
 		if (res) {
 			this.positions = res.items;
+
+			if (this.positions.length <= 0) {
+				this.positionsExist = false;
+			} else {
+				this.positionsExist = true;
+			}
 		}
 	}
 }

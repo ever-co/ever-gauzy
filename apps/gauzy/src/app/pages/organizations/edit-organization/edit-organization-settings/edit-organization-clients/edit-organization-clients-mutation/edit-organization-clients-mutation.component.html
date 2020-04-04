@@ -2,7 +2,7 @@
 	<nb-card-header>{{
 		'ORGANIZATIONS_PAGE.EDIT.ADD_NEW_CLIENT' | translate
 	}}</nb-card-header>
-	<nb-card-body>
+	<nb-card-body *ngIf="form">
 		<div class="form-group">
 			<button
 				class="mr-2"
@@ -17,7 +17,7 @@
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 		</div>
-		<form [formGroup]="form" *ngIf="form" class="row">
+		<form [formGroup]="form" class="row">
 			<div class="form-group col-4">
 				<input
 					type="text"
@@ -64,10 +64,9 @@
 						'ORGANIZATIONS_PAGE.EDIT.PRIMARY_EMAIL' | translate
 					}}"
 					[status]="
-						form.controls.primaryEmail.dirty
-							? form.controls.primaryEmail.invalid
-								? 'danger'
-								: 'basic'
+						form.controls.primaryEmail.dirty &&
+						form.controls.primaryEmail.invalid
+							? 'danger'
 							: 'basic'
 					"
 					[attr.aria-invalid]="

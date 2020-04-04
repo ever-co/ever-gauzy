@@ -8,6 +8,9 @@
 		</h5>
 		<ga-employee-selector
 			#employeeSelector
+			placeholder="Organization"
+			[defaultSelected]="false"
+			[showAllEmployeesOption]="false"
 			[hidden]="income"
 			[skipGlobalChange]="true"
 			class="employees"
@@ -44,7 +47,7 @@
 				<div class="col-sm-6">
 					<div class="form-group">
 						<ng-select
-							[items]="fakeClients"
+							[items]="clients"
 							bindLabel="clientName"
 							[searchable]="false"
 							formControlName="client"
@@ -87,6 +90,18 @@
 							>{{ currency }}</nb-option
 						>
 					</nb-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<ngx-tags-color-input
+							[form]="form"
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsHandler($event)"
+						>
+						</ngx-tags-color-input>
+					</div>
 				</div>
 			</div>
 

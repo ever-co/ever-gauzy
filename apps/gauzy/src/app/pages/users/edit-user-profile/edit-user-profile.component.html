@@ -32,17 +32,6 @@
 			<span>{{ 'BUTTONS.BACK' | translate }}</span>
 		</div>
 
-		<!-- <ga-edit-user-main
-      *ngIf="!!selectedUser"
-			[selectedUser]="selectedUser"
-			(submitUser)="submitUserForm($event)"
-    ></ga-edit-user-main> -->
-
-		<ngx-profile
-			*ngIf="!!selectedUser"
-			[selectedUser]="selectedUser"
-			[allowRoleChange]="true"
-			(userSubmitted)="goBack()"
-		></ngx-profile>
+		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
 	</nb-card-body>
 </nb-card>

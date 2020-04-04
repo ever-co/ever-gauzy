@@ -3,7 +3,11 @@ import { Injectable } from '@angular/core';
 import {
 	EmployeeRecurringExpense,
 	EmployeeRecurringExpenseByMonthFindInput,
-	RecurringExpenseDeleteInput
+	EmployeeRecurringExpenseFindInput,
+	IFindStartDateUpdateTypeInput,
+	IStartUpdateTypeInfo,
+	RecurringExpenseDeleteInput,
+	RecurringExpenseOrderFields
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -11,19 +15,39 @@ import { first } from 'rxjs/operators';
 	providedIn: 'root'
 })
 export class EmployeeRecurringExpenseService {
+	private readonly API_URL = '/api/employee-recurring-expense';
+
 	constructor(private http: HttpClient) {}
 
 	create(createInput: EmployeeRecurringExpense): Promise<any> {
 		return this.http
-			.post<EmployeeRecurringExpense>(
-				'/api/employee-recurring-expense',
-				createInput
-			)
+			.post<EmployeeRecurringExpense>(this.API_URL, createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAll(
+		relations?: string[],
+		findInput?: EmployeeRecurringExpenseFindInput,
+		order?: RecurringExpenseOrderFields
+	): Promise<{
+		items: EmployeeRecurringExpense[];
+		total: number;
+	}> {
+		const data = JSON.stringify({ relations, findInput, order });
+
+		return this.http
+			.get<{
+				items: EmployeeRecurringExpense[];
+				total: number;
+			}>(this.API_URL, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllByMonth(
 		relations?: string[],
 		findInput?: EmployeeRecurringExpenseByMonthFindInput
 	): Promise<{
@@ -36,7 +60,7 @@ export class EmployeeRecurringExpenseService {
 			.get<{
 				items: EmployeeRecurringExpense[];
 				total: number;
-			}>('/api/employee-recurring-expense/month', {
+			}>(`${this.API_URL}/month`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -47,7 +71,7 @@ export class EmployeeRecurringExpenseService {
 		const data = JSON.stringify({ deleteInput });
 
 		return this.http
-			.delete(`/api/employee-recurring-expense/${id}`, {
+			.delete(`${this.API_URL}/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -56,7 +80,20 @@ export class EmployeeRecurringExpenseService {
 
 	update(id: string, updateInput: EmployeeRecurringExpense): Promise<any> {
 		return this.http
-			.put(`/api/employee-recurring-expense/${id}`, updateInput)
+			.put(`${this.API_URL}/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getStartDateUpdateType(
+		findInput?: IFindStartDateUpdateTypeInput
+	): Promise<IStartUpdateTypeInfo> {
+		const data = JSON.stringify({ findInput });
+
+		return this.http
+			.get<IStartUpdateTypeInfo>(`${this.API_URL}/date-update-type`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}

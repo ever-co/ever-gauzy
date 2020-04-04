@@ -3,7 +3,7 @@
 		[value]="formatDateMMMMyy(date)"
 		[(ngModel)]="dateInputValue"
 		nbInput
-		(focus)="loadCalendar = true"
+		(focus)="handleCalendarOpen()"
 		placeholder="{{ 'FORM.PLACEHOLDERS.PICK_DATE' | translate }}"
 	/>
 	<span
@@ -17,12 +17,15 @@
 		<nb-calendar-year-picker
 			[year]="date"
 			[max]="max"
+			[min]="min"
 			(yearChange)="handleDateChange($event)"
 		>
 		</nb-calendar-year-picker>
 		<nb-calendar-month-picker
+			#month
 			[month]="date"
 			[max]="max"
+			[min]="min"
 			(monthChange)="handleDateChange($event)"
 		>
 		</nb-calendar-month-picker>

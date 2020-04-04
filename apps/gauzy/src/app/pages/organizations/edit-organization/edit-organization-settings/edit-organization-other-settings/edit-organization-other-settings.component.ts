@@ -31,7 +31,6 @@ export class EditOrganizationOtherSettingsComponent
 	private _ngDestroy$ = new Subject<void>();
 
 	organization: Organization;
-
 	form: FormGroup;
 
 	defaultValueDateTypes: string[] = Object.values(DefaultValueDateTypeEnum);
@@ -199,7 +198,15 @@ export class EditOrganizationOtherSettingsComponent
 					'yyyy-MM-dd',
 					'en'
 				)
-			]
+			],
+			futureDateAllowed: [this.organization.futureDateAllowed || false],
+			allowModifyTime: [this.organization.allowModifyTime],
+			requireReason: [this.organization.requireReason],
+			requireDescription: [this.organization.requireDescription],
+			requireProject: [this.organization.requireProject],
+			requireTask: [this.organization.requireTask],
+			requireClient: [this.organization.requireClient],
+			timeFormat: [this.organization.timeFormat || 12]
 		});
 	}
 

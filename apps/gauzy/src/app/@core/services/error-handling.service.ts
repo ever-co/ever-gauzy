@@ -10,9 +10,11 @@ export class ErrorHandlingService {
 	errorTitle: string;
 	errorContent: string;
 
-	public handleError(err: any) {
+	public handleError(err: any, duration = 3000) {
 		this.getErrorDetails(err);
-		this.toastrService.danger(this.errorContent, this.errorTitle);
+		this.toastrService.danger(this.errorContent, this.errorTitle, {
+			duration
+		});
 	}
 
 	private getErrorDetails(err) {
@@ -23,7 +25,6 @@ export class ErrorHandlingService {
 
 		if (message) {
 			const keywords = message.split(' ', 3).join(' ');
-
 			switch (keywords) {
 				case 'duplicate key value':
 					this.handleDuplicateKeyError(detail);

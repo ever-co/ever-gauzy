@@ -1,4 +1,4 @@
-@import '../../../../@theme/styles/themes.scss';
+@import 'themes';
 
 @include nb-install-component {
 	.remove-icon {
@@ -51,5 +51,15 @@
 
 	.employee-padding {
 		margin-bottom: 50px;
+	}
+	.notes {
+		text-indent: 1em;
+		p {
+			margin: 5px 0 0 2px;
+			color: #eac72d;
+			font-size: 0.75rem;
+			font-weight: 300;
+			line-height: initial;
+		}
 	}
 }

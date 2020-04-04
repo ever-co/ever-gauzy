@@ -1,4 +1,8 @@
-import { RecurringExpenseEditInput } from '@gauzy/models';
+import {
+	IStartUpdateTypeInfo,
+	PermissionsEnum,
+	RecurringExpenseEditInput
+} from '@gauzy/models';
 import {
 	Body,
 	Controller,
@@ -7,20 +11,28 @@ import {
 	HttpCode,
 	HttpStatus,
 	Param,
+	Post,
 	Put,
-	Query
+	Query,
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
+import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { EmployeeRecurringExpenseCreateCommand } from './commands/employee-recurring-expense.create.command';
 import { EmployeeRecurringExpenseDeleteCommand } from './commands/employee-recurring-expense.delete.command';
 import { EmployeeRecurringExpenseEditCommand } from './commands/employee-recurring-expense.edit.command';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import { EmployeeRecurringExpenseByMonthQuery } from './queries/employee-recurring-expense.by-month.query';
+import { EmployeeRecurringExpenseStartDateUpdateTypeQuery } from './queries/employee-recurring-expense.update-type.query';
 
 @ApiTags('EmployeeRecurringExpense')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeRecurringExpenseController extends CrudController<
 	EmployeeRecurringExpense
@@ -33,6 +45,26 @@ export class EmployeeRecurringExpenseController extends CrudController<
 		super(employeeRecurringExpenseService);
 	}
 
+	@ApiOperation({ summary: 'Create new expense' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The expense has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	async create(
+		@Body() entity: EmployeeRecurringExpense
+	): Promise<EmployeeRecurringExpense> {
+		return this.commandBus.execute(
+			new EmployeeRecurringExpenseCreateCommand(entity)
+		);
+	}
+
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -43,6 +75,8 @@ export class EmployeeRecurringExpenseController extends CrudController<
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Delete(':id')
 	async delete(
 		@Param('id') id: string,
@@ -98,6 +132,52 @@ export class EmployeeRecurringExpenseController extends CrudController<
 
 		return this.queryBus.execute(
 			new EmployeeRecurringExpenseByMonthQuery(findInput)
+		);
+	}
+
+	@ApiOperation({
+		summary: 'Find all employee recurring expenses.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee recurring expense',
+		type: EmployeeRecurringExpense
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findAllRecurringExpenses(
+		@Query('data') data: string
+	): Promise<IPagination<EmployeeRecurringExpense>> {
+		const { findInput, order = {} } = JSON.parse(data);
+
+		return this.employeeRecurringExpenseService.findAll({
+			where: findInput,
+			order: order
+		});
+	}
+
+	@ApiOperation({
+		summary: 'Find the start date update type for a recurring expense.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found start date update type'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/date-update-type')
+	async findStartDateUpdateType(
+		@Query('data') data: string
+	): Promise<IStartUpdateTypeInfo> {
+		const { findInput } = JSON.parse(data);
+
+		return this.queryBus.execute(
+			new EmployeeRecurringExpenseStartDateUpdateTypeQuery(findInput)
 		);
 	}
 }

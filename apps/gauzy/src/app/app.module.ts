@@ -6,7 +6,7 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { CoreModule } from './@core/core.module';
 import { ThemeModule } from './@theme/theme.module';
@@ -41,8 +41,11 @@ import { ServerConnectionService } from './@core/services/server-connection.serv
 import { Store } from './@core/services/store.service';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-
-
+import * as Sentry from '@sentry/browser';
+import { SentryErrorHandler } from './@core/sentry-error.handler';
+import { InvoicesMutationModule } from './@shared/invoices/invoices-mutation.module';
+import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
+import { SharedModule } from './@shared/shared.module';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -51,10 +54,16 @@ export const cloudinary = {
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http);
 }
-
+if (environment.SENTRY_DNS) {
+	Sentry.init({
+		dsn: environment.SENTRY_DNS,
+		environment: environment.production ? 'production' : 'development'
+	});
+}
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
+		InvoicesMutationModule,
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
@@ -81,11 +90,17 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		}),
 		CloudinaryModule.forRoot(cloudinary, cloudinaryConfiguration),
-		FileUploadModule
+		FileUploadModule,
+		TimeTrackerModule.forRoot(),
+		SharedModule.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [
 		{ provide: APP_BASE_HREF, useValue: '/' },
+		{
+			provide: ErrorHandler,
+			useClass: SentryErrorHandler
+		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,

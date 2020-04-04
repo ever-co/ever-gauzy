@@ -45,6 +45,16 @@ export interface CreateEmailInvitesInput {
 	roleId: string;
 	invitedById: string;
 	inviteType: any;
+	startedWorkOn: string;
+}
+
+export interface CreateOrganizationClientInviteInput {
+	emailId: string;
+	clientId: string;
+	organizationId: string;
+	roleId: string;
+	invitedById: string;
+	originalUrl: string;
 }
 
 export interface CreateEmailInvitesOutput {
@@ -85,5 +95,6 @@ export enum InviteStatusEnum {
 
 export enum InvitationTypeEnum {
 	USER = 'USER',
-	EMPLOYEE = 'EMPLOYEE'
+	EMPLOYEE = 'EMPLOYEE',
+	CANDIDATE = 'CANDIDATE'
 }

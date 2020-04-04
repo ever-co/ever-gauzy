@@ -1,8 +1,9 @@
 import { Tenant } from '../tenant';
 import { Connection } from 'typeorm';
 import { Employee } from './employee.entity';
-import { Organization } from '../organization';
+import { Organization } from '../organization/organization.entity';
 import { User } from '../user';
+import { environment as env } from '@env-api/environment';
 
 export const createEmployees = async (
 	connection: Connection,
@@ -26,7 +27,6 @@ export const createEmployees = async (
 		connection,
 		randomData
 	);
-
 	return { defaultEmployees, randomEmployees };
 };
 
@@ -38,24 +38,34 @@ const createDefaultEmployees = async (
 		users: User[];
 	}
 ): Promise<Employee[]> => {
+	const defaultEmployees = env.defaultEmployees || [];
 	let employee: Employee;
 	const employees: Employee[] = [];
 	const defaultUsers = defaultData.users;
 	const defaultOrg = defaultData.org;
 	const defaultTenants = defaultData.tenant;
 
-	console.dir(defaultTenants);
 	let counter = 0;
 	for (const user of defaultUsers) {
 		employee = new Employee();
 		employee.organization = defaultOrg;
 		employee.user = user;
 		employee.tenant = defaultTenants[counter];
+		employee.employeeLevel = defaultEmployees.filter(
+			(e) => e.email === employee.user.email
+		)[0].employeeLevel;
+		employee.startedWorkOn = getDate(
+			defaultEmployees.filter((e) => e.email === employee.user.email)[0]
+				.startedWorkOn
+		);
+		employee.endWork = getDate(
+			defaultEmployees.filter((e) => e.email === employee.user.email)[0]
+				.endWork
+		);
 		await insertEmployee(connection, employee);
 		employees.push(employee);
 		counter++;
 	}
-
 	console.dir(employees);
 	return employees;
 };
@@ -82,6 +92,7 @@ const createRandomEmployees = async (
 				employee.user = randomUsers.pop();
 				employee.isActive = true;
 				employee.endWork = null;
+				employee.startedWorkOn = null;
 
 				if (employee.user) {
 					await insertEmployee(connection, employee);
@@ -90,7 +101,6 @@ const createRandomEmployees = async (
 			}
 		}
 	}
-
 	return employees;
 };
 
@@ -104,4 +114,12 @@ const insertEmployee = async (
 		.into(Employee)
 		.values(employee)
 		.execute();
+};
+
+const getDate = (dateString: string): Date => {
+	if (dateString) {
+		const date = new Date(dateString);
+		return date;
+	}
+	return null;
 };

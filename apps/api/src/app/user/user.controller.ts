@@ -58,6 +58,21 @@ export class UserController extends CrudController<User> {
 		});
 	}
 
+	@ApiOperation({ summary: 'Find user by email address.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found user by email address',
+		type: User
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/email/:email')
+	async findByEmail(@Param('email') email: string): Promise<User> {
+		return this.userService.getUserByEmail(email);
+	}
+
 	@ApiOperation({ summary: 'Find User by id.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -86,7 +101,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get()
-	async findAllEmployees(
+	async findAllUsers(
 		@Query('data') data: string
 	): Promise<IPagination<User>> {
 		const { relations, findInput } = JSON.parse(data);

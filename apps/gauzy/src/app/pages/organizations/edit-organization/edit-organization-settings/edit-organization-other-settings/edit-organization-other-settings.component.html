@@ -154,6 +154,19 @@
 							</nb-select>
 						</div>
 					</div>
+					<div class="col-6">
+						<div class="form-group">
+							<label class="label">{{
+								'FORM.LABELS.TIME_FORMAT' | translate
+							}}</label>
+							<ng-select
+								[items]="[12, 24]"
+								[clearable]="false"
+								[searchable]="false"
+								formControlName="timeFormat"
+							></ng-select>
+						</div>
+					</div>
 				</div>
 			</div>
 		</nb-card-body>
@@ -165,7 +178,7 @@
 		</nb-card-header>
 		<nb-card-body>
 			<div class="fields">
-				<div class="row">
+				<div class="row" id="temporary">
 					<div class="col-6">
 						<div class="form-group">
 							<label class="label">
@@ -376,6 +389,140 @@
 									).invalid
 								}"
 							/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.DATE_LIMIT' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<label class="label">
+								{{
+									'FORM.LABELS.ENABLE_DISABLE_FUTURE_DATE'
+										| translate
+								}}
+							</label>
+							<nb-toggle
+								class="d-block"
+								formControlName="futureDateAllowed"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'FORM.LABELS.ALLOW_FUTURE_DATE' | translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+
+	<nb-card>
+		<nb-card-header>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
+		</nb-card-header>
+		<nb-card-body>
+			<div class="fields">
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
+								formControlName="allowModifyTime"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MODIFY_TIME'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
+								formControlName="requireReason"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_REASON'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
+								formControlName="requireDescription"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_DESCRIPTION'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
+								formControlName="requireProject"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_PROJECT'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
+								formControlName="requireTask"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_TASK'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
+								formControlName="requireClient"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.REQUIRE_CLIENT'
+										| translate
+								}}
+							</nb-toggle>
 						</div>
 					</div>
 				</div>

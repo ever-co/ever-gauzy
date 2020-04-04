@@ -1,0 +1,21 @@
+<nb-select
+	multiple
+	[selected]="selectedOrganizationsId"
+	(selectedChange)="onOrganizationsSelected($event)"
+	fullWidth
+	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_ORGANIZATIONS' | translate }}"
+>
+	<nb-option
+		*ngFor="let organization of allOrganizations"
+		[value]="organization.id"
+	>
+		<img
+			src="{{ organization.imageUrl }}"
+			alt="Smiley face"
+			height="40"
+			width="40"
+			style="margin-right:10px"
+		/>
+		{{ organization.name }}
+	</nb-option>
+</nb-select>

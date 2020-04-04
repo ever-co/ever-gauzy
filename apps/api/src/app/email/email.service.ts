@@ -1,3 +1,9 @@
+import { environment } from '@env-api/environment';
+import {
+	OrganizationClients,
+	OrganizationDepartment,
+	OrganizationProjects
+} from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as Email from 'email-templates';
@@ -5,10 +11,29 @@ import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core';
-import { EmailTemplate } from '../email-template';
-import { User } from '../user';
+import { EmailTemplate } from '../email-template/email-template.entity';
+import { Organization } from '../organization/organization.entity';
+import { User } from '../user/user.entity';
 import { Email as IEmail } from './email.entity';
-import { environment } from '@env-api/environment';
+import { Invite } from '../invite/invite.entity';
+
+export interface InviteUserModel {
+	email: string;
+	role: string;
+	organization: string;
+	registerUrl: string;
+	originUrl?: string;
+}
+
+export interface InviteEmployeeModel {
+	email: string;
+	registerUrl: string;
+	organization: string;
+	projects?: OrganizationProjects[];
+	clients?: OrganizationClients[];
+	departments?: OrganizationDepartment[];
+	originUrl?: string;
+}
 
 @Injectable()
 export class EmailService extends CrudService<IEmail> {
@@ -47,7 +72,6 @@ export class EmailService extends CrudService<IEmail> {
 					name: view,
 					languageCode: locals.locale || 'en'
 				});
-				console.log('Email Template', emailTemplate);
 				if (!emailTemplate || emailTemplate.length < 1) {
 					return resolve('');
 				}
@@ -62,13 +86,51 @@ export class EmailService extends CrudService<IEmail> {
 
 	languageCode: string;
 
-	inviteUser(
-		email: string,
-		role,
-		organization,
-		registerUrl,
+	inviteOrganizationClient(
+		organizationClient: OrganizationClients,
+		inviterUser: User,
+		organization: Organization,
+		invite: Invite,
 		originUrl?: string
 	) {
+		this.languageCode = 'en';
+
+		this.email
+			.send({
+				template: 'invite-organization-client',
+				message: {
+					to: `${organizationClient.primaryEmail}`
+				},
+				locals: {
+					locale: this.languageCode,
+					name: organizationClient.name,
+					host: originUrl || environment.host,
+					id: organizationClient.id,
+					inviterName: inviterUser
+						? (inviterUser.firstName || '') +
+						  (inviterUser.lastName || '')
+						: '',
+					organizationName: organization && organization.name,
+					generatedUrl:
+						originUrl +
+						`#/auth/accept-client-invite?email=${organizationClient.primaryEmail}&token=${invite.token}`
+				}
+			})
+			.then((res) => {
+				this.createEmailRecord(res.originalMessage, this.languageCode);
+			})
+			.catch(console.error);
+	}
+
+	inviteUser(inviteUserModel: InviteUserModel) {
+		const {
+			email,
+			role,
+			organization,
+			registerUrl,
+			originUrl
+		} = inviteUserModel;
+
 		this.languageCode = 'en';
 
 		this.email
@@ -86,20 +148,20 @@ export class EmailService extends CrudService<IEmail> {
 				}
 			})
 			.then((res) => {
-				console.log(res);
 				this.createEmailRecord(res.originalMessage, this.languageCode);
 			})
 			.catch(console.error);
 	}
 
-	inviteEmployee(
-		email: string,
-		registerUrl,
-		project?,
-		client?,
-		department?,
-		originUrl?: string
-	) {
+	inviteEmployee(inviteEmployeeModel: InviteEmployeeModel) {
+		const {
+			email,
+			registerUrl,
+			projects,
+			organization,
+			originUrl
+		} = inviteEmployeeModel;
+
 		this.languageCode = 'en';
 
 		this.email
@@ -110,9 +172,8 @@ export class EmailService extends CrudService<IEmail> {
 				},
 				locals: {
 					locale: this.languageCode,
-					role: project,
-					organization: client,
-					department: department,
+					role: projects,
+					organization,
 					generatedUrl: registerUrl,
 					host: originUrl || environment.host
 				}

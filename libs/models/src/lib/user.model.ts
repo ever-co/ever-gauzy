@@ -5,6 +5,8 @@
 import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tenant } from './tenant.model';
+import { Tag } from './tag-entity.model';
+import { Employee } from './employee.model';
 
 export interface User extends IBaseEntityModel {
 	thirdPartyId?: string;
@@ -16,8 +18,9 @@ export interface User extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	startedWorkOn?: string;
 	tenant: Tenant;
+	employee?: Employee;
+	tags: Tag[];
 }
 
 export interface UserFindInput extends IBaseEntityModel {
@@ -39,6 +42,17 @@ export interface UserRegistrationInput {
 }
 
 export interface UserCreateInput {
+	firstName?: string;
+	lastName?: string;
+	email?: string;
+	username?: string;
+	role?: Role;
+	roleId?: string;
+	hash?: string;
+	imageUrl?: string;
+}
+
+export interface UserUpdateInput {
 	firstName?: string;
 	lastName?: string;
 	email?: string;

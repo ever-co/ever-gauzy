@@ -198,19 +198,20 @@ export class EmployeesComponent extends TranslationBaseComponent
 	async add() {
 		const dialog = this.dialogService.open(EmployeeMutationComponent);
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
-
-		if (data) {
-			if (data.user.firstName || data.user.lastName) {
-				this.employeeName =
-					data.user.firstName + ' ' + data.user.lastName;
-			}
-			this.toastrService.primary(
-				this.employeeName.trim() +
-					' added to ' +
-					data.organization.name,
-				'Success'
-			);
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (response) {
+			response.map((data) => {
+				if (data.user.firstName || data.user.lastName) {
+					this.employeeName =
+						data.user.firstName + ' ' + data.user.lastName;
+				}
+				this.toastrService.primary(
+					this.employeeName.trim() +
+						' added to ' +
+						data.organization.name,
+					'Success'
+				);
+			});
 
 			this.loadPage();
 		}
@@ -235,9 +236,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 			}
 		});
 
-		const data = await dialog.onClose.pipe(first()).toPromise();
-
-		console.log('Data', data);
+		await dialog.onClose.pipe(first()).toPromise();
 	}
 
 	async delete() {
@@ -334,7 +333,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 		this.selectedEmployee = null;
 
 		const { items } = await this.employeesService
-			.getAll(['user'], {
+			.getAll(['user', 'tags'], {
 				organization: { id: this.selectedOrganizationId }
 			})
 			.pipe(first())
@@ -346,7 +345,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 		for (const emp of items) {
 			await this.getEmployeeStatistics(emp.id);
-
 			result.push({
 				fullName: `${emp.user.firstName} ${emp.user.lastName}`,
 				email: emp.user.email,
@@ -361,6 +359,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 					  new Date(emp.endWork).getFullYear()
 					: '',
 				imageUrl: emp.user.imageUrl,
+				tag: emp.tags,
 				// TODO: laod real bonus and bonusDate
 				bonus: this.bonusForSelectedMonth,
 				averageIncome: Math.floor(this.averageIncome),
@@ -379,7 +378,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 		} else {
 			employeesVm = result;
 		}
-
 		this.sourceSmartTable.load(employeesVm);
 
 		if (this.employeesTable) {
@@ -411,7 +409,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
-					type: 'email'
+					type: 'email',
+					class: 'email-column'
 				},
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),

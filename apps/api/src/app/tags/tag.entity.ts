@@ -3,7 +3,7 @@ import { Entity, Column } from 'typeorm';
 import { Tag as ITag } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 
-@Entity('tags')
+@Entity('tag')
 export class Tag extends Base implements ITag {
 	@ApiProperty({ type: String })
 	@Column()

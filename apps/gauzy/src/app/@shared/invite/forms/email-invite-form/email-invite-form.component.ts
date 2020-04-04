@@ -46,6 +46,8 @@ export class EmailInviteFormComponent implements OnInit {
 	clients: any;
 	departments: any;
 	roleName: any;
+	startedWorkOn: string;
+	appliedDate: string;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -71,6 +73,9 @@ export class EmailInviteFormComponent implements OnInit {
 	isEmployeeInvitation = () => {
 		return this.invitationType === InvitationTypeEnum.EMPLOYEE;
 	};
+	isCandidateInvitation = () => {
+		return this.invitationType === InvitationTypeEnum.CANDIDATE;
+	};
 
 	addTagFn(emailAddress) {
 		return { emailAddress: emailAddress, tag: true };
@@ -86,11 +91,15 @@ export class EmailInviteFormComponent implements OnInit {
 				])
 			],
 			projects: [''],
+			startedWorkOn: [''],
+			appliedDate: [''],
 			departments: [''],
 			clients: [''],
 			roleName: [
 				'',
-				this.isEmployeeInvitation() ? null : Validators.required
+				this.isEmployeeInvitation() || this.isCandidateInvitation()
+					? null
+					: Validators.required
 			]
 		});
 
@@ -99,6 +108,8 @@ export class EmailInviteFormComponent implements OnInit {
 		this.clients = this.form.get('clients');
 		this.departments = this.form.get('departments');
 		this.roleName = this.form.get('roleName');
+		this.startedWorkOn = this.form.get('startedWork');
+		this.appliedDate = this.form.get('appliedDate');
 	};
 
 	selectAllProjects() {
@@ -130,10 +141,6 @@ export class EmailInviteFormComponent implements OnInit {
 	};
 
 	async saveInvites(): Promise<CreateEmailInvitesOutput> {
-		const inviteType = 'user';
-
-		console.log(this.router.url);
-
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
@@ -152,7 +159,8 @@ export class EmailInviteFormComponent implements OnInit {
 				roleId: role.id,
 				organizationId: this.selectedOrganizationId,
 				invitedById: this.currentUserId,
-				inviteType: this.router.url
+				inviteType: this.router.url,
+				startedWorkOn: this.startedWorkOn
 			});
 		}
 

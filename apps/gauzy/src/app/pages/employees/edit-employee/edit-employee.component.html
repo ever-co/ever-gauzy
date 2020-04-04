@@ -22,9 +22,7 @@
 						{{ selectedEmployee.user.lastName }}</span
 					>
 					<div class="employee-position">
-						{{
-							'EMPLOYEES_PAGE.EDIT_EMPLOYEE.DEVELOPER' | translate
-						}}
+						{{ selectedEmployee.organizationPosition?.name }}
 					</div>
 				</div>
 			</div>
@@ -84,6 +82,8 @@
 			selectedEmployeeFromHeader.id
 		"
 	>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+
 		<div class="body-header">
 			<div>
 				<span class="setting-name">
@@ -102,8 +102,8 @@
 			</div>
 		</div>
 
-		<div class="sub-header block-content">
-			<div class="row block-info">
+		<div class="sub-header header-content">
+			<div class="row header-info">
 				<div class="col">
 					{{ 'POP_UPS.CATEGORY_NAME' | translate }}
 				</div>
@@ -116,131 +116,18 @@
 			</div>
 		</div>
 
-		<div
+		<ga-recurring-expense-block
 			*ngFor="
-				let setting of selectedEmployeeRecurringExpense;
+				let expense of selectedEmployeeRecurringExpense;
 				let i = index
 			"
-			class="setting-block"
+			(editRecurringExpense)="editEmployeeRecurringExpense(i)"
+			(deleteRecurringExpense)="deleteEmployeeRecurringExpense(i)"
+			(fetchRecurringExpenseHistory)="fetchHistory(i)"
+			[fetchedHistories]="fetchedHistories[i]"
+			[recurringExpense]="expense"
+			[selectedOrganization]="selectedOrganization"
 		>
-			<div class="block-content">
-				<div class="block-info">
-					<div class="row">
-						<div class="col">
-							{{ getCategoryName(setting.categoryName) }}
-						</div>
-						<div class="col">
-							{{ setting.startDay }}
-							{{ getMonthString(setting.startMonth) }}
-							{{ setting.startYear }}
-						</div>
-						<div class="col">
-							<span class="block-amount"
-								>{{
-									setting.value | currency: setting.currency
-								}}
-							</span>
-						</div>
-					</div>
-				</div>
-				<div class="block-value">
-					<span
-						(click)="selectedRowIndexToShow = null"
-						class="hide-menu"
-					>
-						<svg
-							class="hide-menu"
-							*ngIf="selectedRowIndexToShow === i"
-							xmlns="http://www.w3.org/2000/svg"
-							xmlns:xlink="http://www.w3.org/1999/xlink"
-							width="17"
-							height="16"
-							viewBox="0 0 17 16"
-						>
-							<defs>
-								<path
-									id="a"
-									d="M1511 405c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1h-2c-.55 0-1-.45-1-1s.45-1 1-1h1v-12h-1c-.55 0-1-.45-1-1s.45-1 1-1h2zm-7.2 3.4l3 4c.26.346.268.82.018 1.175l-2.814 4a.999.999 0 0 1-1.393.243 1 1 0 0 1-.243-1.394l1.718-2.442c-.03.003-.056.018-.086.018h-8a1 1 0 0 1 0-2h8.001l-1.801-2.4a.999.999 0 1 1 1.6-1.2z"
-								/>
-							</defs>
-							<use
-								fill="inherit"
-								fill-rule="nonzero"
-								opacity=".5"
-								transform="translate(-1495 -405)"
-								xlink:href="#a"
-							/>
-						</svg>
-						<small *ngIf="selectedRowIndexToShow === i">{{
-							'BUTTONS.CLOSE' | translate
-						}}</small>
-					</span>
-					<span
-						*ngIf="selectedRowIndexToShow !== i"
-						class="block-actions open"
-					>
-						<nb-icon
-							icon="settings-2-outline"
-							(click)="showMenu(i)"
-						>
-						</nb-icon>
-					</span>
-				</div>
-			</div>
-			<div
-				class="block-settings"
-				[ngStyle]="{
-					width: selectedRowIndexToShow === i ? '150px' : '0'
-				}"
-			>
-				<div
-					class="single-setting"
-					(click)="editEmployeeRecurringExpense(i)"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="19"
-						height="19"
-						viewBox="0 0 19 19"
-					>
-						<g data-name="Layer 2">
-							<g data-name="edit-2">
-								<rect width="24" height="24" opacity="0" />
-								<path
-									d="M19 20H5a1 1 0 0 0 0 2h14a1 1 0 0 0 0-2z"
-								/>
-								<path
-									d="M5 18h.09l4.17-.38a2 2 0 0 0 1.21-.57l9-9a1.92 1.92 0 0 0-.07-2.71L16.66 2.6A2 2 0 0 0 14 2.53l-9 9a2 2 0 0 0-.57 1.21L4 16.91a1 1 0 0 0 .29.8A1 1 0 0 0 5 18zM15.27 4L18 6.73l-2 1.95L13.32 6zm-8.9 8.91L12 7.32l2.7 2.7-5.6 5.6-3 .28z"
-								/>
-							</g>
-						</g>
-					</svg>
-					<span>{{ 'BUTTONS.EDIT' | translate }}</span>
-				</div>
-
-				<div
-					class="single-setting"
-					(click)="deleteEmployeeRecurringExpense(i)"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="19"
-						height="19"
-						viewBox="0 0 19 19"
-					>
-						<g
-							fill="none"
-							fill-rule="evenodd"
-							stroke="#7F7F7F"
-							stroke-linecap="round"
-							stroke-width="2"
-						>
-							<path d="M1 1l14.933 14.933M15.933 1L1 15.933" />
-						</g>
-					</svg>
-					<span>{{ 'BUTTONS.DELETE' | translate }}</span>
-				</div>
-			</div>
-		</div>
+		</ga-recurring-expense-block>
 	</nb-card-body>
 </nb-card>

@@ -4,7 +4,9 @@ import {
 	Index,
 	ManyToOne,
 	RelationId,
-	JoinColumn
+	JoinColumn,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -18,11 +20,21 @@ import {
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { Expense as IExpense, CurrenciesEnum } from '@gauzy/models';
-import { Organization } from '../organization';
-import { Employee } from '../employee';
+import { Organization } from '../organization/organization.entity';
+import { Employee } from '../employee/employee.entity';
+import { Tag } from '../tags/tag.entity';
+import { ExpenseCategory } from '../expense-categories/expense-category.entity';
+import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 
 @Entity('expense')
 export class Expense extends Base implements IExpense {
+	@ApiProperty({ type: Tag })
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_expense'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -49,19 +61,6 @@ export class Expense extends Base implements IExpense {
 	@Column({ type: 'numeric' })
 	amount: number;
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	vendorName: string;
-
-	@ApiPropertyOptional({ type: String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	vendorId?: string;
-
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
@@ -69,18 +68,27 @@ export class Expense extends Base implements IExpense {
 	@Column({ nullable: true })
 	typeOfExpense: string;
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Index()
-	@Column()
-	categoryName: string;
+	@ApiProperty({ type: OrganizationVendor })
+	@ManyToOne((type) => OrganizationVendor, {
+		nullable: false
+	})
+	@JoinColumn()
+	vendor: OrganizationVendor;
 
-	@ApiPropertyOptional({ type: String })
-	@Index()
-	@IsOptional()
-	@Column({ nullable: true })
-	categoryId?: string;
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((expense: Expense) => expense.vendor)
+	readonly vendorId: string;
+
+	@ApiProperty({ type: ExpenseCategory })
+	@ManyToOne((type) => ExpenseCategory, {
+		nullable: false
+	})
+	@JoinColumn()
+	category: ExpenseCategory;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((expense: Expense) => expense.category)
+	readonly categoryId: string;
 
 	@ApiPropertyOptional({ type: String })
 	@Index()
@@ -161,4 +169,18 @@ export class Expense extends Base implements IExpense {
 	@IsOptional()
 	@Column({ nullable: true })
 	splitExpense: boolean;
+
+	@ApiPropertyOptional({ type: String, maxLength: 256 })
+	@IsOptional()
+	@Column({ nullable: true })
+	reference?: string;
+
+	//IN SOME CASES THE EXPENSES ARE CRASHING BECAUZE ITS TRYING TO ADD EXPENSEID AND THERE IS NO SUCH THING
+
+	// IF THIS HAPPENS AGAIN ADD THIS
+
+	// @ApiPropertyOptional({ type: String})
+	// @IsOptional()
+	// @Column({ nullable: true })
+	// expenseId?: string;
 }

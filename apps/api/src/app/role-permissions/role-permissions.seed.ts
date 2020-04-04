@@ -8,6 +8,36 @@ import { RolePermissions } from './role-permissions.entity';
 
 const defaultRolePermissions = [
 	{
+		role: RolesEnum.SUPER_ADMIN,
+		defaultEnabledPermissions: [
+			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ORG_INCOMES_VIEW,
+			PermissionsEnum.ORG_INCOMES_EDIT,
+			PermissionsEnum.ORG_EXPENSES_VIEW,
+			PermissionsEnum.ORG_EXPENSES_EDIT,
+			PermissionsEnum.ORG_PROPOSALS_VIEW,
+			PermissionsEnum.ORG_PROPOSALS_EDIT,
+			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			PermissionsEnum.ORG_EMPLOYEES_VIEW,
+			PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_VIEW,
+			PermissionsEnum.ORG_CANDIDATES_EDIT,
+			PermissionsEnum.ORG_USERS_VIEW,
+			PermissionsEnum.ORG_USERS_EDIT,
+			PermissionsEnum.ALL_ORG_VIEW,
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.POLICY_EDIT,
+			PermissionsEnum.POLICY_VIEW,
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
+			PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
+			PermissionsEnum.CHANGE_ROLES_PERMISSIONS,
+			PermissionsEnum.ORG_INVITE_VIEW,
+			PermissionsEnum.ORG_INVITE_EDIT,
+			PermissionsEnum.ACCESS_PRIVATE_PROJECTS
+		]
+	},
+	{
 		role: RolesEnum.ADMIN,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
@@ -20,6 +50,8 @@ const defaultRolePermissions = [
 			PermissionsEnum.ORG_TIME_OFF_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_VIEW,
+			PermissionsEnum.ORG_CANDIDATES_EDIT,
 			PermissionsEnum.ORG_USERS_VIEW,
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
@@ -27,10 +59,12 @@ const defaultRolePermissions = [
 			PermissionsEnum.POLICY_EDIT,
 			PermissionsEnum.POLICY_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
+			PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			PermissionsEnum.CHANGE_ROLES_PERMISSIONS,
 			PermissionsEnum.ORG_INVITE_VIEW,
-			PermissionsEnum.ORG_INVITE_EDIT
+			PermissionsEnum.ORG_INVITE_EDIT,
+			PermissionsEnum.ACCESS_PRIVATE_PROJECTS
 		]
 	},
 	{
@@ -45,6 +79,14 @@ const defaultRolePermissions = [
 	},
 	{
 		role: RolesEnum.EMPLOYEE,
+		defaultEnabledPermissions: [
+			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+			PermissionsEnum.ORG_PROPOSALS_VIEW,
+			PermissionsEnum.ORG_TIME_OFF_VIEW
+		]
+	},
+	{
+		role: RolesEnum.CANDIDATE,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 			PermissionsEnum.ORG_PROPOSALS_VIEW,

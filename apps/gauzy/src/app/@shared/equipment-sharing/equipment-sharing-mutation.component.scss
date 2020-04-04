@@ -1,0 +1,41 @@
+.col-sm-3 {
+	padding-left: 0;
+}
+
+.status-label {
+	font-weight: bold;
+	display: flex;
+	align-items: center;
+	height: 100%;
+	border-radius: 3px;
+
+	h4 {
+		font-size: 1em;
+		padding: 0;
+		margin: 0;
+		text-transform: uppercase;
+		padding-left: 10px;
+	}
+}
+
+.status-label.requested {
+	background: #ffc94d;
+}
+
+.status-label.approved {
+	background: #2ce69b;
+}
+
+.status-label.active {
+	background: #598bff;
+}
+
+nb-radio-group {
+	display: flex;
+}
+
+.text-danger {
+	max-width: 100%;
+	font-size: 12px;
+	margin-top: 5px;
+}

@@ -12,12 +12,12 @@ import {
 	RelationId
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Organization } from '../organization';
-import { OrganizationProjects } from '../organization-projects';
-import { Role } from '../role';
-import { User } from '../user';
-import { OrganizationClients } from '../organization-clients';
-import { OrganizationDepartment } from '../organization-department';
+import { Organization } from '../organization/organization.entity';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { Role } from '../role/role.entity';
+import { User } from '../user/user.entity';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 
 @Entity('invite')
 export class Invite extends Base implements IInvite {
@@ -78,19 +78,19 @@ export class Invite extends Base implements IInvite {
 
 	@ManyToMany((type) => OrganizationProjects)
 	@JoinTable({
-		name: 'invite_organization_projects'
+		name: 'invite_organization_project'
 	})
 	projects?: OrganizationProjects[];
 
 	@ManyToMany((type) => OrganizationClients)
 	@JoinTable({
-		name: 'invite_organization_clients'
+		name: 'invite_organization_client'
 	})
 	clients?: OrganizationClients[];
 
 	@ManyToMany((type) => OrganizationDepartment)
 	@JoinTable({
-		name: 'invite_organization_departments'
+		name: 'invite_organization_department'
 	})
 	departments?: OrganizationDepartment[];
 }

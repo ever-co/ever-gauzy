@@ -1,4 +1,5 @@
 import {
+	IStartUpdateTypeInfo,
 	OrganizationRecurringExpenseForEmployeeOutput,
 	RecurringExpenseEditInput
 } from '@gauzy/models';
@@ -10,6 +11,7 @@ import {
 	HttpCode,
 	HttpStatus,
 	Param,
+	Post,
 	Put,
 	Query,
 	UseGuards
@@ -19,12 +21,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
+import { OrganizationRecurringExpenseCreateCommand } from './commands/organization-recurring-expense.create.command';
 import { OrganizationRecurringExpenseDeleteCommand } from './commands/organization-recurring-expense.delete.command';
 import { OrganizationRecurringExpenseEditCommand } from './commands/organization-recurring-expense.edit.command';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import { OrganizationRecurringExpenseByMonthQuery } from './queries/organization-recurring-expense.by-month.query';
 import { OrganizationRecurringExpenseFindSplitExpenseQuery } from './queries/organization-recurring-expense.find-split-expense.query';
+import { OrganizationRecurringExpenseStartDateUpdateTypeQuery } from './queries/organization-recurring-expense.update-type.query';
 
 @ApiTags('OrganizationRecurringExpense')
 @Controller()
@@ -38,6 +42,26 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
 	) {
 		super(organizationRecurringExpenseService);
+	}
+
+	@ApiOperation({ summary: 'Create new expense' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The expense has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	async create(
+		@Body() entity: OrganizationRecurringExpense
+	): Promise<OrganizationRecurringExpense> {
+		return this.commandBus.execute(
+			new OrganizationRecurringExpenseCreateCommand(entity)
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -75,13 +99,14 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAllRecurringExpenses(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationRecurringExpense>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput, order = {} } = JSON.parse(data);
 
 		return this.organizationRecurringExpenseService.findAll({
-			where: findInput
+			where: findInput,
+			order: order
 		});
 	}
 
@@ -137,7 +162,9 @@ export class OrganizationRecurringExpenseController extends CrudController<
 		);
 	}
 
-	@ApiOperation({ summary: 'Find all organization recurring expense.' })
+	@ApiOperation({
+		summary: 'Find all organization recurring expense by month.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found organization recurring expense',
@@ -155,6 +182,29 @@ export class OrganizationRecurringExpenseController extends CrudController<
 
 		return this.queryBus.execute(
 			new OrganizationRecurringExpenseByMonthQuery(findInput)
+		);
+	}
+
+	@ApiOperation({
+		summary:
+			'Find start date update type & conflicting expenses for the update'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found start date update type'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/date-update-type')
+	async findStartDateUpdateType(
+		@Query('data') data: string
+	): Promise<IStartUpdateTypeInfo> {
+		const { findInput } = JSON.parse(data);
+
+		return this.queryBus.execute(
+			new OrganizationRecurringExpenseStartDateUpdateTypeQuery(findInput)
 		);
 	}
 }

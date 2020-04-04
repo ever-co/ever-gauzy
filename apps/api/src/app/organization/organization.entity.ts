@@ -5,7 +5,10 @@ import {
 	Index,
 	ManyToOne,
 	JoinColumn,
-	RelationId
+	RelationId,
+	ManyToMany,
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -19,7 +22,6 @@ import {
 	Max,
 	IsBoolean
 } from 'class-validator';
-import { Base } from '../core/entities/base';
 import {
 	Organization as IOrganization,
 	CurrenciesEnum,
@@ -27,9 +29,17 @@ import {
 	WeekDaysEnum,
 	BonusTypeEnum
 } from '@gauzy/models';
+import { Tag } from '../tags';
+import { LocationBase } from '../core/entities/location-base';
 
 @Entity('organization')
-export class Organization extends Base implements IOrganization {
+export class Organization extends LocationBase implements IOrganization {
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_organizations'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: Tenant })
 	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
@@ -121,42 +131,6 @@ export class Organization extends Base implements IOrganization {
 	@Column()
 	@IsOptional()
 	@Column({ nullable: true })
-	country?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	city?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	address?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	address2?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	postcode?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
-	regionCode?: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	@IsOptional()
-	@Column({ nullable: true })
 	numberFormat?: string;
 
 	@ApiProperty({ type: String, enum: BonusTypeEnum })
@@ -192,4 +166,50 @@ export class Organization extends Base implements IOrganization {
 	@IsOptional()
 	@IsDate()
 	fiscalEndDate?: Date;
+
+	@ApiProperty({ type: Date })
+	@Column({ nullable: true })
+	@IsOptional()
+	@IsDate()
+	registrationDate?: Date;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	futureDateAllowed?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	allowModifyTime?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireReason?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireDescription?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireProject?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireTask?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	requireClient?: boolean;
+
+	@ApiProperty({ enum: [12, 24] })
+	@IsBoolean()
+	@Column({ default: 12 })
+	timeFormat?: 12 | 24;
 }

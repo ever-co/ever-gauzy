@@ -1,12 +1,14 @@
-import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { UserOrganization as IUserOrganization } from '@gauzy/models';
 import { UserOrganizationService } from './user-organization.services';
 import { IPagination } from '../core';
 import { UserOrganization } from './user-organization.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('UserOrganization')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class UserOrganizationController extends CrudController<
 	IUserOrganization

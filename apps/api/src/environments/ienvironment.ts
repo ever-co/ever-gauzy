@@ -42,8 +42,10 @@ export interface IEnvironment {
 	googleConfig: IGoogleConfig;
 
 	defaultAdmins: DefaultUser[];
+	defaultSuperAdmins: DefaultUser[];
 
 	defaultEmployees?: DefaultUser[];
+	defaultCandidates?: DefaultUser[];
 
 	defaultOrganization?: {
 		name: string;
@@ -56,4 +58,7 @@ export interface IEnvironment {
 		name: string;
 		defaultMembers: string[];
 	}[];
+	sentry?: {
+		dns: string;
+	};
 }

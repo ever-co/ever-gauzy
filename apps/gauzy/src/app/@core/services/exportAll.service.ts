@@ -1,0 +1,11 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Injectable()
+export class ExportAllService {
+	constructor(private http: HttpClient) {}
+
+	downloadAllData() {
+		return this.http.get(`/api/download`, { responseType: 'blob' });
+	}
+}

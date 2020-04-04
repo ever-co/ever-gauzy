@@ -18,8 +18,10 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { RolePermissions } from './role-permissions.entity';
 import { RolePermissionsService } from './role-permissions.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Role')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class RolePermissionsController extends CrudController<RolePermissions> {
 	constructor(

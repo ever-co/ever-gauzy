@@ -4,11 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from '../auth';
 import { EmailModule } from '../email/email.module';
 import { EmailService } from '../email/email.service';
-import { Employee, EmployeeService } from '../employee';
-import {
-	OrganizationClients,
-	OrganizationClientsService
-} from '../organization-clients';
+import { Employee } from '../employee/employee.entity';
+import { EmployeeService } from '../employee/employee.service';
+import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
 import {
 	OrganizationDepartment,
 	OrganizationDepartmentService
@@ -27,7 +26,8 @@ import { CommandHandlers } from './commands/handlers';
 import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
-import { OrganizationService, Organization } from '../organization';
+import { Organization } from '../organization/organization.entity';
+import { OrganizationService } from '../organization/organization.service';
 import { Role, RoleService } from '../role';
 
 @Module({

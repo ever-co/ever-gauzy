@@ -1,3 +1,4 @@
+@import 'var';
 .form-group input {
 	width: 100%;
 }
@@ -15,6 +16,33 @@ nb-card-body {
 	overflow-y: hidden; //prevent extra scroll bar
 }
 
-:host ::ng-deep .tab-link {
-	padding: 1rem 5px !important;
+:host ::ng-deep {
+	nb-route-tabset {
+		ul.route-tabset {
+			padding: 0;
+			@include respond(dsk) {
+				flex-wrap: wrap;
+			}
+		}
+
+		.tab-link {
+			padding: px2rem(10px) px2rem(20px);
+			height: 100%;
+
+			@include respond(dsk) {
+				padding: px2rem(10px) px2rem(20px);
+			}
+			@include respond(1440px) {
+				padding: px2rem(10px) px2rem(25px);
+			}
+			@include respond(xxl) {
+				padding: px2rem(10px) px2rem(20px);
+			}
+			nb-icon {
+				display: block;
+				margin: auto;
+				margin-bottom: 8px;
+			}
+		}
+	}
 }

@@ -1,8 +1,8 @@
 import { SplitExpenseOutput } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { IPagination } from '../../../core';
-import { EmployeeService } from '../../../employee';
-import { OrganizationService } from '../../../organization';
+import { EmployeeService } from '../../../employee/employee.service';
+import { OrganizationService } from '../../../organization/organization.service';
 import { ExpenseService } from '../../expense.service';
 import { FindSplitExpenseQuery } from '../expense.find-split-expense.query';
 
@@ -61,8 +61,6 @@ export class FindSplitExpenseHandler
 				organization: employee.organization
 			}
 		});
-
-		console.log(items, total);
 
 		//3. Divide the value of the expense found in 1 to the no. of employees found in 2.
 		const splitItems = items.map((e) =>

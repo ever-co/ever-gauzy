@@ -1,0 +1,34 @@
+<nb-card>
+	<nb-card-header>
+		{{ 'USERS_PAGE.ADD_EXISTING_USER' | translate }}
+	</nb-card-header>
+	<nb-card-body>
+		<div class="form-group">
+			<div class="form-group d-flex flex-row bd-highlight mb-3">
+				<div class="form-group col-4">
+					<form [formGroup]="form" *ngIf="form">
+						<ga-user-organizations-multi-select
+							[selectedOrganizationsId]="selectedOrganizationsId"
+							[allOrganizations]="organizations"
+							(selectedChange)="onOrganizationsSelected($event)"
+						>
+						</ga-user-organizations-multi-select>
+					</form>
+				</div>
+				<div class="form-group">
+					<button
+						class="mr-2"
+						nbButton
+						(click)="submitForm()"
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+					<button (click)="cancel()" nbButton status="danger">
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

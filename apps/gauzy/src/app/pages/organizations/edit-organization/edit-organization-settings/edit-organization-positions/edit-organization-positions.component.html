@@ -40,24 +40,61 @@
 			>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="positions?.length">
-		<div class="ml-3 mb-4">
-			<strong>{{
-				'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
-			}}</strong>
-		</div>
+	<div class="ml-3 mb-4" *ngIf="positionsExist">
+		<strong>Position name</strong>
+	</div>
 
-		<nb-card *ngFor="let p of positions">
-			<nb-card-body>
-				{{ p.name }}
-				<nb-actions class="float-right" e="medium">
-					<nb-action
-						(click)="removePosition(p.id, p.name)"
-						class="d-inline pr-0"
-						icon="close"
-					></nb-action>
-				</nb-actions>
-			</nb-card-body>
-		</nb-card>
-	</nb-card-body>
+	<nb-card *ngFor="let p of positions">
+		<nb-card-body>
+			{{ selectedPosition === p ? '' : p.name }}
+			<div *ngIf="showEditDiv && p === selectedPosition" class="row m-0">
+				<input
+					#editInput
+					class="col-8"
+					nbInput
+					type="text"
+					[value]="selectedPosition.name"
+					fullWidth
+				/>
+				<span class="col-2 pl-2 pr-1">
+					<button
+						class="w-100"
+						(click)="
+							editPosition(selectedPosition.id, editInput.value)
+						"
+						nbButton
+						status="success"
+					>
+						Update
+					</button></span
+				>
+				<span class="col-2 pl-1 pr-0">
+					<button
+						class="w-100"
+						(click)="cancel()"
+						nbButton
+						status="danger"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button></span
+				>
+			</div>
+			<nb-actions
+				*ngIf="p !== selectedPosition"
+				class="float-right"
+				e="medium"
+			>
+				<nb-action
+					(click)="showEditCard(p)"
+					class="d-inline pr-0"
+					icon="edit"
+				></nb-action>
+				<nb-action
+					(click)="removePosition(p.id, p.name)"
+					class="d-inline pr-0"
+					icon="close"
+				></nb-action>
+			</nb-actions>
+		</nb-card-body>
+	</nb-card>
 </nb-card>

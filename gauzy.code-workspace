@@ -11,6 +11,7 @@
 		"typescript.tsdk": "./node_modules/typescript/lib",
 		"debug.node.autoAttach": "on",
 		"search.usePCRE2": true,
-		"git.ignoreLimitWarning": true
+		"git.ignoreLimitWarning": true,
+		"checkpoints.showActiveFileOnly": true
 	}
 }

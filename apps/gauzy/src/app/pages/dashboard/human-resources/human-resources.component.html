@@ -1,0 +1,427 @@
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	*ngIf="selectedEmployee && selectedEmployee.id"
+>
+	<nb-card-header class="header">
+		<nb-alert
+			outline="danger"
+			*ngIf="incomePermissionsError || expensePermissionError"
+		>
+			{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.INSUFFICIENT' | translate }}
+			<span *ngIf="incomePermissionsError">{{
+				'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_INCOMES_VIEW' | translate
+			}}</span>
+			<span *ngIf="expensePermissionError">{{
+				'ORGANIZATIONS_PAGE.PERMISSIONS.ORG_EXPENSES_VIEW' | translate
+			}}</span>
+		</nb-alert>
+		<div class="header-container">
+			<div class="employee-info">
+				<img
+					class="employee-image"
+					[src]="selectedEmployee.imageUrl"
+					alt="Employee Avatar"
+				/>
+
+				<div class="employee-details">
+					<span class="employee-name"
+						>{{ selectedEmployee.firstName }}
+						{{ selectedEmployee.lastName }}
+						<nb-icon
+							class="mr-1 edit-icon"
+							icon="edit-outline"
+							(click)="edit()"
+						></nb-icon
+					></span>
+
+					<div class="employee-position">
+						<!-- When we have employee position we will check this way for example: *ngIf="selectedEmployee['user'].employeeLevel && selectedEmployee['user'].employeePosition" -->
+						{{ 'DASHBOARD_PAGE.DEVELOPER.DEVELOPER' | translate }}
+						<span *ngIf="selectedEmployee['employeeLevel']">
+							| </span
+						>{{ selectedEmployee['employeeLevel'] }}
+					</div>
+				</div>
+			</div>
+
+			<div>
+				<div
+					*ngIf="totalSalary !== 0"
+					class="employee-details employee-salary"
+				>
+					{{ 'DASHBOARD_PAGE.TITLE.SALARY' | translate }}:
+					{{ defaultCurrency }}
+					{{ totalSalary }}
+				</div>
+
+				<div
+					*ngIf="selectedOrganization?.bonusType && avarageBonus"
+					class="employee-details"
+				>
+					{{ 'DASHBOARD_PAGE.DEVELOPER.AVERAGE_BONUS' | translate }}:
+					{{ avarageBonus | currency: defaultCurrency }}
+				</div>
+			</div>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body class="body">
+		<div class="half-content">
+			<div>
+				<ga-info-block
+					*ngIf="totalBonusIncome !== 0"
+					accordion="true"
+					title="{{
+						'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_CALC'
+							| translate
+								: {
+										totalNonBonusIncome: incomeCurrency
+											? (totalNonBonusIncome
+											  | currency: incomeCurrency)
+											: totalNonBonusIncome,
+										totalBonusIncome: incomeCurrency
+											? (totalBonusIncome
+											  | currency: incomeCurrency)
+											: totalBonusIncome
+								  }
+					}}"
+					value="{{
+						incomeCurrency
+							? (totalAllIncome | currency: incomeCurrency)
+							: totalAllIncome
+					}}"
+					color="#089c17"
+					(openInfo)="openHistoryDialog('INCOME')"
+				>
+					<ga-info-block
+						*ngIf="totalBonusIncome !== 0"
+						listItem="true"
+						title="{{ 'INCOME_PAGE.INCOME' | translate }}"
+						value="{{
+							incomeCurrency
+								? (totalNonBonusIncome
+								  | currency: incomeCurrency)
+								: totalNonBonusIncome
+						}}"
+						color="#089c17"
+						(openInfo)="openHistoryDialog('NON_BONUS_INCOME')"
+					>
+					</ga-info-block>
+
+					<ga-info-block
+						*ngIf="totalBonusIncome !== 0"
+						listItem="true"
+						title="{{
+							'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME'
+								| translate
+						}}"
+						meta="{{
+							'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_INCOME_INFO'
+								| translate
+						}}"
+						value="{{
+							incomeCurrency
+								? (totalBonusIncome | currency: incomeCurrency)
+								: totalBonusIncome
+						}}"
+						color="#089c17"
+						(openInfo)="openHistoryDialog('BONUS_INCOME')"
+					>
+					</ga-info-block>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="totalBonusIncome == 0"
+					title="{{
+						'DASHBOARD_PAGE.DEVELOPER.TOTAL_INCOME' | translate
+					}}"
+					value="{{
+						incomeCurrency
+							? (totalAllIncome | currency: incomeCurrency)
+							: totalAllIncome
+					}}"
+					color="#089c17"
+					(openInfo)="openHistoryDialog('INCOME')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY'
+							| translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSES_WITHOUT_SALARY_CALC'
+							| translate
+					}}"
+					value="{{
+						expenseCurrency
+							? (totalExpense - totalSalary
+							  | currency: expenseCurrency)
+							: totalExpense - totalSalary
+					}}"
+					color="#dbc300"
+					(openInfo)="openHistoryDialog('EXPENSES_WITHOUT_SALARY')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					title="{{
+						'DASHBOARD_PAGE.DEVELOPER.TOTAL_EXPENSES' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_EXPENSE_CALC' | translate
+					}}"
+					value="{{
+						expenseCurrency
+							? (totalExpense | currency: expenseCurrency)
+							: totalExpense
+					}}"
+					color="#dbc300"
+					(openInfo)="openHistoryDialog('EXPENSES')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					title="{{ 'DASHBOARD_PAGE.DEVELOPER.PROFIT' | translate }}"
+					meta="{{
+						'DASHBOARD_PAGE.DEVELOPER.PROFIT_CALC'
+							| translate
+								: {
+										totalAllIncome: incomeCurrency
+											? (totalAllIncome
+											  | currency: incomeCurrency)
+											: totalAllIncome,
+										totalExpense: expenseCurrency
+											? (totalExpense
+											  | currency: expenseCurrency)
+											: totalExpense
+								  }
+					}}"
+					value="{{
+						defaultCurrency
+							? (difference | currency: defaultCurrency)
+							: difference
+					}}"
+					color="{{ difference >= 0 ? '#089c17' : '#ff7b00' }}"
+					blockType="highlight"
+					(openInfo)="openProfitDialog()"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="
+						selectedOrganization?.bonusType &&
+						totalBonusIncome !== 0
+					"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_DIRECT_BONUS_INFO'
+							| translate
+					}}"
+					value="{{
+						incomeCurrency
+							? (totalBonusIncome | currency: incomeCurrency)
+							: totalBonusIncome
+					}}"
+					color="#66de0b"
+					(openInfo)="openHistoryDialog('BONUS_INCOME')"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="
+						bonusType === 'PROFIT_BASED_BONUS' &&
+						totalBonusIncome !== 0
+					"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_PROFIT_BONUS_INFO'
+							| translate
+								: {
+										bonusPercentage: bonusPercentage,
+										difference: defaultCurrency
+											? (difference
+											  | currency: defaultCurrency)
+											: difference
+								  }
+					}}"
+					value="{{
+						defaultCurrency
+							? (calculatedBonus | currency: defaultCurrency)
+							: calculatedBonus
+					}}"
+					color="{{ calculatedBonus >= 0 ? '#66de0b' : '#ff7b00' }}"
+				>
+				</ga-info-block>
+
+				<ga-info-block
+					*ngIf="
+						bonusType === 'REVENUE_BASED_BONUS' &&
+						totalBonusIncome !== 0
+					"
+					title="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS' | translate
+					}}"
+					meta="{{
+						'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
+							| translate
+								: {
+										bonusPercentage: bonusPercentage,
+										totalIncome: incomeCurrency
+											? (totalAllIncome
+											  | currency: incomeCurrency)
+											: totalAllIncome
+								  }
+					}}"
+					value="{{
+						defaultCurrency
+							? (calculatedBonus | currency: defaultCurrency)
+							: calculatedBonus
+					}}"
+					color="{{ calculatedBonus >= 0 ? '#66de0b' : '#ff7b00' }}"
+				>
+				</ga-info-block>
+				<!-- End of info blocks -->
+
+				<div *ngIf="selectedOrganization?.bonusType" class="bonus">
+					<div class="bonus-value">
+						<div *ngIf="totalBonusIncome !== 0">
+							{{
+								'DASHBOARD_PAGE.TITLE.TOTAL_BONUS_CALC'
+									| translate
+										: {
+												totalBonusIncome: incomeCurrency
+													? (totalBonusIncome
+													  | currency
+															: incomeCurrency)
+													: totalBonusIncome,
+												calculatedBonus: incomeCurrency
+													? (calculatedBonus
+													  | currency
+															: incomeCurrency)
+													: calculatedBonus
+										  }
+							}}
+						</div>
+						<div *ngIf="totalBonusIncome === 0">
+							{{
+								'DASHBOARD_PAGE.TITLE.TOTAL_INCOME_BONUS_INFO'
+									| translate
+										: {
+												bonusPercentage: bonusPercentage,
+												totalIncome: incomeCurrency
+													? (totalAllIncome
+													  | currency
+															: incomeCurrency)
+													: totalAllIncome
+										  }
+							}}
+						</div>
+						<div
+							*ngIf="defaultCurrency"
+							[ngClass]="{
+								'negative-bonus-color': totalBonus < 0
+							}"
+						>
+							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
+							:
+							{{ totalBonus }}
+							{{ defaultCurrency }}
+						</div>
+						<div
+							*ngIf="!defaultCurrency"
+							[ngClass]="{
+								'negative-bonus-color': totalBonus < 0
+							}"
+						>
+							{{ 'DASHBOARD_PAGE.DEVELOPER.BONUS' | translate }}
+							:
+							{{ totalBonus }}
+							{{ defaultCurrency }}
+						</div>
+					</div>
+					<div class="bonus-disclaimer" *ngIf="totalBonus < 0">
+						{{ 'DASHBOARD_PAGE.DEVELOPER.NOTE' | translate }}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div
+			*ngIf="selectedEmployee && selectedEmployee.id"
+			class="half-content charts"
+		>
+			<div>
+				<label class="chart-select-label">{{
+					'DASHBOARD_PAGE.CHARTS.CHART_TYPE' | translate
+				}}</label>
+				<nb-select
+					placeholder="Select chart"
+					class="select-charts"
+					filled
+					status="success"
+					[selected]="selectedChart"
+					(selectedChange)="onChartSelected($event)"
+					size="tiny"
+				>
+					<nb-option value="1"
+						><img
+							width="auto"
+							height="24"
+							style="margin-right:10px"
+							src="assets/images/others/bar-chart.svg"
+						/>
+						{{ 'DASHBOARD_PAGE.CHARTS.BAR' | translate }}</nb-option
+					>
+					<nb-option value="2"
+						><img
+							width="auto"
+							height="24"
+							style="margin-right:10px"
+							src="assets/images/others/doughnut.svg"
+						/>
+						{{ 'DASHBOARD_PAGE.CHARTS.DOUGHNUT' | translate }}
+					</nb-option>
+					<nb-option value="3"
+						><img
+							width="auto"
+							height="24"
+							style="margin-right:10px"
+							src="assets/images/others/stacked-bar-chart.svg"
+						/>
+						{{
+							'DASHBOARD_PAGE.CHARTS.STACKED_BAR' | translate
+						}}</nb-option
+					>
+				</nb-select>
+			</div>
+			<div class="chart-wrap" [ngSwitch]="selectedChart">
+				<ngx-employee-doughnut-chart
+					*ngSwitchCase="2"
+				></ngx-employee-doughnut-chart>
+				<ngx-employee-stacked-bar-chart
+					*ngSwitchCase="3"
+				></ngx-employee-stacked-bar-chart>
+				<ngx-employee-horizontal-bar-chart
+					*ngSwitchDefault
+				></ngx-employee-horizontal-bar-chart>
+			</div>
+		</div>
+
+		<ng-template #noRole>
+			<span>{{
+				'DASHBOARD_PAGE.INSERT_TEXT_FOR_NOT_AUTHENTICATED_USERS'
+					| translate
+			}}</span>
+		</ng-template>
+	</nb-card-body>
+</nb-card>

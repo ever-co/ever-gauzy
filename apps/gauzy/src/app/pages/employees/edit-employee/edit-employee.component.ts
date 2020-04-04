@@ -3,32 +3,32 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
 	Employee,
 	EmployeeRecurringExpense,
-	RecurringExpenseDeletionEnum,
+	Organization,
+	PermissionsEnum,
 	RecurringExpenseDefaultCategoriesEnum,
-	PermissionsEnum
+	RecurringExpenseDeletionEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { monthNames } from '../../../@core/utils/date';
 import { RecurringExpenseDeleteConfirmationComponent } from '../../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.component';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import {
-	RecurringExpenseMutationComponent,
-	COMPONENT_TYPE
+	COMPONENT_TYPE,
+	RecurringExpenseMutationComponent
 } from '../../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.component';
-import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
 	selector: 'ngx-edit-employee',
 	templateUrl: './edit-employee.component.html',
 	styleUrls: [
-		'./edit-employee.component.scss',
+		'../../organizations/edit-organization/edit-organization.component.scss',
 		'../../dashboard/dashboard.component.scss'
 	]
 })
@@ -43,12 +43,13 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 	employeeName = 'Employee';
 	hasEditPermission = false;
 	hasEditExpensePermission = false;
+	fetchedHistories: Object = {};
+	selectedOrganization: Organization;
 
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
 		private employeeService: EmployeesService,
-		private organizationsService: OrganizationsService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
@@ -86,7 +87,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				const id = params.id;
 
 				const { items } = await this.employeeService
-					.getAll(['user'], { id })
+					.getAll(['user', 'organizationPosition', 'tags'], { id })
 					.pipe(first())
 					.toPromise();
 
@@ -96,7 +97,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 					id: items[0].id,
 					firstName: items[0].user.firstName,
 					lastName: items[0].user.lastName,
-					imageUrl: items[0].user.imageUrl
+					imageUrl: items[0].user.imageUrl,
+					tags: items[0].user.tags
 				};
 
 				const checkUsername = this.selectedEmployee.user.username;
@@ -116,6 +118,12 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 							]);
 						}
 					});
+
+				this.store.selectedOrganization$
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe((organization) => {
+						this.selectedOrganization = organization;
+					});
 			});
 	}
 
@@ -125,13 +133,30 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 		]);
 	}
 
+	getMonthString(month: number) {
+		return monthNames[month];
+	}
+
+	getCategoryName(categoryName: string) {
+		return categoryName in RecurringExpenseDefaultCategoriesEnum
+			? this.getTranslation(
+					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			  )
+			: categoryName;
+	}
+
+	showMenu(index: number) {
+		this.selectedRowIndexToShow = index;
+	}
+
 	async addEmployeeRecurringExpense() {
 		// TODO get currency from the page dropdown
 
 		const result = await this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {
-					componentType: COMPONENT_TYPE.EMPLOYEE
+					componentType: COMPONENT_TYPE.EMPLOYEE,
+					selectedDate: this.selectedDate
 				}
 			})
 			.onClose.pipe(first())
@@ -139,21 +164,12 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 
 		if (result) {
 			try {
-				await this.employeeRecurringExpenseService.create({
-					employeeId: this.selectedEmployee.id,
-					// TODO
-					categoryName: result.categoryName,
-					value: result.value,
-					startDay: 1,
-					startYear: this.selectedDate.getFullYear(),
-					startMonth: this.selectedDate.getMonth() + 1,
-					startDate: new Date(
-						this.selectedDate.getFullYear(),
-						this.selectedDate.getMonth(),
-						1
-					),
-					currency: result.currency
-				});
+				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(
+					result
+				);
+				await this.employeeRecurringExpenseService.create(
+					employeeRecurringExpense
+				);
 
 				this.toastrService.primary(
 					this.employeeName + ' recurring expense set.',
@@ -167,24 +183,6 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				);
 			}
 		}
-	}
-
-	getMonthString(month: number) {
-		const months = monthNames;
-
-		return months[month - 1];
-	}
-
-	getCategoryName(categoryName: string) {
-		return categoryName in RecurringExpenseDefaultCategoriesEnum
-			? this.getTranslation(
-					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			  )
-			: categoryName;
-	}
-
-	showMenu(index: number) {
-		this.selectedRowIndexToShow = index;
 	}
 
 	async editEmployeeRecurringExpense(index: number) {
@@ -204,12 +202,13 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 		if (result) {
 			try {
 				const id = this.selectedEmployeeRecurringExpense[index].id;
-				await this.employeeRecurringExpenseService.update(id, {
-					...result,
-					startDay: 1,
-					startMonth: this.selectedDate.getMonth() + 1,
-					startYear: this.selectedDate.getFullYear()
-				});
+				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(
+					result
+				);
+				await this.employeeRecurringExpenseService.update(
+					id,
+					employeeRecurringExpense
+				);
 				this.selectedRowIndexToShow = null;
 				this._loadEmployeeRecurringExpense();
 
@@ -239,7 +238,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 						selectedExpense.startMonth
 					)}, ${selectedExpense.startYear}`,
 					current: `${this.getMonthString(
-						this.selectedDate.getMonth() + 1
+						this.selectedDate.getMonth()
 					)}, ${this.selectedDate.getFullYear()}`,
 					end: selectedExpense.endMonth
 						? `${this.getMonthString(selectedExpense.endMonth)}, ${
@@ -256,7 +255,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				const id = selectedExpense.id;
 				await this.employeeRecurringExpenseService.delete(id, {
 					deletionType: result,
-					month: this.selectedDate.getMonth() + 1,
+					month: this.selectedDate.getMonth(),
 					year: this.selectedDate.getFullYear()
 				});
 				this.selectedRowIndexToShow = null;
@@ -277,13 +276,51 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 		}
 	}
 
+	private _recurringExpenseMutationResultTransform(
+		result
+	): EmployeeRecurringExpense {
+		return {
+			employeeId: this.selectedEmployee.id,
+			categoryName: result.categoryName,
+			value: result.value,
+			currency: result.currency,
+			startDay: result.startDay || 1,
+			startMonth: result.startMonth || this.selectedDate.getMonth(),
+			startYear: result.startYear || this.selectedDate.getFullYear(),
+			startDate:
+				result.startDate ||
+				new Date(
+					this.selectedDate.getFullYear(),
+					this.selectedDate.getMonth(),
+					1
+				)
+		};
+	}
+
 	private async _loadEmployeeRecurringExpense() {
+		this.fetchedHistories = {};
 		this.selectedEmployeeRecurringExpense = (
-			await this.employeeRecurringExpenseService.getAll([], {
+			await this.employeeRecurringExpenseService.getAllByMonth([], {
 				employeeId: this.selectedEmployee.id,
 				year: this.selectedDate.getFullYear(),
-				month: this.selectedDate.getMonth() + 1
+				month: this.selectedDate.getMonth()
 			})
+		).items;
+	}
+
+	public async fetchHistory(i: number) {
+		this.fetchedHistories[i] = (
+			await this.employeeRecurringExpenseService.getAll(
+				[],
+				{
+					parentRecurringExpenseId: this
+						.selectedEmployeeRecurringExpense[i]
+						.parentRecurringExpenseId
+				},
+				{
+					startDate: 'ASC'
+				}
+			)
 		).items;
 	}
 

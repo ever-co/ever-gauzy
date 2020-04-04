@@ -1,5 +1,9 @@
+@import 'var';
 nb-card-body {
 	padding: 50px 70px;
+	@include respond(dsk) {
+		padding: 30px 40px;
+	}
 
 	.navigate {
 		display: flex;
@@ -73,12 +77,12 @@ nb-card-body {
 
 	.actions {
 		display: flex;
-		justify-content: flex-end;
+		justify-content: flex-start;
 		width: 100%;
 		margin-top: 30px;
 
-		:last-child {
-			margin-left: 40px;
-		}
+		// :last-child {
+		// 	margin-left: 40px;
+		// }
 	}
 }

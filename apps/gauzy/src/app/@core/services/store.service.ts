@@ -3,7 +3,8 @@ import {
 	Organization,
 	PermissionsEnum,
 	RolePermissions,
-	User
+	User,
+	Tag
 } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
@@ -13,8 +14,14 @@ export class Store {
 	private _selectedOrganization: Organization;
 	private _selectedProposal: ProposalViewModel;
 	private _userRolePermissions: RolePermissions[];
+	private _user: User;
+	private _selectedTags: Tag[];
 	Permissions: boolean;
 
+	user$: BehaviorSubject<User> = new BehaviorSubject(this.user);
+	selectedTags$: BehaviorSubject<Tag[]> = new BehaviorSubject(
+		this.selectedTags
+	);
 	selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(
 		this.selectedOrganization
 	);
@@ -36,6 +43,9 @@ export class Store {
 	get selectedOrganization(): Organization {
 		return this._selectedOrganization;
 	}
+	get selectedTags(): Tag[] {
+		return this._selectedTags;
+	}
 
 	set selectedEmployee(employee: SelectedEmployee) {
 		this._selectedEmployee = employee;
@@ -49,6 +59,10 @@ export class Store {
 	set selectedOrganization(organization: Organization) {
 		this.selectedOrganization$.next(organization);
 		this._selectedOrganization = organization;
+	}
+	set selectedTags(tag: Tag[]) {
+		this.selectedTags$.next(tag);
+		this._selectedTags = tag;
 	}
 
 	get token(): string | null {
@@ -73,6 +87,15 @@ export class Store {
 		} else {
 			localStorage.setItem('_userId', id);
 		}
+	}
+
+	get user(): User {
+		return this._user;
+	}
+
+	set user(user: User) {
+		this._user = user;
+		this.user$.next(user);
 	}
 
 	get selectedDate() {

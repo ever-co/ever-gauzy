@@ -4,7 +4,7 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { Column, Entity, Index } from 'typeorm';
 import { Base } from '../core/entities/base';
 
-@Entity('countries')
+@Entity('country')
 export class Country extends Base implements ICountry {
 	@ApiProperty({ type: String })
 	@Index()

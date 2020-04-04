@@ -58,8 +58,6 @@ export class EditEmployeeRatesComponent implements OnInit, OnDestroy {
 			employee.billRateCurrency ||
 			(await this.getDefaultCurrency(employee));
 
-		console.log(employee.billRateCurrency, !!employee.billRateCurrency);
-
 		this.form = this.fb.group({
 			payPeriod: [employee.payPeriod],
 			billRateValue: [employee.billRateValue],

@@ -1,6 +1,7 @@
 import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Tag } from './tag-entity.model';
 
 export interface Income extends IBaseEntityModel {
 	employee?: Employee;
@@ -14,6 +15,7 @@ export interface Income extends IBaseEntityModel {
 	valueDate?: Date;
 	notes?: string;
 	isBonus?: boolean;
+	tags: Tag[];
 }
 
 export interface IncomeCreateInput {
@@ -26,6 +28,8 @@ export interface IncomeCreateInput {
 	notes?: string;
 	orgId?: string;
 	isBonus?: boolean;
+	reference?: string;
+	tags: Tag[];
 }
 
 export interface IncomeUpdateInput {
@@ -37,6 +41,7 @@ export interface IncomeUpdateInput {
 	currency?: string;
 	notes?: string;
 	isBonus?: boolean;
+	tags: Tag[];
 }
 
 export interface IncomeFindInput extends IBaseEntityModel {
@@ -47,4 +52,8 @@ export interface IncomeFindInput extends IBaseEntityModel {
 	clientName?: string;
 	valueDate?: Date;
 	currency?: string;
+}
+
+export enum IncomeTypeEnum {
+	HOURLY = 'Hourly'
 }

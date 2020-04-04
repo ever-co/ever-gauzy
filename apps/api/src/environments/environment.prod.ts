@@ -56,9 +56,17 @@ export const environment: IEnvironment = {
 		imageUrl: 'assets/images/logos/ever-large.jpg'
 	},
 
-	defaultAdmins: [
+	defaultSuperAdmins: [
 		{
 			email: 'admin@ever.co',
+			password: 'admin',
+			imageUrl: 'assets/images/avatars/ruslan.jpg'
+		}
+	],
+
+	defaultAdmins: [
+		{
+			email: 'local.admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg'
 		}
@@ -143,7 +151,15 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/dimana.jpeg'
 		}
 	],
-
+	defaultCandidates: [
+		{
+			email: 'alish@ever.co',
+			password: '123456',
+			firstName: 'Alish',
+			lastName: 'Meklyov',
+			imageUrl: 'assets/images/avatars/alish.jpg'
+		}
+	],
 	defaultTeams: [
 		{
 			name: 'Employees',
@@ -160,6 +176,10 @@ export const environment: IEnvironment = {
 			]
 		},
 		{
+			name: 'Candidates',
+			defaultMembers: ['alish@ever.co']
+		},
+		{
 			name: 'Contractors',
 			defaultMembers: [
 				'rachit@ever.co',
@@ -167,5 +187,8 @@ export const environment: IEnvironment = {
 				'dimana@ever.co'
 			]
 		}
-	]
+	],
+	sentry: {
+		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+	}
 };
