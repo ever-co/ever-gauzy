@@ -19,7 +19,6 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ExpenseDescriptionComponent } from './expense-description/expense-description.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -49,7 +48,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	declarations: [ExpensesComponent, ExpenseDescriptionComponent],
-	entryComponents: [ExpenseDescriptionComponent]
+	declarations: [ExpensesComponent],
+	entryComponents: []
 })
 export class ExpensesModule {}
