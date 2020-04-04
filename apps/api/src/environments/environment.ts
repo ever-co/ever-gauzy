@@ -62,9 +62,17 @@ export const environment: IEnvironment = {
 		imageUrl: 'assets/images/logos/ever-large.jpg'
 	},
 
-	defaultAdmins: [
+	defaultSuperAdmins: [
 		{
 			email: 'admin@ever.co',
+			password: 'admin',
+			imageUrl: 'assets/images/avatars/ruslan.jpg'
+		}
+	],
+
+	defaultAdmins: [
+		{
+			email: 'local.admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg'
 		}

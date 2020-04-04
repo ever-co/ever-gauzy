@@ -173,6 +173,7 @@ export class SeedDataService {
 
 			const roles: Role[] = await createRoles(this.connection);
 			const {
+				superAdminUsers,
 				adminUsers,
 				defaultUsers,
 				randomUsers,
@@ -216,9 +217,13 @@ export class SeedDataService {
 				this.connection,
 				{
 					org: defaultOrganization,
-					users: [...defaultUsers, ...adminUsers]
+					users: [...defaultUsers, ...adminUsers, ...superAdminUsers]
 				},
-				{ orgs: randomOrganizations, users: [...randomUsers] }
+				{
+					orgs: randomOrganizations,
+					users: randomUsers,
+					superAdminUsers
+				}
 			);
 
 			await createIncomes(

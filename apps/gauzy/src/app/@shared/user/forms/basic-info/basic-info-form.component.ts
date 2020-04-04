@@ -173,7 +173,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 					password: this.password.value
 				})
 				.pipe(first())
-				.toPromise();			
+				.toPromise();
 		}
 
 		return;
@@ -183,7 +183,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		this.imageUrl.setValue('');
 	}
 
-	selectedTagsHandler(ev) {		
+	selectedTagsHandler(ev) {
 		this.form.get('selectedTags').setValue(ev);
 	}
 

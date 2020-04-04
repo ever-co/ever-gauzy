@@ -12,6 +12,33 @@ import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
 import { Tenant } from '../tenant';
 
+export const seedSuperAdminUsers = async (
+	connection: Connection,
+	roles: Role[],
+	tenant: Tenant[]
+): Promise<User[]> => {
+	const superAdmins: User[] = [];
+	let superAdminUser: User;
+
+	const superAdminRole = roles.filter(
+		(role) => role.name === RolesEnum.SUPER_ADMIN
+	)[0];
+	const defaultSuperAdmins = env.defaultSuperAdmins || [];
+
+	// Generate default super admins
+	for (const superAdmin of defaultSuperAdmins) {
+		superAdminUser = await generateDefaultUser(
+			superAdmin,
+			superAdminRole,
+			tenant[0]
+		);
+		await insertUser(connection, superAdminUser);
+		superAdmins.push(superAdminUser);
+	}
+
+	return superAdmins;
+};
+
 export const seedAdminUsers = async (
 	connection: Connection,
 	roles: Role[],
@@ -38,6 +65,7 @@ export const createUsers = async (
 	roles: Role[],
 	tenant: Tenant[]
 ): Promise<{
+	superAdminUsers: User[];
 	adminUsers: User[];
 	defaultUsers: User[];
 	randomUsers: User[];
@@ -51,6 +79,11 @@ export const createUsers = async (
 
 	let user: User;
 
+	const superAdminUsers: User[] = await seedSuperAdminUsers(
+		connection,
+		roles,
+		tenant
+	);
 	const adminUsers: User[] = await seedAdminUsers(connection, roles, tenant);
 	// users = [...adminUsers];
 
@@ -101,6 +134,7 @@ export const createUsers = async (
 	}
 
 	return {
+		superAdminUsers,
 		adminUsers,
 		defaultUsers,
 		randomUsers,

@@ -7,6 +7,7 @@ export interface Role extends IBaseEntityModel {
 }
 
 export enum RolesEnum {
+	SUPER_ADMIN = 'SUPER_ADMIN',
 	ADMIN = 'ADMIN',
 	DATA_ENTRY = 'DATA_ENTRY',
 	EMPLOYEE = 'EMPLOYEE',

@@ -336,8 +336,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	selectedTagsHandler(ev: any) {
 		this.form.get('tags').setValue(ev);
-  }
-    
+	}
+
 	onEmployeeChange(selectedEmployee: SelectedEmployee) {
 		this.showTooltip = selectedEmployee === ALL_EMPLOYEES_SELECTED;
 	}
