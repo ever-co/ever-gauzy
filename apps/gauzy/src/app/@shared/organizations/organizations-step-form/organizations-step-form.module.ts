@@ -11,10 +11,11 @@ import {
 	NbToastrModule,
 	NbListModule,
 	NbStepperModule,
-	NbToggleModule
+	NbToggleModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { OrganizationsMutationComponent } from './organizations-mutation.component';
+import { OrganizationsStepFormComponent } from './organizations-step-form.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
@@ -22,7 +23,6 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { CountryService } from '../../../@core/services/country.service';
-import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -46,7 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbStepperModule,
 		NbToggleModule,
 		RemoveLodashModule,
-		OrganizationsStepFormModule,
+		NbTooltipModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -55,9 +55,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [OrganizationsMutationComponent],
-	entryComponents: [OrganizationsMutationComponent],
+	declarations: [OrganizationsStepFormComponent],
+	entryComponents: [OrganizationsStepFormComponent],
 	providers: [OrganizationDepartmentsService, CountryService],
-	exports: [OrganizationsMutationComponent]
+	exports: [OrganizationsStepFormComponent]
 })
-export class OrganizationsMutationModule {}
+export class OrganizationsStepFormModule {}

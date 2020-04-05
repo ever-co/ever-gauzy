@@ -1,4 +1,3 @@
-import { Tenant } from './../../../../../../../../libs/models/src/lib/tenant.model';
 import {
 	Component,
 	ViewChild,
@@ -8,7 +7,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum, Tag } from '@gauzy/models';
+import { RolesEnum, Tag, ITenant } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
@@ -46,7 +45,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	password: any;
 	off: any;
 	role: any;
-	tenant: Tenant;
+	tenant: ITenant;
 	offerDate: any;
 	acceptDate: any;
 	appliedDate: any;

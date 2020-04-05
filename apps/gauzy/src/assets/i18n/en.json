@@ -152,7 +152,8 @@
 			"SELECT_TEAM": "Select team",
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
-			"REGISTRATION_DATE": "Registration Date"
+			"REGISTRATION_DATE": "Registration Date",
+			"ORGANIZATION_NAME": "Organization Name"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -281,7 +282,8 @@
 		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}",
 		"STARTS_ON": "Starts On",
 		"EXPENSE_HISTORY": "Expense History",
-		"NEW_EXPENSE_VALUE": "New Expense Value"
+		"NEW_EXPENSE_VALUE": "New Expense Value",
+		"OFFICIAL_NAME": "This name would be used in tax invoices etc."
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
@@ -1001,5 +1003,9 @@
 	},
 	"TIMESHEET": {
 		"DAILY": "Daily"
+	},
+	"ONBOARDING": {
+		"FIRST_ORGANIZATION": "Let's create your first organization",
+		"COMPLETE": "You're all set!"
 	}
 }
