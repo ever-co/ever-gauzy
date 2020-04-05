@@ -23,7 +23,7 @@ export class UserMutationComponent implements OnInit {
 
 	ngOnInit(): void {}
 
-	closeDialog(user: User) {
+	closeDialog(user: User = null) {
 		this.dialogRef.close({ user });
 	}
 
