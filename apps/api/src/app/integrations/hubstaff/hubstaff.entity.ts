@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne } from 'typeorm';
 import { User } from '../../user';
 
-@Entity('hubstaff')
+@Entity('integration_hubstaff')
 export class Hubstaff {
 	@ApiProperty({ type: User })
 	@ManyToOne((type) => User, { nullable: false })
