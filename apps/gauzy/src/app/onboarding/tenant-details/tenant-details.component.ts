@@ -1,12 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { OrganizationCreateInput, RolesEnum } from '@gauzy/models';
+import { OrganizationCreateInput } from '@gauzy/models';
 import { User } from '@sentry/browser';
 import { UsersService } from '../../@core/services/users.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
-import { RoleService } from '../../@core/services/role.service';
 import { TenantService } from '../../@core/services/tenant.service';
-import { first } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-tenant-details',
@@ -21,8 +19,7 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private organizationsService: OrganizationsService,
 		private tenantService: TenantService,
-		private usersService: UsersService,
-		private roleService: RoleService
+		private usersService: UsersService
 	) {}
 
 	ngOnInit() {
@@ -39,7 +36,7 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 	}
 
 	async onboardUser(formData: OrganizationCreateInput) {
-		const tenant = await this.tenantService.create({ name: formData.name });
+		await this.tenantService.create({ name: formData.name });
 		await this.organizationsService.create(formData);
 		this.router.navigate(['/onboarding/complete']);
 	}

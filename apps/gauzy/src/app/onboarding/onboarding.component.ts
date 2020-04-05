@@ -1,10 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
-import { AuthService } from '../@core/services/auth.service';
-import { Store } from '../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-onboarding',
@@ -22,14 +18,7 @@ export class OnboardingComponent implements OnInit, OnDestroy {
 
 	constructor(private translate: TranslateService) {}
 
-	async ngOnInit() {
-		let result = 'ORGANIZATIONS_PAGE.ORGANIZATIONS';
-		this.translate
-			.get('ORGANIZATIONS_PAGE.ORGANIZATIONS')
-			.subscribe((res) => {
-				result = res;
-			});
-	}
+	async ngOnInit() {}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();
