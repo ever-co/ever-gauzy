@@ -4,12 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import 'rxjs/add/observable/of';
 import { catchError, map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { User, Tag } from '@gauzy/models';
+import { User, Tag, ITenant } from '@gauzy/models';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
 // tslint:disable-next-line: nx-enforce-module-boundaries
-import { Tenant } from 'libs/models/src/lib/tenant.model';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -142,7 +141,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		password: string;
 		confirmPassword: string;
 		terms: boolean;
-		tenant: Tenant;
+		tenant: ITenant;
 		tags: Tag[];
 	}): Observable<NbAuthResult> {
 		const {
