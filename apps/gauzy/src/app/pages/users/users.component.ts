@@ -138,7 +138,11 @@ export class UsersComponent extends TranslationBaseComponent
 	}
 
 	async add() {
-		const dialog = this.dialogService.open(UserMutationComponent);
+		const dialog = this.dialogService.open(UserMutationComponent, {
+			context: {
+				isSuperAdmin: this.hasSuperAdminPermission
+			}
+		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
 
@@ -189,7 +193,8 @@ export class UsersComponent extends TranslationBaseComponent
 			context: {
 				invitationType: InvitationTypeEnum.USER,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId
+				currentUserId: this.store.userId,
+				isSuperAdmin: this.hasSuperAdminPermission
 			}
 		});
 

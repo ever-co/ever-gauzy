@@ -30,6 +30,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 	@Input() public isCandidateCV: boolean;
+	@Input() public isSuperAdmin: boolean;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -65,6 +66,9 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit(): void {
+		this.allRoles = this.allRoles.filter((role) =>
+			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
+		);
 		this.loadFormData();
 
 		// this.getAllTags();

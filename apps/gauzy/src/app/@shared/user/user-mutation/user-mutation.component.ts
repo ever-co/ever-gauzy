@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
 import { RolesEnum, User } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { Store } from '../../../@core/services/store.service';
@@ -12,6 +12,8 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 export class UserMutationComponent implements OnInit {
 	@ViewChild('userBasicInfo', { static: false })
 	userBasicInfo: BasicInfoFormComponent;
+
+	@Input() public isSuperAdmin: boolean;
 
 	constructor(
 		protected dialogRef: NbDialogRef<UserMutationComponent>,
