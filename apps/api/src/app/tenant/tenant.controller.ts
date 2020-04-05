@@ -86,7 +86,7 @@ export class TenantController extends CrudController<Tenant> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.ADMIN) //TODO: Move to super admin when implemented
+	@Roles(RolesEnum.SUPER_ADMIN)
 	@Delete(':id')
 	async delete(@Param('id') id: string) {
 		return this.tenantService.delete(id);
