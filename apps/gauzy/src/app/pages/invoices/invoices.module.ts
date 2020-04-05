@@ -1,8 +1,4 @@
 import { NgModule } from '@angular/core';
-import { InvoicesComponent } from './invoices.component';
-import { InvoicesRoutingModule } from './invoices-routing.module';
-import { InvoicesService } from '../../@core/services/invoices.service';
-import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -27,11 +23,16 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InvoicesValueComponent } from './invoices-value.component';
-import { InvoiceAddComponent } from './Invoice-add/invoice-add.component';
-import { InvoiceAddTasksComponent } from './Invoice-add/invoice-add-tasks.component';
+import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
+import { InvoiceAddTasksComponent } from './invoice-add/invoice-add-tasks.component';
+import { InvoicesComponent } from './invoices.component';
+import { InvoicesRoutingModule } from './invoices-routing.module';
+import { InvoicesService } from '../../@core/services/invoices.service';
+import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { TasksService } from '../../@core/services/tasks.service';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
