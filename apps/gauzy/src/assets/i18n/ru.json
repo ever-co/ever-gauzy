@@ -808,8 +808,18 @@
 		"INVOICES_SELECT_TAX": "Налог",
 		"INVOICES_SELECT_TERMS": "Условия",
 		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
+		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
-		"EDIT_INVOICE": "Изменить счет"
+		"EDIT_INVOICE": "Изменить счет",
+		"INVOICE_ITEM": {
+			"ITEM_NUMBER": "Номер предмета",
+			"TASK": "Задача",
+			"NAME": "Имя",
+			"DESCRIPTION": "Описание",
+			"UNIT_COST": "Стоимость Единицы",
+			"QUANTITY": "Количество",
+			"TOTAL_VALUE": "Общая стоимость"
+		}
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
