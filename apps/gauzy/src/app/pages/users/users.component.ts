@@ -30,6 +30,8 @@ interface UserViewModel {
 	bonus?: number;
 	endWork?: any;
 	id: string;
+	roleName?: string;
+	role?: string;
 }
 
 @Component({
@@ -54,6 +56,7 @@ export class UsersComponent extends TranslationBaseComponent
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
 	hasInviteViewOrEditPermission = false;
+	hasSuperAdminPermission = false;
 	organizationInvitesAllowed = false;
 	showAddCard: boolean;
 	userToEdit: UserOrganization;
@@ -103,6 +106,9 @@ export class UsersComponent extends TranslationBaseComponent
 				this.hasInviteViewOrEditPermission =
 					this.store.hasPermission(PermissionsEnum.ORG_INVITE_VIEW) ||
 					this.hasInviteEditPermission;
+				this.hasSuperAdminPermission = this.store.hasPermission(
+					PermissionsEnum.SUPER_ADMIN_EDIT
+				);
 			});
 
 		this.route.queryParamMap
@@ -120,13 +126,15 @@ export class UsersComponent extends TranslationBaseComponent
 		selected: UserViewModel[];
 		source: LocalDataSource;
 	}) {
-		if (ev.isSelected) {
-			this.selectedUser = ev.data;
-			const checkName = this.selectedUser.fullName.trim();
-			this.userName = checkName ? checkName : 'User';
-		} else {
-			this.selectedUser = null;
-		}
+		const checkName = ev.data.fullName.trim();
+		this.userName = checkName ? checkName : 'User';
+
+		this.selectedUser = ev.isSelected ? ev.data : null;
+
+		if (ev.data.role === RolesEnum.SUPER_ADMIN)
+			this.selectedUser = this.hasSuperAdminPermission
+				? this.selectedUser
+				: null;
 	}
 
 	async add() {
@@ -266,7 +274,6 @@ export class UsersComponent extends TranslationBaseComponent
 			'user',
 			'user.role'
 		]);
-
 		let counter = 0;
 
 		let userToRemove;
@@ -283,7 +290,8 @@ export class UsersComponent extends TranslationBaseComponent
 				}
 			}
 		}
-
+		// TODO: Recheck the flow.
+		// condition always holds true as counter value can either be 0 or 1
 		if (counter - 1 < 1) {
 			this.dialogService
 				.open(DeleteConfirmationComponent, {
@@ -383,6 +391,7 @@ export class UsersComponent extends TranslationBaseComponent
 					id: orgUser.id,
 					isActive: orgUser.isActive,
 					imageUrl: orgUser.user.imageUrl,
+					role: orgUser.user.role.name,
 					roleName: orgUser.user.role
 						? this.getTranslation(
 								`USERS_PAGE.ROLE.${orgUser.user.role.name}`
