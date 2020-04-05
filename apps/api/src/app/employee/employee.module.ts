@@ -8,11 +8,13 @@ import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { AuthService } from '../auth';
 import { EmailService, EmailModule } from '../email';
+import { UserOrganizationModule } from '../user-organization';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Employee, User]),
 		EmailModule,
+		UserOrganizationModule,
 		CqrsModule
 	],
 	controllers: [EmployeeController],

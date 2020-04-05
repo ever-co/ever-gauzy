@@ -592,6 +592,7 @@
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
+			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"GROUPS": {
 				"GENERAL": "General",
 				"ADMINISTRATION": "Administration"

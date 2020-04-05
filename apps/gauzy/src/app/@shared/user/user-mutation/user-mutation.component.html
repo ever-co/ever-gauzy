@@ -8,7 +8,10 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-user-basic-info-form #userBasicInfo></ga-user-basic-info-form>
+		<ga-user-basic-info-form
+			[isSuperAdmin]="isSuperAdmin"
+			#userBasicInfo
+		></ga-user-basic-info-form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button
