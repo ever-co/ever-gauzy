@@ -26,6 +26,14 @@ const routes: Routes = [
 		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
+		path: 'onboarding',
+		loadChildren: () =>
+			import('./onboarding/onboarding.module').then(
+				(m) => m.OnboardingModule
+			),
+		canActivate: [AuthGuard, AppModuleGuard]
+	},
+	{
 		path: 'auth',
 		component: NbAuthComponent,
 		canActivate: [AppModuleGuard],

@@ -4,9 +4,9 @@
 
 import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tenant } from './tenant.model';
 import { Tag } from './tag-entity.model';
 import { Employee } from './employee.model';
+import { ITenant } from '@gauzy/models';
 
 export interface User extends IBaseEntityModel {
 	thirdPartyId?: string;
@@ -18,8 +18,8 @@ export interface User extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	tenant: Tenant;
 	employee?: Employee;
+	tenant: ITenant;
 	tags: Tag[];
 }
 
@@ -39,6 +39,7 @@ export interface UserRegistrationInput {
 	user: User;
 	password?: string;
 	originalUrl?: string;
+	organizationId?: string;
 }
 
 export interface UserCreateInput {

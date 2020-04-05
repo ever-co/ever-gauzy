@@ -4,7 +4,6 @@ import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { UserMutationComponent } from './user-mutation.component';
 import { UserFormsModule } from '../forms/user-forms.module';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
@@ -33,6 +32,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	exports: [UserMutationComponent],
 	declarations: [UserMutationComponent],
 	entryComponents: [UserMutationComponent],
-	providers: [OrganizationsService, UsersService]
+	providers: [UsersService]
 })
 export class UserMutationModule {}

@@ -151,7 +151,8 @@
 			"SELECT_TEAM": "Select team",
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
-			"REGISTRATION_DATE": "Registration Date"
+			"REGISTRATION_DATE": "Registration Date",
+			"ORGANIZATION_NAME": "Organization Name"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -280,7 +281,8 @@
 		"SPLIT_EXPENSE_WITH_INFO": "This is a split expense with original value: {{ originalValue }}, divided by the number of employees: {{ employeeCount }}",
 		"STARTS_ON": "Starts On",
 		"EXPENSE_HISTORY": "Expense History",
-		"NEW_EXPENSE_VALUE": "New Expense Value"
+		"NEW_EXPENSE_VALUE": "New Expense Value",
+		"OFFICIAL_NAME": "This name would be used in tax invoices etc."
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
@@ -591,6 +593,7 @@
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
+			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"GROUPS": {
 				"GENERAL": "כללי",
 				"ADMINISTRATION": "Administration"
@@ -808,8 +811,18 @@
 		"INVOICES_SELECT_TAX": "Tax",
 		"INVOICES_SELECT_TERMS": "Terms",
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
+		"INVOICES_SELECT_CLIENT": "לקוחות",
 		"ADD_INVOICE": "Add Invoice",
-		"EDIT_INVOICE": "Edit Invoice"
+		"EDIT_INVOICE": "Edit Invoice",
+		"INVOICE_ITEM": {
+			"ITEM_NUMBER": "Item Number",
+			"TASK": "Task",
+			"NAME": "שם",
+			"DESCRIPTION": "Description",
+			"UNIT_COST": "Unit Cost",
+			"QUANTITY": "Quantity",
+			"TOTAL_VALUE": "Total Value"
+		}
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
@@ -989,5 +1002,9 @@
 	},
 	"TIMESHEET": {
 		"DAILY": "Daily"
+	},
+	"ONBOARDING": {
+		"FIRST_ORGANIZATION": "Let's create your first organization",
+		"COMPLETE": "You're all set!"
 	}
 }

@@ -1,15 +1,15 @@
 import { Invoice as IInvoice, CurrenciesEnum } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsEnum, IsBoolean, IsDate } from 'class-validator';
 import {
-	Entity,
-	Column,
-	JoinColumn,
-	OneToOne,
-	OneToMany,
-	ManyToOne
-} from 'typeorm';
+	IsString,
+	IsNumber,
+	IsEnum,
+	IsBoolean,
+	IsDate,
+	IsOptional
+} from 'class-validator';
+import { Entity, Column, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
@@ -56,10 +56,11 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true })
 	terms: string;
 
-	@ApiProperty({ type: Number })
+	@ApiPropertyOptional({ type: Number })
 	@IsNumber()
+	@IsOptional()
 	@Column({ nullable: true, type: 'numeric' })
-	totalValue: number;
+	totalValue?: number;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
@@ -82,5 +83,5 @@ export class Invoice extends Base implements IInvoice {
 		(invoiceItem) => invoiceItem.invoice
 	)
 	@JoinColumn()
-	invoiceItems: InvoiceItem[];
+	invoiceItems?: InvoiceItem[];
 }
