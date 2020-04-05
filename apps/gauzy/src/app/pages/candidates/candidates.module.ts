@@ -31,6 +31,9 @@ import { CandidatesRoutingModule } from './candidates-routing.module';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 import { CandidateMutationModule } from '../../@shared/candidate/candidate-mutation/candidate-mutation.module';
+import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
+import { ManageCandidateInviteComponent } from './manage-candidate-invite/manage-candidate-invite.component';
+import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -39,7 +42,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 const COMPONENTS = [
 	CandidatesComponent,
 	CandidateFullNameComponent,
-	CandidateStatusComponent
+	CandidateStatusComponent,
+	ManageCandidateInviteComponent
 ];
 
 @NgModule({
@@ -70,10 +74,16 @@ const COMPONENTS = [
 		}),
 		NbSpinnerModule,
 		TagsColorInputModule,
-		CandidateMutationModule
+		CandidateMutationModule,
+		InviteMutationModule,
+		InviteTableModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [CandidateStatusComponent, CandidateFullNameComponent],
+	entryComponents: [
+		CandidateStatusComponent,
+		CandidateFullNameComponent,
+		ManageCandidateInviteComponent
+	],
 	providers: [
 		OrganizationsService,
 		InviteGuard,

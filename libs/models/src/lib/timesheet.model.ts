@@ -27,6 +27,10 @@ export enum TimesheetStatus {
 	APPROVED = 'APPROVED'
 }
 
+export interface IDateRange {
+	start: Date;
+	end: Date;
+}
 export interface TimeLog extends IBaseEntityModel {
 	employee: Employee;
 	timesheet?: Timesheet;
@@ -103,4 +107,12 @@ export interface IManualTimeInput {
 	stoppedAt?: Date;
 	tags?: string[];
 	isBillable?: boolean;
+}
+
+export interface IGetTimeLogInput {
+	startDate?: string;
+	endDate?: string;
+	projectId?: string[];
+	clientId?: string[];
+	employeeId?: string;
 }

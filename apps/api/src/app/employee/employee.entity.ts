@@ -44,6 +44,7 @@ export class Employee extends LocationBase implements IEmployee {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.user)
+	@Column()
 	readonly userId: string;
 
 	@ApiProperty({ type: Tenant })

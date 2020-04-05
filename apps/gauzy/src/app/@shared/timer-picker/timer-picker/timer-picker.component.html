@@ -6,13 +6,13 @@
 		[(ngModel)]="selectedTime"
 		bindValue="value"
 		bindLabel="label"
-		[placeholder]="'00:00' | timeForamt"
+		[placeholder]="'00:00' | timeFormat"
 	>
 		<ng-template ng-option-tmp let-item="item" let-index="index">
-			{{ item.value | timeForamt }}
+			{{ item.value | timeFormat }}
 		</ng-template>
 		<ng-template ng-label-tmp let-item="item">
-			<span>{{ item.value | timeForamt }}</span>
+			<span>{{ item.value | timeFormat }}</span>
 		</ng-template>
 	</ng-select>
 </div>

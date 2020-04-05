@@ -25,6 +25,7 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	organization: Organization;
 
 	selectedRole: RolesEnum = RolesEnum.EMPLOYEE;
+	superAdminRole: RolesEnum = RolesEnum.SUPER_ADMIN;
 	selectedRoleId: string;
 
 	allRoles: string[] = Object.values(RolesEnum);

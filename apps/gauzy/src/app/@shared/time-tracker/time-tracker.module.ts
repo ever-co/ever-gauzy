@@ -14,18 +14,18 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { TaskSelectorComponent } from './task/task.component';
-import { TimerPickerComponent } from './timer-picker/timer-picker.component';
 import { SharedModule } from '../shared.module';
-
+import { RouterModule } from '@angular/router';
+import { TimerPickerModule } from '../timer-picker/timer-picker.module';
 @NgModule({
 	declarations: [
 		TimeTrackerComponent,
 		ProjectSelectorComponent,
-		TaskSelectorComponent,
-		TimerPickerComponent
+		TaskSelectorComponent
 	],
 	imports: [
 		CommonModule,
+		RouterModule,
 		NbIconModule,
 		NbButtonModule,
 		NbTooltipModule,
@@ -34,7 +34,8 @@ import { SharedModule } from '../shared.module';
 		TranslateModule,
 		NbCheckboxModule,
 		NbDatepickerModule,
-		SharedModule
+		SharedModule,
+		TimerPickerModule
 	],
 	exports: [TimeTrackerComponent]
 })

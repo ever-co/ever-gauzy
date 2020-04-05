@@ -101,6 +101,7 @@
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
 			"START_DATE": "Date when started work",
+			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Image URL (optional)",
 			"CV_URL": "CV URL (optional)",
 			"CURRENCY": "Currency",
@@ -590,6 +591,7 @@
 			"CHANGE_SELECTED_ORGANIZATION": "Change Selected Organization",
 			"CHANGE_ROLES_PERMISSIONS": "Change Roles & Permissions",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
+			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
 			"GROUPS": {
 				"GENERAL": "General",
 				"ADMINISTRATION": "Administration"
@@ -727,6 +729,7 @@
 		"ADD_USER": "Add User",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ROLE": {
+			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "Admin",
 			"MANAGER": "Manager",
 			"DATA_ENTRY": "Data Entry",
@@ -776,6 +779,11 @@
 			"MANAGE": "Manage Employee Invites for",
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
+		},
+		"CANDIDATE": {
+			"MANAGE": "Manage Candidate Invites for",
+			"HEADER": "Invite Candidates",
+			"ACTION": "Invite Candidates"
 		},
 		"SENT": "{{total}} Invites Sent.",
 		"IGNORED": "{{total}} Invites Sent. {{ignored}} were already invited and have been ignored.",
@@ -979,5 +987,8 @@
 		"END_TIME": "End Time",
 		"DESCRIPTION": "Description",
 		"ADD_TIME_SUCCESS": "Time Successfully added"
+	},
+	"TIMESHEET": {
+		"DAILY": "Daily"
 	}
 }

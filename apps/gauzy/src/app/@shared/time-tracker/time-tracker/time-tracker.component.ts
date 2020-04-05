@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
-import { TimeLogType, IManualTimeInput, Organization } from '@gauzy/models';
+import { TimeLogType, Organization, User, IDateRange } from '@gauzy/models';
 import * as moment from 'moment';
-import { takeUntil, ignoreElements } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { toUTC } from 'libs/utils';
 import { ToastrService } from '../../../@core/services/toastr.service';
@@ -16,11 +16,14 @@ import { NgForm } from '@angular/forms';
 })
 export class TimeTrackerComponent implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
+	employeesId: string;
 	time: string = '00:00:00';
+	current_time: string = '00:00:00';
 	running: boolean;
 	today: Date = new Date();
+	selectedRange: IDateRange = { start: null, end: null };
 	manualTime: any = {};
-
+	user: any = {};
 	minSlotStartTime: string;
 	maxSlotStartTime: string;
 	maxSlotEndTime: string;
@@ -32,12 +35,16 @@ export class TimeTrackerComponent implements OnInit {
 		private toastrService: ToastrService,
 		private store: Store
 	) {
-		this.updateTimePickerLimit(new Date());
+		//this.updateTimePickerLimit(new Date());
 		this.store.selectedOrganization$.subscribe(
 			(organization: Organization) => {
 				this.organization = organization;
 			}
 		);
+
+		this.store.user$.subscribe((user: User) => {
+			this.user = user;
+		});
 	}
 
 	public get isBillable(): boolean {
@@ -86,6 +93,11 @@ export class TimeTrackerComponent implements OnInit {
 			.subscribe((time) => {
 				this.time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
+		this.timeTrackerService.$current_session_dueration
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((time) => {
+				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
+			});
 		this.timeTrackerService.$running
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((isRunning) => {
@@ -93,12 +105,9 @@ export class TimeTrackerComponent implements OnInit {
 			});
 	}
 
-	private resetForm() {
-		this.updateTimePickerLimit(new Date());
-	}
-
 	toggle(f: NgForm) {
 		if (!this.running && !f.valid) {
+			f.resetForm();
 			return;
 		}
 		this.timeTrackerService.toggle();
@@ -108,23 +117,16 @@ export class TimeTrackerComponent implements OnInit {
 		if (!f.valid) {
 			return;
 		}
-		const startedAt = toUTC(
-			moment(this.manualTime.date).format('YYYY-MM-DD') +
-				' ' +
-				this.manualTime.startTime
-		).toDate();
-		const stoppedAt = toUTC(
-			moment(this.manualTime.date).format('YYYY-MM-DD') +
-				' ' +
-				this.manualTime.endTime
-		).toDate();
+		const startedAt = toUTC(this.selectedRange.start).toDate();
+		const stoppedAt = toUTC(this.selectedRange.end).toDate();
 
-		let addRequestData = Object.assign({}, this.manualTime);
-		delete addRequestData.date;
-		delete addRequestData.startTime;
-		delete addRequestData.endTime;
-		addRequestData.startedAt = startedAt;
-		addRequestData.stoppedAt = stoppedAt;
+		let addRequestData = Object.assign(
+			{
+				startedAt,
+				stoppedAt
+			},
+			this.timeTrackerService.timerConfig
+		);
 
 		this.timeTrackerService
 			.addTime(addRequestData)
@@ -138,7 +140,8 @@ export class TimeTrackerComponent implements OnInit {
 					this.timeTrackerService.dueration =
 						this.timeTrackerService.dueration + timeLog.duration;
 				}
-				this.resetForm();
+				f.resetForm();
+				//this.updateTimePickerLimit(new Date());
 				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
 			})
 			.catch((error) => {
@@ -149,58 +152,6 @@ export class TimeTrackerComponent implements OnInit {
 	setTimeType(type: string) {
 		this.timeType =
 			type == 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
-	}
-
-	updateTimePickerLimit(date: Date) {
-		let mTime = moment(date);
-
-		if (mTime.isSame(new Date(), 'day')) {
-			mTime = mTime.set({
-				hour: moment().get('hour'),
-				minute: moment().get('minute') - (moment().minutes() % 10),
-				second: 0,
-				millisecond: 0
-			});
-
-			this.manualTime = {
-				description: '',
-				startTime: mTime
-					.clone()
-					.subtract(30, 'minutes')
-					.format('HH:mm'),
-				endTime: mTime.format('HH:mm'),
-				date: mTime.toDate()
-			};
-		}
-
-		if (mTime.isSame(new Date(), 'day')) {
-			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = mTime
-				.clone()
-				.subtract(10, 'minutes')
-				.format('HH:mm');
-			this.maxSlotEndTime = mTime.format('HH:mm');
-		} else {
-			this.minSlotStartTime = '00:00';
-			this.maxSlotStartTime = '23:59';
-			this.maxSlotEndTime = '23:59';
-		}
-		this.updateEndTimeSlot(this.manualTime.startTime);
-	}
-
-	updateEndTimeSlot(time: string) {
-		this.minSlotEndTime = moment(time, 'HH:mm')
-			.add(10, 'minutes')
-			.format('HH:mm');
-		if (
-			!moment(time, 'HH:mm').isBefore(
-				moment(this.manualTime.endTime, 'HH:mm')
-			)
-		) {
-			this.manualTime.endTime = moment(this.manualTime.startTime, 'HH:mm')
-				.add(30, 'minutes')
-				.format('HH:mm');
-		}
 	}
 
 	ngOnDestroy() {
