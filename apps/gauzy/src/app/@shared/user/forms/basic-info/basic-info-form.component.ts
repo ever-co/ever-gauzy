@@ -149,7 +149,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(defaultRoleName: RolesEnum) {
+	async registerUser(defaultRoleName: RolesEnum, organizationId?: string) {
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
@@ -170,7 +170,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						tenant: this.tenant,
 						tags: this.selectedTags
 					},
-					password: this.password.value
+					password: this.password.value,
+					organizationId
 				})
 				.pipe(first())
 				.toPromise();

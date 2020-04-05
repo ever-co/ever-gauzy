@@ -39,6 +39,7 @@ export interface UserRegistrationInput {
 	user: User;
 	password?: string;
 	originalUrl?: string;
+	organizationId?: string;
 }
 
 export interface UserCreateInput {

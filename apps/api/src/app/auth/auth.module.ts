@@ -10,13 +10,23 @@ import { CommandHandlers } from './commands/handlers';
 import { FacebookStrategy } from './facebook.strategy';
 import { GoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
+import {
+	UserOrganizationService,
+	UserOrganization
+} from '../user-organization';
+import { Organization } from '../organization/organization.entity';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([User]), EmailModule, CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([User, UserOrganization, Organization]),
+		EmailModule,
+		CqrsModule
+	],
 	controllers: [AuthController],
 	providers: [
 		AuthService,
 		UserService,
+		UserOrganizationService,
 		EmailService,
 		...CommandHandlers,
 		GoogleStrategy,
