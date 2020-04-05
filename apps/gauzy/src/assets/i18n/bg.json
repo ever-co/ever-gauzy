@@ -100,7 +100,9 @@
 			"FIRST_NAME": "Име (незадължително)",
 			"LAST_NAME": "Фамилия (незадължително)",
 			"START_DATE": "Дата на започване на работа",
+			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Снимка URL (незадължително)",
+			"CV_URL": "CV URL (optional)",
 			"CURRENCY": "Валута",
 			"DATE_TYPE": "Дата по подразбиране",
 			"ADD_TEAM": "Добавяне на нов отбор",
@@ -137,6 +139,8 @@
 			"ADD_NEW_EMPLOYMENT_TYPE": "Add New Employment Type",
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Дата на приемане (опция)",
+			"APPLIED_DATE": "Applied Date (optional)",
+			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Дата на отказ (опция)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
 			"SELECT_EQUIPMENT": "Select equipment",
@@ -196,6 +200,7 @@
 			"REGIONS": "Избери област",
 			"REMOVE_IMAGE": "Премахни снимка",
 			"UPLOADER_PLACEHOLDER": "Снимка",
+			"UPLOADER_CV_PLACEHOLDER": "CV",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
@@ -489,6 +494,7 @@
 			"STEP_1": "Step 1",
 			"STEP_2": "Step 2",
 			"STEP_3": "Step 3",
+			"UPLOAD_CV": "Upload CV",
 			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
@@ -584,6 +590,7 @@
 			"CHANGE_SELECTED_ORGANIZATION": "Промени избраната организация",
 			"CHANGE_ROLES_PERMISSIONS": "Промени ролите и Позволенията",
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
+			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Администрация"
@@ -721,6 +728,7 @@
 		"ADD_USER": "Add User",
 		"ADD_EXISTING_USER": "Add Existing User",
 		"ROLE": {
+			"SUPER_ADMIN": "Super Admin",
 			"ADMIN": "Администратор",
 			"MANAGER": "Manager",
 			"DATA_ENTRY": "Data Entry",
@@ -770,6 +778,11 @@
 			"MANAGE": "Manage Employee Invites for",
 			"HEADER": "Invite Employees",
 			"ACTION": "Invite Employees"
+		},
+		"CANDIDATE": {
+			"MANAGE": "Manage Candidate Invites for",
+			"HEADER": "Invite Candidates",
+			"ACTION": "Invite Candidates"
 		},
 		"SENT": "покани изпратени.",
 		"IGNORED": "общо покани изпратени. бяха вече поканени и бяха игнорирани.",
@@ -973,5 +986,8 @@
 		"END_TIME": "End Time",
 		"DESCRIPTION": "Description",
 		"ADD_TIME_SUCCESS": "Time Successfully added"
+	},
+	"TIMESHEET": {
+		"DAILY": "Daily"
 	}
 }

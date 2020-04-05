@@ -72,6 +72,13 @@ const routes: Routes = [
 				PermissionsEnum.ORG_INVITE_VIEW
 			]
 		}
+	},
+	{
+		path: ':id/timesheet',
+		loadChildren: () =>
+			import('./timesheet/timesheet.module').then(
+				(m) => m.TimesheetModule
+			)
 	}
 ];
 

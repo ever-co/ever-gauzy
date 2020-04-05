@@ -95,5 +95,6 @@ export enum InviteStatusEnum {
 
 export enum InvitationTypeEnum {
 	USER = 'USER',
-	EMPLOYEE = 'EMPLOYEE'
+	EMPLOYEE = 'EMPLOYEE',
+	CANDIDATE = 'CANDIDATE'
 }

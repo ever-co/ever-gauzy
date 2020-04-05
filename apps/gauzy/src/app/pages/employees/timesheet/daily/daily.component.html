@@ -1,0 +1,159 @@
+<nb-card class="employee-edit">
+	<nb-card-header class="header">
+		<h4>{{ 'TIMESHEET.DAILY' | translate }} - {{ selectedDate | date }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filters row">
+			<div class="bulk-actions mb-3 col-sm-3">
+				<div class="row">
+					<div class="col">
+						<input
+							type="text"
+							nbInput
+							class="form-control"
+							placeholder="Select Date"
+							[(ngModel)]="selectedDate"
+							[nbDatepicker]="formpicker"
+						/>
+						<nb-datepicker
+							#formpicker
+							[max]="today"
+						></nb-datepicker>
+					</div>
+					<div class="col-auto pl-0">
+						<button
+							nbButton
+							status="primary"
+							(click)="selectedDate = today"
+						>
+							Today
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="bulk-actions row">
+			<div class="bulk-actions mb-3 col-sm-3">
+				<button
+					nbButton
+					status="default"
+					*ngIf="
+						checkAllCheckbox.checked ||
+						checkAllCheckbox.indeterminate
+					"
+					[nbContextMenu]="bulkActionOptions"
+				>
+					Bulk action <nb-icon icon="chevron-down-outline"></nb-icon>
+				</button>
+				<!-- <nb-select class="d-block m-0" placeholder="Bulk action" *ngIf="checkAllCheckbox.checked || checkAllCheckbox.indeterminate" (selectedChange)="bulkAction($event)">
+					<nb-option value="">Bulk action</nb-option>
+					<nb-option value="delete">Delete</nb-option>
+				</nb-select> -->
+			</div>
+		</div>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th scope="col">
+						<nb-checkbox
+							[indeterminate]="false"
+							#checkAllCheckbox
+							(valueChange)="
+								toggleCheckbox(checkAllCheckbox.checked, 'all')
+							"
+							status="primary"
+						></nb-checkbox>
+					</th>
+					<th scope="col">Project</th>
+					<th scope="col">Log type</th>
+					<th scope="col">Duration</th>
+					<th scope="col">Time span</th>
+					<th scope="col">Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				<ng-template
+					[ngIf]="timeLogs?.length > 0"
+					[ngIfElse]="notFound"
+				>
+					<tr *ngFor="let log of timeLogs">
+						<th scope="row">
+							<nb-checkbox
+								#otherCheckbox
+								[(ngModel)]="selectedIds[log.id]"
+								(valueChange)="
+									toggleCheckbox(
+										otherCheckbox.checked,
+										log.id
+									)
+								"
+								status="primary"
+							></nb-checkbox>
+						</th>
+						<td>
+							<span *ngIf="log?.task; else noProfject">{{
+								log?.project?.name
+							}}</span>
+							<ng-template #noProfject>
+								<span>No project</span>
+							</ng-template>
+							<div class="mt-2 small">
+								<span *ngIf="log?.task; else noToDo">
+									<strong>TO-DO : </strong>
+									{{ log?.task?.title }}</span
+								>
+								<ng-template #noToDo>
+									<span>No to-do</span>
+								</ng-template>
+							</div>
+						</td>
+						<td>{{ log.logType }}</td>
+						<td>{{ log.duration | durationFormat }}</td>
+						<td>
+							<span class="start-timer">{{
+								log.startedAt | timeFormat: true
+							}}</span>
+							-
+							<span
+								class="end-timer"
+								*ngIf="log.stoppedAt; else runningTimer"
+								>{{ log.stoppedAt | timeFormat: true }}</span
+							>
+							<ng-template #runningTimer>
+								<span class="running-timer"> Till now </span>
+							</ng-template>
+						</td>
+						<td>
+							<div class="action-button">
+								<button
+									[disabled]="!log.stoppedAt"
+									class="m-1"
+									nbButton
+									status="success"
+									size="small"
+								>
+									Edit
+								</button>
+								<button
+									[disabled]="!log.stoppedAt"
+									class="m-1"
+									nbButton
+									status="danger"
+									size="small"
+								>
+									Delete
+								</button>
+							</div>
+						</td>
+					</tr>
+				</ng-template>
+				<ng-template #notFound>
+					<tr>
+						<td colspan="6" class="text-center">No logs found.</td>
+					</tr>
+				</ng-template>
+			</tbody>
+		</table>
+		<!-- <ngx-back-navigation class="d-block"></ngx-back-navigation> -->
+	</nb-card-body>
+</nb-card>

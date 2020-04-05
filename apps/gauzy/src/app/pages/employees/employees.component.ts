@@ -199,7 +199,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EmployeeMutationComponent);
 
 		const response = await dialog.onClose.pipe(first()).toPromise();
-
 		if (response) {
 			response.map((data) => {
 				if (data.user.firstName || data.user.lastName) {
@@ -346,7 +345,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 		for (const emp of items) {
 			await this.getEmployeeStatistics(emp.id);
-
 			result.push({
 				fullName: `${emp.user.firstName} ${emp.user.lastName}`,
 				email: emp.user.email,
@@ -380,7 +378,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 		} else {
 			employeesVm = result;
 		}
-
 		this.sourceSmartTable.load(employeesVm);
 
 		if (this.employeesTable) {

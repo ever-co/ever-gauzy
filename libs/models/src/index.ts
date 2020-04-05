@@ -32,6 +32,7 @@ export * from './lib/task-entity.model';
 export * from './lib/timesheet.model';
 export * from './lib/expense-category.model';
 export * from './lib/equipment-sharing.model';
+export * from './lib/tree-node.model';
 export * from './lib/invoice.model';
 export * from './lib/invoice-item.model';
 export * from './lib/expense-category.model';

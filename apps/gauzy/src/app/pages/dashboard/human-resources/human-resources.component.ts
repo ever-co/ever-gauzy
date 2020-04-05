@@ -146,14 +146,14 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employee) => {
 				if (!employee || !employee.id) {
-					this.navigateToOrganizationEmployees();
+					this.navigateToAccounting();
 				}
 			});
 
 		this.loading = false;
 	}
 
-	navigateToOrganizationEmployees() {
+	navigateToAccounting() {
 		this.router.navigate(['/pages/dashboard/accounting']);
 	}
 
