@@ -809,8 +809,18 @@
 		"INVOICES_SELECT_TAX": "Tax",
 		"INVOICES_SELECT_TERMS": "Terms",
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
+		"INVOICES_SELECT_CLIENT": "Client",
 		"ADD_INVOICE": "Add Invoice",
-		"EDIT_INVOICE": "Edit Invoice"
+		"EDIT_INVOICE": "Edit Invoice",
+		"INVOICE_ITEM": {
+			"ITEM_NUMBER": "Item Number",
+			"TASK": "Task",
+			"NAME": "Name",
+			"DESCRIPTION": "Description",
+			"UNIT_COST": "Unit Cost",
+			"QUANTITY": "Quantity",
+			"TOTAL_VALUE": "Total Value"
+		}
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",

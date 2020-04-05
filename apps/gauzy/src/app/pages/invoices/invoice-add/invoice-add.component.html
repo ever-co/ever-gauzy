@@ -1,23 +1,14 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h5>
-			{{
-				(invoice
-					? 'INVOICES_PAGE.EDIT_INVOICE'
-					: 'INVOICES_PAGE.ADD_INVOICE'
-				) | translate
-			}}
-		</h5>
-		<nb-icon
-			class="ml-auto mt-1 close"
-			icon="close-outline"
-			(click)="closeDialog()"
-		></nb-icon>
+		<h3>
+			{{ 'INVOICES_PAGE.ADD_INVOICE' | translate }}
+		</h3>
 	</nb-card-header>
+
 	<nb-card-body class="body">
 		<form [formGroup]="form">
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label for="inputInvoiceNumber" class="label">{{
 							'INVOICES_PAGE.INVOICE_NUMBER' | translate
@@ -35,9 +26,39 @@
 						/>
 					</div>
 				</div>
+				<div class="col-sm-3">
+					<label for="inputInvoiceNumber" class="label"
+						>{{
+							'INVOICES_PAGE.INVOICES_SELECT_CLIENT' | translate
+						}}
+					</label>
+					<ng-select
+						[(items)]="clients"
+						bindName="name"
+						placeholder="All Clients"
+						[(ngModel)]="selectedClient"
+						formControlName="client"
+						id="inputClient"
+						(change)="selectClient($event)"
+						[searchFn]="searchClient"
+					>
+						<ng-template
+							ng-option-tmp
+							let-item="item"
+							let-index="index"
+						>
+							{{ item.name }}
+						</ng-template>
+						<ng-template ng-label-tmp let-item="item">
+							<div class="selector-template">
+								<span>{{ item.name }}</span>
+							</div>
+						</ng-template>
+					</ng-select>
+				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label for="inputInvoiceDate" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
@@ -59,7 +80,7 @@
 						<nb-datepicker #invoiceDatePicker></nb-datepicker>
 					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label for="inputDueDate" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE' | translate
@@ -80,7 +101,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label for="inputDiscountValue" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
@@ -99,12 +120,16 @@
 						/>
 					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label for="inputCurrency" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate
 						}}</label>
-						<nb-select class="d-block" formControlName="currency">
+						<nb-select
+							class="d-block"
+							formControlName="currency"
+							fullWidth
+						>
 							<nb-option
 								*ngFor="let currency of currencies"
 								value="{{ currency }}"
@@ -115,7 +140,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label for="inputTax" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_TAX' | translate
@@ -132,47 +157,16 @@
 						/>
 					</div>
 				</div>
-				<div class="col-sm-6">
+				<div class="col-sm-3">
 					<div class="form-group">
 						<label for="inputCurrency" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate
 						}}</label>
-						<nb-select class="d-block" formControlName="currency">
-							<nb-option
-								*ngFor="let currency of currencies"
-								value="{{ currency }}"
-								>{{ currency }}</nb-option
-							>
-						</nb-select>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="inputTotalValue" class="label">{{
-							'INVOICES_PAGE.INVOICES_SELECT_TOTAL_VALUE'
-								| translate
-						}}</label>
-						<input
-							nbInput
-							placeholder="{{
-								'INVOICES_PAGE.INVOICES_SELECT_TOTAL_VALUE'
-									| translate
-							}}"
-							type="number"
-							formControlName="totalValue"
-							id="inputTotalValue"
+						<nb-select
+							class="d-block"
+							formControlName="currency"
 							fullWidth
-						/>
-					</div>
-				</div>
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="inputCurrency" class="label">{{
-							'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate
-						}}</label>
-						<nb-select class="d-block" formControlName="currency">
+						>
 							<nb-option
 								*ngFor="let currency of currencies"
 								value="{{ currency }}"
@@ -183,7 +177,7 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-sm-6">
 					<div class="form-group">
 						<label for="inputTerms" class="label">{{
 							'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate
@@ -212,16 +206,25 @@
 					</div>
 				</div>
 			</div>
-			<input type="hidden" formControlName="id" />
 		</form>
+		<ng2-smart-table
+			*ngIf="loadedNumber"
+			class="table"
+			(createConfirm)="onCreateConfirm($event)"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			style="cursor: pointer;"
+			#invoiceItemTable
+		>
+		</ng2-smart-table>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
+		<button status="danger" class="mr-3" nbButton (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
 			[disabled]="form.invalid"
-			(click)="saveInvoice()"
+			(click)="addInvoice()"
 			status="success"
 			nbButton
 		>

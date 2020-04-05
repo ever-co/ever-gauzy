@@ -6,9 +6,9 @@
 [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 
-Gauzy™ Platform - **Open-Source ERP Platform** focused on **Fairness** and **Transparency** for freelancers, modern agencies, studios and in-house teams.
+Gauzy™ Platform - **Open-Source Business Management Platform** focused on **Fairness** and **Transparency** for freelancers, modern agencies, studios and in-house teams.
 
-Gauzy Platform includes multiple ERP features, usually available in the _accounting_, _invoicing_, _time management_ and _project management_ software:
+Gauzy Platform includes multiple ERP/CRM features, usually available in the _accounting_, _human resources_, _invoicing_, _time management_ and _project management_ software:
 
 -   Dashboard (provides overview of different metrics, such as company income / expenses, employees bonuses, etc.)
 -   Employees Management (register of company employees / contractors, rates of employees, etc.)
@@ -28,7 +28,7 @@ Gauzy Platform includes multiple ERP features, usually available in the _account
 -   Time Management/Tracking (WIP)
 -   Multi-currency
 
-So, while the primary purpose of Gauzy Platform is to allow transparent and fair accounting, profits sharing and bonuses calculation, you can also use Gauzy software as the platform to run your **Outsourcing/Freelance Agency or Studio business** in a completely new, open way.
+So, while initially the primary purpose of Gauzy Platform was to allow transparent and fair accounting, profits sharing and bonuses calculation, today you can also use Gauzy software as the modern and intelligent platform to run your **Outsourcing/Freelance Agency or Studio business** in a completely new, open way.
 
 In addition, we encourage individual **Freelancers** to join our "Gauzy" revolution and use the platform to jump start your open business!
 
@@ -38,7 +38,7 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 Feel free to test:
 
--   Gauzy Platform SaaS at <https://app.gauzy.co> (currently working as single tenant demo, login with `admin@ever.co` and password: `admin`)
+-   Gauzy Platform SaaS at <https://app.gauzy.co> (temporary shutdown, login `admin@ever.co` and password: `admin`)
 -   Gauzy Platform Demo at <https://demo.gauzy.co> (temporary shutdown)
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev> (temporary shutdown)
 

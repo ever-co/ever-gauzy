@@ -590,6 +590,7 @@
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
+			"TIMESHEET_EDIT_TIME": "Изменить время в расписании",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -985,5 +986,8 @@
 		"END_TIME": "Конец времени",
 		"DESCRIPTION": "Описание",
 		"ADD_TIME_SUCCESS": "Время успешно добавлено"
+	},
+	"TIMESHEET": {
+		"DAILY": "Ежедневно"
 	}
 }

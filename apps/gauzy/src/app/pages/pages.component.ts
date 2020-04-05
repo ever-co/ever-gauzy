@@ -459,20 +459,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 			title: 'Integrations',
 			icon: 'pantone-outline',
 			link: '/pages/integrations',
+			pathMatch: 'prefix',
 			data: {
 				translated: false,
 				translationKey: 'MENU.INTEGRATIONS'
-			},
-			children: [
-				{
-					title: 'Upwork',
-					link: '/pages/integrations/upwork',
-					data: {
-						translated: false,
-						translationKey: 'MENU.UPWORK'
-					}
-				}
-			]
+			}
 		},
 		{
 			title: 'Settings',

@@ -1,0 +1,24 @@
+.integrations-list {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.list-item {
+	width: 155px;
+	height: 155px;
+	display: flex;
+	padding: 15px;
+	border: 1px solid #ebedef;
+	border-radius: 2px;
+	margin: 0 60px 30px 0;
+
+	&:hover {
+		border: 1px solid #2aa7ff;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		transition: 0.2 all;
+	}
+
+	img {
+		width: 100%;
+	}
+}
