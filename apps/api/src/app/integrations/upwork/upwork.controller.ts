@@ -27,7 +27,7 @@ export class UpworkController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Freelancer not found'
 	})
-	@Post('/upwork-transactions')
+	@Post('/transactions')
 	@UseInterceptors(FileInterceptor('file'))
 	async create(@UploadedFile() file, @Body() organizationDto): Promise<any> {
 		return await this._upworkService.handleTransactions(
