@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { IntegrationsComponent } from './components/integrations/integrations.component';
-import { UpworkComponent } from './components/upwork/upwork.component';
+import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
 
 const routes: Routes = [
 	{
@@ -9,8 +9,27 @@ const routes: Routes = [
 		component: IntegrationsComponent,
 		children: [
 			{
+				path: '',
+				redirectTo: 'list',
+				pathMatch: 'full'
+			},
+			{
+				path: 'list',
+				component: IntegrationsListComponent
+			},
+			{
 				path: 'upwork',
-				component: UpworkComponent
+				loadChildren: () =>
+					import('../upwork/upwork.module').then(
+						(m) => m.UpworkModule
+					)
+			},
+			{
+				path: 'hubstaff',
+				loadChildren: () =>
+					import('../hubstaff/hubstaff.module').then(
+						(m) => m.HubstaffModule
+					)
 			}
 		]
 	}
