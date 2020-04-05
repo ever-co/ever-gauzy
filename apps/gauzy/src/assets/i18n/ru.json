@@ -151,7 +151,8 @@
 			"SELECT_TEAM": "Выберите команду",
 			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
 			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
-			"REGISTRATION_DATE": "Дата регистрации"
+			"REGISTRATION_DATE": "Дата регистрации",
+			"ORGANIZATION_NAME": "Название организации"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -280,7 +281,8 @@
 		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}",
 		"STARTS_ON": "Начинается при",
 		"EXPENSE_HISTORY": "История расходов",
-		"NEW_EXPENSE_VALUE": "Новое значение расхода"
+		"NEW_EXPENSE_VALUE": "Новое значение расхода",
+		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д."
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
@@ -1000,5 +1002,9 @@
 	},
 	"TIMESHEET": {
 		"DAILY": "Ежедневно"
+	},
+	"ONBOARDING": {
+		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
+		"COMPLETE": "Все готово!"
 	}
 }
