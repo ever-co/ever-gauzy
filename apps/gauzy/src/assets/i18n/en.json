@@ -478,7 +478,7 @@
 		"REJECTED": "Rejected",
 		"DELETED": "Deleted",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Developer",
 			"DEPARTMENT": "Department",
@@ -488,8 +488,12 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
-			"RATES": "Rates",
-			"HIRING": "Hiring"
+			"RATE": "Rate",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Experience",
+			"TASKS": "Tasks",
+			"HISTORY": "History",
+			"DOCUMENTS": "Documents"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",

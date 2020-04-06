@@ -77,7 +77,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		const appliedDate = this.form.get('appliedDate').value || null;
 		const rejectDate = this.form.get('rejectDate').value || null;
 		const hiredDate = this.form.get('hiredDate').value || null;
-		const cvUrl = this.formCV.get('cvUrl').value || '';
+		const cvUrl = this.formCV.get('cvUrl').value || null;
 
 		const newCandidate: CandidateCreateInput = {
 			user,

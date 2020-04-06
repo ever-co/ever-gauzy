@@ -1,0 +1,40 @@
+<nb-card>
+	<nb-card-header>
+		<h4>
+			{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.HEADER' | translate }}
+			<span
+				*ngIf="
+					selectedCandidate?.user?.firstName ||
+					selectedCandidate?.user?.lastName
+				"
+			>
+				{{ selectedCandidate.user.firstName }}
+				{{ selectedCandidate.user.lastName }}
+			</span>
+			<span *ngIf="selectedCandidate?.user?.username">
+				<ng-container
+					*ngIf="
+						selectedCandidate.user.firstName ||
+							selectedCandidate.user.lastName;
+						then withBraces;
+						else withQuotes
+					"
+				>
+				</ng-container>
+
+				<ng-template #withBraces>
+					({{ selectedCandidate.user.username }})
+				</ng-template>
+
+				<ng-template #withQuotes>
+					'{{ selectedCandidate.user.username }}'
+				</ng-template>
+			</span>
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+
+		<nb-route-tabset [tabs]="tabs" fullWidth></nb-route-tabset>
+	</nb-card-body>
+</nb-card>

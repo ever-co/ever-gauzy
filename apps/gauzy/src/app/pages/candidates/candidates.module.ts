@@ -1,3 +1,10 @@
+import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
+import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
+import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';
+import { EditCandidateLocationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-location/edit-candidate-location.component';
+import { EditCandidateHistoryComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-history/edit-candidate-history.component';
+import { EditCandidateExperienceComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience.component';
+import { EditCandidateComponent } from './edit-candidate/edit-candidate.component';
 import { CandidatesService } from './../../@core/services/candidates.service';
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
@@ -34,6 +41,10 @@ import { CandidateMutationModule } from '../../@shared/candidate/candidate-mutat
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageCandidateInviteComponent } from './manage-candidate-invite/manage-candidate-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
+import { EditCandidateDocumentsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-documents/edit-candidate-documents.component';
+import { EditCandidateEmploymentComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-employment/edit-candidate-employment.component';
+import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-hiring/edit-candidate-hiring.component';
+import { EditCandidateRateComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rate/edit-candidate-rate.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -43,6 +54,17 @@ const COMPONENTS = [
 	CandidatesComponent,
 	CandidateFullNameComponent,
 	CandidateStatusComponent,
+	EditCandidateComponent,
+	EditCandidateDocumentsComponent,
+	EditCandidateEmploymentComponent,
+	EditCandidateExperienceComponent,
+	EditCandidateHiringComponent,
+	EditCandidateHistoryComponent,
+	EditCandidateLocationComponent,
+	EditCandidateMainComponent,
+	EditCandidateProfileComponent,
+	EditCandidateRateComponent,
+	EditCandidateTasksComponent,
 	ManageCandidateInviteComponent
 ];
 

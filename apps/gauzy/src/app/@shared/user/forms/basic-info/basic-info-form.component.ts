@@ -54,6 +54,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	tags: Tag[] = [];
 	selectedTags: any;
 	items: any;
+	cvUrl: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -123,7 +124,18 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 				acceptDate: [''],
 				appliedDate: [''],
 				hiredDate: [''],
-				rejectDate: ['']
+				rejectDate: [''],
+				cvUrl: [
+					'',
+					Validators.compose([
+						Validators.pattern(
+							new RegExp(
+								`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
+								'g'
+							)
+						)
+					])
+				]
 			},
 			{
 				validator: this.validatorService.validateDate
@@ -131,6 +143,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		);
 
 		this.imageUrl = this.form.get('imageUrl');
+		this.cvUrl = this.form.get('cvUrl');
 		this.username = this.form.get('username');
 		this.firstName = this.form.get('firstName');
 		this.lastName = this.form.get('lastName');
