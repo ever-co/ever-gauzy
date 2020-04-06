@@ -29,7 +29,8 @@
 		"PREVIOUS": "Предыдущий",
 		"INVITE_AGAIN": "Пригласить ещё раз",
 		"REQUEST": "Запросить",
-		"HISTORY": "История"
+		"HISTORY": "История",
+		"UPDATE": "Обновить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -864,6 +865,7 @@
 			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
 			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника",
 			"EMPLOYEE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
+			"EMPLOYEE_LEVEL_UPDATE": "Уровень сотрудника успешно обновлен.",
 			"CONFIRM": "Подтвердить",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",
@@ -876,6 +878,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
+			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Требуется уровень сотрудника",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
@@ -944,6 +947,11 @@
 				"EDIT_EXISTING_TEAM": "Команда {{ name }} успешно обновлена!",
 				"INVALID_TEAM_NAME": "Пожалуйста, добавьте название команды и хотя бы одного участника",
 				"REMOVE_TEAM": "Команда {{ name }} успешно удалена!"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
+				"ADD_EMPLOYEE_LEVEL": "Новый уровень {{ name }} успешно добавлен!",
+				"REMOVE_EMPLOYEE_LEVEL": "Уровень {{ name }} сотрудника успешно удален!",
+				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
