@@ -1,5 +1,5 @@
 import { Injectable, HttpService, BadRequestException } from '@nestjs/common';
-import { map, catchError, switchMap, tap } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import {
 	ICreateIntegrationDto,

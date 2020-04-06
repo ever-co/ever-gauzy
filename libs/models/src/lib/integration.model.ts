@@ -1,5 +1,5 @@
 import { SafeResourceUrl } from '@angular/platform-browser';
-import { Tenant } from './tenant.model';
+import { ITenant } from './tenant.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface IIntegrationSetting {
@@ -15,7 +15,7 @@ export interface IIntegrationViewModel {
 }
 
 export interface IIntegration extends IBaseEntityModel {
-	tenant: Tenant;
+	tenant: ITenant;
 	name: string;
 }
 

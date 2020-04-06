@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne } from 'typeorm';
-import { Tenant } from '../tenant';
 import { Base } from '../core/entities/base';
 import { IIntegrationSetting } from '@gauzy/models';
 import { Integration } from '../integration/integration.entity';

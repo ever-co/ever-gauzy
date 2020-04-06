@@ -25,8 +25,7 @@ export const environment: Environment = {
 	FACEBOOK_AUTH_LINK: 'http://localhost:3000/api/auth/facebook',
 	LINKEDIN_AUTH_LINK: '#',
 	NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
-	SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
-	HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff'
+	SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
