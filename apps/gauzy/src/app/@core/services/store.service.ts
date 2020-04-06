@@ -14,9 +14,11 @@ export class Store {
 	private _selectedOrganization: Organization;
 	private _selectedProposal: ProposalViewModel;
 	private _userRolePermissions: RolePermissions[];
+	private _user: User;
 	private _selectedTags: Tag[];
 	Permissions: boolean;
 
+	user$: BehaviorSubject<User> = new BehaviorSubject(this.user);
 	selectedTags$: BehaviorSubject<Tag[]> = new BehaviorSubject(
 		this.selectedTags
 	);
@@ -85,6 +87,15 @@ export class Store {
 		} else {
 			localStorage.setItem('_userId', id);
 		}
+	}
+
+	get user(): User {
+		return this._user;
+	}
+
+	set user(user: User) {
+		this._user = user;
+		this.user$.next(user);
 	}
 
 	get selectedDate() {

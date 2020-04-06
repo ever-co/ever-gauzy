@@ -1,13 +1,13 @@
 import { Connection } from 'typeorm';
-import { User } from '../user';
+import { User } from '../user/user.entity';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
-import { Tenant } from 'libs/models/src/lib/tenant.model';
+import { ITenant } from '@gauzy/models';
 
 export const createCandidates = async (
 	connection: Connection,
 	defaultData: {
-		tenant: Tenant[];
+		tenant: ITenant[];
 		org: Organization;
 		users: User[];
 	},
@@ -34,7 +34,7 @@ export const createCandidates = async (
 const createDefaultCandidates = async (
 	connection: Connection,
 	defaultData: {
-		tenant: Tenant[];
+		tenant: ITenant[];
 		org: Organization;
 		users: User[];
 	}

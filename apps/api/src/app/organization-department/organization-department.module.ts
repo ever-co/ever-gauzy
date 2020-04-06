@@ -5,7 +5,8 @@ import { OrganizationDepartmentController } from './organization-department.cont
 import { OrganizationDepartmentService } from './organization-department.service';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
-import { User, UserService } from '../user';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
 
 @Module({
 	imports: [

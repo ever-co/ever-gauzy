@@ -1,0 +1,19 @@
+.logo {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	margin-bottom: 50px;
+}
+
+.shortcut-card {
+	&:hover {
+		box-shadow: 0 2px 9px 0 rgba(0, 0, 0, 0.26);
+		transform: translateY(-1px);
+	}
+	cursor: pointer;
+}
+
+.centered {
+	justify-content: center;
+}

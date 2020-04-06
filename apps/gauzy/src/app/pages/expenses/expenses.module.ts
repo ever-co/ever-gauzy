@@ -6,7 +6,8 @@ import {
 	NbInputModule,
 	NbIconModule,
 	NbDialogModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { ExpensesRoutingModule } from './expenses-routing.module';
@@ -25,6 +26,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		NbBadgeModule,
 		ExpensesRoutingModule,
 		ThemeModule,
 		NbCardModule,
@@ -46,6 +48,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	declarations: [ExpensesComponent]
+	declarations: [ExpensesComponent],
+	entryComponents: []
 })
 export class ExpensesModule {}

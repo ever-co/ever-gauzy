@@ -126,12 +126,14 @@
 				</div>
 			</div>
 		</div>
-		<div class="col-sm-6" *ngIf="!(!isEmployee || !isCandidate)">
+
+		<div class="col-sm-6" *ngIf="!(isEmployee || isCandidate)">
 			<div class="form-group">
-				<label for="startedWork" class="label">{{
+				<label for="role" class="label">{{
 					'FORM.LABELS.ROLE' | translate
 				}}</label>
 				<nb-select
+					id="role"
 					class="d-block"
 					placeholder="{{ 'FORM.PLACEHOLDERS.ROLE' | translate }}"
 					formControlName="role"
@@ -197,11 +199,11 @@
 					id="offerDateInput"
 					formControlName="offerDate"
 					nbInput
-					[nbDatepicker]="offertDatePicker"
+					[nbDatepicker]="offerDatePicker"
 					placeholder="{{ 'POP_UPS.PICK_DATE' | translate }}"
 					[autocomplete]="off"
 				/>
-				<nb-datepicker #offertDatePicker></nb-datepicker>
+				<nb-datepicker #offerDatePicker></nb-datepicker>
 			</div>
 		</div>
 		<div class="col-sm-6">

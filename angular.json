@@ -24,7 +24,7 @@
 			"architect": {
 				"build": {
 					"builder": "@angular-devkit/build-angular:browser",
-					"options": {
+					"options": {            
 						"outputPath": "dist/apps/gauzy",
 						"index": "apps/gauzy/src/index.html",
 						"main": "apps/gauzy/src/main.ts",
@@ -85,7 +85,7 @@
 							"aot": true,
 							"extractLicenses": true,
 							"vendorChunk": false,
-							"buildOptimizer": true,
+							"buildOptimizer": false,
 							"budgets": [
 								{
 									"type": "initial",

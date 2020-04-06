@@ -42,6 +42,7 @@ export interface IEnvironment {
 	googleConfig: IGoogleConfig;
 
 	defaultAdmins: DefaultUser[];
+	defaultSuperAdmins: DefaultUser[];
 
 	defaultEmployees?: DefaultUser[];
 	defaultCandidates?: DefaultUser[];

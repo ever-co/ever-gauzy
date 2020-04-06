@@ -15,7 +15,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
-import { OrganizationProjects } from '../organization-projects';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Invite } from './invite.entity';
 import * as nodemailer from 'nodemailer';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
