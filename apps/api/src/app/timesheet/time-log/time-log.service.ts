@@ -11,13 +11,13 @@ import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
 import { TimeLogType, IManualTimeInput, IGetTimeLogInput } from '@gauzy/models';
 import * as moment from 'moment';
-import { TimesheetService } from '../timesheet.service';
+import { TimeSheetService } from '../timesheet.service';
 
 @Injectable()
 export class TimeLogService {
 	constructor(
-		@Inject(forwardRef(() => TimesheetService))
-		private readonly timesheetService: TimesheetService,
+		@Inject(forwardRef(() => TimeSheetService))
+		private readonly timesheetService: TimeSheetService,
 
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
@@ -137,6 +137,21 @@ export class TimeLogService {
 				}
 			);
 			return await this.timeLogRepository.findOne(request.id);
+		} else {
+			throw new BadRequestException(
+				"You can't add add twice for same time."
+			);
+		}
+	}
+
+	async deleteTimeLog(id: string): Promise<any> {
+		const log = await this.timeLogRepository.findOne(id);
+		if (!log) {
+			await this.timeLogRepository.update(
+				{ id: log.id },
+				{ deletedAt: new Date() }
+			);
+			return true;
 		} else {
 			throw new BadRequestException(
 				"You can't add add twice for same time."

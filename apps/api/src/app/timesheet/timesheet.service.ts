@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import * as moment from 'moment';
 import { Timesheet } from './timesheet.entity';
+import { CrudService } from '../core';
 
 @Injectable()
 export class TimeSheetService extends CrudService<Timesheet> {

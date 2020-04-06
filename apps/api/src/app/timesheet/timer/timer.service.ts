@@ -7,13 +7,13 @@ import { Employee } from '../../employee/employee.entity';
 import { TimeLogType, TimerStatus } from '@gauzy/models';
 import * as moment from 'moment';
 import { Timesheet } from '../timesheet.entity';
-import { TimesheetService } from '../timesheet.service';
+import { TimeSheetService } from '../timesheet.service';
 
 @Injectable()
 export class TimerService {
 	constructor(
-		@Inject(forwardRef(() => TimesheetService))
-		private readonly timesheetService: TimesheetService,
+		@Inject(forwardRef(() => TimeSheetService))
+		private readonly timesheetService: TimeSheetService,
 
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
