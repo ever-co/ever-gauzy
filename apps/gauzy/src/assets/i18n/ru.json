@@ -100,7 +100,7 @@
 			"FIRST_NAME": "Имя (необязательно)",
 			"LAST_NAME": "Фамилия (необязательно)",
 			"START_DATE": "Дата начала работы",
-			"APPLIED_DATE_LABEL": "Date when applied",
+			"APPLIED_DATE_LABEL": "Дата применения",
 			"IMAGE_URL": "URL изображения (необязательно)",
 			"CV_URL": "URL CV (необязательно)",
 			"CURRENCY": "Валюта",
@@ -727,6 +727,7 @@
 		"ADD_USER": "Добавить пользователя",
 		"ADD_EXISTING_USER": "Добавить существующего пользователя",
 		"ROLE": {
+			"SUPER_ADMIN": "Супер админ",
 			"ADMIN": "Администратор",
 			"MANAGER": "Менеджер",
 			"DATA_ENTRY": "Ввод данных",
@@ -778,9 +779,9 @@
 			"ACTION": "Пригласить сотрудников"
 		},
 		"CANDIDATE": {
-			"MANAGE": "Manage Candidate Invites for",
-			"HEADER": "Invite Candidates",
-			"ACTION": "Invite Candidates"
+			"MANAGE": "Управление приглашениями по Кандидатам для",
+			"HEADER": "Пригласить Кандидатов",
+			"ACTION": "Пригласить Кандидатов"
 		},
 		"SENT": "{{total}} приглашений отправлено.",
 		"IGNORED": "{{total}} приглашений отправлено. {{ignored}} уже были приглашены и проигнорированы.",

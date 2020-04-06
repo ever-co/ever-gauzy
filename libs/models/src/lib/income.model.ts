@@ -29,6 +29,7 @@ export interface IncomeCreateInput {
 	orgId?: string;
 	isBonus?: boolean;
 	reference?: string;
+	tags: Tag[];
 }
 
 export interface IncomeUpdateInput {
@@ -40,6 +41,7 @@ export interface IncomeUpdateInput {
 	currency?: string;
 	notes?: string;
 	isBonus?: boolean;
+	tags: Tag[];
 }
 
 export interface IncomeFindInput extends IBaseEntityModel {

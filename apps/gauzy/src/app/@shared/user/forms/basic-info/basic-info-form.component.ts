@@ -174,8 +174,6 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 				})
 				.pipe(first())
 				.toPromise();
-
-			// call backend to add tags to existed employee
 		}
 
 		return;
@@ -186,7 +184,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	}
 
 	selectedTagsHandler(ev) {
-		this.selectedTags = ev;
+		this.form.get('selectedTags').setValue(ev);
 	}
 
 	ngAfterViewInit() {

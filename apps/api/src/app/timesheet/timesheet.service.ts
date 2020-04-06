@@ -5,17 +5,19 @@ import * as moment from 'moment';
 import { Timesheet } from './timesheet.entity';
 
 @Injectable()
-export class TimesheetService {
+export class TimeSheetService extends CrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
-		private readonly timesheetRepository: Repository<Timesheet>
-	) {}
+		private readonly timeSheetRepository: Repository<Timesheet>
+	) {
+		super(timeSheetRepository);
+	}
 
 	async createOrFindTimeSheet(employeeId, date: Date = new Date()) {
 		const from_date = moment(date).startOf('week');
 		const to_date = moment(date).endOf('week');
 
-		let timesheet = await this.timesheetRepository.findOne({
+		let timesheet = await this.timeSheetRepository.findOne({
 			where: {
 				startedAt: Between(from_date, to_date),
 				employeeId: employeeId
@@ -23,7 +25,7 @@ export class TimesheetService {
 		});
 
 		if (!timesheet) {
-			timesheet = await this.timesheetRepository.save({
+			timesheet = await this.timeSheetRepository.save({
 				employeeId: employeeId,
 				startedAt: from_date.toISOString(),
 				stoppedAt: from_date.toISOString()
