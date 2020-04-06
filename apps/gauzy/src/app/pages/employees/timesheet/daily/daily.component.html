@@ -111,13 +111,17 @@
 						<td>{{ log.duration | durationFormat }}</td>
 						<td>
 							<span class="start-timer">{{
-								log.startedAt | timeFormat: true
+								log.startedAt | utcToLocal | timeFormat: true
 							}}</span>
 							-
 							<span
 								class="end-timer"
 								*ngIf="log.stoppedAt; else runningTimer"
-								>{{ log.stoppedAt | timeFormat: true }}</span
+								>{{
+									log.stoppedAt
+										| utcToLocal
+										| timeFormat: true
+								}}</span
 							>
 							<ng-template #runningTimer>
 								<span class="running-timer"> Till now </span>
@@ -131,6 +135,7 @@
 									nbButton
 									status="success"
 									size="small"
+									(click)="openEdit(addEditDialog, log)"
 								>
 									Edit
 								</button>
@@ -140,6 +145,7 @@
 									nbButton
 									status="danger"
 									size="small"
+									(click)="onDeleteConfirm(log)"
 								>
 									Delete
 								</button>
@@ -154,6 +160,120 @@
 				</ng-template>
 			</tbody>
 		</table>
-		<!-- <ngx-back-navigation class="d-block"></ngx-back-navigation> -->
 	</nb-card-body>
 </nb-card>
+
+<ng-template #addEditDialog let-context let-ref="dialogRef">
+	<nb-card>
+		<nb-card-header class="header">
+			<h4>Edit time logs</h4>
+		</nb-card-header>
+		<nb-card-body>
+			<form #f="ngForm">
+				<div class="form-group">
+					<div class="row">
+						<div class="col-12">
+							<ngx-timer-range-picker
+								name="selectedRange"
+								[maxDate]="today"
+								[(ngModel)]="selectedRange"
+							>
+							</ngx-timer-range-picker>
+						</div>
+
+						<div class="col-12">
+							<nb-checkbox
+								[(ngModel)]="addEditTimeRequest.isBillable"
+								name="isBillable"
+								status="primary"
+							>
+								{{
+									'TIMER_TRACKER.IS_BILLABLE' | translate
+								}}</nb-checkbox
+							>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label>{{
+						'TIMER_TRACKER.SELECT_PROJECT' | translate
+					}}</label>
+					<ga-project-selector
+						name="projectId"
+						[(ngModel)]="addEditTimeRequest.projectId"
+						#projectInput="ngModel"
+						[required]="organization.requireProject"
+					></ga-project-selector>
+
+					<div
+						*ngIf="projectInput.invalid && f.submitted"
+						class="invalid-feedback d-block"
+					>
+						<div *ngIf="projectInput.errors.required">
+							Please selct project
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
+					<ga-task-selector
+						name="taskId"
+						[projectId]="addEditTimeRequest.projectId"
+						[(ngModel)]="addEditTimeRequest.taskId"
+						#taskInput="ngModel"
+						[required]="organization.requireTask"
+					></ga-task-selector>
+
+					<div
+						*ngIf="taskInput.invalid && f.submitted"
+						class="invalid-feedback d-block"
+					>
+						<div *ngIf="taskInput.errors.required">
+							Please selct task
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
+					<textarea
+						class="form-control"
+						rows="2"
+						[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
+						name="description"
+						[(ngModel)]="addEditTimeRequest.description"
+						#descriptionInput="ngModel"
+						[required]="organization.requireDescription"
+					></textarea>
+
+					<div
+						*ngIf="descriptionInput.invalid && f.submitted"
+						class="invalid-feedback d-block"
+					>
+						<div *ngIf="descriptionInput.errors.required">
+							Description is required
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<button
+						nbButton
+						status="primary"
+						class="mr-2"
+						(click)="addTime(f)"
+					>
+						{{
+							!addEditTimeRequest.id ? 'Add Time' : 'Update Time'
+						}}
+					</button>
+					<button nbButton status="default" (click)="ref.close()">
+						Close
+					</button>
+				</div>
+			</form>
+		</nb-card-body>
+	</nb-card>
+</ng-template>

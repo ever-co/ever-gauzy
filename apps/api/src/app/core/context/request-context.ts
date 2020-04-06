@@ -1,4 +1,4 @@
-// Modified code from https://github.com/xmlking/ngx-starter-kit. 
+// Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
@@ -8,64 +8,67 @@ import { User } from '@gauzy/models';
 import { ExtractJwt } from 'passport-jwt';
 
 export class RequestContext {
-  readonly id: number;
-  request: Request;
-  response: Response;
+	readonly id: number;
+	request: Request;
+	response: Response;
 
-  constructor(request: Request, response: Response) {
-    this.id = Math.random();
-    this.request = request;
-    this.response = response;
-  }
+	constructor(request: Request, response: Response) {
+		this.id = Math.random();
+		this.request = request;
+		this.response = response;
+	}
 
-  static currentRequestContext(): RequestContext {
-    const session = cls.getNamespace(RequestContext.name);
-    if (session && session.active) {
-      return session.get(RequestContext.name);
-    }
+	static currentRequestContext(): RequestContext {
+		const session = cls.getNamespace(RequestContext.name);
+		if (session && session.active) {
+			return session.get(RequestContext.name);
+		}
 
-    return null;
-  }
+		return null;
+	}
 
-  static currentRequest(): Request {
-    const requestContext = RequestContext.currentRequestContext();
+	static currentRequest(): Request {
+		const requestContext = RequestContext.currentRequestContext();
 
-    if (requestContext) {
-      return requestContext.request;
-    }
+		if (requestContext) {
+			return requestContext.request;
+		}
 
-    return null;
-  }
+		return null;
+	}
 
-  static currentUser(throwError?: boolean): User {
-    const requestContext = RequestContext.currentRequestContext();
+	static currentUser(throwError?: boolean): User {
+		const requestContext = RequestContext.currentRequestContext();
 
-    if (requestContext) {
-      // tslint:disable-next-line
-      const user: User = requestContext.request['user'];
-      if (user) {
-        return user;
-      }
-    }
+		if (requestContext) {
+			// tslint:disable-next-line
+			const user: User = requestContext.request['user'];
 
-    if (throwError) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
+			if (user) {
+				return user;
+			}
+		}
 
-    return null;
-  }
+		if (throwError) {
+			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+		}
 
-  static currentToken(throwError?: boolean): any {
-    const requestContext = RequestContext.currentRequestContext();
+		return null;
+	}
 
-    if (requestContext) {
-      // tslint:disable-next-line
-      return ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext.request as any)
-    }
+	static currentToken(throwError?: boolean): any {
+		const requestContext = RequestContext.currentRequestContext();
 
-    if (throwError) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-    return null;
-  }
+		if (requestContext) {
+			// tslint:disable-next-line
+			return ExtractJwt.fromAuthHeaderAsBearerToken()(
+				requestContext.request as any
+			);
+		}
+
+		if (throwError) {
+			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+		}
+		return null;
+	}
 }

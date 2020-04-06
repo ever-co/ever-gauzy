@@ -22,12 +22,7 @@ export class TimeTrackerComponent implements OnInit {
 	running: boolean;
 	today: Date = new Date();
 	selectedRange: IDateRange = { start: null, end: null };
-	manualTime: any = {};
 	user: any = {};
-	minSlotStartTime: string;
-	maxSlotStartTime: string;
-	maxSlotEndTime: string;
-	minSlotEndTime: string;
 	organization: Organization;
 
 	constructor(
@@ -87,6 +82,16 @@ export class TimeTrackerComponent implements OnInit {
 		};
 	}
 
+	public get description(): string {
+		return this.timeTrackerService.timerConfig.description;
+	}
+	public set description(value: string) {
+		this.timeTrackerService.timerConfig = {
+			...this.timeTrackerService.timerConfig,
+			description: value
+		};
+	}
+
 	ngOnInit() {
 		this.timeTrackerService.$dueration
 			.pipe(takeUntil(this._ngDestroy$))
@@ -96,6 +101,7 @@ export class TimeTrackerComponent implements OnInit {
 		this.timeTrackerService.$current_session_dueration
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((time) => {
+				console.log(time);
 				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
 		this.timeTrackerService.$running
@@ -142,6 +148,7 @@ export class TimeTrackerComponent implements OnInit {
 				}
 				f.resetForm();
 				//this.updateTimePickerLimit(new Date());
+				this.selectedRange = { start: null, end: null };
 				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
 			})
 			.catch((error) => {

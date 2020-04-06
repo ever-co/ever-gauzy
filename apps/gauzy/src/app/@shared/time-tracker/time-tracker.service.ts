@@ -5,7 +5,8 @@ import {
 	ITimerToggleInput,
 	TimeLogType,
 	TimerStatus,
-	IGetTimeLogInput
+	IGetTimeLogInput,
+	IManualTimeInput
 } from '@gauzy/models';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { toLocal } from 'libs/utils';
@@ -139,9 +140,15 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
-	addTime(request: ITimerToggleInput): Promise<TimeLog> {
+	addTime(request: IManualTimeInput): Promise<TimeLog> {
 		return this.http
-			.post<TimeLog>('/api/timesheet/timer/add', request)
+			.post<TimeLog>('/api/timesheet/time-log', request)
+			.toPromise();
+	}
+
+	updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
+		return this.http
+			.put<TimeLog>('/api/timesheet/time-log/' + id, request)
 			.toPromise();
 	}
 
@@ -155,7 +162,7 @@ export class TimeTrackerService {
 		this.toggleTimer(this.dataStore.timerConfig);
 	}
 
-	turnOnTimer() {		
+	turnOnTimer() {
 		this.running = true;
 		this.interval = setInterval(() => {
 			this.dueration++;
@@ -171,10 +178,14 @@ export class TimeTrackerService {
 
 	getTimeLogs(request?: IGetTimeLogInput) {
 		return this.http
-			.get('/api/timesheet/timer/logs', { params: { ...request } })
+			.get('/api/timesheet/time-log', { params: { ...request } })
 			.toPromise()
 			.then((data: TimeLog[]) => {
 				return data;
 			});
+	}
+
+	deleteLogs(logId: string) {
+		return this.http.delete('/api/timesheet/time-log/' + logId).toPromise();
 	}
 }

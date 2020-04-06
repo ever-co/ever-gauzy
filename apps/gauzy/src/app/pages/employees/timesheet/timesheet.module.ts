@@ -14,13 +14,17 @@ import {
 	NbDialogModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { FormsModule } from '@angular/forms';
-import { EditTimeLogDialogComponent } from './edit-time-log-dialog/edit-time-log-dialog.component';
+import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
+import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/task-select/task-select.module';
+import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/project-select.module';
+import { DeleteConfirmComponent } from './delete-confirm/delete-confirm.component';
 
 @NgModule({
-	declarations: [DailyComponent],
-	entryComponents: [EditTimeLogDialogComponent],
+	declarations: [DailyComponent, DeleteConfirmComponent],
+	exports: [DeleteConfirmComponent],
+	entryComponents: [DeleteConfirmComponent],
 	imports: [
 		CommonModule,
 		TimesheetRoutingModule,
@@ -34,7 +38,10 @@ import { EditTimeLogDialogComponent } from './edit-time-log-dialog/edit-time-log
 		FormsModule,
 		NbContextMenuModule,
 		NbIconModule,
-		NbDialogModule
+		NbDialogModule,
+		TimerPickerModule,
+		TaskSelectModule,
+		ProjectSelectModule
 	]
 })
 export class TimesheetModule {}

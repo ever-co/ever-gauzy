@@ -3,14 +3,27 @@ import {
 	OnInit,
 	ViewChild,
 	ViewChildren,
-	QueryList
+	QueryList,
+	TemplateRef
 } from '@angular/core';
 import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
-import { IGetTimeLogInput, TimeLog } from '@gauzy/models';
-import { toUTC } from 'libs/utils';
-import { NbCheckboxComponent, NbDialogService } from '@nebular/theme';
+import {
+	IGetTimeLogInput,
+	TimeLog,
+	Organization,
+	IDateRange
+} from '@gauzy/models';
+import { toUTC, toLocal } from 'libs/utils';
+import {
+	NbCheckboxComponent,
+	NbDialogService,
+	NbDialogRef
+} from '@nebular/theme';
 import * as moment from 'moment';
-import { EditTimeLogDialogComponent } from '../edit-time-log-dialog/edit-time-log-dialog.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { NgForm } from '@angular/forms';
+import { DeleteConfirmComponent } from '../delete-confirm/delete-confirm.component';
 
 @Component({
 	selector: 'ngx-daily',
@@ -28,15 +41,27 @@ export class DailyComponent implements OnInit {
 	@ViewChildren('otherCheckbox') otherCheckbox: QueryList<
 		NbCheckboxComponent
 	>;
+	organization: Organization;
+	addEditTimeRequest: any = {
+		isBillable: true,
+		projectId: null,
+		taskId: null,
+		description: ''
+	};
+	selectedRange: IDateRange = { start: null, end: null };
 
 	bulkActionOptions = [
 		{
 			title: 'Delete'
 		}
 	];
+	dialogRef: NbDialogRef<any>;
+
 	constructor(
 		private timeTrackerService: TimeTrackerService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private toastrService: ToastrService,
+		private store: Store
 	) {}
 
 	public get selectedDate(): Date {
@@ -48,6 +73,11 @@ export class DailyComponent implements OnInit {
 	}
 	async ngOnInit() {
 		this.getLogs(this.today);
+		this.store.selectedOrganization$.subscribe(
+			(organization: Organization) => {
+				this.organization = organization;
+			}
+		);
 	}
 
 	async getLogs(date: Date) {
@@ -88,20 +118,61 @@ export class DailyComponent implements OnInit {
 		}
 	}
 
-	openEdit(timeLog: TimeLog) {
-		this.dialogService.open(EditTimeLogDialogComponent, {
-			context: {
-				timeLog
-			}
-		});
+	addTime(f: NgForm) {
+		if (!f.valid) {
+			return;
+		}
+		const startedAt = toUTC(this.selectedRange.start).toDate();
+		const stoppedAt = toUTC(this.selectedRange.end).toDate();
+
+		let addRequestData = {
+			startedAt,
+			stoppedAt,
+			isBillable: this.addEditTimeRequest.isBillable,
+			projectId: this.addEditTimeRequest.projectId,
+			taskId: this.addEditTimeRequest.taskId,
+			description: this.addEditTimeRequest.description
+		};
+
+		(this.addEditTimeRequest.id
+			? this.timeTrackerService.updateTime(
+					this.addEditTimeRequest.id,
+					addRequestData
+			  )
+			: this.timeTrackerService.addTime(addRequestData)
+		)
+			.then(() => {
+				this.getLogs(this.selectedDate);
+				f.resetForm();
+				this.dialogRef.close();
+				this.selectedRange = { start: null, end: null };
+				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
+			})
+			.catch((error) => {
+				this.toastrService.danger(error);
+			});
 	}
 
-	onDeleteConfirm(event) {
-		if (window.confirm('Are you sure you want to delete?')) {
-			event.confirm.resolve();
-		} else {
-			event.confirm.reject();
-		}
+	openEdit(dialog: TemplateRef<any>, timeLog: TimeLog) {
+		this.addEditTimeRequest = Object.assign({}, timeLog);
+		this.selectedRange = {
+			start: toLocal(timeLog.startedAt).toDate(),
+			end: toLocal(timeLog.stoppedAt).toDate()
+		};
+		this.dialogRef = this.dialogService.open(dialog, { context: timeLog });
+	}
+
+	onDeleteConfirm(log) {
+		this.dialogService
+			.open(DeleteConfirmComponent)
+			.onClose.subscribe((type) => {
+				if (type == 'ok') {
+					this.timeTrackerService.deleteLogs(log.id).then(() => {
+						let index = this.timeLogs.indexOf(log);
+						this.timeLogs.splice(index, 1);
+					});
+				}
+			});
 	}
 
 	bulkAction(action) {

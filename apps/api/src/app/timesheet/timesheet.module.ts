@@ -8,9 +8,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TimerController } from './timer/timer.controller';
 import { TimerService } from './timer/timer.service';
 import { Employee } from '../employee/employee.entity';
+import { TimesheetService } from './timesheet.service';
+import { TimeLogService } from './time-log/time-log.service';
+import { TimeLogController } from './time-log/time-log.controller';
 
 @Module({
-	controllers: [TimerController],
+	controllers: [TimerController, TimeLogController],
 	imports: [
 		TypeOrmModule.forFeature([
 			TimeSlot,
@@ -21,7 +24,7 @@ import { Employee } from '../employee/employee.entity';
 			Employee
 		])
 	],
-	providers: [TimerService],
+	providers: [TimerService, TimesheetService, TimeLogService],
 	exports: []
 })
 export class TimesheetModule {}

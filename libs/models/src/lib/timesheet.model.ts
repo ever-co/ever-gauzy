@@ -99,6 +99,7 @@ export interface ITimerToggleInput {
 }
 
 export interface IManualTimeInput {
+	id?: string;
 	projectId?: string;
 	taskId?: string;
 	clientId?: string;
