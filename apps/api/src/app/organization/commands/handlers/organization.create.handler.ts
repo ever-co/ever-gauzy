@@ -1,11 +1,9 @@
 import { Organization, RolesEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { RoleService } from '../../../role';
-import { UserService } from '../../../user';
-import {
-	UserOrganization,
-	UserOrganizationService
-} from '../../../user-organization';
+import { RoleService } from '../../../role/role.service';
+import { UserService } from '../../../user/user.service';
+import { UserOrganization } from '../../../user-organization/user-organization.entity';
+import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 

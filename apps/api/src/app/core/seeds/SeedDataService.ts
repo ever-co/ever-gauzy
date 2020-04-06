@@ -1,5 +1,3 @@
-import { Tag } from './../../tags';
-import { Tenant } from './../../tenant/tenant.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
@@ -30,15 +28,16 @@ import { EmployeeSetting } from '../../employee-setting/employee-setting.entity'
 import { createUsersOrganizations } from '../../user-organization/user-organization.seed';
 import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { createCountries } from '../../country/country.seed';
-import { OrganizationTeams } from '../../organization-teams';
+import { OrganizationTeams } from '../../organization-teams/organization-teams.entity';
 import { Country } from '../../country';
 import { createTeams } from '../../organization-teams/organization-teams.seed';
-import { RolePermissions, createRolePermissions } from '../../role-permissions';
+import { RolePermissions } from '../../role-permissions/role-permissions.entity';
+import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import { createTenants } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
 import { seedEmploymentTypes } from '../../organization/employment-types.seed';
-import { OrganizationEmploymentType } from '../../organization-employment-type';
+import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
@@ -67,6 +66,8 @@ import { OrganizationPositions } from '../../organization-positions/organization
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import { createCandidates } from '../../candidate/candidate.seed';
+import { Tag } from './../../tags/tag.entity';
+import { Tenant } from './../../tenant/tenant.entity';
 
 const allEntities = [
 	TimeOffPolicy,

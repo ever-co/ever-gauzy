@@ -1,8 +1,8 @@
 import { Invite, InviteStatusEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
-import { AuthService } from '../../../auth';
-import { UserOrganizationService } from '../../../user-organization';
+import { AuthService } from '../../../auth/auth.service';
+import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { getUserDummyImage } from '../../../core';

@@ -1,5 +1,5 @@
 import { Connection } from 'typeorm';
-import { User } from '../user';
+import { User } from '../user/user.entity';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
 import { ITenant } from '@gauzy/models';

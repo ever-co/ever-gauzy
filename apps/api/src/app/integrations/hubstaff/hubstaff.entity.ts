@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne } from 'typeorm';
-import { User } from '../../user';
+import { User } from '../../user/user.entity';
 
 @Entity('integration_hubstaff')
 export class Hubstaff {

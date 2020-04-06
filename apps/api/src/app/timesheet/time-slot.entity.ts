@@ -3,7 +3,7 @@ import { Base } from '../core/entities/base';
 import { TimeSlot as ITimeSlot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
-import { Task } from '../tasks';
+import { Task } from '../tasks/task.entity';
 import { TimeLog } from './time-log.entity';
 
 @Entity('time_slot')

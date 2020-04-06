@@ -5,7 +5,8 @@ import { OrganizationProjectsController } from './organization-projects.controll
 import { OrganizationProjectsService } from './organization-projects.service';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
-import { User, UserService } from '../user';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
 
 @Module({
 	imports: [

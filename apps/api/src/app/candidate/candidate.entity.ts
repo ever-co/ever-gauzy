@@ -12,12 +12,12 @@ import {
 	RelationId
 } from 'typeorm';
 import { LocationBase } from '../core/entities/location-base';
-import { OrganizationDepartment } from '../organization-department';
-import { OrganizationEmploymentType } from '../organization-employment-type';
-import { OrganizationPositions } from '../organization-positions';
-import { Tag } from '../tags';
-import { Tenant } from '../tenant';
-import { User } from '../user';
+import { OrganizationDepartment } from '../organization-department/organization-department.entity';
+import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
+import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
+import { Tag } from '../tags/tag.entity';
+import { Tenant } from '../tenant/tenant.entity';
+import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 
 export type Status = 'applied' | 'rejected' | 'hired';
