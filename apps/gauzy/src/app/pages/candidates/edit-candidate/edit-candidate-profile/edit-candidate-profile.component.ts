@@ -55,7 +55,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 		this.tabs = [
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.ACCOUNT'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.ACCOUNT'
 				),
 				icon: 'person-outline',
 				responsive: true,
@@ -63,7 +63,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.EMPLOYMENT'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.EMPLOYMENT'
 				),
 				icon: 'browser-outline',
 				responsive: true,
@@ -71,7 +71,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.HIRING'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.HIRING'
 				),
 				icon: 'map-outline',
 				responsive: true,
@@ -79,7 +79,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.LOCATION'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.LOCATION'
 				),
 				icon: 'pin-outline',
 				responsive: true,
@@ -87,15 +87,15 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.RATE'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.RATE'
 				),
-				icon: 'pricetags-outline',
+				icon: 'star-outline',
 				responsive: true,
 				route: this.getRoute('rate')
 			},
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.TASKS'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.TASKS'
 				),
 				icon: 'pricetags-outline',
 				responsive: true,
@@ -103,25 +103,25 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.EXPERIENCE'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.EXPERIENCE'
 				),
-				icon: 'book-outline',
+				icon: 'book-open-outline',
 				responsive: true,
-				route: this.getRoute('projects')
+				route: this.getRoute('experience')
 			},
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.HISTORY'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.HISTORY'
 				),
-				icon: 'book-outline',
+				icon: 'archive-outline',
 				responsive: true,
 				route: this.getRoute('history')
 			},
 			{
 				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIATE.DOCUMENTS'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.DOCUMENTS'
 				),
-				icon: 'book-open-outline',
+				icon: 'file-text-outline',
 				responsive: true,
 				route: this.getRoute('documents')
 			}

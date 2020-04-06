@@ -104,7 +104,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 		selected: CandidateViewModel[];
 		source: LocalDataSource;
 	}) {
-		console.log(ev);
 		if (ev.isSelected) {
 			this.selectedCandidate = ev.data;
 			const checkName = this.selectedCandidate.fullName.trim();
@@ -156,12 +155,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.candidatesService.setCandidateAsInactive(
+						await this.candidatesService.delete(
 							this.selectedCandidate.id
 						);
 
 						this.toastrService.primary(
-							this.candidateName + ' set as inactive.',
+							this.candidateName + ' has been deleted.',
 							'Success'
 						);
 
@@ -180,7 +179,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 				currentUserId: this.store.userId
 			}
 		});
-
 		await dialog.onClose.pipe(first()).toPromise();
 	}
 	manageInvites() {
@@ -222,9 +220,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		if (this.candidatesTable) {
 			this.candidatesTable.grid.dataSet.willSelect = 'false';
 		}
-
 		this.organizationName = name;
-
 		this.loading = false;
 	}
 

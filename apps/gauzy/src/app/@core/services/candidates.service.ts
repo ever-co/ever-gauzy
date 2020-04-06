@@ -32,10 +32,9 @@ export class CandidatesService {
 			.pipe(first())
 			.toPromise();
 	}
-
-	setCandidateAsInactive(id: string): Promise<Candidate> {
+	delete(id: string): Promise<Candidate> {
 		return this.http
-			.put<Candidate>(`/api/candidtae/${id}`, { isActive: false })
+			.delete<Candidate>(`/api/candidate/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

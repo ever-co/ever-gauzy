@@ -127,7 +127,10 @@
 			</div>
 		</div>
 
-		<div class="col-sm-6" *ngIf="!(isEmployee || isCandidate)">
+		<div
+			class="col-sm-6"
+			*ngIf="!(isEmployee || isCandidate || isCandidateCV)"
+		>
 			<div class="form-group">
 				<label for="role" class="label">{{
 					'FORM.LABELS.ROLE' | translate
