@@ -19,12 +19,11 @@ import { FormsModule } from '@angular/forms';
 import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
 import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/task-select/task-select.module';
 import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/project-select.module';
-import { DeleteConfirmComponent } from './delete-confirm/delete-confirm.component';
 
 @NgModule({
-	declarations: [DailyComponent, DeleteConfirmComponent],
-	exports: [DeleteConfirmComponent],
-	entryComponents: [DeleteConfirmComponent],
+	declarations: [DailyComponent],
+	exports: [],
+	entryComponents: [],
 	imports: [
 		CommonModule,
 		TimesheetRoutingModule,

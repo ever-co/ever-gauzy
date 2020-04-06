@@ -7,5 +7,5 @@ export { TimerService } from './timer/timer.service';
 export { TimeSheetService } from './timesheet.service';
 export { ActivityService } from './activity.service';
 export { ScreenShotService } from './screenshot.service';
-export { TimeLogService } from './time_log.service';
+export { TimeLogService } from './time-log/time-log.service';
 export { TimeSlotService } from './time_slot.service';

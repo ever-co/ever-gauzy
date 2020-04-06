@@ -12,8 +12,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IManualTimeInput, TimeLog, IGetTimeLogInput } from '@gauzy/models';
-import { TimeLogService } from './time-log.service';
 import { AuthGuard } from '@nestjs/passport';
+import { TimeLogService } from '..';
 
 @ApiTags('TimeLog')
 @UseGuards(AuthGuard('jwt'))
@@ -29,7 +29,7 @@ export class TimeLogController {
 	})
 	@Get('/')
 	async getLogs(@Query() entity: IGetTimeLogInput): Promise<TimeLog[]> {
-		return this.timeLogService.getLogs(entity);
+		return this.timeLogService.getTimeLogs(entity);
 	}
 
 	@ApiOperation({ summary: 'Add manual time' })

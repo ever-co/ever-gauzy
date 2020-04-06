@@ -8,25 +8,24 @@ import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { RequestContext } from '../../core/context';
-import { Employee } from '../../employee/employee.entity';
 import { TimeLogType, IManualTimeInput, IGetTimeLogInput } from '@gauzy/models';
 import * as moment from 'moment';
-import { TimeSheetService } from '../timesheet.service';
+import { TimeSheetService } from '..';
+import { CrudService } from '../../core';
 
 @Injectable()
-export class TimeLogService {
+export class TimeLogService extends CrudService<TimeLog> {
 	constructor(
 		@Inject(forwardRef(() => TimeSheetService))
 		private readonly timesheetService: TimeSheetService,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		private readonly timeLogRepository: Repository<TimeLog>
+	) {
+		super(timeLogRepository);
+	}
 
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
-	) {}
-
-	async getLogs(request: IGetTimeLogInput) {
+	async getTimeLogs(request: IGetTimeLogInput) {
 		let employeeId: any;
 		const startDate = moment(request.startDate).format(
 			'YYYY-MM-DD HH:mm:ss'
@@ -48,7 +47,6 @@ export class TimeLogService {
 			},
 			relations: ['project', 'task', 'client']
 		});
-
 		return logs;
 	}
 
@@ -114,7 +112,6 @@ export class TimeLogService {
 			request.startedAt
 		);
 
-		let newTimeLog: TimeLog;
 		if (!confict) {
 			const duration = moment(request.stoppedAt).diff(
 				request.startedAt,
@@ -146,17 +143,15 @@ export class TimeLogService {
 
 	async deleteTimeLog(id: string): Promise<any> {
 		const log = await this.timeLogRepository.findOne(id);
-		if (!log) {
-			await this.timeLogRepository.update(
+
+		if (log) {
+			const updae = await this.timeLogRepository.update(
 				{ id: log.id },
 				{ deletedAt: new Date() }
 			);
-			return true;
-		} else {
-			throw new BadRequestException(
-				"You can't add add twice for same time."
-			);
+			console.log(updae);
 		}
+		return true;
 	}
 
 	private async checkConfictTime(

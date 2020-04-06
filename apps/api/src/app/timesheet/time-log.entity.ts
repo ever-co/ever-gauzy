@@ -1,4 +1,12 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
+import {
+	Entity,
+	Column,
+	RelationId,
+	ManyToOne,
+	JoinColumn,
+	IsNull,
+	Not
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeLog as ITimeLog, TimeLogType } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
@@ -17,6 +25,15 @@ import { Task } from '../tasks/task.entity';
 
 @Entity('time_log')
 export class TimeLog extends Base implements ITimeLog {
+	static scope = {
+		default: {
+			deletedAt: IsNull()
+		},
+		deleted: {
+			deletedAt: Not(IsNull())
+		}
+	};
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()

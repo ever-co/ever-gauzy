@@ -23,7 +23,7 @@ import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { NgForm } from '@angular/forms';
-import { DeleteConfirmComponent } from '../delete-confirm/delete-confirm.component';
+import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
 	selector: 'ngx-daily',
@@ -164,7 +164,7 @@ export class DailyComponent implements OnInit {
 
 	onDeleteConfirm(log) {
 		this.dialogService
-			.open(DeleteConfirmComponent)
+			.open(DeleteConfirmationComponent)
 			.onClose.subscribe((type) => {
 				if (type == 'ok') {
 					this.timeTrackerService.deleteLogs(log.id).then(() => {
