@@ -10,7 +10,7 @@ import { EmployeeLevelService } from 'apps/gauzy/src/app/@core/services/employee
 
 @Component({
 	selector: 'ga-edit-org-employee-level',
-	templateUrl: './edit-organization-employee-levle.component.html'
+	templateUrl: './edit-organization-employee-level.component.html'
 })
 export class EditOrganizationEmployeeLevelComponent
 	extends TranslationBaseComponent
@@ -20,10 +20,13 @@ export class EditOrganizationEmployeeLevelComponent
 	organizationId: string;
 
 	showAddCard: boolean;
+	showEditDiv: boolean;
 
 	employeeLevels: EmployeeLevelInput[] = [];
+	selectedEmployeeLevel: EmployeeLevelInput;
+
 	constructor(
-		private readonly employeeLevlesService: EmployeeLevelService,
+		private readonly employeeLevelService: EmployeeLevelService,
 		private readonly toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
 		readonly translateService: TranslateService
@@ -42,36 +45,28 @@ export class EditOrganizationEmployeeLevelComponent
 			});
 	}
 
-	async removeEmployeeLevel(id: string, name: string) {
-		await this.employeeLevlesService.delete(id).toPromise();
-
-		this.toastrService.primary(
-			this.getTranslation(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.REMOVE_POSITION',
-				{
-					name: name
-				}
-			),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
+	private async loadEmployeeLevels() {
+		const { items } = await this.employeeLevelService.getAll(
+			this.organizationId
 		);
 
-		this.loadEmployeeLevels();
+		if (items) {
+			this.employeeLevels = items;
+		}
 	}
 
-	private async addEmployeeLevel(level: string) {
+	async addEmployeeLevel(level: string) {
 		if (level) {
-			await this.employeeLevlesService
-				.create({
-					level,
-					organizationId: this.organizationId
-				})
-				.toPromise();
+			await this.employeeLevelService.create({
+				level,
+				organizationId: this.organizationId
+			});
 
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ADD_POSITION',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.ADD_EMPLOYEE_LEVEL',
 					{
-						name: name
+						name
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -82,10 +77,10 @@ export class EditOrganizationEmployeeLevelComponent
 		} else {
 			this.toastrService.danger(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.INVALID_POSITION_NAME'
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.INVALID_EMPLOYEE_LEVEL'
 				),
 				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_POSITION_INVALID_NAME'
+					'TOASTR.MESSAGE.NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME'
 				)
 			);
 		}
@@ -96,17 +91,39 @@ export class EditOrganizationEmployeeLevelComponent
 			level: employeeLevelName,
 			organizationId: this.organizationId
 		};
-		await this.employeeLevlesService.update(id, employeeLevel).toPromise();
+		await this.employeeLevelService.update(id, employeeLevel);
 
-		this.toastrService.primary('Successfully updated');
+		this.toastrService.primary(
+			this.getTranslation('TOASTR.MESSAGE.EMPLOYEE_LEVEL_UPDATE'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+		this.cancel();
+		this.loadEmployeeLevels();
 	}
 
-	private async loadEmployeeLevels() {
-		const res = await this.employeeLevlesService
-			.getAll(this.organizationId)
-			.toPromise();
-		if (res) {
-			this.employeeLevels = res['items'];
-		}
+	async removeEmployeeLevel(id: string, name: string) {
+		await this.employeeLevelService.delete(id);
+
+		this.toastrService.primary(
+			this.getTranslation(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS.REMOVE_EMPLOYEE_LEVEL',
+				{
+					name
+				}
+			),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+
+		this.loadEmployeeLevels();
+	}
+
+	showEditCard(employeeLevel: EmployeeLevelInput) {
+		this.showEditDiv = true;
+		this.selectedEmployeeLevel = employeeLevel;
+	}
+
+	cancel() {
+		this.showEditDiv = !this.showEditDiv;
+		this.selectedEmployeeLevel = null;
 	}
 }
