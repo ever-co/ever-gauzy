@@ -3,7 +3,8 @@ import { IntegrationController } from './integration.controller';
 import { IntegrationService } from './integration.service';
 import { Integration } from './integration.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Tenant, TenantService } from '../tenant';
+import { Tenant } from '../tenant/tenant.entity';
+import { TenantService } from '../tenant/tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 

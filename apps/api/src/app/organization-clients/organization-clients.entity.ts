@@ -23,7 +23,7 @@ import {
 	OrganizationClients as IOrganizationClients,
 	ClientOrganizationInviteStatus
 } from '@gauzy/models';
-import { OrganizationProjects } from '../organization-projects';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 

@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { CrudService } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Integration } from './integration.entity';
-import { TenantService } from '../tenant';
+import { TenantService } from '../tenant/tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { IIntegration } from '@gauzy/models';
 

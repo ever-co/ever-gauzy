@@ -6,7 +6,8 @@ import { EmployeeRecurringExpenseController } from './employee-recurring-expense
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import { QueryHandlers } from './queries/handlers';
-import { User, UserService } from '../user';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
 
 @Module({
 	imports: [
