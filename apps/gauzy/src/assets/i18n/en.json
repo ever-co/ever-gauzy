@@ -238,6 +238,7 @@
 			"RECORD": "record",
 			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "employee",
+			"CANDIDATE": "candidate",
 			"EXPENSE": "Expense",
 			"USER": "user",
 			"INVITATION": "invitation",

@@ -33,6 +33,12 @@ export class CandidatesService {
 			.toPromise();
 	}
 
+	setCandidateAsInactive(id: string): Promise<Candidate> {
+		return this.http
+			.put<Candidate>(`/api/candidtae/${id}`, { isActive: false })
+			.pipe(first())
+			.toPromise();
+	}
 	update(id: string, updateInput: CandidateUpdateInput): Promise<any> {
 		return this.http
 			.put(`/api/candidate/${id}`, updateInput)

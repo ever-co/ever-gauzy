@@ -12,7 +12,9 @@ import { CandidateFullNameComponent } from './table-components/candidate-fullnam
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -51,7 +53,9 @@ export class CandidatesComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private store: Store,
 		private router: Router,
-		private translate: TranslateService
+		private route: ActivatedRoute,
+		private translate: TranslateService,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translate);
 	}
@@ -85,6 +89,13 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.add();
+				}
+			});
 	}
 
 	selectCandidateTmp(ev: {
@@ -93,6 +104,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		selected: CandidateViewModel[];
 		source: LocalDataSource;
 	}) {
+		console.log(ev);
 		if (ev.isSelected) {
 			this.selectedCandidate = ev.data;
 			const checkName = this.selectedCandidate.fullName.trim();
@@ -127,6 +139,38 @@ export class CandidatesComponent extends TranslationBaseComponent
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
 		]);
+	}
+	async delete() {
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType:
+						this.selectedCandidate.fullName +
+						' ' +
+						this.getTranslation(
+							'FORM.DELETE_CONFIRMATION.CANDIDATE'
+						)
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.candidatesService.setCandidateAsInactive(
+							this.selectedCandidate.id
+						);
+
+						this.toastrService.primary(
+							this.candidateName + ' set as inactive.',
+							'Success'
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
+			});
 	}
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
