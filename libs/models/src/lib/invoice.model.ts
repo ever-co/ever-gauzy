@@ -1,4 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Organization } from './organization.model';
+import { OrganizationClients } from './organization-clients.model';
+import { InvoiceItem } from './invoice-item.model';
 
 export interface Invoice extends IBaseEntityModel {
 	invoiceDate: Date;
@@ -9,7 +12,10 @@ export interface Invoice extends IBaseEntityModel {
 	paid: boolean;
 	tax: number;
 	terms: string;
-	totalValue: number;
+	totalValue?: number;
+	fromOrganization?: Organization;
+	toClient?: OrganizationClients;
+	invoiceItems?: InvoiceItem[];
 }
 
 export enum DiscountTypeEnum {

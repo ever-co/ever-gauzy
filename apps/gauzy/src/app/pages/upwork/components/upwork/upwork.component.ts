@@ -2,11 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../../../@core/services/store.service';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { IntegrationsService } from '../../../../@core/services/integrations.service';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbToastrService } from '@nebular/theme';
 import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
+import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
 
 @Component({
 	selector: 'ngx-upwork',
@@ -20,7 +20,7 @@ export class UpworkComponent extends TranslationBaseComponent
 	file: File;
 
 	constructor(
-		private _integrationsService: IntegrationsService,
+		private _upworkService: UpworkService,
 		private _store: Store,
 		readonly translateService: TranslateService,
 		private toastrService: NbToastrService,
@@ -49,8 +49,8 @@ export class UpworkComponent extends TranslationBaseComponent
 		const formData = new FormData();
 		formData.append('file', this.file);
 		formData.append('orgId', this._selectedOrganizationId);
-		this._integrationsService
-			.uploadUpworkTransaction(formData)
+		this._upworkService
+			.uploadTransaction(formData)
 			.pipe(
 				takeUntil(this._ngDestroy$),
 				tap(() => (this.file = null))

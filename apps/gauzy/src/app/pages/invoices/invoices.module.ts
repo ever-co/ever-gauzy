@@ -1,7 +1,4 @@
 import { NgModule } from '@angular/core';
-import { InvoicesComponent } from './invoices.component';
-import { InvoicesRoutingModule } from './invoices-routing.module';
-import { InvoicesService } from '../../@core/services/invoices.service';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -13,6 +10,7 @@ import {
 	NbRouteTabsetModule,
 	NbSelectModule,
 	NbTooltipModule,
+	NbDatepickerModule,
 	NbRadioModule,
 	NbSpinnerModule
 } from '@nebular/theme';
@@ -20,12 +18,21 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { InvoicesMutationModule } from '../../@shared/invoices/invoices-mutation.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InvoicesValueComponent } from './invoices-value.component';
+import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
+import { InvoiceAddTasksComponent } from './invoice-add/invoice-add-tasks.component';
+import { InvoicesComponent } from './invoices.component';
+import { InvoicesRoutingModule } from './invoices-routing.module';
+import { InvoicesService } from '../../@core/services/invoices.service';
+import { InvoiceItemService } from '../../@core/services/invoice-item.service';
+import { OrganizationsService } from '../../@core/services/organizations.service';
+import { TasksService } from '../../@core/services/tasks.service';
+import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -50,8 +57,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbTooltipModule,
 		NbRadioModule,
 		UserFormsModule,
+		NbDatepickerModule,
 		NgSelectModule,
-		InvoicesMutationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -60,8 +67,24 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	providers: [InvoicesService],
-	entryComponents: [InvoicesComponent, InvoicesValueComponent],
-	declarations: [InvoicesComponent, InvoicesValueComponent]
+	providers: [
+		InvoicesService,
+		OrganizationsService,
+		InvoiceItemService,
+		TasksService,
+		OrganizationClientsService
+	],
+	entryComponents: [
+		InvoicesComponent,
+		InvoicesValueComponent,
+		InvoiceAddComponent,
+		InvoiceAddTasksComponent
+	],
+	declarations: [
+		InvoicesComponent,
+		InvoicesValueComponent,
+		InvoiceAddComponent,
+		InvoiceAddTasksComponent
+	]
 })
 export class InvoicesModule {}

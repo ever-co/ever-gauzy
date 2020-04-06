@@ -13,7 +13,7 @@ export class RoleGuard implements CanActivate {
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const roles = this._reflector.get<string[]>(
 			'roles',
-			context.getClass()
+			context.getHandler()
 		);
 
 		let isAuthorized = false;

@@ -1,0 +1,82 @@
+<div class="logo">
+	<img src="assets/images/logos/logo_Gauzy.svg" />
+	<h4>{{ 'ONBOARDING.COMPLETE' | translate }}</h4>
+	<h6>Where would you like to go now?</h6>
+</div>
+
+<div class="row centered">
+	<div class="col-3">
+		<nb-card status="info" class="shortcut-card" (click)="navigateTo('/')">
+			<nb-card-header>
+				<nb-icon icon="home-outline"></nb-icon>
+				{{ 'MENU.DASHBOARD' | translate }}
+			</nb-card-header>
+			<nb-card-body>
+				<div class="shortcut">
+					<div>
+						Go to dashboard
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+	<div class="col-3">
+		<nb-card
+			status="primary"
+			class="shortcut-card"
+			(click)="navigateTo('/pages/employees')"
+		>
+			<nb-card-header>
+				<nb-icon icon="people-outline"></nb-icon>
+				{{ 'MENU.EMPLOYEES' | translate }}
+			</nb-card-header>
+			<nb-card-body>
+				<div class="shortcut">
+					<div>
+						Add or Invite Employees
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+</div>
+<div class="row centered">
+	<div class="col-3">
+		<nb-card
+			status="success"
+			class="shortcut-card"
+			(click)="navigateTo('/pages/accounting/invoices')"
+		>
+			<nb-card-header>
+				<nb-icon icon="file-text-outline"></nb-icon>
+				{{ 'MENU.INVOICES' | translate }}
+			</nb-card-header>
+			<nb-card-body>
+				<div class="shortcut">
+					<div>
+						Create Invoices
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+	<div class="col-3">
+		<nb-card
+			status="warning"
+			class="shortcut-card"
+			(click)="navigateTo('/pages/help')"
+		>
+			<nb-card-header>
+				<nb-icon icon="question-mark-circle-outline"></nb-icon>
+				{{ 'MENU.HELP' | translate }}
+			</nb-card-header>
+			<nb-card-body>
+				<div class="shortcut">
+					<div>
+						Find out more about how to use Gauzy
+					</div>
+				</div>
+			</nb-card-body>
+		</nb-card>
+	</div>
+</div>

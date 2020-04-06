@@ -151,7 +151,8 @@
 			"SELECT_TEAM": "Выберите команду",
 			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
 			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
-			"REGISTRATION_DATE": "Дата регистрации"
+			"REGISTRATION_DATE": "Дата регистрации",
+			"ORGANIZATION_NAME": "Название организации"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -280,7 +281,8 @@
 		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}",
 		"STARTS_ON": "Начинается при",
 		"EXPENSE_HISTORY": "История расходов",
-		"NEW_EXPENSE_VALUE": "Новое значение расхода"
+		"NEW_EXPENSE_VALUE": "Новое значение расхода",
+		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д."
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
@@ -590,6 +592,8 @@
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
+			"TIMESHEET_EDIT_TIME": "Изменить время в расписании",
+			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -807,8 +811,18 @@
 		"INVOICES_SELECT_TAX": "Налог",
 		"INVOICES_SELECT_TERMS": "Условия",
 		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
+		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
-		"EDIT_INVOICE": "Изменить счет"
+		"EDIT_INVOICE": "Изменить счет",
+		"INVOICE_ITEM": {
+			"ITEM_NUMBER": "Номер предмета",
+			"TASK": "Задача",
+			"NAME": "Имя",
+			"DESCRIPTION": "Описание",
+			"UNIT_COST": "Стоимость Единицы",
+			"QUANTITY": "Количество",
+			"TOTAL_VALUE": "Общая стоимость"
+		}
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
@@ -985,5 +999,12 @@
 		"END_TIME": "Конец времени",
 		"DESCRIPTION": "Описание",
 		"ADD_TIME_SUCCESS": "Время успешно добавлено"
+	},
+	"TIMESHEET": {
+		"DAILY": "Ежедневно"
+	},
+	"ONBOARDING": {
+		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
+		"COMPLETE": "Все готово!"
 	}
 }

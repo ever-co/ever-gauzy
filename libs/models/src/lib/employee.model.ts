@@ -4,7 +4,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
-import { Tenant } from './tenant.model';
+import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 
 export interface Employee extends IBaseEntityModel, ILocation {
@@ -21,7 +21,7 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
-	tenant: Tenant;
+	tenant: ITenant;
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
 	tags: Tag[];

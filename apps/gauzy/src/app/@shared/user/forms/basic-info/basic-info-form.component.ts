@@ -1,4 +1,3 @@
-import { Tenant } from './../../../../../../../../libs/models/src/lib/tenant.model';
 import {
 	Component,
 	ViewChild,
@@ -8,7 +7,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum, Tag } from '@gauzy/models';
+import { RolesEnum, Tag, ITenant } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
@@ -30,6 +29,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 	@Input() public isCandidateCV: boolean;
+	@Input() public isSuperAdmin: boolean;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -45,7 +45,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	password: any;
 	off: any;
 	role: any;
-	tenant: Tenant;
+	tenant: ITenant;
 	offerDate: any;
 	acceptDate: any;
 	appliedDate: any;
@@ -65,6 +65,9 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	) {}
 
 	ngOnInit(): void {
+		this.allRoles = this.allRoles.filter((role) =>
+			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
+		);
 		this.loadFormData();
 
 		// this.getAllTags();
@@ -149,7 +152,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(defaultRoleName: RolesEnum) {
+	async registerUser(defaultRoleName: RolesEnum, organizationId?: string) {
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
@@ -170,7 +173,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						tenant: this.tenant,
 						tags: this.selectedTags
 					},
-					password: this.password.value
+					password: this.password.value,
+					organizationId
 				})
 				.pipe(first())
 				.toPromise();

@@ -6,14 +6,13 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
-			<button nbButton status="success" (click)="save()" class="mr-2">
+			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
 			</button>
 			<button
 				nbButton
 				status="info"
-				(click)="save()"
 				class="mr-2"
 				[disabled]="disableButton"
 			>
