@@ -5,8 +5,9 @@ import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { get, post, Response } from 'request';
 import { EmailService } from '../email/email.service';
-import { User, UserService } from '../user';
-import { UserOrganizationService } from '../user-organization';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
+import { UserOrganizationService } from '../user-organization/user-organization.services';
 
 export enum Provider {
 	GOOGLE = 'google',

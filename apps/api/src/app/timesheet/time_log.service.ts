@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
-import { Activity } from './activity.entity';
+import { TimeLog } from './time-log.entity';
 
 @Injectable()
-export class ActivityService extends CrudService<Activity> {
+export class TimeLogService extends CrudService<TimeLog> {
 	constructor(
-		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>
+		@InjectRepository(TimeLog)
+		private readonly timeLogRepository: Repository<TimeLog>
 	) {
-		super(activityRepository);
+		super(timeLogRepository);
 	}
 }

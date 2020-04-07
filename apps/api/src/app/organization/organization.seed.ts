@@ -1,4 +1,3 @@
-import { Tenant } from './../tenant/';
 import { Connection } from 'typeorm';
 import { environment as env } from '@env-api/environment';
 import { Organization } from './organization.entity';
@@ -9,6 +8,7 @@ import {
 	DefaultValueDateTypeEnum,
 	BonusTypeEnum
 } from '@gauzy/models';
+import { Tenant } from './../tenant/tenant.entity';
 
 export const createOrganizations = async (
 	connection: Connection,

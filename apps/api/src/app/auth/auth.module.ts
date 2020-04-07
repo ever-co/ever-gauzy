@@ -3,17 +3,16 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { authenticate } from 'passport';
 import { EmailModule, EmailService } from '../email';
-import { User, UserService } from '../user';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
 import { FacebookStrategy } from './facebook.strategy';
 import { GoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
-import {
-	UserOrganizationService,
-	UserOrganization
-} from '../user-organization';
+import { UserOrganization } from '../user-organization/user-organization.entity';
+import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { Organization } from '../organization/organization.entity';
 
 @Module({

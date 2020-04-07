@@ -14,10 +14,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestContext } from '../core/context';
 import { CrudController } from '../core/crud/crud.controller';
-import { RoleService } from '../role';
+import { RoleService } from '../role/role.service';
 import { Roles } from '../shared/decorators/roles';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
-import { UserService } from '../user';
+import { UserService } from '../user/user.service';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 

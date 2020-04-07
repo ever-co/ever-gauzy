@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Candidate, CandidateCreateInput } from '@gauzy/models';
-import { AuthService } from '../../../auth';
+import { AuthService } from '../../../auth/auth.service';
 import { EmailService } from '../../../email';
 import { CandidateBulkCreateCommand } from '../candidate.bulk.create.command';
 import { CandidateService } from '../../candidate.service';

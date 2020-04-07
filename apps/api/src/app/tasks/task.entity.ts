@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { Task as ITask } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OrganizationProjects } from '../organization-projects';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('task')

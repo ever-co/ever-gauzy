@@ -5,7 +5,8 @@ import { OrganizationClientsController } from './organization-clients.controller
 import { OrganizationClientsService } from './organization-clients.service';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands/handlers';
-import { User, UserService } from '../user';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
 import { EmailService, Email } from '../email';
 import { EmailTemplate } from '../email-template';
 import { OrganizationService } from '../organization/organization.service';

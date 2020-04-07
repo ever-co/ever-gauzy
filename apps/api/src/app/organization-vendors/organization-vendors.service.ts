@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { OrganizationVendor } from './organization-vendors.entity';
-import { Expense } from '../expense';
+import { Expense } from '../expense/expense.entity';
 
 @Injectable()
 export class OrganizationVendorsService extends CrudService<
