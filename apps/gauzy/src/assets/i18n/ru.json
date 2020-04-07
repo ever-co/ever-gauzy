@@ -336,7 +336,9 @@
 		"TIME_REPORTS": "Отчеты по времени",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
 		"PAYMENT_GATEWAYS": "Платежные шлюзы",
-		"CUSTOM_SMTP": "Пользовательский SMTP"
+		"CUSTOM_SMTP": "Пользовательский SMTP",
+		"SALES": "Продажи",
+		"PAYMENTS": "Платежи"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",

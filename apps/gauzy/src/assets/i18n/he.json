@@ -336,7 +336,9 @@
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
-		"CUSTOM_SMTP": "Custom SMTP"
+		"CUSTOM_SMTP": "Custom SMTP",
+		"SALES": "Sales",
+		"PAYMENTS": "Payments"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
