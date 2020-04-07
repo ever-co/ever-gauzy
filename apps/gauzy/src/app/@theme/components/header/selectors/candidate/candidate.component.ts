@@ -38,6 +38,6 @@ export const NO_CANDIDATE_SELECTED: SelectedCandidate = {
 
 @Component({
 	selector: 'ga-candidate-selector',
-	templateUrl: ''
+	template: ``
 })
 export class CandidateSelectorComponent {}
