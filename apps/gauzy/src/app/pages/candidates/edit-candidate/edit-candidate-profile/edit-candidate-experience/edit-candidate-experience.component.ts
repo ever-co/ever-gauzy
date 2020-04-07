@@ -1,7 +1,7 @@
 import { OnInit, OnDestroy, Component } from '@angular/core';
 import { Subject } from 'rxjs';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { Country, Candidate } from '@gauzy/models';
+import { Candidate } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 
