@@ -101,7 +101,6 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 
 	async remove(id: string) {
 		const user = await this.usersService.getUserById(this.selectedUserId);
-		console.log(id);
 
 		const { items } = await this.userOrganizationsService.getAll([
 			'user',
