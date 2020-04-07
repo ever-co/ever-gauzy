@@ -36,7 +36,7 @@ Read more [About Gauzy](https://github.com/ever-co/gauzy/wiki/About-Gauzy) and [
 
 ## Demos & Testing
 
-Feel free to test a [Demo](http://ec2-52-2-19-125.compute-1.amazonaws.com:4250) on our server. Login: `admin@ever.co` and password: `admin`.
+Feel free to test a Demo <http://demo.gauzy.co:4250> on our server. Login: `admin@ever.co` and password: `admin`.
 
 In the future we will have the following:
 
