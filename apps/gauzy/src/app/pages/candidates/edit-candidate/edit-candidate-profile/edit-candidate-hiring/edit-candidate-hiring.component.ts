@@ -8,14 +8,6 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 	selector: 'ga-edit-candidate-hiring',
 	templateUrl: './edit-candidate-hiring.component.html',
 	styleUrls: ['./edit-candidate-hiring.component.scss']
-
-	// .main-form {
-	// 	width: 100%;
-	// }
-	// .content {
-	// 	display: flex;
-	// 	padding: 50px 0px;
-	// }
 })
 export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
