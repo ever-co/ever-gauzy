@@ -46,6 +46,8 @@
 		"faker": "^4.1.0",
 		"fastify-swagger": "^2.5.0",
 		"helmet": "^3.20.1",
+		"mjml": "^4.6.2",
+		"moment": "^2.24.0",
 		"nest-router": "^1.0.9",
 		"nodemailer": "^6.4.6",
 		"nodemon": "^1.19.4",
@@ -54,6 +56,8 @@
 		"passport-google-oauth20": "^2.0.0",
 		"passport-jwt": "^4.0.0",
 		"pg": "^8.0.0",
+		"pm2": "^4.2.3",
+		"readdirp": "^3.3.0",
 		"reflect-metadata": "^0.1.13",
 		"request": "^2.88.0",
 		"rxjs": "^6.5.2",
@@ -62,10 +66,7 @@
 		"swagger-ui-express": "^4.1.4",
 		"typeorm": "^0.2.24",
 		"typeorm-express-query-builder": "^1.2.0",
-		"web-push": "^3.4.1",
-		"readdirp": "^3.3.0",
-		"mjml": "^4.6.2",
-		"moment": "^2.24.0"
+		"web-push": "^3.4.1"
 	},
 	"devDependencies": {
 		"@nestjs/schematics": "^7.0.0",

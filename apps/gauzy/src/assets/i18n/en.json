@@ -29,7 +29,8 @@
 		"PREVIOUS": "Previous",
 		"INVITE_AGAIN": "Invite Again",
 		"REQUEST": "Request",
-		"HISTORY": "History"
+		"HISTORY": "History",
+		"UPDATE": "Update"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -876,6 +877,7 @@
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
 			"EMPLOYEE_PROFILE_UPDATE": "{{name}} profile updated.",
+			"EMPLOYEE_LEVEL_UPDATE": "Employee Level is successfully updated.",
 			"CONFIRM": "Confirm",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
@@ -888,6 +890,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
+			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Employee Level is required",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
@@ -956,6 +959,11 @@
 				"EDIT_EXISTING_TEAM": "Team {{ name }} successfully updated!",
 				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
 				"REMOVE_TEAM": "Team {{ name }} successfully removed!"
+			},
+			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
+				"ADD_EMPLOYEE_LEVEL": "New Employee Level {{ name }} successfully added!",
+				"REMOVE_EMPLOYEE_LEVEL": "Employee Level {{ name }} successfully removed!",
+				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
 			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
