@@ -1,12 +1,4 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	ViewChildren,
-	QueryList,
-	TemplateRef,
-	AfterViewInit
-} from '@angular/core';
+import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import {
 	IGetTimeLogInput,
@@ -24,7 +16,7 @@ import {
 import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { NgForm, NgModel } from '@angular/forms';
+import { NgForm } from '@angular/forms';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { takeUntil, filter, map } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';

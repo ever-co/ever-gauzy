@@ -1,12 +1,4 @@
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn,
-	IsNull,
-	Not
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeLog as ITimeLog, TimeLogType } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
