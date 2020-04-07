@@ -9,6 +9,7 @@ import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import {
 	Income,
 	OrganizationSelectInput,
+	Tag,
 	OrganizationClients
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
@@ -40,6 +41,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	organizationId: string;
 
 	clients: Object[] = [];
+	tags: Tag[] = [];
 
 	fakeClients = [
 		{
@@ -166,6 +168,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		if (this.income) {
+			this.tags = this.income.tags;
 			this.form = this.fb.group({
 				valueDate: [
 					new Date(this.income.valueDate),
@@ -181,7 +184,8 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				],
 				notes: this.income.notes,
 				currency: this.income.currency,
-				isBonus: this.income.isBonus
+				isBonus: this.income.isBonus,
+				tags: this.income.tags
 			});
 		} else {
 			this.form = this.fb.group({
@@ -193,7 +197,8 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				client: [null, Validators.required],
 				notes: '',
 				currency: '',
-				isBonus: false
+				isBonus: false,
+				tags: []
 			});
 
 			this._loadDefaultCurrency();
@@ -212,5 +217,8 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		if (orgData && this.currency && !this.currency.value) {
 			this.currency.setValue(orgData.currency);
 		}
+	}
+	selectedTagsHandler(ev: any) {
+		this.form.get('tags').setValue(ev);
 	}
 }

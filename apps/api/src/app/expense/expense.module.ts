@@ -13,7 +13,7 @@ import { UserModule } from '../user/user.module';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
 import { QueryHandlers } from './queries/handlers';
-import { ExpenseCategory } from '../expense-categories';
+import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 
 @Module({
 	imports: [

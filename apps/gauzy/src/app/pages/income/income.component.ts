@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Income, PermissionsEnum } from '@gauzy/models';
+import { Income, PermissionsEnum, Tag } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -14,6 +14,7 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { IncomeExpenseAmountComponent } from '../../@shared/table-components/income-amount/income-amount.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 interface SelectedRowModel {
 	data: Income;
@@ -50,6 +51,7 @@ export class IncomeComponent extends TranslationBaseComponent
 	employeeName: string;
 	loading = true;
 	hasEditPermission = false;
+	tags: Tag[] = [];
 
 	@ViewChild('incomeTable', { static: false }) incomeTable;
 
@@ -166,7 +168,9 @@ export class IncomeComponent extends TranslationBaseComponent
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
-					type: 'string'
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
 				}
 			},
 			pager: {
@@ -206,7 +210,8 @@ export class IncomeComponent extends TranslationBaseComponent
 					orgId: this.store.selectedOrganization.id,
 					notes: result.notes,
 					currency: result.currency,
-					isBonus: result.isBonus
+					isBonus: result.isBonus,
+					tags: result.tags
 				});
 
 				this.toastrService.primary(
@@ -251,7 +256,8 @@ export class IncomeComponent extends TranslationBaseComponent
 								valueDate: result.valueDate,
 								notes: result.notes,
 								currency: result.currency,
-								isBonus: result.isBonus
+								isBonus: result.isBonus,
+								tags: result.tags
 							}
 						);
 
@@ -345,7 +351,7 @@ export class IncomeComponent extends TranslationBaseComponent
 		}
 
 		const { items } = await this.incomeService.getAll(
-			['employee', 'employee.user'],
+			['employee', 'employee.user', 'tags'],
 			findObj,
 			this.selectedDate
 		);

@@ -29,7 +29,8 @@
 		"PREVIOUS": "Предыдущий",
 		"INVITE_AGAIN": "Пригласить ещё раз",
 		"REQUEST": "Запросить",
-		"HISTORY": "История"
+		"HISTORY": "История",
+		"UPDATE": "Обновить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -100,7 +101,7 @@
 			"FIRST_NAME": "Имя (необязательно)",
 			"LAST_NAME": "Фамилия (необязательно)",
 			"START_DATE": "Дата начала работы",
-			"APPLIED_DATE_LABEL": "Date when applied",
+			"APPLIED_DATE_LABEL": "Дата применения",
 			"IMAGE_URL": "URL изображения (необязательно)",
 			"CV_URL": "URL CV (необязательно)",
 			"CURRENCY": "Валюта",
@@ -151,7 +152,8 @@
 			"SELECT_TEAM": "Выберите команду",
 			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
 			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
-			"REGISTRATION_DATE": "Дата регистрации"
+			"REGISTRATION_DATE": "Дата регистрации",
+			"ORGANIZATION_NAME": "Название организации"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -280,7 +282,8 @@
 		"SPLIT_EXPENSE_WITH_INFO": "Это дробный расход с исходным значением: {{ originalValue }}, разделённый на количество сотрудников: {{ employeeCount }}",
 		"STARTS_ON": "Начинается при",
 		"EXPENSE_HISTORY": "История расходов",
-		"NEW_EXPENSE_VALUE": "Новое значение расхода"
+		"NEW_EXPENSE_VALUE": "Новое значение расхода",
+		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д."
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
@@ -590,6 +593,8 @@
 			"CHANGE_SELECTED_ORGANIZATION": "Изменить выбранную организацию",
 			"CHANGE_ROLES_PERMISSIONS": "Изменить роли и права доступа",
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
+			"TIMESHEET_EDIT_TIME": "Изменить время в расписании",
+			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -727,6 +732,7 @@
 		"ADD_USER": "Добавить пользователя",
 		"ADD_EXISTING_USER": "Добавить существующего пользователя",
 		"ROLE": {
+			"SUPER_ADMIN": "Супер админ",
 			"ADMIN": "Администратор",
 			"MANAGER": "Менеджер",
 			"DATA_ENTRY": "Ввод данных",
@@ -778,9 +784,9 @@
 			"ACTION": "Пригласить сотрудников"
 		},
 		"CANDIDATE": {
-			"MANAGE": "Manage Candidate Invites for",
-			"HEADER": "Invite Candidates",
-			"ACTION": "Invite Candidates"
+			"MANAGE": "Управление приглашениями по Кандидатам для",
+			"HEADER": "Пригласить Кандидатов",
+			"ACTION": "Пригласить Кандидатов"
 		},
 		"SENT": "{{total}} приглашений отправлено.",
 		"IGNORED": "{{total}} приглашений отправлено. {{ignored}} уже были приглашены и проигнорированы.",
@@ -806,8 +812,18 @@
 		"INVOICES_SELECT_TAX": "Налог",
 		"INVOICES_SELECT_TERMS": "Условия",
 		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
+		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
-		"EDIT_INVOICE": "Изменить счет"
+		"EDIT_INVOICE": "Изменить счет",
+		"INVOICE_ITEM": {
+			"ITEM_NUMBER": "Номер предмета",
+			"TASK": "Задача",
+			"NAME": "Имя",
+			"DESCRIPTION": "Описание",
+			"UNIT_COST": "Стоимость Единицы",
+			"QUANTITY": "Количество",
+			"TOTAL_VALUE": "Общая стоимость"
+		}
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
@@ -849,6 +865,7 @@
 			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
 			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника",
 			"EMPLOYEE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
+			"EMPLOYEE_LEVEL_UPDATE": "Уровень сотрудника успешно обновлен.",
 			"CONFIRM": "Подтвердить",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",
@@ -861,6 +878,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
+			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Требуется уровень сотрудника",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
@@ -930,6 +948,11 @@
 				"INVALID_TEAM_NAME": "Пожалуйста, добавьте название команды и хотя бы одного участника",
 				"REMOVE_TEAM": "Команда {{ name }} успешно удалена!"
 			},
+			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
+				"ADD_EMPLOYEE_LEVEL": "Новый уровень {{ name }} успешно добавлен!",
+				"REMOVE_EMPLOYEE_LEVEL": "Уровень {{ name }} сотрудника успешно удален!",
+				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника"
+			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
 				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
@@ -984,5 +1007,12 @@
 		"END_TIME": "Конец времени",
 		"DESCRIPTION": "Описание",
 		"ADD_TIME_SUCCESS": "Время успешно добавлено"
+	},
+	"TIMESHEET": {
+		"DAILY": "Ежедневно"
+	},
+	"ONBOARDING": {
+		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
+		"COMPLETE": "Все готово!"
 	}
 }

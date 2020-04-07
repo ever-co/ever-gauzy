@@ -1,10 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan, Between, Brackets } from 'typeorm';
+import { Repository, MoreThan, Between } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
-import { TimeLogType, TimerStatus, IManualTimeInput } from '@gauzy/models';
+import {
+	TimeLogType,
+	TimerStatus,
+	IManualTimeInput,
+	IGetTimeLogInput
+} from '@gauzy/models';
 import * as moment from 'moment';
 import { Timesheet } from '../timesheet.entity';
 
@@ -181,5 +186,35 @@ export class TimerService {
 			});
 		}
 		return timesheet;
+	}
+
+	async getLogs(request: IGetTimeLogInput) {
+		let employeeId: any;
+		const startDate = moment(request.startDate).format(
+			'YYYY-MM-DD HH:mm:ss'
+		);
+		const endDate = moment(request.endDate).format('YYYY-MM-DD HH:mm:ss');
+
+		if (!request.employeeId) {
+			const user = RequestContext.currentUser();
+			const employee = await this.employeeRepository.findOne({
+				userId: user.id
+			});
+			employeeId = employee.id;
+		} else {
+			employeeId = request.employeeId;
+		}
+
+		console.log({ startDate, endDate });
+
+		let logs = await this.timeLogRepository.find({
+			where: {
+				startedAt: Between(startDate, endDate),
+				employeeId
+			},
+			relations: ['project', 'task', 'client']
+		});
+
+		return logs;
 	}
 }

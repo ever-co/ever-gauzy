@@ -7,11 +7,13 @@ import { first } from 'rxjs/operators';
 export class UsersService {
 	constructor(private http: HttpClient) {}
 
-	getMe(relations?: string[]): Promise<{ items: User[]; total: number }> {
+	API_URL = '/api/user';
+
+	getMe(relations?: string[]): Promise<User> {
 		const data = JSON.stringify({ relations });
 
 		return this.http
-			.get<{ items: User[]; total: number }>(`/api/user/me`, {
+			.get<User>(`${this.API_URL}/me`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -20,14 +22,14 @@ export class UsersService {
 
 	getUserByEmail(emailId: string): Promise<User> {
 		return this.http
-			.get<User>(`/api/user/email/${emailId}`)
+			.get<User>(`${this.API_URL}/email/${emailId}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getUserById(id: string): Promise<User> {
 		return this.http
-			.get<User>(`/api/user/${id}`)
+			.get<User>(`${this.API_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
@@ -39,7 +41,7 @@ export class UsersService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: User[]; total: number }>(`/api/user`, {
+			.get<{ items: User[]; total: number }>(`${this.API_URL}`, {
 				params: { data }
 			})
 			.pipe(first())
@@ -48,14 +50,14 @@ export class UsersService {
 
 	update(userId: string, updateInput: UserFindInput) {
 		return this.http
-			.put(`/api/user/${userId}`, updateInput)
+			.put(`${this.API_URL}/${userId}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(userId, user) {
 		return this.http
-			.delete(`/api/user/${userId}`, user)
+			.delete(`${this.API_URL}/${userId}`, user)
 			.pipe(first())
 			.toPromise();
 	}

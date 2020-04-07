@@ -10,7 +10,7 @@ import { Base } from '../core/entities/base';
 import { UserOrganization as IUserOrganization } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { User } from '../user';
+import { User } from '../user/user.entity';
 
 @Entity('user_organization')
 export class UserOrganization extends Base implements IUserOrganization {

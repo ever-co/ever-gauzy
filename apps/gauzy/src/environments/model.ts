@@ -17,4 +17,5 @@ export interface Environment {
 	LINKEDIN_AUTH_LINK: string;
 	NO_INTERNET_LOGO: string;
 	SENTRY_DNS?: string;
+	HUBSTAFF_REDIRECT_URI?: string;
 }

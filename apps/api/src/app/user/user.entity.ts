@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { User as IUser } from '@gauzy/models';
+import { User as IUser, Employee } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
@@ -21,23 +21,24 @@ import {
 	ManyToOne,
 	RelationId,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Role } from '../role';
+import { Role } from '../role/role.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import { Tag } from '../tags';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('user')
 export class User extends Base implements IUser {
-	@ManyToMany((type) => Tag)
+	@ManyToMany(() => Tag)
 	@JoinTable({
 		name: 'tag_user'
 	})
 	tags: Tag[];
 
 	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	tenant: Tenant;
 
@@ -83,8 +84,13 @@ export class User extends Base implements IUser {
 	@Column({ nullable: true })
 	username?: string;
 
+	@OneToOne('Employee', (employee: Employee) => employee.user, {
+		nullable: true
+	})
+	employee?: Employee;
+
 	@ApiPropertyOptional({ type: Role })
-	@ManyToOne((type) => Role, { nullable: true, onDelete: 'CASCADE' })
+	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	role?: Role;
 

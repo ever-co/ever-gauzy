@@ -1,18 +1,32 @@
-import { Controller, HttpStatus, Get, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { OrganizationService } from './organization.service';
-import { Organization } from './organization.entity';
-import { CrudController } from '../core/crud/crud.controller';
+import { OrganizationCreateInput, PermissionsEnum } from '@gauzy/models';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	UseGuards
+} from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
+import { CrudController } from '../core/crud/crud.controller';
 import { UUIDValidationPipe } from '../shared';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { OrganizationCreateCommand } from './commands';
+import { Organization } from './organization.entity';
+import { OrganizationService } from './organization.service';
 
 @ApiTags('Organization')
 @Controller()
 export class OrganizationController extends CrudController<Organization> {
-	constructor(private readonly organizationService: OrganizationService) {
+	constructor(
+		private readonly organizationService: OrganizationService,
+		private readonly commandBus: CommandBus
+	) {
 		super(organizationService);
 	}
 
@@ -55,5 +69,23 @@ export class OrganizationController extends CrudController<Organization> {
 		}
 
 		return this.organizationService.findOne(id, findObj);
+	}
+
+	@ApiOperation({ summary: 'Create new Organization' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The Organization has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	async create(
+		@Body() entity: OrganizationCreateInput
+	): Promise<Organization> {
+		return this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
 }

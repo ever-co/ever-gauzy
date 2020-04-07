@@ -29,6 +29,8 @@ export class EmailInviteFormComponent implements OnInit {
 
 	@Input() public currentUserId: string;
 
+	@Input() public isSuperAdmin: boolean;
+
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -57,6 +59,9 @@ export class EmailInviteFormComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
+		this.allRoles = this.allRoles.filter((role) =>
+			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
+		);
 		this.loadFormData();
 	}
 
@@ -141,8 +146,6 @@ export class EmailInviteFormComponent implements OnInit {
 	};
 
 	async saveInvites(): Promise<CreateEmailInvitesOutput> {
-		const inviteType = 'user';
-
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
