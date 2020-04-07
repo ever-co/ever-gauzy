@@ -13,7 +13,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IManualTimeInput, TimeLog, IGetTimeLogInput } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
-import { TimeLogService } from '..';
+import { TimeLogService } from './time-log.service';
 
 @ApiTags('TimeLog')
 @UseGuards(AuthGuard('jwt'))

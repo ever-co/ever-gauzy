@@ -10,8 +10,8 @@ import { Repository, Between } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { TimeLogType, IManualTimeInput, IGetTimeLogInput } from '@gauzy/models';
 import * as moment from 'moment';
-import { TimeSheetService } from '..';
 import { CrudService } from '../../core';
+import { TimeSheetService } from '../timesheet.service';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
