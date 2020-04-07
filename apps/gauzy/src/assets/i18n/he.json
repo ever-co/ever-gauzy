@@ -141,6 +141,9 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"APPLIED_DATE": "Applied Date (optional)",
+			"EDUCATION": "Education (optional)",
+			"EXPERIENCE": "Work experience (optional)",
+			"SKILLS": "Skills (optional)",
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
@@ -187,6 +190,9 @@
 			"CITY": "עיר",
 			"ADDRESS": "Address",
 			"ADDRESS_2": "Address 2",
+			"EDUCATION": "Education",
+			"EXPERIENCE": "Work experience",
+			"SKILLS": "Skills",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
@@ -239,6 +245,7 @@
 			"RECORD": "תקליט",
 			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "עובד",
+			"CANDIDATE": "candidate",
 			"EXPENSE": "הוצאה",
 			"USER": "user",
 			"INVITATION": "invitation",
@@ -480,7 +487,7 @@
 		"REJECTED": "Rejected",
 		"DELETED": "Deleted",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "מפתח",
 			"DEPARTMENT": "המחלקה",
@@ -490,8 +497,12 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
-			"RATES": "Rates",
-			"HIRING": "Hiring"
+			"RATE": "ציון",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Experience",
+			"TASKS": "Tasks",
+			"HISTORY": "History",
+			"DOCUMENTS": "Documents"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
