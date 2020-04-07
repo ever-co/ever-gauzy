@@ -29,8 +29,10 @@ export interface Product {
 
 export interface ProductType extends IBaseEntityModel {
 	name: string;
+	organizationId: string;
 }
 
 export interface ProductCategory extends IBaseEntityModel {
 	name: string;
+	organizationId: string;
 }

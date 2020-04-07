@@ -6,13 +6,19 @@ import {
 	NbCardModule,
 	NbButtonModule,
 	NbIconModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbDialogModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
+import { ProductMutationComponent } from '../../@shared/product-mutation/product-mutation.component';
+import { ProductMutationModule } from '../../@shared/product-mutation/product-mutation.module';
+import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { ThemeModule } from '../../@theme/theme.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -22,12 +28,16 @@ export function HttpLoaderFactory(http: HttpClient) {
 	declarations: [InventoryComponent],
 	imports: [
 		InventoryRoutingModule,
+		ThemeModule,
 		CommonModule,
 		NbCardModule,
 		NbButtonModule,
+		NbCheckboxModule,
 		NbIconModule,
 		Ng2SmartTableModule,
 		TableComponentsModule,
+		ProductMutationModule,
+		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -36,6 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		}),
 		NbSpinnerModule
-	]
+	],
+	entryComponents: [ProductMutationComponent]
 })
 export class InventoryModule {}

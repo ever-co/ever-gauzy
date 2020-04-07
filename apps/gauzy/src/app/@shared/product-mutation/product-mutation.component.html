@@ -1,0 +1,239 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(productItem
+					? 'INVENTORY_PAGE.ADD_INVENTORY_ITEM'
+					: 'INVENTORY_PAGE.EDIT_INVENTPRY_ITEM'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form>
+			<div class="row">
+				<div class="col-sm-4 mb-4">
+					<input
+						fullWidth
+						id="nameInput"
+						type="text"
+						nbInput
+						[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+					/>
+				</div>
+				<div class="col-sm-4 mb-4">
+					<nb-select
+						fullWidth
+						[placeholder]="
+							'INVENTORY_PAGE.PRODUCT_TYPE' | translate
+						"
+					>
+						<nb-option value="">Option 1</nb-option>
+					</nb-select>
+				</div>
+				<div class="col-sm-4 mb-4">
+					<nb-select
+						fullWidth
+						[placeholder]="
+							'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate
+						"
+					>
+						<nb-option value="">Option 1</nb-option>
+					</nb-select>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-4 mb-4">
+					<input
+						fullWidth
+						id="codeInput"
+						type="text"
+						nbInput
+						[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+					/>
+				</div>
+				<div class="col-sm-4 mb-4">
+					<input
+						fullWidth
+						id="internationalReferenceInput"
+						type="text"
+						nbInput
+						[placeholder]="
+							'INVENTORY_PAGE.INTERNATIONAL_REFERENCE' | translate
+						"
+					/>
+				</div>
+				<div class="col-sm-4 mb-4">
+					<input
+						fullWidth
+						id="invoicingPolicyInput"
+						type="text"
+						nbInput
+						[placeholder]="
+							'INVENTORY_PAGE.BILLING_INVOICING_POLICY'
+								| translate
+						"
+					/>
+				</div>
+			</div>
+
+			<hr />
+			<div class="row">
+				<div class="col-sm-8 mb-4">
+					<input
+						fullWidth
+						id="retailPriceInput"
+						type="text"
+						nbInput
+						[placeholder]="
+							'INVENTORY_PAGE.RETAIL_PRICE' | translate
+						"
+					/>
+				</div>
+				<div class="col-sm-4 mb-4">
+					<nb-select
+						fullWidth
+						[placeholder]="
+							'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY' | translate
+						"
+					>
+						<nb-option value="">Option 1</nb-option>
+					</nb-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-8 mb-4">
+					<input
+						fullWidth
+						id="unitCost"
+						type="number"
+						nbInput
+						[placeholder]="'INVENTORY_PAGE.UNIT_COST' | translate"
+					/>
+				</div>
+				<div class="col-sm-4 mb-4">
+					<nb-select
+						fullWidth
+						[placeholder]="
+							'INVENTORY_PAGE.UNIT_COST_CURRENCY' | translate
+						"
+					>
+						<nb-option value="">Option 1</nb-option>
+					</nb-select>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6 mb-4">
+					<input
+						fullWidth
+						id="quantityInput"
+						type="number"
+						nbInput
+						[placeholder]="'INVENTORY_PAGE.QUANTITY' | translate"
+					/>
+				</div>
+				<div class="col-sm-6 mb-4">
+					<input
+						fullWidth
+						id="taxesInput"
+						type="number"
+						nbInput
+						[placeholder]="'INVENTORY_PAGE.TAXES' | translate"
+					/>
+				</div>
+			</div>
+
+			<hr />
+
+			<div class="row">
+				<div class="col-sm-4 d-column mb-4">
+					<nb-checkbox>
+						<span>{{ 'INVENTORY_PAGE.ENABLED' | translate }}</span>
+					</nb-checkbox>
+					<nb-checkbox>
+						<span>{{
+							'INVENTORY_PAGE.IS_SUBSCRIPTION' | translate
+						}}</span>
+					</nb-checkbox>
+					<nb-checkbox>
+						<span>{{
+							'INVENTORY_PAGE.IS_PURCHASE_AUTOMATICALLY'
+								| translate
+						}}</span>
+					</nb-checkbox>
+				</div>
+				<div class="col-sm-4 d-column">
+					<nb-checkbox>
+						<span>{{
+							'INVENTORY_PAGE.CAN_BE_SOLD' | translate
+						}}</span>
+					</nb-checkbox>
+					<nb-checkbox>
+						<span>{{
+							'INVENTORY_PAGE.CAN_BE_PURCHASED' | translate
+						}}</span>
+					</nb-checkbox>
+					<nb-checkbox>
+						<span>{{
+							'INVENTORY_PAGE.CAN_BE_CHARGED' | translate
+						}}</span>
+					</nb-checkbox>
+				</div>
+				<div class="col-sm-4 d-column">
+					<nb-checkbox>
+						<span>{{
+							'INVENTORY_PAGE.CAN_BE_RENTED' | translate
+						}}</span>
+					</nb-checkbox>
+					<nb-checkbox>
+						<span>{{
+							'INVENTORY_PAGE.IS_EQUIPMENT' | translate
+						}}</span>
+					</nb-checkbox>
+				</div>
+			</div>
+			<hr />
+			<div class="row">
+				<div class="col-sm-12 mb-4">
+					<input
+						fullWidth
+						id="notes"
+						type="string"
+						nbInput
+						[placeholder]="'INVENTORY_PAGE.NOTES' | translate"
+					/>
+				</div>
+				<div class="col-sm-12 mb-4">
+					<textarea
+						nbInput
+						fullWidth
+						id="description"
+						[placeholder]="'INVENTORY_PAGE.DESCRIPTION' | translate"
+					>
+					</textarea>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="warning"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button status="success" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

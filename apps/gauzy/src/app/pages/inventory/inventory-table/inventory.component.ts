@@ -6,6 +6,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Router } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { InventoryItem, Inventory } from '@gauzy/models';
+import { ProductMutationComponent } from '../../../@shared/product-mutation/product-mutation.component';
 
 @Component({
 	selector: 'ngx-inventory',
@@ -76,7 +77,11 @@ export class InventoryComponent extends TranslationBaseComponent
 		};
 	}
 
-	async save() {}
+	async save() {
+		const dialog = this.dialogService.open(ProductMutationComponent, {
+			context: { productItem: this.selectedItem }
+		});
+	}
 
 	async delete() {}
 
