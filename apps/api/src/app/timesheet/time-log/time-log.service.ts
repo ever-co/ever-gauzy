@@ -43,6 +43,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		let logs = await this.timeLogRepository.find({
 			where: {
 				startedAt: Between(startDate, endDate),
+				deletedAt: null,
 				employeeId
 			},
 			relations: ['project', 'task', 'client']
@@ -145,11 +146,10 @@ export class TimeLogService extends CrudService<TimeLog> {
 		const log = await this.timeLogRepository.findOne(id);
 
 		if (log) {
-			const updae = await this.timeLogRepository.update(
+			await this.timeLogRepository.update(
 				{ id: log.id },
 				{ deletedAt: new Date() }
 			);
-			console.log(updae);
 		}
 		return true;
 	}
@@ -161,6 +161,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		let confictQuery = this.timeLogRepository
 			.createQueryBuilder()
 			.where('"employeeId" = :employeeId', { employeeId: employeeId })
+			.andWhere('"deletedAt" = :deletedAt', { deletedAt: null })
 			.andWhere(
 				`("startedAt", "stoppedAt") OVERLAPS (\'${moment(
 					request.startedAt

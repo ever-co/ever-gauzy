@@ -25,15 +25,6 @@ import { Task } from '../tasks/task.entity';
 
 @Entity('time_log')
 export class TimeLog extends Base implements ITimeLog {
-	static scope = {
-		default: {
-			deletedAt: IsNull()
-		},
-		deleted: {
-			deletedAt: Not(IsNull())
-		}
-	};
-
 	@ApiProperty({ type: Employee })
 	@ManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
