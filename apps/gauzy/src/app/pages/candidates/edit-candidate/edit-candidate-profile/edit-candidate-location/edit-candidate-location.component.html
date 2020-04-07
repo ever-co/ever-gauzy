@@ -1,0 +1,111 @@
+<form class="main-form" [formGroup]="form" *ngIf="form">
+	<div class="fields">
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="countrySelect">{{
+						'FORM.LABELS.COUNTRY' | translate
+					}}</label>
+					<nb-select
+						class="d-block"
+						size="medium"
+						formControlName="country"
+						id="countrySelect"
+						fullWidth="true"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.COUNTRY' | translate
+						}}"
+					>
+						<nb-option
+							*ngFor="let c of countries"
+							[value]="c.isoCode"
+						>
+							{{ c.country }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="cityInput">{{
+						'FORM.LABELS.CITY' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="cityInput"
+						type="text"
+						nbInput
+						formControlName="city"
+						placeholder="{{ 'FORM.PLACEHOLDERS.CITY' | translate }}"
+					/>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="addressInput">{{
+						'FORM.LABELS.ADDRESS' | translate
+					}}</label>
+					<textarea
+						fullWidth
+						id="addressInput"
+						type="text-area"
+						nbInput
+						formControlName="address"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.ADDRESS' | translate
+						}}"
+					></textarea>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="address2Input">{{
+						'FORM.LABELS.ADDRESS_2' | translate
+					}}</label>
+					<textarea
+						fullWidth
+						id="address2Input"
+						type="text"
+						nbInput
+						formControlName="address2"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.ADDRESS_2' | translate
+						}}"
+					></textarea>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="postcodeInput">{{
+						'FORM.LABELS.POSTCODE' | translate
+					}}</label>
+					<input
+						fullWidth
+						id="postcodeInput"
+						type="text"
+						nbInput
+						formControlName="postcode"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.POSTCODE' | translate
+						}}"
+					/>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="actions">
+		<button
+			[disabled]="this.form.invalid"
+			(click)="submitForm()"
+			nbButton
+			status="success"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</div>
+</form>

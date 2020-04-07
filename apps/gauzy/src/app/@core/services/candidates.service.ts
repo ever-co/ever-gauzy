@@ -32,7 +32,12 @@ export class CandidatesService {
 			.pipe(first())
 			.toPromise();
 	}
-
+	delete(id: string): Promise<Candidate> {
+		return this.http
+			.delete<Candidate>(`/api/candidate/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
 	update(id: string, updateInput: CandidateUpdateInput): Promise<any> {
 		return this.http
 			.put(`/api/candidate/${id}`, updateInput)
