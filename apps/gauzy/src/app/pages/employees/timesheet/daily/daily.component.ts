@@ -4,7 +4,8 @@ import {
 	ViewChild,
 	ViewChildren,
 	QueryList,
-	TemplateRef
+	TemplateRef,
+	AfterViewInit
 } from '@angular/core';
 import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import {
@@ -17,13 +18,16 @@ import { toUTC, toLocal } from 'libs/utils';
 import {
 	NbCheckboxComponent,
 	NbDialogService,
-	NbDialogRef
+	NbDialogRef,
+	NbMenuService
 } from '@nebular/theme';
 import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { NgForm } from '@angular/forms';
+import { NgForm, NgModel } from '@angular/forms';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { takeUntil, filter, map } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 
 @Component({
 	selector: 'ngx-daily',
@@ -34,13 +38,11 @@ export class DailyComponent implements OnInit {
 	timeLogs: TimeLog[];
 	today: Date = new Date();
 	checkboxAll: boolean = false;
-	selectedIds: string[] = [];
+	selectedIds: any = {};
 	private _selectedDate: Date = new Date();
+	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox', { static: false })
 	checkAllCheckbox: NbCheckboxComponent;
-	@ViewChildren('otherCheckbox') otherCheckbox: QueryList<
-		NbCheckboxComponent
-	>;
 	organization: Organization;
 	addEditTimeRequest: any = {
 		isBillable: true,
@@ -61,7 +63,8 @@ export class DailyComponent implements OnInit {
 		private timeTrackerService: TimeTrackerService,
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
-		private store: Store
+		private store: Store,
+		private nbMenuService: NbMenuService
 	) {}
 
 	public get selectedDate(): Date {
@@ -72,6 +75,15 @@ export class DailyComponent implements OnInit {
 		this.getLogs(value);
 	}
 	async ngOnInit() {
+		this.nbMenuService
+			.onItemClick()
+			.pipe(
+				takeUntil(this._ngDestroy$),
+				filter(({ tag }) => tag === 'time-logs-bulk-acton'),
+				map(({ item: { title } }) => title)
+			)
+			.subscribe((title) => this.bulkAction(title));
+
 		this.getLogs(this.today);
 		this.store.selectedOrganization$.subscribe(
 			(organization: Organization) => {
@@ -87,33 +99,43 @@ export class DailyComponent implements OnInit {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
-		this.timeLogs = await this.timeTrackerService.getTimeLogs(request);
+		this.timeLogs = await this.timeTrackerService
+			.getTimeLogs(request)
+			.then((logs) => {
+				this.selectedIds = {};
+				this.checkAllCheckbox.checked = false;
+				this.checkAllCheckbox.indeterminate = false;
+				logs.forEach((log) => (this.selectedIds[log.id] = false));
+				return logs;
+			});
 	}
 
-	toggleCheckbox(is_checked: boolean, type: any) {
+	toggleCheckbox(event: any, type?: any) {
 		if (type == 'all') {
-			if (this.otherCheckbox) {
-				this.otherCheckbox.forEach((otherCheckbox) => {
-					otherCheckbox.checked = is_checked;
-				});
+			for (const key in this.selectedIds) {
+				this.selectedIds[key] = event.target.checked;
 			}
 		} else {
 			let all_checked = true;
 			let any_checked = false;
-			this.otherCheckbox.forEach((otherCheckbox) => {
-				if (otherCheckbox.checked == false) {
+
+			for (const key in this.selectedIds) {
+				const is_checked = this.selectedIds[key];
+				if (is_checked == false || is_checked == undefined) {
 					all_checked = false;
 				} else {
 					any_checked = true;
 				}
-			});
+			}
 
 			if (all_checked) {
+				this.checkAllCheckbox.indeterminate = false;
 				this.checkAllCheckbox.checked = true;
 			} else if (any_checked) {
 				this.checkAllCheckbox.indeterminate = any_checked;
 			} else {
 				this.checkAllCheckbox.checked = false;
+				this.checkAllCheckbox.indeterminate = false;
 			}
 		}
 	}
@@ -176,13 +198,29 @@ export class DailyComponent implements OnInit {
 	}
 
 	bulkAction(action) {
-		console.log(this.otherCheckbox, this.selectedIds);
+		if (action == 'Delete') {
+			this.dialogService
+				.open(DeleteConfirmationComponent)
+				.onClose.subscribe((type) => {
+					if (type == 'ok') {
+						const logIds = [];
+						for (const key in this.selectedIds) {
+							const is_checked = this.selectedIds[key];
+							if (is_checked) {
+								logIds.push(key);
+							}
+						}
 
-		// this.otherCheckbox.forEach(otherCheckbox => {
-		// 	if (otherCheckbox.checked == true) {
-		// 		selectedIds.push(otherCheckbox.value);
-		// 	}
-		// });
-		console.log(action, this.otherCheckbox);
+						this.timeTrackerService.deleteLogs(logIds).then(() => {
+							this.getLogs(this.selectedDate);
+						});
+					}
+				});
+		}
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

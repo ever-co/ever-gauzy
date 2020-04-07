@@ -80,8 +80,8 @@ export class TimeLogController {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Delete('/:id')
-	async deleteTimeTime(@Param('id') id: string): Promise<any> {
-		return this.timeLogService.deleteTimeLog(id);
+	@Delete('/')
+	async deleteTimeTime(@Query() query): Promise<any> {
+		return this.timeLogService.deleteTimeLog(query.logIds);
 	}
 }

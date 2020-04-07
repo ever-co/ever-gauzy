@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Repository, Between, In } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { TimeLogType, IManualTimeInput, IGetTimeLogInput } from '@gauzy/models';
 import * as moment from 'moment';
@@ -142,15 +142,14 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}
 	}
 
-	async deleteTimeLog(id: string): Promise<any> {
-		const log = await this.timeLogRepository.findOne(id);
-
-		if (log) {
-			await this.timeLogRepository.update(
-				{ id: log.id },
-				{ deletedAt: new Date() }
-			);
+	async deleteTimeLog(ids: string | string[]): Promise<any> {
+		if (typeof ids == 'string') {
+			ids = [ids];
 		}
+		await this.timeLogRepository.update(
+			{ id: In(ids) },
+			{ deletedAt: new Date() }
+		);
 		return true;
 	}
 

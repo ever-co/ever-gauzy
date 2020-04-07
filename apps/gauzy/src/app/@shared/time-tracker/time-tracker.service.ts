@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import {
 	TimeLog,
 	ITimerToggleInput,
@@ -20,7 +20,9 @@ export class TimeTrackerService {
 	_current_session_dueration: BehaviorSubject<number>;
 	_running: BehaviorSubject<boolean>;
 	_timerConfig: BehaviorSubject<ITimerToggleInput>;
-	dataStore: {
+	_showTimerWindow: BehaviorSubject<boolean>;
+	private dataStore: {
+		showTimerWindow: boolean;
 		dueration: number;
 		current_session_dueration: number;
 		running: boolean;
@@ -30,6 +32,7 @@ export class TimeTrackerService {
 
 	constructor(private http: HttpClient) {
 		this.dataStore = {
+			showTimerWindow: false,
 			dueration: 0,
 			current_session_dueration: 0,
 			running: false,
@@ -60,6 +63,9 @@ export class TimeTrackerService {
 		);
 		this._running = new BehaviorSubject(this.dataStore.running);
 		this._timerConfig = new BehaviorSubject(this.dataStore.timerConfig);
+		this._showTimerWindow = new BehaviorSubject(
+			this.dataStore.showTimerWindow
+		);
 
 		this.getTimerStatus().then((status: TimerStatus) => {
 			this.dueration = status.duration;
@@ -76,6 +82,17 @@ export class TimeTrackerService {
 				this.turnOnTimer();
 			}
 		});
+	}
+
+	public get $showTimerWindow(): Observable<boolean> {
+		return this._showTimerWindow.asObservable();
+	}
+	public get showTimerWindow(): boolean {
+		return this.dataStore.showTimerWindow;
+	}
+	public set showTimerWindow(value: boolean) {
+		this.dataStore.showTimerWindow = value;
+		this._showTimerWindow.next(this.dataStore.showTimerWindow);
 	}
 
 	public get $dueration(): Observable<number> {
@@ -186,7 +203,16 @@ export class TimeTrackerService {
 			});
 	}
 
-	deleteLogs(logId: string) {
-		return this.http.delete('/api/timesheet/time-log/' + logId).toPromise();
+	deleteLogs(logIds: string | string[]) {
+		let payload = new HttpParams();
+		if (typeof logIds == 'string') {
+			logIds = [logIds];
+		}
+		logIds.forEach((id: string) => {
+			payload = payload.append(`logIds[]`, id);
+		});
+		return this.http
+			.delete('/api/timesheet/time-log', { params: payload })
+			.toPromise();
 	}
 }

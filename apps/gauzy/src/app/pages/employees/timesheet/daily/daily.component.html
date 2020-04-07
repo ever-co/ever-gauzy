@@ -42,6 +42,7 @@
 						checkAllCheckbox.indeterminate
 					"
 					[nbContextMenu]="bulkActionOptions"
+					nbContextMenuTag="time-logs-bulk-acton"
 				>
 					Bulk action <nb-icon icon="chevron-down-outline"></nb-icon>
 				</button>
@@ -58,9 +59,7 @@
 						<nb-checkbox
 							[indeterminate]="false"
 							#checkAllCheckbox
-							(valueChange)="
-								toggleCheckbox(checkAllCheckbox.checked, 'all')
-							"
+							(change)="toggleCheckbox($event, 'all')"
 							status="primary"
 						></nb-checkbox>
 					</th>
@@ -79,14 +78,9 @@
 					<tr *ngFor="let log of timeLogs">
 						<th scope="row">
 							<nb-checkbox
-								#otherCheckbox
+								[value]="log.id"
 								[(ngModel)]="selectedIds[log.id]"
-								(valueChange)="
-									toggleCheckbox(
-										otherCheckbox.checked,
-										log.id
-									)
-								"
+								(change)="toggleCheckbox($event)"
 								status="primary"
 							></nb-checkbox>
 						</th>
