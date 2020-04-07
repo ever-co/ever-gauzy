@@ -8,7 +8,7 @@ import { ViewCell } from 'ng2-smart-table';
 		<ng-select
 			[(items)]="tasks"
 			bindName="title"
-			placeholder="All Tasks"
+			placeholder="Select a Task"
 			[(ngModel)]="selectedTask"
 			(change)="selectTask($event)"
 			[searchFn]="searchTask"
