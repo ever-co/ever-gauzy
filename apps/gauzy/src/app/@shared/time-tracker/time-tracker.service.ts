@@ -63,7 +63,7 @@ export class TimeTrackerService {
 
 		this.getTimerStatus().then((status: TimerStatus) => {
 			this.dueration = status.duration;
-			if (status.lastLog) {
+			if (status.lastLog && !status.lastLog.stoppedAt) {
 				this.current_session_dueration = moment().diff(
 					toLocal(status.lastLog.startedAt),
 					'seconds'
@@ -156,6 +156,7 @@ export class TimeTrackerService {
 		if (this.interval) {
 			this.turnOffTimer();
 		} else {
+			this.current_session_dueration = 0;
 			this.turnOnTimer();
 		}
 
