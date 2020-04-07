@@ -1,14 +1,15 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { HubstaffService } from './hubstaff.service';
 import { Observable } from 'rxjs';
+import { IIntegration } from '@gauzy/models';
 
 @Controller()
 export class HubstaffController {
 	constructor(private _hubstaffService: HubstaffService) {}
 
-	@Post('/access-tokens')
-	getAccessTokens(@Body() body): Observable<any> {
-		return this._hubstaffService.getAccessTokens(body);
+	@Post('/add-integration')
+	addIntegration(@Body() body): Promise<IIntegration> {
+		return this._hubstaffService.addIntegration(body);
 	}
 
 	@Post('/organizations')

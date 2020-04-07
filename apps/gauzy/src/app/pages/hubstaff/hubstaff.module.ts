@@ -1,30 +1,41 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
+import { HubstaffAuthorizeComponent } from './components/hubstaff-authorize/hubstaff-authorize.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
 import {
-	NbStepperModule,
 	NbCardModule,
 	NbButtonModule,
 	NbInputModule,
 	NbIconModule
 } from '@nebular/theme';
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { HttpClient } from '@angular/common/http';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
+
+export function HttpLoaderFactory(http: HttpClient) {
+	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
 
 @NgModule({
-	declarations: [HubstaffComponent],
+	declarations: [HubstaffAuthorizeComponent, HubstaffComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		Ng2SmartTableModule,
 		NbCardModule,
-		NbStepperModule,
 		HubstaffRoutingModule,
 		NbButtonModule,
 		NbInputModule,
-		NbIconModule
+		NbIconModule,
+		TranslateModule.forChild({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		})
 	]
 })
 export class HubstaffModule {}

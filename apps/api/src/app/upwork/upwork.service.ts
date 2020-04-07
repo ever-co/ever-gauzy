@@ -1,23 +1,23 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { EmployeeService } from '../../employee/employee.service';
-import { UserService } from '../../user/user.service';
+import { EmployeeService } from '../employee/employee.service';
+import { UserService } from '../user/user.service';
 import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as csv from 'csv-parser';
-import { IncomeCreateCommand } from '../../income/commands/income.create.command';
-import { ExpenseCreateCommand } from '../../expense/commands/expense.create.command';
-import { OrganizationVendorsService } from '../../organization-vendors/organization-vendors.service';
-import { OrganizationClientsService } from '../../organization-clients/organization-clients.service';
-import { ExpenseCategoriesService } from '../../expense-categories/expense-categories.service';
+import { IncomeCreateCommand } from '../income/commands/income.create.command';
+import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
+import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
+import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import {
 	OrganizationVendorEnum,
 	ExpenseCategoriesEnum,
 	IncomeTypeEnum
 } from '@gauzy/models';
-import { Expense } from '../../expense/expense.entity';
-import { Income } from '../../income/income.entity';
-import { reflect } from '../../core';
+import { Expense } from '../expense/expense.entity';
+import { Income } from '../income/income.entity';
+import { reflect } from '../core';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()

@@ -49,6 +49,8 @@ import { TimeLog } from '../timesheet/time-log.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
 import { Candidate } from '../candidate';
+import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
+import { Integration } from '../integration/integration.entity';
 
 const entities = [
 	Invite,
@@ -89,7 +91,9 @@ const entities = [
 	TimeLog,
 	Activity,
 	Screenshot,
-	ExpenseCategory
+	ExpenseCategory,
+	IntegrationSetting,
+	Integration
 ];
 
 @Module({
