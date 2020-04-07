@@ -2,33 +2,33 @@
 	<nb-card-header class="header">
 		<div class="header-container">
 			<div class="employee-info">
-				<!-- <img
+				<img
 					class="employee-image"
-					[src]="selectedCandidate.user.imageUrl"
+					[src]="selectedCandidate?.user.imageUrl"
 					alt="Candidate Avatar"
-				/> -->
+				/>
 
 				<div class="employee-details">
-					<!-- <span class="employee-name"
-						>{{ selectedCandidate.user.firstName }}
-						{{ selectedCandidate.user.lastName }}</span
-					> -->
+					<span class="employee-name"
+						>{{ selectedCandidate?.user.firstName }}
+						{{ selectedCandidate?.user.lastName }}</span
+					>
 				</div>
 			</div>
 
 			<div class="employee-info">
 				<div class="employee-details">
-					<!-- <div
-						*ngIf="selectedCandidate.user.username"
+					<div
+						*ngIf="selectedCandidate?.user.username"
 						class="transparent"
 					>
 						{{ 'FORM.USERNAME' | translate }}:
-						<strong>{{ selectedCandidate.user.username }}</strong>
-					</div> -->
-					<!-- <div class="transparent">
+						<strong>{{ selectedCandidate?.user.username }}</strong>
+					</div>
+					<div class="transparent">
 						{{ 'FORM.EMAIL' | translate }}:
-						<strong>{{ selectedCandidate.user.email }}</strong>
-					</div> -->
+						<strong>{{ selectedCandidate?.user.email }}</strong>
+					</div>
 				</div>
 				<div
 					*ngIf="hasEditPermission"

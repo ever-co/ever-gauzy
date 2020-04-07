@@ -19,7 +19,9 @@ import {
 	NbInputModule,
 	NbRouteTabsetModule,
 	NbSpinnerModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbSelectModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -78,6 +80,7 @@ const COMPONENTS = [
 		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
+		NbSelectModule,
 		NbIconModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
@@ -95,6 +98,7 @@ const COMPONENTS = [
 			}
 		}),
 		NbSpinnerModule,
+		NbDatepickerModule,
 		TagsColorInputModule,
 		CandidateMutationModule,
 		InviteMutationModule,

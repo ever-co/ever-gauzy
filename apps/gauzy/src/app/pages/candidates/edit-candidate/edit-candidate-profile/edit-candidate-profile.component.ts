@@ -135,16 +135,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	private async _loadCandidateData() {
 		const { id } = this.routeParams;
 		const { items } = await this.candidateService
-			.getAll(
-				[
-					'user',
-					'organizationDepartments',
-					'organizationPosition',
-					'organizationEmploymentTypes',
-					'tags'
-				],
-				{ id }
-			)
+			.getAll(['user'], { id })
 			.pipe(first())
 			.toPromise();
 

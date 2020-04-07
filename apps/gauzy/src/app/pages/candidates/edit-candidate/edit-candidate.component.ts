@@ -1,13 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { PermissionsEnum, Candidate, Organization } from '@gauzy/models';
+import { PermissionsEnum, Candidate } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { takeUntil, first } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { SelectedCandidate } from '../../../@theme/components/header/selectors/candidate/candidate.component';
 
 @Component({
 	selector: 'ngx-edit-candidate',
@@ -23,8 +22,6 @@ export class EditCandidateComponent extends TranslationBaseComponent
 	selectedCandidate: Candidate;
 	candidateName = 'Candidate';
 	hasEditPermission = false;
-	selectedCandidateFromHeader: SelectedCandidate;
-	selectedOrganization: Organization;
 	constructor(
 		private router: Router,
 		private store: Store,
@@ -56,37 +53,10 @@ export class EditCandidateComponent extends TranslationBaseComponent
 
 				this.selectedCandidate = items[0];
 
-				this.store.selectedCandidate = {
-					id: items[0].id,
-					firstName: items[0].user.firstName,
-					lastName: items[0].user.lastName,
-					imageUrl: items[0].user.imageUrl,
-					tags: items[0].user.tags
-				};
-
 				const checkUsername = this.selectedCandidate.user.username;
-				console.log(this.selectedCandidate);
 				this.candidateName = checkUsername
 					? checkUsername
 					: 'Candidate';
-
-				// this.store.selectedCandidate$
-				// 	.pipe(takeUntil(this._ngDestroy$))
-				// 	.subscribe((candidate) => {
-				// 		this.selectedCandidateFromHeader = candidate;
-				// 		if (candidate.id) {
-				// 			this.router.navigate([
-				// 				'/pages/employees/candidates/edit/' +
-				// 					candidate.id
-				// 			]);
-				// 		}
-				// 	});
-
-				this.store.selectedOrganization$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((organization) => {
-						this.selectedOrganization = organization;
-					});
 			});
 	}
 

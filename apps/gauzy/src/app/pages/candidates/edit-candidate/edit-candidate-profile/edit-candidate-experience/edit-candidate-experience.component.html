@@ -1,1 +1,70 @@
-<p>This page is coming soon!</p>
+<form class="main-form" [formGroup]="form" *ngIf="form">
+	<div class="fields">
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="educationInput">{{
+						'FORM.LABELS.EDUCATION' | translate
+					}}</label>
+					<textarea
+						fullWidth
+						id="educationInput"
+						type="text-area"
+						nbInput
+						formControlName="education"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.EDUCATION' | translate
+						}}"
+					></textarea>
+				</div>
+			</div>
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="experienceInput">{{
+						'FORM.LABELS.EXPERIENCE' | translate
+					}}</label>
+					<textarea
+						fullWidth
+						id="experienceInput"
+						type="text"
+						nbInput
+						formControlName="experience"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.EXPERIENCE' | translate
+						}}"
+					></textarea>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-6">
+				<div class="form-group">
+					<label class="label" for="skillsInput">{{
+						'FORM.LABELS.SKILLS' | translate
+					}}</label>
+					<textarea
+						fullWidth
+						id="skillsInput"
+						type="text"
+						nbInput
+						formControlName="skills"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.SKILLS' | translate
+						}}"
+					></textarea>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="actions">
+		<button
+			[disabled]="this.form.invalid"
+			(click)="submitForm()"
+			nbButton
+			status="success"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</div>
+</form>
