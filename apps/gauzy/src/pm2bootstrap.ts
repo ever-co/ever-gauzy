@@ -7,7 +7,7 @@ const PUBLIC_KEY = process.env.KEYMETRICS_PUBLIC_KEY || '';
 const appName = process.env.PM2_APP_NAME || 'Gauzy';
 const instances = process.env.WEB_CONCURRENCY || 1;
 const maxMemory = process.env.WEB_MEMORY || 4096;
-const port = process.env.port || 4205;
+const port = process.env.port || 4250;
 
 pm2.connect(function() {
 	pm2.start(

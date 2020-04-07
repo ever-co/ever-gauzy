@@ -1,7 +1,7 @@
 var connect = require('connect');
 var path = require('path');
 var serveStatic = require('serve-static');
-const port = process.env.port || 4205;
+const port = process.env.port || 4250;
 
 connect()
 	.use(serveStatic(path.join(__dirname, '../../dist/apps/gauzy')))
