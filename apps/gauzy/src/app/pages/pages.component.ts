@@ -264,6 +264,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Inventory',
+					icon: 'grid-outline',
+					link: '/pages/organization/inventory',
+					data: {
+						translated: false,
+						// permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						translationKey: 'MENU.INVENTORY'
+					}
+				},
+				{
 					title: 'Tags',
 					icon: 'pricetags-outline',
 					link: '/pages/organization/tags',
