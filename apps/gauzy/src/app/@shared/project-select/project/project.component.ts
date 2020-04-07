@@ -47,6 +47,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	private async loadProjects(): Promise<void> {
 		const { items = [] } = await this.organizationProjects.getAll([]);
 		this.projects = items;
+		this.projectId = this.val;
 	}
 
 	writeValue(value: any) {
