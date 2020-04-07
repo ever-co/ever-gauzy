@@ -10,5 +10,10 @@ nb-sidebar nb-menu {
 		.menu-item.menu-group {
 			margin-top: auto;
 		}
+
+		.menu-item a {
+			padding-right: 0rem;
+			padding-left: 0.5rem;
+		}
 	}
 }

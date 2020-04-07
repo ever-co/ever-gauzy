@@ -242,13 +242,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
 		this.supportContextMenu = [
 			{
-				title: this.getTranslation('CONTEXT_MENU.CHAT')
+				title: this.getTranslation('CONTEXT_MENU.CHAT'),
+				icon: 'message-square-outline'
 			},
 			{
-				title: this.getTranslation('CONTEXT_MENU.FAQ')
+				title: this.getTranslation('CONTEXT_MENU.FAQ'),
+				icon: 'clipboard-outline'
 			},
 			{
-				title: this.getTranslation('CONTEXT_MENU.HELP')
+				title: this.getTranslation('CONTEXT_MENU.HELP'),
+				icon: 'question-mark-circle-outline',
+				link: 'pages/help'
+			},
+			{
+				title: this.getTranslation('MENU.ABOUT'),
+				icon: 'droplet-outline',
+				link: 'pages/about'
 			}
 		];
 	}
