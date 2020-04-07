@@ -141,6 +141,9 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Дата на приемане (опция)",
 			"APPLIED_DATE": "Applied Date (optional)",
+			"EDUCATION": "Education (optional)",
+			"EXPERIENCE": "Work experience (optional)",
+			"SKILLS": "Skills (optional)",
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Дата на отказ (опция)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
@@ -187,6 +190,9 @@
 			"CITY": "Град",
 			"ADDRESS": "Адрес",
 			"ADDRESS_2": "Адрес 2",
+			"EDUCATION": "Education",
+			"EXPERIENCE": "Work experience",
+			"SKILLS": "Skills",
 			"POSTCODE": "Пощенски код (Zip)",
 			"BILL_RATE": "Заплащане на час",
 			"RECURRING_WEEKLY_LIMIT": "Седмичен лимит (часове)",
@@ -239,6 +245,7 @@
 			"RECORD": "запис",
 			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "служители",
+			"CANDIDATE": "candidate",
 			"EXPENSE": "Разходи",
 			"USER": "user",
 			"INVITATION": "покана",
@@ -480,7 +487,7 @@
 		"REJECTED": "Rejected",
 		"DELETED": "Изтрит",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
@@ -490,8 +497,12 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Локация",
-			"RATES": "Rates",
-			"HIRING": "Hiring"
+			"RATE": "Почасово",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Experience",
+			"TASKS": "Tasks",
+			"HISTORY": "History",
+			"DOCUMENTS": "Documents"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",

@@ -141,6 +141,9 @@
 			"OFFER_DATE": "Дата предложения (опционально)",
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"APPLIED_DATE": "Дата подачи заявки (опционально)",
+			"EDUCATION": "Образование (факультативно)",
+			"EXPERIENCE": "Опыт работы (опционально)",
+			"SKILLS": "Навыки (опционально)",
 			"HIRED_DATE": "Дата окончания (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
 			"EMAIL_INVITATION": "Введите email для отправки приглашения",
@@ -187,6 +190,9 @@
 			"CITY": "Город",
 			"ADDRESS": "Адрес",
 			"ADDRESS_2": "Адрес 2",
+			"EDUCATION": "Образование",
+			"EXPERIENCE": "Опыт работы",
+			"SKILLS": "Навыки",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Ставка счета / час",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
@@ -239,6 +245,7 @@
 			"RECORD": "запись",
 			"USER_RECORD": "от вашей организации",
 			"EMPLOYEE": "служащий",
+			"CANDIDATE": "кандидат",
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
 			"INVITATION": "приглашение",
@@ -480,7 +487,7 @@
 		"REJECTED": "Отклонено",
 		"DELETED": "Удалено",
 		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Управление Кандидатом",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Департамент",
@@ -490,8 +497,12 @@
 			"ACCOUNT": "Аккаунт",
 			"EMPLOYMENT": "Занятость",
 			"LOCATION": "Местоположение",
-			"RATES": "Тарифы",
-			"HIRING": "Hiring"
+			"RATE": "Ставка",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Опыт работы",
+			"TASKS": "Задачи",
+			"HISTORY": "История",
+			"DOCUMENTS": "Документы"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Шаг 1",
