@@ -35,7 +35,7 @@ export class AuthService {
 		password: string
 	): Promise<{ user: User; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role']
+			relations: ['role', 'employee']
 		});
 
 		if (!user || !(await bcrypt.compare(password, user.hash))) {
@@ -43,7 +43,11 @@ export class AuthService {
 		}
 
 		const token = sign(
-			{ id: user.id, role: user.role ? user.role.name : '' },
+			{
+				id: user.id,
+				employeeId: user.employee ? user.employee.id : null,
+				role: user.role ? user.role.name : ''
+			},
 			env.JWT_SECRET,
 			{}
 		); // Never expires

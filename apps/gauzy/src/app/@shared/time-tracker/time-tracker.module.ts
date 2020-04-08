@@ -9,33 +9,29 @@ import {
 	NbCheckboxModule,
 	NbDatepickerModule
 } from '@nebular/theme';
-import { ProjectSelectorComponent } from './project/project.component';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { TaskSelectorComponent } from './task/task.component';
 import { SharedModule } from '../shared.module';
 import { RouterModule } from '@angular/router';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';
+import { TaskSelectModule } from '../task-select/task-select.module';
+import { ProjectSelectModule } from '../project-select/project-select.module';
 @NgModule({
-	declarations: [
-		TimeTrackerComponent,
-		ProjectSelectorComponent,
-		TaskSelectorComponent
-	],
+	declarations: [TimeTrackerComponent],
 	imports: [
 		CommonModule,
 		RouterModule,
 		NbIconModule,
 		NbButtonModule,
 		NbTooltipModule,
-		NgSelectModule,
 		FormsModule,
 		TranslateModule,
 		NbCheckboxModule,
 		NbDatepickerModule,
 		SharedModule,
-		TimerPickerModule
+		TimerPickerModule,
+		TaskSelectModule,
+		ProjectSelectModule
 	],
 	exports: [TimeTrackerComponent]
 })

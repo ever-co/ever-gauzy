@@ -41,13 +41,13 @@ export interface OrganizationClientsFindInput extends IBaseEntityModel {
 export interface OrganizationClientsCreateInput extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
-	primaryEmail: string;
+	primaryEmail?: string;
 	emailAddresses?: string[];
-	primaryPhone: string;
+	primaryPhone?: string;
 	phones?: string[];
-	country: string;
-	street: string;
-	city: string;
+	country?: string;
+	street?: string;
+	city?: string;
 	zipCode?: number;
 	state?: string;
 	projects?: OrganizationProjects[];

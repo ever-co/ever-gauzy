@@ -1,5 +1,5 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { CrudController } from '../core';
+import { CrudController, IPagination } from '../core';
 import { EmployeeLevel } from './organization-employee-level.entity';
 import { EmployeeLevelService } from './organization-employee-level.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -12,7 +12,7 @@ export class EmployeeLevelController extends CrudController<EmployeeLevel> {
 	}
 
 	@Get(':orgId')
-	async findByOrgId(@Param() params): Promise<Object> {
+	async findByOrgId(@Param() params): Promise<IPagination<EmployeeLevel>> {
 		const orgId = params.orgId;
 		return await this.employeeLevelService.findAll({
 			where: { organizationId: orgId }
