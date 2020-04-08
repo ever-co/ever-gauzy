@@ -31,11 +31,12 @@ export class InvoiceAddTasksComponent implements OnInit, ViewCell {
 
 	constructor(private tasksService: TasksService) {}
 
-	value: string | number;
+	value: any;
 	rowData: any;
 
 	ngOnInit() {
 		this.getTasks();
+		this.selectedTask = this.rowData.selectedTask;
 	}
 
 	private async getTasks() {
