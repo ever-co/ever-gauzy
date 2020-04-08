@@ -3,6 +3,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthService } from './auth.service';
+import { User } from '@gauzy/models';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -16,10 +17,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	async validate(payload, done: Function) {
 		try {
 			//We use this to also attach the user object to the request context.
-			const user = await this.authService.getAuthenticatedUser(
+			const user: User = await this.authService.getAuthenticatedUser(
 				payload.id,
 				payload.thirdPartyId
 			);
+
+			user.employeeId = payload.employeeId;
 
 			// You could add a function to the authService to verify the claims of the token:
 			// i.e. does the user still have the roles that are claimed by the token
@@ -30,6 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 			done(null, user);
 		} catch (err) {
+			console.log({ err });
 			throw new UnauthorizedException('unauthorized', err.message);
 		}
 	}

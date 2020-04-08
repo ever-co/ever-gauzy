@@ -105,13 +105,11 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	private getEmployeeLevels() {
-		this.employeeLevelService
-			.getAll(this.selectedOrganization.id)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((data) => {
-				this.employeeLevels = data['items'];
-			});
+	private async getEmployeeLevels() {
+		const { items } = await this.employeeLevelService.getAll(
+			this.selectedOrganization.id
+		);
+		this.employeeLevels = items;
 	}
 
 	handleImageUploadError(error: any) {

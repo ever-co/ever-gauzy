@@ -43,7 +43,9 @@ export enum PermissionsEnum {
 	CHANGE_SELECTED_CANDIDATE = 'CHANGE_SELECTED_CANDIDATE',
 	CHANGE_SELECTED_ORGANIZATION = 'CHANGE_SELECTED_ORGANIZATION',
 	CHANGE_ROLES_PERMISSIONS = 'CHANGE_ROLES_PERMISSIONS',
-	ACCESS_PRIVATE_PROJECTS = 'ACCESS_PRIVATE_PROJECTS'
+	ACCESS_PRIVATE_PROJECTS = 'ACCESS_PRIVATE_PROJECTS',
+	TIMESHEET_EDIT_TIME = 'TIMESHEET_EDIT_TIME',
+	SUPER_ADMIN_EDIT = 'SUPER_ADMIN_EDIT'
 }
 
 export const PermissionGroups = {
@@ -61,7 +63,8 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_INVITE_EDIT,
 		PermissionsEnum.POLICY_VIEW,
 		PermissionsEnum.POLICY_EDIT,
-		PermissionsEnum.ACCESS_PRIVATE_PROJECTS
+		PermissionsEnum.ACCESS_PRIVATE_PROJECTS,
+		PermissionsEnum.TIMESHEET_EDIT_TIME
 	],
 
 	//Readonly permissions, are only enabled for admin role
@@ -77,6 +80,7 @@ export const PermissionGroups = {
 		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 		PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 		PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
-		PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+		PermissionsEnum.CHANGE_ROLES_PERMISSIONS,
+		PermissionsEnum.SUPER_ADMIN_EDIT
 	]
 };

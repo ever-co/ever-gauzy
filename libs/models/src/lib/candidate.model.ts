@@ -4,7 +4,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
-import { Tenant } from './tenant.model';
+import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
@@ -14,7 +14,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	orgId: string;
 	status?: Status;
 	teams?: OrganizationTeams[];
-	tenant: Tenant;
+	tenant: ITenant;
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
 	tags: Tag[];
@@ -23,6 +23,9 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	rejectDate?: Date;
 	candidateLevel?: string;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	education?: string;
+	experience?: string;
+	skills?: string;
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';

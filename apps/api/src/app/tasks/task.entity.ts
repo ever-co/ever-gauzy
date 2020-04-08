@@ -1,8 +1,16 @@
 import { Base } from '../core/entities/base';
-import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
+import {
+	Entity,
+	Column,
+	ManyToOne,
+	JoinColumn,
+	RelationId,
+	OneToMany
+} from 'typeorm';
 import { Task as ITask } from '@gauzy/models';
-import { ApiProperty } from '@nestjs/swagger';
-import { OrganizationProjects } from '../organization-projects';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('task')
 export class Task extends Base implements ITask {
@@ -30,4 +38,12 @@ export class Task extends Base implements ITask {
 	@RelationId((task: Task) => task.project)
 	@Column()
 	readonly projectId?: string;
+
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany(
+		(type) => InvoiceItem,
+		(invoiceItem) => invoiceItem.task
+	)
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
 }

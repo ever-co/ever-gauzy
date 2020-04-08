@@ -30,6 +30,12 @@
 			width: 100%;
 			padding: 0 10px;
 			text-align: center;
+			display: flex;
+			flex-direction: column;
+			.today-time {
+				font-size: 0.6em;
+				line-height: 1;
+			}
 		}
 		.toggle {
 			.btn {

@@ -22,6 +22,7 @@ import { first } from 'rxjs/operators';
 import { EmployeesService } from '../../../@core/services';
 import { PermissionsEnum } from '@gauzy/models';
 import { NO_EMPLOYEE_SELECTED } from '../../components/header/selectors/employee/employee.component';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-one-column-layout',
@@ -37,7 +38,8 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		private organizationsService: OrganizationsService,
 		private employeesService: EmployeesService,
 		private store: Store,
-		private directionService: NbLayoutDirectionService
+		private directionService: NbLayoutDirectionService,
+		private router: Router
 	) {}
 	@ViewChild(NbLayoutComponent, { static: false }) layout: NbLayoutComponent;
 
@@ -70,10 +72,20 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 	private async loadUserData() {
 		const id = this.store.userId;
 		this.user = await this.usersService.getMe([
+			'employee',
 			'role',
 			'role.rolePermissions'
 		]);
+
+		//When a new user registers & logs in for the first time, he/she does not have tenantId.
+		//In this case, we redirect the user to the onboarding page to create their first organization, tenant, role.
+		if (!this.user.tenantId) {
+			this.router.navigate(['/onboarding/tenant']);
+			return;
+		}
+
 		this.store.userRolePermissions = this.user.role.rolePermissions;
+		this.store.user = this.user;
 
 		if (
 			this.store.hasPermission(

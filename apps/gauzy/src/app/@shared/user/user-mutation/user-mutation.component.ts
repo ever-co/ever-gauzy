@@ -1,11 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { RolesEnum, User } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
-import { RolesEnum, UserOrganization } from '@gauzy/models';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
-import { first } from 'rxjs/operators';
-import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
+import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
 
 @Component({
 	selector: 'ga-user-mutation',
@@ -16,36 +13,28 @@ export class UserMutationComponent implements OnInit {
 	@ViewChild('userBasicInfo', { static: false })
 	userBasicInfo: BasicInfoFormComponent;
 
+	@Input() public isSuperAdmin: boolean;
+
 	constructor(
 		protected dialogRef: NbDialogRef<UserMutationComponent>,
-		protected organizationsService: OrganizationsService,
-		protected usersOrganizationsService: UsersOrganizationsService,
 		protected store: Store,
 		private toastrService: NbToastrService
 	) {}
 
 	ngOnInit(): void {}
 
-	closeDialog(userOrganization: UserOrganization = null) {
-		this.dialogRef.close(userOrganization);
+	closeDialog(user: User = null) {
+		this.dialogRef.close({ user });
 	}
 
 	async add() {
 		try {
+			const organization = await this.store.selectedOrganization;
 			const user = await this.userBasicInfo.registerUser(
-				RolesEnum.VIEWER
+				RolesEnum.VIEWER,
+				organization.id
 			);
-			const organization = this.store.selectedOrganization;
-			const userOrganization = await this.usersOrganizationsService
-				.create({
-					userId: user.id,
-					orgId: organization.id,
-					isActive: true
-				})
-				.pipe(first())
-				.toPromise();
-
-			this.closeDialog({ ...userOrganization, user });
+			this.closeDialog(user);
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,

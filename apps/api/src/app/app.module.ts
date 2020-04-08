@@ -40,12 +40,15 @@ import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
 import { TaskModule } from './tasks/task.module';
-import { IntegrationsModule } from './integrations/integrations.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
+import { UpworkModule } from './upwork/upwork.module';
+import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
+import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
+import { IntegrationModule } from './integration/integration.module';
 
 @Module({
 	imports: [
@@ -162,8 +165,12 @@ import { CandidateModule } from './candidate/candidate.module';
 						module: TimesheetModule
 					},
 					{
-						path: '/integrations',
-						module: IntegrationsModule
+						path: '/integrations/upwork',
+						module: UpworkModule
+					},
+					{
+						path: '/integrations/hubstaff',
+						module: HubstaffModule
 					},
 					{
 						path: '/invoices',
@@ -227,8 +234,11 @@ import { CandidateModule } from './candidate/candidate.module';
 		TaskModule,
 		OrganizationEmploymentTypeModule,
 		TimesheetModule,
-		IntegrationsModule,
-		ExpenseCategoriesModule
+		UpworkModule,
+		HubstaffModule,
+		ExpenseCategoriesModule,
+		IntegrationSettingModule,
+		IntegrationModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

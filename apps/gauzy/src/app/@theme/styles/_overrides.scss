@@ -49,6 +49,11 @@
 		}
 	}
 
+	//Override padding from 1.25rem to 0.5rem
+	nb-layout .layout .layout-container .content nb-layout-footer nav {
+		padding: 0.5rem;
+	}
+
 	@media screen and (min-width: nb-theme(layout-window-mode-max-width) + 20px) {
 		@include f-window-mode(nb-theme(layout-window-mode-padding-top) / 4);
 	}

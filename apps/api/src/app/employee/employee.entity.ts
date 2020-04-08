@@ -17,13 +17,13 @@ import {
 } from 'typeorm';
 import { LocationBase } from '../core/entities/location-base';
 import { Organization } from '../organization/organization.entity';
-import { OrganizationDepartment } from '../organization-department';
-import { OrganizationEmploymentType } from '../organization-employment-type';
-import { OrganizationPositions } from '../organization-positions';
+import { OrganizationDepartment } from '../organization-department/organization-department.entity';
+import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
+import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
-import { Tag } from '../tags';
-import { Tenant } from '../tenant';
-import { User } from '../user';
+import { Tag } from '../tags/tag.entity';
+import { Tenant } from '../tenant/tenant.entity';
+import { User } from '../user/user.entity';
 
 @Entity('employee')
 export class Employee extends LocationBase implements IEmployee {
@@ -44,6 +44,7 @@ export class Employee extends LocationBase implements IEmployee {
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((employee: Employee) => employee.user)
+	@Column()
 	readonly userId: string;
 
 	@ApiProperty({ type: Tenant })

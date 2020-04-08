@@ -1,7 +1,8 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Tenant } from './tenant.model';
+
 import { Tag } from './tag-entity.model';
 import { Location as ILocation } from './location.model';
+import { ITenant } from '@gauzy/models';
 
 export interface Organization extends IBaseEntityModel, ILocation {
 	name: string;
@@ -22,7 +23,7 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	numberFormat?: string;
 	bonusType?: string;
 	bonusPercentage?: number;
-	tenant: Tenant;
+	tenant: ITenant;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
 	tags: Tag[];

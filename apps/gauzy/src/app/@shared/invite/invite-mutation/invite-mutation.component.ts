@@ -30,6 +30,9 @@ export class InviteMutationComponent extends TranslationBaseComponent
 	@Input()
 	currentUserId: string;
 
+	@Input()
+	isSuperAdmin: boolean;
+
 	@ViewChild('emailInviteForm', { static: false })
 	emailInviteForm: EmailInviteFormComponent;
 

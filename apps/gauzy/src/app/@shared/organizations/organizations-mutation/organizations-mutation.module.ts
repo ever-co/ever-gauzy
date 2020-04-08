@@ -22,6 +22,7 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { CountryService } from '../../../@core/services/country.service';
+import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -45,6 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbStepperModule,
 		NbToggleModule,
 		RemoveLodashModule,
+		OrganizationsStepFormModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -55,6 +57,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [OrganizationsMutationComponent],
 	entryComponents: [OrganizationsMutationComponent],
-	providers: [OrganizationDepartmentsService, CountryService]
+	providers: [OrganizationDepartmentsService, CountryService],
+	exports: [OrganizationsMutationComponent]
 })
 export class OrganizationsMutationModule {}

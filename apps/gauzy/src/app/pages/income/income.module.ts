@@ -7,7 +7,8 @@ import {
 	NbDatepickerModule,
 	NbIconModule,
 	NbDialogModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IncomeComponent } from './income.component';
@@ -29,6 +30,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		NbBadgeModule,
 		IncomeRoutingModule,
 		ThemeModule,
 		NbCardModule,

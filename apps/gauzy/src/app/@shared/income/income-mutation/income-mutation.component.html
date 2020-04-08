@@ -47,9 +47,10 @@
 				<div class="col-sm-6">
 					<div class="form-group">
 						<ng-select
+							[addTag]="addNewClient"
 							[items]="clients"
-							bindLabel="clientName"
-							[searchable]="false"
+							bindLabel="name"
+							[searchable]="true"
 							formControlName="client"
 							placeholder="{{
 								'POP_UPS.ALL_CLIENTS' | translate
@@ -90,6 +91,18 @@
 							>{{ currency }}</nb-option
 						>
 					</nb-select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<ngx-tags-color-input
+							[form]="form"
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsHandler($event)"
+						>
+						</ngx-tags-color-input>
+					</div>
 				</div>
 			</div>
 

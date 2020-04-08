@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, InvitationTypeEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -11,6 +11,10 @@ import { CandidatesService } from '../../@core/services/candidates.service';
 import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
+import { Router, ActivatedRoute } from '@angular/router';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -48,7 +52,10 @@ export class CandidatesComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private store: Store,
-		private translate: TranslateService
+		private router: Router,
+		private route: ActivatedRoute,
+		private translate: TranslateService,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translate);
 	}
@@ -58,8 +65,9 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_EMPLOYEES_EDIT
+					PermissionsEnum.ORG_CANDIDATES_EDIT
 				);
+
 				this.hasInviteEditPermission = this.store.hasPermission(
 					PermissionsEnum.ORG_INVITE_EDIT
 				);
@@ -81,6 +89,13 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
+		this.route.queryParamMap
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((params) => {
+				if (params.get('openAddDialog')) {
+					this.add();
+				}
+			});
 	}
 
 	selectCandidateTmp(ev: {
@@ -119,7 +134,56 @@ export class CandidatesComponent extends TranslationBaseComponent
 			this.loadPage();
 		}
 	}
+	edit() {
+		this.router.navigate([
+			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
+		]);
+	}
+	async delete() {
+		this.dialogService
+			.open(DeleteConfirmationComponent, {
+				context: {
+					recordType:
+						this.selectedCandidate.fullName +
+						' ' +
+						this.getTranslation(
+							'FORM.DELETE_CONFIRMATION.CANDIDATE'
+						)
+				}
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.candidatesService.delete(
+							this.selectedCandidate.id
+						);
 
+						this.toastrService.primary(
+							this.candidateName + ' has been deleted.',
+							'Success'
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
+			});
+	}
+	async invite() {
+		const dialog = this.dialogService.open(InviteMutationComponent, {
+			context: {
+				invitationType: InvitationTypeEnum.CANDIDATE,
+				selectedOrganizationId: this.selectedOrganizationId,
+				currentUserId: this.store.userId
+			}
+		});
+		await dialog.onClose.pipe(first()).toPromise();
+	}
+	manageInvites() {
+		this.router.navigate(['/pages/employees/candidates/invites']);
+	}
 	private async loadPage() {
 		this.selectedCandidate = null;
 
@@ -156,9 +220,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		if (this.candidatesTable) {
 			this.candidatesTable.grid.dataSet.willSelect = 'false';
 		}
-
 		this.organizationName = name;
-
 		this.loading = false;
 	}
 

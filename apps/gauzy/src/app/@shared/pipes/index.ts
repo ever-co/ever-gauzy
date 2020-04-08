@@ -1,3 +1,5 @@
-import { TimeForamtPipe } from './time-foramt.pipe';
+import { TimeFormatPipe } from './time-format.pipe';
+import { DurationFormatPipe } from './duration-format.pipe';
+import { UtcToLocalPipe } from './utc-to-local.pipe';
 
-export const Pipes = [TimeForamtPipe];
+export const Pipes = [TimeFormatPipe, DurationFormatPipe, UtcToLocalPipe];

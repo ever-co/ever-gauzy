@@ -29,6 +29,8 @@ export class EmailInviteFormComponent implements OnInit {
 
 	@Input() public currentUserId: string;
 
+	@Input() public isSuperAdmin: boolean;
+
 	@Input()
 	invitationType: InvitationTypeEnum;
 
@@ -47,6 +49,7 @@ export class EmailInviteFormComponent implements OnInit {
 	departments: any;
 	roleName: any;
 	startedWorkOn: string;
+	appliedDate: string;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -56,6 +59,9 @@ export class EmailInviteFormComponent implements OnInit {
 	) {}
 
 	ngOnInit(): void {
+		this.allRoles = this.allRoles.filter((role) =>
+			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
+		);
 		this.loadFormData();
 	}
 
@@ -71,6 +77,9 @@ export class EmailInviteFormComponent implements OnInit {
 
 	isEmployeeInvitation = () => {
 		return this.invitationType === InvitationTypeEnum.EMPLOYEE;
+	};
+	isCandidateInvitation = () => {
+		return this.invitationType === InvitationTypeEnum.CANDIDATE;
 	};
 
 	addTagFn(emailAddress) {
@@ -88,11 +97,14 @@ export class EmailInviteFormComponent implements OnInit {
 			],
 			projects: [''],
 			startedWorkOn: [''],
+			appliedDate: [''],
 			departments: [''],
 			clients: [''],
 			roleName: [
 				'',
-				this.isEmployeeInvitation() ? null : Validators.required
+				this.isEmployeeInvitation() || this.isCandidateInvitation()
+					? null
+					: Validators.required
 			]
 		});
 
@@ -102,6 +114,7 @@ export class EmailInviteFormComponent implements OnInit {
 		this.departments = this.form.get('departments');
 		this.roleName = this.form.get('roleName');
 		this.startedWorkOn = this.form.get('startedWork');
+		this.appliedDate = this.form.get('appliedDate');
 	};
 
 	selectAllProjects() {

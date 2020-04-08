@@ -1,22 +1,30 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import {
 	TimeLog,
 	ITimerToggleInput,
 	TimeLogType,
-	TimerStatus
+	TimerStatus,
+	IGetTimeLogInput,
+	IManualTimeInput
 } from '@gauzy/models';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { toLocal } from 'libs/utils';
+import * as moment from 'moment';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class TimeTrackerService {
 	_dueration: BehaviorSubject<number>;
+	_current_session_dueration: BehaviorSubject<number>;
 	_running: BehaviorSubject<boolean>;
 	_timerConfig: BehaviorSubject<ITimerToggleInput>;
-	dataStore: {
+	_showTimerWindow: BehaviorSubject<boolean>;
+	private dataStore: {
+		showTimerWindow: boolean;
 		dueration: number;
+		current_session_dueration: number;
 		running: boolean;
 		timerConfig: ITimerToggleInput;
 	};
@@ -24,7 +32,9 @@ export class TimeTrackerService {
 
 	constructor(private http: HttpClient) {
 		this.dataStore = {
+			showTimerWindow: false,
 			dueration: 0,
+			current_session_dueration: 0,
 			running: false,
 			timerConfig: {
 				isBillable: true,
@@ -48,15 +58,41 @@ export class TimeTrackerService {
 		} catch (error) {}
 
 		this._dueration = new BehaviorSubject(this.dataStore.dueration);
+		this._current_session_dueration = new BehaviorSubject(
+			this.dataStore.current_session_dueration
+		);
 		this._running = new BehaviorSubject(this.dataStore.running);
 		this._timerConfig = new BehaviorSubject(this.dataStore.timerConfig);
+		this._showTimerWindow = new BehaviorSubject(
+			this.dataStore.showTimerWindow
+		);
 
 		this.getTimerStatus().then((status: TimerStatus) => {
 			this.dueration = status.duration;
+			if (status.lastLog && !status.lastLog.stoppedAt) {
+				this.current_session_dueration = moment().diff(
+					toLocal(status.lastLog.startedAt),
+					'seconds'
+				);
+			} else {
+				this.current_session_dueration = 0;
+			}
+
 			if (status.running) {
 				this.turnOnTimer();
 			}
 		});
+	}
+
+	public get $showTimerWindow(): Observable<boolean> {
+		return this._showTimerWindow.asObservable();
+	}
+	public get showTimerWindow(): boolean {
+		return this.dataStore.showTimerWindow;
+	}
+	public set showTimerWindow(value: boolean) {
+		this.dataStore.showTimerWindow = value;
+		this._showTimerWindow.next(this.dataStore.showTimerWindow);
 	}
 
 	public get $dueration(): Observable<number> {
@@ -68,6 +104,19 @@ export class TimeTrackerService {
 	public set dueration(value: number) {
 		this.dataStore.dueration = value;
 		this._dueration.next(this.dataStore.dueration);
+	}
+
+	public get $current_session_dueration(): Observable<number> {
+		return this._current_session_dueration.asObservable();
+	}
+	public get current_session_dueration(): number {
+		return this.dataStore.current_session_dueration;
+	}
+	public set current_session_dueration(value: number) {
+		this.dataStore.current_session_dueration = value;
+		this._current_session_dueration.next(
+			this.dataStore.current_session_dueration
+		);
 	}
 
 	public get $timerConfig(): Observable<ITimerToggleInput> {
@@ -108,9 +157,15 @@ export class TimeTrackerService {
 			.toPromise();
 	}
 
-	addTime(request: ITimerToggleInput): Promise<TimeLog> {
+	addTime(request: IManualTimeInput): Promise<TimeLog> {
 		return this.http
-			.post<TimeLog>('/api/timesheet/timer/add', request)
+			.post<TimeLog>('/api/timesheet/time-log', request)
+			.toPromise();
+	}
+
+	updateTime(id: string, request: IManualTimeInput): Promise<TimeLog> {
+		return this.http
+			.put<TimeLog>('/api/timesheet/time-log/' + id, request)
 			.toPromise();
 	}
 
@@ -118,6 +173,7 @@ export class TimeTrackerService {
 		if (this.interval) {
 			this.turnOffTimer();
 		} else {
+			this.current_session_dueration = 0;
 			this.turnOnTimer();
 		}
 
@@ -128,6 +184,7 @@ export class TimeTrackerService {
 		this.running = true;
 		this.interval = setInterval(() => {
 			this.dueration++;
+			this.current_session_dueration++;
 		}, 1000);
 	}
 
@@ -135,5 +192,27 @@ export class TimeTrackerService {
 		this.running = false;
 		clearInterval(this.interval);
 		this.interval = null;
+	}
+
+	getTimeLogs(request?: IGetTimeLogInput) {
+		return this.http
+			.get('/api/timesheet/time-log', { params: { ...request } })
+			.toPromise()
+			.then((data: TimeLog[]) => {
+				return data;
+			});
+	}
+
+	deleteLogs(logIds: string | string[]) {
+		let payload = new HttpParams();
+		if (typeof logIds == 'string') {
+			logIds = [logIds];
+		}
+		logIds.forEach((id: string) => {
+			payload = payload.append(`logIds[]`, id);
+		});
+		return this.http
+			.delete('/api/timesheet/time-log', { params: payload })
+			.toPromise();
 	}
 }

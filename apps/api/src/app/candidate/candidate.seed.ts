@@ -2,8 +2,8 @@ import { Connection } from 'typeorm';
 import { User } from '../user';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
-import { Tenant } from 'libs/models/src/lib/tenant.model';
 import { CandidateSource } from '../candidate_source';
+import { Tenant } from '../tenant/tenant.entity';
 
 export const createCandidates = async (
 	connection: Connection,
