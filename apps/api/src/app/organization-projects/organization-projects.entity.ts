@@ -66,13 +66,13 @@ export class OrganizationProjects extends Base
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsOptional()
+	@IsNotEmpty()
 	@Column({ nullable: true })
 	type: string;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
-	@IsOptional()
+	@IsNotEmpty()
 	@Index()
 	@Column({ nullable: true })
 	currency: string;

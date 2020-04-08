@@ -73,7 +73,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS".ADD_PROJECT',
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
 					{
 						name: name
 					}
