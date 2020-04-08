@@ -91,7 +91,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'star-outline',
 				responsive: true,
-				route: this.getRoute('rate')
+				route: this.getRoute('rates')
 			},
 			{
 				title: this.getTranslation(

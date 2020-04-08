@@ -55,6 +55,7 @@ import { EmployeeWorkStatusComponent } from './table-components/employee-work-st
 import { SharedModule } from '../../@shared/shared.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { EmployeeLocationmModule } from '../../@shared/employee/employee-location/employee-location.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -118,7 +119,8 @@ const COMPONENTS = [
 		EditEmployeeMembershipFormModule,
 		NbDatepickerModule,
 		RecurringExpenseBlockModule,
-		TagsColorInputModule
+		TagsColorInputModule,
+		EmployeeLocationmModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

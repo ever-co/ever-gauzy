@@ -46,7 +46,8 @@ import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { EditCandidateDocumentsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-documents/edit-candidate-documents.component';
 import { EditCandidateEmploymentComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-employment/edit-candidate-employment.component';
 import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-hiring/edit-candidate-hiring.component';
-import { EditCandidateRateComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rate/edit-candidate-rate.component';
+import { EmployeeLocationmModule } from '../../@shared/employee/employee-location/employee-location.module';
+import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -65,7 +66,7 @@ const COMPONENTS = [
 	EditCandidateLocationComponent,
 	EditCandidateMainComponent,
 	EditCandidateProfileComponent,
-	EditCandidateRateComponent,
+	EditCandidateRatesComponent,
 	EditCandidateTasksComponent,
 	ManageCandidateInviteComponent
 ];
@@ -102,7 +103,8 @@ const COMPONENTS = [
 		TagsColorInputModule,
 		CandidateMutationModule,
 		InviteMutationModule,
-		InviteTableModule
+		InviteTableModule,
+		EmployeeLocationmModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
