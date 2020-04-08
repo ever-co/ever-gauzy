@@ -3,15 +3,17 @@ import { User } from '../user';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from 'libs/models/src/lib/tenant.model';
+import { CandidateSource } from '../candidate_source';
 
 export const createCandidates = async (
 	connection: Connection,
-	defaultData: {
+	defaultData?: {
 		tenant: Tenant[];
 		org: Organization;
 		users: User[];
 	},
-	randomData: {
+	randomData?: {
+		source: CandidateSource[];
 		org: Organization;
 		orgs: Organization[];
 		users: User[];
@@ -62,31 +64,43 @@ const createDefaultCandidates = async (
 const createRandomCandidates = async (
 	connection: Connection,
 	randomData: {
+		source: CandidateSource[];
 		org: Organization;
 		orgs: Organization[];
 		users: User[];
 	}
 ): Promise<Candidate[]> => {
+	const quantity = 100;
 	let candidate: Candidate;
 	const candidates: Candidate[] = [];
 	const randomUsers = randomData.users;
 	const randomOrgs = randomData.orgs;
 	const organization = randomData.org;
-	const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
+	const candidate_source = randomData.source;
+	// const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
 
-	for (let i = 0; i < randomOrgs.length; i++) {
-		if (randomUsers.length) {
-			for (let index = 0; index < averageUsersCount; index++) {
-				candidate = new Candidate();
-				candidate.organization = organization;
-				candidate.user = randomUsers.pop();
-				if (candidate.user) {
-					await insertCandidate(connection, candidate);
-					candidates.push(candidate);
-				}
+	const insertCandidatesInToOrganization = async (
+		quantity: number,
+		organization: Organization
+	) => {
+		for (let index = 0; index < quantity; index++) {
+			candidate = new Candidate();
+			candidate.organization = organization;
+			candidate.source = candidate_source[0].id;
+			candidate.user = randomUsers.pop();
+			if (candidate.user) {
+				await insertCandidate(connection, candidate);
+				candidates.push(candidate);
 			}
 		}
+	};
+	await insertCandidatesInToOrganization(quantity, organization);
+	for (const org of randomOrgs) {
+		if (randomUsers.length) {
+			await insertCandidatesInToOrganization(quantity, org);
+		}
 	}
+
 	return candidates;
 };
 

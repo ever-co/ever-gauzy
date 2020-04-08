@@ -51,6 +51,7 @@ import {
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
 import { Candidate } from '../candidate';
+import { CandidateSource } from '../candidate_source/candidate_source.entity';
 
 const entities = [
 	Invite,
@@ -91,7 +92,8 @@ const entities = [
 	TimeLog,
 	Activity,
 	Screenshot,
-	ExpenseCategory
+	ExpenseCategory,
+	CandidateSource
 ];
 
 @Module({

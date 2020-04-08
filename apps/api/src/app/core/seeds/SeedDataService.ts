@@ -67,6 +67,10 @@ import { OrganizationPositions } from '../../organization-positions/organization
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import { createCandidates } from '../../candidate/candidate.seed';
+import {
+	createCandidateSourses,
+	CandidateSource
+} from '../../candidate_source';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -106,7 +110,8 @@ const allEntities = [
 	Tag,
 	OrganizationEmploymentType,
 	Equipment,
-	EmployeeLevel
+	EmployeeLevel,
+	CandidateSource
 ];
 
 @Injectable()
@@ -170,6 +175,9 @@ export class SeedDataService {
 				)
 			);
 			const tenants = await createTenants(this.connection);
+			const sourses: CandidateSource[] = await createCandidateSourses(
+				this.connection
+			);
 
 			const roles: Role[] = await createRoles(this.connection);
 			const {
@@ -193,6 +201,7 @@ export class SeedDataService {
 				},
 				{ orgs: randomOrganizations, users: [...randomUsers] }
 			);
+
 			await createCandidates(
 				this.connection,
 				{
@@ -201,6 +210,7 @@ export class SeedDataService {
 					users: [...defaultCandidateUser]
 				},
 				{
+					source: sourses,
 					org: defaultOrganization,
 					orgs: randomOrganizations,
 					users: [...randomCandidateUser]
