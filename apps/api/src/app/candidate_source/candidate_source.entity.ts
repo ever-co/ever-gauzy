@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Candidate } from '../candidate';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Entity('candidate_source')
 export class CandidateSource extends Base {
