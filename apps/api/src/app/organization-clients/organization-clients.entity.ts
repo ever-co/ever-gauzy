@@ -44,8 +44,8 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ApiProperty({ type: String })
 	@IsEmail()
-	@IsNotEmpty()
-	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
 	primaryEmail: string;
 
 	@ApiPropertyOptional({ type: String, isArray: true })
@@ -53,8 +53,8 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
-	@Column()
+	@IsOptional()
+	@Column({ nullable: true })
 	primaryPhone: string;
 
 	@ApiPropertyOptional({ type: String, isArray: true })
