@@ -833,8 +833,8 @@
 			"TASK": "Task",
 			"NAME": "שם",
 			"DESCRIPTION": "Description",
-			"UNIT_COST": "Unit Cost",
-			"QUANTITY": "Quantity",
+			"PRICE": "Price",
+			"QTY": "Qty",
 			"TOTAL_VALUE": "Total Value"
 		}
 	},
