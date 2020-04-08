@@ -229,6 +229,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
+			"EXPECTED_RATE": "Ожидаемый курс",
 			"LIMITS": "Лимиты"
 		},
 		"CHECKBOXES": {
@@ -499,7 +500,7 @@
 			"ACCOUNT": "Аккаунт",
 			"EMPLOYMENT": "Занятость",
 			"LOCATION": "Местоположение",
-			"RATE": "Ставка",
+			"RATE": "Тарифы",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Опыт работы",
 			"TASKS": "Задачи",
