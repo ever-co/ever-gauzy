@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Employee } from '@gauzy/models';
 
