@@ -23,6 +23,9 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	rejectDate?: Date;
 	candidateLevel?: string;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	education?: string;
+	experience?: string;
+	skills?: string;
 }
 
 export interface CandidateFindInput extends IBaseEntityModel {

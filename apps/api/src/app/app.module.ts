@@ -44,9 +44,11 @@ import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.mo
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
-import { UpworkModule } from './integrations/upwork/upwork.module';
-import { HubstaffModule } from './integrations/hubstaff/hubstaff.module';
+import { UpworkModule } from './upwork/upwork.module';
+import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
+import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
+import { IntegrationModule } from './integration/integration.module';
 
 @Module({
 	imports: [
@@ -234,7 +236,9 @@ import { CandidateModule } from './candidate/candidate.module';
 		TimesheetModule,
 		UpworkModule,
 		HubstaffModule,
-		ExpenseCategoriesModule
+		ExpenseCategoriesModule,
+		IntegrationSettingModule,
+		IntegrationModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

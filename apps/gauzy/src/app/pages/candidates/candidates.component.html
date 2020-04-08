@@ -84,6 +84,7 @@
 			style="cursor: pointer;"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"
+			(userRowSelect)="selectCandidateTmp($event)"
 			#candidatesTable
 		>
 		</ng2-smart-table>

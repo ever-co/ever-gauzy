@@ -32,6 +32,8 @@ import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { TasksService } from '../../@core/services/tasks.service';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
+import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -58,6 +60,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbRadioModule,
 		UserFormsModule,
 		NbDatepickerModule,
+		EmployeeSelectorsModule,
 		NgSelectModule,
 		TranslateModule.forChild({
 			loader: {
@@ -72,7 +75,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		OrganizationsService,
 		InvoiceItemService,
 		TasksService,
-		OrganizationClientsService
+		OrganizationClientsService,
+		OrganizationProjectsService
 	],
 	entryComponents: [
 		InvoicesComponent,

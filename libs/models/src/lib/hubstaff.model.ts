@@ -5,7 +5,8 @@ export interface IHubstaffAccessTokens {
 	expires_in: number;
 }
 
-export interface IHubstaffGetAccessTokensDto {
+export interface ICreateIntegrationDto {
+	tenantId: string;
 	client_id: string;
 	code: string;
 	grant_type: string;

@@ -53,6 +53,7 @@ import { SelectorService } from '../@core/utils/selector.service';
 import { UsersOrganizationsService } from '../@core/services/users-organizations.service';
 import { OrganizationsService } from '../@core/services/organizations.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
+import { CandidateSelectorsModule } from './components/header/selectors/candidate/candidate.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -75,6 +76,7 @@ const NB_MODULES = [
 	NbEvaIconsModule,
 	HeaderSelectorsModule,
 	EmployeeSelectorsModule,
+	CandidateSelectorsModule,
 	TimeTrackerModule,
 	TranslateModule.forChild({
 		loader: {
