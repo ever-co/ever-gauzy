@@ -12,7 +12,7 @@ import {
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { EmployeeLocationComponent } from './employee-location.component';
+import { EmployeeRatesComponent } from './employee-rates.component';
 import { CandidateStore } from '../../../@core/services/candidate-store.service';
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 
@@ -40,9 +40,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	exports: [EmployeeLocationComponent],
-	declarations: [EmployeeLocationComponent],
-	entryComponents: [EmployeeLocationComponent],
+	exports: [EmployeeRatesComponent],
+	declarations: [EmployeeRatesComponent],
+	entryComponents: [EmployeeRatesComponent],
 	providers: [CandidateStore, EmployeeStore]
 })
-export class EmployeeLocationModule {}
+export class EmployeeRatesModule {}

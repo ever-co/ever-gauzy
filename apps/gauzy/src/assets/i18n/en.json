@@ -230,6 +230,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {

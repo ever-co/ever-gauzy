@@ -46,8 +46,9 @@ import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { EditCandidateDocumentsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-documents/edit-candidate-documents.component';
 import { EditCandidateEmploymentComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-employment/edit-candidate-employment.component';
 import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-hiring/edit-candidate-hiring.component';
-import { EmployeeLocationmModule } from '../../@shared/employee/employee-location/employee-location.module';
 import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
+import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
+import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -104,7 +105,8 @@ const COMPONENTS = [
 		CandidateMutationModule,
 		InviteMutationModule,
 		InviteTableModule,
-		EmployeeLocationmModule
+		EmployeeLocationModule,
+		EmployeeRatesModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
