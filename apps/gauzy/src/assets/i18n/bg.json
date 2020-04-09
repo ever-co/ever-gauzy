@@ -229,6 +229,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
+			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
@@ -499,7 +500,7 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Локация",
-			"RATE": "Почасово",
+			"RATE": "Rates",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
 			"TASKS": "Tasks",
