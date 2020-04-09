@@ -19,7 +19,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, Organization } from '@gauzy/models';
 import { User } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
@@ -38,7 +38,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionPEdit = false;
 
 	@Input() position = 'normal';
-	@Input() user: User;
+	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
 	@ViewChild('timerPopover', { static: false })
@@ -104,6 +104,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				}
 			});
 
+		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+			this.user = user;
+		});
+
 		this.themeService
 			.onThemeChange()
 			.pipe(takeUntil(this._ngDestroy$))
@@ -119,10 +123,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.timeTrackerService.$showTimerWindow
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((status: boolean) => {
-				if (status) {
-					this.timerPopover.show();
-				} else {
-					this.timerPopover.hide();
+				if (this.timerPopover) {
+					if (status) {
+						this.timerPopover.show();
+					} else {
+						this.timerPopover.hide();
+					}
 				}
 			});
 	}

@@ -28,7 +28,9 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	inviteExpiryPeriod?: number;
 	tags: Tag[];
 	futureDateAllowed?: boolean;
+	allowManualTime?: boolean;
 	allowModifyTime?: boolean;
+	allowDeleteTime?: boolean;
 	requireReason?: boolean;
 	requireDescription?: boolean;
 	requireProject?: boolean;
