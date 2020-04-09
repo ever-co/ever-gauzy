@@ -29,11 +29,13 @@
 		"PREVIOUS": "Previous",
 		"INVITE_AGAIN": "Invite Again",
 		"REQUEST": "Request",
-		"HISTORY": "History"
+		"HISTORY": "History",
+		"SYNC": "Sync"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
 		"CLIENT_NAME": "Client Name",
+		"NAME": "Name",
 		"VENDOR": "Vendor",
 		"CATEGORY": "Category",
 		"CURRENCY": "Currency",
@@ -345,7 +347,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Select Organization",
+			"SYNCED_PROJECTS": "Projects synced"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

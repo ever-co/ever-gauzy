@@ -49,6 +49,7 @@ import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
 import { IntegrationModule } from './integration/integration.module';
+import { IntegrationMapModule } from './integration-map/integration-map.module';
 
 @Module({
 	imports: [
@@ -238,7 +239,8 @@ import { IntegrationModule } from './integration/integration.module';
 		HubstaffModule,
 		ExpenseCategoriesModule,
 		IntegrationSettingModule,
-		IntegrationModule
+		IntegrationModule,
+		IntegrationMapModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
