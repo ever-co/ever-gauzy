@@ -177,6 +177,7 @@
 			"ADD_DEPARTMENT": "Add Department",
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "Add vendor",
+			"ADD_SKILL": "Add skill",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Clients",
 			"START_DATE_PROJECT": "Project Start Date (optional)",
@@ -226,7 +227,14 @@
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
-			"ORGANIZATIONS": "Choose Organizations"
+			"ORGANIZATIONS": "Choose Organizations",
+			"ADD_EDUCATION": {
+				"SCHOOL_NAME": "School name",
+				"DEGREE": "Degree/Diploma",
+				"FIELD_OF_STUDY": "Field(s) of study",
+				"DATE_OF_COMPLETION": "Date of completion",
+				"ADDITIONAL_NOTES": "Additional notes"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -504,6 +512,8 @@
 			"RATE": "Rates",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
+			"SKILLS": "Skills",
+			"EDUCATION": "Education",
 			"TASKS": "Tasks",
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents"
@@ -897,6 +907,7 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -945,6 +956,11 @@
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
+		},
+		"CANDIDATE": {
+			"EXPERIENCE": {
+				"INVALID_CANDIDATE_NAME": "Please add a Skill name"
+			}
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",

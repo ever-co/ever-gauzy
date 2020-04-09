@@ -25,7 +25,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
 	education?: string;
 	experience?: string;
-	skills?: string;
+	skills?: string[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
