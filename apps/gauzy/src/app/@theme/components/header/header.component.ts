@@ -1,13 +1,21 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import {
+	Component,
+	Input,
+	OnDestroy,
+	OnInit,
+	ViewChild,
+	AfterViewInit
+} from '@angular/core';
 import {
 	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
-	NbMenuItem
+	NbMenuItem,
+	NbPopoverDirective
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
@@ -21,7 +29,7 @@ import * as moment from 'moment';
 	styleUrls: ['./header.component.scss'],
 	templateUrl: './header.component.html'
 })
-export class HeaderComponent implements OnInit, OnDestroy {
+export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionE = false;
 	hasPermissionI = false;
 	hasPermissionP = false;
@@ -30,9 +38,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	hasPermissionPEdit = false;
 
 	@Input() position = 'normal';
-	@Input() user: User;
+	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
+	@ViewChild('timerPopover', { static: false })
+	timerPopover: NbPopoverDirective;
 
 	showDateSelector = true;
 	organizationSelected = false;
@@ -58,14 +68,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
-		// this.showSelectors(this.router.url);
-
-		// this.router.events
-		// 	.pipe(filter((event) => event instanceof NavigationEnd))
-		// 	.pipe(takeUntil(this._ngDestroy$))
-		// 	.subscribe((e) => {
-		// 		this.showSelectors(e['url']);
-		// 	});
+		this.router.events
+			.pipe(filter((event) => event instanceof NavigationEnd))
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.timeTrackerService.showTimerWindow = false;
+			});
 
 		this.timeTrackerService.$dueration
 			.pipe(takeUntil(this._ngDestroy$))
@@ -96,6 +104,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 				}
 			});
 
+		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+			this.user = user;
+		});
+
 		this.themeService
 			.onThemeChange()
 			.pipe(takeUntil(this._ngDestroy$))
@@ -107,12 +119,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
 		this._applyTranslationOnSmartTable();
 	}
 
-	// showSelectors(url: string) {
-	// 	const selectors = this.selectorService.showSelectors(url);
-	// 	this.showDateSelector = selectors.showDateSelector;
-	// 	this.showEmployeesSelector = selectors.showEmployeesSelector;
-	// 	this.showOrganizationsSelector = selectors.showOrganizationsSelector;
-	// }
+	ngAfterViewInit(): void {
+		this.timeTrackerService.$showTimerWindow
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((status: boolean) => {
+				if (this.timerPopover) {
+					if (status) {
+						this.timerPopover.show();
+					} else {
+						this.timerPopover.hide();
+					}
+				}
+			});
+	}
 
 	toggleSidebar(): boolean {
 		if (this.showExtraActions) {
@@ -242,13 +261,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
 		this.supportContextMenu = [
 			{
-				title: this.getTranslation('CONTEXT_MENU.CHAT')
+				title: this.getTranslation('CONTEXT_MENU.CHAT'),
+				icon: 'message-square-outline'
 			},
 			{
-				title: this.getTranslation('CONTEXT_MENU.FAQ')
+				title: this.getTranslation('CONTEXT_MENU.FAQ'),
+				icon: 'clipboard-outline'
 			},
 			{
-				title: this.getTranslation('CONTEXT_MENU.HELP')
+				title: this.getTranslation('CONTEXT_MENU.HELP'),
+				icon: 'question-mark-circle-outline',
+				link: 'pages/help'
+			},
+			{
+				title: this.getTranslation('MENU.ABOUT'),
+				icon: 'droplet-outline',
+				link: 'pages/about'
 			}
 		];
 	}

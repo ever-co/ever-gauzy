@@ -23,7 +23,7 @@ import {
 	OrganizationClients as IOrganizationClients,
 	ClientOrganizationInviteStatus
 } from '@gauzy/models';
-import { OrganizationProjects } from '../organization-projects';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 
@@ -45,7 +45,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	@ApiProperty({ type: String })
 	@IsEmail()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	primaryEmail: string;
 
 	@ApiPropertyOptional({ type: String, isArray: true })
@@ -54,7 +54,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	primaryPhone: string;
 
 	@ApiPropertyOptional({ type: String, isArray: true })

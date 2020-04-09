@@ -1,8 +1,8 @@
-import { Tenant } from '../tenant';
+import { Tenant } from '../tenant/tenant.entity';
 import { Connection } from 'typeorm';
 import { Employee } from './employee.entity';
 import { Organization } from '../organization/organization.entity';
-import { User } from '../user';
+import { User } from '../user/user.entity';
 import { environment as env } from '@env-api/environment';
 
 export const createEmployees = async (

@@ -1,21 +1,25 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+	Injectable,
+	Inject,
+	forwardRef,
+	BadRequestException
+} from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan, Between } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
-import {
-	TimeLogType,
-	TimerStatus,
-	IManualTimeInput,
-	IGetTimeLogInput
-} from '@gauzy/models';
+import { TimeLogType, TimerStatus } from '@gauzy/models';
 import * as moment from 'moment';
 import { Timesheet } from '../timesheet.entity';
+import { TimeSheetService } from '../timesheet.service';
 
 @Injectable()
 export class TimerService {
 	constructor(
+		@Inject(forwardRef(() => TimeSheetService))
+		private readonly timesheetService: TimeSheetService,
+
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 
@@ -31,6 +35,10 @@ export class TimerService {
 		const employee = await this.employeeRepository.findOne({
 			userId: user.id
 		});
+
+		if (!employee) {
+			throw new BadRequestException('Employee not found.');
+		}
 
 		const todayLog = await this.timeLogRepository.find({
 			where: {
@@ -67,19 +75,20 @@ export class TimerService {
 
 	async toggleTimeLog(request): Promise<TimeLog> {
 		const user = RequestContext.currentUser();
-		const employee = await this.employeeRepository.findOne({
-			userId: user.id
-		});
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
-				employeeId: employee.id
+				employeeId: user.employeeId
 			},
 			order: {
 				startedAt: 'DESC'
 			}
 		});
 
-		const timesheet = await this.createOrFindTimeSheet(employee);
+		const timesheet = await this.timesheetService.createOrFindTimeSheet(
+			user.employeeId,
+			request.startedAt
+		);
+
 		let newTimeLog: TimeLog;
 		if (!lastLog || lastLog.stoppedAt) {
 			newTimeLog = await this.timeLogRepository.save({
@@ -87,7 +96,7 @@ export class TimerService {
 				timesheetId: timesheet.id,
 				isBilled: false,
 				startedAt: new Date(),
-				employeeId: employee.id,
+				employeeId: user.employeeId,
 				projectId: request.projectId || null,
 				taskId: request.taskId || null,
 				clientId: request.clientId || null,
@@ -110,111 +119,5 @@ export class TimerService {
 			newTimeLog = await this.timeLogRepository.findOne(lastLog.id);
 		}
 		return newTimeLog;
-	}
-
-	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
-		if (!request.startedAt || !request.stoppedAt) {
-			throw new BadRequestException(
-				'Please select valid Date start and end time'
-			);
-		}
-
-		const user = RequestContext.currentUser();
-		const employee = await this.employeeRepository.findOne({
-			userId: user.id
-		});
-		const confict = await this.timeLogRepository
-			.createQueryBuilder()
-			.where('"employeeId" = :employeeId', { employeeId: employee.id })
-			.andWhere(
-				`("startedAt", "stoppedAt") OVERLAPS (\'${moment(
-					request.startedAt
-				).format('YYYY-MM-DD HH:ss')}\', \'${moment(
-					request.stoppedAt
-				).format('YYYY-MM-DD HH:ss')}\')`
-			)
-			.getOne();
-
-		const timesheet = await this.createOrFindTimeSheet(
-			employee,
-			request.startedAt
-		);
-		let newTimeLog: TimeLog;
-		if (!confict) {
-			const duration = moment(request.stoppedAt).diff(
-				request.startedAt,
-				'seconds'
-			);
-			newTimeLog = await this.timeLogRepository.save({
-				duration,
-				startedAt: request.startedAt,
-				stoppedAt: request.stoppedAt,
-				timesheetId: timesheet.id,
-				isBilled: false,
-				employeeId: employee.id,
-				projectId: request.projectId || null,
-				taskId: request.taskId || null,
-				clientId: request.clientId || null,
-				logType: TimeLogType.MANUAL,
-				description: request.description || '',
-				isBillable: request.isBillable || false
-			});
-			return newTimeLog;
-		} else {
-			throw new BadRequestException(
-				"You can't add add twice for same time."
-			);
-		}
-	}
-
-	private async createOrFindTimeSheet(employee, date: Date = new Date()) {
-		const from_date = moment(date).startOf('week');
-		const to_date = moment(date).endOf('week');
-
-		let timesheet = await this.timesheetRepository.findOne({
-			where: {
-				startedAt: Between(from_date, to_date),
-				employeeId: employee.id
-			}
-		});
-
-		if (!timesheet) {
-			timesheet = await this.timesheetRepository.save({
-				employeeId: employee.id,
-				startedAt: from_date.toISOString(),
-				stoppedAt: from_date.toISOString()
-			});
-		}
-		return timesheet;
-	}
-
-	async getLogs(request: IGetTimeLogInput) {
-		let employeeId: any;
-		const startDate = moment(request.startDate).format(
-			'YYYY-MM-DD HH:mm:ss'
-		);
-		const endDate = moment(request.endDate).format('YYYY-MM-DD HH:mm:ss');
-
-		if (!request.employeeId) {
-			const user = RequestContext.currentUser();
-			const employee = await this.employeeRepository.findOne({
-				userId: user.id
-			});
-			employeeId = employee.id;
-		} else {
-			employeeId = request.employeeId;
-		}
-
-		console.log({ startDate, endDate });
-
-		let logs = await this.timeLogRepository.find({
-			where: {
-				startedAt: Between(startDate, endDate),
-				employeeId
-			},
-			relations: ['project', 'task', 'client']
-		});
-
-		return logs;
 	}
 }

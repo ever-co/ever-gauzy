@@ -1,4 +1,3 @@
-import { Tenant } from './../../../../../../../../libs/models/src/lib/tenant.model';
 import {
 	Component,
 	ViewChild,
@@ -8,20 +7,22 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum, Tag } from '@gauzy/models';
+import { RolesEnum, Tag, ITenant } from '@gauzy/models';
 import { AuthService } from 'apps/gauzy/src/app/@core/services/auth.service';
 import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
+import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
 	templateUrl: 'basic-info-form.component.html',
 	styleUrls: ['basic-info-form.component.scss']
 })
-export class BasicInfoFormComponent implements OnInit, AfterViewInit {
+export class BasicInfoFormComponent extends TranslationBaseComponent
+	implements OnInit, AfterViewInit {
 	UPLOADER_PLACEHOLDER = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
 	@ViewChild('imagePreview', { static: false })
@@ -30,6 +31,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 	@Input() public isCandidateCV: boolean;
+	@Input() public isSuperAdmin: boolean;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -45,7 +47,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	password: any;
 	off: any;
 	role: any;
-	tenant: Tenant;
+	tenant: ITenant;
 	offerDate: any;
 	acceptDate: any;
 	appliedDate: any;
@@ -54,17 +56,23 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 	tags: Tag[] = [];
 	selectedTags: any;
 	items: any;
+	cvUrl: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly authService: AuthService,
 		private readonly roleService: RoleService,
-		private readonly translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private readonly validatorService: ValidationService,
 		private readonly tagsService: TagsService
-	) {}
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
+		this.allRoles = this.allRoles.filter((role) =>
+			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
+		);
 		this.loadFormData();
 
 		// this.getAllTags();
@@ -123,7 +131,19 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 				acceptDate: [''],
 				appliedDate: [''],
 				hiredDate: [''],
-				rejectDate: ['']
+				rejectDate: [''],
+				tags: [''],
+				cvUrl: [
+					'',
+					Validators.compose([
+						Validators.pattern(
+							new RegExp(
+								`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
+								'g'
+							)
+						)
+					])
+				]
 			},
 			{
 				validator: this.validatorService.validateDate
@@ -131,6 +151,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		);
 
 		this.imageUrl = this.form.get('imageUrl');
+		this.cvUrl = this.form.get('cvUrl');
 		this.username = this.form.get('username');
 		this.firstName = this.form.get('firstName');
 		this.lastName = this.form.get('lastName');
@@ -149,7 +170,7 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(defaultRoleName: RolesEnum) {
+	async registerUser(defaultRoleName: RolesEnum, organizationId?: string) {
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
@@ -170,7 +191,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 						tenant: this.tenant,
 						tags: this.selectedTags
 					},
-					password: this.password.value
+					password: this.password.value,
+					organizationId
 				})
 				.pipe(first())
 				.toPromise();
@@ -183,8 +205,8 @@ export class BasicInfoFormComponent implements OnInit, AfterViewInit {
 		this.imageUrl.setValue('');
 	}
 
-	selectedTagsHandler(ev) {
-		this.form.get('selectedTags').setValue(ev);
+	selectedTagsHandler(ev: any) {
+		this.form.get('tags').setValue(ev);
 	}
 
 	ngAfterViewInit() {

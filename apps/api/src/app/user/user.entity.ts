@@ -25,9 +25,9 @@ import {
 	OneToOne
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { Role } from '../role';
+import { Role } from '../role/role.entity';
 import { Tenant } from '../tenant/tenant.entity';
-import { Tag } from '../tags';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('user')
 export class User extends Base implements IUser {

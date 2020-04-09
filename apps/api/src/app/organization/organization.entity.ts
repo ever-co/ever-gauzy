@@ -1,4 +1,3 @@
-import { Tenant } from './../tenant/';
 import {
 	Column,
 	Entity,
@@ -7,8 +6,7 @@ import {
 	JoinColumn,
 	RelationId,
 	ManyToMany,
-	JoinTable,
-	OneToMany
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -29,7 +27,8 @@ import {
 	WeekDaysEnum,
 	BonusTypeEnum
 } from '@gauzy/models';
-import { Tag } from '../tags';
+import { Tag } from '../tags/tag.entity';
+import { Tenant } from './../tenant/tenant.entity';
 import { LocationBase } from '../core/entities/location-base';
 
 @Entity('organization')
@@ -181,7 +180,17 @@ export class Organization extends LocationBase implements IOrganization {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: true })
+	allowManualTime?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
 	allowModifyTime?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	allowDeleteTime?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()

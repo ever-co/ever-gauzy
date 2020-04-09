@@ -127,7 +127,10 @@
 			</div>
 		</div>
 
-		<div class="col-sm-6" *ngIf="!(isEmployee || isCandidate)">
+		<div
+			class="col-sm-6"
+			*ngIf="!(isEmployee || isCandidate || isCandidateCV)"
+		>
 			<div class="form-group">
 				<label for="role" class="label">{{
 					'FORM.LABELS.ROLE' | translate
@@ -251,6 +254,8 @@
 		<div class="col-sm-6">
 			<div class="form-group">
 				<ngx-tags-color-input
+					[form]="form"
+					[selectedTags]="tags"
 					(selectedTagsEvent)="selectedTagsHandler($event)"
 				>
 				</ngx-tags-color-input>
@@ -323,16 +328,16 @@
 	<div class="row" *ngIf="isCandidateCV">
 		<div class="col-sm-12">
 			<div class="form-group">
-				<label for="inputImageUrl" class="label">{{
+				<label for="inputCvUrl" class="label">{{
 					'FORM.LABELS.CV_URL' | translate
 				}}</label>
 				<ngx-file-uploader-input
-					id="inputImageUrl"
+					id="inputCvUrl"
 					[placeholder]="
 						'FORM.PLACEHOLDERS.UPLOADER_CV_PLACEHOLDER' | translate
 					"
-					[fileUrl]="imageUrl?.value"
-					(uploadedImgUrl)="imageUrl.setValue($event)"
+					[fileUrl]="cvUrl?.value"
+					(uploadedImgUrl)="cvUrl.setValue($event)"
 				></ngx-file-uploader-input>
 			</div>
 		</div>

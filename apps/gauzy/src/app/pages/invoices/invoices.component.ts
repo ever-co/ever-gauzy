@@ -48,7 +48,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	add() {
-		this.router.navigate(['/pages/invoices/add']);
+		this.router.navigate(['/pages/accounting/invoices/add']);
 	}
 
 	async delete() {
@@ -78,6 +78,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	async selectInvoice($event: SelectedInvoice) {
 		if ($event.isSelected) {
 			this.selectedInvoice = $event.data;
+			console.log(this.selectedInvoice);
 			this.disableButton = false;
 			this.invoicesTable.grid.dataSet.willSelect = false;
 		} else {

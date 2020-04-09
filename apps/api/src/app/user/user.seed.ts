@@ -7,10 +7,10 @@ import * as bcrypt from 'bcrypt';
 import { environment as env } from '@env-api/environment';
 import * as faker from 'faker';
 import { DefaultUser, RolesEnum } from '@gauzy/models';
-import { Role } from '../role';
+import { Role } from '../role/role.entity';
 import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
-import { Tenant } from '../tenant';
+import { Tenant } from '../tenant/tenant.entity';
 
 export const seedSuperAdminUsers = async (
 	connection: Connection,
@@ -120,7 +120,7 @@ export const createUsers = async (
 		counter++;
 	}
 	// Generate 50 random candidate users
-	for (let i = 0; i < 100; i++) {
+	for (let i = 0; i < 600; i++) {
 		user = await generateRandomUser(employeeRole);
 		await insertUser(connection, user);
 		randomCandidateUser.push(user);

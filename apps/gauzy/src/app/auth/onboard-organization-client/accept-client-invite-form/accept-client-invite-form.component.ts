@@ -12,12 +12,11 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import { Invite, UserRegistrationInput, Tag } from '@gauzy/models';
+import { Invite, UserRegistrationInput, Tag, ITenant } from '@gauzy/models';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Tenant } from 'libs/models/src/lib/tenant.model';
 
 @Component({
 	selector: 'ga-accept-client-invite-form',
@@ -41,7 +40,7 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 	password: AbstractControl;
 	repeatPassword: AbstractControl;
 	agreeTerms: AbstractControl;
-	tenant: Tenant;
+	tenant: ITenant;
 	tags: Tag[];
 
 	matchPassword: boolean;

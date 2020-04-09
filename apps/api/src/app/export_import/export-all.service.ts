@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { CountryService } from '../country';
 import * as csv from 'csv-writer';
-import { UserService } from '../user';
-import { UserOrganizationService } from '../user-organization';
+import { UserService } from '../user/user.service';
+import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { EmailService } from '../email';
 import { EmailTemplateService } from '../email-template';
 import { EmployeeService } from '../employee/employee.service';
@@ -17,8 +17,8 @@ import { EmployeeRecurringExpenseService } from '../employee-recurring-expense';
 import { EmployeeSettingService } from '../employee-setting';
 import { EquipmentService } from '../equipment';
 import { EquipmentSharingService } from '../equipment-sharing';
-import { ExpenseService } from '../expense';
-import { ExpenseCategoriesService } from '../expense-categories';
+import { ExpenseService } from '../expense/expense.service';
+import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import { IncomeService } from '../income/income.service';
 import { InviteService } from '../invite/invite.service';
 import { InvoiceService } from '../invoice/invoice.service';
@@ -26,27 +26,25 @@ import { InvoiceItemService } from '../invoice-item/invoice-item.service';
 import { OrganizationService } from '../organization/organization.service';
 import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
 import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
-import { OrganizationDepartmentService } from '../organization-department';
-import { OrganizationEmploymentTypeService } from '../organization-employment-type';
-import { OrganizationPositionsService } from '../organization-positions';
-import { OrganizationProjectsService } from '../organization-projects';
-import { OrganizationRecurringExpenseService } from '../organization-recurring-expense';
-import { OrganizationTeamsService } from '../organization-teams';
-import { OrganizationVendorsService } from '../organization-vendors';
-import { ProposalService } from '../proposal';
-import { RoleService } from '../role';
-import { RolePermissionsService } from '../role-permissions';
-import { TagService } from '../tags';
-import { TaskService } from '../tasks';
-import { TenantService } from '../tenant';
-import { TimeOffPolicyService } from '../time-off-policy';
-import {
-	TimeSheetService,
-	ActivityService,
-	ScreenShotService,
-	TimeLogService,
-	TimeSlotService
-} from '../timesheet';
+import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
+import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
+import { OrganizationPositionsService } from '../organization-positions/organization-positions.service';
+import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
+import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
+import { OrganizationTeamsService } from '../organization-teams/organization-teams.service';
+import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
+import { ProposalService } from '../proposal/proposal.service';
+import { RoleService } from '../role/role.service';
+import { RolePermissionsService } from '../role-permissions/role-permissions.service';
+import { TagService } from '../tags/tag.service';
+import { TaskService } from '../tasks/task.service';
+import { TenantService } from '../tenant/tenant.service';
+import { TimeOffPolicyService } from '../time-off-policy/time-off-policy.service';
+import { TimeSheetService } from '../timesheet/timesheet.service';
+import { ActivityService } from '../timesheet/activity.service';
+import { ScreenShotService } from '../timesheet/screenshot.service';
+import { TimeSlotService } from '../timesheet/time_slot.service';
+import { TimeLogService } from '../timesheet/time-log/time-log.service';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {

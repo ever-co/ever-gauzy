@@ -14,8 +14,9 @@
 					<div class="form-group">
 						<ng-select
 							[items]="defaultFilteredCategories"
-							[addTag]="addCustomCategoryName"
+							[addTag]="addNewCustomCategoryName"
 							id="positionInput"
+							[searchable]="true"
 							fullWidth
 							placeholder="{{
 								'POP_UPS.CATEGORY_NAME' | translate

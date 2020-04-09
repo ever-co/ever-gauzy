@@ -4,13 +4,14 @@ import { ExportAllController } from './export-all.controller';
 import { ExportAllService } from './export-all.service';
 import { CountryService, Country } from '../country';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserService, User } from '../user';
-import {
-	UserOrganizationService,
-	UserOrganization
-} from '../user-organization';
-import { EmailService, Email } from '../email';
-import { EmailTemplate, EmailTemplateService } from '../email-template';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
+import { UserOrganizationService } from '../user-organization/user-organization.services';
+import { UserOrganization } from '../user-organization/user-organization.entity';
+import { Email } from '../email/email.entity';
+import { EmailService } from '../email/email.service';
+import { EmailTemplate } from '../email-template/email-template.entity';
+import { EmailTemplateService } from '../email-template/email-template.service';
 import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import {
@@ -23,26 +24,22 @@ import {
 	EquipmentSharingService,
 	EquipmentSharing
 } from '../equipment-sharing';
-import { ExpenseService, Expense } from '../expense';
-import {
-	ExpenseCategoriesService,
-	ExpenseCategory
-} from '../expense-categories';
+import { Expense } from '../expense/expense.entity';
+import { ExpenseService } from '../expense/expense.service';
+import { ExpenseCategory } from '../expense-categories/expense-category.entity';
+import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import { IncomeService } from '../income/income.service';
 import { Income } from '../income/income.entity';
 import { InviteService } from '../invite/invite.service';
 import { Invite } from '../invite/invite.entity';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
-import {
-	OrganizationProjects,
-	OrganizationProjectsService
-} from '../organization-projects';
-import {
-	OrganizationDepartment,
-	OrganizationDepartmentService
-} from '../organization-department';
-import { Role, RoleService } from '../role';
+import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
+import { OrganizationDepartment } from '../organization-department/organization-department.entity';
+import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
+import { Role } from '../role/role.entity';
+import { RoleService } from '../role/role.service';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InvoiceService } from '../invoice/invoice.service';
 import { Invoice } from '../invoice/invoice.entity';
@@ -51,44 +48,38 @@ import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
-import {
-	OrganizationEmploymentTypeService,
-	OrganizationEmploymentType
-} from '../organization-employment-type';
-import {
-	OrganizationPositionsService,
-	OrganizationPositions
-} from '../organization-positions';
-import {
-	OrganizationRecurringExpenseService,
-	OrganizationRecurringExpense
-} from '../organization-recurring-expense';
-import {
-	OrganizationTeamsService,
-	OrganizationTeams
-} from '../organization-teams';
-import {
-	OrganizationVendorsService,
-	OrganizationVendor
-} from '../organization-vendors';
-import { ProposalService, Proposal } from '../proposal';
-import { RolePermissionsService, RolePermissions } from '../role-permissions';
-import { TagService, Tag } from '../tags';
-import { TaskService, Task } from '../tasks';
-import { TenantService, Tenant } from '../tenant';
-import { TimeOffPolicyService, TimeOffPolicy } from '../time-off-policy';
-import {
-	Timesheet,
-	TimeSheetService,
-	TimeSlot,
-	Activity,
-	Screenshot,
-	TimeLog,
-	ActivityService,
-	ScreenShotService,
-	TimeLogService,
-	TimeSlotService
-} from '../timesheet';
+import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
+import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
+import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
+import { OrganizationPositionsService } from '../organization-positions/organization-positions.service';
+import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
+import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
+import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { OrganizationTeamsService } from '../organization-teams/organization-teams.service';
+import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
+import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
+import { Proposal } from '../proposal/proposal.entity';
+import { ProposalService } from '../proposal/proposal.service';
+import { RolePermissions } from '../role-permissions/role-permissions.entity';
+import { RolePermissionsService } from '../role-permissions/role-permissions.service';
+import { Tag } from '../tags/tag.entity';
+import { TagService } from '../tags/tag.service';
+import { Task } from '../tasks/task.entity';
+import { TaskService } from '../tasks/task.service';
+import { Tenant } from '../tenant/tenant.entity';
+import { TenantService } from '../tenant/tenant.service';
+import { TimeOffPolicy } from '../time-off-policy/time-off-policy.entity';
+import { TimeOffPolicyService } from '../time-off-policy/time-off-policy.service';
+import { Timesheet } from '../timesheet/timesheet.entity';
+import { TimeSlot } from '../timesheet/time-slot.entity';
+import { Activity } from '../timesheet/activity.entity';
+import { Screenshot } from '../timesheet/screenshot.entity';
+import { TimeLog } from '../timesheet/time-log.entity';
+import { TimeSheetService } from '../timesheet/timesheet.service';
+import { ActivityService } from '../timesheet/activity.service';
+import { ScreenShotService } from '../timesheet/screenshot.service';
+import { TimeSlotService } from '../timesheet/time_slot.service';
+import { TimeLogService } from '../timesheet/time-log/time-log.service';
 
 @Module({
 	imports: [

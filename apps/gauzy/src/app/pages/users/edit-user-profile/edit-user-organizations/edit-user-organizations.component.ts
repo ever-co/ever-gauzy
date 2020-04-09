@@ -37,6 +37,8 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 	selectedOrganizationId: string;
 	selectedUserId: string;
 	selectedUserName: string;
+	orgUserId: string;
+	userToRemove: any;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -97,7 +99,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 		}
 	}
 
-	async remove() {
+	async remove(id: string) {
 		const user = await this.usersService.getUserById(this.selectedUserId);
 
 		const { items } = await this.userOrganizationsService.getAll([
@@ -106,9 +108,6 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 		]);
 
 		let counter = 0;
-
-		let orgUserId: string;
-		let userToRemove: any;
 		let userName: string;
 
 		for (const orgUser of items) {
@@ -117,12 +116,11 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 				(!orgUser.user.role ||
 					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
 			) {
-				userToRemove = orgUser;
+				this.userToRemove = orgUser;
 				userName = orgUser.user.firstName + ' ' + orgUser.user.lastName;
-				orgUserId = orgUser.id;
-				if (userToRemove.user.id === user.id) {
-					counter++;
-				}
+
+				if (orgUser.orgId === id) this.orgUserId = orgUser.id;
+				if (this.userToRemove.user.id === user.id) counter++;
 			}
 		}
 
@@ -143,8 +141,8 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 					if (result) {
 						try {
 							this.usersService.delete(
-								userToRemove.user.id,
-								userToRemove
+								this.userToRemove.user.id,
+								this.userToRemove
 							);
 
 							this.toastrService.primary(
@@ -183,7 +181,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent
 					if (result) {
 						try {
 							await this.userOrganizationsService.removeUserFromOrg(
-								orgUserId
+								this.orgUserId
 							);
 
 							this.toastrService.primary(

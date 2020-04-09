@@ -5,7 +5,9 @@ import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { get, post, Response } from 'request';
 import { EmailService } from '../email/email.service';
-import { User, UserService } from '../user';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
+import { UserOrganizationService } from '../user-organization/user-organization.services';
 
 export enum Provider {
 	GOOGLE = 'google',
@@ -18,7 +20,8 @@ export class AuthService {
 
 	constructor(
 		private readonly userService: UserService,
-		private emailService: EmailService
+		private emailService: EmailService,
+		private userOrganizationService: UserOrganizationService
 	) {
 		this.saltRounds = env.USER_PASSWORD_BCRYPT_SALT_ROUNDS;
 	}
@@ -32,7 +35,7 @@ export class AuthService {
 		password: string
 	): Promise<{ user: User; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role']
+			relations: ['role', 'employee']
 		});
 
 		if (!user || !(await bcrypt.compare(password, user.hash))) {
@@ -40,7 +43,11 @@ export class AuthService {
 		}
 
 		const token = sign(
-			{ id: user.id, role: user.role ? user.role.name : '' },
+			{
+				id: user.id,
+				employeeId: user.employee ? user.employee.id : null,
+				role: user.role ? user.role.name : ''
+			},
 			env.JWT_SECRET,
 			{}
 		); // Never expires
@@ -112,6 +119,13 @@ export class AuthService {
 				  }
 				: {})
 		});
+
+		if (input.organizationId) {
+			await this.userOrganizationService.addUserToOrganization(
+				await user,
+				input.organizationId
+			);
+		}
 
 		this.emailService.welcomeUser(input.user, input.originalUrl);
 

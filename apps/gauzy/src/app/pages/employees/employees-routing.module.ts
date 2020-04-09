@@ -74,7 +74,7 @@ const routes: Routes = [
 		}
 	},
 	{
-		path: ':id/timesheet',
+		path: 'timesheets',
 		loadChildren: () =>
 			import('./timesheet/timesheet.module').then(
 				(m) => m.TimesheetModule

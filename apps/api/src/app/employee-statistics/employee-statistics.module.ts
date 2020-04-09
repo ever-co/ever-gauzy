@@ -14,10 +14,8 @@ import { OrganizationService } from '../organization/organization.service';
 import { EmployeeStatisticsController } from './employee-statistics.controller';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { QueryHandlers } from './queries/handlers';
-import {
-	OrganizationRecurringExpenseService,
-	OrganizationRecurringExpense
-} from '../organization-recurring-expense';
+import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
+import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
 
 @Module({
 	imports: [

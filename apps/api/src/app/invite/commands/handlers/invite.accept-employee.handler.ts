@@ -1,7 +1,7 @@
 import { Invite, InviteStatusEnum } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
-import { AuthService } from '../../../auth';
+import { AuthService } from '../../../auth/auth.service';
 import { getUserDummyImage } from '../../../core';
 import { Employee } from '../../../employee/employee.entity';
 import { EmployeeService } from '../../../employee/employee.service';

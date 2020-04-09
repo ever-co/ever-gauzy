@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../employee.service';
 import { Employee, EmployeeCreateInput } from '@gauzy/models';
 import { EmployeeBulkCreateCommand } from '../employee.bulk.create.command';
-import { AuthService } from '../../../auth';
+import { AuthService } from '../../../auth/auth.service';
 import { EmailService } from '../../../email';
 
 @CommandHandler(EmployeeBulkCreateCommand)

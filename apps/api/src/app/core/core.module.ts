@@ -41,16 +41,17 @@ import { OrganizationEmploymentType } from '../organization-employment-type/orga
 import { Equipment } from '../equipment/equipment.entity';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
 import { Task } from '../tasks/task.entity';
-import {
-	TimeSlot,
-	Timesheet,
-	TimeLog,
-	Activity,
-	Screenshot
-} from '../timesheet';
+import { Timesheet } from '../timesheet/timesheet.entity';
+import { TimeSlot } from '../timesheet/time-slot.entity';
+import { Activity } from '../timesheet/activity.entity';
+import { Screenshot } from '../timesheet/screenshot.entity';
+import { TimeLog } from '../timesheet/time-log.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
-import { Candidate } from '../candidate';
+import { CandidateSource } from '../candidate_source/candidate_source.entity';
+import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
+import { Integration } from '../integration/integration.entity';
+import { Candidate } from '../candidate/candidate.entity';
 
 const entities = [
 	Invite,
@@ -91,7 +92,10 @@ const entities = [
 	TimeLog,
 	Activity,
 	Screenshot,
-	ExpenseCategory
+	ExpenseCategory,
+	CandidateSource,
+	IntegrationSetting,
+	Integration
 ];
 
 @Module({
