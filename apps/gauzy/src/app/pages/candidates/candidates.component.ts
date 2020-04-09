@@ -14,7 +14,7 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { Router, ActivatedRoute } from '@angular/router';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
-import { PictureNameTags } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -231,7 +231,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTags,
+					renderComponent: PictureNameTagsComponent,
 					class: 'align-row'
 				},
 				email: {

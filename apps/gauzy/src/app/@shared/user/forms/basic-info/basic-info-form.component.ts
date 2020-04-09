@@ -207,6 +207,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 
 	selectedTagsHandler(ev: any) {
 		this.form.get('tags').setValue(ev);
+		this.selectedTags = ev;
 	}
 
 	ngAfterViewInit() {

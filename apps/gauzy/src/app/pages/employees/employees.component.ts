@@ -21,7 +21,7 @@ import { EmployeeAverageIncomeComponent } from './table-components/employee-aver
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { PictureNameTags } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 interface EmployeeViewModel {
 	fullName: string;
@@ -404,7 +404,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTags,
+					renderComponent: PictureNameTagsComponent,
 					class: 'align-row'
 				},
 				email: {

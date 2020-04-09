@@ -7,7 +7,7 @@ import { HttpLoaderFactory } from '../../@theme/components/header/selectors/sele
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
-import { PictureNameTags } from './picture-name-tags/picture-name-tags.component';
+import { PictureNameTagsComponent } from './picture-name-tags/picture-name-tags.component';
 
 @NgModule({
 	imports: [
@@ -27,13 +27,13 @@ import { PictureNameTags } from './picture-name-tags/picture-name-tags.component
 		DateViewComponent,
 		IncomeExpenseAmountComponent,
 		NotesWithTagsComponent,
-		PictureNameTags
+		PictureNameTagsComponent
 	],
 	declarations: [
 		DateViewComponent,
 		IncomeExpenseAmountComponent,
 		NotesWithTagsComponent,
-		PictureNameTags
+		PictureNameTagsComponent
 	],
 	providers: []
 })

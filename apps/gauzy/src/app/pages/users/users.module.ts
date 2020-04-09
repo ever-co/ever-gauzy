@@ -43,6 +43,7 @@ import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-orga
 import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
 import { UserIdService } from '../../@core/services/edit-user-data.service';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -60,6 +61,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		TagsColorInputModule,
 		TableComponentsModule,
 		NbSidebarModule,
 		NbLayoutModule,

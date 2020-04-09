@@ -65,7 +65,6 @@ export class TasksStoreService {
 				})
 			)
 			.subscribe();
-		console.warn(task);
 	}
 
 	delete(id: string): void {
