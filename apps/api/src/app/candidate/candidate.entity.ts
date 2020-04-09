@@ -21,8 +21,6 @@ import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 
-export type Status = 'applied' | 'rejected' | 'hired';
-
 @Entity('candidate')
 export class Candidate extends LocationBase implements ICandidate {
 	@ManyToMany((type) => Tag)
