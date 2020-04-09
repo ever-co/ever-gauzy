@@ -25,6 +25,9 @@ import { NbToastrService } from '@nebular/theme';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { TasksService } from '../../../@core/services/tasks.service';
+import { InvoiceAddProjectsComponent } from './invoice-add-project.component';
+import { InvoiceAddEmployeesComponent } from './invoice-add-employees.component';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -42,6 +45,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	task: Task;
 	tasks: Task[];
+	generatedTask: string;
 	loadedNumber: boolean;
 	organization: Organization;
 	selectedClient: OrganizationClients;
@@ -55,12 +59,15 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	isEmployeeHourTable: boolean;
 	isProjectHourTable: boolean;
 	isTaskHourTable: boolean;
+	organizationId: string;
 	private _ngDestroy$ = new Subject<void>();
 	get currency() {
 		return this.form.get('currency');
 	}
 
 	@ViewChild('invoiceItemTable', { static: false }) invoiceItemTable;
+	@ViewChild('employeeSelector', { static: false })
+	employeeSelector: EmployeeSelectorComponent;
 
 	constructor(
 		private fb: FormBuilder,
@@ -73,13 +80,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private invoiceItemService: InvoiceItemService,
 		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
-		private tasksService: TasksService
+		private tasksService: TasksService,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
-
-	@ViewChild('employeeSelector', { static: false })
-	employeeSelector: EmployeeSelectorComponent;
 
 	ngOnInit() {
 		this.getTasks();
@@ -135,14 +140,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						addable: false
 					},
 					employee: {
-						title: 'Employee name',
-						type: 'string'
-					},
-					name: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.NAME'
-						),
-						type: 'string'
+						title: 'Employee',
+						type: 'custom',
+						renderComponent: InvoiceAddEmployeesComponent
 					},
 					description: {
 						title: this.getTranslation(
@@ -196,14 +196,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						addable: false
 					},
 					project: {
-						title: 'Project name',
-						type: 'string'
-					},
-					name: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.NAME'
-						),
-						type: 'string'
+						title: 'Project',
+						type: 'custom',
+						renderComponent: InvoiceAddProjectsComponent
 					},
 					description: {
 						title: this.getTranslation(
@@ -225,10 +220,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						),
 						type: 'number',
 						addable: false,
-						editable: false,
-						valuePrepareFunction: (cell, row) => {
-							return row.hourlyRate * row.hoursWorked;
-						}
+						editable: false
 					}
 				}
 			};
@@ -260,12 +252,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						title: 'Task',
 						type: 'custom',
 						renderComponent: InvoiceAddTasksComponent
-					},
-					name: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.NAME'
-						),
-						type: 'string'
 					},
 					description: {
 						title: this.getTranslation(
@@ -318,24 +304,22 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						type: 'number',
 						addable: false
 					},
-					name: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.NAME'
-						),
-						type: 'string'
-					},
 					description: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
 						),
 						type: 'string'
 					},
-					hourlyRate: {
-						title: 'Hourly Rate',
+					quantity: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.QTY'
+						),
 						type: 'number'
 					},
-					hoursWorked: {
-						title: 'Hours Worked',
+					price: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.PRICE'
+						),
 						type: 'number'
 					},
 					totalValue: {
@@ -343,11 +327,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
 						),
 						type: 'number',
-						addable: false,
-						editable: false,
 						valuePrepareFunction: (cell, row) => {
-							return row.hourlyRate * row.hoursWorked;
-						}
+							return row.quantity * row.price;
+						},
+						addable: false,
+						editable: false
 					}
 				}
 			};
@@ -497,87 +481,65 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			fakeData = [
 				{
 					itemNumber: 1,
-					employee: 'Employee 1',
-					name: 'Name 1',
 					description: 'Desc 1',
 					hourlyRate: 0,
 					hoursWorked: 0,
-					totalValue: 0
-				},
-				{
-					itemNumber: 2,
-					employee: 'Employee 2',
-					name: 'Name 2',
-					description: 'Desc 2',
-					hourlyRate: 1,
-					hoursWorked: 1,
-					totalValue: 1
-				},
-				{
-					itemNumber: 3,
-					employee: 'Employee 3',
-					name: 'Name 3',
-					description: 'Desc 3',
-					hourlyRate: 2,
-					hoursWorked: 2,
-					totalValue: 4
+					totalValue: 0,
+					employeeId: this.employeeSelector.selectedEmployee.id
 				}
 			];
 		} else if (this.invoiceType === 'By Project Hours') {
 			fakeData = [
 				{
 					itemNumber: 1,
-					project: 'Project 1',
-					name: 'Name 1',
 					description: 'Desc 1',
 					hourlyRate: 0,
 					hoursWorked: 0,
-					totalValue: 0
+					totalValue: 0,
+					selectedProject: this.selectedProject[0]
 				},
 				{
 					itemNumber: 2,
-					project: 'Project 2',
-					name: 'Name 2',
 					description: 'Desc 2',
 					hourlyRate: 1,
 					hoursWorked: 1,
-					totalValue: 1
+					totalValue: 1,
+					selectedProject: this.selectedProject[1]
 				},
 				{
 					itemNumber: 3,
-					project: 'Project 3',
-					name: 'Name 3',
 					description: 'Desc 3',
 					hourlyRate: 2,
 					hoursWorked: 2,
-					totalValue: 4
+					totalValue: 4,
+					selectedProject: this.selectedProject[2]
 				}
 			];
 		} else if (this.invoiceType === 'By Task Hours') {
 			fakeData = [
 				{
 					itemNumber: 1,
-					name: 'Name 1',
 					description: 'Desc 1',
 					hourlyRate: 0,
 					hoursWorked: 0,
-					totalValue: 0
+					totalValue: 0,
+					selectedTask: this.selectedTask[0]
 				},
 				{
 					itemNumber: 2,
-					name: 'Name 2',
 					description: 'Desc 2',
 					hourlyRate: 1,
 					hoursWorked: 1,
-					totalValue: 1
+					totalValue: 1,
+					selectedTask: this.selectedTask[1]
 				},
 				{
 					itemNumber: 3,
-					name: 'Name 3',
 					description: 'Desc 3',
 					hourlyRate: 2,
 					hoursWorked: 2,
-					totalValue: 4
+					totalValue: 4,
+					selectedTask: this.selectedTask[2]
 				}
 			];
 		}
@@ -604,6 +566,27 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return item.name.toLowerCase().includes(term.toLowerCase());
 		}
 	}
+
+	addNewClient = (name: string): Promise<OrganizationClients> => {
+		this.organizationId = this.store.selectedOrganization.id;
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationClientsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
 
 	cancel() {
 		this.router.navigate(['/pages/invoices']);

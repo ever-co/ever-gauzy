@@ -25,6 +25,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { InvoicesValueComponent } from './invoices-value.component';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoiceAddTasksComponent } from './invoice-add/invoice-add-tasks.component';
+import { InvoiceAddProjectsComponent } from './invoice-add/invoice-add-project.component';
 import { InvoicesComponent } from './invoices.component';
 import { InvoicesRoutingModule } from './invoices-routing.module';
 import { InvoicesService } from '../../@core/services/invoices.service';
@@ -34,6 +35,8 @@ import { TasksService } from '../../@core/services/tasks.service';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
+import { InvoiceAddEmployeesComponent } from './invoice-add/invoice-add-employees.component';
+import { EmployeesService } from '../../@core/services/employees.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -76,19 +79,24 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceItemService,
 		TasksService,
 		OrganizationClientsService,
-		OrganizationProjectsService
+		OrganizationProjectsService,
+		EmployeesService
 	],
 	entryComponents: [
 		InvoicesComponent,
 		InvoicesValueComponent,
 		InvoiceAddComponent,
-		InvoiceAddTasksComponent
+		InvoiceAddTasksComponent,
+		InvoiceAddProjectsComponent,
+		InvoiceAddEmployeesComponent
 	],
 	declarations: [
 		InvoicesComponent,
 		InvoicesValueComponent,
 		InvoiceAddComponent,
-		InvoiceAddTasksComponent
+		InvoiceAddTasksComponent,
+		InvoiceAddProjectsComponent,
+		InvoiceAddEmployeesComponent
 	]
 })
 export class InvoicesModule {}

@@ -230,6 +230,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
@@ -500,7 +501,7 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
-			"RATE": "Rate",
+			"RATE": "Rates",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
 			"TASKS": "Tasks",
@@ -836,8 +837,8 @@
 			"TASK": "Task",
 			"NAME": "Name",
 			"DESCRIPTION": "Description",
-			"UNIT_COST": "Unit Cost",
-			"QUANTITY": "Quantity",
+			"PRICE": "Price",
+			"QTY": "Qty",
 			"TOTAL_VALUE": "Total Value"
 		}
 	},

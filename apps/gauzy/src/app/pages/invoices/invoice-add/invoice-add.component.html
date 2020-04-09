@@ -33,9 +33,10 @@
 						}}
 					</label>
 					<ng-select
-						[(items)]="clients"
+						[addTag]="addNewClient"
+						[items]="clients"
 						bindName="name"
-						placeholder="All Clients"
+						placeholder="{{ 'POP_UPS.ALL_CLIENTS' | translate }}"
 						[(ngModel)]="selectedClient"
 						formControlName="client"
 						id="inputClient"
@@ -234,8 +235,6 @@
 					<div class="form-group">
 						<ga-employee-selector
 							#employeeSelector
-							[skipGlobalChange]="true"
-							id="authorInput"
 							class="employees"
 						>
 						</ga-employee-selector>

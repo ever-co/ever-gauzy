@@ -9,7 +9,6 @@ import {
 import { BehaviorSubject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
-import { SelectedCandidate } from '../../@theme/components/header/selectors/candidate/candidate.component';
 
 export class Store {
 	private _selectedOrganization: Organization;
@@ -31,10 +30,6 @@ export class Store {
 	selectedEmployee$: BehaviorSubject<SelectedEmployee> = new BehaviorSubject(
 		this.selectedEmployee
 	);
-	private _selectedCandidate: SelectedCandidate;
-	selectedCandidate$: BehaviorSubject<
-		SelectedCandidate
-	> = new BehaviorSubject(this.selectedCandidate);
 
 	private _selectedDate: Date;
 	selectedDate$: BehaviorSubject<Date> = new BehaviorSubject(
@@ -59,14 +54,6 @@ export class Store {
 
 	get selectedEmployee(): SelectedEmployee {
 		return this._selectedEmployee;
-	}
-	set selectedCandidate(candidate: SelectedCandidate) {
-		this._selectedCandidate = candidate;
-		this.selectedCandidate$.next(candidate);
-	}
-
-	get selectedCandidate(): SelectedCandidate {
-		return this._selectedCandidate;
 	}
 
 	set selectedOrganization(organization: Organization) {
