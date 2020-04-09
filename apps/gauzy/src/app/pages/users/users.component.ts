@@ -19,10 +19,10 @@ import { Store } from '../../@core/services/store.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
-import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { UsersService } from '../../@core/services';
+import { PictureNameTags } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 interface UserViewModel {
 	fullName: string;
@@ -424,7 +424,7 @@ export class UsersComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: UserFullNameComponent,
+					renderComponent: PictureNameTags,
 					class: 'align-row'
 				},
 				email: {

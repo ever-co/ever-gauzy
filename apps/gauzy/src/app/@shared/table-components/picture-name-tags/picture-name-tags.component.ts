@@ -50,7 +50,7 @@ import { ViewCell } from 'ng2-smart-table';
 		`
 	]
 })
-export class CandidateFullNameComponent implements ViewCell {
+export class PictureNameTags implements ViewCell {
 	@Input()
 	rowData: any;
 
