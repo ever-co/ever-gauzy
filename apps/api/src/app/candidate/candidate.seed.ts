@@ -1,17 +1,19 @@
 import { Connection } from 'typeorm';
-import { User } from '../user/user.entity';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
-import { ITenant } from '@gauzy/models';
+import { Tenant } from '../tenant/tenant.entity';
+import { User } from '@gauzy/models';
+import { CandidateSource } from '../candidate_source/candidate_source.entity';
 
 export const createCandidates = async (
 	connection: Connection,
-	defaultData: {
-		tenant: ITenant[];
+	defaultData?: {
+		tenant: Tenant[];
 		org: Organization;
 		users: User[];
 	},
-	randomData: {
+	randomData?: {
+		source: CandidateSource[];
 		org: Organization;
 		orgs: Organization[];
 		users: User[];
@@ -34,7 +36,7 @@ export const createCandidates = async (
 const createDefaultCandidates = async (
 	connection: Connection,
 	defaultData: {
-		tenant: ITenant[];
+		tenant: Tenant[];
 		org: Organization;
 		users: User[];
 	}
@@ -62,31 +64,43 @@ const createDefaultCandidates = async (
 const createRandomCandidates = async (
 	connection: Connection,
 	randomData: {
+		source: CandidateSource[];
 		org: Organization;
 		orgs: Organization[];
 		users: User[];
 	}
 ): Promise<Candidate[]> => {
+	const quantity = 100;
 	let candidate: Candidate;
 	const candidates: Candidate[] = [];
 	const randomUsers = randomData.users;
 	const randomOrgs = randomData.orgs;
 	const organization = randomData.org;
-	const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
+	const candidate_source = randomData.source;
+	// const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
 
-	for (let i = 0; i < randomOrgs.length; i++) {
-		if (randomUsers.length) {
-			for (let index = 0; index < averageUsersCount; index++) {
-				candidate = new Candidate();
-				candidate.organization = organization;
-				candidate.user = randomUsers.pop();
-				if (candidate.user) {
-					await insertCandidate(connection, candidate);
-					candidates.push(candidate);
-				}
+	const insertCandidatesInToOrganization = async (
+		quantity: number,
+		organization: Organization
+	) => {
+		for (let index = 0; index < quantity; index++) {
+			candidate = new Candidate();
+			candidate.organization = organization;
+			candidate.source = candidate_source[0].id;
+			candidate.user = randomUsers.pop();
+			if (candidate.user) {
+				await insertCandidate(connection, candidate);
+				candidates.push(candidate);
 			}
 		}
+	};
+	await insertCandidatesInToOrganization(quantity, organization);
+	for (const org of randomOrgs) {
+		if (randomUsers.length) {
+			await insertCandidatesInToOrganization(quantity, org);
+		}
 	}
+
 	return candidates;
 };
 
