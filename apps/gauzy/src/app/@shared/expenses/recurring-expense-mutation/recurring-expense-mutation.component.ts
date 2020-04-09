@@ -7,10 +7,10 @@ import {
 	RecurringExpenseDefaultCategoriesEnum,
 	StartDateUpdateTypeEnum
 } from '@gauzy/models';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { first } from 'rxjs/operators';
 import * as moment from 'moment';
-
+import { IExpenseCategory } from './../../../../../../../libs/models/src/lib/expense-category.model';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -18,6 +18,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { OrganizationRecurringExpenseService } from '../../../@core/services/organization-recurring-expense.service';
 import { defaultDateFormat } from '../../../@core/utils/date';
 import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { ExpenseCategoriesStoreService } from '../../../@core/services/expense-categories-store.service';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -76,7 +78,10 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		protected dialogRef: NbDialogRef<RecurringExpenseMutationComponent>,
 		private organizationsService: OrganizationsService,
 		private store: Store,
+		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
 		private translate: TranslateService,
+		private readonly toastrService: NbToastrService,
+		private errorHandler: ErrorHandlingService,
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private employeeRecurringExpenseService: EmployeeRecurringExpenseService
 	) {
@@ -155,6 +160,23 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	addCustomCategoryName(term) {
 		return { value: term, label: term };
 	}
+
+	addNewCustomCategoryName = (name: string): Promise<IExpenseCategory> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.expenseCategoriesStore.create(name).toPromise();
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
 
 	private _initializeForm(recurringExpense?: any) {
 		this.form = this.fb.group({

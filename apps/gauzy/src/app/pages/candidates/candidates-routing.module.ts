@@ -14,7 +14,7 @@ import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-pr
 import { EditCandidateEmploymentComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-employment/edit-candidate-employment.component';
 import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
 import { EditCandidateExperienceComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience.component';
-import { EditCandidateRateComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rate/edit-candidate-rate.component';
+import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
 
 const routes: Routes = [
 	{
@@ -39,8 +39,8 @@ const routes: Routes = [
 				component: EditCandidateMainComponent
 			},
 			{
-				path: 'rate',
-				component: EditCandidateRateComponent
+				path: 'rates',
+				component: EditCandidateRatesComponent
 			},
 			{
 				path: 'tasks',

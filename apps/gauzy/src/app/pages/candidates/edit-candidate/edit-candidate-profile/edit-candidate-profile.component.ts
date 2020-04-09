@@ -89,15 +89,15 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				title: this.getTranslation(
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.RATE'
 				),
-				icon: 'star-outline',
+				icon: 'pricetags-outline',
 				responsive: true,
-				route: this.getRoute('rate')
+				route: this.getRoute('rates')
 			},
 			{
 				title: this.getTranslation(
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.TASKS'
 				),
-				icon: 'pricetags-outline',
+				icon: 'layers-outline',
 				responsive: true,
 				route: this.getRoute('tasks')
 			},
