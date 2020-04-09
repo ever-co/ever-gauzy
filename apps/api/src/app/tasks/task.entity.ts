@@ -5,15 +5,25 @@ import {
 	ManyToOne,
 	JoinColumn,
 	RelationId,
-	OneToMany
+	OneToMany,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Task as ITask } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('task')
 export class Task extends Base implements ITask {
+	@ApiProperty({ type: Tag })
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_task'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: String })
 	@Column()
 	title: string;
