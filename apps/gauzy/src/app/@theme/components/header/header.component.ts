@@ -19,7 +19,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { filter, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
-import { PermissionsEnum, Organization } from '@gauzy/models';
+import { PermissionsEnum } from '@gauzy/models';
 import { User } from '@gauzy/models';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import * as moment from 'moment';
@@ -71,7 +71,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.router.events
 			.pipe(filter((event) => event instanceof NavigationEnd))
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((e) => {
+			.subscribe(() => {
 				this.timeTrackerService.showTimerWindow = false;
 			});
 
