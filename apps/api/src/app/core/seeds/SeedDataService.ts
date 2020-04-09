@@ -66,12 +66,10 @@ import { OrganizationPositions } from '../../organization-positions/organization
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import { createCandidates } from '../../candidate/candidate.seed';
-import {
-	createCandidateSourses,
-	CandidateSource
-} from '../../candidate_source';
 import { Tag } from './../../tags/tag.entity';
 import { Tenant } from './../../tenant/tenant.entity';
+import { CandidateSource } from '../../candidate_source/candidate_source.entity';
+import { createCandidateSourses } from '../../candidate_source/candidate_source.seed';
 
 const allEntities = [
 	TimeOffPolicy,

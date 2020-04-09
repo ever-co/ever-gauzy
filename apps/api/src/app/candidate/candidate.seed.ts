@@ -1,9 +1,9 @@
 import { Connection } from 'typeorm';
-import { User } from '../user';
 import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
-import { CandidateSource } from '../candidate_source';
 import { Tenant } from '../tenant/tenant.entity';
+import { User } from '@gauzy/models';
+import { CandidateSource } from '../candidate_source/candidate_source.entity';
 
 export const createCandidates = async (
 	connection: Connection,
