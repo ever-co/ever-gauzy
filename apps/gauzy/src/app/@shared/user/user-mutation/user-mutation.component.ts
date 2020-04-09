@@ -40,7 +40,6 @@ export class UserMutationComponent implements OnInit {
 				organization.id
 			);
 			this.closeDialog(user);
-			console.warn(user);
 		} catch (error) {
 			this.toastrService.danger(
 				error.error ? error.error.message : error.message,
