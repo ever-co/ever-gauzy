@@ -120,7 +120,7 @@ export const createUsers = async (
 		counter++;
 	}
 	// Generate 50 random candidate users
-	for (let i = 0; i < 100; i++) {
+	for (let i = 0; i < 600; i++) {
 		user = await generateRandomUser(employeeRole);
 		await insertUser(connection, user);
 		randomCandidateUser.push(user);

@@ -40,7 +40,7 @@ Feel free to test a Demo <http://demo.gauzy.co:4250> on our server. Login: `admi
 
 In the future we will have the following:
 
--   Gauzy Platform SaaS at <https://app.gauzy.co> 
+-   Gauzy Platform SaaS at <https://app.gauzy.co>
 -   Gauzy Platform Demo at <https://demo.gauzy.co> (login `admin@ever.co` and password: `admin`)
 -   Gauzy Platform Dev builds (using CI/CD, from the `develop` branch) at <https://app.gauzy.dev>
 
