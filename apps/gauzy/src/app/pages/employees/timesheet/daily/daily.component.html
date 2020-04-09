@@ -37,10 +37,7 @@
 				<button
 					nbButton
 					status="default"
-					*ngIf="
-						checkAllCheckbox.checked ||
-						checkAllCheckbox.indeterminate
-					"
+					*ngIf="showBulkAction"
 					[nbContextMenu]="bulkActionOptions"
 					nbContextMenuTag="time-logs-bulk-acton"
 				>
@@ -55,7 +52,7 @@
 		<table class="table table-striped">
 			<thead>
 				<tr>
-					<th scope="col">
+					<th scope="col" *ngIf="organization?.allowDeleteTime">
 						<nb-checkbox
 							[indeterminate]="false"
 							#checkAllCheckbox
@@ -76,7 +73,7 @@
 					[ngIfElse]="notFound"
 				>
 					<tr *ngFor="let log of timeLogs">
-						<th scope="row">
+						<th scope="row" *ngIf="organization?.allowDeleteTime">
 							<nb-checkbox
 								[value]="log.id"
 								[(ngModel)]="selectedIds[log.id]"
@@ -124,6 +121,7 @@
 						<td>
 							<div class="action-button">
 								<button
+									*ngIf="organization?.allowModifyTime"
 									[disabled]="!log.stoppedAt"
 									class="m-1"
 									nbButton
@@ -134,6 +132,7 @@
 									Edit
 								</button>
 								<button
+									*ngIf="organization?.allowDeleteTime"
 									[disabled]="!log.stoppedAt"
 									class="m-1"
 									nbButton

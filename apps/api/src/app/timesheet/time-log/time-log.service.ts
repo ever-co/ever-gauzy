@@ -2,7 +2,8 @@ import {
 	Injectable,
 	BadRequestException,
 	forwardRef,
-	Inject
+	Inject,
+	UnauthorizedException
 } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +13,7 @@ import { TimeLogType, IManualTimeInput, IGetTimeLogInput } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
 import { TimeSheetService } from '../timesheet.service';
+import { Employee } from '../../employee/employee.entity';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
@@ -20,7 +22,10 @@ export class TimeLogService extends CrudService<TimeLog> {
 		private readonly timesheetService: TimeSheetService,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>
+		private readonly timeLogRepository: Repository<TimeLog>,
+
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>
 	) {
 		super(timeLogRepository);
 	}
@@ -57,8 +62,20 @@ export class TimeLogService extends CrudService<TimeLog> {
 				'Please select valid Date start and end time'
 			);
 		}
-
 		const user = RequestContext.currentUser();
+
+		const employee = await this.employeeRepository.findOne(
+			user.employeeId,
+			{
+				relations: ['organization']
+			}
+		);
+
+		if (!employee.organization || !employee.organization.allowManualTime) {
+			throw new UnauthorizedException(
+				'You have not sufficient permission to add time'
+			);
+		}
 
 		const confict = await this.checkConfictTime(request, user.employeeId);
 		const timesheet = await this.timesheetService.createOrFindTimeSheet(
@@ -102,9 +119,18 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}
 
 		const user = RequestContext.currentUser();
-		// const employee = await this.employeeRepository.findOne({
-		//     userId: user.id
-		// });
+		const employee = await this.employeeRepository.findOne(
+			user.employeeId,
+			{
+				relations: ['organization']
+			}
+		);
+
+		if (!employee.organization || !employee.organization.allowModifyTime) {
+			throw new UnauthorizedException(
+				'You have not sufficient permission to update time'
+			);
+		}
 
 		const confict = await this.checkConfictTime(request, user.employeeId);
 
@@ -143,11 +169,29 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async deleteTimeLog(ids: string | string[]): Promise<any> {
+		const user = RequestContext.currentUser();
+
+		const employee = await this.employeeRepository.findOne(
+			user.employeeId,
+			{
+				relations: ['organization']
+			}
+		);
+
+		if (!employee.organization || !employee.organization.allowManualTime) {
+			throw new UnauthorizedException(
+				'You have not sufficient permission to add time'
+			);
+		}
+
 		if (typeof ids == 'string') {
 			ids = [ids];
 		}
 		await this.timeLogRepository.update(
-			{ id: In(ids) },
+			{
+				employeeId: user.employeeId,
+				id: In(ids)
+			},
 			{ deletedAt: new Date() }
 		);
 		return true;

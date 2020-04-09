@@ -83,17 +83,25 @@
 			>
 				<nb-icon icon="clock-outline"></nb-icon>
 			</button>
-			<button
-				nbButton
-				type="button"
-				(click)="$event.stopPropagation(); setTimeType('MANUAL')"
-				size="tiny"
-				[status]="timeType == 'MANUAL' ? 'primary' : 'basic'"
-				[nbTooltip]="'TIMER_TRACKER.MANUAL' | translate"
-				[disabled]="running"
+			<span
+				[nbTooltip]="
+					(organization?.allowManualTime
+						? 'TIMER_TRACKER.MANUAL'
+						: 'TIMER_TRACKER.MANUAL_NOT_ALLOW'
+					) | translate
+				"
 			>
-				<nb-icon icon="menu-outline"></nb-icon>
-			</button>
+				<button
+					nbButton
+					type="button"
+					(click)="$event.stopPropagation(); setTimeType('MANUAL')"
+					size="tiny"
+					[status]="timeType == 'MANUAL' ? 'primary' : 'basic'"
+					[disabled]="running || !organization?.allowManualTime"
+				>
+					<nb-icon icon="menu-outline"></nb-icon>
+				</button>
+			</span>
 		</div>
 	</div>
 
@@ -158,11 +166,7 @@
 	</div>
 
 	<div class="view-log-button mt-2 text-center" *ngIf="user?.employee?.id">
-		<a
-			nbButton
-			ghost
-			[routerLink]="['/pages/employees', user?.employee?.id, 'timesheet']"
-		>
+		<a nbButton ghost [routerLink]="['/pages/employees/timesheets']">
 			View timesheet
 		</a>
 	</div>

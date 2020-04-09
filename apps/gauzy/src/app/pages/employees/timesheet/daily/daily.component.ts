@@ -43,7 +43,7 @@ export class DailyComponent implements OnInit {
 		description: ''
 	};
 	selectedRange: IDateRange = { start: null, end: null };
-
+	showBulkAction: boolean = false;
 	bulkActionOptions = [
 		{
 			title: 'Delete'
@@ -95,8 +95,10 @@ export class DailyComponent implements OnInit {
 			.getTimeLogs(request)
 			.then((logs) => {
 				this.selectedIds = {};
-				this.checkAllCheckbox.checked = false;
-				this.checkAllCheckbox.indeterminate = false;
+				if (this.checkAllCheckbox) {
+					this.checkAllCheckbox.checked = false;
+					this.checkAllCheckbox.indeterminate = false;
+				}
 				logs.forEach((log) => (this.selectedIds[log.id] = false));
 				return logs;
 			});
@@ -121,11 +123,14 @@ export class DailyComponent implements OnInit {
 			}
 
 			if (all_checked) {
+				this.showBulkAction = true;
 				this.checkAllCheckbox.indeterminate = false;
 				this.checkAllCheckbox.checked = true;
 			} else if (any_checked) {
+				this.showBulkAction = true;
 				this.checkAllCheckbox.indeterminate = any_checked;
 			} else {
+				this.showBulkAction = false;
 				this.checkAllCheckbox.checked = false;
 				this.checkAllCheckbox.indeterminate = false;
 			}

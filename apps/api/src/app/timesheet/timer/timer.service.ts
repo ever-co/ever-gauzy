@@ -1,4 +1,9 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import {
+	Injectable,
+	Inject,
+	forwardRef,
+	BadRequestException
+} from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
@@ -30,6 +35,10 @@ export class TimerService {
 		const employee = await this.employeeRepository.findOne({
 			userId: user.id
 		});
+
+		if (!employee) {
+			throw new BadRequestException('Employee not found.');
+		}
 
 		const todayLog = await this.timeLogRepository.find({
 			where: {
