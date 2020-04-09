@@ -1,3 +1,10 @@
+import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
+import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
+import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';
+import { EditCandidateLocationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-location/edit-candidate-location.component';
+import { EditCandidateHistoryComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-history/edit-candidate-history.component';
+import { EditCandidateExperienceComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience.component';
+import { EditCandidateComponent } from './edit-candidate/edit-candidate.component';
 import { CandidatesService } from './../../@core/services/candidates.service';
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
@@ -12,7 +19,9 @@ import {
 	NbInputModule,
 	NbRouteTabsetModule,
 	NbSpinnerModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbSelectModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -29,11 +38,17 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { CandidatesComponent } from './candidates.component';
 import { CandidatesRoutingModule } from './candidates-routing.module';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
-import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 import { CandidateMutationModule } from '../../@shared/candidate/candidate-mutation/candidate-mutation.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageCandidateInviteComponent } from './manage-candidate-invite/manage-candidate-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
+import { EditCandidateDocumentsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-documents/edit-candidate-documents.component';
+import { EditCandidateEmploymentComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-employment/edit-candidate-employment.component';
+import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-hiring/edit-candidate-hiring.component';
+import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
+import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
+import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -41,13 +56,24 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 const COMPONENTS = [
 	CandidatesComponent,
-	CandidateFullNameComponent,
 	CandidateStatusComponent,
+	EditCandidateComponent,
+	EditCandidateDocumentsComponent,
+	EditCandidateEmploymentComponent,
+	EditCandidateExperienceComponent,
+	EditCandidateHiringComponent,
+	EditCandidateHistoryComponent,
+	EditCandidateLocationComponent,
+	EditCandidateMainComponent,
+	EditCandidateProfileComponent,
+	EditCandidateRatesComponent,
+	EditCandidateTasksComponent,
 	ManageCandidateInviteComponent
 ];
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
 		SharedModule,
 		CandidatesRoutingModule,
 		ThemeModule,
@@ -56,6 +82,7 @@ const COMPONENTS = [
 		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
+		NbSelectModule,
 		NbIconModule,
 		Ng2SmartTableModule,
 		NbDialogModule.forChild(),
@@ -73,17 +100,16 @@ const COMPONENTS = [
 			}
 		}),
 		NbSpinnerModule,
+		NbDatepickerModule,
 		TagsColorInputModule,
 		CandidateMutationModule,
 		InviteMutationModule,
-		InviteTableModule
+		InviteTableModule,
+		EmployeeLocationModule,
+		EmployeeRatesModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [
-		CandidateStatusComponent,
-		CandidateFullNameComponent,
-		ManageCandidateInviteComponent
-	],
+	entryComponents: [CandidateStatusComponent, ManageCandidateInviteComponent],
 	providers: [
 		OrganizationsService,
 		InviteGuard,

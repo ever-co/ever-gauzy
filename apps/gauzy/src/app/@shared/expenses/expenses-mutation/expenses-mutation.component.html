@@ -165,8 +165,9 @@
 						<div class="form-group">
 							<ng-select
 								[isOpen]="showWarning ? true : null"
+								[addTag]="addNewClient"
 								[items]="clients"
-								bindLabel="clientName"
+								bindLabel="name"
 								[searchable]="true"
 								autocomplete="on"
 								formControlName="client"
@@ -181,6 +182,7 @@
 						<div class="form-group">
 							<ng-select
 								[items]="projects"
+								[addTag]="addNewProject"
 								nbInput
 								bindLabel="projectName"
 								[searchable]="true"

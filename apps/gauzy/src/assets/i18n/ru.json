@@ -29,7 +29,8 @@
 		"PREVIOUS": "Предыдущий",
 		"INVITE_AGAIN": "Пригласить ещё раз",
 		"REQUEST": "Запросить",
-		"HISTORY": "История"
+		"HISTORY": "История",
+		"UPDATE": "Обновить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -140,6 +141,9 @@
 			"OFFER_DATE": "Дата предложения (опционально)",
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"APPLIED_DATE": "Дата подачи заявки (опционально)",
+			"EDUCATION": "Образование (факультативно)",
+			"EXPERIENCE": "Опыт работы (опционально)",
+			"SKILLS": "Навыки (опционально)",
 			"HIRED_DATE": "Дата окончания (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
 			"EMAIL_INVITATION": "Введите email для отправки приглашения",
@@ -186,6 +190,9 @@
 			"CITY": "Город",
 			"ADDRESS": "Адрес",
 			"ADDRESS_2": "Адрес 2",
+			"EDUCATION": "Образование",
+			"EXPERIENCE": "Опыт работы",
+			"SKILLS": "Навыки",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Ставка счета / час",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
@@ -222,6 +229,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
+			"EXPECTED_RATE": "Ожидаемый курс",
 			"LIMITS": "Лимиты"
 		},
 		"CHECKBOXES": {
@@ -238,6 +246,7 @@
 			"RECORD": "запись",
 			"USER_RECORD": "от вашей организации",
 			"EMPLOYEE": "служащий",
+			"CANDIDATE": "кандидат",
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
 			"INVITATION": "приглашение",
@@ -328,7 +337,9 @@
 		"TIME_REPORTS": "Отчеты по времени",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
 		"PAYMENT_GATEWAYS": "Платежные шлюзы",
-		"CUSTOM_SMTP": "Пользовательский SMTP"
+		"CUSTOM_SMTP": "Пользовательский SMTP",
+		"SALES": "Продажи",
+		"PAYMENTS": "Платежи"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -479,7 +490,7 @@
 		"REJECTED": "Отклонено",
 		"DELETED": "Удалено",
 		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Управление Кандидатом",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Департамент",
@@ -489,8 +500,12 @@
 			"ACCOUNT": "Аккаунт",
 			"EMPLOYMENT": "Занятость",
 			"LOCATION": "Местоположение",
-			"RATES": "Тарифы",
-			"HIRING": "Hiring"
+			"RATE": "Тарифы",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Опыт работы",
+			"TASKS": "Задачи",
+			"HISTORY": "История",
+			"DOCUMENTS": "Документы"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Шаг 1",
@@ -559,6 +574,8 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Настройки таймера",
 				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
+				"ALLOW_DELETE_TIME": "Разрешить удаление времени",
+				"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 				"REQUIRE_REASON": "Требуется причина",
 				"REQUIRE_DESCRIPTION": "Требуется описание",
 				"REQUIRE_PROJECT": "Требовать проект",
@@ -819,8 +836,8 @@
 			"TASK": "Задача",
 			"NAME": "Имя",
 			"DESCRIPTION": "Описание",
-			"UNIT_COST": "Стоимость Единицы",
-			"QUANTITY": "Количество",
+			"PRICE": "Цена",
+			"QTY": "Кол-во",
 			"TOTAL_VALUE": "Общая стоимость"
 		}
 	},
@@ -864,6 +881,7 @@
 			"EMPLOYEE_CLIENT_REMOVED": "Сотрудник удалён из клиента",
 			"EMPLOYEE_EDIT_ERROR": "Ошибка в редактировании сотрудника",
 			"EMPLOYEE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
+			"EMPLOYEE_LEVEL_UPDATE": "Уровень сотрудника успешно обновлен.",
 			"CONFIRM": "Подтвердить",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Вы уверены, что хотите отправить приглашение еще раз",
 			"OK": "ОК",
@@ -876,6 +894,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Требуется название команды и члены",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Требуется название поставщика",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Требуется название позиции",
+			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Требуется уровень сотрудника",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
@@ -945,6 +964,11 @@
 				"INVALID_TEAM_NAME": "Пожалуйста, добавьте название команды и хотя бы одного участника",
 				"REMOVE_TEAM": "Команда {{ name }} успешно удалена!"
 			},
+			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
+				"ADD_EMPLOYEE_LEVEL": "Новый уровень {{ name }} успешно добавлен!",
+				"REMOVE_EMPLOYEE_LEVEL": "Уровень {{ name }} сотрудника успешно удален!",
+				"INVALID_EMPLOYEE_LEVEL": "Пожалуйста, добавьте уровень сотрудника"
+			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "Новый поставщик {{ name }} успешно добавлен!",
 				"REMOVE_VENDOR": "Поставщик {{ name }} успешно удален!",
@@ -992,6 +1016,7 @@
 		"START_TIMER": "Запустить таймер",
 		"TIMER": "Таймер",
 		"MANUAL": "Ручной",
+		"MANUAL_NOT_ALLOW": "Ручное время не разрешено",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
 		"DATE": "Дата",

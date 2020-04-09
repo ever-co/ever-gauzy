@@ -1,0 +1,65 @@
+<nb-card class="employee-edit">
+	<nb-card-header class="header">
+		<div class="header-container">
+			<div class="employee-info">
+				<img
+					class="employee-image"
+					[src]="selectedCandidate?.user.imageUrl"
+					alt="Candidate Avatar"
+				/>
+
+				<div class="employee-details">
+					<span class="employee-name"
+						>{{ selectedCandidate?.user.firstName }}
+						{{ selectedCandidate?.user.lastName }}</span
+					>
+				</div>
+			</div>
+
+			<div class="employee-info">
+				<div class="employee-details">
+					<div
+						*ngIf="selectedCandidate?.user.username"
+						class="transparent"
+					>
+						{{ 'FORM.USERNAME' | translate }}:
+						<strong>{{ selectedCandidate?.user.username }}</strong>
+					</div>
+					<div class="transparent">
+						{{ 'FORM.EMAIL' | translate }}:
+						<strong>{{ selectedCandidate?.user.email }}</strong>
+					</div>
+				</div>
+				<div
+					*ngIf="hasEditPermission"
+					class="employee-details edit-icon"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="36"
+						height="36"
+						viewBox="0 0 36 36"
+					>
+						<circle
+							cx="18"
+							cy="18"
+							r="18"
+							fill="#0091FF"
+							fill-rule="evenodd"
+						/>
+					</svg>
+					<nb-icon
+						class="ml-2 open"
+						icon="edit-outline"
+						(click)="editCandidate()"
+						[options]="{ color: 'white' }"
+					>
+					</nb-icon>
+				</div>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="settings-body">
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+	</nb-card-body>
+</nb-card>

@@ -19,6 +19,7 @@ export interface User extends IBaseEntityModel {
 	hash?: string;
 	imageUrl?: string;
 	employee?: Employee;
+	employeeId?: string;
 	tenant: ITenant;
 	tags: Tag[];
 }

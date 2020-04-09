@@ -8,7 +8,8 @@ import {
 	Organization,
 	UserOrganizationCreateInput,
 	RolesEnum,
-	User
+	User,
+	Tag
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,10 +20,10 @@ import { Store } from '../../@core/services/store.service';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
-import { UserFullNameComponent } from './table-components/user-fullname/user-fullname.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { UsersService } from '../../@core/services';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 interface UserViewModel {
 	fullName: string;
@@ -61,6 +62,8 @@ export class UsersComponent extends TranslationBaseComponent
 	showAddCard: boolean;
 	userToEdit: UserOrganization;
 	users: User[] = [];
+	tags: Tag[];
+	selectedTags: any;
 
 	@ViewChild('usersTable', { static: false }) usersTable;
 
@@ -374,7 +377,7 @@ export class UsersComponent extends TranslationBaseComponent
 		this.selectedUser = null;
 
 		const { items } = await this.userOrganizationsService.getAll(
-			['user', 'user.role'],
+			['user', 'user.role', 'user.tags'],
 			{
 				orgId: this.selectedOrganizationId
 			}
@@ -393,6 +396,7 @@ export class UsersComponent extends TranslationBaseComponent
 					fullName: `${orgUser.user.firstName || ''} ${orgUser.user
 						.lastName || ''}`,
 					email: orgUser.user.email,
+					tag: orgUser.user.tags,
 					id: orgUser.id,
 					isActive: orgUser.isActive,
 					imageUrl: orgUser.user.imageUrl,
@@ -405,7 +409,6 @@ export class UsersComponent extends TranslationBaseComponent
 				});
 			}
 		}
-
 		this.sourceSmartTable.load(usersVm);
 
 		if (this.usersTable) {
@@ -424,7 +427,7 @@ export class UsersComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: UserFullNameComponent,
+					renderComponent: PictureNameTagsComponent,
 					class: 'align-row'
 				},
 				email: {

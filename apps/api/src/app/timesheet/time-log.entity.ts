@@ -97,4 +97,9 @@ export class TimeLog extends Base implements ITimeLog {
 	@IsBoolean()
 	@Column({ default: false })
 	isBillable: boolean;
+
+	@ApiProperty({ type: 'timestamptz' })
+	@IsDateString()
+	@Column({ nullable: true, default: null })
+	deletedAt?: Date;
 }

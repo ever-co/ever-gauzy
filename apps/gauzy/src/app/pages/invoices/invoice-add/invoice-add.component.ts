@@ -7,7 +7,9 @@ import {
 	CurrenciesEnum,
 	Invoice,
 	OrganizationClients,
-	Organization
+	Organization,
+	OrganizationProjects,
+	Task
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -20,6 +22,12 @@ import { OrganizationClientsService } from '../../../@core/services/organization
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
+import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { TasksService } from '../../../@core/services/tasks.service';
+import { InvoiceAddProjectsComponent } from './invoice-add-project.component';
+import { InvoiceAddEmployeesComponent } from './invoice-add-employees.component';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -34,19 +42,32 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	formInvoiceNumber: number;
 	formItemNumber: number;
 	currencies = Object.values(CurrenciesEnum);
-	smartTableSource = new LocalDataSource([]);
-	tasks: Object[] = [];
+	smartTableSource = new LocalDataSource();
+	task: Task;
+	tasks: Task[];
+	generatedTask: string;
 	loadedNumber: boolean;
 	organization: Organization;
 	selectedClient: OrganizationClients;
+	selectedProject: OrganizationProjects;
+	selectedTask: Task;
 	client: OrganizationClients;
 	clients: OrganizationClients[];
+	projects: OrganizationProjects[];
+	invoiceType: string;
+	shouldLoadTable: boolean;
+	isEmployeeHourTable: boolean;
+	isProjectHourTable: boolean;
+	isTaskHourTable: boolean;
+	organizationId: string;
 	private _ngDestroy$ = new Subject<void>();
 	get currency() {
 		return this.form.get('currency');
 	}
 
 	@ViewChild('invoiceItemTable', { static: false }) invoiceItemTable;
+	@ViewChild('employeeSelector', { static: false })
+	employeeSelector: EmployeeSelectorComponent;
 
 	constructor(
 		private fb: FormBuilder,
@@ -57,17 +78,19 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
-		private organizationsService: OrganizationsService
+		private organizationsService: OrganizationsService,
+		private organizationProjectsService: OrganizationProjectsService,
+		private tasksService: TasksService,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.getTasks();
 		this._loadOrganizationData();
 		this.initializeForm();
 		this.form.get('currency').disable();
-		this.loadSmartTable();
-		this._applyTranslationOnSmartTable();
 	}
 
 	async initializeForm() {
@@ -81,7 +104,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			paid: [''],
 			tax: ['', Validators.required],
 			terms: ['', Validators.required],
-			client: ['', Validators.required]
+			client: ['', Validators.required],
+			invoiceType: ['', Validators.required],
+			project: ['', Validators.required],
+			task: ['', Validators.required]
 		});
 	}
 
@@ -89,75 +115,227 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.loadedNumber = false;
 		await this.createInvoiceItemNumber();
 		this.loadedNumber = true;
-		this.settingsSmartTable = {
-			add: {
-				addButtonContent: '<i class="nb-plus"></i>',
-				createButtonContent: '<i class="nb-checkmark"></i>',
-				cancelButtonContent: '<i class="nb-close"></i>',
-				confirmCreate: true
-			},
-			edit: {
-				editButtonContent: '<i class="nb-edit"></i>',
-				saveButtonContent: '<i class="nb-checkmark"></i>',
-				cancelButtonContent: '<i class="nb-close"></i>'
-			},
-			delete: {
-				deleteButtonContent: '<i class="nb-trash"></i>'
-			},
-			columns: {
-				itemNumber: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-					),
-					type: 'number',
-					addable: false
+		if (this.invoiceType === 'By Employee Hours') {
+			this.settingsSmartTable = {
+				add: {
+					addButtonContent: '<i class="nb-plus"></i>',
+					createButtonContent: '<i class="nb-checkmark"></i>',
+					cancelButtonContent: '<i class="nb-close"></i>',
+					confirmCreate: true
 				},
-				task: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.TASK'
-					),
-					type: 'custom',
-					renderComponent: InvoiceAddTasksComponent,
-					addable: false,
-					editable: false
+				edit: {
+					editButtonContent: '<i class="nb-edit"></i>',
+					saveButtonContent: '<i class="nb-checkmark"></i>',
+					cancelButtonContent: '<i class="nb-close"></i>'
 				},
-				name: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.NAME'
-					),
-					type: 'string'
+				delete: {
+					deleteButtonContent: '<i class="nb-trash"></i>'
 				},
-				description: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
-					),
-					type: 'string'
-				},
-				unitCost: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.UNIT_COST'
-					),
-					type: 'number'
-				},
-				quantity: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.QUANTITY'
-					),
-					type: 'number'
-				},
-				totalValue: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
-					),
-					type: 'number',
-					addable: false,
-					editable: false,
-					valuePrepareFunction: (cell, row) => {
-						return row.unitCost * row.quantity;
+				columns: {
+					itemNumber: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
+						),
+						type: 'number',
+						addable: false
+					},
+					employee: {
+						title: 'Employee',
+						type: 'custom',
+						renderComponent: InvoiceAddEmployeesComponent
+					},
+					description: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
+						),
+						type: 'string'
+					},
+					hourlyRate: {
+						title: 'Hourly Rate',
+						type: 'number'
+					},
+					hoursWorked: {
+						title: 'Hours Worked',
+						type: 'number'
+					},
+					totalValue: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
+						),
+						type: 'number',
+						addable: false,
+						editable: false,
+						valuePrepareFunction: (cell, row) => {
+							return row.hourlyRate * row.hoursWorked;
+						}
 					}
 				}
-			}
-		};
+			};
+		} else if (this.invoiceType === 'By Project Hours') {
+			this.settingsSmartTable = {
+				add: {
+					addButtonContent: '<i class="nb-plus"></i>',
+					createButtonContent: '<i class="nb-checkmark"></i>',
+					cancelButtonContent: '<i class="nb-close"></i>',
+					confirmCreate: true
+				},
+				edit: {
+					editButtonContent: '<i class="nb-edit"></i>',
+					saveButtonContent: '<i class="nb-checkmark"></i>',
+					cancelButtonContent: '<i class="nb-close"></i>'
+				},
+				delete: {
+					deleteButtonContent: '<i class="nb-trash"></i>'
+				},
+				columns: {
+					itemNumber: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
+						),
+						type: 'number',
+						addable: false
+					},
+					project: {
+						title: 'Project',
+						type: 'custom',
+						renderComponent: InvoiceAddProjectsComponent
+					},
+					description: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
+						),
+						type: 'string'
+					},
+					hourlyRate: {
+						title: 'Hourly Rate',
+						type: 'number'
+					},
+					hoursWorked: {
+						title: 'Hours Worked',
+						type: 'number'
+					},
+					totalValue: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
+						),
+						type: 'number',
+						addable: false,
+						editable: false
+					}
+				}
+			};
+		} else if (this.invoiceType === 'By Task Hours') {
+			this.settingsSmartTable = {
+				add: {
+					addButtonContent: '<i class="nb-plus"></i>',
+					createButtonContent: '<i class="nb-checkmark"></i>',
+					cancelButtonContent: '<i class="nb-close"></i>',
+					confirmCreate: true
+				},
+				edit: {
+					editButtonContent: '<i class="nb-edit"></i>',
+					saveButtonContent: '<i class="nb-checkmark"></i>',
+					cancelButtonContent: '<i class="nb-close"></i>'
+				},
+				delete: {
+					deleteButtonContent: '<i class="nb-trash"></i>'
+				},
+				columns: {
+					itemNumber: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
+						),
+						type: 'number',
+						addable: false
+					},
+					task: {
+						title: 'Task',
+						type: 'custom',
+						renderComponent: InvoiceAddTasksComponent
+					},
+					description: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
+						),
+						type: 'string'
+					},
+					hourlyRate: {
+						title: 'Hourly Rate',
+						type: 'number'
+					},
+					hoursWorked: {
+						title: 'Hours Worked',
+						type: 'number'
+					},
+					totalValue: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
+						),
+						type: 'number',
+						addable: false,
+						editable: false,
+						valuePrepareFunction: (cell, row) => {
+							return row.hourlyRate * row.hoursWorked;
+						}
+					}
+				}
+			};
+		} else {
+			this.settingsSmartTable = {
+				add: {
+					addButtonContent: '<i class="nb-plus"></i>',
+					createButtonContent: '<i class="nb-checkmark"></i>',
+					cancelButtonContent: '<i class="nb-close"></i>',
+					confirmCreate: true
+				},
+				edit: {
+					editButtonContent: '<i class="nb-edit"></i>',
+					saveButtonContent: '<i class="nb-checkmark"></i>',
+					cancelButtonContent: '<i class="nb-close"></i>'
+				},
+				delete: {
+					deleteButtonContent: '<i class="nb-trash"></i>'
+				},
+				columns: {
+					itemNumber: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
+						),
+						type: 'number',
+						addable: false
+					},
+					description: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
+						),
+						type: 'string'
+					},
+					quantity: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.QTY'
+						),
+						type: 'number'
+					},
+					price: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.PRICE'
+						),
+						type: 'number'
+					},
+					totalValue: {
+						title: this.getTranslation(
+							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
+						),
+						type: 'number',
+						valuePrepareFunction: (cell, row) => {
+							return row.quantity * row.price;
+						},
+						addable: false,
+						editable: false
+					}
+				}
+			};
+		}
 	}
 
 	async addInvoice() {
@@ -205,7 +383,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 
-			this.router.navigate(['/pages/invoices']);
+			this.router.navigate(['/pages/accounting/invoices']);
 		}
 	}
 
@@ -218,8 +396,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	private async createInvoiceItemNumber() {
 		const { items } = await this.invoiceItemService.getAll();
 		if (items.length) {
-			console.log(items);
-			this.formItemNumber = +items[0].itemNumber + 1;
+			this.formItemNumber = +items[items.length - 1].itemNumber + 1;
 		} else {
 			this.formItemNumber = 1;
 		}
@@ -239,6 +416,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
 				if (organization) {
+					const projects = await this.organizationProjectsService.getAll(
+						[],
+						{ organizationId: organization.id }
+					);
+					this.projects = projects.items;
 					this.organization = organization;
 					const orgData = await this.organizationsService
 						.getById(organization.id, [
@@ -265,8 +447,118 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			});
 	}
 
+	private async getTasks() {
+		this.tasksService.getAllTasks().subscribe((data) => {
+			this.tasks = data.items;
+		});
+	}
+
+	onTypeChange($event) {
+		this.invoiceType = $event;
+		if ($event === 'By Employee Hours') {
+			this.isEmployeeHourTable = true;
+			this.isProjectHourTable = false;
+			this.isTaskHourTable = false;
+		} else if ($event === 'By Project Hours') {
+			this.isEmployeeHourTable = false;
+			this.isProjectHourTable = true;
+			this.isTaskHourTable = false;
+		} else if ($event === 'By Task Hours') {
+			this.isEmployeeHourTable = false;
+			this.isProjectHourTable = false;
+			this.isTaskHourTable = true;
+		} else {
+			this.isEmployeeHourTable = false;
+			this.isProjectHourTable = false;
+			this.isTaskHourTable = false;
+		}
+	}
+
+	generateTable() {
+		this.smartTableSource.refresh();
+		let fakeData = [];
+		if (this.invoiceType === 'By Employee Hours') {
+			fakeData = [
+				{
+					itemNumber: 1,
+					description: 'Desc 1',
+					hourlyRate: 0,
+					hoursWorked: 0,
+					totalValue: 0,
+					employeeId: this.employeeSelector.selectedEmployee.id
+				}
+			];
+		} else if (this.invoiceType === 'By Project Hours') {
+			fakeData = [
+				{
+					itemNumber: 1,
+					description: 'Desc 1',
+					hourlyRate: 0,
+					hoursWorked: 0,
+					totalValue: 0,
+					selectedProject: this.selectedProject[0]
+				},
+				{
+					itemNumber: 2,
+					description: 'Desc 2',
+					hourlyRate: 1,
+					hoursWorked: 1,
+					totalValue: 1,
+					selectedProject: this.selectedProject[1]
+				},
+				{
+					itemNumber: 3,
+					description: 'Desc 3',
+					hourlyRate: 2,
+					hoursWorked: 2,
+					totalValue: 4,
+					selectedProject: this.selectedProject[2]
+				}
+			];
+		} else if (this.invoiceType === 'By Task Hours') {
+			fakeData = [
+				{
+					itemNumber: 1,
+					description: 'Desc 1',
+					hourlyRate: 0,
+					hoursWorked: 0,
+					totalValue: 0,
+					selectedTask: this.selectedTask[0]
+				},
+				{
+					itemNumber: 2,
+					description: 'Desc 2',
+					hourlyRate: 1,
+					hoursWorked: 1,
+					totalValue: 1,
+					selectedTask: this.selectedTask[1]
+				},
+				{
+					itemNumber: 3,
+					description: 'Desc 3',
+					hourlyRate: 2,
+					hoursWorked: 2,
+					totalValue: 4,
+					selectedTask: this.selectedTask[2]
+				}
+			];
+		}
+		this.shouldLoadTable = true;
+		this.loadSmartTable();
+		this._applyTranslationOnSmartTable();
+		this.smartTableSource.load(fakeData);
+	}
+
+	selectTask($event) {
+		this.selectedTask = $event;
+	}
+
 	selectClient($event) {
 		this.selectedClient = $event;
+	}
+
+	selectProject($event) {
+		this.selectedProject = $event;
 	}
 
 	searchClient(term: string, item: any) {
@@ -274,6 +566,27 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return item.name.toLowerCase().includes(term.toLowerCase());
 		}
 	}
+
+	addNewClient = (name: string): Promise<OrganizationClients> => {
+		this.organizationId = this.store.selectedOrganization.id;
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationClientsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
 
 	cancel() {
 		this.router.navigate(['/pages/invoices']);

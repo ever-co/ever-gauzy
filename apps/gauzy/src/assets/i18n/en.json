@@ -30,7 +30,8 @@
 		"INVITE_AGAIN": "Invite Again",
 		"REQUEST": "Request",
 		"HISTORY": "History",
-		"SYNC": "Sync"
+		"SYNC": "Sync",
+		"UPDATE": "Update"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -143,6 +144,9 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"APPLIED_DATE": "Applied Date (optional)",
+			"EDUCATION": "Education (optional)",
+			"EXPERIENCE": "Work experience (optional)",
+			"SKILLS": "Skills (optional)",
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
@@ -189,6 +193,9 @@
 			"CITY": "City",
 			"ADDRESS": "Address",
 			"ADDRESS_2": "Address 2",
+			"EDUCATION": "Education",
+			"EXPERIENCE": "Work experience",
+			"SKILLS": "Skills",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
@@ -225,6 +232,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
@@ -241,6 +249,7 @@
 			"RECORD": "record",
 			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "employee",
+			"CANDIDATE": "candidate",
 			"EXPENSE": "Expense",
 			"USER": "user",
 			"INVITATION": "invitation",
@@ -331,7 +340,9 @@
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
-		"CUSTOM_SMTP": "Custom SMTP"
+		"CUSTOM_SMTP": "Custom SMTP",
+		"SALES": "Sales",
+		"PAYMENTS": "Payments"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -487,7 +498,7 @@
 		"REJECTED": "Rejected",
 		"DELETED": "Deleted",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Developer",
 			"DEPARTMENT": "Department",
@@ -497,8 +508,12 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
-			"RATES": "Rates",
-			"HIRING": "Hiring"
+			"RATE": "Rates",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Experience",
+			"TASKS": "Tasks",
+			"HISTORY": "History",
+			"DOCUMENTS": "Documents"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -567,6 +582,8 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_MANUAL_TIME": "Allow Manual Time",
 				"REQUIRE_REASON": "Require Reason",
 				"REQUIRE_DESCRIPTION": "Require Description",
 				"REQUIRE_PROJECT": "Require Project",
@@ -827,8 +844,8 @@
 			"TASK": "Task",
 			"NAME": "Name",
 			"DESCRIPTION": "Description",
-			"UNIT_COST": "Unit Cost",
-			"QUANTITY": "Quantity",
+			"PRICE": "Price",
+			"QTY": "Qty",
 			"TOTAL_VALUE": "Total Value"
 		}
 	},
@@ -872,6 +889,7 @@
 			"EMPLOYEE_CLIENT_REMOVED": "Employee removed from the client",
 			"EMPLOYEE_EDIT_ERROR": "Error in editing employee",
 			"EMPLOYEE_PROFILE_UPDATE": "{{name}} profile updated.",
+			"EMPLOYEE_LEVEL_UPDATE": "Employee Level is successfully updated.",
 			"CONFIRM": "Confirm",
 			"ARE_YOU_SURE_YOU_WANT_TO_RESEND_THE_INVITE_TO": "Are you sure you want to resend the invite to",
 			"OK": "OK",
@@ -884,6 +902,7 @@
 			"NEW_ORGANIZATION_TEAM_INVALID_NAME": "Team name and members are required",
 			"NEW_ORGANIZATION_VENDOR_INVALID_NAME": "Vendor name is required",
 			"NEW_ORGANIZATION_POSITION_INVALID_NAME": "Position name is required",
+			"NEW_ORGANIZATION_EMPLOYEE_LEVEL_INVALID_NAME": "Employee Level is required",
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
@@ -953,6 +972,11 @@
 				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
 				"REMOVE_TEAM": "Team {{ name }} successfully removed!"
 			},
+			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
+				"ADD_EMPLOYEE_LEVEL": "New Employee Level {{ name }} successfully added!",
+				"REMOVE_EMPLOYEE_LEVEL": "Employee Level {{ name }} successfully removed!",
+				"INVALID_EMPLOYEE_LEVEL": "Please add an Employee Level"
+			},
 			"EDIT_ORGANIZATIONS_VENDOR": {
 				"ADD_VENDOR": "New vendor {{ name }} successfully added!",
 				"REMOVE_VENDOR": "Vendor {{ name }} successfully removed!",
@@ -1000,6 +1024,7 @@
 		"START_TIMER": "Start Timer",
 		"TIMER": "Timer",
 		"MANUAL": "Manual",
+		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"DATE": "Date",

@@ -67,19 +67,19 @@ export class OrganizationProjects extends Base
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	type: string;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@Column({ nullable: true })
 	currency: string;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
-	@Column()
+	@Column({ nullable: true })
 	public: boolean;
 
 	@ManyToMany((type) => Employee, { cascade: ['update'] })

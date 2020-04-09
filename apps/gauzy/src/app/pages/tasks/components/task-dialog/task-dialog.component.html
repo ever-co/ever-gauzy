@@ -20,6 +20,7 @@
 				<div class="col-sm-6">
 					<div class="form-group">
 						<ng-select
+							[addTag]="addNewProject"
 							[items]="projects"
 							nbInput
 							bindLabel="name"
@@ -56,6 +57,16 @@
 						nbInput
 						placeholder="Add title"
 					/>
+				</div>
+				<div class="col-sm-12">
+					<div class="formGroup">
+						<ngx-tags-color-input
+							[form]="form"
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsHandler($event)"
+						>
+						</ngx-tags-color-input>
+					</div>
 				</div>
 				<div class="col-sm-12">
 					<textarea

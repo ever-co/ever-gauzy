@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { OrganizationProjects } from '..';
+import { OrganizationProjects, Tag } from '..';
 
 export interface Task extends IBaseEntityModel {
 	title: string;
@@ -7,6 +7,7 @@ export interface Task extends IBaseEntityModel {
 	status?: string;
 	project?: OrganizationProjects;
 	projectId?: string;
+	tags?: Tag[];
 }
 
 export interface GetTaskOptions {

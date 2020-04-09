@@ -20,7 +20,7 @@ export class ToastrService {
 	) {
 		let displayMesage: string = '';
 
-		if (message.message && typeof message.message == 'string') {
+		if (message && message.message && typeof message.message == 'string') {
 			displayMesage = message.message;
 		} else {
 			displayMesage = message;
@@ -39,7 +39,11 @@ export class ToastrService {
 	) {
 		let displayMesage: string = '';
 
-		if (error.error.message && typeof error.error.message == 'string') {
+		if (
+			error.error &&
+			error.error.message &&
+			typeof error.error.message == 'string'
+		) {
 			displayMesage = error.error.message;
 		} else if (error.message && typeof error.message == 'string') {
 			displayMesage = error.message;

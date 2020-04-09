@@ -4,12 +4,13 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TaskDialogComponent } from '../task-dialog/task-dialog.component';
 import { first, takeUntil } from 'rxjs/operators';
-import { Task } from '@gauzy/models';
+import { Task, Tag } from '@gauzy/models';
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 import { Observable, Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 @Component({
 	selector: 'ngx-task',
@@ -27,6 +28,7 @@ export class TaskComponent extends TranslationBaseComponent
 	disableButton = true;
 	tasks$: Observable<Task[]>;
 	selectedTask: Task;
+	tags: Tag[];
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -61,8 +63,10 @@ export class TaskComponent extends TranslationBaseComponent
 				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_DESCRIPTION'),
-					type: 'string',
-					filter: false
+					type: 'custom',
+					filter: false,
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
 				},
 				projectName: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
@@ -94,7 +98,8 @@ export class TaskComponent extends TranslationBaseComponent
 	async editTaskDIalog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask
+				selectedTask: this.selectedTask,
+				tags: this.selectedTask.tags
 			}
 		});
 
