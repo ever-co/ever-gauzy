@@ -94,7 +94,6 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			tags: this.userBasicInfo.selectedTags
 		};
 		this.candidates.push(newCandidate);
-		console.log(this.candidates);
 		this.userBasicInfo.loadFormData();
 		this.candidateCv.loadFormData();
 		this.form = this.userBasicInfo.form;
