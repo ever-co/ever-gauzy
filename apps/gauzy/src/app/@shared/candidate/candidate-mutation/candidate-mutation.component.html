@@ -31,11 +31,7 @@
 					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_2' | translate
 				}}</ng-template>
 				<div class="file-uploader">
-					<ga-user-basic-info-form
-						#userBasicInfoCV
-						[isCandidateCV]="true"
-					>
-					</ga-user-basic-info-form>
+					<ga-candidate-cv #candidateCv></ga-candidate-cv>
 				</div>
 
 				<div class="button-container">

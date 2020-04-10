@@ -1,0 +1,17 @@
+<div class="row">
+	<div class="col-sm-12">
+		<div class="form-group">
+			<label for="inputCvUrl" class="label">{{
+				'FORM.LABELS.CV_URL' | translate
+			}}</label>
+			<ngx-file-uploader-input
+				id="inputCvUrl"
+				[placeholder]="
+					'FORM.PLACEHOLDERS.UPLOADER_CV_PLACEHOLDER' | translate
+				"
+				[fileUrl]="cvUrl?.value"
+				(uploadedImgUrl)="cvUrl.setValue($event)"
+			></ngx-file-uploader-input>
+		</div>
+	</div>
+</div>
