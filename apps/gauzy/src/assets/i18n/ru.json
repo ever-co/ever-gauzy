@@ -30,11 +30,13 @@
 		"INVITE_AGAIN": "Пригласить ещё раз",
 		"REQUEST": "Запросить",
 		"HISTORY": "История",
+		"SYNC": "Синхр.",
 		"UPDATE": "Обновить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
 		"CLIENT_NAME": "Имя клиента",
+		"NAME": "Имя",
 		"VENDOR": "Продавец",
 		"CATEGORY": "Категория",
 		"CURRENCY": "Валюта",
@@ -355,7 +357,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Выберите организацию",
+			"SYNCED_PROJECTS": "Проекты синхронизированы"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",

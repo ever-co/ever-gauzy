@@ -13,3 +13,16 @@ export interface ICreateIntegrationDto {
 	redirect_uri: string;
 	client_secret: string;
 }
+
+export interface IHubstaffOrganization {
+	id: number;
+	name: string;
+	status: string;
+}
+
+export interface IHubstaffProject {
+	id: number;
+	name: string;
+	status: string;
+	client_id: number;
+}
