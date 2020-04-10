@@ -12,7 +12,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	userId: string;
 	organization: Organization;
 	orgId: string;
-	status?: string;
+	status?: Status;
 	teams?: OrganizationTeams[];
 	tenant: ITenant;
 	organizationDepartments?: OrganizationDepartment[];
@@ -38,6 +38,9 @@ export interface Education {
 	field?: string;
 	notes?: string;
 }
+
+export type Status = 'applied' | 'rejected' | 'hired';
+
 export interface CandidateFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 	user?: UserFindInput;

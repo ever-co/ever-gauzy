@@ -50,13 +50,13 @@ import { EmployeeAverageBonusComponent } from './table-components/employee-avera
 import { EmployeeAverageExpensesComponent } from './table-components/employee-average-expenses/employee-average-expenses.component';
 import { EmployeeAverageIncomeComponent } from './table-components/employee-average-income/employee-average-income.component';
 import { EmployeeBonusComponent } from './table-components/employee-bonus/employee-bonus.component';
-import { EmployeeFullNameComponent } from './table-components/employee-fullname/employee-fullname.component';
 import { EmployeeWorkStatusComponent } from './table-components/employee-work-status/employee-work-status.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -68,7 +68,6 @@ const COMPONENTS = [
 	EmployeeAverageIncomeComponent,
 	EmployeeAverageExpensesComponent,
 	EmployeeAverageBonusComponent,
-	EmployeeFullNameComponent,
 	EmployeeWorkStatusComponent,
 	EditEmployeeComponent,
 	EditEmployeeProfileComponent,
@@ -84,6 +83,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
 		SharedModule,
 		EmployeesRoutingModule,
 		ThemeModule,
@@ -130,7 +130,6 @@ const COMPONENTS = [
 		EmployeeAverageIncomeComponent,
 		EmployeeAverageExpensesComponent,
 		EmployeeAverageBonusComponent,
-		EmployeeFullNameComponent,
 		EmployeeWorkStatusComponent,
 		ManageEmployeeInviteComponent
 	],

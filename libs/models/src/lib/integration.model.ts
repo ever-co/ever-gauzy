@@ -8,6 +8,12 @@ export interface IIntegrationSetting {
 	settingsValue: string;
 }
 
+export interface IIntegrationMap {
+	integration: IIntegration;
+	sourceId: string;
+	gauzyId: string;
+}
+
 export interface IIntegrationViewModel {
 	title: string;
 	imgSrc: string | SafeResourceUrl;
@@ -22,4 +28,9 @@ export interface IIntegration extends IBaseEntityModel {
 export enum IntegrationEnum {
 	UPWORK = 'Upwork',
 	HUBSTAFF = 'Hubstaff'
+}
+
+export enum IntegrationEntity {
+	PROJECT = 'Project',
+	ORGANIZATION = 'Organization'
 }

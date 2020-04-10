@@ -84,6 +84,7 @@
 		></nb-action> -->
 
 		<nb-action
+			*ngIf="user?.employee?.id"
 			class="timer-action"
 			[nbPopover]="timerCard"
 			#timerPopover="nbPopover"

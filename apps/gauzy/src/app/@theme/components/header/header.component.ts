@@ -38,7 +38,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionPEdit = false;
 
 	@Input() position = 'normal';
-	@Input() user: User;
+	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
 	@ViewChild('timerPopover', { static: false })
@@ -71,7 +71,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.router.events
 			.pipe(filter((event) => event instanceof NavigationEnd))
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((e) => {
+			.subscribe(() => {
 				this.timeTrackerService.showTimerWindow = false;
 			});
 
@@ -104,6 +104,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				}
 			});
 
+		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+			this.user = user;
+		});
+
 		this.themeService
 			.onThemeChange()
 			.pipe(takeUntil(this._ngDestroy$))
@@ -119,10 +123,12 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.timeTrackerService.$showTimerWindow
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((status: boolean) => {
-				if (status) {
-					this.timerPopover.show();
-				} else {
-					this.timerPopover.hide();
+				if (this.timerPopover) {
+					if (status) {
+						this.timerPopover.show();
+					} else {
+						this.timerPopover.hide();
+					}
 				}
 			});
 	}

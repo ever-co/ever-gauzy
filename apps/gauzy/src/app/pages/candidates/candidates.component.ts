@@ -8,13 +8,13 @@ import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidatesService } from '../../@core/services/candidates.service';
-import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -231,7 +231,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: CandidateFullNameComponent,
+					renderComponent: PictureNameTagsComponent,
 					class: 'align-row'
 				},
 				email: {

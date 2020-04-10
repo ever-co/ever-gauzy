@@ -48,9 +48,11 @@ import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
-import { Candidate } from '../candidate';
+import { CandidateSource } from '../candidate_source/candidate_source.entity';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 import { Integration } from '../integration/integration.entity';
+import { IntegrationMap } from '../integration-map/integration-map.entity';
+import { Candidate } from '../candidate/candidate.entity';
 
 const entities = [
 	Invite,
@@ -92,8 +94,10 @@ const entities = [
 	Activity,
 	Screenshot,
 	ExpenseCategory,
+	CandidateSource,
 	IntegrationSetting,
-	Integration
+	Integration,
+	IntegrationMap
 ];
 
 @Module({

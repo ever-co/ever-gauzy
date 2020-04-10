@@ -30,11 +30,13 @@
 		"INVITE_AGAIN": "Пригласить ещё раз",
 		"REQUEST": "Запросить",
 		"HISTORY": "История",
+		"SYNC": "Синхр.",
 		"UPDATE": "Обновить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
 		"CLIENT_NAME": "Имя клиента",
+		"NAME": "Имя",
 		"VENDOR": "Продавец",
 		"CATEGORY": "Категория",
 		"CURRENCY": "Валюта",
@@ -229,6 +231,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
+			"EXPECTED_RATE": "Ожидаемый курс",
 			"LIMITS": "Лимиты"
 		},
 		"CHECKBOXES": {
@@ -354,7 +357,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Выберите организацию",
+			"SYNCED_PROJECTS": "Проекты синхронизированы"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
@@ -499,7 +507,7 @@
 			"ACCOUNT": "Аккаунт",
 			"EMPLOYMENT": "Занятость",
 			"LOCATION": "Местоположение",
-			"RATE": "Ставка",
+			"RATE": "Тарифы",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Опыт работы",
 			"TASKS": "Задачи",
@@ -573,6 +581,8 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Настройки таймера",
 				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
+				"ALLOW_DELETE_TIME": "Разрешить удаление времени",
+				"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 				"REQUIRE_REASON": "Требуется причина",
 				"REQUIRE_DESCRIPTION": "Требуется описание",
 				"REQUIRE_PROJECT": "Требовать проект",
@@ -833,8 +843,8 @@
 			"TASK": "Задача",
 			"NAME": "Имя",
 			"DESCRIPTION": "Описание",
-			"UNIT_COST": "Стоимость Единицы",
-			"QUANTITY": "Количество",
+			"PRICE": "Цена",
+			"QTY": "Кол-во",
 			"TOTAL_VALUE": "Общая стоимость"
 		}
 	},
@@ -1013,6 +1023,7 @@
 		"START_TIMER": "Запустить таймер",
 		"TIMER": "Таймер",
 		"MANUAL": "Ручной",
+		"MANUAL_NOT_ALLOW": "Ручное время не разрешено",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
 		"DATE": "Дата",

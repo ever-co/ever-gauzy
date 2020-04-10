@@ -121,26 +121,42 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 			this.maxSlotStartTime = '23:59';
 			this.maxSlotEndTime = '23:59';
 		}
+
 		this.updateEndTimeSlot(this.startTime);
+	}
+
+	chnageStartTime(time: string) {
+		if (time) {
+			this.updateEndTimeSlot(time);
+			if (
+				!moment(time, 'HH:mm').isBefore(moment(this.endTime, 'HH:mm'))
+			) {
+				this.endTime = moment(time, 'HH:mm')
+					.add(30, 'minutes')
+					.format('HH:mm');
+			}
+		} else {
+			this.endTime = null;
+		}
 	}
 
 	updateEndTimeSlot(time: string) {
 		this.minSlotEndTime = moment(time, 'HH:mm')
 			.add(10, 'minutes')
 			.format('HH:mm');
-		// if (!moment(time, 'HH:mm').isBefore(moment(this.endTime, 'HH:mm'))) {
-		// 	if (this.startTime) {
-		// 		this.endTime = moment(this.startTime, 'HH:mm')
-		// 			.add(30, 'minutes')
-		// 			.format('HH:mm');
-		// 	} else {
-		// 		this.endTime = null;
-		// 	}
-		// }
 	}
 
 	writeValue(value: IDateRange) {
 		if (value) {
+			if (!value.start) {
+				value.start = moment()
+					.subtract(30, 'minutes')
+					.toDate();
+			}
+			if (!value.end) {
+				value.end = new Date();
+			}
+
 			let start = moment(value.start);
 			this.date = start.toDate();
 
@@ -154,6 +170,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 			this.endTime = `${hour}:${minute}`;
 		}
 		this._selectedRange = value;
+
 		//this.updateTimePickerLimit(value.start)-
 	}
 	registerOnChange(fn: (rating: number) => void): void {

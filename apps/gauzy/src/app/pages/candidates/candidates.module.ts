@@ -40,7 +40,6 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { CandidatesComponent } from './candidates.component';
 import { CandidatesRoutingModule } from './candidates-routing.module';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
-import { CandidateFullNameComponent } from './table-components/candidate-fullname/candidate-fullname.component';
 import { CandidateMutationModule } from '../../@shared/candidate/candidate-mutation/candidate-mutation.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageCandidateInviteComponent } from './manage-candidate-invite/manage-candidate-invite.component';
@@ -53,6 +52,7 @@ import { EmployeeLocationModule } from '../../@shared/employee/employee-location
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
 import { EditCandidateSkillsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-skills/edit-candidate-skills.component';
 import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-education/edit-candidate-education.component';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -60,7 +60,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 const COMPONENTS = [
 	CandidatesComponent,
-	CandidateFullNameComponent,
 	CandidateStatusComponent,
 	EditCandidateComponent,
 	EditCandidateDocumentsComponent,
@@ -80,6 +79,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
 		SharedModule,
 		CandidatesRoutingModule,
 		ThemeModule,
@@ -118,11 +118,7 @@ const COMPONENTS = [
 		EmployeeRatesModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [
-		CandidateStatusComponent,
-		CandidateFullNameComponent,
-		ManageCandidateInviteComponent
-	],
+	entryComponents: [CandidateStatusComponent, ManageCandidateInviteComponent],
 	providers: [
 		OrganizationsService,
 		InviteGuard,

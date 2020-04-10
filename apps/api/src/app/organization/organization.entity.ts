@@ -180,7 +180,17 @@ export class Organization extends LocationBase implements IOrganization {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: true })
+	allowManualTime?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
 	allowModifyTime?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	allowDeleteTime?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()

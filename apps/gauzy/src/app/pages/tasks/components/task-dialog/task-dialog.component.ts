@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Task, OrganizationProjects } from '@gauzy/models';
+import { Task, OrganizationProjects, Tag } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
@@ -28,6 +28,8 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
 	selectedTask: Task;
 	organizationId: string;
+	tags: Tag[];
+	selectedTags: any;
 
 	constructor(
 		public dialogRef: NbDialogRef<TaskDialogComponent>,
@@ -64,7 +66,8 @@ export class TaskDialogComponent extends TranslationBaseComponent
 			title: [title, Validators.required],
 			project: [project],
 			status: [status],
-			description: [description]
+			description: [description],
+			tags: [this.tags]
 		});
 	}
 
@@ -93,5 +96,9 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		if (this.form.valid) {
 			this.dialogRef.close(this.form.value);
 		}
+	}
+
+	selectedTagsHandler(ev) {
+		this.tags = ev;
 	}
 }

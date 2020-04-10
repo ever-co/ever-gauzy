@@ -67,21 +67,23 @@ export class TimeTrackerService {
 			this.dataStore.showTimerWindow
 		);
 
-		this.getTimerStatus().then((status: TimerStatus) => {
-			this.dueration = status.duration;
-			if (status.lastLog && !status.lastLog.stoppedAt) {
-				this.current_session_dueration = moment().diff(
-					toLocal(status.lastLog.startedAt),
-					'seconds'
-				);
-			} else {
-				this.current_session_dueration = 0;
-			}
+		this.getTimerStatus()
+			.then((status: TimerStatus) => {
+				this.dueration = status.duration;
+				if (status.lastLog && !status.lastLog.stoppedAt) {
+					this.current_session_dueration = moment().diff(
+						toLocal(status.lastLog.startedAt),
+						'seconds'
+					);
+				} else {
+					this.current_session_dueration = 0;
+				}
 
-			if (status.running) {
-				this.turnOnTimer();
-			}
-		});
+				if (status.running) {
+					this.turnOnTimer();
+				}
+			})
+			.catch(() => {});
 	}
 
 	public get $showTimerWindow(): Observable<boolean> {
