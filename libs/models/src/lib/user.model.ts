@@ -34,6 +34,7 @@ export interface UserFindInput extends IBaseEntityModel {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	tags?: Tag[];
 }
 
 export interface UserRegistrationInput {
@@ -52,6 +53,7 @@ export interface UserCreateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	tags?: Tag[];
 }
 
 export interface UserUpdateInput {

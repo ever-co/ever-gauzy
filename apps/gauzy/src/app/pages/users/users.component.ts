@@ -33,6 +33,7 @@ interface UserViewModel {
 	id: string;
 	roleName?: string;
 	role?: string;
+	tags?: Tag[];
 }
 
 @Component({
@@ -266,11 +267,15 @@ export class UsersComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const { items } = await this.userOrganizationsService.getAll(['user'], {
-			orgId: this.organization.id
-		});
+		const { items } = await this.userOrganizationsService.getAll(
+			['user', 'user.tags'],
+			{
+				orgId: this.organization.id
+			}
+		);
 
 		this.users = items.map((user) => user.user);
+		console.warn(items);
 	}
 
 	async remove() {

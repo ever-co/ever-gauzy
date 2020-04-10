@@ -60,7 +60,8 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 	private async _loadUsers() {
 		const { items } = await this.usersOrganizationsService.getAll([
 			'user',
-			'user.role'
+			'user.role',
+			'user.tags'
 		]);
 
 		const usersVm = [];
@@ -83,7 +84,8 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 					id: orgUser.userId,
 					isActive: orgUser.isActive,
 					imageUrl: orgUser.user.imageUrl,
-					user: orgUser.user
+					user: orgUser.user,
+					tag: orgUser.tags
 				});
 			}
 		}

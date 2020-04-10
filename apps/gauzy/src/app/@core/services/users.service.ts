@@ -49,6 +49,8 @@ export class UsersService {
 	}
 
 	update(userId: string, updateInput: UserFindInput) {
+		console.warn(updateInput);
+		debugger;
 		return this.http
 			.put(`${this.API_URL}/${userId}`, updateInput)
 			.pipe(first())

@@ -47,7 +47,7 @@ export class EditUserDataComponent extends TranslationBaseComponent
 	private async _loadUserData() {
 		const { id } = this.routeParams;
 		const { items } = await this.usersOrganizationsService.getAll(
-			['user', 'user.role'],
+			['user', 'user.role', 'user.tags'],
 			{ id }
 		);
 
