@@ -1,4 +1,5 @@
 import { Employee } from './employee.model';
+import { User } from './user.model';
 
 export interface EmployeeStatisticsFindInput {
 	valueDate: Date;
@@ -25,6 +26,13 @@ export interface MonthAggregatedEmployeeStatistics {
 	bonus: number;
 }
 
+export interface MonthAggregatedSplitExpense {
+	month: number;
+	year: number;
+	splitExpense: number;
+	splitAmong: number;
+}
+
 export interface AggregatedEmployeeStatisticFindInput {
 	organizationId: string;
 	filterDate: Date;
@@ -38,7 +46,10 @@ export interface StatisticSum {
 }
 
 export interface EmployeeStatisticSum extends StatisticSum {
-	employee: Employee;
+	employee: {
+		id: string;
+		user: User;
+	};
 }
 
 export interface AggregatedEmployeeStatistic {

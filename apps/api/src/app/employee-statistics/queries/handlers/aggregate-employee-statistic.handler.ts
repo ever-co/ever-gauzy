@@ -1,14 +1,16 @@
 import {
 	AggregatedEmployeeStatistic,
 	EmployeeStatisticSum,
-	StatisticSum
+	StatisticSum,
+	MonthAggregatedSplitExpense
 } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { startOfMonth, subMonths } from 'date-fns';
 import { EmployeeService } from '../../../employee/employee.service';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
 import { EmployeeStatisticsService } from './../../employee-statistics.service';
-
+import { LessThanOrEqual, Not, IsNull } from 'typeorm';
+import * as moment from 'moment';
 /**
  * Finds income, expense, profit and bonus for all employees for the given month.
  * If month is not specified, finds from the start of time till now.
@@ -28,22 +30,36 @@ export class AggregateOrganizationQueryHandler
 			input: { filterDate, organizationId }
 		} = command;
 
-		// Calculate transactions for 1 month if filterDate is available, last 20 years otherwise.
+		// Calculate transactions for 1 month if filterDate is available,
+		// TODO: last 20 years otherwise. More than one month can be very complex, since in any given month, any number of employees can be working
 		const searchInput = {
-			months: filterDate ? 1 : 12 * 20,
+			months: 1,
 			valueDate: filterDate ? filterDate : new Date()
 		};
 
 		// Get employees of input organization
-		const { items: employees } = await this.employeeService.findAll({
-			select: ['id'],
-			where: {
-				organization: {
-					id: organizationId
-				}
-			},
-			relations: ['user']
-		});
+		// const { items: employees } = await this.employeeService.findAll({
+		// 	select: ['id'],
+		// 	where: {
+		// 		organization: {
+		// 			id: organizationId
+		// 		},
+		// 		startedWorkOn: filterDate ? LessThanOrEqual(
+		// 			moment(filterDate)
+		// 				.endOf('month')
+		// 				.toDate()
+		// 		) : Not(IsNull()) //Only employees that started work on before the filter date
+		// 	},
+		// 	relations: ['user']
+		// });
+
+		const {
+			items: employees
+		} = await this.employeeService.findWorkingEmployees(
+			organizationId,
+			filterDate,
+			true
+		);
 
 		const employeeMap: Map<string, EmployeeStatisticSum> = new Map();
 
@@ -55,7 +71,10 @@ export class AggregateOrganizationQueryHandler
 				expense: 0,
 				bonus: 0,
 				profit: 0,
-				employee
+				employee: {
+					id: employee.id,
+					user: employee.user
+				}
 			});
 		});
 
@@ -190,25 +209,27 @@ export class AggregateOrganizationQueryHandler
 	) {
 		const employeeIds = [...employeeMap.keys()];
 
-		// Fetch split expenses and the number of employees the expense need to be split among
-		const {
-			items: expenses,
-			splitAmong
-		} = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
+		// Fetch split expenses and the number of employees the expense need to be split among for each month
+		// TODO: Handle case when searchInput.months > 1
+		const expenses = await this.employeeStatisticsService.employeeSplitExpenseInNMonths(
 			employeeIds[0], // split expenses are fetched at organization level, 1st Employee
 			searchInput.valueDate,
-			searchInput.months
+			searchInput.months //this is always 1
 		);
 
-		// sum all split expenses amounts
-		const commonSplitAmount = expenses.reduce((a, b) => a + b.amount, 0);
+		//Since we are only calculating for one month, we only expect one value here.
+		const monthSplitExpense: MonthAggregatedSplitExpense = expenses
+			.values()
+			.next().value;
 
-		// Add split expense share to each employee's expenses
-		employeeMap.forEach((emp) => {
-			emp.expense = Number(
-				(emp.expense + commonSplitAmount / splitAmong).toFixed(2)
-			);
-		});
+		if (monthSplitExpense) {
+			// Add split expense share to each employee's expenses
+			employeeMap.forEach((emp) => {
+				emp.expense = Number(
+					(emp.expense + monthSplitExpense.splitExpense).toFixed(2)
+				);
+			});
+		}
 	}
 
 	private async _loadOrganizationRecurringSplitExpenses(
@@ -218,63 +239,27 @@ export class AggregateOrganizationQueryHandler
 		const employeeIds = [...employeeMap.keys()];
 
 		// Fetch split expenses and the number of employees the expense need to be split among
-		const {
-			items: organizationRecurringSplitExpenses,
-			splitAmong
-		} = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
-			employeeIds[0]
+		const organizationRecurringSplitExpenses = await this.employeeStatisticsService.organizationRecurringSplitExpenses(
+			employeeIds[0],
+			searchInput.valueDate,
+			searchInput.months //this is always 1
 		);
 
-		/**
-		 * Add Organization split recurring expense from the
-		 * expense start date
-		 * OR
-		 * past N months to each month's expense, whichever is lesser
-		 * Stop adding recurring expenses at the month where it was stopped
-		 * OR
-		 * till the input date
-		 */
-		const splitExpenses = organizationRecurringSplitExpenses.map(
-			(expense) => {
-				// Find start date based on input date and X months.
-				const inputStartDate = subMonths(
-					startOfMonth(searchInput.valueDate),
-					searchInput.months - 1
-				);
+		//Since we are only calculating for one month, we only expect one value here.
+		const monthSplitExpense: MonthAggregatedSplitExpense = organizationRecurringSplitExpenses
+			.values()
+			.next().value;
 
-				/**
-				 * Add Organization split recurring expense from the
-				 * expense start date
-				 * OR
-				 * past N months to each month's expense, whichever is more recent
-				 */
-				const requiredStartDate =
-					expense.startDate > inputStartDate
-						? expense.startDate
-						: inputStartDate;
-
-				let amount = 0;
-				for (
-					const date = requiredStartDate;
-					date <= searchInput.valueDate;
-					date.setMonth(date.getMonth() + 1)
-				) {
-					// Stop loading expense if the split recurring expense has ended before input date
-					if (expense.endDate && date > expense.endDate) break;
-
-					// accumulate employee's recurring expense share for each month
-					amount += Number(expense.value) / splitAmong;
-				}
-				return amount;
-			}
-		);
-
-		// sum accumulate employee's recurring expense shares
-		const employeeShare = splitExpenses.reduce((a, b) => a + b, 0);
-		employeeMap.forEach(
-			(emp) =>
-				(emp.expense = Number((emp.expense + employeeShare).toFixed(2)))
-		);
+		if (monthSplitExpense) {
+			employeeMap.forEach(
+				(emp) =>
+					(emp.expense = Number(
+						(emp.expense + monthSplitExpense.splitExpense).toFixed(
+							2
+						)
+					))
+			);
+		}
 	}
 
 	private _calculateProfit(employeeMap: Map<string, EmployeeStatisticSum>) {

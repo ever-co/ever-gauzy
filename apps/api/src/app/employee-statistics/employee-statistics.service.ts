@@ -3,16 +3,18 @@ import {
 	EmployeeStatistics,
 	EmployeeStatisticsFindInput,
 	DEFAULT_PROFIT_BASED_BONUS,
-	DEFAULT_REVENUE_BASED_BONUS
+	DEFAULT_REVENUE_BASED_BONUS,
+	MonthAggregatedSplitExpense
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { EmployeeService } from '../employee/employee.service';
 import { ExpenseService } from '../expense/expense.service';
 import { IncomeService } from '../income/income.service';
-import { Between, In } from 'typeorm';
+import { Between, In, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
 import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
+import * as moment from 'moment';
 
 @Injectable()
 export class EmployeeStatisticsService {
@@ -314,12 +316,16 @@ export class EmployeeStatisticsService {
 	 * that were marked to be split among its employees,
 	 * in last N months(lastNMonths),till the specified Date(searchMonth)
 	 * lastNMonths = 1, for last 1 month and 12 for an year
+	 *
+	 * @returns {Promise<Map<string, MonthAggregatedSplitExpense>>} A map with
+	 * the key as 'month-year' for every month in the range & for which at least
+	 * one expense is available
 	 */
 	employeeSplitExpenseInNMonths = async (
 		employeeId: string,
 		searchMonth: Date,
 		lastNMonths: number
-	) => {
+	): Promise<Map<string, MonthAggregatedSplitExpense>> => {
 		// 1 Get Employee's Organization
 		const employee = await this.employeeService.findOne({
 			where: {
@@ -338,20 +344,55 @@ export class EmployeeStatisticsService {
 			}
 		});
 
-		// 3. Number of employees in Employee's organization that the expense has to be split between
-		const splitAmong =
-			(await this.employeeService.count({
-				where: {
-					organization: { id: employee.organization.id }
-				}
-			})) || 1;
-		return { items, splitAmong };
+		const monthlySplitExpenseMap: Map<
+			string,
+			MonthAggregatedSplitExpense
+		> = new Map();
+
+		// 3 Find the number of active employees for each month, and split the expenses among the active employees for each month
+		for (const expense of items) {
+			const key = `${expense.valueDate.getMonth()}-${expense.valueDate.getFullYear()}`;
+			const amount = Number(expense.amount);
+
+			if (monthlySplitExpenseMap.has(key)) {
+				// Update expense statistics values in map if key pre-exists
+				const stat = monthlySplitExpenseMap.get(key);
+				const splitAmount = amount / stat.splitAmong;
+				stat.splitExpense = Number(
+					(splitAmount + stat.splitExpense).toFixed(2)
+				);
+			} else {
+				// Add a new map entry if the key(month-year) does not already exist
+				const {
+					total: splitAmong
+				} = await this.employeeService.findWorkingEmployees(
+					employee.organization.id,
+					expense.valueDate,
+					false
+				);
+
+				const newStat = {
+					month: expense.valueDate.getMonth(),
+					year: expense.valueDate.getFullYear(),
+					splitExpense: Number((amount / splitAmong).toFixed(2)),
+					splitAmong
+				};
+
+				monthlySplitExpenseMap.set(key, newStat);
+			}
+		}
+
+		return monthlySplitExpenseMap;
 	};
 
 	/**
 	 * Fetch all recurring split expenses of the employee's Organization
 	 */
-	organizationRecurringSplitExpenses = async (employeeId: string) => {
+	organizationRecurringSplitExpenses = async (
+		employeeId: string,
+		searchMonth: Date,
+		lastNMonths: number
+	) => {
 		// 1 Get Employee's Organization
 		const employee = await this.employeeService.findOne({
 			where: {
@@ -371,20 +412,95 @@ export class EmployeeStatisticsService {
 				'startDate',
 				'endDate'
 			],
-			where: {
-				orgId: employee.organization.id,
-				splitExpense: true
-			}
+			where: [
+				{
+					orgId: employee.organization.id,
+					splitExpense: true,
+					startDate: LessThanOrEqual(endOfMonth(searchMonth)),
+					endDate: MoreThanOrEqual(
+						subMonths(startOfMonth(searchMonth), lastNMonths - 1)
+					)
+				},
+				{
+					orgId: employee.organization.id,
+					splitExpense: true,
+					startDate: LessThanOrEqual(endOfMonth(searchMonth)),
+					endDate: IsNull()
+				}
+			]
 		});
 
-		// 3. Number of employees in Employee's organization that the expense has to be split between
-		const splitAmong =
-			(await this.employeeService.count({
-				where: {
-					organization: { id: employee.organization.id }
-				}
-			})) || 1;
+		const monthlySplitExpenseMap: Map<
+			string,
+			MonthAggregatedSplitExpense
+		> = new Map();
 
-		return { items, splitAmong };
+		/**
+		 * Add Organization split recurring expense from the
+		 * expense start date
+		 * OR
+		 * past N months to each month's expense, whichever is lesser
+		 * Stop adding recurring expenses at the month where it was stopped
+		 * OR
+		 * till the input date
+		 */
+		for (const expense of items) {
+			// Find start date based on input date and X months.
+			const inputStartDate = subMonths(
+				startOfMonth(searchMonth),
+				lastNMonths - 1
+			);
+
+			/**
+			 * Add Organization split recurring expense from the
+			 * expense start date
+			 * OR
+			 * past N months to each month's expense, whichever is more recent
+			 */
+			const requiredStartDate =
+				expense.startDate > inputStartDate
+					? expense.startDate
+					: inputStartDate;
+
+			for (
+				const date = requiredStartDate;
+				date <= endOfMonth(searchMonth);
+				date.setMonth(date.getMonth() + 1)
+			) {
+				// Stop loading expense if the split recurring expense has ended before input date
+				if (expense.endDate && date > expense.endDate) break;
+
+				const key = `${date.getMonth()}-${date.getFullYear()}`;
+				const amount = Number(expense.value);
+				if (monthlySplitExpenseMap.has(key)) {
+					// Update expense statistics values in map if key pre-exists
+					const stat = monthlySplitExpenseMap.get(key);
+					const splitExpense = amount / stat.splitAmong;
+					stat.splitExpense = Number(
+						(splitExpense + stat.splitExpense).toFixed(2)
+					);
+				} else {
+					const {
+						total: splitAmong
+					} = await this.employeeService.findWorkingEmployees(
+						employee.organization.id,
+						date,
+						false
+					);
+
+					// Add a new map entry if the key(month-year) does not already exist
+					const newStat: MonthAggregatedSplitExpense = {
+						month: date.getMonth(),
+						year: date.getFullYear(),
+						splitExpense: Number((amount / splitAmong).toFixed(2)),
+						splitAmong
+					};
+
+					monthlySplitExpenseMap.set(key, newStat);
+				}
+			}
+		}
+
+		return monthlySplitExpenseMap;
 	};
 }
