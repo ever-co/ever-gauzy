@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
-import { RolesEnum } from '@gauzy/models';
 @Component({
 	selector: 'ga-candidate-cv',
 	templateUrl: 'candidate-cv.component.html'
