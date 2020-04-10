@@ -51,6 +51,7 @@ import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity'
 import { CandidateSource } from '../candidate_source/candidate_source.entity';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 import { Integration } from '../integration/integration.entity';
+import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 
 const entities = [
@@ -95,7 +96,8 @@ const entities = [
 	ExpenseCategory,
 	CandidateSource,
 	IntegrationSetting,
-	Integration
+	Integration,
+	IntegrationMap
 ];
 
 @Module({

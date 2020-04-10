@@ -3,7 +3,6 @@ import { Repository } from 'typeorm';
 import { IntegrationSetting } from './integration-setting.entity';
 import { CrudService } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IIntegrationSetting } from '@gauzy/models';
 
 @Injectable()
 export class IntegrationSettingService extends CrudService<IntegrationSetting> {
@@ -14,11 +13,5 @@ export class IntegrationSettingService extends CrudService<IntegrationSetting> {
 		super(repository);
 	}
 
-	async addIntegrationSettings(integrationSettings: IIntegrationSetting) {
-		return await this.create(integrationSettings);
-	}
-
-	// setIntegrationSettings(settings: any[]) {
-	//     this._repository.find({ where: { tenandId: 'janko' } })
-	// }
+	async updateIntegrationSettings(updateIntegrationSettingsDto) {}
 }

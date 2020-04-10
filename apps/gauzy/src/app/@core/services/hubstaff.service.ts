@@ -1,17 +1,34 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IIntegration } from '@gauzy/models';
+import {
+	IIntegration,
+	IIntegrationSetting,
+	IHubstaffOrganization,
+	IHubstaffProject
+} from '@gauzy/models';
 import { v4 as uuid } from 'uuid';
 import { Store } from './store.service';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { environment } from 'apps/gauzy/src/environments/environment';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class HubstaffService {
+	private ACCESS_TOKEN: string;
+
 	constructor(private _http: HttpClient, private _store: Store) {}
+
+	getToken(integrationId: string): Observable<IIntegrationSetting> {
+		return this._http
+			.get<IIntegrationSetting>(
+				`/api/integrations/hubstaff/get-token/${integrationId}`
+			)
+			.pipe(
+				tap(({ settingsValue }) => (this.ACCESS_TOKEN = settingsValue))
+			);
+	}
 
 	authorizeClient(client_id: string): void {
 		//  'http://localhost:4200/pages/integrations/hubstaff';
@@ -49,9 +66,37 @@ export class HubstaffService {
 		);
 	}
 
-	getOrganizations(token): Observable<any> {
-		return this._http.post(`/api/integrations/hubstaff/organizations`, {
-			token
-		});
+	getOrganizations(integrationId): Observable<IHubstaffOrganization[]> {
+		return this._http.post<IHubstaffOrganization[]>(
+			`/api/integrations/hubstaff/organizations/${integrationId}`,
+			{
+				token: this.ACCESS_TOKEN
+			}
+		);
+	}
+
+	getProjects(organizationId): Observable<IHubstaffProject[]> {
+		return this._http.post<IHubstaffProject[]>(
+			`/api/integrations/hubstaff/projects/${organizationId}`,
+			{ token: this.ACCESS_TOKEN }
+		);
+	}
+
+	syncProjects(projects, integrationId) {
+		return this._store.selectedOrganization$.pipe(
+			switchMap(({ id }) => {
+				return this._http.post(
+					`/api/integrations/hubstaff/sync-projects/${integrationId}`,
+					{
+						projects: this._mapNameAndSourceId(projects),
+						orgId: id
+					}
+				);
+			})
+		);
+	}
+
+	private _mapNameAndSourceId(data: any[]) {
+		return data.map(({ name, id }) => ({ name, sourceId: id }));
 	}
 }
