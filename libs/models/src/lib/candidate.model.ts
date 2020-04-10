@@ -23,15 +23,21 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	rejectDate?: Date;
 	candidateLevel?: string;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
-	education?: string;
 	experience?: string;
 	skills?: string[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	education?: Education;
 }
-
+export interface Education {
+	schoolName?: string;
+	degree?: string;
+	completionDate?: Date;
+	field?: string;
+	notes?: string;
+}
 export interface CandidateFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 	user?: UserFindInput;

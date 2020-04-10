@@ -76,7 +76,11 @@
 						</button></span
 					>
 				</div>
-				<nb-actions class="float-right" e="medium">
+				<nb-actions
+					*ngIf="!showEditDiv[i]"
+					class="float-right"
+					e="medium"
+				>
 					<nb-action
 						(click)="showEditCard(i)"
 						class="d-inline pr-0"

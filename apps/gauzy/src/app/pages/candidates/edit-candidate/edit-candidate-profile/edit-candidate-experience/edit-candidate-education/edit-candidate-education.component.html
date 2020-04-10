@@ -10,76 +10,89 @@
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 		<div *ngIf="showAddCard" class="row m-0">
-			<input
-				#addInput
-				class="col-8"
-				nbInput
-				type="text"
-				placeholder="{{
-					'FORM.PLACEHOLDERS.ADD_EDUCATION.SCHOOL_NAME' | translate
-				}}"
-				fullWidth
-			/>
-			<input
-				#addInput
-				class="col-8"
-				nbInput
-				type="text"
-				placeholder="{{
-					'FORM.PLACEHOLDERS.ADD_EDUCATION.DEGREE' | translate
-				}}"
-				fullWidth
-			/>
-			<!-- <input
-				#addInput
-				class="col-8"
-				nbInput
-				type="text"
-				placeholder="{{
-					'FORM.PLACEHOLDERS.ADD_EDUCATION.FIELD_OF_STUDY' | translate
-				}}"
-				fullWidth
-			/>
-			<input
-				#addInput
-				class="col-8"
-				nbInput
-				type="text"
-				placeholder="{{
-					'FORM.PLACEHOLDERS.ADD_EDUCATION.DATE_OF_COMPLETION'
-						| translate
-				}}"
-				fullWidth
-			/>
-			<textarea
-				nbInput
-				placeholder="{{
-					'FORM.PLACEHOLDERS.ADD_EDUCATION.ADDITIONAL_NOTES'
-						| translate
-				}}"
-			>
-			</textarea> -->
-
-			<span class="col-2 pl-2 pr-1"
-				><button
-					class="w-100"
-					(click)="addEducation(addInput.value)"
-					nbButton
-					status="success"
+			<form class="col-10" [formGroup]="form" *ngIf="form">
+				<input
+					#addInput
+					class="col-5"
+					nbInput
+					formControlName="schoolName"
+					type="text"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ADD_EDUCATION.SCHOOL_NAME'
+							| translate
+					}}"
+					fullWidth
+				/>
+				<input
+					#addInput
+					class="col-5"
+					nbInput
+					formControlName="degree"
+					type="text"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ADD_EDUCATION.DEGREE' | translate
+					}}"
+					fullWidth
+				/>
+				<input
+					#addInput
+					class="col-5"
+					nbInput
+					formControlName="field"
+					type="text"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ADD_EDUCATION.FIELD_OF_STUDY'
+							| translate
+					}}"
+					fullWidth
+				/>
+				<input
+					#addInput
+					class="col-5"
+					nbInput
+					type="text"
+					formControlName="completionDate"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ADD_EDUCATION.DATE_OF_COMPLETION'
+							| translate
+					}}"
+					fullWidth
+					[nbDatepicker]="appliedDatePicker"
+				/>
+				<nb-datepicker #appliedDatePicker></nb-datepicker>
+				<textarea
+					class="notes col-5"
+					nbInput
+					formControlName="notes"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ADD_EDUCATION.ADDITIONAL_NOTES'
+							| translate
+					}}"
 				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button></span
-			>
-			<span class="col-2 pl-1 pr-0"
-				><button
-					class="w-100"
-					(click)="showAddCard = !showAddCard"
-					nbButton
-					status="danger"
+				</textarea>
+			</form>
+			<div class="col-2 ">
+				<span class="col-2 pl-2 pr-0"
+					><button
+						class="w-100 form-btn"
+						(click)="addEducation(addInput.value)"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button></span
 				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button></span
-			>
+				<span class="col-2 pl-2 pr-0"
+					><button
+						class="w-100 form-btn"
+						(click)="showAddCard = !showAddCard"
+						nbButton
+						status="danger"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button></span
+				>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="educations?.length">
@@ -120,7 +133,7 @@
 				</div>-->
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="showEditCard(education, i)"
+						(click)="showEditCard(i)"
 						class="d-inline pr-0"
 						icon="edit"
 					></nb-action>
