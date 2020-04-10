@@ -98,8 +98,7 @@ export class TaskComponent extends TranslationBaseComponent
 	async editTaskDIalog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask,
-				tags: this.selectedTask.tags
+				selectedTask: this.selectedTask
 			}
 		});
 
