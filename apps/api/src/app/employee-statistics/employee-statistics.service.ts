@@ -14,7 +14,6 @@ import { Between, In, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
 import { subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
-import * as moment from 'moment';
 
 @Injectable()
 export class EmployeeStatisticsService {

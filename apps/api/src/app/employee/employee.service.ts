@@ -1,7 +1,7 @@
 import { EmployeeCreateInput } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, Brackets } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { Employee } from './employee.entity';
 import { CrudService } from '../core/crud/crud.service';
 import * as moment from 'moment';

@@ -1,4 +1,3 @@
-import { Employee } from './employee.model';
 import { User } from './user.model';
 
 export interface EmployeeStatisticsFindInput {

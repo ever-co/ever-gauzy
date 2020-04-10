@@ -7,7 +7,7 @@ import {
 	EventEmitter
 } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { Tag } from '@gauzy/models';

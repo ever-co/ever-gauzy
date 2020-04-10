@@ -1,16 +1,14 @@
 import {
 	AggregatedEmployeeStatistic,
 	EmployeeStatisticSum,
-	StatisticSum,
-	MonthAggregatedSplitExpense
+	MonthAggregatedSplitExpense,
+	StatisticSum
 } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { startOfMonth, subMonths } from 'date-fns';
 import { EmployeeService } from '../../../employee/employee.service';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
 import { EmployeeStatisticsService } from './../../employee-statistics.service';
-import { LessThanOrEqual, Not, IsNull } from 'typeorm';
-import * as moment from 'moment';
 /**
  * Finds income, expense, profit and bonus for all employees for the given month.
  * If month is not specified, finds from the start of time till now.
