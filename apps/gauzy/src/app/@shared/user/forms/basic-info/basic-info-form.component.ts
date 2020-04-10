@@ -30,7 +30,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
-	@Input() public isCandidateCV: boolean;
 	@Input() public isSuperAdmin: boolean;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
@@ -56,7 +55,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	tags: Tag[] = [];
 	selectedTags: any;
 	items: any;
-	cvUrl: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -132,18 +130,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 				appliedDate: [''],
 				hiredDate: [''],
 				rejectDate: [''],
-				tags: [''],
-				cvUrl: [
-					'',
-					Validators.compose([
-						Validators.pattern(
-							new RegExp(
-								`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
-								'g'
-							)
-						)
-					])
-				]
+				tags: ['']
 			},
 			{
 				validator: this.validatorService.validateDate
@@ -151,7 +138,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		);
 
 		this.imageUrl = this.form.get('imageUrl');
-		this.cvUrl = this.form.get('cvUrl');
 		this.username = this.form.get('username');
 		this.firstName = this.form.get('firstName');
 		this.lastName = this.form.get('lastName');
