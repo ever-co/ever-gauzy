@@ -7,6 +7,16 @@
 		{
 			"type": "node",
 			"request": "launch",
+			"name": "Debug Nest Framework",
+			"args": ["${workspaceFolder}/src/main.ts"],
+			"runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+			"sourceMaps": true,
+			"cwd": "${workspaceRoot}",
+			"protocol": "inspector"
+		},
+		{
+			"type": "node",
+			"request": "launch",
 			"name": "Launch Program",
 			"program": "${workspaceFolder}\\start:gauzy",
 			"preLaunchTask": "tsc: build - tsconfig.json",
