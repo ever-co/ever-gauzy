@@ -31,6 +31,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
 	@Input() public isSuperAdmin: boolean;
+	@Input() public createdById: string;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -156,7 +157,11 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(defaultRoleName: RolesEnum, organizationId?: string) {
+	async registerUser(
+		defaultRoleName: RolesEnum,
+		organizationId?: string,
+		createdById?: string
+	) {
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
@@ -178,7 +183,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 						tags: this.selectedTags
 					},
 					password: this.password.value,
-					organizationId
+					organizationId,
+					createdById
 				})
 				.pipe(first())
 				.toPromise();

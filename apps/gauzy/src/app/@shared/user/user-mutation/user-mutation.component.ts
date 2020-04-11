@@ -37,7 +37,8 @@ export class UserMutationComponent implements OnInit {
 			const organization = await this.store.selectedOrganization;
 			const user = await this.userBasicInfo.registerUser(
 				RolesEnum.VIEWER,
-				organization.id
+				organization.id,
+				this.store.userId
 			);
 			this.closeDialog(user);
 		} catch (error) {
