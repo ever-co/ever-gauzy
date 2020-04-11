@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Task, OrganizationProjects, Tag } from '@gauzy/models';
+import { Task, OrganizationProjects } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
@@ -12,7 +12,8 @@ const initialTaskValue = {
 	title: '',
 	project: null,
 	status: '',
-	description: ''
+	description: '',
+	tags: null
 };
 
 @Component({
@@ -28,7 +29,6 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
 	selectedTask: Task;
 	organizationId: string;
-	tags: Tag[];
 	selectedTags: any;
 
 	constructor(
@@ -61,13 +61,13 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		if (items) this.projects = items;
 	}
 
-	initializeForm({ title, description, project, status }: Task) {
+	initializeForm({ title, description, project, status, tags }: Task) {
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
 			status: [status],
 			description: [description],
-			tags: [this.tags]
+			tags: []
 		});
 	}
 
@@ -99,6 +99,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	}
 
 	selectedTagsHandler(ev) {
-		this.tags = ev;
+		// we dont need this, at least we dont need for create or update TASK
+		// this.tags = ev;
 	}
 }
