@@ -6,13 +6,25 @@
 </div>
 <div
 	class="text-center d-block"
-	*ngIf="rowData.isActive && !rowData.workStatus"
+	*ngIf="!rowData.startedWorkOn"
+	nbTooltip="{{ 'EMPLOYEES_PAGE.NOT_STARTED_HELP' | translate }}"
+>
+	<div class="badge-disabled">
+		{{ 'EMPLOYEES_PAGE.NOT_STARTED' | translate }}
+	</div>
+</div>
+<div
+	class="text-center d-block"
+	*ngIf="rowData.startedWorkOn && rowData.isActive && !rowData.workStatus"
 >
 	<div class="badge-success">
 		{{ 'EMPLOYEES_PAGE.ACTIVE' | translate }}
 	</div>
 </div>
-<div class="text-center d-block" *ngIf="!rowData.isActive">
+<div
+	class="text-center d-block"
+	*ngIf="rowData.startedWorkOn && !rowData.isActive"
+>
 	<div class="badge-danger">
 		{{ 'EMPLOYEES_PAGE.DELETED' | translate }}
 	</div>

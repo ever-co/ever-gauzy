@@ -488,7 +488,9 @@
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
-		}
+		},
+		"NOT_STARTED": "Not Started",
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",

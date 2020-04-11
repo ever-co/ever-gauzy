@@ -7,7 +7,7 @@ import {
 	EventEmitter
 } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { Tag } from '@gauzy/models';
@@ -63,6 +63,18 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	showAllEmployeesOption: boolean;
 	@Input()
 	placeholder: string;
+
+	@Input()
+	set selectedDate(value: Date) {
+		this._selectedDate = value;
+		this.loadWorkingEmployees(this.store.selectedOrganization.id, value);
+	}
+
+	get selectedDate() {
+		return this._selectedDate;
+	}
+
+	private _selectedDate?: Date;
 
 	@Output()
 	selectionChanged: EventEmitter<SelectedEmployee> = new EventEmitter();
@@ -132,48 +144,20 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	private async _loadEmployees() {
-		/**
-		 * TODO: fetch only employees of selected organization,
-		 * currently all employees are fetched and filtered at the frontend
-		 */
-
-		const { items } = await this.employeesService
-			.getAll(['user'])
-			.pipe(first())
-			.toPromise();
-
-		const load = (loadItems) => {
-			this.people = [
-				...loadItems.map((e) => {
-					return {
-						id: e.id,
-						firstName: e.user.firstName,
-						lastName: e.user.lastName,
-						imageUrl: e.user.imageUrl
-					};
-				})
-			];
-			if (this.showAllEmployeesOption)
-				this.people.unshift(ALL_EMPLOYEES_SELECTED);
-		};
-
-		this.store.selectedOrganization$.subscribe((org) => {
-			if (org) {
-				load(items.filter((e) => e.orgId === org.id));
+		this.store.selectedOrganization$.subscribe(async (org) => {
+			if (org && this.store.selectedDate) {
+				this.loadWorkingEmployees(org.id, this.store.selectedDate);
 			}
 		});
 
-		const selectedOrg = this.store.selectedOrganization;
-		load(
-			selectedOrg
-				? items.filter((e) => e.orgId === selectedOrg.id)
-				: items
-		);
-
-		if (items.length > 0 && !this.store.selectedEmployee) {
-			this.store.selectedEmployee =
-				this.people[0] || ALL_EMPLOYEES_SELECTED;
-		}
+		this.store.selectedDate$.subscribe(async (date) => {
+			if (date && this.store.selectedOrganization) {
+				this.loadWorkingEmployees(
+					this.store.selectedOrganization.id,
+					date
+				);
+			}
+		});
 
 		if (!this.selectedEmployee) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
@@ -188,6 +172,36 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 		)
 			this.selectedEmployee = null;
 	}
+
+	loadWorkingEmployees = async (orgId: string, selectedDate: Date) => {
+		const { items } = await this.employeesService.getWorking(
+			orgId,
+			selectedDate,
+			true
+		);
+
+		this.people = [
+			...items.map((e) => {
+				return {
+					id: e.id,
+					firstName: e.user.firstName,
+					lastName: e.user.lastName,
+					imageUrl: e.user.imageUrl
+				};
+			})
+		];
+
+		//Insert All Employees Option
+		if (this.showAllEmployeesOption) {
+			this.people.unshift(ALL_EMPLOYEES_SELECTED);
+		}
+
+		//Set selected employee if no employee selected
+		if (items.length > 0 && !this.store.selectedEmployee) {
+			this.store.selectedEmployee =
+				this.people[0] || ALL_EMPLOYEES_SELECTED;
+		}
+	};
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();

@@ -18,6 +18,7 @@
 			placeholder="Organization"
 			[defaultSelected]="false"
 			(selectionChanged)="onEmployeeChange($event)"
+			[selectedDate]="valueDate.value"
 		></ga-employee-selector>
 		<span
 			*ngIf="showTooltip"
