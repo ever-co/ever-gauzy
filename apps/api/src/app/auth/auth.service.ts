@@ -123,8 +123,7 @@ export class AuthService {
 		if (input.organizationId) {
 			await this.userOrganizationService.addUserToOrganization(
 				await user,
-				input.organizationId,
-				input.createdById
+				input.organizationId
 			);
 		}
 
