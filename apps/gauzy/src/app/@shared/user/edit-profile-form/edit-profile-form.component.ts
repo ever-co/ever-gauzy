@@ -173,7 +173,6 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
-		console.warn(this.accountInfo);
 	}
 
 	private _initializeForm(user: User) {

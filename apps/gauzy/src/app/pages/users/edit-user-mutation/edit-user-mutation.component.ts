@@ -84,8 +84,7 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 					id: orgUser.userId,
 					isActive: orgUser.isActive,
 					imageUrl: orgUser.user.imageUrl,
-					user: orgUser.user,
-					tag: orgUser.tags
+					user: orgUser.user
 				});
 			}
 		}

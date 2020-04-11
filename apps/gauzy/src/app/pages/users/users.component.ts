@@ -275,7 +275,6 @@ export class UsersComponent extends TranslationBaseComponent
 		);
 
 		this.users = items.map((user) => user.user);
-		console.warn(items);
 	}
 
 	async remove() {
