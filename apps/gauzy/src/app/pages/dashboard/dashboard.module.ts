@@ -36,6 +36,7 @@ import { EmployeeDoughnutChartComponent } from './employee-charts/employee-dough
 import { EmployeeStackedBarChartComponent } from './employee-charts/employee-stacked-bar-chart/employee-stacked-bar-chart.component';
 import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
+import { EmployeeChartsComponent } from './employee-charts/employee-charts.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -79,6 +80,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EmployeeDoughnutChartComponent,
 		AccountingComponent,
 		HumanResourcesComponent,
+		EmployeeChartsComponent,
 		DataEntryShortcutsComponent,
 		TimeTrackingComponent,
 		ProjectManagementComponent
