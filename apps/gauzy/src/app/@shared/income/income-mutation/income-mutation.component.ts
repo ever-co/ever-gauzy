@@ -123,8 +123,10 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 	private async _getClients() {
 		this.organizationId = this.store.selectedOrganization.id;
-		const items = await this.organizationClientsService.getAll();
-		items['items'].forEach((i) => {
+		const { items } = await this.organizationClientsService.getAll([], {
+			organizationId: this.store.selectedOrganization.id
+		});
+		items.forEach((i) => {
 			this.clients = [
 				...this.clients,
 				{ clientName: i.name, clientId: i.id }
