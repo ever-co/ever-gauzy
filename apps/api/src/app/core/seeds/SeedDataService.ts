@@ -66,7 +66,7 @@ import { OrganizationPositions } from '../../organization-positions/organization
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import { createCandidates } from '../../candidate/candidate.seed';
-import { createCandidateSourses } from '../../candidate_source/candidate_source.seed';
+import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
 import { CandidateSource } from '../../candidate_source/candidate_source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Tenant } from './../../tenant/tenant.entity';
@@ -174,7 +174,7 @@ export class SeedDataService {
 				)
 			);
 			const tenants = await createTenants(this.connection);
-			const sourses: CandidateSource[] = await createCandidateSourses(
+			const sources: CandidateSource[] = await createCandidateSources(
 				this.connection
 			);
 
@@ -195,11 +195,15 @@ export class SeedDataService {
 			const employees = await createEmployees(
 				this.connection,
 				{
-					tenant: [...tenants],
+					tenant: tenants,
 					org: defaultOrganization,
-					users: [...defaultUsers]
+					users: defaultUsers
 				},
-				{ orgs: randomOrganizations, users: [...randomUsers] }
+				{
+					orgs: randomOrganizations,
+					users: randomUsers,
+					tenant: tenants
+				}
 			);
 
 			await createCandidates(
@@ -210,7 +214,7 @@ export class SeedDataService {
 					users: [...defaultCandidateUser]
 				},
 				{
-					source: sourses,
+					source: sources,
 					org: defaultOrganization,
 					orgs: randomOrganizations,
 					users: [...randomCandidateUser]
