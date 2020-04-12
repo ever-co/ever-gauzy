@@ -40,18 +40,18 @@ export const createOrganizations = async (
 
 	const randomOrganizations: Organization[] = [];
 
-	for (let index = 1; index <= 5; index++) {
+	for (let index = 0; index < 5; index++) {
 		const organization = new Organization();
 		const companyName = faker.company.companyName();
 
 		const logoAbbreviation = _extractLogoAbbreviation(companyName);
 
 		organization.name = companyName;
-		organization.currency = currencies[(index % currencies.length) + 1 - 1];
+		organization.currency = currencies[index % currencies.length];
 		organization.defaultValueDateType =
-			defaultDateTypes[(index % defaultDateTypes.length) + 1 - 1];
+			defaultDateTypes[index % defaultDateTypes.length];
 		organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
-		organization.tenant = tenant[index];
+		organization.tenant = tenant[index % tenant.length];
 		organization.invitesAllowed = true;
 
 		const { bonusType, bonusPercentage } = randomBonus();
