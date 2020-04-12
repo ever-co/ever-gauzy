@@ -19,21 +19,19 @@ export const createTenants = async (
 		}
 	];
 
-	for (let i = 0; i < tenants.length; i++) {
-		await insertTenant(connection, tenants[i]);
-	}
+	await insertTenants(connection, tenants);
 
 	return tenants;
 };
 
-const insertTenant = async (
+const insertTenants = async (
 	connection: Connection,
-	tenant: Tenant
+	tenants: Tenant[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(Tenant)
-		.values(tenant)
+		.values(tenants)
 		.execute();
 };
