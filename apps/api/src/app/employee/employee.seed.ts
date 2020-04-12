@@ -4,6 +4,7 @@ import { Employee } from './employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
 import { environment as env } from '@env-api/environment';
+import { date as fakerDate } from 'faker';
 
 export const createEmployees = async (
 	connection: Connection,
@@ -15,7 +16,7 @@ export const createEmployees = async (
 	randomData: {
 		orgs: Organization[];
 		users: User[];
-		// tenant: Tenant[];
+		tenant: Tenant[];
 	}
 ): Promise<{ defaultEmployees: Employee[]; randomEmployees: Employee[] }> => {
 	const defaultEmployees: Employee[] = await createDefaultEmployees(
@@ -50,7 +51,7 @@ const createDefaultEmployees = async (
 		employee = new Employee();
 		employee.organization = defaultOrg;
 		employee.user = user;
-		employee.tenant = defaultTenants[counter];
+		employee.tenant = defaultTenants[counter % defaultTenants.length];
 		employee.employeeLevel = defaultEmployees.filter(
 			(e) => e.email === employee.user.email
 		)[0].employeeLevel;
@@ -75,12 +76,14 @@ const createRandomEmployees = async (
 	randomData: {
 		orgs: Organization[];
 		users: User[];
+		tenant: Tenant[];
 	}
 ): Promise<Employee[]> => {
 	let employee: Employee;
 	const employees: Employee[] = [];
 	const randomUsers = randomData.users;
 	const randomOrgs = randomData.orgs;
+	const tenant = randomData.tenant;
 
 	const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
 
@@ -92,7 +95,8 @@ const createRandomEmployees = async (
 				employee.user = randomUsers.pop();
 				employee.isActive = true;
 				employee.endWork = null;
-				employee.startedWorkOn = null;
+				employee.startedWorkOn = fakerDate.past(index % 5);
+				employee.tenant = tenant[index % tenant.length];
 
 				if (employee.user) {
 					await insertEmployee(connection, employee);

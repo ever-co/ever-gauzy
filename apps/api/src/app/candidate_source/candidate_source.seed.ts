@@ -1,12 +1,12 @@
 import { Connection } from 'typeorm';
 import { CandidateSource } from './candidate_source.entity';
 
-export const createCandidateSourses = async (
+export const createCandidateSources = async (
 	connection: Connection
 ): Promise<CandidateSource[]> => {
-	const candidateSourses: CandidateSource[] = [
+	const candidateSources: CandidateSource[] = [
 		{
-			name: ' LinkDin'
+			name: 'LinkedIn'
 		},
 		{
 			name: 'Djiny'
@@ -22,14 +22,14 @@ export const createCandidateSourses = async (
 		}
 	];
 
-	for (let i = 0; i < candidateSourses.length; i++) {
-		await insertCandidateSourses(connection, candidateSourses[i]);
+	for (let i = 0; i < candidateSources.length; i++) {
+		await insertCandidateSources(connection, candidateSources[i]);
 	}
 
-	return candidateSourses;
+	return candidateSources;
 };
 
-const insertCandidateSourses = async (
+const insertCandidateSources = async (
 	connection: Connection,
 	candidateSource: CandidateSource
 ): Promise<void> => {

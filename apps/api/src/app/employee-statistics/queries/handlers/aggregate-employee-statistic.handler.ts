@@ -76,23 +76,25 @@ export class AggregateOrganizationQueryHandler
 			});
 		});
 
-		// 1.Load Income and Direct Bonus in employeeMap
-		await this._loadIncomeAndDirectBonus(searchInput, employeeMap);
+		if (employees.length > 0) {
+			// 1.Load Income and Direct Bonus in employeeMap
+			await this._loadIncomeAndDirectBonus(searchInput, employeeMap);
 
-		// 2. Populate Expenses(One time, Recurring, and split expenses) in employeeMap
-		await this._loadEmployeeExpenses(searchInput, employeeMap);
-		await this._loadEmployeeRecurringExpenses(searchInput, employeeMap);
-		await this._loadOrganizationSplitExpenses(searchInput, employeeMap);
-		await this._loadOrganizationRecurringSplitExpenses(
-			searchInput,
-			employeeMap
-		);
+			// 2. Populate Expenses(One time, Recurring, and split expenses) in employeeMap
+			await this._loadEmployeeExpenses(searchInput, employeeMap);
+			await this._loadEmployeeRecurringExpenses(searchInput, employeeMap);
+			await this._loadOrganizationSplitExpenses(searchInput, employeeMap);
+			await this._loadOrganizationRecurringSplitExpenses(
+				searchInput,
+				employeeMap
+			);
 
-		// 3. Populate Profit in employeeMap
-		this._calculateProfit(employeeMap);
+			// 3. Populate Profit in employeeMap
+			this._calculateProfit(employeeMap);
 
-		// 4. Populate Bonus in employeeMap
-		await this._loadEmployeeBonus(employeeMap);
+			// 4. Populate Bonus in employeeMap
+			await this._loadEmployeeBonus(employeeMap);
+		}
 
 		const employeeStats = [...employeeMap.values()];
 		const total: StatisticSum = employeeStats.reduce(
@@ -118,7 +120,6 @@ export class AggregateOrganizationQueryHandler
 			searchInput.valueDate,
 			searchInput.months
 		);
-
 		incomes.map((income) => {
 			const stat = employeeMap.get(income.employeeId);
 			const amount = Number(income.amount);
