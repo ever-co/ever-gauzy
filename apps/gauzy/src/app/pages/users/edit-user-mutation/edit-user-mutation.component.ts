@@ -60,7 +60,8 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 	private async _loadUsers() {
 		const { items } = await this.usersOrganizationsService.getAll([
 			'user',
-			'user.role'
+			'user.role',
+			'user.tags'
 		]);
 
 		const usersVm = [];

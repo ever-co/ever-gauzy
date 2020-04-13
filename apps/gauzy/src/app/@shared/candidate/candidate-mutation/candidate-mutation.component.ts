@@ -19,6 +19,7 @@ import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
+import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 
 @Component({
 	selector: 'ga-candidate-mutation',
@@ -28,10 +29,13 @@ import { CandidatesService } from '../../../@core/services/candidates.service';
 export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	@ViewChild('userBasicInfo', { static: false })
 	userBasicInfo: BasicInfoFormComponent;
-	@ViewChild('userBasicInfoCV', { static: false })
-	userBasicInfoCV: BasicInfoFormComponent;
+
+	@ViewChild('candidateCv', { static: false })
+	candidateCv: CandidateCvComponent;
+
 	@ViewChild('stepper', { static: false })
 	stepper: NbStepperComponent;
+
 	form: FormGroup;
 	formCV: FormGroup;
 	role: Role;
@@ -50,7 +54,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 
 	async ngAfterViewInit() {
 		this.form = this.userBasicInfo.form;
-		this.formCV = this.userBasicInfoCV.form;
+		this.formCV = this.candidateCv.form;
 		this.role = await this.roleService
 			.getRoleByName({
 				name: RolesEnum.CANDIDATE
@@ -91,9 +95,9 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		};
 		this.candidates.push(newCandidate);
 		this.userBasicInfo.loadFormData();
-		this.userBasicInfoCV.loadFormData();
+		this.candidateCv.loadFormData();
 		this.form = this.userBasicInfo.form;
-		this.formCV = this.userBasicInfoCV.form;
+		this.formCV = this.candidateCv.form;
 		this.stepper.reset();
 	}
 	async add() {

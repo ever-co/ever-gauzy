@@ -18,6 +18,7 @@
 			placeholder="Organization"
 			[defaultSelected]="false"
 			(selectionChanged)="onEmployeeChange($event)"
+			[selectedDate]="valueDate.value"
 		></ga-employee-selector>
 		<span
 			*ngIf="showTooltip"
@@ -167,7 +168,7 @@
 								[isOpen]="showWarning ? true : null"
 								[addTag]="addNewClient"
 								[items]="clients"
-								bindLabel="name"
+								bindLabel="clientName"
 								[searchable]="true"
 								autocomplete="on"
 								formControlName="client"

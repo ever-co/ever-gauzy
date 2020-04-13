@@ -12,8 +12,7 @@ import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
 import { Tenant } from '../tenant/tenant.entity';
 
-export const seedSuperAdminUsers = async (
-	connection: Connection,
+const seedSuperAdminUsers = async (
 	roles: Role[],
 	tenant: Tenant[]
 ): Promise<User[]> => {
@@ -32,32 +31,90 @@ export const seedSuperAdminUsers = async (
 			superAdminRole,
 			tenant[0]
 		);
-		await insertUser(connection, superAdminUser);
 		superAdmins.push(superAdminUser);
 	}
-
 	return superAdmins;
 };
 
-export const seedAdminUsers = async (
-	connection: Connection,
+const seedAdminUsers = async (
 	roles: Role[],
 	tenant: Tenant[]
 ): Promise<User[]> => {
-	const admins: User[] = [];
-	let adminUser: User;
+	const admins: Promise<User>[] = [];
+	let adminUser: Promise<User>;
 
 	const adminRole = roles.filter((role) => role.name === RolesEnum.ADMIN)[0];
 	const defaultAdmins = env.defaultAdmins || [];
 
 	// Generate default admins
 	for (const admin of defaultAdmins) {
-		adminUser = await generateDefaultUser(admin, adminRole, tenant[0]);
-		await insertUser(connection, adminUser);
+		adminUser = generateDefaultUser(admin, adminRole, tenant[0]);
 		admins.push(adminUser);
 	}
 
-	return admins;
+	return Promise.all(admins);
+};
+
+const seedDefaultUsers = async (
+	role: Role,
+	tenant: Tenant[]
+): Promise<User[]> => {
+	const defaultUsers: Promise<User>[] = [];
+	let user: Promise<User>;
+
+	const defaultEmployees = env.defaultEmployees || [];
+	let counter = 0;
+	// Generate default users
+	for (const employee of defaultEmployees) {
+		user = generateDefaultUser(
+			employee,
+			role,
+			tenant[counter % tenant.length]
+		);
+		defaultUsers.push(user);
+		counter++;
+	}
+	return Promise.all(defaultUsers);
+};
+
+const seedRandomUsers = async (
+	role: Role,
+	tenant: Tenant[]
+): Promise<User[]> => {
+	const randomUsers: Promise<User>[] = [];
+	let user: Promise<User>;
+
+	let counter = 0;
+	// Generate 50 random users
+	for (let i = 0; i < 50; i++) {
+		user = generateRandomUser(role, tenant[counter % tenant.length]);
+		randomUsers.push(user);
+		counter++;
+	}
+	return Promise.all(randomUsers);
+};
+
+const seedDefaultCandidateUsers = async (
+	role: Role,
+	tenant: Tenant[]
+): Promise<User[]> => {
+	const defaultCandidateUsers: Promise<User>[] = [];
+	let user: Promise<User>;
+
+	const defaultCandidates = env.defaultCandidates || [];
+
+	let counter = 0;
+	// Generate default candidate users
+	for (const candidate of defaultCandidates) {
+		user = generateDefaultUser(
+			candidate,
+			role,
+			tenant[counter % tenant.length]
+		);
+		defaultCandidateUsers.push(user);
+		counter++;
+	}
+	return Promise.all(defaultCandidateUsers);
 };
 
 export const createUsers = async (
@@ -72,66 +129,59 @@ export const createUsers = async (
 	defaultCandidateUser: User[];
 	randomCandidateUser: User[];
 }> => {
-	const defaultUsers: User[] = [];
-	const randomUsers: User[] = [];
-	const defaultCandidateUser: User[] = [];
-	const randomCandidateUser: User[] = [];
-
-	let user: User;
-
-	const superAdminUsers: User[] = await seedSuperAdminUsers(
-		connection,
-		roles,
-		tenant
-	);
-	const adminUsers: User[] = await seedAdminUsers(connection, roles, tenant);
-	// users = [...adminUsers];
-
 	const employeeRole = roles.filter(
 		(role) => role.name === RolesEnum.EMPLOYEE
 	)[0];
+
 	const candidateRole = roles.filter(
 		(role) => role.name === RolesEnum.CANDIDATE
 	)[0];
-	const defaultEmployees = env.defaultEmployees || [];
-	const defaultCandidates = env.defaultCandidates || [];
-	let counter = 0;
-	// Generate default users
-	for (const employee of defaultEmployees) {
-		user = await generateDefaultUser(
-			employee,
-			employeeRole,
-			tenant[counter]
-		);
-		await insertUser(connection, user);
-		defaultUsers.push(user);
-		counter++;
-	}
 
-	// Generate default candidate users
-	for (const candidate of defaultCandidates) {
-		user = await generateDefaultUser(
-			candidate,
-			candidateRole,
-			tenant[counter]
-		);
-		await insertUser(connection, user);
-		defaultCandidateUser.push(user);
-		counter++;
-	}
-	// Generate 50 random candidate users
-	for (let i = 0; i < 600; i++) {
-		user = await generateRandomUser(employeeRole);
-		await insertUser(connection, user);
-		randomCandidateUser.push(user);
-	}
+	const _superAdminUsers: Promise<User[]> = seedSuperAdminUsers(
+		roles,
+		tenant
+	);
+	const _adminUsers: Promise<User[]> = seedAdminUsers(roles, tenant);
 
-	// Generate 50 random users
-	for (let i = 0; i < 50; i++) {
-		user = await generateRandomUser(employeeRole);
-		await insertUser(connection, user);
-		randomUsers.push(user);
-	}
+	const _defaultUsers: Promise<User[]> = seedDefaultUsers(
+		employeeRole,
+		tenant
+	);
+	const _randomUsers: Promise<User[]> = seedRandomUsers(employeeRole, tenant);
+
+	const _defaultCandidateUser: Promise<User[]> = seedDefaultCandidateUsers(
+		candidateRole,
+		tenant
+	);
+	const _randomCandidateUser: Promise<User[]> = seedRandomUsers(
+		candidateRole,
+		tenant
+	);
+
+	const [
+		superAdminUsers,
+		adminUsers,
+		defaultUsers,
+		randomUsers,
+		defaultCandidateUser,
+		randomCandidateUser
+	] = await Promise.all([
+		_superAdminUsers,
+		_adminUsers,
+		_defaultUsers,
+		_randomUsers,
+		_defaultCandidateUser,
+		_randomCandidateUser
+	]);
+
+	await insertUsers(connection, [
+		...superAdminUsers,
+		...adminUsers,
+		...defaultUsers,
+		...randomUsers,
+		...defaultCandidateUser,
+		...randomCandidateUser
+	]);
 
 	return {
 		superAdminUsers,
@@ -167,7 +217,10 @@ const generateDefaultUser = async (
 	return user;
 };
 
-const generateRandomUser = async (role: Role): Promise<User> => {
+const generateRandomUser = async (
+	role: Role,
+	tenant: Tenant
+): Promise<User> => {
 	const gender = faker.random.number(1);
 	const firstName = faker.name.firstName(gender);
 	const lastName = faker.name.lastName(gender);
@@ -182,6 +235,8 @@ const generateRandomUser = async (role: Role): Promise<User> => {
 	user.email = email;
 	user.role = role;
 	user.imageUrl = avatar;
+	user.tenant = tenant;
+
 	user.hash = await bcrypt.hash(
 		'123456',
 		env.USER_PASSWORD_BCRYPT_SALT_ROUNDS
@@ -190,14 +245,14 @@ const generateRandomUser = async (role: Role): Promise<User> => {
 	return user;
 };
 
-const insertUser = async (
+const insertUsers = async (
 	connection: Connection,
-	user: User
+	users: User[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(User)
-		.values(user)
+		.values(users)
 		.execute();
 };

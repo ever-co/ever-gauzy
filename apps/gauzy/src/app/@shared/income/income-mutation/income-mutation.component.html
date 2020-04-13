@@ -14,6 +14,7 @@
 			[hidden]="income"
 			[skipGlobalChange]="true"
 			class="employees"
+			[selectedDate]="valueDate"
 		>
 		</ga-employee-selector>
 
@@ -49,7 +50,7 @@
 						<ng-select
 							[addTag]="addNewClient"
 							[items]="clients"
-							bindLabel="name"
+							bindLabel="clientName"
 							[searchable]="true"
 							formControlName="client"
 							placeholder="{{

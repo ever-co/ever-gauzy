@@ -365,7 +365,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 				averageIncome: Math.floor(this.averageIncome),
 				averageExpenses: Math.floor(this.averageExpense),
 				averageBonus: Math.floor(this.averageBonus),
-				bonusDate: Date.now()
+				bonusDate: Date.now(),
+				startedWorkOn: emp.startedWorkOn
 			});
 		}
 
