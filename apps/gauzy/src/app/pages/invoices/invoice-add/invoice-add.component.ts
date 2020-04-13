@@ -27,7 +27,6 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { TasksService } from '../../../@core/services/tasks.service';
 import { InvoiceAddProjectsComponent } from './invoice-add-project.component';
 import { InvoiceAddEmployeesComponent } from './invoice-add-employees.component';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-invoice-add',

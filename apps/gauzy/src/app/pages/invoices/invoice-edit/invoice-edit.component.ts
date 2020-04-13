@@ -15,11 +15,11 @@ import {
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
-import { Subject, of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
-import { Router, ActivatedRoute, ParamMap } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceAddEmployeesComponent } from '../invoice-add/invoice-add-employees.component';
