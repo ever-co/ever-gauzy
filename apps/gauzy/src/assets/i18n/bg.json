@@ -110,6 +110,7 @@
 			"DATE_TYPE": "Дата по подразбиране",
 			"ADD_TEAM": "Добавяне на нов отбор",
 			"OFFICIAL_NAME": "Официално Име",
+			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Започни седмицата на",
 			"TAX_ID": "Таксa ID",
 			"COUNTRY": "Държава",
@@ -186,6 +187,7 @@
 			"ADD_REMOVE_MEMBERS": "Добавяне или премахване на членове",
 			"MEMBERS_COUNT": "Брой членове",
 			"OFFICIAL_NAME": "Добави официално име",
+			"PROFILE_LINK": "Enter Profile Link",
 			"START_WEEK_ON": "Започни седмицата на",
 			"TAX_ID": "Такса ID",
 			"COUNTRY": "Държава",
@@ -530,6 +532,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
+		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
