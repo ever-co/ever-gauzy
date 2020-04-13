@@ -27,6 +27,7 @@ export const createOrganizations = async (
 	const currencies = Object.values(CurrenciesEnum);
 	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
 	defaultOrganization.name = name;
+	defaultOrganization.profile_link = generateLink(name);
 	defaultOrganization.currency = currency;
 	defaultOrganization.defaultValueDateType = defaultValueDateType;
 	defaultOrganization.imageUrl = imageUrl;
@@ -47,6 +48,7 @@ export const createOrganizations = async (
 		const logoAbbreviation = _extractLogoAbbreviation(companyName);
 
 		organization.name = companyName;
+		organization.profile_link = generateLink(companyName);
 		organization.currency = currencies[index % currencies.length];
 		organization.defaultValueDateType =
 			defaultDateTypes[index % defaultDateTypes.length];
@@ -113,4 +115,8 @@ const randomBonus = () => {
 			: randomNumberBetween(5, 10);
 
 	return { bonusType, bonusPercentage };
+};
+
+const generateLink = (name) => {
+	return name.replace(/[^A-Z0-9]+/gi, '_').toLowerCase();
 };
