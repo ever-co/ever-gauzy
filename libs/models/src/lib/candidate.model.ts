@@ -29,7 +29,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
-	education?: Education;
+	educations?: Education[];
 }
 export interface Education {
 	schoolName?: string;
@@ -58,6 +58,7 @@ export interface CandidateUpdateInput {
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
+	skiills?: string[];
 }
 
 export interface CandidateCreateInput {

@@ -3,6 +3,12 @@ import { Subject } from 'rxjs';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
+import { takeUntil, first } from 'rxjs/operators';
+import { Candidate } from '@gauzy/models';
+import { FormGroup, FormBuilder } from '@angular/forms';
+import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',
@@ -14,38 +20,80 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	skills: string[] = [];
 	showAddCard: boolean;
 	showEditDiv = [];
+
+	selectedCandidate: Candidate;
+	form: FormGroup;
 	constructor(
 		private readonly toastrService: NbToastrService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private candidateStore: CandidateStore,
+		private candidatesService: CandidatesService,
+		private fb: FormBuilder,
+		private router: Router,
+		private route: ActivatedRoute
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		// this.route.params
-		// 	.pipe(takeUntil(this._ngDestroy$))
-		// 	.subscribe((params) => {
-		// 		this.routeParams = params;
-		// 	});
+		this.candidateStore.selectedCandidate$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((candidate) => {
+				this.selectedCandidate = candidate;
+				if (this.selectedCandidate) {
+					this._initializeForm(this.selectedCandidate);
+				}
+			});
+		this.route.params
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (params) => {
+				const id = params.id;
+				const { items } = await this.candidatesService
+					.getAll(['user', 'tags'], { id })
+					.pipe(first())
+					.toPromise();
+				this.selectedCandidate = items[0];
+
+				this.candidateStore.selectedCandidate = this.selectedCandidate;
+			});
+	}
+	private async _initializeForm(candidate: Candidate) {
+		this.form = this.fb.group({
+			skills: [candidate.skills]
+		});
 	}
 	showEditCard(index: number) {
 		this.showEditDiv[index] = true;
 	}
 	removeSkill(index: number) {
-		return this.skills.splice(index, 1);
+		this.skills.splice(index, 1);
+		this.selectedCandidate.skills = this.skills;
 	}
 	editSkill(skill: string, index: number) {
 		this.skills[index] = skill;
+		this.selectedCandidate.skills = this.skills;
 		this.showEditDiv[index] = !this.showEditDiv[index];
 	}
 	cancel(index: number) {
 		this.showEditDiv[index] = !this.showEditDiv[index];
 	}
 
-	addSkill(skill: string) {
-		this.showAddCard = !this.showAddCard;
+	async addSkill(skill: string) {
 		if (skill !== '') {
+			this.showAddCard = !this.showAddCard;
 			this.skills.push(skill);
+			this.selectedCandidate.skills = this.skills;
+			try {
+				await this.candidatesService.update(
+					this.selectedCandidate.id,
+					this.selectedCandidate
+				);
+			} catch (error) {
+				this.toastrService.danger(
+					error.error.message || error.message,
+					'Error'
+				);
+			}
 		} else {
 			this.toastrService.danger(
 				this.getTranslation(
@@ -55,16 +103,6 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			);
 		}
 	}
-	// private async loadSkills() {
-	// 	const { id } = this.routeParams;
-	// 	const { items } = await this.candidatesService
-	// 		.getAll(['user'], { id })
-	// 		.pipe(first())
-	// 		.toPromise();
-
-	// 	this.selectedCandidate = items[0];
-	// }
-
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 	}

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormGroup, FormBuilder, FormArray, FormControl } from '@angular/forms';
 import { Candidate, Education } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -17,6 +17,10 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	implements OnInit {
 	showAddCard: boolean;
 	showEditDiv = [];
+	educations: Education[] = [
+		{ schoolName: '111', degree: '2222' },
+		{ schoolName: '3333', degree: '444' }
+	];
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
 	form: FormGroup;
@@ -34,36 +38,32 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			.subscribe((candidate) => {
 				this.selectedCandidate = candidate;
 				if (this.selectedCandidate) {
-					this._initializeForm(this.selectedCandidate);
+					this._initializeForm(this.selectedCandidate.educations);
 				}
 			});
 	}
-	private async _initializeForm(candidate: Candidate) {
-		this.form = this.fb.group({
-			schoolName: [
-				candidate.education ? candidate.education.schoolName : null
-			],
-			degree: [candidate.education ? candidate.education.degree : null],
-			field: [candidate.education ? candidate.education.field : null],
-			completionDate: [
-				candidate.education ? candidate.education.completionDate : null
-			],
-			notes: [candidate.education ? candidate.education.notes : null]
+	private async _initializeForm(educations: Education[]) {
+		this.form = new FormGroup({
+			educations: this.fb.array([])
 		});
 	}
-	// showEditCard( index: number) {
-	// 	this.showEditDiv[index] = true;
-	// 	this.showAddCard = !this.showAddCard;
-	// }
 
-	addEducation(education: Education) {
-		console.log(education);
-		this.form.valueChanges.subscribe((data) => console.log(data));
+	showEditCard(index: number) {
+		this.showEditDiv[index] = true;
 		this.showAddCard = !this.showAddCard;
-		if (this.form.valid) {
-			this.candidateStore.candidateForm = {
-				...this.form.value
-			};
-		}
+	}
+
+	addEducation() {
+		const educations = this.form.controls.educations as FormArray;
+		educations.push(
+			this.fb.group({
+				schoolName: '',
+				degree: ''
+				//field: [''],
+				// completionDate: [''],
+				// notes: ['']
+			})
+		);
+		// console.log(educations.value);
 	}
 }
