@@ -12,7 +12,7 @@ import {
 	InvoiceItem,
 	Organization
 } from '@gauzy/models';
-import { takeUntil, first, switchMap } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { Subject, of } from 'rxjs';

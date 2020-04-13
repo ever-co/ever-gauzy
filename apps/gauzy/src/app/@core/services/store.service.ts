@@ -4,8 +4,7 @@ import {
 	PermissionsEnum,
 	RolePermissions,
 	User,
-	Tag,
-	Invoice
+	Tag
 } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
@@ -17,15 +16,11 @@ export class Store {
 	private _userRolePermissions: RolePermissions[];
 	private _user: User;
 	private _selectedTags: Tag[];
-	private _selectedInvoice: Invoice;
 	Permissions: boolean;
 
 	user$: BehaviorSubject<User> = new BehaviorSubject(this.user);
 	selectedTags$: BehaviorSubject<Tag[]> = new BehaviorSubject(
 		this.selectedTags
-	);
-	selectedInvoice$: BehaviorSubject<Invoice> = new BehaviorSubject(
-		this.selectedInvoice
 	);
 	selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(
 		this.selectedOrganization
@@ -110,15 +105,6 @@ export class Store {
 	set selectedDate(date: Date) {
 		this._selectedDate = date;
 		this.selectedDate$.next(date);
-	}
-
-	get selectedInvoice(): Invoice {
-		return this._selectedInvoice;
-	}
-
-	set selectedInvoice(invoice: Invoice) {
-		this._selectedInvoice = invoice;
-		this.selectedInvoice$.next(invoice);
 	}
 
 	get selectedProposal(): ProposalViewModel {
