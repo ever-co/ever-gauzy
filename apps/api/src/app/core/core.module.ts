@@ -53,6 +53,7 @@ import { IntegrationSetting } from '../integration-setting/integration-setting.e
 import { Integration } from '../integration/integration.entity';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
+import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 
 const entities = [
 	Invite,
@@ -95,6 +96,7 @@ const entities = [
 	Screenshot,
 	ExpenseCategory,
 	CandidateSource,
+	CandidateCv,
 	IntegrationSetting,
 	Integration,
 	IntegrationMap

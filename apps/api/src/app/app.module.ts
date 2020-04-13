@@ -50,6 +50,7 @@ import { CandidateModule } from './candidate/candidate.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
+import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
 
 @Module({
 	imports: [
@@ -189,6 +190,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 		UserModule,
 		EmployeeModule,
 		CandidateModule,
+		CandidateCvModule,
 		ExportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,

@@ -70,6 +70,7 @@ import { createCandidateSourses } from '../../candidate_source/candidate_source.
 import { CandidateSource } from '../../candidate_source/candidate_source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Tenant } from './../../tenant/tenant.entity';
+import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -110,7 +111,8 @@ const allEntities = [
 	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,
-	CandidateSource
+	CandidateSource,
+	CandidateCv
 ];
 
 @Injectable()
