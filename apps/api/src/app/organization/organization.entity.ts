@@ -55,6 +55,13 @@ export class Organization extends LocationBase implements IOrganization {
 	@Column()
 	name: string;
 
+	@ApiProperty({ type: String, minLength: 3, maxLength: 100 })
+	@IsString()
+	@Index({ unique: true })
+	@IsOptional()
+	@Column({ nullable: true })
+	profile_link: string;
+
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
 	@Column({ length: 500, nullable: true })

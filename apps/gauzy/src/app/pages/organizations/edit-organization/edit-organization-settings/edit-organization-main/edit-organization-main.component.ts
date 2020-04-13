@@ -94,6 +94,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
 			officialName: [this.organization.officialName],
+			profile_link: [this.organization.profile_link],
 			taxId: [this.organization.taxId],
 			registrationDate: [
 				this.organization.registrationDate
