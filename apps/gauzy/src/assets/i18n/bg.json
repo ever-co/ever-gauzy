@@ -750,6 +750,8 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
+		"DUE_DATE": "Крайна Дата",
+		"ESTIMATE": "Приблизително Време",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {

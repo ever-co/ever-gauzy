@@ -30,6 +30,7 @@ export class TasksStoreService {
 	}
 
 	private _mapToViewModel(tasks) {
+		debugger;
 		return tasks.map((task) => ({
 			...task,
 			projectName: task.project ? task.project.name : undefined

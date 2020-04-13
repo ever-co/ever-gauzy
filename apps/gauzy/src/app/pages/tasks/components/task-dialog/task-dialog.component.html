@@ -68,6 +68,45 @@
 						</ngx-tags-color-input>
 					</div>
 				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="dueDate" class="label">{{
+							'TASKS_PAGE.DUE_DATE' | translate
+						}}</label>
+						<input
+							formControlName="dueDate"
+							type="text"
+							nbInput
+							placeholder="{{
+								'TASKS_PAGE.DUE_DATE' | translate
+							}}"
+							[nbDatepicker]="taskDueDatePicker"
+							id="dueDate"
+							fullWidth
+						/>
+						<nb-datepicker #taskDueDatePicker></nb-datepicker>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="estimate" class="label">{{
+							'TASKS_PAGE.ESTIMATE' | translate
+						}}</label>
+						<input
+							formControlName="estimate"
+							type="text"
+							nbInput
+							placeholder="{{
+								'TASKS_PAGE.ESTIMATE' | translate
+							}}"
+							id="estimate"
+							fullWidth
+						/>
+
+						<div>{{ form.get('estimate').errors | json }}</div>
+					</div>
+				</div>
+
 				<div class="col-sm-12">
 					<textarea
 						formControlName="description"

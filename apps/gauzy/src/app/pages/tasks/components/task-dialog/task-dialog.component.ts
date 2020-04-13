@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Task, OrganizationProjects } from '@gauzy/models';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import {
+	FormGroup,
+	FormBuilder,
+	Validators,
+	AbstractControl
+} from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -12,6 +17,8 @@ const initialTaskValue = {
 	title: '',
 	project: null,
 	status: '',
+	estimate: null,
+	dueDate: null,
 	description: '',
 	tags: null
 };
@@ -61,11 +68,39 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		if (items) this.projects = items;
 	}
 
-	initializeForm({ title, description, project, status, tags }: Task) {
+	initializeForm({
+		title,
+		description,
+		project,
+		status,
+		estimate,
+		dueDate,
+		tags
+	}: Task) {
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
 			status: [status],
+			estimate: [
+				estimate,
+				(control: AbstractControl) => {
+					const value = control.value;
+
+					if (value) {
+						const hours = +value.split(':')[0];
+						const minutes = +value.split(':')[1];
+
+						if (hours >= 0 && minutes >= 0 && minutes <= 59) {
+							return null;
+						}
+
+						return {
+							wrongFormat: true
+						};
+					}
+				}
+			],
+			dueDate: [dueDate],
 			description: [description],
 			tags: []
 		});

@@ -751,6 +751,8 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Project",
+		"DUE_DATE": "Due Date",
+		"ESTIMATE": "Estimate",
 		"TASKS_STATUS": "Status"
 	},
 	"USERS_PAGE": {

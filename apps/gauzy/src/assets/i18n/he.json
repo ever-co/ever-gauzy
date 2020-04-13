@@ -750,6 +750,8 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "פרויקטים",
+		"DUE_DATE": "תאריך להגשה",
+		"ESTIMATE": "הערכה",
 		"TASKS_STATUS": "עבודה"
 	},
 	"USERS_PAGE": {

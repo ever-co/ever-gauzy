@@ -750,6 +750,8 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
+		"DUE_DATE": "Срок оплаты",
+		"ESTIMATE": "Оценка общего времени",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
