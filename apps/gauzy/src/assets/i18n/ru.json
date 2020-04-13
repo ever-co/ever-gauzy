@@ -110,6 +110,7 @@
 			"DATE_TYPE": "Тип даты по умолчанию",
 			"ADD_TEAM": "Добавить новую команду",
 			"OFFICIAL_NAME": "Официальное имя",
+			"PROFILE_LINK": "Ссылка на профиль",
 			"START_WEEK_ON": "Начало недели в",
 			"TAX_ID": "Налог ID",
 			"COUNTRY": "Страна",
@@ -186,6 +187,7 @@
 			"ADD_REMOVE_MEMBERS": "Добавление или удаление членов команды",
 			"MEMBERS_COUNT": "Количество участников",
 			"OFFICIAL_NAME": "Введите официальное имя",
+			"PROFILE_LINK": "Введите ссылку на профиль",
 			"START_WEEK_ON": "Начало недели в",
 			"TAX_ID": "Налог ID",
 			"COUNTRY": "Страна",
@@ -530,6 +532,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
+		"EDIT_PUBLIC_PAGE": "Изменить публичную страницу",
 		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
 		"DEPARTMENTS": "Департаменты",
