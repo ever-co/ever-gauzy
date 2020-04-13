@@ -13,12 +13,14 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	@Column({ type: 'numeric' })
 	itemNumber: number;
 
-	@ApiProperty({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
-	name: string;
+	@IsOptional()
+	name?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
+	@Column()
 	description: string;
 
 	@ApiProperty({ type: Number })
@@ -51,7 +53,8 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	@ApiPropertyOptional({ type: Invoice })
 	@ManyToOne(
 		(type) => Invoice,
-		(invoice) => invoice.invoiceItems
+		(invoice) => invoice.invoiceItems,
+		{ onDelete: 'SET NULL' }
 	)
 	@JoinColumn()
 	invoice?: Invoice;

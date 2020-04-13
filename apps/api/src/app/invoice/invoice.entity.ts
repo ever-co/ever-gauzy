@@ -38,7 +38,7 @@ export class Invoice extends Base implements IInvoice {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({ type: 'numeric' })
 	discountValue: number;
 
 	@ApiProperty({ type: Boolean })
@@ -53,7 +53,7 @@ export class Invoice extends Base implements IInvoice {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@Column({ nullable: true })
+	@Column()
 	terms: string;
 
 	@ApiPropertyOptional({ type: Number })
@@ -66,6 +66,24 @@ export class Invoice extends Base implements IInvoice {
 	@IsBoolean()
 	@Column({ nullable: true })
 	emailSent: boolean;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	invoiceType?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	organizationId?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	clientId?: string;
 
 	@ApiPropertyOptional({ type: Organization })
 	@ManyToOne((type) => Organization)
@@ -80,7 +98,8 @@ export class Invoice extends Base implements IInvoice {
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany(
 		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.invoice
+		(invoiceItem) => invoiceItem.invoice,
+		{ onDelete: 'SET NULL' }
 	)
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];

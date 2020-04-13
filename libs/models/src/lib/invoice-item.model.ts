@@ -2,7 +2,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface InvoiceItem extends IBaseEntityModel {
 	itemNumber: number;
-	name: string;
+	name?: string;
 	description: string;
 	unitCost: number;
 	quantity: number;

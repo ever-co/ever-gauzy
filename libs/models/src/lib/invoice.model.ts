@@ -13,9 +13,12 @@ export interface Invoice extends IBaseEntityModel {
 	tax: number;
 	terms: string;
 	totalValue?: number;
+	clientId?: string;
+	organizationId?: string;
 	fromOrganization?: Organization;
 	toClient?: OrganizationClients;
 	invoiceItems?: InvoiceItem[];
+	invoiceType?: string;
 }
 
 export enum DiscountTypeEnum {

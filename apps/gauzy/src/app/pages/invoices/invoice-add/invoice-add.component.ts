@@ -80,8 +80,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private invoiceItemService: InvoiceItemService,
 		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
-		private tasksService: TasksService,
-		private errorHandler: ErrorHandlingService
+		private tasksService: TasksService
 	) {
 		super(translateService);
 	}
@@ -340,12 +339,12 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	async addInvoice() {
 		const tableData = await this.smartTableSource.getAll();
-		if (tableData.length) {
+		if (tableData) {
 			const invoiceData = this.form.value;
 			let allItemValue = 0;
 			tableData.forEach((invoiceItem) => {
 				invoiceItem.totalValue =
-					+invoiceItem.unitCost * +invoiceItem.quantity;
+					+invoiceItem.price * +invoiceItem.quantity;
 				allItemValue += invoiceItem.totalValue;
 			});
 			const invoiceTotalValue =
@@ -361,19 +360,18 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				terms: invoiceData.terms,
 				paid: invoiceData.paid,
 				totalValue: invoiceTotalValue,
-				toClient: invoiceData.client,
-				fromOrganization: this.organization
+				clientId: invoiceData.client.id,
+				organizationId: this.organization.id,
+				invoiceType: this.invoiceType
 			});
 
 			for (const invoiceItem of tableData) {
 				await this.invoiceItemService.add({
 					itemNumber: invoiceItem.itemNumber,
-					name: invoiceItem.name,
 					description: invoiceItem.description,
-					unitCost: invoiceItem.unitCost,
+					unitCost: invoiceItem.price,
 					quantity: invoiceItem.quantity,
 					totalValue: invoiceItem.totalValue,
-					taskId: invoiceItem.task.id,
 					invoiceId: createdInvoice.id
 				});
 			}
@@ -566,27 +564,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return item.name.toLowerCase().includes(term.toLowerCase());
 		}
 	}
-
-	addNewClient = (name: string): Promise<OrganizationClients> => {
-		this.organizationId = this.store.selectedOrganization.id;
-		try {
-			this.toastrService.primary(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-			return this.organizationClientsService.create({
-				name,
-				organizationId: this.organizationId
-			});
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
-	};
 
 	cancel() {
 		this.router.navigate(['/pages/invoices']);

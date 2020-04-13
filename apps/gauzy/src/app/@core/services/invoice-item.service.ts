@@ -20,4 +20,18 @@ export class InvoiceItemService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	update(id: string, invoiceItem: InvoiceItem): Promise<InvoiceItem> {
+		return this.http
+			.put<InvoiceItem>(`/api/invoice-item/${id}`, invoiceItem)
+			.pipe(first())
+			.toPromise();
+	}
+
+	delete(id: string): Promise<any> {
+		return this.http
+			.delete(`/api/invoice-item/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
 }
