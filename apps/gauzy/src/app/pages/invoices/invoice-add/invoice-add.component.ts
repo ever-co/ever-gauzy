@@ -27,6 +27,7 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 import { TasksService } from '../../../@core/services/tasks.service';
 import { InvoiceAddProjectsComponent } from './invoice-add-project.component';
 import { InvoiceAddEmployeesComponent } from './invoice-add-employees.component';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -79,7 +80,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private invoiceItemService: InvoiceItemService,
 		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
-		private tasksService: TasksService
+		private tasksService: TasksService,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -360,8 +362,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				paid: invoiceData.paid,
 				totalValue: invoiceTotalValue,
 				clientId: invoiceData.client.id,
-				organizationId: this.organization.id,
-				invoiceType: this.invoiceType
+				organizationId: this.organization.id
 			});
 
 			for (const invoiceItem of tableData) {
@@ -563,6 +564,27 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return item.name.toLowerCase().includes(term.toLowerCase());
 		}
 	}
+
+	addNewClient = (name: string): Promise<OrganizationClients> => {
+		this.organizationId = this.store.selectedOrganization.id;
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationClientsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
 
 	cancel() {
 		this.router.navigate(['/pages/invoices']);
