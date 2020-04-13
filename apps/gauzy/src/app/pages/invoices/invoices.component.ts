@@ -86,7 +86,6 @@ export class InvoicesComponent extends TranslationBaseComponent
 	async selectInvoice($event: SelectedInvoice) {
 		if ($event.isSelected) {
 			this.selectedInvoice = $event.data;
-			this.store.selectedInvoice = $event.data;
 			this.disableButton = false;
 			this.invoicesTable.grid.dataSet.willSelect = false;
 		} else {
