@@ -110,6 +110,7 @@
 			"DATE_TYPE": "סוג תאריך ברירת מחדל",
 			"ADD_TEAM": "Add New Team",
 			"OFFICIAL_NAME": "Official Name",
+			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
 			"COUNTRY": "מדינה",
@@ -186,6 +187,7 @@
 			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
 			"MEMBERS_COUNT": "Members count",
 			"OFFICIAL_NAME": "Enter Official Name",
+			"PROFILE_LINK": "Enter Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
 			"COUNTRY": "מדינה",
@@ -530,6 +532,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "ארגונים",
 		"EMPLOYEES": "עובדים",
+		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
 		"DEPARTMENTS": "מחלקות",
