@@ -46,7 +46,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	task: Task;
 	tasks: Task[];
 	generatedTask: string;
-	loadedNumber: boolean;
 	organization: Organization;
 	selectedClient: OrganizationClients;
 	selectedProject: OrganizationProjects;
@@ -112,9 +111,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	}
 
 	async loadSmartTable() {
-		this.loadedNumber = false;
-		await this.createInvoiceItemNumber();
-		this.loadedNumber = true;
 		if (this.invoiceType === 'By Employee Hours') {
 			this.settingsSmartTable = {
 				add: {
@@ -132,13 +128,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					deleteButtonContent: '<i class="nb-trash"></i>'
 				},
 				columns: {
-					itemNumber: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-						),
-						type: 'number',
-						addable: false
-					},
 					employee: {
 						title: 'Employee',
 						type: 'custom',
@@ -188,13 +177,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					deleteButtonContent: '<i class="nb-trash"></i>'
 				},
 				columns: {
-					itemNumber: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-						),
-						type: 'number',
-						addable: false
-					},
 					project: {
 						title: 'Project',
 						type: 'custom',
@@ -241,13 +223,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					deleteButtonContent: '<i class="nb-trash"></i>'
 				},
 				columns: {
-					itemNumber: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-						),
-						type: 'number',
-						addable: false
-					},
 					task: {
 						title: 'Task',
 						type: 'custom',
@@ -297,13 +272,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					deleteButtonContent: '<i class="nb-trash"></i>'
 				},
 				columns: {
-					itemNumber: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-						),
-						type: 'number',
-						addable: false
-					},
 					description: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
@@ -362,12 +330,12 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				paid: invoiceData.paid,
 				totalValue: invoiceTotalValue,
 				clientId: invoiceData.client.id,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				invoiceType: this.invoiceType
 			});
 
 			for (const invoiceItem of tableData) {
 				await this.invoiceItemService.add({
-					itemNumber: invoiceItem.itemNumber,
 					description: invoiceItem.description,
 					unitCost: invoiceItem.price,
 					quantity: invoiceItem.quantity,
@@ -389,15 +357,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		event.newData.itemNumber = this.formItemNumber;
 		this.formItemNumber++;
 		event.confirm.resolve(event.newData);
-	}
-
-	private async createInvoiceItemNumber() {
-		const { items } = await this.invoiceItemService.getAll();
-		if (items.length) {
-			this.formItemNumber = +items[items.length - 1].itemNumber + 1;
-		} else {
-			this.formItemNumber = 1;
-		}
 	}
 
 	private async createInvoiceNumber() {
@@ -478,7 +437,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		if (this.invoiceType === 'By Employee Hours') {
 			fakeData = [
 				{
-					itemNumber: 1,
 					description: 'Desc 1',
 					hourlyRate: 0,
 					hoursWorked: 0,
@@ -489,7 +447,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		} else if (this.invoiceType === 'By Project Hours') {
 			fakeData = [
 				{
-					itemNumber: 1,
 					description: 'Desc 1',
 					hourlyRate: 0,
 					hoursWorked: 0,
@@ -497,7 +454,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					selectedProject: this.selectedProject[0]
 				},
 				{
-					itemNumber: 2,
 					description: 'Desc 2',
 					hourlyRate: 1,
 					hoursWorked: 1,
@@ -505,7 +461,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					selectedProject: this.selectedProject[1]
 				},
 				{
-					itemNumber: 3,
 					description: 'Desc 3',
 					hourlyRate: 2,
 					hoursWorked: 2,
@@ -516,7 +471,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		} else if (this.invoiceType === 'By Task Hours') {
 			fakeData = [
 				{
-					itemNumber: 1,
 					description: 'Desc 1',
 					hourlyRate: 0,
 					hoursWorked: 0,
@@ -524,7 +478,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					selectedTask: this.selectedTask[0]
 				},
 				{
-					itemNumber: 2,
 					description: 'Desc 2',
 					hourlyRate: 1,
 					hoursWorked: 1,
@@ -532,7 +485,6 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					selectedTask: this.selectedTask[1]
 				},
 				{
-					itemNumber: 3,
 					description: 'Desc 3',
 					hourlyRate: 2,
 					hoursWorked: 2,

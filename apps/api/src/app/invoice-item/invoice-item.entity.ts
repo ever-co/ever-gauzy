@@ -8,11 +8,6 @@ import { Task } from '../tasks/task.entity';
 
 @Entity('invoice_item')
 export class InvoiceItem extends Base implements IInvoiceItem {
-	@ApiProperty({ type: Number })
-	@IsNumber()
-	@Column({ type: 'numeric' })
-	itemNumber: number;
-
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()

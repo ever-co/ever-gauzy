@@ -1,13 +1,17 @@
-import { Invoice as IInvoice, CurrenciesEnum } from '@gauzy/models';
+import {
+	Invoice as IInvoice,
+	CurrenciesEnum,
+	InvoiceTypeEnum
+} from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
 	IsNumber,
-	IsEnum,
 	IsBoolean,
 	IsDate,
-	IsOptional
+	IsOptional,
+	IsEnum
 } from 'class-validator';
 import { Entity, Column, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
 import { Organization } from '../organization/organization.entity';
@@ -67,8 +71,8 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true })
 	emailSent: boolean;
 
-	@ApiPropertyOptional({ type: String })
-	@IsString()
+	@ApiPropertyOptional({ type: String, enum: InvoiceTypeEnum })
+	@IsEnum(InvoiceTypeEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	invoiceType?: string;

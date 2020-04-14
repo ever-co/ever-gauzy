@@ -309,7 +309,7 @@
 			</div>
 		</form>
 		<ng2-smart-table
-			*ngIf="loadedNumber && shouldLoadTable"
+			*ngIf="shouldLoadTable"
 			class="table"
 			(createConfirm)="onCreateConfirm($event)"
 			[settings]="settingsSmartTable"

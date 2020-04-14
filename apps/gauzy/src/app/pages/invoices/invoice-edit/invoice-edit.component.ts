@@ -126,9 +126,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	async loadSmartTable() {
-		this.loadedNumber = false;
-		await this.createInvoiceItemNumber();
-		this.loadedNumber = true;
 		if (this.invoice.invoiceType === 'By Employee Hours') {
 			this.settingsSmartTable = {
 				add: {
@@ -147,13 +144,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					confirmDelete: true
 				},
 				columns: {
-					itemNumber: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-						),
-						type: 'number',
-						addable: false
-					},
 					employee: {
 						title: 'Employee',
 						type: 'custom',
@@ -204,13 +194,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					confirmDelete: true
 				},
 				columns: {
-					itemNumber: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-						),
-						type: 'number',
-						addable: false
-					},
 					project: {
 						title: 'Project',
 						type: 'custom',
@@ -258,13 +241,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					confirmDelete: true
 				},
 				columns: {
-					itemNumber: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-						),
-						type: 'number',
-						addable: false
-					},
 					task: {
 						title: 'Task',
 						type: 'custom',
@@ -315,13 +291,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					confirmDelete: true
 				},
 				columns: {
-					itemNumber: {
-						title: this.getTranslation(
-							'INVOICES_PAGE.INVOICE_ITEM.ITEM_NUMBER'
-						),
-						type: 'number',
-						addable: false
-					},
 					description: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
@@ -426,7 +395,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			for (const invoiceItem of tableData) {
 				if (invoiceItem.id) {
 					await this.invoiceItemService.update(invoiceItem.id, {
-						itemNumber: invoiceItem.itemNumber,
 						description: invoiceItem.description,
 						unitCost: invoiceItem.price,
 						quantity: invoiceItem.quantity,
@@ -435,7 +403,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					});
 				} else {
 					await this.invoiceItemService.add({
-						itemNumber: invoiceItem.itemNumber,
 						description: invoiceItem.description,
 						unitCost: invoiceItem.price,
 						quantity: invoiceItem.quantity,
@@ -469,7 +436,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		let data;
 		for (const item of invoiceItems) {
 			data = {
-				itemNumber: item.itemNumber,
 				description: item.description,
 				quantity: item.quantity,
 				price: item.unitCost,
@@ -478,16 +444,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			items.push(data);
 		}
 		this.smartTableSource.load(items);
-	}
-
-	private async createInvoiceItemNumber() {
-		const { items } = await this.invoiceItemService.getAll();
-		console.log(items);
-		if (items.length) {
-			this.formItemNumber = +items[0].itemNumber + 1;
-		} else {
-			this.formItemNumber = 1;
-		}
 	}
 
 	searchClient(term: string, item: any) {
