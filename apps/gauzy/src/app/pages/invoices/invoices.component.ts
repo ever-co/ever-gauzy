@@ -9,6 +9,7 @@ import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoicesValueComponent } from './invoices-value.component';
 import { Router } from '@angular/router';
 import { first } from 'rxjs/operators';
+import { Store } from '../../@core/services/store.service';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -33,6 +34,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	constructor(
 		readonly translateService: TranslateService,
+		private store: Store,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
@@ -49,6 +51,12 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	add() {
 		this.router.navigate(['/pages/accounting/invoices/add']);
+	}
+
+	edit() {
+		this.router.navigate([
+			`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`
+		]);
 	}
 
 	async delete() {
@@ -78,7 +86,6 @@ export class InvoicesComponent extends TranslationBaseComponent
 	async selectInvoice($event: SelectedInvoice) {
 		if ($event.isSelected) {
 			this.selectedInvoice = $event.data;
-			console.log(this.selectedInvoice);
 			this.disableButton = false;
 			this.invoicesTable.grid.dataSet.willSelect = false;
 		} else {

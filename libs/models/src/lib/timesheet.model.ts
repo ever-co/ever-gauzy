@@ -50,14 +50,14 @@ export enum TimeLogType {
 }
 
 export interface TimeSlot extends IBaseEntityModel {
-	timeLog?: TimeLog;
+	employee: Employee;
 	project?: OrganizationProjects;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;
 	overall?: number;
-	startedAt?: Date;
-	stoppedAt?: Date;
+	startedAt: Date;
+	stoppedAt: Date;
 	tags?: Tag[];
 }
 

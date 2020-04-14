@@ -1,13 +1,17 @@
-import { Invoice as IInvoice, CurrenciesEnum } from '@gauzy/models';
+import {
+	Invoice as IInvoice,
+	CurrenciesEnum,
+	InvoiceTypeEnum
+} from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsString,
 	IsNumber,
-	IsEnum,
 	IsBoolean,
 	IsDate,
-	IsOptional
+	IsOptional,
+	IsEnum
 } from 'class-validator';
 import { Entity, Column, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
 import { Organization } from '../organization/organization.entity';
@@ -38,7 +42,7 @@ export class Invoice extends Base implements IInvoice {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({ type: 'numeric' })
 	discountValue: number;
 
 	@ApiProperty({ type: Boolean })
@@ -53,7 +57,7 @@ export class Invoice extends Base implements IInvoice {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@Column({ nullable: true })
+	@Column()
 	terms: string;
 
 	@ApiPropertyOptional({ type: Number })
@@ -66,6 +70,24 @@ export class Invoice extends Base implements IInvoice {
 	@IsBoolean()
 	@Column({ nullable: true })
 	emailSent: boolean;
+
+	@ApiPropertyOptional({ type: String, enum: InvoiceTypeEnum })
+	@IsEnum(InvoiceTypeEnum)
+	@IsOptional()
+	@Column({ nullable: true })
+	invoiceType?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	organizationId?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	clientId?: string;
 
 	@ApiPropertyOptional({ type: Organization })
 	@ManyToOne((type) => Organization)
@@ -80,7 +102,8 @@ export class Invoice extends Base implements IInvoice {
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany(
 		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.invoice
+		(invoiceItem) => invoiceItem.invoice,
+		{ onDelete: 'SET NULL' }
 	)
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];

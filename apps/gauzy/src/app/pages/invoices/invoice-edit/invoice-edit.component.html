@@ -1,7 +1,7 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h3>
-			{{ 'INVOICES_PAGE.ADD_INVOICE' | translate }}
+			{{ 'INVOICES_PAGE.EDIT_INVOICE' | translate }}
 		</h3>
 	</nb-card-header>
 
@@ -20,7 +20,6 @@
 								'INVOICES_PAGE.INVOICE_NUMBER' | translate
 							}}"
 							formControlName="invoiceNumber"
-							[(ngModel)]="formInvoiceNumber"
 							id="inputInvoiceNumber"
 							fullWidth
 						/>
@@ -165,6 +164,7 @@
 						<nb-select
 							class="d-block"
 							formControlName="currency"
+							[ngModel]="currency"
 							fullWidth
 						>
 							<nb-option
@@ -206,124 +206,24 @@
 					</div>
 				</div>
 			</div>
-			<div class="row">
-				<div class="col-sm-3">
-					<div class="form-group">
-						<nb-select
-							(selectedChange)="onTypeChange($event)"
-							formControlName="invoiceType"
-							placeholder="Invoice Type"
-							fullWidth
-						>
-							<nb-option value="By Employee Hours"
-								>By Employee Hours</nb-option
-							>
-							<nb-option value="By Project Hours"
-								>By Project Hours</nb-option
-							>
-							<nb-option value="By Task Hours"
-								>By Task Hours</nb-option
-							>
-							<nb-option value="Details Invoice Items"
-								>Details Invoice Items</nb-option
-							>
-						</nb-select>
-					</div>
-				</div>
-				<div class="col-sm-3" *ngIf="isEmployeeHourTable">
-					<div class="form-group">
-						<ga-employee-selector
-							#employeeSelector
-							class="employees"
-						>
-						</ga-employee-selector>
-					</div>
-				</div>
-				<div class="col-sm-3" *ngIf="isProjectHourTable">
-					<div class="form-group">
-						<ng-select
-							[(items)]="projects"
-							bindName="name"
-							placeholder="All Projects"
-							[(ngModel)]="selectedProject"
-							formControlName="project"
-							id="inputProject"
-							(change)="selectProject($event)"
-							[multiple]="true"
-						>
-							<ng-template
-								ng-option-tmp
-								let-item="item"
-								let-index="index"
-							>
-								{{ item.name }}
-							</ng-template>
-							<ng-template ng-label-tmp let-item="item">
-								<div class="selector-template">
-									<span>{{ item.name }}</span>
-								</div>
-							</ng-template>
-						</ng-select>
-					</div>
-				</div>
-				<div class="col-sm-3" *ngIf="isTaskHourTable">
-					<div class="form-group">
-						<ng-select
-							[(items)]="tasks"
-							bindName="title"
-							placeholder="Select a Task"
-							[(ngModel)]="selectedTask"
-							formControlName="task"
-							id="inputTask"
-							(change)="selectTask($event)"
-							[multiple]="true"
-						>
-							<ng-template
-								ng-option-tmp
-								let-item="item"
-								let-index="index"
-							>
-								{{ item.title }}
-							</ng-template>
-							<ng-template ng-label-tmp let-item="item">
-								<div class="selector-template">
-									<span>{{ item.title }}</span>
-								</div>
-							</ng-template>
-						</ng-select>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<button
-							(click)="generateTable()"
-							status="success"
-							nbButton
-						>
-							Generate Invoice Items
-						</button>
-					</div>
-				</div>
-			</div>
 		</form>
 		<ng2-smart-table
-			*ngIf="shouldLoadTable"
 			class="table"
-			(createConfirm)="onCreateConfirm($event)"
+			*ngIf="invoiceLoaded"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
-			#invoiceItemTable
+			(createConfirm)="onCreateConfirm($event)"
+			(deleteConfirm)="onDeleteConfirm($event)"
+			#invoceiItemTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+		<button status="danger" class="mr-3" (click)="cancel()" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="addInvoice()" status="success" nbButton>
+		<button status="success" (click)="updateInvoice()" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
