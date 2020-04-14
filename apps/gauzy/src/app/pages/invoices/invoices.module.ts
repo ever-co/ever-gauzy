@@ -37,6 +37,7 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
 import { InvoiceAddEmployeesComponent } from './invoice-add/invoice-add-employees.component';
 import { EmployeesService } from '../../@core/services/employees.service';
+import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -88,7 +89,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceAddComponent,
 		InvoiceAddTasksComponent,
 		InvoiceAddProjectsComponent,
-		InvoiceAddEmployeesComponent
+		InvoiceAddEmployeesComponent,
+		InvoiceEditComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -96,7 +98,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceAddComponent,
 		InvoiceAddTasksComponent,
 		InvoiceAddProjectsComponent,
-		InvoiceAddEmployeesComponent
+		InvoiceAddEmployeesComponent,
+		InvoiceEditComponent
 	]
 })
 export class InvoicesModule {}

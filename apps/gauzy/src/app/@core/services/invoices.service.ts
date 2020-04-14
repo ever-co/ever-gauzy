@@ -14,9 +14,23 @@ export class InvoicesService {
 			.toPromise();
 	}
 
+	getById(id: string) {
+		return this.http
+			.get<Invoice>(`/api/invoices/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	add(invoice: Invoice): Promise<Invoice> {
 		return this.http
 			.post<Invoice>('/api/invoices', invoice)
+			.pipe(first())
+			.toPromise();
+	}
+
+	update(id: string, invoice: Invoice): Promise<Invoice> {
+		return this.http
+			.put<Invoice>(`/api/invoices/${id}`, invoice)
 			.pipe(first())
 			.toPromise();
 	}

@@ -6,7 +6,8 @@ import {
 	JoinColumn,
 	RelationId,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -30,6 +31,7 @@ import {
 import { Tag } from '../tags/tag.entity';
 import { Tenant } from './../tenant/tenant.entity';
 import { LocationBase } from '../core/entities/location-base';
+import { Invoice } from '../invoice/invoice.entity';
 
 @Entity('organization')
 export class Organization extends LocationBase implements IOrganization {
@@ -43,6 +45,14 @@ export class Organization extends LocationBase implements IOrganization {
 	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	tenant: Tenant;
+
+	@ApiPropertyOptional({ type: Invoice, isArray: true })
+	@OneToMany(
+		(type) => Invoice,
+		(invoices) => invoices.fromOrganization
+	)
+	@JoinColumn()
+	invoices?: Invoice[];
 
 	@ApiProperty()
 	@RelationId((organization: Organization) => organization.tenant)
