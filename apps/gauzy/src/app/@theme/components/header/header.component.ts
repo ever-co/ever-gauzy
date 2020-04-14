@@ -50,11 +50,10 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	createContextMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
 	showExtraActions = false;
-	largeBreakpoint = 1290;
 
 	private _selectedOrganizationId: string;
 	private _ngDestroy$ = new Subject<void>();
-	timerDueration: string;
+	timerDuration: string;
 
 	constructor(
 		private sidebarService: NbSidebarService,
@@ -78,9 +77,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.timeTrackerService.$dueration
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((time) => {
-				this.timerDueration = moment
-					.utc(time * 1000)
-					.format('HH:mm:ss');
+				this.timerDuration = moment.utc(time * 1000).format('HH:mm:ss');
 			});
 
 		this.menuService
@@ -159,8 +156,18 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 		return false;
 	}
 
-	getWindowWidth() {
-		return window.innerWidth;
+	closeExtraActionsIfLarge(event?: any) {
+		let width;
+
+		if (event !== undefined) {
+			width = event.target.innerWidth;
+		} else {
+			width = document.body.clientWidth;
+		}
+
+		if (width >= 1200) {
+			this.showExtraActions = false;
+		}
 	}
 
 	toggleExtraActions(bool?: boolean) {
