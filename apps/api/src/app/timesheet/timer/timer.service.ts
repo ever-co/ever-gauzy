@@ -13,12 +13,15 @@ import { TimeLogType, TimerStatus } from '@gauzy/models';
 import * as moment from 'moment';
 import { Timesheet } from '../timesheet.entity';
 import { TimeSheetService } from '../timesheet.service';
+import { TimeSlotService } from '../time-slot.service';
 
 @Injectable()
 export class TimerService {
 	constructor(
 		@Inject(forwardRef(() => TimeSheetService))
 		private readonly timesheetService: TimeSheetService,
+		@Inject(forwardRef(() => TimeSlotService))
+		private readonly timeSlotService: TimeSlotService,
 
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
@@ -117,6 +120,19 @@ export class TimerService {
 
 			await this.timesheetRepository.update(timesheet.id, { duration });
 			newTimeLog = await this.timeLogRepository.findOne(lastLog.id);
+
+			let timeSlots = this.timeSlotService.generateTimeSlots(
+				newTimeLog.startedAt,
+				newTimeLog.stoppedAt
+			);
+			timeSlots = timeSlots.map((slot) => ({
+				...slot,
+				employeeId: user.employeeId,
+				keyboard: 0,
+				mouse: 0,
+				overall: 0
+			}));
+			await this.timeSlotService.bulkCreate(timeSlots);
 		}
 		return newTimeLog;
 	}
