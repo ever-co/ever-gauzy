@@ -11,84 +11,93 @@
 		</button>
 		<div *ngIf="showAddCard" class="row m-0">
 			<form class="col-10" [formGroup]="form" *ngIf="form">
-				<div
-					formArrayName="educations"
-					*ngFor="
-						let education of form.controls.educations?.value;
-						let i = index
-					"
-				>
-					<ng-container [formGroupName]="i"
-						>{{ i }}
-						<input
-							#addInput
-							class="col-5"
-							nbInput
-							formControlName="schoolName"
-							type="text"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.ADD_EDUCATION.SCHOOL_NAME'
-									| translate
-							}}"
-							fullWidth
-						/>
-						<input
-							#addInput
-							class="col-5"
-							nbInput
-							formControlName="degree"
-							type="text"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.ADD_EDUCATION.DEGREE'
-									| translate
-							}}"
-							fullWidth
-						/>
-					</ng-container>
+				<div formArrayName="educations">
+					<div
+						*ngFor="
+							let education of form.controls.educations?.controls;
+							let i = index
+						"
+					>
+						<div [formGroupName]="i">
+							<input
+								#addInput
+								class="col-5"
+								nbInput
+								formControlName="schoolName"
+								type="text"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_EDUCATION.SCHOOL_NAME'
+										| translate
+								}}"
+								fullWidth
+							/>
+							<input
+								#addInput
+								class="col-5"
+								nbInput
+								formControlName="degree"
+								type="text"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_EDUCATION.DEGREE'
+										| translate
+								}}"
+								fullWidth
+							/>
+							<input
+								#addInput
+								class="col-5"
+								nbInput
+								formControlName="field"
+								type="text"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_EDUCATION.FIELD_OF_STUDY'
+										| translate
+								}}"
+								fullWidth
+							/>
+							<input
+								#addInput
+								class="col-5"
+								nbInput
+								type="text"
+								formControlName="completionDate"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_EDUCATION.DATE_OF_COMPLETION'
+										| translate
+								}}"
+								fullWidth
+								[nbDatepicker]="appliedDatePicker"
+							/>
+							<nb-datepicker #appliedDatePicker></nb-datepicker>
+							<textarea
+								class="notes col-5"
+								nbInput
+								formControlName="notes"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_EDUCATION.ADDITIONAL_NOTES'
+										| translate
+								}}"
+							>
+							</textarea>
+						</div>
+					</div>
 				</div>
-
-				<!-- <input
-					#addInput
-					class="col-5"
-					nbInput
-					formControlName="field"
-					type="text"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ADD_EDUCATION.FIELD_OF_STUDY'
-							| translate
-					}}"
-					fullWidth
-				/>
-				<input
-					#addInput
-					class="col-5"
-					nbInput
-					type="text"
-					formControlName="completionDate"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ADD_EDUCATION.DATE_OF_COMPLETION'
-							| translate
-					}}"
-					fullWidth
-					[nbDatepicker]="appliedDatePicker"
-				/>
-				<nb-datepicker #appliedDatePicker></nb-datepicker>
-				<textarea
-					class="notes col-5"
-					nbInput
-					formControlName="notes"
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ADD_EDUCATION.ADDITIONAL_NOTES'
-							| translate
-					}}"
-				>
-				</textarea> -->
 			</form>
 			<div class="col-2 ">
 				<span class="col-2 pl-2 pr-0"
 					><button
 						class="w-100 form-btn"
 						(click)="addEducation()"
+						nbButton
+						status="primary"
+					>
+						{{ 'BUTTONS.ADD' | translate }}
+					</button></span
+				>
+				<span class="col-2 pl-2 pr-0"
+					><button
+						class="w-100 form-btn"
+						(click)="submitForm()"
 						nbButton
 						status="success"
 					>
@@ -108,7 +117,7 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<!-- <nb-card-body *ngIf="educations?.length">
+	<nb-card-body *ngIf="educations?.length">
 		<div class="ml-3 mb-4"><strong>Education</strong></div>
 
 		<nb-card *ngFor="let education of educations; let i = index">
@@ -169,5 +178,5 @@
 				</nb-actions>
 			</nb-card-body>
 		</nb-card>
-	</nb-card-body> -->
+	</nb-card-body>
 </nb-card>

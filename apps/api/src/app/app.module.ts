@@ -51,7 +51,6 @@ import { IntegrationSettingModule } from './integration-setting/integration-sett
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
-
 @Module({
 	imports: [
 		RouterModule.forRoutes([

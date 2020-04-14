@@ -1,1 +1,58 @@
-<p>This page is coming soon!</p>
+<nb-card>
+	<form [formGroup]="form" *ngIf="form">
+		<nb-card-header>
+			<button
+				*ngIf="!showAddCard"
+				(click)="showAddCard = !showAddCard"
+				nbButton
+				status="success"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<div class="row m-0" *ngIf="showAddCard">
+				<div class="col-4">
+					<ngx-file-uploader-input
+						id="inputCvUrl"
+						[placeholder]="
+							'FORM.PLACEHOLDERS.UPLOADER_CV_PLACEHOLDER'
+								| translate
+						"
+						[fileUrl]="cvUrl?.value"
+						(uploadedImgUrl)="cvUrl.setValue($event)"
+					>
+					</ngx-file-uploader-input>
+				</div>
+				<div class="col-3">
+					<input
+						formControlName="filename"
+						#addInput
+						class="col-12"
+						nbInput
+						type="text"
+						placeholder="{{
+							'FORM.PLACEHOLDERS.DOCUMENT_NAME' | translate
+						}}"
+						fullWidth
+					/>
+				</div>
+				<span class="col-2 pl-2 pr-1"
+					><button
+						class="w-100"
+						(click)="addCV(addInput.value)"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button></span
+				>
+				<span class="col-2 pl-1 pr-0"
+					><button class="w-100" nbButton status="danger">
+						<!-- (click)="showAddCard = !showAddCard" -->
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button></span
+				>
+			</div>
+		</nb-card-header>
+	</form>
+</nb-card>

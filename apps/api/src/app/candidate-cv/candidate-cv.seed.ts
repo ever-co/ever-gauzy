@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { CandidateCv } from './candidate-cv.entity';
 
-export const createCandidateCVs = async (
+export const createCandidateCvs = async (
 	connection: Connection
 ): Promise<CandidateCv[]> => {
 	const candidateCv: CandidateCv[] = [

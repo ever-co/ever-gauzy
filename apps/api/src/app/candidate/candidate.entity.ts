@@ -20,6 +20,7 @@ import { Tag } from '../tags/tag.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
+import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 
 @Entity('candidate')
 export class Candidate extends LocationBase implements ICandidate {
@@ -126,9 +127,43 @@ export class Candidate extends LocationBase implements ICandidate {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	source: string;
+	source?: string;
 
 	@ApiProperty({ type: CandidateSource, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.source)
 	readonly sourceId?: CandidateSource;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	reWeeklyLimit?: number;
+
+	@ApiPropertyOptional({ type: String, maxLength: 255 })
+	@IsOptional()
+	@Column({ length: 255, nullable: true })
+	billRateCurrency?: string;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsOptional()
+	@Column({ nullable: true })
+	billRateValue?: number;
+
+	@ApiPropertyOptional({ type: String, maxLength: 255 })
+	@IsOptional()
+	@Column({ length: 255, nullable: true })
+	payPeriod?: string;
+
+	@ApiProperty({ type: CandidateCv })
+	@OneToOne((type) => CandidateCv, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	cv: CandidateCv;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((candidate: Candidate) => candidate.cv)
+	readonly cvId: string;
 }

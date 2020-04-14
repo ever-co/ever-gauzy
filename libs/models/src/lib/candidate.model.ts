@@ -30,6 +30,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	educations?: Education[];
+	source?: string;
 }
 export interface Education {
 	schoolName?: string;

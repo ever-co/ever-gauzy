@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { FormGroup, FormBuilder, FormArray, FormControl } from '@angular/forms';
+import { FormGroup, FormBuilder, FormArray } from '@angular/forms';
 import { Candidate, Education } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -17,15 +16,12 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	implements OnInit {
 	showAddCard: boolean;
 	showEditDiv = [];
-	educations: Education[] = [
-		{ schoolName: '111', degree: '2222' },
-		{ schoolName: '3333', degree: '444' }
-	];
+	educations: Education[];
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
 	form: FormGroup;
 	constructor(
-		private readonly toastrService: NbToastrService,
+		// private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private fb: FormBuilder
@@ -39,6 +35,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 				this.selectedCandidate = candidate;
 				if (this.selectedCandidate) {
 					this._initializeForm(this.selectedCandidate.educations);
+					this.addEducation();
 				}
 			});
 	}
@@ -58,12 +55,14 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		educations.push(
 			this.fb.group({
 				schoolName: '',
-				degree: ''
-				//field: [''],
-				// completionDate: [''],
-				// notes: ['']
+				degree: '',
+				field: [''],
+				completionDate: [''],
+				notes: ['']
 			})
 		);
-		// console.log(educations.value);
+	}
+	submitForm() {
+		console.log(this.form.controls.educations.value);
 	}
 }

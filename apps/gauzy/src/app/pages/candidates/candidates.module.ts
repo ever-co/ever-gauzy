@@ -53,6 +53,7 @@ import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/emplo
 import { EditCandidateSkillsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-skills/edit-candidate-skills.component';
 import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-education/edit-candidate-education.component';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -98,7 +99,7 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-
+		FileUploaderModule,
 		NbTabsetModule,
 		NbActionsModule,
 		TranslateModule.forChild({

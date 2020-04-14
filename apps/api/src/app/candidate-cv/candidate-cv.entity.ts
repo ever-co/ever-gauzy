@@ -1,15 +1,8 @@
-import {
-	Column,
-	Entity,
-	PrimaryGeneratedColumn,
-	OneToMany,
-	Index,
-	ManyToOne
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, Index } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Candidate } from '../candidate/candidate.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 @Entity('candidate_cv')
 export class CandidateCv extends Base {

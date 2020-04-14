@@ -33,7 +33,6 @@ import { Country } from '../../country';
 import { createTeams } from '../../organization-teams/organization-teams.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
-import { createTenants } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
 import { seedEmploymentTypes } from '../../organization/employment-types.seed';
@@ -66,11 +65,13 @@ import { OrganizationPositions } from '../../organization-positions/organization
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import { createCandidates } from '../../candidate/candidate.seed';
-import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
 import { CandidateSource } from '../../candidate_source/candidate_source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Tenant } from './../../tenant/tenant.entity';
+import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
 import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
+import { createCandidateCvs } from '../../candidate-cv/candidate-cv.seed';
+import { createTenants } from '../../tenant/tenant.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -111,8 +112,8 @@ const allEntities = [
 	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,
-	CandidateSource,
-	CandidateCv
+	CandidateSource
+	// CandidateCv
 ];
 
 @Injectable()
@@ -176,6 +177,9 @@ export class SeedDataService {
 				)
 			);
 			const tenants = await createTenants(this.connection);
+			const cvs: CandidateCv[] = await createCandidateCvs(
+				this.connection
+			);
 			const sources: CandidateSource[] = await createCandidateSources(
 				this.connection
 			);
@@ -217,6 +221,7 @@ export class SeedDataService {
 				},
 				{
 					source: sources,
+					cvs: cvs,
 					org: defaultOrganization,
 					orgs: randomOrganizations,
 					users: [...randomCandidateUser]
