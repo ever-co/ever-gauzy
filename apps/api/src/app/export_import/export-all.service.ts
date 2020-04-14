@@ -43,7 +43,7 @@ import { TimeOffPolicyService } from '../time-off-policy/time-off-policy.service
 import { TimeSheetService } from '../timesheet/timesheet.service';
 import { ActivityService } from '../timesheet/activity.service';
 import { ScreenShotService } from '../timesheet/screenshot.service';
-import { TimeSlotService } from '../timesheet/time_slot.service';
+import { TimeSlotService } from '../timesheet/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
 
 @Injectable()

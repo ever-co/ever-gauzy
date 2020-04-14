@@ -1,32 +1,29 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
+import {
+	Entity,
+	Column,
+	RelationId,
+	ManyToOne,
+	JoinColumn,
+	Unique
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeSlot as ITimeSlot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
-import { Task } from '../tasks/task.entity';
-import { TimeLog } from './time-log.entity';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('time_slot')
+@Unique(['employeeId', 'startedAt'])
 export class TimeSlot extends Base implements ITimeSlot {
-	@ApiProperty({ type: TimeLog })
-	@ManyToOne(() => TimeLog, { nullable: true })
+	@ApiProperty({ type: Employee })
+	@ManyToOne(() => Employee)
 	@JoinColumn()
-	timeLog?: TimeLog;
+	employee: Employee;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeSlot: TimeSlot) => timeSlot.timeLog)
-	@Column({ nullable: true })
-	readonly timeLogId?: string;
-
-	@ApiProperty({ type: Task })
-	@ManyToOne(() => Task, { nullable: true })
-	@JoinColumn()
-	task?: Task;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((timeSlot: TimeSlot) => timeSlot.task)
-	@Column({ nullable: true })
-	readonly taskId?: string;
+	@RelationId((timeSlot: TimeSlot) => timeSlot.employee)
+	@Column()
+	readonly employeeId: string;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
@@ -50,11 +47,11 @@ export class TimeSlot extends Base implements ITimeSlot {
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
-	@Column({ nullable: true, default: null })
-	startedAt?: Date;
+	@Column()
+	startedAt: Date;
 
 	@ApiProperty({ type: 'timestamptz' })
 	@IsDateString()
-	@Column({ nullable: true, default: null })
-	stoppedAt?: Date;
+	@Column()
+	stoppedAt: Date;
 }
