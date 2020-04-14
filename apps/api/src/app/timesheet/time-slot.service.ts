@@ -70,8 +70,6 @@ export class TimeSlotService extends CrudService<TimeSlot> {
 				} else {
 					duration = tempEnd.diff(mStart, 'seconds');
 				}
-
-				duration = mStart.diff(tempStart, 'seconds');
 				mStart = tempStart;
 			}
 
