@@ -30,8 +30,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 
 	@Input() public isEmployee: boolean;
 	@Input() public isCandidate: boolean;
-	@Input() public isCandidateCV: boolean;
 	@Input() public isSuperAdmin: boolean;
+	@Input() public createdById: string;
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -56,7 +56,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	tags: Tag[] = [];
 	selectedTags: any;
 	items: any;
-	cvUrl: any;
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -132,18 +131,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 				appliedDate: [''],
 				hiredDate: [''],
 				rejectDate: [''],
-				tags: [''],
-				cvUrl: [
-					'',
-					Validators.compose([
-						Validators.pattern(
-							new RegExp(
-								`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
-								'g'
-							)
-						)
-					])
-				]
+				tags: ['']
 			},
 			{
 				validator: this.validatorService.validateDate
@@ -151,7 +139,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		);
 
 		this.imageUrl = this.form.get('imageUrl');
-		this.cvUrl = this.form.get('cvUrl');
 		this.username = this.form.get('username');
 		this.firstName = this.form.get('firstName');
 		this.lastName = this.form.get('lastName');
@@ -170,7 +157,11 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		return this.imageUrl && this.imageUrl.value !== '';
 	}
 
-	async registerUser(defaultRoleName: RolesEnum, organizationId?: string) {
+	async registerUser(
+		defaultRoleName: RolesEnum,
+		organizationId?: string,
+		createdById?: string
+	) {
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
@@ -192,7 +183,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 						tags: this.selectedTags
 					},
 					password: this.password.value,
-					organizationId
+					organizationId,
+					createdById
 				})
 				.pipe(first())
 				.toPromise();
@@ -207,6 +199,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 
 	selectedTagsHandler(ev: any) {
 		this.form.get('tags').setValue(ev);
+		this.selectedTags = ev;
 	}
 
 	ngAfterViewInit() {

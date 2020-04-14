@@ -30,11 +30,13 @@
 		"INVITE_AGAIN": "Invite Again",
 		"REQUEST": "Request",
 		"HISTORY": "History",
+		"SYNC": "Sync",
 		"UPDATE": "Update"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
 		"CLIENT_NAME": "Client Name",
+		"NAME": "Name",
 		"VENDOR": "Vendor",
 		"CATEGORY": "Category",
 		"CURRENCY": "Currency",
@@ -109,6 +111,7 @@
 			"DATE_TYPE": "Default Date Type",
 			"ADD_TEAM": "Add New Team",
 			"OFFICIAL_NAME": "Official Name",
+			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
 			"COUNTRY": "Country",
@@ -185,6 +188,7 @@
 			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
 			"MEMBERS_COUNT": "Members count",
 			"OFFICIAL_NAME": "Enter Official Name",
+			"PROFILE_LINK": "Enter Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
 			"COUNTRY": "Country",
@@ -356,7 +360,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Select Organization",
+			"SYNCED_PROJECTS": "Projects synced"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -481,7 +490,9 @@
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
-		}
+		},
+		"NOT_STARTED": "Not Started",
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -522,6 +533,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Organizations",
 		"EMPLOYEES": "Employees",
+		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
 		"MAIN": "Main",
 		"DEPARTMENTS": "Departments",

@@ -1,4 +1,4 @@
-// Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit. 
+// Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
 
@@ -7,22 +7,21 @@ import { Role } from './role.entity';
 import { RolesEnum } from '@gauzy/models';
 
 export const createRoles = async (connection: Connection): Promise<Role[]> => {
-    const roles: Role[] = [];
-    const rolesNames = Object.values(RolesEnum);
+	const roles: Role[] = [];
+	const rolesNames = Object.values(RolesEnum);
 
-    for (const name of rolesNames) {
-        const role = new Role();
-        role.name = name;
+	for (const name of rolesNames) {
+		const role = new Role();
+		role.name = name;
+		roles.push(role);
+	}
 
-        await connection
-            .createQueryBuilder()
-            .insert()
-            .into(Role)
-            .values(role)
-            .execute();
+	await connection
+		.createQueryBuilder()
+		.insert()
+		.into(Role)
+		.values(roles)
+		.execute();
 
-        roles.push(role);
-    }
-
-    return roles;
+	return roles;
 };

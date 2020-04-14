@@ -71,6 +71,33 @@ export class OrganizationController extends CrudController<Organization> {
 		return this.organizationService.findOne(id, findObj);
 	}
 
+	@ApiOperation({ summary: 'Find Organization by profile link.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record',
+		type: Organization
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('profile/:profile_link/:select')
+	async findOneByProfileLink(
+		@Param('profile_link') profile_link: string,
+		@Param('select') select: string
+	): Promise<Organization> {
+		const findObj = {};
+
+		if (select) {
+			findObj['select'] = JSON.parse(select);
+		}
+
+		return this.organizationService.findOne(
+			{ where: { profile_link: profile_link } },
+			findObj
+		);
+	}
+
 	@ApiOperation({ summary: 'Create new Organization' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

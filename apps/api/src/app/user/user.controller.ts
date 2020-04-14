@@ -11,7 +11,8 @@ import {
 	UseGuards,
 	HttpCode,
 	Post,
-	Body
+	Body,
+	Put
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
@@ -129,5 +130,20 @@ export class UserController extends CrudController<User> {
 		...options: any[]
 	): Promise<User> {
 		return this.commandBus.execute(new UserCreateCommand(entity));
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
+	@Put(':id')
+	async update(
+		@Param('id') id: string,
+		@Body() entity: User,
+		...options: any[]
+	): Promise<any> {
+		return this.userService.create({
+			id,
+			...entity
+		});
 	}
 }

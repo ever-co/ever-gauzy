@@ -30,11 +30,13 @@
 		"INVITE_AGAIN": "Invite Again",
 		"REQUEST": "Request",
 		"HISTORY": "History",
+		"SYNC": "Sync",
 		"UPDATE": "Update"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
 		"CLIENT_NAME": "שם הלקוח",
+		"NAME": "שם",
 		"VENDOR": "ספק",
 		"CATEGORY": "קטגוריה",
 		"CURRENCY": "מטבע",
@@ -229,6 +231,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
@@ -354,7 +357,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Select Organization",
+			"SYNCED_PROJECTS": "Projects synced"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -479,7 +487,9 @@
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
-		}
+		},
+		"NOT_STARTED": "Not Started",
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -499,7 +509,7 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
-			"RATE": "ציון",
+			"RATE": "Rates",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
 			"TASKS": "Tasks",
@@ -573,6 +583,8 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_MANUAL_TIME": "Allow Manual Time",
 				"REQUIRE_REASON": "Require Reason",
 				"REQUIRE_DESCRIPTION": "Require Description",
 				"REQUIRE_PROJECT": "Require Project",
@@ -1013,6 +1025,7 @@
 		"START_TIMER": "Start Timer",
 		"TIMER": "Timer",
 		"MANUAL": "Manual",
+		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"DATE": "תאריך",

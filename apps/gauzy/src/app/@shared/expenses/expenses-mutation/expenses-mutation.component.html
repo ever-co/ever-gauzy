@@ -18,6 +18,7 @@
 			placeholder="Organization"
 			[defaultSelected]="false"
 			(selectionChanged)="onEmployeeChange($event)"
+			[selectedDate]="valueDate.value"
 		></ga-employee-selector>
 		<span
 			*ngIf="showTooltip"
@@ -165,6 +166,7 @@
 						<div class="form-group">
 							<ng-select
 								[isOpen]="showWarning ? true : null"
+								[addTag]="addNewClient"
 								[items]="clients"
 								bindLabel="clientName"
 								[searchable]="true"
@@ -181,6 +183,7 @@
 						<div class="form-group">
 							<ng-select
 								[items]="projects"
+								[addTag]="addNewProject"
 								nbInput
 								bindLabel="projectName"
 								[searchable]="true"

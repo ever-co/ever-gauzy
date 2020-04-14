@@ -12,7 +12,8 @@ const initialTaskValue = {
 	title: '',
 	project: null,
 	status: '',
-	description: ''
+	description: '',
+	tags: null
 };
 
 @Component({
@@ -28,6 +29,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
 	selectedTask: Task;
 	organizationId: string;
+	selectedTags: any;
 
 	constructor(
 		public dialogRef: NbDialogRef<TaskDialogComponent>,
@@ -59,12 +61,13 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		if (items) this.projects = items;
 	}
 
-	initializeForm({ title, description, project, status }: Task) {
+	initializeForm({ title, description, project, status, tags }: Task) {
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
 			status: [status],
-			description: [description]
+			description: [description],
+			tags: []
 		});
 	}
 
@@ -93,5 +96,10 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		if (this.form.valid) {
 			this.dialogRef.close(this.form.value);
 		}
+	}
+
+	selectedTagsHandler(ev) {
+		// we dont need this, at least we dont need for create or update TASK
+		// this.tags = ev;
 	}
 }

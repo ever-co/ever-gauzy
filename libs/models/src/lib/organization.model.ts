@@ -6,6 +6,7 @@ import { ITenant } from '@gauzy/models';
 
 export interface Organization extends IBaseEntityModel, ILocation {
 	name: string;
+	profile_link: string;
 	valueDate?: Date;
 	totalEmployees?: number;
 	status?: string;
@@ -42,6 +43,7 @@ export interface Organization extends IBaseEntityModel, ILocation {
 
 export interface OrganizationFindInput extends IBaseEntityModel {
 	name?: string;
+	profile_link?: string;
 	valueDate?: Date;
 	imageUrl?: string;
 	currency?: CurrenciesEnum;
@@ -50,6 +52,7 @@ export interface OrganizationFindInput extends IBaseEntityModel {
 
 export interface OrganizationCreateInput extends ILocation {
 	name: string;
+	profile_link: string;
 	valueDate?: Date;
 	imageUrl: string;
 	currency: CurrenciesEnum;
@@ -69,6 +72,7 @@ export interface OrganizationCreateInput extends ILocation {
 export enum OrganizationSelectInput {
 	id = 'id',
 	name = 'name',
+	profile_link = 'profile_link',
 	valueDate = 'valueDate',
 	imageUrl = 'imageUrl',
 	currency = 'currency',

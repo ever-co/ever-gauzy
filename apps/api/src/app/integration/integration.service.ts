@@ -31,10 +31,10 @@ export class IntegrationService extends CrudService<Integration> {
 			integration
 		}));
 
-		await this._integrationSettingService.addIntegrationSettings(
-			settingsDto
-		);
+		await this._integrationSettingService.create(settingsDto);
 
 		return integration;
 	}
+
+	async updateIntegration(updateIntegrationDto) {}
 }
