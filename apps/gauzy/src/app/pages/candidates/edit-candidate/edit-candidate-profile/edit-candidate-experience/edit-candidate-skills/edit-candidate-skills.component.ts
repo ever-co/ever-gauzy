@@ -52,7 +52,6 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 					.pipe(first())
 					.toPromise();
 				this.selectedCandidate = items[0];
-				// console.log(this.selectedCandidate);
 				this.candidateStore.selectedCandidate = this.selectedCandidate;
 			});
 	}

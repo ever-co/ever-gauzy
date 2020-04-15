@@ -14,7 +14,6 @@ export class CandidateCvService {
 	constructor(private http: HttpClient) {}
 
 	create(createInput: ICandidateCvCreateInput): Promise<ICandidateCv> {
-		console.log('createInput', createInput);
 		return this.http
 			.post<ICandidateCv>('/api/candidate_cv', createInput)
 			.pipe(first())
@@ -26,7 +25,6 @@ export class CandidateCvService {
 		findInput?: ICandidateCvFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-		console.log('data', data);
 		return this.http
 			.get<{ items: ICandidateCv[]; total: number }>(
 				`/api/candidate-cv`,

@@ -149,7 +149,6 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		);
 		if (res) {
 			this.docs = res.items;
-			console.log('this.doks', this.docs);
 		}
 	}
 }

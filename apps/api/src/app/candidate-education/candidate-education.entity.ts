@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 // tslint:disable-next-line: nx-enforce-module-boundaries
 import { Education } from 'libs/models/src/lib/candidate-education.model';
