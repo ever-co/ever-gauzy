@@ -6,6 +6,7 @@ import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
+import { Education } from './candidate-education.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
 	user: User;
@@ -31,13 +32,6 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	reWeeklyLimit?: number;
 	educations?: Education[];
 	source?: string;
-}
-export interface Education {
-	schoolName?: string;
-	degree?: string;
-	completionDate?: Date;
-	field?: string;
-	notes?: string;
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';

@@ -21,6 +21,9 @@ import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
+import { CandidateEducation } from '../candidate-education/candidate-education.entity';
+// tslint:disable-next-line: nx-enforce-module-boundaries
+import { Education } from 'libs/models/src/lib/candidate-education.model';
 
 @Entity('candidate')
 export class Candidate extends LocationBase implements ICandidate {
@@ -166,4 +169,10 @@ export class Candidate extends LocationBase implements ICandidate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.cv)
 	readonly cvId: string;
+
+	@ManyToOne((type) => CandidateEducation)
+	@JoinTable({
+		name: 'candidate_education'
+	})
+	educations: Education[];
 }

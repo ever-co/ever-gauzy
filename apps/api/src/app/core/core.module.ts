@@ -54,6 +54,7 @@ import { Integration } from '../integration/integration.entity';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
+import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 
 const entities = [
 	Invite,
@@ -97,6 +98,7 @@ const entities = [
 	ExpenseCategory,
 	CandidateSource,
 	CandidateCv,
+	CandidateEducation,
 	IntegrationSetting,
 	Integration,
 	IntegrationMap

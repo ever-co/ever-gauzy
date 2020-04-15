@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
-import { Candidate, Education } from '@gauzy/models';
+import { Candidate } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
+import { Education } from 'libs/models/src/lib/candidate-education.model';
 
 @Component({
 	selector: 'ga-edit-candidate-education',
