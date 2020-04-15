@@ -15,3 +15,15 @@ input {
 .form-btn {
 	margin: 0.5rem 0;
 }
+.education-card {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+.education-line {
+	margin: 0.2rem 0;
+}
+.education-title {
+	font-weight: 600;
+}

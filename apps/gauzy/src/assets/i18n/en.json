@@ -237,7 +237,7 @@
 				"DEGREE": "Degree/Diploma",
 				"FIELD_OF_STUDY": "Field(s) of study",
 				"DATE_OF_COMPLETION": "Date of completion",
-				"ADDITIONAL_NOTES": "Additional notes"
+				"ADDITIONAL_NOTES": "Additional notes (optional)"
 			}
 		},
 		"RATES": {
@@ -525,6 +525,11 @@
 			"EXPERIENCE": "Experience",
 			"SKILLS": "Skills",
 			"EDUCATION": "Education",
+			"SCHOOL_NAME": "School name",
+			"DEGREE": "Degree/Diploma",
+			"FIELD": "Field(s)",
+			"COMPLETION_DATE": "Date of completion",
+			"ADDITIONAL_NOTES": "Additional notes",
 			"TASKS": "Tasks",
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents"
@@ -922,6 +927,7 @@
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
+			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -973,7 +979,8 @@
 		},
 		"CANDIDATE": {
 			"EXPERIENCE": {
-				"INVALID_CANDIDATE_NAME": "Please add a Skill name"
+				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
+				"INVALID_FORM": "Please fill the form"
 			}
 		},
 		"ORGANIZATIONS": {

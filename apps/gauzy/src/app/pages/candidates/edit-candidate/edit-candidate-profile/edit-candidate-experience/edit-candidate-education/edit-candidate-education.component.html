@@ -4,7 +4,7 @@
 			nbButton
 			status="success"
 			*ngIf="!showAddCard"
-			(click)="showAddCard = !showAddCard"
+			(click)="showCard()"
 		>
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
@@ -56,6 +56,7 @@
 								fullWidth
 							/>
 							<input
+								readonly
 								#addInput
 								class="col-5"
 								nbInput
@@ -87,16 +88,6 @@
 				<span class="col-2 pl-2 pr-0"
 					><button
 						class="w-100 form-btn"
-						(click)="addEducation()"
-						nbButton
-						status="primary"
-					>
-						{{ 'BUTTONS.ADD' | translate }}
-					</button></span
-				>
-				<span class="col-2 pl-2 pr-0"
-					><button
-						class="w-100 form-btn"
 						(click)="submitForm()"
 						nbButton
 						status="success"
@@ -107,7 +98,7 @@
 				<span class="col-2 pl-2 pr-0"
 					><button
 						class="w-100 form-btn"
-						(click)="showAddCard = !showAddCard"
+						(click)="cancel()"
 						nbButton
 						status="danger"
 					>
@@ -121,52 +112,58 @@
 		<div class="ml-3 mb-4"><strong>Education</strong></div>
 
 		<nb-card *ngFor="let education of educations; let i = index">
-			<nb-card-body>
-				<span> {{ education.schoolName }}</span>
-				<span> {{ education.degree }}</span>
-				<div class="row m-0" *ngIf="showEditDiv[i]">
-					<input
-						#addInput
-						class="col-5"
-						nbInput
-						formControlName="schoolName"
-						type="text"
-						[value]="education.schoolName"
-						fullWidth
-					/>
-					<input
-						#addInput
-						class="col-5"
-						nbInput
-						formControlName="degree"
-						type="text"
-						[value]="education.degree"
-						fullWidth
-					/>
-					<span class="col-2 pl-2 pr-1">
-						<button
-							class="w-100"
-							(click)="editEducation(editInput.value, i)"
-							nbButton
-							status="success"
+			<nb-card-body class="education-card">
+				<div>
+					<div class="education-line">
+						<span class="education-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.SCHOOL_NAME'
+									| translate
+							}}:</span
 						>
-							Update
-						</button></span
-					>
-					<span class="col-2 pl-1 pr-0">
-						<button
-							class="w-100"
-							(click)="cancel(i)"
-							nbButton
-							status="danger"
+						{{ education.schoolName }}
+					</div>
+					<div class="education-line">
+						<span class="education-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.DEGREE'
+									| translate
+							}}:</span
 						>
-							{{ 'BUTTONS.CANCEL' | translate }}
-						</button></span
-					>
+						{{ education.degree }}
+					</div>
+					<div class="education-line">
+						<span class="education-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.FIELD'
+									| translate
+							}}:</span
+						>
+						{{ education.field }}
+					</div>
+					<div class="education-line">
+						<span class="education-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.COMPLETION_DATE'
+									| translate
+							}}:
+						</span>
+						{{ education.completionDate | date: 'mediumDate' }}
+					</div>
+					<div class="education-line">
+						<span class="education-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.ADDITIONAL_NOTES'
+									| translate
+							}}:
+						</span>
+						{{ education.notes }}
+					</div>
 				</div>
+
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="showEditCard(i)"
+						(click)="editEducation(i)"
 						class="d-inline pr-0"
 						icon="edit"
 					></nb-action>
