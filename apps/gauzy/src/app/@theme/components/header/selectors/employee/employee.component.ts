@@ -10,7 +10,7 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.se
 import { takeUntil } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { Tag } from '@gauzy/models';
+import { Tag, Organization } from '@gauzy/models';
 
 //TODO: Currently the whole application assumes that if employee or id is null then you need to get data for All Employees
 //That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
@@ -66,14 +66,18 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 	@Input()
 	set selectedDate(value: Date) {
-		this._selectedDate = value;
-		this.loadWorkingEmployees(this.store.selectedOrganization.id, value);
+		//This will set _selectDate too
+		this.loadWorkingEmployeesIfRequired(
+			this.store.selectedOrganization,
+			value
+		);
 	}
 
 	get selectedDate() {
 		return this._selectedDate;
 	}
 
+	private _selectedOrganization?: Organization;
 	private _selectedDate?: Date;
 
 	@Output()
@@ -117,6 +121,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 	selectEmployee(employee: SelectedEmployee) {
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+		} else {
+			this.selectedEmployee = employee;
 		}
 		this.selectionChanged.emit(employee);
 	}
@@ -145,25 +151,24 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 	private async _loadEmployees() {
 		this.store.selectedOrganization$.subscribe(async (org) => {
-			if (org && this.store.selectedDate) {
-				this.loadWorkingEmployees(org.id, this.store.selectedDate);
+			if (org) {
+				await this.loadWorkingEmployeesIfRequired(
+					org,
+					this.store.selectedDate
+				);
 			}
 		});
 
-		this.store.selectedDate$.subscribe(async (date) => {
-			if (date && this.store.selectedOrganization) {
-				this.loadWorkingEmployees(
-					this.store.selectedOrganization.id,
-					date
-				);
-			}
+		this.store.selectedDate$.subscribe((date) => {
+			this.loadWorkingEmployeesIfRequired(
+				this.store.selectedOrganization,
+				date
+			);
 		});
 
 		if (!this.selectedEmployee) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
-			this.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
-			this.store.selectedEmployee.id = null;
 		}
 
 		if (
@@ -173,9 +178,32 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 			this.selectedEmployee = null;
 	}
 
-	loadWorkingEmployees = async (orgId: string, selectedDate: Date) => {
+	loadWorkingEmployeesIfRequired = async (
+		org: Organization,
+		selectedDate: Date
+	) => {
+		//If no organization, then something is wrong
+		if (!org) {
+			this.people = [];
+			return;
+		}
+
+		//Save repeated API calls for the same organization & date
+		if (
+			this._selectedOrganization &&
+			this._selectedDate &&
+			selectedDate &&
+			org.id === this._selectedOrganization.id &&
+			selectedDate.getTime() === this._selectedDate.getTime()
+		) {
+			return;
+		}
+
+		this._selectedOrganization = org;
+		this._selectedDate = selectedDate;
+
 		const { items } = await this.employeesService.getWorking(
-			orgId,
+			org.id,
 			selectedDate,
 			true
 		);
