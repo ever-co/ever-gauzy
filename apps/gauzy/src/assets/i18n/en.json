@@ -322,7 +322,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT": "Import",
-			"EXPORT": "Export"
+			"EXPORT": "Export",
+			"MERGE": "merge data",
+			"CLEAN_UP": "clean up before import"
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
@@ -754,6 +756,11 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Project",
+		"DUE_DATE": "Due Date",
+		"ESTIMATE": "Estimate",
+		"ESTIMATE_DAYS": "Days",
+		"ESTIMATE_HOURS": "Hours",
+		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status"
 	},
 	"USERS_PAGE": {

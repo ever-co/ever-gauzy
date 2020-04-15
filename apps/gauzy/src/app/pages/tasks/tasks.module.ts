@@ -13,7 +13,8 @@ import {
 	NbDialogModule,
 	NbInputModule,
 	NbSelectModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbDatepickerModule
 } from '@nebular/theme';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -54,7 +55,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NbSpinnerModule
+		NbSpinnerModule,
+		NbDatepickerModule
 	],
 	entryComponents: [TaskDialogComponent]
 })

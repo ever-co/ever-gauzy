@@ -44,8 +44,8 @@ export class TasksStoreService {
 		this._taskService
 			.createTask(task)
 			.pipe(
-				tap((task) => {
-					const tasks = [...this.tasks, task];
+				tap((createdTask) => {
+					const tasks = [...this.tasks, createdTask];
 					this._tasks$.next(tasks);
 				})
 			)

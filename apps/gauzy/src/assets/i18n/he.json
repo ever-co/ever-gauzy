@@ -755,11 +755,11 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "פרויקטים",
-		"DUE_DATE": "Due Date",
-		"ESTIMATE": "Estimate",
-		"ESTIMATE_DAYS": "Days",
-		"ESTIMATE_HOURS": "Hours",
-		"ESTIMATE_MINUTES": "Mins",
+		"DUE_DATE": "תאריך להגשה",
+		"ESTIMATE": "הערכה",
+		"ESTIMATE_DAYS": "ימים",
+		"ESTIMATE_HOURS": "שעה (ות",
+		"ESTIMATE_MINUTES": "דקות",
 		"TASKS_STATUS": "עבודה"
 	},
 	"USERS_PAGE": {

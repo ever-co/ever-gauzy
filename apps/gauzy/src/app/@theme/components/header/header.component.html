@@ -27,7 +27,7 @@
 		[class.left]="position === 'normal'"
 		[class.right]="position === 'inverse'"
 	>
-		<nb-action *ngIf="getWindowWidth() > largeBreakpoint">
+		<nb-action class="show-large-up">
 			<button
 				nbButton
 				status="success"
@@ -38,25 +38,17 @@
 			</button>
 		</nb-action>
 
-		<nb-action
-			*ngIf="showEmployeesSelector && getWindowWidth() > largeBreakpoint"
-		>
+		<nb-action *ngIf="showEmployeesSelector" class="show-large-up">
 			<ga-employee-selector
 				class="header-selector employee-selector"
 			></ga-employee-selector>
 		</nb-action>
 
-		<nb-action
-			*ngIf="showDateSelector && getWindowWidth() > largeBreakpoint"
-		>
+		<nb-action *ngIf="showDateSelector" class="show-large-up">
 			<ga-date-selector class="date-selector"></ga-date-selector>
 		</nb-action>
 
-		<nb-action
-			*ngIf="
-				showOrganizationsSelector && getWindowWidth() > largeBreakpoint
-			"
-		>
+		<nb-action *ngIf="showOrganizationsSelector" class="show-large-up">
 			<ga-organization-selector
 				class="header-selector organization-selector"
 			></ga-organization-selector>
@@ -66,9 +58,9 @@
       <nb-user [nbContextMenu]="userMenu" [name]="(user?.name || user?.email)" [picture]="user?.picture"></nb-user>
 	</nb-action> -->
 		<nb-action
-			*ngIf="getWindowWidth() < largeBreakpoint"
 			icon="options-2-outline"
 			class="toggle-layout"
+			class="show-large-down"
 			(click)="toggleExtraActions()"
 		></nb-action>
 		<nb-action
@@ -92,7 +84,7 @@
 			nbPopoverTrigger="noop"
 		>
 			<nb-icon class="mr-3" icon="clock-outline"></nb-icon>
-			{{ timerDueration }}
+			{{ timerDuration }}
 		</nb-action>
 
 		<ng-template #timerCard>
@@ -125,8 +117,9 @@
 </div>
 
 <div
+	(window:resize)="closeExtraActionsIfLarge($event)"
 	class="extra-actions"
-	*ngIf="showExtraActions && getWindowWidth() < largeBreakpoint"
+	[hidden]="!showExtraActions"
 >
 	<div>
 		<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>

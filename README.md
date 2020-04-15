@@ -129,7 +129,6 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 -   Emil Momchilov ([jew-er](https://github.com/jew-er))
 -   Hristo Hristov ([hrimar](https://github.com/hrimar))
 -   Lubomir Petrov ([lpetrv](https://github.com/lpetrv))
--   Nikolay Monov ([ntmonov](https://github.com/ntmonov))
 -   Tsvetelina Yordanova ([tsvetelina-e-y](https://github.com/tsvetelina-e-y))
 -   Yavor Grancharov ([YavorGrancharov](https://github.com/YavorGrancharov))
 
@@ -141,6 +140,7 @@ Please see our [Wiki page](https://github.com/ever-co/gauzy/wiki/How-to-use-Nx) 
 
 -   Muiz Nadeem ([MuizNadeem](https://github.com/MuizNadeem))
 -   [Milena Dimova](https://www.linkedin.com/in/dimova-milena-31010414) (UI/UX Designer)
+-   Nikolay Monov ([ntmonov](https://github.com/ntmonov))
 
 View full list of our [contributors](https://github.com/ever-co/gauzy/graphs/contributors).
 
