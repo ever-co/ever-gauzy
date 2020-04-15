@@ -17,7 +17,6 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { ProductMutationComponent } from '../../@shared/product-mutation/product-mutation.component';
 import { ProductMutationModule } from '../../@shared/product-mutation/product-mutation.module';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ThemeModule } from '../../@theme/theme.module';
 
 export function HttpLoaderFactory(http: HttpClient) {

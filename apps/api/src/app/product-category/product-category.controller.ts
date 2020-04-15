@@ -1,6 +1,5 @@
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { UseGuards, Controller, Get, HttpStatus, Query } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
 import { CrudController, IPagination } from '../core';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';

@@ -1,14 +1,5 @@
 import { Base } from '../core/entities/base';
-import {
-	Entity,
-	Column,
-	OneToMany,
-	ManyToOne,
-	ManyToMany,
-	JoinTable,
-	OneToOne,
-	RelationId
-} from 'typeorm';
+import { Entity, Column, ManyToOne, OneToOne, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductVariant as IProductVariant } from '@gauzy/models';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';

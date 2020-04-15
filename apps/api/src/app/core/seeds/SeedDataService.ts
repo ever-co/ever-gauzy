@@ -289,14 +289,9 @@ export class SeedDataService {
 				employees: [...employees.defaultEmployees]
 			});
 
-			const productCategories = await createProductCategories(
-				this.connection,
-				defaultOrganization
-			);
-			const productTypes = await createProductTypes(
-				this.connection,
-				defaultOrganization
-			);
+			await createProductCategories(this.connection, defaultOrganization);
+
+			await createProductTypes(this.connection, defaultOrganization);
 
 			this.log(
 				chalk.green(
