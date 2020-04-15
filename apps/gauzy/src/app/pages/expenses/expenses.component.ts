@@ -247,7 +247,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
-					name: this.employeeName
+					name: formData.employee
+						? `${formData.employee.firstName} ${formData.employee.lastName}`
+						: this.getTranslation('SM_TABLE.EMPLOYEE')
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
