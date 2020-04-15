@@ -5,6 +5,8 @@ export interface Task extends IBaseEntityModel {
 	title: string;
 	description?: string;
 	status?: string;
+	dueDate?: Date;
+	estimate?: number;
 	project?: OrganizationProjects;
 	projectId?: string;
 	tags?: Tag[];
