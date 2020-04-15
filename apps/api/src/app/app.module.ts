@@ -48,6 +48,9 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 import { UpworkModule } from './upwork/upwork.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
+import { ProductCategoriesModule } from './product-category/product-category-module';
+import { ProductTypesModule } from './product-type/product-type-module';
+import { ProductModule } from './product/product.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
@@ -182,6 +185,18 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 					{
 						path: '/invoice-item',
 						module: InvoiceItemModule
+					},
+					{
+						path: '/products',
+						module: ProductModule
+					},
+					{
+						path: '/product-categories',
+						module: ProductCategoriesModule
+					},
+					{
+						path: '/product-types',
+						module: ProductTypesModule
 					}
 				]
 			}
@@ -241,6 +256,9 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 		UpworkModule,
 		HubstaffModule,
 		ExpenseCategoriesModule,
+		ProductCategoriesModule,
+		ProductTypesModule,
+		ProductModule,
 		IntegrationSettingModule,
 		IntegrationModule,
 		IntegrationMapModule

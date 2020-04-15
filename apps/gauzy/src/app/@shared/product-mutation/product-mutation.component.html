@@ -1,0 +1,7 @@
+<nb-card>
+	<ngx-product-form
+		*ngIf="edit === 'product'"
+		(save)="onSaveProduct($event)"
+		(cancel)="closeDialog()"
+	></ngx-product-form>
+</nb-card>

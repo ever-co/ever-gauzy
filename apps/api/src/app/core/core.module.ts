@@ -48,6 +48,13 @@ import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
+import { Product } from '../product/product.entity';
+import { ProductOption } from '../product-option/product-option.entity';
+import { ProductVariantSettings } from '../product-settings/product-settings.entity';
+import { ProductType } from '../product-type/product-type.entity';
+import { ProductVariant } from '../product-variant/product-variant.entity';
+import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
+import { ProductCategory } from '../product-category/product-category.entity';
 import { CandidateSource } from '../candidate_source/candidate_source.entity';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 import { Integration } from '../integration/integration.entity';
@@ -94,6 +101,13 @@ const entities = [
 	Activity,
 	Screenshot,
 	ExpenseCategory,
+	ProductVariantPrice,
+	ProductOption,
+	ProductVariantSettings,
+	ProductType,
+	ProductCategory,
+	ProductVariant,
+	Product,
 	CandidateSource,
 	IntegrationSetting,
 	Integration,
