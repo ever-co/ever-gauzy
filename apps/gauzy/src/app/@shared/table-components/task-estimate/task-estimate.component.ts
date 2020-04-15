@@ -10,6 +10,10 @@ export class TaskEstimateComponent {
 	value: any;
 
 	transformSeconds() {
+		if (!this.value) {
+			return '';
+		}
+
 		const duration = moment.duration(this.value, 'seconds');
 
 		const days = duration.days();

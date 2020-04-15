@@ -106,10 +106,12 @@ export class TaskComponent extends TranslationBaseComponent
 		if (data) {
 			const { estimateDays, estimateHours, estimateMinutes } = data;
 
-			data.estimate =
+			const estimate =
 				estimateDays * 24 * 60 * 60 +
 				estimateHours * 60 * 60 +
 				estimateMinutes * 60;
+
+			estimate ? (data.estimate = estimate) : (data.estimate = null);
 
 			this._store.createTask(data);
 			this.selectTask({ isSelected: false, data: null });
@@ -128,10 +130,12 @@ export class TaskComponent extends TranslationBaseComponent
 		if (data) {
 			const { estimateDays, estimateHours, estimateMinutes } = data;
 
-			data.estimate =
+			const estimate =
 				estimateDays * 24 * 60 * 60 +
 				estimateHours * 60 * 60 +
 				estimateMinutes * 60;
+
+			estimate ? (data.estimate = estimate) : (data.estimate = null);
 
 			this._store.editTask({
 				...data,
