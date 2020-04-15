@@ -26,17 +26,18 @@ export interface Invite extends IBaseEntityModel {
 	organization?: Organization;
 }
 
-export interface InviteAcceptInput extends UserRegistrationInput {
+export interface IInviteAcceptInput extends UserRegistrationInput {
 	inviteId: string;
 	organization: Organization;
+	originalUrl?: string;
 }
 
-export interface InviteResendInput {
+export interface IInviteResendInput {
 	id: string;
 	invitedById: string;
 }
 
-export interface CreateEmailInvitesInput {
+export interface ICreateEmailInvitesInput {
 	emailIds: string[];
 	projectIds?: string[];
 	clientIds?: string[];
@@ -48,7 +49,7 @@ export interface CreateEmailInvitesInput {
 	startedWorkOn: string;
 }
 
-export interface CreateOrganizationClientInviteInput {
+export interface ICreateOrganizationClientInviteInput {
 	emailId: string;
 	clientId: string;
 	organizationId: string;
@@ -57,21 +58,10 @@ export interface CreateOrganizationClientInviteInput {
 	originalUrl: string;
 }
 
-export interface CreateEmailInvitesOutput {
+export interface ICreateEmailInvitesOutput {
 	items: Invite[];
 	total: number;
 	ignored: number;
-}
-
-export interface CreateInviteInput {
-	token: string;
-	email: string;
-	organizationId: string;
-	roleId: string;
-	invitedById: string;
-	status: string;
-	expireDate: Date;
-	projects?: OrganizationProjects[];
 }
 
 export interface InviteFindInput {

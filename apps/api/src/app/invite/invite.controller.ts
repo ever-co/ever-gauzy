@@ -1,9 +1,9 @@
 import { AuthGuard } from '@nestjs/passport';
 import {
-	CreateEmailInvitesInput,
-	CreateEmailInvitesOutput,
-	InviteAcceptInput,
-	InviteResendInput,
+	ICreateEmailInvitesInput,
+	ICreateEmailInvitesOutput,
+	IInviteAcceptInput,
+	IInviteResendInput,
 	PermissionsEnum,
 	LinkClientOrganizationInviteInput
 } from '@gauzy/models';
@@ -66,9 +66,9 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('/emails')
 	async createManyWithEmailsId(
-		@Body() entity: CreateEmailInvitesInput,
+		@Body() entity: ICreateEmailInvitesInput,
 		@Req() request: Request
-	): Promise<CreateEmailInvitesOutput> {
+	): Promise<ICreateEmailInvitesOutput> {
 		return this.inviteService.createBulk(entity, request.get('Origin'));
 	}
 
@@ -135,8 +135,10 @@ export class InviteController {
 	})
 	@Post('employee')
 	async acceptEmployeeInvite(
-		@Body() entity: InviteAcceptInput
+		@Body() entity: IInviteAcceptInput,
+		@Req() request: Request
 	): Promise<UpdateResult | Invite> {
+		entity.originalUrl = request.get('Origin');
 		return this.commandBus.execute(new InviteAcceptEmployeeCommand(entity));
 	}
 
@@ -152,8 +154,10 @@ export class InviteController {
 	})
 	@Post('user')
 	async acceptUserInvite(
-		@Body() entity: InviteAcceptInput
+		@Body() entity: IInviteAcceptInput,
+		@Req() request: Request
 	): Promise<UpdateResult | Invite> {
+		entity.originalUrl = request.get('Origin');
 		return this.commandBus.execute(new InviteAcceptUserCommand(entity));
 	}
 
@@ -171,7 +175,7 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
 	async resendInvite(
-		@Body() entity: InviteResendInput
+		@Body() entity: IInviteResendInput
 	): Promise<UpdateResult | Invite> {
 		return this.commandBus.execute(new InviteResendCommand(entity));
 	}

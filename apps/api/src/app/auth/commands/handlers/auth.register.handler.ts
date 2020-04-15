@@ -16,7 +16,11 @@ export class AuthRegisterHandler
 	public async execute(command: AuthRegisterCommand): Promise<User> {
 		const { input } = command;
 
-		if (input.user.role.name === RolesEnum.SUPER_ADMIN) {
+		if (
+			input.user &&
+			input.user.role &&
+			input.user.role.name === RolesEnum.SUPER_ADMIN
+		) {
 			if (!input.createdById) throw new BadRequestException();
 
 			const { role } = await this.userService.findOne(input.createdById, {
