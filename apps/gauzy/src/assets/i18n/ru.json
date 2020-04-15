@@ -755,6 +755,11 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
+		"DUE_DATE": "Срок сдачи",
+		"ESTIMATE": "Оценить",
+		"ESTIMATE_DAYS": "Дней",
+		"ESTIMATE_HOURS": "Часы",
+		"ESTIMATE_MINUTES": "Минс",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
