@@ -4,4 +4,6 @@
 		(save)="onSaveProduct($event)"
 		(cancel)="closeDialog()"
 	></ngx-product-form>
+	<ngx-product-variant-form *ngIf="edit === 'product-variant'">
+	</ngx-product-variant-form>
 </nb-card>

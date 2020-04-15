@@ -19,9 +19,14 @@ import { ProductFormComponent } from './product-form/product-form.component';
 import { ProductCategoryService } from '../../@core/services/product-category.service';
 import { ProductService } from '../../@core/services/product.service';
 import { ProductTypeService } from '../../@core/services/product-type.service';
+import { ProductVariantFormComponent } from './product-variant-form/product-variant-form.component';
 
 @NgModule({
-	declarations: [ProductMutationComponent, ProductFormComponent],
+	declarations: [
+		ProductMutationComponent,
+		ProductFormComponent,
+		ProductVariantFormComponent
+	],
 	imports: [
 		ThemeModule,
 		NgSelectModule,

@@ -81,8 +81,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 			})
 		};
 
-		console.log(newProduct);
-
 		this.save.emit(newProduct);
 	}
 

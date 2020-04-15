@@ -15,7 +15,7 @@ export class ProductMutationComponent extends TranslationBaseComponent {
 	form: FormGroup;
 	productItem: Product;
 
-	edit = 'product';
+	edit = 'product-variant';
 
 	constructor(
 		readonly translationService: TranslateService,
