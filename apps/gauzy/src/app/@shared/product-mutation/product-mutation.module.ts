@@ -15,9 +15,13 @@ import { HttpLoaderFactory } from '../../@theme/components/header/selectors/empl
 import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
+import { ProductFormComponent } from './product-form/product-form.component';
+import { ProductCategoryService } from '../../@core/services/product-category.service';
+import { ProductService } from '../../@core/services/product.service';
+import { ProductTypeService } from '../../@core/services/product-type.service';
 
 @NgModule({
-	declarations: [ProductMutationComponent],
+	declarations: [ProductMutationComponent, ProductFormComponent],
 	imports: [
 		ThemeModule,
 		NgSelectModule,
@@ -37,6 +41,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 				deps: [HttpClient]
 			}
 		})
-	]
+	],
+	providers: [ProductTypeService, ProductCategoryService, ProductService]
 })
 export class ProductMutationModule {}

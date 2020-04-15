@@ -47,6 +47,9 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 import { UpworkModule } from './integrations/upwork/upwork.module';
 import { HubstaffModule } from './integrations/hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
+import { ProductCategoriesModule } from './product-category/product-category-module';
+import { ProductTypesModule } from './product-type/product-type-module';
+import { ProductModule } from './product/product.module';
 
 @Module({
 	imports: [
@@ -177,6 +180,18 @@ import { CandidateModule } from './candidate/candidate.module';
 					{
 						path: '/invoice-item',
 						module: InvoiceItemModule
+					},
+					{
+						path: '/products',
+						module: ProductModule
+					},
+					{
+						path: '/product-categories',
+						module: ProductCategoriesModule
+					},
+					{
+						path: '/product-types',
+						module: ProductTypesModule
 					}
 				]
 			}
@@ -234,7 +249,10 @@ import { CandidateModule } from './candidate/candidate.module';
 		TimesheetModule,
 		UpworkModule,
 		HubstaffModule,
-		ExpenseCategoriesModule
+		ExpenseCategoriesModule,
+		ProductCategoriesModule,
+		ProductTypesModule,
+		ProductModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

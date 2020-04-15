@@ -1,0 +1,124 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(productItem
+					? 'INVENTORY_PAGE.EDIT_INVENTORY_ITEM'
+					: 'INVENTORY_PAGE.ADD_INVENTORY_ITEM'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="onCancel()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="form-group">
+				<div class="row">
+					<div class="col-sm-6 mb-4">
+						<label class="label" for="nameInput">
+							{{ 'INVENTORY_PAGE.NAME' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="nameInput"
+							type="text"
+							nbInput
+							formControlName="name"
+							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+						/>
+					</div>
+					<div class="col-sm-6 mb-4">
+						<label class="label" for="codeInput">
+							{{ 'INVENTORY_PAGE.CODE' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="codeInput"
+							type="text"
+							nbInput
+							formControlName="code"
+							[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+						/>
+					</div>
+				</div>
+				<div class="row" *ngIf="productTypes && productCategories">
+					<div class="col-sm-6 mb-4">
+						<label class="label" for="productTypeId">
+							{{ 'INVENTORY_PAGE.PRODUCT_TYPE' | translate }}
+						</label>
+						<nb-select
+							id="productTypeId"
+							formControlName="productTypeId"
+							fullWidth
+							[placeholder]="
+								'INVENTORY_PAGE.PRODUCT_TYPE' | translate
+							"
+						>
+							<nb-option
+								*ngFor="let productType of productTypes"
+								[value]="productType.id"
+								>{{ productType.name }}</nb-option
+							>
+						</nb-select>
+					</div>
+					<div class="col-sm-6 mb-4">
+						<label class="label" for="productCategoryId">
+							{{ 'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate }}
+						</label>
+						<nb-select
+							id="productCategoryId"
+							formControlName="productCategoryId"
+							fullWidth
+							[placeholder]="
+								'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate
+							"
+						>
+							<nb-option
+								*ngFor="
+									let productCategory of productCategories
+								"
+								[value]="productCategory.id"
+								>{{ productCategory.name }}</nb-option
+							>
+						</nb-select>
+					</div>
+				</div>
+				<div class="mb-4">
+					<label class="label" for="description">
+						{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}
+					</label>
+					<textarea
+						formControlName="description"
+						nbInput
+						fullWidth
+						id="description"
+						[placeholder]="'INVENTORY_PAGE.DESCRIPTION' | translate"
+					>
+					</textarea>
+				</div>
+				<div class="row">
+					<div class="col-sm-12 mb-4">
+						<nb-checkbox formControlName="enabled">
+							<span>{{
+								'INVENTORY_PAGE.ENABLED' | translate
+							}}</span>
+						</nb-checkbox>
+					</div>
+				</div>
+				<!-- todo -> add product options -->
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="onCancel()" status="warning" class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button status="success" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

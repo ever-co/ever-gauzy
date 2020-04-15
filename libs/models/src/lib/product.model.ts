@@ -1,30 +1,16 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
-export interface Product {
+export interface Product extends IBaseEntityModel {
 	name: string;
+	description: string;
 	enabled: boolean;
+	code: string;
+	variants?: ProductVariant[];
+	options?: ProductOption[];
 	productTypeId: string;
 	productCategoryId: string;
-	isSubscription: boolean;
-	isPurchaseAutomatically: boolean;
-	canBeSold: boolean;
-	canBePurchased: boolean;
-	canBeCharged: boolean;
-	canBeRented: boolean;
-	isEquipment: boolean;
-	internalReference: string;
-	code: string;
-	notes: string;
-	description: string;
-	unitCost: number;
-	unitCostCurrency: string;
-	retailPrice: number;
-	retailPriceCurrency: string;
-	quantity: number;
-	taxes: number;
-	billingInvoicingPolicy: string;
-	productType?: ProductType;
-	productCategory?: ProductCategory;
+	type?: ProductType;
+	category?: ProductCategory;
 }
 
 export interface ProductType extends IBaseEntityModel {
@@ -35,4 +21,40 @@ export interface ProductType extends IBaseEntityModel {
 export interface ProductCategory extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
+}
+
+export interface ProductVariant extends IBaseEntityModel {
+	price: ProductVariantPrice;
+	taxes: number;
+	notes: string;
+	productId: string;
+	quantity: number;
+	billingInvoicingPolicy: string;
+	internalReference: string;
+	options: ProductOption[];
+	settings: ProductVariantSettings;
+	product?: Product;
+}
+
+export interface ProductVariantPrice extends IBaseEntityModel {
+	unitCost: number;
+	unitCostCurrency: string;
+	retailPrice: number;
+	retailPriceCurrency: string;
+}
+
+export interface ProductVariantSettings extends IBaseEntityModel {
+	isSubscription: boolean;
+	isPurchaseAutomatically: boolean;
+	canBeSold: boolean;
+	canBePurchased: boolean;
+	canBeCharged: boolean;
+	canBeRented: boolean;
+	isEquipment: boolean;
+	trackInventory: boolean;
+}
+
+export interface ProductOption extends IBaseEntityModel {
+	name: string;
+	code: string;
 }
