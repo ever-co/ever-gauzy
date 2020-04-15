@@ -322,7 +322,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT": "Import",
-			"EXPORT": "Export"
+			"EXPORT": "Export",
+			"MERGE": "merge data",
+			"CLEAN_UP": "clean up before import"
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",

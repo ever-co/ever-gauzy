@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Organization, PermissionsEnum, RolesEnum } from '@gauzy/models';
-import { NbMenuItem } from '@nebular/theme';
+import { NbMenuItem, NbMenuService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { filter, first, takeUntil } from 'rxjs/operators';
@@ -488,12 +488,31 @@ export class PagesComponent implements OnInit, OnDestroy {
 				},
 				{
 					title: 'Import/Export',
-					icon: 'arrow-circle-down-outline',
-					link: '/pages/settings/import-export',
+					icon: 'flip-outline',
 					data: {
 						translated: false,
 						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
-					}
+					},
+					children: [
+						{
+							title: 'Export',
+							icon: 'download-outline',
+							link: '/pages/settings/import-export/export',
+							data: {
+								translated: false,
+								translationKey: 'MENU.IMPORT_EXPORT.EXPORT'
+							}
+						},
+						{
+							title: 'Import',
+							icon: 'upload-outline',
+							link: '/pages/settings/general',
+							data: {
+								translated: false,
+								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'
+							}
+						}
+					]
 				},
 				{
 					title: 'Payment Gateways',
