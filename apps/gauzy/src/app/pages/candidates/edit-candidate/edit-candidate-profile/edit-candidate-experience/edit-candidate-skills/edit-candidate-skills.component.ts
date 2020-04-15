@@ -8,7 +8,7 @@ import { takeUntil, first } from 'rxjs/operators';
 import { Candidate } from '@gauzy/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',
@@ -29,7 +29,6 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 		private candidateStore: CandidateStore,
 		private candidatesService: CandidatesService,
 		private fb: FormBuilder,
-		private router: Router,
 		private route: ActivatedRoute
 	) {
 		super(translateService);
@@ -53,8 +52,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 					.pipe(first())
 					.toPromise();
 				this.selectedCandidate = items[0];
-				console.log(this.selectedCandidate);
-
+				// console.log(this.selectedCandidate);
 				this.candidateStore.selectedCandidate = this.selectedCandidate;
 			});
 	}

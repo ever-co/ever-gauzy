@@ -238,6 +238,12 @@
 				"FIELD_OF_STUDY": "Field(s) of study",
 				"DATE_OF_COMPLETION": "Date of completion",
 				"ADDITIONAL_NOTES": "Additional notes (optional)"
+			},
+			"ADD_EXPERIENCE": {
+				"OCCUPATION": "Occupation",
+				"ORGANIZATION": "Organization name",
+				"DURATION": "Duration",
+				"DESCRIPTION": "Description (optional)"
 			}
 		},
 		"RATES": {
@@ -530,6 +536,10 @@
 			"FIELD": "Field(s)",
 			"COMPLETION_DATE": "Date of completion",
 			"ADDITIONAL_NOTES": "Additional notes",
+			"OCCUPATION": "Occupation",
+			"ORGANIZATION": "Organization name",
+			"DURATION": "Duration",
+			"DESCRIPTION": "Description",
 			"TASKS": "Tasks",
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents"
@@ -928,6 +938,7 @@
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
+			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",

@@ -20,7 +20,7 @@ export interface ICandidateSkill {
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.EXPERIENCE' | translate
 				}}"
 			>
-				<p>EXPERIENCE</p>
+				<ga-edit-candidate-experience-form></ga-edit-candidate-experience-form>
 			</nb-tab>
 			<nb-tab
 				tabTitle="{{

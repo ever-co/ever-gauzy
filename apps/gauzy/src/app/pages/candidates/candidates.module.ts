@@ -54,6 +54,7 @@ import { EditCandidateSkillsComponent } from './edit-candidate/edit-candidate-pr
 import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-education/edit-candidate-education.component';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
+import { EditCandidateExperienceFormComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience/edit-candidate-experience-form.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -75,7 +76,8 @@ const COMPONENTS = [
 	EditCandidateTasksComponent,
 	ManageCandidateInviteComponent,
 	EditCandidateSkillsComponent,
-	EditCandidateEducationComponent
+	EditCandidateEducationComponent,
+	EditCandidateExperienceFormComponent
 ];
 
 @NgModule({
