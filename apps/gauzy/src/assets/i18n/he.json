@@ -752,6 +752,9 @@
 		"TASKS_PROJECT": "פרויקטים",
 		"DUE_DATE": "תאריך להגשה",
 		"ESTIMATE": "הערכה",
+		"ESTIMATE_DAYS": "ימים",
+		"ESTIMATE_HOURS": "שעה (ות",
+		"ESTIMATE_MINUTES": "דקות",
 		"TASKS_STATUS": "עבודה"
 	},
 	"USERS_PAGE": {

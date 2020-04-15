@@ -89,21 +89,53 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
-						<label for="estimate" class="label">{{
+						<label class="label">{{
 							'TASKS_PAGE.ESTIMATE' | translate
 						}}</label>
-						<input
-							formControlName="estimate"
-							type="text"
-							nbInput
-							placeholder="{{
-								'TASKS_PAGE.ESTIMATE' | translate
-							}}"
-							id="estimate"
-							fullWidth
-						/>
+						<div class="estimate-inputs">
+							<input
+								formControlName="estimateDays"
+								type="number"
+								nbInput
+								placeholder="{{
+									'TASKS_PAGE.ESTIMATE_DAYS' | translate
+								}}"
+							/>
 
-						<div>{{ form.get('estimate').errors | json }}</div>
+							<input
+								formControlName="estimateHours"
+								type="number"
+								[status]="
+									form.get('estimateHours').errors
+										? 'danger'
+										: 'basic'
+								"
+								min="0"
+								max="23"
+								nbInput
+								placeholder="{{
+									'TASKS_PAGE.ESTIMATE_HOURS' | translate
+								}}"
+							/>
+
+							<input
+								formControlName="estimateMinutes"
+								type="number"
+								[status]="
+									form.get('estimateMinutes').errors
+										? 'danger'
+										: 'basic'
+								"
+								min="0"
+								max="59"
+								nbInput
+								placeholder="{{
+									'TASKS_PAGE.ESTIMATE_MINUTES' | translate
+								}}"
+							/>
+						</div>
+
+						<!-- <div>{{ form.get('estimate').errors | json }}</div> -->
 					</div>
 				</div>
 
@@ -128,7 +160,12 @@
 		>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="onSave()" status="success" nbButton>
+		<button
+			(click)="onSave()"
+			[disabled]="form.invalid"
+			status="success"
+			nbButton
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

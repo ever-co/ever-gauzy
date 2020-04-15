@@ -752,6 +752,9 @@
 		"TASKS_PROJECT": "Проект",
 		"DUE_DATE": "Крайна Дата",
 		"ESTIMATE": "Приблизително Време",
+		"ESTIMATE_DAYS": "Дни",
+		"ESTIMATE_HOURS": "Часове",
+		"ESTIMATE_MINUTES": "Минути",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {

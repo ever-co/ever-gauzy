@@ -753,6 +753,9 @@
 		"TASKS_PROJECT": "Project",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
+		"ESTIMATE_DAYS": "Days",
+		"ESTIMATE_HOURS": "Hours",
+		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status"
 	},
 	"USERS_PAGE": {

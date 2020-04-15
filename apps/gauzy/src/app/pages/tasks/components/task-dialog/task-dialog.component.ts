@@ -12,6 +12,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import * as moment from 'moment';
 
 const initialTaskValue = {
 	title: '',
@@ -77,28 +78,20 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		dueDate,
 		tags
 	}: Task) {
+		const duration = moment.duration(estimate, 'seconds');
+
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
 			status: [status],
-			estimate: [
-				estimate,
-				(control: AbstractControl) => {
-					const value = control.value;
-
-					if (value) {
-						const hours = +value.split(':')[0];
-						const minutes = +value.split(':')[1];
-
-						if (hours >= 0 && minutes >= 0 && minutes <= 59) {
-							return null;
-						}
-
-						return {
-							wrongFormat: true
-						};
-					}
-				}
+			estimateDays: [duration.days() || ''],
+			estimateHours: [
+				duration.hours() || '',
+				[Validators.min(0), Validators.max(23)]
+			],
+			estimateMinutes: [
+				duration.minutes() || '',
+				[Validators.min(0), Validators.max(59)]
 			],
 			dueDate: [dueDate],
 			description: [description],

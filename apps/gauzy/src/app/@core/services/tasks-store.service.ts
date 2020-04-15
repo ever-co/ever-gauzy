@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Task } from '@gauzy/models';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
+import * as moment from 'moment';
 
 @Injectable({
 	providedIn: 'root'
@@ -30,7 +31,6 @@ export class TasksStoreService {
 	}
 
 	private _mapToViewModel(tasks) {
-		debugger;
 		return tasks.map((task) => ({
 			...task,
 			projectName: task.project ? task.project.name : undefined
@@ -45,8 +45,8 @@ export class TasksStoreService {
 		this._taskService
 			.createTask(task)
 			.pipe(
-				tap((task) => {
-					const tasks = [...this.tasks, task];
+				tap((createdTask) => {
+					const tasks = [...this.tasks, createdTask];
 					this._tasks$.next(tasks);
 				})
 			)
