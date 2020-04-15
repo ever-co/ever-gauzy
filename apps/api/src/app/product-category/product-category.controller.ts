@@ -27,7 +27,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployees(
+	async findAllProductCategories(
 		@Query('findInput') findInput: string
 	): Promise<IPagination<ProductCategory>> {
 		return this.productCategoriesService.findAll({
