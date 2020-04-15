@@ -755,11 +755,11 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
-		"DUE_DATE": "Крайна Дата",
-		"ESTIMATE": "Приблизително Време",
-		"ESTIMATE_DAYS": "Дни",
-		"ESTIMATE_HOURS": "Часове",
-		"ESTIMATE_MINUTES": "Минути",
+		"DUE_DATE": "Due Date",
+		"ESTIMATE": "Estimate",
+		"ESTIMATE_DAYS": "Days",
+		"ESTIMATE_HOURS": "Hours",
+		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
