@@ -3,9 +3,7 @@ import * as moment from 'moment';
 
 @Component({
 	template: `
-		<div>
-			{{ transformSeconds() }}
-		</div>
+		{{ transformSeconds() }}
 	`
 })
 export class TaskEstimateComponent {
