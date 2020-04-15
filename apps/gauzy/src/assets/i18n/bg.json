@@ -344,6 +344,7 @@
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
+		"INVENTORY": "Inventory",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments"
 	},
@@ -743,6 +744,35 @@
 			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
 			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
 		}
+	},
+	"INVENTORY_PAGE": {
+		"HEADER": "Inventory",
+		"ADD_INVENTORY_ITEM": "Add inventory item",
+		"EDIT_INVENTPRY_ITEM": "Edit inventory item",
+		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
+		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
+		"NAME": "Име",
+		"ENABLED": "Enabled",
+		"PRODUCT_TYPE": "Product type",
+		"PRODUCT_CATEGORY": "Product category",
+		"IS_SUBSCRIPTION": "Is subscription",
+		"IS_PURCHASE_AUTOMATICALLY": "Is purchased automatically",
+		"CAN_BE_SOLD": "Can be sold",
+		"CAN_BE_PURCHASED": "Can be purchased",
+		"CAN_BE_CHARGED": "Can be charged",
+		"CAN_BE_RENTED": "Can be rented",
+		"IS_EQUIPMENT": "Is equipment",
+		"INTERNATIONAL_REFERENCE": "International reference",
+		"CODE": "Code",
+		"NOTES": "Бележки",
+		"DESCRIPTION": "Description",
+		"UNIT_COST": "Unit Cost",
+		"UNIT_COST_CURRENCY": "Unit cost currency",
+		"RETAIL_PRICE": "Retail price",
+		"RETAIL_PRICE_CURRENCY": "Retail price currency",
+		"QUANTITY": "Quantity",
+		"TAXES": "Taxes",
+		"BILLING_INVOICING_POLICY": "Billing invoicing policy"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
