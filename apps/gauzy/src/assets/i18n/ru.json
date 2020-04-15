@@ -321,7 +321,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Импорт/Экспорт",
 			"IMPORT": "Импорт",
-			"EXPORT": "Экспорт"
+			"EXPORT": "Экспорт",
+			"MERGE": "объединение данных",
+			"CLEAN_UP": "очистить перед импортом"
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
@@ -753,11 +755,11 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
-		"DUE_DATE": "Срок оплаты",
-		"ESTIMATE": "Оценка общего времени",
+		"DUE_DATE": "Срок сдачи",
+		"ESTIMATE": "Оценить",
 		"ESTIMATE_DAYS": "Дней",
-		"ESTIMATE_HOURS": "Часов",
-		"ESTIMATE_MINUTES": "Минут",
+		"ESTIMATE_HOURS": "Часы",
+		"ESTIMATE_MINUTES": "Минс",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
