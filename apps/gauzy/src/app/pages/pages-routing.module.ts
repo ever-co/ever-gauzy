@@ -217,6 +217,13 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'inventory',
+						loadChildren: () =>
+							import('./inventory/inventory.module').then(
+								(m) => m.InventoryModule
+							)
+					},
+					{
 						path: 'tags',
 						loadChildren: () =>
 							import('./tags/tags.module').then(

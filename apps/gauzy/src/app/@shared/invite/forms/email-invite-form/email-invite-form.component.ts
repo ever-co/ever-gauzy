@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
 import {
-	CreateEmailInvitesOutput,
+	ICreateEmailInvitesOutput,
 	InvitationTypeEnum,
 	OrganizationProjects,
 	RolesEnum,
@@ -145,7 +145,7 @@ export class EmailInviteFormComponent implements OnInit {
 		return this.roleName.value || RolesEnum.VIEWER;
 	};
 
-	async saveInvites(): Promise<CreateEmailInvitesOutput> {
+	async saveInvites(): Promise<ICreateEmailInvitesOutput> {
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({

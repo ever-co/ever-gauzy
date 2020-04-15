@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {
-	CreateEmailInvitesInput,
-	CreateEmailInvitesOutput,
+	ICreateEmailInvitesInput,
+	ICreateEmailInvitesOutput,
 	Invite,
 	InviteFindInput,
 	PublicInviteFindInput,
-	InviteAcceptInput,
-	InviteResendInput,
+	IInviteAcceptInput,
+	IInviteResendInput,
 	OrganizationClients,
 	LinkClientOrganizationInviteInput
 } from '@gauzy/models';
@@ -18,10 +18,10 @@ export class InviteService {
 	constructor(private http: HttpClient) {}
 
 	createWithEmails(
-		createInput: CreateEmailInvitesInput
-	): Promise<CreateEmailInvitesOutput> {
+		createInput: ICreateEmailInvitesInput
+	): Promise<ICreateEmailInvitesOutput> {
 		return this.http
-			.post<CreateEmailInvitesOutput>('/api/invite/emails', createInput)
+			.post<ICreateEmailInvitesOutput>('/api/invite/emails', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -61,26 +61,26 @@ export class InviteService {
 			.toPromise();
 	}
 
-	acceptEmployeeInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+	acceptEmployeeInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/employee`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}
-	acceptCandidateInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+	acceptCandidateInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/candidate`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}
-	acceptUserInvite(acceptInviteInput: InviteAcceptInput): Promise<any> {
+	acceptUserInvite(acceptInviteInput: IInviteAcceptInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/user`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}
 
-	resendInvite(inviteResendInput: InviteResendInput): Promise<any> {
+	resendInvite(inviteResendInput: IInviteResendInput): Promise<any> {
 		return this.http
 			.post(`/api/invite/resend`, inviteResendInput)
 			.pipe(first())

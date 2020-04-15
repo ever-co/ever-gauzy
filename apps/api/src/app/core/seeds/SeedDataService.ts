@@ -72,6 +72,10 @@ import { createCandidateSources } from '../../candidate_source/candidate_source.
 import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
 import { createCandidateCvs } from '../../candidate-cv/candidate-cv.seed';
 import { createTenants } from '../../tenant/tenant.seed';
+import { ProductCategory } from '../../product-category/product-category.entity';
+import { createProductCategories } from '../../product-category/product-category.seed';
+import { ProductType } from '../../product-type/product-type.entity';
+import { createProductTypes } from '../../product-type/product-type.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -112,6 +116,8 @@ const allEntities = [
 	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,
+	ProductCategory,
+	ProductType,
 	CandidateSource
 	// CandidateCv
 ];
@@ -299,6 +305,10 @@ export class SeedDataService {
 				org: defaultOrganization,
 				employees: [...employees.defaultEmployees]
 			});
+
+			await createProductCategories(this.connection, defaultOrganization);
+
+			await createProductTypes(this.connection, defaultOrganization);
 
 			this.log(
 				chalk.green(
