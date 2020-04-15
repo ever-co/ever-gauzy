@@ -2,7 +2,6 @@ import {
 	Controller,
 	HttpStatus,
 	Get,
-	Res,
 	Post,
 	UseInterceptors,
 	UploadedFiles,

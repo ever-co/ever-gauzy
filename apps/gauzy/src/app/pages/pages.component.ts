@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Organization, PermissionsEnum, RolesEnum } from '@gauzy/models';
-import { NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { filter, first, takeUntil } from 'rxjs/operators';
