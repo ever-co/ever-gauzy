@@ -2,13 +2,11 @@ import { Component } from '@angular/core';
 import * as moment from 'moment';
 
 @Component({
-	selector: 'ngx-task-estimate',
 	template: `
 		<div>
 			{{ transformSeconds() }}
 		</div>
-	`,
-	styles: [``]
+	`
 })
 export class TaskEstimateComponent {
 	value: any;
@@ -16,12 +14,16 @@ export class TaskEstimateComponent {
 	transformSeconds() {
 		const duration = moment.duration(this.value, 'seconds');
 
-		return `${duration.days()}d ${
-			duration.hours() >= 10 ? duration.hours() : '0' + duration.hours()
-		}h ${
+		const days = duration.days();
+
+		const hours =
+			duration.hours() >= 10 ? duration.hours() : '0' + duration.hours();
+
+		const minutes =
 			duration.minutes() >= 10
 				? duration.minutes()
-				: '0' + duration.minutes()
-		}m`;
+				: '0' + duration.minutes();
+
+		return `${days}d ${hours}h ${minutes}m`;
 	}
 }
