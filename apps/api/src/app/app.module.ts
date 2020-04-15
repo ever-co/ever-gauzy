@@ -36,6 +36,7 @@ import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
 import { ExportAllModule } from './export_import/export-all.module';
+import { ImportAllModule } from './export_import/import/import-all.module';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
@@ -62,6 +63,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 					{ path: '/employee', module: EmployeeModule },
 					{ path: '/candidate', module: CandidateModule },
 					{ path: '/download', module: ExportAllModule },
+					{ path: '/import', module: ImportAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
@@ -190,6 +192,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 		EmployeeModule,
 		CandidateModule,
 		ExportAllModule,
+		ImportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		RoleModule,

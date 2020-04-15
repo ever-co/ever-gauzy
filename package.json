@@ -143,7 +143,6 @@
 		"bcrypt": "^4.0.1",
 		"bootstrap": "^4.3.1",
 		"chart.js": "^2.9.3",
-		"pm2": "^4.2.3",
 		"chart.piecelabel.js": "^0.15.0",
 		"ckeditor": "^4.12.0",
 		"ckeditor4-angular": "^1.0.1",
@@ -193,6 +192,7 @@
 		"nodemailer-handlebars": "^1.0.0",
 		"normalize.css": "^8.0.1",
 		"pace-js": "^1.0.2",
+		"pm2": "^4.2.3",
 		"pug": "^2.0.4",
 		"reflect-metadata": "^0.1.13",
 		"roboto-fontface": "^0.10.0",
@@ -204,6 +204,7 @@
 		"tinymce": "^5.0.9",
 		"tslib": "^1.10.0",
 		"typeface-exo": "^0.0.61",
+		"unzipper": "^0.10.10",
 		"uuid": "^7.0.2",
 		"web-animations-js": "^2.3.2",
 		"zone.js": "~0.10.2"
