@@ -61,11 +61,22 @@ export class InviteAcceptEmployeeHandler
 			input.user.imageUrl = getUserDummyImage(input.user);
 		}
 
-		const user = await this.authService.register(input);
+		const user = await this.authService.register({
+			...input,
+			user: {
+				...input.user,
+				tenant: {
+					id: organization.tenantId
+				}
+			}
+		});
 
 		const employee = await this.employeeService.create({
 			user,
-			organization: input.organization
+			organization: input.organization,
+			tenant: {
+				id: organization.tenantId
+			}
 		});
 
 		this.updateEmployeeMemberships(invite, employee);

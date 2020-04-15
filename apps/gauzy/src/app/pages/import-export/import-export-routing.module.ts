@@ -5,7 +5,14 @@ import { ImportExportComponent } from './import-export.component';
 const routes: Routes = [
 	{
 		path: '',
-		component: ImportExportComponent
+		component: ImportExportComponent,
+		children: [
+			{
+				path: 'export',
+				loadChildren: () =>
+					import('./export/export.module').then((m) => m.ExportModule)
+			}
+		]
 	}
 ];
 

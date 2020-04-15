@@ -5,6 +5,7 @@ import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { getUserDummyImage } from '../../../core';
+import { OrganizationService } from '../../../organization/organization.service';
 
 /**
  * Use this command for registering all non-employee users.
@@ -16,7 +17,8 @@ export class InviteAcceptUserHandler
 	implements ICommandHandler<InviteAcceptUserCommand> {
 	constructor(
 		private readonly inviteService: InviteService,
-		private readonly authService: AuthService
+		private readonly authService: AuthService,
+		private readonly organizationService: OrganizationService
 	) {}
 
 	public async execute(
@@ -24,13 +26,22 @@ export class InviteAcceptUserHandler
 	): Promise<UpdateResult | Invite> {
 		const { input } = command;
 
+		const organization = await this.organizationService.findOne(
+			input.organization.id
+		);
+
 		if (!input.user.imageUrl) {
 			input.user.imageUrl = getUserDummyImage(input.user);
 		}
 
 		await this.authService.register({
 			...input,
-			organizationId: input.organization.id
+			user: {
+				...input.user,
+				tenant: {
+					id: organization.tenantId
+				}
+			}
 		});
 
 		return await this.inviteService.update(input.inviteId, {

@@ -11,6 +11,8 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import { TranslateService } from '@ngx-translate/core';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
+import { TaskEstimateComponent } from 'apps/gauzy/src/app/@shared/table-components/task-estimate/task-estimate.component';
 
 @Component({
 	selector: 'ngx-task',
@@ -73,6 +75,18 @@ export class TaskComponent extends TranslationBaseComponent
 					type: 'string',
 					filter: false
 				},
+				estimate: {
+					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
+					type: 'custom',
+					filter: false,
+					renderComponent: TaskEstimateComponent
+				},
+				dueDate: {
+					title: this.getTranslation('TASKS_PAGE.DUE_DATE'),
+					type: 'custom',
+					filter: false,
+					renderComponent: DateViewComponent
+				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'string',
@@ -90,6 +104,15 @@ export class TaskComponent extends TranslationBaseComponent
 		const data = await dialog.onClose.pipe(first()).toPromise();
 
 		if (data) {
+			const { estimateDays, estimateHours, estimateMinutes } = data;
+
+			const estimate =
+				estimateDays * 24 * 60 * 60 +
+				estimateHours * 60 * 60 +
+				estimateMinutes * 60;
+
+			estimate ? (data.estimate = estimate) : (data.estimate = null);
+
 			this._store.createTask(data);
 			this.selectTask({ isSelected: false, data: null });
 		}
@@ -105,6 +128,15 @@ export class TaskComponent extends TranslationBaseComponent
 		const data = await dialog.onClose.pipe(first()).toPromise();
 
 		if (data) {
+			const { estimateDays, estimateHours, estimateMinutes } = data;
+
+			const estimate =
+				estimateDays * 24 * 60 * 60 +
+				estimateHours * 60 * 60 +
+				estimateMinutes * 60;
+
+			estimate ? (data.estimate = estimate) : (data.estimate = null);
+
 			this._store.editTask({
 				...data,
 				id: this.selectedTask.id
