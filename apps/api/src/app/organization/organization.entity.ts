@@ -6,7 +6,8 @@ import {
 	JoinColumn,
 	RelationId,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -30,6 +31,7 @@ import {
 import { Tag } from '../tags/tag.entity';
 import { Tenant } from './../tenant/tenant.entity';
 import { LocationBase } from '../core/entities/location-base';
+import { Invoice } from '../invoice/invoice.entity';
 
 @Entity('organization')
 export class Organization extends LocationBase implements IOrganization {
@@ -44,6 +46,14 @@ export class Organization extends LocationBase implements IOrganization {
 	@JoinColumn()
 	tenant: Tenant;
 
+	@ApiPropertyOptional({ type: Invoice, isArray: true })
+	@OneToMany(
+		(type) => Invoice,
+		(invoices) => invoices.fromOrganization
+	)
+	@JoinColumn()
+	invoices?: Invoice[];
+
 	@ApiProperty()
 	@RelationId((organization: Organization) => organization.tenant)
 	readonly tenantId?: string;
@@ -54,6 +64,13 @@ export class Organization extends LocationBase implements IOrganization {
 	@Index()
 	@Column()
 	name: string;
+
+	@ApiProperty({ type: String, minLength: 3, maxLength: 100 })
+	@IsString()
+	@Index({ unique: true })
+	@IsOptional()
+	@Column({ nullable: true })
+	profile_link: string;
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
@@ -180,7 +197,17 @@ export class Organization extends LocationBase implements IOrganization {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: true })
+	allowManualTime?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
 	allowModifyTime?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ default: true })
+	allowDeleteTime?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()

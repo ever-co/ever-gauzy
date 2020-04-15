@@ -30,11 +30,13 @@
 		"INVITE_AGAIN": "Invite Again",
 		"REQUEST": "Request",
 		"HISTORY": "History",
+		"SYNC": "Sync",
 		"UPDATE": "Update"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
 		"CLIENT_NAME": "Клиентско име",
+		"NAME": "Име",
 		"VENDOR": "Доставчик",
 		"CATEGORY": "Категория",
 		"CURRENCY": "Валута",
@@ -108,6 +110,7 @@
 			"DATE_TYPE": "Дата по подразбиране",
 			"ADD_TEAM": "Добавяне на нов отбор",
 			"OFFICIAL_NAME": "Официално Име",
+			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Започни седмицата на",
 			"TAX_ID": "Таксa ID",
 			"COUNTRY": "Държава",
@@ -141,6 +144,9 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Дата на приемане (опция)",
 			"APPLIED_DATE": "Applied Date (optional)",
+			"EDUCATION": "Education (optional)",
+			"EXPERIENCE": "Work experience (optional)",
+			"SKILLS": "Skills (optional)",
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Дата на отказ (опция)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
@@ -181,12 +187,16 @@
 			"ADD_REMOVE_MEMBERS": "Добавяне или премахване на членове",
 			"MEMBERS_COUNT": "Брой членове",
 			"OFFICIAL_NAME": "Добави официално име",
+			"PROFILE_LINK": "Enter Profile Link",
 			"START_WEEK_ON": "Започни седмицата на",
 			"TAX_ID": "Такса ID",
 			"COUNTRY": "Държава",
 			"CITY": "Град",
 			"ADDRESS": "Адрес",
 			"ADDRESS_2": "Адрес 2",
+			"EDUCATION": "Education",
+			"EXPERIENCE": "Work experience",
+			"SKILLS": "Skills",
 			"POSTCODE": "Пощенски код (Zip)",
 			"BILL_RATE": "Заплащане на час",
 			"RECURRING_WEEKLY_LIMIT": "Седмичен лимит (часове)",
@@ -223,6 +233,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
+			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
@@ -239,6 +250,7 @@
 			"RECORD": "запис",
 			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "служители",
+			"CANDIDATE": "candidate",
 			"EXPENSE": "Разходи",
 			"USER": "user",
 			"INVITATION": "покана",
@@ -309,7 +321,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT": "Import",
-			"EXPORT": "Export"
+			"EXPORT": "Export",
+			"MERGE": "merge data",
+			"CLEAN_UP": "clean up before import"
 		},
 		"TAGS": "Тагове",
 		"EQUIPMENT": "Equipment",
@@ -329,7 +343,9 @@
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
-		"CUSTOM_SMTP": "Custom SMTP"
+		"CUSTOM_SMTP": "Custom SMTP",
+		"SALES": "Sales",
+		"PAYMENTS": "Payments"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Теми",
@@ -345,7 +361,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Select Organization",
+			"SYNCED_PROJECTS": "Projects synced"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -470,7 +491,9 @@
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
-		}
+		},
+		"NOT_STARTED": "Not Started",
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -480,7 +503,7 @@
 		"REJECTED": "Rejected",
 		"DELETED": "Изтрит",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
@@ -490,8 +513,12 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Локация",
-			"RATES": "Rates",
-			"HIRING": "Hiring"
+			"RATE": "Rates",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Experience",
+			"TASKS": "Tasks",
+			"HISTORY": "History",
+			"DOCUMENTS": "Documents"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -507,6 +534,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
+		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
@@ -560,6 +588,8 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_MANUAL_TIME": "Allow Manual Time",
 				"REQUIRE_REASON": "Require Reason",
 				"REQUIRE_DESCRIPTION": "Require Description",
 				"REQUIRE_PROJECT": "Require Project",
@@ -725,6 +755,11 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
+		"DUE_DATE": "Крайна Дата",
+		"ESTIMATE": "Приблизително Време",
+		"ESTIMATE_DAYS": "Дни",
+		"ESTIMATE_HOURS": "Часове",
+		"ESTIMATE_MINUTES": "Минути",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
@@ -820,8 +855,8 @@
 			"TASK": "Задача",
 			"NAME": "Име",
 			"DESCRIPTION": "Description",
-			"UNIT_COST": "Unit Cost",
-			"QUANTITY": "Quantity",
+			"PRICE": "Price",
+			"QTY": "Qty",
 			"TOTAL_VALUE": "Total Value"
 		}
 	},
@@ -1000,6 +1035,7 @@
 		"START_TIMER": "Страртирай таймер",
 		"TIMER": "Timer",
 		"MANUAL": "Manual",
+		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"DATE": "Дата",

@@ -200,7 +200,9 @@ export class EditOrganizationOtherSettingsComponent
 				)
 			],
 			futureDateAllowed: [this.organization.futureDateAllowed || false],
+			allowManualTime: [this.organization.allowManualTime],
 			allowModifyTime: [this.organization.allowModifyTime],
+			allowDeleteTime: [this.organization.allowDeleteTime],
 			requireReason: [this.organization.requireReason],
 			requireDescription: [this.organization.requireDescription],
 			requireProject: [this.organization.requireProject],

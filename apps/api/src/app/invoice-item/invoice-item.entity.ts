@@ -8,17 +8,14 @@ import { Task } from '../tasks/task.entity';
 
 @Entity('invoice_item')
 export class InvoiceItem extends Base implements IInvoiceItem {
-	@ApiProperty({ type: Number })
-	@IsNumber()
-	@Column({ type: 'numeric' })
-	itemNumber: number;
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	name?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
-	name: string;
-
-	@ApiProperty({ type: String })
-	@IsString()
+	@Column()
 	description: string;
 
 	@ApiProperty({ type: Number })
@@ -51,7 +48,8 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	@ApiPropertyOptional({ type: Invoice })
 	@ManyToOne(
 		(type) => Invoice,
-		(invoice) => invoice.invoiceItems
+		(invoice) => invoice.invoiceItems,
+		{ onDelete: 'SET NULL' }
 	)
 	@JoinColumn()
 	invoice?: Invoice;

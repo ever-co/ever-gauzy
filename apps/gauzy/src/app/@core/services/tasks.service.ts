@@ -27,7 +27,10 @@ export class TasksService extends TranslationBaseComponent {
 	}
 
 	getAllTasks(findInput: GetTaskOptions = {}): Observable<ITaskResponse> {
-		const data = JSON.stringify({ relations: ['project'], findInput });
+		const data = JSON.stringify({
+			relations: ['project', 'tags'],
+			findInput
+		});
 		return this._http
 			.get<ITaskResponse>(this.API_URL, {
 				params: { data }

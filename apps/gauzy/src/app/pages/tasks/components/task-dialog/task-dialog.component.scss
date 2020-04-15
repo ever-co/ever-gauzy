@@ -1,5 +1,5 @@
 .body {
-	width: 505px;
+	width: 550px;
 }
 .description {
 	margin-top: 10px;
@@ -8,4 +8,14 @@
 
 .name-input {
 	min-width: 100%;
+}
+
+.estimate-inputs {
+	display: flex;
+	justify-content: space-between;
+
+	input {
+		width: 30%;
+		padding: 0.4rem !important;
+	}
 }

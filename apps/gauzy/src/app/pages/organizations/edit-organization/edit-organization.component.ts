@@ -118,6 +118,12 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		]);
 	}
 
+	editPublicPage() {
+		this.router.navigate([
+			'/share/organization/' + this.selectedOrg.profile_link
+		]);
+	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

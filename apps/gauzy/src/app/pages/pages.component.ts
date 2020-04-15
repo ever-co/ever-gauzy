@@ -66,15 +66,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Estimates',
-					icon: 'file-outline',
-					link: '/pages/accounting/estimates',
-					data: {
-						translated: false,
-						translationKey: 'MENU.ESTIMATES'
-					}
-				},
-				{
 					title: 'Income',
 					icon: 'plus-circle-outline',
 					link: '/pages/accounting/income',
@@ -93,26 +84,77 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translationKey: 'MENU.EXPENSES',
 						permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
 					}
+				},
+				{
+					title: 'Payments',
+					icon: 'clipboard-outline',
+					link: '/pages/accounting/payments',
+					data: {
+						translated: false,
+						translationKey: 'MENU.PAYMENTS'
+					}
 				}
 			]
 		},
 		{
-			title: 'Clients',
-			icon: 'book-open-outline',
-			link: '/pages/clients',
+			title: 'Sales',
+			icon: 'trending-up-outline',
+			link: '/pages/sales',
 			data: {
 				translated: false,
-				translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
-			}
-		},
-		{
-			title: 'Projects',
-			icon: 'book-outline',
-			link: '/pages/projects',
-			data: {
-				translated: false,
-				translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
-			}
+				translationKey: 'MENU.SALES',
+				permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
+			},
+			children: [
+				{
+					title: 'Proposals',
+					icon: 'paper-plane-outline',
+					link: '/pages/sales/proposals',
+					hidden: false,
+					data: {
+						translated: false,
+						translationKey: 'MENU.PROPOSALS',
+						permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
+					}
+				},
+				{
+					title: 'Estimates',
+					icon: 'file-outline',
+					link: '/pages/sales/estimates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ESTIMATES'
+					}
+				},
+				{
+					title: 'Invoices',
+					icon: 'file-text-outline',
+					link: '/pages/sales/invoices',
+					data: {
+						translated: false,
+						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						translationKey: 'MENU.INVOICES'
+					}
+				},
+				{
+					title: 'Recurring Invoices',
+					icon: 'flip-outline',
+					link: '/pages/sales/recurring-invoices',
+					data: {
+						translated: false,
+						translationKey: 'MENU.RECURRING_INVOICES'
+					}
+				},
+				{
+					title: 'Payments',
+					icon: 'clipboard-outline',
+					link: '/pages/sales/payments',
+					data: {
+						translated: false,
+						translationKey: 'MENU.PAYMENTS'
+					}
+				}
+			]
 		},
 		{
 			title: 'Tasks',
@@ -151,17 +193,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				}
 			]
-		},
-		{
-			title: 'Proposals',
-			icon: 'paper-plane-outline',
-			link: '/pages/proposals',
-			hidden: false,
-			data: {
-				translated: false,
-				translationKey: 'MENU.PROPOSALS',
-				permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
-			}
 		},
 		{
 			title: 'Employees',
@@ -402,24 +433,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			]
 		},
 		{
-			title: 'Help',
-			icon: 'question-mark-circle-outline',
-			link: '/pages/help',
-			data: {
-				translated: false,
-				translationKey: 'MENU.HELP'
-			}
-		},
-		{
-			title: 'About',
-			icon: 'droplet-outline',
-			link: '/pages/about',
-			data: {
-				translated: false,
-				translationKey: 'MENU.ABOUT'
-			}
-		},
-		{
 			title: 'Admin',
 			group: true,
 			data: {
@@ -457,15 +470,6 @@ export class PagesComponent implements OnInit, OnDestroy {
 			}
 		},
 		{
-			title: 'Import/Export',
-			icon: 'arrow-circle-down-outline',
-			link: '/pages/import-export',
-			data: {
-				translated: false,
-				translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
-			}
-		},
-		{
 			title: 'Integrations',
 			icon: 'pantone-outline',
 			link: '/pages/integrations',
@@ -485,6 +489,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			children: [
 				{
 					title: 'General',
+					icon: 'edit-outline',
 					link: '/pages/settings/general',
 					data: {
 						translated: false,
@@ -492,7 +497,36 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Import/Export',
+					icon: 'flip-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
+					},
+					children: [
+						{
+							title: 'Export',
+							icon: 'download-outline',
+							link: '/pages/settings/import-export/export',
+							data: {
+								translated: false,
+								translationKey: 'MENU.IMPORT_EXPORT.EXPORT'
+							}
+						},
+						{
+							title: 'Import',
+							icon: 'upload-outline',
+							link: '/pages/settings/general',
+							data: {
+								translated: false,
+								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'
+							}
+						}
+					]
+				},
+				{
 					title: 'Payment Gateways',
+					icon: 'credit-card-outline',
 					data: {
 						translated: false,
 						translationKey: 'MENU.PAYMENT_GATEWAYS'
@@ -500,6 +534,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				},
 				{
 					title: 'Custom SMTP',
+					icon: 'at-outline',
 					data: {
 						translated: false,
 						translationKey: 'MENU.CUSTOM_SMTP'
@@ -508,6 +543,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Roles & Permissions',
 					link: '/pages/settings/roles',
+					icon: 'award-outline',
 					data: {
 						translated: false,
 						translationKey: 'MENU.ROLES',
@@ -519,6 +555,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Danger Zone',
 					link: '/pages/settings/danger-zone',
+					icon: 'alert-triangle-outline',
 					data: {
 						translated: false,
 						translationKey: 'MENU.DANGER_ZONE'

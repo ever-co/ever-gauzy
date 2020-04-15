@@ -2,7 +2,6 @@
 	<div class="col-12">
 		<div class="form-group">
 			<label>{{ 'TIMER_TRACKER.DATE' | translate }}</label>
-
 			<input
 				type="text"
 				class="form-control"
@@ -27,7 +26,7 @@
 				name="start_time"
 				[min]="minSlotStartTime"
 				[max]="maxSlotStartTime"
-				(change)="updateEndTimeSlot($event)"
+				(change)="chnageStartTime($event)"
 				[(ngModel)]="startTime"
 				#startTimeModel="ngModel"
 			></ga-timer-picker>

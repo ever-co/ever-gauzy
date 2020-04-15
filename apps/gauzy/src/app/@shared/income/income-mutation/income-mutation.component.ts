@@ -5,21 +5,30 @@ import {
 	FormGroup,
 	AbstractControl
 } from '@angular/forms';
-import { NbDialogRef } from '@nebular/theme';
-import { Income, OrganizationSelectInput, Tag } from '@gauzy/models';
+import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import {
+	Income,
+	OrganizationSelectInput,
+	Tag,
+	OrganizationClients
+} from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
 import { first } from 'rxjs/operators';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { TranslateService } from '@ngx-translate/core';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @Component({
 	selector: 'ngx-income-mutation',
 	templateUrl: './income-mutation.component.html',
 	styleUrls: ['./income-mutation.component.scss']
 })
-export class IncomeMutationComponent implements OnInit {
+export class IncomeMutationComponent extends TranslationBaseComponent
+	implements OnInit {
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
 
@@ -28,6 +37,8 @@ export class IncomeMutationComponent implements OnInit {
 
 	form: FormGroup;
 	notes: AbstractControl;
+
+	organizationId: string;
 
 	clients: Object[] = [];
 	tags: Tag[] = [];
@@ -96,8 +107,13 @@ export class IncomeMutationComponent implements OnInit {
 		protected dialogRef: NbDialogRef<IncomeMutationComponent>,
 		private organizationsService: OrganizationsService,
 		private store: Store,
-		private clientService: OrganizationClientsService
-	) {}
+		private organizationClientsService: OrganizationClientsService,
+		private readonly toastrService: NbToastrService,
+		readonly translateService: TranslateService,
+		private errorHandler: ErrorHandlingService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit() {
 		this._initializeForm();
@@ -106,8 +122,11 @@ export class IncomeMutationComponent implements OnInit {
 	}
 
 	private async _getClients() {
-		const items = await this.clientService.getAll();
-		items['items'].forEach((i) => {
+		this.organizationId = this.store.selectedOrganization.id;
+		const { items } = await this.organizationClientsService.getAll([], {
+			organizationId: this.store.selectedOrganization.id
+		});
+		items.forEach((i) => {
 			this.clients = [
 				...this.clients,
 				{ clientName: i.name, clientId: i.id }
@@ -125,6 +144,26 @@ export class IncomeMutationComponent implements OnInit {
 			);
 		}
 	}
+
+	addNewClient = (name: string): Promise<OrganizationClients> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationClientsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
 
 	close() {
 		this.dialogRef.close();

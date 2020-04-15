@@ -87,6 +87,28 @@ export class EmployeeController extends CrudController<Employee> {
 		return this.employeeService.findAll({ where: findInput, relations });
 	}
 
+	@ApiOperation({ summary: 'Find all working employees.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found working employees',
+		type: Employee
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('/working')
+	async findAllWorkingEmployees(
+		@Query('data') data: string
+	): Promise<IPagination<Employee>> {
+		const { organizationId, forMonth, withUser } = JSON.parse(data);
+		return this.employeeService.findWorkingEmployees(
+			organizationId,
+			new Date(forMonth),
+			withUser
+		);
+	}
+
 	@ApiOperation({ summary: 'Find User by id.' })
 	@ApiResponse({
 		status: HttpStatus.OK,

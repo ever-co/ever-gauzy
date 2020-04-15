@@ -439,12 +439,42 @@
 						<div class="form-group invite-toggle">
 							<nb-toggle
 								class="d-block"
+								formControlName="allowManualTime"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MANUAL_TIME'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
 								formControlName="allowModifyTime"
 								status="primary"
 								labelPosition="start"
 							>
 								{{
 									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MODIFY_TIME'
+										| translate
+								}}
+							</nb-toggle>
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-group invite-toggle">
+							<nb-toggle
+								class="d-block"
+								formControlName="allowDeleteTime"
+								status="primary"
+								labelPosition="start"
+							>
+								{{
+									'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_DELETE_TIME'
 										| translate
 								}}
 							</nb-toggle>

@@ -66,7 +66,7 @@ const routes: Routes = [
 							).then((m) => m.WorkInProgressModule)
 					},
 					{
-						path: 'estimates',
+						path: 'payments',
 						loadChildren: () =>
 							import(
 								'./work-in-progress/work-in-progress.module'
@@ -120,11 +120,44 @@ const routes: Routes = [
 				]
 			},
 			{
-				path: 'proposals',
-				loadChildren: () =>
-					import('./proposals/proposals.module').then(
-						(m) => m.ProposalsModule
-					)
+				path: 'sales',
+				children: [
+					{
+						path: 'proposals',
+						loadChildren: () =>
+							import('./proposals/proposals.module').then(
+								(m) => m.ProposalsModule
+							)
+					},
+					{
+						path: 'estimates',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'invoices',
+						loadChildren: () =>
+							import('./invoices/invoices.module').then(
+								(m) => m.InvoicesModule
+							)
+					},
+					{
+						path: 'recurring-invoices',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'payments',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					}
+				]
 			},
 			{
 				path: 'employees',
@@ -273,13 +306,6 @@ const routes: Routes = [
 				loadChildren: () =>
 					import('./organizations/organizations.module').then(
 						(m) => m.OrganizationsModule
-					)
-			},
-			{
-				path: 'import-export',
-				loadChildren: () =>
-					import('./import-export/import-export.module').then(
-						(m) => m.DownloadModule
 					)
 			},
 			{

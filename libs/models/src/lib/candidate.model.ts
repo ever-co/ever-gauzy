@@ -12,7 +12,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	userId: string;
 	organization: Organization;
 	orgId: string;
-	status?: string;
+	status?: Status;
 	teams?: OrganizationTeams[];
 	tenant: ITenant;
 	organizationDepartments?: OrganizationDepartment[];
@@ -23,8 +23,16 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	rejectDate?: Date;
 	candidateLevel?: string;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	education?: string;
+	experience?: string;
+	skills?: string;
+	payPeriod?: string;
+	billRateValue?: number;
+	billRateCurrency?: string;
+	reWeeklyLimit?: number;
 }
 
+export type Status = 'applied' | 'rejected' | 'hired';
 export interface CandidateFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 	user?: UserFindInput;
@@ -33,6 +41,10 @@ export interface CandidateFindInput extends IBaseEntityModel {
 }
 
 export interface CandidateUpdateInput {
+	payPeriod?: string;
+	billRateValue?: number;
+	billRateCurrency?: string;
+	reWeeklyLimit?: number;
 	organizationDepartment?: OrganizationDepartment;
 	organizationPosition?: OrganizationPositions;
 	appliedDate?: Date;
@@ -51,7 +63,11 @@ export interface CandidateCreateInput {
 	members?: Candidate[];
 	tags?: Tag[];
 }
-
+export interface CandidateLevel {
+	id: string;
+	level: string;
+	organizationId: string;
+}
 export interface CandidateLevelInput {
 	level: string;
 	organizationId: string;

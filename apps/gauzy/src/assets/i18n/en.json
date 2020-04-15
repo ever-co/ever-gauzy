@@ -30,11 +30,13 @@
 		"INVITE_AGAIN": "Invite Again",
 		"REQUEST": "Request",
 		"HISTORY": "History",
+		"SYNC": "Sync",
 		"UPDATE": "Update"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
 		"CLIENT_NAME": "Client Name",
+		"NAME": "Name",
 		"VENDOR": "Vendor",
 		"CATEGORY": "Category",
 		"CURRENCY": "Currency",
@@ -109,6 +111,7 @@
 			"DATE_TYPE": "Default Date Type",
 			"ADD_TEAM": "Add New Team",
 			"OFFICIAL_NAME": "Official Name",
+			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
 			"COUNTRY": "Country",
@@ -142,6 +145,9 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"APPLIED_DATE": "Applied Date (optional)",
+			"EDUCATION": "Education (optional)",
+			"EXPERIENCE": "Work experience (optional)",
+			"SKILLS": "Skills (optional)",
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
@@ -182,12 +188,16 @@
 			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
 			"MEMBERS_COUNT": "Members count",
 			"OFFICIAL_NAME": "Enter Official Name",
+			"PROFILE_LINK": "Enter Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
 			"COUNTRY": "Country",
 			"CITY": "City",
 			"ADDRESS": "Address",
 			"ADDRESS_2": "Address 2",
+			"EDUCATION": "Education",
+			"EXPERIENCE": "Work experience",
+			"SKILLS": "Skills",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
@@ -224,6 +234,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
@@ -240,6 +251,7 @@
 			"RECORD": "record",
 			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "employee",
+			"CANDIDATE": "candidate",
 			"EXPENSE": "Expense",
 			"USER": "user",
 			"INVITATION": "invitation",
@@ -310,7 +322,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT": "Import",
-			"EXPORT": "Export"
+			"EXPORT": "Export",
+			"MERGE": "merge data",
+			"CLEAN_UP": "clean up before import"
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
@@ -331,7 +345,9 @@
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
-		"INVENTORY": "Inventory"
+		"INVENTORY": "Inventory",
+		"SALES": "Sales",
+		"PAYMENTS": "Payments"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -347,7 +363,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Select Organization",
+			"SYNCED_PROJECTS": "Projects synced"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -472,7 +493,9 @@
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
-		}
+		},
+		"NOT_STARTED": "Not Started",
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -482,7 +505,7 @@
 		"REJECTED": "Rejected",
 		"DELETED": "Deleted",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Developer",
 			"DEPARTMENT": "Department",
@@ -492,8 +515,12 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
-			"RATES": "Rates",
-			"HIRING": "Hiring"
+			"RATE": "Rates",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Experience",
+			"TASKS": "Tasks",
+			"HISTORY": "History",
+			"DOCUMENTS": "Documents"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -509,6 +536,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Organizations",
 		"EMPLOYEES": "Employees",
+		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "Please select organizations from the menu above.",
 		"MAIN": "Main",
 		"DEPARTMENTS": "Departments",
@@ -562,6 +590,8 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_MANUAL_TIME": "Allow Manual Time",
 				"REQUIRE_REASON": "Require Reason",
 				"REQUIRE_DESCRIPTION": "Require Description",
 				"REQUIRE_PROJECT": "Require Project",
@@ -756,6 +786,11 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Project",
+		"DUE_DATE": "Due Date",
+		"ESTIMATE": "Estimate",
+		"ESTIMATE_DAYS": "Days",
+		"ESTIMATE_HOURS": "Hours",
+		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status"
 	},
 	"USERS_PAGE": {
@@ -851,8 +886,8 @@
 			"TASK": "Task",
 			"NAME": "Name",
 			"DESCRIPTION": "Description",
-			"UNIT_COST": "Unit Cost",
-			"QUANTITY": "Quantity",
+			"PRICE": "Price",
+			"QTY": "Qty",
 			"TOTAL_VALUE": "Total Value"
 		}
 	},
@@ -1031,6 +1066,7 @@
 		"START_TIMER": "Start Timer",
 		"TIMER": "Timer",
 		"MANUAL": "Manual",
+		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"DATE": "Date",

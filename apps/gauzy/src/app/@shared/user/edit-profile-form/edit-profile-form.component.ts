@@ -14,7 +14,7 @@ import {
 } from '@angular/forms';
 import { UsersService } from '../../../@core/services/users.service';
 import { Store } from '../../../@core/services/store.service';
-import { User, UserFindInput, RolesEnum } from '@gauzy/models';
+import { User, UserFindInput, RolesEnum, Tag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
@@ -41,6 +41,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	repeatPasswordErrorMsg: string;
 
 	matchPassword = true;
+	tags: Tag[];
+	selectedTags: any;
 
 	@Input()
 	selectedUser: User;
@@ -135,7 +137,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			email: this.form.value['email'],
 			firstName: this.form.value['firstName'],
 			imageUrl: this.form.value['imageUrl'],
-			lastName: this.form.value['lastName']
+			lastName: this.form.value['lastName'],
+			tags: this.form.value['tags']
 		};
 
 		if (this.form.value['password']) {
@@ -173,6 +176,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	private _initializeForm(user: User) {
+		this.tags = user.tags;
 		this.form = this.fb.group({
 			firstName: [user.firstName],
 			lastName: [user.lastName],
@@ -193,7 +197,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 					}
 				]
 			],
-			roleName: [user.role.name]
+			roleName: [user.role.name],
+			tags: [user.tags]
 		});
 	}
 
@@ -205,6 +210,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	loadControls() {
 		this.validations.passwordControl();
 		this.validations.repeatPasswordControl();
+	}
+	selectedTagsHandler(ev: any) {
+		this.form.get('tags').setValue(ev);
 	}
 
 	ngOnDestroy(): void {

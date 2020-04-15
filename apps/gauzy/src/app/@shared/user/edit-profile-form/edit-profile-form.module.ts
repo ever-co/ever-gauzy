@@ -18,6 +18,7 @@ import { HttpClient } from '@angular/common/http';
 import { UsersService } from '../../../@core/services';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { RoleService } from '../../../@core/services/role.service';
+import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -25,6 +26,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		TagsColorInputModule,
 		ThemeModule,
 		FormsModule,
 		NbCardModule,

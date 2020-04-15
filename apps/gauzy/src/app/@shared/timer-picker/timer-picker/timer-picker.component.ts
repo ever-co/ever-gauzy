@@ -86,7 +86,7 @@ export class TimerPickerComponent implements OnInit {
 	}
 
 	writeValue(value: any) {
-		this.selectedTime = value;
+		this.val = value;
 	}
 	registerOnChange(fn: (rating: number) => void): void {
 		this.onChange = fn;

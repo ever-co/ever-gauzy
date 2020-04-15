@@ -30,11 +30,13 @@
 		"INVITE_AGAIN": "Invite Again",
 		"REQUEST": "Request",
 		"HISTORY": "History",
+		"SYNC": "Sync",
 		"UPDATE": "Update"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
 		"CLIENT_NAME": "שם הלקוח",
+		"NAME": "שם",
 		"VENDOR": "ספק",
 		"CATEGORY": "קטגוריה",
 		"CURRENCY": "מטבע",
@@ -108,6 +110,7 @@
 			"DATE_TYPE": "סוג תאריך ברירת מחדל",
 			"ADD_TEAM": "Add New Team",
 			"OFFICIAL_NAME": "Official Name",
+			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
 			"COUNTRY": "מדינה",
@@ -141,6 +144,9 @@
 			"OFFER_DATE": "Offer Date (optional)",
 			"ACCEPT_DATE": "Accept Date (optional)",
 			"APPLIED_DATE": "Applied Date (optional)",
+			"EDUCATION": "Education (optional)",
+			"EXPERIENCE": "Work experience (optional)",
+			"SKILLS": "Skills (optional)",
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
 			"EMAIL_INVITATION": "Enter email to send invitation",
@@ -181,12 +187,16 @@
 			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
 			"MEMBERS_COUNT": "Members count",
 			"OFFICIAL_NAME": "Enter Official Name",
+			"PROFILE_LINK": "Enter Profile Link",
 			"START_WEEK_ON": "Start Week On",
 			"TAX_ID": "Tax ID",
 			"COUNTRY": "מדינה",
 			"CITY": "עיר",
 			"ADDRESS": "Address",
 			"ADDRESS_2": "Address 2",
+			"EDUCATION": "Education",
+			"EXPERIENCE": "Work experience",
+			"SKILLS": "Skills",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Bill Rate / hr",
 			"RECURRING_WEEKLY_LIMIT": "Recurring Weekly Limit (hours)",
@@ -223,6 +233,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
@@ -239,6 +250,7 @@
 			"RECORD": "תקליט",
 			"USER_RECORD": "from your organization",
 			"EMPLOYEE": "עובד",
+			"CANDIDATE": "candidate",
 			"EXPENSE": "הוצאה",
 			"USER": "user",
 			"INVITATION": "invitation",
@@ -309,7 +321,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT": "Import",
-			"EXPORT": "Export"
+			"EXPORT": "Export",
+			"MERGE": "merge data",
+			"CLEAN_UP": "clean up before import"
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
@@ -329,7 +343,9 @@
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
-		"CUSTOM_SMTP": "Custom SMTP"
+		"CUSTOM_SMTP": "Custom SMTP",
+		"SALES": "Sales",
+		"PAYMENTS": "Payments"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Themes",
@@ -345,7 +361,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Select Organization",
+			"SYNCED_PROJECTS": "Projects synced"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -470,7 +491,9 @@
 			"FINISHED_ADDING": "I’ve Added All Current Employees",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
-		}
+		},
+		"NOT_STARTED": "Not Started",
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -480,7 +503,7 @@
 		"REJECTED": "Rejected",
 		"DELETED": "Deleted",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "מפתח",
 			"DEPARTMENT": "המחלקה",
@@ -490,8 +513,12 @@
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
 			"LOCATION": "Location",
-			"RATES": "Rates",
-			"HIRING": "Hiring"
+			"RATE": "Rates",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Experience",
+			"TASKS": "Tasks",
+			"HISTORY": "History",
+			"DOCUMENTS": "Documents"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -507,6 +534,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "ארגונים",
 		"EMPLOYEES": "עובדים",
+		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "אנא בחר ארגונים מהתפריט שלמעלה",
 		"MAIN": "עיקרי",
 		"DEPARTMENTS": "מחלקות",
@@ -560,6 +588,8 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Timer Settings",
 				"ALLOW_MODIFY_TIME": "Allow Modify Time",
+				"ALLOW_DELETE_TIME": "Allow Delete Time",
+				"ALLOW_MANUAL_TIME": "Allow Manual Time",
 				"REQUIRE_REASON": "Require Reason",
 				"REQUIRE_DESCRIPTION": "Require Description",
 				"REQUIRE_PROJECT": "Require Project",
@@ -725,6 +755,11 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "פרויקטים",
+		"DUE_DATE": "תאריך להגשה",
+		"ESTIMATE": "הערכה",
+		"ESTIMATE_DAYS": "ימים",
+		"ESTIMATE_HOURS": "שעה (ות",
+		"ESTIMATE_MINUTES": "דקות",
 		"TASKS_STATUS": "עבודה"
 	},
 	"USERS_PAGE": {
@@ -820,8 +855,8 @@
 			"TASK": "Task",
 			"NAME": "שם",
 			"DESCRIPTION": "Description",
-			"UNIT_COST": "Unit Cost",
-			"QUANTITY": "Quantity",
+			"PRICE": "Price",
+			"QTY": "Qty",
 			"TOTAL_VALUE": "Total Value"
 		}
 	},
@@ -1000,6 +1035,7 @@
 		"START_TIMER": "Start Timer",
 		"TIMER": "Timer",
 		"MANUAL": "Manual",
+		"MANUAL_NOT_ALLOW": "Manual time not allowed",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"DATE": "תאריך",

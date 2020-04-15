@@ -1,0 +1,137 @@
+<div class="content">
+	<div class="employee-form">
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col">
+					<nb-card>
+						<nb-card-header *ngIf="isEmployee">
+							{{ 'FORM.RATES.DEFAULT_RATE' | translate }}
+						</nb-card-header>
+						<nb-card-header *ngIf="isCandidate">
+							{{
+								'FORM.RATES.EXPECTED_RATE' | translate
+							}}</nb-card-header
+						>
+						<nb-card-body>
+							<div class="form-group">
+								<label class="label">{{
+									'FORM.LABELS.PAY_PERIOD' | translate
+								}}</label>
+								<nb-select
+									id="payPeriodsSelect"
+									formControlName="payPeriod"
+									placeholder="{{
+										'FORM.LABELS.PAY_PERIOD' | translate
+									}}"
+									class="d-block"
+									size="medium"
+									fullWidth="true"
+								>
+									<nb-option
+										*ngFor="let payPeriod of payPeriods"
+										[value]="payPeriod"
+									>
+										{{
+											'SM_TABLE.' + payPeriod | translate
+										}}
+									</nb-option>
+								</nb-select>
+							</div>
+							<div class="bill-rate">
+								<div class="form-group">
+									<label
+										class="label"
+										for="billRateValueInput"
+										>{{
+											'FORM.LABELS.BILL_RATE' | translate
+										}}</label
+									>
+									<input
+										fullWidth
+										id="billRateValueInput"
+										type="number"
+										step="0.1"
+										nbInput
+										formControlName="billRateValue"
+										placeholder="{{
+											'FORM.PLACEHOLDERS.BILL_RATE'
+												| translate
+										}}"
+									/>
+								</div>
+								<div class="form-group currency-per-hour">
+									<label
+										class="label"
+										for="currencyPerHourInput"
+										>{{
+											'FORM.LABELS.CURRENCY_PER_HOUR'
+												| translate
+										}}</label
+									>
+									<nb-select
+										id="currencyPerHourInput"
+										formControlName="billRateCurrency"
+										placeholder="{{
+											'FORM.LABELS.CURRENCY_PER_HOUR'
+												| translate
+										}}"
+										class="d-block"
+										size="medium"
+										disabled
+									>
+										<nb-option
+											*ngFor="let currency of currencies"
+											[value]="currency"
+										>
+											{{ currency }}
+										</nb-option>
+									</nb-select>
+								</div>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</div>
+				<div class="col">
+					<nb-card>
+						<nb-card-header>
+							{{ 'FORM.RATES.LIMITS' | translate }}
+						</nb-card-header>
+						<nb-card-body>
+							<div class="form-group">
+								<label class="label" for="reWeeklyLimitInput">{{
+									'FORM.LABELS.RECURRING_WEEKLY_LIMIT'
+										| translate
+								}}</label>
+								<input
+									fullWidth
+									id="reWeeklyLimitInput"
+									type="text"
+									nbInput
+									type="number"
+									step="0.1"
+									max="5"
+									formControlName="reWeeklyLimit"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.RECURRING_WEEKLY_LIMIT'
+											| translate
+									}}"
+								/>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</div>
+			</div>
+
+			<div class="actions">
+				<button
+					[disabled]="form.invalid"
+					(click)="submitForm()"
+					nbButton
+					status="success"
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</div>
+		</form>
+	</div>
+</div>

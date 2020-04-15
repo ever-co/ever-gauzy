@@ -5,15 +5,26 @@ import {
 	ManyToOne,
 	JoinColumn,
 	RelationId,
-	OneToMany
+	OneToMany,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Task as ITask } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { Tag } from '../tags/tag.entity';
+import { IsOptional } from 'class-validator';
 
 @Entity('task')
 export class Task extends Base implements ITask {
+	@ApiProperty({ type: Tag })
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_task'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: String })
 	@Column()
 	title: string;
@@ -25,6 +36,16 @@ export class Task extends Base implements ITask {
 	@ApiProperty({ type: String })
 	@Column()
 	status?: string;
+
+	@ApiProperty({ type: Number })
+	@Column({ nullable: true })
+	@IsOptional()
+	estimate?: number;
+
+	@ApiProperty({ type: Date })
+	@Column({ nullable: true })
+	@IsOptional()
+	dueDate?: Date;
 
 	@ApiProperty({ type: OrganizationProjects })
 	@ManyToOne((type) => OrganizationProjects, {

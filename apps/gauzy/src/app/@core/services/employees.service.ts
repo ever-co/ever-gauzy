@@ -26,6 +26,23 @@ export class EmployeesService {
 		);
 	}
 
+	getWorking(
+		organizationId: string,
+		forMonth: Date,
+		withUser: boolean
+	): Promise<{ items: Employee[]; total: number }> {
+		const data = JSON.stringify({ organizationId, forMonth, withUser });
+		return this.http
+			.get<{ items: Employee[]; total: number }>(
+				`/api/employee/working`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getEmployeeById(id: string) {
 		return this.http
 			.get<Employee>(`/api/employee/${id}`)

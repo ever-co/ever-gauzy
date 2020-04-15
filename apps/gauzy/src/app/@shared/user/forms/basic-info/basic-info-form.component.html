@@ -1,5 +1,5 @@
 <form [formGroup]="form" *ngIf="form">
-	<div class="row" *ngIf="!isCandidateCV">
+	<div class="row">
 		<div class="col-sm-6">
 			<div class="form-group">
 				<label for="inputFirstName" class="label">{{
@@ -52,7 +52,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="row" *ngIf="!isCandidateCV">
+	<div class="row">
 		<div class="col-sm-6">
 			<div class="form-group">
 				<label for="inputUsername" class="label">{{
@@ -146,7 +146,7 @@
 				</nb-select>
 			</div>
 		</div>
-		<div class="col-sm-6" *ngIf="!isCandidateCV">
+		<div class="col-sm-6">
 			<div class="form-group">
 				<label for="inputPassword" class="label">{{
 					'FORM.PASSWORD' | translate
@@ -251,6 +251,8 @@
 		<div class="col-sm-6">
 			<div class="form-group">
 				<ngx-tags-color-input
+					[form]="form"
+					[selectedTags]="tags"
 					(selectedTagsEvent)="selectedTagsHandler($event)"
 				>
 				</ngx-tags-color-input>
@@ -280,7 +282,7 @@
 		</div>
 	</div>
 
-	<div class="row" *ngIf="!isCandidateCV">
+	<div class="row">
 		<div class="col-sm-12">
 			<div class="form-group">
 				<label for="inputImageUrl" class="label">{{
@@ -317,23 +319,6 @@
 						}}"
 					></div>
 				</div>
-			</div>
-		</div>
-	</div>
-	<div class="row" *ngIf="isCandidateCV">
-		<div class="col-sm-12">
-			<div class="form-group">
-				<label for="inputImageUrl" class="label">{{
-					'FORM.LABELS.CV_URL' | translate
-				}}</label>
-				<ngx-file-uploader-input
-					id="inputImageUrl"
-					[placeholder]="
-						'FORM.PLACEHOLDERS.UPLOADER_CV_PLACEHOLDER' | translate
-					"
-					[fileUrl]="imageUrl?.value"
-					(uploadedImgUrl)="imageUrl.setValue($event)"
-				></ngx-file-uploader-input>
 			</div>
 		</div>
 	</div>

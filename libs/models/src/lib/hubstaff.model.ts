@@ -5,10 +5,24 @@ export interface IHubstaffAccessTokens {
 	expires_in: number;
 }
 
-export interface IHubstaffGetAccessTokensDto {
+export interface ICreateIntegrationDto {
+	tenantId: string;
 	client_id: string;
 	code: string;
 	grant_type: string;
 	redirect_uri: string;
 	client_secret: string;
+}
+
+export interface IHubstaffOrganization {
+	id: number;
+	name: string;
+	status: string;
+}
+
+export interface IHubstaffProject {
+	id: number;
+	name: string;
+	status: string;
+	client_id: number;
 }

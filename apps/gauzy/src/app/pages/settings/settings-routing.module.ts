@@ -18,6 +18,13 @@ const routes: Routes = [
 				component: EditRolesPermissionsComponent
 			},
 			{
+				path: 'import-export',
+				loadChildren: () =>
+					import('../import-export/import-export.module').then(
+						(m) => m.ImportExportModule
+					)
+			},
+			{
 				path: 'danger-zone',
 				component: DangerZoneComponent
 			}

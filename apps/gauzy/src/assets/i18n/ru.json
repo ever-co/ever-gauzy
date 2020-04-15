@@ -30,11 +30,13 @@
 		"INVITE_AGAIN": "Пригласить ещё раз",
 		"REQUEST": "Запросить",
 		"HISTORY": "История",
+		"SYNC": "Синхр.",
 		"UPDATE": "Обновить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
 		"CLIENT_NAME": "Имя клиента",
+		"NAME": "Имя",
 		"VENDOR": "Продавец",
 		"CATEGORY": "Категория",
 		"CURRENCY": "Валюта",
@@ -108,6 +110,7 @@
 			"DATE_TYPE": "Тип даты по умолчанию",
 			"ADD_TEAM": "Добавить новую команду",
 			"OFFICIAL_NAME": "Официальное имя",
+			"PROFILE_LINK": "Ссылка на профиль",
 			"START_WEEK_ON": "Начало недели в",
 			"TAX_ID": "Налог ID",
 			"COUNTRY": "Страна",
@@ -141,6 +144,9 @@
 			"OFFER_DATE": "Дата предложения (опционально)",
 			"ACCEPT_DATE": "Дата принятия (опционально)",
 			"APPLIED_DATE": "Дата подачи заявки (опционально)",
+			"EDUCATION": "Образование (факультативно)",
+			"EXPERIENCE": "Опыт работы (опционально)",
+			"SKILLS": "Навыки (опционально)",
 			"HIRED_DATE": "Дата окончания (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
 			"EMAIL_INVITATION": "Введите email для отправки приглашения",
@@ -181,12 +187,16 @@
 			"ADD_REMOVE_MEMBERS": "Добавление или удаление членов команды",
 			"MEMBERS_COUNT": "Количество участников",
 			"OFFICIAL_NAME": "Введите официальное имя",
+			"PROFILE_LINK": "Введите ссылку на профиль",
 			"START_WEEK_ON": "Начало недели в",
 			"TAX_ID": "Налог ID",
 			"COUNTRY": "Страна",
 			"CITY": "Город",
 			"ADDRESS": "Адрес",
 			"ADDRESS_2": "Адрес 2",
+			"EDUCATION": "Образование",
+			"EXPERIENCE": "Опыт работы",
+			"SKILLS": "Навыки",
 			"POSTCODE": "Postcode (Zip)",
 			"BILL_RATE": "Ставка счета / час",
 			"RECURRING_WEEKLY_LIMIT": "Повторяющийся еженедельный лимит (часы)",
@@ -223,6 +233,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
+			"EXPECTED_RATE": "Ожидаемый курс",
 			"LIMITS": "Лимиты"
 		},
 		"CHECKBOXES": {
@@ -239,6 +250,7 @@
 			"RECORD": "запись",
 			"USER_RECORD": "от вашей организации",
 			"EMPLOYEE": "служащий",
+			"CANDIDATE": "кандидат",
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
 			"INVITATION": "приглашение",
@@ -309,7 +321,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Импорт/Экспорт",
 			"IMPORT": "Импорт",
-			"EXPORT": "Экспорт"
+			"EXPORT": "Экспорт",
+			"MERGE": "объединение данных",
+			"CLEAN_UP": "очистить перед импортом"
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
@@ -329,7 +343,9 @@
 		"TIME_REPORTS": "Отчеты по времени",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
 		"PAYMENT_GATEWAYS": "Платежные шлюзы",
-		"CUSTOM_SMTP": "Пользовательский SMTP"
+		"CUSTOM_SMTP": "Пользовательский SMTP",
+		"SALES": "Продажи",
+		"PAYMENTS": "Платежи"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "Темы",
@@ -345,7 +361,12 @@
 	},
 	"INTEGRATIONS": {
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
-		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}"
+		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
+		"HUBSTAFF_PAGE": {
+			"NAME": "Hubstaff",
+			"SELECT_ORGANIZATION": "Выберите организацию",
+			"SYNCED_PROJECTS": "Проекты синхронизированы"
+		}
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
@@ -470,7 +491,9 @@
 			"FINISHED_ADDING": "Я добавил все текущие сотрудники",
 			"NEXT": "Следующий",
 			"PREVIOUS": "Предыдущий"
-		}
+		},
+		"NOT_STARTED": "Не начато",
+		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д."
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
@@ -480,7 +503,7 @@
 		"REJECTED": "Отклонено",
 		"DELETED": "Удалено",
 		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
-		"EDIT_CANDIATES": {
+		"EDIT_CANDIDATE": {
 			"HEADER": "Управление Кандидатом",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Департамент",
@@ -490,8 +513,12 @@
 			"ACCOUNT": "Аккаунт",
 			"EMPLOYMENT": "Занятость",
 			"LOCATION": "Местоположение",
-			"RATES": "Тарифы",
-			"HIRING": "Hiring"
+			"RATE": "Тарифы",
+			"HIRING": "Hiring",
+			"EXPERIENCE": "Опыт работы",
+			"TASKS": "Задачи",
+			"HISTORY": "История",
+			"DOCUMENTS": "Документы"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Шаг 1",
@@ -507,6 +534,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
+		"EDIT_PUBLIC_PAGE": "Изменить публичную страницу",
 		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
 		"DEPARTMENTS": "Департаменты",
@@ -560,6 +588,8 @@
 			"SETTINGS": {
 				"TIMER_SETTINGS": "Настройки таймера",
 				"ALLOW_MODIFY_TIME": "Разрешить изменять время",
+				"ALLOW_DELETE_TIME": "Разрешить удаление времени",
+				"ALLOW_MANUAL_TIME": "Разрешить ручное время",
 				"REQUIRE_REASON": "Требуется причина",
 				"REQUIRE_DESCRIPTION": "Требуется описание",
 				"REQUIRE_PROJECT": "Требовать проект",
@@ -725,6 +755,11 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
+		"DUE_DATE": "Срок сдачи",
+		"ESTIMATE": "Оценить",
+		"ESTIMATE_DAYS": "Дней",
+		"ESTIMATE_HOURS": "Часы",
+		"ESTIMATE_MINUTES": "Минс",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
@@ -820,8 +855,8 @@
 			"TASK": "Задача",
 			"NAME": "Имя",
 			"DESCRIPTION": "Описание",
-			"UNIT_COST": "Стоимость Единицы",
-			"QUANTITY": "Количество",
+			"PRICE": "Цена",
+			"QTY": "Кол-во",
 			"TOTAL_VALUE": "Общая стоимость"
 		}
 	},
@@ -1000,6 +1035,7 @@
 		"START_TIMER": "Запустить таймер",
 		"TIMER": "Таймер",
 		"MANUAL": "Ручной",
+		"MANUAL_NOT_ALLOW": "Ручное время не разрешено",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
 		"DATE": "Дата",

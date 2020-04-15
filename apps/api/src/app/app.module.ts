@@ -36,6 +36,7 @@ import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './organization_employeeLevel/organization-employee-level.module';
 import { ExportAllModule } from './export_import/export-all.module';
+import { ImportAllModule } from './export_import/import/import-all.module';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { environment } from '@env-api/environment';
 import { LogLevel } from '@sentry/types';
@@ -44,12 +45,15 @@ import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.mo
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimesheetModule } from './timesheet/timesheet.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
-import { UpworkModule } from './integrations/upwork/upwork.module';
-import { HubstaffModule } from './integrations/hubstaff/hubstaff.module';
+import { UpworkModule } from './upwork/upwork.module';
+import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { CandidateModule } from './candidate/candidate.module';
 import { ProductCategoriesModule } from './product-category/product-category-module';
 import { ProductTypesModule } from './product-type/product-type-module';
 import { ProductModule } from './product/product.module';
+import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
+import { IntegrationModule } from './integration/integration.module';
+import { IntegrationMapModule } from './integration-map/integration-map.module';
 
 @Module({
 	imports: [
@@ -62,6 +66,7 @@ import { ProductModule } from './product/product.module';
 					{ path: '/employee', module: EmployeeModule },
 					{ path: '/candidate', module: CandidateModule },
 					{ path: '/download', module: ExportAllModule },
+					{ path: '/import', module: ImportAllModule },
 					{ path: '/role', module: RoleModule },
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
@@ -202,6 +207,7 @@ import { ProductModule } from './product/product.module';
 		EmployeeModule,
 		CandidateModule,
 		ExportAllModule,
+		ImportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
 		RoleModule,
@@ -252,7 +258,10 @@ import { ProductModule } from './product/product.module';
 		ExpenseCategoriesModule,
 		ProductCategoriesModule,
 		ProductTypesModule,
-		ProductModule
+		ProductModule,
+		IntegrationSettingModule,
+		IntegrationModule,
+		IntegrationMapModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

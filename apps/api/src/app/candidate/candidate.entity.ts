@@ -1,4 +1,5 @@
-import { Candidate as ICandidate } from '@gauzy/models';
+import { CandidateSource } from './../candidate_source/candidate_source.entity';
+import { Candidate as ICandidate, Status } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional } from 'class-validator';
 import {
@@ -19,8 +20,6 @@ import { Tag } from '../tags/tag.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
-
-export type Status = 'applied' | 'rejected' | 'hired';
 
 @Entity('candidate')
 export class Candidate extends LocationBase implements ICandidate {
@@ -120,4 +119,16 @@ export class Candidate extends LocationBase implements ICandidate {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	candidateLevel?: string;
+
+	@Column({ nullable: true })
+	@ManyToOne((type) => CandidateSource, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	source: string;
+
+	@ApiProperty({ type: CandidateSource, readOnly: true })
+	@RelationId((candidate: Candidate) => candidate.source)
+	readonly sourceId?: CandidateSource;
 }

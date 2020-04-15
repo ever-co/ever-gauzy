@@ -14,7 +14,9 @@ import {
 	ExpenseTypesEnum,
 	IExpenseCategory,
 	IOrganizationVendor,
-	Tag
+	Tag,
+	OrganizationClients,
+	OrganizationProjects
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -174,6 +176,47 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 			return this.organizationVendorsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
+
+	addNewClient = (name: string): Promise<OrganizationClients> => {
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationClientsService.create({
+				name,
+				organizationId: this.organizationId
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	};
+
+	addNewProject = (name: string): Promise<OrganizationProjects> => {
+		this.organizationId = this.store.selectedOrganization.id;
+		try {
+			this.toastrService.primary(
+				this.getTranslation(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
+					{
+						name: name
+					}
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			return this.organizationProjectsService.create({
 				name,
 				organizationId: this.organizationId
 			});

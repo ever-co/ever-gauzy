@@ -8,9 +8,10 @@ import {
 	OrganizationDepartment as IOrganizationDepartment,
 	Role as IOrganizationRole,
 	User,
-	CreateOrganizationClientInviteInput
+	CreateOrganizationClientInviteInput,
+	RolesEnum
 } from '@gauzy/models';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { sign } from 'jsonwebtoken';
 import { MoreThanOrEqual, Repository } from 'typeorm';
@@ -125,6 +126,17 @@ export class InviteService extends CrudService<Invite> {
 		const role: IOrganizationRole = await this.roleRepository.findOne(
 			roleId
 		);
+
+		if (role.name === RolesEnum.SUPER_ADMIN) {
+			const { role: inviterRole } = await this.userService.findOne(
+				invitedById,
+				{
+					relations: ['role']
+				}
+			);
+			if (inviterRole.name !== RolesEnum.SUPER_ADMIN)
+				throw new UnauthorizedException();
+		}
 
 		const inviteExpiryPeriod =
 			organization && organization.inviteExpiryPeriod

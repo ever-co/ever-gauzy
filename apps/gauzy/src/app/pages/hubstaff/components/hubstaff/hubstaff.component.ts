@@ -1,162 +1,124 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Validators, FormGroup, FormBuilder } from '@angular/forms';
-import { filter, tap, takeUntil, switchMap } from 'rxjs/operators';
-import { StepperEnum } from '../../stepper.enum';
-import { ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs';
-import { v4 as uuid } from 'uuid';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 import { HubstaffService } from 'apps/gauzy/src/app/@core/services/hubstaff.service';
+import { ActivatedRoute } from '@angular/router';
+import { switchMap, tap, catchError, finalize } from 'rxjs/operators';
+import { IHubstaffOrganization, IHubstaffProject } from '@gauzy/models';
+import { Observable, of } from 'rxjs';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-hubstaff',
 	templateUrl: './hubstaff.component.html',
 	styleUrls: ['./hubstaff.component.scss']
 })
-export class HubstaffComponent implements OnInit, OnDestroy {
-	private _ngDestroy$: Subject<void> = new Subject();
-	authorizeForm: FormGroup;
-	clientSecretForm: FormGroup;
-	stepIndex: number;
-	hubStaffAppCode: string;
-	organizations: any[];
+export class HubstaffComponent extends TranslationBaseComponent
+	implements OnInit {
+	@ViewChild('projectsTable', { static: false }) projectsTable;
 	settingsSmartTable: object;
-	authorizationStepCompleted: boolean;
-	clientSecretStepCompleted: boolean;
+	organizations$: Observable<IHubstaffOrganization[]>;
+	projects$: Observable<IHubstaffProject[]>;
+	selectedOrganization: IHubstaffOrganization;
+	selectedProjects: IHubstaffProject[];
+	loading: boolean = true;
+	integrationId: string;
 
 	constructor(
-		private _activatedRoute: ActivatedRoute,
+		public translateService: TranslateService,
 		private _hubstaffService: HubstaffService,
-		private fb: FormBuilder
-	) {}
-
-	ngOnInit() {
-		this._initializeForms();
-		this._setCurrentStep();
-		this._loadTableSettings();
+		private _activatedRoute: ActivatedRoute,
+		private _errorHandlingService: ErrorHandlingService,
+		private toastrService: ToastrService
+	) {
+		super(translateService);
 	}
 
-	private _loadTableSettings() {
+	ngOnInit() {
+		this.loadSettingsSmartTable();
+		this._applyTranslationOnSmartTable();
+		this._setTokenAndloadOrganizations();
+	}
+
+	private _setTokenAndloadOrganizations() {
+		this.integrationId = this._activatedRoute.snapshot.params.id;
+		this.organizations$ = this._hubstaffService
+			.getToken(this.integrationId)
+			.pipe(
+				switchMap(() =>
+					this._hubstaffService.getOrganizations(this.integrationId)
+				),
+				tap(() => (this.loading = false)),
+				catchError((error) => {
+					this._errorHandlingService.handleError(error);
+					return of([]);
+				}),
+				finalize(() => (this.loading = false))
+			);
+	}
+
+	_applyTranslationOnSmartTable() {
+		this.translateService.onLangChange.subscribe(() => {
+			this.loadSettingsSmartTable();
+		});
+	}
+
+	loadSettingsSmartTable() {
 		this.settingsSmartTable = {
-			actions: false,
+			selectMode: 'multi',
+			actions: {
+				add: false,
+				edit: false,
+				delete: false,
+				select: true
+			},
 			columns: {
-				id: {
-					title: 'id',
-					type: 'string',
-					width: '20%',
-					filter: false
-				},
 				name: {
-					title: 'name',
-					type: 'string',
-					filter: false
+					title: this.getTranslation('SM_TABLE.NAME'),
+					type: 'string'
 				},
 				status: {
-					title: 'status',
-					type: 'boolean',
+					title: this.getTranslation('SM_TABLE.STATUS'),
+					type: 'string',
 					filter: false
 				}
 			}
 		};
 	}
 
-	private _setCurrentStep() {
-		const access_token = localStorage.getItem('hubstaff_access_token');
-
-		if (access_token) {
-			this._hubstaffService
-				.getOrganizations(access_token)
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe(({ organizations }) =>
-					this._setOrganizations(organizations)
-				);
-			return;
-		}
-		this._getHubstaffCode();
-	}
-
-	private _initializeForms() {
-		this.authorizeForm = this.fb.group({
-			client_id: ['', Validators.required]
-		});
-		this.clientSecretForm = this.fb.group({
-			client_secret: ['', Validators.required]
-		});
-	}
-
-	private _getHubstaffCode() {
-		this._activatedRoute.queryParams
+	selectOrganization(organization) {
+		this.loading = true;
+		this.projects$ = this._hubstaffService
+			.getProjects(organization.id)
 			.pipe(
-				tap(() => (this.stepIndex = StepperEnum.AUTHORIZE)),
-				filter(({ code }) => code),
-				tap(() => this._setSecondStep()),
-				tap(({ code }) => (this.hubStaffAppCode = code)),
-				takeUntil(this._ngDestroy$)
-			)
-			.subscribe();
-	}
-
-	private _setSecondStep() {
-		this.stepIndex = StepperEnum.ACCESS_TOKEN;
-		this.authorizationStepCompleted = true;
-	}
-
-	private _setThirdStep() {
-		this.stepIndex = StepperEnum.SELECT_ORGANIZATION;
-		this.authorizationStepCompleted = true;
-		this.clientSecretStepCompleted = true;
-	}
-
-	authorizeHubstaff() {
-		const { client_id } = this.authorizeForm.value;
-		const redirect_uri =
-			'http://localhost:4200/pages/integrations/hubstaff';
-		// environment.HUBSTAFF_REDIRECT_URI;
-		localStorage.setItem('client_id', client_id);
-		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${redirect_uri}&realm=hubstaff&client_id=${client_id}&scope=hubstaff:read&state=oauth2&nonce=${uuid()}`;
-
-		window.location.replace(url);
-	}
-
-	genereteAccessTokens() {
-		const client_id = localStorage.getItem('client_id');
-		const getAccessTokensDto = {
-			client_id,
-			code: this.hubStaffAppCode,
-			redirect_uri: 'http://localhost:4200/pages/integrations/hubstaff',
-			client_secret: this.clientSecretForm.value.client_secret
-		};
-
-		this._hubstaffService
-			.getAccessTokens(getAccessTokensDto)
-			.pipe(
-				tap((tokens) =>
-					localStorage.setItem(
-						'hubstaff_access_token',
-						tokens.access_token
-					)
-				),
-				switchMap((tokens) =>
-					this._hubstaffService.getOrganizations(tokens.access_token)
-				),
-				takeUntil(this._ngDestroy$)
-			)
-			.subscribe(({ organizations }) =>
-				this._setOrganizations(organizations)
+				catchError((error) => {
+					this._errorHandlingService.handleError(error);
+					return of([]);
+				}),
+				finalize(() => (this.loading = false))
 			);
 	}
 
-	private _setOrganizations(organizations) {
-		this._setThirdStep();
-		this.organizations = organizations;
+	selectProject({ isSelected, selected }) {
+		const selectedProject = isSelected ? selected : null;
+		this.projectsTable.grid.dataSet.willSelect = false;
+		this.selectedProjects = selectedProject;
 	}
 
-	selectOrganization(organization) {
-		console.log(organization);
-	}
-
-	ngOnDestroy() {
-		localStorage.removeItem('client_id');
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	syncProjects() {
+		this._hubstaffService
+			.syncProjects(this.selectedProjects, this.integrationId)
+			.subscribe(
+				(res) => {
+					this.toastrService.success(
+						this.getTranslation(
+							'INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_PROJECTS'
+						),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+				},
+				(err) => this._errorHandlingService.handleError(err)
+			);
 	}
 }
