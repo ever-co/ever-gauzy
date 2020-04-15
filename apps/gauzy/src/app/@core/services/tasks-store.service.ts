@@ -3,7 +3,6 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Task } from '@gauzy/models';
 import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
-import * as moment from 'moment';
 
 @Injectable({
 	providedIn: 'root'

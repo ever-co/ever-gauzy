@@ -3,7 +3,7 @@ import { FormGroup } from '@angular/forms';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TaskDialogComponent } from '../task-dialog/task-dialog.component';
-import { first, takeUntil, map } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { Task, Tag } from '@gauzy/models';
 import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
 import { Observable, Subject } from 'rxjs';

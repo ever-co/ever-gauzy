@@ -1,11 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Task, OrganizationProjects } from '@gauzy/models';
-import {
-	FormGroup,
-	FormBuilder,
-	Validators,
-	AbstractControl
-} from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
