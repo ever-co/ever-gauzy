@@ -7,6 +7,13 @@ import { first } from 'rxjs/operators';
 export class TagsService {
 	constructor(private http: HttpClient) {}
 
+	insertTags(createTags: Tag[]): Promise<Tag[]> {
+		return this.http
+			.post<Tag[]>('/api/tags', createTags)
+			.pipe(first())
+			.toPromise();
+	}
+
 	insertTag(createTag: Tag): Promise<Tag> {
 		return this.http
 			.post<Tag>('/api/tags', createTag)

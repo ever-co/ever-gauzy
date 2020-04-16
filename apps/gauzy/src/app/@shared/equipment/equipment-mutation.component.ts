@@ -40,6 +40,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 
 	async initializeForm() {
 		this.form = this.fb.group({
+			tags: [],
 			name: [
 				this.equipment ? this.equipment.name : '',
 				Validators.required
@@ -78,5 +79,8 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 
 	async closeDialog(equipment?: Equipment) {
 		this.dialogRef.close(equipment);
+	}
+	selectedTagsEvent(ev) {
+		console.warn(ev);
 	}
 }
