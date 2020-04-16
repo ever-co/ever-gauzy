@@ -48,6 +48,8 @@ export class UsersComponent extends TranslationBaseComponent
 	selectedUser: UserViewModel;
 	selectedOrganizationId: string;
 	UserRole: Role;
+	userToRemoveId: string;
+	userToRemove: UserOrganization;
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -130,6 +132,7 @@ export class UsersComponent extends TranslationBaseComponent
 		selected: UserViewModel[];
 		source: LocalDataSource;
 	}) {
+		this.userToRemoveId = ev.data.id;
 		const checkName = ev.data.fullName.trim();
 		this.userName = checkName ? checkName : 'User';
 
@@ -286,9 +289,8 @@ export class UsersComponent extends TranslationBaseComponent
 			'user',
 			'user.role'
 		]);
-		let counter = 0;
 
-		let userToRemove;
+		let counter = -1;
 
 		for (const orgUser of items) {
 			if (
@@ -296,15 +298,13 @@ export class UsersComponent extends TranslationBaseComponent
 				(!orgUser.user.role ||
 					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
 			) {
-				userToRemove = orgUser;
-				if (userToRemove.user.id === user.id) {
-					counter++;
-				}
+				if (orgUser.id === this.userToRemoveId)
+					this.userToRemove = orgUser;
+				if (orgUser.user.id === user.id) counter++;
 			}
 		}
-		// TODO: Recheck the flow.
-		// condition always holds true as counter value can either be 0 or 1
-		if (counter - 1 < 1) {
+
+		if (counter < 1) {
 			this.dialogService
 				.open(DeleteConfirmationComponent, {
 					context: {
@@ -321,8 +321,8 @@ export class UsersComponent extends TranslationBaseComponent
 					if (result) {
 						try {
 							this.usersService.delete(
-								userToRemove.user.id,
-								userToRemove
+								this.userToRemove.user.id,
+								this.userToRemove
 							);
 
 							this.toastrService.primary(
