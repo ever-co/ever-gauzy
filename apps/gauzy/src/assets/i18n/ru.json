@@ -880,14 +880,29 @@
 		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
 		"EDIT_INVOICE": "Изменить счет",
+		"SELECT_EMPLOYEE": "Выбрать сотрудника",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"INVOICE_TYPE": {
+			"INVOICE_TYPE": "Invoice Type",
+			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
+			"BY_EMPLOYEE_HOURS": "By Employee Hours",
+			"BY_PROJECT_HOURS": "By Project Hours",
+			"BY_TASK_HOURS": "By Task Hours",
+			"DETAILS_INVOICE_ITEMS": "Details Invoice Items"
+		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",
 			"TASK": "Задача",
 			"NAME": "Имя",
 			"DESCRIPTION": "Описание",
 			"PRICE": "Цена",
-			"QTY": "Кол-во",
-			"TOTAL_VALUE": "Общая стоимость"
+			"QUANTITY": "Quantity",
+			"TOTAL_VALUE": "Общая стоимость",
+			"EMPLOYEE": "Employee",
+			"HOURLY_RATE": "Hourly Rate",
+			"HOURS_WORKED": "Hours Worked",
+			"PROJECT": "Project"
 		}
 	},
 	"HEADER": {
