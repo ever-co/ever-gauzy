@@ -1,37 +1,24 @@
 import { Connection } from 'typeorm';
 import { Tenant } from './tenant.entity';
 
-export const createTenants = async (
-	connection: Connection
-): Promise<Tenant[]> => {
-	const tenants: Tenant[] = [
-		{
-			name: 'Ever'
-		},
-		{
-			name: 'Google'
-		},
-		{
-			name: 'Yahoo'
-		},
-		{
-			name: 'Youtube'
-		}
-	];
+export const createTenant = async (connection: Connection): Promise<Tenant> => {
+	const tenant = {
+		name: 'Ever'
+	};
 
-	await insertTenants(connection, tenants);
+	await insertTenants(connection, tenant);
 
-	return tenants;
+	return tenant;
 };
 
 const insertTenants = async (
 	connection: Connection,
-	tenants: Tenant[]
+	tenant: Tenant
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(Tenant)
-		.values(tenants)
+		.values(tenant)
 		.execute();
 };

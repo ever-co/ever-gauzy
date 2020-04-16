@@ -33,7 +33,7 @@ import { Country } from '../../country';
 import { createTeams } from '../../organization-teams/organization-teams.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
-import { createTenants } from '../../tenant/tenant.seed';
+import { createTenant } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
 import { seedEmploymentTypes } from '../../organization/employment-types.seed';
@@ -74,6 +74,10 @@ import { ProductCategory } from '../../product-category/product-category.entity'
 import { createProductCategories } from '../../product-category/product-category.seed';
 import { ProductType } from '../../product-type/product-type.entity';
 import { createProductTypes } from '../../product-type/product-type.seed';
+import { Product } from '../../product/product.entity';
+import { ProductVariant } from '../../product-variant/product-variant.entity';
+import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
+import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -116,7 +120,11 @@ const allEntities = [
 	EmployeeLevel,
 	ProductCategory,
 	ProductType,
-	CandidateSource
+	CandidateSource,
+	Product,
+	ProductVariant,
+	ProductVariantSettings,
+	ProductVariantPrice
 ];
 
 @Injectable()
@@ -179,7 +187,7 @@ export class SeedDataService {
 					} DATABASE...`
 				)
 			);
-			const tenants = await createTenants(this.connection);
+			const tenant = await createTenant(this.connection);
 			const sources: CandidateSource[] = await createCandidateSources(
 				this.connection
 			);
@@ -192,30 +200,30 @@ export class SeedDataService {
 				randomUsers,
 				defaultCandidateUser,
 				randomCandidateUser
-			} = await createUsers(this.connection, roles, tenants);
+			} = await createUsers(this.connection, roles, tenant);
 			const {
 				defaultOrganization,
 				randomOrganizations
-			} = await createOrganizations(this.connection, tenants);
+			} = await createOrganizations(this.connection, tenant);
 
 			const employees = await createEmployees(
 				this.connection,
 				{
-					tenant: tenants,
+					tenant,
 					org: defaultOrganization,
 					users: defaultUsers
 				},
 				{
 					orgs: randomOrganizations,
 					users: randomUsers,
-					tenant: tenants
+					tenant
 				}
 			);
 
 			await createCandidates(
 				this.connection,
 				{
-					tenant: [...tenants],
+					tenant,
 					org: defaultOrganization,
 					users: [...defaultCandidateUser]
 				},
