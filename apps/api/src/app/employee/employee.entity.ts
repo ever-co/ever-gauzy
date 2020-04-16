@@ -13,7 +13,8 @@ import {
 	ManyToMany,
 	ManyToOne,
 	OneToOne,
-	RelationId
+	RelationId,
+	OneToMany
 } from 'typeorm';
 import { LocationBase } from '../core/entities/location-base';
 import { Organization } from '../organization/organization.entity';
@@ -24,6 +25,7 @@ import { OrganizationTeams } from '../organization-teams/organization-teams.enti
 import { Tag } from '../tags/tag.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('employee')
 export class Employee extends LocationBase implements IEmployee {
@@ -166,4 +168,13 @@ export class Employee extends LocationBase implements IEmployee {
 	@ApiPropertyOptional({ type: Boolean })
 	@Column({ nullable: true })
 	anonymousBonus?: boolean;
+
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany(
+		(type) => InvoiceItem,
+		(invoiceItem) => invoiceItem.employee,
+		{ onDelete: 'SET NULL' }
+	)
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
 }

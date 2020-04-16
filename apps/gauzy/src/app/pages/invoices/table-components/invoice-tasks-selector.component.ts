@@ -2,14 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { Task } from '@gauzy/models';
 import { ViewCell } from 'ng2-smart-table';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	template: `
 		<ng-select
 			[(items)]="tasks"
 			bindName="title"
-			placeholder="Select a Task"
-			[(ngModel)]="selectedTask"
+			placeholder="{{ 'INVOICES_PAGE.SELECT_TASK' | translate }}"
+			[(ngModel)]="task"
 			(change)="selectTask($event)"
 			[searchFn]="searchTask"
 		>
@@ -25,18 +27,24 @@ import { ViewCell } from 'ng2-smart-table';
 	`,
 	styles: []
 })
-export class InvoiceAddTasksComponent implements OnInit, ViewCell {
+export class InvoiceTasksSelectorComponent extends TranslationBaseComponent
+	implements OnInit, ViewCell {
 	tasks: Task[] = [];
-	selectedTask: Task;
+	task: Task;
 
-	constructor(private tasksService: TasksService) {}
+	constructor(
+		private tasksService: TasksService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	value: any;
 	rowData: any;
 
 	ngOnInit() {
 		this.getTasks();
-		this.selectedTask = this.rowData.selectedTask;
+		this.task = this.rowData.task ? this.rowData.task : null;
 	}
 
 	private async getTasks() {
