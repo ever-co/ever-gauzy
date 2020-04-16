@@ -10,6 +10,7 @@ import { InvoicesValueComponent } from './invoices-value.component';
 import { Router } from '@angular/router';
 import { first } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
+import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -38,6 +39,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
+		private invoiceItemService: InvoiceItemService,
 		private router: Router
 	) {
 		super(translateService);
@@ -66,7 +68,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.toPromise();
 
 		if (result) {
+			const items = await this.invoiceItemService.getAll();
+			const itemsToDelete = items.items.filter(
+				(i) => i.invoiceId === this.selectedInvoice.id
+			);
 			await this.invoicesService.delete(this.selectedInvoice.id);
+
+			for (const item of itemsToDelete) {
+				await this.invoiceItemService.delete(item.id);
+			}
+
 			this.loadSettings();
 			this.toastrService.primary(
 				this.getTranslation('INVOICES_PAGE.INVOICES_DELETE_INVOICE'),

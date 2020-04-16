@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbToastrService } from '@nebular/theme';
 import { Observable, throwError } from 'rxjs';
 import { Task, GetTaskOptions } from '@gauzy/models';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -33,6 +33,13 @@ export class TasksService extends TranslationBaseComponent {
 				params: { data }
 			})
 			.pipe(catchError((error) => this.errorHandler(error)));
+	}
+
+	getById(id: string) {
+		return this._http
+			.get<Task>(`${this.API_URL}/${id}`)
+			.pipe(first())
+			.toPromise();
 	}
 
 	createTask(task): Observable<Task> {

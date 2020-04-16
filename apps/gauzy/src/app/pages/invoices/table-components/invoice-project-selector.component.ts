@@ -4,14 +4,16 @@ import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	template: `
 		<ng-select
 			[(items)]="projects"
 			bindName="name"
-			placeholder="All Projects"
-			[(ngModel)]="selectedProject"
+			placeholder="{{ 'INVOICES_PAGE.SELECT_PROJECT' | translate }}"
+			[(ngModel)]="project"
 			(change)="selectProject($event)"
 		>
 			<ng-template ng-option-tmp let-item="item" let-index="index">
@@ -26,22 +28,26 @@ import { OrganizationProjectsService } from '../../../@core/services/organizatio
 	`,
 	styles: []
 })
-export class InvoiceAddProjectsComponent implements OnInit, OnDestroy {
-	selectedProject: OrganizationProjects;
+export class InvoiceProjectsSelectorComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
+	project: OrganizationProjects;
 	projects: OrganizationProjects[];
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private store: Store,
-		private organizationProjectsService: OrganizationProjectsService
-	) {}
+		private organizationProjectsService: OrganizationProjectsService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 
 	value: any;
 	rowData: any;
 
 	ngOnInit() {
 		this._loadProjects();
-		this.selectedProject = this.rowData.selectedProject;
+		this.project = this.rowData.project ? this.rowData.project : null;
 	}
 
 	private async _loadProjects() {
