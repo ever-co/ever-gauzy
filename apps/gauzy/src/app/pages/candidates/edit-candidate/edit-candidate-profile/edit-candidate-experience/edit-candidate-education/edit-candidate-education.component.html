@@ -108,14 +108,19 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="educations?.length">
+	<nb-card-body *ngIf="selectedCandidate?.educations?.length">
 		<div class="ml-3 mb-4">
 			<strong>{{
 				'CANDIDATES_PAGE.EDIT_CANDIDATE.EDUCATION' | translate
 			}}</strong>
 		</div>
 
-		<nb-card *ngFor="let education of educations; let i = index">
+		<nb-card
+			*ngFor="
+				let education of selectedCandidate.educations;
+				let i = index
+			"
+		>
 			<nb-card-body class="education-card">
 				<div>
 					<div class="education-line">

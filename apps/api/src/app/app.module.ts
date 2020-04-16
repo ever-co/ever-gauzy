@@ -55,6 +55,8 @@ import { IntegrationSettingModule } from './integration-setting/integration-sett
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
+import { CandidateEducationModule } from './candidate-education/candidate-education.module';
+import { CandidateSourceModule } from './candidate_source/candidate_source.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
@@ -65,6 +67,18 @@ import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
 					{ path: '/user', module: UserModule },
 					{ path: '/employee', module: EmployeeModule },
 					{ path: '/candidate', module: CandidateModule },
+					{
+						path: '/candidate-education',
+						module: CandidateEducationModule
+					},
+					{
+						path: '/candidate-cv',
+						module: CandidateCvModule
+					},
+					{
+						path: '/candidate-source',
+						module: CandidateSourceModule
+					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
 					{ path: '/role', module: RoleModule },
@@ -207,6 +221,8 @@ import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
 		EmployeeModule,
 		CandidateModule,
 		CandidateCvModule,
+		CandidateSourceModule,
+		CandidateEducationModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,

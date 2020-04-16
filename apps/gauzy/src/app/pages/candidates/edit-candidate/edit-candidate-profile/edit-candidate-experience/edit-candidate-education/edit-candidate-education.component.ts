@@ -10,6 +10,7 @@ import { NbToastrService } from '@nebular/theme';
 import { Education } from 'libs/models/src/lib/candidate-education.model';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { ActivatedRoute } from '@angular/router';
+import { CandidateEducationsService } from 'apps/gauzy/src/app/@core/services/candidate-educations.service';
 
 @Component({
 	selector: 'ga-edit-candidate-education',
@@ -19,9 +20,9 @@ import { ActivatedRoute } from '@angular/router';
 export class EditCandidateEducationComponent extends TranslationBaseComponent
 	implements OnInit {
 	showAddCard: boolean;
-	isEdit = false;
 	editIndex = null;
-	educations: Education[] = [];
+	candidateId: string;
+	educationList: Education[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
 	form: FormGroup;
@@ -31,6 +32,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		private candidateStore: CandidateStore,
 		private fb: FormBuilder,
 		private candidatesService: CandidatesService,
+		private candidateEducationsService: CandidateEducationsService,
 		private route: ActivatedRoute
 	) {
 		super(translateService);
@@ -41,24 +43,24 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			.subscribe((candidate) => {
 				this.selectedCandidate = candidate;
 				if (this.selectedCandidate) {
-					this._initializeForm(this.selectedCandidate.educations);
+					this._initializeForm();
 					this.loadData();
 				}
 			});
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (params) => {
-				const id = params.id;
-				const { items } = await this.candidatesService
-					.getAll(['user', 'tags'], { id })
-					.pipe(first())
-					.toPromise();
-				this.selectedCandidate = items[0];
-
-				this.candidateStore.selectedCandidate = this.selectedCandidate;
+				this.candidateId = params.id;
+				// const { items } = await this.candidatesService
+				// 	.getAll(['user', 'tags', 'educations'], { id })
+				// 	.pipe(first())
+				// 	.toPromise();
+				// this.selectedCandidate = items[0];
+				// console.log(this.selectedCandidate);
+				// this.candidateStore.selectedCandidate = this.selectedCandidate;
 			});
 	}
-	private async _initializeForm(educations: Education[]) {
+	private async _initializeForm() {
 		this.form = new FormGroup({
 			educations: this.fb.array([])
 		});
@@ -77,8 +79,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	}
 	editEducation(index: number) {
 		this.showAddCard = !this.showAddCard;
-		this.form.controls.educations.patchValue([this.educations[index]]);
-		this.isEdit = true;
+		this.form.controls.educations.patchValue([this.educationList[index]]);
 		this.editIndex = index;
 	}
 	showCard() {
@@ -90,20 +91,34 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		this.form.controls.educations.value.length = 0;
 	}
 
-	submitForm() {
+	private async loadEducations() {
+		const { items } = await this.candidatesService
+			.getAll(['educations'], { id: this.candidateId })
+			.pipe(first())
+			.toPromise();
+
+		this.selectedCandidate = items[0];
+		console.log(this.selectedCandidate);
+	}
+	async submitForm() {
 		const educationForm = this.form.controls.educations as FormArray;
 		if (educationForm.valid) {
-			if (this.isEdit) {
-				const editValue = { ...this.form.controls.educations.value[0] };
-				this.educations[this.editIndex] = editValue;
-				this.isEdit = false;
+			if (this.editIndex !== null) {
+				const editValue = { ...educationForm.value[0] };
+				this.educationList[this.editIndex] = editValue;
 				this.editIndex = null;
 			} else {
-				this.educations.push(...this.form.controls.educations.value);
+				await this.candidateEducationsService.create({
+					...educationForm.value,
+					candidateId: this.candidateId
+				});
+				this.loadEducations();
+				// this.educationList.push({ ...educationForm.value });
+				console.log(111);
 			}
-			this.selectedCandidate.educations = this.educations;
+			this.selectedCandidate.educations = this.educationList;
 			this.showAddCard = !this.showAddCard;
-			this.form.controls.educations.reset();
+			educationForm.reset();
 			// to do  toastr for success
 		} else {
 			this.toastrService.danger(
@@ -115,7 +130,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		}
 	}
 	removeEducation(index: number) {
-		this.educations.splice(index, 1);
-		this.selectedCandidate.educations = this.educations;
+		this.educationList.splice(index, 1);
+		this.selectedCandidate.educations = this.educationList;
 	}
 }

@@ -33,6 +33,12 @@ export class Candidate extends LocationBase implements ICandidate {
 	})
 	tags: Tag[];
 
+	@ManyToOne((type) => CandidateEducation)
+	@JoinTable({
+		name: 'candidate_education'
+	})
+	educations: Education[];
+
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
 		nullable: false,
@@ -169,10 +175,4 @@ export class Candidate extends LocationBase implements ICandidate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.cv)
 	readonly cvId: string;
-
-	@ManyToOne((type) => CandidateEducation)
-	@JoinTable({
-		name: 'candidate_education'
-	})
-	educations: Education[];
 }

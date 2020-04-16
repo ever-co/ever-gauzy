@@ -8,19 +8,19 @@ import { Base } from '../core/entities/base';
 export class CandidateEducation extends Base implements Education {
 	@ApiProperty({ type: String })
 	@Column()
-	schooolName?: string;
+	schoolName: string;
 
 	@ApiProperty({ type: String })
 	@Column()
-	degree?: string;
+	degree: string;
 
 	@ApiProperty({ type: String })
 	@Column()
-	field?: string;
+	field: string;
 
 	@ApiProperty({ type: Date })
 	@Column()
-	completionDate?: Date;
+	completionDate: Date;
 
 	@ApiProperty({ type: String })
 	@Column()

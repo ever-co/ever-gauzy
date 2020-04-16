@@ -9,6 +9,7 @@ import { User } from '../user/user.entity';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { AuthService } from '../auth/auth.service';
 import { EmailService } from '../email';
+import { CandidateCvController } from './candidate-cv.controller';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { EmailService } from '../email';
 		EmailModule
 	],
 	providers: [CandidateCvService, UserService, AuthService, EmailService],
-	// controllers: [CandidateCvController],
+	controllers: [CandidateCvController],
 	exports: [CandidateCvService]
 })
 export class CandidateCvModule {}
