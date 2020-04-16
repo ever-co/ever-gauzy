@@ -7,7 +7,6 @@ import {
 	Invoice,
 	OrganizationClients,
 	CurrenciesEnum,
-	OrganizationProjects,
 	OrganizationSelectInput,
 	InvoiceItem,
 	Organization,
@@ -26,12 +25,8 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
 import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
 import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
-import { EmployeesService, UsersService } from '../../../@core/services';
+import { EmployeesService } from '../../../@core/services';
 import { TasksService } from '../../../@core/services/tasks.service';
-import {
-	EmployeeSelectorComponent,
-	SelectedEmployee
-} from '../../../@theme/components/header/selectors/employee/employee.component';
 
 @Component({
 	selector: 'ga-invoice-edit',
