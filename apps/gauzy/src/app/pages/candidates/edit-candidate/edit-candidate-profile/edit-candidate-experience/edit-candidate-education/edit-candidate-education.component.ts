@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { Candidate } from '@gauzy/models';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
@@ -31,7 +31,6 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private fb: FormBuilder,
-		private candidatesService: CandidatesService,
 		private candidateEducationsService: CandidateEducationsService,
 		private route: ActivatedRoute
 	) {
@@ -47,17 +46,11 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 					this.loadData();
 				}
 			});
+		this.loadEducations();
 		this.route.params
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (params) => {
 				this.candidateId = params.id;
-				// const { items } = await this.candidatesService
-				// 	.getAll(['user', 'tags', 'educations'], { id })
-				// 	.pipe(first())
-				// 	.toPromise();
-				// this.selectedCandidate = items[0];
-				// console.log(this.selectedCandidate);
-				// this.candidateStore.selectedCandidate = this.selectedCandidate;
 			});
 	}
 	private async _initializeForm() {
@@ -92,31 +85,32 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	}
 
 	private async loadEducations() {
-		const { items } = await this.candidatesService
-			.getAll(['educations'], { id: this.candidateId })
-			.pipe(first())
-			.toPromise();
-
-		this.selectedCandidate = items[0];
-		console.log(this.selectedCandidate);
+		const res = await this.candidateEducationsService.getAll({
+			candidateId: this.candidateId
+		});
+		if (res) {
+			this.educationList = res.items;
+		}
 	}
 	async submitForm() {
 		const educationForm = this.form.controls.educations as FormArray;
 		if (educationForm.valid) {
 			if (this.editIndex !== null) {
 				const editValue = { ...educationForm.value[0] };
-				this.educationList[this.editIndex] = editValue;
+				// await this.candidateEducationsService.update(this.editIndex, {
+				// 	editValue
+				// });
+				this.loadEducations();
+				this.toastrService.success('Successfully updated');
 				this.editIndex = null;
 			} else {
 				await this.candidateEducationsService.create({
-					...educationForm.value,
+					...{ ...educationForm.value },
 					candidateId: this.candidateId
 				});
 				this.loadEducations();
-				// this.educationList.push({ ...educationForm.value });
-				console.log(111);
+				this.toastrService.success('Successfully created');
 			}
-			this.selectedCandidate.educations = this.educationList;
 			this.showAddCard = !this.showAddCard;
 			educationForm.reset();
 			// to do  toastr for success
@@ -129,8 +123,9 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 			);
 		}
 	}
-	removeEducation(index: number) {
-		this.educationList.splice(index, 1);
-		this.selectedCandidate.educations = this.educationList;
+	async removeEducation(id: string) {
+		// await this.candidateEducationsService.delete(id);
+		// this.loadEducations();
+		// to do  toastr
 	}
 }

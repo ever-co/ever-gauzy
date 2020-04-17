@@ -76,6 +76,7 @@ import { ProductCategory } from '../../product-category/product-category.entity'
 import { createProductCategories } from '../../product-category/product-category.seed';
 import { ProductType } from '../../product-type/product-type.entity';
 import { createProductTypes } from '../../product-type/product-type.seed';
+import { CandidateEducation } from '../../candidate-education/candidate-education.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -118,8 +119,8 @@ const allEntities = [
 	EmployeeLevel,
 	ProductCategory,
 	ProductType,
-	CandidateSource
-	// CandidateCv
+	CandidateSource,
+	CandidateEducation
 ];
 
 @Injectable()

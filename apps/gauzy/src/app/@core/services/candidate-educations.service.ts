@@ -24,7 +24,6 @@ export class CandidateEducationsService {
 		findInput?: IEducationFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
-
 		return this.http
 			.get<{ items: Education[]; total: number }>(
 				`/api/candidate-educations`,

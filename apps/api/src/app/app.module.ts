@@ -68,7 +68,7 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 					{ path: '/employee', module: EmployeeModule },
 					{ path: '/candidate', module: CandidateModule },
 					{
-						path: '/candidate-education',
+						path: '/candidate-educations',
 						module: CandidateEducationModule
 					},
 					{

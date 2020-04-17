@@ -5,6 +5,7 @@ export interface Education extends IBaseEntityModel {
 	completionDate: Date;
 	field: string;
 	notes?: string;
+	candidateId?: string;
 }
 export interface IEducationFindInput extends IBaseEntityModel {
 	schoolName?: string;
@@ -12,6 +13,7 @@ export interface IEducationFindInput extends IBaseEntityModel {
 	completionDate?: Date;
 	field?: string;
 	notes?: string;
+	candidateId?: string;
 }
 
 export interface IEducationCreateInput {
@@ -20,4 +22,5 @@ export interface IEducationCreateInput {
 	completionDate: Date;
 	field: string;
 	notes?: string;
+	candidateId?: string;
 }

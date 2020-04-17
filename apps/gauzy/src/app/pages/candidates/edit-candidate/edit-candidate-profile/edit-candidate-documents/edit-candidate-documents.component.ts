@@ -81,17 +81,6 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	async removeDoc(id: string, name: string) {
 		try {
 			await this.candidateCVsService.delete(id);
-
-			// this.toastrService.primary(
-			// 	this.getTranslation(
-			// 		'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
-			// 		{
-			// 			name: name
-			// 		}
-			// 	),
-			// 	this.getTranslation('TOASTR.TITLE.SUCCESS')
-			// );
-
 			this.loadDocs();
 		} catch (error) {
 			this.errorHandlingService.handleError(error);
@@ -112,28 +101,11 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 				candidateId: this.candidateId,
 				cvUrl: this.cvUrl.value
 			});
-			// this.toastrService.primary(
-			// 	this.getTranslation(
-			// 		'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CV.ADD_CV',
-			// 		{
-			// 			name: name
-			// 		}
-			// 	),
-			// 	this.getTranslation('TOASTR.TITLE.SUCCESS')
-			// );
 
 			this.showAddCard = !this.showAddCard;
 			// this.loadDocs();
 		} else {
-			// TODO translate
-			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CV.INVALID_CV_NAME'
-				),
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_CV_INVALID_NAME'
-				)
-			);
+			// TODO toasrt
 		}
 	}
 	private async loadDocs() {

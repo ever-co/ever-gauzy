@@ -18,7 +18,6 @@ export class EditCandidateExperienceFormComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	showAddCard: boolean;
-	isEdit = false;
 	editIndex = null;
 	experience: Experience[] = [];
 	private _ngDestroy$ = new Subject<void>();
@@ -62,7 +61,6 @@ export class EditCandidateExperienceFormComponent
 	editExperience(index: number) {
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.experience.patchValue([this.experience[index]]);
-		this.isEdit = true;
 		this.editIndex = index;
 	}
 	showCard() {
@@ -77,10 +75,9 @@ export class EditCandidateExperienceFormComponent
 	submitForm() {
 		const experienceForm = this.form.controls.experience as FormArray;
 		if (experienceForm.valid) {
-			if (this.isEdit) {
+			if (this.editIndex !== null) {
 				const editValue = { ...this.form.controls.experience.value[0] };
 				this.experience[this.editIndex] = editValue;
-				this.isEdit = false;
 				this.editIndex = null;
 			} else {
 				this.experience.push(...this.form.controls.experience.value);
