@@ -52,6 +52,13 @@ export class OrganizationProjectsService {
 			.toPromise();
 	}
 
+	getById(id: string) {
+		return this.http
+			.get<OrganizationProjects>(`/api/organization-projects/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	updateByEmployee(updateInput: EditEntityByMemberInput): Promise<any> {
 		return this.http
 			.put(`/api/organization-projects/employee`, updateInput)

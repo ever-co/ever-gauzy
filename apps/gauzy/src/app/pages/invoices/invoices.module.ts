@@ -24,8 +24,8 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InvoicesValueComponent } from './invoices-value.component';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
-import { InvoiceAddTasksComponent } from './invoice-add/invoice-add-tasks.component';
-import { InvoiceAddProjectsComponent } from './invoice-add/invoice-add-project.component';
+import { InvoiceTasksSelectorComponent } from './table-components/invoice-tasks-selector.component';
+import { InvoiceProjectsSelectorComponent } from './table-components/invoice-project-selector.component';
 import { InvoicesComponent } from './invoices.component';
 import { InvoicesRoutingModule } from './invoices-routing.module';
 import { InvoicesService } from '../../@core/services/invoices.service';
@@ -33,11 +33,11 @@ import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { TasksService } from '../../@core/services/tasks.service';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
-import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { OrganizationProjectsService } from '../../@core/services/organization-projects.service';
-import { InvoiceAddEmployeesComponent } from './invoice-add/invoice-add-employees.component';
+import { InvoiceEmployeesSelectorComponent } from './table-components/invoice-employees-selector.component';
 import { EmployeesService } from '../../@core/services/employees.service';
 import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
+import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -62,9 +62,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSelectModule,
 		NbTooltipModule,
 		NbRadioModule,
+		EmployeeMultiSelectModule,
 		UserFormsModule,
 		NbDatepickerModule,
-		EmployeeSelectorsModule,
 		NgSelectModule,
 		TranslateModule.forChild({
 			loader: {
@@ -87,18 +87,18 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicesComponent,
 		InvoicesValueComponent,
 		InvoiceAddComponent,
-		InvoiceAddTasksComponent,
-		InvoiceAddProjectsComponent,
-		InvoiceAddEmployeesComponent,
+		InvoiceTasksSelectorComponent,
+		InvoiceProjectsSelectorComponent,
+		InvoiceEmployeesSelectorComponent,
 		InvoiceEditComponent
 	],
 	declarations: [
 		InvoicesComponent,
 		InvoicesValueComponent,
 		InvoiceAddComponent,
-		InvoiceAddTasksComponent,
-		InvoiceAddProjectsComponent,
-		InvoiceAddEmployeesComponent,
+		InvoiceTasksSelectorComponent,
+		InvoiceProjectsSelectorComponent,
+		InvoiceEmployeesSelectorComponent,
 		InvoiceEditComponent
 	]
 })

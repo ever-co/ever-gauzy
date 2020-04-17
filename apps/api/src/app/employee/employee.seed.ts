@@ -9,14 +9,14 @@ import { date as fakerDate } from 'faker';
 export const createEmployees = async (
 	connection: Connection,
 	defaultData: {
-		tenant: Tenant[];
+		tenant: Tenant;
 		org: Organization;
 		users: User[];
 	},
 	randomData: {
 		orgs: Organization[];
 		users: User[];
-		tenant: Tenant[];
+		tenant: Tenant;
 	}
 ): Promise<{ defaultEmployees: Employee[]; randomEmployees: Employee[] }> => {
 	const defaultEmployees: Employee[] = await createDefaultEmployees(
@@ -34,7 +34,7 @@ export const createEmployees = async (
 const createDefaultEmployees = async (
 	connection: Connection,
 	defaultData: {
-		tenant: Tenant[];
+		tenant: Tenant;
 		org: Organization;
 		users: User[];
 	}
@@ -44,14 +44,14 @@ const createDefaultEmployees = async (
 	const employees: Employee[] = [];
 	const defaultUsers = defaultData.users;
 	const defaultOrg = defaultData.org;
-	const defaultTenants = defaultData.tenant;
+	const defaultTenant = defaultData.tenant;
 
 	let counter = 0;
 	for (const user of defaultUsers) {
 		employee = new Employee();
 		employee.organization = defaultOrg;
 		employee.user = user;
-		employee.tenant = defaultTenants[counter % defaultTenants.length];
+		employee.tenant = defaultTenant;
 		employee.employeeLevel = defaultEmployees.filter(
 			(e) => e.email === employee.user.email
 		)[0].employeeLevel;
@@ -76,7 +76,7 @@ const createRandomEmployees = async (
 	randomData: {
 		orgs: Organization[];
 		users: User[];
-		tenant: Tenant[];
+		tenant: Tenant;
 	}
 ): Promise<Employee[]> => {
 	let employee: Employee;
@@ -96,7 +96,7 @@ const createRandomEmployees = async (
 				employee.isActive = true;
 				employee.endWork = null;
 				employee.startedWorkOn = fakerDate.past(index % 5);
-				employee.tenant = tenant[index % tenant.length];
+				employee.tenant = tenant;
 
 				if (employee.user) {
 					await insertEmployee(connection, employee);

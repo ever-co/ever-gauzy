@@ -12,7 +12,7 @@ import { Tenant } from './../tenant/tenant.entity';
 
 export const createOrganizations = async (
 	connection: Connection,
-	tenant: Tenant[]
+	tenant: Tenant
 ): Promise<{
 	defaultOrganization: Organization;
 	randomOrganizations: Organization[];
@@ -31,7 +31,7 @@ export const createOrganizations = async (
 	defaultOrganization.currency = currency;
 	defaultOrganization.defaultValueDateType = defaultValueDateType;
 	defaultOrganization.imageUrl = imageUrl;
-	defaultOrganization.tenant = tenant[0];
+	defaultOrganization.tenant = tenant;
 	defaultOrganization.invitesAllowed = true;
 	defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
 	defaultOrganization.bonusPercentage = 10;
@@ -53,7 +53,7 @@ export const createOrganizations = async (
 		organization.defaultValueDateType =
 			defaultDateTypes[index % defaultDateTypes.length];
 		organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
-		organization.tenant = tenant[index % tenant.length];
+		organization.tenant = tenant;
 		organization.invitesAllowed = true;
 
 		const { bonusType, bonusPercentage } = randomBonus();

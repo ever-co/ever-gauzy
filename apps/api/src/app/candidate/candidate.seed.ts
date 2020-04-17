@@ -9,7 +9,7 @@ import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 export const createCandidates = async (
 	connection: Connection,
 	defaultData?: {
-		tenant: Tenant[];
+		tenant: Tenant;
 		org: Organization;
 		users: User[];
 	},
@@ -38,7 +38,7 @@ export const createCandidates = async (
 const createDefaultCandidates = async (
 	connection: Connection,
 	defaultData: {
-		tenant: Tenant[];
+		tenant: Tenant;
 		org: Organization;
 		users: User[];
 	}
@@ -47,14 +47,14 @@ const createDefaultCandidates = async (
 	const candidates: Candidate[] = [];
 	const defaultUsers = defaultData.users;
 	const defaultOrg = defaultData.org;
-	const defaultTenants = defaultData.tenant;
+	const defaultTenant = defaultData.tenant;
 
 	let counter = 0;
 	for (const user of defaultUsers) {
 		candidate = new Candidate();
 		candidate.organization = defaultOrg;
 		candidate.user = user;
-		candidate.tenant = defaultTenants[counter];
+		candidate.tenant = defaultTenant;
 
 		await insertCandidate(connection, candidate);
 		candidates.push(candidate);
