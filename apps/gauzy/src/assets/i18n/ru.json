@@ -179,6 +179,7 @@
 			"ADD_DEPARTMENT": "Добавить департамент",
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
+			"ADD_SKILL": "Добавить навык",
 			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
@@ -229,7 +230,20 @@
 			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации",
-			"ORGANIZATIONS": "Выберите организации"
+			"ORGANIZATIONS": "Выберите организации",
+			"ADD_EDUCATION": {
+				"SCHOOL_NAME": "School name",
+				"DEGREE": "Degree/Diploma",
+				"FIELD_OF_STUDY": "Field(s) of study",
+				"DATE_OF_COMPLETION": "Date of completion",
+				"ADDITIONAL_NOTES": "Additional notes (optional)"
+			},
+			"ADD_EXPERIENCE": {
+				"OCCUPATION": "Occupation",
+				"ORGANIZATION": "Organization name",
+				"DURATION": "Duration",
+				"DESCRIPTION": "Description (optional)"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -517,6 +531,17 @@
 			"RATE": "Тарифы",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Опыт работы",
+			"SKILLS": "Skills",
+			"EDUCATION": "Education",
+			"SCHOOL_NAME": "School name",
+			"DEGREE": "Degree/Diploma",
+			"FIELD": "Field(s)",
+			"COMPLETION_DATE": "Date of completion",
+			"ADDITIONAL_NOTES": "Additional notes",
+			"OCCUPATION": "Occupation",
+			"ORGANIZATION": "Organization name",
+			"DURATION": "Duration",
+			"DESCRIPTION": "Description",
 			"TASKS": "Задачи",
 			"HISTORY": "История",
 			"DOCUMENTS": "Документы"
@@ -962,6 +987,9 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
+			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
+			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
@@ -1010,6 +1038,12 @@
 		},
 		"USER": {
 			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
+		},
+		"CANDIDATE": {
+			"EXPERIENCE": {
+				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
+				"INVALID_FORM": "Please fill the form"
+			}
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "Организация {{ name }} создана.",
