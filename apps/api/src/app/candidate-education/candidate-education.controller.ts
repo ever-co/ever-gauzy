@@ -9,7 +9,6 @@ import {
 	Delete,
 	Param,
 	Put,
-	Post,
 	Body
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';

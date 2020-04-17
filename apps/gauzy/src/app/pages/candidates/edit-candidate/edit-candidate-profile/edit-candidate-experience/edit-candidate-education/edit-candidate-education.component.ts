@@ -8,7 +8,6 @@ import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
 import { Education } from 'libs/models/src/lib/candidate-education.model';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { ActivatedRoute } from '@angular/router';
 import { CandidateEducationsService } from 'apps/gauzy/src/app/@core/services/candidate-educations.service';
 
@@ -96,7 +95,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		const educationForm = this.form.controls.educations as FormArray;
 		if (educationForm.valid) {
 			if (this.editIndex !== null) {
-				const editValue = { ...educationForm.value[0] };
+				// const editValue = { ...educationForm.value[0] };
 				// await this.candidateEducationsService.update(this.editIndex, {
 				// 	editValue
 				// });
