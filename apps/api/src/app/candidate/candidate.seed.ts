@@ -4,6 +4,7 @@ import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { User } from '@gauzy/models';
 import { CandidateSource } from '../candidate_source/candidate_source.entity';
+import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 
 export const createCandidates = async (
 	connection: Connection,
@@ -13,6 +14,7 @@ export const createCandidates = async (
 		users: User[];
 	},
 	randomData?: {
+		cvs: CandidateCv[];
 		source: CandidateSource[];
 		org: Organization;
 		orgs: Organization[];

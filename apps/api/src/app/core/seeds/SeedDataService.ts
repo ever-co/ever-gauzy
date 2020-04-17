@@ -66,14 +66,17 @@ import { OrganizationPositions } from '../../organization-positions/organization
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import { createCandidates } from '../../candidate/candidate.seed';
-import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
 import { CandidateSource } from '../../candidate_source/candidate_source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Tenant } from './../../tenant/tenant.entity';
+import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
+import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
+import { createCandidateCvs } from '../../candidate-cv/candidate-cv.seed';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { createProductCategories } from '../../product-category/product-category.seed';
 import { ProductType } from '../../product-type/product-type.entity';
 import { createProductTypes } from '../../product-type/product-type.seed';
+import { CandidateEducation } from '../../candidate-education/candidate-education.entity';
 import { Product } from '../../product/product.entity';
 import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
@@ -121,6 +124,7 @@ const allEntities = [
 	ProductCategory,
 	ProductType,
 	CandidateSource,
+	CandidateEducation,
 	Product,
 	ProductVariant,
 	ProductVariantSettings,
@@ -187,7 +191,13 @@ export class SeedDataService {
 					} DATABASE...`
 				)
 			);
+
+			const cvs: CandidateCv[] = await createCandidateCvs(
+				this.connection
+			);
+
 			const tenant = await createTenant(this.connection);
+
 			const sources: CandidateSource[] = await createCandidateSources(
 				this.connection
 			);
@@ -229,6 +239,7 @@ export class SeedDataService {
 				},
 				{
 					source: sources,
+					cvs: cvs,
 					org: defaultOrganization,
 					orgs: randomOrganizations,
 					users: [...randomCandidateUser]
