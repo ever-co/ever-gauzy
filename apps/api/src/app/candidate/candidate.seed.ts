@@ -64,8 +64,6 @@ export const createRandomCandidates = async (
 			}
 		};
 
-		console.log(randomUsers.length);
-
 		for (const org of randomOrgs) {
 			if (randomUsers.length) {
 				await insertCandidatesInToOrganization(
