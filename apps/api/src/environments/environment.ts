@@ -55,12 +55,20 @@ export const environment: IEnvironment = {
 			process.env.GoogleClientSecret || 'liU5ihpwoqnsmXJNxNjFp1yP'
 	},
 
-	defaultOrganization: {
-		name: 'Ever Technologies LTD',
-		currency: CurrenciesEnum.BGN,
-		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-		imageUrl: 'assets/images/logos/ever-large.jpg'
-	},
+	defaultOrganizations: [
+		{
+			name: 'Ever Technologies LTD',
+			currency: CurrenciesEnum.BGN,
+			defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+			imageUrl: 'assets/images/logos/ever-large.jpg'
+		},
+		{
+			name: 'Ever Co. Ltd',
+			currency: CurrenciesEnum.BGN,
+			defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
+			imageUrl: 'assets/images/logos/ever-large.jpg'
+		}
+	],
 
 	defaultSuperAdmins: [
 		{
@@ -391,5 +399,11 @@ export const environment: IEnvironment = {
 	],
 	sentry: {
 		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
+	},
+	randomSeedConfig: {
+		tenants: 5,
+		organizationsPerTenant: 2,
+		employeesPerOrganization: 5,
+		candidatesPerOrganization: 2
 	}
 };
