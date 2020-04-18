@@ -2,37 +2,28 @@ import { Connection } from 'typeorm';
 import { Organization } from '@gauzy/models';
 import { ProductType } from './product-type.entity';
 
-export const createProductTypes = async (
+export const createDefaultProductTypes = async (
 	connection: Connection,
-	organization: Organization
+	organizations: Organization[]
 ): Promise<ProductType[]> => {
-	const productTypes = [];
+	const productTypes: ProductType[] = [];
 
-	const productType1 = new ProductType();
-	productType1.name = 'product type 1';
-	productType1.organizationId = organization.id;
-	productTypes.push(productType1);
+	//TODO: Get this from env ?
+	organizations.forEach((organization) => {
+		const productType1 = new ProductType();
+		productType1.name = 'product type 1';
+		productType1.organizationId = organization.id;
+		productTypes.push(productType1);
+	});
 
-	const productType2 = new ProductType();
-	productType2.name = 'product type 2';
-	productType2.organizationId = organization.id;
-	productTypes.push(productType2);
-
-	const productType3 = new ProductType();
-	productType3.name = 'product type 3';
-	productType3.organizationId = organization.id;
-	productTypes.push(productType3);
-
-	insertProductType(connection, productType1);
-	insertProductType(connection, productType2);
-	insertProductType(connection, productType3);
+	await insertProductTypes(connection, productTypes);
 
 	return productTypes;
 };
 
-const insertProductType = async (
+const insertProductTypes = async (
 	connection: Connection,
-	Type: ProductType
+	productTypes: ProductType[]
 ): Promise<void> => {
-	await connection.manager.save(Type);
+	await connection.manager.save(productTypes);
 };
