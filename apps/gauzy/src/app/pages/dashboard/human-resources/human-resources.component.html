@@ -360,7 +360,9 @@
 			*ngIf="selectedEmployee && selectedEmployee.id"
 			class="half-content"
 		>
-			<ga-employee-charts></ga-employee-charts>
+			<ga-employee-charts
+				[employeeStatistics]="employeeStatistics"
+			></ga-employee-charts>
 		</div>
 
 		<ng-template #noRole>

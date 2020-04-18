@@ -16,7 +16,8 @@ import {
 	DEFAULT_REVENUE_BASED_BONUS,
 	OrganizationRecurringExpenseForEmployeeOutput,
 	SplitExpenseOutput,
-	RecurringExpenseDefaultCategoriesEnum
+	RecurringExpenseDefaultCategoriesEnum,
+	MonthAggregatedEmployeeStatistics
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
 import {
@@ -86,6 +87,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 
 	selectedChart = '1';
 
+	employeeStatistics: MonthAggregatedEmployeeStatistics[];
+
 	constructor(
 		private incomeService: IncomeService,
 		private expenseService: ExpensesService,
@@ -111,6 +114,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				if (this.selectedDate) {
 					this._loadEmployeeTotalIncome();
 					this._loadEmployeeTotalExpense();
+					this._loadEmployeeStatistics();
 				}
 			});
 
@@ -122,6 +126,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				if (this.selectedEmployee) {
 					this._loadEmployeeTotalIncome();
 					this._loadEmployeeTotalExpense();
+					this._loadEmployeeStatistics();
 				}
 			});
 
@@ -433,8 +438,15 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			'/pages/employees/edit/' + this.selectedEmployee.id
 		]);
 	}
-	onChartSelected(selectedChart: string) {
-		this.selectedChart = selectedChart;
+
+	async _loadEmployeeStatistics() {
+		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
+			{
+				employeeId: this.selectedEmployee.id,
+				valueDate: this.selectedDate || new Date(),
+				months: this.selectedDate ? 1 : 12
+			}
+		);
 	}
 
 	ngOnDestroy() {

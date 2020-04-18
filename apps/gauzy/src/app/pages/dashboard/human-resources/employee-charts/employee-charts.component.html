@@ -7,8 +7,7 @@
 		class="select-charts"
 		filled
 		status="success"
-		[selected]="selectedChart"
-		(selectedChange)="onChartSelected($event)"
+		[(selected)]="selectedChart"
 		size="tiny"
 	>
 		<nb-option value="1"
@@ -41,13 +40,16 @@
 	</nb-select>
 </div>
 <div class="chart-wrap" [ngSwitch]="selectedChart">
-	<ngx-employee-doughnut-chart
+	<ga-employee-doughnut-chart
+		[employeeStatistics]="employeeStatistics"
 		*ngSwitchCase="2"
-	></ngx-employee-doughnut-chart>
-	<ngx-employee-stacked-bar-chart
+	></ga-employee-doughnut-chart>
+	<ga-employee-stacked-bar-chart
+		[employeeStatistics]="employeeStatistics"
 		*ngSwitchCase="3"
-	></ngx-employee-stacked-bar-chart>
-	<ngx-employee-horizontal-bar-chart
+	></ga-employee-stacked-bar-chart>
+	<ga-employee-horizontal-bar-chart
+		[employeeStatistics]="employeeStatistics"
 		*ngSwitchDefault
-	></ngx-employee-horizontal-bar-chart>
+	></ga-employee-horizontal-bar-chart>
 </div>
