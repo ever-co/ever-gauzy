@@ -2,37 +2,30 @@ import { Connection } from 'typeorm';
 import { Organization } from '@gauzy/models';
 import { ProductCategory } from './product-category.entity';
 
-export const createProductCategories = async (
+export const createDefaultProductCategories = async (
 	connection: Connection,
-	organization: Organization
+	organizations: Organization[]
 ): Promise<ProductCategory[]> => {
-	const productCategories = [];
+	const productCategories: ProductCategory[] = [];
 
-	const productCategory1 = new ProductCategory();
-	productCategory1.name = 'product category 1';
-	productCategory1.organizationId = organization.id;
-	productCategories.push(productCategory1);
+	//TODO: Get this from env ?
+	organizations.forEach((organization) => {
+		for (let i = 0; i < 3; i++) {
+			const category = new ProductCategory();
+			category.name = 'product category 1';
+			category.organizationId = organization.id;
+			productCategories.push(category);
+		}
+	});
 
-	const productCategory2 = new ProductCategory();
-	productCategory2.name = 'product category 2';
-	productCategory2.organizationId = organization.id;
-	productCategories.push(productCategory2);
-
-	const productCategory3 = new ProductCategory();
-	productCategory3.name = 'product category 3';
-	productCategory3.organizationId = organization.id;
-	productCategories.push(productCategory3);
-
-	insertProductCategory(connection, productCategory1);
-	insertProductCategory(connection, productCategory2);
-	insertProductCategory(connection, productCategory3);
+	insertProductCategories(connection, productCategories);
 
 	return productCategories;
 };
 
-const insertProductCategory = async (
+const insertProductCategories = async (
 	connection: Connection,
-	category: ProductCategory
+	categories: ProductCategory[]
 ): Promise<void> => {
-	await connection.manager.save(category);
+	await connection.manager.save(categories);
 };

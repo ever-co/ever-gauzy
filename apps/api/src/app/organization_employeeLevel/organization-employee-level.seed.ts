@@ -4,15 +4,10 @@ import { EmployeeLevel } from './organization-employee-level.entity';
 import { Organization } from '../organization/organization.entity';
 
 export const createEmployeeLevels = async (
-	connection: Connection
+	connection: Connection,
+	organizations: Organization[]
 ): Promise<EmployeeLevelInput[]> => {
 	let employeeLevels: EmployeeLevelInput[] = [];
-
-	const organizations = await connection
-		.createQueryBuilder()
-		.select('organization')
-		.from(Organization, 'organization')
-		.getMany();
 
 	for (let i = 0; i < organizations.length; i++) {
 		const orgArray = [

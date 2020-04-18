@@ -5,33 +5,9 @@ import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
 import { environment as env } from '@env-api/environment';
 import { date as fakerDate } from 'faker';
+import { ISeedUsers } from '@gauzy/models';
 
-export const createEmployees = async (
-	connection: Connection,
-	defaultData: {
-		tenant: Tenant;
-		org: Organization;
-		users: User[];
-	},
-	randomData: {
-		orgs: Organization[];
-		users: User[];
-		tenant: Tenant;
-	}
-): Promise<{ defaultEmployees: Employee[]; randomEmployees: Employee[] }> => {
-	const defaultEmployees: Employee[] = await createDefaultEmployees(
-		connection,
-		defaultData
-	);
-
-	const randomEmployees: Employee[] = await createRandomEmployees(
-		connection,
-		randomData
-	);
-	return { defaultEmployees, randomEmployees };
-};
-
-const createDefaultEmployees = async (
+export const createDefaultEmployees = async (
 	connection: Connection,
 	defaultData: {
 		tenant: Tenant;
@@ -67,45 +43,59 @@ const createDefaultEmployees = async (
 		employees.push(employee);
 		counter++;
 	}
-	console.dir(employees);
+
 	return employees;
 };
 
-const createRandomEmployees = async (
+export const createRandomEmployees = async (
 	connection: Connection,
-	randomData: {
-		orgs: Organization[];
-		users: User[];
-		tenant: Tenant;
-	}
-): Promise<Employee[]> => {
-	let employee: Employee;
-	const employees: Employee[] = [];
-	const randomUsers = randomData.users;
-	const randomOrgs = randomData.orgs;
-	const tenant = randomData.tenant;
+	tenants: Tenant[],
+	tenantOrganizationsMap: Map<Tenant, Organization[]>,
+	tenantUsersMap: Map<Tenant, ISeedUsers>,
+	employeesPerOrganization: number
+): Promise<Map<Tenant, Employee[]>> => {
+	const employeeMap: Map<Tenant, Employee[]> = new Map();
 
-	const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
+	for (const tenant of tenants) {
+		let employee: Employee;
+		const employees: Employee[] = [];
+		const randomUsers = tenantUsersMap.get(tenant).employeeUsers;
+		const randomOrgs = tenantOrganizationsMap.get(tenant);
 
-	for (const orgs of randomOrgs) {
-		if (randomUsers.length) {
-			for (let index = 0; index < averageUsersCount; index++) {
-				employee = new Employee();
-				employee.organization = orgs;
-				employee.user = randomUsers.pop();
-				employee.isActive = true;
-				employee.endWork = null;
-				employee.startedWorkOn = fakerDate.past(index % 5);
-				employee.tenant = tenant;
+		for (const organization of randomOrgs) {
+			if (randomUsers.length) {
+				for (let index = 0; index < employeesPerOrganization; index++) {
+					employee = new Employee();
+					employee.organization = organization;
+					employee.user = randomUsers.pop();
+					employee.isActive = true;
+					employee.endWork = null;
+					employee.startedWorkOn = fakerDate.past(index % 5);
+					employee.tenant = tenant;
 
-				if (employee.user) {
-					await insertEmployee(connection, employee);
-					employees.push(employee);
+					if (employee.user) {
+						employees.push(employee);
+					}
 				}
 			}
 		}
+		employeeMap.set(tenant, employees);
+		await insertEmployees(connection, employees);
 	}
-	return employees;
+
+	return employeeMap;
+};
+
+const insertEmployees = async (
+	connection: Connection,
+	employees: Employee[]
+): Promise<void> => {
+	await connection
+		.createQueryBuilder()
+		.insert()
+		.into(Employee)
+		.values(employees)
+		.execute();
 };
 
 const insertEmployee = async (

@@ -15,35 +15,64 @@ import { environment as env } from '@env-api/environment';
 import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
 import { User } from '../../user/user.entity';
-import { createUsers } from '../../user/user.seed';
+import {
+	createDefaultSuperAdminUsers,
+	createDefaultUsers,
+	createRandomSuperAdminUsers,
+	createRandomUsers
+} from '../../user/user.seed';
 import { Employee } from '../../employee/employee.entity';
-import { createEmployees } from '../../employee/employee.seed';
+import {
+	createDefaultEmployees,
+	createRandomEmployees
+} from '../../employee/employee.seed';
 import { Organization } from '../../organization/organization.entity';
-import { createOrganizations } from '../../organization/organization.seed';
+import {
+	createDefaultOrganizations,
+	createRandomOrganizations
+} from '../../organization/organization.seed';
 import { Income } from '../../income/income.entity';
-import { createIncomes } from '../../income/income.seed';
+import {
+	createDefaultIncomes,
+	createRandomIncomes
+} from '../../income/income.seed';
 import { Expense } from '../../expense/expense.entity';
-import { createExpenses } from '../../expense/expense.seed';
+import {
+	createDefaultExpenses,
+	createRandomExpenses
+} from '../../expense/expense.seed';
 import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
-import { createUsersOrganizations } from '../../user-organization/user-organization.seed';
+import {
+	createDefaultUsersOrganizations,
+	createRandomUsersOrganizations
+} from '../../user-organization/user-organization.seed';
 import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { createCountries } from '../../country/country.seed';
 import { OrganizationTeams } from '../../organization-teams/organization-teams.entity';
 import { Country } from '../../country';
-import { createTeams } from '../../organization-teams/organization-teams.seed';
+import { createDefaultTeams } from '../../organization-teams/organization-teams.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
-import { createTenant } from '../../tenant/tenant.seed';
+import {
+	createDefaultTenants,
+	createRandomTenants
+} from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
 import { createEmailTemplates } from '../../email-template/email-template.seed';
-import { seedEmploymentTypes } from '../../organization/employment-types.seed';
+import {
+	seedDefaultEmploymentTypes,
+	seedRandomEmploymentTypes
+} from '../../organization/employment-types.seed';
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
 import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
-import { createOrganizationVendors } from '../../organization-vendors/organization-vendors.seed';
+import {
+	createOrganizationVendors,
+	createRandomOrganizationVendors
+} from '../../organization-vendors/organization-vendors.seed';
 import { Invoice } from '../../invoice/invoice.entity';
 import { InvoiceItem } from '../../invoice-item/invoice-item.entity';
 import { TimeOffPolicy } from '../../time-off-policy/time-off-policy.entity';
@@ -65,18 +94,21 @@ import { OrganizationRecurringExpense } from '../../organization-recurring-expen
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
-import { createCandidates } from '../../candidate/candidate.seed';
+import {
+	createDefaultCandidates,
+	createRandomCandidates
+} from '../../candidate/candidate.seed';
+import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
 import { CandidateSource } from '../../candidate_source/candidate_source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Tenant } from './../../tenant/tenant.entity';
-import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
 import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
 import { createCandidateCvs } from '../../candidate-cv/candidate-cv.seed';
 import { ProductCategory } from '../../product-category/product-category.entity';
-import { createProductCategories } from '../../product-category/product-category.seed';
+import { createDefaultProductCategories } from '../../product-category/product-category.seed';
 import { ProductType } from '../../product-type/product-type.entity';
-import { createProductTypes } from '../../product-type/product-type.seed';
 import { CandidateEducation } from '../../candidate-education/candidate-education.entity';
+import { createDefaultProductTypes } from '../../product-type/product-type.seed';
 import { Product } from '../../product/product.entity';
 import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
@@ -128,7 +160,8 @@ const allEntities = [
 	Product,
 	ProductVariant,
 	ProductVariantSettings,
-	ProductVariantPrice
+	ProductVariantPrice,
+	CandidateCv
 ];
 
 @Injectable()
@@ -192,135 +225,26 @@ export class SeedDataService {
 				)
 			);
 
-			const cvs: CandidateCv[] = await createCandidateCvs(
-				this.connection
-			);
+			//Seed data which only needs connection
+			await createCandidateCvs(this.connection);
 
-			const tenant = await createTenant(this.connection);
-
-			const sources: CandidateSource[] = await createCandidateSources(
+			const candidateSources = await createCandidateSources(
 				this.connection
 			);
 
 			const roles: Role[] = await createRoles(this.connection);
-			const {
-				superAdminUsers,
-				adminUsers,
-				defaultUsers,
-				randomUsers,
-				defaultCandidateUser,
-				randomCandidateUser
-			} = await createUsers(this.connection, roles, tenant);
-			const {
-				defaultOrganization,
-				randomOrganizations
-			} = await createOrganizations(this.connection, tenant);
-
-			const employees = await createEmployees(
-				this.connection,
-				{
-					tenant,
-					org: defaultOrganization,
-					users: defaultUsers
-				},
-				{
-					orgs: randomOrganizations,
-					users: randomUsers,
-					tenant
-				}
-			);
-
-			await createCandidates(
-				this.connection,
-				{
-					tenant,
-					org: defaultOrganization,
-					users: [...defaultCandidateUser]
-				},
-				{
-					source: sources,
-					cvs: cvs,
-					org: defaultOrganization,
-					orgs: randomOrganizations,
-					users: [...randomCandidateUser]
-				}
-			);
-			await createTeams(
-				this.connection,
-				defaultOrganization,
-				employees.defaultEmployees
-			);
-
-			await createUsersOrganizations(
-				this.connection,
-				{
-					org: defaultOrganization,
-					users: [...defaultUsers, ...adminUsers, ...superAdminUsers]
-				},
-				{
-					orgs: randomOrganizations,
-					users: randomUsers,
-					superAdminUsers
-				}
-			);
-
-			await createIncomes(
-				this.connection,
-				{
-					org: defaultOrganization,
-					employees: [...employees.defaultEmployees]
-				},
-				{
-					orgs: randomOrganizations,
-					employees: [...employees.randomEmployees]
-				}
-			);
-
-			const organizationVendors = await createOrganizationVendors(
-				this.connection,
-				defaultOrganization.id
-			);
-			const categories = await createExpenseCategories(this.connection);
-
-			await createExpenses(
-				this.connection,
-				{
-					org: defaultOrganization,
-					employees: [...employees.defaultEmployees],
-					categories,
-					organizationVendors
-				},
-				{
-					orgs: randomOrganizations,
-					employees: [...employees.randomEmployees],
-					categories,
-					organizationVendors
-				}
-			);
-
-			await createCountries(this.connection);
 
 			await createRolePermissions(this.connection, roles);
 
+			const categories = await createExpenseCategories(this.connection);
+
+			await createCountries(this.connection);
+
 			await createEmailTemplates(this.connection);
 
-			await seedEmploymentTypes(
-				this.connection,
-				[...randomOrganizations, defaultOrganization],
-				employees.defaultEmployees,
-				defaultOrganization
-			);
+			await this.seedDefaultData(roles, categories);
 
-			await createEmployeeLevels(this.connection);
-
-			await createDefaultTimeOffPolicy(this.connection, {
-				org: defaultOrganization,
-				employees: [...employees.defaultEmployees]
-			});
-
-			await createProductCategories(this.connection, defaultOrganization);
-
-			await createProductTypes(this.connection, defaultOrganization);
+			await this.seedRandomData(roles, categories, candidateSources);
 
 			this.log(
 				chalk.green(
@@ -330,6 +254,192 @@ export class SeedDataService {
 		} catch (error) {
 			this.handleError(error);
 		}
+	}
+
+	/**
+	 * Populate default data from env files
+	 */
+	async seedDefaultData(roles: Role[], categories: ExpenseCategory[]) {
+		//Platform level data
+		const tenant = await createDefaultTenants(this.connection);
+
+		//Tenant level inserts which only need connection, tenant, roles
+		const defaultOrganizations = await createDefaultOrganizations(
+			this.connection,
+			tenant
+		);
+
+		const superAdminUsers = await createDefaultSuperAdminUsers(
+			this.connection,
+			roles,
+			tenant
+		);
+
+		//Organization level inserts which need connection, tenant, role, organizations
+
+		await createEmployeeLevels(this.connection, defaultOrganizations);
+
+		await createDefaultProductCategories(
+			this.connection,
+			defaultOrganizations
+		);
+
+		await createDefaultProductTypes(this.connection, defaultOrganizations);
+
+		const organizationVendors = await createOrganizationVendors(
+			this.connection,
+			defaultOrganizations
+		);
+
+		const {
+			adminUsers,
+			defaultEmployeeUsers,
+			defaultCandidateUsers
+		} = await createDefaultUsers(this.connection, roles, tenant);
+
+		await createDefaultUsersOrganizations(this.connection, {
+			organizations: defaultOrganizations,
+			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
+		});
+
+		//User level data that needs connection, tenant, organization, role, users
+		const defaultEmployees = await createDefaultEmployees(this.connection, {
+			tenant,
+			org: defaultOrganizations[0],
+			users: defaultEmployeeUsers
+		});
+
+		await createDefaultCandidates(this.connection, {
+			tenant,
+			org: defaultOrganizations[0],
+			users: [...defaultCandidateUsers]
+		});
+
+		//Employee level data that need connection, tenant, organization, role, users, employee
+		await createDefaultTeams(
+			this.connection,
+			defaultOrganizations[0],
+			defaultEmployees
+		);
+
+		await createDefaultIncomes(this.connection, {
+			org: defaultOrganizations[0],
+			employees: defaultEmployees
+		});
+
+		await createDefaultExpenses(this.connection, {
+			org: defaultOrganizations[0],
+			employees: defaultEmployees,
+			categories,
+			organizationVendors
+		});
+
+		await seedDefaultEmploymentTypes(
+			this.connection,
+			defaultEmployees,
+			defaultOrganizations[0]
+		);
+
+		await createDefaultTimeOffPolicy(this.connection, {
+			org: defaultOrganizations[0],
+			employees: defaultEmployees
+		});
+	}
+
+	/**
+	 * Populate database with random generated data
+	 */
+	async seedRandomData(
+		roles: Role[],
+		categories: ExpenseCategory[],
+		candidateSources: CandidateSource[]
+	) {
+		if (!env.randomSeedConfig) {
+			this.log(
+				chalk.red(
+					`randomSeedConfig NOT FOUND IN ENV. Random data would not be seeded`
+				)
+			);
+			return;
+		}
+
+		//Platform level data which only need database connection
+		const tenants = await createRandomTenants(
+			this.connection,
+			env.randomSeedConfig.tenants || 1
+		);
+
+		//Tenant level inserts which only need connection, tenant, role
+		const tenantOrganizationsMap = await createRandomOrganizations(
+			this.connection,
+			tenants,
+			env.randomSeedConfig.organizationsPerTenant || 1
+		);
+
+		const tenantSuperAdminsMap = await createRandomSuperAdminUsers(
+			this.connection,
+			roles,
+			tenants,
+			1
+		);
+
+		const tenantUsersMap = await createRandomUsers(
+			this.connection,
+			roles,
+			tenants,
+			env.randomSeedConfig.organizationsPerTenant || 1,
+			env.randomSeedConfig.employeesPerOrganization || 1,
+			env.randomSeedConfig.candidatesPerOrganization || 1
+		);
+
+		//Organization level inserts which need connection, tenant, organizations, users
+		await createRandomUsersOrganizations(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			tenantSuperAdminsMap,
+			tenantUsersMap,
+			env.randomSeedConfig.employeesPerOrganization || 1
+		);
+
+		const tenantEmployeeMap = await createRandomEmployees(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			tenantUsersMap,
+			env.randomSeedConfig.employeesPerOrganization || 1
+		);
+
+		await createRandomCandidates(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap,
+			tenantUsersMap,
+			candidateSources,
+			env.randomSeedConfig.candidatesPerOrganization || 1
+		);
+
+		await createRandomIncomes(this.connection, tenants, tenantEmployeeMap);
+
+		const organizationVendorsMap = await createRandomOrganizationVendors(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
+
+		await createRandomExpenses(
+			this.connection,
+			tenants,
+			tenantEmployeeMap,
+			organizationVendorsMap,
+			categories
+		);
+
+		await seedRandomEmploymentTypes(
+			this.connection,
+			tenants,
+			tenantOrganizationsMap
+		);
 	}
 
 	/**
