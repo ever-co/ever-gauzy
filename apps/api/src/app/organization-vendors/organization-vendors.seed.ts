@@ -37,7 +37,7 @@ export const createRandomOrganizationVendors = async (
 		OrganizationVendor[]
 	> = new Map();
 
-	(tenants || []).map((tenant) => {
+	(tenants || []).forEach((tenant) => {
 		const organizations = tenantOrganizationsMap.get(tenant);
 
 		(organizations || []).forEach((organization) => {

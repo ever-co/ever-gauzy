@@ -226,9 +226,7 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-			const cvs: CandidateCv[] = await createCandidateCvs(
-				this.connection
-			);
+			await createCandidateCvs(this.connection);
 
 			const candidateSources = await createCandidateSources(
 				this.connection
