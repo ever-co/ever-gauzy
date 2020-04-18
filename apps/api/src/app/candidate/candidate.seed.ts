@@ -73,8 +73,6 @@ export const createRandomCandidates = async (
 			}
 		}
 	}
-
-	return;
 };
 
 const insertCandidate = async (
