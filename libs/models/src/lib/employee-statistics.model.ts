@@ -19,10 +19,12 @@ export interface MonthAggregatedEmployeeStatisticsFindInput {
 export interface MonthAggregatedEmployeeStatistics {
 	month: number;
 	year: number;
-	expense: number;
 	income: number;
+	expenseWithoutSalary: number;
+	expense: number;
 	profit: number;
 	bonus: number;
+	directIncomeBonus: number;
 }
 
 export interface MonthAggregatedSplitExpense {

@@ -55,7 +55,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	selectedEmployee: SelectedEmployee;
 	selectedOrganization: Organization;
 
-	totalExpense = 0; //Employee Expenses + Org Recurring Expenses + Employee Recurring Expenses
+	//Employee Expenses + Org Recurring Expenses + Employee Recurring Expenses
 	difference = 0; //the profit = totalAllIncome - totalExpense
 	calculatedBonus = 0; //%age of income or profit depending on the settings
 	bonusPercentage = 0; //%age which needs to be calculated
@@ -85,10 +85,15 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	incomePermissionsError = false;
 	expensePermissionError = false;
 
-	selectedChart = '1';
-
 	employeeStatistics: MonthAggregatedEmployeeStatistics[];
-
+	expense = 0;
+	expenseWithoutSalary: number;
+	income: number;
+	nonBonusIncome: number;
+	profit: number;
+	directIncomeBonus: number;
+	bonus: number;
+	salary: number;
 	constructor(
 		private incomeService: IncomeService,
 		private expenseService: ExpensesService,
@@ -112,8 +117,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				}
 
 				if (this.selectedDate) {
-					this._loadEmployeeTotalIncome();
 					this._loadEmployeeTotalExpense();
+					this._loadEmployeeTotalIncome();
 					this._loadEmployeeStatistics();
 				}
 			});
@@ -124,8 +129,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				this.selectedDate = date;
 
 				if (this.selectedEmployee) {
-					this._loadEmployeeTotalIncome();
 					this._loadEmployeeTotalExpense();
+					this._loadEmployeeTotalIncome();
 					this._loadEmployeeStatistics();
 				}
 			});
@@ -138,14 +143,9 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				if (this.selectedOrganization) {
 					this.bonusType = this.selectedOrganization.bonusType;
 					this.bonusPercentage = this.selectedOrganization.bonusPercentage;
+					this.defaultCurrency = this.selectedOrganization.currency;
 				}
 			});
-
-		this.employeeStatisticsService.avarageBonus$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(
-				(calculatedBonus) => (this.avarageBonus = calculatedBonus)
-			);
 
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -260,7 +260,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 
 	private async _loadEmployeeTotalExpense() {
 		await this._loadExpense();
-		const profit = this.totalAllIncome - Math.abs(this.totalExpense);
+		const profit = this.totalAllIncome - Math.abs(this.expense);
 		this.difference = profit;
 		this.calculatedBonus = this.calculateEmployeeBonus(
 			this.bonusType,
@@ -344,12 +344,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 
 			this.totalSalary = onlySalary.reduce((a, b) => a + +b.value, 0);
 
-			this.totalExpense =
-				totalExpense +
-				totalEmployeeRecurringExpense +
-				totalOrgRecurringExpense;
-
-			if (items.length && this.totalExpense !== 0) {
+			if (items.length && this.expense !== 0) {
 				const firstItem = items[0];
 
 				this.expenseCurrency = firstItem.currency;
@@ -447,6 +442,35 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				months: this.selectedDate ? 1 : 12
 			}
 		);
+		this.income = this.employeeStatistics.reduce((a, b) => a + b.income, 0);
+
+		this.expenseWithoutSalary = this.employeeStatistics.reduce(
+			(a, b) => a + b.expenseWithoutSalary,
+			0
+		);
+
+		this.expense = this.employeeStatistics.reduce(
+			(a, b) => a + b.expense,
+			0
+		);
+		this.directIncomeBonus = this.employeeStatistics.reduce(
+			(a, b) => a + b.directIncomeBonus,
+			0
+		);
+		this.nonBonusIncome = this.income - this.directIncomeBonus;
+		this.profit = +this.employeeStatistics
+			.reduce((a, b) => a + b.profit, 0)
+			.toFixed(2);
+
+		this.bonus = +this.employeeStatistics
+			.reduce((a, b) => a + b.bonus, 0)
+			.toFixed(2);
+
+		this.calculatedBonus = +(this.bonus - this.directIncomeBonus).toFixed(
+			2
+		);
+
+		this.salary = +(this.expense - this.expenseWithoutSalary).toFixed(2);
 	}
 
 	ngOnDestroy() {

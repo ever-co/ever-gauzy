@@ -41,12 +41,13 @@ export class ProfitHistoryComponent implements OnInit, OnDestroy {
 		});
 		const combinedTableData = [...incomeList, ...expenseList];
 
-		this.incomeTotal = combinedTableData.reduce((a, b) => a + +b.income, 0);
+		this.incomeTotal = combinedTableData
+			.reduce((a, b) => a + +b.income, 0)
+			.toFixed(2);
 
-		this.expensesTotal = combinedTableData.reduce(
-			(a, b) => a + +b.expense,
-			0
-		);
+		this.expensesTotal = combinedTableData
+			.reduce((a, b) => a + +b.expense, 0)
+			.toFixed(2);
 
 		this.profit = this.incomeTotal - Math.abs(this.expensesTotal);
 
