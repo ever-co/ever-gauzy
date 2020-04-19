@@ -8,7 +8,6 @@ import {
 } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { HubstaffService } from './services/hubstaff.service';
-import { ActivatedRoute } from '@angular/router';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
 import { HttpStatus } from '@gauzy/models';

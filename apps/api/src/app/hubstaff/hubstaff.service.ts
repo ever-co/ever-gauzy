@@ -5,13 +5,11 @@ import {
 	HttpStatus,
 	UnauthorizedException
 } from '@nestjs/common';
-import { map, catchError, switchMap, tap } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import {
 	ICreateIntegrationDto,
 	IIntegration,
 	IntegrationEnum,
-	IHubstaffOrganization,
-	IHubstaffProject,
 	IntegrationEntity,
 	IIntegrationMap,
 	IIntegrationSetting
@@ -28,7 +26,6 @@ import {
 import { OrganizationCreateCommand } from '../organization/commands';
 import { CommandBus } from '@nestjs/cqrs';
 import { OrganizationClientsCreateCommand } from '../organization-clients/commands/organization-clients-create.commant';
-import { Observable } from 'rxjs';
 import { TaskCreateCommand } from '../tasks/commands';
 import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
 import { DeepPartial } from 'typeorm';

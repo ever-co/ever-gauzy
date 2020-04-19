@@ -6,8 +6,6 @@ import {
 	IHubstaffProject,
 	IIntegrationMap
 } from '@gauzy/models';
-import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
 
 @Controller()
 export class HubstaffController {

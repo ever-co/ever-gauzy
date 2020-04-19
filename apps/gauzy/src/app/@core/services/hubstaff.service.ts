@@ -13,7 +13,7 @@ import {
 } from '@gauzy/models';
 import { v4 as uuid } from 'uuid';
 import { Store } from './store.service';
-import { switchMap, tap, map } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { environment } from 'apps/gauzy/src/environments/environment';
 import { cloneDeep } from 'lodash';
 

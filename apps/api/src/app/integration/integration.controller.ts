@@ -1,12 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	Param,
-	Put,
-	Body
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Param } from '@nestjs/common';
 import { CrudController } from '../core';
 import { Integration } from './integration.entity';
 import { IntegrationService } from './integration.service';

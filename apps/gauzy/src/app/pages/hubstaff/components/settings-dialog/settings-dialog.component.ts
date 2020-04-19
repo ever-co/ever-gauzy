@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HubstaffService } from 'apps/gauzy/src/app/@core/services/hubstaff.service';
 import { NbDialogRef } from '@nebular/theme';
-import { IIntegrationEntitySetting } from '@gauzy/models';
 import { Observable } from 'rxjs';
 
 @Component({
