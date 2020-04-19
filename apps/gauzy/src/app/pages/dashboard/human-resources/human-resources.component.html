@@ -195,9 +195,9 @@
 							| translate
 								: {
 										totalAllIncome: defaultCurrency
-											? (totalAllIncome
+											? (income
 											  | currency: defaultCurrency)
-											: totalAllIncome,
+											: income,
 										totalExpense: defaultCurrency
 											? (expense
 											  | currency: defaultCurrency)

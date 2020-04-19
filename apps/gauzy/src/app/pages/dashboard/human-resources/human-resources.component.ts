@@ -147,12 +147,32 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	openProfitDialog() {
+	async openProfitDialog() {
+		const incomes = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
+			{
+				employeeId: this.selectedEmployee.id,
+				valueDate: this.selectedDate || new Date(),
+				months: this.selectedDate ? 1 : 12,
+				type: EmployeeStatisticsHistoryEnum.INCOME
+			}
+		);
+		const expenses = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
+			{
+				employeeId: this.selectedEmployee.id,
+				valueDate: this.selectedDate || new Date(),
+				months: this.selectedDate ? 1 : 12,
+				type: EmployeeStatisticsHistoryEnum.EXPENSES
+			}
+		);
+
 		this.dialogService.open(ProfitHistoryComponent, {
 			context: {
 				recordsData: {
-					income: [],
-					expenses: []
+					incomes,
+					expenses,
+					incomeTotal: this.income,
+					expenseTotal: this.expense,
+					profit: this.profit
 				}
 			}
 		});
