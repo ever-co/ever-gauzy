@@ -5,7 +5,8 @@ import {
 	JoinColumn,
 	ManyToOne,
 	ManyToMany,
-	JoinTable
+	JoinTable,
+	OneToMany
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -23,6 +24,7 @@ import {
 } from '@gauzy/models';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { Employee } from '../employee/employee.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends Base
@@ -87,4 +89,13 @@ export class OrganizationProjects extends Base
 		name: 'organization_project_employee'
 	})
 	members?: Employee[];
+
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany(
+		(type) => InvoiceItem,
+		(invoiceItem) => invoiceItem.project,
+		{ onDelete: 'SET NULL' }
+	)
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
 }

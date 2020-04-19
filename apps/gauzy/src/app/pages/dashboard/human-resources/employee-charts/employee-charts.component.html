@@ -1,0 +1,55 @@
+<div class="charts">
+	<label class="chart-select-label">{{
+		'DASHBOARD_PAGE.CHARTS.CHART_TYPE' | translate
+	}}</label>
+	<nb-select
+		placeholder="Select chart"
+		class="select-charts"
+		filled
+		status="success"
+		[(selected)]="selectedChart"
+		size="tiny"
+	>
+		<nb-option value="1"
+			><img
+				width="auto"
+				height="24"
+				style="margin-right:10px"
+				src="assets/images/others/bar-chart.svg"
+			/>
+			{{ 'DASHBOARD_PAGE.CHARTS.BAR' | translate }}</nb-option
+		>
+		<nb-option value="2"
+			><img
+				width="auto"
+				height="24"
+				style="margin-right:10px"
+				src="assets/images/others/doughnut.svg"
+			/>
+			{{ 'DASHBOARD_PAGE.CHARTS.DOUGHNUT' | translate }}
+		</nb-option>
+		<nb-option value="3"
+			><img
+				width="auto"
+				height="24"
+				style="margin-right:10px"
+				src="assets/images/others/stacked-bar-chart.svg"
+			/>
+			{{ 'DASHBOARD_PAGE.CHARTS.STACKED_BAR' | translate }}</nb-option
+		>
+	</nb-select>
+</div>
+<div class="chart-wrap" [ngSwitch]="selectedChart">
+	<ga-employee-doughnut-chart
+		[employeeStatistics]="employeeStatistics"
+		*ngSwitchCase="2"
+	></ga-employee-doughnut-chart>
+	<ga-employee-stacked-bar-chart
+		[employeeStatistics]="employeeStatistics"
+		*ngSwitchCase="3"
+	></ga-employee-stacked-bar-chart>
+	<ga-employee-horizontal-bar-chart
+		[employeeStatistics]="employeeStatistics"
+		*ngSwitchDefault
+	></ga-employee-horizontal-bar-chart>
+</div>

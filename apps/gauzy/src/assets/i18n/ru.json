@@ -110,6 +110,7 @@
 			"DATE_TYPE": "Тип даты по умолчанию",
 			"ADD_TEAM": "Добавить новую команду",
 			"OFFICIAL_NAME": "Официальное имя",
+			"PROFILE_LINK": "Ссылка на профиль",
 			"START_WEEK_ON": "Начало недели в",
 			"TAX_ID": "Налог ID",
 			"COUNTRY": "Страна",
@@ -178,6 +179,7 @@
 			"ADD_DEPARTMENT": "Добавить департамент",
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
+			"ADD_SKILL": "Добавить навык",
 			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
@@ -186,6 +188,7 @@
 			"ADD_REMOVE_MEMBERS": "Добавление или удаление членов команды",
 			"MEMBERS_COUNT": "Количество участников",
 			"OFFICIAL_NAME": "Введите официальное имя",
+			"PROFILE_LINK": "Введите ссылку на профиль",
 			"START_WEEK_ON": "Начало недели в",
 			"TAX_ID": "Налог ID",
 			"COUNTRY": "Страна",
@@ -227,7 +230,20 @@
 			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации",
-			"ORGANIZATIONS": "Выберите организации"
+			"ORGANIZATIONS": "Выберите организации",
+			"ADD_EDUCATION": {
+				"SCHOOL_NAME": "Название школы",
+				"DEGREE": "Диплом",
+				"FIELD_OF_STUDY": "В. Область(ы) изучения",
+				"DATE_OF_COMPLETION": "Дата завершения",
+				"ADDITIONAL_NOTES": "Дополнительные заметки (опционально)"
+			},
+			"ADD_EXPERIENCE": {
+				"OCCUPATION": "Занятость",
+				"ORGANIZATION": "Название организации",
+				"DURATION": "Продолжительность",
+				"DESCRIPTION": "Описание (необязательно)"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -319,7 +335,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Импорт/Экспорт",
 			"IMPORT": "Импорт",
-			"EXPORT": "Экспорт"
+			"EXPORT": "Экспорт",
+			"MERGE": "объединение данных",
+			"CLEAN_UP": "очистить перед импортом"
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
@@ -340,6 +358,7 @@
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
 		"PAYMENT_GATEWAYS": "Платежные шлюзы",
 		"CUSTOM_SMTP": "Пользовательский SMTP",
+		"INVENTORY": "Инвентаризация",
 		"SALES": "Продажи",
 		"PAYMENTS": "Платежи"
 	},
@@ -512,6 +531,17 @@
 			"RATE": "Тарифы",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Опыт работы",
+			"SKILLS": "Навыки",
+			"EDUCATION": "Образование",
+			"SCHOOL_NAME": "Название школы",
+			"DEGREE": "Диплом",
+			"FIELD": "Поля(и)",
+			"COMPLETION_DATE": "Дата завершения",
+			"ADDITIONAL_NOTES": "Дополнительные заметки",
+			"OCCUPATION": "Занятость",
+			"ORGANIZATION": "Название организации",
+			"DURATION": "Продолжительность",
+			"DESCRIPTION": "Описание",
 			"TASKS": "Задачи",
 			"HISTORY": "История",
 			"DOCUMENTS": "Документы"
@@ -530,6 +560,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Сотрудники",
+		"EDIT_PUBLIC_PAGE": "Изменить публичную страницу",
 		"SELECT_ORGANZIATION": "Пожалуйста, выберите организации из меню выше",
 		"MAIN": "Главная",
 		"DEPARTMENTS": "Департаменты",
@@ -739,6 +770,35 @@
 			"ITEM_RETURNED_BEFORE_ERR": "Товар должен быть возвращен до "
 		}
 	},
+	"INVENTORY_PAGE": {
+		"HEADER": "Инвентаризация",
+		"ADD_INVENTORY_ITEM": "Добавить товар в инвентарь",
+		"EDIT_INVENTPRY_ITEM": "Изменить элемент инвентаря",
+		"INVENTORY_ITEM_DELETED": "Элемент инвентаря удален!",
+		"INVENTORY_ITEM_SAVED": "Элемент инвентаря сохранен!",
+		"NAME": "Имя",
+		"ENABLED": "Включено",
+		"PRODUCT_TYPE": "Тип товара",
+		"PRODUCT_CATEGORY": "Категория товара",
+		"IS_SUBSCRIPTION": "Подписка",
+		"IS_PURCHASE_AUTOMATICALLY": "Автоматически приобретено",
+		"CAN_BE_SOLD": "Можно продать",
+		"CAN_BE_PURCHASED": "Можно купить",
+		"CAN_BE_CHARGED": "Можно заплатить",
+		"CAN_BE_RENTED": "Может быть арендован",
+		"IS_EQUIPMENT": "Оборудование",
+		"INTERNATIONAL_REFERENCE": "Международная ссылка",
+		"CODE": "Код",
+		"NOTES": "Заметки",
+		"DESCRIPTION": "Описание",
+		"UNIT_COST": "Стоимость Единицы",
+		"UNIT_COST_CURRENCY": "Валюта расходов за единицу",
+		"RETAIL_PRICE": "Розничная цена",
+		"RETAIL_PRICE_CURRENCY": "Розничная цена валюты",
+		"QUANTITY": "Количество",
+		"TAXES": "Налоги",
+		"BILLING_INVOICING_POLICY": "Политика выставления счетов"
+	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
 		"ADD_TASKS": "Добавить задачи",
@@ -750,6 +810,11 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
+		"DUE_DATE": "Срок сдачи",
+		"ESTIMATE": "Оценить",
+		"ESTIMATE_DAYS": "Дней",
+		"ESTIMATE_HOURS": "Часы",
+		"ESTIMATE_MINUTES": "Минс",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
@@ -840,14 +905,29 @@
 		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
 		"EDIT_INVOICE": "Изменить счет",
+		"SELECT_EMPLOYEE": "Выбрать сотрудника",
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TASK": "Выберите задачу",
+		"INVOICE_TYPE": {
+			"INVOICE_TYPE": "Тип счета",
+			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
+			"BY_EMPLOYEE_HOURS": "По часам сотрудника",
+			"BY_PROJECT_HOURS": "По часам проекта",
+			"BY_TASK_HOURS": "По часам задания",
+			"DETAILS_INVOICE_ITEMS": "Детали накладной"
+		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",
 			"TASK": "Задача",
 			"NAME": "Имя",
 			"DESCRIPTION": "Описание",
 			"PRICE": "Цена",
-			"QTY": "Кол-во",
-			"TOTAL_VALUE": "Общая стоимость"
+			"QUANTITY": "Количество",
+			"TOTAL_VALUE": "Общая стоимость",
+			"EMPLOYEE": "Сотрудник",
+			"HOURLY_RATE": "Почасовая ставка",
+			"HOURS_WORKED": "Часы работы",
+			"PROJECT": "Проект"
 		}
 	},
 	"HEADER": {
@@ -907,6 +987,9 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"CANDIDATE_SKILL_REQUIRED": "Требуется название навыка",
+			"CANDIDATE_EDUCATION_REQUIRED": "Необходима информация об образовании",
+			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
@@ -955,6 +1038,12 @@
 		},
 		"USER": {
 			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
+		},
+		"CANDIDATE": {
+			"EXPERIENCE": {
+				"INVALID_CANDIDATE_NAME": "Пожалуйста, добавьте название навыка",
+				"INVALID_FORM": "Пожалуйста, заполните форму"
+			}
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "Организация {{ name }} создана.",

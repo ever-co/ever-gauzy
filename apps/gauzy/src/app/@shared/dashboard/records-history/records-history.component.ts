@@ -1,19 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { RecurringExpenseDefaultCategoriesEnum } from '@gauzy/models';
+import {
+	RecurringExpenseDefaultCategoriesEnum,
+	EmployeeStatisticsHistoryEnum as HistoryType,
+	EmployeeStatisticsHistory
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { IncomeExpenseAmountComponent } from '../../table-components/income-amount/income-amount.component';
-
-export enum HistoryType {
-	NON_BONUS_INCOME = 'NON_BONUS_INCOME',
-	BONUS_INCOME = 'BONUS_INCOME',
-	INCOME = 'INCOME',
-	EXPENSES = 'EXPENSES',
-	SALARY = 'SALARY',
-	EXPENSES_WITHOUT_SALARY = 'EXPENSES_WITHOUT_SALARY'
-}
 
 @Component({
 	selector: 'ngx-records-history',
@@ -23,7 +18,7 @@ export enum HistoryType {
 export class RecordsHistoryComponent extends TranslationBaseComponent
 	implements OnInit {
 	type: HistoryType;
-	recordsData: any;
+	recordsData: EmployeeStatisticsHistory[];
 	smartTableSource = new LocalDataSource();
 	translatedType: string;
 
@@ -34,25 +29,18 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		let viewModel: any;
 		this.loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
+		this._populateSmartTable();
+	}
 
+	private _populateSmartTable() {
+		let viewModel: any;
 		switch (this.type) {
 			case HistoryType.INCOME:
 			case HistoryType.BONUS_INCOME:
 			case HistoryType.NON_BONUS_INCOME:
-				viewModel = this.recordsData.map((i) => {
-					return {
-						id: i.id,
-						valueDate: i.valueDate,
-						clientName: i.clientName,
-						clientId: i.clientId,
-						amount: i.amount,
-						notes: i.notes,
-						isBonus: i.isBonus
-					};
-				});
+				viewModel = this.recordsData;
 				this.translatedType = this.getTranslation(
 					'INCOME_PAGE.INCOME'
 				).toUpperCase();
@@ -60,24 +48,35 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 
 			case HistoryType.EXPENSES:
 			case HistoryType.EXPENSES_WITHOUT_SALARY:
-			case HistoryType.SALARY:
-				viewModel = this.recordsData.map((i) => {
-					return {
-						id: i.id,
-						valueDate: i.valueDate,
-						vendorId: i.vendorId,
-						vendorName: i.vendorName,
-						categoryId: i.categoryId,
-						categoryName: i.categoryName,
-						amount: i.amount,
-						notes: i.notes,
-						recurring: i.recurring,
-						source: i.source,
-						originalValue: i.originalValue,
-						employeeCount: i.employeeCount,
-						splitExpense: i.splitExpense
-					};
-				});
+				viewModel = this.recordsData.map(
+					({
+						valueDate,
+						vendorName,
+						categoryName,
+						amount,
+						notes,
+						isRecurring,
+						source,
+						splitExpense
+					}) => {
+						return {
+							valueDate,
+							vendorName,
+							categoryName,
+							amount,
+							notes,
+							recurring: isRecurring,
+							source,
+							splitExpense: splitExpense,
+							originalValue: splitExpense
+								? splitExpense.originalValue
+								: '',
+							employeeCount: splitExpense
+								? splitExpense.employeeCount
+								: ''
+						};
+					}
+				);
 				this.translatedType = this.getTranslation(
 					'EXPENSES_PAGE.EXPENSES'
 				).toUpperCase();
@@ -128,7 +127,6 @@ export class RecordsHistoryComponent extends TranslationBaseComponent
 				};
 				break;
 			case HistoryType.EXPENSES:
-			case HistoryType.SALARY:
 			case HistoryType.EXPENSES_WITHOUT_SALARY:
 				this.smartTableSettings = {
 					actions: false,

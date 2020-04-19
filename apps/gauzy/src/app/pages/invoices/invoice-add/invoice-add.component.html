@@ -37,7 +37,7 @@
 						[items]="clients"
 						bindName="name"
 						placeholder="{{ 'POP_UPS.ALL_CLIENTS' | translate }}"
-						[(ngModel)]="selectedClient"
+						[(ngModel)]="client"
 						formControlName="client"
 						id="inputClient"
 						(change)="selectClient($event)"
@@ -213,31 +213,46 @@
 						<nb-select
 							(selectedChange)="onTypeChange($event)"
 							formControlName="invoiceType"
-							placeholder="Invoice Type"
+							placeholder="{{
+								'INVOICES_PAGE.INVOICE_TYPE.INVOICE_TYPE'
+									| translate
+							}}"
 							fullWidth
 						>
-							<nb-option value="By Employee Hours"
-								>By Employee Hours</nb-option
-							>
-							<nb-option value="By Project Hours"
-								>By Project Hours</nb-option
-							>
-							<nb-option value="By Task Hours"
-								>By Task Hours</nb-option
-							>
-							<nb-option value="Details Invoice Items"
-								>Details Invoice Items</nb-option
-							>
+							<nb-option value="By Employee Hours">
+								{{
+									'INVOICES_PAGE.INVOICE_TYPE.BY_EMPLOYEE_HOURS'
+										| translate
+								}}
+							</nb-option>
+							<nb-option value="By Project Hours">
+								{{
+									'INVOICES_PAGE.INVOICE_TYPE.BY_PROJECT_HOURS'
+										| translate
+								}}
+							</nb-option>
+							<nb-option value="By Task Hours">
+								{{
+									'INVOICES_PAGE.INVOICE_TYPE.BY_TASK_HOURS'
+										| translate
+								}}
+							</nb-option>
+							<nb-option value="Details Invoice Items">
+								{{
+									'INVOICES_PAGE.INVOICE_TYPE.DETAILS_INVOICE_ITEMS'
+										| translate
+								}}
+							</nb-option>
 						</nb-select>
 					</div>
 				</div>
 				<div class="col-sm-3" *ngIf="isEmployeeHourTable">
 					<div class="form-group">
-						<ga-employee-selector
-							#employeeSelector
-							class="employees"
+						<ga-employee-multi-select
+							[allEmployees]="employees"
+							(selectedChange)="onMembersSelected($event)"
 						>
-						</ga-employee-selector>
+						</ga-employee-multi-select>
 					</div>
 				</div>
 				<div class="col-sm-3" *ngIf="isProjectHourTable">
@@ -245,8 +260,9 @@
 						<ng-select
 							[(items)]="projects"
 							bindName="name"
-							placeholder="All Projects"
-							[(ngModel)]="selectedProject"
+							placeholder="{{
+								'INVOICES_PAGE.SELECT_PROJECT' | translate
+							}}"
 							formControlName="project"
 							id="inputProject"
 							(change)="selectProject($event)"
@@ -272,8 +288,9 @@
 						<ng-select
 							[(items)]="tasks"
 							bindName="title"
-							placeholder="Select a Task"
-							[(ngModel)]="selectedTask"
+							placeholder="{{
+								'INVOICES_PAGE.SELECT_TASK' | translate
+							}}"
 							formControlName="task"
 							id="inputTask"
 							(change)="selectTask($event)"
@@ -303,20 +320,24 @@
 							status="success"
 							nbButton
 						>
-							Generate Invoice Items
+							{{
+								'INVOICES_PAGE.INVOICE_TYPE.GENERATE_INVOICE_ITEMS'
+									| translate
+							}}
 						</button>
 					</div>
 				</div>
 			</div>
 		</form>
 		<ng2-smart-table
-			*ngIf="loadedNumber && shouldLoadTable"
+			*ngIf="shouldLoadTable"
 			class="table"
-			(createConfirm)="onCreateConfirm($event)"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
-			#invoceiItemTable
+			(createConfirm)="onCreateConfirm($event)"
+			(editConfirm)="onEditConfirm($event)"
+			#invoiceItemTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>
@@ -324,7 +345,12 @@
 		<button status="danger" class="mr-3" nbButton (click)="cancel()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="addInvoice()" status="success" nbButton>
+		<button
+			(click)="addInvoice()"
+			status="success"
+			[disabled]="form.invalid"
+			nbButton
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

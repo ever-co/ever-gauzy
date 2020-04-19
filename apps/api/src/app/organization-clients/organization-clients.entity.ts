@@ -26,6 +26,7 @@ import {
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
+import { Invoice } from '../invoice/invoice.entity';
 
 @Entity('organization_client')
 export class OrganizationClients extends Base implements IOrganizationClients {
@@ -113,6 +114,14 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
+
+	@ApiPropertyOptional({ type: Invoice, isArray: true })
+	@OneToMany(
+		(type) => Invoice,
+		(invoices) => invoices.toClient
+	)
+	@JoinColumn()
+	invoices?: Invoice[];
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()

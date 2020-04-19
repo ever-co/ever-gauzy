@@ -295,6 +295,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Inventory',
+					icon: 'grid-outline',
+					link: '/pages/organization/inventory',
+					data: {
+						translated: false,
+						// permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						translationKey: 'MENU.INVENTORY'
+					}
+				},
+				{
 					title: 'Tags',
 					icon: 'pricetags-outline',
 					link: '/pages/organization/tags',
@@ -488,12 +498,31 @@ export class PagesComponent implements OnInit, OnDestroy {
 				},
 				{
 					title: 'Import/Export',
-					icon: 'arrow-circle-down-outline',
-					link: '/pages/settings/import-export',
+					icon: 'flip-outline',
 					data: {
 						translated: false,
 						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
-					}
+					},
+					children: [
+						{
+							title: 'Export',
+							icon: 'download-outline',
+							link: '/pages/settings/import-export/export',
+							data: {
+								translated: false,
+								translationKey: 'MENU.IMPORT_EXPORT.EXPORT'
+							}
+						},
+						{
+							title: 'Import',
+							icon: 'upload-outline',
+							link: '/pages/settings/general',
+							data: {
+								translated: false,
+								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'
+							}
+						}
+					]
 				},
 				{
 					title: 'Payment Gateways',

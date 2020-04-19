@@ -1,4 +1,4 @@
-import { InviteAcceptInput as IInviteAcceptInput } from '@gauzy/models';
+import { IInviteAcceptInput } from '@gauzy/models';
 import { ICommand } from '@nestjs/cqrs';
 
 export class InviteAcceptEmployeeCommand implements ICommand {

@@ -3,11 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import {
-	DefaultUser,
-	CurrenciesEnum,
-	DefaultValueDateTypeEnum
-} from '@gauzy/models';
+import { IDefaultUser, IDefaultOrganization } from '@gauzy/models';
 import { IFacebookConfig } from './IFacebookConfig';
 import { IGoogleConfig } from './IGoogleConfig';
 
@@ -41,23 +37,26 @@ export interface IEnvironment {
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
 
-	defaultAdmins: DefaultUser[];
-	defaultSuperAdmins: DefaultUser[];
+	defaultAdmins: IDefaultUser[];
+	defaultSuperAdmins: IDefaultUser[];
 
-	defaultEmployees?: DefaultUser[];
-	defaultCandidates?: DefaultUser[];
+	defaultEmployees?: IDefaultUser[];
+	defaultCandidates?: IDefaultUser[];
 
-	defaultOrganization?: {
-		name: string;
-		currency: CurrenciesEnum;
-		defaultValueDateType: DefaultValueDateTypeEnum;
-		imageUrl: string;
-	};
+	defaultOrganizations?: IDefaultOrganization[];
 
 	defaultTeams?: {
 		name: string;
 		defaultMembers: string[];
 	}[];
+
+	randomSeedConfig?: {
+		tenants: number; //The number of random tenants to be seeded.
+		organizationsPerTenant: number; //No of random organizations seeded will be (organizationsPerTenant * tenants)
+		employeesPerOrganization: number; //No of random employees seeded will be (employeesPerOrganization * organizationsPerTenant * tenants)
+		candidatesPerOrganization: number; //No of random employees seeded will be (candidatesPerOrganization * organizationsPerTenant * tenants)
+	};
+
 	sentry?: {
 		dns: string;
 	};

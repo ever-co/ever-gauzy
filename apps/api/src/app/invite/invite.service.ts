@@ -1,14 +1,14 @@
 import { environment as env } from '@env-api/environment';
 import {
-	CreateEmailInvitesInput,
-	CreateEmailInvitesOutput,
+	ICreateEmailInvitesInput,
+	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
 	OrganizationProjects as IOrganizationProjects,
 	OrganizationClients as IOrganizationClients,
 	OrganizationDepartment as IOrganizationDepartment,
 	Role as IOrganizationRole,
 	User,
-	CreateOrganizationClientInviteInput,
+	ICreateOrganizationClientInviteInput,
 	RolesEnum
 } from '@gauzy/models';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
@@ -92,9 +92,9 @@ export class InviteService extends CrudService<Invite> {
 	 * @param emailInvites Emails Ids to send invite
 	 */
 	async createBulk(
-		emailInvites: CreateEmailInvitesInput,
+		emailInvites: ICreateEmailInvitesInput,
 		originUrl: string
-	): Promise<CreateEmailInvitesOutput> {
+	): Promise<ICreateEmailInvitesOutput> {
 		const invites: Invite[] = [];
 
 		const {
@@ -209,7 +209,7 @@ export class InviteService extends CrudService<Invite> {
 	}
 
 	async createOrganizationClientInvite(
-		inviteInput: CreateOrganizationClientInviteInput
+		inviteInput: ICreateOrganizationClientInviteInput
 	): Promise<Invite> {
 		const {
 			emailId,

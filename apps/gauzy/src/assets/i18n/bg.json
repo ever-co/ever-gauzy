@@ -110,6 +110,7 @@
 			"DATE_TYPE": "Дата по подразбиране",
 			"ADD_TEAM": "Добавяне на нов отбор",
 			"OFFICIAL_NAME": "Официално Име",
+			"PROFILE_LINK": "Profile Link",
 			"START_WEEK_ON": "Започни седмицата на",
 			"TAX_ID": "Таксa ID",
 			"COUNTRY": "Държава",
@@ -178,6 +179,7 @@
 			"ADD_DEPARTMENT": "Добави Отдел",
 			"ADD_POSITION": "Добави позиция",
 			"ADD_VENDOR": "Добави доставчик",
+			"ADD_SKILL": "Add skill",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Клиенти",
 			"START_DATE_PROJECT": "Начало на проекта (опция)",
@@ -186,6 +188,7 @@
 			"ADD_REMOVE_MEMBERS": "Добавяне или премахване на членове",
 			"MEMBERS_COUNT": "Брой членове",
 			"OFFICIAL_NAME": "Добави официално име",
+			"PROFILE_LINK": "Enter Profile Link",
 			"START_WEEK_ON": "Започни седмицата на",
 			"TAX_ID": "Такса ID",
 			"COUNTRY": "Държава",
@@ -227,7 +230,20 @@
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
-			"ORGANIZATIONS": "Choose Organizations"
+			"ORGANIZATIONS": "Choose Organizations",
+			"ADD_EDUCATION": {
+				"SCHOOL_NAME": "School name",
+				"DEGREE": "Degree/Diploma",
+				"FIELD_OF_STUDY": "Field(s) of study",
+				"DATE_OF_COMPLETION": "Date of completion",
+				"ADDITIONAL_NOTES": "Additional notes (optional)"
+			},
+			"ADD_EXPERIENCE": {
+				"OCCUPATION": "Occupation",
+				"ORGANIZATION": "Organization name",
+				"DURATION": "Duration",
+				"DESCRIPTION": "Description (optional)"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -319,7 +335,9 @@
 		"IMPORT_EXPORT": {
 			"IMPORT_EXPORT": "Import/Export",
 			"IMPORT": "Import",
-			"EXPORT": "Export"
+			"EXPORT": "Export",
+			"MERGE": "merge data",
+			"CLEAN_UP": "clean up before import"
 		},
 		"TAGS": "Тагове",
 		"EQUIPMENT": "Equipment",
@@ -340,6 +358,7 @@
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
 		"CUSTOM_SMTP": "Custom SMTP",
+		"INVENTORY": "Inventory",
 		"SALES": "Sales",
 		"PAYMENTS": "Payments"
 	},
@@ -512,6 +531,17 @@
 			"RATE": "Rates",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
+			"SKILLS": "Skills",
+			"EDUCATION": "Education",
+			"SCHOOL_NAME": "School name",
+			"DEGREE": "Degree/Diploma",
+			"FIELD": "Field(s)",
+			"COMPLETION_DATE": "Date of completion",
+			"ADDITIONAL_NOTES": "Additional notes",
+			"OCCUPATION": "Occupation",
+			"ORGANIZATION": "Organization name",
+			"DURATION": "Duration",
+			"DESCRIPTION": "Description",
 			"TASKS": "Tasks",
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents"
@@ -530,6 +560,7 @@
 	"ORGANIZATIONS_PAGE": {
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
+		"EDIT_PUBLIC_PAGE": "Edit Public Page",
 		"SELECT_ORGANZIATION": "Моля, изберете организация от менюто по-горе.",
 		"MAIN": "Основни",
 		"DEPARTMENTS": "Отдели",
@@ -739,6 +770,35 @@
 			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
 		}
 	},
+	"INVENTORY_PAGE": {
+		"HEADER": "Inventory",
+		"ADD_INVENTORY_ITEM": "Add inventory item",
+		"EDIT_INVENTPRY_ITEM": "Edit inventory item",
+		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
+		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
+		"NAME": "Име",
+		"ENABLED": "Enabled",
+		"PRODUCT_TYPE": "Product type",
+		"PRODUCT_CATEGORY": "Product category",
+		"IS_SUBSCRIPTION": "Is subscription",
+		"IS_PURCHASE_AUTOMATICALLY": "Is purchased automatically",
+		"CAN_BE_SOLD": "Can be sold",
+		"CAN_BE_PURCHASED": "Can be purchased",
+		"CAN_BE_CHARGED": "Can be charged",
+		"CAN_BE_RENTED": "Can be rented",
+		"IS_EQUIPMENT": "Is equipment",
+		"INTERNATIONAL_REFERENCE": "International reference",
+		"CODE": "Code",
+		"NOTES": "Бележки",
+		"DESCRIPTION": "Description",
+		"UNIT_COST": "Unit Cost",
+		"UNIT_COST_CURRENCY": "Unit cost currency",
+		"RETAIL_PRICE": "Retail price",
+		"RETAIL_PRICE_CURRENCY": "Retail price currency",
+		"QUANTITY": "Quantity",
+		"TAXES": "Taxes",
+		"BILLING_INVOICING_POLICY": "Billing invoicing policy"
+	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
 		"ADD_TASKS": "Add Tasks",
@@ -750,6 +810,11 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
+		"DUE_DATE": "Due Date",
+		"ESTIMATE": "Estimate",
+		"ESTIMATE_DAYS": "Days",
+		"ESTIMATE_HOURS": "Hours",
+		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Статус"
 	},
 	"USERS_PAGE": {
@@ -840,14 +905,29 @@
 		"INVOICES_SELECT_CLIENT": "Клиент",
 		"ADD_INVOICE": "Add Invoice",
 		"EDIT_INVOICE": "Edit Invoice",
+		"SELECT_EMPLOYEE": "Select Employee",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"INVOICE_TYPE": {
+			"INVOICE_TYPE": "Invoice Type",
+			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
+			"BY_EMPLOYEE_HOURS": "By Employee Hours",
+			"BY_PROJECT_HOURS": "By Project Hours",
+			"BY_TASK_HOURS": "By Task Hours",
+			"DETAILS_INVOICE_ITEMS": "Details Invoice Items"
+		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
 			"TASK": "Задача",
 			"NAME": "Име",
 			"DESCRIPTION": "Description",
 			"PRICE": "Price",
-			"QTY": "Qty",
-			"TOTAL_VALUE": "Total Value"
+			"QUANTITY": "Quantity",
+			"TOTAL_VALUE": "Total Value",
+			"EMPLOYEE": "Служител",
+			"HOURLY_RATE": "Hourly Rate",
+			"HOURS_WORKED": "Hours Worked",
+			"PROJECT": "Проект"
 		}
 	},
 	"HEADER": {
@@ -907,6 +987,9 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
+			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
+			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
+			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -955,6 +1038,12 @@
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
+		},
+		"CANDIDATE": {
+			"EXPERIENCE": {
+				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
+				"INVALID_FORM": "Please fill the form"
+			}
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",

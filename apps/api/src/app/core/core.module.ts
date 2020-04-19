@@ -48,6 +48,13 @@ import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
+import { Product } from '../product/product.entity';
+import { ProductOption } from '../product-option/product-option.entity';
+import { ProductVariantSettings } from '../product-settings/product-settings.entity';
+import { ProductType } from '../product-type/product-type.entity';
+import { ProductVariant } from '../product-variant/product-variant.entity';
+import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
+import { ProductCategory } from '../product-category/product-category.entity';
 import { CandidateSource } from '../candidate_source/candidate_source.entity';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 import { Integration } from '../integration/integration.entity';
@@ -55,6 +62,8 @@ import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
+import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 
 const entities = [
 	Invite,
@@ -96,7 +105,16 @@ const entities = [
 	Activity,
 	Screenshot,
 	ExpenseCategory,
+	ProductVariantPrice,
+	ProductOption,
+	ProductVariantSettings,
+	ProductType,
+	ProductCategory,
+	ProductVariant,
+	Product,
 	CandidateSource,
+	CandidateCv,
+	CandidateEducation,
 	IntegrationSetting,
 	Integration,
 	IntegrationMap,

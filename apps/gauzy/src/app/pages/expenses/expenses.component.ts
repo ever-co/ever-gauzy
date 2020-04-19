@@ -203,8 +203,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 					this.openAddExpenseDialog();
 				}
 			});
-
-		this.loading = false;
 	}
 
 	canShowTable() {
@@ -247,7 +245,9 @@ export class ExpensesComponent extends TranslationBaseComponent
 
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
-					name: this.employeeName
+					name: formData.employee
+						? `${formData.employee.firstName} ${formData.employee.lastName}`
+						: this.getTranslation('SM_TABLE.EMPLOYEE')
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
@@ -471,6 +471,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					this.store.selectedEmployee.lastName
 			  ).trim()
 			: 'All Employees';
+		this.loading = false;
 	}
 
 	_applyTranslationOnSmartTable() {

@@ -7,11 +7,14 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import * as moment from 'moment';
 
 const initialTaskValue = {
 	title: '',
 	project: null,
 	status: '',
+	estimate: null,
+	dueDate: null,
 	description: '',
 	tags: null
 };
@@ -61,11 +64,31 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		if (items) this.projects = items;
 	}
 
-	initializeForm({ title, description, project, status, tags }: Task) {
+	initializeForm({
+		title,
+		description,
+		project,
+		status,
+		estimate,
+		dueDate,
+		tags
+	}: Task) {
+		const duration = moment.duration(estimate, 'seconds');
+
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
 			status: [status],
+			estimateDays: [duration.days() || ''],
+			estimateHours: [
+				duration.hours() || '',
+				[Validators.min(0), Validators.max(23)]
+			],
+			estimateMinutes: [
+				duration.minutes() || '',
+				[Validators.min(0), Validators.max(59)]
+			],
+			dueDate: [dueDate],
 			description: [description],
 			tags: []
 		});

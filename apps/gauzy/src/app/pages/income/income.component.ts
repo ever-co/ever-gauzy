@@ -130,8 +130,6 @@ export class IncomeComponent extends TranslationBaseComponent
 					this.addIncome();
 				}
 			});
-
-		this.loading = false;
 	}
 
 	canShowTable() {
@@ -216,7 +214,9 @@ export class IncomeComponent extends TranslationBaseComponent
 
 				this.toastrService.primary(
 					this.getTranslation('NOTES.INCOME.ADD_INCOME', {
-						name: this.employeeName
+						name: result.employee
+							? `${result.employee.firstName} ${result.employee.lastName}`
+							: this.getTranslation('SM_TABLE.EMPLOYEE')
 					}),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
@@ -363,6 +363,7 @@ export class IncomeComponent extends TranslationBaseComponent
 			  ).trim()
 			: '';
 		this.smartTableSource.load(items);
+		this.loading = false;
 		this.showTable = true;
 	}
 

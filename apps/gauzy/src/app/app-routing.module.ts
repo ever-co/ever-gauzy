@@ -34,6 +34,12 @@ const routes: Routes = [
 		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
+		path: 'share',
+		loadChildren: () =>
+			import('./share/share.module').then((m) => m.ShareModule),
+		canActivate: []
+	},
+	{
 		path: 'auth',
 		component: NbAuthComponent,
 		canActivate: [AppModuleGuard],
