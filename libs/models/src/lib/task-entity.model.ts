@@ -13,3 +13,5 @@ export interface Task extends IBaseEntityModel {
 export interface GetTaskOptions {
 	projectId?: string;
 }
+
+export interface ITaskCreateInput extends Task {}

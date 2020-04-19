@@ -6,6 +6,8 @@ import {
 	IHubstaffProject,
 	IIntegrationMap
 } from '@gauzy/models';
+import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 @Controller()
 export class HubstaffController {
@@ -18,6 +20,13 @@ export class HubstaffController {
 		return this._hubstaffService.getHubstaffToken(integrationId);
 	}
 
+	@Get('/refresh-token/:integrationId')
+	refreshHubstaffToken(
+		@Param('integrationId') integrationId: string
+	): Promise<string> {
+		return this._hubstaffService.refreshToken(integrationId);
+	}
+
 	@Post('/add-integration')
 	addIntegration(@Body() body): Promise<IIntegration> {
 		return this._hubstaffService.addIntegration(body);
@@ -26,20 +35,25 @@ export class HubstaffController {
 	@Post('/organizations/:integrationId')
 	async getOrganizations(
 		@Param('integrationId') integrationId: string,
-		@Body() token
+		@Body() body
 	): Promise<IHubstaffOrganization[]> {
-		return await this._hubstaffService.getOrganizations(
-			token,
-			integrationId
+		const { organizations } = await this._hubstaffService.fetchIntegration(
+			'https://api.hubstaff.com/v2/organizations',
+			body.token
 		);
+		return organizations;
 	}
 
 	@Post('/projects/:organizationId')
 	async getProjects(
 		@Param('organizationId') organizationId: string,
-		@Body() { token }
+		@Body() { token, integrationId }
 	): Promise<IHubstaffProject[]> {
-		return await this._hubstaffService.getProjects(organizationId, token);
+		const { projects } = await this._hubstaffService.fetchIntegration(
+			`https://api.hubstaff.com/v2/organizations/${organizationId}/projects?status=all`,
+			token
+		);
+		return projects;
 	}
 
 	@Post('/sync-projects/:integrationId')
@@ -48,6 +62,28 @@ export class HubstaffController {
 		@Body() body
 	): Promise<IIntegrationMap[]> {
 		return await this._hubstaffService.syncProjects({
+			integrationId,
+			...body
+		});
+	}
+
+	@Post('/sync-organizations/:integrationId')
+	async syncOrganizations(
+		@Param('integrationId') integrationId: string,
+		@Body() body
+	): Promise<IIntegrationMap[]> {
+		return await this._hubstaffService.syncOrganizations({
+			integrationId,
+			...body
+		});
+	}
+
+	@Post('/auto-sync/:integrationId')
+	async autoSync(
+		@Param('integrationId') integrationId: string,
+		@Body() body
+	): Promise<any> {
+		return await this._hubstaffService.autoSync({
 			integrationId,
 			...body
 		});

@@ -31,7 +31,8 @@
 		"REQUEST": "Request",
 		"HISTORY": "History",
 		"SYNC": "Sync",
-		"UPDATE": "Update"
+		"UPDATE": "Update",
+		"AUTO_SYNC": "Auto sync"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -357,12 +358,15 @@
 		"RUSSIAN": "Russian"
 	},
 	"INTEGRATIONS": {
+		"AVALIABLE_INTEGRATIONS": "Avaliable integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
 			"NAME": "Hubstaff",
 			"SELECT_ORGANIZATION": "Select Organization",
-			"SYNCED_PROJECTS": "Projects synced"
+			"SYNCED_PROJECTS": "Projects synced",
+			"SETTINGS_UPDATED": "Updated settings for integration",
+			"SYNCED_ENTITIES": "Auto synced entities"
 		}
 	},
 	"DASHBOARD_PAGE": {
