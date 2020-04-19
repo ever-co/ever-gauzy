@@ -1,47 +1,19 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IncomeService } from '../../../@core/services/income.service';
-import { takeUntil } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
-import { Subject } from 'rxjs';
-import { ExpensesService } from '../../../@core/services/expenses.service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import {
-	Income,
-	Expense,
-	EmployeeRecurringExpense,
-	OrganizationRecurringExpense,
 	BonusTypeEnum,
-	Organization,
-	PermissionsEnum,
-	DEFAULT_PROFIT_BASED_BONUS,
-	DEFAULT_REVENUE_BASED_BONUS,
-	OrganizationRecurringExpenseForEmployeeOutput,
-	SplitExpenseOutput,
-	RecurringExpenseDefaultCategoriesEnum,
-	MonthAggregatedEmployeeStatistics
+	EmployeeStatisticsHistoryEnum,
+	MonthAggregatedEmployeeStatistics,
+	Organization
 } from '@gauzy/models';
 import { NbDialogService } from '@nebular/theme';
-import {
-	RecordsHistoryComponent,
-	HistoryType
-} from '../../../@shared/dashboard/records-history/records-history.component';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
-import { EmployeeRecurringExpenseService } from '../../../@core/services/employee-recurring-expense.service';
-import { OrganizationRecurringExpenseService } from '../../../@core/services/organization-recurring-expense.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
+import { Store } from '../../../@core/services/store.service';
 import { ProfitHistoryComponent } from '../../../@shared/dashboard/profit-history/profit-history.component';
-import { Router } from '@angular/router';
-
-export interface ViewDashboardExpenseHistory {
-	valueDate?: Date;
-	vendorName?: string;
-	categoryName: string;
-	amount: number;
-	notes?: string;
-	recurring: boolean;
-	source: 'employee' | 'org';
-	originalValue?: number;
-	employeeCount?: number;
-}
+import { RecordsHistoryComponent } from '../../../@shared/dashboard/records-history/records-history.component';
+import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 @Component({
 	selector: 'ga-human-resources',
 	templateUrl: './human-resources.component.html',
@@ -54,29 +26,6 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	selectedDate: Date;
 	selectedEmployee: SelectedEmployee;
 	selectedOrganization: Organization;
-
-	//Employee Expenses + Org Recurring Expenses + Employee Recurring Expenses
-	difference = 0; //the profit = totalAllIncome - totalExpense
-	calculatedBonus = 0; //%age of income or profit depending on the settings
-	bonusPercentage = 0; //%age which needs to be calculated
-	totalBonus = 0; //calculatedBonus + totalBonusIncome
-	bonusType: string; //either income or profit based
-	totalSalary = 0; //filtered from employee recurring expenses with category name SALARY
-
-	//Total Income = nonBonusIncome + totalBonusIncome
-	totalNonBonusIncome = 0;
-	totalBonusIncome = 0;
-	totalAllIncome = 0;
-	nonBonusIncomeData: Income[]; //Filtered from allIncomeData
-	bonusIncomeData: Income[]; //Filtered from allIncomeData
-	allIncomeData: Income[]; //Populated from GET call
-	salaryData: ViewDashboardExpenseHistory[];
-
-	avarageBonus: number;
-	expensesData: Expense[];
-	expenseData: ViewDashboardExpenseHistory[];
-	employeeRecurringExpense: EmployeeRecurringExpense[];
-	orgRecurringExpense: OrganizationRecurringExpense[];
 
 	incomeCurrency: string;
 	expenseCurrency: string;
@@ -93,16 +42,16 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	profit: number;
 	directIncomeBonus: number;
 	bonus: number;
+	calculatedBonus: number;
+	bonusType: BonusTypeEnum;
+	bonusPercentage: number;
 	salary: number;
+
 	constructor(
-		private incomeService: IncomeService,
-		private expenseService: ExpensesService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		private router: Router,
-		private employeeStatisticsService: EmployeeStatisticsService,
-		private employeeRecurringExpenseService: EmployeeRecurringExpenseService,
-		private organizationRecurringExpenseService: OrganizationRecurringExpenseService
+		private employeeStatisticsService: EmployeeStatisticsService
 	) {}
 
 	async ngOnInit() {
@@ -117,8 +66,6 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				}
 
 				if (this.selectedDate) {
-					this._loadEmployeeTotalExpense();
-					this._loadEmployeeTotalIncome();
 					this._loadEmployeeStatistics();
 				}
 			});
@@ -129,8 +76,6 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				this.selectedDate = date;
 
 				if (this.selectedEmployee) {
-					this._loadEmployeeTotalExpense();
-					this._loadEmployeeTotalIncome();
 					this._loadEmployeeStatistics();
 				}
 			});
@@ -141,7 +86,8 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				this.selectedOrganization = organization;
 
 				if (this.selectedOrganization) {
-					this.bonusType = this.selectedOrganization.bonusType;
+					this.bonusType = this.selectedOrganization
+						.bonusType as BonusTypeEnum;
 					this.bonusPercentage = this.selectedOrganization.bonusPercentage;
 					this.defaultCurrency = this.selectedOrganization.currency;
 				}
@@ -158,282 +104,6 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		this.loading = false;
 	}
 
-	navigateToAccounting() {
-		this.router.navigate(['/pages/dashboard/accounting']);
-	}
-
-	openHistoryDialog(type: HistoryType) {
-		this.dialogService.open(RecordsHistoryComponent, {
-			context: {
-				type,
-				recordsData: this.getRecordsData(type)
-			}
-		});
-	}
-
-	getRecordsData(type: HistoryType) {
-		switch (type) {
-			case HistoryType.BONUS_INCOME:
-				return this.bonusIncomeData;
-			case HistoryType.NON_BONUS_INCOME:
-				return this.nonBonusIncomeData;
-			case HistoryType.INCOME:
-				return this.allIncomeData;
-			case HistoryType.EXPENSES:
-				return this.expenseData;
-			case HistoryType.SALARY:
-				return this.salaryData;
-			case HistoryType.EXPENSES_WITHOUT_SALARY:
-				return this.expenseData.filter(
-					(d) =>
-						d.categoryName !==
-						RecurringExpenseDefaultCategoriesEnum.SALARY
-				);
-			default:
-				return [];
-		}
-	}
-
-	openProfitDialog() {
-		this.dialogService.open(ProfitHistoryComponent, {
-			context: {
-				recordsData: {
-					income: this.allIncomeData as Income[],
-					expenses: this.expenseData
-				}
-			}
-		});
-	}
-
-	private async _loadEmployeeTotalIncome() {
-		try {
-			this.incomePermissionsError = false;
-			const { items } = this.store.hasPermission(
-				PermissionsEnum.ORG_INCOMES_VIEW
-			)
-				? await this.incomeService.getAll(
-						['employee', 'organization'],
-						{
-							employee: {
-								id: this.selectedEmployee.id
-							}
-						},
-						this.selectedDate
-				  )
-				: await this.incomeService.getMyAll(
-						['employee', 'organization'],
-						{},
-						this.selectedDate
-				  );
-
-			this.allIncomeData = items || [];
-
-			this.bonusIncomeData = this.allIncomeData.filter((d) => d.isBonus);
-			this.nonBonusIncomeData =
-				this.bonusIncomeData && this.bonusIncomeData.length > 0
-					? this.allIncomeData.filter((d) => !d.isBonus)
-					: this.allIncomeData;
-		} catch (error) {
-			this.allIncomeData = [];
-			this.incomePermissionsError = true;
-		}
-
-		this.totalAllIncome = this.allIncomeData.reduce(
-			(a, b) => a + +b.amount,
-			0
-		);
-
-		this.totalBonusIncome = (this.bonusIncomeData || []).reduce(
-			(a, b) => a + +b.amount,
-			0
-		);
-
-		this.totalNonBonusIncome = this.totalAllIncome - this.totalBonusIncome;
-
-		if (this.allIncomeData.length && this.totalAllIncome !== 0) {
-			const firstItem = this.allIncomeData[0];
-
-			this.incomeCurrency = firstItem.currency;
-			this.defaultCurrency = firstItem.organization.currency;
-		}
-	}
-
-	private async _loadEmployeeTotalExpense() {
-		await this._loadExpense();
-		const profit = this.totalAllIncome - Math.abs(this.expense);
-		this.difference = profit;
-		this.calculatedBonus = this.calculateEmployeeBonus(
-			this.bonusType,
-			this.bonusPercentage,
-			this.totalAllIncome,
-			profit
-		);
-		this.totalBonus =
-			Math.floor((this.calculatedBonus + this.totalBonusIncome) * 100) /
-			100;
-	}
-
-	private async _loadExpense() {
-		try {
-			this.expensePermissionError = false;
-			const { items } = this.store.hasPermission(
-				PermissionsEnum.ORG_EXPENSES_VIEW
-			)
-				? await this.expenseService.getAllWithSplitExpenses(
-						this.selectedEmployee.id,
-						['employee', 'organization', 'category', 'vendor'],
-						this.selectedDate
-				  )
-				: await this.expenseService.getMyAllWithSplitExpenses(
-						['employee', 'organization', 'category', 'vendor'],
-						this.selectedDate
-				  );
-
-			const employeeRecurringExpense = this.selectedDate
-				? (
-						await this.employeeRecurringExpenseService.getAllByMonth(
-							[],
-							{
-								employeeId: this.selectedEmployee.id,
-								year: this.selectedDate.getFullYear(),
-								month: this.selectedDate.getMonth() + 1
-							}
-						)
-				  ).items
-				: [];
-
-			const orgRecurringExpense = this.selectedDate
-				? (
-						await this.organizationRecurringExpenseService.getSplitExpensesForEmployee(
-							this.store.selectedOrganization.id,
-							{
-								year: this.selectedDate.getFullYear(),
-								month: this.selectedDate.getMonth()
-							}
-						)
-				  ).items
-				: [];
-
-			const totalExpense = items.reduce((a, b) => a + +b.amount, 0);
-			const totalEmployeeRecurringExpense = employeeRecurringExpense.reduce(
-				(a, b) => a + +b.value,
-				0
-			);
-			const totalOrgRecurringExpense = orgRecurringExpense.reduce(
-				(a, b) => a + +b.value,
-				0
-			);
-
-			this.expenseData = [
-				...this.getViewDashboardExpenseHistory({ expense: items }),
-				...this.getViewDashboardExpenseHistory({
-					employeeRecurringExpense
-				}),
-				...this.getViewDashboardExpenseHistory({ orgRecurringExpense })
-			];
-
-			const onlySalary = employeeRecurringExpense.filter(
-				(e) =>
-					e.categoryName ===
-					RecurringExpenseDefaultCategoriesEnum.SALARY
-			);
-
-			this.salaryData = this.getViewDashboardExpenseHistory({
-				employeeRecurringExpense: onlySalary
-			});
-
-			this.totalSalary = onlySalary.reduce((a, b) => a + +b.value, 0);
-
-			if (items.length && this.expense !== 0) {
-				const firstItem = items[0];
-
-				this.expenseCurrency = firstItem.currency;
-				this.defaultCurrency = firstItem.organization.currency;
-			}
-		} catch (error) {
-			this.expensesData = [];
-			this.expensePermissionError = true;
-		}
-	}
-
-	private getViewDashboardExpenseHistory(data: {
-		expense?: SplitExpenseOutput[];
-		employeeRecurringExpense?: EmployeeRecurringExpense[];
-		orgRecurringExpense?: OrganizationRecurringExpenseForEmployeeOutput[];
-	}): ViewDashboardExpenseHistory[] {
-		let viewDashboardExpenseHistory = [];
-		if (data.expense && data.expense.length) {
-			viewDashboardExpenseHistory = data.expense.map((e) => ({
-				valueDate: e.valueDate,
-				vendorName: e.vendor.name,
-				categoryName: e.category.name,
-				categoryId: e.category.id,
-				amount: e.amount,
-				notes: e.notes,
-				recurring: false,
-				source: 'employee',
-				splitExpense: e.splitExpense,
-				originalValue: e.originalValue,
-				employeeCount: e.employeeCount
-			}));
-		} else if (
-			data.employeeRecurringExpense &&
-			data.employeeRecurringExpense.length
-		) {
-			viewDashboardExpenseHistory = data.employeeRecurringExpense.map(
-				(e) => ({
-					valueDate: new Date(e.startYear, e.startMonth),
-					categoryName: e.categoryName,
-					amount: e.value,
-					recurring: true,
-					source: 'employee'
-				})
-			);
-		} else if (
-			data.orgRecurringExpense &&
-			data.orgRecurringExpense.length
-		) {
-			viewDashboardExpenseHistory = data.orgRecurringExpense.map((e) => ({
-				valueDate: new Date(e.startYear, e.startMonth),
-				categoryName: e.categoryName,
-				amount: e.value,
-				recurring: true,
-				source: 'org',
-				splitExpense: e.splitExpense,
-				originalValue: e.originalValue,
-				employeeCount: e.employeeCount
-			}));
-		}
-		return viewDashboardExpenseHistory;
-	}
-
-	calculateEmployeeBonus = (
-		bonusType: string,
-		bonusPercentage: number,
-		income: number,
-		profit: number
-	) => {
-		bonusType = bonusType ? bonusType : BonusTypeEnum.PROFIT_BASED_BONUS;
-		switch (bonusType) {
-			case BonusTypeEnum.PROFIT_BASED_BONUS:
-				this.bonusPercentage =
-					bonusPercentage || DEFAULT_PROFIT_BASED_BONUS;
-				return (profit * this.bonusPercentage) / 100;
-			case BonusTypeEnum.REVENUE_BASED_BONUS:
-				this.bonusPercentage =
-					bonusPercentage || DEFAULT_REVENUE_BASED_BONUS;
-				return (income * this.bonusPercentage) / 100;
-			default:
-				return 0;
-		}
-	};
-
-	edit() {
-		this.router.navigate([
-			'/pages/employees/edit/' + this.selectedEmployee.id
-		]);
-	}
-
 	async _loadEmployeeStatistics() {
 		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
 			{
@@ -442,35 +112,66 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 				months: this.selectedDate ? 1 : 12
 			}
 		);
-		this.income = this.employeeStatistics.reduce((a, b) => a + b.income, 0);
-
-		this.expenseWithoutSalary = this.employeeStatistics.reduce(
-			(a, b) => a + b.expenseWithoutSalary,
-			0
+		this.income = this._statsSum(this.employeeStatistics, 'income');
+		this.expenseWithoutSalary = this._statsSum(
+			this.employeeStatistics,
+			'expenseWithoutSalary'
 		);
-
-		this.expense = this.employeeStatistics.reduce(
-			(a, b) => a + b.expense,
-			0
-		);
-		this.directIncomeBonus = this.employeeStatistics.reduce(
-			(a, b) => a + b.directIncomeBonus,
-			0
+		this.expense = this._statsSum(this.employeeStatistics, 'expense');
+		this.directIncomeBonus = this._statsSum(
+			this.employeeStatistics,
+			'directIncomeBonus'
 		);
 		this.nonBonusIncome = this.income - this.directIncomeBonus;
-		this.profit = +this.employeeStatistics
-			.reduce((a, b) => a + b.profit, 0)
-			.toFixed(2);
-
-		this.bonus = +this.employeeStatistics
-			.reduce((a, b) => a + b.bonus, 0)
-			.toFixed(2);
-
+		this.profit = this._statsSum(this.employeeStatistics, 'profit');
+		this.bonus = this._statsSum(this.employeeStatistics, 'bonus');
 		this.calculatedBonus = +(this.bonus - this.directIncomeBonus).toFixed(
 			2
 		);
-
 		this.salary = +(this.expense - this.expenseWithoutSalary).toFixed(2);
+	}
+
+	async openHistoryDialog(type: EmployeeStatisticsHistoryEnum) {
+		this.dialogService.open(RecordsHistoryComponent, {
+			context: {
+				type,
+				recordsData: await this.employeeStatisticsService.getEmployeeStatisticsHistory(
+					{
+						employeeId: this.selectedEmployee.id,
+						valueDate: this.selectedDate || new Date(),
+						months: this.selectedDate ? 1 : 12,
+						type
+					}
+				)
+			}
+		});
+	}
+
+	openProfitDialog() {
+		this.dialogService.open(ProfitHistoryComponent, {
+			context: {
+				recordsData: {
+					income: [],
+					expenses: []
+				}
+			}
+		});
+	}
+
+	private _statsSum = (
+		employeeStatistics: MonthAggregatedEmployeeStatistics[],
+		key: string
+	): number =>
+		Number(employeeStatistics.reduce((a, b) => a + b[key], 0).toFixed(2));
+
+	navigateToAccounting() {
+		this.router.navigate(['/pages/dashboard/accounting']);
+	}
+
+	edit() {
+		this.router.navigate([
+			'/pages/employees/edit/' + this.selectedEmployee.id
+		]);
 	}
 
 	ngOnDestroy() {

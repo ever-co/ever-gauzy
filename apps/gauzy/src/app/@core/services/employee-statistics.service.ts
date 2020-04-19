@@ -6,7 +6,9 @@ import {
 	EmployeeStatistics,
 	EmployeeStatisticsFindInput,
 	MonthAggregatedEmployeeStatisticsFindInput,
-	MonthAggregatedEmployeeStatistics
+	MonthAggregatedEmployeeStatistics,
+	EmployeeStatisticsHistoryFindInput,
+	EmployeeStatisticsHistory
 } from '@gauzy/models';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -74,6 +76,27 @@ export class EmployeeStatisticsService {
 		return this.http
 			.get<MonthAggregatedEmployeeStatistics[]>(
 				`/api/employee-statistics/months`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	/**
+	 * Gets the statistics history for the selected employee for the last N months.
+	 * @param findInput Object containing valueDate, employeeId, Months and History Type.
+	 * @returns Promise<EmployeeStatisticsHistory[]
+	 */
+	getEmployeeStatisticsHistory(
+		findInput: EmployeeStatisticsHistoryFindInput
+	): Promise<EmployeeStatisticsHistory[]> {
+		const data = JSON.stringify({ findInput });
+
+		return this.http
+			.get<EmployeeStatisticsHistory[]>(
+				`/api/employee-statistics/history`,
 				{
 					params: { data }
 				}
