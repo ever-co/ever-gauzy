@@ -39,6 +39,7 @@ export * from './lib/expense-category.model';
 export * from './lib/integration.model';
 export * from './lib/hubstaff.model';
 export * from './lib/tenant.model';
+export * from './lib/http-status.enum';
 export * from './lib/product.model';
 export * from './lib/seed.model';
 
