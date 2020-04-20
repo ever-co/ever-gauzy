@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
@@ -17,7 +17,7 @@ import { CandidateEducationsService } from 'apps/gauzy/src/app/@core/services/ca
 	styleUrls: ['./edit-candidate-education.component.scss']
 })
 export class EditCandidateEducationComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	showAddCard: boolean;
 	editIndex = null;
 	candidateId: string;
@@ -38,18 +38,14 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.candidateStore.selectedCandidate$
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidate) => {
-				this.selectedCandidate = candidate;
-				if (this.selectedCandidate) {
+			.subscribe(async (candidate) => {
+				if (candidate) {
+					console.log(candidate);
+					this.candidateId = candidate.id;
 					this._initializeForm();
 					this.loadData();
+					this.loadEducations();
 				}
-			});
-		this.loadEducations();
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				this.candidateId = params.id;
 			});
 	}
 	private async _initializeForm() {
@@ -103,8 +99,9 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 				this.toastrService.success('Successfully updated');
 				this.editIndex = null;
 			} else {
+				const value = { ...educationForm.value };
 				await this.candidateEducationsService.create({
-					...{ ...educationForm.value },
+					...value[0],
 					candidateId: this.candidateId
 				});
 				this.loadEducations();
@@ -123,8 +120,12 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 		}
 	}
 	async removeEducation(id: string) {
-		// await this.candidateEducationsService.delete(id);
-		// this.loadEducations();
+		await this.candidateEducationsService.delete(id);
 		// to do  toastr
+		this.loadEducations();
+	}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

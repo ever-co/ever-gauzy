@@ -18,8 +18,7 @@ export class CandidateEducationService extends CrudService<CandidateEducation> {
 		const education = await this.candidateEducationRepository
 			.createQueryBuilder('education')
 			.getOne();
-
-		if (education) {
+		if (!education) {
 			throw new BadRequestException("This Education can't be deleted ");
 		}
 

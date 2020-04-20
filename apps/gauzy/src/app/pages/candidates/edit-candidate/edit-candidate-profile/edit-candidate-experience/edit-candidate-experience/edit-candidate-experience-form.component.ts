@@ -32,15 +32,15 @@ export class EditCandidateExperienceFormComponent
 		super(translateService);
 	}
 	ngOnInit() {
-		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidate) => {
-				this.selectedCandidate = candidate;
-				if (this.selectedCandidate) {
-					this._initializeForm(this.selectedCandidate.experience);
-					this.loadData();
-				}
-			});
+		// this.candidateStore.selectedCandidate$
+		// 	.pipe(takeUntil(this._ngDestroy$))
+		// 	.subscribe((candidate) => {
+		// 		this.selectedCandidate = candidate;
+		// 		if (this.selectedCandidate) {
+		// 			this._initializeForm(this.selectedCandidate.experience);
+		// 			this.loadData();
+		// 		}
+		// 	});
 	}
 	private async _initializeForm(experience: Experience[]) {
 		this.form = new FormGroup({

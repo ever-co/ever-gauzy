@@ -35,25 +35,25 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidate) => {
-				this.selectedCandidate = candidate;
-				if (this.selectedCandidate) {
-					this._initializeForm(this.selectedCandidate);
-				}
-			});
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
-				const { items } = await this.candidatesService
-					.getAll(['user', 'tags'], { id })
-					.pipe(first())
-					.toPromise();
-				this.selectedCandidate = items[0];
-				this.candidateStore.selectedCandidate = this.selectedCandidate;
-			});
+		// this.candidateStore.selectedCandidate$
+		// 	.pipe(takeUntil(this._ngDestroy$))
+		// 	.subscribe((candidate) => {
+		// 		this.selectedCandidate = candidate;
+		// 		if (this.selectedCandidate) {
+		// 			this._initializeForm(this.selectedCandidate);
+		// 		}
+		// 	});
+		// this.route.params
+		// 	.pipe(takeUntil(this._ngDestroy$))
+		// 	.subscribe(async (params) => {
+		// 		const id = params.id;
+		// 		const { items } = await this.candidatesService
+		// 			.getAll(['user', 'tags'], { id })
+		// 			.pipe(first())
+		// 			.toPromise();
+		// 		this.selectedCandidate = items[0];
+		// 		this.candidateStore.selectedCandidate = this.selectedCandidate;
+		// 	});
 	}
 	private async _initializeForm(candidate: Candidate) {
 		this.form = this.fb.group({
