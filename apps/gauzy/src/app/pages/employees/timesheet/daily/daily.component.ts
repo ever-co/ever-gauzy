@@ -26,7 +26,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { NgForm } from '@angular/forms';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { takeUntil, filter, map } from 'rxjs/operators';
+import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 
@@ -65,6 +65,8 @@ export class DailyComponent implements OnInit, OnDestroy {
 		employeeId?: string;
 	} = {};
 
+	updateLogs$: Subject<any> = new Subject();
+
 	constructor(
 		private timeTrackerService: TimeTrackerService,
 		private dialogService: NbDialogService,
@@ -79,7 +81,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 	public set selectedDate(value: Date) {
 		this._selectedDate = value;
 		this.logRequest.date = value;
-		this.getLogs();
+		this.updateLogs$.next();
 	}
 	async ngOnInit() {
 		this.nbMenuService
@@ -100,10 +102,9 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.store.selectedEmployee$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employee: SelectedEmployee) => {
-				console.log(employee);
 				if (employee) {
 					this.logRequest.employeeId = employee.id;
-					this.getLogs();
+					this.updateLogs$.next();
 				}
 			});
 
@@ -113,7 +114,11 @@ export class DailyComponent implements OnInit, OnDestroy {
 				this.organization = organization;
 			});
 
-		this.getLogs();
+		this.updateLogs$
+			.pipe(takeUntil(this._ngDestroy$), debounceTime(500))
+			.subscribe(() => {
+				this.getLogs();
+			});
 	}
 
 	async nextDay() {
@@ -212,7 +217,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			: this.timeTrackerService.addTime(addRequestData)
 		)
 			.then(() => {
-				this.getLogs();
+				this.updateLogs$.next();
 				f.resetForm();
 				this.dialogRef.close();
 				this.selectedRange = { start: null, end: null };
@@ -261,7 +266,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 							}
 						}
 						this.timeTrackerService.deleteLogs(logIds).then(() => {
-							this.getLogs();
+							this.updateLogs$.next();
 						});
 					}
 				});
