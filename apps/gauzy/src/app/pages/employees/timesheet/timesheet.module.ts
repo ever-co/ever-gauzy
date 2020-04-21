@@ -19,6 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
 import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/task-select/task-select.module';
 import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/project-select.module';
+import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -40,7 +41,9 @@ import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/p
 		NbDialogModule,
 		TimerPickerModule,
 		TaskSelectModule,
-		ProjectSelectModule
+		ProjectSelectModule,
+		NbIconModule,
+		EmployeeSelectorsModule
 	]
 })
 export class TimesheetModule {}

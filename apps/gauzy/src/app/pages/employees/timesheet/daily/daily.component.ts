@@ -1,10 +1,18 @@
-import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
+// tslint:disable: nx-enforce-module-boundaries
+import {
+	Component,
+	OnInit,
+	ViewChild,
+	TemplateRef,
+	OnDestroy
+} from '@angular/core';
 import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import {
 	IGetTimeLogInput,
 	TimeLog,
 	Organization,
-	IDateRange
+	IDateRange,
+	PermissionsEnum
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
 import {
@@ -20,16 +28,17 @@ import { NgForm } from '@angular/forms';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { takeUntil, filter, map } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
+import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 
 @Component({
 	selector: 'ngx-daily',
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent implements OnInit {
+export class DailyComponent implements OnInit, OnDestroy {
 	timeLogs: TimeLog[];
 	today: Date = new Date();
-	checkboxAll: boolean = false;
+	checkboxAll = false;
 	selectedIds: any = {};
 	private _selectedDate: Date = new Date();
 	private _ngDestroy$ = new Subject<void>();
@@ -43,13 +52,18 @@ export class DailyComponent implements OnInit {
 		description: ''
 	};
 	selectedRange: IDateRange = { start: null, end: null };
-	showBulkAction: boolean = false;
+	showBulkAction = false;
 	bulkActionOptions = [
 		{
 			title: 'Delete'
 		}
 	];
 	dialogRef: NbDialogRef<any>;
+	canChangeSelectedEmployee: boolean;
+	logRequest: {
+		date?: Date;
+		employeeId?: string;
+	} = {};
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
@@ -64,7 +78,8 @@ export class DailyComponent implements OnInit {
 	}
 	public set selectedDate(value: Date) {
 		this._selectedDate = value;
-		this.getLogs(value);
+		this.logRequest.date = value;
+		this.getLogs();
 	}
 	async ngOnInit() {
 		this.nbMenuService
@@ -76,20 +91,55 @@ export class DailyComponent implements OnInit {
 			)
 			.subscribe((title) => this.bulkAction(title));
 
-		this.getLogs(this.today);
-		this.store.selectedOrganization$.subscribe(
-			(organization: Organization) => {
+		this.store.user$.subscribe(() => {
+			this.canChangeSelectedEmployee = this.store.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			);
+		});
+
+		this.store.selectedEmployee$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employee: SelectedEmployee) => {
+				console.log(employee);
+				if (employee) {
+					this.logRequest.employeeId = employee.id;
+					this.getLogs();
+				}
+			});
+
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((organization: Organization) => {
 				this.organization = organization;
-			}
-		);
+			});
+
+		this.getLogs();
 	}
 
-	async getLogs(date: Date) {
+	async nextDay() {
+		this.selectedDate = moment(this.selectedDate)
+			.add(1, 'day')
+			.toDate();
+	}
+
+	async previousDay() {
+		this.selectedDate = moment(this.selectedDate)
+			.subtract(1, 'day')
+			.toDate();
+	}
+
+	async getLogs() {
+		const { date, employeeId } = this.logRequest;
 		const startDate = moment(date).format('YYYY-MM-DD') + ' 00:00:00';
 		const endDate = moment(date).format('YYYY-MM-DD') + ' 23:59:59';
+
+		console.log(this.organization);
+
 		const request: IGetTimeLogInput = {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
+			...(employeeId ? { employeeId } : {}),
+			organizationId: this.organization.id
 		};
 		this.timeLogs = await this.timeTrackerService
 			.getTimeLogs(request)
@@ -105,20 +155,23 @@ export class DailyComponent implements OnInit {
 	}
 
 	toggleCheckbox(event: any, type?: any) {
-		if (type == 'all') {
+		if (type === 'all') {
 			for (const key in this.selectedIds) {
-				this.selectedIds[key] = event.target.checked;
+				if (this.selectedIds.hasOwnProperty(key)) {
+					this.selectedIds[key] = event.target.checked;
+				}
 			}
 		} else {
 			let all_checked = true;
 			let any_checked = false;
-
 			for (const key in this.selectedIds) {
-				const is_checked = this.selectedIds[key];
-				if (is_checked == false || is_checked == undefined) {
-					all_checked = false;
-				} else {
-					any_checked = true;
+				if (this.selectedIds.hasOwnProperty(key)) {
+					const is_checked = this.selectedIds[key];
+					if (is_checked === false || is_checked === undefined) {
+						all_checked = false;
+					} else {
+						any_checked = true;
+					}
 				}
 			}
 
@@ -144,7 +197,7 @@ export class DailyComponent implements OnInit {
 		const startedAt = toUTC(this.selectedRange.start).toDate();
 		const stoppedAt = toUTC(this.selectedRange.end).toDate();
 
-		let addRequestData = {
+		const addRequestData = {
 			startedAt,
 			stoppedAt,
 			isBillable: this.addEditTimeRequest.isBillable,
@@ -161,7 +214,7 @@ export class DailyComponent implements OnInit {
 			: this.timeTrackerService.addTime(addRequestData)
 		)
 			.then(() => {
-				this.getLogs(this.selectedDate);
+				this.getLogs();
 				f.resetForm();
 				this.dialogRef.close();
 				this.selectedRange = { start: null, end: null };
@@ -185,9 +238,9 @@ export class DailyComponent implements OnInit {
 		this.dialogService
 			.open(DeleteConfirmationComponent)
 			.onClose.subscribe((type) => {
-				if (type == 'ok') {
+				if (type === 'ok') {
 					this.timeTrackerService.deleteLogs(log.id).then(() => {
-						let index = this.timeLogs.indexOf(log);
+						const index = this.timeLogs.indexOf(log);
 						this.timeLogs.splice(index, 1);
 					});
 				}
@@ -195,21 +248,22 @@ export class DailyComponent implements OnInit {
 	}
 
 	bulkAction(action) {
-		if (action == 'Delete') {
+		if (action === 'Delete') {
 			this.dialogService
 				.open(DeleteConfirmationComponent)
 				.onClose.subscribe((type) => {
-					if (type == 'ok') {
+					if (type === 'ok') {
 						const logIds = [];
 						for (const key in this.selectedIds) {
-							const is_checked = this.selectedIds[key];
-							if (is_checked) {
-								logIds.push(key);
+							if (this.selectedIds.hasOwnProperty(key)) {
+								const is_checked = this.selectedIds[key];
+								if (is_checked) {
+									logIds.push(key);
+								}
 							}
 						}
-
 						this.timeTrackerService.deleteLogs(logIds).then(() => {
-							this.getLogs(this.selectedDate);
+							this.getLogs();
 						});
 					}
 				});

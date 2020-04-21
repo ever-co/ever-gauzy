@@ -3,24 +3,32 @@
 		<h4>{{ 'TIMESHEET.DAILY' | translate }} - {{ selectedDate | date }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="filters row">
-			<div class="bulk-actions mb-3 col-sm-3">
-				<div class="row">
-					<div class="col">
-						<input
-							type="text"
-							nbInput
-							class="form-control"
-							placeholder="Select Date"
-							[(ngModel)]="selectedDate"
-							[nbDatepicker]="formpicker"
-						/>
-						<nb-datepicker
-							#formpicker
-							[max]="today"
-						></nb-datepicker>
+		<div class="filters row mb-3">
+			<div class="bulk-actions col-sm-3">
+				<div class="input-group">
+					<div class="input-group-append" id="button-addon4">
+						<button
+							nbButton
+							status="primary"
+							(click)="previousDay()"
+						>
+							<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+						</button>
 					</div>
-					<div class="col-auto pl-0">
+					<input
+						type="text"
+						nbInput
+						class="form-control ml-1"
+						placeholder="Select Date"
+						[(ngModel)]="selectedDate"
+						[nbDatepicker]="formpicker"
+					/>
+					<div class="input-group-append ml-1" id="button-addon4">
+						<button nbButton status="primary" (click)="nextDay()">
+							<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+						</button>
+					</div>
+					<div class="input-group-append ml-1" id="button-addon4">
 						<button
 							nbButton
 							status="primary"
@@ -29,7 +37,16 @@
 							Today
 						</button>
 					</div>
+					<nb-datepicker #formpicker [max]="today"></nb-datepicker>
 				</div>
+			</div>
+			<div
+				class="employee-select col-sm-3"
+				*ngIf="canChangeSelectedEmployee"
+			>
+				<ga-employee-selector
+					class="header-selector employee-selector"
+				></ga-employee-selector>
 			</div>
 		</div>
 		<div class="bulk-actions row">
@@ -61,6 +78,9 @@
 						></nb-checkbox>
 					</th>
 					<th scope="col">Project</th>
+					<th *ngIf="canChangeSelectedEmployee" scope="col">
+						Employee
+					</th>
 					<th scope="col">Log type</th>
 					<th scope="col">Duration</th>
 					<th scope="col">Time span</th>
@@ -96,6 +116,18 @@
 								<ng-template #noToDo>
 									<span>No to-do</span>
 								</ng-template>
+							</div>
+						</td>
+						<td *ngIf="canChangeSelectedEmployee">
+							<div class="name-container">
+								<ngx-avatar
+									[name]="
+										log?.employee?.user?.firstName +
+										' ' +
+										log?.employee?.user?.lastName
+									"
+									[src]="log?.employee?.user?.imageUrl"
+								></ngx-avatar>
 							</div>
 						</td>
 						<td>{{ log.logType }}</td>

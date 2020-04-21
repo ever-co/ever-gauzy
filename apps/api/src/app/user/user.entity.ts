@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { User as IUser, Employee } from '@gauzy/models';
+import { User as IUser } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
@@ -28,6 +28,7 @@ import { Base } from '../core/entities/base';
 import { Role } from '../role/role.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Tag } from '../tags/tag.entity';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('user')
 export class User extends Base implements IUser {
@@ -84,9 +85,7 @@ export class User extends Base implements IUser {
 	@Column({ nullable: true })
 	username?: string;
 
-	@OneToOne('Employee', (employee: Employee) => employee.user, {
-		nullable: true
-	})
+	@OneToOne('Employee', (employee: Employee) => employee.user)
 	employee?: Employee;
 
 	@ApiPropertyOptional({ type: Role })

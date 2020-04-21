@@ -4,6 +4,12 @@ import { Tag } from './tag-entity.model';
 import { Location as ILocation } from './location.model';
 import { ITenant } from '@gauzy/models';
 
+export enum OrganizationPermissionsEnum {
+	ALLOW_MANUAL_TIME = 'allowManualTime',
+	ALLOW_MODIFY_TIME = 'allowModifyTime',
+	ALLOW_DELETE_TIME = 'allowDeleteTime'
+}
+
 export interface Organization extends IBaseEntityModel, ILocation {
 	name: string;
 	profile_link: string;
