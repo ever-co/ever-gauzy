@@ -133,13 +133,11 @@ export class DailyComponent implements OnInit, OnDestroy {
 		const startDate = moment(date).format('YYYY-MM-DD') + ' 00:00:00';
 		const endDate = moment(date).format('YYYY-MM-DD') + ' 23:59:59';
 
-		console.log(this.organization);
-
 		const request: IGetTimeLogInput = {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
-			organizationId: this.organization.id
+			organizationId: this.organization ? this.organization.id : null
 		};
 		this.timeLogs = await this.timeTrackerService
 			.getTimeLogs(request)
