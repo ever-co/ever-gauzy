@@ -1,4 +1,8 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="card-header">
+		<h5>{{ 'INTEGRATIONS.HUBSTAFF_PAGE.NAME' | translate }}</h5>
+		<nb-icon icon="settings-outline" (click)="setSettings()"></nb-icon>
+	</nb-card-header>
 	<nb-card-body>
 		<div class="mb-3">
 			<button
@@ -10,6 +14,10 @@
 			>
 				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
 				>{{ 'BUTTONS.SYNC' | translate }}
+			</button>
+			<button nbButton (click)="autoSync()" status="primary" class="mr-2">
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.AUTO_SYNC' | translate }}
 			</button>
 		</div>
 

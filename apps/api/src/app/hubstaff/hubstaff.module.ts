@@ -12,6 +12,11 @@ import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
+import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
+import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
+import { CqrsModule } from '@nestjs/cqrs';
+import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
 
 @Module({
 	imports: [
@@ -21,8 +26,11 @@ import { OrganizationProjectsService } from '../organization-projects/organizati
 			Tenant,
 			IntegrationSetting,
 			IntegrationMap,
-			OrganizationProjects
-		])
+			OrganizationProjects,
+			IntegrationEntitySetting,
+			IntegrationEntitySettingTiedEntity
+		]),
+		CqrsModule
 	],
 	controllers: [HubstaffController],
 	providers: [
@@ -31,7 +39,9 @@ import { OrganizationProjectsService } from '../organization-projects/organizati
 		TenantService,
 		IntegrationSettingService,
 		IntegrationMapService,
-		OrganizationProjectsService
+		OrganizationProjectsService,
+		IntegrationEntitySettingService,
+		IntegrationEntitySettingTiedEntityService
 	]
 })
 export class HubstaffModule {}

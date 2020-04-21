@@ -24,7 +24,8 @@ export class IntegrationService extends CrudService<Integration> {
 		);
 		const integration = await this.create({
 			tenant,
-			name: createIntegrationDto.name
+			name: createIntegrationDto.name,
+			entitySettings: createIntegrationDto.entitySettings
 		});
 		const settingsDto = createIntegrationDto.settings.map((setting) => ({
 			...setting,

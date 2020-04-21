@@ -31,7 +31,8 @@
 		"REQUEST": "Запросить",
 		"HISTORY": "История",
 		"SYNC": "Синхр.",
-		"UPDATE": "Обновить"
+		"UPDATE": "Обновить",
+		"AUTO_SYNC": "Автосинхронизация"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -375,12 +376,15 @@
 		"RUSSIAN": "Русский"
 	},
 	"INTEGRATIONS": {
+		"AVALIABLE_INTEGRATIONS": "Доступная интеграция",
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
 			"NAME": "Hubstaff",
 			"SELECT_ORGANIZATION": "Выберите организацию",
-			"SYNCED_PROJECTS": "Проекты синхронизированы"
+			"SYNCED_PROJECTS": "Проекты синхронизированы",
+			"SETTINGS_UPDATED": "Обновлены настройки интеграции",
+			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей"
 		}
 	},
 	"DASHBOARD_PAGE": {
