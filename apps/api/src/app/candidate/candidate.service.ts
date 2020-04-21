@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
 import { Candidate } from './candidate.entity';
 import { CandidateCreateInput } from '@gauzy/models';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
