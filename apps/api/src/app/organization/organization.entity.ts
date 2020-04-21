@@ -28,7 +28,6 @@ import {
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
 import { Invoice } from '../invoice/invoice.entity';
-import { TenantBase } from '../core/entities/tenant-base';
 import { TenantLocationBase } from '../core/entities/tenant-location-base';
 
 @Entity('organization')
