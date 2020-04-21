@@ -4,4 +4,20 @@ export interface Experience extends IBaseEntityModel {
 	organization: string;
 	duration: string;
 	description?: string;
+	candidateId?: string;
+}
+export interface IExperienceFindInput extends IBaseEntityModel {
+	occupation?: string;
+	organization?: string;
+	duration?: string;
+	description?: string;
+	candidateId?: string;
+}
+
+export interface IExperienceCreateInput {
+	occupation: string;
+	organization: string;
+	duration: string;
+	description?: string;
+	candidateId?: string;
 }

@@ -143,6 +143,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
+			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_${text}`)
 		);
 	}

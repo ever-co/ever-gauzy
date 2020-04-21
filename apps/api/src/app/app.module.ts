@@ -1,3 +1,4 @@
+import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
@@ -57,6 +58,7 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
 import { CandidateSourceModule } from './candidate_source/candidate_source.module';
+import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
@@ -70,6 +72,14 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 					{
 						path: '/candidate-educations',
 						module: CandidateEducationModule
+					},
+					{
+						path: '/candidate-experience',
+						module: CandidateExperienceModule
+					},
+					{
+						path: '/candidate-skills',
+						module: CandidateSkillModule
 					},
 					{
 						path: '/candidate-cv',
@@ -223,6 +233,8 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 		CandidateCvModule,
 		CandidateSourceModule,
 		CandidateEducationModule,
+		CandidateExperienceModule,
+		CandidateSkillModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,

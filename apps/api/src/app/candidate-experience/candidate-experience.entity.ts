@@ -1,30 +1,26 @@
 import { Column, Entity } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Education } from 'libs/models/src/lib/candidate-education.model';
 import { Base } from '../core/entities/base';
+import { Experience } from 'libs/models/src/lib/candidate-experience.model';
 import { IsString, IsNotEmpty } from 'class-validator';
 
-@Entity('candidate_educations')
-export class CandidateEducation extends Base implements Education {
+@Entity('candidate_experience')
+export class CandidateExperience extends Base implements Experience {
 	@ApiProperty({ type: String })
 	@Column()
-	schoolName: string;
+	occupation: string;
 
 	@ApiProperty({ type: String })
 	@Column()
-	degree: string;
+	organization: string;
 
 	@ApiProperty({ type: String })
 	@Column()
-	field: string;
-
-	@ApiProperty({ type: Date })
-	@Column()
-	completionDate: Date;
+	duration: string;
 
 	@ApiProperty({ type: String })
 	@Column()
-	notes?: string;
+	description?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()

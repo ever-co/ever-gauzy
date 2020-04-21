@@ -1,3 +1,5 @@
+import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
+import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateSource } from './../candidate_source/candidate_source.entity';
 import { Candidate as ICandidate, Status } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -24,6 +26,8 @@ import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 // tslint:disable-next-line: nx-enforce-module-boundaries
 import { Education } from 'libs/models/src/lib/candidate-education.model';
+import { Experience } from 'libs/models/src/lib/candidate-experience.model';
+import { Skill } from 'libs/models/src/lib/candidate-skill.model';
 
 @Entity('candidate')
 export class Candidate extends LocationBase implements ICandidate {
@@ -38,6 +42,18 @@ export class Candidate extends LocationBase implements ICandidate {
 		name: 'candidate_education'
 	})
 	educations: Education[];
+
+	@ManyToOne((type) => CandidateExperience)
+	@JoinTable({
+		name: 'candidate_experience'
+	})
+	experience: Experience[];
+
+	@ManyToOne((type) => CandidateSkill)
+	@JoinTable({
+		name: 'candidate_skills'
+	})
+	skills: Skill[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {

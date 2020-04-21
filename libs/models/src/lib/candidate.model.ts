@@ -8,6 +8,7 @@ import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { Education } from './candidate-education.model';
 import { Experience } from './candidate-experience.model';
+import { Skill } from './candidate-skill.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
 	user: User;
@@ -26,7 +27,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	candidateLevel?: string;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
 	experience?: Experience[];
-	skills?: string[];
+	skills?: Skill[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;

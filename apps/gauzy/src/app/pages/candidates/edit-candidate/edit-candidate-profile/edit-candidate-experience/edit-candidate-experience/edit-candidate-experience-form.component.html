@@ -96,14 +96,14 @@
 			</div>
 		</div>
 	</nb-card-header>
-	<nb-card-body *ngIf="experience?.length">
+	<nb-card-body *ngIf="experienceList?.length">
 		<div class="ml-3 mb-4">
 			<strong>{{
 				'CANDIDATES_PAGE.EDIT_CANDIDATE.EXPERIENCE' | translate
 			}}</strong>
 		</div>
 
-		<nb-card *ngFor="let exp of experience; let i = index">
+		<nb-card *ngFor="let exp of experienceList; let i = index">
 			<nb-card-body class="experience-card">
 				<div>
 					<div class="experience-line">
@@ -147,12 +147,12 @@
 
 				<nb-actions class="float-right" e="medium">
 					<nb-action
-						(click)="editExperience(i)"
+						(click)="editExperience(i, exp.id)"
 						class="d-inline pr-0"
 						icon="edit"
 					></nb-action>
 					<nb-action
-						(click)="removeExperience(i)"
+						(click)="removeExperience(exp.id)"
 						class="d-inline pr-0"
 						icon="close"
 					></nb-action>

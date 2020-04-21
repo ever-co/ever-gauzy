@@ -994,6 +994,7 @@
 			"CANDIDATE_EXPERIENCE_DELETED": "Successfully deleted",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
+			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -1047,6 +1048,7 @@
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
 				"INVALID_FORM": "Please fill the form",
+				"INVALID_FIELD": "Please fill the field",
 				"ERROR": "{{ error }}"
 			}
 		},

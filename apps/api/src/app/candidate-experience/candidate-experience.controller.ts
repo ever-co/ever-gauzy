@@ -1,4 +1,3 @@
-import { CandidateEducationService } from './candidate-education.service';
 import {
 	Controller,
 	UseGuards,
@@ -7,47 +6,45 @@ import {
 	HttpStatus,
 	HttpCode,
 	Delete,
-	Param,
-	Put,
-	Body
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { AuthGuard } from '@nestjs/passport';
-import { CandidateEducation } from './candidate-education.entity';
 import { IPagination } from '../core';
-import { Education } from 'libs/models/src/lib/candidate-education.model';
+import { CandidateExperienceService } from './candidate-experience.service';
+import { CandidateExperience } from './candidate-experience.entity';
 
-@ApiTags('candidate_educations')
+@ApiTags('candidate_experience')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class CandidateEducationController extends CrudController<
-	CandidateEducation
+export class CandidateExperienceController extends CrudController<
+	CandidateExperience
 > {
 	constructor(
-		private readonly candidateEducationService: CandidateEducationService
+		private readonly candidateExperienceService: CandidateExperienceService
 	) {
-		super(candidateEducationService);
+		super(candidateExperienceService);
 	}
 	// GET
 	@ApiOperation({
-		summary: 'Find all candidate education.'
+		summary: 'Find all candidate experience.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found candidate education',
-		type: CandidateEducation
+		description: 'Found candidate experience',
+		type: CandidateExperience
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
 	@Get()
-	async findEducations(
+	async findExperience(
 		@Query('data') data: string
-	): Promise<IPagination<CandidateEducation>> {
+	): Promise<IPagination<CandidateExperience>> {
 		const { findInput } = JSON.parse(data);
-		return this.candidateEducationService.findAll({ where: findInput });
+		return this.candidateExperienceService.findAll({ where: findInput });
 	}
 
 	// DELETE
@@ -62,11 +59,11 @@ export class CandidateEducationController extends CrudController<
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: "This Education can't be deleted"
+		description: "This Experience can't be deleted"
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
 	async delete(@Param('id') id: string): Promise<any> {
-		return this.candidateEducationService.deleteEducation(id);
+		return this.candidateExperienceService.deleteExperience(id);
 	}
 }
