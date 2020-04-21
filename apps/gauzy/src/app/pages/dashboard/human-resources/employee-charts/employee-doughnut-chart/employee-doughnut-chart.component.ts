@@ -1,17 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, OnChanges } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { EmployeeStatisticsService } from '../../../../@core/services/employee-statistics.serivce';
-import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { MonthAggregatedEmployeeStatistics } from '@gauzy/models';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 
 @Component({
-	selector: 'ngx-employee-doughnut-chart',
+	selector: 'ga-employee-doughnut-chart',
 	template: `
 		<div
 			*ngIf="noData"
@@ -33,7 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 	`
 })
 export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy, OnChanges {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
@@ -42,53 +39,49 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 	profitStatistics = 0;
 	bonusStatistics = 0;
 	labels: string[] = [];
-	selectedDate: Date;
-	selectedEmployee: SelectedEmployee;
 	displayDate: string;
 	noData = false;
 
+	@Input()
+	employeeStatistics: MonthAggregatedEmployeeStatistics[];
+
 	constructor(
 		private themeService: NbThemeService,
-		private employeeStatisticsService: EmployeeStatisticsService,
-		private store: Store,
-		private errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
 
-	/**
-	 * Loads or reloads chart statistics and chart when employee or date
-	 * is changed from the header component
-	 */
-	async ngOnInit() {
-		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (date) => {
-				this.selectedDate = date;
-				await this._initializeChart();
-			});
-
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (emp) => {
-				this.selectedEmployee = emp;
-				await this._initializeChart();
-			});
+	ngOnInit() {
+		this._loadData();
+		this._LoadChart();
 	}
-	// /**
-	//  * Loads or reloads chart statistics and chart when employee or date
-	//  * is changed from the header component
-	//  */
-	private async _initializeChart() {
-		if (this.selectedEmployee && this.selectedEmployee.id) {
-			try {
-				await this._loadData();
-				this._LoadChart();
-			} catch (error) {
-				this.errorHandler.handleError(error);
-			}
-		}
+
+	ngOnChanges() {
+		this._loadData();
+		this._LoadChart();
+	}
+
+	private _loadData() {
+		this.noData = !this.employeeStatistics[0];
+
+		this.incomeStatistics = this.employeeStatistics[0]
+			? this.employeeStatistics[0].income
+			: 0;
+		this.expenseStatistics = this.employeeStatistics[0]
+			? this.employeeStatistics[0].expense
+			: 0;
+		this.profitStatistics = this.employeeStatistics[0]
+			? this.employeeStatistics[0].profit
+			: 0;
+		this.bonusStatistics = this.employeeStatistics[0]
+			? this.employeeStatistics[0].bonus
+			: 0;
+		this.displayDate = this.employeeStatistics[0]
+			? monthNames[this.employeeStatistics[0].month] +
+			  ', ' +
+			  this.employeeStatistics[0].year
+			: '';
 	}
 
 	private _LoadChart() {
@@ -156,42 +149,6 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent
 					}
 				};
 			});
-	}
-	// /**
-	//  * Fetches selected employee's statistics for chosen date for past X months.
-	//  * Populates the local statistics variables with fetched data.
-	//  */
-	private async _loadData() {
-		/**
-		 * Fetches selected employee's statistics for chosen date for past X months.
-		 */
-		const employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
-			{
-				employeeId: this.selectedEmployee.id,
-				valueDate: this.selectedDate || new Date(),
-				months: 1
-			}
-		);
-
-		this.noData = !employeeStatistics[0];
-
-		this.incomeStatistics = employeeStatistics[0]
-			? employeeStatistics[0].income
-			: 0;
-		this.expenseStatistics = employeeStatistics[0]
-			? employeeStatistics[0].expense
-			: 0;
-		this.profitStatistics = employeeStatistics[0]
-			? employeeStatistics[0].profit
-			: 0;
-		this.bonusStatistics = employeeStatistics[0]
-			? employeeStatistics[0].bonus
-			: 0;
-		this.displayDate = employeeStatistics[0]
-			? monthNames[employeeStatistics[0].month] +
-			  ', ' +
-			  employeeStatistics[0].year
-			: '';
 	}
 
 	ngOnDestroy() {

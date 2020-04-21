@@ -4,7 +4,7 @@ import { environment as env } from '@env-api/environment';
 import { OrganizationTeams } from './organization-teams.entity';
 import { Organization } from '../organization/organization.entity';
 
-export const createTeams = async (
+export const createDefaultTeams = async (
 	connection: Connection,
 	organization: Organization,
 	employees: Employee[]
@@ -20,16 +20,17 @@ export const createTeams = async (
 			(e) => (teams[i].defaultMembers || []).indexOf(e.user.email) > -1
 		);
 
-		insertOrganizationTeam(connection, team);
 		organizationTeams.push(team);
 	}
+
+	insertOrganizationTeam(connection, organizationTeams);
 
 	return organizationTeams;
 };
 
 const insertOrganizationTeam = async (
 	connection: Connection,
-	team: OrganizationTeams
+	team: OrganizationTeams[]
 ): Promise<void> => {
 	await connection.manager.save(team);
 };

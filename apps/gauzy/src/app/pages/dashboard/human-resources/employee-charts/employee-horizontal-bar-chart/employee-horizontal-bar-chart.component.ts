@@ -1,15 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, OnChanges } from '@angular/core';
+import { MonthAggregatedEmployeeStatistics } from '@gauzy/models';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { EmployeeStatisticsService } from '../../../../@core/services/employee-statistics.serivce';
-import { Store } from '../../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { monthNames } from '../../../../@core/utils/date';
-import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import { SelectedEmployee } from '../../../../@theme/components/header/selectors/employee/employee.component';
+import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
 
 @Component({
-	selector: 'ngx-employee-horizontal-bar-chart',
+	selector: 'ga-employee-horizontal-bar-chart',
 	template: `
 		<div
 			*ngIf="noData"
@@ -29,7 +26,8 @@ import { SelectedEmployee } from '../../../../@theme/components/header/selectors
 		></chart>
 	`
 })
-export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
+export class EmployeeHorizontalBarChartComponent
+	implements OnInit, OnDestroy, OnChanges {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
@@ -39,48 +37,20 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 	bonusStatistics: number[] = [];
 	labels: string[] = [];
 	selectedDate: Date;
-	selectedEmployee: SelectedEmployee;
 	noData = false;
+	@Input()
+	employeeStatistics: MonthAggregatedEmployeeStatistics[];
 
-	constructor(
-		private themeService: NbThemeService,
-		private employeeStatisticsService: EmployeeStatisticsService,
-		private store: Store,
-		private errorHandler: ErrorHandlingService
-	) {}
+	constructor(private themeService: NbThemeService) {}
 
-	/**
-	 * Loads or reloads chart statistics and chart when employee or date
-	 * is changed from the header component
-	 */
-	async ngOnInit() {
-		this.store.selectedDate$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (date) => {
-				this.selectedDate = date;
-				await this._initializeChart();
-			});
-
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (emp) => {
-				this.selectedEmployee = emp;
-				await this._initializeChart();
-			});
+	ngOnInit() {
+		this._loadData();
+		this._LoadChart();
 	}
-	/**
-	 * Loads or reloads chart statistics and chart when employee or date
-	 * is changed from the header component
-	 */
-	private async _initializeChart() {
-		if (this.selectedEmployee && this.selectedEmployee.id) {
-			try {
-				await this._loadData();
-				this._LoadChart();
-			} catch (error) {
-				this.errorHandler.handleError(error);
-			}
-		}
+
+	ngOnChanges() {
+		this._loadData();
+		this._LoadChart();
 	}
 
 	private _LoadChart() {
@@ -188,32 +158,18 @@ export class EmployeeHorizontalBarChartComponent implements OnInit, OnDestroy {
 			});
 	}
 	/**
-	 * Fetches selected employee's statistics for chosen date for past X months.
-	 * Populates the local statistics variables with fetched data.
+	 * Populates the local statistics variables with input employeeStatistics data.
 	 */
 	private async _loadData() {
-		/**
-		 * Fetches selected employee's statistics for chosen date for past X months.
-		 */
-		const employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
-			{
-				employeeId: this.selectedEmployee.id,
-				valueDate: this.selectedDate || new Date(),
-				months: this.selectedDate ? 1 : 12
-			}
-		);
 		this.labels = [];
 		this.incomeStatistics = [];
 		this.expenseStatistics = [];
 		this.profitStatistics = [];
 		this.bonusStatistics = [];
 
-		this.noData = !(employeeStatistics || []).length;
+		this.noData = !(this.employeeStatistics || []).length;
 
-		/**
-		 * Populates the local statistics variables with fetched data.
-		 */
-		(employeeStatistics || []).map((stat) => {
+		(this.employeeStatistics || []).map((stat) => {
 			const labelValue = `${monthNames[stat.month]} '${stat.year
 				.toString(10)
 				.substring(2)}`;

@@ -232,17 +232,17 @@
 			"REGISTRATION_DATE": "Дата регистрации организации",
 			"ORGANIZATIONS": "Выберите организации",
 			"ADD_EDUCATION": {
-				"SCHOOL_NAME": "School name",
-				"DEGREE": "Degree/Diploma",
-				"FIELD_OF_STUDY": "Field(s) of study",
-				"DATE_OF_COMPLETION": "Date of completion",
-				"ADDITIONAL_NOTES": "Additional notes (optional)"
+				"SCHOOL_NAME": "Название школы",
+				"DEGREE": "Диплом",
+				"FIELD_OF_STUDY": "В. Область(ы) изучения",
+				"DATE_OF_COMPLETION": "Дата завершения",
+				"ADDITIONAL_NOTES": "Дополнительные заметки (опционально)"
 			},
 			"ADD_EXPERIENCE": {
-				"OCCUPATION": "Occupation",
-				"ORGANIZATION": "Organization name",
-				"DURATION": "Duration",
-				"DESCRIPTION": "Description (optional)"
+				"OCCUPATION": "Занятость",
+				"ORGANIZATION": "Название организации",
+				"DURATION": "Продолжительность",
+				"DESCRIPTION": "Описание (необязательно)"
 			}
 		},
 		"RATES": {
@@ -531,17 +531,17 @@
 			"RATE": "Тарифы",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Опыт работы",
-			"SKILLS": "Skills",
-			"EDUCATION": "Education",
-			"SCHOOL_NAME": "School name",
-			"DEGREE": "Degree/Diploma",
-			"FIELD": "Field(s)",
-			"COMPLETION_DATE": "Date of completion",
-			"ADDITIONAL_NOTES": "Additional notes",
-			"OCCUPATION": "Occupation",
-			"ORGANIZATION": "Organization name",
-			"DURATION": "Duration",
-			"DESCRIPTION": "Description",
+			"SKILLS": "Навыки",
+			"EDUCATION": "Образование",
+			"SCHOOL_NAME": "Название школы",
+			"DEGREE": "Диплом",
+			"FIELD": "Поля(и)",
+			"COMPLETION_DATE": "Дата завершения",
+			"ADDITIONAL_NOTES": "Дополнительные заметки",
+			"OCCUPATION": "Занятость",
+			"ORGANIZATION": "Название организации",
+			"DURATION": "Продолжительность",
+			"DESCRIPTION": "Описание",
 			"TASKS": "Задачи",
 			"HISTORY": "История",
 			"DOCUMENTS": "Документы"
@@ -987,9 +987,9 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
-			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
-			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
-			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
+			"CANDIDATE_SKILL_REQUIRED": "Требуется название навыка",
+			"CANDIDATE_EDUCATION_REQUIRED": "Необходима информация об образовании",
+			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
@@ -1041,8 +1041,8 @@
 		},
 		"CANDIDATE": {
 			"EXPERIENCE": {
-				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
-				"INVALID_FORM": "Please fill the form"
+				"INVALID_CANDIDATE_NAME": "Пожалуйста, добавьте название навыка",
+				"INVALID_FORM": "Пожалуйста, заполните форму"
 			}
 		},
 		"ORGANIZATIONS": {

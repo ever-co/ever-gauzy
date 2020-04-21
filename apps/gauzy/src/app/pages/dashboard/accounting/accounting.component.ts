@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
-import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.serivce';
+import { EmployeeStatisticsService } from '../../../@core/services/employee-statistics.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { AggregatedEmployeeStatistic, Organization } from '@gauzy/models';

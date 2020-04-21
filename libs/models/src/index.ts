@@ -40,7 +40,7 @@ export * from './lib/integration.model';
 export * from './lib/hubstaff.model';
 export * from './lib/tenant.model';
 export * from './lib/product.model';
+export * from './lib/seed.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
-export { DefaultUser } from './lib/default-user.model';
