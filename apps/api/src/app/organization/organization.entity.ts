@@ -2,9 +2,7 @@ import {
 	Column,
 	Entity,
 	Index,
-	ManyToOne,
 	JoinColumn,
-	RelationId,
 	ManyToMany,
 	JoinTable,
 	OneToMany
@@ -29,22 +27,16 @@ import {
 	BonusTypeEnum
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from './../tenant/tenant.entity';
-import { LocationBase } from '../core/entities/location-base';
 import { Invoice } from '../invoice/invoice.entity';
+import { TenantLocationBase } from '../core/entities/tenant-location-base';
 
 @Entity('organization')
-export class Organization extends LocationBase implements IOrganization {
+export class Organization extends TenantLocationBase implements IOrganization {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_organizations'
 	})
 	tags: Tag[];
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant: Tenant;
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
 	@OneToMany(
@@ -53,10 +45,6 @@ export class Organization extends LocationBase implements IOrganization {
 	)
 	@JoinColumn()
 	invoices?: Invoice[];
-
-	@ApiProperty()
-	@RelationId((organization: Organization) => organization.tenant)
-	readonly tenantId?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
