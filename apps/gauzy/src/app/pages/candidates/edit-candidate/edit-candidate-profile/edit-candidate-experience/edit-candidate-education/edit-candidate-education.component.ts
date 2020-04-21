@@ -42,6 +42,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 				}
 			});
 	}
+
 	private async _initializeForm() {
 		this.form = new FormGroup({
 			educations: this.fb.array([])
