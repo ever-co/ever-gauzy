@@ -1,3 +1,23 @@
 .hubstaff-container {
 	min-height: 200px;
 }
+
+.card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+::ng-deep {
+	.hubstaff-container {
+		.ng2-smart-actions {
+			text-align: center;
+			width: 5%;
+
+			.form-control {
+				width: 15px;
+				display: inline-block;
+			}
+		}
+	}
+}

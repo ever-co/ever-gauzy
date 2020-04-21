@@ -9,7 +9,9 @@ import {
 	NbIconModule,
 	NbSpinnerModule,
 	NbSelectModule,
-	NbCheckboxModule
+	NbCheckboxModule,
+	NbToggleModule,
+	NbDialogModule
 } from '@nebular/theme';
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -19,13 +21,18 @@ import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 @NgModule({
-	declarations: [HubstaffAuthorizeComponent, HubstaffComponent],
+	declarations: [
+		HubstaffAuthorizeComponent,
+		HubstaffComponent,
+		SettingsDialogComponent
+	],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -40,7 +47,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NgSelectModule,
 		NbSelectModule,
 		NbCheckboxModule,
+		NbToggleModule,
 		ThemeModule,
+		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -48,6 +57,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		})
-	]
+	],
+	entryComponents: [SettingsDialogComponent]
 })
 export class HubstaffModule {}
