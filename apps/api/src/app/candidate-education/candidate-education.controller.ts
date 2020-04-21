@@ -44,35 +44,35 @@ export class CandidateEducationController extends CrudController<
 	})
 	@Get()
 	async findEducations(
-		@Query('data') data: string
+		@Query('candidateId') candidateId: string
 	): Promise<IPagination<CandidateEducation>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput } = JSON.parse(candidateId);
 		return this.candidateEducationService.findAll({ where: findInput });
 	}
 
-	/////////   UPDATE
-	@ApiOperation({ summary: 'Update an education' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The education has been successfully edited.'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Education not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
-	async update(
-		@Param('id') id: string,
-		@Body() entity: Education
-	): Promise<any> {
-		return this.candidateEducationService.update(id, { ...entity });
-	}
+	// /////////   UPDATE
+	// @ApiOperation({ summary: 'Update an education' })
+	// @ApiResponse({
+	// 	status: HttpStatus.CREATED,
+	// 	description: 'The education has been successfully edited.'
+	// })
+	// @ApiResponse({
+	// 	status: HttpStatus.NOT_FOUND,
+	// 	description: 'Education not found'
+	// })
+	// @ApiResponse({
+	// 	status: HttpStatus.BAD_REQUEST,
+	// 	description:
+	// 		'Invalid input, The response body may contain clues as to what went wrong'
+	// })
+	// @HttpCode(HttpStatus.ACCEPTED)
+	// @Put(':id')
+	// async update(
+	// 	@Param('id') id: string,
+	// 	@Body() entity: Education
+	// ): Promise<any> {
+	// 	return this.candidateEducationService.update(id, { ...entity });
+	// }
 
 	///////  DELETE
 	@ApiOperation({ summary: 'Delete record' })
