@@ -23,7 +23,6 @@ import { OrganizationEmploymentType } from '../organization-employment-type/orga
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 

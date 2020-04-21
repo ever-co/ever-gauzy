@@ -31,7 +31,7 @@ export class OrganizationController extends CrudController<Organization> {
 		super(organizationService);
 	}
 
-	@ApiOperation({ summary: 'Find all organizations.' })
+	@ApiOperation({ summary: 'Find all organizations within the tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found organizations',
@@ -48,7 +48,7 @@ export class OrganizationController extends CrudController<Organization> {
 		return this.organizationService.findAll();
 	}
 
-	@ApiOperation({ summary: 'Find Organization by id.' })
+	@ApiOperation({ summary: 'Find Organization by id within the tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',
@@ -88,15 +88,9 @@ export class OrganizationController extends CrudController<Organization> {
 		@Param('profile_link') profile_link: string,
 		@Param('select') select: string
 	): Promise<Organization> {
-		const findObj = {};
-
-		if (select) {
-			findObj['select'] = JSON.parse(select);
-		}
-
-		return this.organizationService.findOne(
-			{ where: { profile_link: profile_link } },
-			findObj
+		return await this.organizationService.findByPublicLink(
+			profile_link,
+			select
 		);
 	}
 

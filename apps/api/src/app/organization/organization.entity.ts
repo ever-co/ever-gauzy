@@ -2,9 +2,7 @@ import {
 	Column,
 	Entity,
 	Index,
-	ManyToOne,
 	JoinColumn,
-	RelationId,
 	ManyToMany,
 	JoinTable,
 	OneToMany
@@ -29,12 +27,12 @@ import {
 	BonusTypeEnum
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from './../tenant/tenant.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { TenantBase } from '../core/entities/tenant-base';
+import { TenantLocationBase } from '../core/entities/tenant-location-base';
 
 @Entity('organization')
-export class Organization extends TenantBase implements IOrganization {
+export class Organization extends TenantLocationBase implements IOrganization {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_organizations'

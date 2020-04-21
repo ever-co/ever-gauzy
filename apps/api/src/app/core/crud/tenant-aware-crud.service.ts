@@ -28,6 +28,15 @@ export abstract class TenantAwareCrudService<T extends TenantBase>
 		user: User,
 		where?: FindConditions<T> | ObjectLiteral | FindConditions<T>[]
 	): FindConditions<T> | ObjectLiteral | FindConditions<T>[] {
+		if (Array.isArray(where)) {
+			return where.map((options) => ({
+				...options,
+				tenant: {
+					id: user.tenantId
+				}
+			}));
+		}
+
 		return where
 			? {
 					...where,
