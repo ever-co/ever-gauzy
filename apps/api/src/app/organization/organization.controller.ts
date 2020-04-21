@@ -19,6 +19,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { OrganizationCreateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization')
 @Controller()
@@ -40,7 +41,7 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAll(): Promise<IPagination<Organization>> {
@@ -57,6 +58,7 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(AuthGuard('jwt'))
 	@Get(':id/:select')
 	async findOneById(
 		@Param('id', UUIDValidationPipe) id: string,

@@ -12,7 +12,7 @@ import {
 	OneToOne,
 	RelationId
 } from 'typeorm';
-import { LocationBase } from '../core/entities/location-base';
+import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
@@ -26,7 +26,7 @@ import { CandidateEducation } from '../candidate-education/candidate-education.e
 import { Education } from 'libs/models/src/lib/candidate-education.model';
 
 @Entity('candidate')
-export class Candidate extends LocationBase implements ICandidate {
+export class Candidate extends TenantLocationBase implements ICandidate {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_candidate'
@@ -51,15 +51,6 @@ export class Candidate extends LocationBase implements ICandidate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.user)
 	readonly userId: string;
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.tenant)
-	readonly tenantId?: string;
 
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
