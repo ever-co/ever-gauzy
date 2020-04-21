@@ -73,6 +73,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	currencies = Object.values(CurrenciesEnum);
 	invoiceDate: Date;
 	dueDate: Date;
+	enableSaveButton = true;
 	get currency() {
 		return this.form.get('currency');
 	}
@@ -148,7 +149,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					confirmDelete: true
 				},
 				columns: {
-					employee: {
+					selectedEmployee: {
 						title: 'Employee',
 						type: 'custom',
 						renderComponent: InvoiceEmployeesSelectorComponent,
@@ -205,7 +206,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					confirmDelete: true
 				},
 				columns: {
-					project: {
+					selectedProject: {
 						title: 'Project',
 						type: 'custom',
 						renderComponent: InvoiceProjectsSelectorComponent,
@@ -261,7 +262,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					confirmDelete: true
 				},
 				columns: {
-					task: {
+					selectedTask: {
 						title: 'Task',
 						type: 'custom',
 						renderComponent: InvoiceTasksSelectorComponent,
@@ -405,9 +406,81 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 	async updateInvoice() {
 		const tableData = await this.smartTableSource.getAll();
-		if (tableData) {
-			console.log(tableData);
+		if (tableData.length) {
 			const invoiceData = this.form.value;
+
+			console.log(invoiceData);
+
+			if (invoiceData.invoiceNumber < 1) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER_VALUE'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			} else if (invoiceData.tax <= 0) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.TAX_VALUE'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			} else if (invoiceData.discountValue <= 0) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.DISCOUNT_VALUE'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			}
+
+			if (
+				!invoiceData.invoiceDate ||
+				!invoiceData.dueDate ||
+				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
+			) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			}
+
+			if (tableData[0].hasOwnProperty('selectedEmployee')) {
+				for (const invoiceItem of tableData) {
+					if (!invoiceItem.selectedEmployee) {
+						this.toastrService.danger(
+							this.getTranslation(
+								'INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE_VALUE'
+							),
+							this.getTranslation('TOASTR.TITLE.WARNING')
+						);
+						return;
+					}
+				}
+			} else if (tableData[0].hasOwnProperty('selectedProject')) {
+				for (const invoiceItem of tableData) {
+					if (!invoiceItem.selectedProject) {
+						this.toastrService.danger(
+							this.getTranslation(
+								'INVOICES_PAGE.INVOICE_ITEM.PROJECT_VALUE'
+							),
+							this.getTranslation('TOASTR.TITLE.WARNING')
+						);
+						return;
+					}
+				}
+			} else if (tableData[0].hasOwnProperty('selectedTask')) {
+				for (const invoiceItem of tableData) {
+					if (!invoiceItem.selectedTask) {
+						this.toastrService.danger(
+							this.getTranslation(
+								'INVOICES_PAGE.INVOICE_ITEM.TASK_VALUE'
+							),
+							this.getTranslation('TOASTR.TITLE.WARNING')
+						);
+						return;
+					}
+				}
+			}
+
 			let allItemValue = 0;
 			tableData.forEach((invoiceItem) => {
 				invoiceItem.totalValue =
@@ -522,6 +595,11 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			);
 
 			this.router.navigate(['/pages/accounting/invoices']);
+		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
 		}
 	}
 
@@ -576,6 +654,25 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.smartTableSource.load(items);
 	}
 
+	compareDate(date1: Date, date2: Date): boolean {
+		const d1 = new Date(date1);
+		const d2 = new Date(date2);
+
+		const same = d1.getTime() === d2.getTime();
+
+		if (same) {
+			return false;
+		}
+
+		if (d1 > d2) {
+			return true;
+		}
+
+		if (d1 < d2) {
+			return false;
+		}
+	}
+
 	searchClient(term: string, item: any) {
 		if (item.name) {
 			return item.name.toLowerCase().includes(term.toLowerCase());
@@ -593,15 +690,42 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	onCreateConfirm(event) {
-		event.newData['allEmployees'] = this.employees;
-		event.confirm.resolve(event.newData);
+		if (event.newData.employee === '') {
+			event.newData['allEmployees'] = this.employees;
+		}
+		if (
+			!isNaN(event.newData.quantity) &&
+			!isNaN(event.newData.price) &&
+			event.newData.quantity &&
+			event.newData.price &&
+			event.newData.description
+		) {
+			event.confirm.resolve(event.newData);
+		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
+			event.confirm.reject();
+		}
 	}
 
 	onEditConfirm(event) {
-		console.log(event);
-		if (!isNaN(event.newData.quantity) && !isNaN(event.newData.price)) {
+		if (
+			!isNaN(event.newData.quantity) &&
+			!isNaN(
+				event.newData.price &&
+					event.newData.quantity &&
+					event.newData.price &&
+					event.newData.description
+			)
+		) {
 			event.confirm.resolve(event.newData);
 		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
 			event.confirm.reject();
 		}
 	}
