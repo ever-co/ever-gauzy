@@ -3,7 +3,6 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
-import { TenantQueryMiddleware } from '../shared/middlewares/tenant-query.middleware';
 import { UserOrganization } from '../user-organization/user-organization.entity';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { User } from '../user/user.entity';
@@ -28,8 +27,4 @@ import { OrganizationService } from './organization.service';
 	],
 	exports: [OrganizationService]
 })
-export class OrganizationModule {
-	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(TenantQueryMiddleware).forRoutes(OrganizationController);
-	}
-}
+export class OrganizationModule {}
