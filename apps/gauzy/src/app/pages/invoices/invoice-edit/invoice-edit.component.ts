@@ -713,12 +713,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	onEditConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
-			!isNaN(
-				event.newData.price &&
-					event.newData.quantity &&
-					event.newData.price &&
-					event.newData.description
-			)
+			!isNaN(event.newData.price) &&
+			event.newData.quantity &&
+			event.newData.price &&
+			event.newData.description
 		) {
 			event.confirm.resolve(event.newData);
 		} else {
