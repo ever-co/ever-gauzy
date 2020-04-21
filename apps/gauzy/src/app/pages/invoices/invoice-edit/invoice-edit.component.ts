@@ -408,9 +408,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		const tableData = await this.smartTableSource.getAll();
 		if (tableData.length) {
 			const invoiceData = this.form.value;
-
-			console.log(invoiceData);
-
 			if (invoiceData.invoiceNumber < 1) {
 				this.toastrService.danger(
 					this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER_VALUE'),
@@ -505,7 +502,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			});
 
 			for (const invoiceItem of tableData) {
-				console.log(invoiceItem);
 				if (invoiceItem.id) {
 					if (invoiceItem.selectedEmployee) {
 						await this.invoiceItemService.update(invoiceItem.id, {
@@ -608,7 +604,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		const invoiceItems = allItems.items.filter(
 			(i) => i.invoiceId === this.invoice.id
 		);
-		console.log(invoiceItems);
 		const items = [];
 		let data;
 		for (const item of invoiceItems) {
