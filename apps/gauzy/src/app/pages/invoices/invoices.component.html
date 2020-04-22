@@ -22,6 +22,16 @@
 			</button>
 			<button
 				nbButton
+				status="info"
+				(click)="duplicate()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="copy-outline"></nb-icon>
+				{{ 'BUTTONS.DUPLICATE' | translate }}
+			</button>
+			<button
+				nbButton
 				status="danger"
 				(click)="delete()"
 				class="mr-2"
