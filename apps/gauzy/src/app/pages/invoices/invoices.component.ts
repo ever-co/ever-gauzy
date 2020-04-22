@@ -129,11 +129,14 @@ export class InvoicesComponent extends TranslationBaseComponent
 			}
 		}
 
-		this.loadSettings();
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
+
+		this.router.navigate([
+			`/pages/accounting/invoices/edit/${createdInvoice.id}`
+		]);
 	}
 
 	async delete() {
