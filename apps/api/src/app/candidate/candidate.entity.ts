@@ -19,10 +19,10 @@ import { OrganizationPositions } from '../organization-positions/organization-po
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
-import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
-// tslint:disable-next-line: nx-enforce-module-boundaries
 import { Education } from 'libs/models/src/lib/candidate-education.model';
+import { ICandidateDocument } from 'libs/models/src/lib/candidate-document.model';
+import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -37,6 +37,12 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 		name: 'candidate_education'
 	})
 	educations: Education[];
+
+	@ManyToOne((type) => CandidateDocument)
+	@JoinTable({
+		name: 'candidate_documents'
+	})
+	documents: ICandidateDocument[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -152,17 +158,4 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@IsOptional()
 	@Column({ length: 255, nullable: true })
 	payPeriod?: string;
-
-	@ApiProperty({ type: CandidateCv })
-	@OneToOne((type) => CandidateCv, {
-		nullable: true,
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	cv: CandidateCv;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.cv)
-	readonly cvId: string;
 }

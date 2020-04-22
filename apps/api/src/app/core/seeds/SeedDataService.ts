@@ -102,8 +102,6 @@ import { createCandidateSources } from '../../candidate_source/candidate_source.
 import { CandidateSource } from '../../candidate_source/candidate_source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Tenant } from './../../tenant/tenant.entity';
-import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
-import { createCandidateCvs } from '../../candidate-cv/candidate-cv.seed';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { createDefaultProductCategories } from '../../product-category/product-category.seed';
 import { ProductType } from '../../product-type/product-type.entity';
@@ -113,6 +111,7 @@ import { Product } from '../../product/product.entity';
 import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
 import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
+import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -161,7 +160,7 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
-	CandidateCv
+	CandidateDocument
 ];
 
 @Injectable()
@@ -226,7 +225,7 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-			await createCandidateCvs(this.connection);
+			// await createCandidateCvs(this.connection);
 
 			const candidateSources = await createCandidateSources(
 				this.connection

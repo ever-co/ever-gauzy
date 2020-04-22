@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
 @Component({
 	selector: 'ga-candidate-cv',
@@ -7,7 +7,6 @@ import { Validators, FormBuilder } from '@angular/forms';
 export class CandidateCvComponent implements OnInit {
 	form: any;
 	cvUrl: any;
-
 	constructor(private readonly fb: FormBuilder) {}
 
 	ngOnInit(): void {

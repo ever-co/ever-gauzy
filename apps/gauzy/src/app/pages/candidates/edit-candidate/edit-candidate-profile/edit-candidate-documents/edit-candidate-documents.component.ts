@@ -1,126 +1,178 @@
-import { Component, OnInit } from '@angular/core';
+import {
+	ICandidateDocument,
+	ICandidateDocumentCreateInput
+} from './../../../../../../../../../libs/models/src/lib/candidate-document.model';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
-import { ICandidateCv } from 'libs/models/src/lib/candidate-cv.model';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { takeUntil } from 'rxjs/operators';
-import { CandidateCvService } from 'apps/gauzy/src/app/@core/services/candidate-cv.service';
+import { CandidateDocumentsService } from 'apps/gauzy/src/app/@core/services/candidate-documents.service';
+import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-cv/candidate-cv.component';
 
 @Component({
 	selector: 'ga-edit-candidate-documents',
-	templateUrl: './edit-candidate-documents.component.html'
+	templateUrl: './edit-candidate-documents.component.html',
+	styleUrls: ['./edit-candidate-documents.component.scss']
 })
 export class EditCandidateDocumentsComponent extends TranslationBaseComponent
-	implements OnInit {
-	private _ngDestroy$ = new Subject<void>();
-
-	candidateId: string;
+	implements OnInit, OnDestroy {
 	showAddCard: boolean;
-	showEditDiv: boolean;
-
-	selectedDoc: ICandidateCv;
-	form: any;
-	cvUrl: any;
-	name: any;
-	docs: any[];
+	@ViewChild('candidateCv', { static: false })
+	candidateCv: CandidateCvComponent;
+	documentId = null;
+	documentList: ICandidateDocument[] = [];
+	private _ngDestroy$ = new Subject<void>();
+	candidateId: string;
+	form: FormGroup;
+	formCv: FormGroup;
 	constructor(
 		private readonly fb: FormBuilder,
-		private readonly candidateCVsService: CandidateCvService,
+		private readonly candidateDocumentsService: CandidateDocumentsService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
-
 		private errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
-
 	ngOnInit(): void {
 		this.candidateStore.selectedCandidate$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
 				if (candidate) {
 					this.candidateId = candidate.id;
-					this.loadDocs();
+					this._initializeForm();
+					this.loadDocuments();
 				}
 			});
-
-		this.form = this.fb.group({
-			filename: [''],
-			cvUrl: [
-				'',
-				Validators.compose([
-					Validators.pattern(
-						new RegExp(
-							`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
-							'g'
-						)
-					)
-				])
-			]
+	}
+	private async _initializeForm() {
+		this.form = new FormGroup({
+			documents: this.fb.array([])
 		});
-
-		this.name = this.form.get('filename');
-		this.cvUrl = this.form.get('cvUrl');
+		const documentForm = this.form.controls.documents as FormArray;
+		documentForm.push(
+			this.fb.group({
+				name: ['', Validators.required],
+				documentUrl: [
+					'',
+					Validators.compose([
+						Validators.pattern(
+							new RegExp(
+								`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
+								'g'
+							)
+						)
+					])
+				]
+			})
+		);
+	}
+	private async loadDocuments() {
+		const res = await this.candidateDocumentsService.getAll({
+			candidateId: this.candidateId
+		});
+		if (res) {
+			this.documentList = res.items;
+		}
+	}
+	showCard() {
+		this.showAddCard = !this.showAddCard;
+		this.form.controls.documents.reset();
 	}
 
-	showEditCard(doc: ICandidateCv) {
-		this.showEditDiv = true;
-		this.selectedDoc = doc;
+	editDocument(index: number, id: string) {
+		this.showAddCard = !this.showAddCard;
+		this.form.controls.documents.patchValue([this.documentList[index]]);
+		this.documentId = id;
 	}
 
 	cancel() {
-		this.showEditDiv = !this.showEditDiv;
-		this.selectedDoc = null;
+		this.showAddCard = !this.showAddCard;
+		this.form.controls.documents.value.length = 0;
 	}
 
-	async removeDoc(id: string, name: string) {
-		try {
-			await this.candidateCVsService.delete(id);
-			this.loadDocs();
-		} catch (error) {
-			this.errorHandlingService.handleError(error);
-		}
-	}
+	async submitForm() {
+		const documentForm = this.form.controls.documents as FormArray;
+		const formValue = { ...documentForm.value[0] };
 
-	async editVendor(id: string, name: string) {
-		await this.candidateCVsService.update(id, { name });
-		this.loadDocs();
-		this.toastrService.success('Successfully updated');
-		this.showEditDiv = !this.showEditDiv;
-	}
-
-	async addCV(name: string) {
-		if (name) {
-			await this.candidateCVsService.create({
-				name,
-				candidateId: this.candidateId,
-				cvUrl: this.cvUrl.value
-			});
-
-			this.showAddCard = !this.showAddCard;
-			// this.loadDocs();
-		} else {
-			// TODO toasrt
-		}
-	}
-	private async loadDocs() {
-		if (!this.candidateId) {
-			return;
-		}
-
-		const res = await this.candidateCVsService.getAll(
-			['projects', 'members', 'members.user'],
-			{
-				candidateId: this.candidateId
+		if (documentForm.valid) {
+			this.formCv = this.candidateCv.form;
+			formValue.documentUrl = this.formCv.get('cvUrl').value || null;
+			if (this.documentId !== null) {
+				//editing existing document
+				try {
+					await this.candidateDocumentsService.update(
+						this.documentId,
+						{
+							...formValue
+						}
+					);
+					this.loadDocuments();
+					this.toastrSuccess('UPDATED');
+					this.showAddCard = !this.showAddCard;
+					this.form.controls.experience.reset();
+				} catch (error) {
+					this.toastrError(error);
+				}
+				this.documentId = null;
+			} else {
+				//creating document
+				try {
+					await this.candidateDocumentsService.create({
+						...formValue,
+						candidateId: this.candidateId
+					});
+					this.toastrSuccess('CREATED');
+					this.loadDocuments();
+					this.showAddCard = !this.showAddCard;
+					this.form.controls.experience.reset();
+				} catch (error) {
+					this.toastrError(error);
+				}
 			}
-		);
-		if (res) {
-			this.docs = res.items;
+		} else {
+			this.toastrService.danger(
+				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'),
+				this.getTranslation(
+					'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_REQUIRED'
+				)
+			);
 		}
+	}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
+
+	async removeDocument(id: string) {
+		try {
+			await this.candidateDocumentsService.delete(id);
+			this.toastrSuccess('DELETED');
+			this.loadDocuments();
+		} catch (error) {
+			this.toastrError(error);
+		}
+	}
+
+	private toastrError(error) {
+		this.toastrService.danger(
+			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
+				error: error.error ? error.error.message : error.message
+			}),
+			this.getTranslation('TOASTR.TITLE.ERROR')
+		);
+	}
+
+	private toastrSuccess(text: string) {
+		this.toastrService.success(
+			this.getTranslation('TOASTR.TITLE.SUCCESS'),
+			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_DOCUMENT_${text}`)
+		);
 	}
 }

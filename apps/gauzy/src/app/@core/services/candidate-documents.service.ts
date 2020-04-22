@@ -1,8 +1,9 @@
 import {
-	ICandidateCvCreateInput,
-	ICandidateCv,
-	ICandidateCvFindInput
-} from '../../../../../../libs/models/src/lib/candidate-cv.model';
+	ICandidateDocumentCreateInput,
+	ICandidateDocument,
+	ICandidateDocumentFindInput
+} from './../../../../../../libs/models/src/lib/candidate-document.model';
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
@@ -10,24 +11,25 @@ import { first } from 'rxjs/operators';
 @Injectable({
 	providedIn: 'root'
 })
-export class CandidateCvService {
+export class CandidateDocumentsService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: ICandidateCvCreateInput): Promise<ICandidateCv> {
+	create(
+		createInput: ICandidateDocumentCreateInput
+	): Promise<ICandidateDocument> {
 		return this.http
-			.post<ICandidateCv>('/api/candidate_cv', createInput)
+			.post<ICandidateDocument>('/api/candidate-documents', createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAll(
-		relations?: string[],
-		findInput?: ICandidateCvFindInput
+		findInput?: ICandidateDocumentFindInput
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
+		const data = JSON.stringify({ findInput });
 		return this.http
-			.get<{ items: ICandidateCv[]; total: number }>(
-				`/api/candidate-cv`,
+			.get<{ items: ICandidateDocument[]; total: number }>(
+				`/api/candidate-documents`,
 				{
 					params: { data }
 				}
@@ -38,14 +40,14 @@ export class CandidateCvService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/candidate-cv/${id}`, updateInput)
+			.put(`/api/candidate-documents/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/candidate-cv/${id}`)
+			.delete(`/api/candidate-documents/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

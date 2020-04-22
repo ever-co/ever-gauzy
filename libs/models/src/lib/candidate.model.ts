@@ -8,6 +8,7 @@ import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { Education } from './candidate-education.model';
 import { Experience } from './candidate-experience.model';
+import { ICandidateDocument } from './candidate-document.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
 	user: User;
@@ -32,6 +33,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	educations?: Education[];
+	documents: ICandidateDocument[];
 	source?: string;
 }
 
@@ -54,7 +56,6 @@ export interface CandidateUpdateInput {
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
-	skiills?: string[];
 }
 
 export interface CandidateCreateInput {

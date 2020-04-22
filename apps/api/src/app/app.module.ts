@@ -56,10 +56,9 @@ import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
 import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.module';
-
-import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
 import { CandidateSourceModule } from './candidate_source/candidate_source.module';
+import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
 @Module({
 	imports: [
 		RouterModule.forRoutes([
@@ -75,8 +74,8 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 						module: CandidateEducationModule
 					},
 					{
-						path: '/candidate-cv',
-						module: CandidateCvModule
+						path: '/candidate-documents',
+						module: CandidateDocumentsModule
 					},
 					{
 						path: '/candidate-source',
@@ -231,7 +230,7 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 		UserModule,
 		EmployeeModule,
 		CandidateModule,
-		CandidateCvModule,
+		CandidateDocumentsModule,
 		CandidateSourceModule,
 		CandidateEducationModule,
 		ExportAllModule,

@@ -62,8 +62,8 @@ import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
-import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
+import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 
 const entities = [
 	Invite,
@@ -113,7 +113,7 @@ const entities = [
 	ProductVariant,
 	Product,
 	CandidateSource,
-	CandidateCv,
+	CandidateDocument,
 	CandidateEducation,
 	IntegrationSetting,
 	Integration,
