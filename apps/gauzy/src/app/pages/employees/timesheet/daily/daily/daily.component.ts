@@ -122,9 +122,11 @@ export class DailyComponent implements OnInit, OnDestroy {
 	}
 
 	async nextDay() {
-		this.selectedDate = moment(this.selectedDate)
-			.add(1, 'day')
-			.toDate();
+		const date = moment(this.selectedDate).add(1, 'day');
+		if (date.isAfter(this.today)) {
+			return;
+		}
+		this.selectedDate = date.toDate();
 	}
 
 	async previousDay() {
