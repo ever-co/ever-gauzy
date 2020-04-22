@@ -7,16 +7,13 @@ import {
 	HttpStatus,
 	HttpCode,
 	Delete,
-	Param,
-	Put,
-	Body
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { AuthGuard } from '@nestjs/passport';
 import { CandidateEducation } from './candidate-education.entity';
 import { IPagination } from '../core';
-import { Education } from 'libs/models/src/lib/candidate-education.model';
 
 @ApiTags('candidate_educations')
 @UseGuards(AuthGuard('jwt'))
