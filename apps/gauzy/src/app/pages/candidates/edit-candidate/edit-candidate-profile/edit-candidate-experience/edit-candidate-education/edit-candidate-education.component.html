@@ -154,7 +154,7 @@
 						</span>
 						{{ education.completionDate | date: 'mediumDate' }}
 					</div>
-					<div class="education-line">
+					<div class="education-line" *ngIf="education.notes">
 						<span class="education-title">
 							{{
 								'CANDIDATES_PAGE.EDIT_CANDIDATE.ADDITIONAL_NOTES'

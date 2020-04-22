@@ -18,7 +18,7 @@ export class EditCandidateExperienceFormComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	showAddCard: boolean;
-	educationId = null;
+	experienceId = null;
 	experienceList: Experience[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
@@ -68,7 +68,7 @@ export class EditCandidateExperienceFormComponent
 	editExperience(index: number, id: string) {
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.experience.patchValue([this.experienceList[index]]);
-		this.educationId = id;
+		this.experienceId = id;
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
@@ -83,23 +83,25 @@ export class EditCandidateExperienceFormComponent
 		const experienceForm = this.form.controls.experience as FormArray;
 		if (experienceForm.valid) {
 			const formValue = { ...experienceForm.value[0] };
-			if (this.educationId !== null) {
-				//editing existing education
+			if (this.experienceId !== null) {
+				//editing existing experience
 				try {
 					await this.candidateExperienceService.update(
-						this.educationId,
+						this.experienceId,
 						{
 							...formValue
 						}
 					);
 					this.loadExperience();
 					this.toastrSuccess('UPDATED');
+					this.showAddCard = !this.showAddCard;
+					this.form.controls.experience.reset();
 				} catch (error) {
 					this.toastrError(error);
 				}
-				this.educationId = null;
+				this.experienceId = null;
 			} else {
-				//creating education
+				//creating experience
 				try {
 					await this.candidateExperienceService.create({
 						...formValue,
@@ -107,13 +109,12 @@ export class EditCandidateExperienceFormComponent
 					});
 					this.toastrSuccess('CREATED');
 					this.loadExperience();
+					this.showAddCard = !this.showAddCard;
+					this.form.controls.experience.reset();
 				} catch (error) {
 					this.toastrError(error);
 				}
 			}
-
-			this.showAddCard = !this.showAddCard;
-			this.form.controls.experience.reset();
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'),

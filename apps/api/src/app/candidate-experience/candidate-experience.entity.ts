@@ -19,7 +19,7 @@ export class CandidateExperience extends Base implements Experience {
 	duration: string;
 
 	@ApiProperty({ type: String })
-	@Column()
+	@Column({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: String })

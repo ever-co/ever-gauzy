@@ -64,8 +64,6 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	}
 	showEditCard(index: number, id: string) {
 		this.showEditDiv[index] = true;
-		const skillForm = this.form.controls.skills as FormArray;
-		skillForm.patchValue([this.skillList[index]]);
 		this.skillId = id;
 	}
 	async removeSkill(id: string) {
@@ -85,11 +83,11 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 				});
 				this.loadSkills();
 				this.toastrSuccess('UPDATED');
+				(this.form.controls.skills as FormArray).reset();
+				this.showEditDiv[index] = !this.showEditDiv[index];
 			} catch (error) {
 				this.toastrError(error);
 			}
-			(this.form.controls.skills as FormArray).reset();
-			this.showEditDiv[index] = !this.showEditDiv[index];
 			this.skillId = null;
 		} else {
 			this.toastrService.danger(
@@ -128,7 +126,6 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			);
 		}
 	}
-
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
@@ -137,7 +134,6 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);
 	}
-
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),

@@ -23,7 +23,7 @@ export class CandidateEducation extends Base implements Education {
 	completionDate: Date;
 
 	@ApiProperty({ type: String })
-	@Column()
+	@Column({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: String })

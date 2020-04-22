@@ -94,6 +94,8 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 					);
 					this.loadEducations();
 					this.toastrSuccess('UPDATED');
+					this.showAddCard = !this.showAddCard;
+					educationForm.reset();
 				} catch (error) {
 					this.toastrError(error);
 				}
@@ -107,12 +109,12 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 					});
 					this.toastrSuccess('CREATED');
 					this.loadEducations();
+					this.showAddCard = !this.showAddCard;
+					educationForm.reset();
 				} catch (error) {
 					this.toastrError(error);
 				}
 			}
-			this.showAddCard = !this.showAddCard;
-			educationForm.reset();
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'),

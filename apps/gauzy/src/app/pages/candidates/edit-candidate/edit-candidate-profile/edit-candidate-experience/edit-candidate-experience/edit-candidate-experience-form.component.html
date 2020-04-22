@@ -134,7 +134,7 @@
 						{{ exp.duration }}
 					</div>
 
-					<div class="experience-line">
+					<div class="experience-line" *ngIf="exp.description">
 						<span class="experience-title">
 							{{
 								'CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'

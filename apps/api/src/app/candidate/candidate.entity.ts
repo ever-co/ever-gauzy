@@ -1,9 +1,9 @@
 import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateSource } from './../candidate_source/candidate_source.entity';
-import { Candidate as ICandidate, Status } from '@gauzy/models';
+import { Candidate as ICandidate, Status, PayPeriodEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional } from 'class-validator';
+import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -152,7 +152,7 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
-	reWeeklyLimit?: number;
+	reWeeklyLimit?: number; //Recurring Weekly Limit (hours)
 
 	@ApiPropertyOptional({ type: String, maxLength: 255 })
 	@IsOptional()
@@ -164,9 +164,10 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@Column({ nullable: true })
 	billRateValue?: number;
 
-	@ApiPropertyOptional({ type: String, maxLength: 255 })
+	@ApiProperty({ type: String, enum: PayPeriodEnum })
+	@IsEnum(PayPeriodEnum)
 	@IsOptional()
-	@Column({ length: 255, nullable: true })
+	@Column({ nullable: true })
 	payPeriod?: string;
 
 	@ApiProperty({ type: CandidateCv })
