@@ -1,13 +1,13 @@
 import { EmployeeCreateInput } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Brackets } from 'typeorm';
-import { Employee } from './employee.entity';
-import { CrudService } from '../core/crud/crud.service';
 import * as moment from 'moment';
+import { Brackets, Repository } from 'typeorm';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
+import { Employee } from './employee.entity';
 
 @Injectable()
-export class EmployeeService extends CrudService<Employee> {
+export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
