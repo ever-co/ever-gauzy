@@ -61,6 +61,84 @@ export class InvoicesComponent extends TranslationBaseComponent
 		]);
 	}
 
+	async duplicate() {
+		const { items } = await this.invoicesService.getAll();
+		const createdInvoice = await this.invoicesService.add({
+			invoiceNumber: +items[items.length - 1].invoiceNumber + 1,
+			invoiceDate: this.selectedInvoice.invoiceDate,
+			dueDate: this.selectedInvoice.dueDate,
+			currency: this.selectedInvoice.currency,
+			discountValue: this.selectedInvoice.discountValue,
+			tax: this.selectedInvoice.tax,
+			terms: this.selectedInvoice.terms,
+			paid: this.selectedInvoice.paid,
+			totalValue: this.selectedInvoice.totalValue,
+			clientId: this.selectedInvoice.clientId,
+			organizationId: this.selectedInvoice.organizationId,
+			invoiceType: this.selectedInvoice.invoiceType
+		});
+
+		const allItems = await this.invoiceItemService.getAll();
+
+		const invoiceItems = allItems.items.filter(
+			(i) => i.invoiceId === this.selectedInvoice.id
+		);
+
+		if (invoiceItems[0].employeeId) {
+			for (const item of invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					unitCost: item.unitCost,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id,
+					employeeId: item.employeeId
+				});
+			}
+		} else if (invoiceItems[0].projectId) {
+			for (const item of invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					unitCost: item.unitCost,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id,
+					projectId: item.projectId
+				});
+			}
+		} else if (invoiceItems[0].taskId) {
+			for (const item of invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					unitCost: item.unitCost,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id,
+					taskId: item.taskId
+				});
+			}
+		} else {
+			for (const item of invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					unitCost: item.unitCost,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id
+				});
+			}
+		}
+
+		this.toastrService.primary(
+			this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+
+		this.router.navigate([
+			`/pages/accounting/invoices/edit/${createdInvoice.id}`
+		]);
+	}
+
 	async delete() {
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent)
