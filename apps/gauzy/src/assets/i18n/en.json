@@ -764,6 +764,8 @@
 		"CAN_BE_CHARGED": "Can be charged",
 		"CAN_BE_RENTED": "Can be rented",
 		"IS_EQUIPMENT": "Is equipment",
+		"TRACK_INVENTORY": "Track inventory",
+		"ADD_OPTION": "Add option",
 		"INTERNATIONAL_REFERENCE": "International reference",
 		"CODE": "Code",
 		"NOTES": "Notes",
