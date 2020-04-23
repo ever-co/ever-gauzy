@@ -6,8 +6,8 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
-import { Experience } from 'libs/models/src/lib/candidate-experience.model';
 import { CandidateExperienceService } from 'apps/gauzy/src/app/@core/services/candidate-experience.service';
+import { IExperience } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-candidate-experience-form',
@@ -19,7 +19,7 @@ export class EditCandidateExperienceFormComponent
 	implements OnInit, OnDestroy {
 	showAddCard: boolean;
 	experienceId = null;
-	experienceList: Experience[] = [];
+	experienceList: IExperience[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
 	form: FormGroup;

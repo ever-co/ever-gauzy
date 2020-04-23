@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-export interface Experience extends IBaseEntityModel {
+export interface IExperience extends IBaseEntityModel {
 	occupation: string;
 	organization: string;
 	duration: string;

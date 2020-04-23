@@ -1,11 +1,7 @@
-import {
-	Skill,
-	ISkillCreateInput,
-	ISkillFindInput
-} from './../../../../../../libs/models/src/lib/candidate-skill.model';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
+import { ISkillCreateInput, ISkill, ISkillFindInput } from '@gauzy/models';
 
 @Injectable({
 	providedIn: 'root'
@@ -13,9 +9,9 @@ import { first } from 'rxjs/operators';
 export class CandidateSkillsService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: ISkillCreateInput): Promise<Skill> {
+	create(createInput: ISkillCreateInput): Promise<ISkill> {
 		return this.http
-			.post<Skill>('/api/candidate-skills', createInput)
+			.post<ISkill>('/api/candidate-skills', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -25,7 +21,7 @@ export class CandidateSkillsService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 		return this.http
-			.get<{ items: Skill[]; total: number }>(`/api/candidate-skills`, {
+			.get<{ items: ISkill[]; total: number }>(`/api/candidate-skills`, {
 				params: { data }
 			})
 			.pipe(first())

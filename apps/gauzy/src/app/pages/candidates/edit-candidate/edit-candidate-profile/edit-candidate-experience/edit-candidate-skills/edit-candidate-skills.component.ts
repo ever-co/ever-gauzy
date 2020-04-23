@@ -1,4 +1,3 @@
-import { Skill } from './../../../../../../../../../../libs/models/src/lib/candidate-skill.model';
 import { OnInit, OnDestroy, Component } from '@angular/core';
 import { Subject } from 'rxjs';
 import { NbToastrService } from '@nebular/theme';
@@ -8,6 +7,7 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { takeUntil } from 'rxjs/operators';
 import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
 import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
+import { ISkill } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',
@@ -20,7 +20,7 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	showEditDiv = [];
 	skillId = null;
 	candidateId: string;
-	skillList: Skill[] = [];
+	skillList: ISkill[] = [];
 	form: FormGroup;
 	constructor(
 		private readonly toastrService: NbToastrService,

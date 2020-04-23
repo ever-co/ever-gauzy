@@ -6,8 +6,8 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { NbToastrService } from '@nebular/theme';
-import { Education } from 'libs/models/src/lib/candidate-education.model';
 import { CandidateEducationsService } from 'apps/gauzy/src/app/@core/services/candidate-educations.service';
+import { IEducation } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-candidate-education',
@@ -19,7 +19,7 @@ export class EditCandidateEducationComponent extends TranslationBaseComponent
 	showAddCard: boolean;
 	educationId = null;
 	candidateId: string;
-	educationList: Education[] = [];
+	educationList: IEducation[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	constructor(

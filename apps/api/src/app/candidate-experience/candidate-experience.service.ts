@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
@@ -15,15 +15,5 @@ export class CandidateExperienceService extends CrudService<
 		>
 	) {
 		super(candidateExperienceRepository);
-	}
-	async deleteExperience(experienceId) {
-		const experience = await this.candidateExperienceRepository
-			.createQueryBuilder('experience')
-			.getOne();
-		if (!experience) {
-			throw new BadRequestException("This Experience can't be deleted ");
-		}
-
-		return await this.delete(experienceId);
 	}
 }

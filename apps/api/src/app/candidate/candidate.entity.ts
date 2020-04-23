@@ -1,7 +1,14 @@
 import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateSource } from './../candidate_source/candidate_source.entity';
-import { Candidate as ICandidate, Status, PayPeriodEnum } from '@gauzy/models';
+import {
+	Candidate as ICandidate,
+	Status,
+	PayPeriodEnum,
+	IEducation,
+	IExperience,
+	ISkill
+} from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
@@ -23,10 +30,6 @@ import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
-// tslint:disable-next-line: nx-enforce-module-boundaries
-import { Education } from 'libs/models/src/lib/candidate-education.model';
-import { Experience } from 'libs/models/src/lib/candidate-experience.model';
-import { Skill } from 'libs/models/src/lib/candidate-skill.model';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -40,19 +43,19 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@JoinTable({
 		name: 'candidate_education'
 	})
-	educations: Education[];
+	educations: IEducation[];
 
 	@ManyToOne((type) => CandidateExperience)
 	@JoinTable({
 		name: 'candidate_experience'
 	})
-	experience: Experience[];
+	experience: IExperience[];
 
 	@ManyToOne((type) => CandidateSkill)
 	@JoinTable({
 		name: 'candidate_skills'
 	})
-	skills: Skill[];
+	skills: ISkill[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {

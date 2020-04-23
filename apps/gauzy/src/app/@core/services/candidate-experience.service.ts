@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
-	IExperienceFindInput,
-	Experience,
-	IExperienceCreateInput
-} from 'libs/models/src/lib/candidate-experience.model';
+	IExperience,
+	IExperienceCreateInput,
+	IExperienceFindInput
+} from '@gauzy/models';
 
 @Injectable({
 	providedIn: 'root'
@@ -13,9 +13,9 @@ import {
 export class CandidateExperienceService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: IExperienceCreateInput): Promise<Experience> {
+	create(createInput: IExperienceCreateInput): Promise<IExperience> {
 		return this.http
-			.post<Experience>('/api/candidate-experience', createInput)
+			.post<IExperience>('/api/candidate-experience', createInput)
 			.pipe(first())
 			.toPromise();
 	}
@@ -25,7 +25,7 @@ export class CandidateExperienceService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 		return this.http
-			.get<{ items: Experience[]; total: number }>(
+			.get<{ items: IExperience[]; total: number }>(
 				`/api/candidate-experience`,
 				{
 					params: { data }

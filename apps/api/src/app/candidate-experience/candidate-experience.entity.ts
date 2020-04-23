@@ -1,11 +1,11 @@
 import { Column, Entity } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
-import { Experience } from 'libs/models/src/lib/candidate-experience.model';
 import { IsString, IsNotEmpty } from 'class-validator';
+import { IExperience } from '@gauzy/models';
 
 @Entity('candidate_experience')
-export class CandidateExperience extends Base implements Experience {
+export class CandidateExperience extends Base implements IExperience {
 	@ApiProperty({ type: String })
 	@Column()
 	occupation: string;

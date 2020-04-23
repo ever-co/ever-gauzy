@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-export interface Skill extends IBaseEntityModel {
+export interface ISkill extends IBaseEntityModel {
 	name: string;
 	candidateId?: string;
 }
