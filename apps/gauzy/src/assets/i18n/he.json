@@ -912,6 +912,10 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"INVALID_DATES": "Invalid Dates",
+		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
+		"TAX_VALUE": "Tax cannot be a negative number",
+		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
@@ -931,7 +935,12 @@
 			"EMPLOYEE": "עובד",
 			"HOURLY_RATE": "Hourly Rate",
 			"HOURS_WORKED": "Hours Worked",
-			"PROJECT": "פרויקטים"
+			"PROJECT": "פרויקטים",
+			"NO_ITEMS": "Please add invoice items",
+			"INVALID_ITEM": "Invalid Invoice Item",
+			"EMPLOYEE_VALUE": "Employee cannot be empty",
+			"PROJECT_VALUE": "Project cannot be empty",
+			"TASK_VALUE": "Task cannot be empty"
 		}
 	},
 	"HEADER": {
