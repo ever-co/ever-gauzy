@@ -3,7 +3,6 @@ import { CrudService } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductVariantPrice } from './product-variant-price.entity';
-import { CurrenciesEnum } from '@gauzy/models';
 
 @Injectable()
 export class ProductVariantPriceService extends CrudService<

@@ -1,12 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
-import {
-	Product,
-	ProductVariant,
-	BillingInvoicingPolicyEnum
-} from '@gauzy/models';
+import { Product, ProductVariant } from '@gauzy/models';
 import { FormGroup } from '@angular/forms';
 import { ProductService } from '../../@core/services/product.service';
 import { ProductVariantService } from '../../@core/services/product-variant.service';
@@ -32,18 +28,14 @@ export class ProductMutationComponent extends TranslationBaseComponent {
 	}
 
 	async onSaveProduct(productRequest: Product) {
-		let product: Product;
-
 		if (!productRequest.id) {
 			this.product = await this.productService.create(productRequest);
 			this.product.variants = await this.productVariantService.createProductVariants(
 				this.product
 			);
 		} else {
-			product = await this.productService.update(productRequest);
+			// product = await this.productService.update(productRequest);
 		}
-
-		// this.closeDialog(product);
 	}
 
 	async onEditProductVariant(productVariantId: string) {
