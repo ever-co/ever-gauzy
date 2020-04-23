@@ -897,6 +897,7 @@
 		"PAID_STATUS": "Paid Status",
 		"INVOICES_ADD_INVOICE": "Invoice Added",
 		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DUPLICATE_INVOICE": "Invoice Duplicated",
 		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
 		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
