@@ -1,5 +1,9 @@
 import { CandidateSource } from './../candidate_source/candidate_source.entity';
-import { Candidate as ICandidate, Status } from '@gauzy/models';
+import {
+	Candidate as ICandidate,
+	Status,
+	ICandidateDocument
+} from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional } from 'class-validator';
 import {
@@ -20,9 +24,8 @@ import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
-import { Education } from 'libs/models/src/lib/candidate-education.model';
-import { ICandidateDocument } from 'libs/models/src/lib/candidate-document.model';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
+import { Education } from 'libs/models/src/lib/candidate-education.model';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -158,4 +161,9 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@IsOptional()
 	@Column({ length: 255, nullable: true })
 	payPeriod?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	cvUrl?: string;
 }

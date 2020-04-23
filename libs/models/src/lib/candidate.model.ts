@@ -1,3 +1,4 @@
+import { Experience } from 'libs/models/src/lib/candidate-experience.model';
 import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
@@ -6,9 +7,9 @@ import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
-import { Education } from './candidate-education.model';
-import { Experience } from './candidate-experience.model';
+
 import { ICandidateDocument } from './candidate-document.model';
+import { Education } from './candidate-education.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
 	user: User;
@@ -35,6 +36,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	educations?: Education[];
 	documents: ICandidateDocument[];
 	source?: string;
+	cvUrl?: string;
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';
@@ -56,6 +58,7 @@ export interface CandidateUpdateInput {
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
+	cvUrl?: string;
 }
 
 export interface CandidateCreateInput {

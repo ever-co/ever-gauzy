@@ -1,12 +1,11 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { first } from 'rxjs/operators';
 import {
 	ICandidateDocumentCreateInput,
 	ICandidateDocument,
 	ICandidateDocumentFindInput
-} from './../../../../../../libs/models/src/lib/candidate-document.model';
-
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { first } from 'rxjs/operators';
+} from '@gauzy/models';
 
 @Injectable({
 	providedIn: 'root'

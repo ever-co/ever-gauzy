@@ -1,4 +1,3 @@
-import { ICandidateDocument } from './../../../../../../../../../libs/models/src/lib/candidate-document.model';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
@@ -9,6 +8,8 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { takeUntil } from 'rxjs/operators';
 import { CandidateDocumentsService } from 'apps/gauzy/src/app/@core/services/candidate-documents.service';
 import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-cv/candidate-cv.component';
+import { ICandidateDocument } from '@gauzy/models';
+import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 
 @Component({
 	selector: 'ga-edit-candidate-documents',
@@ -26,17 +27,19 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	candidateId: string;
 	form: FormGroup;
 	formCv: FormGroup;
+	cvFile: string;
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateDocumentsService: CandidateDocumentsService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore
+		private candidateStore: CandidateStore,
+		private candidatesService: CandidatesService
 	) {
 		super(translateService);
 	}
 
-	ngOnInit(): void {
+	ngOnInit() {
 		this.candidateStore.selectedCandidate$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
@@ -66,6 +69,16 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		if (res) {
 			this.documentList = res.items;
 		}
+		// const candidate = await this.candidatesService.getCandidateById(
+		// 	this.candidateId
+		// );
+		// candidate.cvUrl =
+		// 	'http://res.cloudinary.com/evereq/image/upload/v1587654258/everbie-products-images/xdiaz0od4wxr0mwscrev.pdf';
+		// this.cvFile = candidate.cvUrl;
+		// if (this.cvFile !== null) {
+		// 	this.documentList.push({ name: 'CV', documentUrl: this.cvFile });
+		// }
+		// console.log(this.documentList);
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
@@ -76,6 +89,9 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.documents.patchValue([this.documentList[index]]);
 		this.documentId = id;
+		// this.formCv = this.candidateCv.form;
+		// const res = this.formCv.get('cvUrl').value;
+		// console.log(this.candidateCv);
 	}
 
 	cancel() {

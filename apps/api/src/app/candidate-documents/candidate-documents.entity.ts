@@ -1,7 +1,7 @@
 import { Column, Entity } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ICandidateDocument } from 'libs/models/src/lib/candidate-document.model';
+import { ICandidateDocument } from '@gauzy/models';
 
 @Entity('candidate_documents')
 export class CandidateDocument extends Base implements ICandidateDocument {

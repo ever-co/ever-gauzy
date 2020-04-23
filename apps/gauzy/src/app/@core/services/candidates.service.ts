@@ -6,7 +6,7 @@ import {
 	Candidate,
 	CandidateUpdateInput
 } from '@gauzy/models';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 @Injectable()
