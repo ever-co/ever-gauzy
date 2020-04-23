@@ -1,3 +1,4 @@
+import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 // Copyright (c) 2019-2020 Ever Co. LTD
 
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
@@ -64,6 +65,7 @@ import { IntegrationEntitySetting } from '../integration-entity-setting/integrat
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
 import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
+import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
 
 const entities = [
 	Invite,
@@ -115,6 +117,8 @@ const entities = [
 	CandidateSource,
 	CandidateCv,
 	CandidateEducation,
+	CandidateSkill,
+	CandidateExperience,
 	IntegrationSetting,
 	Integration,
 	IntegrationMap,

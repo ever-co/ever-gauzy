@@ -2,31 +2,31 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
-	IEducationCreateInput,
-	IEducation,
-	IEducationFindInput
+	IExperience,
+	IExperienceCreateInput,
+	IExperienceFindInput
 } from '@gauzy/models';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class CandidateEducationsService {
+export class CandidateExperienceService {
 	constructor(private http: HttpClient) {}
 
-	create(createInput: IEducationCreateInput): Promise<IEducation> {
+	create(createInput: IExperienceCreateInput): Promise<IExperience> {
 		return this.http
-			.post<IEducation>('/api/candidate-educations', createInput)
+			.post<IExperience>('/api/candidate-experience', createInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAll(
-		findInput?: IEducationFindInput
+		findInput?: IExperienceFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 		return this.http
-			.get<{ items: IEducation[]; total: number }>(
-				`/api/candidate-educations`,
+			.get<{ items: IExperience[]; total: number }>(
+				`/api/candidate-experience`,
 				{
 					params: { data }
 				}
@@ -37,14 +37,14 @@ export class CandidateEducationsService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/candidate-educations/${id}`, updateInput)
+			.put(`/api/candidate-experience/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/candidate-educations/${id}`)
+			.delete(`/api/candidate-experience/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

@@ -2,29 +2,25 @@ import { Column, Entity } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Base } from '../core/entities/base';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { IEducation } from '@gauzy/models';
+import { IExperience } from '@gauzy/models';
 
-@Entity('candidate_educations')
-export class CandidateEducation extends Base implements IEducation {
+@Entity('candidate_experience')
+export class CandidateExperience extends Base implements IExperience {
 	@ApiProperty({ type: String })
 	@Column()
-	schoolName: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	degree: string;
+	occupation: string;
 
 	@ApiProperty({ type: String })
 	@Column()
-	field: string;
+	organization: string;
 
-	@ApiProperty({ type: Date })
+	@ApiProperty({ type: String })
 	@Column()
-	completionDate: Date;
+	duration: string;
 
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
-	notes?: string;
+	description?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
