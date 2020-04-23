@@ -84,7 +84,7 @@ export class InventoryComponent extends TranslationBaseComponent
 
 	async save() {
 		const dialog = this.dialogService.open(ProductMutationComponent, {
-			context: { productItem: this.selectedItem }
+			context: { product: this.selectedItem }
 		});
 
 		const product = await dialog.onClose.pipe(first()).toPromise();
@@ -103,6 +103,7 @@ export class InventoryComponent extends TranslationBaseComponent
 	async loadSettings() {
 		this.selectedItem = null;
 		const { items } = await this.productService.getAll();
+		console.log(items);
 		this.loading = false;
 		this.smartTableSource.load(items);
 	}

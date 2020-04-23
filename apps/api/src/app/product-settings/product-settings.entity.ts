@@ -1,7 +1,8 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, OneToOne } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ProductVariantSettings as IProductVariantSettings } from '@gauzy/models';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ProductVariant } from '../product-variant/product-variant.entity';
 
 @Entity('product_variant_settings')
 export class ProductVariantSettings extends Base
@@ -37,4 +38,7 @@ export class ProductVariantSettings extends Base
 	@ApiPropertyOptional({ type: Boolean })
 	@Column({ default: false })
 	trackInventory: boolean;
+
+	@OneToOne(() => ProductVariant)
+	productVariant: ProductVariant;
 }
