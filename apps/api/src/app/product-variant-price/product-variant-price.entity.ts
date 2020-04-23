@@ -12,7 +12,7 @@ import { ProductVariant } from '../product-variant/product-variant.entity';
 export class ProductVariantPrice extends Base implements IProductVariantPrice {
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Column()
+	@Column({ default: 0 })
 	unitCost: number;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
@@ -22,7 +22,7 @@ export class ProductVariantPrice extends Base implements IProductVariantPrice {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Column()
+	@Column({ default: 0 })
 	retailPrice: number;
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })

@@ -10,7 +10,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form>
+		<form [formGroup]="form" *ngIf="form">
 			<div class="form-group">
 				<div class="row">
 					<div class="col-sm-6 mb-4">
@@ -20,12 +20,12 @@
 									| translate
 							}}
 						</label>
-
 						<input
 							fullWidth
 							id="internationalReferenceInput"
 							type="text"
 							nbInput
+							formControlName="internationalReference"
 							[placeholder]="
 								'INVENTORY_PAGE.INTERNATIONAL_REFERENCE'
 									| translate
@@ -39,11 +39,11 @@
 									| translate
 							}}
 						</label>
-
 						<input
 							fullWidth
 							id="invoicingPolicyInput"
 							type="text"
+							formControlName="invoicingPolicy"
 							nbInput
 							[placeholder]="
 								'INVENTORY_PAGE.BILLING_INVOICING_POLICY'
@@ -61,6 +61,7 @@
 							fullWidth
 							id="quantityInput"
 							type="number"
+							formControlName="quantity"
 							nbInput
 							[placeholder]="
 								'INVENTORY_PAGE.QUANTITY' | translate
@@ -75,6 +76,7 @@
 							fullWidth
 							id="taxesInput"
 							type="number"
+							formControlName="taxes"
 							nbInput
 							[placeholder]="'INVENTORY_PAGE.TAXES' | translate"
 						/>
@@ -86,11 +88,11 @@
 						<label class="label" for="retailPriceInput">
 							{{ 'INVENTORY_PAGE.RETAIL_PRICE' | translate }}
 						</label>
-
 						<input
 							fullWidth
 							id="retailPriceInput"
 							type="text"
+							formControlName="retailPrice"
 							nbInput
 							[placeholder]="
 								'INVENTORY_PAGE.RETAIL_PRICE' | translate
@@ -107,6 +109,7 @@
 						<nb-select
 							id="retailPriceCurrencyInput"
 							fullWidth
+							formControlName="retailPriceCurrency"
 							[placeholder]="
 								'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
 									| translate
@@ -121,11 +124,11 @@
 						<label class="label" for="unitCost">
 							{{ 'INVENTORY_PAGE.UNIT_COST' | translate }}
 						</label>
-
 						<input
 							fullWidth
 							id="unitCost"
 							type="number"
+							formControlName="unitCost"
 							nbInput
 							[placeholder]="
 								'INVENTORY_PAGE.UNIT_COST' | translate
@@ -133,13 +136,13 @@
 						/>
 					</div>
 					<div class="col-sm-4 mb-4">
-						<label class="label" for="uniCostCurrency">
+						<label class="label" for="unitCostCurrency">
 							{{
 								'INVENTORY_PAGE.UNIT_COST_CURRENCY' | translate
 							}}
 						</label>
 						<nb-select
-							id="uniCostCurrency"
+							id="unitCostCurrency"
 							fullWidth
 							[placeholder]="
 								'INVENTORY_PAGE.UNIT_COST_CURRENCY' | translate
@@ -151,19 +154,17 @@
 				</div>
 				<div class="row mb-4">
 					<div class="col-sm-4 flex-column">
-						<nb-checkbox>
+						<nb-checkbox formControlName="enabled">
 							<span>{{
 								'INVENTORY_PAGE.ENABLED' | translate
 							}}</span>
 						</nb-checkbox>
-
-						<nb-checkbox>
+						<nb-checkbox formControlName="isSubscription">
 							<span>{{
 								'INVENTORY_PAGE.IS_SUBSCRIPTION' | translate
 							}}</span>
 						</nb-checkbox>
-
-						<nb-checkbox>
+						<nb-checkbox formControlName="isPurchaseAutomatically">
 							<span>{{
 								'INVENTORY_PAGE.IS_PURCHASE_AUTOMATICALLY'
 									| translate
@@ -171,32 +172,34 @@
 						</nb-checkbox>
 					</div>
 					<div class="col-sm-4 flex-column">
-						<nb-checkbox>
+						<nb-checkbox formControlName="canBeSold">
 							<span>{{
 								'INVENTORY_PAGE.CAN_BE_SOLD' | translate
 							}}</span>
 						</nb-checkbox>
-
-						<nb-checkbox>
+						<nb-checkbox formControlName="canBePurchased">
 							<span>{{
 								'INVENTORY_PAGE.CAN_BE_PURCHASED' | translate
 							}}</span>
 						</nb-checkbox>
-
-						<nb-checkbox>
+						<nb-checkbox formControlName="canBeCharged">
 							<span>{{
 								'INVENTORY_PAGE.CAN_BE_CHARGED' | translate
 							}}</span>
 						</nb-checkbox>
 					</div>
 					<div class="col-sm-4 flex-column">
-						<nb-checkbox>
+						<nb-checkbox formControlName="canBeRented">
 							<span>{{
 								'INVENTORY_PAGE.CAN_BE_RENTED' | translate
 							}}</span>
 						</nb-checkbox>
-
-						<nb-checkbox>
+						<nb-checkbox formControlName="trackInventory">
+							<span>{{
+								'INVENTORY_PAGE.TRACK_INVENTORY' | translate
+							}}</span>
+						</nb-checkbox>
+						<nb-checkbox formControlName="isEquipment">
 							<span>{{
 								'INVENTORY_PAGE.IS_EQUIPMENT' | translate
 							}}</span>
@@ -211,6 +214,7 @@
 						<textarea
 							nbInput
 							fullWidth
+							formControlName="notes"
 							id="notes"
 							[placeholder]="'INVENTORY_PAGE.NOTES' | translate"
 						>

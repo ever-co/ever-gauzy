@@ -5,6 +5,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { Product } from '@gauzy/models';
 import { FormGroup } from '@angular/forms';
 import { ProductService } from '../../@core/services/product.service';
+import { ProductVariantService } from '../../@core/services/product-variant.service';
 
 @Component({
 	selector: 'ngx-product-mutation',
@@ -15,12 +16,13 @@ export class ProductMutationComponent extends TranslationBaseComponent {
 	form: FormGroup;
 	productItem: Product;
 
-	edit = 'product-variant';
+	edit = 'product';
 
 	constructor(
 		readonly translationService: TranslateService,
 		public dialogRef: NbDialogRef<ProductMutationComponent>,
-		private productService: ProductService
+		private productService: ProductService,
+		private productVariantService: ProductVariantService
 	) {
 		super(translationService);
 	}
@@ -30,6 +32,9 @@ export class ProductMutationComponent extends TranslationBaseComponent {
 
 		if (!productRequest.id) {
 			product = await this.productService.create(productRequest);
+			product.variants = await this.productVariantService.createProductVariants(
+				product
+			);
 		} else {
 			product = await this.productService.update(productRequest);
 		}

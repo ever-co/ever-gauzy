@@ -109,7 +109,50 @@
 						</nb-checkbox>
 					</div>
 				</div>
-				<!-- todo -> add product options -->
+				<div class="options-wrap">
+					<div *ngFor="let option of options">{{ option.name }}</div>
+				</div>
+				<div class="row d-bottom">
+					<div class="col-sm-5">
+						<label class="label" for="addOption">
+							{{ 'INVENTORY_PAGE.CODE' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="addOption"
+							type="text"
+							[(ngModel)]="optionValue"
+							[ngModelOptions]="{ standalone: true }"
+							nbInput
+							[placeholder]="
+								'INVENTORY_PAGE.ADD_OPTION' | translate
+							"
+						/>
+					</div>
+					<div class="col-sm-4">
+						<label class="label" for="optionCode">
+							{{ 'INVENTORY_PAGE.CODE' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="optionCode"
+							type="text"
+							[(ngModel)]="optionCode"
+							[ngModelOptions]="{ standalone: true }"
+							nbInput
+							[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+						/>
+					</div>
+					<div class="col-sm-2">
+						<button
+							status="success"
+							nbButton
+							(click)="onAddOption()"
+						>
+							{{ 'INVENTORY_PAGE.ADD_OPTION' | translate }}
+						</button>
+					</div>
+				</div>
 			</div>
 		</form>
 	</nb-card-body>

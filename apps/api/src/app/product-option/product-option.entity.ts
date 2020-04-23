@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ProductOption as IProductOption } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
@@ -17,6 +17,10 @@ export class ProductOption extends Base implements IProductOption {
 	@Column()
 	code: string;
 
-	// @ManyToOne(()=> Product, product => product.options)
+	@ManyToOne(
+		() => Product,
+		(product) => product.options
+	)
+	@JoinColumn()
 	product: Product;
 }

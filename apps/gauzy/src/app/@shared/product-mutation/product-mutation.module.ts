@@ -20,6 +20,7 @@ import { ProductCategoryService } from '../../@core/services/product-category.se
 import { ProductService } from '../../@core/services/product.service';
 import { ProductTypeService } from '../../@core/services/product-type.service';
 import { ProductVariantFormComponent } from './product-variant-form/product-variant-form.component';
+import { ProductVariantService } from '../../@core/services/product-variant.service';
 
 @NgModule({
 	declarations: [
@@ -47,6 +48,11 @@ import { ProductVariantFormComponent } from './product-variant-form/product-vari
 			}
 		})
 	],
-	providers: [ProductTypeService, ProductCategoryService, ProductService]
+	providers: [
+		ProductTypeService,
+		ProductCategoryService,
+		ProductService,
+		ProductVariantService
+	]
 })
 export class ProductMutationModule {}

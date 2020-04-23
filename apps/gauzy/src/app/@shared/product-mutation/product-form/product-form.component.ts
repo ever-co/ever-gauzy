@@ -1,7 +1,12 @@
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Product, ProductType, ProductCategory } from '@gauzy/models';
+import {
+	Product,
+	ProductType,
+	ProductCategory,
+	ProductOption
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
@@ -17,8 +22,12 @@ export class ProductFormComponent extends TranslationBaseComponent
 	form: FormGroup;
 	productItem: Product;
 
+	optionValue = '';
+	optionCode = '';
+
 	productTypes: ProductType[];
 	productCategories: ProductCategory[];
+	options: Array<ProductOption> = [];
 
 	@Output() save = new EventEmitter<Product>();
 	@Output() cancel = new EventEmitter<void>();
@@ -73,6 +82,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			enabled: this.form.get('enabled').value,
 			description: this.form.get('description').value,
 			variants: [],
+			options: this.options,
 			category: this.productCategories.find((c) => {
 				return c.id === this.form.get('productCategoryId').value;
 			}),
@@ -82,6 +92,14 @@ export class ProductFormComponent extends TranslationBaseComponent
 		};
 
 		this.save.emit(newProduct);
+	}
+
+	onAddOption() {
+		if (!(this.optionValue && this.optionCode)) return;
+
+		this.options.push({ name: this.optionValue, code: this.optionCode });
+		this.optionValue = '';
+		this.optionCode = '';
 	}
 
 	onCancel() {

@@ -12,4 +12,16 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 	) {
 		super(productVariantRepository);
 	}
+
+	async createBulk(
+		productVariants: ProductVariant[]
+	): Promise<ProductVariant[]> {
+		return this.productVariantRepository.save(productVariants);
+	}
+
+	async createVariant(
+		productVariant: ProductVariant
+	): Promise<ProductVariant> {
+		return this.productVariantRepository.save(productVariant);
+	}
 }

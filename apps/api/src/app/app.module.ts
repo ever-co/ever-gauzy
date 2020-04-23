@@ -54,6 +54,8 @@ import { ProductModule } from './product/product.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
+import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
+import { ProductVariantModule } from './product-variant/product-variant.module';
 
 @Module({
 	imports: [
@@ -197,6 +199,14 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 					{
 						path: '/product-types',
 						module: ProductTypesModule
+					},
+					{
+						path: '/product-variant-prices',
+						module: ProductVariantPriceModule
+					},
+					{
+						path: '/product-variants',
+						module: ProductVariantModule
 					}
 				]
 			}
@@ -261,7 +271,9 @@ import { IntegrationMapModule } from './integration-map/integration-map.module';
 		ProductModule,
 		IntegrationSettingModule,
 		IntegrationModule,
-		IntegrationMapModule
+		IntegrationMapModule,
+		ProductVariantPriceModule,
+		ProductVariantModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

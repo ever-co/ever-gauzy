@@ -16,9 +16,9 @@ export class ProductService {
 			.toPromise();
 	}
 
-	create(product: Product): Promise<Product> {		
+	create(productInput: Product): Promise<Product> {
 		return this.http
-			.post<Product>(this.PRODUCTS_URL, product)
+			.post<Product>(`${this.PRODUCTS_URL}/create`, productInput)
 			.pipe(first())
 			.toPromise();
 	}
