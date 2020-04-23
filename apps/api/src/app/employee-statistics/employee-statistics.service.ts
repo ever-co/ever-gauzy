@@ -280,16 +280,26 @@ export class EmployeeStatisticsService {
 		lastNMonths: number
 	) =>
 		await this.expenseService.findAll({
-			select: ['employeeId', 'valueDate', 'amount', 'currency', 'notes'],
+			select: [
+				'employeeId',
+				'valueDate',
+				'amount',
+				'currency',
+				'notes',
+				'vendor',
+				'category'
+			],
 			where: {
 				employee: {
 					id: In(employeeIds)
 				},
+				splitExpense: false,
 				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
 			},
 			order: {
 				valueDate: 'DESC'
-			}
+			},
+			relations: ['vendor', 'category']
 		});
 
 	/**
@@ -335,12 +345,13 @@ export class EmployeeStatisticsService {
 
 		// 2 Find split expenses for Employee's Organization in last N months
 		const { items } = await this.expenseService.findAll({
-			select: ['valueDate', 'amount', 'currency', 'notes'],
+			select: ['valueDate', 'amount', 'currency', 'notes', 'category'],
 			where: {
 				organization: { id: employee.organization.id },
 				splitExpense: true,
 				valueDate: this._beforeDateFilter(searchMonth, lastNMonths)
-			}
+			},
+			relations: ['category']
 		});
 
 		const monthlySplitExpenseMap: Map<
@@ -360,6 +371,7 @@ export class EmployeeStatisticsService {
 				stat.splitExpense = Number(
 					(splitAmount + stat.splitExpense).toFixed(2)
 				);
+				stat.expense.push(expense);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
 				const {
@@ -374,7 +386,8 @@ export class EmployeeStatisticsService {
 					month: expense.valueDate.getMonth(),
 					year: expense.valueDate.getFullYear(),
 					splitExpense: Number((amount / splitAmong).toFixed(2)),
-					splitAmong
+					splitAmong,
+					expense: [expense]
 				};
 
 				monthlySplitExpenseMap.set(key, newStat);
@@ -478,6 +491,8 @@ export class EmployeeStatisticsService {
 					stat.splitExpense = Number(
 						(splitExpense + stat.splitExpense).toFixed(2)
 					);
+					stat.recurringExpense.push(expense);
+					stat.valueDate = date;
 				} else {
 					const {
 						total: splitAmong
@@ -492,7 +507,9 @@ export class EmployeeStatisticsService {
 						month: date.getMonth(),
 						year: date.getFullYear(),
 						splitExpense: Number((amount / splitAmong).toFixed(2)),
-						splitAmong
+						splitAmong,
+						recurringExpense: [expense],
+						valueDate: date
 					};
 
 					monthlySplitExpenseMap.set(key, newStat);

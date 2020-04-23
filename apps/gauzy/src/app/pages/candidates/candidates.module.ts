@@ -21,7 +21,9 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule,
 	NbSelectModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbActionsModule,
+	NbTabsetModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -48,7 +50,11 @@ import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-pr
 import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
 import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
+import { EditCandidateSkillsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-skills/edit-candidate-skills.component';
+import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-education/edit-candidate-education.component';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
+import { EditCandidateExperienceFormComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience/edit-candidate-experience-form.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -68,7 +74,10 @@ const COMPONENTS = [
 	EditCandidateProfileComponent,
 	EditCandidateRatesComponent,
 	EditCandidateTasksComponent,
-	ManageCandidateInviteComponent
+	ManageCandidateInviteComponent,
+	EditCandidateSkillsComponent,
+	EditCandidateEducationComponent,
+	EditCandidateExperienceFormComponent
 ];
 
 @NgModule({
@@ -92,6 +101,9 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
+		FileUploaderModule,
+		NbTabsetModule,
+		NbActionsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

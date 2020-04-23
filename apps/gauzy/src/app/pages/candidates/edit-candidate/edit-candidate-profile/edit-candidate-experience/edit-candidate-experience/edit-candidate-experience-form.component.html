@@ -1,0 +1,163 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			nbButton
+			status="success"
+			*ngIf="!showAddCard"
+			(click)="showCard()"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<div *ngIf="showAddCard" class="row m-0">
+			<form class="col-10" [formGroup]="form" *ngIf="form">
+				<div formArrayName="experience">
+					<div
+						*ngFor="
+							let exp of form.controls.experience?.controls;
+							let i = index
+						"
+					>
+						<div [formGroupName]="i" class="experience-add-card">
+							<div class="col-6 add-card-wrapp">
+								<input
+									#addInput
+									class="col-10"
+									nbInput
+									formControlName="occupation"
+									type="text"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.ADD_EXPERIENCE.OCCUPATION'
+											| translate
+									}}"
+									fullWidth
+								/>
+								<input
+									#addInput
+									class="col-10"
+									nbInput
+									formControlName="organization"
+									type="text"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.ADD_EXPERIENCE.ORGANIZATION'
+											| translate
+									}}"
+									fullWidth
+								/>
+								<input
+									#addInput
+									class="col-10"
+									nbInput
+									formControlName="duration"
+									type="text"
+									placeholder="{{
+										'FORM.PLACEHOLDERS.ADD_EXPERIENCE.DURATION'
+											| translate
+									}}"
+									fullWidth
+								/>
+							</div>
+
+							<textarea
+								class="description col-6"
+								nbInput
+								formControlName="description"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.ADD_EXPERIENCE.DESCRIPTION'
+										| translate
+								}}"
+							>
+							</textarea>
+						</div>
+					</div>
+				</div>
+			</form>
+			<div class="col-2 ">
+				<span class="col-2 pl-2 pr-0"
+					><button
+						class="w-100 form-btn"
+						(click)="submitForm()"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button></span
+				>
+				<span class="col-2 pl-2 pr-0"
+					><button
+						class="w-100 form-btn"
+						(click)="cancel()"
+						nbButton
+						status="danger"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button></span
+				>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body *ngIf="experience?.length">
+		<div class="ml-3 mb-4">
+			<strong>{{
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.EXPERIENCE' | translate
+			}}</strong>
+		</div>
+
+		<nb-card *ngFor="let exp of experience; let i = index">
+			<nb-card-body class="experience-card">
+				<div>
+					<div class="experience-line">
+						<span class="experience-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.OCCUPATION'
+									| translate
+							}}:</span
+						>
+						{{ exp.occupation }}
+					</div>
+					<div class="experience-line">
+						<span class="experience-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.ORGANIZATION'
+									| translate
+							}}:</span
+						>
+						{{ exp.organization }}
+					</div>
+					<div class="experience-line">
+						<span class="experience-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.DURATION'
+									| translate
+							}}:</span
+						>
+						{{ exp.duration }}
+					</div>
+
+					<div class="experience-line">
+						<span class="experience-title">
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'
+									| translate
+							}}:
+						</span>
+						{{ exp.description }}
+					</div>
+				</div>
+
+				<nb-actions class="float-right" e="medium">
+					<nb-action
+						(click)="editExperience(i)"
+						class="d-inline pr-0"
+						icon="edit"
+					></nb-action>
+					<nb-action
+						(click)="removeExperience(i)"
+						class="d-inline pr-0"
+						icon="close"
+					></nb-action>
+				</nb-actions>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

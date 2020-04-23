@@ -31,7 +31,8 @@
 		"REQUEST": "Запросить",
 		"HISTORY": "История",
 		"SYNC": "Синхр.",
-		"UPDATE": "Обновить"
+		"UPDATE": "Обновить",
+		"AUTO_SYNC": "Автосинхронизация"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -179,6 +180,7 @@
 			"ADD_DEPARTMENT": "Добавить департамент",
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
+			"ADD_SKILL": "Добавить навык",
 			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
@@ -229,7 +231,20 @@
 			"CHOOSE_TEAMS": "Выберите команду/с",
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации",
-			"ORGANIZATIONS": "Выберите организации"
+			"ORGANIZATIONS": "Выберите организации",
+			"ADD_EDUCATION": {
+				"SCHOOL_NAME": "Название школы",
+				"DEGREE": "Диплом",
+				"FIELD_OF_STUDY": "В. Область(ы) изучения",
+				"DATE_OF_COMPLETION": "Дата завершения",
+				"ADDITIONAL_NOTES": "Дополнительные заметки (опционально)"
+			},
+			"ADD_EXPERIENCE": {
+				"OCCUPATION": "Занятость",
+				"ORGANIZATION": "Название организации",
+				"DURATION": "Продолжительность",
+				"DESCRIPTION": "Описание (необязательно)"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -361,12 +376,15 @@
 		"RUSSIAN": "Русский"
 	},
 	"INTEGRATIONS": {
+		"AVALIABLE_INTEGRATIONS": "Доступная интеграция",
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
 			"NAME": "Hubstaff",
 			"SELECT_ORGANIZATION": "Выберите организацию",
-			"SYNCED_PROJECTS": "Проекты синхронизированы"
+			"SYNCED_PROJECTS": "Проекты синхронизированы",
+			"SETTINGS_UPDATED": "Обновлены настройки интеграции",
+			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей"
 		}
 	},
 	"DASHBOARD_PAGE": {
@@ -517,6 +535,17 @@
 			"RATE": "Тарифы",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Опыт работы",
+			"SKILLS": "Навыки",
+			"EDUCATION": "Образование",
+			"SCHOOL_NAME": "Название школы",
+			"DEGREE": "Диплом",
+			"FIELD": "Поля(и)",
+			"COMPLETION_DATE": "Дата завершения",
+			"ADDITIONAL_NOTES": "Дополнительные заметки",
+			"OCCUPATION": "Занятость",
+			"ORGANIZATION": "Название организации",
+			"DURATION": "Продолжительность",
+			"DESCRIPTION": "Описание",
 			"TASKS": "Задачи",
 			"HISTORY": "История",
 			"DOCUMENTS": "Документы"
@@ -868,6 +897,7 @@
 		"PAID_STATUS": "Оплаченный статус",
 		"INVOICES_ADD_INVOICE": "Счет добавлен",
 		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_DUPLICATE_INVOICE": "Счет скопирован",
 		"INVOICES_DELETE_INVOICE": "Счет удален",
 		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
 		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
@@ -880,14 +910,38 @@
 		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
 		"EDIT_INVOICE": "Изменить счет",
+		"SELECT_EMPLOYEE": "Выбрать сотрудника",
+		"SELECT_PROJECT": "Выбрать проект",
+		"SELECT_TASK": "Выберите задачу",
+		"INVALID_DATES": "Неверные даты",
+		"INVOICE_NUMBER_VALUE": "Номер счета не может быть отрицательным числом или нулевым",
+		"TAX_VALUE": "Налог не может быть отрицательным числом",
+		"DISCOUNT_VALUE": "Значение скидки не может быть отрицательным числом",
+		"INVOICE_TYPE": {
+			"INVOICE_TYPE": "Тип счета",
+			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
+			"BY_EMPLOYEE_HOURS": "По часам сотрудника",
+			"BY_PROJECT_HOURS": "По часам проекта",
+			"BY_TASK_HOURS": "По часам задания",
+			"DETAILS_INVOICE_ITEMS": "Детали накладной"
+		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",
 			"TASK": "Задача",
 			"NAME": "Имя",
 			"DESCRIPTION": "Описание",
 			"PRICE": "Цена",
-			"QTY": "Кол-во",
-			"TOTAL_VALUE": "Общая стоимость"
+			"QUANTITY": "Количество",
+			"TOTAL_VALUE": "Общая стоимость",
+			"EMPLOYEE": "Сотрудник",
+			"HOURLY_RATE": "Почасовая ставка",
+			"HOURS_WORKED": "Часы работы",
+			"PROJECT": "Проект",
+			"NO_ITEMS": "Пожалуйста, добавьте элементы счета",
+			"INVALID_ITEM": "Неверный элемент счета",
+			"EMPLOYEE_VALUE": "Сотрудник не может быть пустым",
+			"PROJECT_VALUE": "Проект не может быть пустым",
+			"TASK_VALUE": "Задание не может быть пустым"
 		}
 	},
 	"HEADER": {
@@ -947,6 +1001,9 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"CANDIDATE_SKILL_REQUIRED": "Требуется название навыка",
+			"CANDIDATE_EDUCATION_REQUIRED": "Необходима информация об образовании",
+			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
@@ -995,6 +1052,12 @@
 		},
 		"USER": {
 			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
+		},
+		"CANDIDATE": {
+			"EXPERIENCE": {
+				"INVALID_CANDIDATE_NAME": "Пожалуйста, добавьте название навыка",
+				"INVALID_FORM": "Пожалуйста, заполните форму"
+			}
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "Организация {{ name }} создана.",

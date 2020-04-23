@@ -64,31 +64,6 @@
 		flex-direction: column;
 		align-items: stretch;
 	}
-	.charts {
-		width: 49%;
-		display: flex;
-		align-items: flex-end;
-		flex-direction: column;
-	}
-	.chart-select-label {
-		margin-right: 10px;
-	}
-	.chart-wrap {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		width: 100%;
-	}
-	.select-charts {
-		cursor: pointer;
-		font-size: 0.875rem;
-		margin-bottom: 20px;
-		min-width: 150px;
-		width: fit-content;
-	}
-	.chart-option {
-		margin-left: 5px;
-	}
 	.bonus {
 		display: flex;
 		flex-direction: column;

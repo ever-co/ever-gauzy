@@ -56,6 +56,11 @@ import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
 import { ProductVariantModule } from './product-variant/product-variant.module';
+import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
+import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.module';
+import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
+import { CandidateEducationModule } from './candidate-education/candidate-education.module';
+import { CandidateSourceModule } from './candidate_source/candidate_source.module';
 
 @Module({
 	imports: [
@@ -67,6 +72,18 @@ import { ProductVariantModule } from './product-variant/product-variant.module';
 					{ path: '/user', module: UserModule },
 					{ path: '/employee', module: EmployeeModule },
 					{ path: '/candidate', module: CandidateModule },
+					{
+						path: '/candidate-educations',
+						module: CandidateEducationModule
+					},
+					{
+						path: '/candidate-cv',
+						module: CandidateCvModule
+					},
+					{
+						path: '/candidate-source',
+						module: CandidateSourceModule
+					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
 					{ path: '/role', module: RoleModule },
@@ -181,6 +198,14 @@ import { ProductVariantModule } from './product-variant/product-variant.module';
 						module: HubstaffModule
 					},
 					{
+						path: '/integration',
+						module: IntegrationModule
+					},
+					{
+						path: '/integration-entity-setting',
+						module: IntegrationEntitySettingModule
+					},
+					{
 						path: '/invoices',
 						module: InvoiceModule
 					},
@@ -216,6 +241,9 @@ import { ProductVariantModule } from './product-variant/product-variant.module';
 		UserModule,
 		EmployeeModule,
 		CandidateModule,
+		CandidateCvModule,
+		CandidateSourceModule,
+		CandidateEducationModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
@@ -273,7 +301,9 @@ import { ProductVariantModule } from './product-variant/product-variant.module';
 		IntegrationModule,
 		IntegrationMapModule,
 		ProductVariantPriceModule,
-		ProductVariantModule
+		ProductVariantModule,
+		IntegrationEntitySettingModule,
+		IntegrationEntitySettingTiedEntityModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

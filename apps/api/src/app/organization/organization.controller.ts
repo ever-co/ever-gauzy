@@ -19,6 +19,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { OrganizationCreateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization')
 @Controller()
@@ -30,7 +31,7 @@ export class OrganizationController extends CrudController<Organization> {
 		super(organizationService);
 	}
 
-	@ApiOperation({ summary: 'Find all organizations.' })
+	@ApiOperation({ summary: 'Find all organizations within the tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found organizations',
@@ -40,14 +41,14 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
 	async findAll(): Promise<IPagination<Organization>> {
 		return this.organizationService.findAll();
 	}
 
-	@ApiOperation({ summary: 'Find Organization by id.' })
+	@ApiOperation({ summary: 'Find Organization by id within the tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',
@@ -57,6 +58,7 @@ export class OrganizationController extends CrudController<Organization> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(AuthGuard('jwt'))
 	@Get(':id/:select')
 	async findOneById(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -86,15 +88,9 @@ export class OrganizationController extends CrudController<Organization> {
 		@Param('profile_link') profile_link: string,
 		@Param('select') select: string
 	): Promise<Organization> {
-		const findObj = {};
-
-		if (select) {
-			findObj['select'] = JSON.parse(select);
-		}
-
-		return this.organizationService.findOne(
-			{ where: { profile_link: profile_link } },
-			findObj
+		return await this.organizationService.findByPublicLink(
+			profile_link,
+			select
 		);
 	}
 

@@ -1,0 +1,47 @@
+<nb-card>
+	<nb-card-header>
+		{{ 'SETTINGS' | translate }}
+	</nb-card-header>
+	<nb-card-body>
+		<div
+			class="switcher-wrapper"
+			*ngIf="entitiesToSync$ | async as entitiesToSync"
+		>
+			<ng-container *ngFor="let entity of entitiesToSync.currentValue">
+				<nb-toggle
+					[(checked)]="entity.sync"
+					labelPosition="start"
+					status="basic"
+				>
+					{{ entity.entity }}
+				</nb-toggle>
+
+				<div class="tied-entities-wrapper">
+					<nb-toggle
+						*ngFor="let tiedEntity of entity.tiedEntities"
+						[(checked)]="tiedEntity.sync"
+						[disabled]="!entity.sync"
+						labelPosition="start"
+						status="basic"
+					>
+						{{ tiedEntity.entity }}
+					</nb-toggle>
+				</div>
+			</ng-container>
+		</div>
+	</nb-card-body>
+
+	<nb-card-footer>
+		<div class="dialog-footer">
+			<button
+				nbButton
+				(click)="saveSettings()"
+				status="primary"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
+	</nb-card-footer>
+</nb-card>

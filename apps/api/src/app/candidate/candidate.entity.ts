@@ -12,22 +12,31 @@ import {
 	OneToOne,
 	RelationId
 } from 'typeorm';
-import { LocationBase } from '../core/entities/location-base';
+import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
+import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
+import { CandidateEducation } from '../candidate-education/candidate-education.entity';
+// tslint:disable-next-line: nx-enforce-module-boundaries
+import { Education } from 'libs/models/src/lib/candidate-education.model';
 
 @Entity('candidate')
-export class Candidate extends LocationBase implements ICandidate {
+export class Candidate extends TenantLocationBase implements ICandidate {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_candidate'
 	})
 	tags: Tag[];
+
+	@ManyToOne((type) => CandidateEducation)
+	@JoinTable({
+		name: 'candidate_education'
+	})
+	educations: Education[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -41,15 +50,6 @@ export class Candidate extends LocationBase implements ICandidate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.user)
 	readonly userId: string;
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.tenant)
-	readonly tenantId?: string;
 
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
@@ -126,9 +126,43 @@ export class Candidate extends LocationBase implements ICandidate {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	source: string;
+	source?: string;
 
 	@ApiProperty({ type: CandidateSource, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.source)
 	readonly sourceId?: CandidateSource;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsDate()
+	@IsOptional()
+	@Column({ nullable: true })
+	reWeeklyLimit?: number;
+
+	@ApiPropertyOptional({ type: String, maxLength: 255 })
+	@IsOptional()
+	@Column({ length: 255, nullable: true })
+	billRateCurrency?: string;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsOptional()
+	@Column({ nullable: true })
+	billRateValue?: number;
+
+	@ApiPropertyOptional({ type: String, maxLength: 255 })
+	@IsOptional()
+	@Column({ length: 255, nullable: true })
+	payPeriod?: string;
+
+	@ApiProperty({ type: CandidateCv })
+	@OneToOne((type) => CandidateCv, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	cv: CandidateCv;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((candidate: Candidate) => candidate.cv)
+	readonly cvId: string;
 }

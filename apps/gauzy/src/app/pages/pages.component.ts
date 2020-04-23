@@ -249,7 +249,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.TIME_OFF',
-						permissionKeys: [PermissionsEnum.POLICY_VIEW]
+						permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW]
 					}
 				},
 				{

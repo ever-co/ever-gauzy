@@ -1,15 +1,22 @@
-<div class="integrations-list">
-	<a
-		*ngFor="let integration of integrations"
-		[routerLink]="[integration.navigation_url]"
-		class="list-item"
-	>
-		<img
-			[src]="integration.imgSrc"
-			width="100%"
-			height="100%"
-			alt="image not found"
-			[title]="integration.title"
-		/>
-	</a>
-</div>
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'INTEGRATIONS.AVALIABLE_INTEGRATIONS' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="integrations-list">
+			<a
+				*ngFor="let integration of integrations"
+				[routerLink]="[integration.navigation_url]"
+				class="list-item"
+			>
+				<img
+					[src]="integration.imgSrc"
+					width="100%"
+					height="100%"
+					alt="image not found"
+					[title]="integration.title"
+				/>
+			</a>
+		</div>
+	</nb-card-body>
+</nb-card>

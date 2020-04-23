@@ -60,6 +60,10 @@ import { IntegrationSetting } from '../integration-setting/integration-setting.e
 import { Integration } from '../integration/integration.entity';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
+import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
+import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
+import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
+import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 
 const entities = [
 	Invite,
@@ -109,9 +113,13 @@ const entities = [
 	ProductVariant,
 	Product,
 	CandidateSource,
+	CandidateCv,
+	CandidateEducation,
 	IntegrationSetting,
 	Integration,
-	IntegrationMap
+	IntegrationMap,
+	IntegrationEntitySetting,
+	IntegrationEntitySettingTiedEntity
 ];
 
 @Module({

@@ -10,75 +10,98 @@ import {
 } from '@gauzy/models';
 import { Tenant } from './../tenant/tenant.entity';
 
-export const createOrganizations = async (
+export const createDefaultOrganizations = async (
 	connection: Connection,
-	tenant: Tenant[]
-): Promise<{
-	defaultOrganization: Organization;
-	randomOrganizations: Organization[];
-}> => {
-	const defaultOrganization = new Organization();
-	const {
-		name,
-		currency,
-		defaultValueDateType,
-		imageUrl
-	} = env.defaultOrganization;
-	const currencies = Object.values(CurrenciesEnum);
-	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
-	defaultOrganization.name = name;
-	defaultOrganization.profile_link = generateLink(name);
-	defaultOrganization.currency = currency;
-	defaultOrganization.defaultValueDateType = defaultValueDateType;
-	defaultOrganization.imageUrl = imageUrl;
-	defaultOrganization.tenant = tenant[0];
-	defaultOrganization.invitesAllowed = true;
-	defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
-	defaultOrganization.bonusPercentage = 10;
-	defaultOrganization.registrationDate = faker.date.past(5);
+	tenant: Tenant
+): Promise<Organization[]> => {
+	const defaultOrganizations: Organization[] = [];
 
-	await insertOrganization(connection, defaultOrganization);
+	env.defaultOrganizations.map((organiziation) => {
+		const defaultOrganization: Organization = new Organization();
 
-	const randomOrganizations: Organization[] = [];
+		const {
+			name,
+			currency,
+			defaultValueDateType,
+			imageUrl
+		} = organiziation;
 
-	for (let index = 0; index < 5; index++) {
-		const organization = new Organization();
-		const companyName = faker.company.companyName();
+		defaultOrganization.name = name;
+		defaultOrganization.profile_link = generateLink(name);
+		defaultOrganization.currency = currency;
+		defaultOrganization.defaultValueDateType = defaultValueDateType;
+		defaultOrganization.imageUrl = imageUrl;
+		defaultOrganization.tenant = tenant;
+		defaultOrganization.invitesAllowed = true;
+		defaultOrganization.bonusType = BonusTypeEnum.REVENUE_BASED_BONUS;
+		defaultOrganization.bonusPercentage = 10;
+		defaultOrganization.registrationDate = faker.date.past(5);
 
-		const logoAbbreviation = _extractLogoAbbreviation(companyName);
+		defaultOrganizations.push(defaultOrganization);
+	});
 
-		organization.name = companyName;
-		organization.profile_link = generateLink(companyName);
-		organization.currency = currencies[index % currencies.length];
-		organization.defaultValueDateType =
-			defaultDateTypes[index % defaultDateTypes.length];
-		organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
-		organization.tenant = tenant[index % tenant.length];
-		organization.invitesAllowed = true;
+	await insertOrganizations(connection, defaultOrganizations);
 
-		const { bonusType, bonusPercentage } = randomBonus();
-		organization.bonusType = bonusType;
-		organization.bonusPercentage = bonusPercentage;
-		organization.registrationDate = faker.date.past(
-			Math.floor(Math.random() * 10) + 1
-		);
-
-		await insertOrganization(connection, organization);
-		randomOrganizations.push(organization);
-	}
-
-	return { defaultOrganization, randomOrganizations };
+	return defaultOrganizations;
 };
 
-const insertOrganization = async (
+export const createRandomOrganizations = async (
 	connection: Connection,
-	organization: Organization
+	tenants: Tenant[],
+	noOfOrganizations: number
+): Promise<Map<Tenant, Organization[]>> => {
+	const currencies = Object.values(CurrenciesEnum);
+	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
+
+	const tenantOrganizations: Map<Tenant, Organization[]> = new Map();
+	let allOrganizations: Organization[] = [];
+
+	tenants.forEach((tenant) => {
+		const randomOrganizations: Organization[] = [];
+
+		for (let index = 0; index < noOfOrganizations; index++) {
+			const organization = new Organization();
+			const companyName = faker.company.companyName();
+
+			const logoAbbreviation = _extractLogoAbbreviation(companyName);
+
+			organization.name = companyName;
+			organization.profile_link = generateLink(companyName);
+			organization.currency = currencies[index % currencies.length];
+			organization.defaultValueDateType =
+				defaultDateTypes[index % defaultDateTypes.length];
+			organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
+			organization.tenant = tenant;
+			organization.invitesAllowed = true;
+
+			const { bonusType, bonusPercentage } = randomBonus();
+			organization.bonusType = bonusType;
+			organization.bonusPercentage = bonusPercentage;
+			organization.registrationDate = faker.date.past(
+				Math.floor(Math.random() * 10) + 1
+			);
+
+			randomOrganizations.push(organization);
+		}
+
+		allOrganizations = allOrganizations.concat(randomOrganizations);
+		tenantOrganizations.set(tenant, randomOrganizations);
+	});
+
+	await insertOrganizations(connection, allOrganizations);
+
+	return tenantOrganizations;
+};
+
+const insertOrganizations = async (
+	connection: Connection,
+	organizations: Organization[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()
 		.insert()
 		.into(Organization)
-		.values(organization)
+		.values(organizations)
 		.execute();
 };
 

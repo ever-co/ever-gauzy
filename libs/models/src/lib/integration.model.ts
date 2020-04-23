@@ -8,6 +8,12 @@ export interface IIntegrationSetting {
 	settingsValue: string;
 }
 
+export interface IIntegrationEntitySetting {
+	// integration: IIntegration;
+	entity: string;
+	sync: boolean;
+}
+
 export interface IIntegrationMap {
 	integration: IIntegration;
 	sourceId: string;
@@ -23,6 +29,7 @@ export interface IIntegrationViewModel {
 export interface IIntegration extends IBaseEntityModel {
 	tenant: ITenant;
 	name: string;
+	entitySettings?: IIntegrationEntitySetting[];
 }
 
 export enum IntegrationEnum {
@@ -32,5 +39,8 @@ export enum IntegrationEnum {
 
 export enum IntegrationEntity {
 	PROJECT = 'Project',
-	ORGANIZATION = 'Organization'
+	ORGANIZATION = 'Organization',
+	NOTE = 'Note',
+	CLIENT = 'Client',
+	TASK = 'Task'
 }

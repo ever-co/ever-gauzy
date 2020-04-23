@@ -31,7 +31,8 @@
 		"REQUEST": "Request",
 		"HISTORY": "History",
 		"SYNC": "Sync",
-		"UPDATE": "Update"
+		"UPDATE": "Update",
+		"AUTO_SYNC": "Auto sync"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -179,6 +180,7 @@
 			"ADD_DEPARTMENT": "הוסף מחלקה",
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "הוסף ספק",
+			"ADD_SKILL": "Add skill",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "לקוחות",
 			"START_DATE_PROJECT": "תאריך התחלת הפרויקט",
@@ -229,7 +231,20 @@
 			"CHOOSE_TEAMS": "Choose team/s",
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
-			"ORGANIZATIONS": "Choose Organizations"
+			"ORGANIZATIONS": "Choose Organizations",
+			"ADD_EDUCATION": {
+				"SCHOOL_NAME": "School name",
+				"DEGREE": "Degree/Diploma",
+				"FIELD_OF_STUDY": "Field(s) of study",
+				"DATE_OF_COMPLETION": "Date of completion",
+				"ADDITIONAL_NOTES": "Additional notes (optional)"
+			},
+			"ADD_EXPERIENCE": {
+				"OCCUPATION": "Occupation",
+				"ORGANIZATION": "Organization name",
+				"DURATION": "Duration",
+				"DESCRIPTION": "Description (optional)"
+			}
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -361,12 +376,15 @@
 		"RUSSIAN": "Russian"
 	},
 	"INTEGRATIONS": {
+		"AVALIABLE_INTEGRATIONS": "Avaliable integrations",
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
 			"NAME": "Hubstaff",
 			"SELECT_ORGANIZATION": "Select Organization",
-			"SYNCED_PROJECTS": "Projects synced"
+			"SYNCED_PROJECTS": "Projects synced",
+			"SETTINGS_UPDATED": "Updated settings for integration",
+			"SYNCED_ENTITIES": "Auto synced entities"
 		}
 	},
 	"DASHBOARD_PAGE": {
@@ -517,6 +535,17 @@
 			"RATE": "Rates",
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
+			"SKILLS": "Skills",
+			"EDUCATION": "Education",
+			"SCHOOL_NAME": "School name",
+			"DEGREE": "Degree/Diploma",
+			"FIELD": "Field(s)",
+			"COMPLETION_DATE": "Date of completion",
+			"ADDITIONAL_NOTES": "Additional notes",
+			"OCCUPATION": "Occupation",
+			"ORGANIZATION": "Organization name",
+			"DURATION": "Duration",
+			"DESCRIPTION": "Description",
 			"TASKS": "Tasks",
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents"
@@ -868,6 +897,7 @@
 		"PAID_STATUS": "Paid Status",
 		"INVOICES_ADD_INVOICE": "Invoice Added",
 		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DUPLICATE_INVOICE": "Invoice Duplicated",
 		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
 		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
@@ -880,14 +910,38 @@
 		"INVOICES_SELECT_CLIENT": "לקוחות",
 		"ADD_INVOICE": "Add Invoice",
 		"EDIT_INVOICE": "Edit Invoice",
+		"SELECT_EMPLOYEE": "Select Employee",
+		"SELECT_PROJECT": "Select Project",
+		"SELECT_TASK": "Select Task",
+		"INVALID_DATES": "Invalid Dates",
+		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
+		"TAX_VALUE": "Tax cannot be a negative number",
+		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
+		"INVOICE_TYPE": {
+			"INVOICE_TYPE": "Invoice Type",
+			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
+			"BY_EMPLOYEE_HOURS": "By Employee Hours",
+			"BY_PROJECT_HOURS": "By Project Hours",
+			"BY_TASK_HOURS": "By Task Hours",
+			"DETAILS_INVOICE_ITEMS": "Details Invoice Items"
+		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
 			"TASK": "Task",
 			"NAME": "שם",
 			"DESCRIPTION": "Description",
 			"PRICE": "Price",
-			"QTY": "Qty",
-			"TOTAL_VALUE": "Total Value"
+			"QUANTITY": "Quantity",
+			"TOTAL_VALUE": "Total Value",
+			"EMPLOYEE": "עובד",
+			"HOURLY_RATE": "Hourly Rate",
+			"HOURS_WORKED": "Hours Worked",
+			"PROJECT": "פרויקטים",
+			"NO_ITEMS": "Please add invoice items",
+			"INVALID_ITEM": "Invalid Invoice Item",
+			"EMPLOYEE_VALUE": "Employee cannot be empty",
+			"PROJECT_VALUE": "Project cannot be empty",
+			"TASK_VALUE": "Task cannot be empty"
 		}
 	},
 	"HEADER": {
@@ -947,6 +1001,9 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
+			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
+			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -995,6 +1052,12 @@
 		},
 		"USER": {
 			"EDIT_PROFILE": "Your profile has been updated successfully."
+		},
+		"CANDIDATE": {
+			"EXPERIENCE": {
+				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
+				"INVALID_FORM": "Please fill the form"
+			}
 		},
 		"ORGANIZATIONS": {
 			"ADD_NEW_ORGANIZATION": "{{ name }} organization created.",
