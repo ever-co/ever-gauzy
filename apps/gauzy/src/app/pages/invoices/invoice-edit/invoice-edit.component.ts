@@ -10,7 +10,8 @@ import {
 	OrganizationSelectInput,
 	InvoiceItem,
 	Organization,
-	Employee
+	Employee,
+	PermissionsEnum
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -73,12 +74,20 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	currencies = Object.values(CurrenciesEnum);
 	invoiceDate: Date;
 	dueDate: Date;
+	hasInvoiceEditPermission: boolean;
 	get currency() {
 		return this.form.get('currency');
 	}
 	private _ngDestroy$ = new Subject<void>();
 
 	ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasInvoiceEditPermission = this.store.hasPermission(
+					PermissionsEnum.INVOICES_EDIT
+				);
+			});
 		this.route.paramMap.subscribe((params) => {
 			this.invoiceId = params.get('id');
 		});

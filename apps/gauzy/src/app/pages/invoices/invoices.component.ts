@@ -1,16 +1,17 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Invoice } from '@gauzy/models';
+import { Invoice, PermissionsEnum } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoicesValueComponent } from './invoices-value.component';
 import { Router } from '@angular/router';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
+import { Subject } from 'rxjs';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -23,13 +24,16 @@ export interface SelectedInvoice {
 	styleUrls: ['./invoices.component.scss']
 })
 export class InvoicesComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	invoice: Invoice;
 	selectedInvoice: Invoice;
 	loading = false;
 	disableButton = true;
+	hasInvoiceEditPermission: boolean;
+
+	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('invoicesTable', { static: false }) invoicesTable;
 
@@ -46,6 +50,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasInvoiceEditPermission = this.store.hasPermission(
+					PermissionsEnum.INVOICES_EDIT
+				);
+			});
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
@@ -207,5 +218,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();
 		});
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

@@ -224,7 +224,12 @@
 		<button status="danger" class="mr-3" (click)="cancel()" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button status="success" (click)="updateInvoice()" nbButton>
+		<button
+			status="success"
+			(click)="updateInvoice()"
+			*ngIf="hasInvoiceEditPermission"
+			nbButton
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
