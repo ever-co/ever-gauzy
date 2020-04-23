@@ -1054,6 +1054,7 @@
 			"EDIT_PROFILE": "Your profile has been updated successfully."
 		},
 		"CANDIDATE": {
+			"INVALID_FORM": "Please fill the form",
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
 				"INVALID_FORM": "Please fill the form"

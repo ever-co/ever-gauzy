@@ -1,7 +1,4 @@
-import {
-	ICandidateDocument,
-	ICandidateDocumentCreateInput
-} from './../../../../../../../../../libs/models/src/lib/candidate-document.model';
+import { ICandidateDocument } from './../../../../../../../../../libs/models/src/lib/candidate-document.model';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
@@ -9,7 +6,6 @@ import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateDocumentsService } from 'apps/gauzy/src/app/@core/services/candidate-documents.service';
 import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-cv/candidate-cv.component';
@@ -21,12 +17,12 @@ import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candi
 })
 export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	showAddCard: boolean;
 	@ViewChild('candidateCv', { static: false })
 	candidateCv: CandidateCvComponent;
-	documentId = null;
-	documentList: ICandidateDocument[] = [];
 	private _ngDestroy$ = new Subject<void>();
+	documentId = null;
+	showAddCard: boolean;
+	documentList: ICandidateDocument[] = [];
 	candidateId: string;
 	form: FormGroup;
 	formCv: FormGroup;
@@ -35,11 +31,11 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		private readonly candidateDocumentsService: CandidateDocumentsService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore,
-		private errorHandlingService: ErrorHandlingService
+		private candidateStore: CandidateStore
 	) {
 		super(translateService);
 	}
+
 	ngOnInit(): void {
 		this.candidateStore.selectedCandidate$
 			.pipe(takeUntil(this._ngDestroy$))
@@ -59,17 +55,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		documentForm.push(
 			this.fb.group({
 				name: ['', Validators.required],
-				documentUrl: [
-					'',
-					Validators.compose([
-						Validators.pattern(
-							new RegExp(
-								`(http)?s?:?(\/\/[^"']*\.(?:doc|docx|pdf|))`,
-								'g'
-							)
-						)
-					])
-				]
+				documentUrl: ['', Validators.required]
 			})
 		);
 	}
@@ -100,10 +86,10 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	async submitForm() {
 		const documentForm = this.form.controls.documents as FormArray;
 		const formValue = { ...documentForm.value[0] };
-
-		if (documentForm.valid) {
-			this.formCv = this.candidateCv.form;
-			formValue.documentUrl = this.formCv.get('cvUrl').value || null;
+		this.formCv = this.candidateCv.form;
+		formValue.documentUrl = this.formCv.get('cvUrl').value;
+		if (formValue.documentUrl !== null && formValue.documentUrl !== '') {
+			//fields not empty
 			if (this.documentId !== null) {
 				//editing existing document
 				try {
@@ -116,7 +102,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 					this.loadDocuments();
 					this.toastrSuccess('UPDATED');
 					this.showAddCard = !this.showAddCard;
-					this.form.controls.experience.reset();
+					this.form.controls.documents.reset();
 				} catch (error) {
 					this.toastrError(error);
 				}
@@ -131,14 +117,14 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 					this.toastrSuccess('CREATED');
 					this.loadDocuments();
 					this.showAddCard = !this.showAddCard;
-					this.form.controls.experience.reset();
+					this.form.controls.documents.reset();
 				} catch (error) {
 					this.toastrError(error);
 				}
 			}
 		} else {
 			this.toastrService.danger(
-				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FORM'),
+				this.getTranslation('NOTES.CANDIDATE.INVALID_FORM'),
 				this.getTranslation(
 					'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_REQUIRED'
 				)
