@@ -3,8 +3,8 @@ import {
 	Get,
 	HttpStatus,
 	Post,
-	Body,
-	UseGuards
+	Body
+	// UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
@@ -12,7 +12,7 @@ import { ProductService } from './product.service';
 import { Product } from './product.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { ProductCreateCommand } from './commands/product.create.command';
-import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+// import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 
 @ApiTags('Product')
 @Controller()
@@ -51,7 +51,7 @@ export class ProductController extends CrudController<Product> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UseGuards(PermissionGuard)
+	// @UseGuards(PermissionGuard)
 	@Post('/create')
 	async createProduct(@Body() entity: Product, ...options: any[]) {
 		return this.commandBus.execute(new ProductCreateCommand(entity));

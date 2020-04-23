@@ -17,7 +17,7 @@ export class ProductVariantPrice extends Base implements IProductVariantPrice {
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
-	@Column()
+	@Column({ default: CurrenciesEnum.USD })
 	unitCostCurrency: string;
 
 	@ApiProperty({ type: Number })
@@ -27,7 +27,7 @@ export class ProductVariantPrice extends Base implements IProductVariantPrice {
 
 	@ApiProperty({ type: String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
-	@Column()
+	@Column({ default: CurrenciesEnum.USD })
 	retailPriceCurrency: string;
 
 	@OneToOne((type) => ProductVariant)

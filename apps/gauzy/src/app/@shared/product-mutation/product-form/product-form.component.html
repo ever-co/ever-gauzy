@@ -2,7 +2,7 @@
 	<nb-card-header class="d-flex">
 		<h5>
 			{{
-				(productItem
+				(product
 					? 'INVENTORY_PAGE.EDIT_INVENTORY_ITEM'
 					: 'INVENTORY_PAGE.ADD_INVENTORY_ITEM'
 				) | translate
@@ -109,8 +109,10 @@
 						</nb-checkbox>
 					</div>
 				</div>
-				<div class="options-wrap">
-					<div *ngFor="let option of options">{{ option.name }}</div>
+				<div class="options-wrap mb-4">
+					<div *ngFor="let option of options" class="option">
+						{{ option.name }}
+					</div>
 				</div>
 				<div class="row d-bottom">
 					<div class="col-sm-5">
@@ -155,6 +157,21 @@
 				</div>
 			</div>
 		</form>
+
+		<div class="row">
+			<div *ngIf="product && product.variants" class="col-sm-12">
+				<button
+					class="mr-2"
+					status="info"
+					nbButton
+					*ngFor="let productVariant of product.variants"
+					(click)="onEditProductVariant(productVariant.id)"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					{{ productVariant.internalReference }}
+				</button>
+			</div>
+		</div>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
 		<button (click)="onCancel()" status="warning" class="mr-3" nbButton>

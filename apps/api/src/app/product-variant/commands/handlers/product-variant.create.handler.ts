@@ -24,10 +24,8 @@ export class ProductVariantCreateHandler
 		for await (const productOption of productInput.options) {
 			const newProductVariant = new ProductVariant();
 
-			//tstodo
-			newProductVariant.billingInvoicingPolicy = 'policy';
 			newProductVariant.internalReference =
-				productOption.name + productOption.code;
+				productOption.name + ' ' + productOption.code;
 
 			newProductVariant.settings = await this.productVariantSettingsService.createDefaultVariantSettings();
 			newProductVariant.price = await this.productVariantPriceService.createDefaultProductVariantPrice();

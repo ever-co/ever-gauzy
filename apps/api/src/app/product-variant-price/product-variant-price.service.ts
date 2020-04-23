@@ -20,10 +20,6 @@ export class ProductVariantPriceService extends CrudService<
 
 	async createDefaultProductVariantPrice(): Promise<ProductVariantPrice> {
 		const newProductVariantPrice = new ProductVariantPrice();
-
-		newProductVariantPrice.retailPriceCurrency = CurrenciesEnum.BGN;
-		newProductVariantPrice.unitCostCurrency = CurrenciesEnum.BGN;
-
 		return this.productVariantPriceRepository.save(newProductVariantPrice);
 	}
 }

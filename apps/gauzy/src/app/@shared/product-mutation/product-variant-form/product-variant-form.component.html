@@ -39,17 +39,21 @@
 									| translate
 							}}
 						</label>
-						<input
+						<nb-select
+							id="unitCostCurrency"
 							fullWidth
-							id="invoicingPolicyInput"
-							type="text"
-							formControlName="invoicingPolicy"
-							nbInput
 							[placeholder]="
 								'INVENTORY_PAGE.BILLING_INVOICING_POLICY'
 									| translate
 							"
-						/>
+							formControlName="invoicingPolicy"
+						>
+							<nb-option
+								*ngFor="let policy of billingInvoicingPolicies"
+								value="{{ policy }}"
+								>{{ policy }}</nb-option
+							>
+						</nb-select>
 					</div>
 				</div>
 				<div class="row">
@@ -115,7 +119,11 @@
 									| translate
 							"
 						>
-							<nb-option value="">Option 1</nb-option>
+							<nb-option
+								*ngFor="let currency of currencies"
+								value="{{ currency }}"
+								>{{ currency }}</nb-option
+							>
 						</nb-select>
 					</div>
 				</div>
@@ -147,8 +155,13 @@
 							[placeholder]="
 								'INVENTORY_PAGE.UNIT_COST_CURRENCY' | translate
 							"
+							formControlName="unitCostCurrency"
 						>
-							<nb-option value="">Option 1</nb-option>
+							<nb-option
+								*ngFor="let currency of currencies"
+								value="{{ currency }}"
+								>{{ currency }}</nb-option
+							>
 						</nb-select>
 					</div>
 				</div>

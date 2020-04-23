@@ -8,12 +8,15 @@ import {
 	JoinColumn
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductVariant as IProductVariant } from '@gauzy/models';
+import {
+	ProductVariant as IProductVariant,
+	BillingInvoicingPolicyEnum
+} from '@gauzy/models';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
 import { ProductOption } from '../product-option/product-option.entity';
 import { ProductVariantSettings } from '../product-settings/product-settings.entity';
 import { Product } from '../product/product.entity';
-import { IsNumber, IsString, IsOptional } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 
 @Entity('product_variant')
 export class ProductVariant extends Base implements IProductVariant {
@@ -40,14 +43,18 @@ export class ProductVariant extends Base implements IProductVariant {
 	quantity: number;
 
 	@ApiProperty({ type: String })
-	@IsString()
-	@Column()
+	@IsEnum(BillingInvoicingPolicyEnum)
+	@Column({ default: BillingInvoicingPolicyEnum.QUANTITY_ORDERED })
 	billingInvoicingPolicy: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()
 	internalReference: string;
+
+	@ApiPropertyOptional({ type: Boolean })
+	@Column({ default: true })
+	enabled: boolean;
 
 	// @OneToMany(() => ProductOption, productOption => productOption.variant)
 	options: ProductOption[];

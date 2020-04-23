@@ -2,8 +2,14 @@
 	<ngx-product-form
 		*ngIf="edit === 'product'"
 		(save)="onSaveProduct($event)"
-		(cancel)="closeDialog()"
+		(cancel)="closeDialog($event)"
+		(editProductVariant)="onEditProductVariant($event)"
+		[product]="product"
 	></ngx-product-form>
-	<ngx-product-variant-form *ngIf="edit === 'product-variant'">
+	<ngx-product-variant-form
+		*ngIf="edit === 'product-variant' && editProductVariant"
+		(cancel)="closeDialog($event)"
+		[productVariant]="editProductVariant"
+	>
 	</ngx-product-variant-form>
 </nb-card>

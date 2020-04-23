@@ -749,7 +749,7 @@
 	"INVENTORY_PAGE": {
 		"HEADER": "Inventory",
 		"ADD_INVENTORY_ITEM": "Add inventory item",
-		"EDIT_INVENTPRY_ITEM": "Edit inventory item",
+		"EDIT_INVENTORY_ITEM": "Edit inventory item",
 		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
 		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
 		"EDIT_PRODUCT_VARIANT": "Edit product variant",
