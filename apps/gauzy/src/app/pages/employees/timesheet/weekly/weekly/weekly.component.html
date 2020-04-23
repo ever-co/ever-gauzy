@@ -1,6 +1,6 @@
 <div class="header">
 	<h5 class="mb-3">
-		{{ 'TIMESHEET.DAILY' | translate }} - {{ selectedDate | date }}
+		{{ 'TIMESHEET.WEEKLY' | translate }}
 	</h5>
 </div>
 
@@ -12,14 +12,19 @@
 					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
 				</button>
 			</div>
-			<input
-				type="text"
-				nbInput
-				class="form-control ml-1"
-				placeholder="Select Date"
-				[(ngModel)]="selectedDate"
-				[nbDatepicker]="formpicker"
-			/>
+			<div class="week-date-input form-control ml-1">
+				<div class="display-box">
+					{{ logRequest.startDate | date }} -
+					{{ logRequest.endDate | date }}
+				</div>
+				<input
+					type="text"
+					nbInput
+					placeholder="Select Date"
+					[(ngModel)]="selectedDate"
+					[nbDatepicker]="formpicker"
+				/>
+			</div>
 			<div class="input-group-append ml-1" id="button-addon4">
 				<button nbButton status="primary" (click)="nextDay()">
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>

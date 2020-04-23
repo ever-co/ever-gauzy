@@ -17,6 +17,7 @@
 
 // install ng-select default theme
 @import '~@ng-select/ng-select/themes/default.theme.css';
+@import './includes/fullcalendar';
 
 // install the framework and custom global styles
 @include nb-install() {

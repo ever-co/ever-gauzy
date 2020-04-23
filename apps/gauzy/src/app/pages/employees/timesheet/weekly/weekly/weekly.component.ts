@@ -45,6 +45,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
+		this.selectedDate = this.today;
 		this.store.user$.subscribe(() => {
 			this.canChangeSelectedEmployee = this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -58,7 +59,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 
 	async nextDay() {
-		const date = moment(this.selectedDate).add(1, 'day');
+		const date = moment(this.selectedDate).add(7, 'day');
 		if (date.isAfter(this.today)) {
 			return;
 		}
@@ -67,7 +68,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 
 	async previousDay() {
 		this.selectedDate = moment(this.selectedDate)
-			.subtract(1, 'day')
+			.subtract(7, 'day')
 			.toDate();
 	}
 
