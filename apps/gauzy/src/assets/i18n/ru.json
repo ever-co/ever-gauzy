@@ -897,6 +897,7 @@
 		"PAID_STATUS": "Оплаченный статус",
 		"INVOICES_ADD_INVOICE": "Счет добавлен",
 		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_DUPLICATE_INVOICE": "Счет скопирован",
 		"INVOICES_DELETE_INVOICE": "Счет удален",
 		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
 		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
