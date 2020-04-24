@@ -4,28 +4,25 @@ import * as faker from 'faker';
 import { CurrenciesEnum, Organization, Employee } from '@gauzy/models';
 import * as fs from 'fs';
 import * as csv from 'csv-parser';
+import { Tenant } from '../tenant/tenant.entity';
 
-export const createIncomes = async (
+export const createDefaultIncomes = async (
 	connection: Connection,
 	defaultData: {
 		org: Organization;
 		employees: Employee[];
-	},
-	randomData: {
-		orgs: Organization[];
-		employees: Employee[];
 	}
-): Promise<{ defaultIncomes: Income[]; randomIncomes: Income[] }> => {
-	const currencies = Object.values(CurrenciesEnum);
-	const defaultIncomes = [];
+): Promise<Income[]> => {
+	const incomeFromFile = [];
+	let defaultIncomes = [];
 	const filePath =
 		'./apps/api/src/app/income/income-seed-data/income-data.csv';
 
 	fs.createReadStream(filePath)
 		.pipe(csv())
-		.on('data', (data) => defaultIncomes.push(data))
-		.on('end', () => {
-			defaultIncomes.map(async (seedIncome) => {
+		.on('data', (data) => incomeFromFile.push(data))
+		.on('end', async () => {
+			defaultIncomes = incomeFromFile.map((seedIncome) => {
 				const income = new Income();
 				const foundEmployee = defaultData.employees.find(
 					(emp) => emp.user.email === seedIncome.email
@@ -41,10 +38,21 @@ export const createIncomes = async (
 				income.currency = seedIncome.currency;
 				income.valueDate = new Date(seedIncome.valueDate);
 				income.notes = seedIncome.notes;
-
-				await insertIncome(connection, income);
+				return income;
 			});
+
+			await insertIncome(connection, defaultIncomes);
 		});
+
+	return defaultIncomes;
+};
+
+export const createRandomIncomes = async (
+	connection: Connection,
+	tenants: Tenant[],
+	tenantEmployeeMap: Map<Tenant, Employee[]>
+): Promise<void> => {
+	const currencies = Object.values(CurrenciesEnum);
 
 	const randomIncomes: Income[] = [];
 
@@ -57,31 +65,42 @@ export const createIncomes = async (
 		'Great job!'
 	];
 
-	for (let index = 0; index < 25; index++) {
-		const income = new Income();
+	(tenants || []).forEach((tenant) => {
+		const employees = tenantEmployeeMap.get(tenant);
 
-		const currentIndex = faker.random.number({ min: 0, max: index % 5 });
+		(employees || []).map((employee) => {
+			for (let index = 0; index < 5; index++) {
+				const income = new Income();
 
-		income.organization = randomData.orgs[index % 5];
-		income.employee = randomData.employees[currentIndex];
-		income.clientName = clientsArray[currentIndex];
-		income.amount = faker.random.number({ min: 10, max: 9999 });
-		income.clientId = faker.random
-			.number({ min: 10, max: 9999 })
-			.toString();
-		income.currency = currencies[(index % currencies.length) + 1 - 1];
-		income.valueDate = faker.date.recent(15);
-		income.notes = notesArray[currentIndex];
+				const currentIndex = faker.random.number({
+					min: 0,
+					max: index % 5
+				});
 
-		await insertIncome(connection, income);
-	}
+				income.organization = employee.organization;
+				income.employee = employee;
+				income.clientName = clientsArray[currentIndex];
+				income.amount = faker.random.number({ min: 10, max: 9999 });
+				income.clientId = faker.random
+					.number({ min: 10, max: 9999 })
+					.toString();
+				income.currency =
+					employee.organization.currency || currencies[0];
+				income.valueDate = faker.date.recent(15);
+				income.notes = notesArray[currentIndex];
 
-	return { defaultIncomes, randomIncomes };
+				randomIncomes.push(income);
+			}
+		});
+	});
+
+	await insertIncome(connection, randomIncomes);
+	return;
 };
 
 const insertIncome = async (
 	connection: Connection,
-	income: Income
+	income: Income[]
 ): Promise<void> => {
 	await connection
 		.createQueryBuilder()

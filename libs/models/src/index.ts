@@ -1,6 +1,9 @@
 export * from './lib/user.model';
 export * from './lib/employee.model';
 export * from './lib/candidate.model';
+export * from './lib/candidate-experience.model';
+export * from './lib/candidate-education.model';
+export * from './lib/candidate-skill.model';
 export * from './lib/organization.model';
 export * from './lib/income.model';
 export * from './lib/proposal.model';
@@ -39,8 +42,9 @@ export * from './lib/expense-category.model';
 export * from './lib/integration.model';
 export * from './lib/hubstaff.model';
 export * from './lib/tenant.model';
+export * from './lib/http-status.enum';
 export * from './lib/product.model';
+export * from './lib/seed.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
-export { DefaultUser } from './lib/default-user.model';

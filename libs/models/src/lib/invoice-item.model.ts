@@ -8,4 +8,6 @@ export interface InvoiceItem extends IBaseEntityModel {
 	totalValue: number;
 	invoiceId?: string;
 	taskId?: string;
+	employeeId?: string;
+	projectId?: string;
 }

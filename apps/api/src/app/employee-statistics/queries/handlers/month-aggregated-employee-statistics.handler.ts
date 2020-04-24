@@ -1,6 +1,7 @@
 import {
 	MonthAggregatedEmployeeStatistics,
-	MonthAggregatedEmployeeStatisticsFindInput
+	MonthAggregatedEmployeeStatisticsFindInput,
+	RecurringExpenseDefaultCategoriesEnum
 } from '@gauzy/models';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../../employee/employee.service';
@@ -92,6 +93,9 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				stat.bonus = income.isBonus
 					? Number((stat.bonus + amount).toFixed(2))
 					: stat.bonus;
+				stat.directIncomeBonus = income.isBonus
+					? Number((stat.directIncomeBonus + amount).toFixed(2))
+					: stat.directIncomeBonus;
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
 				const newStat: MonthAggregatedEmployeeStatistics = {
@@ -99,7 +103,11 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 					year: income.valueDate.getFullYear(),
 					income: Number(amount.toFixed(2)),
 					expense: 0,
+					expenseWithoutSalary: 0,
 					profit: 0,
+					directIncomeBonus: income.isBonus
+						? Number(amount.toFixed(2))
+						: 0,
 					bonus: income.isBonus ? Number(amount.toFixed(2)) : 0
 				};
 				statisticsMap.set(key, newStat);
@@ -135,6 +143,9 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				// Update expense statistics values in map if key pre-exists
 				const stat = statisticsMap.get(key);
 				stat.expense = Number((amount + stat.expense).toFixed(2));
+				stat.expenseWithoutSalary = Number(
+					(amount + stat.expenseWithoutSalary).toFixed(2)
+				);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
 				const newStat: MonthAggregatedEmployeeStatistics = {
@@ -142,8 +153,10 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 					year: expense.valueDate.getFullYear(),
 					income: 0,
 					expense: Number(amount.toFixed(2)),
+					expenseWithoutSalary: Number(amount.toFixed(2)),
 					profit: 0,
-					bonus: 0
+					bonus: 0,
+					directIncomeBonus: 0
 				};
 				statisticsMap.set(key, newStat);
 			}
@@ -205,10 +218,19 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 
 				const key = `${date.getMonth()}-${date.getFullYear()}`;
 				const amount = Number(expense.value);
+				const salaryExpense =
+					expense.categoryName ===
+					RecurringExpenseDefaultCategoriesEnum.SALARY;
+
 				if (statisticsMap.has(key)) {
 					// Update expense statistics values in map if key pre-exists
 					const stat = statisticsMap.get(key);
 					stat.expense = Number((amount + stat.expense).toFixed(2));
+					stat.expenseWithoutSalary = salaryExpense
+						? stat.expenseWithoutSalary
+						: Number(
+								(amount + stat.expenseWithoutSalary).toFixed(2)
+						  );
 				} else {
 					// Add a new map entry if the key(month-year) does not already exist
 					const newStat: MonthAggregatedEmployeeStatistics = {
@@ -216,8 +238,12 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 						year: date.getFullYear(),
 						income: 0,
 						expense: Number(amount.toFixed(2)),
+						expenseWithoutSalary: salaryExpense
+							? 0
+							: Number(amount.toFixed(2)),
 						profit: 0,
-						bonus: 0
+						bonus: 0,
+						directIncomeBonus: 0
 					};
 					statisticsMap.set(key, newStat);
 				}
@@ -253,6 +279,9 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				stat.expense = Number(
 					(value.splitExpense + stat.expense).toFixed(2)
 				);
+				stat.expenseWithoutSalary = Number(
+					(value.splitExpense + stat.expenseWithoutSalary).toFixed(2)
+				);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
 				const newStat: MonthAggregatedEmployeeStatistics = {
@@ -260,8 +289,10 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 					year: value.year,
 					income: 0,
 					expense: Number(value.splitExpense.toFixed(2)),
+					expenseWithoutSalary: Number(value.splitExpense.toFixed(2)),
 					profit: 0,
-					bonus: 0
+					bonus: 0,
+					directIncomeBonus: 0
 				};
 				statisticsMap.set(key, newStat);
 			}
@@ -295,6 +326,9 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 				stat.expense = Number(
 					(value.splitExpense + stat.expense).toFixed(2)
 				);
+				stat.expenseWithoutSalary = Number(
+					(value.splitExpense + stat.expenseWithoutSalary).toFixed(2)
+				);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
 				const newStat: MonthAggregatedEmployeeStatistics = {
@@ -302,7 +336,9 @@ export class MonthAggregatedEmployeeStatisticsQueryHandler
 					year: value.year,
 					income: 0,
 					expense: Number(value.splitExpense.toFixed(2)),
+					expenseWithoutSalary: Number(value.splitExpense.toFixed(2)),
 					profit: 0,
+					directIncomeBonus: 0,
 					bonus: 0
 				};
 				statisticsMap.set(key, newStat);

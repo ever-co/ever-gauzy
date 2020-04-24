@@ -130,8 +130,6 @@ export class IncomeComponent extends TranslationBaseComponent
 					this.addIncome();
 				}
 			});
-
-		this.loading = false;
 	}
 
 	canShowTable() {
@@ -365,6 +363,7 @@ export class IncomeComponent extends TranslationBaseComponent
 			  ).trim()
 			: '';
 		this.smartTableSource.load(items);
+		this.loading = false;
 		this.showTable = true;
 	}
 

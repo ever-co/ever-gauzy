@@ -6,6 +6,9 @@ import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
+import { IEducation } from './candidate-education.model';
+import { IExperience } from './candidate-experience.model';
+import { ISkill } from './candidate-skill.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
 	user: User;
@@ -23,16 +26,18 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	rejectDate?: Date;
 	candidateLevel?: string;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
-	education?: string;
-	experience?: string;
-	skills?: string;
+	experience?: IExperience[];
+	skills?: ISkill[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	educations?: IEducation[];
+	source?: string;
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';
+
 export interface CandidateFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;
 	user?: UserFindInput;
@@ -50,6 +55,7 @@ export interface CandidateUpdateInput {
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
+	skiills?: string[];
 }
 
 export interface CandidateCreateInput {

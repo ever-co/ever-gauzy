@@ -17,7 +17,6 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ChartModule } from 'angular2-chartjs';
 import { AuthService } from '../../@core/services/auth.service';
 import { ExpensesService } from '../../@core/services/expenses.service';
 import { IncomeService } from '../../@core/services/income.service';
@@ -31,11 +30,9 @@ import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-s
 import { HumanResourcesComponent } from './human-resources/human-resources.component';
 import { AccountingComponent } from './accounting/accounting.component';
 import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.module';
-import { EmployeeHorizontalBarChartComponent } from './employee-charts/employee-horizontal-bar-chart/employee-horizontal-bar-chart.component';
-import { EmployeeDoughnutChartComponent } from './employee-charts/employee-doughnut-chart/employee-doughnut-chart.component';
-import { EmployeeStackedBarChartComponent } from './employee-charts/employee-stacked-bar-chart/employee-stacked-bar-chart.component';
 import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
+import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -66,7 +63,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		ChartModule,
+		EmployeeChartsModule,
 		NbSpinnerModule,
 		SingleStatisticModule,
 		InfoBlockModule,
@@ -74,9 +71,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [
 		DashboardComponent,
-		EmployeeHorizontalBarChartComponent,
-		EmployeeStackedBarChartComponent,
-		EmployeeDoughnutChartComponent,
 		AccountingComponent,
 		HumanResourcesComponent,
 		DataEntryShortcutsComponent,

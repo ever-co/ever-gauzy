@@ -28,7 +28,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	constructor(
 		private route: ActivatedRoute,
 		private location: Location,
-		private candidateService: CandidatesService,
+		private candidatesService: CandidatesService,
 		private candidateStore: CandidateStore,
 		readonly translateService: TranslateService
 	) {
@@ -134,7 +134,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 
 	private async _loadCandidateData() {
 		const { id } = this.routeParams;
-		const { items } = await this.candidateService
+		const { items } = await this.candidatesService
 			.getAll(['user'], { id })
 			.pipe(first())
 			.toPromise();

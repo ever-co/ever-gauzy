@@ -1,0 +1,23 @@
+.switcher-wrapper {
+	display: flex;
+	flex-direction: column;
+	width: 200px;
+
+	nb-toggle {
+		display: flex;
+		::ng-deep .toggle-label {
+			display: flex;
+			justify-content: space-between;
+			flex-grow: 1;
+		}
+	}
+}
+
+.dialog-footer {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.tied-entities-wrapper {
+	padding-left: 15px;
+}

@@ -203,8 +203,6 @@ export class ExpensesComponent extends TranslationBaseComponent
 					this.openAddExpenseDialog();
 				}
 			});
-
-		this.loading = false;
 	}
 
 	canShowTable() {
@@ -473,6 +471,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					this.store.selectedEmployee.lastName
 			  ).trim()
 			: 'All Employees';
+		this.loading = false;
 	}
 
 	_applyTranslationOnSmartTable() {
