@@ -1005,8 +1005,12 @@
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"CANDIDATE_SKILL_REQUIRED": "Требуется название навыка",
+			"CANDIDATE_EXPERIENCE_CREATED": "Успешно создано",
+			"CANDIDATE_EXPERIENCE_UPDATED": "Успешно обновлено",
+			"CANDIDATE_EXPERIENCE_DELETED": "Успешно удален",
 			"CANDIDATE_EDUCATION_REQUIRED": "Необходима информация об образовании",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
+			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
@@ -1059,7 +1063,9 @@
 		"CANDIDATE": {
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Пожалуйста, добавьте название навыка",
-				"INVALID_FORM": "Пожалуйста, заполните форму"
+				"INVALID_FORM": "Пожалуйста, заполните форму",
+				"INVALID_FIELD": "Пожалуйста, заполните поле",
+				"ERROR": "{{ error }}"
 			}
 		},
 		"ORGANIZATIONS": {
