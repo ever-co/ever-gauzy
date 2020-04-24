@@ -5,11 +5,12 @@ import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { CandidateDocumentsService } from 'apps/gauzy/src/app/@core/services/candidate-documents.service';
 import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-cv/candidate-cv.component';
 import { ICandidateDocument } from '@gauzy/models';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-candidate-documents',
@@ -27,9 +28,10 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	candidateId: string;
 	form: FormGroup;
 	formCv: FormGroup;
-	cvFile: string;
+	documentUrl = '';
 	constructor(
 		private readonly fb: FormBuilder,
+		private route: ActivatedRoute,
 		private readonly candidateDocumentsService: CandidateDocumentsService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
@@ -69,16 +71,18 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		if (res) {
 			this.documentList = res.items;
 		}
-		// const candidate = await this.candidatesService.getCandidateById(
-		// 	this.candidateId
-		// );
-		// candidate.cvUrl =
-		// 	'http://res.cloudinary.com/evereq/image/upload/v1587654258/everbie-products-images/xdiaz0od4wxr0mwscrev.pdf';
-		// this.cvFile = candidate.cvUrl;
-		// if (this.cvFile !== null) {
-		// 	this.documentList.push({ name: 'CV', documentUrl: this.cvFile });
-		// }
-		// console.log(this.documentList);
+		this.route.params
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (params) => {
+				const id = params.id;
+
+				const { items } = await this.candidatesService
+					.getAll(['user', 'documents'], { id })
+					.pipe(first())
+					.toPromise();
+
+				console.log(items);
+			});
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
@@ -89,14 +93,13 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.documents.patchValue([this.documentList[index]]);
 		this.documentId = id;
-		// this.formCv = this.candidateCv.form;
-		// const res = this.formCv.get('cvUrl').value;
-		// console.log(this.candidateCv);
+		this.documentUrl = this.documentList[index].documentUrl;
 	}
 
 	cancel() {
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.documents.value.length = 0;
+		this.documentUrl = '';
 	}
 
 	async submitForm() {
@@ -153,6 +156,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	}
 
 	async removeDocument(id: string) {
+		console.log(id);
 		try {
 			await this.candidateDocumentsService.delete(id);
 			this.toastrSuccess('DELETED');

@@ -7,7 +7,7 @@
 					'FORM.PLACEHOLDERS.UPLOADER_DOCUMENT_PLACEHOLDER'
 						| translate
 				"
-				[fileUrl]="cvUrl?.value"
+				[fileUrl]="isDocument ? documentUrl : cvUrl.value"
 				(uploadedImgUrl)="cvUrl.setValue($event)"
 			></ngx-file-uploader-input>
 		</div>

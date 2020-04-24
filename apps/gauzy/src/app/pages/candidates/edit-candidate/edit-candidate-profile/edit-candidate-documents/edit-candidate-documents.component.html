@@ -47,7 +47,11 @@
 					<div class="label">
 						{{ 'FORM.LABELS.DOCUMENT_URL' | translate }}
 					</div>
-					<ga-candidate-cv #candidateCv></ga-candidate-cv>
+					<ga-candidate-cv
+						#candidateCv
+						[documentUrl]="documentUrl"
+						[isDocument]="true"
+					></ga-candidate-cv>
 				</div>
 			</div>
 

@@ -5,6 +5,8 @@ import { Validators, FormBuilder } from '@angular/forms';
 	templateUrl: 'candidate-cv.component.html'
 })
 export class CandidateCvComponent implements OnInit {
+	@Input() documentUrl: any;
+	@Input() isDocument: false;
 	form: any;
 	cvUrl: any;
 	constructor(private readonly fb: FormBuilder) {}

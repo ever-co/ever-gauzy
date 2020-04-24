@@ -71,6 +71,7 @@ export interface CandidateCreateInput {
 	cvUrl?: string;
 	members?: Candidate[];
 	tags?: Tag[];
+	documents: ICandidateDocument[];
 }
 export interface CandidateLevel {
 	id: string;

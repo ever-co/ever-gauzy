@@ -1,47 +1,38 @@
+// import { CandidateDocument } from './candidate-documents.entity';
+// import { ICandidateDocument } from '@gauzy/models';
 // import { Connection } from 'typeorm';
-// import { CandidateCv } from './candidate-cv.entity';
 
-// export const createCandidateCvs = async (
+// export const createCandidateDocuments = async (
 // 	connection: Connection
-// ): Promise<CandidateCv[]> => {
-// 	const candidateCv: CandidateCv[] = [
+// ): Promise<ICandidateDocument[]> => {
+// 	const candidateDocument: ICandidateDocument[] = [
 // 		{
-// 			name: 'Test',
-// 			cvUrl: 'test/test/test'
+// 			name: 'Test 1',
+// 			documentUrl:
+// 				'http://res.cloudinary.com/evereq/image/upload/v1587742725/everbie-products-images/n07vjqa8pa8dfinkzqdy.pdf'
 // 		},
 // 		{
-// 			name: 'Test2',
-// 			cvUrl: 'test/test/test2'
-// 		},
-// 		{
-// 			name: 'Test3',
-// 			cvUrl: 'test/test/test3'
-// 		},
-// 		{
-// 			name: 'Test4',
-// 			cvUrl: 'test/test/test4'
-// 		},
-// 		{
-// 			name: 'Test5',
-// 			cvUrl: 'test/test/test5	'
+// 			name: 'Test 2',
+// 			documentUrl:
+// 				'http://res.cloudinary.com/evereq/raw/upload/v1587742757/everbie-products-images/wxjghcvuysc3imrx7z2t.docx'
 // 		}
 // 	];
 
-// 	for (let i = 0; i < candidateCv.length; i++) {
-// 		await insertCandidateSourses(connection, candidateCv[i]);
+// 	for (let i = 0; i < candidateDocument.length; i++) {
+// 		await insertCandidateDocuments(connection, candidateDocument[i]);
 // 	}
 
-// 	return candidateCv;
+// 	return candidateDocument;
 // };
 
-// const insertCandidateSourses = async (
+// const insertCandidateDocuments = async (
 // 	connection: Connection,
-// 	candidateCv: CandidateCv
+// 	candidateDocument: CandidateDocument
 // ): Promise<void> => {
 // 	await connection
 // 		.createQueryBuilder()
 // 		.insert()
-// 		.into(CandidateCv)
-// 		.values(candidateCv)
+// 		.into(CandidateDocument)
+// 		.values(candidateDocument)
 // 		.execute();
 // };
