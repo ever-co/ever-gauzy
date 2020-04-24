@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 
 @Component({
@@ -20,7 +20,7 @@ import { ViewCell } from 'ng2-smart-table';
 		</div>
 		<div class="tags">
 			<nb-badge
-				*ngFor="let tag of rowData?.tag"
+				*ngFor="let tag of rowData?.tags"
 				class="color"
 				position="centered"
 				[style.background]="tag.color"
@@ -57,9 +57,14 @@ import { ViewCell } from 'ng2-smart-table';
 		`
 	]
 })
-export class PictureNameTagsComponent implements ViewCell {
+export class PictureNameTagsComponent implements OnInit, ViewCell {
 	@Input()
 	rowData: any;
 
 	value: string | number;
+
+	ngOnInit() {
+		console.warn(this.rowData);
+		console.warn(this.value);
+	}
 }

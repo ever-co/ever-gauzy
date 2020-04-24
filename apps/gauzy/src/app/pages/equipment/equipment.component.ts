@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { Equipment } from '@gauzy/models';
+import { Equipment, Tag } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,6 +30,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
+	tags: any;
 
 	@ViewChild('equipmentTable', { static: false }) equipmentTable;
 
@@ -151,6 +152,8 @@ export class EquipmentComponent extends TranslationBaseComponent
 		const { items } = await this.equipmentService.getAll();
 		this.loading = false;
 		this.smartTableSource.load(items);
+
+		console.warn(items);
 	}
 
 	async selectEquipment($event: SelectedEquipment) {

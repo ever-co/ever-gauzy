@@ -184,7 +184,12 @@
 					/>
 				</div>
 				<div class="col-sm-6">
-					<ngx-tags-color-input [form]="form"> </ngx-tags-color-input>
+					<ngx-tags-color-input
+						[form]="form"
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+					>
+					</ngx-tags-color-input>
 				</div>
 			</div>
 

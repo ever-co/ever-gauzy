@@ -46,7 +46,9 @@ export class TagsColorInputComponent implements OnInit {
 					description: '',
 					color: ''
 				});
-				if (tagNew.id) tags.push(tagNew);
+				if (tagNew.id) {
+					tags.push(tagNew);
+				}
 			}
 		}
 		await this.selectedTagsEvent.emit(tags);
