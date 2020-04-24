@@ -36,22 +36,22 @@ export class TagsColorInputComponent implements OnInit {
 	constructor(private readonly tagsService: TagsService) {}
 
 	async onChange() {
-		const tags = [];
-		for (const tag of this.selectedTags) {
-			if (tag.id) {
-				tags.push(tag);
-			} else {
-				const tagNew = await this.tagsService.insertTag({
-					name: tag.name,
-					description: '',
-					color: ''
-				});
-				if (tagNew.id) {
-					tags.push(tagNew);
-				}
-			}
-		}
-		await this.selectedTagsEvent.emit(tags);
+		// const tags = [];
+		// for (const tag of this.selectedTags) {
+		// 	if (tag.id) {
+		// 		tags.push(tag);
+		// 	} else {
+		// 		const tagNew = await this.tagsService.insertTag({
+		// 			name: tag.name,
+		// 			description: '',
+		// 			color: ''
+		// 		});
+		// 		if (tagNew.id) {
+		// 			tags.push(tagNew);
+		// 		}
+		// 	}
+		// }
+		// await this.selectedTagsEvent.emit(tags);
 	}
 
 	ngOnInit() {

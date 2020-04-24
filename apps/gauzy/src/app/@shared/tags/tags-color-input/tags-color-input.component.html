@@ -1,10 +1,10 @@
+<!-- [addTag]="true" -->
 <form [formGroup]="form" *ngIf="form">
 	<label class="label" for="addTags">
 		{{ 'TAGS_PAGE.HEADER' | translate }}
 	</label>
 	<ng-select
 		bindLabel="name"
-		[addTag]="true"
 		formControlName="tags"
 		[items]="tags"
 		[(ngModel)]="selectedTags"
