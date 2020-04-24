@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { AuthGuard } from '@nestjs/passport';
-import { User } from '@gauzy/models';
 
 @ApiTags('Equipment')
 @UseGuards(AuthGuard('jwt'))

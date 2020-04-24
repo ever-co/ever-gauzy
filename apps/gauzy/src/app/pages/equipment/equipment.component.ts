@@ -152,8 +152,6 @@ export class EquipmentComponent extends TranslationBaseComponent
 		const { items } = await this.equipmentService.getAll();
 		this.loading = false;
 		this.smartTableSource.load(items);
-
-		console.warn(items);
 	}
 
 	async selectEquipment($event: SelectedEquipment) {

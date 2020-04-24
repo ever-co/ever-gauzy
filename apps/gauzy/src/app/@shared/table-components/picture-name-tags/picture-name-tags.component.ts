@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 
 @Component({
@@ -57,14 +57,9 @@ import { ViewCell } from 'ng2-smart-table';
 		`
 	]
 })
-export class PictureNameTagsComponent implements OnInit, ViewCell {
+export class PictureNameTagsComponent implements ViewCell {
 	@Input()
 	rowData: any;
 
 	value: string | number;
-
-	ngOnInit() {
-		console.warn(this.rowData);
-		console.warn(this.value);
-	}
 }
