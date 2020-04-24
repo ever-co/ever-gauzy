@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -23,7 +23,6 @@ import { OrganizationClientsService } from '../../../@core/services/organization
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
