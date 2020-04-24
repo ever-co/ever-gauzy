@@ -41,9 +41,12 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 	}
 
 	async initializeForm() {
-		this.tags = this.equipment.tags;
+		if (this.equipment) {
+			this.tags = this.equipment.tags;
+		}
+
 		this.form = this.fb.group({
-			tags: [this.tags],
+			tags: [this.equipment ? this.tags : ''],
 			name: [
 				this.equipment ? this.equipment.name : '',
 				Validators.required
@@ -75,8 +78,8 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		}
 		const equipment = await this.equipmentService.save({
 			...this.form.value,
-			currency: this.selectedCurrency,
-			tags: this.equipment.tags
+			currency: this.selectedCurrency
+			// tags: this.equipment.tags
 		});
 		this.closeDialog(equipment);
 	}
@@ -85,6 +88,8 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		this.dialogRef.close(equipment);
 	}
 	selectedTagsEvent(ev) {
-		this.equipment.tags = ev;
+		if (this.equipment) {
+			this.equipment.tags = ev;
+		}
 	}
 }
