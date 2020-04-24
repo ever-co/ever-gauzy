@@ -4,11 +4,10 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { takeUntil, first } from 'rxjs/operators';
-import { Candidate } from '@gauzy/models';
-import { FormGroup, FormBuilder } from '@angular/forms';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { ActivatedRoute } from '@angular/router';
+import { takeUntil } from 'rxjs/operators';
+import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
+import { ISkill } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',
@@ -17,19 +16,18 @@ import { ActivatedRoute } from '@angular/router';
 export class EditCandidateSkillsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	skills: string[] = [];
 	showAddCard: boolean;
 	showEditDiv = [];
-
-	selectedCandidate: Candidate;
+	skillId = null;
+	candidateId: string;
+	skillList: ISkill[] = [];
 	form: FormGroup;
 	constructor(
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
-		private candidatesService: CandidatesService,
 		private fb: FormBuilder,
-		private route: ActivatedRoute
+		private candidateSkillsService: CandidateSkillsService
 	) {
 		super(translateService);
 	}
@@ -38,70 +36,112 @@ export class EditCandidateSkillsComponent extends TranslationBaseComponent
 		this.candidateStore.selectedCandidate$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((candidate) => {
-				this.selectedCandidate = candidate;
-				if (this.selectedCandidate) {
-					this._initializeForm(this.selectedCandidate);
+				if (candidate) {
+					this.candidateId = candidate.id;
+					this._initializeForm();
+					this.loadSkills();
 				}
 			});
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
-				const { items } = await this.candidatesService
-					.getAll(['user', 'tags'], { id })
-					.pipe(first())
-					.toPromise();
-				this.selectedCandidate = items[0];
-				this.candidateStore.selectedCandidate = this.selectedCandidate;
-			});
 	}
-	private async _initializeForm(candidate: Candidate) {
-		this.form = this.fb.group({
-			skills: [candidate.skills]
+	private async _initializeForm() {
+		this.form = new FormGroup({
+			skills: this.fb.array([])
 		});
+		const skillForm = this.form.controls.skills as FormArray;
+		skillForm.push(
+			this.fb.group({
+				name: ['', Validators.required]
+			})
+		);
 	}
-	showEditCard(index: number) {
+	private async loadSkills() {
+		const res = await this.candidateSkillsService.getAll({
+			candidateId: this.candidateId
+		});
+		if (res) {
+			this.skillList = res.items;
+		}
+	}
+	showEditCard(index: number, id: string) {
 		this.showEditDiv[index] = true;
+		this.skillId = id;
 	}
-	removeSkill(index: number) {
-		this.skills.splice(index, 1);
-		this.selectedCandidate.skills = this.skills;
+	async removeSkill(id: string) {
+		try {
+			await this.candidateSkillsService.delete(id);
+			this.toastrSuccess('DELETED');
+			this.loadSkills();
+		} catch (error) {
+			this.toastrError(error);
+		}
 	}
-	editSkill(skill: string, index: number) {
-		this.skills[index] = skill;
-		this.selectedCandidate.skills = this.skills;
-		this.showEditDiv[index] = !this.showEditDiv[index];
+	async editSkill(skill: string, index: number) {
+		if (skill !== '') {
+			try {
+				await this.candidateSkillsService.update(this.skillId, {
+					name: skill
+				});
+				this.loadSkills();
+				this.toastrSuccess('UPDATED');
+				(this.form.controls.skills as FormArray).reset();
+				this.showEditDiv[index] = !this.showEditDiv[index];
+			} catch (error) {
+				this.toastrError(error);
+			}
+			this.skillId = null;
+		} else {
+			this.toastrService.danger(
+				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FIELD'),
+				this.getTranslation('TOASTR.MESSAGE.CANDIDATE_SKILLS_REQUIRED')
+			);
+		}
 	}
 	cancel(index: number) {
 		this.showEditDiv[index] = !this.showEditDiv[index];
 	}
-
-	async addSkill(skill: string) {
-		if (skill !== '') {
-			this.showAddCard = !this.showAddCard;
-			this.skills.push(skill);
-			this.selectedCandidate.skills = this.skills;
+	showCard() {
+		this.showAddCard = !this.showAddCard;
+		this.form.controls.skills.reset();
+	}
+	async addSkill() {
+		const skillForm = this.form.controls.skills as FormArray;
+		if (skillForm.valid) {
+			const formValue = { ...skillForm.value[0] };
 			try {
-				await this.candidatesService.update(
-					this.selectedCandidate.id,
-					this.selectedCandidate
-				);
+				await this.candidateSkillsService.create({
+					...formValue,
+					candidateId: this.candidateId
+				});
+				this.toastrSuccess('CREATED');
+				this.loadSkills();
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.toastrError(error);
 			}
+			this.showAddCard = !this.showAddCard;
+			skillForm.reset();
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'NOTES.CANDIDATE.EXPERIENCE.INVALID_CANDIDATE_NAME'
-				),
-				this.getTranslation('TOASTR.MESSAGE.CANDIDATE_SKILL_REQUIRED')
+				this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.INVALID_FIELD'),
+				this.getTranslation('TOASTR.MESSAGE.CANDIDATE_SKILLS_REQUIRED')
 			);
 		}
 	}
+	private toastrError(error) {
+		this.toastrService.danger(
+			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
+				error: error.error ? error.error.message : error.message
+			}),
+			this.getTranslation('TOASTR.TITLE.ERROR')
+		);
+	}
+	private toastrSuccess(text: string) {
+		this.toastrService.success(
+			this.getTranslation('TOASTR.TITLE.SUCCESS'),
+			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_${text}`)
+		);
+	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

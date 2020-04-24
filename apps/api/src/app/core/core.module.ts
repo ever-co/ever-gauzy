@@ -64,6 +64,8 @@ import { IntegrationEntitySetting } from '../integration-entity-setting/integrat
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
+import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
+import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 
 const entities = [
 	Invite,
@@ -115,6 +117,8 @@ const entities = [
 	CandidateSource,
 	CandidateDocument,
 	CandidateEducation,
+	CandidateSkill,
+	CandidateExperience,
 	IntegrationSetting,
 	Integration,
 	IntegrationMap,

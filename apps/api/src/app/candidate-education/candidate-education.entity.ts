@@ -1,10 +1,11 @@
 import { Column, Entity } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Education } from 'libs/models/src/lib/candidate-education.model';
 import { Base } from '../core/entities/base';
+import { IsString, IsNotEmpty } from 'class-validator';
+import { IEducation } from '@gauzy/models';
 
 @Entity('candidate_educations')
-export class CandidateEducation extends Base implements Education {
+export class CandidateEducation extends Base implements IEducation {
 	@ApiProperty({ type: String })
 	@Column()
 	schoolName: string;
@@ -22,6 +23,12 @@ export class CandidateEducation extends Base implements Education {
 	completionDate: Date;
 
 	@ApiProperty({ type: String })
-	@Column()
+	@Column({ nullable: true })
 	notes?: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Column()
+	candidateId?: string;
 }

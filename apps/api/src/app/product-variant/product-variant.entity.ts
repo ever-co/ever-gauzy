@@ -1,30 +1,40 @@
 import { Base } from '../core/entities/base';
-import { Entity, Column, ManyToOne, OneToOne, RelationId } from 'typeorm';
+import {
+	Entity,
+	Column,
+	ManyToOne,
+	OneToOne,
+	RelationId,
+	JoinColumn
+} from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductVariant as IProductVariant } from '@gauzy/models';
+import {
+	ProductVariant as IProductVariant,
+	BillingInvoicingPolicyEnum
+} from '@gauzy/models';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
 import { ProductOption } from '../product-option/product-option.entity';
 import { ProductVariantSettings } from '../product-settings/product-settings.entity';
 import { Product } from '../product/product.entity';
-import { IsNumber, IsString, IsOptional } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 
 @Entity('product_variant')
 export class ProductVariant extends Base implements IProductVariant {
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Column()
+	@Column({ default: 0 })
 	taxes: number;
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@Column({ nullable: true })
 	notes: string;
 
 	@ApiProperty({ type: String })
 	@RelationId((productVariant: ProductVariant) => productVariant.product)
 	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	productId: string;
 
 	@ApiProperty({ type: Number })
@@ -33,8 +43,8 @@ export class ProductVariant extends Base implements IProductVariant {
 	quantity: number;
 
 	@ApiProperty({ type: String })
-	@IsString()
-	@Column()
+	@IsEnum(BillingInvoicingPolicyEnum)
+	@Column({ default: BillingInvoicingPolicyEnum.QUANTITY_ORDERED })
 	billingInvoicingPolicy: string;
 
 	@ApiProperty({ type: String })
@@ -42,15 +52,31 @@ export class ProductVariant extends Base implements IProductVariant {
 	@Column()
 	internalReference: string;
 
+	@ApiPropertyOptional({ type: Boolean })
+	@Column({ default: true })
+	enabled: boolean;
+
 	// @OneToMany(() => ProductOption, productOption => productOption.variant)
 	options: ProductOption[];
 
-	@OneToOne(() => ProductVariantSettings)
+	@OneToOne(
+		() => ProductVariantSettings,
+		(settings) => settings.productVariant
+	)
+	@JoinColumn()
 	settings: ProductVariantSettings;
 
-	@OneToOne(() => ProductVariantPrice)
+	@OneToOne(
+		() => ProductVariantPrice,
+		(variantPrice) => variantPrice.productVariant
+	)
+	@JoinColumn()
 	price: ProductVariantPrice;
 
-	@ManyToOne(() => Product)
-	product?: Product;
+	@ManyToOne(
+		() => Product,
+		(product) => product.variants
+	)
+	@JoinColumn()
+	product: Product;
 }

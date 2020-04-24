@@ -1,3 +1,4 @@
+import { CandidateExperience } from './../../candidate-experience/candidate-experience.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
 // Copyright (c) 2019 Alexi Taylor
@@ -112,6 +113,7 @@ import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
 import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
 import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
+import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -156,6 +158,8 @@ const allEntities = [
 	ProductType,
 	CandidateSource,
 	CandidateEducation,
+	CandidateSkill,
+	CandidateExperience,
 	Product,
 	ProductVariant,
 	ProductVariantSettings,

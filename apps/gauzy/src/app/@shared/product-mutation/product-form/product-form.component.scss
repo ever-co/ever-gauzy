@@ -1,0 +1,18 @@
+.d-bottom {
+	display: flex;
+	align-items: flex-end;
+	align-content: flex-end;
+}
+
+.options-wrap {
+	display: flex;
+}
+
+.option {
+	padding: 5px 10px;
+	font-size: 12px;
+	background: #3366ff;
+	border-radius: 7px;
+	color: #fff;
+	margin-right: 10px;
+}
