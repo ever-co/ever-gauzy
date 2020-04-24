@@ -777,9 +777,10 @@
 	"INVENTORY_PAGE": {
 		"HEADER": "Инвентаризация",
 		"ADD_INVENTORY_ITEM": "Добавить товар в инвентарь",
-		"EDIT_INVENTPRY_ITEM": "Изменить элемент инвентаря",
+		"EDIT_INVENTORY_ITEM": "Изменить элемент инвентаря",
 		"INVENTORY_ITEM_DELETED": "Элемент инвентаря удален!",
 		"INVENTORY_ITEM_SAVED": "Элемент инвентаря сохранен!",
+		"EDIT_PRODUCT_VARIANT": "Изменить вариант товара",
 		"NAME": "Имя",
 		"ENABLED": "Включено",
 		"PRODUCT_TYPE": "Тип товара",
@@ -791,6 +792,8 @@
 		"CAN_BE_CHARGED": "Можно заплатить",
 		"CAN_BE_RENTED": "Может быть арендован",
 		"IS_EQUIPMENT": "Оборудование",
+		"TRACK_INVENTORY": "Отслеживать инвентарь",
+		"ADD_OPTION": "Добавить опцию",
 		"INTERNATIONAL_REFERENCE": "Международная ссылка",
 		"CODE": "Код",
 		"NOTES": "Заметки",
@@ -897,6 +900,7 @@
 		"PAID_STATUS": "Оплаченный статус",
 		"INVOICES_ADD_INVOICE": "Счет добавлен",
 		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_DUPLICATE_INVOICE": "Счет скопирован",
 		"INVOICES_DELETE_INVOICE": "Счет удален",
 		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
 		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
@@ -912,6 +916,10 @@
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
+		"INVALID_DATES": "Неверные даты",
+		"INVOICE_NUMBER_VALUE": "Номер счета не может быть отрицательным числом или нулевым",
+		"TAX_VALUE": "Налог не может быть отрицательным числом",
+		"DISCOUNT_VALUE": "Значение скидки не может быть отрицательным числом",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
@@ -931,7 +939,12 @@
 			"EMPLOYEE": "Сотрудник",
 			"HOURLY_RATE": "Почасовая ставка",
 			"HOURS_WORKED": "Часы работы",
-			"PROJECT": "Проект"
+			"PROJECT": "Проект",
+			"NO_ITEMS": "Пожалуйста, добавьте элементы счета",
+			"INVALID_ITEM": "Неверный элемент счета",
+			"EMPLOYEE_VALUE": "Сотрудник не может быть пустым",
+			"PROJECT_VALUE": "Проект не может быть пустым",
+			"TASK_VALUE": "Задание не может быть пустым"
 		}
 	},
 	"HEADER": {
