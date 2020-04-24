@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { Equipment, Tag } from '@gauzy/models';
+import { Equipment } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { FormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
