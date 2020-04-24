@@ -658,6 +658,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				subtotal += itemTotal;
 			}
 			this.subtotal = subtotal;
+		} else {
+			this.subtotal = 0;
 		}
 
 		this.shouldLoadTable = true;
