@@ -777,9 +777,10 @@
 	"INVENTORY_PAGE": {
 		"HEADER": "Inventory",
 		"ADD_INVENTORY_ITEM": "Add inventory item",
-		"EDIT_INVENTPRY_ITEM": "Edit inventory item",
+		"EDIT_INVENTORY_ITEM": "Edit inventory item",
 		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
 		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
+		"EDIT_PRODUCT_VARIANT": "Edit product variant",
 		"NAME": "שם",
 		"ENABLED": "Enabled",
 		"PRODUCT_TYPE": "Product type",
@@ -791,6 +792,8 @@
 		"CAN_BE_CHARGED": "Can be charged",
 		"CAN_BE_RENTED": "Can be rented",
 		"IS_EQUIPMENT": "Is equipment",
+		"TRACK_INVENTORY": "Track inventory",
+		"ADD_OPTION": "Add option",
 		"INTERNATIONAL_REFERENCE": "International reference",
 		"CODE": "Code",
 		"NOTES": "הערות",
@@ -897,6 +900,7 @@
 		"PAID_STATUS": "Paid Status",
 		"INVOICES_ADD_INVOICE": "Invoice Added",
 		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_DUPLICATE_INVOICE": "Invoice Duplicated",
 		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
 		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
@@ -912,6 +916,10 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"INVALID_DATES": "Invalid Dates",
+		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
+		"TAX_VALUE": "Tax cannot be a negative number",
+		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
@@ -931,7 +939,12 @@
 			"EMPLOYEE": "עובד",
 			"HOURLY_RATE": "Hourly Rate",
 			"HOURS_WORKED": "Hours Worked",
-			"PROJECT": "פרויקטים"
+			"PROJECT": "פרויקטים",
+			"NO_ITEMS": "Please add invoice items",
+			"INVALID_ITEM": "Invalid Invoice Item",
+			"EMPLOYEE_VALUE": "Employee cannot be empty",
+			"PROJECT_VALUE": "Project cannot be empty",
+			"TASK_VALUE": "Task cannot be empty"
 		}
 	},
 	"HEADER": {
@@ -992,8 +1005,12 @@
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
+			"CANDIDATE_EXPERIENCE_CREATED": "Successfully created",
+			"CANDIDATE_EXPERIENCE_UPDATED": "Successfully updated",
+			"CANDIDATE_EXPERIENCE_DELETED": "Successfully deleted",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
+			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -1046,7 +1063,9 @@
 		"CANDIDATE": {
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
-				"INVALID_FORM": "Please fill the form"
+				"INVALID_FORM": "Please fill the form",
+				"INVALID_FIELD": "Please fill the field",
+				"ERROR": "{{ error }}"
 			}
 		},
 		"ORGANIZATIONS": {

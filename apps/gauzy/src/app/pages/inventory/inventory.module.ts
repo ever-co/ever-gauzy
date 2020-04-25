@@ -18,6 +18,7 @@ import { HttpClient } from '@angular/common/http';
 import { ProductMutationComponent } from '../../@shared/product-mutation/product-mutation.component';
 import { ProductMutationModule } from '../../@shared/product-mutation/product-mutation.module';
 import { ThemeModule } from '../../@theme/theme.module';
+import { ProductVariantFormComponent } from '../../@shared/product-mutation/product-variant-form/product-variant-form.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -46,6 +47,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	entryComponents: [ProductMutationComponent]
+	entryComponents: [ProductMutationComponent, ProductVariantFormComponent]
 })
 export class InventoryModule {}
