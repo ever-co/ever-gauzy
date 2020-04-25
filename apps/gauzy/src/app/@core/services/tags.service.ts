@@ -41,4 +41,10 @@ export class TagsService {
 			.pipe(first())
 			.toPromise();
 	}
+	findByName(name: string): Promise<{ item: Tag }> {
+		return this.http
+			.get<{ item: Tag }>(`/api/tags/getByName/${name}`)
+			.pipe(first())
+			.toPromise();
+	}
 }
