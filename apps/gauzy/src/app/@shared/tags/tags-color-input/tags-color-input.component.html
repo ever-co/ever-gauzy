@@ -1,9 +1,9 @@
-<!-- [addTag]="true" -->
 <form [formGroup]="form" *ngIf="form">
 	<label class="label" for="addTags">
 		{{ 'TAGS_PAGE.HEADER' | translate }}
 	</label>
 	<ng-select
+		[addTag]="true"
 		bindLabel="name"
 		formControlName="tags"
 		[items]="tags"

@@ -18,7 +18,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 	equipment: Equipment;
 	currencies = Object.values(CurrenciesEnum);
 	selectedCurrency;
-	tags: Tag[];
+	tags: Tag[] = [];
 	selectedTags: any;
 
 	constructor(
@@ -41,12 +41,8 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 	}
 
 	async initializeForm() {
-		if (this.equipment) {
-			this.tags = this.equipment.tags;
-		}
-
 		this.form = this.fb.group({
-			tags: [this.equipment ? this.tags : ''],
+			tags: [this.equipment ? this.equipment.tags : ''],
 			name: [
 				this.equipment ? this.equipment.name : '',
 				Validators.required
@@ -78,8 +74,8 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		}
 		const equipment = await this.equipmentService.save({
 			...this.form.value,
-			currency: this.selectedCurrency
-			// tags: this.equipment.tags
+			currency: this.selectedCurrency,
+			tags: this.tags
 		});
 		this.closeDialog(equipment);
 	}
@@ -88,8 +84,6 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		this.dialogRef.close(equipment);
 	}
 	selectedTagsEvent(ev) {
-		if (this.equipment) {
-			this.equipment.tags = ev;
-		}
+		this.tags = ev;
 	}
 }
