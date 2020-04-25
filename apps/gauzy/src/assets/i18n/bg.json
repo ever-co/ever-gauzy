@@ -920,6 +920,12 @@
 		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
 		"TAX_VALUE": "Tax cannot be a negative number",
 		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
+		"DISCOUNT_TYPE": "Discount Type",
+		"TAX_TYPE": "Tax Type",
+		"PERCENT": "Percent",
+		"FLAT": "Flat",
+		"SUBTOTAL": "Subtotal",
+		"TOTAL": "Total",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
