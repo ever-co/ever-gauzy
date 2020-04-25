@@ -32,7 +32,8 @@
 		"HISTORY": "History",
 		"SYNC": "Sync",
 		"UPDATE": "Update",
-		"AUTO_SYNC": "Auto sync"
+		"AUTO_SYNC": "Auto sync",
+		"VIEW": "View"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",

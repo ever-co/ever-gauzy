@@ -267,7 +267,8 @@
 		<button
 			status="success"
 			(click)="updateInvoice()"
-			[disabled]="form.invalid"
+			*ngIf="hasInvoiceEditPermission"
+			[disabled]="enableSaveButton || form.invalid"
 			nbButton
 		>
 			{{ 'BUTTONS.SAVE' | translate }}

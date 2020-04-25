@@ -52,7 +52,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/accounting/invoices',
 					data: {
 						translated: false,
-						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						permissionKeys: [
+							PermissionsEnum.ALL_ORG_VIEW,
+							PermissionsEnum.INVOICES_VIEW
+						],
 						translationKey: 'MENU.INVOICES'
 					}
 				},
@@ -62,6 +65,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/accounting/recurring-invoices',
 					data: {
 						translated: false,
+						permissionKeys: [PermissionsEnum.INVOICES_VIEW],
 						translationKey: 'MENU.RECURRING_INVOICES'
 					}
 				},
@@ -132,7 +136,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/sales/invoices',
 					data: {
 						translated: false,
-						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						permissionKeys: [
+							PermissionsEnum.ALL_ORG_VIEW,
+							PermissionsEnum.INVOICES_VIEW
+						],
 						translationKey: 'MENU.INVOICES'
 					}
 				},
@@ -142,6 +149,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/sales/recurring-invoices',
 					data: {
 						translated: false,
+						permissionKeys: [PermissionsEnum.INVOICES_VIEW],
 						translationKey: 'MENU.RECURRING_INVOICES'
 					}
 				},
