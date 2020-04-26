@@ -1,4 +1,4 @@
-import { ActivityCreateHandler } from './activity-create.handler';
 import { TimeLogCreateHandler } from './time-log-create.handler';
+import { TimeSlotCreateHandler } from './time-slot-create.handler';
 
-export const CommandHandlers = [ActivityCreateHandler, TimeLogCreateHandler];
+export const CommandHandlers = [TimeLogCreateHandler, TimeSlotCreateHandler];

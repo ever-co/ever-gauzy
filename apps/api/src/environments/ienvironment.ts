@@ -60,4 +60,6 @@ export interface IEnvironment {
 	sentry?: {
 		dns: string;
 	};
+
+	defaultHubstaffUserPass?: string;
 }

@@ -47,5 +47,6 @@ export enum IntegrationEntity {
 	ACTIVITY = 'Activity',
 	USER = 'User',
 	EMPLOYEE = 'Employee',
-	TIME_LOG = 'TimeLog'
+	TIME_LOG = 'TimeLog',
+	TIME_SLOT = 'TimeSlot'
 }

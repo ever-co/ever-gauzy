@@ -49,12 +49,22 @@ export interface ITimeLogCreateInput {
 	timesheetId?: string;
 	taskId?: string;
 	projectId: string;
-	startedAt: Date;
+	startedAt?: Date;
 	logType: TimeLogType;
 	description?: string;
 	duration: number;
 	isBillable?: boolean;
 	isBilled?: boolean;
+}
+
+export interface ITimeSlotCreateInput {
+	employeeId;
+	duration;
+	keyboard;
+	mouse;
+	overall;
+	startedAt;
+	time_slot;
 }
 
 export enum TimeLogType {

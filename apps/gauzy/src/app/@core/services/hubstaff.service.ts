@@ -23,7 +23,7 @@ const TODAY = new Date();
 const DEFAULT_DATE_RANGE = {
 	start: new Date(
 		moment()
-			.subtract(14, 'days')
+			.subtract(7, 'days')
 			.format('YYYY-MM-DD')
 	),
 	end: TODAY
@@ -103,7 +103,6 @@ export class HubstaffService {
 				settingsData.currentValue
 			)
 			.pipe(
-				tap(console.log),
 				tap((entitySettings) => this._setSettingsValue(entitySettings))
 			);
 	}
@@ -194,8 +193,15 @@ export class HubstaffService {
 	setActivityDateRange({ start, end }) {
 		this._dateRangeActivity$.next({
 			start: start || DEFAULT_DATE_RANGE.start,
-			end: end || DEFAULT_DATE_RANGE.end
+			end: this._setEndDate(start)
 		});
+	}
+
+	private _setEndDate(start) {
+		const end = moment(start)
+			.add(7, 'days')
+			.toDate();
+		return end > TODAY ? TODAY : end;
 	}
 
 	autoSync({ integrationId, hubstaffOrganizations, organizationId }) {
