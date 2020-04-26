@@ -753,7 +753,8 @@
 		"EQUIPMENT_EDITED": "Оборудование отредактировано",
 		"EQUIPMENT_DELETED": "Снаряжение удалено",
 		"EQUIPMENT_ADDED": "Снаряжение добавлено",
-		"EQUIPMENT_SAVED": "Оборудование сохранено"
+		"EQUIPMENT_SAVED": "Оборудование сохранено",
+		"CURRENCY": "Валюта"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Совместное использование снаряжения",
