@@ -262,7 +262,7 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
-			"REMOVE_USER": " from you organization",
+			"REMOVE_USER": " from your organization",
 			"SURE": "Are you sure you want to delete",
 			"RECORD": "record",
 			"USER_RECORD": "from your organization",
@@ -271,7 +271,7 @@
 			"EXPENSE": "Expense",
 			"USER": "user",
 			"INVITATION": "invitation",
-			"DELETE_USER": " from database as it's data in no longer part of any organization "
+			"DELETE_USER": " from database as it is associated only to current organization"
 		}
 	},
 	"POP_UPS": {
@@ -844,7 +844,8 @@
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Main",
 			"USER_ORGANIZATIONS": "Organizations"
-		}
+		},
+		"REMOVE_USER": "{{ name }} successfully removed"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Start Timer",

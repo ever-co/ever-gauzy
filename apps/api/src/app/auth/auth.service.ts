@@ -109,10 +109,27 @@ export class AuthService {
 		const hash = await this.getPasswordHash(findObject.password);
 		return this.userService.changePassword(findObject.user.id, hash);
 	}
-
+	/**
+	 * Shared method involved in
+	 * 1. Sign up
+	 * 2. Addition of new user to organization
+	 * 3. User invite accept scenario
+	 */
 	async register(input: IUserRegistrationInput): Promise<User> {
+		let tenant = input.user.tenant;
+		if (input.createdById) {
+			const creatingUser = await this.userService.findOne(
+				input.createdById,
+				{
+					relations: ['tenant']
+				}
+			);
+			tenant = creatingUser.tenant;
+		}
+
 		const user = this.userService.create({
 			...input.user,
+			tenant,
 			...(input.password
 				? {
 						hash: await this.getPasswordHash(input.password)
