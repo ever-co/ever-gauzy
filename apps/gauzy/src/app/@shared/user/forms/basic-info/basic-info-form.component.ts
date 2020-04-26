@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
 import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-user-basic-info-form',
@@ -63,7 +64,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		private readonly roleService: RoleService,
 		readonly translateService: TranslateService,
 		private readonly validatorService: ValidationService,
-		private readonly tagsService: TagsService
+		private readonly tagsService: TagsService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -165,7 +167,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		if (this.form.valid) {
 			const role = await this.roleService
 				.getRoleByName({
-					name: this.role.value ? this.role.value : defaultRoleName
+					name: this.role.value ? this.role.value : defaultRoleName,
+					tenant: this.store.user.tenant
 				})
 				.pipe(first())
 				.toPromise();

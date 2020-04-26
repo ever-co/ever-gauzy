@@ -12,6 +12,7 @@ import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service'
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { first } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-email-invite-form',
@@ -55,7 +56,8 @@ export class EmailInviteFormComponent implements OnInit {
 		private readonly fb: FormBuilder,
 		private readonly inviteService: InviteService,
 		private readonly roleService: RoleService,
-		private router: Router
+		private router: Router,
+		private store: Store
 	) {}
 
 	ngOnInit(): void {
@@ -151,7 +153,8 @@ export class EmailInviteFormComponent implements OnInit {
 				.getRoleByName({
 					name: this.isEmployeeInvitation()
 						? RolesEnum.EMPLOYEE
-						: this.getRoleNameFromForm()
+						: this.getRoleNameFromForm(),
+					tenant: this.store.user.tenant
 				})
 				.pipe(first())
 				.toPromise();

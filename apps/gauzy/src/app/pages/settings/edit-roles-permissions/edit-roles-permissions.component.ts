@@ -12,6 +12,7 @@ import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-org-roles-permissions',
@@ -41,7 +42,8 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private readonly toastrService: NbToastrService,
 		private readonly rolePermissionsService: RolePermissionsService,
-		private readonly rolesService: RoleService
+		private readonly rolesService: RoleService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -69,9 +71,11 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 	async loadPermissionsForSelectedRole() {
 		this.enabledPermissions = {};
 		this.loading = true;
-
 		const role = await this.rolesService
-			.getRoleByName({ name: this.selectedRole })
+			.getRoleByName({
+				name: this.selectedRole,
+				tenant: this.store.user.tenant
+			})
 			.pipe(first())
 			.toPromise();
 
@@ -110,7 +114,8 @@ export class EditRolesPermissionsComponent extends TranslationBaseComponent
 				: await this.rolePermissionsService.create({
 						roleId: this.selectedRoleId,
 						permission,
-						enabled
+						enabled,
+						tenant: this.store.user.tenant
 				  });
 
 			await this.refreshPermissions();

@@ -1,13 +1,15 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindConditions, UpdateResult } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
+import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RolePermissions } from './role-permissions.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { RolesEnum } from '@gauzy/models';
 
 @Injectable()
-export class RolePermissionsService extends CrudService<RolePermissions> {
+export class RolePermissionsService extends TenantAwareCrudService<
+	RolePermissions
+> {
 	constructor(
 		@InjectRepository(RolePermissions)
 		private readonly RolePermissionsRepository: Repository<RolePermissions>

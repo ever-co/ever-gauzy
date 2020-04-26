@@ -6,11 +6,11 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { Column, Entity, Index, ManyToOne } from 'typeorm';
-import { Base } from '../core/entities/base';
+import { TenantBase } from '../core/entities/tenant-base';
 import { Role } from '../role/role.entity';
 
 @Entity('role_permission')
-export class RolePermissions extends Base implements IRolePermissions {
+export class RolePermissions extends TenantBase implements IRolePermissions {
 	@ApiProperty({ type: String, enum: RolesEnum })
 	@IsEnum(RolesEnum)
 	@IsNotEmpty()
