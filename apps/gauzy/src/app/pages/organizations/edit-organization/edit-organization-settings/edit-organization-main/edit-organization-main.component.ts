@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { CurrenciesEnum, Organization } from '@gauzy/models';
+import { CurrenciesEnum, Organization, Tag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { Subject } from 'rxjs';
@@ -25,6 +25,8 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	employeesCount: number;
 	form: FormGroup;
 	currencies: string[] = Object.values(CurrenciesEnum);
+	tags: Tag[];
+	selectedTags: any;
 
 	constructor(
 		private fb: FormBuilder,
@@ -91,6 +93,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		}
 
 		this.form = this.fb.group({
+			tags: [this.organization.tags],
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
 			officialName: [this.organization.officialName],
@@ -102,5 +105,8 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 					: null
 			]
 		});
+	}
+	selectedTagsEvent(ev) {
+		console.warn(ev);
 	}
 }

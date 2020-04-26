@@ -61,6 +61,7 @@ import { InviteService } from '../../../../@core/services/invite.service';
 
 @NgModule({
 	imports: [
+		TagsColorInputModule,
 		ThemeModule,
 		NbCardModule,
 		FormsModule,

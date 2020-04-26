@@ -7,7 +7,9 @@ import {
 	HttpStatus,
 	Param,
 	Post,
-	UseGuards
+	UseGuards,
+	Put,
+	Query
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -44,8 +46,14 @@ export class OrganizationController extends CrudController<Organization> {
 	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
-	async findAll(): Promise<IPagination<Organization>> {
-		return this.organizationService.findAll();
+	async findAllOrganizations(
+		@Query('data') data: string
+	): Promise<IPagination<Organization>> {
+		const { relations, findInput } = JSON.parse(data);
+		return this.organizationService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Find Organization by id within the tenant.' })
@@ -110,5 +118,16 @@ export class OrganizationController extends CrudController<Organization> {
 		@Body() entity: OrganizationCreateInput
 	): Promise<Organization> {
 		return this.commandBus.execute(new OrganizationCreateCommand(entity));
+	}
+	@Put(':id')
+	async update(
+		@Param('id') id: string,
+		@Body() entity: OrganizationCreateInput,
+		...options: any[]
+	): Promise<any> {
+		return this.organizationService.create({
+			id,
+			...entity
+		});
 	}
 }
