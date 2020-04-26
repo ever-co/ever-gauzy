@@ -95,7 +95,7 @@ const routes: Routes = [
 ];
 
 const config: ExtraOptions = {
-	useHash: false
+	useHash: true
 };
 
 @NgModule({

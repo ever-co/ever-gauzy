@@ -365,6 +365,7 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
+
 				const gauzyTimeSlot = await this.commandBus.execute(
 					new TimeSlotCreateCommand({
 						employeeId: employee.gauzyId,
@@ -401,6 +402,7 @@ export class HubstaffService {
 					integrationId,
 					organizationId
 				);
+
 				const gauzyTimeLog = await this.commandBus.execute(
 					new TimeLogCreateCommand({
 						projectId,
