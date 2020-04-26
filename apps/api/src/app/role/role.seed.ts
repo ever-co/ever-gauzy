@@ -5,16 +5,23 @@
 import { Connection } from 'typeorm';
 import { Role } from './role.entity';
 import { RolesEnum } from '@gauzy/models';
+import { Tenant } from '../tenant/tenant.entity';
 
-export const createRoles = async (connection: Connection): Promise<Role[]> => {
+export const createRoles = async (
+	connection: Connection,
+	tenants: Tenant[]
+): Promise<Role[]> => {
 	const roles: Role[] = [];
 	const rolesNames = Object.values(RolesEnum);
 
-	for (const name of rolesNames) {
-		const role = new Role();
-		role.name = name;
-		roles.push(role);
-	}
+	tenants.forEach((tenant) => {
+		for (const name of rolesNames) {
+			const role = new Role();
+			role.name = name;
+			role.tenant = tenant;
+			roles.push(role);
+		}
+	});
 
 	await connection
 		.createQueryBuilder()

@@ -5,6 +5,7 @@
 import { PermissionsEnum, Role, RolesEnum } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { RolePermissions } from './role-permissions.entity';
+import { Tenant } from '../tenant/tenant.entity';
 
 const defaultRolePermissions = [
 	{
@@ -106,21 +107,28 @@ const defaultRolePermissions = [
 
 export const createRolePermissions = async (
 	connection: Connection,
-	roles: Role[]
+	roles: Role[],
+	tenants: Tenant[]
 ): Promise<RolePermissions[]> => {
 	const rolePermissions: RolePermissions[] = [];
 
-	defaultRolePermissions.forEach((r) => {
-		const role = roles.find((dbRole) => dbRole.name === r.role);
-		if (role) {
-			r.defaultEnabledPermissions.forEach((p) => {
-				const rolePermission = new RolePermissions();
-				rolePermission.roleId = role.id;
-				rolePermission.permission = p;
-				rolePermission.enabled = true;
-				rolePermissions.push(rolePermission);
-			});
-		}
+	tenants.forEach((t) => {
+		defaultRolePermissions.forEach((r) => {
+			const role = roles.find(
+				(dbRole) =>
+					dbRole.name === r.role && dbRole.tenant.name === t.name
+			);
+			if (role) {
+				r.defaultEnabledPermissions.forEach((p) => {
+					const rolePermission = new RolePermissions();
+					rolePermission.roleId = role.id;
+					rolePermission.permission = p;
+					rolePermission.enabled = true;
+					rolePermission.tenant = role.tenant;
+					rolePermissions.push(rolePermission);
+				});
+			}
+		});
 	});
 
 	await connection
