@@ -17,6 +17,12 @@ import { IntegrationEntitySetting } from '../integration-entity-setting/integrat
 import { CqrsModule } from '@nestjs/cqrs';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
 import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
+import { RoleService } from '../role/role.service';
+import { Organization } from '../organization/organization.entity';
+import { OrganizationService } from '../organization/organization.service';
+import { Role } from '../role/role.entity';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
 
 @Module({
 	imports: [
@@ -28,7 +34,10 @@ import { IntegrationEntitySettingTiedEntityService } from '../integration-entity
 			IntegrationMap,
 			OrganizationProjects,
 			IntegrationEntitySetting,
-			IntegrationEntitySettingTiedEntity
+			IntegrationEntitySettingTiedEntity,
+			Role,
+			Organization,
+			User
 		]),
 		CqrsModule
 	],
@@ -41,7 +50,10 @@ import { IntegrationEntitySettingTiedEntityService } from '../integration-entity
 		IntegrationMapService,
 		OrganizationProjectsService,
 		IntegrationEntitySettingService,
-		IntegrationEntitySettingTiedEntityService
+		IntegrationEntitySettingTiedEntityService,
+		OrganizationService,
+		RoleService,
+		UserService
 	]
 })
 export class HubstaffModule {}

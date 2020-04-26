@@ -9,7 +9,7 @@ import {
 import { Observable } from 'rxjs/Observable';
 import { HubstaffService } from './services/hubstaff.service';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, throwError } from 'rxjs';
 import { HttpStatus } from '@gauzy/models';
 
 @Injectable()
@@ -31,6 +31,7 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 		// source from https://github.com/melcor76/interceptors/blob/master/src/app/interceptors/auth.interceptor.ts
 		return next.handle(req).pipe(
 			catchError((error: HttpErrorResponse) => {
+				console.log(error, 'ERROR', error.status, 'STATUS');
 				if (error && error.status === HttpStatus.UNAUTHORIZED) {
 					// 401 errors are most likely going to be because we have an expired token that we need to refresh.
 					if (this.refreshTokenInProgress) {
@@ -72,7 +73,7 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 						);
 					}
 				} else {
-					return next.handle(req);
+					return throwError(error);
 				}
 			})
 		);

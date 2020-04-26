@@ -14,6 +14,7 @@ export class IntegrationMap extends Base implements IIntegrationMap {
 	integration: Integration;
 
 	@ApiProperty({ type: String, readOnly: true })
+	@Column()
 	@RelationId(
 		(integrationSetting: IntegrationMap) => integrationSetting.integration
 	)

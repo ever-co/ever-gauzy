@@ -385,7 +385,9 @@
 			"SELECT_ORGANIZATION": "Select Organization",
 			"SYNCED_PROJECTS": "Projects synced",
 			"SETTINGS_UPDATED": "Updated settings for integration",
-			"SYNCED_ENTITIES": "Auto synced entities"
+			"SYNCED_ENTITIES": "Auto synced entities",
+			"TOOLTIP_ACTIVITY_INFO": "The daily activities can optionally be filtered to those of a given project. Date range Limit: 31 days Earliest Date: 3 full years",
+			"DATE_RANGE_PLACEHOLDER": "Choose date between"
 		}
 	},
 	"DASHBOARD_PAGE": {

@@ -1,7 +1,7 @@
 .switcher-wrapper {
 	display: flex;
 	flex-direction: column;
-	width: 200px;
+	// width: 200px;
 
 	nb-toggle {
 		display: flex;
@@ -20,4 +20,31 @@
 
 .tied-entities-wrapper {
 	padding-left: 15px;
+}
+
+.visible {
+	height: 50px;
+	transition: 0.2s all ease-in-out;
+}
+
+.not-visible {
+	transition: 0.2s all ease-in-out;
+	height: 0px;
+	visibility: hidden;
+}
+
+.tied-entity {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.entity-more-options {
+	display: flex;
+	align-items: center;
+	margin-left: -20px;
+
+	.label {
+		margin: 0 5px 0 0;
+	}
 }

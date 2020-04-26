@@ -16,10 +16,27 @@ import { Store } from './store.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { environment } from 'apps/gauzy/src/environments/environment';
 import { cloneDeep } from 'lodash';
+import * as moment from 'moment';
+
+const TODAY = new Date();
+
+const DEFAULT_DATE_RANGE = {
+	start: new Date(
+		moment()
+			.subtract(14, 'days')
+			.format('YYYY-MM-DD')
+	),
+	end: TODAY
+};
 
 interface IEntitiesSettings {
 	previousValue: IIntegrationEntitySetting[];
 	currentValue: IIntegrationEntitySetting[];
+}
+
+interface IDateRangeActivityFilter {
+	start: Date;
+	end: Date;
 }
 
 @Injectable({
@@ -33,10 +50,20 @@ export class HubstaffService {
 		previousValue: [],
 		currentValue: []
 	});
+	private _dateRangeActivity$: BehaviorSubject<
+		IDateRangeActivityFilter
+	> = new BehaviorSubject(DEFAULT_DATE_RANGE);
+
 	public entitiesToSync$: Observable<
 		IEntitiesSettings
 	> = this._entitiesToSync$.asObservable();
+
+	public dateRangeActivity$: Observable<
+		IDateRangeActivityFilter
+	> = this._dateRangeActivity$.asObservable();
+
 	integrationId: string;
+
 	constructor(private _http: HttpClient, private _store: Store) {}
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
@@ -76,6 +103,7 @@ export class HubstaffService {
 				settingsData.currentValue
 			)
 			.pipe(
+				tap(console.log),
 				tap((entitySettings) => this._setSettingsValue(entitySettings))
 			);
 	}
@@ -163,11 +191,18 @@ export class HubstaffService {
 		);
 	}
 
+	setActivityDateRange({ start, end }) {
+		this._dateRangeActivity$.next({
+			start: start || DEFAULT_DATE_RANGE.start,
+			end: end || DEFAULT_DATE_RANGE.end
+		});
+	}
+
 	autoSync({ integrationId, hubstaffOrganizations, organizationId }) {
 		const entitiesToSync = this._entitiesToSync$
 			.getValue()
 			.currentValue.filter((setting) => setting.sync);
-
+		const dateRange = this._dateRangeActivity$.getValue();
 		// organizations are already fetched ---> skip fetch for this just integrate in DB
 
 		const organizationSetting = entitiesToSync.find(
@@ -196,7 +231,8 @@ export class HubstaffService {
 					this._forkEntities(
 						entitiesToSync,
 						organizations,
-						integrationId
+						integrationId,
+						dateRange
 					)
 				)
 			);
@@ -206,6 +242,7 @@ export class HubstaffService {
 			entitiesToSync,
 			hubstaffOrganizations,
 			integrationId,
+			dateRange,
 			organizationId
 		);
 	}
@@ -214,6 +251,7 @@ export class HubstaffService {
 		entitiesToSync,
 		organizations,
 		integrationId,
+		dateRange,
 		organizationId?
 	) {
 		return forkJoin(
@@ -222,6 +260,7 @@ export class HubstaffService {
 					`/api/integrations/hubstaff/auto-sync/${integrationId}`,
 					{
 						entitiesToSync,
+						dateRange,
 						gauzyId: organizationId
 							? organizationId
 							: organization.gauzyId,

@@ -44,6 +44,19 @@ export interface TimeLog extends IBaseEntityModel {
 	isBillable: boolean;
 }
 
+export interface ITimeLogCreateInput {
+	employeeId: string;
+	timesheetId?: string;
+	taskId?: string;
+	projectId: string;
+	startedAt: Date;
+	logType: TimeLogType;
+	description?: string;
+	duration: number;
+	isBillable?: boolean;
+	isBilled?: boolean;
+}
+
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL'
@@ -67,6 +80,18 @@ export interface Activity extends IBaseEntityModel {
 	data?: string;
 	duration?: number;
 	type?: string;
+}
+
+export interface ICreateActivityInput {
+	employeeId: string;
+	projectId: string;
+	duration?: number;
+	keyboard?: number;
+	mouse?: number;
+	overall?: number;
+	startedAt: Date;
+	stoppedAt: Date;
+	title: string;
 }
 
 export enum ActivityType {

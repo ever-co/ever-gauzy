@@ -12,7 +12,9 @@ import {
 	IntegrationEnum,
 	IntegrationEntity,
 	IIntegrationMap,
-	IIntegrationSetting
+	IIntegrationSetting,
+	RolesEnum,
+	TimeLogType
 } from '@gauzy/models';
 import { IntegrationService } from '../integration/integration.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
@@ -30,6 +32,14 @@ import { TaskCreateCommand } from '../tasks/commands';
 import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
 import { DeepPartial } from 'typeorm';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
+import { ActivityCreateCommand } from '../timesheet/commands/activity-create.command';
+import { EmployeeCreateCommand } from '../employee/commands';
+import { RoleService } from '../role/role.service';
+import { OrganizationService } from '../organization/organization.service';
+import { UserService } from '../user/user.service';
+import { EmployeeGetCommand } from '../employee/commands/employee.get.command';
+import * as moment from 'moment';
+import { TimeLogCreateCommand } from '../timesheet/commands';
 
 @Injectable()
 export class HubstaffService {
@@ -41,6 +51,9 @@ export class HubstaffService {
 		private _integrationMapService: IntegrationMapService,
 		private _integrationEntitySettingService: IntegrationEntitySettingService,
 		private _integrationEntitySettingTiedEntityService: IntegrationEntitySettingTiedEntityService,
+		private _roleService: RoleService,
+		private _organizationService: OrganizationService,
+		private _userService: UserService,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -228,13 +241,13 @@ export class HubstaffService {
 						currency: 'BGN'
 					}
 				);
-				const {
-					record: integration
-				} = await this._integrationService.findOneOrFail(integrationId);
+				// const {
+				// 	record: integration
+				// } = await this._integrationService.findOneOrFail(integrationId);
 
 				return await this._integrationMapService.create({
 					gauzyId: gauzyProject.id,
-					integration,
+					integrationId,
 					sourceId,
 					entity: IntegrationEntity.PROJECT
 				});
@@ -254,13 +267,13 @@ export class HubstaffService {
 					new OrganizationCreateCommand(organization)
 				);
 
-				const {
-					record: integration
-				} = await this._integrationService.findOneOrFail(integrationId);
+				// const {
+				// 	record: integration
+				// } = await this._integrationService.findOneOrFail(integrationId);
 
 				return await this._integrationMapService.create({
 					gauzyId: gauzyOrganization.id,
-					integration,
+					integrationId,
 					sourceId: organization.sourceId,
 					entity: IntegrationEntity.ORGANIZATION
 				});
@@ -285,13 +298,13 @@ export class HubstaffService {
 					})
 				);
 
-				const {
-					record: integration
-				} = await this._integrationService.findOneOrFail(integrationId);
+				// const {
+				// 	record: integration
+				// } = await this._integrationService.findOneOrFail(integrationId);
 
 				return await this._integrationMapService.create({
 					gauzyId: gauzyClient.id,
-					integration,
+					integrationId,
 					sourceId: id,
 					entity: IntegrationEntity.CLIENT
 				});
@@ -317,13 +330,13 @@ export class HubstaffService {
 					})
 				);
 
-				const {
-					record: integration
-				} = await this._integrationService.findOneOrFail(integrationId);
+				// const {
+				// 	record: integration
+				// } = await this._integrationService.findOneOrFail(integrationId);
 
 				return await this._integrationMapService.create({
 					gauzyId: gauzyTask.id,
-					integration,
+					integrationId,
 					sourceId: id,
 					entity: IntegrationEntity.TASK
 				});
@@ -331,6 +344,171 @@ export class HubstaffService {
 		);
 
 		return await Promise.all(integrationMaps);
+	}
+
+	async syncTimeLogs({
+		integrationId,
+		projectId,
+		activities,
+		token,
+		organizationId
+	}): Promise<IIntegrationMap[]> {
+		// "id": 1286268733,
+		// "time_slot": "2020-04-25T21:50:00Z", ???
+		// "starts_at": "2020-04-25T21:50:35Z",  ----> startedAt LOG/SLOT
+		// task_id ---> taskId ignore for now
+		// "user_id": 851172,  ---> employeeId  LOG/SLOT
+		// "project_id": 1002338, --- projectId LOG
+		// "keyboard": 1, ----> keyboard SLOT
+		// "mouse": 9,  ----> mouse SLOT
+		// "overall": 9,  ---> overall SLOT
+		// "tracked": 11, --->  stoppedAt starts_at + duration LOG/SLOT
+		// "billable": true, ---> isBillable LOG
+		// "client": "windows" | "manual"  ---> logType ? LOG
+
+		// ============ TIME LOG ===============
+
+		// 	employeeId: string;
+		// projectId?: string;
+		// taskId?: string;
+		// startedAt?: Date;
+		// stoppedAt?: Date;
+		// logType: string;
+		// duration: number;
+		// isBillable
+
+		// =========== TIME SSLOT ==================
+
+		// stoppedAt: Date;
+		// startedAt: Date;
+		// overall?: number;
+		// mouse: number;
+		// keyboard: number;
+		// duration: number;
+		// employeeId: string;
+
+		const integrationMaps = await activities.map(
+			async ({
+				id,
+				user_id,
+				starts_at,
+				billable,
+				client,
+				tracked,
+				time_slot,
+				keyboard,
+				mouse,
+				overall
+			}) => {
+				let {
+					record: employee
+				} = await this._integrationMapService.findOneOrFail({
+					where: {
+						sourceId: user_id,
+						entity: IntegrationEntity.EMPLOYEE
+					}
+				});
+
+				if (!employee) {
+					employee = await this._handleEmployee({
+						user_id,
+						token,
+						integrationId,
+						organizationId
+					});
+				}
+
+				const gauzyTimeLog = await this.commandBus.execute(
+					new TimeLogCreateCommand({
+						projectId,
+						employeeId: employee.id,
+						logType:
+							client === 'windows'
+								? TimeLogType.TRACKED
+								: TimeLogType.MANUAL,
+						startedAt: starts_at,
+						duration: tracked,
+						isBillable: billable
+					})
+				);
+				console.log(gauzyTimeLog, 'LOG');
+
+				return await this._integrationMapService.create({
+					gauzyId: gauzyTimeLog.id,
+					integrationId,
+					sourceId: id,
+					entity: IntegrationEntity.ACTIVITY
+				});
+			}
+		);
+
+		return await Promise.all(integrationMaps);
+	}
+
+	async syncEmployee({ integrationId, user, organizationId }) {
+		let { record } = await this._userService.findOneOrFail({
+			where: { email: user.email }
+		});
+		let employee;
+		console.log(record, 'REKORD');
+		if (record) {
+			employee = await this.commandBus.execute(
+				new EmployeeGetCommand({ where: { userId: record.id } })
+			);
+		} else {
+			const [role, organization] = await Promise.all([
+				this._roleService.findOne({
+					where: { name: RolesEnum.EMPLOYEE }
+				}),
+				this._organizationService.findOne({
+					where: { id: organizationId }
+				})
+			]);
+			const [firstName, lastName] = user.name.split(' ');
+			employee = await this.commandBus.execute(
+				new EmployeeCreateCommand({
+					user: {
+						email: user.email,
+						firstName,
+						lastName,
+						role,
+						tags: null,
+						tenant: null
+					},
+					password: 'hubstaff', // keep in env
+					organization
+				})
+			);
+		}
+
+		// const {
+		// 	record: integration
+		// } = await this._integrationService.findOneOrFail(integrationId);
+		console.log(employee, 'EMPL');
+		return await this._integrationMapService.create({
+			gauzyId: employee.id,
+			integrationId,
+			sourceId: user.id,
+			entity: IntegrationEntity.EMPLOYEE
+		});
+	}
+
+	private async _handleEmployee({
+		user_id,
+		integrationId,
+		token,
+		organizationId
+	}) {
+		const { user } = await this.fetchIntegration(
+			`https://api.hubstaff.com/v2/users/${user_id}`,
+			token
+		);
+
+		return await this.syncEmployee({
+			integrationId,
+			user,
+			organizationId
+		});
 	}
 
 	private async _handleProjects(sourceId, integrationId, gauzyId, token) {
@@ -382,12 +560,44 @@ export class HubstaffService {
 		return tasksMap.flat();
 	}
 
+	private async _handleActivities(
+		projectsMap,
+		integrationId,
+		token,
+		organizationId,
+		dateRange
+	) {
+		// should be fetch from client
+		const start = moment(dateRange.start).format('YYYY-MM-DD');
+		const end = moment(dateRange.end).format('YYYY-MM-DD');
+
+		const activitiesMap = await Promise.all(
+			projectsMap.map(async (project) => {
+				const { activities } = await this.fetchIntegration(
+					`https://api.hubstaff.com/v2/projects/${project.sourceId}/activities/time_slot?date[start]=${start}&date[stop]=${end}`,
+					token
+				);
+
+				return await this.syncTimeLogs({
+					integrationId,
+					activities,
+					projectId: project.gauzyId,
+					token,
+					organizationId
+				});
+			})
+		);
+
+		return activitiesMap.flat();
+	}
+
 	async autoSync({
 		integrationId,
 		entitiesToSync,
 		gauzyId,
 		sourceId,
-		token
+		token,
+		dateRange
 	}) {
 		// entities have depended entity. eg to fetch Task we need Project id or Org id, because our Task entity is related to Project, the relation here is same, we need project id to fetch Tasks
 
@@ -395,7 +605,7 @@ export class HubstaffService {
 			entitiesToSync.map(async (setting) => {
 				switch (setting.entity) {
 					case IntegrationEntity.PROJECT:
-						let tasks;
+						let tasks, activities;
 						const projectsMap = await this._handleProjects(
 							sourceId,
 							integrationId,
@@ -406,6 +616,11 @@ export class HubstaffService {
 							(setting) =>
 								setting.entity === IntegrationEntity.TASK
 						);
+
+						const activitySetting = setting.tiedEntities.find(
+							(setting) =>
+								setting.entity === IntegrationEntity.ACTIVITY
+						);
 						if (taskSetting.sync) {
 							tasks = await this._handleTasks(
 								projectsMap,
@@ -413,7 +628,17 @@ export class HubstaffService {
 								token
 							);
 						}
-						return { tasks, projectsMap };
+
+						if (activitySetting.sync) {
+							activities = await this._handleActivities(
+								projectsMap,
+								integrationId,
+								token,
+								gauzyId,
+								dateRange
+							);
+						}
+						return { tasks, projectsMap, activities };
 					case IntegrationEntity.CLIENT:
 						const clients = await this._handleClients(
 							sourceId,

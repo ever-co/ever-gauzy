@@ -27,7 +27,7 @@ export class OrganizationCreateHandler
 		// SUPER ADMIN DOES NOT EXIST, CHANGED ONLY FOR TESTING INTEGRATION
 
 		const { id: roleId } = await this.roleService.findOne({
-			name: RolesEnum.SUPER_ADMIN
+			name: RolesEnum.ADMIN
 		});
 
 		// 2. Get all Super Admin Users
