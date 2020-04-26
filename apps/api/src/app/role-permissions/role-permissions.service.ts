@@ -4,7 +4,9 @@ import { Repository, FindConditions, UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RolePermissions } from './role-permissions.entity';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { RolesEnum } from '@gauzy/models';
+import { RolesEnum, ITenant } from '@gauzy/models';
+import { Role } from '../role/role.entity';
+import { defaultRolePermissions } from './role-permissions.seed';
 
 @Injectable()
 export class RolePermissionsService extends TenantAwareCrudService<
@@ -42,5 +44,20 @@ export class RolePermissionsService extends TenantAwareCrudService<
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err.message);
 		}
+	}
+
+	public async updateRoles(tenant: ITenant, role: Role) {
+		const { defaultEnabledPermissions } = defaultRolePermissions.find(
+			(defaultRole) => role.name === defaultRole.role
+		);
+
+		defaultEnabledPermissions.forEach((p) => {
+			const rolePermission = new RolePermissions();
+			rolePermission.roleId = role.id;
+			rolePermission.permission = p;
+			rolePermission.enabled = true;
+			rolePermission.tenant = tenant;
+			this.create(rolePermission);
+		});
 	}
 }

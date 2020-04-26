@@ -7,7 +7,7 @@ import { Connection } from 'typeorm';
 import { RolePermissions } from './role-permissions.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
-const defaultRolePermissions = [
+export const defaultRolePermissions = [
 	{
 		role: RolesEnum.SUPER_ADMIN,
 		defaultEnabledPermissions: [
