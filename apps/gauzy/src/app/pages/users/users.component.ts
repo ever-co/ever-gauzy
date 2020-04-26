@@ -355,7 +355,7 @@ export class UsersComponent extends TranslationBaseComponent
 					fullName: `${orgUser.user.firstName || ''} ${orgUser.user
 						.lastName || ''}`,
 					email: orgUser.user.email,
-					tag: orgUser.user.tags,
+					tags: orgUser.user.tags,
 					id: orgUser.id,
 					isActive: orgUser.isActive,
 					imageUrl: orgUser.user.imageUrl,

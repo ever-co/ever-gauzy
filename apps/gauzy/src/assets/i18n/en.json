@@ -754,7 +754,8 @@
 		"EQUIPMENT_EDITED": "Equipment edited",
 		"EQUIPMENT_DELETED": "Equipment deleted",
 		"EQUIPMENT_ADDED": "Equipment added",
-		"EQUIPMENT_SAVED": "Equipment saved"
+		"EQUIPMENT_SAVED": "Equipment saved",
+		"CURRENCY": "Currency"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",

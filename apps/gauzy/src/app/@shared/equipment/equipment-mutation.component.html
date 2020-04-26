@@ -18,6 +18,9 @@
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row ">
 				<div class="col-sm-6 mb-3">
+					<label for="name" class="label">
+						{{ 'EQUIPMENT_PAGE.EQUIPMENT_NAME' | translate }}
+					</label>
 					<input
 						nbInput
 						type="text"
@@ -37,6 +40,9 @@
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
+					<label for="type" class="label">
+						{{ 'EQUIPMENT_PAGE.EQUIPMENT_TYPE' | translate }}
+					</label>
 					<input
 						nbInput
 						type="text"
@@ -59,6 +65,9 @@
 
 			<div class="row ">
 				<div class="col-sm-6 mb-3">
+					<label for="serialNumber" class="label">
+						{{ 'EQUIPMENT_PAGE.EQUIPMENT_SN' | translate }}
+					</label>
 					<input
 						nbInput
 						type="text"
@@ -70,6 +79,12 @@
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
+					<label for="manufacturedYear" class="label">
+						{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
+								| translate
+						}}
+					</label>
 					<input
 						nbInput
 						type="number"
@@ -93,6 +108,11 @@
 
 			<div class="row">
 				<div class="col-sm-6 mb-3">
+					<label for="initialCost" class="label">
+						{{
+							'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST' | translate
+						}}
+					</label>
 					<input
 						nbInput
 						type="number"
@@ -112,9 +132,13 @@
 					/>
 				</div>
 				<div class="col-sm-6 mb-3">
+					<label for="currency" class="label">
+						{{ 'EQUIPMENT_PAGE.CURRENCY' | translate }}
+					</label>
 					<nb-select
 						class="d-block"
 						formControlName="currency"
+						fullWidth
 						[ngClass]="{
 							'status-danger':
 								form.controls['currency'].invalid &&
@@ -135,6 +159,12 @@
 
 			<div class="row ">
 				<div class="col-sm-6 mb-3">
+					<label for="name" class="label">
+						{{
+							'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
+								| translate
+						}}
+					</label>
 					<input
 						nbInput
 						type="number"
@@ -153,6 +183,14 @@
 								form.controls['maxSharePeriod'].dirty
 						}"
 					/>
+				</div>
+				<div class="col-sm-6">
+					<ngx-tags-color-input
+						[form]="form"
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+					>
+					</ngx-tags-color-input>
 				</div>
 			</div>
 
