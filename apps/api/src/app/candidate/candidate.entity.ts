@@ -1,7 +1,16 @@
+import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
+import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateSource } from './../candidate_source/candidate_source.entity';
-import { Candidate as ICandidate, Status } from '@gauzy/models';
+import {
+	Candidate as ICandidate,
+	Status,
+	PayPeriodEnum,
+	IEducation,
+	IExperience,
+	ISkill
+} from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional } from 'class-validator';
+import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -12,21 +21,18 @@ import {
 	OneToOne,
 	RelationId
 } from 'typeorm';
-import { LocationBase } from '../core/entities/location-base';
+import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
-// tslint:disable-next-line: nx-enforce-module-boundaries
-import { Education } from 'libs/models/src/lib/candidate-education.model';
 
 @Entity('candidate')
-export class Candidate extends LocationBase implements ICandidate {
+export class Candidate extends TenantLocationBase implements ICandidate {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_candidate'
@@ -37,7 +43,19 @@ export class Candidate extends LocationBase implements ICandidate {
 	@JoinTable({
 		name: 'candidate_education'
 	})
-	educations: Education[];
+	educations: IEducation[];
+
+	@ManyToOne((type) => CandidateExperience)
+	@JoinTable({
+		name: 'candidate_experience'
+	})
+	experience: IExperience[];
+
+	@ManyToOne((type) => CandidateSkill)
+	@JoinTable({
+		name: 'candidate_skills'
+	})
+	skills: ISkill[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -51,15 +69,6 @@ export class Candidate extends LocationBase implements ICandidate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.user)
 	readonly userId: string;
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.tenant)
-	readonly tenantId?: string;
 
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
@@ -146,7 +155,7 @@ export class Candidate extends LocationBase implements ICandidate {
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
-	reWeeklyLimit?: number;
+	reWeeklyLimit?: number; //Recurring Weekly Limit (hours)
 
 	@ApiPropertyOptional({ type: String, maxLength: 255 })
 	@IsOptional()
@@ -158,9 +167,10 @@ export class Candidate extends LocationBase implements ICandidate {
 	@Column({ nullable: true })
 	billRateValue?: number;
 
-	@ApiPropertyOptional({ type: String, maxLength: 255 })
+	@ApiProperty({ type: String, enum: PayPeriodEnum })
+	@IsEnum(PayPeriodEnum)
 	@IsOptional()
-	@Column({ length: 255, nullable: true })
+	@Column({ nullable: true })
 	payPeriod?: string;
 
 	@ApiProperty({ type: CandidateCv })

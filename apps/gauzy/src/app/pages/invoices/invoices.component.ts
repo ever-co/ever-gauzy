@@ -1,16 +1,17 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Invoice } from '@gauzy/models';
+import { Invoice, PermissionsEnum } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoicesValueComponent } from './invoices-value.component';
 import { Router } from '@angular/router';
-import { first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
+import { Subject } from 'rxjs';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -23,13 +24,16 @@ export interface SelectedInvoice {
 	styleUrls: ['./invoices.component.scss']
 })
 export class InvoicesComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	invoice: Invoice;
 	selectedInvoice: Invoice;
 	loading = false;
 	disableButton = true;
+	hasInvoiceEditPermission: boolean;
+
+	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('invoicesTable', { static: false }) invoicesTable;
 
@@ -46,6 +50,13 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this.store.userRolePermissions$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.hasInvoiceEditPermission = this.store.hasPermission(
+					PermissionsEnum.INVOICES_EDIT
+				);
+			});
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
@@ -58,6 +69,86 @@ export class InvoicesComponent extends TranslationBaseComponent
 	edit() {
 		this.router.navigate([
 			`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`
+		]);
+	}
+
+	async duplicate() {
+		const { items } = await this.invoicesService.getAll();
+		const createdInvoice = await this.invoicesService.add({
+			invoiceNumber: +items[items.length - 1].invoiceNumber + 1,
+			invoiceDate: this.selectedInvoice.invoiceDate,
+			dueDate: this.selectedInvoice.dueDate,
+			currency: this.selectedInvoice.currency,
+			discountValue: this.selectedInvoice.discountValue,
+			discountType: this.selectedInvoice.discountType,
+			tax: this.selectedInvoice.tax,
+			taxType: this.selectedInvoice.taxType,
+			terms: this.selectedInvoice.terms,
+			paid: this.selectedInvoice.paid,
+			totalValue: this.selectedInvoice.totalValue,
+			clientId: this.selectedInvoice.clientId,
+			organizationId: this.selectedInvoice.organizationId,
+			invoiceType: this.selectedInvoice.invoiceType
+		});
+
+		const allItems = await this.invoiceItemService.getAll();
+
+		const invoiceItems = allItems.items.filter(
+			(i) => i.invoiceId === this.selectedInvoice.id
+		);
+
+		if (invoiceItems[0].employeeId) {
+			for (const item of invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					unitCost: item.unitCost,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id,
+					employeeId: item.employeeId
+				});
+			}
+		} else if (invoiceItems[0].projectId) {
+			for (const item of invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					unitCost: item.unitCost,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id,
+					projectId: item.projectId
+				});
+			}
+		} else if (invoiceItems[0].taskId) {
+			for (const item of invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					unitCost: item.unitCost,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id,
+					taskId: item.taskId
+				});
+			}
+		} else {
+			for (const item of invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					unitCost: item.unitCost,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id
+				});
+			}
+		}
+
+		this.toastrService.primary(
+			this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+
+		this.router.navigate([
+			`/pages/accounting/invoices/edit/${createdInvoice.id}`
 		]);
 	}
 
@@ -129,5 +220,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();
 		});
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

@@ -27,6 +27,7 @@ export interface ProductVariant extends IBaseEntityModel {
 	price: ProductVariantPrice;
 	taxes: number;
 	notes: string;
+	enabled: boolean;
 	productId: string;
 	quantity: number;
 	billingInvoicingPolicy: string;
@@ -57,4 +58,9 @@ export interface ProductVariantSettings extends IBaseEntityModel {
 export interface ProductOption extends IBaseEntityModel {
 	name: string;
 	code: string;
+}
+
+export enum BillingInvoicingPolicyEnum {
+	QUANTITY_ORDERED = 'Quantity ordered',
+	QUANTITY_DELIVERED = 'Quantity Delivered'
 }

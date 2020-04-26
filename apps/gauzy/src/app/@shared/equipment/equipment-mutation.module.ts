@@ -15,9 +15,11 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
 import { Store } from '../../@core/services/store.service';
+import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 
 @NgModule({
 	imports: [
+		TagsColorInputModule,
 		ThemeModule,
 		FormsModule,
 		NbCardModule,

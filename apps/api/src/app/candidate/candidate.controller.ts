@@ -69,10 +69,10 @@ export class CandidateController extends CrudController<Candidate> {
 		}
 	}
 
-	@ApiOperation({ summary: 'Find all candidates.' })
+	@ApiOperation({ summary: 'Find all candidates in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found candidates',
+		description: 'Found candidates in the tenant',
 		type: Candidate
 	})
 	@ApiResponse({
@@ -80,14 +80,14 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllCandidades(
+	async findAllCandidates(
 		@Query('data') data: string
 	): Promise<IPagination<Candidate>> {
 		const { relations, findInput } = JSON.parse(data);
 		return this.candidateService.findAll({ where: findInput, relations });
 	}
 
-	@ApiOperation({ summary: 'Find Candidate by id.' })
+	@ApiOperation({ summary: 'Find Candidate by id in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',

@@ -25,3 +25,18 @@
 :host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(2):hover {
 	color: white;
 }
+
+.total {
+	float: right;
+	border: solid 2px #e4e9f2;
+	border-radius: 5px;
+	margin: 20px 0 0 40px;
+	background-color: #f7f9fc;
+
+	&-item {
+		font-weight: 600;
+		margin: 10px 40px;
+		padding: 10px;
+		font-size: 16px;
+	}
+}

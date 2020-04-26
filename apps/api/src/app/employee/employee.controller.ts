@@ -69,10 +69,10 @@ export class EmployeeController extends CrudController<Employee> {
 		}
 	}
 
-	@ApiOperation({ summary: 'Find all employees.' })
+	@ApiOperation({ summary: 'Find all employees in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found employees',
+		description: 'Found employees in the tenant',
 		type: Employee
 	})
 	@ApiResponse({
@@ -109,10 +109,10 @@ export class EmployeeController extends CrudController<Employee> {
 		);
 	}
 
-	@ApiOperation({ summary: 'Find User by id.' })
+	@ApiOperation({ summary: 'Find employee by id in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found one record',
+		description: 'Found employee in the same tenant',
 		type: Employee
 	})
 	@ApiResponse({

@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-export interface Education extends IBaseEntityModel {
+export interface IEducation extends IBaseEntityModel {
 	schoolName: string;
 	degree: string;
 	completionDate: Date;

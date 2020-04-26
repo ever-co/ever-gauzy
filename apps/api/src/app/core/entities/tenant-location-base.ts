@@ -1,9 +1,9 @@
-import { Base } from './base';
 import { ApiProperty } from '@nestjs/swagger';
-import { Column } from 'typeorm';
 import { IsOptional } from 'class-validator';
+import { Column } from 'typeorm';
+import { TenantBase } from './tenant-base';
 
-export abstract class LocationBase extends Base {
+export abstract class TenantLocationBase extends TenantBase {
 	@ApiProperty({ type: String })
 	@Column()
 	@IsOptional()

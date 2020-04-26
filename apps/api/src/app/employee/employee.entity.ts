@@ -16,19 +16,18 @@ import {
 	RelationId,
 	OneToMany
 } from 'typeorm';
-import { LocationBase } from '../core/entities/location-base';
+import { TenantLocationBase } from '../core/entities/tenant-location-base';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
 import { Tag } from '../tags/tag.entity';
-import { Tenant } from '../tenant/tenant.entity';
 import { User } from '../user/user.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('employee')
-export class Employee extends LocationBase implements IEmployee {
+export class Employee extends TenantLocationBase implements IEmployee {
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_employee'
@@ -48,15 +47,6 @@ export class Employee extends LocationBase implements IEmployee {
 	@RelationId((employee: Employee) => employee.user)
 	@Column()
 	readonly userId: string;
-
-	@ApiProperty({ type: Tenant })
-	@ManyToOne((type) => Tenant, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	tenant: Tenant;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((employee: Employee) => employee.tenant)
-	readonly tenantId?: string;
 
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
