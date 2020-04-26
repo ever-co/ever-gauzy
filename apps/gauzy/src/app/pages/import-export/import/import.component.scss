@@ -1,0 +1,15 @@
+$center: center;
+
+.import_export_wrapper {
+	display: flex;
+	justify-content: $center;
+	align-items: $center;
+	height: 100%;
+}
+.radio-buttons-group {
+	margin-left: 5%;
+}
+.info-text {
+	color: #3366ff;
+	font-weight: 600;
+}

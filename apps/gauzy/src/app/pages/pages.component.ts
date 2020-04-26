@@ -524,7 +524,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 						{
 							title: 'Import',
 							icon: 'upload-outline',
-							link: '/pages/settings/general',
+							link: '/pages/settings/import-export/import',
 							data: {
 								translated: false,
 								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'
