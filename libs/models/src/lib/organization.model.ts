@@ -67,6 +67,7 @@ export interface OrganizationCreateInput extends ILocation {
 	bonusPercentage?: number;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
+	tenant: ITenant;
 }
 
 export enum OrganizationSelectInput {

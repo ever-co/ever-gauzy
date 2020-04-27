@@ -27,7 +27,8 @@ export class InviteAcceptUserHandler
 		const { input } = command;
 
 		const organization = await this.organizationService.findOne(
-			input.organization.id
+			input.organization.id,
+			{ relations: ['tenant'] }
 		);
 
 		if (!input.user.imageUrl) {
@@ -38,10 +39,9 @@ export class InviteAcceptUserHandler
 			...input,
 			user: {
 				...input.user,
-				tenant: {
-					id: organization.tenantId
-				}
-			}
+				tenant: organization.tenant
+			},
+			organizationId: organization.id
 		});
 
 		return await this.inviteService.update(input.inviteId, {

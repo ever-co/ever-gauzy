@@ -22,3 +22,8 @@ export interface UserOrganizationCreateInput {
 	isDefault?: boolean;
 	isActive?: boolean;
 }
+
+export interface UserOrganizationDeleteInput {
+	userOrganizationId: string;
+	requestingUser: User;
+}

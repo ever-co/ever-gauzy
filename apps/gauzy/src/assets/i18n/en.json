@@ -32,7 +32,8 @@
 		"HISTORY": "History",
 		"SYNC": "Sync",
 		"UPDATE": "Update",
-		"AUTO_SYNC": "Auto sync"
+		"AUTO_SYNC": "Auto sync",
+		"VIEW": "View"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -264,7 +265,7 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
-			"REMOVE_USER": " from you organization",
+			"REMOVE_USER": " from your organization",
 			"SURE": "Are you sure you want to delete",
 			"RECORD": "record",
 			"USER_RECORD": "from your organization",
@@ -273,7 +274,7 @@
 			"EXPENSE": "Expense",
 			"USER": "user",
 			"INVITATION": "invitation",
-			"DELETE_USER": " from database as it's data in no longer part of any organization "
+			"DELETE_USER": " from database as it is associated only to current organization"
 		}
 	},
 	"POP_UPS": {
@@ -342,7 +343,22 @@
 			"IMPORT": "Import",
 			"EXPORT": "Export",
 			"MERGE": "merge data",
-			"CLEAN_UP": "clean up before import"
+			"CLEAN_UP": "clean up before import",
+			"EXPORT_MESSAGE": "Click export to download all tables from the database.",
+			"IMPORT_MESSAGE": "Click import to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
+			"SELECT_FILE": "Select File",
+			"DROP_FILE": "Drop the file here",
+			"BROWSE": "BROWSE",
+			"NAME": "Name",
+			"SIZE": "Size",
+			"PROGRESS": "Progress",
+			"STATUS": "Status",
+			"ACTIONS": "Actions",
+			"QUEUE_PROGRESS": "Queue progress:",
+			"CANCEL": "Cancel",
+			"REMOVE": "Remove",
+			"WRONG_FILE_NAME": "Wrong file name!!!",
+			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\""
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
@@ -758,7 +774,8 @@
 		"EQUIPMENT_EDITED": "Equipment edited",
 		"EQUIPMENT_DELETED": "Equipment deleted",
 		"EQUIPMENT_ADDED": "Equipment added",
-		"EQUIPMENT_SAVED": "Equipment saved"
+		"EQUIPMENT_SAVED": "Equipment saved",
+		"CURRENCY": "Currency"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
@@ -848,7 +865,8 @@
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Main",
 			"USER_ORGANIZATIONS": "Organizations"
-		}
+		},
+		"REMOVE_USER": "{{ name }} successfully removed"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Start Timer",
@@ -926,6 +944,12 @@
 		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
 		"TAX_VALUE": "Tax cannot be a negative number",
 		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
+		"DISCOUNT_TYPE": "Discount Type",
+		"TAX_TYPE": "Tax Type",
+		"PERCENT": "Percent",
+		"FLAT": "Flat",
+		"SUBTOTAL": "Subtotal",
+		"TOTAL": "Total",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
