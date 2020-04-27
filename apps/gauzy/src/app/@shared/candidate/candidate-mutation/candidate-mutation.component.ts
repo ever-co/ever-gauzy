@@ -57,7 +57,8 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		this.formCV = this.candidateCv.form;
 		this.role = await this.roleService
 			.getRoleByName({
-				name: RolesEnum.CANDIDATE
+				name: RolesEnum.CANDIDATE,
+				tenant: this.store.user.tenant
 			})
 			.pipe(first())
 			.toPromise();

@@ -49,7 +49,8 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		this.form = this.userBasicInfo.form;
 		this.role = await this.roleService
 			.getRoleByName({
-				name: RolesEnum.EMPLOYEE
+				name: RolesEnum.EMPLOYEE,
+				tenant: this.store.user.tenant
 			})
 			.pipe(first())
 			.toPromise();

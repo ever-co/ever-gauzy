@@ -236,19 +236,15 @@ export class SeedDataService {
 				this.connection
 			);
 
-			const roles: Role[] = await createRoles(this.connection);
-
-			await createRolePermissions(this.connection, roles);
-
 			const categories = await createExpenseCategories(this.connection);
 
 			await createCountries(this.connection);
 
 			await createEmailTemplates(this.connection);
 
-			await this.seedDefaultData(roles, categories);
+			await this.seedDefaultData(categories);
 
-			await this.seedRandomData(roles, categories, candidateSources);
+			await this.seedRandomData(categories, candidateSources);
 
 			this.log(
 				chalk.green(
@@ -263,9 +259,13 @@ export class SeedDataService {
 	/**
 	 * Populate default data from env files
 	 */
-	async seedDefaultData(roles: Role[], categories: ExpenseCategory[]) {
+	async seedDefaultData(categories: ExpenseCategory[]) {
 		//Platform level data
 		const tenant = await createDefaultTenants(this.connection);
+
+		const roles: Role[] = await createRoles(this.connection, [tenant]);
+
+		await createRolePermissions(this.connection, roles, [tenant]);
 
 		//Tenant level inserts which only need connection, tenant, roles
 		const defaultOrganizations = await createDefaultOrganizations(
@@ -354,7 +354,6 @@ export class SeedDataService {
 	 * Populate database with random generated data
 	 */
 	async seedRandomData(
-		roles: Role[],
 		categories: ExpenseCategory[],
 		candidateSources: CandidateSource[]
 	) {
@@ -372,6 +371,11 @@ export class SeedDataService {
 			this.connection,
 			env.randomSeedConfig.tenants || 1
 		);
+
+		// Independent roles and role permissions for each tenant
+		const roles: Role[] = await createRoles(this.connection, tenants);
+
+		await createRolePermissions(this.connection, roles, tenants);
 
 		//Tenant level inserts which only need connection, tenant, role
 		const tenantOrganizationsMap = await createRandomOrganizations(
