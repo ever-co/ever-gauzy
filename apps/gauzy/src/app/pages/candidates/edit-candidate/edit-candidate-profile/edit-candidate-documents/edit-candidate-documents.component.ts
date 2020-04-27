@@ -78,7 +78,6 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		this.form.controls.documents.patchValue([this.documentList[index]]);
 		this.documentId = id;
 		this.documentUrl = this.documentList[index].documentUrl;
-		console.log('editDocument', this.documentUrl);
 	}
 
 	cancel() {
