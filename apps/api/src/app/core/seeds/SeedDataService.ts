@@ -233,8 +233,6 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-			// await createCandidateDocuments(this.connection);
-
 			const candidateSources = await createCandidateSources(
 				this.connection
 			);
