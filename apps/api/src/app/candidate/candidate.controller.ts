@@ -8,9 +8,7 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	Post,
-	UsePipes,
-	ValidationPipe
+	Post
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
