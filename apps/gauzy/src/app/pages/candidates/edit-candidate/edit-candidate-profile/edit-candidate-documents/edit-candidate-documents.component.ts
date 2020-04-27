@@ -5,12 +5,10 @@ import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { CandidateDocumentsService } from 'apps/gauzy/src/app/@core/services/candidate-documents.service';
 import { CandidateCvComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-cv/candidate-cv.component';
 import { ICandidateDocument } from '@gauzy/models';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ga-edit-candidate-documents',
@@ -31,12 +29,10 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	documentUrl = '';
 	constructor(
 		private readonly fb: FormBuilder,
-		private route: ActivatedRoute,
 		private readonly candidateDocumentsService: CandidateDocumentsService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore,
-		private candidatesService: CandidatesService
+		private candidateStore: CandidateStore
 	) {
 		super(translateService);
 	}
@@ -71,18 +67,6 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		if (res) {
 			this.documentList = res.items;
 		}
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
-
-				const { items } = await this.candidatesService
-					.getAll(['user', 'documents'], { id })
-					.pipe(first())
-					.toPromise();
-
-				// console.log(items);
-			});
 	}
 	showCard() {
 		this.showAddCard = !this.showAddCard;
@@ -94,12 +78,13 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		this.form.controls.documents.patchValue([this.documentList[index]]);
 		this.documentId = id;
 		this.documentUrl = this.documentList[index].documentUrl;
+		console.log('editDocument', this.documentUrl);
 	}
 
 	cancel() {
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.documents.value.length = 0;
-		this.documentUrl = null;
+		this.documentUrl = '';
 	}
 
 	async submitForm() {
@@ -109,19 +94,18 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		formValue.documentUrl = this.formCv.get('cvUrl').value;
 		if (this.documentId !== null) {
 			//editing existing document
-			formValue.documentUrl = this.documentUrl;
-			if (documentForm.valid) {
+			formValue.documentUrl =
+				formValue.documentUrl === ''
+					? this.documentUrl
+					: formValue.documentUrl;
+			if (formValue.name !== '') {
 				this.updateDocument(formValue);
 			} else {
 				this.toastrInvalid();
 			}
 		} else {
 			//creating document
-			if (
-				formValue.documentUrl !== null &&
-				formValue.documentUrl !== '' &&
-				formValue.name !== ''
-			) {
+			if (formValue.documentUrl !== '' && formValue.name !== '') {
 				this.createDocument(formValue);
 			} else {
 				this.toastrInvalid();
