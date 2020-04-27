@@ -29,6 +29,6 @@ export class CandidateEducation extends Base implements IEducation {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	candidateId?: string;
 }

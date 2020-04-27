@@ -81,7 +81,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 					.pipe(first())
 					.toPromise();
 
-				console.log(items);
+				// console.log(items);
 			});
 	}
 	showCard() {
@@ -99,7 +99,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	cancel() {
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.documents.value.length = 0;
-		this.documentUrl = '';
+		this.documentUrl = null;
 	}
 
 	async submitForm() {
@@ -107,56 +107,58 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		const formValue = { ...documentForm.value[0] };
 		this.formCv = this.candidateCv.form;
 		formValue.documentUrl = this.formCv.get('cvUrl').value;
-		if (formValue.documentUrl !== null && formValue.documentUrl !== '') {
-			//fields not empty
-			if (this.documentId !== null) {
-				//editing existing document
-				try {
-					await this.candidateDocumentsService.update(
-						this.documentId,
-						{
-							...formValue
-						}
-					);
-					this.loadDocuments();
-					this.toastrSuccess('UPDATED');
-					this.showAddCard = !this.showAddCard;
-					this.form.controls.documents.reset();
-				} catch (error) {
-					this.toastrError(error);
-				}
-				this.documentId = null;
+		if (this.documentId !== null) {
+			//editing existing document
+			formValue.documentUrl = this.documentUrl;
+			if (documentForm.valid) {
+				this.updateDocument(formValue);
 			} else {
-				//creating document
-				try {
-					await this.candidateDocumentsService.create({
-						...formValue,
-						candidateId: this.candidateId
-					});
-					this.toastrSuccess('CREATED');
-					this.loadDocuments();
-					this.showAddCard = !this.showAddCard;
-					this.form.controls.documents.reset();
-				} catch (error) {
-					this.toastrError(error);
-				}
+				this.toastrInvalid();
 			}
 		} else {
-			this.toastrService.danger(
-				this.getTranslation('NOTES.CANDIDATE.INVALID_FORM'),
-				this.getTranslation(
-					'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_REQUIRED'
-				)
-			);
+			//creating document
+			if (
+				formValue.documentUrl !== null &&
+				formValue.documentUrl !== '' &&
+				formValue.name !== ''
+			) {
+				this.createDocument(formValue);
+			} else {
+				this.toastrInvalid();
+			}
 		}
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+	async updateDocument(formValue: ICandidateDocument) {
+		try {
+			await this.candidateDocumentsService.update(this.documentId, {
+				...formValue
+			});
+			this.loadDocuments();
+			this.toastrSuccess('UPDATED');
+			this.showAddCard = !this.showAddCard;
+			this.form.controls.documents.reset();
+		} catch (error) {
+			this.toastrError(error);
+		}
+		this.documentId = null;
+		this.documentUrl = '';
+	}
+	async createDocument(formValue: ICandidateDocument) {
+		try {
+			await this.candidateDocumentsService.create({
+				...formValue,
+				candidateId: this.candidateId
+			});
+			this.toastrSuccess('CREATED');
+			this.loadDocuments();
+			this.showAddCard = !this.showAddCard;
+			this.form.controls.documents.reset();
+		} catch (error) {
+			this.toastrError(error);
+		}
 	}
 
 	async removeDocument(id: string) {
-		console.log(id);
 		try {
 			await this.candidateDocumentsService.delete(id);
 			this.toastrSuccess('DELETED');
@@ -180,5 +182,15 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_DOCUMENT_${text}`)
 		);
+	}
+	private toastrInvalid() {
+		this.toastrService.danger(
+			this.getTranslation('NOTES.CANDIDATE.INVALID_FORM'),
+			this.getTranslation('TOASTR.MESSAGE.CANDIDATE_DOCUMENT_REQUIRED')
+		);
+	}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }
