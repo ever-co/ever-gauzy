@@ -7,7 +7,8 @@ import {
 	PayPeriodEnum,
 	IEducation,
 	IExperience,
-	ISkill
+	ISkill,
+	ICandidateDocument
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
@@ -28,9 +29,9 @@ import { OrganizationPositions } from '../organization-positions/organization-po
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
-import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
+import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -66,6 +67,12 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	})
 	@JoinColumn()
 	source?: ICandidateSource;
+
+	@ManyToOne((type) => CandidateDocument)
+	@JoinTable({
+		name: 'candidate_documents'
+	})
+	documents: ICandidateDocument[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -171,16 +178,8 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@Column({ nullable: true })
 	payPeriod?: string;
 
-	@ApiProperty({ type: CandidateCv })
-	@OneToOne((type) => CandidateCv, {
-		nullable: true,
-		cascade: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	cv: CandidateCv;
-
-	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.cv)
-	readonly cvId: string;
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	cvUrl?: string;
 }

@@ -260,7 +260,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 					type: 'email',
 					class: 'email-column'
 				},
-
 				source: {
 					title: this.getTranslation('SM_TABLE.SOURCE'),
 					type: 'custom',
@@ -269,6 +268,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 					renderComponent: CandidateSourceComponent,
 					filter: false
 				},
+
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
