@@ -1,5 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { PermissionsEnum, InvitationTypeEnum } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	InvitationTypeEnum,
+	ICandidateSource
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -15,6 +19,8 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
+import { CandidateSourceService } from '../../@core/services/candidate-source.service';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -55,7 +61,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 		private router: Router,
 		private route: ActivatedRoute,
 		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private candidateSourceService: CandidateSourceService
 	) {
 		super(translate);
 	}
@@ -188,24 +195,38 @@ export class CandidatesComponent extends TranslationBaseComponent
 		this.selectedCandidate = null;
 
 		const { items } = await this.candidatesService
-			.getAll(['user', 'tags'], {
+			.getAll(['user', 'source'], {
 				organization: { id: this.selectedOrganizationId }
 			})
 			.pipe(first())
 			.toPromise();
 		const { name } = this.store.selectedOrganization;
-
+		console.log(items);
 		let candidatesVm = [];
 		const result = [];
+
+		// for (let i = 0; i < items.length; i++) {
+		// 	const res = await this.candidateSourceService.getAll({
+		// 		candidateId: items[i].id
+		// 	});
+		// 	if (res) {
+		// 		// res.items[i] =
+		// 		// 	res.items[i] === undefined ? res.items[0] : res.items[i];
+		// 		// items[i].source = res.items[i];
+		// 	}
+		// }
+
 		for (const candidate of items) {
 			result.push({
 				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
 				email: candidate.user.email,
 				id: candidate.id,
+				source: candidate.source,
 				status: candidate.status,
 				imageUrl: candidate.user.imageUrl,
 				tag: candidate.tags
 			});
+			console.log(result);
 		}
 
 		if (!this.includeDeleted) {
@@ -239,15 +260,15 @@ export class CandidatesComponent extends TranslationBaseComponent
 					type: 'email',
 					class: 'email-column'
 				},
-				//  WIP - need to fix, makes mistake when initialize
 
-				// source: {
-				// 	title: this.getTranslation('SM_TABLE.SOURCE'),
-				// 	type: 'custom',
-				// 	class: 'text-center',
-				// 	width: '200px',
-				// 	filter: false
-				// },
+				source: {
+					title: this.getTranslation('SM_TABLE.SOURCE'),
+					type: 'custom',
+					class: 'text-center',
+					width: '200px',
+					renderComponent: CandidateSourceComponent,
+					filter: false
+				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',

@@ -61,7 +61,7 @@ import { IntegrationEntitySettingModule } from './integration-entity-setting/int
 import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.module';
 import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
-import { CandidateSourceModule } from './candidate_source/candidate_source.module';
+import { CandidateSourceModule } from './candidate-source/candidate-source.module';
 import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
 
 @Module({

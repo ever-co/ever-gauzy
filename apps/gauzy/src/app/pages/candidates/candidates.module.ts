@@ -55,6 +55,7 @@ import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { EditCandidateExperienceFormComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience/edit-candidate-experience-form.component';
+import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -63,6 +64,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 const COMPONENTS = [
 	CandidatesComponent,
 	CandidateStatusComponent,
+	CandidateSourceComponent,
 	EditCandidateComponent,
 	EditCandidateDocumentsComponent,
 	EditCandidateEmploymentComponent,
@@ -121,7 +123,11 @@ const COMPONENTS = [
 		EmployeeRatesModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [CandidateStatusComponent, ManageCandidateInviteComponent],
+	entryComponents: [
+		CandidateStatusComponent,
+		CandidateSourceComponent,
+		ManageCandidateInviteComponent
+	],
 	providers: [
 		OrganizationsService,
 		InviteGuard,

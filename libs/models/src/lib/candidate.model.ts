@@ -1,3 +1,4 @@
+import { ICandidateSource } from './candidate-source.model';
 import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
@@ -33,7 +34,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
 	educations?: IEducation[];
-	source?: string;
+	source?: ICandidateSource;
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';
