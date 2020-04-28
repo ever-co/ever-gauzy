@@ -7,6 +7,13 @@ import { first } from 'rxjs/operators';
 export class TagsService {
 	constructor(private http: HttpClient) {}
 
+	insertTags(createTags: Tag[]): Promise<Tag[]> {
+		return this.http
+			.post<Tag[]>('/api/tags', createTags)
+			.pipe(first())
+			.toPromise();
+	}
+
 	insertTag(createTag: Tag): Promise<Tag> {
 		return this.http
 			.post<Tag>('/api/tags', createTag)
@@ -31,6 +38,12 @@ export class TagsService {
 	update(id: string, updateInput: Tag) {
 		return this.http
 			.put(`/api/tags/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
+	findByName(name: string): Promise<{ item: Tag }> {
+		return this.http
+			.get<{ item: Tag }>(`/api/tags/getByName/${name}`)
 			.pipe(first())
 			.toPromise();
 	}

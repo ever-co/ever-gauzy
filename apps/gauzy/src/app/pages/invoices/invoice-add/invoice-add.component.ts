@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -23,7 +23,6 @@ import { OrganizationClientsService } from '../../../@core/services/organization
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
@@ -59,15 +58,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	isEmployeeHourTable: boolean;
 	isProjectHourTable: boolean;
 	isTaskHourTable: boolean;
+	enableSaveButton = true;
 	organizationId: string;
+	subtotal = 0;
+	total = 0;
 	private _ngDestroy$ = new Subject<void>();
 	get currency() {
 		return this.form.get('currency');
 	}
-
-	@ViewChild('invoiceItemTable', { static: false }) invoiceItemTable;
-	@ViewChild('employeeSelector', { static: false })
-	employeeSelector: EmployeeSelectorComponent;
 
 	constructor(
 		private fb: FormBuilder,
@@ -106,6 +104,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			tax: ['', Validators.required],
 			terms: ['', Validators.required],
 			client: ['', Validators.required],
+			discountType: ['', Validators.required],
+			taxType: ['', Validators.required],
 			invoiceType: [''],
 			project: [''],
 			task: ['']
@@ -125,13 +125,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					editButtonContent: '<i class="nb-edit"></i>',
 					saveButtonContent: '<i class="nb-checkmark"></i>',
 					cancelButtonContent: '<i class="nb-close"></i>',
-					confirmEdit: true
+					confirmSave: true
 				},
 				delete: {
-					deleteButtonContent: '<i class="nb-trash"></i>'
+					deleteButtonContent: '<i class="nb-trash"></i>',
+					confirmDelete: true
 				},
 				columns: {
-					employee: {
+					selectedEmployee: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE'
 						),
@@ -146,31 +147,35 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
 						),
-						type: 'string'
+						type: 'text'
 					},
 					price: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.HOURLY_RATE'
 						),
-						type: 'number',
-						filter: false
+						type: 'text',
+						filter: false,
+						valuePrepareFunction: (cell, row) => {
+							return `${this.currency.value} ${row.price}`;
+						}
 					},
 					quantity: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'
 						),
-						type: 'number',
+						type: 'text',
 						filter: false
 					},
 					totalValue: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
 						),
-						type: 'number',
+						type: 'text',
 						addable: false,
 						editable: false,
 						valuePrepareFunction: (cell, row) => {
-							return row.price * row.quantity;
+							return `${this.currency.value} ${row.price *
+								row.quantity}`;
 						},
 						filter: false
 					}
@@ -188,13 +193,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					editButtonContent: '<i class="nb-edit"></i>',
 					saveButtonContent: '<i class="nb-checkmark"></i>',
 					cancelButtonContent: '<i class="nb-close"></i>',
-					confirmEdit: true
+					confirmSave: true
 				},
 				delete: {
-					deleteButtonContent: '<i class="nb-trash"></i>'
+					deleteButtonContent: '<i class="nb-trash"></i>',
+					confirmDelete: true
 				},
 				columns: {
-					project: {
+					selectedProject: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.PROJECT'
 						),
@@ -208,27 +214,27 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
 						),
-						type: 'string'
+						type: 'text'
 					},
 					price: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.HOURLY_RATE'
 						),
-						type: 'number',
+						type: 'text',
 						filter: false
 					},
 					quantity: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'
 						),
-						type: 'number',
+						type: 'text',
 						filter: false
 					},
 					totalValue: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
 						),
-						type: 'number',
+						type: 'text',
 						addable: false,
 						editable: false,
 						valuePrepareFunction: (cell, row) => {
@@ -250,13 +256,14 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					editButtonContent: '<i class="nb-edit"></i>',
 					saveButtonContent: '<i class="nb-checkmark"></i>',
 					cancelButtonContent: '<i class="nb-close"></i>',
-					confirmEdit: true
+					confirmSave: true
 				},
 				delete: {
-					deleteButtonContent: '<i class="nb-trash"></i>'
+					deleteButtonContent: '<i class="nb-trash"></i>',
+					confirmDelete: true
 				},
 				columns: {
-					task: {
+					selectedTask: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.TASK'
 						),
@@ -270,27 +277,27 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
 						),
-						type: 'string'
+						type: 'text'
 					},
 					price: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.HOURLY_RATE'
 						),
-						type: 'number',
+						type: 'text',
 						filter: false
 					},
 					quantity: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'
 						),
-						type: 'number',
+						type: 'text',
 						filter: false
 					},
 					totalValue: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
 						),
-						type: 'number',
+						type: 'text',
 						addable: false,
 						editable: false,
 						valuePrepareFunction: (cell, row) => {
@@ -315,34 +322,35 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					confirmSave: true
 				},
 				delete: {
-					deleteButtonContent: '<i class="nb-trash"></i>'
+					deleteButtonContent: '<i class="nb-trash"></i>',
+					confirmDelete: true
 				},
 				columns: {
 					description: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
 						),
-						type: 'string'
+						type: 'text'
 					},
 					quantity: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.QUANTITY'
 						),
-						type: 'number',
+						type: 'text',
 						filter: false
 					},
 					price: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.PRICE'
 						),
-						type: 'number',
+						type: 'text',
 						filter: false
 					},
 					totalValue: {
 						title: this.getTranslation(
 							'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
 						),
-						type: 'number',
+						type: 'text',
 						valuePrepareFunction: (cell, row) => {
 							return row.quantity * row.price;
 						},
@@ -357,17 +365,77 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	async addInvoice() {
 		const tableData = await this.smartTableSource.getAll();
-		if (tableData) {
-			console.log(tableData);
+		if (tableData.length) {
 			const invoiceData = this.form.value;
-			let allItemValue = 0;
-			tableData.forEach((invoiceItem) => {
-				invoiceItem.totalValue =
-					+invoiceItem.price * +invoiceItem.quantity;
-				allItemValue += invoiceItem.totalValue;
-			});
-			const invoiceTotalValue =
-				allItemValue + invoiceData.tax - invoiceData.discountValue;
+			if (invoiceData.invoiceNumber < 1) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER_VALUE'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			} else if (invoiceData.tax <= 0) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.TAX_VALUE'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			} else if (invoiceData.discountValue <= 0) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.DISCOUNT_VALUE'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			}
+
+			if (
+				!invoiceData.invoiceDate ||
+				!invoiceData.dueDate ||
+				this.compareDate(invoiceData.invoiceDate, invoiceData.dueDate)
+			) {
+				this.toastrService.danger(
+					this.getTranslation('INVOICES_PAGE.INVALID_DATES'),
+					this.getTranslation('TOASTR.TITLE.WARNING')
+				);
+				return;
+			}
+
+			if (tableData[0].hasOwnProperty('selectedEmployee')) {
+				for (const invoiceItem of tableData) {
+					if (!invoiceItem.selectedEmployee) {
+						this.toastrService.danger(
+							this.getTranslation(
+								'INVOICES_PAGE.INVOICE_ITEM.EMPLOYEE_VALUE'
+							),
+							this.getTranslation('TOASTR.TITLE.WARNING')
+						);
+						return;
+					}
+				}
+			} else if (tableData[0].hasOwnProperty('selectedProject')) {
+				for (const invoiceItem of tableData) {
+					if (!invoiceItem.selectedProject) {
+						this.toastrService.danger(
+							this.getTranslation(
+								'INVOICES_PAGE.INVOICE_ITEM.PROJECT_VALUE'
+							),
+							this.getTranslation('TOASTR.TITLE.WARNING')
+						);
+						return;
+					}
+				}
+			} else if (tableData[0].hasOwnProperty('selectedTask')) {
+				for (const invoiceItem of tableData) {
+					if (!invoiceItem.selectedTask) {
+						this.toastrService.danger(
+							this.getTranslation(
+								'INVOICES_PAGE.INVOICE_ITEM.TASK_VALUE'
+							),
+							this.getTranslation('TOASTR.TITLE.WARNING')
+						);
+						return;
+					}
+				}
+			}
 
 			const createdInvoice = await this.invoicesService.add({
 				invoiceNumber: invoiceData.invoiceNumber,
@@ -375,10 +443,12 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				dueDate: invoiceData.dueDate,
 				currency: this.currency.value,
 				discountValue: invoiceData.discountValue,
+				discountType: invoiceData.discountType,
 				tax: invoiceData.tax,
+				taxType: invoiceData.taxType,
 				terms: invoiceData.terms,
 				paid: invoiceData.paid,
-				totalValue: invoiceTotalValue,
+				totalValue: this.total,
 				clientId: invoiceData.client.id,
 				organizationId: this.organization.id,
 				invoiceType: this.invoiceType
@@ -435,6 +505,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			);
 
 			this.router.navigate(['/pages/accounting/invoices']);
+		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
 		}
 	}
 
@@ -535,7 +610,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						price: fakePrice,
 						quantity: fakeQuantity,
 						selectedEmployee: employeeId,
-						allEmployees: this.employees
+						allEmployees: this.employees,
+						totalValue: fakePrice * fakeQuantity
 					};
 					fakeData.push(data);
 					fakePrice++;
@@ -549,7 +625,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						description: 'Desc',
 						price: fakePrice,
 						quantity: fakeQuantity,
-						project: project
+						project: project,
+						totalValue: fakePrice * fakeQuantity
 					};
 					fakeData.push(data);
 					fakePrice++;
@@ -563,7 +640,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						description: 'Desc',
 						price: fakePrice,
 						quantity: fakeQuantity,
-						task: task
+						task: task,
+						totalValue: fakePrice * fakeQuantity
 					};
 					fakeData.push(data);
 					fakePrice++;
@@ -571,10 +649,25 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				}
 			}
 		}
+
+		if (fakeData.length) {
+			let subtotal = 0;
+			for (const data of fakeData) {
+				let itemTotal = 0;
+				itemTotal += +data.price * +data.quantity;
+				subtotal += itemTotal;
+			}
+			this.subtotal = subtotal;
+		} else {
+			this.subtotal = 0;
+		}
+
 		this.shouldLoadTable = true;
+		this.enableSaveButton = false;
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.smartTableSource.load(fakeData);
+		this.calculateTotal();
 	}
 
 	selectTask($event) {
@@ -599,23 +692,130 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.selectedEmployeeIds = event;
 	}
 
+	calculateTotal() {
+		const discountValue =
+			this.form.value.discountValue && this.form.value.discountValue > 0
+				? this.form.value.discountValue
+				: 0;
+		const tax =
+			this.form.value.tax && this.form.value.tax > 0
+				? this.form.value.tax
+				: 0;
+
+		let totalDiscount = 0;
+		let totalTax = 0;
+
+		switch (this.form.value.discountType) {
+			case 'Percent':
+				totalDiscount = this.subtotal * (discountValue / 100);
+				break;
+			case 'Flat':
+				totalDiscount = discountValue;
+				break;
+			default:
+				totalDiscount = 0;
+				break;
+		}
+		switch (this.form.value.taxType) {
+			case 'Percent':
+				totalTax = this.subtotal * (tax / 100);
+				break;
+			case 'Flat':
+				totalTax = tax;
+				break;
+			default:
+				totalTax = 0;
+				break;
+		}
+
+		this.total = this.subtotal - totalDiscount + totalTax;
+
+		if (this.total < 0) {
+			this.total = 0;
+		}
+	}
+
+	async onCurrencyChange() {
+		const tableData = await this.smartTableSource.getAll();
+		this.smartTableSource.load(tableData);
+	}
+
 	onCreateConfirm(event) {
-		if (event.newData.employee === '') {
+		if (event.newData.selectedEmployee === '') {
 			event.newData['allEmployees'] = this.employees;
 		}
-		if (!isNaN(event.newData.quantity) && !isNaN(event.newData.price)) {
-			event.confirm.resolve(event.newData);
+		if (
+			!isNaN(event.newData.quantity) &&
+			!isNaN(event.newData.price) &&
+			event.newData.quantity &&
+			event.newData.price &&
+			event.newData.description
+		) {
+			const newData = event.newData;
+			const itemTotal = +event.newData.quantity * +event.newData.price;
+			newData.totalValue = itemTotal;
+			this.subtotal += itemTotal;
+			this.calculateTotal();
+			event.confirm.resolve(newData);
 		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
 			event.confirm.reject();
 		}
 	}
 
 	onEditConfirm(event) {
-		console.log(event);
-		if (!isNaN(event.newData.quantity) && !isNaN(event.newData.price)) {
-			event.confirm.resolve(event.newData);
+		if (
+			!isNaN(event.newData.quantity) &&
+			!isNaN(event.newData.price) &&
+			event.newData.quantity &&
+			event.newData.price &&
+			event.newData.description
+		) {
+			const newData = event.newData;
+			const oldValue = +event.data.quantity * +event.data.price;
+			const newValue = +newData.quantity * +event.newData.price;
+			newData.totalValue = newValue;
+			if (newValue > oldValue) {
+				this.subtotal += newValue - oldValue;
+			} else if (oldValue > newValue) {
+				this.subtotal -= oldValue - newValue;
+			}
+			this.calculateTotal();
+			event.confirm.resolve(newData);
 		} else {
+			this.toastrService.danger(
+				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.INVALID_ITEM'),
+				this.getTranslation('TOASTR.TITLE.WARNING')
+			);
 			event.confirm.reject();
+		}
+	}
+
+	onDeleteConfirm(event) {
+		this.subtotal -= +event.data.quantity * +event.data.price;
+		this.calculateTotal();
+		event.confirm.resolve(event.data);
+	}
+
+	compareDate(date1: Date, date2: Date): boolean {
+		const d1 = new Date(date1);
+		const d2 = new Date(date2);
+
+		const same = d1.getTime() === d2.getTime();
+
+		if (same) {
+			return false;
+		}
+
+		if (d1 > d2) {
+			return true;
+		}
+
+		if (d1 < d2) {
+			return false;
 		}
 	}
 

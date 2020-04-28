@@ -32,7 +32,8 @@
 		"HISTORY": "История",
 		"SYNC": "Синхр.",
 		"UPDATE": "Обновить",
-		"AUTO_SYNC": "Автосинхронизация"
+		"AUTO_SYNC": "Автосинхронизация",
+		"VIEW": "Вид"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -269,7 +270,7 @@
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
 			"INVITATION": "приглашение",
-			"DELETE_USER": " из базы данных, поскольку ее данные больше не являются частью какой-либо организации "
+			"DELETE_USER": " из базы данных, которая связана только с текущей организацией"
 		}
 	},
 	"POP_UPS": {
@@ -338,7 +339,22 @@
 			"IMPORT": "Импорт",
 			"EXPORT": "Экспорт",
 			"MERGE": "объединение данных",
-			"CLEAN_UP": "очистить перед импортом"
+			"CLEAN_UP": "очистить перед импортом",
+			"EXPORT_MESSAGE": "Нажмите на экспорт, чтобы загрузить все таблицы из базы данных.",
+			"IMPORT_MESSAGE": "Нажмите на импорт, чтобы вставить все таблицы в базу данных. Имя файла для загрузки должно быть: \"экспорт. Также выберите между параметрами \"объединить данные\" и \"очистить перед импортом\".",
+			"SELECT_FILE": "Выбрать файл",
+			"DROP_FILE": "Перетащите файл сюда",
+			"BROWSE": "ДРУЗЬЕ",
+			"NAME": "Имя",
+			"SIZE": "Размер",
+			"PROGRESS": "Прогресс",
+			"STATUS": "Статус",
+			"ACTIONS": "Действия",
+			"QUEUE_PROGRESS": "Прогресс очереди:",
+			"CANCEL": "Отменить",
+			"REMOVE": "Удалить",
+			"WRONG_FILE_NAME": "Неправильное имя файла!!!",
+			"CORRECT_FILE_NAME": "Имя файла должно быть: \"export.zip\""
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
@@ -752,7 +768,8 @@
 		"EQUIPMENT_EDITED": "Оборудование отредактировано",
 		"EQUIPMENT_DELETED": "Снаряжение удалено",
 		"EQUIPMENT_ADDED": "Снаряжение добавлено",
-		"EQUIPMENT_SAVED": "Оборудование сохранено"
+		"EQUIPMENT_SAVED": "Оборудование сохранено",
+		"CURRENCY": "Валюта"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Совместное использование снаряжения",
@@ -777,9 +794,10 @@
 	"INVENTORY_PAGE": {
 		"HEADER": "Инвентаризация",
 		"ADD_INVENTORY_ITEM": "Добавить товар в инвентарь",
-		"EDIT_INVENTPRY_ITEM": "Изменить элемент инвентаря",
+		"EDIT_INVENTORY_ITEM": "Изменить элемент инвентаря",
 		"INVENTORY_ITEM_DELETED": "Элемент инвентаря удален!",
 		"INVENTORY_ITEM_SAVED": "Элемент инвентаря сохранен!",
+		"EDIT_PRODUCT_VARIANT": "Изменить вариант товара",
 		"NAME": "Имя",
 		"ENABLED": "Включено",
 		"PRODUCT_TYPE": "Тип товара",
@@ -791,6 +809,8 @@
 		"CAN_BE_CHARGED": "Можно заплатить",
 		"CAN_BE_RENTED": "Может быть арендован",
 		"IS_EQUIPMENT": "Оборудование",
+		"TRACK_INVENTORY": "Отслеживать инвентарь",
+		"ADD_OPTION": "Добавить опцию",
 		"INTERNATIONAL_REFERENCE": "Международная ссылка",
 		"CODE": "Код",
 		"NOTES": "Заметки",
@@ -839,7 +859,8 @@
 			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации"
-		}
+		},
+		"REMOVE_USER": "{{ name }} успешно удален"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Запустить таймер",
@@ -897,6 +918,7 @@
 		"PAID_STATUS": "Оплаченный статус",
 		"INVOICES_ADD_INVOICE": "Счет добавлен",
 		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_DUPLICATE_INVOICE": "Счет скопирован",
 		"INVOICES_DELETE_INVOICE": "Счет удален",
 		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
 		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
@@ -912,6 +934,16 @@
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
+		"INVALID_DATES": "Неверные даты",
+		"INVOICE_NUMBER_VALUE": "Номер счета не может быть отрицательным числом или нулевым",
+		"TAX_VALUE": "Налог не может быть отрицательным числом",
+		"DISCOUNT_VALUE": "Значение скидки не может быть отрицательным числом",
+		"DISCOUNT_TYPE": "Тип скидки",
+		"TAX_TYPE": "Тип налога",
+		"PERCENT": "Процент",
+		"FLAT": "Квартира",
+		"SUBTOTAL": "Итого",
+		"TOTAL": "Итого",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
@@ -931,7 +963,12 @@
 			"EMPLOYEE": "Сотрудник",
 			"HOURLY_RATE": "Почасовая ставка",
 			"HOURS_WORKED": "Часы работы",
-			"PROJECT": "Проект"
+			"PROJECT": "Проект",
+			"NO_ITEMS": "Пожалуйста, добавьте элементы счета",
+			"INVALID_ITEM": "Неверный элемент счета",
+			"EMPLOYEE_VALUE": "Сотрудник не может быть пустым",
+			"PROJECT_VALUE": "Проект не может быть пустым",
+			"TASK_VALUE": "Задание не может быть пустым"
 		}
 	},
 	"HEADER": {
@@ -992,8 +1029,12 @@
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"CANDIDATE_SKILL_REQUIRED": "Требуется название навыка",
+			"CANDIDATE_EXPERIENCE_CREATED": "Успешно создано",
+			"CANDIDATE_EXPERIENCE_UPDATED": "Успешно обновлено",
+			"CANDIDATE_EXPERIENCE_DELETED": "Успешно удален",
 			"CANDIDATE_EDUCATION_REQUIRED": "Необходима информация об образовании",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
+			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
@@ -1046,7 +1087,9 @@
 		"CANDIDATE": {
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Пожалуйста, добавьте название навыка",
-				"INVALID_FORM": "Пожалуйста, заполните форму"
+				"INVALID_FORM": "Пожалуйста, заполните форму",
+				"INVALID_FIELD": "Пожалуйста, заполните поле",
+				"ERROR": "{{ error }}"
 			}
 		},
 		"ORGANIZATIONS": {

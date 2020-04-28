@@ -58,7 +58,9 @@ export class Product extends Base implements IProduct {
 	@JoinColumn()
 	category?: ProductCategory;
 
-	// @OneToMany((type) => ProductOption,
-	// 	productOption => productOption.product)
+	@OneToMany(
+		(type) => ProductOption,
+		(productOption) => productOption.product
+	)
 	options?: ProductOption[];
 }

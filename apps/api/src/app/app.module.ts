@@ -1,3 +1,4 @@
+import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
@@ -54,12 +55,15 @@ import { ProductModule } from './product/product.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
+import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
+import { ProductVariantModule } from './product-variant/product-variant.module';
 import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
 import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.module';
-
 import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
 import { CandidateSourceModule } from './candidate_source/candidate_source.module';
+import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
+
 @Module({
 	imports: [
 		RouterModule.forRoutes([
@@ -73,6 +77,14 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 					{
 						path: '/candidate-educations',
 						module: CandidateEducationModule
+					},
+					{
+						path: '/candidate-experience',
+						module: CandidateExperienceModule
+					},
+					{
+						path: '/candidate-skills',
+						module: CandidateSkillModule
 					},
 					{
 						path: '/candidate-cv',
@@ -222,6 +234,14 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 					{
 						path: '/product-types',
 						module: ProductTypesModule
+					},
+					{
+						path: '/product-variant-prices',
+						module: ProductVariantPriceModule
+					},
+					{
+						path: '/product-variants',
+						module: ProductVariantModule
 					}
 				]
 			}
@@ -234,6 +254,8 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 		CandidateCvModule,
 		CandidateSourceModule,
 		CandidateEducationModule,
+		CandidateExperienceModule,
+		CandidateSkillModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
@@ -290,6 +312,8 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 		IntegrationSettingModule,
 		IntegrationModule,
 		IntegrationMapModule,
+		ProductVariantPriceModule,
+		ProductVariantModule,
 		IntegrationEntitySettingModule,
 		IntegrationEntitySettingTiedEntityModule
 	],

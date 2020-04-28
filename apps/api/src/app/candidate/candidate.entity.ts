@@ -1,7 +1,16 @@
+import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
+import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateSource } from './../candidate_source/candidate_source.entity';
-import { Candidate as ICandidate, Status } from '@gauzy/models';
+import {
+	Candidate as ICandidate,
+	Status,
+	PayPeriodEnum,
+	IEducation,
+	IExperience,
+	ISkill
+} from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDate, IsOptional } from 'class-validator';
+import { IsDate, IsOptional, IsEnum } from 'class-validator';
 import {
 	Column,
 	Entity,
@@ -21,8 +30,6 @@ import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
-// tslint:disable-next-line: nx-enforce-module-boundaries
-import { Education } from 'libs/models/src/lib/candidate-education.model';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -36,7 +43,19 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@JoinTable({
 		name: 'candidate_education'
 	})
-	educations: Education[];
+	educations: IEducation[];
+
+	@ManyToOne((type) => CandidateExperience)
+	@JoinTable({
+		name: 'candidate_experience'
+	})
+	experience: IExperience[];
+
+	@ManyToOne((type) => CandidateSkill)
+	@JoinTable({
+		name: 'candidate_skills'
+	})
+	skills: ISkill[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -136,7 +155,7 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@IsDate()
 	@IsOptional()
 	@Column({ nullable: true })
-	reWeeklyLimit?: number;
+	reWeeklyLimit?: number; //Recurring Weekly Limit (hours)
 
 	@ApiPropertyOptional({ type: String, maxLength: 255 })
 	@IsOptional()
@@ -148,9 +167,10 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@Column({ nullable: true })
 	billRateValue?: number;
 
-	@ApiPropertyOptional({ type: String, maxLength: 255 })
+	@ApiProperty({ type: String, enum: PayPeriodEnum })
+	@IsEnum(PayPeriodEnum)
 	@IsOptional()
-	@Column({ length: 255, nullable: true })
+	@Column({ nullable: true })
 	payPeriod?: string;
 
 	@ApiProperty({ type: CandidateCv })

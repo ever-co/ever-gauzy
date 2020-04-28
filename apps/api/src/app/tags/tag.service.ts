@@ -12,4 +12,14 @@ export class TagService extends CrudService<Tag> {
 	) {
 		super(tagRepository);
 	}
+
+	async findOneByName(name: string): Promise<Tag> {
+		const query = await this.repository
+			.createQueryBuilder('tag')
+			.where('"tag"."name" = :name', {
+				name
+			});
+		const item = await query.getOne();
+		return item;
+	}
 }

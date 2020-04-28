@@ -9,7 +9,7 @@
 	],
 	"settings": {
 		"typescript.tsdk": "./node_modules/typescript/lib",
-		"debug.node.autoAttach": "on",
+		"debug.node.autoAttach": "off",
 		"search.usePCRE2": true,
 		"git.ignoreLimitWarning": true,
 		"checkpoints.showActiveFileOnly": true

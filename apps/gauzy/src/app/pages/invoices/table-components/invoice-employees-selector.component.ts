@@ -42,10 +42,12 @@ export class InvoiceEmployeesSelectorComponent extends TranslationBaseComponent
 
 	async getEmployees() {
 		this.employees = this.rowData.allEmployees;
-		const employee = this.employees.filter(
-			(e) => e.id === this.rowData.selectedEmployee
-		);
-		this.employee = employee[0];
+		if (this.employees) {
+			const employee = this.employees.filter(
+				(e) => e.id === this.rowData.selectedEmployee
+			);
+			this.employee = employee[0];
+		}
 	}
 
 	selectEmployee($event) {

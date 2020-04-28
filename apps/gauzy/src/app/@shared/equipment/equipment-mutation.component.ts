@@ -1,7 +1,7 @@
 import { OnInit, Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Equipment, CurrenciesEnum } from '@gauzy/models';
+import { Equipment, CurrenciesEnum, Tag } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +18,8 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 	equipment: Equipment;
 	currencies = Object.values(CurrenciesEnum);
 	selectedCurrency;
+	tags: Tag[] = [];
+	selectedTags: any;
 
 	constructor(
 		public dialogRef: NbDialogRef<EquipmentMutationComponent>,
@@ -40,6 +42,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 
 	async initializeForm() {
 		this.form = this.fb.group({
+			tags: [this.equipment ? this.equipment.tags : ''],
 			name: [
 				this.equipment ? this.equipment.name : '',
 				Validators.required
@@ -71,12 +74,16 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		}
 		const equipment = await this.equipmentService.save({
 			...this.form.value,
-			currency: this.selectedCurrency
+			currency: this.selectedCurrency,
+			tags: this.tags
 		});
 		this.closeDialog(equipment);
 	}
 
 	async closeDialog(equipment?: Equipment) {
 		this.dialogRef.close(equipment);
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }
