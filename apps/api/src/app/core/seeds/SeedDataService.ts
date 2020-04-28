@@ -113,7 +113,10 @@ import { ProductVariantSettings } from '../../product-settings/product-settings.
 import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
 import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
 import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
-import { createCandidateSources } from '../../candidate-source/candidate-source.seed';
+import {
+	createCandidateSources,
+	createRandomCandidateSources
+} from '../../candidate-source/candidate-source.seed';
 import {
 	createCandidateDocuments,
 	createRandomCandidateDocuments
@@ -427,6 +430,11 @@ export class SeedDataService {
 			env.randomSeedConfig.candidatesPerOrganization || 1
 		);
 		await createRandomCandidateDocuments(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
+		await createRandomCandidateSources(
 			this.connection,
 			tenants,
 			tenantCandidatesMap

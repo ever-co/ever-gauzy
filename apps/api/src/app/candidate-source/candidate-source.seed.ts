@@ -40,32 +40,32 @@ export const createCandidateSources = async (
 	return defaultCandidateSources;
 };
 
-// export const createRandomCandidateSources = async (
-// 	connection: Connection,
-// 	tenants: Tenant[],
-// 	tenantCandidatesMap: Map<Tenant, Candidate[]>
-// ): Promise<Map<Candidate, CandidateSource[]>> => {
-// 	let candidateSources = [];
-// 	const candidateSourcesMap: Map<Candidate, CandidateSource[]> = new Map();
+export const createRandomCandidateSources = async (
+	connection: Connection,
+	tenants: Tenant[],
+	tenantCandidatesMap: Map<Tenant, Candidate[]>
+): Promise<Map<Candidate, CandidateSource[]>> => {
+	let candidateSources = [];
+	const candidateSourcesMap: Map<Candidate, CandidateSource[]> = new Map();
 
-// 	(tenants || []).forEach((tenant) => {
-// 		const candidates = tenantCandidatesMap.get(tenant);
+	(tenants || []).forEach((tenant) => {
+		const candidates = tenantCandidatesMap.get(tenant);
 
-// 		(candidates || []).forEach((candidate) => {
-// 			const sources = candidateSourceList.map((source) => ({
-// 				name: source.name,
-// 				candidateId: candidate.id
-// 			}));
+		(candidates || []).forEach((candidate) => {
+			const sources = candidateSourceList.map((source) => ({
+				name: source.name,
+				candidateId: candidate.id
+			}));
 
-// 			candidateSourcesMap.set(candidate, sources);
-// 			candidateSources = [...candidateSources, ...sources];
-// 		});
-// 	});
+			candidateSourcesMap.set(candidate, sources);
+			candidateSources = [...candidateSources, ...sources];
+		});
+	});
 
-// 	await insertCandidateSources(connection, candidateSources);
+	await insertCandidateSources(connection, candidateSources);
 
-// 	return candidateSourcesMap;
-// };
+	return candidateSourcesMap;
+};
 
 const insertCandidateSources = async (
 	connection: Connection,

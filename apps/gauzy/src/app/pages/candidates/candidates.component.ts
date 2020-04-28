@@ -1,9 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-	PermissionsEnum,
-	InvitationTypeEnum,
-	ICandidateSource
-} from '@gauzy/models';
+import { PermissionsEnum, InvitationTypeEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -201,32 +197,27 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.pipe(first())
 			.toPromise();
 		const { name } = this.store.selectedOrganization;
-		console.log(items);
+
 		let candidatesVm = [];
 		const result = [];
-
-		// for (let i = 0; i < items.length; i++) {
-		// 	const res = await this.candidateSourceService.getAll({
-		// 		candidateId: items[i].id
-		// 	});
-		// 	if (res) {
-		// 		// res.items[i] =
-		// 		// 	res.items[i] === undefined ? res.items[0] : res.items[i];
-		// 		// items[i].source = res.items[i];
-		// 	}
-		// }
-
 		for (const candidate of items) {
+			const randomCandidateSource = await this.candidateSourceService.getAll(
+				{
+					candidateId: candidate.id
+				}
+			);
+			const rand = Math.floor(
+				Math.random() * randomCandidateSource.total
+			);
 			result.push({
 				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
 				email: candidate.user.email,
 				id: candidate.id,
-				source: candidate.source,
+				source: randomCandidateSource.items[rand],
 				status: candidate.status,
 				imageUrl: candidate.user.imageUrl,
 				tag: candidate.tags
 			});
-			console.log(result);
 		}
 
 		if (!this.includeDeleted) {
