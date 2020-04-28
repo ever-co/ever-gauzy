@@ -103,8 +103,6 @@ import { createCandidateSources } from '../../candidate_source/candidate_source.
 import { CandidateSource } from '../../candidate_source/candidate_source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Tenant } from './../../tenant/tenant.entity';
-import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
-import { createCandidateCvs } from '../../candidate-cv/candidate-cv.seed';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { createDefaultProductCategories } from '../../product-category/product-category.seed';
 import { ProductType } from '../../product-type/product-type.entity';
@@ -114,7 +112,12 @@ import { Product } from '../../product/product.entity';
 import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
 import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
+import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
 import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
+import {
+	createCandidateDocuments,
+	createRandomCandidateDocuments
+} from '../../candidate-documents/candidate-documents.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -165,7 +168,7 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
-	CandidateCv
+	CandidateDocument
 ];
 
 @Injectable()
@@ -230,8 +233,6 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-			await createCandidateCvs(this.connection);
-
 			const candidateSources = await createCandidateSources(
 				this.connection
 			);
@@ -313,12 +314,15 @@ export class SeedDataService {
 			users: defaultEmployeeUsers
 		});
 
-		await createDefaultCandidates(this.connection, {
-			tenant,
-			org: defaultOrganizations[0],
-			users: [...defaultCandidateUsers]
-		});
-
+		const defaultCandidates = await createDefaultCandidates(
+			this.connection,
+			{
+				tenant,
+				org: defaultOrganizations[0],
+				users: [...defaultCandidateUsers]
+			}
+		);
+		await createCandidateDocuments(this.connection, defaultCandidates);
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
 			this.connection,
@@ -418,7 +422,7 @@ export class SeedDataService {
 			env.randomSeedConfig.employeesPerOrganization || 1
 		);
 
-		await createRandomCandidates(
+		const tenantCandidatesMap = await createRandomCandidates(
 			this.connection,
 			tenants,
 			tenantOrganizationsMap,
@@ -426,7 +430,11 @@ export class SeedDataService {
 			candidateSources,
 			env.randomSeedConfig.candidatesPerOrganization || 1
 		);
-
+		await createRandomCandidateDocuments(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
 		await createRandomIncomes(this.connection, tenants, tenantEmployeeMap);
 
 		const organizationVendorsMap = await createRandomOrganizationVendors(

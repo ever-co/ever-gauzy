@@ -239,15 +239,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 					type: 'email',
 					class: 'email-column'
 				},
-				//  WIP - need to fix, makes mistake when initialize
-
-				// source: {
-				// 	title: this.getTranslation('SM_TABLE.SOURCE'),
-				// 	type: 'custom',
-				// 	class: 'text-center',
-				// 	width: '200px',
-				// 	filter: false
-				// },
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',

@@ -1,4 +1,10 @@
-import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
+import {
+	User,
+	Tag,
+	OrganizationDepartment,
+	OrganizationPositions,
+	ICandidateDocument
+} from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
@@ -6,9 +12,9 @@ import { UserFindInput } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
 import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
-import { IEducation } from './candidate-education.model';
 import { IExperience } from './candidate-experience.model';
 import { ISkill } from './candidate-skill.model';
+import { IEducation } from './candidate-education.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
 	user: User;
@@ -32,8 +38,10 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	billRateValue?: number;
 	billRateCurrency?: string;
 	reWeeklyLimit?: number;
+	documents: ICandidateDocument[];
 	educations?: IEducation[];
 	source?: string;
+	cvUrl?: string;
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';
@@ -55,7 +63,7 @@ export interface CandidateUpdateInput {
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
-	skiills?: string[];
+	cvUrl?: string;
 }
 
 export interface CandidateCreateInput {
@@ -68,6 +76,7 @@ export interface CandidateCreateInput {
 	cvUrl?: string;
 	members?: Candidate[];
 	tags?: Tag[];
+	documents: ICandidateDocument[];
 }
 export interface CandidateLevel {
 	id: string;

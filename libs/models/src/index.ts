@@ -1,5 +1,6 @@
 export * from './lib/user.model';
 export * from './lib/employee.model';
+export * from './lib/candidate-document.model';
 export * from './lib/candidate.model';
 export * from './lib/candidate-experience.model';
 export * from './lib/candidate-education.model';
