@@ -1,10 +1,5 @@
-import {
-	User,
-	Tag,
-	OrganizationDepartment,
-	OrganizationPositions,
-	ICandidateDocument
-} from '..';
+import { ICandidateSource } from './candidate-source.model';
+import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
@@ -15,6 +10,7 @@ import { OrganizationEmploymentType } from './organization-employment-type.model
 import { IExperience } from './candidate-experience.model';
 import { ISkill } from './candidate-skill.model';
 import { IEducation } from './candidate-education.model';
+import { ICandidateDocument } from './candidate-document.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
 	user: User;
@@ -40,7 +36,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	reWeeklyLimit?: number;
 	documents: ICandidateDocument[];
 	educations?: IEducation[];
-	source?: string;
+	source?: ICandidateSource;
 	cvUrl?: string;
 }
 

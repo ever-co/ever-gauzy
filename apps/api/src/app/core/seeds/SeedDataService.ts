@@ -99,8 +99,7 @@ import {
 	createDefaultCandidates,
 	createRandomCandidates
 } from '../../candidate/candidate.seed';
-import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
-import { CandidateSource } from '../../candidate_source/candidate_source.entity';
+import { CandidateSource } from '../../candidate-source/candidate-source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Skill } from './../../skills/skill.entity';
 import { Tenant } from './../../tenant/tenant.entity';
@@ -115,6 +114,10 @@ import { ProductVariantSettings } from '../../product-settings/product-settings.
 import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
 import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
 import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
+import {
+	createCandidateSources,
+	createRandomCandidateSources
+} from '../../candidate-source/candidate-source.seed';
 import {
 	createCandidateDocuments,
 	createRandomCandidateDocuments
@@ -235,10 +238,6 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-			const candidateSources = await createCandidateSources(
-				this.connection
-			);
-
 			const categories = await createExpenseCategories(this.connection);
 
 			await createCountries(this.connection);
@@ -247,7 +246,7 @@ export class SeedDataService {
 
 			await this.seedDefaultData(categories);
 
-			await this.seedRandomData(categories, candidateSources);
+			await this.seedRandomData(categories);
 
 			this.log(
 				chalk.green(
@@ -324,7 +323,11 @@ export class SeedDataService {
 				users: [...defaultCandidateUsers]
 			}
 		);
+
+		await createCandidateSources(this.connection, defaultCandidates);
+
 		await createCandidateDocuments(this.connection, defaultCandidates);
+
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
 			this.connection,
@@ -359,10 +362,7 @@ export class SeedDataService {
 	/**
 	 * Populate database with random generated data
 	 */
-	async seedRandomData(
-		categories: ExpenseCategory[],
-		candidateSources: CandidateSource[]
-	) {
+	async seedRandomData(categories: ExpenseCategory[]) {
 		if (!env.randomSeedConfig) {
 			this.log(
 				chalk.red(
@@ -429,10 +429,14 @@ export class SeedDataService {
 			tenants,
 			tenantOrganizationsMap,
 			tenantUsersMap,
-			candidateSources,
 			env.randomSeedConfig.candidatesPerOrganization || 1
 		);
 		await createRandomCandidateDocuments(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
+		await createRandomCandidateSources(
 			this.connection,
 			tenants,
 			tenantCandidatesMap
