@@ -782,6 +782,7 @@
 		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
 		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
 		"EDIT_PRODUCT_VARIANT": "Edit product variant",
+		"PRODUCT_VARIANT_SAVED": "Product variant saved",
 		"NAME": "Name",
 		"ENABLED": "Enabled",
 		"PRODUCT_TYPE": "Product type",
