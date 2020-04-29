@@ -1187,7 +1187,10 @@
 		"ADD_TIME_SUCCESS": "Time Successfully added"
 	},
 	"TIMESHEET": {
-		"DAILY": "Daily"
+		"DAILY": "Daily",
+		"WEEKLY": "Weekly",
+		"CALENDAR": "Calendar",
+		"APPROVALS": "Approvals"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

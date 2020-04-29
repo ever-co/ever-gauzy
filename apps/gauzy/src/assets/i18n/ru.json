@@ -1187,7 +1187,10 @@
 		"ADD_TIME_SUCCESS": "Время успешно добавлено"
 	},
 	"TIMESHEET": {
-		"DAILY": "Ежедневно"
+		"DAILY": "Ежедневно",
+		"WEEKLY": "Еженедельно",
+		"CALENDAR": "Календарь",
+		"APPROVALS": "Утверждения"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
