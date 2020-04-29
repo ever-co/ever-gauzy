@@ -102,6 +102,7 @@ import {
 import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
 import { CandidateSource } from '../../candidate_source/candidate_source.entity';
 import { Tag } from './../../tags/tag.entity';
+import { Skill } from './../../skills/skill.entity';
 import { Tenant } from './../../tenant/tenant.entity';
 import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
 import { createCandidateCvs } from '../../candidate-cv/candidate-cv.seed';
@@ -152,6 +153,7 @@ const allEntities = [
 	Email,
 	EmailTemplate,
 	Tag,
+	Skill,
 	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,

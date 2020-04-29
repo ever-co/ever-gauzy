@@ -36,7 +36,8 @@ const defaultRolePermissions = [
 			PermissionsEnum.ORG_INVITE_EDIT,
 			PermissionsEnum.ACCESS_PRIVATE_PROJECTS,
 			PermissionsEnum.TIMESHEET_EDIT_TIME,
-			PermissionsEnum.SUPER_ADMIN_EDIT
+			PermissionsEnum.SUPER_ADMIN_EDIT,
+			PermissionsEnum.PUBLIC_PAGE_EDIT
 		]
 	},
 	{
@@ -67,7 +68,8 @@ const defaultRolePermissions = [
 			PermissionsEnum.ORG_INVITE_VIEW,
 			PermissionsEnum.ORG_INVITE_EDIT,
 			PermissionsEnum.ACCESS_PRIVATE_PROJECTS,
-			PermissionsEnum.TIMESHEET_EDIT_TIME
+			PermissionsEnum.TIMESHEET_EDIT_TIME,
+			PermissionsEnum.PUBLIC_PAGE_EDIT
 		]
 	},
 	{

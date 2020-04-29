@@ -1,0 +1,116 @@
+.org-info {
+	.edit-icon {
+		margin-left: 30px;
+		position: absolute;
+		width: 36px;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		right: 45px;
+		top: 35px;
+
+		svg {
+			position: absolute;
+		}
+
+		nb-icon {
+			position: absolute;
+			cursor: pointer;
+		}
+	}
+	.org-head {
+		.org-head-left-sec {
+			width: 180px;
+			float: left;
+
+			img.org-image {
+				object-fit: cover;
+				object-position: center;
+				width: 180px;
+				height: auto;
+				border-radius: 13px;
+			}
+
+			.organization-photo {
+				width: fit-content;
+				height: fit-content;
+				position: relative;
+
+				div {
+					pointer-events: none;
+					background: black;
+					position: absolute;
+					height: 100%;
+					width: 100%;
+					border-radius: 13px;
+				}
+
+				img {
+					width: 180px;
+					height: auto;
+					border-radius: 13px;
+				}
+
+				input {
+					width: 100%;
+					height: 100%;
+					opacity: 0;
+					position: absolute;
+					z-index: 3;
+					cursor: pointer;
+				}
+
+				svg {
+					z-index: 2;
+					transition: opacity 0.2s ease-in;
+					opacity: 0.3;
+					position: absolute;
+					top: calc(50% - 68px / 2);
+					left: calc(50% - 68px / 2);
+				}
+			}
+			button.save_image {
+				top: 125px;
+				position: absolute;
+				left: 50px;
+				z-index: 9999;
+				padding: 5px 15px;
+				font-size: 12px;
+			}
+		}
+
+		.org-head-right-sec {
+			width: calc(100% - 180px);
+			float: left;
+			padding: 0 20px;
+
+			.org-year-found {
+				font-weight: 600;
+				font-size: 18px;
+				padding: 10px 0;
+			}
+
+			.org-banner {
+				font-size: 18px;
+				line-height: 26px;
+				font-weight: 400;
+			}
+		}
+	}
+	.org-details {
+		width: 100%;
+		display: block;
+		clear: both;
+		padding: 20px 0;
+
+		p.short_description {
+			font-size: 15px;
+		}
+
+		.org-skills {
+			padding: 20px 0;
+			font-size: 18px;
+			font-weight: 500;
+		}
+	}
+}

@@ -27,6 +27,7 @@ import {
 	BonusTypeEnum
 } from '@gauzy/models';
 import { Tag } from '../tags/tag.entity';
+import { Skill } from '../skills/skill.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { TenantLocationBase } from '../core/entities/tenant-location-base';
 
@@ -37,6 +38,12 @@ export class Organization extends TenantLocationBase implements IOrganization {
 		name: 'tag_organizations'
 	})
 	tags: Tag[];
+
+	@ManyToMany((type) => Skill)
+	@JoinTable({
+		name: 'skill_organizations'
+	})
+	skills: Skill[];
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
 	@OneToMany(
@@ -59,6 +66,34 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	profile_link: string;
+
+	@ApiProperty({ type: String, maxLength: 300 })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	banner: string;
+
+	@ApiProperty({ type: String, maxLength: 600 })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	short_description: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	overview: string;
+
+	@ApiProperty({ type: String, maxLength: 4 })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	founded: string;
 
 	@ApiPropertyOptional({ type: String, maxLength: 500 })
 	@IsOptional()
