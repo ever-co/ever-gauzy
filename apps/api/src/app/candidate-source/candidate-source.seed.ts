@@ -20,6 +20,7 @@ const candidateSourceList: ICandidateSource[] = [
 		name: 'Monster'
 	}
 ];
+
 export const createCandidateSources = async (
 	connection: Connection,
 	candidates: Candidate[]
@@ -27,12 +28,12 @@ export const createCandidateSources = async (
 	let defaultCandidateSources = [];
 
 	candidates.forEach((candidate) => {
-		const sources = candidateSourceList.map((source) => ({
-			name: source.name,
+		const rand = Math.floor(Math.random() * candidateSourceList.length);
+		const sources = {
+			name: candidateSourceList[rand].name,
 			candidateId: candidate.id
-		}));
-
-		defaultCandidateSources = [...defaultCandidateSources, ...sources];
+		};
+		defaultCandidateSources = [...defaultCandidateSources, sources];
 	});
 
 	insertCandidateSources(connection, defaultCandidateSources);
@@ -51,14 +52,16 @@ export const createRandomCandidateSources = async (
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);
 
+		const rand = Math.floor(Math.random() * candidateSourceList.length);
+
 		(candidates || []).forEach((candidate) => {
-			const sources = candidateSourceList.map((source) => ({
-				name: source.name,
+			const sources: any = {
+				name: candidateSourceList[rand].name,
 				candidateId: candidate.id
-			}));
+			};
 
 			candidateSourcesMap.set(candidate, sources);
-			candidateSources = [...candidateSources, ...sources];
+			candidateSources = [...candidateSources, sources];
 		});
 	});
 

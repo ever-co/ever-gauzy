@@ -10,6 +10,13 @@ export interface IDefaultUser {
 	startedWorkOn?: string;
 	endWork?: string;
 	employeeLevel?: string;
+}
+export interface IDefaultCandidate {
+	email: string;
+	password: string;
+	imageUrl: string;
+	firstName?: string;
+	lastName?: string;
 	candidateLevel?: string;
 	source?: ICandidateSource;
 }

@@ -1,5 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { PermissionsEnum, InvitationTypeEnum } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	InvitationTypeEnum,
+	ICandidateSource
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
@@ -200,20 +204,21 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 		let candidatesVm = [];
 		const result = [];
+
 		for (const candidate of items) {
-			const randomCandidateSource = await this.candidateSourceService.getAll(
-				{
-					candidateId: candidate.id
-				}
-			);
-			const rand = Math.floor(
-				Math.random() * randomCandidateSource.total
-			);
+			let source = null;
+			const res = await this.candidateSourceService.getAll({
+				candidateId: candidate.id
+			});
+			if (res) {
+				source = res.items[0];
+			}
+
 			result.push({
 				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
 				email: candidate.user.email,
 				id: candidate.id,
-				source: randomCandidateSource.items[rand],
+				source: source,
 				status: candidate.status,
 				imageUrl: candidate.user.imageUrl,
 				tag: candidate.tags
