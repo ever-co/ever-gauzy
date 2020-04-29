@@ -2,11 +2,25 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as moment from 'moment';
-import { IGetTimeLogInput, Organization, PermissionsEnum } from '@gauzy/models';
+import * as _ from 'underscore';
+import {
+	IGetTimeLogInput,
+	Organization,
+	PermissionsEnum,
+	TimeLog,
+	OrganizationProjects
+} from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+import { debounceTime } from 'rxjs/operators';
+import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+
+interface WeeklyDayData {
+	project?: OrganizationProjects;
+	dates: any;
+}
 
 @Component({
 	selector: 'ngx-weekly',
@@ -23,6 +37,9 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
 	canChangeSelectedEmployee: boolean;
+
+	weekData: WeeklyDayData[] = [];
+	weekDayList: string[] = [];
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
@@ -41,6 +58,18 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.logRequest.endDate = moment(value)
 			.endOf('isoWeek')
 			.toDate();
+
+		const range = {};
+		let i = 0;
+		const start = moment(this.logRequest.startDate);
+		while (start.isSameOrBefore(this.logRequest.endDate) && i < 7) {
+			const date = start.format('YYYY-MM-DD');
+			range[date] = null;
+			start.add(1, 'day');
+			i++;
+		}
+		this.weekDayList = Object.keys(range);
+
 		this.updateLogs$.next();
 	}
 
@@ -55,6 +84,21 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: Organization) => {
 				this.organization = organization;
+			});
+
+		this.store.selectedEmployee$
+			.pipe(untilDestroyed(this))
+			.subscribe((employee: SelectedEmployee) => {
+				if (employee) {
+					this.logRequest.employeeId = employee.id;
+					this.updateLogs$.next();
+				}
+			});
+
+		this.updateLogs$
+			.pipe(untilDestroyed(this), debounceTime(500))
+			.subscribe(() => {
+				this.getLogs();
 			});
 	}
 
@@ -84,8 +128,33 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			organizationId: this.organization ? this.organization.id : null
 		};
 
-		await this.timeTrackerService.getTimeLogs(request).then((logs) => {
-			return logs;
+		this.timeTrackerService.getTimeLogs(request).then((logs: TimeLog[]) => {
+			this.weekData = _.chain(logs)
+				.groupBy('projectId')
+				.map((logs: TimeLog[], _projectId) => {
+					const byDate = _.chain(logs)
+						.groupBy((log) =>
+							moment(log.startedAt).format('YYYY-MM-DD')
+						)
+						.mapObject((logs: TimeLog[], date) => {
+							const sum = logs.reduce(
+								(iteratee: any, log: any) => {
+									return iteratee + log.duration;
+								},
+								0
+							);
+							return sum;
+						})
+						.value();
+
+					const project = logs.length > 0 ? logs[0].project : null;
+					const dates: any = {};
+					this.weekDayList.forEach((date) => {
+						dates[date] = byDate[date] || 0;
+					});
+					return { project, dates };
+				})
+				.value();
 		});
 	}
 

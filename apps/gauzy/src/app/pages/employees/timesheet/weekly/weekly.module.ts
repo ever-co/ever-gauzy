@@ -12,6 +12,7 @@ import {
 } from '@nebular/theme';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { FormsModule } from '@angular/forms';
+import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 
 @NgModule({
 	declarations: [WeeklyComponent],
@@ -24,7 +25,8 @@ import { FormsModule } from '@angular/forms';
 		NbIconModule,
 		EmployeeSelectorsModule,
 		FormsModule,
-		NbButtonModule
+		NbButtonModule,
+		SharedModule
 	]
 })
 export class WeeklyModule {}
