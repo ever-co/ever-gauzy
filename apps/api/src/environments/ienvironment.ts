@@ -3,7 +3,11 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { IDefaultUser, IDefaultOrganization } from '@gauzy/models';
+import {
+	IDefaultUser,
+	IDefaultOrganization,
+	IDefaultCandidate
+} from '@gauzy/models';
 import { IFacebookConfig } from './IFacebookConfig';
 import { IGoogleConfig } from './IGoogleConfig';
 
@@ -41,7 +45,7 @@ export interface IEnvironment {
 	defaultSuperAdmins: IDefaultUser[];
 
 	defaultEmployees?: IDefaultUser[];
-	defaultCandidates?: IDefaultUser[];
+	defaultCandidates?: IDefaultCandidate[];
 
 	defaultOrganizations?: IDefaultOrganization[];
 

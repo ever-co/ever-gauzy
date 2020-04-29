@@ -85,7 +85,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 
-					this.router.navigate(['/pages/proposals']);
+					this.router.navigate(['/pages/sales/proposals']);
 				} else {
 					this.toastrService.primary(
 						this.getTranslation(

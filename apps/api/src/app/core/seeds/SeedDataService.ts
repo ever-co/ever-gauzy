@@ -99,12 +99,10 @@ import {
 	createDefaultCandidates,
 	createRandomCandidates
 } from '../../candidate/candidate.seed';
-import { createCandidateSources } from '../../candidate_source/candidate_source.seed';
-import { CandidateSource } from '../../candidate_source/candidate_source.entity';
+import { CandidateSource } from '../../candidate-source/candidate-source.entity';
 import { Tag } from './../../tags/tag.entity';
+import { Skill } from './../../skills/skill.entity';
 import { Tenant } from './../../tenant/tenant.entity';
-import { CandidateCv } from '../../candidate-cv/candidate-cv.entity';
-import { createCandidateCvs } from '../../candidate-cv/candidate-cv.seed';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { createDefaultProductCategories } from '../../product-category/product-category.seed';
 import { ProductType } from '../../product-type/product-type.entity';
@@ -114,7 +112,17 @@ import { Product } from '../../product/product.entity';
 import { ProductVariant } from '../../product-variant/product-variant.entity';
 import { ProductVariantSettings } from '../../product-settings/product-settings.entity';
 import { ProductVariantPrice } from '../../product-variant-price/product-variant-price.entity';
+import { CandidateDocument } from '../../candidate-documents/candidate-documents.entity';
 import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
+import {
+	createCandidateSources,
+	createRandomCandidateSources
+} from '../../candidate-source/candidate-source.seed';
+import {
+	createCandidateDocuments,
+	createRandomCandidateDocuments
+} from '../../candidate-documents/candidate-documents.seed';
+import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -152,6 +160,7 @@ const allEntities = [
 	Email,
 	EmailTemplate,
 	Tag,
+	Skill,
 	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,
@@ -165,7 +174,8 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
-	CandidateCv
+	CandidateDocument,
+	CandidateFeedback
 ];
 
 @Injectable()
@@ -230,25 +240,15 @@ export class SeedDataService {
 			);
 
 			//Seed data which only needs connection
-			await createCandidateCvs(this.connection);
-
-			const candidateSources = await createCandidateSources(
-				this.connection
-			);
-
-			const roles: Role[] = await createRoles(this.connection);
-
-			await createRolePermissions(this.connection, roles);
-
 			const categories = await createExpenseCategories(this.connection);
 
 			await createCountries(this.connection);
 
 			await createEmailTemplates(this.connection);
 
-			await this.seedDefaultData(roles, categories);
+			await this.seedDefaultData(categories);
 
-			await this.seedRandomData(roles, categories, candidateSources);
+			await this.seedRandomData(categories);
 
 			this.log(
 				chalk.green(
@@ -263,9 +263,13 @@ export class SeedDataService {
 	/**
 	 * Populate default data from env files
 	 */
-	async seedDefaultData(roles: Role[], categories: ExpenseCategory[]) {
+	async seedDefaultData(categories: ExpenseCategory[]) {
 		//Platform level data
 		const tenant = await createDefaultTenants(this.connection);
+
+		const roles: Role[] = await createRoles(this.connection, [tenant]);
+
+		await createRolePermissions(this.connection, roles, [tenant]);
 
 		//Tenant level inserts which only need connection, tenant, roles
 		const defaultOrganizations = await createDefaultOrganizations(
@@ -313,11 +317,18 @@ export class SeedDataService {
 			users: defaultEmployeeUsers
 		});
 
-		await createDefaultCandidates(this.connection, {
-			tenant,
-			org: defaultOrganizations[0],
-			users: [...defaultCandidateUsers]
-		});
+		const defaultCandidates = await createDefaultCandidates(
+			this.connection,
+			{
+				tenant,
+				org: defaultOrganizations[0],
+				users: [...defaultCandidateUsers]
+			}
+		);
+
+		await createCandidateSources(this.connection, defaultCandidates);
+
+		await createCandidateDocuments(this.connection, defaultCandidates);
 
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
@@ -353,11 +364,7 @@ export class SeedDataService {
 	/**
 	 * Populate database with random generated data
 	 */
-	async seedRandomData(
-		roles: Role[],
-		categories: ExpenseCategory[],
-		candidateSources: CandidateSource[]
-	) {
+	async seedRandomData(categories: ExpenseCategory[]) {
 		if (!env.randomSeedConfig) {
 			this.log(
 				chalk.red(
@@ -372,6 +379,11 @@ export class SeedDataService {
 			this.connection,
 			env.randomSeedConfig.tenants || 1
 		);
+
+		// Independent roles and role permissions for each tenant
+		const roles: Role[] = await createRoles(this.connection, tenants);
+
+		await createRolePermissions(this.connection, roles, tenants);
 
 		//Tenant level inserts which only need connection, tenant, role
 		const tenantOrganizationsMap = await createRandomOrganizations(
@@ -414,15 +426,23 @@ export class SeedDataService {
 			env.randomSeedConfig.employeesPerOrganization || 1
 		);
 
-		await createRandomCandidates(
+		const tenantCandidatesMap = await createRandomCandidates(
 			this.connection,
 			tenants,
 			tenantOrganizationsMap,
 			tenantUsersMap,
-			candidateSources,
 			env.randomSeedConfig.candidatesPerOrganization || 1
 		);
-
+		await createRandomCandidateDocuments(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
+		await createRandomCandidateSources(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
 		await createRandomIncomes(this.connection, tenants, tenantEmployeeMap);
 
 		const organizationVendorsMap = await createRandomOrganizationVendors(

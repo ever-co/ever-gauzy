@@ -75,7 +75,8 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		this.user = await this.usersService.getMe([
 			'employee',
 			'role',
-			'role.rolePermissions'
+			'role.rolePermissions',
+			'tenant'
 		]);
 
 		//When a new user registers & logs in for the first time, he/she does not have tenantId.

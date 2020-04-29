@@ -8,7 +8,8 @@ import {
 	NbInputModule,
 	NbCheckboxModule,
 	NbButtonModule,
-	NbSelectModule
+	NbSelectModule,
+	NbToastrModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
@@ -21,6 +22,9 @@ import { ProductService } from '../../@core/services/product.service';
 import { ProductTypeService } from '../../@core/services/product-type.service';
 import { ProductVariantFormComponent } from './product-variant-form/product-variant-form.component';
 import { ProductVariantService } from '../../@core/services/product-variant.service';
+import { ProductVariantSettingsService } from '../../@core/services/product-variant-settings.service';
+import { ProductVariantPriceService } from '../../@core/services/product-variant-price.service';
+import { UserFormsModule } from '../user/forms/user-forms.module';
 
 @NgModule({
 	declarations: [
@@ -40,6 +44,8 @@ import { ProductVariantService } from '../../@core/services/product-variant.serv
 		ReactiveFormsModule,
 		NbSelectModule,
 		NbCheckboxModule,
+		NbToastrModule,
+		UserFormsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -52,7 +58,9 @@ import { ProductVariantService } from '../../@core/services/product-variant.serv
 		ProductTypeService,
 		ProductCategoryService,
 		ProductService,
-		ProductVariantService
+		ProductVariantService,
+		ProductVariantSettingsService,
+		ProductVariantPriceService
 	]
 })
 export class ProductMutationModule {}

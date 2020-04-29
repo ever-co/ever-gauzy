@@ -15,6 +15,7 @@ import { EditCandidateEmploymentComponent } from './edit-candidate/edit-candidat
 import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
 import { EditCandidateExperienceComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience.component';
 import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
+import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/edit-candidate-feedbacks.component';
 
 const routes: Routes = [
 	{
@@ -53,6 +54,10 @@ const routes: Routes = [
 			{
 				path: 'documents',
 				component: EditCandidateDocumentsComponent
+			},
+			{
+				path: 'feedbacks',
+				component: EditCandidateFeedbacksComponent
 			},
 			{
 				path: 'history',

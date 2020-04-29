@@ -13,5 +13,20 @@ export class ImportAllService implements OnDestroy {
 			resolve();
 		});
 	}
+
+	async createFolder(): Promise<any> {
+		return new Promise((resolve, reject) => {
+			fs.access(`./import`, (error) => {
+				if (!error) {
+					return null;
+				} else {
+					fs.mkdir(`./import`, { recursive: true }, (err) => {
+						if (err) reject(err);
+						resolve();
+					});
+				}
+			});
+		});
+	}
 	ngOnDestroy() {}
 }

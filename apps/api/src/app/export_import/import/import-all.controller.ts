@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OnDestroy } from '@angular/core';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ImportAllService } from '.';
 
@@ -30,13 +30,10 @@ export class ImportAllController implements OnDestroy {
 		description: 'Record not found'
 	})
 	@Get()
-	async importAll() {
-		await this.importAllService.unzip();
-		return 'Test: Ok';
-	}
+	async importAll() {}
 	@Post()
 	@UseInterceptors(
-		FileInterceptor('zip', {
+		FilesInterceptor('file', 1, {
 			storage: diskStorage({
 				destination: './import',
 				filename: (rq, file, cb) => {
@@ -45,7 +42,9 @@ export class ImportAllController implements OnDestroy {
 			})
 		})
 	)
-	async uploadFile(@UploadedFiles() file) {}
+	async uploadFile(@UploadedFiles() file) {
+		await this.importAllService.unzip();
+	}
 
 	ngOnDestroy() {}
 }

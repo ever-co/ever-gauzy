@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { IntegrationsListComponent } from './components/integrations-list/integrations-list.component';
-import { WorkspaceComponent } from '../../@shared/workspace/workspace.component';
+import { WorkspaceComponent } from '../../@shared/components/workspace/workspace.component';
 
 const routes: Routes = [
 	{

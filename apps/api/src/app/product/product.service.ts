@@ -21,4 +21,8 @@ export class ProductService extends CrudService<Product> {
 
 		return { items, total };
 	}
+
+	async saveProduct(productRequest: Product): Promise<Product> {
+		return await this.productRepository.save(productRequest);
+	}
 }

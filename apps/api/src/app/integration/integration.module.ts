@@ -9,6 +9,9 @@ import { IntegrationSettingService } from '../integration-setting/integration-se
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 import { IntegrationEntitySettingService } from '../integration-entity-setting/integration-entity-setting.service';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
+import { RoleModule } from '../role/role.module';
+import { UserModule } from '../user/user.module';
+import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
 
 @Module({
 	imports: [
@@ -17,7 +20,10 @@ import { IntegrationEntitySetting } from '../integration-entity-setting/integrat
 			IntegrationSetting,
 			Tenant,
 			IntegrationEntitySetting
-		])
+		]),
+		RoleModule,
+		UserModule,
+		RolePermissionsModule
 	],
 	controllers: [IntegrationController],
 	providers: [

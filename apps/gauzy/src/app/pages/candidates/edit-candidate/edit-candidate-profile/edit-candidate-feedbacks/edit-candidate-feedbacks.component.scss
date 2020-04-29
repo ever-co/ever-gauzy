@@ -1,0 +1,43 @@
+.form {
+	padding: 0;
+}
+.form-btn {
+	margin: 0.5rem 0;
+}
+.feedbacks-line {
+	margin: 0.2rem 0;
+}
+
+.feedbacks-add-card {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+}
+.add-card-wrap {
+	padding: 0;
+	margin: 1rem 0 0 0;
+}
+.buttons {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+.description {
+	max-width: 70rem !important;
+	height: 6rem;
+}
+.label-wrap {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.2rem;
+}
+.feedbacks-card {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}

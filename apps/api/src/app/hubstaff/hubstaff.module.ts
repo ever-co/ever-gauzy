@@ -23,6 +23,9 @@ import { OrganizationService } from '../organization/organization.service';
 import { Role } from '../role/role.entity';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
+import { UserModule } from '../user/user.module';
+import { RoleModule } from '../role/role.module';
+import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
 
 @Module({
 	imports: [
@@ -39,7 +42,10 @@ import { UserService } from '../user/user.service';
 			Organization,
 			User
 		]),
-		CqrsModule
+		CqrsModule,
+		RoleModule,
+		UserModule,
+		RolePermissionsModule
 	],
 	controllers: [HubstaffController],
 	providers: [

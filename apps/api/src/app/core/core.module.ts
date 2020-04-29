@@ -1,4 +1,3 @@
-import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 // Copyright (c) 2019-2020 Ever Co. LTD
 
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
@@ -9,6 +8,7 @@ import { CandidateExperience } from './../candidate-experience/candidate-experie
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
+import { Skill } from '../skills/skill.entity';
 import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
@@ -56,16 +56,18 @@ import { ProductType } from '../product-type/product-type.entity';
 import { ProductVariant } from '../product-variant/product-variant.entity';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
 import { ProductCategory } from '../product-category/product-category.entity';
-import { CandidateSource } from '../candidate_source/candidate_source.entity';
+import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 import { Integration } from '../integration/integration.entity';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
-import { CandidateCv } from '../candidate-cv/candidate-cv.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
+import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
+import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
+import { CandidateFeedback } from './../candidate-feedbacks/candidate-feedbacks.entity';
 
 const entities = [
 	Invite,
@@ -94,6 +96,7 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
+	Skill,
 	Invoice,
 	InvoiceItem,
 	OrganizationEmploymentType,
@@ -115,7 +118,8 @@ const entities = [
 	ProductVariant,
 	Product,
 	CandidateSource,
-	CandidateCv,
+	CandidateDocument,
+	CandidateFeedback,
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
