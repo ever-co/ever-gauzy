@@ -1,11 +1,16 @@
+import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
-import { User, Tag, OrganizationDepartment, OrganizationPositions } from '..';
 import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
-import { UserFindInput } from './user.model';
+import { UserFindInput, User } from './user.model';
 import { OrganizationTeams } from './organization-teams-model';
-import { ITenant } from '@gauzy/models';
+import {
+	ITenant,
+	OrganizationDepartment,
+	OrganizationPositions,
+	Tag
+} from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { IExperience } from './candidate-experience.model';
 import { ISkill } from './candidate-skill.model';
@@ -38,6 +43,8 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	educations?: IEducation[];
 	source?: ICandidateSource;
 	cvUrl?: string;
+	feedbacks?: ICandidateFeedback[];
+	rating?: number;
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';
