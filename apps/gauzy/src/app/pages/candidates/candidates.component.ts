@@ -1,9 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import {
-	PermissionsEnum,
-	InvitationTypeEnum,
-	ICandidateSource
-} from '@gauzy/models';
+import { PermissionsEnum, InvitationTypeEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
