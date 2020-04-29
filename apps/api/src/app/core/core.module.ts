@@ -8,6 +8,7 @@
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
+import { Skill } from '../skills/skill.entity';
 import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
@@ -55,7 +56,7 @@ import { ProductType } from '../product-type/product-type.entity';
 import { ProductVariant } from '../product-variant/product-variant.entity';
 import { ProductVariantPrice } from '../product-variant-price/product-variant-price.entity';
 import { ProductCategory } from '../product-category/product-category.entity';
-import { CandidateSource } from '../candidate_source/candidate_source.entity';
+import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
 import { Integration } from '../integration/integration.entity';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
@@ -95,6 +96,7 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
+	Skill,
 	Invoice,
 	InvoiceItem,
 	OrganizationEmploymentType,

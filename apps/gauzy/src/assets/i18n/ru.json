@@ -281,6 +281,12 @@
 		"ADD_EXPENSE": "Добавить расходы",
 		"EDIT_INCOME": "Изменить доход",
 		"EDIT_EXPENSE": "Изменить Расход",
+		"EDIT_PAGE": "Изменить страницу",
+		"SHORT_DESCRIPTION": "Краткое описание",
+		"OVERVIEW": "Общий обзор",
+		"COMPANY_NAME": "Название компании",
+		"BANNER": "Баннер",
+		"YEAR_FOUNDED": "Дата создания",
 		"DUPLICATE": "Duplicate",
 		"DATE": "Дата",
 		"PICK_DATE": "Выбрать дату",
@@ -803,6 +809,7 @@
 		"INVENTORY_ITEM_DELETED": "Элемент инвентаря удален!",
 		"INVENTORY_ITEM_SAVED": "Элемент инвентаря сохранен!",
 		"EDIT_PRODUCT_VARIANT": "Изменить вариант товара",
+		"PRODUCT_VARIANT_SAVED": "Вариант товара сохранен",
 		"NAME": "Имя",
 		"ENABLED": "Включено",
 		"PRODUCT_TYPE": "Тип товара",
@@ -1181,7 +1188,10 @@
 		"ADD_TIME_SUCCESS": "Время успешно добавлено"
 	},
 	"TIMESHEET": {
-		"DAILY": "Ежедневно"
+		"DAILY": "Ежедневно",
+		"WEEKLY": "Еженедельно",
+		"CALENDAR": "Календарь",
+		"APPROVALS": "Утверждения"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",

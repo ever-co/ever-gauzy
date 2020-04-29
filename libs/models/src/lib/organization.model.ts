@@ -1,8 +1,15 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 import { Tag } from './tag-entity.model';
+import { Skill } from './skill-entity.model';
 import { Location as ILocation } from './location.model';
 import { ITenant } from '@gauzy/models';
+
+export enum OrganizationPermissionsEnum {
+	ALLOW_MANUAL_TIME = 'allowManualTime',
+	ALLOW_MODIFY_TIME = 'allowModifyTime',
+	ALLOW_DELETE_TIME = 'allowDeleteTime'
+}
 
 export interface Organization extends IBaseEntityModel, ILocation {
 	name: string;
@@ -11,6 +18,11 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	totalEmployees?: number;
 	status?: string;
 	imageUrl?: string;
+	banner: string;
+	short_description: string;
+	overview: string;
+	founded: string;
+	skills: Skill[];
 	currency: string;
 	isActive: boolean;
 	defaultValueDateType: string;

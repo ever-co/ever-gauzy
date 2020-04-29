@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { CrudService } from '../core';
+import { CrudService, IPagination } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductVariant } from './product-variant.entity';
@@ -13,6 +13,15 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 		super(productVariantRepository);
 	}
 
+	async findAllProductVariants(): Promise<IPagination<ProductVariant>> {
+		const total = await this.productVariantRepository.count();
+		const items = await this.productVariantRepository.find({
+			relations: ['settings', 'price']
+		});
+
+		return { items, total };
+	}
+
 	async createBulk(
 		productVariants: ProductVariant[]
 	): Promise<ProductVariant[]> {
@@ -20,6 +29,12 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 	}
 
 	async createVariant(
+		productVariant: ProductVariant
+	): Promise<ProductVariant> {
+		return this.productVariantRepository.save(productVariant);
+	}
+
+	async updateVariant(
 		productVariant: ProductVariant
 	): Promise<ProductVariant> {
 		return this.productVariantRepository.save(productVariant);

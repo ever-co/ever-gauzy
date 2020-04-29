@@ -38,6 +38,7 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ACCESS_PRIVATE_PROJECTS,
 			PermissionsEnum.TIMESHEET_EDIT_TIME,
 			PermissionsEnum.SUPER_ADMIN_EDIT,
+			PermissionsEnum.PUBLIC_PAGE_EDIT,
 			PermissionsEnum.INVOICES_VIEW,
 			PermissionsEnum.INVOICES_EDIT
 		]
@@ -71,6 +72,7 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_INVITE_EDIT,
 			PermissionsEnum.ACCESS_PRIVATE_PROJECTS,
 			PermissionsEnum.TIMESHEET_EDIT_TIME,
+			PermissionsEnum.PUBLIC_PAGE_EDIT,
 			PermissionsEnum.INVOICES_VIEW,
 			PermissionsEnum.INVOICES_EDIT
 		]

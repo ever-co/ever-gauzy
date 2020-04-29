@@ -33,7 +33,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 		this.proposal = this.store.selectedProposal;
 
 		if (!this.proposal) {
-			this.router.navigate([`/pages/proposals`]);
+			this.router.navigate([`/pages/sales/proposals`]);
 		}
 
 		this._initializeForm();
@@ -65,7 +65,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
 
-				this.router.navigate([`/pages/proposals`]);
+				this.router.navigate([`/pages/sales/proposals`]);
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation(

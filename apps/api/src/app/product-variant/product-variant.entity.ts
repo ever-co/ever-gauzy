@@ -61,21 +61,30 @@ export class ProductVariant extends Base implements IProductVariant {
 
 	@OneToOne(
 		() => ProductVariantSettings,
-		(settings) => settings.productVariant
+		(settings) => settings.productVariant,
+		{
+			eager: true,
+			onDelete: 'CASCADE'
+		}
 	)
 	@JoinColumn()
 	settings: ProductVariantSettings;
 
 	@OneToOne(
 		() => ProductVariantPrice,
-		(variantPrice) => variantPrice.productVariant
+		(variantPrice) => variantPrice.productVariant,
+		{
+			eager: true,
+			onDelete: 'CASCADE'
+		}
 	)
 	@JoinColumn()
 	price: ProductVariantPrice;
 
 	@ManyToOne(
 		() => Product,
-		(product) => product.variants
+		(product) => product.variants,
+		{ onDelete: 'CASCADE' }
 	)
 	@JoinColumn()
 	product: Product;

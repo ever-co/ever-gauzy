@@ -1,6 +1,15 @@
-import { Controller, HttpStatus, Post, Body } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Post,
+	Body,
+	Get,
+	HttpCode,
+	Put,
+	Param
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from '../core';
+import { CrudController, IPagination } from '../core';
 import { ProductVariant } from './product-variant.entity';
 import { ProductVariantService } from './product-variant.service';
 import { ProductVariantCreateCommand } from './commands';
@@ -35,5 +44,45 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		...options: any[]
 	): Promise<ProductVariant[]> {
 		return this.commandBus.execute(new ProductVariantCreateCommand(entity));
+	}
+
+	@ApiOperation({
+		summary: 'Find all product variants'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found product variants',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('all')
+	async findAllProductVariants(): Promise<IPagination<ProductVariant>> {
+		return this.productVariantService.findAllProductVariants();
+	}
+
+	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully edited.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	async update(
+		@Param('id') id: string,
+		@Body() productVariant: ProductVariant
+	): Promise<ProductVariant> {
+		return this.productVariantService.updateVariant(productVariant);
 	}
 }

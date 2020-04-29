@@ -1,6 +1,132 @@
 <nb-card>
-	<nb-card-header *ngIf="organization">
-		<h4 [textContent]="organization.name"></h4>
-	</nb-card-header>
-	<nb-card-body> </nb-card-body>
+	<nb-card-body *ngIf="organization">
+		<div class="org-info">
+			<div *ngIf="hasEditPermission">
+				<div class="edit-icon">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="36"
+						height="36"
+						viewBox="0 0 36 36"
+					>
+						<circle
+							cx="18"
+							cy="18"
+							r="18"
+							fill="#0091FF"
+							fill-rule="evenodd"
+						/>
+					</svg>
+					<nb-icon
+						class="ml-2 open"
+						icon="edit-outline"
+						(click)="editPage()"
+						[options]="{ color: 'white' }"
+					>
+					</nb-icon>
+				</div>
+			</div>
+			<div class="org-head">
+				<div class="org-head-left-sec">
+					<img
+						*ngIf="!hasEditPermission"
+						class="org-image"
+						[src]="organization.imageUrl"
+						alt="Organization Avatar"
+					/>
+					<div class="organization-photo" *ngIf="hasEditPermission">
+						<ngx-image-uploader
+							(changeHoverState)="hoverState = $event"
+							(uploadedImageUrl)="updateImageUrl($event)"
+							(uploadImageError)="handleImageUploadError($event)"
+						></ngx-image-uploader>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							xmlns:xlink="http://www.w3.org/1999/xlink"
+							width="68"
+							height="68"
+							viewBox="0 0 68 68"
+							[ngStyle]="{ opacity: hoverState ? '1' : '0.3' }"
+						>
+							<defs>
+								<path
+									id="a"
+									d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+								/>
+							</defs>
+							<g fill="none" fill-rule="evenodd">
+								<circle
+									cx="34"
+									cy="34"
+									r="34"
+									fill="#0091FF"
+									opacity=".3"
+								/>
+								<circle
+									cx="34"
+									cy="34"
+									r="26"
+									fill="#0091FF"
+									opacity=".9"
+								/>
+								<use
+									fill="#FFF"
+									fill-rule="nonzero"
+									xlink:href="#a"
+								/>
+							</g>
+						</svg>
+						<div
+							class="image-overlay"
+							[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
+						></div>
+
+						<img
+							*ngIf="imageUrl"
+							[src]="imageUrl"
+							alt="Organization Photo"
+							(mouseenter)="hoverState = true"
+							(mouseleave)="hoverState = false"
+						/>
+						<button
+							*ngIf="imageUpdateButton"
+							class="save_image"
+							(click)="saveImage({ imageUrl: imageUrl })"
+							status="success"
+							nbButton
+						>
+							{{ 'BUTTONS.UPDATE' | translate }}
+						</button>
+					</div>
+				</div>
+				<div class="org-head-right-sec">
+					<h4 class="org-name" [textContent]="organization.name"></h4>
+					<div class="org-year-found">
+						Year Founded:
+						<span
+							class="year-found"
+							[textContent]="organization.founded"
+						></span>
+					</div>
+					<div
+						class="org-banner"
+						[textContent]="organization.banner"
+					></div>
+				</div>
+			</div>
+			<div class="org-details">
+				<p
+					class="short_description"
+					[textContent]="organization.short_description"
+				></p>
+				<div class="org-skills">
+					Company Skills: <span class="skills"></span>
+				</div>
+				<div
+					class="org-overview"
+					[textContent]="organization.overview"
+				></div>
+			</div>
+		</div>
+	</nb-card-body>
 </nb-card>

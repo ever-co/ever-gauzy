@@ -281,6 +281,12 @@
 		"ADD_EXPENSE": "הוסף הוצאה",
 		"EDIT_INCOME": "ערוך הכנסה",
 		"EDIT_EXPENSE": "ערוך הוצאות",
+		"EDIT_PAGE": "Edit Page",
+		"SHORT_DESCRIPTION": "Short Description",
+		"OVERVIEW": "Overview",
+		"COMPANY_NAME": "Company Name",
+		"BANNER": "Banner",
+		"YEAR_FOUNDED": "Year Founded",
 		"DUPLICATE": "Duplicate",
 		"DATE": "תאריך",
 		"PICK_DATE": "תבחר תאריך",
@@ -803,6 +809,7 @@
 		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
 		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
 		"EDIT_PRODUCT_VARIANT": "Edit product variant",
+		"PRODUCT_VARIANT_SAVED": "Product variant saved",
 		"NAME": "שם",
 		"ENABLED": "Enabled",
 		"PRODUCT_TYPE": "Product type",
@@ -1181,7 +1188,10 @@
 		"ADD_TIME_SUCCESS": "Time Successfully added"
 	},
 	"TIMESHEET": {
-		"DAILY": "Daily"
+		"DAILY": "Daily",
+		"WEEKLY": "Weekly",
+		"CALENDAR": "Calendar",
+		"APPROVALS": "Approvals"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

@@ -3,8 +3,7 @@ import { Candidate } from './candidate.entity';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { User, ISeedUsers } from '@gauzy/models';
-import { CandidateSource } from '../candidate_source/candidate_source.entity';
-
+import { environment as env } from '@env-api/environment';
 export const createDefaultCandidates = async (
 	connection: Connection,
 	defaultData: {
@@ -13,6 +12,7 @@ export const createDefaultCandidates = async (
 		users: User[];
 	}
 ): Promise<Candidate[]> => {
+	const defaultCandidates = env.defaultCandidates || [];
 	let candidate: Candidate;
 	const candidates: Candidate[] = [];
 	const defaultUsers = defaultData.users;
@@ -25,6 +25,9 @@ export const createDefaultCandidates = async (
 		candidate.organization = defaultOrg;
 		candidate.user = user;
 		candidate.tenant = defaultTenant;
+		candidate.source = defaultCandidates.filter(
+			(e) => e.email === candidate.user.email
+		)[0].source;
 
 		await insertCandidate(connection, candidate);
 		candidates.push(candidate);
@@ -38,7 +41,6 @@ export const createRandomCandidates = async (
 	tenants: Tenant[],
 	tenantOrganizationsMap: Map<Tenant, Organization[]>,
 	tenantUsersMap: Map<Tenant, ISeedUsers>,
-	source: CandidateSource[],
 	candidatesPerOrganization: number
 ): Promise<Map<Tenant, Candidate[]>> => {
 	const candidateMap: Map<Tenant, Candidate[]> = new Map();
@@ -47,8 +49,6 @@ export const createRandomCandidates = async (
 		const candidates: Candidate[] = [];
 		const randomUsers = tenantUsersMap.get(tenant).candidateUsers;
 		const randomOrgs = tenantOrganizationsMap.get(tenant);
-		// const averageUsersCount = Math.ceil(randomUsers.length / randomOrgs.length);
-
 		const insertCandidatesInToOrganization = async (
 			quantity: number,
 			organization: Organization
@@ -56,7 +56,6 @@ export const createRandomCandidates = async (
 			for (let index = 0; index < quantity; index++) {
 				candidate = new Candidate();
 				candidate.organization = organization;
-				candidate.source = source[0].id;
 				candidate.user = randomUsers.pop();
 				if (candidate.user) {
 					await insertCandidate(connection, candidate);

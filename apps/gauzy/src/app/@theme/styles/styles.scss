@@ -17,6 +17,7 @@
 
 // install ng-select default theme
 @import '~@ng-select/ng-select/themes/default.theme.css';
+@import './includes/fullcalendar';
 
 // install the framework and custom global styles
 @include nb-install() {
@@ -32,56 +33,4 @@
 
 	@import './includes/tabset';
 	@import './includes/ng-select';
-
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-		background: nb-theme(background-basic-color-1);
-		color: nb-theme(text-basic-color);
-		padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
-		transition-duration: 0.15s;
-		transition-property: border, background-color, color, box-shadow;
-		transition-timing-function: ease-in;
-		font-family: Open Sans, sans-serif;
-		font-weight: 600;
-		font-size: 0.8125rem;
-		line-height: 1.5rem;
-	}
-
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
-		color: nb-theme(text-primary-hover-color);
-	}
-
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-		color: nb-theme(text-primary-active-color);
-		background: nb-theme(background-basic-color-1);
-	}
-
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
-		color: nb-theme(text-primary-active-color);
-		background: nb-theme(background-basic-color-1);
-	}
-	.ng-value-container .ng-input input {
-		background-color: nb-theme(background-basic-color-1);
-		color: nb-theme(text-basic-color);
-	}
-	.ng-dropdown-panel {
-		box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
-		border-bottom-left-radius: nb-theme(border-radius);
-		border-bottom-right-radius: nb-theme(border-radius);
-		box-shadow: nb-theme(shadow);
-		transform: translateY(1px);
-		border-color: nb-theme(color-primary-transparent-active-border);
-		border-width: 1px;
-		border-style: solid;
-	}
-
-	tr {
-		background-color: nb-theme(background-basic-color-1) !important;
-	}
-
-	ng2-smart-table tbody tr {
-		&:hover,
-		&.selected {
-			background-color: nb-theme(background-basic-color-3) !important;
-		}
-	}
 }
