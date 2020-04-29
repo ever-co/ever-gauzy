@@ -14,7 +14,6 @@ import { ScreenShotService } from './screenshot.service';
 import { TimeSlotService } from './time-slot.service';
 import { TimeLogController } from './time-log/time-log.controller';
 import { TimeLogService } from './time-log/time-log.service';
-import { EmployeeService } from '../employee/employee.service';
 
 @Module({
 	controllers: [TimerController, TimeLogController],
