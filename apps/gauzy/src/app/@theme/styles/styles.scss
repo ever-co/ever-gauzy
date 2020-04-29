@@ -85,3 +85,93 @@
 		}
 	}
 }
+/* Dark Theme css */
+.nb-theme-dark ng2-smart-table table tr,
+.nb-theme-dark ng2-smart-table table tr td {
+	background-color: #222b45 !important;
+}
+.nb-theme-dark .ng-select .ng-select-container {
+	background-color: #222b45 !important;
+	color: #ffff !important;
+}
+.nb-theme-dark .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+	background-color: #222b45 !important;
+	color: #ffff !important;
+}
+.nb-theme-dark .setting-block {
+	background-color: #192038 !important;
+	color: #ffff !important;
+}
+.nb-theme-dark .info-block-wrapper {
+	background-color: #192038 !important;
+	color: #ffff !important;
+}
+.nb-theme-dark .info-block-wrapper .info-block--highlight {
+	background: #141427 !important;
+}
+.nb-theme-dark .info-text {
+	color: #ffff !important;
+}
+.nb-theme-dark nb-icon {
+	color: #ffff !important;
+}
+.nb-theme-dark .records {
+	box-shadow: 0px 0px 16px 9px #333352 !important;
+	background: #141427 !important;
+}
+.nb-theme-dark .profit-history {
+	box-shadow: 0px 0px 16px 9px #333352 !important;
+	background: #141427 !important;
+}
+.nb-theme-dark tr {
+	background-color: #192038 !important;
+}
+.nb-theme-dark .table {
+	color: #ffff !important;
+}
+
+/* Cosmic Theme css */
+.nb-theme-cosmic ng2-smart-table table tr,
+.nb-theme-cosmic ng2-smart-table table tr td {
+	background-color: #323259 !important;
+}
+.nb-theme-cosmic .ng-select .ng-select-container {
+	background-color: #323259 !important;
+	color: #ffff !important;
+}
+.nb-theme-cosmic .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+	background-color: #323259 !important;
+	color: #ffff !important;
+}
+.nb-theme-cosmic .setting-block {
+	background-color: #1b1c37 !important;
+	color: #ffff !important;
+}
+.nb-theme-cosmic .info-block-wrapper {
+	background-color: #1b1c37 !important;
+	color: #ffff !important;
+}
+.nb-theme-cosmic .info-block-wrapper .info-block--highlight {
+	background: #060710 !important;
+}
+.nb-theme-cosmic .info-text {
+	color: #ffff !important;
+}
+.nb-theme-cosmic nb-icon {
+	color: #ffff !important;
+}
+.nb-theme-cosmic .records {
+	box-shadow: 0px 0px 16px 9px #333352 !important;
+	background: #1b1c37 !important;
+}
+.nb-theme-cosmic .profit-history {
+	box-shadow: 0px 0px 16px 9px #333352 !important;
+	background: #1b1c37 !important;
+}
+.nb-theme-cosmic tr {
+	background-color: #1b1c37 !important;
+}
+.nb-theme-cosmic .table {
+	color: #ffff !important;
+}
+
