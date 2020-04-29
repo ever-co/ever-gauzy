@@ -29,6 +29,7 @@ import { OrganizationPositions } from '../organization-positions/organization-po
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Proposal } from '../proposal/proposal.entity';
 import { Country } from '../country/country.entity';
 import { Invite } from '../invite/invite.entity';
@@ -84,6 +85,7 @@ const entities = [
 	OrganizationRecurringExpense,
 	EmployeeRecurringExpense,
 	OrganizationTeams,
+	OrganizationTeamEmployee,
 	Proposal,
 	Country,
 	Email,

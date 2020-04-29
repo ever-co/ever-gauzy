@@ -25,6 +25,7 @@ import { OrganizationPositionsModule } from './organization-positions/organizati
 import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
 import { OrganizationTeamsModule } from './organization-teams/organization-teams.module';
+import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { InviteModule } from './invite/invite.module';
@@ -251,6 +252,7 @@ import { CandidateSourceModule } from './candidate_source/candidate_source.modul
 		OrganizationVendorsModule,
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamsModule,
+		OrganizationTeamEmployeeModule,
 		ProposalModule,
 		EmailModule,
 		CountryModule,
