@@ -8,7 +8,8 @@ import {
 	PayPeriodEnum,
 	IEducation,
 	IExperience,
-	ISkill
+	ISkill,
+	ICandidateFeedback
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
@@ -31,6 +32,7 @@ import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
+import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -64,6 +66,12 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	})
 	documents: ICandidateDocument[];
 
+	@ManyToOne((type) => CandidateFeedback)
+	@JoinTable({
+		name: 'candidate_feedbacks'
+	})
+	feedbacks?: ICandidateFeedback[];
+
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
 		nullable: false,
@@ -76,6 +84,11 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.user)
 	readonly userId: string;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsOptional()
+	@Column({ nullable: true })
+	rating?: number;
 
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })

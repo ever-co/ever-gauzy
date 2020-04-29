@@ -63,6 +63,7 @@ import { CandidateEducationModule } from './candidate-education/candidate-educat
 import { CandidateSourceModule } from './candidate_source/candidate_source.module';
 import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
 import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
+import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedbacks.module';
 
 @Module({
 	imports: [
@@ -81,6 +82,10 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 					{
 						path: '/candidate-documents',
 						module: CandidateDocumentsModule
+					},
+					{
+						path: '/candidate-feedbacks',
+						module: CandidateFeedbacksModule
 					},
 					{
 						path: '/candidate-experience',
@@ -256,6 +261,7 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 		CandidateEducationModule,
 		CandidateExperienceModule,
 		CandidateSkillModule,
+		CandidateFeedbacksModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
