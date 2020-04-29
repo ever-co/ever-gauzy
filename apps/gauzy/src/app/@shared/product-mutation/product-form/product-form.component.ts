@@ -5,7 +5,8 @@ import {
 	Product,
 	ProductType,
 	ProductCategory,
-	ProductOption
+	ProductOption,
+	ProductVariant
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -28,6 +29,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	productTypes: ProductType[];
 	productCategories: ProductCategory[];
 	options: Array<ProductOption> = [];
+	variants: Array<ProductVariant> = [];
 
 	@Output() save = new EventEmitter<Product>();
 	@Output() cancel = new EventEmitter<string>();
@@ -47,6 +49,9 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.loadProductTypes();
 		this.loadProductCategories();
 		this._initializeForm();
+
+		this.options = this.product ? this.product.options : [];
+		this.variants = this.product ? this.product.variants : [];
 	}
 
 	private _initializeForm() {
@@ -81,14 +86,14 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	onSaveRequest() {
-		const newProduct = {
+		const productRequest = {
 			name: this.form.get('name').value,
 			code: this.form.get('code').value,
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
 			description: this.form.get('description').value,
-			variants: [],
+			variants: this.variants,
 			options: this.options,
 			category: this.productCategories.find((c) => {
 				return c.id === this.form.get('productCategoryId').value;
@@ -98,7 +103,11 @@ export class ProductFormComponent extends TranslationBaseComponent
 			})
 		};
 
-		this.save.emit(newProduct);
+		if (this.product) {
+			productRequest['id'] = this.product.id;
+		}
+
+		this.save.emit(productRequest);
 	}
 
 	onAddOption() {

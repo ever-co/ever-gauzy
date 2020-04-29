@@ -8,6 +8,7 @@
 	></ngx-product-form>
 	<ngx-product-variant-form
 		*ngIf="edit === 'product-variant' && editProductVariant"
+		(save)="onSaveProductVarinat($event)"
 		(cancel)="closeDialog($event)"
 		[productVariant]="editProductVariant"
 	>

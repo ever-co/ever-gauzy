@@ -64,6 +64,7 @@ import { CandidateEducationModule } from './candidate-education/candidate-educat
 import { CandidateSourceModule } from './candidate_source/candidate_source.module';
 import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
 import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
+import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
 
 @Module({
 	imports: [
@@ -247,6 +248,10 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 					{
 						path: '/product-variants',
 						module: ProductVariantModule
+					},
+					{
+						path: '/product-variant-settings',
+						module: ProductVariantSettingsModule
 					}
 				]
 			}
@@ -320,6 +325,7 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 		IntegrationMapModule,
 		ProductVariantPriceModule,
 		ProductVariantModule,
+		ProductVariantSettingsModule,
 		IntegrationEntitySettingModule,
 		IntegrationEntitySettingTiedEntityModule
 	],
