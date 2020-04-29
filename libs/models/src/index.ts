@@ -28,6 +28,7 @@ export * from './lib/entity-with-members.model';
 export * from './lib/role-permission.model';
 export * from './lib/email-template.model';
 export * from './lib/tag-entity.model';
+export * from './lib/skill-entity.model';
 export * from './lib/recurring-expense.model';
 export * from './lib/organization-employment-type.model';
 export * from './lib/equipment.model';

@@ -8,6 +8,7 @@
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
+import { Skill } from '../skills/skill.entity';
 import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
@@ -94,6 +95,7 @@ const entities = [
 	Tenant,
 	EmailTemplate,
 	Tag,
+	Skill,
 	Invoice,
 	InvoiceItem,
 	OrganizationEmploymentType,

@@ -1,0 +1,156 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{ 'POP_UPS.EDIT_PAGE' | translate }}
+		</h5>
+
+		<nb-icon
+			class="ml-auto mt-1 close"
+			(click)="close()"
+			icon="close-outline"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form" *ngIf="form">
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{
+								'POP_UPS.COMPANY_NAME' | translate
+							}}"
+							formControlName="name"
+							[ngClass]="{
+								'status-danger':
+									name?.invalid &&
+									(name.dirty || name.touched),
+								'status-success':
+									name?.valid && (name.dirty || name.touched)
+							}"
+							autocomplete="off"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{
+								'POP_UPS.YEAR_FOUNDED' | translate
+							}}"
+							formControlName="founded"
+							[ngClass]="{
+								'status-danger':
+									founded?.invalid &&
+									(founded.dirty || founded.touched),
+								'status-success':
+									founded?.valid &&
+									(founded.dirty || founded.touched)
+							}"
+							autocomplete="off"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<input
+							nbInput
+							type="text"
+							fullWidth
+							placeholder="{{ 'POP_UPS.BANNER' | translate }}"
+							formControlName="banner"
+							[ngClass]="{
+								'status-danger':
+									banner?.invalid &&
+									(banner.dirty || banner.touched),
+								'status-success':
+									banner?.valid &&
+									(banner.dirty || banner.touched)
+							}"
+							autocomplete="off"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<ngx-tags-color-input
+							[form]="form"
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsHandler($event)"
+						>
+						</ngx-tags-color-input>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<textarea
+							nbInput
+							fullWidth
+							placeholder="{{
+								'POP_UPS.SHORT_DESCRIPTION' | translate
+							}}"
+							formControlName="short_description"
+							class="short_description"
+							[ngClass]="{
+								'status-danger':
+									short_description?.invalid &&
+									(short_description.dirty ||
+										short_description.touched),
+								'status-success':
+									short_description?.valid &&
+									(short_description.dirty ||
+										short_description.touched)
+							}"
+						>
+						</textarea>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<textarea
+							nbInput
+							fullWidth
+							placeholder="{{ 'POP_UPS.OVERVIEW' | translate }}"
+							formControlName="overview"
+							class="overview"
+							[ngClass]="{
+								'status-danger':
+									overview?.invalid &&
+									(overview.dirty || overview.touched),
+								'status-success':
+									overview?.valid &&
+									(overview.dirty || overview.touched)
+							}"
+						>
+						</textarea>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="editPublicPage()" status="success" nbButton>
+			{{ 'BUTTONS.UPDATE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

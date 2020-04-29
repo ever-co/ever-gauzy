@@ -2,6 +2,7 @@ import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
+import { SkillModule } from './skills/skill.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
@@ -180,6 +181,10 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 						module: TagModule
 					},
 					{
+						path: '/skills',
+						module: SkillModule
+					},
+					{
 						path: '/tasks',
 						module: TaskModule
 					},
@@ -282,6 +287,7 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
+		SkillModule,
 		InvoiceModule,
 		InvoiceItemModule,
 		EmployeeLevelModule,

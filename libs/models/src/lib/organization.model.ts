@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 import { Tag } from './tag-entity.model';
+import { Skill } from './skill-entity.model';
 import { Location as ILocation } from './location.model';
 import { ITenant } from '@gauzy/models';
 
@@ -11,6 +12,11 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	totalEmployees?: number;
 	status?: string;
 	imageUrl?: string;
+	banner: string;
+	short_description: string;
+	overview: string;
+	founded: string;
+	skills: Skill[];
 	currency: string;
 	isActive: boolean;
 	defaultValueDateType: string;

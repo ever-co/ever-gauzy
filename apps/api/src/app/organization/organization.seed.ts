@@ -141,5 +141,5 @@ const randomBonus = () => {
 };
 
 const generateLink = (name) => {
-	return name.replace(/[^A-Z0-9]+/gi, '_').toLowerCase();
+	return name.replace(/[^A-Z0-9]+/gi, '-').toLowerCase();
 };
