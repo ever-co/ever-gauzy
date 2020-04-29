@@ -12,13 +12,20 @@ export class TimeLogCreateHandler
 	public async execute(command: TimeLogCreateCommand): Promise<TimeLog> {
 		try {
 			const { input } = command;
-			const { employeeId, duration, projectId, logType } = input;
+			const {
+				employeeId,
+				duration,
+				projectId,
+				logType,
+				startedAt
+			} = input;
 
 			return await this._timeLogService.create({
 				employeeId,
 				duration,
 				projectId,
-				logType
+				logType,
+				startedAt
 			});
 		} catch (error) {
 			throw new BadRequestException('Cannot create time log');

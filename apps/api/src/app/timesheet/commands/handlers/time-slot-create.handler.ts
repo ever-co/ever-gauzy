@@ -16,21 +16,21 @@ export class TimeSlotCreateHandler
 			const {
 				employeeId,
 				duration,
-				startedAt,
 				keyboard,
 				mouse,
-				overall
+				overall,
+				time_slot
 			} = input;
-			// time_slot
+
 			return await this._timeSlotService.create({
 				employeeId,
 				duration,
 				keyboard,
 				mouse,
 				overall,
-				startedAt,
-				stoppedAt: moment(startedAt)
-					.add(duration, 'seconds')
+				startedAt: time_slot,
+				stoppedAt: moment(time_slot)
+					.add(10, 'minutes')
 					.toDate()
 			});
 		} catch (error) {

@@ -395,7 +395,7 @@ export class HubstaffService {
 		projectId
 	) {
 		return await Promise.all(
-			timeLogs.map(async ({ id, user_id, tracked, manual }) => {
+			timeLogs.map(async ({ id, user_id, tracked, manual, date }) => {
 				const employee = await this._getEmployeeByHubstaffUserId(
 					user_id,
 					token,
@@ -410,7 +410,8 @@ export class HubstaffService {
 						logType: !manual
 							? TimeLogType.TRACKED
 							: TimeLogType.MANUAL,
-						duration: tracked
+						duration: tracked,
+						startedAt: date
 					})
 				);
 				return await this._integrationMapService.create({
