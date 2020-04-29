@@ -108,6 +108,7 @@
 			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Снимка URL (незадължително)",
 			"CV_URL": "CV URL (optional)",
+			"DOCUMENT_URL": "Document URL",
 			"CURRENCY": "Валута",
 			"DATE_TYPE": "Дата по подразбиране",
 			"ADD_TEAM": "Добавяне на нов отбор",
@@ -151,6 +152,7 @@
 			"SKILLS": "Skills (optional)",
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Дата на отказ (опция)",
+			"DOCUMENT_NAME": "Document name",
 			"EMAIL_INVITATION": "Enter email to send invitation",
 			"SELECT_EQUIPMENT": "Select equipment",
 			"SELECT_SHARE_REQUEST_DATE": "Select request date",
@@ -215,7 +217,7 @@
 			"REGIONS": "Избери област",
 			"REMOVE_IMAGE": "Премахни снимка",
 			"UPLOADER_PLACEHOLDER": "Снимка",
-			"UPLOADER_CV_PLACEHOLDER": "CV",
+			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
@@ -233,6 +235,7 @@
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
+			"DOCUMENT_NAME": "Document name",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -564,7 +567,9 @@
 			"DESCRIPTION": "Description",
 			"TASKS": "Tasks",
 			"HISTORY": "History",
-			"DOCUMENTS": "Documents"
+			"DOCUMENTS": "Documents",
+			"DOCUMENT_NAME": "Document name",
+			"DOCUMENT": "Document"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -1034,6 +1039,10 @@
 			"CANDIDATE_EXPERIENCE_DELETED": "Successfully deleted",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
+			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
+			"CANDIDATE_DOCUMENT_CREATED": "Successfully created",
+			"CANDIDATE_DOCUMENT_UPDATED": "Successfully updated",
+			"CANDIDATE_DOCUMENT_DELETED": "Successfully deleted",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
@@ -1085,6 +1094,7 @@
 			"EDIT_PROFILE": "Your profile has been updated successfully."
 		},
 		"CANDIDATE": {
+			"INVALID_FORM": "Please fill the form",
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
 				"INVALID_FORM": "Please fill the form",

@@ -13,6 +13,6 @@ export class CandidateSkill extends Base implements ISkill {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	candidateId?: string;
 }

@@ -10,7 +10,8 @@ import {
 	User,
 	Role,
 	CandidateCreateInput,
-	Candidate
+	Candidate,
+	ICandidateDocument
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -57,7 +58,8 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		this.formCV = this.candidateCv.form;
 		this.role = await this.roleService
 			.getRoleByName({
-				name: RolesEnum.CANDIDATE
+				name: RolesEnum.CANDIDATE,
+				tenant: this.store.user.tenant
 			})
 			.pipe(first())
 			.toPromise();
@@ -82,10 +84,15 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		const rejectDate = this.form.get('rejectDate').value || null;
 		const hiredDate = this.form.get('hiredDate').value || null;
 		const cvUrl = this.formCV.get('cvUrl').value || null;
+		let documents: ICandidateDocument[] = null;
+		if (cvUrl !== null) {
+			documents = [{ name: 'CV', documentUrl: cvUrl }];
+		}
 
 		const newCandidate: CandidateCreateInput = {
 			user,
 			cvUrl,
+			documents,
 			password: this.form.get('password').value,
 			organization: this.store.selectedOrganization,
 			appliedDate,
@@ -93,6 +100,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			rejectDate,
 			tags: this.userBasicInfo.selectedTags
 		};
+
 		this.candidates.push(newCandidate);
 		this.userBasicInfo.loadFormData();
 		this.candidateCv.loadFormData();

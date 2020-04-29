@@ -40,7 +40,8 @@ export const createRandomCandidates = async (
 	tenantUsersMap: Map<Tenant, ISeedUsers>,
 	source: CandidateSource[],
 	candidatesPerOrganization: number
-): Promise<void> => {
+): Promise<Map<Tenant, Candidate[]>> => {
+	const candidateMap: Map<Tenant, Candidate[]> = new Map();
 	for (const tenant of tenants) {
 		let candidate: Candidate;
 		const candidates: Candidate[] = [];
@@ -72,7 +73,9 @@ export const createRandomCandidates = async (
 				);
 			}
 		}
+		candidateMap.set(tenant, candidates);
 	}
+	return candidateMap;
 };
 
 const insertCandidate = async (

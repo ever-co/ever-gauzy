@@ -1,17 +1,20 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Role } from './role.model';
+import { ITenant } from './tenant.model';
 
 export interface RolePermissions extends IBaseEntityModel {
 	roleId: string;
 	permission: string;
 	role: Role;
 	enabled: boolean;
+	tenant: ITenant;
 }
 
 export interface RolePermissionsCreateInput {
 	roleId: string;
 	permission: string;
 	enabled: boolean;
+	tenant: ITenant;
 }
 
 export interface RolePermissionsUpdateInput extends IBaseEntityModel {
