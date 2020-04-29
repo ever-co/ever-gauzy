@@ -1,5 +1,13 @@
 @import './themes';
 
+::-webkit-scrollbar {
+	display: none;
+}
+
+body {
+	-ms-overflow-style: none;
+}
+
 @mixin nb-overrides() {
 	// overrides bootstrap svg style
 	nb-icon svg {
