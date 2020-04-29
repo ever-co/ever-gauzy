@@ -1,17 +1,20 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Role } from './role.model';
+import { ITenant } from './tenant.model';
 
 export interface RolePermissions extends IBaseEntityModel {
 	roleId: string;
 	permission: string;
 	role: Role;
 	enabled: boolean;
+	tenant: ITenant;
 }
 
 export interface RolePermissionsCreateInput {
 	roleId: string;
 	permission: string;
 	enabled: boolean;
+	tenant: ITenant;
 }
 
 export interface RolePermissionsUpdateInput extends IBaseEntityModel {
@@ -46,7 +49,9 @@ export enum PermissionsEnum {
 	ACCESS_PRIVATE_PROJECTS = 'ACCESS_PRIVATE_PROJECTS',
 	TIMESHEET_EDIT_TIME = 'TIMESHEET_EDIT_TIME',
 	SUPER_ADMIN_EDIT = 'SUPER_ADMIN_EDIT',
-	PUBLIC_PAGE_EDIT = 'PUBLIC_PAGE_EDIT'
+	PUBLIC_PAGE_EDIT = 'PUBLIC_PAGE_EDIT',
+	INVOICES_VIEW = 'INVOICES_VIEW',
+	INVOICES_EDIT = 'INVOICES_EDIT'
 }
 
 export const PermissionGroups = {
@@ -65,7 +70,9 @@ export const PermissionGroups = {
 		PermissionsEnum.POLICY_VIEW,
 		PermissionsEnum.POLICY_EDIT,
 		PermissionsEnum.ACCESS_PRIVATE_PROJECTS,
-		PermissionsEnum.TIMESHEET_EDIT_TIME
+		PermissionsEnum.TIMESHEET_EDIT_TIME,
+		PermissionsEnum.INVOICES_VIEW,
+		PermissionsEnum.INVOICES_EDIT
 	],
 
 	//Readonly permissions, are only enabled for admin role

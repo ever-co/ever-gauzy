@@ -32,7 +32,8 @@
 		"HISTORY": "History",
 		"SYNC": "Sync",
 		"UPDATE": "Update",
-		"AUTO_SYNC": "Auto sync"
+		"AUTO_SYNC": "Auto sync",
+		"VIEW": "View"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -107,6 +108,7 @@
 			"APPLIED_DATE_LABEL": "Date when applied",
 			"IMAGE_URL": "Снимка URL (незадължително)",
 			"CV_URL": "CV URL (optional)",
+			"DOCUMENT_URL": "Document URL",
 			"CURRENCY": "Валута",
 			"DATE_TYPE": "Дата по подразбиране",
 			"ADD_TEAM": "Добавяне на нов отбор",
@@ -150,6 +152,7 @@
 			"SKILLS": "Skills (optional)",
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Дата на отказ (опция)",
+			"DOCUMENT_NAME": "Document name",
 			"EMAIL_INVITATION": "Enter email to send invitation",
 			"SELECT_EQUIPMENT": "Select equipment",
 			"SELECT_SHARE_REQUEST_DATE": "Select request date",
@@ -214,7 +217,7 @@
 			"REGIONS": "Избери област",
 			"REMOVE_IMAGE": "Премахни снимка",
 			"UPLOADER_PLACEHOLDER": "Снимка",
-			"UPLOADER_CV_PLACEHOLDER": "CV",
+			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
@@ -232,6 +235,7 @@
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
+			"DOCUMENT_NAME": "Document name",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -260,7 +264,7 @@
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
 			"DELETE_ACCOUNT": "Are you sure you want to delete your account?",
-			"REMOVE_USER": " from you organization",
+			"REMOVE_USER": " from your organization",
 			"SURE": "Потвърждавате ли изтриване на",
 			"RECORD": "запис",
 			"USER_RECORD": "from your organization",
@@ -269,7 +273,7 @@
 			"EXPENSE": "Разходи",
 			"USER": "user",
 			"INVITATION": "покана",
-			"DELETE_USER": " from database as it's data in no longer part of any organization "
+			"DELETE_USER": " from database as it is associated only to current organization"
 		}
 	},
 	"POP_UPS": {
@@ -338,7 +342,22 @@
 			"IMPORT": "Import",
 			"EXPORT": "Export",
 			"MERGE": "merge data",
-			"CLEAN_UP": "clean up before import"
+			"CLEAN_UP": "clean up before import",
+			"EXPORT_MESSAGE": "Click export to download all tables from the database.",
+			"IMPORT_MESSAGE": "Click import to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
+			"SELECT_FILE": "Select File",
+			"DROP_FILE": "Drop the file here",
+			"BROWSE": "BROWSE",
+			"NAME": "Име",
+			"SIZE": "Size",
+			"PROGRESS": "Progress",
+			"STATUS": "Статус",
+			"ACTIONS": "Actions",
+			"QUEUE_PROGRESS": "Queue progress:",
+			"CANCEL": "Отказ",
+			"REMOVE": "Remove",
+			"WRONG_FILE_NAME": "Wrong file name!!!",
+			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\""
 		},
 		"TAGS": "Тагове",
 		"EQUIPMENT": "Equipment",
@@ -548,7 +567,9 @@
 			"DESCRIPTION": "Description",
 			"TASKS": "Tasks",
 			"HISTORY": "History",
-			"DOCUMENTS": "Documents"
+			"DOCUMENTS": "Documents",
+			"DOCUMENT_NAME": "Document name",
+			"DOCUMENT": "Document"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -752,7 +773,8 @@
 		"EQUIPMENT_EDITED": "Equipment edited",
 		"EQUIPMENT_DELETED": "Equipment deleted",
 		"EQUIPMENT_ADDED": "Equipment added",
-		"EQUIPMENT_SAVED": "Equipment saved"
+		"EQUIPMENT_SAVED": "Equipment saved",
+		"CURRENCY": "Валута"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Equipment Sharing",
@@ -842,7 +864,8 @@
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Основни",
 			"USER_ORGANIZATIONS": "Организации"
-		}
+		},
+		"REMOVE_USER": "{{ name }} successfully removed"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Страртирай таймер",
@@ -920,6 +943,12 @@
 		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
 		"TAX_VALUE": "Tax cannot be a negative number",
 		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
+		"DISCOUNT_TYPE": "Discount Type",
+		"TAX_TYPE": "Tax Type",
+		"PERCENT": "Percent",
+		"FLAT": "Flat",
+		"SUBTOTAL": "Subtotal",
+		"TOTAL": "Total",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
@@ -1010,6 +1039,10 @@
 			"CANDIDATE_EXPERIENCE_DELETED": "Successfully deleted",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
+			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
+			"CANDIDATE_DOCUMENT_CREATED": "Successfully created",
+			"CANDIDATE_DOCUMENT_UPDATED": "Successfully updated",
+			"CANDIDATE_DOCUMENT_DELETED": "Successfully deleted",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
@@ -1061,6 +1094,7 @@
 			"EDIT_PROFILE": "Your profile has been updated successfully."
 		},
 		"CANDIDATE": {
+			"INVALID_FORM": "Please fill the form",
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
 				"INVALID_FORM": "Please fill the form",

@@ -25,6 +25,6 @@ export class CandidateExperience extends Base implements IExperience {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@Column({ nullable: true })
 	candidateId?: string;
 }

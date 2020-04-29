@@ -17,6 +17,9 @@ import { IntegrationEntitySetting } from '../integration-entity-setting/integrat
 import { CqrsModule } from '@nestjs/cqrs';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
 import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
+import { UserModule } from '../user/user.module';
+import { RoleModule } from '../role/role.module';
+import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
 
 @Module({
 	imports: [
@@ -30,7 +33,10 @@ import { IntegrationEntitySettingTiedEntityService } from '../integration-entity
 			IntegrationEntitySetting,
 			IntegrationEntitySettingTiedEntity
 		]),
-		CqrsModule
+		CqrsModule,
+		RoleModule,
+		UserModule,
+		RolePermissionsModule
 	],
 	controllers: [HubstaffController],
 	providers: [

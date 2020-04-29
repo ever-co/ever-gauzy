@@ -5,7 +5,7 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="mb-3">
+		<div class="mb-3" *ngIf="hasInvoiceEditPermission">
 			<button nbButton status="success" (click)="add()" class="mr-2">
 				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 				>{{ 'BUTTONS.ADD' | translate }}
@@ -39,6 +39,19 @@
 			>
 				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
 				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+
+		<div class="mb-3" *ngIf="!hasInvoiceEditPermission">
+			<button
+				nbButton
+				status="info"
+				(click)="edit()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
 			</button>
 		</div>
 

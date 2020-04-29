@@ -39,7 +39,6 @@ export class UsersService {
 		findInput?: UserFindInput
 	): Promise<{ items: User[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
-
 		return this.http
 			.get<{ items: User[]; total: number }>(`${this.API_URL}`, {
 				params: { data }

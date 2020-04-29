@@ -30,7 +30,6 @@ export class FileUploaderInputComponent {
 
 	@Output()
 	uploadedImgUrl: EventEmitter<string> = new EventEmitter<string>();
-
 	uploader: FileUploader;
 
 	private oldValue: string;
@@ -42,7 +41,7 @@ export class FileUploaderInputComponent {
 	}
 
 	async imageUrlChanged() {
-		let newValue =
+		const newValue =
 			this.fileUrl &&
 			this.fileUrl.replace(this.oldValue || '', '').trim();
 

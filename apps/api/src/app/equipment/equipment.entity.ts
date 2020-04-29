@@ -1,5 +1,5 @@
 import { Equipment as IEquipment, CurrenciesEnum } from '@gauzy/models';
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -11,9 +11,15 @@ import {
 	IsBoolean
 } from 'class-validator';
 import { EquipmentSharing } from '../equipment-sharing/equipment-sharing.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('equipment')
 export class Equipment extends Base implements IEquipment {
+	@ApiProperty()
+	@ManyToMany((type) => Tag)
+	@JoinTable({ name: 'tag_equipment' })
+	tags: Tag[];
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

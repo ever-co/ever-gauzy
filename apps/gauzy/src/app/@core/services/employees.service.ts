@@ -18,6 +18,7 @@ export class EmployeesService {
 		findInput?: EmployeeFindInput
 	): Observable<{ items: Employee[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
+
 		return this.http.get<{ items: Employee[]; total: number }>(
 			`/api/employee`,
 			{

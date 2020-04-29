@@ -32,7 +32,8 @@
 		"HISTORY": "История",
 		"SYNC": "Синхр.",
 		"UPDATE": "Обновить",
-		"AUTO_SYNC": "Автосинхронизация"
+		"AUTO_SYNC": "Автосинхронизация",
+		"VIEW": "Вид"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -107,6 +108,7 @@
 			"APPLIED_DATE_LABEL": "Дата применения",
 			"IMAGE_URL": "URL изображения (необязательно)",
 			"CV_URL": "URL CV (необязательно)",
+			"DOCUMENT_URL": "URL документа",
 			"CURRENCY": "Валюта",
 			"DATE_TYPE": "Тип даты по умолчанию",
 			"ADD_TEAM": "Добавить новую команду",
@@ -150,6 +152,7 @@
 			"SKILLS": "Навыки (опционально)",
 			"HIRED_DATE": "Дата окончания (опционально)",
 			"REJECT_DATE": "Дата отклонения (опционально)",
+			"DOCUMENT_NAME": "Название документа",
 			"EMAIL_INVITATION": "Введите email для отправки приглашения",
 			"SELECT_EQUIPMENT": "Выберите оборудование",
 			"SELECT_SHARE_REQUEST_DATE": "Выберите дату запроса",
@@ -214,7 +217,7 @@
 			"REGIONS": "Выберите регион",
 			"REMOVE_IMAGE": "Remove image",
 			"UPLOADER_PLACEHOLDER": "Изображение",
-			"UPLOADER_CV_PLACEHOLDER": "CV",
+			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
@@ -232,6 +235,7 @@
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации",
 			"ORGANIZATIONS": "Выберите организации",
+			"DOCUMENT_NAME": "Название документа",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -269,7 +273,7 @@
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
 			"INVITATION": "приглашение",
-			"DELETE_USER": " из базы данных, поскольку ее данные больше не являются частью какой-либо организации "
+			"DELETE_USER": " из базы данных, которая связана только с текущей организацией"
 		}
 	},
 	"POP_UPS": {
@@ -338,7 +342,22 @@
 			"IMPORT": "Импорт",
 			"EXPORT": "Экспорт",
 			"MERGE": "объединение данных",
-			"CLEAN_UP": "очистить перед импортом"
+			"CLEAN_UP": "очистить перед импортом",
+			"EXPORT_MESSAGE": "Нажмите на экспорт, чтобы загрузить все таблицы из базы данных.",
+			"IMPORT_MESSAGE": "Нажмите на импорт, чтобы вставить все таблицы в базу данных. Имя файла для загрузки должно быть: \"экспорт. Также выберите между параметрами \"объединить данные\" и \"очистить перед импортом\".",
+			"SELECT_FILE": "Выбрать файл",
+			"DROP_FILE": "Перетащите файл сюда",
+			"BROWSE": "ДРУЗЬЕ",
+			"NAME": "Имя",
+			"SIZE": "Размер",
+			"PROGRESS": "Прогресс",
+			"STATUS": "Статус",
+			"ACTIONS": "Действия",
+			"QUEUE_PROGRESS": "Прогресс очереди:",
+			"CANCEL": "Отменить",
+			"REMOVE": "Удалить",
+			"WRONG_FILE_NAME": "Неправильное имя файла!!!",
+			"CORRECT_FILE_NAME": "Имя файла должно быть: \"export.zip\""
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
@@ -548,7 +567,9 @@
 			"DESCRIPTION": "Описание",
 			"TASKS": "Задачи",
 			"HISTORY": "История",
-			"DOCUMENTS": "Документы"
+			"DOCUMENTS": "Документы",
+			"DOCUMENT_NAME": "Название документа",
+			"DOCUMENT": "Документ"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Шаг 1",
@@ -752,7 +773,8 @@
 		"EQUIPMENT_EDITED": "Оборудование отредактировано",
 		"EQUIPMENT_DELETED": "Снаряжение удалено",
 		"EQUIPMENT_ADDED": "Снаряжение добавлено",
-		"EQUIPMENT_SAVED": "Оборудование сохранено"
+		"EQUIPMENT_SAVED": "Оборудование сохранено",
+		"CURRENCY": "Валюта"
 	},
 	"EQUIPMENT_SHARING_PAGE": {
 		"HEADER": "Совместное использование снаряжения",
@@ -842,7 +864,8 @@
 			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
 			"MAIN": "Главная",
 			"USER_ORGANIZATIONS": "Организации"
-		}
+		},
+		"REMOVE_USER": "{{ name }} успешно удален"
 	},
 	"CONTEXT_MENU": {
 		"TIMER": "Запустить таймер",
@@ -920,6 +943,12 @@
 		"INVOICE_NUMBER_VALUE": "Номер счета не может быть отрицательным числом или нулевым",
 		"TAX_VALUE": "Налог не может быть отрицательным числом",
 		"DISCOUNT_VALUE": "Значение скидки не может быть отрицательным числом",
+		"DISCOUNT_TYPE": "Тип скидки",
+		"TAX_TYPE": "Тип налога",
+		"PERCENT": "Процент",
+		"FLAT": "Квартира",
+		"SUBTOTAL": "Итого",
+		"TOTAL": "Итого",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
@@ -1010,6 +1039,10 @@
 			"CANDIDATE_EXPERIENCE_DELETED": "Успешно удален",
 			"CANDIDATE_EDUCATION_REQUIRED": "Необходима информация об образовании",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
+			"CANDIDATE_DOCUMENT_REQUIRED": "Требуется информация о документе",
+			"CANDIDATE_DOCUMENT_CREATED": "Успешно создано",
+			"CANDIDATE_DOCUMENT_UPDATED": "Успешно обновлено",
+			"CANDIDATE_DOCUMENT_DELETED": "Успешно удален",
 			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
@@ -1061,6 +1094,7 @@
 			"EDIT_PROFILE": "Ваш профиль был успешно обновлен."
 		},
 		"CANDIDATE": {
+			"INVALID_FORM": "Пожалуйста, заполните форму",
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Пожалуйста, добавьте название навыка",
 				"INVALID_FORM": "Пожалуйста, заполните форму",

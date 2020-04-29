@@ -4,16 +4,23 @@ import { ViewCell } from 'ng2-smart-table';
 @Component({
 	template: `
 		<div style="display: flex; align-items: center;">
-			<div class="image-container">
+			<div *ngIf="rowData.imageUrl" class="image-container">
 				<img [src]="rowData.imageUrl" />
 			</div>
-			<div class="d-block" style="margin-left:15px;">
+			<div
+				*ngIf="rowData.fullName"
+				class="d-block"
+				style="margin-left:15px;"
+			>
 				{{ rowData.fullName }}
+			</div>
+			<div *ngIf="rowData.name" class="d-block" style="margin-left:15px;">
+				{{ rowData.name }}
 			</div>
 		</div>
 		<div class="tags">
 			<nb-badge
-				*ngFor="let tag of rowData?.tag"
+				*ngFor="let tag of rowData?.tags"
 				class="color"
 				position="centered"
 				[style.background]="tag.color"
