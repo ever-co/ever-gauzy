@@ -9,7 +9,12 @@ import { TimeLog } from '../time-log.entity';
 import { InjectRepository, InjectConnection } from '@nestjs/typeorm';
 import { Repository, Between, In, Connection } from 'typeorm';
 import { RequestContext } from '../../core/context';
-import { TimeLogType, IManualTimeInput, IGetTimeLogInput } from '@gauzy/models';
+import {
+	TimeLogType,
+	IManualTimeInput,
+	IGetTimeLogInput,
+	RolesEnum
+} from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
 import { TimeSheetService } from '../timesheet.service';
@@ -36,28 +41,74 @@ export class TimeLogService extends CrudService<TimeLog> {
 		super(timeLogRepository);
 	}
 
-	async getTimeLogs(request: IGetTimeLogInput) {
-		let employeeId: any;
+	async getTimeLogs(request: IGetTimeLogInput, role?: RolesEnum) {
+		let employeeId: string;
 		const startDate = moment(request.startDate).format(
 			'YYYY-MM-DD HH:mm:ss'
 		);
 		const endDate = moment(request.endDate).format('YYYY-MM-DD HH:mm:ss');
 
-		if (!request.employeeId) {
-			const user = RequestContext.currentUser();
-
-			employeeId = user.employeeId;
+		if (role === RolesEnum.ADMIN) {
+			if (request.employeeId) {
+				employeeId = request.employeeId;
+			}
 		} else {
-			employeeId = request.employeeId;
+			const user = RequestContext.currentUser();
+			employeeId = user.employeeId;
 		}
 
-		let logs = await this.timeLogRepository.find({
+		console.log({
 			where: {
 				startedAt: Between(startDate, endDate),
 				deletedAt: null,
-				employeeId
+				//...(employeeId ? { employeeId } : {}),
+				employee: {
+					...(employeeId ? { id: employeeId } : {}),
+					...(request.organizationId
+						? { organization: { id: request.organizationId } }
+						: {})
+				}
+			}
+		});
+
+		const logs = await this.timeLogRepository.find({
+			join: {
+				alias: 'time_logs',
+				innerJoin: {
+					employee: 'time_logs.employee'
+				}
 			},
-			relations: ['project', 'task', 'client']
+			relations: [
+				'project',
+				'task',
+				'client',
+				...(role === RolesEnum.ADMIN
+					? ['employee', 'employee.organization', 'employee.user']
+					: [])
+			],
+			where: (qb) => {
+				qb.where({
+					startedAt: Between(startDate, endDate),
+					deletedAt: null,
+					...(employeeId ? { employeeId } : {})
+				});
+				qb.andWhere('"startedAt" Between :startDate AND :endDate', {
+					startDate,
+					endDate
+				});
+				qb.andWhere('"deletedAt" IS NULL');
+				if (request.employeeId) {
+					qb.andWhere('"employeeId" = :employeeId', {
+						employeeId: request.employeeId
+					});
+				}
+				if (request.organizationId) {
+					qb.andWhere(
+						'"employee"."organizationId" = :organizationId',
+						{ organizationId: request.organizationId }
+					);
+				}
+			}
 		});
 		return logs;
 	}
@@ -138,18 +189,18 @@ export class TimeLogService extends CrudService<TimeLog> {
 		}
 
 		const user = RequestContext.currentUser();
-		const employee = await this.employeeRepository.findOne(
-			user.employeeId,
-			{
-				relations: ['organization']
-			}
-		);
+		// const employee = await this.employeeRepository.findOne(
+		// 	user.employeeId,
+		// 	{
+		// 		relations: ['organization']
+		// 	}
+		// );
 
-		if (!employee.organization || !employee.organization.allowModifyTime) {
-			throw new UnauthorizedException(
-				'You have not sufficient permission to update time'
-			);
-		}
+		// if (!employee.organization || !employee.organization.allowModifyTime) {
+		// 	throw new UnauthorizedException(
+		// 		'You have not sufficient permission to update time'
+		// 	);
+		// }
 
 		const confict = await this.checkConfictTime(request, user.employeeId);
 
@@ -164,8 +215,8 @@ export class TimeLogService extends CrudService<TimeLog> {
 				'seconds'
 			);
 
-			let timeLog = await this.timeLogRepository.findOne(request.id);
-			let timeSlots = this.timeSlotService.generateTimeSlots(
+			const timeLog = await this.timeLogRepository.findOne(request.id);
+			const timeSlots = this.timeSlotService.generateTimeSlots(
 				timeLog.startedAt,
 				timeLog.stoppedAt
 			);
@@ -191,24 +242,20 @@ export class TimeLogService extends CrudService<TimeLog> {
 				}
 			);
 
-			let startTimes = timeSlots
+			const startTimes = timeSlots
 				.filter((timeslot) => {
 					return (
 						updateTimeSlots.filter(
 							(newSlot) =>
-								newSlot.startedAt.getTime() ==
+								newSlot.startedAt.getTime() ===
 								timeslot.startedAt.getTime()
-						).length == 0
+						).length === 0
 					);
 				})
 				.map((timeslot) => new Date(timeslot.startedAt));
 
-			console.log({ timeSlots });
-			console.log({ updateTimeSlots });
-			console.log({ startTimes });
-
 			if (startTimes.length > 0) {
-				let deletedData = await this.timeSlotService.delete({
+				const deletedData = await this.timeSlotService.delete({
 					employeeId: user.employeeId,
 					startedAt: In(startTimes)
 				});
@@ -236,20 +283,20 @@ export class TimeLogService extends CrudService<TimeLog> {
 	async deleteTimeLog(ids: string | string[]): Promise<any> {
 		const user = RequestContext.currentUser();
 
-		const employee = await this.employeeRepository.findOne(
-			user.employeeId,
-			{
-				relations: ['organization']
-			}
-		);
+		// const employee = await this.employeeRepository.findOne(
+		// 	user.employeeId,
+		// 	{
+		// 		relations: ['organization']
+		// 	}
+		// );
 
-		if (!employee.organization || !employee.organization.allowManualTime) {
-			throw new UnauthorizedException(
-				'You have not sufficient permission to add time'
-			);
-		}
+		// if (!employee.organization || !employee.organization.allowManualTime) {
+		// 	throw new UnauthorizedException(
+		// 		'You have not sufficient permission to add time'
+		// 	);
+		// }
 
-		if (typeof ids == 'string') {
+		if (typeof ids === 'string') {
 			ids = [ids];
 		}
 		await this.timeLogRepository.update(

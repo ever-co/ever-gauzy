@@ -116,4 +116,5 @@ export interface IGetTimeLogInput {
 	projectId?: string[];
 	clientId?: string[];
 	employeeId?: string;
+	organizationId?: string;
 }

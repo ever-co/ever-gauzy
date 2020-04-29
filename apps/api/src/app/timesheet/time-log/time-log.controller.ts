@@ -11,9 +11,18 @@ import {
 	Delete
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IManualTimeInput, TimeLog, IGetTimeLogInput } from '@gauzy/models';
+import {
+	IManualTimeInput,
+	TimeLog,
+	IGetTimeLogInput,
+	OrganizationPermissionsEnum,
+	RolesEnum
+} from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 import { TimeLogService } from './time-log.service';
+import { Permissions } from '../../shared/decorators/permissions';
+import { OrganizationPermissionGuard } from '../../shared/guards/auth/organization-permission.guard';
+import { UserRole } from '../../shared/decorators/roles';
 
 @ApiTags('TimeLog')
 @UseGuards(AuthGuard('jwt'))
@@ -28,8 +37,11 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/')
-	async getLogs(@Query() entity: IGetTimeLogInput): Promise<TimeLog[]> {
-		return this.timeLogService.getTimeLogs(entity);
+	async getLogs(
+		@Query() entity: IGetTimeLogInput,
+		@UserRole() roles: RolesEnum
+	): Promise<TimeLog[]> {
+		return this.timeLogService.getTimeLogs(entity, roles);
 	}
 
 	@ApiOperation({ summary: 'Add manual time' })
@@ -43,10 +55,9 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('/')
-	async addManualTime(
-		@Body() entity: IManualTimeInput,
-		...options: any[]
-	): Promise<TimeLog> {
+	@UseGuards(OrganizationPermissionGuard)
+	@Permissions(OrganizationPermissionsEnum.ALLOW_MANUAL_TIME)
+	async addManualTime(@Body() entity: IManualTimeInput): Promise<TimeLog> {
 		return this.timeLogService.addManualTime(entity);
 	}
 
@@ -61,10 +72,11 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/:id')
+	@UseGuards(OrganizationPermissionGuard)
+	@Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
 	async updateManualTime(
 		@Param('id') id: string,
-		@Body() entity: IManualTimeInput,
-		...options: any[]
+		@Body() entity: IManualTimeInput
 	): Promise<TimeLog> {
 		entity.id = id;
 		return this.timeLogService.updateManualTime(entity);
@@ -81,6 +93,8 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Delete('/')
+	@UseGuards(OrganizationPermissionGuard)
+	@Permissions(OrganizationPermissionsEnum.ALLOW_DELETE_TIME)
 	async deleteTimeTime(@Query() query): Promise<any> {
 		return this.timeLogService.deleteTimeLog(query.logIds);
 	}
