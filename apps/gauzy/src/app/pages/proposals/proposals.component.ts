@@ -137,12 +137,12 @@ export class ProposalsComponent extends TranslationBaseComponent
 	}
 
 	add() {
-		this.router.navigate(['/pages/proposals/register']);
+		this.router.navigate(['/pages/sales/proposals/register']);
 	}
 
 	details() {
 		this.router.navigate([
-			`/pages/proposals/details/${this.selectedProposal.data.id}`
+			`/pages/sales/proposals/details/${this.selectedProposal.data.id}`
 		]);
 	}
 
