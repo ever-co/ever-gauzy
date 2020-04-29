@@ -14,6 +14,7 @@ export * from './lib/organization-positions.model';
 export * from './lib/organization-projects.model';
 export * from './lib/organization-vendors.model';
 export * from './lib/organization-teams-model';
+export * from './lib/organization-teams-employee-model';
 export * from './lib/organization-recurring-expense.model';
 export * from './lib/employee-recurring-expense.model';
 export * from './lib/country.model';
