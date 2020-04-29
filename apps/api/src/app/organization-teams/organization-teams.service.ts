@@ -10,6 +10,7 @@ import { IPagination } from '../core';
 import { Employee } from '../employee/employee.entity';
 import { User } from '../user/user.entity';
 import { OrganizationTeams } from './organization-teams.entity';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 
 @Injectable()
 export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
@@ -42,6 +43,16 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 
 		organizationTeam.members = employees;
 
+		// OrganizationTeamEmployee
+		const teamEmployee: OrganizationTeamEmployee[] = [];
+		organizationTeam.members.forEach((member) => {
+			const employee = new OrganizationTeamEmployee();
+			employee.employeeId = member.id;
+			teamEmployee.push(employee);
+		});
+		organizationTeam.teamEmployee = teamEmployee;
+		// OrganizationTeamEmployee
+
 		return this.organizationTeamsRepository.save(organizationTeam);
 	}
 
@@ -64,6 +75,16 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 
 			organizationTeam.members = employees;
 
+			// OrganizationTeamEmployee
+			const teamEmployee: OrganizationTeamEmployee[] = [];
+			organizationTeam.members.forEach((member) => {
+				const employee = new OrganizationTeamEmployee();
+				employee.employeeId = member.id;
+				teamEmployee.push(employee);
+			});
+			organizationTeam.teamEmployee = teamEmployee;
+			// OrganizationTeamEmployee
+
 			return this.organizationTeamsRepository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
@@ -78,9 +99,15 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 		const items = await this.organizationTeamsRepository.find(filter);
 
 		for (const orgTeams of items) {
-			for (const emp of orgTeams.members) {
+			const emps: Employee[] = [];
+			for (const teamEmp of orgTeams.teamEmployee) {
+				const emp = await this.employeeRepository.findOne(
+					teamEmp.employeeId
+				);
 				emp.user = await this.userRepository.findOne(emp.userId);
+				emps.push(emp);
 			}
+			orgTeams.members = emps;
 		}
 
 		return { items, total };

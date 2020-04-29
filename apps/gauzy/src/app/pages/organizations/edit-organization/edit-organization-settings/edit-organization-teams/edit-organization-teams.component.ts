@@ -177,9 +177,12 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const teams = await this.organizationTeamsService.getAll(['members'], {
-			organizationId: this.organizationId
-		});
+		const teams = await this.organizationTeamsService.getAll(
+			['teamEmployee'],
+			{
+				organizationId: this.organizationId
+			}
+		);
 
 		if (teams) {
 			this.teams = teams.items.sort(
