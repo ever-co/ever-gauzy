@@ -92,6 +92,12 @@ export class Invoice extends Base implements IInvoice {
 	@IsString()
 	@IsOptional()
 	@Column({ nullable: true })
+	sentTo?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
 	organizationId?: string;
 
 	@ApiPropertyOptional({ type: String })

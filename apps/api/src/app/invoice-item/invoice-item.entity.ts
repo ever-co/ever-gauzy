@@ -23,7 +23,7 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	@ApiProperty({ type: Number })
 	@IsNumber()
 	@Column({ type: 'numeric' })
-	unitCost: number;
+	price: number;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
