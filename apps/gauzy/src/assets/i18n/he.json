@@ -33,7 +33,8 @@
 		"SYNC": "Sync",
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
-		"VIEW": "View"
+		"VIEW": "View",
+		"SEND": "Send"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -374,6 +375,7 @@
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
 		"RECURRING_INVOICES": "Recurring Invoices",
+		"INVOICES_RECIEVED": "Recieved Invoices",
 		"ESTIMATES": "Estimates",
 		"MY_TASKS": "My Tasks",
 		"TEAM_TASKS": "Team's Tasks",
@@ -947,6 +949,7 @@
 		"INVOICES_SELECT_CLIENT": "לקוחות",
 		"ADD_INVOICE": "Add Invoice",
 		"EDIT_INVOICE": "Edit Invoice",
+		"VIEW_INVOICE": "View Invoice",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
@@ -960,6 +963,9 @@
 		"FLAT": "Flat",
 		"SUBTOTAL": "Subtotal",
 		"TOTAL": "Total",
+		"NAME": "Name",
+		"RECIEVED_INVOICES": "Recieved Invoices",
+		"SEND_INVOICE": "Invoice Sent",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
@@ -985,6 +991,10 @@
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
 			"PROJECT_VALUE": "Project cannot be empty",
 			"TASK_VALUE": "Task cannot be empty"
+		},
+		"SEND": {
+			"CONFIRMATION": "Are you sure you want to send this invoice to",
+			"ALREADY_SENT": "This invoice has already been sent to"
 		}
 	},
 	"HEADER": {
