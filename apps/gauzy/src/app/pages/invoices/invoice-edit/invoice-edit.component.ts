@@ -74,7 +74,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	invoiceDate: Date;
 	dueDate: Date;
 	hasInvoiceEditPermission: boolean;
-	enableSaveButton = true;
 
 	subtotal = 0;
 	total = 0;
@@ -542,7 +541,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					if (invoiceItem.selectedEmployee) {
 						await this.invoiceItemService.update(invoiceItem.id, {
 							description: invoiceItem.description,
-							unitCost: invoiceItem.price,
+							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
@@ -551,7 +550,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					} else if (invoiceItem.project) {
 						await this.invoiceItemService.update(invoiceItem.id, {
 							description: invoiceItem.description,
-							unitCost: invoiceItem.price,
+							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
@@ -560,7 +559,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					} else if (invoiceItem.task) {
 						await this.invoiceItemService.update(invoiceItem.id, {
 							description: invoiceItem.description,
-							unitCost: invoiceItem.price,
+							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
@@ -569,7 +568,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					} else {
 						await this.invoiceItemService.update(invoiceItem.id, {
 							description: invoiceItem.description,
-							unitCost: invoiceItem.price,
+							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id
@@ -579,7 +578,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					if (invoiceItem.selectedEmployee) {
 						await this.invoiceItemService.add({
 							description: invoiceItem.description,
-							unitCost: invoiceItem.price,
+							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
@@ -588,7 +587,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					} else if (invoiceItem.project) {
 						await this.invoiceItemService.add({
 							description: invoiceItem.description,
-							unitCost: invoiceItem.price,
+							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
@@ -597,7 +596,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					} else if (invoiceItem.task) {
 						await this.invoiceItemService.add({
 							description: invoiceItem.description,
-							unitCost: invoiceItem.price,
+							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
@@ -606,7 +605,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					} else {
 						await this.invoiceItemService.add({
 							description: invoiceItem.description,
-							unitCost: invoiceItem.price,
+							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id
@@ -647,7 +646,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				data = {
 					description: item.description,
 					quantity: item.quantity,
-					price: item.unitCost,
+					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
 					allEmployees: this.employees,
@@ -660,7 +659,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				data = {
 					description: item.description,
 					quantity: item.quantity,
-					price: item.unitCost,
+					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
 					project: project
@@ -670,7 +669,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				data = {
 					description: item.description,
 					quantity: item.quantity,
-					price: item.unitCost,
+					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
 					task: task
@@ -679,7 +678,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				data = {
 					description: item.description,
 					quantity: item.quantity,
-					price: item.unitCost,
+					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id
 				};

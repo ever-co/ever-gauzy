@@ -1,0 +1,11 @@
+.grid {
+	display: grid;
+	grid-template-columns: 0.3fr 0.3fr;
+	&-item {
+		margin: 15px;
+	}
+}
+
+.invoice-number {
+	margin: 15px;
+}
