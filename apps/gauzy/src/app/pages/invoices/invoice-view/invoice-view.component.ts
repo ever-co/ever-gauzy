@@ -11,9 +11,6 @@ import {
 } from '@gauzy/models';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
-import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
-import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
-import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';

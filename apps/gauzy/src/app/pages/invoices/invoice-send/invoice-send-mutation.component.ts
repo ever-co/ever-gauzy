@@ -3,8 +3,6 @@ import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OrganizationClients, Invoice } from '@gauzy/models';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { first } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 
 @Component({
