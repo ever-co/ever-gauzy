@@ -1,3 +1,4 @@
+import { CandidateHistoryModule } from './candidate-history/candidate-history.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
@@ -100,6 +101,10 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 					{
 						path: '/candidate-source',
 						module: CandidateSourceModule
+					},
+					{
+						path: '/candidate-history',
+						module: CandidateHistoryModule
 					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
@@ -272,6 +277,7 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 		CandidateExperienceModule,
 		CandidateSkillModule,
 		CandidateFeedbacksModule,
+		CandidateHistoryModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,

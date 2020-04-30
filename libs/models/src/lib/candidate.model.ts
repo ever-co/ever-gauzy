@@ -16,6 +16,7 @@ import { IExperience } from './candidate-experience.model';
 import { ISkill } from './candidate-skill.model';
 import { IEducation } from './candidate-education.model';
 import { ICandidateDocument } from './candidate-document.model';
+import { ICandidateHistory } from './candidate-history.model';
 
 export interface Candidate extends IBaseEntityModel, ILocation {
 	user: User;
@@ -45,6 +46,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	cvUrl?: string;
 	feedbacks?: ICandidateFeedback[];
 	rating?: number;
+	history: ICandidateHistory[];
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';

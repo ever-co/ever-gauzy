@@ -1,3 +1,4 @@
+import { CandidateHistory } from './../../candidate-history/candidate-history.entity';
 import { CandidateExperience } from './../../candidate-experience/candidate-experience.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
@@ -175,7 +176,8 @@ const allEntities = [
 	ProductVariantSettings,
 	ProductVariantPrice,
 	CandidateDocument,
-	CandidateFeedback
+	CandidateFeedback,
+	CandidateHistory
 ];
 
 @Injectable()

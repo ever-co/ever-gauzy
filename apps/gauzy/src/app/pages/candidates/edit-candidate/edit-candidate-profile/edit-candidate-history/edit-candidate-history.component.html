@@ -1,1 +1,12 @@
-<p>This page is coming soon!</p>
+<nb-card>
+	<div class="actions">
+		<div class="action" *ngFor="let action of actionList">
+			<div class="action-time">time</div>
+			<div class="action-text">
+				<div class="name">{{ candidateName }}'s</div>
+				<div class="description">rating has been updated by</div>
+				<div class="name">{{ userName }}</div>
+			</div>
+		</div>
+	</div>
+</nb-card>

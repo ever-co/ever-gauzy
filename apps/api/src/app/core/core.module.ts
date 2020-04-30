@@ -1,3 +1,4 @@
+import { CandidateHistory } from './../candidate-history/candidate-history.entity';
 // Copyright (c) 2019-2020 Ever Co. LTD
 
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
@@ -123,6 +124,7 @@ const entities = [
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
+	CandidateHistory,
 	IntegrationSetting,
 	Integration,
 	IntegrationMap,
