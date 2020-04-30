@@ -19,7 +19,8 @@ export class ProductOption extends Base implements IProductOption {
 
 	@ManyToOne(
 		() => Product,
-		(product) => product.options
+		(product) => product.options,
+		{ onUpdate: 'CASCADE', onDelete: 'CASCADE' }
 	)
 	@JoinColumn()
 	product: Product;

@@ -2,6 +2,7 @@ import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
+import { SkillModule } from './skills/skill.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
@@ -59,10 +60,12 @@ import { ProductVariantPriceModule } from './product-variant-price/product-varia
 import { ProductVariantModule } from './product-variant/product-variant.module';
 import { IntegrationEntitySettingModule } from './integration-entity-setting/integration-entity-setting.module';
 import { IntegrationEntitySettingTiedEntityModule } from './integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.module';
-import { CandidateCvModule } from './candidate-cv/candidate-cv.module';
 import { CandidateEducationModule } from './candidate-education/candidate-education.module';
-import { CandidateSourceModule } from './candidate_source/candidate_source.module';
+import { CandidateSourceModule } from './candidate-source/candidate-source.module';
+import { CandidateDocumentsModule } from './candidate-documents/candidate-documents.module';
 import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
+import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedbacks.module';
+import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
 
 @Module({
 	imports: [
@@ -79,16 +82,20 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 						module: CandidateEducationModule
 					},
 					{
+						path: '/candidate-documents',
+						module: CandidateDocumentsModule
+					},
+					{
+						path: '/candidate-feedbacks',
+						module: CandidateFeedbacksModule
+					},
+					{
 						path: '/candidate-experience',
 						module: CandidateExperienceModule
 					},
 					{
 						path: '/candidate-skills',
 						module: CandidateSkillModule
-					},
-					{
-						path: '/candidate-cv',
-						module: CandidateCvModule
 					},
 					{
 						path: '/candidate-source',
@@ -180,6 +187,10 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 						module: TagModule
 					},
 					{
+						path: '/skills',
+						module: SkillModule
+					},
+					{
 						path: '/tasks',
 						module: TaskModule
 					},
@@ -242,6 +253,10 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 					{
 						path: '/product-variants',
 						module: ProductVariantModule
+					},
+					{
+						path: '/product-variant-settings',
+						module: ProductVariantSettingsModule
 					}
 				]
 			}
@@ -251,11 +266,12 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 		UserModule,
 		EmployeeModule,
 		CandidateModule,
-		CandidateCvModule,
+		CandidateDocumentsModule,
 		CandidateSourceModule,
 		CandidateEducationModule,
 		CandidateExperienceModule,
 		CandidateSkillModule,
+		CandidateFeedbacksModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
@@ -282,6 +298,7 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 		TenantModule,
 		EmailTemplateModule,
 		TagModule,
+		SkillModule,
 		InvoiceModule,
 		InvoiceItemModule,
 		EmployeeLevelModule,
@@ -314,6 +331,7 @@ import { CandidateExperienceModule } from './candidate-experience/candidate-expe
 		IntegrationMapModule,
 		ProductVariantPriceModule,
 		ProductVariantModule,
+		ProductVariantSettingsModule,
 		IntegrationEntitySettingModule,
 		IntegrationEntitySettingTiedEntityModule
 	],

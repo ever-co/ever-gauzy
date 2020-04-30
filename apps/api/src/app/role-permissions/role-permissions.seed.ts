@@ -5,8 +5,9 @@
 import { PermissionsEnum, Role, RolesEnum } from '@gauzy/models';
 import { Connection } from 'typeorm';
 import { RolePermissions } from './role-permissions.entity';
+import { Tenant } from '../tenant/tenant.entity';
 
-const defaultRolePermissions = [
+export const defaultRolePermissions = [
 	{
 		role: RolesEnum.SUPER_ADMIN,
 		defaultEnabledPermissions: [
@@ -37,6 +38,7 @@ const defaultRolePermissions = [
 			PermissionsEnum.ACCESS_PRIVATE_PROJECTS,
 			PermissionsEnum.TIMESHEET_EDIT_TIME,
 			PermissionsEnum.SUPER_ADMIN_EDIT,
+			PermissionsEnum.PUBLIC_PAGE_EDIT,
 			PermissionsEnum.INVOICES_VIEW,
 			PermissionsEnum.INVOICES_EDIT
 		]
@@ -70,6 +72,7 @@ const defaultRolePermissions = [
 			PermissionsEnum.ORG_INVITE_EDIT,
 			PermissionsEnum.ACCESS_PRIVATE_PROJECTS,
 			PermissionsEnum.TIMESHEET_EDIT_TIME,
+			PermissionsEnum.PUBLIC_PAGE_EDIT,
 			PermissionsEnum.INVOICES_VIEW,
 			PermissionsEnum.INVOICES_EDIT
 		]
@@ -106,21 +109,28 @@ const defaultRolePermissions = [
 
 export const createRolePermissions = async (
 	connection: Connection,
-	roles: Role[]
+	roles: Role[],
+	tenants: Tenant[]
 ): Promise<RolePermissions[]> => {
 	const rolePermissions: RolePermissions[] = [];
 
-	defaultRolePermissions.forEach((r) => {
-		const role = roles.find((dbRole) => dbRole.name === r.role);
-		if (role) {
-			r.defaultEnabledPermissions.forEach((p) => {
-				const rolePermission = new RolePermissions();
-				rolePermission.roleId = role.id;
-				rolePermission.permission = p;
-				rolePermission.enabled = true;
-				rolePermissions.push(rolePermission);
-			});
-		}
+	tenants.forEach((t) => {
+		defaultRolePermissions.forEach((r) => {
+			const role = roles.find(
+				(dbRole) =>
+					dbRole.name === r.role && dbRole.tenant.name === t.name
+			);
+			if (role) {
+				r.defaultEnabledPermissions.forEach((p) => {
+					const rolePermission = new RolePermissions();
+					rolePermission.roleId = role.id;
+					rolePermission.permission = p;
+					rolePermission.enabled = true;
+					rolePermission.tenant = role.tenant;
+					rolePermissions.push(rolePermission);
+				});
+			}
+		});
 	});
 
 	await connection

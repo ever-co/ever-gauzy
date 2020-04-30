@@ -15,6 +15,7 @@ export class CandidateEducationController extends CrudController<
 	) {
 		super(candidateEducationService);
 	}
+	// GET
 	@ApiOperation({
 		summary: 'Find all candidate education.'
 	})
