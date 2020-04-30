@@ -38,6 +38,7 @@ import { EmployeesService } from '../../../@core/services';
 export class InvoiceAddComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
+	loading = true;
 	form: FormGroup;
 	invoice?: Invoice;
 	formInvoiceNumber: number;
@@ -90,6 +91,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this._loadOrganizationData();
 		this.initializeForm();
 		this.form.get('currency').disable();
+		this.loading = false;
 	}
 
 	async initializeForm() {
@@ -458,7 +460,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				for (const invoiceItem of tableData) {
 					await this.invoiceItemService.add({
 						description: invoiceItem.description,
-						unitCost: invoiceItem.price,
+						price: invoiceItem.price,
 						quantity: invoiceItem.quantity,
 						totalValue: invoiceItem.totalValue,
 						invoiceId: createdInvoice.id,
@@ -469,7 +471,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				for (const invoiceItem of tableData) {
 					await this.invoiceItemService.add({
 						description: invoiceItem.description,
-						unitCost: invoiceItem.price,
+						price: invoiceItem.price,
 						quantity: invoiceItem.quantity,
 						totalValue: invoiceItem.totalValue,
 						invoiceId: createdInvoice.id,
@@ -480,7 +482,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				for (const invoiceItem of tableData) {
 					await this.invoiceItemService.add({
 						description: invoiceItem.description,
-						unitCost: invoiceItem.price,
+						price: invoiceItem.price,
 						quantity: invoiceItem.quantity,
 						totalValue: invoiceItem.totalValue,
 						invoiceId: createdInvoice.id,
@@ -491,7 +493,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				for (const invoiceItem of tableData) {
 					await this.invoiceItemService.add({
 						description: invoiceItem.description,
-						unitCost: invoiceItem.price,
+						price: invoiceItem.price,
 						quantity: invoiceItem.quantity,
 						totalValue: invoiceItem.totalValue,
 						invoiceId: createdInvoice.id

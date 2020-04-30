@@ -33,7 +33,8 @@
 		"SYNC": "Sync",
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
-		"VIEW": "View"
+		"VIEW": "View",
+		"SEND": "Send"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -153,6 +154,7 @@
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Reject Date (optional)",
 			"DOCUMENT_NAME": "Document name",
+			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"EMAIL_INVITATION": "Enter email to send invitation",
 			"SELECT_EQUIPMENT": "Select equipment",
 			"SELECT_SHARE_REQUEST_DATE": "Select request date",
@@ -236,6 +238,7 @@
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
 			"DOCUMENT_NAME": "Document name",
+			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -372,6 +375,7 @@
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
 		"RECURRING_INVOICES": "Recurring Invoices",
+		"INVOICES_RECIEVED": "Recieved Invoices",
 		"ESTIMATES": "Estimates",
 		"MY_TASKS": "My Tasks",
 		"TEAM_TASKS": "Team's Tasks",
@@ -561,6 +565,7 @@
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
 			"SKILLS": "Skills",
+			"FEEDBACKS": "Feedbacks",
 			"EDUCATION": "Education",
 			"SCHOOL_NAME": "School name",
 			"DEGREE": "Degree/Diploma",
@@ -575,7 +580,8 @@
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents",
 			"DOCUMENT_NAME": "Document name",
-			"DOCUMENT": "Document"
+			"DOCUMENT": "Document",
+			"FEEDBACK_DESCRIPTION": "Feedback description"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -943,6 +949,7 @@
 		"INVOICES_SELECT_CLIENT": "לקוחות",
 		"ADD_INVOICE": "Add Invoice",
 		"EDIT_INVOICE": "Edit Invoice",
+		"VIEW_INVOICE": "View Invoice",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
@@ -956,6 +963,9 @@
 		"FLAT": "Flat",
 		"SUBTOTAL": "Subtotal",
 		"TOTAL": "Total",
+		"NAME": "Name",
+		"RECIEVED_INVOICES": "Recieved Invoices",
+		"SEND_INVOICE": "Invoice Sent",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
@@ -981,6 +991,10 @@
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
 			"PROJECT_VALUE": "Project cannot be empty",
 			"TASK_VALUE": "Task cannot be empty"
+		},
+		"SEND": {
+			"CONFIRMATION": "Are you sure you want to send this invoice to",
+			"ALREADY_SENT": "This invoice has already been sent to"
 		}
 	},
 	"HEADER": {
@@ -1041,15 +1055,13 @@
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
-			"CANDIDATE_EXPERIENCE_CREATED": "Successfully created",
-			"CANDIDATE_EXPERIENCE_UPDATED": "Successfully updated",
-			"CANDIDATE_EXPERIENCE_DELETED": "Successfully deleted",
+			"CANDIDATE_EDIT_CREATED": "Successfully created",
+			"CANDIDATE_EDIT_UPDATED": "Successfully updated",
+			"CANDIDATE_EDIT_DELETED": "Successfully deleted",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
+			"CANDIDATE_FEEDBACK_REQUIRED": "Feedback information is required",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
-			"CANDIDATE_DOCUMENT_CREATED": "Successfully created",
-			"CANDIDATE_DOCUMENT_UPDATED": "Successfully updated",
-			"CANDIDATE_DOCUMENT_DELETED": "Successfully deleted",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",

@@ -16,7 +16,7 @@ export class CalendarComponent implements OnInit {
 
 	calendarVisible = true;
 	calendarPlugins = [
-		dayGridPlugin,
+		//	dayGridPlugin,
 		timeGrigPlugin,
 		interactionPlugin,
 		bootstrapPlugin
