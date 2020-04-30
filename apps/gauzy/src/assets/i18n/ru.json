@@ -34,7 +34,7 @@
 		"UPDATE": "Обновить",
 		"AUTO_SYNC": "Автосинхронизация",
 		"VIEW": "Вид",
-		"SEND": "Send"
+		"SEND": "Отправить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -375,7 +375,7 @@
 		"INVOICES": "Счета",
 		"ORGANIZATION": "Организация",
 		"RECURRING_INVOICES": "Повторяющиеся счета",
-		"INVOICES_RECIEVED": "Recieved Invoices",
+		"INVOICES_RECIEVED": "Полученные счета",
 		"ESTIMATES": "Оценки",
 		"MY_TASKS": "Мои задачи",
 		"TEAM_TASKS": "Задачи команды",
@@ -949,7 +949,7 @@
 		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
 		"EDIT_INVOICE": "Изменить счет",
-		"VIEW_INVOICE": "View Invoice",
+		"VIEW_INVOICE": "Просмотр счета",
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
@@ -963,9 +963,9 @@
 		"FLAT": "Квартира",
 		"SUBTOTAL": "Итого",
 		"TOTAL": "Итого",
-		"NAME": "Name",
-		"RECIEVED_INVOICES": "Recieved Invoices",
-		"SEND_INVOICE": "Invoice Sent",
+		"NAME": "Имя",
+		"RECIEVED_INVOICES": "Полученные счета",
+		"SEND_INVOICE": "Счет отправлен",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
@@ -993,8 +993,8 @@
 			"TASK_VALUE": "Задание не может быть пустым"
 		},
 		"SEND": {
-			"CONFIRMATION": "Are you sure you want to send this invoice to",
-			"ALREADY_SENT": "This invoice has already been sent to"
+			"CONFIRMATION": "Вы уверены, что хотите отправить этот счет на",
+			"ALREADY_SENT": "Этот счет уже был отправлен на"
 		}
 	},
 	"HEADER": {
