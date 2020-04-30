@@ -963,7 +963,7 @@
 		"FLAT": "Flat",
 		"SUBTOTAL": "Subtotal",
 		"TOTAL": "Total",
-		"NAME": "Name",
+		"NAME": "שם",
 		"RECIEVED_INVOICES": "Recieved Invoices",
 		"SEND_INVOICE": "Invoice Sent",
 		"INVOICE_TYPE": {
