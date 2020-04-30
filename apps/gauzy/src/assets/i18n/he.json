@@ -688,6 +688,8 @@
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
+			"INVOICES_VIEW": "View Invoices",
+			"INVOICES_EDIT": "Edit Invoices",
 			"GROUPS": {
 				"GENERAL": "כללי",
 				"ADMINISTRATION": "Administration"
