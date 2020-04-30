@@ -62,6 +62,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		);
 
 		if (items) this.projects = items;
+		// console.warn(items);
 	}
 
 	initializeForm({

@@ -33,9 +33,18 @@ export class OrganizationsService {
 			.toPromise();
 	}
 
-	getAll(): Promise<{ items: Organization[]; total: number }> {
+	getAll(
+		relations?: string[],
+		findInput?: Organization
+	): Promise<{ items: Organization[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: Organization[]; total: number }>(`/api/organization`)
+			.get<{ items: Organization[]; total: number }>(
+				`/api/organization`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}

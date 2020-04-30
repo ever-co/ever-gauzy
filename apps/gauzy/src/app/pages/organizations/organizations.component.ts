@@ -115,6 +115,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	selectOrganization(data: SelectedRow) {
 		if (data.isSelected) {
 			this.selectedOrganization = data.data;
+			// console.warn(this.selectedOrganization);
 		} else {
 			this.selectedOrganization = null;
 		}
@@ -190,7 +191,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	private async _loadSmartTable() {
 		try {
-			const { items } = await this.organizationsService.getAll();
+			const { items } = await this.organizationsService.getAll(['tags']);
 			for (const org of items) {
 				const data = await this.employeesService
 					.getAll([], { organization: { id: org.id } })

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOneOptions } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { Organization } from './organization.entity';
+import { IPagination } from '../core';
 
 @Injectable()
 export class OrganizationService extends TenantAwareCrudService<Organization> {

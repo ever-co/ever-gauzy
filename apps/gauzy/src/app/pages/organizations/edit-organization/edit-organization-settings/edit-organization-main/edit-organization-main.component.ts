@@ -26,7 +26,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	form: FormGroup;
 	currencies: string[] = Object.values(CurrenciesEnum);
 	tags: Tag[];
-	selectedTags: any;
+	// selectedTags: any;
 
 	constructor(
 		private fb: FormBuilder,
@@ -91,9 +91,9 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-
+		//  console.warn(this.organization)
 		this.form = this.fb.group({
-			tags: [this.organization.tags],
+			tags: [{ name: 'peho' }],
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
 			officialName: [this.organization.officialName],
@@ -107,6 +107,6 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		});
 	}
 	selectedTagsEvent(ev) {
-		console.warn(ev);
+		this.tags = ev;
 	}
 }
