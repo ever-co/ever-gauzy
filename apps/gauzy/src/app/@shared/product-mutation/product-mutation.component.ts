@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { Product, ProductVariant } from '@gauzy/models';
 import { FormGroup } from '@angular/forms';
 import { ProductService } from '../../@core/services/product.service';
 import { ProductVariantService } from '../../@core/services/product-variant.service';
+import { ProductVariantSettingsService } from '../../@core/services/product-variant-settings.service';
+import { ProductVariantPriceService } from '../../@core/services/product-variant-price.service';
 
 @Component({
 	selector: 'ngx-product-mutation',
@@ -20,9 +22,12 @@ export class ProductMutationComponent extends TranslationBaseComponent {
 
 	constructor(
 		readonly translationService: TranslateService,
+		private toastrService: NbToastrService,
 		public dialogRef: NbDialogRef<ProductMutationComponent>,
 		private productService: ProductService,
-		private productVariantService: ProductVariantService
+		private productVariantService: ProductVariantService,
+		private productVariantPriceService: ProductVariantPriceService,
+		private productVariantSettingsService: ProductVariantSettingsService
 	) {
 		super(translationService);
 	}
@@ -34,8 +39,46 @@ export class ProductMutationComponent extends TranslationBaseComponent {
 				this.product
 			);
 		} else {
-			// product = await this.productService.update(productRequest);
+			this.product = await this.productService.update(productRequest);
 		}
+
+		this.toastrService.primary(
+			this.getTranslation('INVENTORY_PAGE.INVENTORY_ITEM_SAVED'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
+	}
+
+	async onSaveProductVarinat(productVariantRequest: any) {
+		await this.productVariantSettingsService.updateProductVariantSettings(
+			productVariantRequest.productVariantSettings
+		);
+
+		await this.productVariantPriceService.updateProductVariantPrice(
+			productVariantRequest.productVariantPrice
+		);
+
+		await this.productVariantService.updateProductVariant(
+			productVariantRequest.productVariant
+		);
+
+		const oldVariant = this.product.variants.find(
+			(v) => v.id === productVariantRequest.productVariant.id
+		);
+
+		const newProductVariant = await this.productVariantService.getProductVariant(
+			oldVariant.id
+		);
+
+		this.product.variants[
+			this.product.variants.indexOf(oldVariant)
+		] = newProductVariant;
+
+		this.closeDialog('PRODUCT_VARIANT_EDIT');
+
+		this.toastrService.primary(
+			this.getTranslation('INVENTORY_PAGE.PRODUCT_VARIANT_SAVED'),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
 	}
 
 	async onEditProductVariant(productVariantId: string) {

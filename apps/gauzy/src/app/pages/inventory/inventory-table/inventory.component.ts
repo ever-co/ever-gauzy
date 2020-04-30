@@ -8,6 +8,7 @@ import { ProductMutationComponent } from '../../../@shared/product-mutation/prod
 import { first } from 'rxjs/operators';
 import { ProductService } from '../../../@core/services/product.service';
 import { Product, ProductType, ProductCategory } from '@gauzy/models';
+import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 export interface SelectedProduct {
 	data: Product;
@@ -87,23 +88,31 @@ export class InventoryComponent extends TranslationBaseComponent
 			context: { product: this.selectedItem }
 		});
 
-		const product = await dialog.onClose.pipe(first()).toPromise();
+		await dialog.onClose.pipe(first()).toPromise();
 
-		if (product) {
-			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.INVENTORY_ITEM_SAVED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-		}
 		this.loadSettings();
 	}
 
-	async delete() {}
+	async delete() {
+		const result = await this.dialogService
+			.open(DeleteConfirmationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (result) {
+			await this.productService.delete(this.selectedItem.id);
+			this.loadSettings();
+			this.toastrService.primary(
+				this.getTranslation('INVENTORY_PAGE.INVENTORY_ITEM_DELETED'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+		}
+		this.disableButton = true;
+	}
 
 	async loadSettings() {
 		this.selectedItem = null;
 		const { items } = await this.productService.getAll();
-		console.log(items);
 		this.loading = false;
 		this.smartTableSource.load(items);
 	}

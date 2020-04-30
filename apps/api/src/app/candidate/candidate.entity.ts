@@ -1,14 +1,15 @@
+import { ICandidateSource } from './../../../../../libs/models/src/lib/candidate-source.model';
 import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
-import { CandidateSource } from './../candidate_source/candidate_source.entity';
 import {
 	Candidate as ICandidate,
 	Status,
-	ICandidateDocument,
 	PayPeriodEnum,
 	IEducation,
 	IExperience,
-	ISkill
+	ISkill,
+	ICandidateFeedback,
+	ICandidateDocument
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
@@ -30,7 +31,9 @@ import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { Organization } from '../organization/organization.entity';
 import { CandidateEducation } from '../candidate-education/candidate-education.entity';
+import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
+import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -58,11 +61,26 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	})
 	skills: ISkill[];
 
+	@ApiProperty({ type: CandidateSource })
+	@OneToOne((type) => CandidateSource, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	source?: ICandidateSource;
+
 	@ManyToOne((type) => CandidateDocument)
 	@JoinTable({
 		name: 'candidate_documents'
 	})
 	documents: ICandidateDocument[];
+
+	@ManyToOne((type) => CandidateFeedback)
+	@JoinTable({
+		name: 'candidate_feedbacks'
+	})
+	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: User })
 	@OneToOne((type) => User, {
@@ -76,6 +94,11 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((candidate: Candidate) => candidate.user)
 	readonly userId: string;
+
+	@ApiPropertyOptional({ type: Number })
+	@IsOptional()
+	@Column({ nullable: true })
+	rating?: number;
 
 	@ApiProperty({ type: OrganizationPositions })
 	@ManyToOne((type) => OrganizationPositions, { nullable: true })
@@ -145,18 +168,6 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	candidateLevel?: string;
-
-	@Column({ nullable: true })
-	@ManyToOne((type) => CandidateSource, {
-		nullable: true,
-		onDelete: 'CASCADE'
-	})
-	@JoinColumn()
-	source?: string;
-
-	@ApiProperty({ type: CandidateSource, readOnly: true })
-	@RelationId((candidate: Candidate) => candidate.source)
-	readonly sourceId?: CandidateSource;
 
 	@ApiPropertyOptional({ type: Number })
 	@IsDate()

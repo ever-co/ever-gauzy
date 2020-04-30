@@ -38,7 +38,8 @@ export class Product extends Base implements IProduct {
 
 	@OneToMany(
 		() => ProductVariant,
-		(productVariant) => productVariant.product
+		(productVariant) => productVariant.product,
+		{ onDelete: 'CASCADE' }
 	)
 	variants: ProductVariant[];
 
@@ -62,5 +63,5 @@ export class Product extends Base implements IProduct {
 		(type) => ProductOption,
 		(productOption) => productOption.product
 	)
-	options?: ProductOption[];
+	options: ProductOption[];
 }

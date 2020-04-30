@@ -16,6 +16,6 @@ export class ProductOptionService extends CrudService<ProductOption> {
 	async createBulk(
 		productOptionsInput: ProductOption[]
 	): Promise<ProductOption[]> {
-		return this.productOptionRepository.create(productOptionsInput);
+		return this.productOptionRepository.save(productOptionsInput);
 	}
 }

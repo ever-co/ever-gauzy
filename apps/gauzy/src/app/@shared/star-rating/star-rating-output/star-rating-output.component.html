@@ -1,0 +1,8 @@
+<div class="stars">
+	<div *ngFor="let star of stars; let i = index" class="stars-icon">
+		<span
+			class="ion ion-md-{{ star.icon }} rating-star-icon"
+			[ngClass]="{ 'gold-star': star.active }"
+		></span>
+	</div>
+</div>

@@ -15,7 +15,7 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 })
 export class ProductVariantFormComponent extends TranslationBaseComponent
 	implements OnInit {
-	@Output() save = new EventEmitter<ProductVariant>();
+	@Output() save = new EventEmitter<any>();
 	@Output() cancel = new EventEmitter<string>();
 
 	currencies = Object.values(CurrenciesEnum);
@@ -86,5 +86,39 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 		this.cancel.emit('PRODUCT_VARIANT_EDIT');
 	}
 
-	onSaveRequest() {}
+	onSaveRequest() {
+		const formValue = this.form.value;
+
+		const productVariantRequest = {
+			productVariant: {
+				id: this.productVariant.id,
+				internalReference: formValue['internationalReference'],
+				billingInvoicingPolicy: formValue['invoicingPolicy'],
+				quantity: formValue['quantity'],
+				taxes: formValue['taxes'],
+				enabled: formValue['enabled'],
+				notes: formValue['notes']
+			},
+			productVariantPrice: {
+				id: this.productVariant.price.id,
+				retailPrice: formValue['retailPrice'],
+				retailPriceCurrency: formValue['retailPriceCurrency'],
+				unitCost: formValue['unitCost'],
+				unitCostCurrency: formValue['unitCostCurrency']
+			},
+			productVariantSettings: {
+				id: this.productVariant.settings.id,
+				isSubscription: formValue['isSubscription'],
+				isPurchaseAutomatically: formValue['isPurchaseAutomatically'],
+				canBeSold: formValue['canBeSold'],
+				canBePurchased: formValue['canBePurchased'],
+				canBeCharged: formValue['canBeCharged'],
+				canBeRented: formValue['canBeRented'],
+				trackInventory: formValue['trackInventory'],
+				isEquipment: formValue['isEquipment']
+			}
+		};
+
+		this.save.emit(productVariantRequest);
+	}
 }

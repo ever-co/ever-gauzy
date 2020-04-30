@@ -19,6 +19,7 @@ import { ProductMutationComponent } from '../../@shared/product-mutation/product
 import { ProductMutationModule } from '../../@shared/product-mutation/product-mutation.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ProductVariantFormComponent } from '../../@shared/product-mutation/product-variant-form/product-variant-form.component';
+import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -27,6 +28,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 @NgModule({
 	declarations: [InventoryComponent],
 	imports: [
+		UserFormsModule,
 		InventoryRoutingModule,
 		ThemeModule,
 		CommonModule,

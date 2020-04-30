@@ -18,14 +18,15 @@ export class ProductCreateHandler
 
 		const product = await this.productService.create(productInput);
 
-		const options = productInput.options.map((optionInput) => {
+		const optionsInput = productInput.options.map((optionInput) => {
 			const option = new ProductOption();
 			Object.assign(option, { ...optionInput, product });
 
 			return option;
 		});
 
-		product.options = await this.productOptionService.createBulk(options);
+		await this.productOptionService.createBulk(optionsInput);
+
 		return product;
 	}
 }

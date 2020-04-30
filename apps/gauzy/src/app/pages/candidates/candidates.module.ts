@@ -55,6 +55,10 @@ import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { EditCandidateExperienceFormComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience/edit-candidate-experience-form.component';
+import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/edit-candidate-feedbacks.component';
+import { StarRatingInputModule } from '../../@shared/star-rating/star-rating-input/star-rating-input.module';
+import { StarRatingOutputModule } from '../../@shared/star-rating/star-rating-output/star-rating-output.module';
+import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -63,8 +67,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 const COMPONENTS = [
 	CandidatesComponent,
 	CandidateStatusComponent,
+	CandidateSourceComponent,
 	EditCandidateComponent,
 	EditCandidateDocumentsComponent,
+	EditCandidateFeedbacksComponent,
 	EditCandidateEmploymentComponent,
 	EditCandidateExperienceComponent,
 	EditCandidateHiringComponent,
@@ -118,10 +124,16 @@ const COMPONENTS = [
 		InviteMutationModule,
 		InviteTableModule,
 		EmployeeLocationModule,
-		EmployeeRatesModule
+		EmployeeRatesModule,
+		StarRatingInputModule,
+		StarRatingOutputModule
 	],
 	declarations: [...COMPONENTS],
-	entryComponents: [CandidateStatusComponent, ManageCandidateInviteComponent],
+	entryComponents: [
+		CandidateStatusComponent,
+		CandidateSourceComponent,
+		ManageCandidateInviteComponent
+	],
 	providers: [
 		OrganizationsService,
 		InviteGuard,

@@ -153,6 +153,7 @@
 			"HIRED_DATE": "Hired Date (optional)",
 			"REJECT_DATE": "Дата на отказ (опция)",
 			"DOCUMENT_NAME": "Document name",
+			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"EMAIL_INVITATION": "Enter email to send invitation",
 			"SELECT_EQUIPMENT": "Select equipment",
 			"SELECT_SHARE_REQUEST_DATE": "Select request date",
@@ -236,6 +237,7 @@
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
 			"DOCUMENT_NAME": "Document name",
+			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -281,6 +283,12 @@
 		"ADD_EXPENSE": "Добавете разход",
 		"EDIT_INCOME": "Редактиране доход",
 		"EDIT_EXPENSE": "Редактиране разход",
+		"EDIT_PAGE": "Edit Page",
+		"SHORT_DESCRIPTION": "Short Description",
+		"OVERVIEW": "Overview",
+		"COMPANY_NAME": "Company Name",
+		"BANNER": "Banner",
+		"YEAR_FOUNDED": "Year Founded",
 		"DUPLICATE": "Дублирай",
 		"DATE": "Дата",
 		"PICK_DATE": "Изберете дата",
@@ -555,6 +563,7 @@
 			"HIRING": "Hiring",
 			"EXPERIENCE": "Experience",
 			"SKILLS": "Skills",
+			"FEEDBACKS": "Feedbacks",
 			"EDUCATION": "Education",
 			"SCHOOL_NAME": "School name",
 			"DEGREE": "Degree/Diploma",
@@ -569,7 +578,8 @@
 			"HISTORY": "History",
 			"DOCUMENTS": "Documents",
 			"DOCUMENT_NAME": "Document name",
-			"DOCUMENT": "Document"
+			"DOCUMENT": "Document",
+			"FEEDBACK_DESCRIPTION": "Feedback description"
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -803,6 +813,7 @@
 		"INVENTORY_ITEM_DELETED": "Inventory item deleted!",
 		"INVENTORY_ITEM_SAVED": "Inventory item saved!",
 		"EDIT_PRODUCT_VARIANT": "Edit product variant",
+		"PRODUCT_VARIANT_SAVED": "Product variant saved",
 		"NAME": "Име",
 		"ENABLED": "Enabled",
 		"PRODUCT_TYPE": "Product type",
@@ -1034,15 +1045,13 @@
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Доход добавен за",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
-			"CANDIDATE_EXPERIENCE_CREATED": "Successfully created",
-			"CANDIDATE_EXPERIENCE_UPDATED": "Successfully updated",
-			"CANDIDATE_EXPERIENCE_DELETED": "Successfully deleted",
+			"CANDIDATE_EDIT_CREATED": "Successfully created",
+			"CANDIDATE_EDIT_UPDATED": "Successfully updated",
+			"CANDIDATE_EDIT_DELETED": "Successfully deleted",
 			"CANDIDATE_EDUCATION_REQUIRED": "Education information is required",
+			"CANDIDATE_FEEDBACK_REQUIRED": "Feedback information is required",
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
-			"CANDIDATE_DOCUMENT_CREATED": "Successfully created",
-			"CANDIDATE_DOCUMENT_UPDATED": "Successfully updated",
-			"CANDIDATE_DOCUMENT_DELETED": "Successfully deleted",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
@@ -1181,7 +1190,10 @@
 		"ADD_TIME_SUCCESS": "Time Successfully added"
 	},
 	"TIMESHEET": {
-		"DAILY": "Daily"
+		"DAILY": "Daily",
+		"WEEKLY": "Weekly",
+		"CALENDAR": "Calendar",
+		"APPROVALS": "Approvals"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

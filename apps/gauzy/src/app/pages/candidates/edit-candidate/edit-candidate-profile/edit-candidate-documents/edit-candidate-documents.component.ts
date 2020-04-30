@@ -163,7 +163,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
-			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_DOCUMENT_${text}`)
+			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
 		);
 	}
 	private toastrInvalid() {

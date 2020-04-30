@@ -2,13 +2,11 @@
 	<div class="badge-success">
 		{{ 'CANDIDATES_PAGE.APPLIED' | translate }}
 	</div>
-	{{ rowData.workStatus }}
 </div>
 <div
 	class="text-center d-block"
 	*ngIf="rowData.isActive && rowData.status === 'hired'"
 >
-	<!-- rowData.isActive && -->
 	<div class="badge-success">
 		{{ 'CANDIDATES_PAGE.HIRED' | translate }}
 	</div>
