@@ -1,6 +1,7 @@
 .actions {
 	margin: 40px 0 0 40px;
 }
+
 .action {
 	display: flex;
 	flex-direction: column;
@@ -9,7 +10,8 @@
 	padding: 0px 40px;
 	position: relative;
 }
-.action:before {
+
+.action::before {
 	content: '';
 	position: absolute;
 	top: 0px;
@@ -17,12 +19,14 @@
 	width: 16px;
 	height: 16px;
 	border-radius: 50%;
-	border: 2px #3366ff solid;
+	border: 2px #36f solid;
 	background-color: #fff;
 }
+
 .action:not(:last-child) {
 	border-left: 1px #8f9bb3 solid;
 }
+
 .action-text {
 	display: flex;
 	flex-direction: row;
@@ -30,9 +34,11 @@
 	align-items: center;
 	margin: 5px 0 20px 0;
 }
+
 .name {
 	font-weight: 600;
 }
+
 .description {
 	margin: 0 2px 0 2px;
 }
