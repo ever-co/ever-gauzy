@@ -8,22 +8,14 @@ export interface IDefaultUser {
 	firstName?: string;
 	lastName?: string;
 }
-export interface IDefaultEmployee {
-	email: string;
-	password: string;
-	imageUrl: string;
-	firstName?: string;
-	lastName?: string;
+
+export interface IDefaultEmployee extends IDefaultUser {	
 	startedWorkOn?: string;
 	endWork?: string;
 	employeeLevel?: string;
 }
-export interface IDefaultCandidate {
-	email: string;
-	password: string;
-	imageUrl: string;
-	firstName?: string;
-	lastName?: string;
+
+export interface IDefaultCandidate extends IDefaultUser {	
 	candidateLevel?: string;
 	source?: ICandidateSource;
 }
