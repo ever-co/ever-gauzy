@@ -7,6 +7,13 @@ export interface IDefaultUser {
 	imageUrl: string;
 	firstName?: string;
 	lastName?: string;
+}
+export interface IDefaultEmployee {
+	email: string;
+	password: string;
+	imageUrl: string;
+	firstName?: string;
+	lastName?: string;
 	startedWorkOn?: string;
 	endWork?: string;
 	employeeLevel?: string;

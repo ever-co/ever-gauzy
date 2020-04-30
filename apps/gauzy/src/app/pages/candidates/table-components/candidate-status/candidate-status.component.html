@@ -1,3 +1,7 @@
+<div class="rating">
+	<ga-star-rating-output [rate]="rowData.rating"></ga-star-rating-output>
+</div>
+
 <div class="text-center d-block" *ngIf="rowData.status === 'applied'">
 	<div class="badge-success">
 		{{ 'CANDIDATES_PAGE.APPLIED' | translate }}

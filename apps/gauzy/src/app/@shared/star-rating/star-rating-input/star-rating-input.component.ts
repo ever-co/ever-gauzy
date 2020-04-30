@@ -33,7 +33,7 @@ export class StarRatingInputComponent implements ControlValueAccessor {
 		this.onChange(this.currentRating);
 	}
 	public starMouseEnter(index: number) {
-		this.highlightRating = index;
+		this.highlightRating = index + 1;
 	}
 	public starMouseLeave() {
 		this.highlightRating = null;

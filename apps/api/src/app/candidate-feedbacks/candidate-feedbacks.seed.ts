@@ -10,7 +10,7 @@ const candidateFeedbackList: ICandidateFeedback[] = [
 	},
 	{
 		description: 'Feedback 2',
-		rating: 3.5
+		rating: 3
 	}
 ];
 export const createCandidateFeedbacks = async (
@@ -50,6 +50,8 @@ export const createRandomCandidateFeedbacks = async (
 
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);
+
+		const rand = Math.floor(Math.random() * candidateFeedbackList.length);
 
 		(candidates || []).forEach((candidate) => {
 			const feedbacks = candidateFeedbackList.map((feedback) => ({
