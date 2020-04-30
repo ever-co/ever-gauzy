@@ -4,13 +4,15 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	Unique
+	Unique,
+	AfterLoad
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeSlot as ITimeSlot } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
+import * as moment from 'moment';
 
 @Entity('time_slot')
 @Unique(['employeeId', 'startedAt'])
@@ -50,8 +52,11 @@ export class TimeSlot extends Base implements ITimeSlot {
 	@Column()
 	startedAt: Date;
 
-	@ApiProperty({ type: 'timestamptz' })
-	@IsDateString()
-	@Column()
 	stoppedAt: Date;
+	@AfterLoad()
+	getStoppedAt() {
+		this.stoppedAt = moment(this.startedAt)
+			.add(10, 'minutes')
+			.toDate();
+	}
 }

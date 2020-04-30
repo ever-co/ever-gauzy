@@ -1,19 +1,21 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
+import {
+	Entity,
+	Column,
+	RelationId,
+	ManyToOne,
+	JoinColumn,
+	AfterLoad
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { TimeLog as ITimeLog, TimeLogType } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-	IsString,
-	IsBoolean,
-	IsDateString,
-	IsEnum,
-	IsNumber
-} from 'class-validator';
+import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { Timesheet } from './timesheet.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { Task } from '../tasks/task.entity';
+import * as moment from 'moment';
 
 @Entity('time_log')
 export class TimeLog extends Base implements ITimeLog {
@@ -88,11 +90,6 @@ export class TimeLog extends Base implements ITimeLog {
 	@Column({ default: null, nullable: true })
 	description?: string;
 
-	@ApiProperty({ type: Number })
-	@IsNumber()
-	@Column({ default: 0 })
-	duration: number;
-
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ default: false })
@@ -102,4 +99,12 @@ export class TimeLog extends Base implements ITimeLog {
 	@IsDateString()
 	@Column({ nullable: true, default: null })
 	deletedAt?: Date;
+
+	duration: number;
+
+	@AfterLoad()
+	getDuration() {
+		const end = this.stoppedAt ? this.stoppedAt : new Date();
+		this.duration = moment(end).diff(moment(this.startedAt), 'seconds');
+	}
 }

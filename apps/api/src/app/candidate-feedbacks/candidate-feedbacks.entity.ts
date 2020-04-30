@@ -14,6 +14,6 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 	candidateId?: string;
 
 	@ApiPropertyOptional({ type: Number })
-	@Column({ nullable: true })
+	@Column({ nullable: true, type: 'numeric' })
 	rating: number;
 }

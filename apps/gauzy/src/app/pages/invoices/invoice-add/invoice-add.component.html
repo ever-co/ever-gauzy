@@ -1,4 +1,9 @@
-<nb-card class="main">
+<nb-card
+	class="main"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex">
 		<h3>
 			{{ 'INVOICES_PAGE.ADD_INVOICE' | translate }}
