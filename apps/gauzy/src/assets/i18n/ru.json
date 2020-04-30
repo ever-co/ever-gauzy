@@ -688,6 +688,8 @@
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
 			"TIMESHEET_EDIT_TIME": "Изменить время в расписании",
 			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
+			"INVOICES_VIEW": "Просмотр счетов",
+			"INVOICES_EDIT": "Редактировать счета",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
