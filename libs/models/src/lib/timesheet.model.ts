@@ -19,6 +19,22 @@ export interface Timesheet extends IBaseEntityModel {
 	status: string;
 }
 
+export interface ITimesheetCreateInput {
+	employeeId: string;
+	approvedById?: string;
+	duration?: number;
+	keyboard?: number;
+	mouse?: number;
+	overall?: number;
+	startedAt?: Date;
+	stoppedAt?: Date;
+	approvedAt?: Date;
+	submittedAt?: Date;
+	lockedAt?: Date;
+	isBilled?: boolean;
+	status?: string;
+}
+
 export enum TimesheetStatus {
 	DRAFT = 'DRAFT',
 	PENDING = 'PENDING',
@@ -50,6 +66,7 @@ export interface ITimeLogCreateInput {
 	taskId?: string;
 	projectId: string;
 	startedAt?: Date;
+	stoppedAt?: Date;
 	logType: TimeLogType;
 	description?: string;
 	duration: number;

@@ -2,7 +2,6 @@ import { TimeSlot } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TimeSlotCreateCommand } from '..';
 import { TimeSlotService } from '../../time-slot.service';
-import * as moment from 'moment';
 import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(TimeSlotCreateCommand)
@@ -28,10 +27,7 @@ export class TimeSlotCreateHandler
 				keyboard,
 				mouse,
 				overall,
-				startedAt: time_slot,
-				stoppedAt: moment(time_slot)
-					.add(10, 'minutes')
-					.toDate()
+				startedAt: time_slot
 			});
 		} catch (error) {
 			throw new BadRequestException('Cant create time slot');

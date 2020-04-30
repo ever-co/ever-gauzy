@@ -43,6 +43,7 @@ import {
 	TimeSlotCreateCommand
 } from '../timesheet/commands';
 import { environment } from '@env-api/environment';
+import { getDummyImage } from '../core';
 
 @Injectable()
 export class HubstaffService {
@@ -256,7 +257,6 @@ export class HubstaffService {
 
 		return await Promise.all(integrationMaps);
 	}
-
 	async syncOrganizations({
 		integrationId,
 		organizations
@@ -264,7 +264,11 @@ export class HubstaffService {
 		const integrationMaps = await organizations.map(
 			async (organization) => {
 				const gauzyOrganization = await this.commandBus.execute(
-					new OrganizationCreateCommand(organization)
+					new OrganizationCreateCommand({
+						...organization,
+						imageUrl:
+							organization.imageUrl || getDummyImage(330, 300, '')
+					})
 				);
 
 				return await this._integrationMapService.create({
@@ -435,10 +439,10 @@ export class HubstaffService {
 			);
 		} else {
 			const [role, organization] = await Promise.all([
-				this._roleService.findOne({
+				await this._roleService.findOne({
 					where: { name: RolesEnum.EMPLOYEE }
 				}),
-				this._organizationService.findOne({
+				await this._organizationService.findOne({
 					where: { id: organizationId }
 				})
 			]);
@@ -458,7 +462,6 @@ export class HubstaffService {
 				})
 			);
 		}
-
 		return await this._integrationMapService.create({
 			gauzyId: employee.id,
 			integrationId,
