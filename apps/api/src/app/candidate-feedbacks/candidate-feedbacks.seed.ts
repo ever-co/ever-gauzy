@@ -51,8 +51,6 @@ export const createRandomCandidateFeedbacks = async (
 	(tenants || []).forEach((tenant) => {
 		const candidates = tenantCandidatesMap.get(tenant);
 
-		const rand = Math.floor(Math.random() * candidateFeedbackList.length);
-
 		(candidates || []).forEach((candidate) => {
 			const feedbacks = candidateFeedbackList.map((feedback) => ({
 				description: feedback.description,
