@@ -7,14 +7,14 @@
 	flex-direction: column;
 	justify-content: center;
 	align-items: flex-start;
-	padding: 0px 40px;
+	padding: 0 40px;
 	position: relative;
 }
 
 .action::before {
 	content: '';
 	position: absolute;
-	top: 0px;
+	top: 0;
 	left: -8px;
 	width: 16px;
 	height: 16px;
