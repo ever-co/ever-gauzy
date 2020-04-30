@@ -97,7 +97,7 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 
 	@ApiPropertyOptional({ type: Number })
 	@IsOptional()
-	@Column({ nullable: true })
+	@Column({ nullable: true, type: 'numeric' })
 	rating?: number;
 
 	@ApiProperty({ type: OrganizationPositions })

@@ -123,6 +123,10 @@ import {
 	createRandomCandidateDocuments
 } from '../../candidate-documents/candidate-documents.seed';
 import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
+import {
+	createCandidateFeedbacks,
+	createRandomCandidateFeedbacks
+} from '../../candidate-feedbacks/candidate-feedbacks.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -327,8 +331,8 @@ export class SeedDataService {
 		);
 
 		await createCandidateSources(this.connection, defaultCandidates);
-
 		await createCandidateDocuments(this.connection, defaultCandidates);
+		await createCandidateFeedbacks(this.connection, defaultCandidates);
 
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
@@ -434,6 +438,11 @@ export class SeedDataService {
 			env.randomSeedConfig.candidatesPerOrganization || 1
 		);
 		await createRandomCandidateDocuments(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
+		await createRandomCandidateFeedbacks(
 			this.connection,
 			tenants,
 			tenantCandidatesMap
