@@ -9,7 +9,8 @@ import {
 	IExperience,
 	ISkill,
 	ICandidateFeedback,
-	ICandidateDocument
+	ICandidateDocument,
+	ICandidateHistory
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
@@ -34,6 +35,7 @@ import { CandidateEducation } from '../candidate-education/candidate-education.e
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
+import { CandidateHistory } from '../candidate-history/candidate-history.entity';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -75,6 +77,12 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 		name: 'candidate_documents'
 	})
 	documents: ICandidateDocument[];
+
+	@ManyToOne((type) => CandidateHistory)
+	@JoinTable({
+		name: 'candidate_history'
+	})
+	history: ICandidateHistory[];
 
 	@ManyToOne((type) => CandidateFeedback)
 	@JoinTable({
