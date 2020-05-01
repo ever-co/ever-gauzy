@@ -1,24 +1,18 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<div class="main-header">
-			<h4>{{ 'INVENTORY_PAGE.HEADER' | translate }}</h4>
-			<div>
+		<div class="top-nav">
+			<div class="navigate">
 				<button
+					(click)="goBack()"
 					nbButton
 					status="primary"
-					(click)="manageProductTypes()"
+					class="mr-4"
 				>
-					<nb-icon icon="edit-outline"></nb-icon>
-					{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}
+					<nb-icon icon="arrow-back-outline"></nb-icon>
 				</button>
-				<button
-					nbButton
-					status="primary"
-					(click)="manageProductCategories()"
-				>
-					<nb-icon icon="edit-outline"></nb-icon>
-					{{ 'INVENTORY_PAGE.PRODUCT_CATEGORIES' | translate }}
-				</button>
+			</div>
+			<div class="main-header">
+				<h4>{{ 'INVENTORY_PAGE.PRODUCT_TYPES' | translate }}</h4>
 			</div>
 		</div>
 	</nb-card-header>
@@ -54,10 +48,10 @@
 		<ng2-smart-table
 			class="tags-table"
 			[settings]="settingsSmartTable"
-			(userRowSelect)="selectItem($event)"
+			(userRowSelect)="selectProductType($event)"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
-			#inventoryTable
+			#productTypesTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>
