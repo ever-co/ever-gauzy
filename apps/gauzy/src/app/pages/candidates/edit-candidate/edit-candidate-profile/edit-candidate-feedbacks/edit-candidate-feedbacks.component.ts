@@ -93,6 +93,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.toastrInvalid();
 		}
 	}
+
 	async updateFeedback(formValue: ICandidateFeedback) {
 		try {
 			await this.candidateFeedbacksService.update(this.feedbackId, {

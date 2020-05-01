@@ -6,12 +6,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Invoice, PermissionsEnum } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
-import { InvoicesValueComponent } from './invoices-value.component';
 import { Router } from '@angular/router';
 import { first, takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { Subject } from 'rxjs';
+import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
+import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -29,7 +30,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	invoice: Invoice;
 	selectedInvoice: Invoice;
-	loading = false;
+	loading = true;
 	disableButton = true;
 	hasInvoiceEditPermission: boolean;
 
@@ -44,6 +45,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
+		private organizationClientsService: OrganizationClientsService,
 		private router: Router
 	) {
 		super(translateService);
@@ -101,7 +103,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			for (const item of invoiceItems) {
 				await this.invoiceItemService.add({
 					description: item.description,
-					unitCost: item.unitCost,
+					price: item.price,
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
@@ -112,7 +114,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			for (const item of invoiceItems) {
 				await this.invoiceItemService.add({
 					description: item.description,
-					unitCost: item.unitCost,
+					price: item.price,
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
@@ -123,7 +125,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			for (const item of invoiceItems) {
 				await this.invoiceItemService.add({
 					description: item.description,
-					unitCost: item.unitCost,
+					price: item.price,
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
@@ -134,7 +136,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			for (const item of invoiceItems) {
 				await this.invoiceItemService.add({
 					description: item.description,
-					unitCost: item.unitCost,
+					price: item.price,
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id
@@ -150,6 +152,22 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.router.navigate([
 			`/pages/accounting/invoices/edit/${createdInvoice.id}`
 		]);
+	}
+
+	async send() {
+		if (this.selectedInvoice) {
+			const client = await this.organizationClientsService.getById(
+				this.selectedInvoice.clientId
+			);
+			if (client.organizationId) {
+				this.dialogService.open(InvoiceSendMutationComponent, {
+					context: {
+						client: client,
+						invoice: this.selectedInvoice
+					}
+				});
+			}
+		}
 	}
 
 	async delete() {
@@ -178,6 +196,12 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.disableButton = true;
 	}
 
+	view() {
+		this.router.navigate([
+			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
+		]);
+	}
+
 	async loadSettings() {
 		this.selectedInvoice = null;
 		const { items } = await this.invoicesService.getAll();
@@ -195,22 +219,25 @@ export class InvoicesComponent extends TranslationBaseComponent
 		}
 	}
 
-	async loadSmartTable() {
+	loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
-					type: 'string'
+					type: 'text',
+					sortDirection: 'asc'
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
-					type: 'custom',
-					renderComponent: InvoicesValueComponent
+					type: 'text',
+					valuePrepareFunction: (cell, row) => {
+						return `${row.currency} ${cell}`;
+					}
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-					type: 'string'
+					type: 'text'
 				}
 			}
 		};

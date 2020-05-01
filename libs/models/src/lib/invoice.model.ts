@@ -21,6 +21,7 @@ export interface Invoice extends IBaseEntityModel {
 	toClient?: OrganizationClients;
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;
+	sentTo?: string;
 }
 
 export enum InvoiceTypeEnum {

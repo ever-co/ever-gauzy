@@ -20,13 +20,20 @@ import { ProductMutationModule } from '../../@shared/product-mutation/product-mu
 import { ThemeModule } from '../../@theme/theme.module';
 import { ProductVariantFormComponent } from '../../@shared/product-mutation/product-variant-form/product-variant-form.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { ProductTypesComponent } from './product-type/product-types.component';
+import { ProductTypeMutationComponent } from '../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
+import { OrganizationRowComponent } from './product-type/org-row/organization-row.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 @NgModule({
-	declarations: [InventoryComponent],
+	declarations: [
+		InventoryComponent,
+		ProductTypesComponent,
+		OrganizationRowComponent
+	],
 	imports: [
 		UserFormsModule,
 		InventoryRoutingModule,
@@ -49,6 +56,11 @@ export function HttpLoaderFactory(http: HttpClient) {
 		}),
 		NbSpinnerModule
 	],
-	entryComponents: [ProductMutationComponent, ProductVariantFormComponent]
+	entryComponents: [
+		ProductMutationComponent,
+		ProductVariantFormComponent,
+		ProductTypeMutationComponent,
+		OrganizationRowComponent
+	]
 })
 export class InventoryModule {}

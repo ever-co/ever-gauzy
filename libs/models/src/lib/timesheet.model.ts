@@ -61,6 +61,13 @@ export interface TimeSlot extends IBaseEntityModel {
 	tags?: Tag[];
 }
 
+export interface ITimeSlotMinute extends IBaseEntityModel {
+	timeSlot?: TimeSlot;
+	keyboard?: number;
+	mouse?: number;
+	datetime: Date;
+}
+
 export interface Activity extends IBaseEntityModel {
 	timeSlot?: TimeSlot;
 	title: string;

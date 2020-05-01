@@ -1,0 +1,39 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			Send invoice to client
+		</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<span *ngIf="!alreadySent">
+			{{ 'INVOICES_PAGE.SEND.CONFIRMATION' | translate }}
+			{{ client.name }}?
+		</span>
+		<span *ngIf="alreadySent">
+			{{ 'INVOICES_PAGE.SEND.ALREADY_SENT' | translate }}
+			{{ client.name }}.
+		</span>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="closeDialog()"
+			status="danger"
+			class="mr-3"
+			*ngIf="!alreadySent"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="send()" status="success" *ngIf="!alreadySent" nbButton>
+			{{ 'BUTTONS.SEND' | translate }}
+		</button>
+		<button
+			(click)="closeDialog()"
+			status="success"
+			*ngIf="alreadySent"
+			nbButton
+		>
+			{{ 'BUTTONS.OK' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

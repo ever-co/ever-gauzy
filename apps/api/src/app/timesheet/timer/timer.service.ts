@@ -109,16 +109,10 @@ export class TimerService {
 			});
 		} else {
 			const stoppedAt = new Date();
-			const diffTime = Math.abs(
-				stoppedAt.getTime() - lastLog.startedAt.getTime()
-			);
-			const duration = Math.ceil(diffTime / 1000);
 			await this.timeLogRepository.update(lastLog.id, {
-				stoppedAt,
-				duration
+				stoppedAt
 			});
-
-			await this.timesheetRepository.update(timesheet.id, { duration });
+			// await this.timesheetRepository.update(timesheet.id, { duration });
 			newTimeLog = await this.timeLogRepository.findOne(lastLog.id);
 
 			let timeSlots = this.timeSlotService.generateTimeSlots(
