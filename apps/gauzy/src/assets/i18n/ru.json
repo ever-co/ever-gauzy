@@ -841,7 +841,14 @@
 		"RETAIL_PRICE_CURRENCY": "Розничная цена валюты",
 		"QUANTITY": "Количество",
 		"TAXES": "Налоги",
-		"BILLING_INVOICING_POLICY": "Политика выставления счетов"
+		"BILLING_INVOICING_POLICY": "Политика выставления счетов",
+		"PRODUCT_TYPES": "Типы товаров",
+		"PRODUCT_CATEGORIES": "Категории товаров",
+		"ORGANIZATION": "Организация",
+		"EDIT_PRODUCT_TYPE": "Изменить тип товара",
+		"ADD_PRODUCT_TYPE": "Добавить тип товара",
+		"PRODUCT_TYPE_SAVED": "Тип товара сохранен",
+		"PRODUCT_TYPE_DELETED": "Тип товара удален"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
