@@ -1548,18 +1548,20 @@
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.12.1.tgz#2a98fea9fbb8a606ddc79a4680034e9d5591c550"
   integrity sha512-ZtjIIFplxncqxvogq148C3hBLQE+W3iJ8E4UvJ09zIJUgzwLcROsWwFDErVSXY2Plzao5J9KUYNHKHMEUYDMKw==
 
-"@fullcalendar/angular@^4.4.5-beta":
-  version "4.4.5-beta"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/angular/-/angular-4.4.5-beta.tgz#c06c766b0664f2f89fe4a42433ffeb9f5a8ac57c"
-  integrity sha512-L144YrgrgFr75/LGNcDDX9xKy465AZR/EqWPxkdNFgBSeeblH+kf8OMy8K6YcuJDlv4nXw4RucBqbMrrQKvbQw==
+"@fullcalendar/angular@5.0.0-beta.2":
+  version "5.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/angular/-/angular-5.0.0-beta.2.tgz#2900c4937f9fe99d76cd0ddfd7d13e0a9ef73240"
+  integrity sha512-O5+EKmWfFSwbmCIaR77VaeL6X9z4eZxc93MVFEZcNeLwBbmp0Dl/WqQP6Eg0O9mSApFxw3uWy2OTXPVwerTk/Q==
   dependencies:
-    "@fullcalendar/core" "~4.4.0"
+    "@fullcalendar/core" "5.0.0-beta.2"
     fast-deep-equal "^3.1.1"
 
-"@fullcalendar/bootstrap@^4.4.0":
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/bootstrap/-/bootstrap-4.4.0.tgz#4d77d19b4e2d3aaf518f1ade187d8e4db341d2a1"
-  integrity sha512-2YYM2tPhTwNtYFBcIm4Cf/72pJ3qzRRmzGZx13mJeVYjbSOe1rn/tquff/mMDPPtfCZ4+XqXOLCzAeW7eWHGgw==
+"@fullcalendar/bootstrap@5.0.0-beta.2":
+  version "5.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/bootstrap/-/bootstrap-5.0.0-beta.2.tgz#78ff4f821ca74afca7517d95fecc4b0f8519bcb0"
+  integrity sha512-M5Zdjkk7rXY7LOkWIE7jXr5rbst1UUmkfwdRkZihAlW7mdL1Kw/eHUlY1HafCm1M9XcbU08SqsgdF++PPLfNaQ==
+  dependencies:
+    tslib "^1.9.3"
 
 "@fullcalendar/core@5.0.0-beta.2":
   version "5.0.0-beta.2"
@@ -1568,11 +1570,6 @@
   dependencies:
     preact "^10.0.5"
     tslib "^1.9.3"
-
-"@fullcalendar/core@~4.4.0":
-  version "4.4.0"
-  resolved "https://registry.yarnpkg.com/@fullcalendar/core/-/core-4.4.0.tgz#79dbc0cca836ce628a07e739a456da11ff141373"
-  integrity sha512-PC4mmXHJHAlXmUEmZVnePyA8yYCOBdxBNq8yjJqedEtT1X0x36yTFz/Y0Ux6bniICZDqYtk0xoxe6jaxi++e0g==
 
 "@fullcalendar/daygrid@5.0.0-beta.2":
   version "5.0.0-beta.2"

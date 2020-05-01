@@ -4,17 +4,4 @@
 	</h5>
 </div>
 
-<full-calendar
-	#calendar
-	initialView="dayGridMonth"
-	[header]="{
-		left: 'prev,next today',
-		center: 'title',
-		right: 'timeGridWeek'
-	}"
-	themeSystem="bootstrap"
-	[plugins]="calendarPlugins"
-	[weekends]="calendarWeekends"
-	[events]="calendarEvents"
-	(dateClick)="handleDateClick($event)"
-></full-calendar>
+<div #calendar></div>
