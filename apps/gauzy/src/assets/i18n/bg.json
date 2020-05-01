@@ -841,7 +841,14 @@
 		"RETAIL_PRICE_CURRENCY": "Retail price currency",
 		"QUANTITY": "Quantity",
 		"TAXES": "Taxes",
-		"BILLING_INVOICING_POLICY": "Billing invoicing policy"
+		"BILLING_INVOICING_POLICY": "Billing invoicing policy",
+		"PRODUCT_TYPES": "Product types",
+		"PRODUCT_CATEGORIES": "Product categories",
+		"ORGANIZATION": "Organization",
+		"EDIT_PRODUCT_TYPE": "Edit product type",
+		"ADD_PRODUCT_TYPE": "Add product type",
+		"PRODUCT_TYPE_SAVED": "Product type saved",
+		"PRODUCT_TYPE_DELETED": "Product type deleted"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
