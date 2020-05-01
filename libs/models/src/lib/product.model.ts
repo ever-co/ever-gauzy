@@ -23,7 +23,6 @@ export interface ProductType extends IBaseEntityModel {
 export interface ProductCategory extends IBaseEntityModel {
 	name: string;
 	organizationId?: string;
-	organization: Organization;
 }
 
 export interface ProductVariant extends IBaseEntityModel {
