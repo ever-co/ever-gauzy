@@ -51,10 +51,15 @@ export class OrganizationsService {
 
 	getById(
 		id: string = '',
-		select?: OrganizationSelectInput[]
+		select?: OrganizationSelectInput[],
+		relations?: string[]
 	): Observable<Organization> {
+		const data = JSON.stringify({ relations });
 		return this.http.get<Organization>(
-			`/api/organization/${id}/${JSON.stringify(select || '')}`
+			`/api/organization/${id}/${JSON.stringify(select || '')}`,
+			{
+				params: { data }
+			}
 		);
 	}
 

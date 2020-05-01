@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { Country, Organization } from '@gauzy/models';
+import { Country, Organization, OrganizationSelectInput } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
@@ -34,6 +34,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	vendors: string[] = [];
 	employeesCount: number;
 	countries: Country[] = [];
+	test: any;
 
 	private _ngOnDestroy$ = new Subject();
 	routeParams: Params;
@@ -160,8 +161,9 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				.getById(id)
 				.pipe(first())
 				.toPromise();
-
 			this.organizationEditStore.selectedOrganization = this.organization;
+			//NEED TO ADD TAGS TO GETBYID
+			// this.organization.tags = [];
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,

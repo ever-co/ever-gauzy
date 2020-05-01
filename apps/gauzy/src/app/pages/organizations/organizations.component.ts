@@ -115,7 +115,6 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	selectOrganization(data: SelectedRow) {
 		if (data.isSelected) {
 			this.selectedOrganization = data.data;
-			// console.warn(this.selectedOrganization);
 		} else {
 			this.selectedOrganization = null;
 		}

@@ -95,7 +95,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 					.getById(id)
 					.pipe(first())
 					.toPromise();
-				// console.warn(this.selectedOrg);
+
 				this.selectedOrgFromHeader = this.selectedOrg;
 				this.loadEmployeesCount();
 				this._loadOrgRecurringExpense();
@@ -197,7 +197,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	}
 
 	async addOrganizationRecurringExpense() {
-		console.log(this.selectedDate);
 		const result = await this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {

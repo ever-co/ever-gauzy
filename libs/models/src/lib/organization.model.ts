@@ -93,7 +93,8 @@ export enum OrganizationSelectInput {
 	currency = 'currency',
 	createdAt = 'createdAt',
 	updatedAt = 'updatedAt',
-	isActive = 'isActive'
+	isActive = 'isActive',
+	tags = 'tags'
 }
 
 export enum RegionsEnum {

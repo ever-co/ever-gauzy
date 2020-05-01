@@ -70,12 +70,16 @@ export class OrganizationController extends CrudController<Organization> {
 	@Get(':id/:select')
 	async findOneById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Param('select') select: string
+		@Param('select') select: string,
+		@Query('data') data: string
 	): Promise<Organization> {
 		const findObj = {};
-
+		const { relations } = JSON.parse(data);
 		if (select) {
 			findObj['select'] = JSON.parse(select);
+		}
+		if (relations) {
+			findObj['relations'] = JSON.parse(relations);
 		}
 
 		return this.organizationService.findOne(id, findObj);

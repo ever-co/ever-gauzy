@@ -43,13 +43,18 @@ export class Store {
 	get selectedOrganization(): Organization {
 		return this._selectedOrganization;
 	}
-	get selectedTags(): Tag[] {
-		return this._selectedTags;
-	}
 
 	set selectedEmployee(employee: SelectedEmployee) {
 		this._selectedEmployee = employee;
 		this.selectedEmployee$.next(employee);
+	}
+
+	get selectedTags(): Tag[] {
+		return this._selectedTags;
+	}
+	set selectedTags(tag: Tag[]) {
+		this.selectedTags$.next(tag);
+		this._selectedTags = tag;
 	}
 
 	get selectedEmployee(): SelectedEmployee {
@@ -59,10 +64,6 @@ export class Store {
 	set selectedOrganization(organization: Organization) {
 		this.selectedOrganization$.next(organization);
 		this._selectedOrganization = organization;
-	}
-	set selectedTags(tag: Tag[]) {
-		this.selectedTags$.next(tag);
-		this._selectedTags = tag;
 	}
 
 	get token(): string | null {
