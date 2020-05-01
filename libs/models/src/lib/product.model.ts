@@ -1,4 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Organization } from './organization.model';
 
 export interface Product extends IBaseEntityModel {
 	name: string;
@@ -15,12 +16,13 @@ export interface Product extends IBaseEntityModel {
 
 export interface ProductType extends IBaseEntityModel {
 	name: string;
-	organizationId: string;
+	organizationId?: string;
+	organization: Organization;
 }
 
 export interface ProductCategory extends IBaseEntityModel {
 	name: string;
-	organizationId: string;
+	organizationId?: string;
 }
 
 export interface ProductVariant extends IBaseEntityModel {

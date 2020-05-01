@@ -22,7 +22,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { InvoicesValueComponent } from './invoices-value.component';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoiceTasksSelectorComponent } from './table-components/invoice-tasks-selector.component';
 import { InvoiceProjectsSelectorComponent } from './table-components/invoice-project-selector.component';
@@ -38,6 +37,9 @@ import { InvoiceEmployeesSelectorComponent } from './table-components/invoice-em
 import { EmployeesService } from '../../@core/services/employees.service';
 import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { InvoicesRecievedComponent } from './invoices-recieved/invoices-recieved.component';
+import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
+import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -85,21 +87,25 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	entryComponents: [
 		InvoicesComponent,
-		InvoicesValueComponent,
 		InvoiceAddComponent,
 		InvoiceTasksSelectorComponent,
 		InvoiceProjectsSelectorComponent,
 		InvoiceEmployeesSelectorComponent,
-		InvoiceEditComponent
+		InvoiceEditComponent,
+		InvoicesRecievedComponent,
+		InvoiceSendMutationComponent,
+		InvoiceViewComponent
 	],
 	declarations: [
 		InvoicesComponent,
-		InvoicesValueComponent,
 		InvoiceAddComponent,
 		InvoiceTasksSelectorComponent,
 		InvoiceProjectsSelectorComponent,
 		InvoiceEmployeesSelectorComponent,
-		InvoiceEditComponent
+		InvoiceEditComponent,
+		InvoicesRecievedComponent,
+		InvoiceSendMutationComponent,
+		InvoiceViewComponent
 	]
 })
 export class InvoicesModule {}

@@ -17,6 +17,7 @@ import { ErrorHandlingService } from '../../@core/services/error-handling.servic
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
 import { CandidateSourceService } from '../../@core/services/candidate-source.service';
+import { CandidateFeedbacksService } from '../../@core/services/candidate-feedbacks.service';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -40,6 +41,9 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 	candidateName = 'Candidate';
 
+	candidateSource: string;
+	candidateRating: number;
+
 	includeDeleted = false;
 	loading = true;
 	hasEditPermission = false;
@@ -58,7 +62,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private translate: TranslateService,
 		private errorHandler: ErrorHandlingService,
-		private candidateSourceService: CandidateSourceService
+		private candidateSourceService: CandidateSourceService,
+		private candidateFeedbacksService: CandidateFeedbacksService
 	) {
 		super(translate);
 	}
@@ -187,6 +192,26 @@ export class CandidatesComponent extends TranslationBaseComponent
 	manageInvites() {
 		this.router.navigate(['/pages/employees/candidates/invites']);
 	}
+	async getCandidateSource(id: string) {
+		this.candidateSource = null;
+		const res = await this.candidateSourceService.getAll({
+			candidateId: id
+		});
+		if (res) {
+			return (this.candidateSource = res.items[0]);
+		}
+	}
+	async getCandidateRating(id: string) {
+		const res = await this.candidateFeedbacksService.getAll({
+			candidateId: id
+		});
+		if (res) {
+			this.candidateRating = 0;
+			for (let i = 0; i < res.total; i++) {
+				this.candidateRating += +res.items[i].rating / res.total;
+			}
+		}
+	}
 	private async loadPage() {
 		this.selectedCandidate = null;
 
@@ -202,19 +227,14 @@ export class CandidatesComponent extends TranslationBaseComponent
 		const result = [];
 
 		for (const candidate of items) {
-			let source = null;
-			const res = await this.candidateSourceService.getAll({
-				candidateId: candidate.id
-			});
-			if (res) {
-				source = res.items[0];
-			}
-
+			await this.getCandidateSource(candidate.id);
+			await this.getCandidateRating(candidate.id);
 			result.push({
 				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
 				email: candidate.user.email,
 				id: candidate.id,
-				source: source,
+				source: this.candidateSource,
+				rating: this.candidateRating,
 				status: candidate.status,
 				imageUrl: candidate.user.imageUrl,
 				tag: candidate.tags

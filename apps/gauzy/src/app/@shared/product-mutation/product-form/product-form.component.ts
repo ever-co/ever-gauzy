@@ -72,7 +72,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	async loadProductTypes() {
-		const res = await this.productTypeService.getAll({
+		const res = await this.productTypeService.getAll([], {
 			organizationId: this.store.selectedOrganization.id
 		});
 		this.productTypes = res.items;

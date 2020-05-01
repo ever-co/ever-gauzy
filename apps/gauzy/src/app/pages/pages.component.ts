@@ -70,6 +70,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Recieved Invoices',
+					icon: 'bulb-outline',
+					link: '/pages/accounting/invoices/recieved-invoices',
+					data: {
+						translated: false,
+						translationKey: 'MENU.INVOICES_RECIEVED'
+					}
+				},
+				{
 					title: 'Income',
 					icon: 'plus-circle-outline',
 					link: '/pages/accounting/income',

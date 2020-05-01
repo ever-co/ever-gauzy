@@ -13,6 +13,7 @@ export const createDefaultProductTypes = async (
 		const productType1 = new ProductType();
 		productType1.name = 'product type 1';
 		productType1.organizationId = organization.id;
+		productType1.organization = organization;
 		productTypes.push(productType1);
 	});
 

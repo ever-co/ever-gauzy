@@ -32,6 +32,16 @@
 			</button>
 			<button
 				nbButton
+				status="info"
+				(click)="send()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="upload-outline"> </nb-icon>
+				{{ 'BUTTONS.SEND' | translate }}
+			</button>
+			<button
+				nbButton
 				status="danger"
 				(click)="delete()"
 				class="mr-2"
@@ -46,7 +56,7 @@
 			<button
 				nbButton
 				status="info"
-				(click)="edit()"
+				(click)="view()"
 				class="mr-2"
 				[disabled]="disableButton"
 			>

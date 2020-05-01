@@ -33,7 +33,8 @@
 		"SYNC": "Синхр.",
 		"UPDATE": "Обновить",
 		"AUTO_SYNC": "Автосинхронизация",
-		"VIEW": "Вид"
+		"VIEW": "Вид",
+		"SEND": "Отправить"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -374,6 +375,7 @@
 		"INVOICES": "Счета",
 		"ORGANIZATION": "Организация",
 		"RECURRING_INVOICES": "Повторяющиеся счета",
+		"INVOICES_RECIEVED": "Полученные счета",
 		"ESTIMATES": "Оценки",
 		"MY_TASKS": "Мои задачи",
 		"TEAM_TASKS": "Задачи команды",
@@ -686,6 +688,8 @@
 			"ACCESS_PRIVATE_PROJECTS": "Доступ к приватным проектам",
 			"TIMESHEET_EDIT_TIME": "Изменить время в расписании",
 			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
+			"INVOICES_VIEW": "Просмотр счетов",
+			"INVOICES_EDIT": "Редактировать счета",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
@@ -947,6 +951,7 @@
 		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
 		"EDIT_INVOICE": "Изменить счет",
+		"VIEW_INVOICE": "Просмотр счета",
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
@@ -960,6 +965,9 @@
 		"FLAT": "Квартира",
 		"SUBTOTAL": "Итого",
 		"TOTAL": "Итого",
+		"NAME": "Имя",
+		"RECIEVED_INVOICES": "Полученные счета",
+		"SEND_INVOICE": "Счет отправлен",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
 			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
@@ -985,6 +993,10 @@
 			"EMPLOYEE_VALUE": "Сотрудник не может быть пустым",
 			"PROJECT_VALUE": "Проект не может быть пустым",
 			"TASK_VALUE": "Задание не может быть пустым"
+		},
+		"SEND": {
+			"CONFIRMATION": "Вы уверены, что хотите отправить этот счет на",
+			"ALREADY_SENT": "Этот счет уже был отправлен на"
 		}
 	},
 	"HEADER": {

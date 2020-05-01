@@ -4,14 +4,17 @@
 	justify-content: center;
 	align-items: center;
 }
+
 .rating-star-icon {
 	font-size: 1.5rem;
 	color: #d2d2d2;
 }
+
 .rating-star-icon:hover {
 	color: #ffa900;
 	cursor: pointer;
 }
+
 .selected {
 	color: #ffa900;
 }
