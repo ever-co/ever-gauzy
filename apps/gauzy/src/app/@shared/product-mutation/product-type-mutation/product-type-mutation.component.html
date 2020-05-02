@@ -1,0 +1,91 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(productType
+					? 'INVENTORY_PAGE.EDIT_PRODUCT_TYPE'
+					: 'INVENTORY_PAGE.ADD_PRODUCT_TYPE'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="dialogRef.close()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="form" *ngIf="form">
+			<div class="form-group">
+				<div class="row">
+					<div class="col-sm-12 mb-4">
+						<label class="label" for="organizationId">
+							{{ 'INVENTORY_PAGE.ORGANIZATION' | translate }}
+						</label>
+						<ng-select
+							[clearable]="false"
+							[items]="organizations"
+							bindLabel="name"
+							placeholder="Select Company"
+							id="organizationId"
+							[(ngModel)]="selectedOrganization"
+							(change)="selectOrganiztion($event)"
+							[ngModelOptions]="{ standalone: true }"
+						>
+							<ng-template
+								ng-option-tmp
+								let-item="item"
+								let-index="index"
+							>
+								<img
+									*ngIf="item.imageUrl"
+									[src]="item.imageUrl"
+									width="40"
+									height="40"
+								/>
+								{{ item.name }}
+							</ng-template>
+							<ng-template ng-label-tmp let-item="item">
+								<div class="selector-template">
+									<img
+										*ngIf="item.imageUrl"
+										height="25"
+										width="25"
+										[src]="item.imageUrl"
+									/>
+									<span>{{ item.name }}</span>
+								</div>
+							</ng-template>
+						</ng-select>
+					</div>
+					<div class="col-sm-12 mb-4">
+						<label class="label" for="nameInput">
+							{{ 'INVENTORY_PAGE.NAME' | translate }}
+						</label>
+						<input
+							fullWidth
+							id="nameInput"
+							type="text"
+							nbInput
+							formControlName="name"
+							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+						/>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="warning"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CLOSE' | translate }}
+		</button>
+		<button status="success" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
