@@ -112,11 +112,6 @@ export class OrganizationController extends CrudController<Organization> {
 	async create(
 		@Body() entity: OrganizationCreateInput
 	): Promise<Organization> {
-		const user = RequestContext.currentUser();
-		entity.tenant = {
-			id: user.tenantId
-		};
-
 		return this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
 }
