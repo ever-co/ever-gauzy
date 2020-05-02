@@ -40,10 +40,13 @@ import { EmployeeGetCommand } from '../employee/commands/employee.get.command';
 import * as moment from 'moment';
 import {
 	TimeLogCreateCommand,
-	TimeSlotCreateCommand
+	TimeSlotCreateCommand,
+	TimesheetGetCommand,
+	TimesheetCreateCommand
 } from '../timesheet/commands';
 import { environment } from '@env-api/environment';
 import { getDummyImage } from '../core';
+import { TenantService } from '../tenant/tenant.service';
 
 @Injectable()
 export class HubstaffService {
@@ -58,6 +61,7 @@ export class HubstaffService {
 		private _roleService: RoleService,
 		private _organizationService: OrganizationService,
 		private _userService: UserService,
+		private _tenantService: TenantService,
 		private readonly commandBus: CommandBus
 	) {}
 
@@ -263,9 +267,13 @@ export class HubstaffService {
 	}): Promise<IIntegrationMap[]> {
 		const integrationMaps = await organizations.map(
 			async (organization) => {
+				const tenant = await this._tenantService.findOne({
+					where: { name: 'Ever' }
+				});
 				const gauzyOrganization = await this.commandBus.execute(
 					new OrganizationCreateCommand({
 						...organization,
+						tenant,
 						imageUrl:
 							organization.imageUrl || getDummyImage(330, 300, '')
 					})
@@ -350,6 +358,7 @@ export class HubstaffService {
 				entity: IntegrationEntity.EMPLOYEE
 			}
 		});
+
 		return record
 			? record
 			: await this._handleEmployee({
@@ -361,34 +370,38 @@ export class HubstaffService {
 	}
 
 	async syncTimeSlots(timeSlots, token, integrationId, organizationId) {
-		return await Promise.all(
-			timeSlots.map(async (timeSlot) => {
-				const employee = await this._getEmployeeByHubstaffUserId(
-					timeSlot.user_id,
-					token,
-					integrationId,
-					organizationId
-				);
+		let integratedTimeSlots = [];
 
-				const gauzyTimeSlot = await this.commandBus.execute(
-					new TimeSlotCreateCommand({
-						employeeId: employee.gauzyId,
-						startedAt: timeSlot.starts_at,
-						keyboard: timeSlot.keyboard,
-						mouse: timeSlot.mouse,
-						overall: timeSlot.overall,
-						duration: timeSlot.tracked,
-						time_slot: timeSlot.time_slot
-					})
-				);
-				return await this._integrationMapService.create({
-					gauzyId: gauzyTimeSlot.id,
-					integrationId,
-					sourceId: timeSlot.id,
-					entity: IntegrationEntity.TIME_SLOT
-				});
-			})
-		);
+		for await (const timeSlot of timeSlots) {
+			const employee = await this._getEmployeeByHubstaffUserId(
+				timeSlot.user_id,
+				token,
+				integrationId,
+				organizationId
+			);
+
+			const gauzyTimeSlot = await this.commandBus.execute(
+				new TimeSlotCreateCommand({
+					employeeId: employee.gauzyId,
+					startedAt: timeSlot.starts_at,
+					keyboard: timeSlot.keyboard,
+					mouse: timeSlot.mouse,
+					overall: timeSlot.overall,
+					duration: timeSlot.tracked,
+					time_slot: timeSlot.time_slot
+				})
+			);
+
+			const integratedSlots = await this._integrationMapService.create({
+				gauzyId: gauzyTimeSlot.id,
+				integrationId,
+				sourceId: timeSlot.id,
+				entity: IntegrationEntity.TIME_SLOT
+			});
+
+			integratedTimeSlots = integratedTimeSlots.concat(integratedSlots);
+		}
+		return integratedTimeSlots;
 	}
 
 	async syncTimeLogs(
@@ -396,36 +409,61 @@ export class HubstaffService {
 		token,
 		integrationId,
 		organizationId,
-		projectId
+		projectId,
+		start,
+		end
 	) {
-		return await Promise.all(
-			timeLogs.map(async ({ id, user_id, tracked, manual, date }) => {
-				const employee = await this._getEmployeeByHubstaffUserId(
-					user_id,
-					token,
-					integrationId,
-					organizationId
-				);
+		let integratedTimeLogs = [];
 
-				const gauzyTimeLog = await this.commandBus.execute(
-					new TimeLogCreateCommand({
-						projectId,
+		for await (const timeLog of timeLogs) {
+			const employee = await this._getEmployeeByHubstaffUserId(
+				timeLog.user_id,
+				token,
+				integrationId,
+				organizationId
+			);
+
+			let timesheet = await this.commandBus.execute(
+				new TimesheetGetCommand({
+					where: { employeeId: employee.gauzyId }
+				})
+			);
+
+			if (!timesheet) {
+				timesheet = await this.commandBus.execute(
+					new TimesheetCreateCommand({
+						startedAt: start,
+						stoppedAt: end,
 						employeeId: employee.gauzyId,
-						logType: !manual
-							? TimeLogType.TRACKED
-							: TimeLogType.MANUAL,
-						duration: tracked,
-						startedAt: date
+						// to be get from formatedLogs, filtered by user and get totals
+						mouse: 0,
+						keyboard: 0,
+						duration: 0
 					})
 				);
-				return await this._integrationMapService.create({
-					gauzyId: gauzyTimeLog.id,
-					integrationId,
-					sourceId: id,
-					entity: IntegrationEntity.TIME_LOG
-				});
-			})
-		);
+			}
+
+			const gauzyTimeLog = await this.commandBus.execute(
+				new TimeLogCreateCommand({
+					projectId,
+					employeeId: employee.gauzyId,
+					logType: timeLog.logType,
+					duration: timeLog.tracked,
+					startedAt: timeLog.starts_at,
+					timesheetId: timesheet.id
+				})
+			);
+
+			const integratedLogs = await this._integrationMapService.create({
+				gauzyId: gauzyTimeLog.id,
+				integrationId,
+				sourceId: timeLog.id,
+				entity: IntegrationEntity.TIME_LOG
+			});
+			integratedTimeLogs = integratedTimeLogs.concat(integratedLogs);
+		}
+
+		return integratedTimeLogs;
 	}
 
 	async syncEmployee({ integrationId, user, organizationId }) {
@@ -480,6 +518,7 @@ export class HubstaffService {
 			`https://api.hubstaff.com/v2/users/${user_id}`,
 			token
 		);
+
 		return await this.syncEmployee({
 			integrationId,
 			user,
@@ -549,38 +588,43 @@ export class HubstaffService {
 	) {
 		const start = moment(dateRange.start).format('YYYY-MM-DD');
 		const end = moment(dateRange.end).format('YYYY-MM-DD');
+		const syncedActivities = {
+			integratedTimeLogs: [],
+			integratedTimeSlots: []
+		};
 
-		const activitiesMap = await Promise.all(
-			projectsMap.map(async (project) => {
-				const [timeLogs, timeSlots] = await Promise.all([
-					await this.fetchIntegration(
-						`https://api.hubstaff.com/v2/projects/${project.sourceId}/activities/daily?date[start]=${start}&date[stop]=${end}`,
-						token
-					),
-					await this.fetchIntegration(
-						`https://api.hubstaff.com/v2/projects/${project.sourceId}/activities?time_slot[start]=${start}&time_slot[stop]=${end}`,
-						token
-					)
-				]);
-				return await Promise.all([
-					await this.syncTimeLogs(
-						timeLogs.daily_activities,
-						token,
-						integrationId,
-						organizationId,
-						project.gauzyId
-					),
-					await this.syncTimeSlots(
-						timeSlots.activities,
-						token,
-						integrationId,
-						organizationId
-					)
-				]);
-			})
-		);
+		for await (const project of projectsMap) {
+			const timeSlots = await this.fetchIntegration(
+				`https://api.hubstaff.com/v2/projects/${project.sourceId}/activities?time_slot[start]=${start}&time_slot[stop]=${end}`,
+				token
+			);
 
-		return activitiesMap.flat(Infinity);
+			const integratedTimeLogs = await this.syncTimeLogs(
+				this.formatedLogsFromSlots(timeSlots.activities),
+				token,
+				integrationId,
+				organizationId,
+				project.gauzyId,
+				start,
+				end
+			);
+
+			const integratedTimeSlots = await this.syncTimeSlots(
+				timeSlots.activities,
+				token,
+				integrationId,
+				organizationId
+			);
+
+			syncedActivities.integratedTimeLogs = syncedActivities.integratedTimeLogs.concat(
+				integratedTimeLogs
+			);
+			syncedActivities.integratedTimeSlots = syncedActivities.integratedTimeSlots.concat(
+				integratedTimeSlots
+			);
+		}
+
+		return syncedActivities;
 	}
 
 	async autoSync({
@@ -592,7 +636,8 @@ export class HubstaffService {
 		dateRange
 	}) {
 		// entities have depended entity. eg to fetch Task we need Project id or Org id, because our Task entity is related to Project, the relation here is same, we need project id to fetch Tasks
-		return await Promise.all(
+
+		const integratedMaps = await Promise.all(
 			entitiesToSync.map(async (setting) => {
 				switch (setting.entity) {
 					case IntegrationEntity.PROJECT:
@@ -641,5 +686,52 @@ export class HubstaffService {
 				}
 			})
 		);
+		return integratedMaps;
+	}
+
+	formatedLogsFromSlots(timeSlots) {
+		const timeLogs = timeSlots.reduce((prev, current) => {
+			const prevLog = prev[current.date];
+			return {
+				...prev,
+				[current.date]: prevLog
+					? {
+							id: current.id,
+							date: current.date,
+							user_id: prevLog.user_id,
+							project_id: prevLog.project_id,
+							starts_at: moment
+								.utc(prevLog.starts_at)
+								.format('YYYY-MM-DD HH:mm:ss'),
+							keyboard: prevLog.keyboard += current.keyboard,
+							mouse: prevLog.mouse += current.mouse,
+							overall: prevLog.overall += current.overall,
+							tracked: prevLog.tracked += current.tracked,
+							// this will take the last chunk(slot), maybe we should allow percentage for this, as one time log can have both manual and tracked
+							logType:
+								current.client === 'windows'
+									? TimeLogType.TRACKED
+									: TimeLogType.MANUAL
+					  }
+					: {
+							id: current.id,
+							date: current.date,
+							user_id: current.user_id,
+							project_id: current.project_id,
+							starts_at: moment
+								.utc(current.starts_at)
+								.format('YYYY-MM-DD HH:mm:ss'),
+							keyboard: current.keyboard,
+							mouse: current.mouse,
+							overall: current.overall,
+							tracked: current.tracked,
+							logType:
+								current.client === 'windows'
+									? TimeLogType.TRACKED
+									: TimeLogType.MANUAL
+					  }
+			};
+		}, {});
+		return Object.values(timeLogs);
 	}
 }

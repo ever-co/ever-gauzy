@@ -22,12 +22,12 @@ export interface Timesheet extends IBaseEntityModel {
 export interface ITimesheetCreateInput {
 	employeeId: string;
 	approvedById?: string;
-	duration?: number;
-	keyboard?: number;
-	mouse?: number;
+	duration: number;
+	keyboard: number;
+	mouse: number;
 	overall?: number;
-	startedAt?: Date;
-	stoppedAt?: Date;
+	startedAt: Date;
+	stoppedAt: Date;
 	approvedAt?: Date;
 	submittedAt?: Date;
 	lockedAt?: Date;
@@ -75,13 +75,13 @@ export interface ITimeLogCreateInput {
 }
 
 export interface ITimeSlotCreateInput {
-	employeeId;
-	duration;
-	keyboard;
-	mouse;
-	overall;
-	startedAt;
-	time_slot;
+	employeeId: string;
+	duration: number;
+	keyboard: number;
+	mouse: number;
+	overall: number;
+	startedAt: Date;
+	time_slot: Date;
 }
 
 export enum TimeLogType {

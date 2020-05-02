@@ -41,7 +41,6 @@ export class TimeLogController {
 		@Query() entity: IGetTimeLogInput,
 		@UserRole() roles: RolesEnum
 	): Promise<TimeLog[]> {
-		console.log(entity, 'ENTITY');
 		return this.timeLogService.getTimeLogs(entity, roles);
 	}
 
