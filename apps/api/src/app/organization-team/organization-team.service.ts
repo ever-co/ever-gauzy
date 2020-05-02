@@ -4,33 +4,33 @@ import { Repository, FindManyOptions } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
-	OrganizationTeams as IOrganizationTeams
+	OrganizationTeam as IOrganizationTeam
 } from '@gauzy/models';
 import { IPagination } from '../core';
 import { Employee } from '../employee/employee.entity';
 import { User } from '../user/user.entity';
-import { OrganizationTeams } from './organization-teams.entity';
+import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 
 @Injectable()
-export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
+export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 	constructor(
-		@InjectRepository(OrganizationTeams)
-		private readonly organizationTeamsRepository: Repository<
-			OrganizationTeams
+		@InjectRepository(OrganizationTeam)
+		private readonly organizationTeamRepository: Repository<
+			OrganizationTeam
 		>,
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>
 	) {
-		super(organizationTeamsRepository);
+		super(organizationTeamRepository);
 	}
 
 	async createOrgTeam(
 		entity: IOrganizationTeamCreateInput
-	): Promise<OrganizationTeams> {
-		const organizationTeam = new OrganizationTeams();
+	): Promise<OrganizationTeam> {
+		const organizationTeam = new OrganizationTeam();
 		organizationTeam.name = entity.name;
 		organizationTeam.organizationId = entity.organizationId;
 
@@ -50,17 +50,17 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 		});
 		organizationTeam.members = teamEmployees;
 
-		return this.organizationTeamsRepository.save(organizationTeam);
+		return this.organizationTeamRepository.save(organizationTeam);
 	}
 
 	async updateOrgTeam(
 		id: string,
 		entity: IOrganizationTeamCreateInput
-	): Promise<OrganizationTeams> {
+	): Promise<OrganizationTeam> {
 		try {
-			await this.organizationTeamsRepository.delete(id);
+			await this.organizationTeamRepository.delete(id);
 
-			const organizationTeam = new OrganizationTeams();
+			const organizationTeam = new OrganizationTeam();
 			organizationTeam.name = entity.name;
 			organizationTeam.organizationId = entity.organizationId;
 			const employees = await this.employeeRepository.findByIds(
@@ -79,18 +79,18 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 			});
 			organizationTeam.members = teamEmployees;
 
-			return this.organizationTeamsRepository.save(organizationTeam);
+			return this.organizationTeamRepository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}
 	}
 
 	async getAllOrgTeams(
-		filter: FindManyOptions<OrganizationTeams>
-	): Promise<IPagination<IOrganizationTeams>> {
-		const total = await this.organizationTeamsRepository.count(filter);
+		filter: FindManyOptions<OrganizationTeam>
+	): Promise<IPagination<IOrganizationTeam>> {
+		const total = await this.organizationTeamRepository.count(filter);
 
-		const items = await this.organizationTeamsRepository.find(filter);
+		const items = await this.organizationTeamRepository.find(filter);
 
 		for (const orgTeams of items) {
 			for (const teamEmp of orgTeams.members) {

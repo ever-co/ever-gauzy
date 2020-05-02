@@ -2,12 +2,11 @@ import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Base } from '../core/entities/base';
-import { OrganizationTeams as IOrganizationTeams } from '@gauzy/models';
-import { Employee } from '../employee/employee.entity';
+import { OrganizationTeam as IOrganizationTeam } from '@gauzy/models';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 
 @Entity('organization_team')
-export class OrganizationTeams extends Base implements IOrganizationTeams {
+export class OrganizationTeam extends Base implements IOrganizationTeam {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -29,8 +28,7 @@ export class OrganizationTeams extends Base implements IOrganizationTeams {
 
 	@OneToMany(
 		(type) => OrganizationTeamEmployee,
-		(organizationTeamEmployee) =>
-			organizationTeamEmployee.organizationTeams,
+		(organizationTeamEmployee) => organizationTeamEmployee.organizationTeam,
 		{
 			cascade: true
 		}

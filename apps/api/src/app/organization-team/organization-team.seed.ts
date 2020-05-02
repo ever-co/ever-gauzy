@@ -1,7 +1,7 @@
 import { Connection } from 'typeorm';
 import { Employee } from '../employee/employee.entity';
 import { environment as env } from '@env-api/environment';
-import { OrganizationTeams } from './organization-teams.entity';
+import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Organization } from '../organization/organization.entity';
 
@@ -9,12 +9,12 @@ export const createDefaultTeams = async (
 	connection: Connection,
 	organization: Organization,
 	employees: Employee[]
-): Promise<OrganizationTeams[]> => {
+): Promise<OrganizationTeam[]> => {
 	const teams = env.defaultTeams || [];
 
-	const organizationTeams: OrganizationTeams[] = [];
+	const organizationTeams: OrganizationTeam[] = [];
 	for (let i = 0; i < teams.length; i++) {
-		const team = new OrganizationTeams();
+		const team = new OrganizationTeam();
 		team.name = teams[i].name;
 		team.organizationId = organization.id;
 
@@ -42,7 +42,7 @@ export const createDefaultTeams = async (
 
 const insertOrganizationTeam = async (
 	connection: Connection,
-	teams: OrganizationTeams[]
+	teams: OrganizationTeam[]
 ): Promise<void> => {
 	await connection.manager.save(teams);
 };
