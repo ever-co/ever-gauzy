@@ -25,7 +25,7 @@ export class OrganizationTeams extends Base implements IOrganizationTeams {
 	// @JoinTable({
 	// 	name: 'organization_team_employee'
 	// })
-	members?: Employee[];
+	// members?: Employee[];
 
 	@OneToMany(
 		(type) => OrganizationTeamEmployee,
@@ -35,5 +35,5 @@ export class OrganizationTeams extends Base implements IOrganizationTeams {
 			cascade: true
 		}
 	)
-	teamEmployee?: OrganizationTeamEmployee[];
+	members?: OrganizationTeamEmployee[];
 }

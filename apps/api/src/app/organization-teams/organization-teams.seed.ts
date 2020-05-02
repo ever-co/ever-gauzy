@@ -18,18 +18,19 @@ export const createDefaultTeams = async (
 		team.name = teams[i].name;
 		team.organizationId = organization.id;
 
-		team.members = employees.filter(
+		const emps = employees.filter(
 			(e) => (teams[i].defaultMembers || []).indexOf(e.user.email) > -1
 		);
 
-		const teamEmployee: OrganizationTeamEmployee[] = [];
-		team.members.forEach((member) => {
-			const employee = new OrganizationTeamEmployee();
-			employee.employeeId = member.id;
-			teamEmployee.push(employee);
+		const teamEmployees: OrganizationTeamEmployee[] = [];
+
+		emps.forEach((emp) => {
+			const teamEmployee = new OrganizationTeamEmployee();
+			teamEmployee.employeeId = emp.id;
+			teamEmployees.push(teamEmployee);
 		});
 
-		team.teamEmployee = teamEmployee;
+		team.members = teamEmployees;
 
 		organizationTeams.push(team);
 	}

@@ -41,17 +41,14 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 			}
 		);
 
-		organizationTeam.members = employees;
-
-		// OrganizationTeamEmployee
-		const teamEmployee: OrganizationTeamEmployee[] = [];
-		organizationTeam.members.forEach((member) => {
-			const employee = new OrganizationTeamEmployee();
-			employee.employeeId = member.id;
-			teamEmployee.push(employee);
+		const teamEmployees: OrganizationTeamEmployee[] = [];
+		employees.forEach((employee) => {
+			const teamEmployee = new OrganizationTeamEmployee();
+			teamEmployee.employeeId = employee.id;
+			teamEmployee.employee = employee;
+			teamEmployees.push(teamEmployee);
 		});
-		organizationTeam.teamEmployee = teamEmployee;
-		// OrganizationTeamEmployee
+		organizationTeam.members = teamEmployees;
 
 		return this.organizationTeamsRepository.save(organizationTeam);
 	}
@@ -73,17 +70,14 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 				}
 			);
 
-			organizationTeam.members = employees;
-
-			// OrganizationTeamEmployee
-			const teamEmployee: OrganizationTeamEmployee[] = [];
-			organizationTeam.members.forEach((member) => {
-				const employee = new OrganizationTeamEmployee();
-				employee.employeeId = member.id;
-				teamEmployee.push(employee);
+			const teamEmployees: OrganizationTeamEmployee[] = [];
+			employees.forEach((employee) => {
+				const teamEmployee = new OrganizationTeamEmployee();
+				teamEmployee.employeeId = employee.id;
+				teamEmployee.employee = employee;
+				teamEmployees.push(teamEmployee);
 			});
-			organizationTeam.teamEmployee = teamEmployee;
-			// OrganizationTeamEmployee
+			organizationTeam.members = teamEmployees;
 
 			return this.organizationTeamsRepository.save(organizationTeam);
 		} catch (err /*: WriteError*/) {
@@ -99,15 +93,13 @@ export class OrganizationTeamsService extends CrudService<OrganizationTeams> {
 		const items = await this.organizationTeamsRepository.find(filter);
 
 		for (const orgTeams of items) {
-			const emps: Employee[] = [];
-			for (const teamEmp of orgTeams.teamEmployee) {
+			for (const teamEmp of orgTeams.members) {
 				const emp = await this.employeeRepository.findOne(
 					teamEmp.employeeId
 				);
 				emp.user = await this.userRepository.findOne(emp.userId);
-				emps.push(emp);
+				teamEmp.employee = emp;
 			}
-			orgTeams.members = emps;
 		}
 
 		return { items, total };
