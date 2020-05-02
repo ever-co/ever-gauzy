@@ -34,10 +34,13 @@ export class ProductMutationComponent extends TranslationBaseComponent {
 
 	async onSaveProduct(productRequest: Product) {
 		if (!productRequest.id) {
+			console.warn('PRODUCT MUTATION COMP');
+
 			this.product = await this.productService.create(productRequest);
 			this.product.variants = await this.productVariantService.createProductVariants(
 				this.product
 			);
+			console.warn(this.product);
 		} else {
 			this.product = await this.productService.update(productRequest);
 		}
