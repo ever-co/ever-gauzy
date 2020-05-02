@@ -26,7 +26,7 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	ngOnInit() {
 		if (this.team) {
 			this.selectedEmployees = this.team.members.map(
-				(member) => member.id
+				(member) => member.employeeId
 			);
 			this.name = this.team.name;
 		}
