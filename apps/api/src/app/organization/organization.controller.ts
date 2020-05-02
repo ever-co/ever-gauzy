@@ -20,7 +20,6 @@ import { OrganizationCreateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { AuthGuard } from '@nestjs/passport';
-import { RequestContext } from '../core/context';
 
 @ApiTags('Organization')
 @Controller()
