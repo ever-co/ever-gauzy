@@ -57,7 +57,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	private _initializeForm() {
-		console.warn(this.product);
 		if (this.product) {
 			this.tags = this.product.tags;
 		}

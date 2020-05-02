@@ -129,8 +129,6 @@ export class InventoryComponent extends TranslationBaseComponent
 		const { items } = await this.productService.getAll();
 		this.loading = false;
 		this.smartTableSource.load(items);
-		console.warn('INVENOTRY COMPONENT');
-		console.warn(items);
 	}
 
 	async selectItem($event: SelectedProduct) {
