@@ -3,7 +3,7 @@ import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
-import { OrganizationTeams } from './organization-teams-model';
+import { OrganizationTeam } from './organization-team-model';
 import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { Education } from './candidate-education.model';
@@ -15,7 +15,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	organization: Organization;
 	orgId: string;
 	status?: Status;
-	teams?: OrganizationTeams[];
+	teams?: OrganizationTeam[];
 	tenant: ITenant;
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
