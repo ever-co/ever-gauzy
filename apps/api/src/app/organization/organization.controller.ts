@@ -20,6 +20,7 @@ import { OrganizationCreateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { AuthGuard } from '@nestjs/passport';
+import { RequestContext } from '../core/context';
 
 @ApiTags('Organization')
 @Controller()
@@ -105,10 +106,17 @@ export class OrganizationController extends CrudController<Organization> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	async create(
 		@Body() entity: OrganizationCreateInput
 	): Promise<Organization> {
+		const user = RequestContext.currentUser();
+		entity.tenant = {
+			id: user.tenantId
+		};
+
 		return this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
 }

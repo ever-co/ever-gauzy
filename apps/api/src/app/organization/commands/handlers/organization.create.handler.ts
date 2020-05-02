@@ -21,19 +21,21 @@ export class OrganizationCreateHandler
 		command: OrganizationCreateCommand
 	): Promise<Organization> {
 		const { input } = command;
+		const { id: tenantId } = input.tenant;
 
-		//1. Get roleId for Super Admin user
-
-		// SUPER ADMIN DOES NOT EXIST, CHANGED ONLY FOR TESTING INTEGRATION
-
+		//1. Get roleId for Super Admin user of the Tenant
 		const { id: roleId } = await this.roleService.findOne({
+			tenant: { id: tenantId },
 			name: RolesEnum.SUPER_ADMIN
 		});
 
-		// 2. Get all Super Admin Users
+		// 2. Get all Super Admin Users of the Tenant
 		const { items: superAdminUsers } = await this.userService.findAll({
 			relations: ['role'],
-			where: { role: { id: roleId } }
+			where: {
+				tenant: { id: tenantId },
+				role: { id: roleId }
+			}
 		});
 
 		// 3. Create organization
