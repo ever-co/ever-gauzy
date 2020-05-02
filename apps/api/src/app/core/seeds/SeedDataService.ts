@@ -48,10 +48,10 @@ import {
 } from '../../user-organization/user-organization.seed';
 import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { createCountries } from '../../country/country.seed';
-import { OrganizationTeams } from '../../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../../organization-team/organization-team.entity';
 import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
 import { Country } from '../../country';
-import { createDefaultTeams } from '../../organization-teams/organization-teams.seed';
+import { createDefaultTeams } from '../../organization-team/organization-team.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
@@ -133,7 +133,7 @@ const allEntities = [
 	InvoiceItem,
 	Expense,
 	EmployeeSetting,
-	OrganizationTeams,
+	OrganizationTeam,
 	OrganizationTeamEmployee,
 	OrganizationClients,
 	OrganizationVendor,

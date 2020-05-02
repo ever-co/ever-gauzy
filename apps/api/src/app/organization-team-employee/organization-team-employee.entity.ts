@@ -3,7 +3,7 @@ import { Base } from '../core/entities/base';
 import { Entity, Column, ManyToOne, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
-import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { Employee } from '../employee/employee.entity';
 import { Role } from '../role/role.entity';
 
@@ -14,7 +14,7 @@ export class OrganizationTeamEmployee extends Base
 	@IsString()
 	@IsNotEmpty()
 	@Column()
-	public organizationTeamsId!: string;
+	public organizationTeamId!: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -23,13 +23,13 @@ export class OrganizationTeamEmployee extends Base
 	public employeeId!: string;
 
 	@ManyToOne(
-		(type) => OrganizationTeams,
-		(organizationTeams) => organizationTeams.members,
+		(type) => OrganizationTeam,
+		(organizationTeam) => organizationTeam.members,
 		{
 			onDelete: 'CASCADE'
 		}
 	)
-	public organizationTeams!: OrganizationTeams;
+	public organizationTeam!: OrganizationTeam;
 
 	@ManyToOne(
 		(type) => Employee,
