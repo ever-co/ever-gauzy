@@ -17,25 +17,90 @@
 				</nb-toggle>
 
 				<div class="tied-entities-wrapper">
-					<nb-toggle
+					<ng-container
 						*ngFor="let tiedEntity of entity.tiedEntities"
-						[(checked)]="tiedEntity.sync"
-						[disabled]="!entity.sync"
-						labelPosition="start"
-						status="basic"
 					>
-						{{ tiedEntity.entity }}
-					</nb-toggle>
+						<div class="tied-entity">
+							<div
+								*ngIf="
+									tiedEntity.entity === 'Activity';
+									else notActivityTemp
+								"
+								class="entity-more-options"
+							>
+								<nb-icon
+									[icon]="
+										expandOptions
+											? 'chevron-down-outline'
+											: 'chevron-right-outline'
+									"
+									(click)="expandOptions = !expandOptions"
+								></nb-icon>
+
+								<label class="label">
+									{{ tiedEntity.entity }}
+								</label>
+								<nb-icon
+									icon="info-outline"
+									nbTooltip="{{
+										'INTEGRATIONS.HUBSTAFF_PAGE.TOOLTIP_ACTIVITY_INFO'
+											| translate
+									}}"
+									nbTooltipTrigger="hover"
+								>
+								</nb-icon>
+							</div>
+							<ng-template #notActivityTemp>
+								<label class="label">
+									{{ tiedEntity.entity }}
+								</label>
+							</ng-template>
+							<nb-toggle
+								[(checked)]="tiedEntity.sync"
+								[disabled]="!entity.sync"
+								labelPosition="start"
+								status="basic"
+							>
+							</nb-toggle>
+						</div>
+
+						<div
+							[ngClass]="
+								expandOptions &&
+								tiedEntity.entity === 'Activity'
+									? 'visible'
+									: 'not-visible'
+							"
+						>
+							<input
+								nbInput
+								placeholder="{{
+									'INTEGRATIONS.HUBSTAFF_PAGE.DATE_RANGE_PLACEHOLDER'
+										| translate
+								}}"
+								[nbDatepicker]="rangePicker"
+								[value]="dispayDate"
+							/>
+							<nb-rangepicker
+								#rangePicker
+								[range]="defaultRange$ | async"
+								[max]="maxDate"
+								[min]="minDate"
+								(rangeChange)="onDateChange($event)"
+							>
+							</nb-rangepicker>
+						</div>
+					</ng-container>
 				</div>
 			</ng-container>
 		</div>
 	</nb-card-body>
 
 	<nb-card-footer>
-		<div class="dialog-footer">
+		<div class=" dialog-footer">
 			<button
 				nbButton
-				(click)="saveSettings()"
+				(click)="dialogRef.close(true)"
 				status="primary"
 				class="mr-2"
 			>

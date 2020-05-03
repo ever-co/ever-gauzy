@@ -204,5 +204,8 @@ export const environment: IEnvironment = {
 		organizationsPerTenant: 10,
 		employeesPerOrganization: 10,
 		candidatesPerOrganization: 2
-	}
+	},
+
+	defaultHubstaffUserPass:
+		process.env.INTEGRATED_HUBSTAFF_USER_PASS || 'hubstaff'
 };

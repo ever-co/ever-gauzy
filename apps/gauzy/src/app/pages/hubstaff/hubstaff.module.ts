@@ -11,7 +11,9 @@ import {
 	NbSelectModule,
 	NbCheckboxModule,
 	NbToggleModule,
-	NbDialogModule
+	NbDialogModule,
+	NbDatepickerModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -40,6 +42,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCardModule,
 		HubstaffRoutingModule,
 		NbButtonModule,
+		NbTooltipModule,
 		NbInputModule,
 		NbIconModule,
 		NbSpinnerModule,
@@ -49,6 +52,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCheckboxModule,
 		NbToggleModule,
 		ThemeModule,
+		NbDatepickerModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

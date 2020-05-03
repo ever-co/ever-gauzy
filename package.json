@@ -123,6 +123,8 @@
 		"@angular/service-worker": "^8.2.4",
 		"@asymmetrik/ngx-leaflet": "^5.0.2",
 		"@cloudinary/angular-5.x": "^1.0.3",
+		"@datorama/akita": "^4.23.0",
+		"@datorama/akita-ngdevtools": "^4.0.0",
 		"@fortawesome/fontawesome-free": "^5.9.0",
 		"@fullcalendar/angular": "^4.4.5-beta",
 		"@fullcalendar/bootstrap": "^4.4.0",

@@ -1,4 +1,5 @@
 import {
+	DeepPartial,
 	FindConditions,
 	FindManyOptions,
 	FindOneOptions,
@@ -97,6 +98,26 @@ export abstract class TenantAwareCrudService<T extends TenantBase>
 		id: string | number | FindOneOptions<T> | FindConditions<T>,
 		options?: FindOneOptions<T>
 	): Promise<T> {
+		if (typeof id === 'object') {
+			const firstOptions = id as FindOneOptions<T>;
+			return await super.findOne(
+				this.findManyWithTenant(firstOptions),
+				options
+			);
+		}
+
 		return await super.findOne(id, this.findManyWithTenant(options));
+	}
+
+	public async create(entity: DeepPartial<T>, ...options: any[]): Promise<T> {
+		const user = RequestContext.currentUser();
+		if (user && user.tenantId) {
+			const entityWithTenant = {
+				...entity,
+				tenant: { id: user.tenantId }
+			};
+			return super.create(entityWithTenant, ...options);
+		}
+		return super.create(entity, ...options);
 	}
 }

@@ -91,7 +91,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}
-
 	async initializeForm() {
 		this.form = this.fb.group({
 			equipment: [

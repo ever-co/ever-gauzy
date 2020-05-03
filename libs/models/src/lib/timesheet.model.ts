@@ -19,6 +19,22 @@ export interface Timesheet extends IBaseEntityModel {
 	status: string;
 }
 
+export interface ITimesheetCreateInput {
+	employeeId: string;
+	approvedById?: string;
+	duration: number;
+	keyboard: number;
+	mouse: number;
+	overall?: number;
+	startedAt: Date;
+	stoppedAt: Date;
+	approvedAt?: Date;
+	submittedAt?: Date;
+	lockedAt?: Date;
+	isBilled?: boolean;
+	status?: string;
+}
+
 export enum TimesheetStatus {
 	DRAFT = 'DRAFT',
 	PENDING = 'PENDING',
@@ -42,6 +58,30 @@ export interface TimeLog extends IBaseEntityModel {
 	description?: string;
 	duration: number;
 	isBillable: boolean;
+}
+
+export interface ITimeLogCreateInput {
+	employeeId: string;
+	timesheetId?: string;
+	taskId?: string;
+	projectId: string;
+	startedAt?: Date;
+	stoppedAt?: Date;
+	logType: TimeLogType;
+	description?: string;
+	duration: number;
+	isBillable?: boolean;
+	isBilled?: boolean;
+}
+
+export interface ITimeSlotCreateInput {
+	employeeId: string;
+	duration: number;
+	keyboard: number;
+	mouse: number;
+	overall: number;
+	startedAt: Date;
+	time_slot: Date;
 }
 
 export enum TimeLogType {
@@ -74,6 +114,18 @@ export interface Activity extends IBaseEntityModel {
 	data?: string;
 	duration?: number;
 	type?: string;
+}
+
+export interface ICreateActivityInput {
+	employeeId: string;
+	projectId: string;
+	duration?: number;
+	keyboard?: number;
+	mouse?: number;
+	overall?: number;
+	startedAt: Date;
+	stoppedAt: Date;
+	title: string;
 }
 
 export enum ActivityType {

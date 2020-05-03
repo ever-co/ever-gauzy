@@ -12,6 +12,7 @@ export interface IIntegrationEntitySetting {
 	// integration: IIntegration;
 	entity: string;
 	sync: boolean;
+	tiedEntities?: any[];
 }
 
 export interface IIntegrationMap {
@@ -42,5 +43,10 @@ export enum IntegrationEntity {
 	ORGANIZATION = 'Organization',
 	NOTE = 'Note',
 	CLIENT = 'Client',
-	TASK = 'Task'
+	TASK = 'Task',
+	ACTIVITY = 'Activity',
+	USER = 'User',
+	EMPLOYEE = 'Employee',
+	TIME_LOG = 'TimeLog',
+	TIME_SLOT = 'TimeSlot'
 }
