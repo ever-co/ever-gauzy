@@ -3,7 +3,7 @@ import {
 	Employee,
 	Organization,
 	OrganizationTeamCreateInput,
-	OrganizationTeams
+	OrganizationTeam
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -28,9 +28,9 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 
 	organizationId: string;
 	showAddCard: boolean;
-	teams: OrganizationTeams[];
+	teams: OrganizationTeam[];
 	employees: Employee[] = [];
-	teamToEdit: OrganizationTeams;
+	teamToEdit: OrganizationTeam;
 	loading = true;
 
 	constructor(
@@ -147,7 +147,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		}
 	}
 
-	editTeam(team: OrganizationTeams) {
+	editTeam(team: OrganizationTeam) {
 		this.showAddCard = !this.showAddCard;
 		this.teamToEdit = team;
 		this.showAddCard = true;

@@ -26,7 +26,8 @@ import { OrganizationClientsModule } from './organization-clients/organization-c
 import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
 import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
-import { OrganizationTeamsModule } from './organization-teams/organization-teams.module';
+import { OrganizationTeamModule } from './organization-team/organization-team.module';
+import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { InviteModule } from './invite/invite.module';
@@ -151,8 +152,8 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 						module: EmployeeRecurringExpenseModule
 					},
 					{
-						path: '/organization-teams',
-						module: OrganizationTeamsModule
+						path: '/organization-team',
+						module: OrganizationTeamModule
 					},
 					{
 						path: '/proposal',
@@ -288,7 +289,8 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
 		EmployeeRecurringExpenseModule,
-		OrganizationTeamsModule,
+		OrganizationTeamModule,
+		OrganizationTeamEmployeeModule,
 		ProposalModule,
 		EmailModule,
 		CountryModule,

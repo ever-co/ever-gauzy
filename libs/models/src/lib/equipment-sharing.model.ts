@@ -1,6 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee } from './employee.model';
-import { OrganizationTeams } from './organization-teams-model';
+import { OrganizationTeam } from './organization-team-model';
 import { Equipment } from './equipment.model';
 
 export interface EquipmentSharing extends IBaseEntityModel {
@@ -10,7 +10,7 @@ export interface EquipmentSharing extends IBaseEntityModel {
 	shareEndDay: Date;
 	status: string;
 	employees: Employee[];
-	teams: OrganizationTeams[];
+	teams: OrganizationTeam[];
 	equipment: Equipment;
 }
 

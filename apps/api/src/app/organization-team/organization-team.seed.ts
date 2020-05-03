@@ -1,36 +1,48 @@
 import { Connection } from 'typeorm';
 import { Employee } from '../employee/employee.entity';
 import { environment as env } from '@env-api/environment';
-import { OrganizationTeams } from './organization-teams.entity';
+import { OrganizationTeam } from './organization-team.entity';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Organization } from '../organization/organization.entity';
 
 export const createDefaultTeams = async (
 	connection: Connection,
 	organization: Organization,
 	employees: Employee[]
-): Promise<OrganizationTeams[]> => {
+): Promise<OrganizationTeam[]> => {
 	const teams = env.defaultTeams || [];
 
-	const organizationTeams = [];
+	const organizationTeams: OrganizationTeam[] = [];
 	for (let i = 0; i < teams.length; i++) {
-		const team = new OrganizationTeams();
+		const team = new OrganizationTeam();
 		team.name = teams[i].name;
 		team.organizationId = organization.id;
-		team.members = employees.filter(
+
+		const emps = employees.filter(
 			(e) => (teams[i].defaultMembers || []).indexOf(e.user.email) > -1
 		);
+
+		const teamEmployees: OrganizationTeamEmployee[] = [];
+
+		emps.forEach((emp) => {
+			const teamEmployee = new OrganizationTeamEmployee();
+			teamEmployee.employeeId = emp.id;
+			teamEmployees.push(teamEmployee);
+		});
+
+		team.members = teamEmployees;
 
 		organizationTeams.push(team);
 	}
 
-	insertOrganizationTeam(connection, organizationTeams);
+	await insertOrganizationTeam(connection, organizationTeams);
 
 	return organizationTeams;
 };
 
 const insertOrganizationTeam = async (
 	connection: Connection,
-	team: OrganizationTeams[]
+	teams: OrganizationTeam[]
 ): Promise<void> => {
-	await connection.manager.save(team);
+	await connection.manager.save(teams);
 };

@@ -16,7 +16,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
 import { Equipment } from '../equipment/equipment.entity';
 import { Employee } from '../employee/employee.entity';
-import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing extends Base implements IEquipmentSharing {
@@ -61,9 +61,9 @@ export class EquipmentSharing extends Base implements IEquipmentSharing {
 	})
 	employees: Employee[];
 
-	@ManyToMany((type) => OrganizationTeams, { cascade: true })
+	@ManyToMany((type) => OrganizationTeam, { cascade: true })
 	@JoinTable({
 		name: 'equipment_shares_teams'
 	})
-	teams: OrganizationTeams[];
+	teams: OrganizationTeam[];
 }
