@@ -25,14 +25,19 @@ import { ProductVariantService } from '../../@core/services/product-variant.serv
 import { ProductVariantSettingsService } from '../../@core/services/product-variant-settings.service';
 import { ProductVariantPriceService } from '../../@core/services/product-variant-price.service';
 import { UserFormsModule } from '../user/forms/user-forms.module';
+import { ProductTypeMutationComponent } from './product-type-mutation/product-type-mutation.component';
+import { OrganizationsService } from '../../@core/services/organizations.service';
+import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 
 @NgModule({
 	declarations: [
 		ProductMutationComponent,
 		ProductFormComponent,
-		ProductVariantFormComponent
+		ProductVariantFormComponent,
+		ProductTypeMutationComponent
 	],
 	imports: [
+		TagsColorInputModule,
 		ThemeModule,
 		NgSelectModule,
 		NbRadioModule,
@@ -60,7 +65,8 @@ import { UserFormsModule } from '../user/forms/user-forms.module';
 		ProductService,
 		ProductVariantService,
 		ProductVariantSettingsService,
-		ProductVariantPriceService
+		ProductVariantPriceService,
+		OrganizationsService
 	]
 })
 export class ProductMutationModule {}

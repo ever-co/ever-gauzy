@@ -33,19 +33,33 @@ export class OrganizationsService {
 			.toPromise();
 	}
 
-	getAll(): Promise<{ items: Organization[]; total: number }> {
+	getAll(
+		relations?: string[],
+		findInput?: Organization
+	): Promise<{ items: Organization[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: Organization[]; total: number }>(`/api/organization`)
+			.get<{ items: Organization[]; total: number }>(
+				`/api/organization`,
+				{
+					params: { data }
+				}
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getById(
 		id: string = '',
-		select?: OrganizationSelectInput[]
+		select?: OrganizationSelectInput[],
+		relations?: string[]
 	): Observable<Organization> {
+		const data = JSON.stringify({ relations });
 		return this.http.get<Organization>(
-			`/api/organization/${id}/${JSON.stringify(select || '')}`
+			`/api/organization/${id}/${JSON.stringify(select || '')}`,
+			{
+				params: { data }
+			}
 		);
 	}
 

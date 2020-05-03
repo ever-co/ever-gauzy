@@ -6,7 +6,8 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import {
 	IDefaultUser,
 	IDefaultOrganization,
-	IDefaultCandidate
+	IDefaultCandidate,
+	IDefaultEmployee
 } from '@gauzy/models';
 import { IFacebookConfig } from './IFacebookConfig';
 import { IGoogleConfig } from './IGoogleConfig';
@@ -44,7 +45,7 @@ export interface IEnvironment {
 	defaultAdmins: IDefaultUser[];
 	defaultSuperAdmins: IDefaultUser[];
 
-	defaultEmployees?: IDefaultUser[];
+	defaultEmployees?: IDefaultEmployee[];
 	defaultCandidates?: IDefaultCandidate[];
 
 	defaultOrganizations?: IDefaultOrganization[];
@@ -64,4 +65,6 @@ export interface IEnvironment {
 	sentry?: {
 		dns: string;
 	};
+
+	defaultHubstaffUserPass?: string;
 }

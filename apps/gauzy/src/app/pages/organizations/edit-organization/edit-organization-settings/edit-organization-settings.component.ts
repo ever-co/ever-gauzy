@@ -34,6 +34,7 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	vendors: string[] = [];
 	employeesCount: number;
 	countries: Country[] = [];
+	test: any;
 
 	private _ngOnDestroy$ = new Subject();
 	routeParams: Params;
@@ -160,8 +161,9 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 				.getById(id)
 				.pipe(first())
 				.toPromise();
-
 			this.organizationEditStore.selectedOrganization = this.organization;
+			//NEED TO ADD TAGS TO GETBYID
+			// this.organization.tags = [];
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,

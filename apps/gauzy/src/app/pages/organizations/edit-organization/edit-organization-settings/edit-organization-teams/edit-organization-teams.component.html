@@ -42,11 +42,11 @@
 						*ngFor="let member of team.members"
 					>
 						<div class="image-container">
-							<img [src]="member.user.imageUrl" />
+							<img [src]="member.employee.user.imageUrl" />
 						</div>
 						<span
-							>{{ member.user.firstName }}
-							{{ member.user.lastName }}
+							>{{ member.employee.user.firstName }}
+							{{ member.employee.user.lastName }}
 						</span>
 					</div>
 				</div>

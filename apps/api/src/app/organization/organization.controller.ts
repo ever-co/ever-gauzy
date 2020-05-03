@@ -7,7 +7,9 @@ import {
 	HttpStatus,
 	Param,
 	Post,
-	UseGuards
+	UseGuards,
+	Put,
+	Query
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -44,8 +46,14 @@ export class OrganizationController extends CrudController<Organization> {
 	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
-	async findAll(): Promise<IPagination<Organization>> {
-		return this.organizationService.findAll();
+	async findAllOrganizations(
+		@Query('data') data: string
+	): Promise<IPagination<Organization>> {
+		const { relations, findInput } = JSON.parse(data);
+		return this.organizationService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Find Organization by id within the tenant.' })
@@ -62,12 +70,16 @@ export class OrganizationController extends CrudController<Organization> {
 	@Get(':id/:select')
 	async findOneById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Param('select') select: string
+		@Param('select') select: string,
+		@Query('data') data: string
 	): Promise<Organization> {
 		const findObj = {};
-
+		const { relations } = JSON.parse(data);
 		if (select) {
 			findObj['select'] = JSON.parse(select);
+		}
+		if (relations) {
+			findObj['relations'] = JSON.parse(relations);
 		}
 
 		return this.organizationService.findOne(id, findObj);
@@ -105,10 +117,23 @@ export class OrganizationController extends CrudController<Organization> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	async create(
 		@Body() entity: OrganizationCreateInput
 	): Promise<Organization> {
 		return this.commandBus.execute(new OrganizationCreateCommand(entity));
+	}
+	@Put(':id')
+	async update(
+		@Param('id') id: string,
+		@Body() entity: OrganizationCreateInput,
+		...options: any[]
+	): Promise<any> {
+		return this.organizationService.create({
+			id,
+			...entity
+		});
 	}
 }

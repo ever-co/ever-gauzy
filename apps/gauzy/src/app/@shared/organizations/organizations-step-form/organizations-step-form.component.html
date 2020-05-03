@@ -192,8 +192,20 @@
 								</div>
 							</div>
 						</div>
+						<div class="row">
+							<div class="col-6">
+								<ngx-tags-color-input
+									[form]="orgMainForm"
+									[selectedTags]="tags"
+									(selectedTagsEvent)="
+										selectedTagsEvent($event)
+									"
+								>
+								</ngx-tags-color-input>
+							</div>
+						</div>
 
-						<div class="">
+						<div class="" style="margin-top: 20px;">
 							<button
 								[disabled]="orgMainForm.invalid"
 								nbButton

@@ -9,6 +9,8 @@ import { first } from 'rxjs/operators';
 import { ProductService } from '../../../@core/services/product.service';
 import { Product, ProductType, ProductCategory } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { Router } from '@angular/router';
+import { PictureNameTagsComponent } from '../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 export interface SelectedProduct {
 	data: Product;
@@ -41,7 +43,8 @@ export class InventoryComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
-		private productService: ProductService
+		private productService: ProductService,
+		private router: Router
 	) {
 		super(translateService);
 	}
@@ -52,7 +55,8 @@ export class InventoryComponent extends TranslationBaseComponent
 			columns: {
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: PictureNameTagsComponent
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
@@ -81,6 +85,16 @@ export class InventoryComponent extends TranslationBaseComponent
 				}
 			}
 		};
+	}
+
+	manageProductTypes() {
+		this.router.navigate(['/pages/organization/inventory/product-types']);
+	}
+
+	manageProductCategories() {
+		this.router.navigate([
+			'/pages/organization/inventory/product-categories'
+		]);
 	}
 
 	async save() {
