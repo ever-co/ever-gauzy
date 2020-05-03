@@ -60,6 +60,7 @@ export interface OrganizationFindInput extends IBaseEntityModel {
 	imageUrl?: string;
 	currency?: CurrenciesEnum;
 	isActive?: boolean;
+	tags?: Tag[];
 }
 
 export interface OrganizationCreateInput extends ILocation {
@@ -79,6 +80,7 @@ export interface OrganizationCreateInput extends ILocation {
 	bonusPercentage?: number;
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
+	tags?: Tag[];
 	tenant: ITenant;
 }
 
@@ -91,7 +93,8 @@ export enum OrganizationSelectInput {
 	currency = 'currency',
 	createdAt = 'createdAt',
 	updatedAt = 'updatedAt',
-	isActive = 'isActive'
+	isActive = 'isActive',
+	tags = 'tags'
 }
 
 export enum RegionsEnum {

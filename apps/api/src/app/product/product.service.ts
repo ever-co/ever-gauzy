@@ -16,7 +16,7 @@ export class ProductService extends CrudService<Product> {
 	async findAllProducts(): Promise<IPagination<Product>> {
 		const total = await this.productRepository.count();
 		const items = await this.productRepository.find({
-			relations: ['category', 'type', 'options', 'variants']
+			relations: ['category', 'type', 'options', 'variants', 'tags']
 		});
 
 		return { items, total };

@@ -33,6 +33,7 @@ import { TenantLocationBase } from '../core/entities/tenant-location-base';
 
 @Entity('organization')
 export class Organization extends TenantLocationBase implements IOrganization {
+	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({
 		name: 'tag_organizations'

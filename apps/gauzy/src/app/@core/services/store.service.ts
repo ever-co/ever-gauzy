@@ -3,8 +3,7 @@ import {
 	Organization,
 	PermissionsEnum,
 	RolePermissions,
-	User,
-	Tag
+	User
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
@@ -23,7 +22,6 @@ export interface AppState {
 	selectedEmployee: SelectedEmployee;
 	selectedProposal: ProposalViewModel;
 	selectedDate: Date;
-	selectedTags: Tag[];
 }
 
 export interface PersistState {
@@ -35,7 +33,6 @@ export interface PersistState {
 export function createInitialAppState(): AppState {
 	return {
 		selectedDate: new Date(),
-		selectedTags: [],
 		userRolePermissions: []
 	} as AppState;
 }
@@ -90,7 +87,6 @@ export class Store {
 	) {}
 
 	user$ = this.appQuery.select((state) => state.user);
-	selectedTags$ = this.appQuery.select((state) => state.selectedTags);
 	selectedOrganization$ = this.appQuery.select(
 		(state) => state.selectedOrganization
 	);
@@ -103,11 +99,6 @@ export class Store {
 	get selectedOrganization(): Organization {
 		const { selectedOrganization } = this.appQuery.getValue();
 		return selectedOrganization;
-	}
-
-	get selectedTags(): Tag[] {
-		const { selectedTags } = this.appQuery.getValue();
-		return selectedTags;
 	}
 
 	set selectedEmployee(employee: SelectedEmployee) {
@@ -124,12 +115,6 @@ export class Store {
 	set selectedOrganization(organization: Organization) {
 		this.appStore.update({
 			selectedOrganization: organization
-		});
-	}
-
-	set selectedTags(tags: Tag[]) {
-		this.appStore.update({
-			selectedTags: tags
 		});
 	}
 

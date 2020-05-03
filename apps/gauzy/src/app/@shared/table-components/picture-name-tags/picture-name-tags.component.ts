@@ -3,8 +3,11 @@ import { ViewCell } from 'ng2-smart-table';
 
 @Component({
 	template: `
-		<div style="display: flex; align-items: center;">
-			<div *ngIf="rowData.imageUrl" class="image-container">
+		<div
+			*ngIf="rowData.imageUrl"
+			style="display: flex; align-items: center;"
+		>
+			<div class="image-container">
 				<img [src]="rowData.imageUrl" />
 			</div>
 			<div
@@ -14,7 +17,18 @@ import { ViewCell } from 'ng2-smart-table';
 			>
 				{{ rowData.fullName }}
 			</div>
-			<div *ngIf="rowData.name" class="d-block" style="margin-left:15px;">
+			<div class="d-block" style="margin-left:15px;">
+				{{ rowData.name }}
+			</div>
+		</div>
+		<div
+			*ngIf="rowData.name && !rowData.imageUrl"
+			style="display: flex; align-items: center;"
+		>
+			<div *ngIf="rowData.fullName" class="d-block">
+				{{ rowData.fullName }}
+			</div>
+			<div class="d-block">
 				{{ rowData.name }}
 			</div>
 		</div>
