@@ -112,11 +112,7 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	reWeeklyLimit?: number;
-
-	// @ManyToMany((type) => OrganizationTeams) // , orgTeams => orgTeams.members
-	// @JoinTable({
-	// 	name: 'organization_team_employee'
-	// })
+	
 	@OneToMany(
 		(type) => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.employee
