@@ -53,10 +53,16 @@ export class OrganizationsService {
 		profile_link: string = '',
 		select?: OrganizationSelectInput[]
 	): Observable<Organization> {
+		const option = JSON.stringify({
+			relations: ['skills']
+		});
 		return this.http.get<Organization>(
 			`/api/organization/profile/${profile_link}/${JSON.stringify(
 				select || ''
-			)}`
+			)}`,
+			{
+				params: { option }
+			}
 		);
 	}
 }

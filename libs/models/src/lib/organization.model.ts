@@ -60,6 +60,7 @@ export interface OrganizationFindInput extends IBaseEntityModel {
 	imageUrl?: string;
 	currency?: CurrenciesEnum;
 	isActive?: boolean;
+	skills?: Skill[];
 }
 
 export interface OrganizationCreateInput extends ILocation {
@@ -80,6 +81,7 @@ export interface OrganizationCreateInput extends ILocation {
 	invitesAllowed?: boolean;
 	inviteExpiryPeriod?: number;
 	tenant: ITenant;
+	skills?: Skill[];
 }
 
 export enum OrganizationSelectInput {

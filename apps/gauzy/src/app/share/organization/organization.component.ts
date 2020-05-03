@@ -4,7 +4,6 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { EmployeesService } from '../../@core/services';
-import { OrganizationRecurringExpenseService } from '../../@core/services/organization-recurring-expense.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Organization, PermissionsEnum } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -34,7 +33,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private organizationsService: OrganizationsService,
 		private toastrService: NbToastrService,
 		private employeesService: EmployeesService,
-		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -69,6 +67,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 						.pipe(first())
 						.toPromise();
 					this.imageUrl = this.organization.imageUrl;
+					console.log(this.organization);
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}
@@ -94,11 +93,15 @@ export class OrganizationComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
 				if (!!result) {
-					delete result.tags;
+					console.log(result.skills);
+					// result.skills = result.skills.map(skill => skill.id);
+					console.log(result);
+					// delete result.skills;
 					await this.organizationsService.update(
 						this.organization.id,
 						result
 					);
+					// delete result.skills;
 					Object.assign(this.organization, result);
 					this.toastrService.primary(
 						this.organization.name + ' page is updated.',

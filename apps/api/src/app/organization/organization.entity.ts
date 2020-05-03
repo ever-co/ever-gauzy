@@ -39,12 +39,6 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	})
 	tags: Tag[];
 
-	@ManyToMany((type) => Skill)
-	@JoinTable({
-		name: 'skill_organizations'
-	})
-	skills: Skill[];
-
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
 	@OneToMany(
 		(type) => Invoice,
@@ -261,4 +255,16 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@IsBoolean()
 	@Column({ default: 12 })
 	timeFormat?: 12 | 24;
+
+	@ApiProperty({ type: Skill })
+	@ManyToMany((type) => Skill)
+	@JoinTable({
+		name: 'skill_organization'
+	})
+	skills: Skill[];
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	organizationId?: string;
 }
