@@ -17,8 +17,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
-import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { TagsService } from '../../../@core/services/tags.service';
+import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';
+import { SkillsService } from '../../../@core/services/skills.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -26,7 +26,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
-		TagsColorInputModule,
+		SkillsInputModule,
 		ThemeModule,
 		FormsModule,
 		NbCardModule,
@@ -49,6 +49,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	declarations: [PublicPageMutationComponent],
 	entryComponents: [PublicPageMutationComponent],
-	providers: [TagsService]
+	providers: [SkillsService]
 })
 export class PublicPageMutationModule {}

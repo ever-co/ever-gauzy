@@ -775,6 +775,9 @@
 		"TAGS_SELECT_COLOR": "Tag color",
 		"TAGS_SELECT_DESCRIPTION": "Tag description"
 	},
+	"SKILLS_PAGE": {
+		"HEADER": "Skills"
+	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
 		"ADD_EQUIPMENT": "Add Equipment",
