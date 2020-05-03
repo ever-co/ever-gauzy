@@ -774,6 +774,9 @@
 		"TAGS_SELECT_COLOR": "Цвет тега",
 		"TAGS_SELECT_DESCRIPTION": "Описание метки"
 	},
+	"SKILLS_PAGE": {
+		"HEADER": "Навыки"
+	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
 		"ADD_EQUIPMENT": "Добавить снаряжение",
