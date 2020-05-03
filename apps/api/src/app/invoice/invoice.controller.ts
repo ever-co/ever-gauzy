@@ -17,7 +17,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum, Invoice as IInvoice } from '@gauzy/models';
-import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Invoice')
 @UseGuards(AuthGuard('jwt'))
