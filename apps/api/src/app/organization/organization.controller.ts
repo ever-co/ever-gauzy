@@ -105,6 +105,8 @@ export class OrganizationController extends CrudController<Organization> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
 	async create(
 		@Body() entity: OrganizationCreateInput
