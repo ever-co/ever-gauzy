@@ -42,7 +42,6 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		console.warn(this.tasks$);
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
 	}

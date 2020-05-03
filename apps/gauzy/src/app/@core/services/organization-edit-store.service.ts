@@ -14,7 +14,6 @@ export class OrganizationEditStore {
 	set selectedOrganization(organization: Organization) {
 		this._selectedOrganization = organization;
 		this.selectedOrganization$.next(organization);
-		// console.warn(organization);
 	}
 
 	get selectedOrganization(): Organization {
