@@ -11,6 +11,7 @@ import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { Router } from '@angular/router';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 export interface SelectedEquipment {
 	data: Equipment;
@@ -29,6 +30,8 @@ export class EquipmentComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
+	tags: any;
+	selectedTags: any;
 
 	@ViewChild('equipmentTable', { static: false }) equipmentTable;
 
@@ -54,7 +57,8 @@ export class EquipmentComponent extends TranslationBaseComponent
 			columns: {
 				name: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_NAME'),
-					type: 'string'
+					type: 'custom',
+					renderComponent: PictureNameTagsComponent
 				},
 				type: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_TYPE'),
@@ -109,9 +113,15 @@ export class EquipmentComponent extends TranslationBaseComponent
 	}
 
 	async save() {
+		if (this.selectedEquipment) {
+			this.selectedTags = this.selectedEquipment.tags;
+		} else {
+			this.selectedTags = [];
+		}
 		const dialog = this.dialogService.open(EquipmentMutationComponent, {
 			context: {
-				equipment: this.selectedEquipment
+				equipment: this.selectedEquipment,
+				tags: this.selectedTags
 			}
 		});
 		const equipment = await dialog.onClose.pipe(first()).toPromise();
@@ -124,6 +134,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 		}
+
 		this.loadSettings();
 	}
 

@@ -1515,6 +1515,54 @@
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.12.1.tgz#2a98fea9fbb8a606ddc79a4680034e9d5591c550"
   integrity sha512-ZtjIIFplxncqxvogq148C3hBLQE+W3iJ8E4UvJ09zIJUgzwLcROsWwFDErVSXY2Plzao5J9KUYNHKHMEUYDMKw==
 
+"@fullcalendar/angular@^4.4.5-beta":
+  version "4.4.5-beta"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/angular/-/angular-4.4.5-beta.tgz#c06c766b0664f2f89fe4a42433ffeb9f5a8ac57c"
+  integrity sha512-L144YrgrgFr75/LGNcDDX9xKy465AZR/EqWPxkdNFgBSeeblH+kf8OMy8K6YcuJDlv4nXw4RucBqbMrrQKvbQw==
+  dependencies:
+    "@fullcalendar/core" "~4.4.0"
+    fast-deep-equal "^3.1.1"
+
+"@fullcalendar/bootstrap@^4.4.0":
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/bootstrap/-/bootstrap-4.4.0.tgz#4d77d19b4e2d3aaf518f1ade187d8e4db341d2a1"
+  integrity sha512-2YYM2tPhTwNtYFBcIm4Cf/72pJ3qzRRmzGZx13mJeVYjbSOe1rn/tquff/mMDPPtfCZ4+XqXOLCzAeW7eWHGgw==
+
+"@fullcalendar/core@5.0.0-beta.2":
+  version "5.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/core/-/core-5.0.0-beta.2.tgz#30a9cbbbf2d6476568f53cfa1c0746d06daa9660"
+  integrity sha512-9U/kk8Y4ackY1XZ1PHvX8rG1olixoKveStXdDsX3FCtKATR8fA/O+4Pd5qyH7nGcih8TrgreUjZ+dB+DEaomqQ==
+  dependencies:
+    preact "^10.0.5"
+    tslib "^1.9.3"
+
+"@fullcalendar/core@~4.4.0":
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/core/-/core-4.4.0.tgz#79dbc0cca836ce628a07e739a456da11ff141373"
+  integrity sha512-PC4mmXHJHAlXmUEmZVnePyA8yYCOBdxBNq8yjJqedEtT1X0x36yTFz/Y0Ux6bniICZDqYtk0xoxe6jaxi++e0g==
+
+"@fullcalendar/daygrid@5.0.0-beta.2":
+  version "5.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/daygrid/-/daygrid-5.0.0-beta.2.tgz#fae2a7cba8a6afc23c9d6faaa88150d820e59a73"
+  integrity sha512-Dd2VLsMPWPH1W1HQ+K1iftHVXF1MYOM/lo33FUdFKM8jc0MHnF620TVyOgPojAC26u2hApbURKIY2eY87vFulg==
+  dependencies:
+    tslib "^1.9.3"
+
+"@fullcalendar/interaction@5.0.0-beta.2":
+  version "5.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/interaction/-/interaction-5.0.0-beta.2.tgz#3895d7fd25a76fdcacdf979426fd714437fa5266"
+  integrity sha512-io/0fVAssn2BQxcIqcE3lQuljbe5eBwH8M73+Se93ngTHju0abv0YqKAR4EqQml5+tjCxfjdXgQBLknTOwdD4w==
+  dependencies:
+    tslib "^1.9.3"
+
+"@fullcalendar/timegrid@5.0.0-beta.2":
+  version "5.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/timegrid/-/timegrid-5.0.0-beta.2.tgz#65227b1b56267d1f5f3ef98e19adf6e05d74d52c"
+  integrity sha512-AuEBZkHIJi0zu6dMY7HjUZKf13a9EQRKnDQjOsL+PqomKUZWq2qiujDQ95heqT4rEO8H/riaZCFbBRR1cFePHg==
+  dependencies:
+    "@fullcalendar/daygrid" "5.0.0-beta.2"
+    tslib "^1.9.3"
+
 "@godaddy/terminus@^4.3.1":
   version "4.3.1"
   resolved "https://registry.yarnpkg.com/@godaddy/terminus/-/terminus-4.3.1.tgz#20bc24271df373ae362b3948c9dd95d22736b5c2"
@@ -4124,6 +4172,11 @@
   version "2.0.20"
   resolved "https://registry.yarnpkg.com/@types/swagger-schema-official/-/swagger-schema-official-2.0.20.tgz#5f5935a47d7713393efde071fd97a4408cc03487"
   integrity sha512-GHdvwZQg7i+6AUMnP+tqYJJbt59SuYu8k9dzX8E6TJ5QFXKW9FxfdfqT5g+VcyuEua+/YaRzumqJ6wcQMuSP5Q==
+
+"@types/underscore@^1.9.4":
+  version "1.9.4"
+  resolved "https://registry.yarnpkg.com/@types/underscore/-/underscore-1.9.4.tgz#22d1a3e6b494608e430221ec085fa0b7ccee7f33"
+  integrity sha512-CjHWEMECc2/UxOZh0kpiz3lEyX2Px3rQS9HzD20lxMvx571ivOBQKeLnqEjxUY0BMgp6WJWo/pQLRBwMW5v4WQ==
 
 "@types/unist@*", "@types/unist@^2.0.0", "@types/unist@^2.0.2":
   version "2.0.3"
@@ -10829,6 +10882,11 @@ ftp@~0.3.10:
     readable-stream "1.1.x"
     xregexp "2.0.0"
 
+fullcalendar@5.0.0-beta.2:
+  version "5.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/fullcalendar/-/fullcalendar-5.0.0-beta.2.tgz#1f0337dc89295ca116ef225239bba836b8d986fe"
+  integrity sha512-FYZt67bXv17uJed4cJg9r5ntp54RsFFtYJeZ1OZS/uznD5yG0Xk4Ua9swpAvYkXRCp15yXTAi3U3o75Cc/Vd8A==
+
 function-bind@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
@@ -16448,6 +16506,13 @@ ngx-perfect-scrollbar@^8.0.0:
     perfect-scrollbar "^1.4.0"
     resize-observer-polyfill "^1.5.0"
 
+ngx-take-until-destroy@^5.4.0:
+  version "5.4.0"
+  resolved "https://registry.yarnpkg.com/ngx-take-until-destroy/-/ngx-take-until-destroy-5.4.0.tgz#6c8606ee956584dc947e2eb609c48b8f98b09900"
+  integrity sha512-e+VfCrHbLybdKWoQ8prdhmVzWI6vTnedr/9cVGQTkfepMdLz5D++VDk+Wnbs7mru6S9C+kIpNWUlh2YMPl928Q==
+  dependencies:
+    tslib "^1.9.0"
+
 nice-try@^1.0.4:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
@@ -18468,6 +18533,11 @@ postgres-interval@^1.1.0:
   integrity sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==
   dependencies:
     xtend "^4.0.0"
+
+preact@^10.0.5:
+  version "10.4.1"
+  resolved "https://registry.yarnpkg.com/preact/-/preact-10.4.1.tgz#9b3ba020547673a231c6cf16f0fbaef0e8863431"
+  integrity sha512-WKrRpCSwL2t3tpOOGhf2WfTpcmbpxaWtDbdJdKdjd0aEiTkvOmS4NBkG6kzlaAHI9AkQ3iVqbFWM3Ei7mZ4o1Q==
 
 prebuild-install@^5.3.3:
   version "5.3.3"
@@ -22841,6 +22911,11 @@ underscore.deep@~0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/underscore.deep/-/underscore.deep-0.5.1.tgz#072671f48d68735c34223fcfef63e69e5276cc2b"
   integrity sha1-ByZx9I1oc1w0Ij/P72PmnlJ2zCs=
+
+underscore@^1.10.2:
+  version "1.10.2"
+  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.10.2.tgz#73d6aa3668f3188e4adb0f1943bd12cfd7efaaaf"
+  integrity sha512-N4P+Q/BuyuEKFJ43B9gYuOj4TQUHXX+j2FqguVOpjkssLUUrnJofCcBccJSCoeturDoZU6GorDTHSvUDlSQbTg==
 
 underscore@^1.9.1:
   version "1.9.2"

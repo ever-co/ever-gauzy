@@ -1,7 +1,8 @@
 import {
 	Invoice as IInvoice,
 	CurrenciesEnum,
-	InvoiceTypeEnum
+	InvoiceTypeEnum,
+	DiscountTaxTypeEnum
 } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -71,11 +72,27 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true })
 	emailSent: boolean;
 
+	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@IsEnum(DiscountTaxTypeEnum)
+	@Column({ nullable: true })
+	discountType: string;
+
+	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
+	@IsEnum(DiscountTaxTypeEnum)
+	@Column({ nullable: true })
+	taxType: string;
+
 	@ApiPropertyOptional({ type: String, enum: InvoiceTypeEnum })
 	@IsEnum(InvoiceTypeEnum)
 	@IsOptional()
 	@Column({ nullable: true })
 	invoiceType?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	sentTo?: string;
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()

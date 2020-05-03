@@ -359,7 +359,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 					  new Date(emp.endWork).getFullYear()
 					: '',
 				imageUrl: emp.user.imageUrl,
-				tag: emp.tags,
+				tags: emp.tags,
 				// TODO: laod real bonus and bonusDate
 				bonus: this.bonusForSelectedMonth,
 				averageIncome: Math.floor(this.averageIncome),

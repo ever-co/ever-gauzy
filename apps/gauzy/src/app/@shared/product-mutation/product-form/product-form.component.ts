@@ -1,7 +1,13 @@
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { Product, ProductType, ProductCategory } from '@gauzy/models';
+import {
+	Product,
+	ProductType,
+	ProductCategory,
+	ProductOption,
+	ProductVariant
+} from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
@@ -15,13 +21,19 @@ import { Store } from '../../../@core/services/store.service';
 export class ProductFormComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
-	productItem: Product;
+	@Input() product: Product;
+
+	optionValue = '';
+	optionCode = '';
 
 	productTypes: ProductType[];
 	productCategories: ProductCategory[];
+	options: Array<ProductOption> = [];
+	variants: Array<ProductVariant> = [];
 
 	@Output() save = new EventEmitter<Product>();
-	@Output() cancel = new EventEmitter<void>();
+	@Output() cancel = new EventEmitter<string>();
+	@Output() editProductVariant = new EventEmitter<string>();
 
 	constructor(
 		readonly translationService: TranslateService,
@@ -37,21 +49,30 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.loadProductTypes();
 		this.loadProductCategories();
 		this._initializeForm();
+
+		this.options = this.product ? this.product.options : [];
+		this.variants = this.product ? this.product.variants : [];
 	}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
-			name: ['', Validators.required],
-			code: ['', Validators.required],
-			productTypeId: ['', Validators.required],
-			productCategoryId: ['', Validators.required],
-			enabled: [true],
-			description: ['']
+			name: [this.product ? this.product.name : '', Validators.required],
+			code: [this.product ? this.product.code : '', Validators.required],
+			productTypeId: [
+				this.product ? this.product.productTypeId : '',
+				Validators.required
+			],
+			productCategoryId: [
+				this.product ? this.product.productCategoryId : '',
+				Validators.required
+			],
+			enabled: [this.product ? this.product.enabled : true],
+			description: [this.product ? this.product.description : '']
 		});
 	}
 
 	async loadProductTypes() {
-		const res = await this.productTypeService.getAll({
+		const res = await this.productTypeService.getAll([], {
 			organizationId: this.store.selectedOrganization.id
 		});
 		this.productTypes = res.items;
@@ -65,14 +86,15 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	onSaveRequest() {
-		const newProduct = {
+		const productRequest = {
 			name: this.form.get('name').value,
 			code: this.form.get('code').value,
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
 			description: this.form.get('description').value,
-			variants: [],
+			variants: this.variants,
+			options: this.options,
 			category: this.productCategories.find((c) => {
 				return c.id === this.form.get('productCategoryId').value;
 			}),
@@ -81,12 +103,26 @@ export class ProductFormComponent extends TranslationBaseComponent
 			})
 		};
 
-		console.log(newProduct);
+		if (this.product) {
+			productRequest['id'] = this.product.id;
+		}
 
-		this.save.emit(newProduct);
+		this.save.emit(productRequest);
+	}
+
+	onAddOption() {
+		if (!(this.optionValue && this.optionCode)) return;
+
+		this.options.push({ name: this.optionValue, code: this.optionCode });
+		this.optionValue = '';
+		this.optionCode = '';
+	}
+
+	onEditProductVariant(productVariantId: string) {
+		this.editProductVariant.emit(productVariantId);
 	}
 
 	onCancel() {
-		this.cancel.emit();
+		this.cancel.emit('PRODUCT_EDIT');
 	}
 }

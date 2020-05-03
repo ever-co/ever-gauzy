@@ -8,7 +8,8 @@ import {
 	NbInputModule,
 	NbCheckboxModule,
 	NbButtonModule,
-	NbSelectModule
+	NbSelectModule,
+	NbToastrModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/employee/employee.module';
@@ -19,9 +20,21 @@ import { ProductFormComponent } from './product-form/product-form.component';
 import { ProductCategoryService } from '../../@core/services/product-category.service';
 import { ProductService } from '../../@core/services/product.service';
 import { ProductTypeService } from '../../@core/services/product-type.service';
+import { ProductVariantFormComponent } from './product-variant-form/product-variant-form.component';
+import { ProductVariantService } from '../../@core/services/product-variant.service';
+import { ProductVariantSettingsService } from '../../@core/services/product-variant-settings.service';
+import { ProductVariantPriceService } from '../../@core/services/product-variant-price.service';
+import { UserFormsModule } from '../user/forms/user-forms.module';
+import { ProductTypeMutationComponent } from './product-type-mutation/product-type-mutation.component';
+import { OrganizationsService } from '../../@core/services/organizations.service';
 
 @NgModule({
-	declarations: [ProductMutationComponent, ProductFormComponent],
+	declarations: [
+		ProductMutationComponent,
+		ProductFormComponent,
+		ProductVariantFormComponent,
+		ProductTypeMutationComponent
+	],
 	imports: [
 		ThemeModule,
 		NgSelectModule,
@@ -34,6 +47,8 @@ import { ProductTypeService } from '../../@core/services/product-type.service';
 		ReactiveFormsModule,
 		NbSelectModule,
 		NbCheckboxModule,
+		NbToastrModule,
+		UserFormsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -42,6 +57,14 @@ import { ProductTypeService } from '../../@core/services/product-type.service';
 			}
 		})
 	],
-	providers: [ProductTypeService, ProductCategoryService, ProductService]
+	providers: [
+		ProductTypeService,
+		ProductCategoryService,
+		ProductService,
+		ProductVariantService,
+		ProductVariantSettingsService,
+		ProductVariantPriceService,
+		OrganizationsService
+	]
 })
 export class ProductMutationModule {}

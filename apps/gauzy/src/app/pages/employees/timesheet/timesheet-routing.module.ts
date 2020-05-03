@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DailyComponent } from './daily/daily.component';
+import { LayoutComponent } from './layout/layout.component';
 
 const routes: Routes = [
 	{
@@ -9,8 +9,34 @@ const routes: Routes = [
 		pathMatch: 'full'
 	},
 	{
-		path: 'daily',
-		component: DailyComponent
+		path: '',
+		component: LayoutComponent,
+		children: [
+			{
+				path: 'daily',
+				loadChildren: () =>
+					import('./daily/daily.module').then((m) => m.DailyModule)
+			},
+			{
+				path: 'weekly',
+				loadChildren: () =>
+					import('./weekly/weekly.module').then((m) => m.WeeklyModule)
+			},
+			{
+				path: 'calendar',
+				loadChildren: () =>
+					import('./calendar/calendar.module').then(
+						(m) => m.CalendarModule
+					)
+			},
+			{
+				path: 'approvals',
+				loadChildren: () =>
+					import('./approvals/approvals.module').then(
+						(m) => m.ApprovalsModule
+					)
+			}
+		]
 	}
 ];
 

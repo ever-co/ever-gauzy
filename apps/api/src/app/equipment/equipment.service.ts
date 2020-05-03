@@ -15,7 +15,7 @@ export class EquipmentService extends CrudService<Equipment> {
 
 	async getAll(): Promise<IPagination<Equipment>> {
 		const items = await this.equipmentRepository.find({
-			relations: ['equipmentSharings']
+			relations: ['equipmentSharings', 'tags']
 		});
 
 		const total = await this.equipmentRepository.count();

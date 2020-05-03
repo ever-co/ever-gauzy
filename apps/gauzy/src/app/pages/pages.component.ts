@@ -52,7 +52,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/accounting/invoices',
 					data: {
 						translated: false,
-						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						permissionKeys: [
+							PermissionsEnum.ALL_ORG_VIEW,
+							PermissionsEnum.INVOICES_VIEW
+						],
 						translationKey: 'MENU.INVOICES'
 					}
 				},
@@ -62,7 +65,17 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/accounting/recurring-invoices',
 					data: {
 						translated: false,
+						permissionKeys: [PermissionsEnum.INVOICES_VIEW],
 						translationKey: 'MENU.RECURRING_INVOICES'
+					}
+				},
+				{
+					title: 'Recieved Invoices',
+					icon: 'bulb-outline',
+					link: '/pages/accounting/invoices/recieved-invoices',
+					data: {
+						translated: false,
+						translationKey: 'MENU.INVOICES_RECIEVED'
 					}
 				},
 				{
@@ -132,7 +145,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/sales/invoices',
 					data: {
 						translated: false,
-						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
+						permissionKeys: [
+							PermissionsEnum.ALL_ORG_VIEW,
+							PermissionsEnum.INVOICES_VIEW
+						],
 						translationKey: 'MENU.INVOICES'
 					}
 				},
@@ -142,6 +158,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/sales/recurring-invoices',
 					data: {
 						translated: false,
+						permissionKeys: [PermissionsEnum.INVOICES_VIEW],
 						translationKey: 'MENU.RECURRING_INVOICES'
 					}
 				},
@@ -516,7 +533,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 						{
 							title: 'Import',
 							icon: 'upload-outline',
-							link: '/pages/settings/general',
+							link: '/pages/settings/import-export/import',
 							data: {
 								translated: false,
 								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'

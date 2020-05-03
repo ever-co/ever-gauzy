@@ -1,3 +1,4 @@
+import { ICandidateSource } from '@gauzy/models';
 import { CurrenciesEnum, DefaultValueDateTypeEnum, User } from '..';
 
 export interface IDefaultUser {
@@ -6,10 +7,17 @@ export interface IDefaultUser {
 	imageUrl: string;
 	firstName?: string;
 	lastName?: string;
+}
+
+export interface IDefaultEmployee extends IDefaultUser {	
 	startedWorkOn?: string;
 	endWork?: string;
 	employeeLevel?: string;
+}
+
+export interface IDefaultCandidate extends IDefaultUser {	
 	candidateLevel?: string;
+	source?: ICandidateSource;
 }
 
 export interface IDefaultOrganization {

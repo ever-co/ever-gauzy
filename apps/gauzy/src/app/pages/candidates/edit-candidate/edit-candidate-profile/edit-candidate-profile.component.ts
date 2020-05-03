@@ -124,6 +124,14 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				icon: 'file-text-outline',
 				responsive: true,
 				route: this.getRoute('documents')
+			},
+			{
+				title: this.getTranslation(
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACKS'
+				),
+				icon: 'message-square-outline',
+				responsive: true,
+				route: this.getRoute('feedbacks')
 			}
 		];
 	}

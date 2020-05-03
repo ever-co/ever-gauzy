@@ -9,8 +9,10 @@ export interface Invoice extends IBaseEntityModel {
 	dueDate: Date;
 	currency: string;
 	discountValue: number;
+	discountType: string;
 	paid: boolean;
 	tax: number;
+	taxType: string;
 	terms: string;
 	totalValue?: number;
 	clientId?: string;
@@ -19,6 +21,7 @@ export interface Invoice extends IBaseEntityModel {
 	toClient?: OrganizationClients;
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;
+	sentTo?: string;
 }
 
 export enum InvoiceTypeEnum {
@@ -28,7 +31,7 @@ export enum InvoiceTypeEnum {
 	DETAILS_INVOICE_ITEMS = 'Details Invoice Items'
 }
 
-export enum DiscountTypeEnum {
-	PERCENTAGE = 'Percentage',
-	VALUE = 'Value'
+export enum DiscountTaxTypeEnum {
+	PERCENT = 'Percent',
+	FLAT_VALUE = 'Flat'
 }

@@ -1,0 +1,46 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h3>
+			{{ 'INVOICES_PAGE.VIEW_INVOICE' | translate }}
+		</h3>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="invoice-number">
+			Invoice Number: {{ invoice ? invoice.invoiceNumber : '' }}
+		</div>
+		<div class="grid">
+			<div class="grid-item">
+				Invoice Date: {{ invoice ? invoiceDate : '' }}
+			</div>
+			<div class="grid-item">Due Date: {{ invoice ? dueDate : '' }}</div>
+			<div class="grid-item">
+				Currency: {{ invoice ? invoice.currency : '' }}
+			</div>
+			<div class="grid-item">Client: {{ client ? client.name : '' }}</div>
+			<div class="grid-item">
+				Discount Value: {{ invoice ? invoice.discountValue : '' }}
+			</div>
+			<div class="grid-item">
+				Discount Type: {{ invoice ? invoice.discountType : '' }}
+			</div>
+			<div class="grid-item">
+				Tax Value: {{ invoice ? invoice.tax : '' }}
+			</div>
+			<div class="grid-item">
+				Tax Type: {{ invoice ? invoice.taxType : '' }}
+			</div>
+			<div class="grid-item">
+				Terms: {{ invoice ? invoice.terms : '' }}
+			</div>
+			<div class="grid-item">Paid: {{ invoice ? invoice.paid : '' }}</div>
+		</div>
+	</nb-card-body>
+	<ng2-smart-table
+		*ngIf="loadTable"
+		class="table"
+		[settings]="settingsSmartTable"
+		[source]="smartTableSource"
+		style="cursor: pointer;"
+	>
+	</ng2-smart-table>
+</nb-card>

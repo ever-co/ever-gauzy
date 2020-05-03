@@ -1,0 +1,94 @@
+<div class="header">
+	<h5 class="mb-3">
+		{{ 'TIMESHEET.WEEKLY' | translate }}
+	</h5>
+</div>
+
+<div class="filters row mb-3">
+	<div class="bulk-actions col-sm-4">
+		<div class="input-group">
+			<div class="input-group-append" id="button-addon4">
+				<button nbButton status="primary" (click)="previousDay()">
+					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="week-date-input form-control ml-1">
+				<div class="display-box">
+					{{ logRequest.startDate | date }} -
+					{{ logRequest.endDate | date }}
+				</div>
+				<input
+					type="text"
+					nbInput
+					placeholder="Select Date"
+					[(ngModel)]="selectedDate"
+					[nbDatepicker]="formpicker"
+				/>
+			</div>
+			<div class="input-group-append ml-1" id="button-addon4">
+				<button nbButton status="primary" (click)="nextDay()">
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="input-group-append ml-1" id="button-addon4">
+				<button
+					nbButton
+					status="primary"
+					(click)="selectedDate = today"
+				>
+					Today
+				</button>
+			</div>
+			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
+		</div>
+	</div>
+	<div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
+		<ga-employee-selector
+			class="header-selector employee-selector"
+		></ga-employee-selector>
+	</div>
+</div>
+<div class="weekly-logs">
+	<table class="table weekly-logs-table table-striped">
+		<thead>
+			<tr>
+				<th width="20%">Project</th>
+				<th class="day-col" *ngFor="let date of weekDayList">
+					{{ date | date }}
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<ng-template [ngIf]="weekData?.length > 0" [ngIfElse]="notFound">
+				<tr *ngFor="let day of weekData">
+					<th class="">
+						<span *ngIf="day?.project; else noProfject">{{
+							day?.project?.name
+						}}</span>
+						<ng-template #noProfject>
+							<span>No project</span>
+						</ng-template>
+					</th>
+					<td class="day-col" *ngFor="let date of weekDayList">
+						<span *ngIf="day.dates[date] > 0; else noLogsCol">
+							{{ day.dates[date] | durationFormat }}
+						</span>
+						<ng-template #noLogsCol>
+							-
+						</ng-template>
+					</td>
+				</tr>
+			</ng-template>
+			<ng-template #notFound>
+				<tr>
+					<td
+						[attr.colspan]="weekDayList.length + 1"
+						class="text-center p-5 "
+					>
+						No logs found.
+					</td>
+				</tr>
+			</ng-template>
+		</tbody>
+	</table>
+</div>
