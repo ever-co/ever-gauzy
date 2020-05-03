@@ -6,7 +6,6 @@ import {
 	User,
 	Tag
 } from '@gauzy/models';
-import { BehaviorSubject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 import { Injectable } from '@angular/core';
