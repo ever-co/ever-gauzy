@@ -20,12 +20,6 @@ export class OrganizationTeam extends Base implements IOrganizationTeam {
 	@Column()
 	organizationId: string;
 
-	// @ManyToMany((type) => Employee, { cascade: ['update'] })
-	// @JoinTable({
-	// 	name: 'organization_team_employee'
-	// })
-	// members?: Employee[];
-
 	@OneToMany(
 		(type) => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.organizationTeam,
