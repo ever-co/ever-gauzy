@@ -13,35 +13,35 @@ import * as mjml2html from 'mjml';
  * language-code: Is the ISO language code lik bg, en, he, ru
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
-// export const createEmailTemplates = async (
-// 	connection: Connection
-// ): Promise<any> => {
-// 	return new Promise((resolve, reject) => {
-// 		const files = [];
+export const createEmailTemplates = async (
+	connection: Connection
+): Promise<any> => {
+	return new Promise((resolve, reject) => {
+		const files = [];
 
-// 		readdirp('./apps/api/src/app/core/seeds/data/default-email-templates', {
-// 			depth: 2
-// 		})
-// 			.on('data', (entry) => {
-// 				files.push(entry);
-// 			})
-// 			.on('error', (error) => {
-// 				reject(error);
-// 			})
-// 			.on('end', async () => {
-// 				for (const file of files) {
-// 					const template = await pathToEmailTemplate(
-// 						file.path,
-// 						file.fullPath
-// 					);
-// 					if (template && template.hbs) {
-// 						await insertTemplate(connection, template);
-// 					}
-// 				}
-// 				resolve();
-// 			});
-// 	});
-// };
+		readdirp('./apps/api/src/app/core/seeds/data/default-email-templates', {
+			depth: 2
+		})
+			.on('data', (entry) => {
+				files.push(entry);
+			})
+			.on('error', (error) => {
+				reject(error);
+			})
+			.on('end', async () => {
+				for (const file of files) {
+					const template = await pathToEmailTemplate(
+						file.path,
+						file.fullPath
+					);
+					if (template && template.hbs) {
+						await insertTemplate(connection, template);
+					}
+				}
+				resolve();
+			});
+	});
+};
 
 const insertTemplate = async (
 	connection: Connection,
