@@ -369,7 +369,6 @@ export class EmployeesComponent extends TranslationBaseComponent
 				startedWorkOn: emp.startedWorkOn
 			});
 		}
-
 		if (!this.includeDeleted) {
 			result.forEach((employee) => {
 				if (employee.isActive) {

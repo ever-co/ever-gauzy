@@ -45,6 +45,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	cvUrl?: string;
 	feedbacks?: ICandidateFeedback[];
 	rating?: number;
+	isActive?: boolean;
 }
 
 export type Status = 'applied' | 'rejected' | 'hired';

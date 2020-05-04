@@ -7,10 +7,7 @@
 		{{ 'CANDIDATES_PAGE.APPLIED' | translate }}
 	</div>
 </div>
-<div
-	class="text-center d-block"
-	*ngIf="rowData.isActive && rowData.status === 'hired'"
->
+<div class="text-center d-block" *ngIf="rowData.status === 'hired'">
 	<div class="badge-success">
 		{{ 'CANDIDATES_PAGE.HIRED' | translate }}
 	</div>

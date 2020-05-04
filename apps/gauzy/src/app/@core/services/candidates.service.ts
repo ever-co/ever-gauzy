@@ -55,4 +55,11 @@ export class CandidatesService {
 			createInput
 		);
 	}
+
+	setCandidateAsInactive(id: string): Promise<Candidate> {
+		return this.http
+			.put<Candidate>(`/api/candidate/${id}`, { isActive: false })
+			.pipe(first())
+			.toPromise();
+	}
 }
