@@ -34,7 +34,8 @@
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
-		"SEND": "Send"
+		"SEND": "Send",
+		"ARCHIVE": "Archive"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -89,6 +90,9 @@
 		"CLIENTS": "Клиенти",
 		"DEPARTMENTS": "Отдели",
 		"DESCRIPTION": "Описание",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -259,10 +263,16 @@
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Показване на изтритите"
+			"INCLUDE_DELETED": "Показване на изтритите",
+			"INCLUDE_ARCHIVED": "Include Archived"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+		},
+		"ARCHIVE_CONFIRMATION": {
+			"SURE": "Are you sure you want to archive",
+			"RECORD": "запис",
+			"CANDIDATE": "candidate"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -552,6 +562,7 @@
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
 		"DELETED": "Изтрит",
+		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
