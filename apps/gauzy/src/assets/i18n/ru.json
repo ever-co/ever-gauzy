@@ -1077,6 +1077,7 @@
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Требуется информация о документе",
 			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
+			"CANDIDATE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
