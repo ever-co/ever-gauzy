@@ -60,7 +60,7 @@ import {
 	createRandomTenants
 } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
-import { createEmailTemplates } from '../../email-template/email-template.seed';
+// import { createEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
@@ -250,7 +250,7 @@ export class SeedDataService {
 
 			await createCountries(this.connection);
 
-			await createEmailTemplates(this.connection);
+			// await createEmailTemplates(this.connection);
 
 			await this.seedDefaultData(categories);
 

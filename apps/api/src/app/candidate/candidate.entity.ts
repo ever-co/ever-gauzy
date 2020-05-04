@@ -3,13 +3,13 @@ import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import {
 	Candidate as ICandidate,
-	Status,
 	PayPeriodEnum,
 	IEducation,
 	IExperience,
 	ISkill,
 	ICandidateFeedback,
-	ICandidateDocument
+	ICandidateDocument,
+	CandidateStatus
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
@@ -136,13 +136,11 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@Column({ nullable: true })
 	hiredDate?: Date;
 
+	@ApiProperty({ type: String, enum: CandidateStatus })
+	@IsEnum(CandidateStatus)
 	@IsOptional()
-	@Column({
-		type: 'enum',
-		enum: ['applied', 'rejected', 'hired'],
-		default: 'applied'
-	})
-	status?: Status;
+	@Column({ nullable: true, default: CandidateStatus.APPLIED })
+	status?: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -196,7 +194,7 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@Column({ nullable: true })
 	cvUrl?: string;
 
-	@ApiPropertyOptional({ type: Boolean, default: true })
-	@Column({ nullable: true, default: true })
-	isActive?: boolean;
+	@ApiPropertyOptional({ type: Boolean, default: false })
+	@Column({ nullable: true, default: false })
+	isArchived?: boolean;
 }

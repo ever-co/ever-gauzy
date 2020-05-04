@@ -22,7 +22,7 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	userId: string;
 	organization: Organization;
 	orgId: string;
-	status?: Status;
+	status?: string;
 	teams?: OrganizationTeam[];
 	tenant: ITenant;
 	organizationDepartments?: OrganizationDepartment[];
@@ -45,10 +45,14 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	cvUrl?: string;
 	feedbacks?: ICandidateFeedback[];
 	rating?: number;
-	isActive?: boolean;
+	isArchived?: boolean;
 }
 
-export type Status = 'applied' | 'rejected' | 'hired';
+export enum CandidateStatus {
+	APPLIED = 'APPLIED',
+	REJECTED = 'HIRED',
+	HIRED = 'REJECTED'
+}
 
 export interface CandidateFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;

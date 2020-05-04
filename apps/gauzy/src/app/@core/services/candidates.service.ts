@@ -56,9 +56,9 @@ export class CandidatesService {
 		);
 	}
 
-	setCandidateAsInactive(id: string): Promise<Candidate> {
+	setCandidateAsArchived(id: string): Promise<Candidate> {
 		return this.http
-			.put<Candidate>(`/api/candidate/${id}`, { isActive: false })
+			.put<Candidate>(`/api/candidate/${id}`, { isArchived: true })
 			.pipe(first())
 			.toPromise();
 	}
