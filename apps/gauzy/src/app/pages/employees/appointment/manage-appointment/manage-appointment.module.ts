@@ -49,7 +49,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbSpinnerModule,
 		NbRouteTabsetModule
 	],
-	declarations: [ManageAppointmentComponent],
+	declarations: [],
 	providers: []
 })
 export class ManageAppointmentModule {}
