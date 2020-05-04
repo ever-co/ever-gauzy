@@ -301,7 +301,6 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
-		console.log('includeDeleted', this.includeDeleted);
 		this.loadPage();
 	}
 
