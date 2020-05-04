@@ -9,7 +9,7 @@ import {
 	ErrorHttpStatusCode,
 	HttpErrorByCode
 } from '@nestjs/common/utils/http-error-by-code.util';
-import { Validator } from 'class-validator';
+import { isJSON } from 'class-validator';
 
 export interface ParseJsonPipeOptions {
 	throwInvalidError?: boolean;
@@ -34,7 +34,6 @@ export class ParseJsonPipe implements PipeTransform<string> {
 	 * Can not be easily injected, and there's no need to do so as we
 	 * only use it for json validation method.
 	 */
-	private readonly validator: Validator = new Validator();
 
 	constructor(@Optional() options?: ParseJsonPipeOptions) {
 		options = options || {};
@@ -56,7 +55,7 @@ export class ParseJsonPipe implements PipeTransform<string> {
 	 * @param metadata contains metadata about the currently processed route argument
 	 */
 	async transform(value: string, metadata: ArgumentMetadata): Promise<any> {
-		const isJson = this.validator.isJSON(value);
+		const isJson = isJSON(value);
 
 		if (isJson) {
 			try {
