@@ -12,12 +12,12 @@ import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mu
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { Router, ActivatedRoute } from '@angular/router';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
 import { CandidateSourceService } from '../../@core/services/candidate-source.service';
 import { CandidateFeedbacksService } from '../../@core/services/candidate-feedbacks.service';
+import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -44,7 +44,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	candidateSource: string;
 	candidateRating: number;
 
-	includeDeleted = false;
+	includeArchived = false;
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
@@ -147,15 +147,15 @@ export class CandidatesComponent extends TranslationBaseComponent
 			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
 		]);
 	}
-	async delete() {
+	async archive() {
 		this.dialogService
-			.open(DeleteConfirmationComponent, {
+			.open(ArchiveConfirmationComponent, {
 				context: {
 					recordType:
 						this.selectedCandidate.fullName +
 						' ' +
 						this.getTranslation(
-							'FORM.DELETE_CONFIRMATION.CANDIDATE'
+							'FORM.ARCHIVE_CONFIRMATION.CANDIDATE'
 						)
 				}
 			})
@@ -163,12 +163,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.candidatesService.setCandidateAsInactive(
+						await this.candidatesService.setCandidateAsArchived(
 							this.selectedCandidate.id
 						);
 
 						this.toastrService.primary(
-							this.candidateName + '  set as inactive.',
+							this.candidateName + '  set as archived.',
 							'Success'
 						);
 
@@ -236,14 +236,14 @@ export class CandidatesComponent extends TranslationBaseComponent
 				source: this.candidateSource,
 				rating: this.candidateRating,
 				status: candidate.status,
-				isActive: candidate.isActive,
+				isArchived: candidate.isArchived,
 				imageUrl: candidate.user.imageUrl,
 				tag: candidate.tags
 			});
 		}
-		if (!this.includeDeleted) {
+		if (!this.includeArchived) {
 			result.forEach((candidate) => {
-				if (candidate.isActive) {
+				if (!candidate.isArchived) {
 					candidatesVm.push(candidate);
 				}
 			});
@@ -299,8 +299,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 		};
 	}
 
-	changeIncludeDeleted(checked: boolean) {
-		this.includeDeleted = checked;
+	changeIncludeArchived(checked: boolean) {
+		this.includeArchived = checked;
 		this.loadPage();
 	}
 

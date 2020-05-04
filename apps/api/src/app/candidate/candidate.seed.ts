@@ -24,6 +24,7 @@ export const createDefaultCandidates = async (
 		candidate = new Candidate();
 		candidate.organization = defaultOrg;
 		candidate.user = user;
+		candidate.isArchived = false;
 		candidate.tenant = defaultTenant;
 		candidate.source = defaultCandidates.filter(
 			(e) => e.email === candidate.user.email
@@ -56,7 +57,7 @@ export const createRandomCandidates = async (
 			for (let index = 0; index < quantity; index++) {
 				candidate = new Candidate();
 				candidate.organization = organization;
-				candidate.isActive = true;
+				candidate.isArchived = false;
 				candidate.user = randomUsers.pop();
 				if (candidate.user) {
 					await insertCandidate(connection, candidate);
