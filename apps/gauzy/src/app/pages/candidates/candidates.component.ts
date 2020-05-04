@@ -163,12 +163,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.candidatesService.delete(
+						await this.candidatesService.setCandidateAsInactive(
 							this.selectedCandidate.id
 						);
 
 						this.toastrService.primary(
-							this.candidateName + ' has been deleted.',
+							this.candidateName + '  set as inactive.',
 							'Success'
 						);
 
@@ -236,14 +236,16 @@ export class CandidatesComponent extends TranslationBaseComponent
 				source: this.candidateSource,
 				rating: this.candidateRating,
 				status: candidate.status,
+				isActive: candidate.isActive,
 				imageUrl: candidate.user.imageUrl,
 				tag: candidate.tags
 			});
 		}
-
 		if (!this.includeDeleted) {
 			result.forEach((candidate) => {
-				candidatesVm.push(candidate);
+				if (candidate.isActive) {
+					candidatesVm.push(candidate);
+				}
 			});
 		} else {
 			candidatesVm = result;
@@ -299,6 +301,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 	changeIncludeDeleted(checked: boolean) {
 		this.includeDeleted = checked;
+		console.log('includeDeleted', this.includeDeleted);
 		this.loadPage();
 	}
 

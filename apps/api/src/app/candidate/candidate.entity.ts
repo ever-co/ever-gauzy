@@ -195,4 +195,8 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@IsOptional()
 	@Column({ nullable: true })
 	cvUrl?: string;
+
+	@ApiPropertyOptional({ type: Boolean, default: true })
+	@Column({ nullable: true, default: true })
+	isActive?: boolean;
 }

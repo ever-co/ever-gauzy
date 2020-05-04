@@ -56,6 +56,7 @@ export const createRandomCandidates = async (
 			for (let index = 0; index < quantity; index++) {
 				candidate = new Candidate();
 				candidate.organization = organization;
+				candidate.isActive = true;
 				candidate.user = randomUsers.pop();
 				if (candidate.user) {
 					await insertCandidate(connection, candidate);
