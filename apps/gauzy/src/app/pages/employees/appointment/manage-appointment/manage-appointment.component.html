@@ -1,0 +1,105 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'APPOINTMENTS_PAGE.ADD_APPOINTMENT' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+		<div class="appointment-form">
+			<form [formGroup]="form" *ngIf="form">
+				<div class="row">
+					<div class="col-9">
+						<div class="form-group">
+							<label for="agenda" class="label">{{
+								'FORM.LABELS.MEETING_AGENDA' | translate
+							}}</label>
+							<input
+								fullWidth
+								id="agenda"
+								type="text"
+								nbInput
+								formControlName="agenda"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.MEETING_AGENDA'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-9">
+						<ngx-timer-range-picker
+							name="selectedRange"
+							[maxDate]="today"
+						>
+						</ngx-timer-range-picker>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-9">
+						<div class="form-group">
+							<label for="location" class="label">{{
+								'FORM.LABELS.MEETING_LOCATION' | translate
+							}}</label>
+							<input
+								fullWidth
+								id="location"
+								type="text"
+								nbInput
+								formControlName="location"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.MEETING_LOCATION'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-9">
+						<div class="form-group">
+							<label for="description" class="label">{{
+								'FORM.LABELS.MEETING_DESCRIPTION' | translate
+							}}</label>
+							<input
+								fullWidth
+								id="description"
+								type="text"
+								nbInput
+								formControlName="description"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.MEETING_DESCRIPTION'
+										| translate
+								}}"
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-9">
+						<div class="form-group">
+							<label for="description" class="label">{{
+								'FORM.LABELS.MEETING_INVITEES' | translate
+							}}</label>
+							<ga-employee-multi-select
+								[allEmployees]="employees"
+								(selectedChange)="onMembersSelected($event)"
+							>
+							</ga-employee-multi-select>
+						</div>
+					</div>
+				</div>
+				<div class="actions">
+					<button
+						[disabled]="this.form.invalid"
+						(click)="submitForm()"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+				</div>
+			</form>
+		</div>
+	</nb-card-body>
+</nb-card>
