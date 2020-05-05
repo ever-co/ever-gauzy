@@ -6,7 +6,8 @@ import {
 	Body,
 	Put,
 	Param,
-	HttpCode
+	HttpCode,
+	UseGuards
 	// UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -16,9 +17,11 @@ import { Product } from './product.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { ProductCreateCommand } from './commands/product.create.command';
 import { ProductUpdateCommand } from './commands/product.update.command';
+import { AuthGuard } from '@nestjs/passport';
 // import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 
 @ApiTags('Product')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ProductController extends CrudController<Product> {
 	constructor(

@@ -4,12 +4,15 @@ import {
 	Body,
 	UploadedFile,
 	UseInterceptors,
-	HttpStatus
+	HttpStatus,
+	UseGuards
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpworkService } from './upwork.service';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class UpworkController {
 	constructor(private _upworkService: UpworkService) {}
