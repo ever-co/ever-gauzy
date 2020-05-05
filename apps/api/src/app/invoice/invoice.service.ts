@@ -28,6 +28,7 @@ export class InvoiceService extends CrudService<Invoice> {
 			await this.invoiceRepository.delete(id);
 			const invoice = new Invoice();
 
+			invoice.id = id;
 			invoice.invoiceNumber = entity.invoiceNumber;
 			invoice.invoiceDate = entity.invoiceDate;
 			invoice.dueDate = entity.dueDate;
@@ -38,6 +39,7 @@ export class InvoiceService extends CrudService<Invoice> {
 			invoice.taxType = entity.taxType;
 			invoice.terms = entity.terms;
 			invoice.totalValue = entity.totalValue;
+			invoice.paid = entity.paid;
 			invoice.clientId = entity.clientId;
 			invoice.organizationId = entity.organizationId;
 			invoice.invoiceType = entity.invoiceType;
