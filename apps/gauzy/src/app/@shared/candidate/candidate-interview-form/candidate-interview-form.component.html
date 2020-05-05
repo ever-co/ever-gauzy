@@ -1,0 +1,64 @@
+<div class="row">
+	<form class="col-12 form" [formGroup]="form" *ngIf="form">
+		<div class="col-sm-6">
+			<div class="form-group">
+				<label for="inputTitle" class="label">{{
+					'FORM.LABELS.TITLE' | translate
+				}}</label>
+				<input
+					nbInput
+					type="text"
+					id="inputTitle"
+					fullWidth
+					placeholder="{{ 'FORM.PLACEHOLDERS.TITLE' | translate }}"
+					formControlName="title"
+				/>
+			</div>
+		</div>
+		<div class="col-sm-6">
+			<div class="form-group">
+				<label for="inputDate" class="label">{{
+					'FORM.LABELS.DATE' | translate
+				}}</label>
+				<input
+					nbInput
+					type="text"
+					id="inputDate"
+					fullWidth
+					placeholder="{{ 'FORM.PLACEHOLDERS.DATE' | translate }}"
+					formControlName="title"
+				/>
+			</div>
+		</div>
+		<div formArrayName="interviewers">
+			<div
+				*ngFor="
+					let interviewer of form.controls.interviewers?.controls;
+					let i = index
+				"
+			>
+				<div [formGroupName]="i">
+					<div class="col-12 add-card-wrap ">
+						<div class="label-wrap">
+							<label for="description" class="label">{{
+								'FORM.LABELS.FEEDBACK_DESCRIPTION' | translate
+							}}</label>
+						</div>
+
+						<textarea
+							id="description"
+							class="description col-6"
+							nbInput
+							formControlName="description"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.FEEDBACK_DESCRIPTION'
+									| translate
+							}}"
+						>
+						</textarea>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>

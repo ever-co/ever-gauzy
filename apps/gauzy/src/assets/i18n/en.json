@@ -603,7 +603,15 @@
 			"DOCUMENTS": "Documents",
 			"DOCUMENT_NAME": "Document name",
 			"DOCUMENT": "Document",
-			"FEEDBACK_DESCRIPTION": "Feedback description"
+			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"INTERVIEW": {
+				"INTERVIEW": "Interview",
+				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"STEP_1": "Step 1",
+				"STEP_2": "Step 2",
+				"NEXT": "Next",
+				"PREVIOUS": "Previous"
+			}
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",

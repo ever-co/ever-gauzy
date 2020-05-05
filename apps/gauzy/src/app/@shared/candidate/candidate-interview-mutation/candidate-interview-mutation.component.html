@@ -1,0 +1,48 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<h5>
+			{{ 'CANDIDATES_PAGE.INTERVIEW.SCHEDULE_INTERVIEW' | translate }}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-stepper #stepper>
+			<nb-step [label]="step1">
+				<ng-template #step1>{{
+					'CANDIDATES_PAGE.INTERVIEW.STEP_1' | translate
+				}}</ng-template>
+				<ga-candidate-interview-form
+					#candidateInterviewForm
+				></ga-candidate-interview-form>
+				<div class="text-right">
+					<button
+						status="success"
+						[disabled]="userBasicInfo.form.invalid"
+						nbButton
+						nbStepperNext
+					>
+						{{ 'CANDIDATES_PAGE.INTERVIEW.NEXT' | translate }}
+					</button>
+				</div>
+			</nb-step>
+			<nb-step [label]="step2">
+				<ng-template #step2>{{
+					'CANDIDATES_PAGE.INTERVIEW.STEP_2' | translate
+				}}</ng-template>
+
+				<div class="button-container">
+					<button status="primary" nbButton nbStepperPrevious>
+						{{ 'CANDIDATES_PAGE.INTERVIEW.PREVIOUS' | translate }}
+					</button>
+					<button status="success" nbButton nbStepperNext>
+						{{ 'CANDIDATES_PAGE.INTERVIEW.NEXT' | translate }}
+					</button>
+				</div>
+			</nb-step>
+		</nb-stepper>
+	</nb-card-body>
+</nb-card>
