@@ -1,11 +1,10 @@
 import { Component, ViewChild, OnDestroy, OnInit } from '@angular/core';
+import { OptionsInput, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Router } from '@angular/router';
-import { EventInput } from '@fullcalendar/core';
 import { Subject } from 'rxjs';
-import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -21,13 +20,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
-	calendarPlugins = [
-		dayGridPlugin,
-		timeGrigPlugin,
-		interactionPlugin,
-		bootstrapPlugin
-	];
-	calendarWeekends = true;
+	calendarOptions: OptionsInput;
+
 	calendarEvents: EventInput[] = [
 		{
 			title: 'Meeting 1',
@@ -56,21 +50,29 @@ export class AppointmentComponent extends TranslationBaseComponent
 		}
 	];
 
-	tabs: {
-		title: string;
-		icon: string;
-		responsive: boolean;
-		route: string;
-	}[] = [];
-
-	loading = true;
-
 	constructor(
-		private store: Store,
 		private router: Router,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+		this.calendarOptions = {
+			initialView: 'timeGridWeek',
+			header: {
+				left: 'prev,next today',
+				center: 'title',
+				right: 'timeGridWeek'
+			},
+			themeSystem: 'bootstrap',
+			plugins: [
+				dayGridPlugin,
+				timeGrigPlugin,
+				interactionPlugin,
+				bootstrapPlugin
+			],
+			weekends: true,
+			height: 'auto',
+			events: this.calendarEvents
+		};
 	}
 
 	ngOnInit(): void {}
