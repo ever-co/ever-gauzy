@@ -169,7 +169,11 @@
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date",
-			"ORGANIZATION_NAME": "Organization Name"
+			"ORGANIZATION_NAME": "Organization Name",
+			"MEETING_AGENDA": "Agenda",
+			"MEETING_LOCATION": "Локация",
+			"MEETING_DESCRIPTION": "Description",
+			"MEETING_INVITEES": "Invitees"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -255,7 +259,10 @@
 				"ORGANIZATION": "Organization name",
 				"DURATION": "Duration",
 				"DESCRIPTION": "Description (optional)"
-			}
+			},
+			"MEETING_AGENDA": "Agenda",
+			"MEETING_LOCATION": "Локация",
+			"MEETING_DESCRIPTION": "Description"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -337,6 +344,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
+		"APPOINTMENTS": "Appointments",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
@@ -1234,5 +1242,8 @@
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
+	},
+	"APPOINTMENTS_PAGE": {
+		"ADD_APPOINTMENT": "Add Appointment"
 	}
 }
