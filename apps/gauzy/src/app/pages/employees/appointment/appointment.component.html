@@ -9,19 +9,6 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<full-calendar
-			#calendar
-			defaultView="dayGridMonth"
-			[header]="{
-				left: 'prev,next today',
-				center: 'title',
-				right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-			}"
-			themeSystem="bootstrap"
-			[plugins]="calendarPlugins"
-			[events]="calendarEvents"
-			[weekends]="calendarWeekends"
-		>
-		</full-calendar>
+		<full-calendar #calendar [options]="calendarOptions"></full-calendar>
 	</nb-card-body>
 </nb-card>
