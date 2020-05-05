@@ -2,12 +2,10 @@ import { Component, ViewChild, OnDestroy, OnInit } from '@angular/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { EventInput } from '@fullcalendar/core';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
-import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -75,17 +73,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
-	ngOnInit(): void {
-		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.store.selectedEmployee$
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe((emp) => {
-						this.loadTabs(emp);
-					});
-			});
-	}
+	ngOnInit(): void {}
 
 	getRoute(name: string) {
 		return `/pages/employees/appointments/${name}`;
@@ -93,17 +81,6 @@ export class AppointmentComponent extends TranslationBaseComponent
 
 	manageAppointments() {
 		this.router.navigate([this.getRoute('add')]);
-	}
-
-	loadTabs(selectedEmployee: SelectedEmployee) {
-		let conditionalTabs = [];
-
-		if (selectedEmployee && selectedEmployee.id) {
-		}
-
-		this.tabs = [];
-
-		this.loading = false;
 	}
 
 	ngOnDestroy() {

@@ -12,7 +12,7 @@ const databaseConfig: TypeOrmModuleOptions = {
 	port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
 	database: process.env.DB_NAME || 'postgres',
 	username: process.env.DB_USER || 'postgres',
-	password: process.env.DB_PASS || 'toor',
+	password: process.env.DB_PASS || 'root',
 	keepConnectionAlive: true,
 	logging: true,
 	synchronize: true,

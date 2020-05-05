@@ -18,7 +18,6 @@ import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../../../@theme/theme.module';
 import { ManageAppointmentRoutingModule } from './manage-appointment-routing.module';
-import { ManageAppointmentComponent } from './manage-appointment.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
