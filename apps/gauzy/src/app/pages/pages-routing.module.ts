@@ -191,6 +191,13 @@ const routes: Routes = [
 							).then((m) => m.WorkInProgressModule)
 					},
 					{
+						path: 'appointments',
+						loadChildren: () =>
+							import(
+								'./employees/appointment/appointment.module'
+							).then((m) => m.AppointmentModule)
+					},
+					{
 						path: 'time-off',
 						loadChildren: () =>
 							import('./time-off/time-off.module').then(

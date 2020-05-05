@@ -34,7 +34,8 @@
 		"UPDATE": "Обновить",
 		"AUTO_SYNC": "Автосинхронизация",
 		"VIEW": "Вид",
-		"SEND": "Отправить"
+		"SEND": "Отправить",
+		"ARCHIVE": "Архивировать"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -89,6 +90,9 @@
 		"CLIENTS": "Клиенты",
 		"DEPARTMENTS": "Департаменты",
 		"DESCRIPTION": "Описание",
+		"APPLIED": "Применяется",
+		"HIRED": "Наклонный",
+		"REJECTED": "Отклонено",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "Русский (Соединенные Штаты)",
@@ -165,7 +169,11 @@
 			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
 			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
 			"REGISTRATION_DATE": "Дата регистрации",
-			"ORGANIZATION_NAME": "Название организации"
+			"ORGANIZATION_NAME": "Название организации",
+			"MEETING_AGENDA": "Повестка дня",
+			"MEETING_LOCATION": "Местоположение",
+			"MEETING_DESCRIPTION": "Описание",
+			"MEETING_INVITEES": "Приглашенные"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -251,7 +259,10 @@
 				"ORGANIZATION": "Название организации",
 				"DURATION": "Продолжительность",
 				"DESCRIPTION": "Описание (необязательно)"
-			}
+			},
+			"MEETING_AGENDA": "Повестка дня",
+			"MEETING_LOCATION": "Местоположение",
+			"MEETING_DESCRIPTION": "Описание"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -259,10 +270,16 @@
 			"LIMITS": "Лимиты"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Включать удаленные"
+			"INCLUDE_DELETED": "Включать удаленные",
+			"INCLUDE_ARCHIVED": "Включать в архив"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "Необходимо ввести дату, когда работник начал работу для генерации заработной платы работников, позволяет работнику участвовать в разделенных расходах, видеть статистику работников"
+		},
+		"ARCHIVE_CONFIRMATION": {
+			"SURE": "Вы уверены, что хотите архивировать",
+			"RECORD": "запись",
+			"CANDIDATE": "кандидат"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
@@ -327,6 +344,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
+		"APPOINTMENTS": "Назначения",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -552,6 +570,7 @@
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
 		"DELETED": "Удалено",
+		"ARCHIVED": "Архивирован",
 		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Управление Кандидатом",
@@ -1223,5 +1242,8 @@
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
 		"COMPLETE": "Все готово!"
+	},
+	"APPOINTMENTS_PAGE": {
+		"ADD_APPOINTMENT": "Добавить Назначение"
 	}
 }

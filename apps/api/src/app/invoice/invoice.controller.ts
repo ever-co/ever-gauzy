@@ -28,7 +28,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	}
 
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.POLICY_VIEW)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
 	async findAllInvoices(
 		@Query('data', ParseJsonPipe) data: any

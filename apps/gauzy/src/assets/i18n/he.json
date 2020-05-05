@@ -34,7 +34,8 @@
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
-		"SEND": "Send"
+		"SEND": "Send",
+		"ARCHIVE": "Archive"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -89,6 +90,9 @@
 		"CLIENTS": "לקוחות",
 		"DEPARTMENTS": "מחלקות",
 		"DESCRIPTION": "Description",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -165,7 +169,11 @@
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date",
-			"ORGANIZATION_NAME": "Organization Name"
+			"ORGANIZATION_NAME": "Organization Name",
+			"MEETING_AGENDA": "Agenda",
+			"MEETING_LOCATION": "Location",
+			"MEETING_DESCRIPTION": "Description",
+			"MEETING_INVITEES": "Invitees"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -251,7 +259,10 @@
 				"ORGANIZATION": "Organization name",
 				"DURATION": "Duration",
 				"DESCRIPTION": "Description (optional)"
-			}
+			},
+			"MEETING_AGENDA": "Agenda",
+			"MEETING_LOCATION": "Location",
+			"MEETING_DESCRIPTION": "Description"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -259,10 +270,16 @@
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Include Deleted"
+			"INCLUDE_DELETED": "Include Deleted",
+			"INCLUDE_ARCHIVED": "Include Archived"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+		},
+		"ARCHIVE_CONFIRMATION": {
+			"SURE": "Are you sure you want to archive",
+			"RECORD": "תקליט",
+			"CANDIDATE": "candidate"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -327,6 +344,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
+		"APPOINTMENTS": "Appointments",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
@@ -552,6 +570,7 @@
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
 		"DELETED": "Deleted",
+		"ARCHIVED": "נשמר בארכיון",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
@@ -1223,5 +1242,8 @@
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
+	},
+	"APPOINTMENTS_PAGE": {
+		"ADD_APPOINTMENT": "Add Appointment"
 	}
 }

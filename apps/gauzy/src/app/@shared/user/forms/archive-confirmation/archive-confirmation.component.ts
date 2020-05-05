@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 @Component({
-	selector: 'ga-delete-confirmation',
+	selector: 'ga-archive-confirmation',
 	template: `
 		<nb-card class="center">
 			<nb-card-header>
@@ -12,12 +12,12 @@ import { NbDialogRef } from '@nebular/theme';
 				<span>
 					{{ 'FORM.ARCHIVE_CONFIRMATION.SURE' | translate }}
 					{{ recordType }}
-					{{ 'FORM.ARCHIVE_CONFIRMATION.RECORD' | translate }}?
+					{{ 'FORM.DELETE_CONFIRMATION.RECORD' | translate }}?
 				</span>
 			</nb-card-body>
 			<nb-card-footer>
 				<button
-					(click)="delete()"
+					(click)="archive()"
 					class="mr-3"
 					status="danger"
 					nbButton
@@ -43,17 +43,17 @@ import { NbDialogRef } from '@nebular/theme';
 		`
 	]
 })
-export class DeleteConfirmationComponent {
+export class ArchiveConfirmationComponent {
 	recordType: string;
 	constructor(
-		protected dialogRef: NbDialogRef<DeleteConfirmationComponent>
+		protected dialogRef: NbDialogRef<ArchiveConfirmationComponent>
 	) {}
 
 	close() {
 		this.dialogRef.close();
 	}
 
-	delete() {
+	archive() {
 		this.dialogRef.close('ok');
 	}
 }
