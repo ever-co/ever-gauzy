@@ -122,7 +122,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			discountValue: ['', Validators.required],
 			tax: ['', Validators.required],
 			terms: ['', Validators.required],
-			paid: ['', Validators.required],
+			paid: [''],
 			client: ['', Validators.required],
 			currency: ['', Validators.required],
 			discountType: ['', Validators.required],
@@ -511,15 +511,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				}
 			}
 
-			let allItemValue = 0;
-			tableData.forEach((invoiceItem) => {
-				invoiceItem.totalValue =
-					+invoiceItem.price * +invoiceItem.quantity;
-				allItemValue += invoiceItem.totalValue;
-			});
-			const invoiceTotalValue =
-				allItemValue + +invoiceData.tax - +invoiceData.discountValue;
-
 			await this.invoicesService.update(this.invoice.id, {
 				invoiceNumber: invoiceData.invoiceNumber,
 				invoiceDate: invoiceData.invoiceDate,
@@ -531,7 +522,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				taxType: invoiceData.taxType,
 				terms: invoiceData.terms,
 				paid: invoiceData.paid,
-				totalValue: invoiceTotalValue,
+				totalValue: this.total,
+				invoiceType: this.invoice.invoiceType,
 				clientId: invoiceData.client.id,
 				organizationId: this.organization.id
 			});
@@ -697,11 +689,11 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	calculateTotal() {
 		const discountValue =
 			this.form.value.discountValue && this.form.value.discountValue > 0
-				? this.form.value.discountValue
+				? +this.form.value.discountValue
 				: 0;
 		const tax =
 			this.form.value.tax && this.form.value.tax > 0
-				? this.form.value.tax
+				? +this.form.value.tax
 				: 0;
 		let totalDiscount = 0;
 		let totalTax = 0;
