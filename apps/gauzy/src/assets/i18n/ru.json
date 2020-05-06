@@ -174,7 +174,14 @@
 			"MEETING_AGENDA": "Повестка дня",
 			"MEETING_LOCATION": "Местоположение",
 			"MEETING_DESCRIPTION": "Описание",
-			"MEETING_INVITEES": "Приглашенные"
+			"MEETING_INVITEES": "Приглашенные",
+			"TITLE": "Заголовок",
+			"DATE": "Дата",
+			"TIME": "Время",
+			"DURATION": "Продолжительность",
+			"INTERVIEWERS": "Интервьюеры",
+			"LOCATION": "Местоположение",
+			"NOTE": "Примечание"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -230,6 +237,7 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
@@ -260,6 +268,16 @@
 				"ORGANIZATION": "Название организации",
 				"DURATION": "Продолжительность",
 				"DESCRIPTION": "Описание (необязательно)"
+			},
+			"ADD_INTERVIEW": {
+				"TITLE": "Заголовок",
+				"DATE": "Дата",
+				"TIME": "Время",
+				"DURATION": "Продолжительность",
+				"INTERVIEWERS": "Интервьюеры",
+				"LOCATION": "Местоположение",
+				"NOTE": "Примечание (опционально)",
+				"TYPE": "Тип интервью"
 			},
 			"MEETING_AGENDA": "Повестка дня",
 			"MEETING_LOCATION": "Местоположение",
@@ -603,7 +621,16 @@
 			"DOCUMENTS": "Документы",
 			"DOCUMENT_NAME": "Название документа",
 			"DOCUMENT": "Документ",
-			"FEEDBACK_DESCRIPTION": "Описание отзыва"
+			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"INTERVIEW": {
+				"INTERVIEW": "Интервью",
+				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"STEP_1": "Шаг 1",
+				"STEP_2": "Шаг2",
+				"NEXT": "Следующий",
+				"PREVIOUS": "Предыдущий",
+				"SAVE": "Сохранить"
+			}
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Шаг 1",
