@@ -14,7 +14,6 @@ import {
 	NbCheckboxModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';

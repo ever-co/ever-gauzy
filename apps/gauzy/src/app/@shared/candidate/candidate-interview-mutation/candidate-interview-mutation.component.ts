@@ -61,14 +61,14 @@ export class CandidateInterviewMutationComponent
 	}
 	async add() {
 		this.addInterview();
-		try {
-			// const candidate = await this.candidatesService
-			// 	.createBulk(this.candidates)
-			// 	.pipe(first())
-			// 	.toPromise();
-			// this.closeDialog(candidate);
-		} catch (error) {
-			this.errorHandler.handleError(error);
-		}
+		// try {
+		// const candidate = await this.candidatesService
+		// 	.createBulk(this.candidates)
+		// 	.pipe(first())
+		// 	.toPromise();
+		// this.closeDialog(candidate);
+		// } catch (error) {
+		// 	this.errorHandler.handleError(error);
+		// }
 	}
 }
