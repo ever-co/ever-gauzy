@@ -69,6 +69,8 @@ import { CandidateDocument } from '../candidate-documents/candidate-documents.en
 import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateFeedback } from './../candidate-feedbacks/candidate-feedbacks.entity';
+import { EmployeeAppointment } from '../employee-appointment';
+import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
 
 const entities = [
 	Invite,
@@ -129,7 +131,9 @@ const entities = [
 	Integration,
 	IntegrationMap,
 	IntegrationEntitySetting,
-	IntegrationEntitySettingTiedEntity
+	IntegrationEntitySettingTiedEntity,
+	AppointmentEmployees,
+	EmployeeAppointment
 ];
 
 @Module({
