@@ -1,0 +1,83 @@
+<form class="form" [formGroup]="form" *ngIf="form">
+	<div class="form-group">
+		<label for="inputTitle" class="label">{{
+			'FORM.LABELS.TITLE' | translate
+		}}</label>
+		<input
+			nbInput
+			type="text"
+			id="inputTitle"
+			fullWidth
+			placeholder="{{
+				'FORM.PLACEHOLDERS.ADD_INTERVIEW.TITLE' | translate
+			}}"
+			formControlName="title"
+		/>
+	</div>
+	<ngx-timer-range-picker
+		name="selectedRange"
+		[maxDate]="today"
+		[ngModelOptions]="{ standalone: true }"
+		[(ngModel)]="selectedRange"
+	>
+	</ngx-timer-range-picker>
+
+	<div class="form-group">
+		<label for="note" class="label">{{
+			'FORM.LABELS.MEETING_INVITEES' | translate
+		}}</label>
+		<ga-employee-multi-select
+			[allEmployees]="employees"
+			(selectedChange)="onMembersSelected($event)"
+		>
+		</ga-employee-multi-select>
+	</div>
+	<div class="form-group checkbox-wrap">
+		<span>
+			{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.TYPE' | translate }}
+		</span>
+		<!-- <nb-checkbox
+			(checkedChange)="callToggle()"
+			[checked]="isCall()"
+			class="checkbox"
+			>Call</nb-checkbox
+		>
+		<nb-checkbox
+			(checkedChange)="meetingToggle()"
+			[checked]="isMeeting()"
+			class="checkbox"
+			>Meeting</nb-checkbox
+		> -->
+	</div>
+
+	<div class="form-group">
+		<label for="location" class="label">{{
+			'FORM.LABELS.LOCATION' | translate
+		}}</label>
+		<input
+			fullWidth
+			id="location"
+			type="text"
+			nbInput
+			formControlName="location"
+			placeholder="{{
+				'FORM.PLACEHOLDERS.ADD_INTERVIEW.LOCATION' | translate
+			}}"
+		/>
+	</div>
+	<div class="form-group">
+		<label for="note" class="label">{{
+			'FORM.LABELS.NOTE' | translate
+		}}</label>
+		<input
+			fullWidth
+			id="note"
+			type="text"
+			nbInput
+			formControlName="note"
+			placeholder="{{
+				'FORM.PLACEHOLDERS.ADD_INTERVIEW.NOTE' | translate
+			}}"
+		/>
+	</div>
+</form>

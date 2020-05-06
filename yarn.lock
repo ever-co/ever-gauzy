@@ -1554,10 +1554,12 @@
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.12.1.tgz#2a98fea9fbb8a606ddc79a4680034e9d5591c550"
   integrity sha512-ZtjIIFplxncqxvogq148C3hBLQE+W3iJ8E4UvJ09zIJUgzwLcROsWwFDErVSXY2Plzao5J9KUYNHKHMEUYDMKw==
 
+
 "@fullcalendar/angular@5.0.0-beta.2":
   version "5.0.0-beta.2"
   resolved "https://registry.yarnpkg.com/@fullcalendar/angular/-/angular-5.0.0-beta.2.tgz#2900c4937f9fe99d76cd0ddfd7d13e0a9ef73240"
   integrity sha512-O5+EKmWfFSwbmCIaR77VaeL6X9z4eZxc93MVFEZcNeLwBbmp0Dl/WqQP6Eg0O9mSApFxw3uWy2OTXPVwerTk/Q==
+
   dependencies:
     "@fullcalendar/core" "5.0.0-beta.2"
     fast-deep-equal "^3.1.1"

@@ -149,6 +149,14 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 			},
 			{
 				title: this.getTranslation(
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'
+				),
+				icon: 'people-outline',
+				responsive: true,
+				route: this.getRoute('interview')
+			},
+			{
+				title: this.getTranslation(
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACKS'
 				),
 				icon: 'message-square-outline',

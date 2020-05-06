@@ -1,3 +1,4 @@
+import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { CandidatesComponent } from './candidates.component';
@@ -75,6 +76,10 @@ const routes: Routes = [
 			{
 				path: 'employment',
 				component: EditCandidateEmploymentComponent
+			},
+			{
+				path: 'interview',
+				component: EditCandidateInterviewComponent
 			}
 		]
 	},
