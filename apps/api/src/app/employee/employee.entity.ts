@@ -26,7 +26,7 @@ import { OrganizationTeamEmployee } from '../organization-team-employee/organiza
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
-
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 @Entity('employee')
 export class Employee extends TenantLocationBase implements IEmployee {
 	@ManyToMany((type) => Tag)
@@ -112,7 +112,7 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	reWeeklyLimit?: number;
-	
+
 	@OneToMany(
 		(type) => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.employee
@@ -168,4 +168,10 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	)
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	@OneToMany(
+		(type) => RequestApprovalEmployee,
+		(requestApprovalEmployee) => requestApprovalEmployee.employee
+	)
+	rApprovalEmployee?: RequestApprovalEmployee[];
 }
