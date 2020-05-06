@@ -61,6 +61,8 @@ import { StarRatingOutputModule } from '../../@shared/star-rating/star-rating-ou
 import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
 import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
 import { CandidateInterviewMutationModule } from '../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.module';
+import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
+import { FullCalendarModule } from '@fullcalendar/angular';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -91,6 +93,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		FullCalendarModule,
 		TableComponentsModule,
 		SharedModule,
 		CandidatesRoutingModule,
@@ -132,7 +135,7 @@ const COMPONENTS = [
 		StarRatingInputModule,
 		StarRatingOutputModule
 	],
-	declarations: [...COMPONENTS],
+	declarations: [...COMPONENTS, ManageCandidateInterviewsComponent],
 	entryComponents: [
 		CandidateStatusComponent,
 		CandidateSourceComponent,
