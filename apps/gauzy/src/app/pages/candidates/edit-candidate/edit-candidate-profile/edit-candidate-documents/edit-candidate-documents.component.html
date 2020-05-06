@@ -86,11 +86,18 @@
 
 		<nb-card *ngFor="let document of documentList; let i = index">
 			<nb-card-body class="documents-card">
-				<div>
-					<div class="documents-line">
+				<div class="documents-line">
+					<div>
+						<nb-icon
+							class="doc-icon"
+							icon="file-text-outline"
+						></nb-icon>
 						<a href="{{ document.documentUrl }}">
 							{{ document.name }}
 						</a>
+					</div>
+					<div class="document-data">
+						{{ document.updatedAt | date: 'medium' }}
 					</div>
 				</div>
 
