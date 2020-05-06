@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Router, ActivatedRoute } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
+import { first } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -31,23 +31,23 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			CandidateInterviewMutationComponent
 		);
 
-		// const response = await dialog.onClose.pipe(first()).toPromise();
+		const response = await dialog.onClose.pipe(first()).toPromise();
 
-		// if (response) {
-		// response.map((data) => {
-		// 	if (data.user.firstName || data.user.lastName) {
-		// 		this.candidateName =
-		// 			data.user.firstName + ' ' + data.user.lastName;
-		// 	}
-		// 	this.toastrService.primary(
-		// 		this.candidateName.trim() +
-		// 			' added to ' +
-		// 			data.organization.name,
-		// 		'Success'
-		// 	);
-		// });
-		// this.loadPage();
-		// }
+		if (response) {
+			// response.map((data) => {
+			// 	if (data.user.firstName || data.user.lastName) {
+			// 		this.candidateName =
+			// 			data.user.firstName + ' ' + data.user.lastName;
+			// 	}
+			// 	this.toastrService.primary(
+			// 		this.candidateName.trim() +
+			// 			' added to ' +
+			// 			data.organization.name,
+			// 		'Success'
+			// 	);
+			// });
+			//this.loadPage();
+		}
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
