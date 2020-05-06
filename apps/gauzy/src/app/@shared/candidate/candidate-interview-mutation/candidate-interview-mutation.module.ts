@@ -10,7 +10,9 @@ import {
 	NbInputModule,
 	NbDatepickerModule,
 	NbSelectModule,
-	NbBadgeModule
+	NbBadgeModule,
+	NbCheckboxModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -18,6 +20,8 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
+import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -32,11 +36,15 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbBadgeModule,
 		ThemeModule,
 		FormsModule,
+		NbCheckboxModule,
 		NbCardModule,
 		NbInputModule,
 		NbButtonModule,
+		NbRadioModule,
 		NbIconModule,
 		NbStepperModule,
+		TimerPickerModule,
+		EmployeeMultiSelectModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

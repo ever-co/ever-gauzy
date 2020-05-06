@@ -26,7 +26,8 @@ export class CandidateInterviewMutationComponent
 	candidateInterviewForm: CandidateInterviewFormComponent;
 
 	form: FormGroup;
-	interviews: ICandidateInterviewCreateInput[] = [];
+	interview: ICandidateInterviewCreateInput;
+
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
 		protected organizationsService: OrganizationsService,
@@ -36,7 +37,7 @@ export class CandidateInterviewMutationComponent
 		private errorHandler: ErrorHandlingService
 	) {}
 
-	ngOnInit(): void {}
+	ngOnInit() {}
 
 	async ngAfterViewInit() {
 		this.form = this.candidateInterviewForm.form;
@@ -45,29 +46,18 @@ export class CandidateInterviewMutationComponent
 		this.dialogRef.close(candidate);
 	}
 	addInterview() {
-		console.log('111');
-		const interviewers = this.form.get('interviewers').value || null;
-		const location = this.form.get('location').value || null;
-		const note = this.form.get('note').value || null;
-
-		const newInterview: ICandidateInterviewCreateInput = {
+		this.candidateInterviewForm.loadFormData();
+		const formInterview = this.candidateInterviewForm.form.value;
+		this.interview = {
 			title: this.form.get('title').value,
-			date: this.form.get('date').value,
-			interviewers,
-			location,
-			duration: this.form.get('duration').value,
-			timeZone: this.form.get('timeZone').value,
-			note
-			// interviewersNotification: this.form.get('interviewersNotification')
-			// 	.value,
-			// candidateNotification: this.form.get('candidateNotification').value
+			interviewers: formInterview.interviewers,
+			location: this.form.get('location').value,
+			startTime: this.form.get('startTime').value,
+			endTime: this.form.get('endTime').value,
+			note: this.form.get('note').value
 		};
 
-		this.interviews.push(newInterview);
-		this.candidateInterviewForm.loadFormData();
-		this.form = this.candidateInterviewForm.form;
-
-		this.stepper.reset();
+		//this.stepper.reset();
 	}
 	async add() {
 		this.addInterview();

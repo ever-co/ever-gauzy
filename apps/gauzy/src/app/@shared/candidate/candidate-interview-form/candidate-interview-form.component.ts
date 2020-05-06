@@ -1,56 +1,58 @@
-import { Component, OnInit } from '@angular/core';
-import { Validators, FormBuilder, FormArray } from '@angular/forms';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { Employee, IDateRange } from '@gauzy/models';
+import { EmployeesService } from '../../../@core/services';
+import { toUTC } from 'libs/utils';
+
 @Component({
 	selector: 'ga-candidate-interview-form',
-	templateUrl: 'candidate-interview-form.component.html'
+	templateUrl: 'candidate-interview-form.component.html',
+	styleUrls: ['candidate-interview-form.component.scss']
 })
-export class CandidateInterviewFormComponent implements OnInit {
+export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	form: any;
+	employees: Employee[];
 
-	//Fields for the form
-	title: any;
-	date: any;
-	duration: any;
-	timeZone: any;
-	// interviewersNotification: any;
-	// candidateNotification: any;
-	location: any;
-	note: any;
-	interviewers: string[];
-
-	constructor(private readonly fb: FormBuilder) {}
+	selectedEmployeeIds: string[];
+	select = true;
+	selectedRange: IDateRange = { start: null, end: null };
+	private _ngDestroy$ = new Subject<void>();
+	constructor(
+		private readonly fb: FormBuilder,
+		private employeeService: EmployeesService
+	) {}
 
 	ngOnInit() {
 		this.loadFormData();
+		this.employeeService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employees) => {
+				this.employees = employees.items;
+			});
 	}
-	loadFormData = () => {
+	onMembersSelected(event) {
+		this.selectedEmployeeIds = event;
+	}
+	loadFormData() {
+		const startedAt = toUTC(this.selectedRange.start).toDate();
+		const stoppedAt = toUTC(this.selectedRange.end).toDate();
+
+		// console.log(startedAt);
+
 		this.form = this.fb.group({
 			title: [''],
-			date: [''],
-			duration: [''],
-			timeZone: [''],
-			// interviewersNotification: [false],
-			// candidateNotification: [false],
+			startTime: [startedAt],
+			interviewers: [this.selectedEmployeeIds],
+			endTime: [stoppedAt],
 			location: [''],
-			note: [''],
-			interviewers: this.fb.array([])
+			note: ['']
 		});
-		const interviewerForm = this.form.controls.interviewers as FormArray;
-		interviewerForm.push(
-			this.fb.group({
-				interviewers: ['', Validators.required]
-			})
-		);
-		//this.title = this.form.get('title');
-		//this.date = this.form.get('date');
-		//this.duration = this.form.get('duration');
-		//	this.timeZone = this.form.get('timeZone');
-		// this.interviewersNotification = this.form.get(
-		// 	'interviewersNotification'
-		// );
-		// this.candidateNotification = this.form.get('candidateNotification');
-		//	this.location = this.form.get('location');
-		//	this.note = this.form.get('note');
-		//this.interviewers = this.form.get('candidateNotification');
-	};
+	}
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
+	}
 }
