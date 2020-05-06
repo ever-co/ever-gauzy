@@ -40,8 +40,6 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 		const startedAt = toUTC(this.selectedRange.start).toDate();
 		const stoppedAt = toUTC(this.selectedRange.end).toDate();
 
-		// console.log(startedAt);
-
 		this.form = this.fb.group({
 			title: [''],
 			startTime: [startedAt],
