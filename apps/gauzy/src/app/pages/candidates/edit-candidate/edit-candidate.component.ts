@@ -13,13 +13,15 @@ import { CandidatesService } from '../../../@core/services/candidates.service';
 	templateUrl: './edit-candidate.component.html',
 	styleUrls: [
 		'../../organizations/edit-organization/edit-organization.component.scss',
-		'../../dashboard/dashboard.component.scss'
+		'../../dashboard/dashboard.component.scss',
+		'./edit-candidate.component.scss'
 	]
 })
 export class EditCandidateComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
+	selectedInterview = true;
 	candidateName = 'Candidate';
 	hasEditPermission = false;
 	constructor(

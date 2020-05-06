@@ -1,0 +1,28 @@
+.notification {
+	margin-top: 18px;
+	margin-right: -20px;
+	margin-left: 20px;
+	position: relative;
+	display: inline-block;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	background-color: #0091ff;
+}
+.exist {
+	position: absolute;
+	font-size: 8px;
+	top: 9px;
+	right: 8px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: #ff1100;
+}
+.bell {
+	color: white !important;
+	font-size: 18px;
+	position: absolute;
+	margin-top: 9px;
+	margin-left: 9px;
+}

@@ -16,6 +16,7 @@ import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-pro
 import { EditCandidateExperienceComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience.component';
 import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
 import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/edit-candidate-feedbacks.component';
+import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
 
 const routes: Routes = [
 	{
@@ -87,6 +88,10 @@ const routes: Routes = [
 				PermissionsEnum.ORG_INVITE_VIEW
 			]
 		}
+	},
+	{
+		path: 'interviews',
+		component: ManageCandidateInterviewsComponent
 	}
 ];
 
