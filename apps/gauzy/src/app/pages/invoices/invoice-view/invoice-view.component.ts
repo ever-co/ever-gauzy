@@ -228,7 +228,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 				imgWidth,
 				imgHeight
 			);
-			pdf.save('MYPdf.pdf');
+			pdf.save(`Invoice ${this.invoice.invoiceNumber}`);
 		});
 	}
 
