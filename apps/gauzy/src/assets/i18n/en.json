@@ -584,9 +584,9 @@
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
 	"INTERVIEW_INFO_MODAL": {
-		"TITLE": "Title interview",
 		"SCHEDULED_BY": "Scheduled by",
 		"HOURS_AGO": "hour(s) ago",
+		"MINUTES_AGO": "minute(s) ago",
 		"DATE": "Date",
 		"TIME": "Time",
 		"CANDIDATE": "Candidate",

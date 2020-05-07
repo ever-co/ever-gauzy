@@ -2,12 +2,17 @@
 	<nb-card-header class="d-flex">
 		<div>
 			<h5 class="title">
-				{{ 'INTERVIEW_INFO_MODAL.TITLE' | translate }}
+				{{ interview.title }}
 			</h5>
-			<p class="interview-info">
+			<p *ngIf="!isMinutes" class="interview-info">
 				{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
-				{{ interviewersName }} {{ hoursUpdate }}
+				{{ interview.interviewers }} {{ hoursUpdate }}
 				{{ 'INTERVIEW_INFO_MODAL.HOURS_AGO' | translate }}
+			</p>
+			<p *ngIf="isMinutes" class="interview-info">
+				{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
+				{{ interview.interviewers }} {{ hoursUpdate }}
+				{{ 'INTERVIEW_INFO_MODAL.MINUTES_AGO' | translate }}
 			</p>
 		</div>
 		<nb-icon
@@ -24,7 +29,9 @@
 					{{ 'INTERVIEW_INFO_MODAL.DATE' | translate }}
 				</p>
 			</div>
-			<p class="interview-data">{{ time | date: 'fullDate' }}</p>
+			<p class="interview-data">
+				{{ interview.startTime | date: 'fullDate' }}
+			</p>
 		</div>
 		<div>
 			<div class="interview-info">
@@ -34,8 +41,8 @@
 				</p>
 			</div>
 			<p class="interview-data">
-				{{ time | date: 'longTime' }} -
-				{{ currentTime | date: 'longTime' }}
+				{{ interview.startTime | date: 'mediumTime' }} -
+				{{ interview.endTime | date: 'longTime' }}
 			</p>
 		</div>
 		<div>
@@ -54,7 +61,7 @@
 					{{ 'INTERVIEW_INFO_MODAL.INTERVIEWERS' | translate }}
 				</p>
 			</div>
-			<p class="interview-data">{{ interviewersName }}</p>
+			<p class="interview-data">{{ interview.interviewers }}</p>
 		</div>
 		<div>
 			<div class="interview-info">
@@ -63,7 +70,7 @@
 					{{ 'INTERVIEW_INFO_MODAL.LOCATION' | translate }}
 				</p>
 			</div>
-			<p class="interview-data">{{ interviewLocation }}</p>
+			<p class="interview-data">{{ interview.location }}</p>
 		</div>
 		<div>
 			<div class="interview-info">
@@ -72,7 +79,7 @@
 					{{ 'INTERVIEW_INFO_MODAL.NOTE' | translate }}
 				</p>
 			</div>
-			<p class="interview-data">{{ interviewNote }}</p>
+			<p class="interview-data">{{ interview.note }}</p>
 		</div>
 	</nb-card-body>
 </nb-card>
