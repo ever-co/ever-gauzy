@@ -1,0 +1,78 @@
+<nb-card>
+	<nb-card-header class="d-flex">
+		<div>
+			<h5 class="title">
+				{{ 'INTERVIEW_INFO_MODAL.TITLE' | translate }}
+			</h5>
+			<p class="interview-info">
+				{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
+				{{ interviewersName }} {{ hoursUpdate }}
+				{{ 'INTERVIEW_INFO_MODAL.HOURS_AGO' | translate }}
+			</p>
+		</div>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<div>
+			<div class="interview-info">
+				<nb-icon icon="calendar-outline" class="icons"></nb-icon>
+				<p class="interview-text">
+					{{ 'INTERVIEW_INFO_MODAL.DATE' | translate }}
+				</p>
+			</div>
+			<p class="interview-data">{{ time | date: 'fullDate' }}</p>
+		</div>
+		<div>
+			<div class="interview-info">
+				<nb-icon icon="clock-outline" class="icons"></nb-icon>
+				<p class="interview-text">
+					{{ 'INTERVIEW_INFO_MODAL.TIME' | translate }}
+				</p>
+			</div>
+			<p class="interview-data">
+				{{ time | date: 'longTime' }} -
+				{{ currentTime | date: 'longTime' }}
+			</p>
+		</div>
+		<div>
+			<div class="interview-info">
+				<nb-icon icon="person-outline" class="icons"></nb-icon>
+				<p class="interview-text">
+					{{ 'INTERVIEW_INFO_MODAL.CANDIDATE' | translate }}
+				</p>
+			</div>
+			<p class="interview-data">{{ candidateName }}</p>
+		</div>
+		<div>
+			<div class="interview-info">
+				<nb-icon icon="people-outline" class="icons"></nb-icon>
+				<p class="interview-text">
+					{{ 'INTERVIEW_INFO_MODAL.INTERVIEWERS' | translate }}
+				</p>
+			</div>
+			<p class="interview-data">{{ interviewersName }}</p>
+		</div>
+		<div>
+			<div class="interview-info">
+				<nb-icon icon="navigation-2-outline" class="icons"></nb-icon>
+				<p class="interview-text">
+					{{ 'INTERVIEW_INFO_MODAL.LOCATION' | translate }}
+				</p>
+			</div>
+			<p class="interview-data">{{ interviewLocation }}</p>
+		</div>
+		<div>
+			<div class="interview-info">
+				<nb-icon icon="edit-outline" class="icons"></nb-icon>
+				<p class="interview-text">
+					{{ 'INTERVIEW_INFO_MODAL.NOTE' | translate }}
+				</p>
+			</div>
+			<p class="interview-data">{{ interviewNote }}</p>
+		</div>
+	</nb-card-body>
+</nb-card>
