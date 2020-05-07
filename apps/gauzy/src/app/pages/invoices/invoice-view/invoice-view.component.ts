@@ -7,7 +7,8 @@ import {
 	Invoice,
 	InvoiceItem,
 	OrganizationClients,
-	Employee
+	Employee,
+	Organization
 } from '@gauzy/models';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
@@ -17,6 +18,9 @@ import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { LocalDataSource } from 'ng2-smart-table';
+import * as jspdf from 'jspdf';
+import * as html2canvas from 'html2canvas';
+import { OrganizationsService } from '../../../@core/services/organizations.service';
 
 @Component({
 	selector: 'ga-invoice-view',
@@ -31,6 +35,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 	dueDate: string;
 	invoiceItems: InvoiceItem[];
 	client: OrganizationClients;
+	organization: Organization;
 	settingsSmartTable: object;
 	loadTable = false;
 	smartTableSource = new LocalDataSource();
@@ -45,7 +50,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		private organizationClientsService: OrganizationClientsService,
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
-		private taskService: TasksService
+		private taskService: TasksService,
+		private organizationService: OrganizationsService
 	) {
 		super(translateService);
 	}
@@ -76,6 +82,9 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 			this.invoice.clientId
 		);
 		this.client = client;
+		this.organizationService
+			.getById(this.invoice.organizationId)
+			.subscribe((org) => (this.organization = org));
 	}
 
 	async getInvoiceItems() {
@@ -201,6 +210,26 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 				this.smartTableSource.load(items);
 				this.loadTable = true;
 			});
+	}
+
+	download() {
+		const data = document.getElementById('contentToConvert');
+		(html2canvas as any)(data).then((canvas) => {
+			const imgWidth = 208;
+			const imgHeight = (canvas.height * imgWidth) / canvas.width;
+			const contentDataURL = canvas.toDataURL('image/png');
+			const pdf = new jspdf('l', 'mm', 'a4');
+			const position = 0;
+			pdf.addImage(
+				contentDataURL,
+				'PNG',
+				0,
+				position,
+				imgWidth,
+				imgHeight
+			);
+			pdf.save('MYPdf.pdf');
+		});
 	}
 
 	_applyTranslationOnSmartTable() {

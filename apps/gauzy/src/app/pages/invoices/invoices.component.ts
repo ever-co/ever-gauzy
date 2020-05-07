@@ -13,6 +13,8 @@ import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { Subject } from 'rxjs';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import * as jspdf from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export interface SelectedInvoice {
 	data: Invoice;

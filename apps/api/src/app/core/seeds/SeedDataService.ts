@@ -250,7 +250,7 @@ export class SeedDataService {
 
 			await createCountries(this.connection);
 
-			await createEmailTemplates(this.connection);
+			// await createEmailTemplates(this.connection);
 
 			await this.seedDefaultData(categories);
 

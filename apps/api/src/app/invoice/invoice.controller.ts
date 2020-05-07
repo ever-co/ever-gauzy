@@ -47,9 +47,8 @@ export class InvoiceController extends CrudController<Invoice> {
 	@Put(':id')
 	async updateInvoice(
 		@Param('id') id: string,
-		@Body() entity: IInvoice,
-		...options: any[]
-	): Promise<IInvoice> {
+		@Body() entity: IInvoice
+	): Promise<any> {
 		return this.invoiceService.update(id, entity);
 	}
 }
