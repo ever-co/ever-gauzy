@@ -1,3 +1,4 @@
+import { ICandidateInterview } from './../../../../../libs/models/src/lib/candidate-interview.model';
 import { ICandidateSource } from './../../../../../libs/models/src/lib/candidate-source.model';
 import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
@@ -34,6 +35,7 @@ import { CandidateEducation } from '../candidate-education/candidate-education.e
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -48,6 +50,12 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 		name: 'candidate_education'
 	})
 	educations: IEducation[];
+
+	@ManyToOne((type) => CandidateInterview)
+	@JoinTable({
+		name: 'candidate_interview'
+	})
+	interview: ICandidateInterview[];
 
 	@ManyToOne((type) => CandidateExperience)
 	@JoinTable({

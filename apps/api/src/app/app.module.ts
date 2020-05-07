@@ -67,6 +67,7 @@ import { CandidateDocumentsModule } from './candidate-documents/candidate-docume
 import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
 import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedbacks.module';
 import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
+import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
 
 @Module({
 	imports: [
@@ -89,6 +90,10 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 					{
 						path: '/candidate-feedbacks',
 						module: CandidateFeedbacksModule
+					},
+					{
+						path: '/candidate-interview',
+						module: CandidateInterviewModule
 					},
 					{
 						path: '/candidate-experience',
@@ -273,6 +278,7 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 		CandidateExperienceModule,
 		CandidateSkillModule,
 		CandidateFeedbacksModule,
+		CandidateInterviewModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,

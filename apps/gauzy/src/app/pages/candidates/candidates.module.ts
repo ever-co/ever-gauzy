@@ -88,7 +88,8 @@ const COMPONENTS = [
 	ManageCandidateInviteComponent,
 	EditCandidateSkillsComponent,
 	EditCandidateEducationComponent,
-	EditCandidateExperienceFormComponent
+	EditCandidateExperienceFormComponent,
+	ManageCandidateInterviewsComponent
 ];
 
 @NgModule({
@@ -135,7 +136,7 @@ const COMPONENTS = [
 		StarRatingInputModule,
 		StarRatingOutputModule
 	],
-	declarations: [...COMPONENTS, ManageCandidateInterviewsComponent],
+	declarations: [...COMPONENTS],
 	entryComponents: [
 		CandidateStatusComponent,
 		CandidateSourceComponent,

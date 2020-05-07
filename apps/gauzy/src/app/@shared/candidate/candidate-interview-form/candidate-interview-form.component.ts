@@ -1,10 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, Validators, FormControl } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Employee, IDateRange } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
-import { toUTC } from 'libs/utils';
 
 @Component({
 	selector: 'ga-candidate-interview-form',
@@ -14,7 +13,7 @@ import { toUTC } from 'libs/utils';
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	form: any;
 	employees: Employee[];
-
+	isMeeting: boolean;
 	selectedEmployeeIds: string[];
 	select = true;
 	selectedRange: IDateRange = { start: null, end: null };
@@ -33,24 +32,30 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 				this.employees = employees.items;
 			});
 	}
+	findTime() {}
 	onMembersSelected(event) {
 		this.selectedEmployeeIds = event;
 	}
 	loadFormData() {
-		const startedAt = toUTC(this.selectedRange.start).toDate();
-		const stoppedAt = toUTC(this.selectedRange.end).toDate();
-
-		// console.log(startedAt);
-
 		this.form = this.fb.group({
-			title: [''],
-			startTime: [startedAt],
+			title: ['', Validators.required],
+			startTime: [this.selectedRange.start],
 			interviewers: [this.selectedEmployeeIds],
-			endTime: [stoppedAt],
-			location: [''],
+			endTime: [this.selectedRange.end],
+			location: ['', [this.locationValidator]],
 			note: ['']
 		});
 	}
+	resetLocation() {
+		this.form.patchValue({ location: '' });
+	}
+	locationValidator = (location: FormControl) => {
+		if (this.isMeeting) {
+			return location.setValidators(Validators.required);
+		} else {
+			return location.clearValidators();
+		}
+	};
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

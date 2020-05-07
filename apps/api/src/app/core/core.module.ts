@@ -69,6 +69,7 @@ import { CandidateDocument } from '../candidate-documents/candidate-documents.en
 import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateFeedback } from './../candidate-feedbacks/candidate-feedbacks.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 
 const entities = [
 	Invite,
@@ -125,6 +126,7 @@ const entities = [
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
+	CandidateInterview,
 	IntegrationSetting,
 	Integration,
 	IntegrationMap,
