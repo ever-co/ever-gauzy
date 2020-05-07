@@ -30,6 +30,10 @@
 						<strong>{{ selectedCandidate?.user.email }}</strong>
 					</div>
 				</div>
+				<div class="notification" (click)="interviewInfo()">
+					<nb-icon class="bell" icon="bell"></nb-icon>
+					<div *ngIf="selectedInterview" class="exist"></div>
+				</div>
 				<div
 					*ngIf="hasEditPermission"
 					class="employee-details edit-icon"

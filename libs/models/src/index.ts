@@ -6,6 +6,7 @@ export * from './lib/candidate-experience.model';
 export * from './lib/candidate-education.model';
 export * from './lib/candidate-skill.model';
 export * from './lib/candidate-feedback.model';
+export * from './lib/candidate-interview.model';
 export * from './lib/candidate-source.model';
 export * from './lib/organization.model';
 export * from './lib/income.model';
@@ -50,6 +51,8 @@ export * from './lib/tenant.model';
 export * from './lib/http-status.enum';
 export * from './lib/product.model';
 export * from './lib/seed.model';
+export * from './lib/employee-appointment.model';
+export * from './lib/appointment-employees.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

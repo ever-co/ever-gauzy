@@ -5,18 +5,33 @@
 				{{ 'CANDIDATES_PAGE.HEADER' | translate }}
 				{{ organizationName }}
 			</h4>
-			<button
-				*ngIf="
-					organizationInvitesAllowed &&
-					hasInviteViewOrEditPermission &&
-					hasEditPermission
-				"
-				nbButton
-				status="primary"
-				(click)="manageInvites()"
-			>
-				{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-			</button>
+			<div>
+				<button
+					class="interview-button"
+					*ngIf="
+						organizationInvitesAllowed &&
+						hasInviteViewOrEditPermission &&
+						hasEditPermission
+					"
+					nbButton
+					status="primary"
+					(click)="manageInterviews()"
+				>
+					{{ 'BUTTONS.MANAGE_INTERVIEWS' | translate }}
+				</button>
+				<button
+					*ngIf="
+						organizationInvitesAllowed &&
+						hasInviteViewOrEditPermission &&
+						hasEditPermission
+					"
+					nbButton
+					status="primary"
+					(click)="manageInvites()"
+				>
+					{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+				</button>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>

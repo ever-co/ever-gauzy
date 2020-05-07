@@ -192,6 +192,9 @@ export class CandidatesComponent extends TranslationBaseComponent
 	manageInvites() {
 		this.router.navigate(['/pages/employees/candidates/invites']);
 	}
+	manageInterviews() {
+		this.router.navigate(['/pages/employees/candidates/interviews']);
+	}
 	async getCandidateSource(id: string) {
 		this.candidateSource = null;
 		const res = await this.candidateSourceService.getAll({

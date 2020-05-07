@@ -7,19 +7,23 @@ import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { takeUntil, first } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
+import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { NbDialogService } from '@nebular/theme';
 
 @Component({
 	selector: 'ngx-edit-candidate',
 	templateUrl: './edit-candidate.component.html',
 	styleUrls: [
 		'../../organizations/edit-organization/edit-organization.component.scss',
-		'../../dashboard/dashboard.component.scss'
+		'../../dashboard/dashboard.component.scss',
+		'./edit-candidate.component.scss'
 	]
 })
 export class EditCandidateComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
+	selectedInterview = true;
 	candidateName = 'Candidate';
 	hasEditPermission = false;
 	constructor(
@@ -27,7 +31,8 @@ export class EditCandidateComponent extends TranslationBaseComponent
 		private store: Store,
 		private candidatesService: CandidatesService,
 		private route: ActivatedRoute,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -58,6 +63,12 @@ export class EditCandidateComponent extends TranslationBaseComponent
 					? checkUsername
 					: 'Candidate';
 			});
+	}
+
+	async interviewInfo() {
+		if (this.selectedInterview) {
+			this.dialogService.open(CandidateInterviewInfoComponent);
+		}
 	}
 
 	editCandidate() {

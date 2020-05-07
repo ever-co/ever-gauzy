@@ -1,10 +1,12 @@
-import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core/crud';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Employment-Type')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class OrganizationEmploymentTypeController extends CrudController<
 	OrganizationEmploymentType

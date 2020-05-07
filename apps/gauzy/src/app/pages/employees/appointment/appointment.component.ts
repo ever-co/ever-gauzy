@@ -1,12 +1,13 @@
 import { Component, ViewChild, OnDestroy, OnInit } from '@angular/core';
+import { OptionsInput, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { Router } from '@angular/router';
-import { EventInput } from '@fullcalendar/core';
 import { Subject } from 'rxjs';
-import { Store } from '../../../@core/services/store.service';
+import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
@@ -21,62 +22,58 @@ export class AppointmentComponent extends TranslationBaseComponent
 
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
-	calendarPlugins = [
-		dayGridPlugin,
-		timeGrigPlugin,
-		interactionPlugin,
-		bootstrapPlugin
-	];
-	calendarWeekends = true;
-	calendarEvents: EventInput[] = [
-		{
-			title: 'Meeting 1',
-			start: new Date(),
-			groupId: 1,
-			allDay: true,
-			url: 'http://google.com'
-		},
-		{
-			title: 'Meeting 2',
-			start: new Date(),
-			groupId: 1,
-			backgroundColor: 'lightpink'
-		},
-		{
-			title: 'Meeting 3',
-			start: new Date(),
-			groupId: 2,
-			backgroundColor: 'lightblue'
-		},
-		{
-			title: 'Meeting 4',
-			start: new Date(),
-			groupId: 3,
-			url: 'http://google.com'
-		}
-	];
+	calendarOptions: OptionsInput;
 
-	tabs: {
-		title: string;
-		icon: string;
-		responsive: boolean;
-		route: string;
-	}[] = [];
-
-	loading = true;
+	calendarEvents: EventInput[] = [];
 
 	constructor(
-		private store: Store,
 		private router: Router,
+		private employeeAppointmentService: EmployeeAppointmentService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
+		this._loadAppointments();
+
+		this.calendarOptions = {
+			initialView: 'timeGridWeek',
+			header: {
+				left: 'prev,next today',
+				center: 'title',
+				right: 'timeGridWeek'
+			},
+			themeSystem: 'bootstrap',
+			plugins: [
+				dayGridPlugin,
+				timeGrigPlugin,
+				interactionPlugin,
+				bootstrapPlugin
+			],
+			weekends: true,
+			height: 'auto'
+		};
 	}
 
 	ngOnInit(): void {}
 
 	getRoute(name: string) {
 		return `/pages/employees/appointments/${name}`;
+	}
+
+	private _loadAppointments() {
+		this.employeeAppointmentService
+			.getAll()
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((appointments) => {
+				appointments.items.forEach((o) => {
+					this.calendarEvents.push({
+						title: o.agenda,
+						start: new Date(o.startDateTime),
+						end: new Date(o.endDateTime),
+						url: o.location
+					});
+				});
+				this.calendarOptions.events = this.calendarEvents;
+			});
 	}
 
 	manageAppointments() {

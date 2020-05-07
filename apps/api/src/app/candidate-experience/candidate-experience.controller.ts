@@ -1,11 +1,13 @@
-import { Controller, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { CandidateExperienceService } from './candidate-experience.service';
 import { CandidateExperience } from './candidate-experience.entity';
 import { IPagination } from '../core';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('candidate_experience')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateExperienceController extends CrudController<
 	CandidateExperience

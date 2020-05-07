@@ -1,0 +1,13 @@
+<nb-card>
+	<nb-card-header>
+		<div class="main-header">
+			<p>Calendar</p>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<full-calendar
+			[options]="calendarOptions"
+			(dateClick)="eventInfo()"
+		></full-calendar>
+	</nb-card-body>
+</nb-card>
