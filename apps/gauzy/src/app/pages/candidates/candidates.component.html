@@ -6,6 +6,19 @@
 				{{ organizationName }}
 			</h4>
 			<button
+				class="interview-button"
+				*ngIf="
+					organizationInvitesAllowed &&
+					hasInviteViewOrEditPermission &&
+					hasEditPermission
+				"
+				nbButton
+				status="primary"
+				(click)="manageInterviews()"
+			>
+				{{ 'BUTTONS.MANAGE_INTERVIEWS' | translate }}
+			</button>
+			<button
 				*ngIf="
 					organizationInvitesAllowed &&
 					hasInviteViewOrEditPermission &&

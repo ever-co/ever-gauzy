@@ -1,9 +1,18 @@
-import { Controller, HttpStatus, Get, Query, Param } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Query,
+	Param,
+	UseGuards
+} from '@nestjs/common';
 import { CrudController } from '../core';
 import { Integration } from './integration.entity';
 import { IntegrationService } from './integration.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class IntegrationController extends CrudController<Integration> {
 	constructor(private integrationService: IntegrationService) {

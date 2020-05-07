@@ -4,7 +4,14 @@ import {
 	MonthAggregatedEmployeeStatistics,
 	EmployeeStatisticsHistory
 } from '@gauzy/models';
-import { Controller, Get, HttpStatus, Param, Query } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	HttpStatus,
+	Param,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { parseISO } from 'date-fns';
@@ -12,7 +19,9 @@ import { EmployeeStatisticsService } from './employee-statistics.service';
 import { AggregatedEmployeeStatisticQuery } from './queries/aggregate-employee-statistic.query';
 import { MonthAggregatedEmployeeStatisticsQuery } from './queries/month-aggregated-employee-statistics.query';
 import { EmployeeStatisticsHistoryQuery } from './queries/employee-statistics-history.query';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class EmployeeStatisticsController {
 	constructor(

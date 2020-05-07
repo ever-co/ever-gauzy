@@ -59,6 +59,10 @@ import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate
 import { StarRatingInputModule } from '../../@shared/star-rating/star-rating-input/star-rating-input.module';
 import { StarRatingOutputModule } from '../../@shared/star-rating/star-rating-output/star-rating-output.module';
 import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
+import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
+import { CandidateInterviewMutationModule } from '../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.module';
+import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
+import { FullCalendarModule } from '@fullcalendar/angular';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -80,6 +84,7 @@ const COMPONENTS = [
 	EditCandidateProfileComponent,
 	EditCandidateRatesComponent,
 	EditCandidateTasksComponent,
+	EditCandidateInterviewComponent,
 	ManageCandidateInviteComponent,
 	EditCandidateSkillsComponent,
 	EditCandidateEducationComponent,
@@ -88,6 +93,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		FullCalendarModule,
 		TableComponentsModule,
 		SharedModule,
 		CandidatesRoutingModule,
@@ -121,6 +127,7 @@ const COMPONENTS = [
 		NbDatepickerModule,
 		TagsColorInputModule,
 		CandidateMutationModule,
+		CandidateInterviewMutationModule,
 		InviteMutationModule,
 		InviteTableModule,
 		EmployeeLocationModule,
@@ -128,7 +135,7 @@ const COMPONENTS = [
 		StarRatingInputModule,
 		StarRatingOutputModule
 	],
-	declarations: [...COMPONENTS],
+	declarations: [...COMPONENTS, ManageCandidateInterviewsComponent],
 	entryComponents: [
 		CandidateStatusComponent,
 		CandidateSourceComponent,

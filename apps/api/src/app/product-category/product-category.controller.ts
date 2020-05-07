@@ -1,11 +1,12 @@
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { CrudController, IPagination } from '../core';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Product-Categories')
-// @UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ProductCategoryController extends CrudController<ProductCategory> {
 	constructor(

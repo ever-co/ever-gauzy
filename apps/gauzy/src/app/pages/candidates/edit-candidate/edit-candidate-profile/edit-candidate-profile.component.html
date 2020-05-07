@@ -12,7 +12,7 @@
 				{{ selectedCandidate?.user?.lastName }}
 			</span>
 			<span *ngIf="selectedCandidate?.user?.username">
-				<!-- <ng-container
+				<ng-container
 					*ngIf="
 						selectedCandidate?.user.firstName ||
 							selectedCandidate?.user.lastName;
@@ -20,14 +20,14 @@
 						else withQuotes
 					"
 				>
-				</ng-container> -->
+				</ng-container>
 
 				<ng-template #withBraces>
-					<!-- ({{ selectedCandidate?.user.username }}) -->
+					({{ selectedCandidate?.user.username }})
 				</ng-template>
 
 				<ng-template #withQuotes>
-					<!-- '{{ selectedCandidate?.user.username }}' -->
+					'{{ selectedCandidate?.user.username }}'
 				</ng-template>
 			</span>
 		</h4>
