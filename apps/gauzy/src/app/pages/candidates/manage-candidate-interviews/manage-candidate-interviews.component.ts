@@ -1,32 +1,40 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { OptionsInput, EventInput } from '@fullcalendar/core';
-import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { NbDialogService } from '@nebular/theme';
 
 @Component({
 	selector: 'ngx-manage-candidate-interviews',
 	templateUrl: './manage-candidate-interviews.component.html'
 })
 export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;
-
-	calendarEvents: EventInput[] = [];
-
+	selectedInterview = true;
+	calendarEvents: EventInput[] = [
+		{
+			title: 'Meeting 1',
+			start: new Date(),
+			groupId: 1,
+			allDay: true,
+			url: '/'
+		}
+	];
 	constructor(
-		private router: Router,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private dialogService: NbDialogService
 	) {
 		super(translateService);
 		this.calendarOptions = {
@@ -48,17 +56,11 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			events: this.calendarEvents
 		};
 	}
-
-	ngOnInit(): void {}
-
-	getRoute(name: string) {
-		return `/pages/employees/appointments/${name}`;
+	async eventInfo() {
+		if (this.selectedInterview) {
+			this.dialogService.open(CandidateInterviewInfoComponent);
+		}
 	}
-
-	manageAppointments() {
-		this.router.navigate([this.getRoute('add')]);
-	}
-
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
