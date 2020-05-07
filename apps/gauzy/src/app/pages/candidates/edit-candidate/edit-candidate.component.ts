@@ -65,17 +65,9 @@ export class EditCandidateComponent extends TranslationBaseComponent
 			});
 	}
 
-	async info() {
+	async interviewInfo() {
 		if (this.selectedInterview) {
-			const dialog = this.dialogService.open(
-				CandidateInterviewInfoComponent
-			);
-
-			const response = await dialog.onClose.pipe(first()).toPromise();
-
-			if (response) {
-				console.log('aaaaaa');
-			}
+			this.dialogService.open(CandidateInterviewInfoComponent);
 		}
 	}
 

@@ -3,7 +3,6 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { Subject } from 'rxjs';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { OptionsInput, EventInput } from '@fullcalendar/core';
-import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -15,19 +14,24 @@ import interactionPlugin from '@fullcalendar/interaction';
 	templateUrl: './manage-candidate-interviews.component.html'
 })
 export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;
+	selectedInterview = true;
+	calendarEvents: EventInput[] = [
+		{
+			title: 'Meeting 1',
+			start: new Date(),
+			groupId: 1,
+			allDay: true,
+			url: '/'
+		}
+	];
 
-	calendarEvents: EventInput[] = [];
-
-	constructor(
-		private router: Router,
-		readonly translateService: TranslateService
-	) {
+	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
@@ -48,17 +52,6 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			events: this.calendarEvents
 		};
 	}
-
-	ngOnInit(): void {}
-
-	getRoute(name: string) {
-		return `/pages/employees/appointments/${name}`;
-	}
-
-	manageAppointments() {
-		this.router.navigate([this.getRoute('add')]);
-	}
-
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
