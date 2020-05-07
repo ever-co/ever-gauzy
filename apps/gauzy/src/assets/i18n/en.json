@@ -37,6 +37,7 @@
 		"VIEW": "View",
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
+		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download"
 	},
 	"SM_TABLE": {
@@ -642,7 +643,8 @@
 				"STEP_2": "Step 2",
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
-				"SAVE": "Save"
+				"SAVE": "Save",
+				"SUMMARY": "Summary:"
 			}
 		},
 		"ADD_CANDIATES": {

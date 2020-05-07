@@ -2,6 +2,11 @@
 	width: 35rem;
 }
 
+.radio-label {
+	margin-bottom: 0;
+	display: block;
+}
+
 .checkbox {
 	margin: 0 10px 0 10px;
 }
@@ -11,4 +16,32 @@
 	flex-direction: row;
 	justify-content: flex-start;
 	align-items: center;
+	min-height: 68px;
+	margin-bottom: 0;
+}
+
+.radio-group {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-around;
+	margin-left: 1rem;
+}
+
+.location {
+	width: 50%;
+}
+
+.title-wrap {
+	flex-direction: row;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+}
+.input-title {
+	width: 78%;
+}
+
+.button {
+	height: 40px;
 }
