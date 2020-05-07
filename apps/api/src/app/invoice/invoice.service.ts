@@ -4,7 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, UpdateResult } from 'typeorm';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Invoice as IInvoice } from '@gauzy/models';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @Injectable()
 export class InvoiceService extends CrudService<Invoice> {
