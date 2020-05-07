@@ -36,7 +36,9 @@
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
 		"SEND": "Send",
-		"ARCHIVE": "Archive"
+		"ARCHIVE": "Archive",
+		"FIND_TIME": "Find time",
+		"DOWNLOAD": "Download"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -582,6 +584,17 @@
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
+	"INTERVIEW_INFO_MODAL": {
+		"SCHEDULED_BY": "Scheduled by",
+		"HOURS_AGO": "hour(s) ago",
+		"MINUTES_AGO": "minute(s) ago",
+		"DATE": "Дата",
+		"TIME": "Time",
+		"CANDIDATE": "Candidate",
+		"INTERVIEWERS": "Interviewers",
+		"LOCATION": "Локация",
+		"NOTE": "Note"
+	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
 		"ADD_CANDIATE": "Add Candidates",
@@ -629,7 +642,8 @@
 				"STEP_2": "Step 2",
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
-				"SAVE": "Запази"
+				"SAVE": "Запази",
+				"SUMMARY": "Summary:"
 			}
 		},
 		"ADD_CANDIATES": {
@@ -1056,6 +1070,10 @@
 		"SEND": {
 			"CONFIRMATION": "Are you sure you want to send this invoice to",
 			"ALREADY_SENT": "This invoice has already been sent to"
+		},
+		"VIEW": {
+			"FROM": "FROM",
+			"TO": "TO"
 		}
 	},
 	"HEADER": {
