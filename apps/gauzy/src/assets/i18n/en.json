@@ -36,7 +36,8 @@
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
 		"SEND": "Send",
-		"ARCHIVE": "Archive"
+		"ARCHIVE": "Archive",
+		"DOWNLOAD": "Download"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -1068,6 +1069,10 @@
 		"SEND": {
 			"CONFIRMATION": "Are you sure you want to send this invoice to",
 			"ALREADY_SENT": "This invoice has already been sent to"
+		},
+		"VIEW": {
+			"FROM": "FROM",
+			"TO": "TO"
 		}
 	},
 	"HEADER": {
