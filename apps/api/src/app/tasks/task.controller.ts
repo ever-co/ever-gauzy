@@ -7,14 +7,17 @@ import {
 	Put,
 	Param,
 	Body,
-	BadRequestException
+	BadRequestException,
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Task } from './task.entity';
 import { CrudController, IPagination } from '../core';
 import { TaskService } from './task.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Tasks')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TaskController extends CrudController<Task> {
 	constructor(private readonly taskService: TaskService) {

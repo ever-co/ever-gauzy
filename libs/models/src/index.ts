@@ -51,6 +51,8 @@ export * from './lib/tenant.model';
 export * from './lib/http-status.enum';
 export * from './lib/product.model';
 export * from './lib/seed.model';
+export * from './lib/employee-appointment.model';
+export * from './lib/appointment-employees.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

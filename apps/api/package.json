@@ -57,7 +57,6 @@
 		"passport-jwt": "^4.0.0",
 		"pg": "^8.0.3",
 		"pm2": "^4.2.3",
-		"readdirp": "^3.3.0",
 		"reflect-metadata": "^0.1.13",
 		"request": "^2.88.2",
 		"rxjs": "^6.5.2",

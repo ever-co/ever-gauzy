@@ -22,6 +22,7 @@ import { AppointmentRoutingModule } from './appointment-routing.module';
 import { AppointmentComponent } from './appointment.component';
 import { TimerPickerModule } from '../../../@shared/timer-picker/timer-picker.module';
 import { ManageAppointmentComponent } from './manage-appointment/manage-appointment.component';
+import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { SharedModule } from '../../../@shared/shared.module';
 
@@ -60,6 +61,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		SharedModule
 	],
 	declarations: [AppointmentComponent, ManageAppointmentComponent],
-	providers: []
+	providers: [EmployeeAppointmentService]
 })
 export class AppointmentModule {}

@@ -31,6 +31,7 @@
 						<ngx-timer-range-picker
 							name="selectedRange"
 							[maxDate]="today"
+							formControlName="selectedRange"
 						>
 						</ngx-timer-range-picker>
 					</div>
@@ -89,17 +90,12 @@
 						</div>
 					</div>
 				</div>
-				<div class="actions">
-					<button
-						[disabled]="this.form.invalid"
-						(click)="submitForm()"
-						nbButton
-						status="success"
-					>
-						{{ 'BUTTONS.SAVE' | translate }}
-					</button>
-				</div>
 			</form>
 		</div>
 	</nb-card-body>
+	<nb-card-footer>
+		<button status="success" nbButton (click)="onSaveRequest()">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
 </nb-card>

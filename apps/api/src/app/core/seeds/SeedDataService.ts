@@ -128,6 +128,8 @@ import {
 	createCandidateFeedbacks,
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
+import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
+import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -171,6 +173,8 @@ const allEntities = [
 	Equipment,
 	EmployeeLevel,
 	ProductCategory,
+	AppointmentEmployees,
+	EmployeeAppointment,
 	ProductType,
 	CandidateSource,
 	CandidateEducation,
