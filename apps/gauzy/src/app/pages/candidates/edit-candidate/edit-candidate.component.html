@@ -30,7 +30,7 @@
 						<strong>{{ selectedCandidate?.user.email }}</strong>
 					</div>
 				</div>
-				<div class="notification">
+				<div class="notification" (click)="info()">
 					<nb-icon class="bell" icon="bell"></nb-icon>
 					<div *ngIf="selectedInterview" class="exist"></div>
 				</div>

@@ -7,6 +7,8 @@ import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { takeUntil, first } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
+import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { NbDialogService } from '@nebular/theme';
 
 @Component({
 	selector: 'ngx-edit-candidate',
@@ -29,7 +31,8 @@ export class EditCandidateComponent extends TranslationBaseComponent
 		private store: Store,
 		private candidatesService: CandidatesService,
 		private route: ActivatedRoute,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private dialogService: NbDialogService
 	) {
 		super(translateService);
 	}
@@ -60,6 +63,20 @@ export class EditCandidateComponent extends TranslationBaseComponent
 					? checkUsername
 					: 'Candidate';
 			});
+	}
+
+	async info() {
+		if (this.selectedInterview) {
+			const dialog = this.dialogService.open(
+				CandidateInterviewInfoComponent
+			);
+
+			const response = await dialog.onClose.pipe(first()).toPromise();
+
+			if (response) {
+				console.log('aaaaaa');
+			}
+		}
 	}
 
 	editCandidate() {
