@@ -8,6 +8,8 @@ import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { NbDialogService } from '@nebular/theme';
 
 @Component({
 	selector: 'ngx-manage-candidate-interviews',
@@ -30,8 +32,10 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			url: '/'
 		}
 	];
-
-	constructor(readonly translateService: TranslateService) {
+	constructor(
+		readonly translateService: TranslateService,
+		private dialogService: NbDialogService
+	) {
 		super(translateService);
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
@@ -51,6 +55,11 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			height: 'auto',
 			events: this.calendarEvents
 		};
+	}
+	async eventInfo() {
+		if (this.selectedInterview) {
+			this.dialogService.open(CandidateInterviewInfoComponent);
+		}
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
