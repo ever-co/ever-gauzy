@@ -13,7 +13,7 @@ import { RequestApproval as IRequestApproval } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
-import { ApprovalsPolicy } from '../manage-approvals-policy/approvals-policy.entity';
+import { ApprovalsPolicy } from '../approvals-policy/approvals-policy.entity';
 
 @Entity('request-approval')
 export class RequestApproval extends Base implements IRequestApproval {
@@ -40,9 +40,9 @@ export class RequestApproval extends Base implements IRequestApproval {
 
 	@OneToMany(
 		(type) => RequestApprovalEmployee,
-		(requestApprovalEmployee) => requestApprovalEmployee.employee
+		(requestApprovalEmployee) => requestApprovalEmployee.requestApproval
 	)
-	rApprovalEmployee?: RequestApprovalEmployee[];
+	requestApprovalEmployee?: RequestApprovalEmployee[];
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

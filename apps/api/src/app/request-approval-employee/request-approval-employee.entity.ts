@@ -1,13 +1,4 @@
-import {
-	Entity,
-	Index,
-	Column,
-	OneToMany,
-	JoinTable,
-	RelationId,
-	ManyToOne,
-	JoinColumn
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { RequestApprovalEmployee as IRequestApprovalEmployee } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
@@ -32,19 +23,13 @@ export class RequestApprovalEmployee extends Base
 
 	@ManyToOne(
 		(type) => RequestApproval,
-		(requestApproval) => requestApproval.rApprovalEmployee,
-		{
-			onDelete: 'CASCADE'
-		}
+		(requestApproval) => requestApproval.requestApprovalEmployee
 	)
 	public requestApproval!: RequestApproval;
 
 	@ManyToOne(
 		(type) => Employee,
-		(employee) => employee.rApprovalEmployee,
-		{
-			cascade: true
-		}
+		(employee) => employee.requestApprovalEmployee
 	)
 	public employee!: Employee;
 

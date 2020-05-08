@@ -173,5 +173,5 @@ export class Employee extends TenantLocationBase implements IEmployee {
 		(type) => RequestApprovalEmployee,
 		(requestApprovalEmployee) => requestApprovalEmployee.employee
 	)
-	rApprovalEmployee?: RequestApprovalEmployee[];
+	requestApprovalEmployee?: RequestApprovalEmployee[];
 }

@@ -71,7 +71,9 @@ import { CandidateExperience } from './../candidate-experience/candidate-experie
 import { CandidateFeedback } from './../candidate-feedbacks/candidate-feedbacks.entity';
 import { EmployeeAppointment } from '../employee-appointment';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
-
+import { RequestApproval } from '../request-approval/request-approval.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+import { ApprovalsPolicy } from '../approvals-policy/approvals-policy.entity';
 const entities = [
 	Invite,
 	User,
@@ -133,7 +135,10 @@ const entities = [
 	IntegrationEntitySetting,
 	IntegrationEntitySettingTiedEntity,
 	AppointmentEmployees,
-	EmployeeAppointment
+	EmployeeAppointment,
+	RequestApproval,
+	RequestApprovalEmployee,
+	ApprovalsPolicy
 ];
 
 @Module({
