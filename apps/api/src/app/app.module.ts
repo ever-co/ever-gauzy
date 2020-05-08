@@ -131,6 +131,10 @@ import { AppointmentEmployeesModule } from './appointment-employees/appointment-
 						module: EmployeeAppointmentModule
 					},
 					{
+						path: '/appointment-employees',
+						module: AppointmentEmployeesModule
+					},
+					{
 						path: '/user-organization',
 						module: UserOrganizationModule
 					},
@@ -289,8 +293,8 @@ import { AppointmentEmployeesModule } from './appointment-employees/appointment-
 		ImportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
-		AppointmentEmployeesModule,
 		EmployeeAppointmentModule,
+		AppointmentEmployeesModule,
 		RoleModule,
 		OrganizationModule,
 		IncomeModule,

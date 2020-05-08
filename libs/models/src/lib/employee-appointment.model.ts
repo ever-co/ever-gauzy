@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { Employee } from './employee.model';
+import { AppointmentEmployees } from './appointment-employees.model';
 
 export interface EmployeeAppointment extends IBaseEntityModel {
 	description?: string;
@@ -7,7 +7,7 @@ export interface EmployeeAppointment extends IBaseEntityModel {
 	agenda: string;
 	startDateTime: Date;
 	endDateTime: Date;
-	invitees: Employee[];
+	invitees?: AppointmentEmployees[];
 }
 
 export interface IEmployeeAppointmentCreateInput {
@@ -16,5 +16,5 @@ export interface IEmployeeAppointmentCreateInput {
 	agenda: string;
 	startDateTime: Date;
 	endDateTime: Date;
-	invitees: Employee[];
+	invitees?: AppointmentEmployees[];
 }

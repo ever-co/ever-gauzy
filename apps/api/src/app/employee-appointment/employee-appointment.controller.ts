@@ -17,6 +17,7 @@ import { EmployeeAppointmentService } from './employee-appointment.service';
 import { EmployeeAppointmentCreateCommand } from './commands/employee-appointment.create.command';
 import { EmployeeAppointmentUpdateCommand } from './commands/employee-appointment.update.command';
 import { AuthGuard } from '@nestjs/passport';
+import { UUIDValidationPipe } from '../shared';
 
 @ApiTags('employee_appointment')
 @UseGuards(AuthGuard('jwt'))
@@ -93,5 +94,23 @@ export class EmployeeAppointmentController extends CrudController<
 		return this.commandBus.execute(
 			new EmployeeAppointmentUpdateCommand(id, entity)
 		);
+	}
+
+	@ApiOperation({ summary: 'Find Employee appointment by id.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record',
+		type: EmployeeAppointment
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(AuthGuard('jwt'))
+	@Get(':id')
+	async findOneById(
+		@Param('id', UUIDValidationPipe) id: string
+	): Promise<EmployeeAppointment> {
+		return this.employeeAppointmentService.findOne(id);
 	}
 }

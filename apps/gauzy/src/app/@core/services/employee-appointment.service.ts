@@ -16,6 +16,12 @@ export class EmployeeAppointmentService {
 		);
 	}
 
+	getById(id: string = ''): Observable<EmployeeAppointment> {
+		return this.http.get<EmployeeAppointment>(
+			this.EMPLOYEE_APPOINTMENT_URL + '/' + id
+		);
+	}
+
 	create(
 		employeeAppointment: EmployeeAppointment
 	): Promise<EmployeeAppointment> {
