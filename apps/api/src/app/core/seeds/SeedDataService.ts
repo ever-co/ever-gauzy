@@ -131,6 +131,8 @@ import {
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
 import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
+import { ProductOption } from '../../product-option/product-option.entity';
+import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -185,8 +187,10 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
+	ProductOption,
 	CandidateDocument,
-	CandidateFeedback
+	CandidateFeedback,
+	CandidateInterview
 ];
 
 @Injectable()

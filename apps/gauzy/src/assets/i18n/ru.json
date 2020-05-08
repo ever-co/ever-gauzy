@@ -36,7 +36,9 @@
 		"AUTO_SYNC": "Автосинхронизация",
 		"VIEW": "Вид",
 		"SEND": "Отправить",
-		"ARCHIVE": "Архивировать"
+		"ARCHIVE": "Архивировать",
+		"FIND_TIME": "Время поиска",
+		"DOWNLOAD": "Скачать"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -582,6 +584,17 @@
 		"NOT_STARTED": "Не начато",
 		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д."
 	},
+	"INTERVIEW_INFO_MODAL": {
+		"SCHEDULED_BY": "Запланировано на",
+		"HOURS_AGO": "час(ы) назад",
+		"MINUTES_AGO": "минут назад",
+		"DATE": "Дата",
+		"TIME": "Время",
+		"CANDIDATE": "Кандидат",
+		"INTERVIEWERS": "Интервьюеры",
+		"LOCATION": "Местоположение",
+		"NOTE": "Примечание"
+	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
 		"ADD_CANDIATE": "Добавить Кандидатов",
@@ -629,7 +642,8 @@
 				"STEP_2": "Шаг2",
 				"NEXT": "Следующий",
 				"PREVIOUS": "Предыдущий",
-				"SAVE": "Сохранить"
+				"SAVE": "Сохранить",
+				"SUMMARY": "Резюме:"
 			}
 		},
 		"ADD_CANDIATES": {
@@ -726,6 +740,10 @@
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ORG_INVITE_VIEW": "Просмотреть приглашения организации",
 			"ORG_INVITE_EDIT": "Создание/повторение/удаление приглашений",
+			"ORG_CANDIDATES_DOCUMENTS_VIEW": "View All Candidates Documents",
+			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
+			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
+			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
 			"POLICY_VIEW": "Просмотр политики отключения",
@@ -1056,6 +1074,10 @@
 		"SEND": {
 			"CONFIRMATION": "Вы уверены, что хотите отправить этот счет на",
 			"ALREADY_SENT": "Этот счет уже был отправлен на"
+		},
+		"VIEW": {
+			"FROM": "ИЗ",
+			"TO": "К"
 		}
 	},
 	"HEADER": {

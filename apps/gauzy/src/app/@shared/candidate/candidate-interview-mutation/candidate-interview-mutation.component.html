@@ -1,11 +1,23 @@
 <nb-card>
 	<nb-card-header class="d-flex">
-		<h5>
-			{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
-					| translate
-			}}
-		</h5>
+		<img
+			class="candidate-image"
+			[src]="selectedCandidate?.user.imageUrl"
+			alt="Candidate Avatar"
+		/>
+		<div>
+			<h5>
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
+						| translate
+				}}
+			</h5>
+			<span>
+				{{ selectedCandidate?.user.firstName }}
+				{{ selectedCandidate?.user.lastName }}
+			</span>
+		</div>
+
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -28,6 +40,7 @@
 						[disabled]="candidateInterviewForm.form.invalid"
 						nbButton
 						nbStepperNext
+						(click)="addInterview()"
 					>
 						{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
@@ -41,9 +54,55 @@
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_2'
 						| translate
 				}}</ng-template>
+				<nb-card class="summary">
+					<nb-card-body>
+						<nb-icon icon="calendar-outline"></nb-icon>
 
+						<strong>
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SUMMARY'
+									| translate
+							}}
+						</strong>
+
+						<strong> {{ interview?.title }} </strong>
+						on
+						<strong
+							>{{
+								interview?.startTime | date: 'fullDate'
+							}} </strong
+						>from
+						<strong>{{
+							interview?.startTime | date: 'shortTime'
+						}}</strong
+						>-
+						<strong>{{
+							interview?.endTime | date: 'shortTime'
+						}}</strong>
+						with
+						<strong>
+							{{ selectedCandidate?.user.firstName }}
+							{{ selectedCandidate?.user.lastName }}</strong
+						>
+						and
+						<div
+							*ngFor="let employee of employees"
+							class="employeeName"
+						>
+							<strong>
+								{{ employee.user.firstName }}
+								{{ employee.user.lastName }}</strong
+							>
+						</div>
+					</nb-card-body>
+				</nb-card>
 				<div class="button-container">
-					<button status="primary" nbButton nbStepperPrevious>
+					<button
+						status="primary"
+						(click)="previous()"
+						nbButton
+						nbStepperPrevious
+					>
 						{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS'
 								| translate

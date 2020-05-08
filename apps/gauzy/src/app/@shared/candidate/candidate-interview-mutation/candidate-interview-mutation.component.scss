@@ -1,0 +1,23 @@
+.candidate-image {
+	max-width: 70px;
+	max-height: 70px;
+	border-radius: 13px;
+	margin-right: 24px;
+	margin-left: 24px;
+}
+
+.button-container {
+	justify-content: space-between;
+	flex-direction: row;
+	display: flex;
+}
+
+.summary {
+	min-width: 45rem;
+}
+.employeeName {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+}

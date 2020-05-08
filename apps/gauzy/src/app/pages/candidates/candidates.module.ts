@@ -63,6 +63,7 @@ import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate
 import { CandidateInterviewMutationModule } from '../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.module';
 import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
 import { FullCalendarModule } from '@fullcalendar/angular';
+import { CandidateInterviewInfoModule } from '../../@shared/candidate/candidate-interview-info/candidate-interview-info.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -88,7 +89,8 @@ const COMPONENTS = [
 	ManageCandidateInviteComponent,
 	EditCandidateSkillsComponent,
 	EditCandidateEducationComponent,
-	EditCandidateExperienceFormComponent
+	EditCandidateExperienceFormComponent,
+	ManageCandidateInterviewsComponent
 ];
 
 @NgModule({
@@ -128,6 +130,7 @@ const COMPONENTS = [
 		TagsColorInputModule,
 		CandidateMutationModule,
 		CandidateInterviewMutationModule,
+		CandidateInterviewInfoModule,
 		InviteMutationModule,
 		InviteTableModule,
 		EmployeeLocationModule,
@@ -135,7 +138,7 @@ const COMPONENTS = [
 		StarRatingInputModule,
 		StarRatingOutputModule
 	],
-	declarations: [...COMPONENTS, ManageCandidateInterviewsComponent],
+	declarations: [...COMPONENTS],
 	entryComponents: [
 		CandidateStatusComponent,
 		CandidateSourceComponent,

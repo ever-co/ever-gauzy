@@ -49,6 +49,7 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 			paid: this.invoice.paid,
 			totalValue: this.invoice.totalValue,
 			clientId: this.invoice.clientId,
+			invoiceType: this.invoice.invoiceType,
 			organizationId: this.invoice.organizationId,
 			sentTo: this.client.organizationId
 		});

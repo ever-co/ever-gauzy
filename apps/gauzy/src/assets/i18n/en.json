@@ -36,7 +36,9 @@
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
 		"SEND": "Send",
-		"ARCHIVE": "Archive"
+		"ARCHIVE": "Archive",
+		"FIND_TIME": "Find time",
+		"DOWNLOAD": "Download"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -583,6 +585,17 @@
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
+	"INTERVIEW_INFO_MODAL": {
+		"SCHEDULED_BY": "Scheduled by",
+		"HOURS_AGO": "hour(s) ago",
+		"MINUTES_AGO": "minute(s) ago",
+		"DATE": "Date",
+		"TIME": "Time",
+		"CANDIDATE": "Candidate",
+		"INTERVIEWERS": "Interviewers",
+		"LOCATION": "Location",
+		"NOTE": "Note"
+	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
 		"ADD_CANDIATE": "Add Candidates",
@@ -630,7 +643,8 @@
 				"STEP_2": "Step 2",
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
-				"SAVE": "Save"
+				"SAVE": "Save",
+				"SUMMARY": "Summary:"
 			}
 		},
 		"ADD_CANDIATES": {
@@ -727,6 +741,10 @@
 			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
 			"ORG_INVITE_VIEW": "View Organization Invites",
 			"ORG_INVITE_EDIT": "Create/Resend/Delete Invites",
+			"ORG_CANDIDATES_DOCUMENTS_VIEW": "View All Candidates Documents",
+			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
+			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
+			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
 			"POLICY_VIEW": "View Time Off Policy",
@@ -1057,6 +1075,10 @@
 		"SEND": {
 			"CONFIRMATION": "Are you sure you want to send this invoice to",
 			"ALREADY_SENT": "This invoice has already been sent to"
+		},
+		"VIEW": {
+			"FROM": "FROM",
+			"TO": "TO"
 		}
 	},
 	"HEADER": {
@@ -1266,7 +1288,9 @@
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
 		"CALENDAR": "Calendar",
-		"APPROVALS": "Approvals"
+		"APPROVALS": "Approvals",
+		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
+		"DENIED_SUCCESS": "Timesheet Successfully Denied"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
