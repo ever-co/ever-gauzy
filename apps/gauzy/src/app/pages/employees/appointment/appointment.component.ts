@@ -35,6 +35,12 @@ export class AppointmentComponent extends TranslationBaseComponent
 		this._loadAppointments();
 
 		this.calendarOptions = {
+			eventClick: (event) => {
+				let eventObject = event.event._def;
+				this.router.navigate([
+					this.getRoute('manage') + '/' + eventObject.extendedProps.id
+				]);
+			},
 			initialView: 'timeGridWeek',
 			header: {
 				left: 'prev,next today',
@@ -69,7 +75,10 @@ export class AppointmentComponent extends TranslationBaseComponent
 						title: o.agenda,
 						start: new Date(o.startDateTime),
 						end: new Date(o.endDateTime),
-						url: o.location
+						extendedProps: {
+							id: o.id
+						}
+						// url: o.location
 					});
 				});
 				this.calendarOptions.events = this.calendarEvents;
@@ -77,7 +86,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 	}
 
 	manageAppointments() {
-		this.router.navigate([this.getRoute('add')]);
+		this.router.navigate([this.getRoute('manage')]);
 	}
 
 	ngOnDestroy() {

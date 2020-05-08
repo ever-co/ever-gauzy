@@ -10,13 +10,14 @@ import {
 import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { takeUntil, first } from 'rxjs/operators';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Employee, EmployeeAppointment } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../../@core/services';
 import { NbToastrService } from '@nebular/theme';
+import { AppointmentEmployeesService } from 'apps/gauzy/src/app/@core/services/appointment-employees.service';
 
 @Component({
 	templateUrl: './manage-appointment.component.html'
@@ -33,13 +34,16 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	save = new EventEmitter<EmployeeAppointment>();
 	@Output() cancel = new EventEmitter<string>();
 
-	invitees: Employee[];
+	selectedEmployeeIds: string[];
+	selectedRange: { start: Date; end: Date };
 
 	constructor(
+		private route: ActivatedRoute,
 		private router: Router,
 		private fb: FormBuilder,
 		private employeeService: EmployeesService,
 		private employeeAppointmentService: EmployeeAppointmentService,
+		private appointmentEmployeesService: AppointmentEmployeesService,
 		private toastrService: NbToastrService,
 		readonly translateService: TranslateService
 	) {
@@ -47,7 +51,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this._initializeForm();
+		this._parseParams();
 		this._loadEmployees();
 	}
 
@@ -73,7 +77,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 					: [],
 				Validators.required
 			],
-			selectedRange: { start: null, end: null }
+			selectedRange: this.selectedRange
 		});
 	}
 
@@ -86,12 +90,40 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			});
 	}
 
+	private _parseParams() {
+		this.route.params
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (params) => {
+				const id = params.id;
+				if (id) {
+					const appointment = await this.employeeAppointmentService
+						.getById(id)
+						.pipe(first())
+						.toPromise();
+
+					const selectedEmployees = await this.appointmentEmployeesService
+						.getById(appointment.id)
+						.pipe(takeUntil(this._ngDestroy$))
+						.toPromise();
+
+					this.selectedEmployeeIds = selectedEmployees.map(
+						(o) => o.employeeId
+					);
+					this.selectedRange = {
+						start: new Date(appointment.startDateTime),
+						end: new Date(appointment.endDateTime)
+					};
+					this.employeeAppointment = appointment;
+				}
+				this._initializeForm();
+			});
+	}
+
 	async onSaveRequest() {
 		const employeeAppointmentRequest = {
 			agenda: this.form.get('agenda').value,
 			location: this.form.get('location').value,
 			description: this.form.get('description').value,
-			invitees: this.invitees,
 			startDateTime: this.form.get('selectedRange').value.start,
 			endDateTime: this.form.get('selectedRange').value.end
 		};
@@ -104,6 +136,12 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			this.employeeAppointment = await this.employeeAppointmentService.create(
 				employeeAppointmentRequest
 			);
+			for (let e of this.selectedEmployeeIds) {
+				await this.appointmentEmployeesService.add({
+					employeeId: e,
+					appointmentId: this.employeeAppointment.id
+				});
+			}
 		} else {
 			this.employeeAppointment = await this.employeeAppointmentService.update(
 				employeeAppointmentRequest
@@ -115,7 +153,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	}
 
 	onMembersSelected(ev) {
-		this.invitees = ev;
+		this.selectedEmployeeIds = ev;
 	}
 
 	ngOnDestroy() {
