@@ -643,7 +643,8 @@
 				"NEXT": "Следующий",
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
-				"SUMMARY": "Резюме:"
+				"SUMMARY": "Summary",
+				"EMAIL_NOTIFICATION": "Уведомление по e-mail"
 			}
 		},
 		"ADD_CANDIATES": {
