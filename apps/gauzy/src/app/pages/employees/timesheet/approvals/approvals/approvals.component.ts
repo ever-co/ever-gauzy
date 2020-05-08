@@ -18,7 +18,7 @@ import {
 import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
+import { filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
@@ -202,16 +202,14 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	}
 
 	updateStatus(timesheetId: string | string[], status: TimesheetStatus) {
-		this.timeTrackerService
-			.updateStatus(timesheetId, status)
-			.then((data) => {
-				if (status === TimesheetStatus.APPROVED) {
-					this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
-				} else if (status === TimesheetStatus.DENIED) {
-					this.toastrService.success('TIMESHEET.DENIED_SUCCESS');
-				}
-				this.updateLogs$.next();
-			});
+		this.timeTrackerService.updateStatus(timesheetId, status).then(() => {
+			if (status === TimesheetStatus.APPROVED) {
+				this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
+			} else if (status === TimesheetStatus.DENIED) {
+				this.toastrService.success('TIMESHEET.DENIED_SUCCESS');
+			}
+			this.updateLogs$.next();
+		});
 	}
 
 	bulkAction(action) {
