@@ -23,6 +23,10 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW,
 			PermissionsEnum.ORG_USERS_VIEW,
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
@@ -58,6 +62,10 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW,
 			PermissionsEnum.ORG_USERS_VIEW,
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
@@ -86,7 +94,10 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_INCOMES_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			PermissionsEnum.INVOICES_VIEW,
-			PermissionsEnum.INVOICES_EDIT
+			PermissionsEnum.INVOICES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
 		]
 	},
 	{
@@ -113,7 +124,7 @@ export const createRolePermissions = async (
 	tenants: Tenant[]
 ): Promise<RolePermissions[]> => {
 	const rolePermissions: RolePermissions[] = [];
-
+	console.log('seed role permission');
 	tenants.forEach((t) => {
 		defaultRolePermissions.forEach((r) => {
 			const role = roles.find(
