@@ -124,7 +124,7 @@ export const createRolePermissions = async (
 	tenants: Tenant[]
 ): Promise<RolePermissions[]> => {
 	const rolePermissions: RolePermissions[] = [];
-	console.log('seed role permission');
+
 	tenants.forEach((t) => {
 		defaultRolePermissions.forEach((r) => {
 			const role = roles.find(
