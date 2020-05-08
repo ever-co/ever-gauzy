@@ -740,6 +740,10 @@
 			"ORG_USERS_EDIT": "Create/Edit/Delete Organization Users",
 			"ORG_INVITE_VIEW": "View Organization Invites",
 			"ORG_INVITE_EDIT": "Create/Resend/Delete Invites",
+			"ORG_CANDIDATES_DOCUMENTS_VIEW": "View All Candidates Documents",
+			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
+			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
+			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
 			"POLICY_VIEW": "View Time Off Policy",
@@ -1283,7 +1287,9 @@
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
 		"CALENDAR": "Calendar",
-		"APPROVALS": "Approvals"
+		"APPROVALS": "Approvals",
+		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
+		"DENIED_SUCCESS": "Timesheet Successfully Denied"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
