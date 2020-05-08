@@ -1,15 +1,15 @@
 import { ICandidateInterview } from './../../../../../../../../../libs/models/src/lib/candidate-interview.model';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { CandidateInterviewMutationComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { first, takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
+import { FormGroup } from '@angular/forms';
+import { Candidate } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -21,12 +21,12 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	interviewList: ICandidateInterview[];
 	candidateId: string;
-	candidateName: string;
+	selectedCandidate: Candidate;
+	interviewId = null;
+	form: FormGroup;
 	constructor(
-		private candidatesService: CandidatesService,
 		private dialogService: NbDialogService,
-		private translate: TranslateService,
-		private errorHandler: ErrorHandlingService,
+		translate: TranslateService,
 		private readonly candidateInterviewService: CandidateInterviewService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
@@ -42,6 +42,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					this.candidateId = candidate.id;
 					this.loadInterview();
 				}
+				this.selectedCandidate = candidate;
 			});
 	}
 
@@ -62,6 +63,32 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		if (res) {
 			this.interviewList = res.items;
 		}
+	}
+	editInterview(index: number, id: string) {
+		this.interviewId = id;
+	}
+	async removeInterview(id: string) {
+		try {
+			await this.candidateInterviewService.delete(id);
+			this.toastrSuccess('DELETED');
+			this.loadInterview();
+		} catch (error) {
+			this.toastrError(error);
+		}
+	}
+	private toastrSuccess(text: string) {
+		this.toastrService.success(
+			this.getTranslation('TOASTR.TITLE.SUCCESS'),
+			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
+		);
+	}
+	private toastrError(error) {
+		this.toastrService.danger(
+			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
+				error: error.error ? error.error.message : error.message
+			}),
+			this.getTranslation('TOASTR.TITLE.ERROR')
+		);
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

@@ -638,6 +638,10 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
+				"INTERVIEWS": "Interviews",
+				"ON": "on",
+				"FROM": "from",
+				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
