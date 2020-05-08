@@ -89,4 +89,9 @@ export class Timesheet extends Base implements ITimesheet {
 	@IsString()
 	@Column({ default: TimesheetStatus.PENDING })
 	status: string;
+
+	@ApiProperty({ type: 'timestamptz' })
+	@IsDateString()
+	@Column({ nullable: true, default: null })
+	deletedAt?: Date;
 }
