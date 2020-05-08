@@ -1,1 +1,137 @@
-<p>approvals works!</p>
+<div class="header">
+	<h5 class="mb-3">
+		{{ 'TIMESHEET.APPROVALS' | translate }}
+	</h5>
+</div>
+
+<div class="filters row mb-3">
+	<div class="bulk-actions col-sm-3">
+		<div class="input-group">
+			<div class="input-group-append" id="button-addon4">
+				<button nbButton status="primary" (click)="previousDay()">
+					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+				</button>
+			</div>
+			<input
+				type="text"
+				nbInput
+				class="form-control ml-1"
+				placeholder="Select Date"
+				[(ngModel)]="selectedDate"
+				[nbDatepicker]="formpicker"
+			/>
+			<div class="input-group-append ml-1" id="button-addon4">
+				<button nbButton status="primary" (click)="nextDay()">
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="input-group-append ml-1" id="button-addon4">
+				<button
+					nbButton
+					status="primary"
+					(click)="selectedDate = today"
+				>
+					Today
+				</button>
+			</div>
+			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
+		</div>
+	</div>
+	<div class="employee-select col-sm-3">
+		<ga-employee-selector
+			class="header-selector employee-selector"
+		></ga-employee-selector>
+	</div>
+</div>
+<div class="bulk-actions row">
+	<div class="bulk-actions mb-3 col-sm-3">
+		<button
+			nbButton
+			status="default"
+			*ngIf="showBulkAction"
+			[nbContextMenu]="bulkActionOptions"
+			nbContextMenuTag="timesheet-bulk-acton"
+		>
+			Bulk action <nb-icon icon="chevron-down-outline"></nb-icon>
+		</button>
+	</div>
+</div>
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th scope="col" *ngIf="organization?.allowDeleteTime">
+				<nb-checkbox
+					[indeterminate]="false"
+					#checkAllCheckbox
+					(change)="toggleCheckbox($event, 'all')"
+					status="primary"
+				></nb-checkbox>
+			</th>
+			<th scope="col">
+				Employee
+			</th>
+			<th scope="col">Total Duration</th>
+			<th scope="col">Activites</th>
+			<th scope="col">Status</th>
+			<th scope="col">Action</th>
+		</tr>
+	</thead>
+	<tbody>
+		<ng-template [ngIf]="timeSheets?.length > 0" [ngIfElse]="notFound">
+			<tr *ngFor="let timesheet of timeSheets">
+				<th scope="row" *ngIf="organization?.allowDeleteTime">
+					<nb-checkbox
+						[value]="timesheet.id"
+						[(ngModel)]="selectedIds[timesheet.id]"
+						(change)="toggleCheckbox($event)"
+						status="primary"
+					></nb-checkbox>
+				</th>
+				<td>
+					<div class="name-container">
+						<ngx-avatar
+							[name]="
+								timesheet?.employee?.user?.firstName +
+								' ' +
+								timesheet?.employee?.user?.lastName
+							"
+							[src]="timesheet?.employee?.user?.imageUrl"
+						></ngx-avatar>
+					</div>
+				</td>
+				<td>{{ timesheet.duration | durationFormat }}</td>
+				<td>{{ timesheet.keyboard }}</td>
+				<td>{{ timesheet.status }}</td>
+				<td>
+					<div class="action-button">
+						<button
+							*ngIf="organization?.allowModifyTime"
+							class="m-1"
+							nbButton
+							status="success"
+							size="small"
+							(click)="updateStatus(timesheet.id, 'approve')"
+						>
+							Approve
+						</button>
+						<button
+							*ngIf="organization?.allowDeleteTime"
+							class="m-1"
+							nbButton
+							status="danger"
+							size="small"
+							(click)="updateStatus(timesheet.id, 'reject')"
+						>
+							Reject
+						</button>
+					</div>
+				</td>
+			</tr>
+		</ng-template>
+		<ng-template #notFound>
+			<tr>
+				<td colspan="6" class="text-center">No logs found.</td>
+			</tr>
+		</ng-template>
+	</tbody>
+</table>
