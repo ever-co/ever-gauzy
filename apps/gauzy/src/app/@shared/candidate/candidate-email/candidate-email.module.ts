@@ -8,7 +8,6 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { CandidateEmailComponent } from './candidate-email.component';
-import { EditorModule } from '@progress/kendo-angular-editor';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -21,7 +20,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		UserFormsModule,
 		NbButtonModule,
 		NbIconModule,
-		EditorModule,
 		FileUploaderModule,
 		TranslateModule.forChild({
 			loader: {
