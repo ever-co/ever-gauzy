@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { PermissionsEnum, Candidate } from '@gauzy/models';
+import { PermissionsEnum, Candidate, ICandidateInterview } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
@@ -9,6 +9,7 @@ import { takeUntil, first } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { NbDialogService } from '@nebular/theme';
+import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 
 @Component({
 	selector: 'ngx-edit-candidate',
@@ -23,10 +24,13 @@ export class EditCandidateComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
-	selectedInterview = true;
+	selectedInterview = false;
 	candidateName = 'Candidate';
+	candidateId: string;
+	interviewList: ICandidateInterview[];
 	hasEditPermission = false;
 	constructor(
+		private readonly candidateInterviewService: CandidateInterviewService,
 		private router: Router,
 		private store: Store,
 		private candidatesService: CandidatesService,
@@ -63,11 +67,21 @@ export class EditCandidateComponent extends TranslationBaseComponent
 					? checkUsername
 					: 'Candidate';
 			});
+		this.loadInterview();
 	}
-
+	private async loadInterview() {
+		const res = await this.candidateInterviewService.getAll({
+			candidateId: this.candidateId
+		});
+		if (res) {
+			this.selectedInterview = true;
+		}
+	}
 	async interviewInfo() {
 		if (this.selectedInterview) {
 			this.dialogService.open(CandidateInterviewInfoComponent);
+		} else {
+			alert("You don't have any new interviews");
 		}
 	}
 
