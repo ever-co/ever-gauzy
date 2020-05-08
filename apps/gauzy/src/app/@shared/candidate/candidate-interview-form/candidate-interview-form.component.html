@@ -50,6 +50,7 @@
 		</label>
 		<nb-radio-group
 			[(ngModel)]="isMeeting"
+			(ngModelChange)="detectChanges($event)"
 			[ngModelOptions]="{ standalone: true }"
 			class="radio-group"
 		>
