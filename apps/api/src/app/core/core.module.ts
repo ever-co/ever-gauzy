@@ -134,8 +134,8 @@ const entities = [
 	IntegrationMap,
 	IntegrationEntitySetting,
 	IntegrationEntitySettingTiedEntity,
-	AppointmentEmployees,
-	EmployeeAppointment
+	EmployeeAppointment,
+	AppointmentEmployees
 ];
 
 @Module({
