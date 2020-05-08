@@ -40,6 +40,12 @@ export class DailyComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
+	timesheetRequest: {
+		startDate?: Date;
+		endDate?: Date;
+		employeeId?: string;
+	} = {};
+
 	private _selectedDate: Date = new Date();
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox', { static: false })
@@ -67,6 +73,20 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 	updateLogs$: Subject<any> = new Subject();
 
+	public get selectedDate(): Date {
+		return this._selectedDate;
+	}
+	public set selectedDate(value: Date) {
+		this._selectedDate = value;
+		this.timesheetRequest.startDate = moment(value)
+			.startOf('isoWeek')
+			.toDate();
+		this.timesheetRequest.endDate = moment(value)
+			.endOf('isoWeek')
+			.toDate();
+		this.updateLogs$.next();
+	}
+
 	constructor(
 		private timeTrackerService: TimeTrackerService,
 		private dialogService: NbDialogService,
@@ -75,14 +95,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 		private nbMenuService: NbMenuService
 	) {}
 
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-		this.logRequest.date = value;
-		this.updateLogs$.next();
-	}
 	async ngOnInit() {
 		this.nbMenuService
 			.onItemClick()

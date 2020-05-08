@@ -6,7 +6,9 @@ import {
 	TimeLogType,
 	TimerStatus,
 	IGetTimeLogInput,
-	IManualTimeInput
+	IManualTimeInput,
+	TimesheetStatus,
+	Timesheet
 } from '@gauzy/models';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { toLocal } from 'libs/utils';
@@ -194,6 +196,24 @@ export class TimeTrackerService {
 		this.running = false;
 		clearInterval(this.interval);
 		this.interval = null;
+	}
+
+	getTimeSheets(request?: IGetTimeLogInput) {
+		return this.http
+			.get('/api/timesheet', { params: { ...request } })
+			.toPromise()
+			.then((data: Timesheet[]) => {
+				return data;
+			});
+	}
+
+	updateStatus(ids: string | string[], status: TimesheetStatus) {
+		return this.http
+			.put(`/api/timesheet/status`, { ids, status })
+			.toPromise()
+			.then((data: any) => {
+				return data;
+			});
 	}
 
 	getTimeLogs(request?: IGetTimeLogInput) {

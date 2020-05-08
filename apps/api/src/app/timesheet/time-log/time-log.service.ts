@@ -57,20 +57,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 			employeeId = user.employeeId;
 		}
 
-		console.log({
-			where: {
-				startedAt: Between(startDate, endDate),
-				deletedAt: null,
-				//...(employeeId ? { employeeId } : {}),
-				employee: {
-					...(employeeId ? { id: employeeId } : {}),
-					...(request.organizationId
-						? { organization: { id: request.organizationId } }
-						: {})
-				}
-			}
-		});
-
 		const logs = await this.timeLogRepository.find({
 			join: {
 				alias: 'time_logs',

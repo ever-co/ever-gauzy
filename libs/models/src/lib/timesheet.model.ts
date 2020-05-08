@@ -43,6 +43,20 @@ export enum TimesheetStatus {
 	APPROVED = 'APPROVED'
 }
 
+export interface IUpdateTimesheetStatusInput {
+	ids: string | string[];
+	status?: TimesheetStatus;
+}
+
+export interface IGetTimeSheetInput {
+	startDate?: string;
+	endDate?: string;
+	projectId?: string[];
+	clientId?: string[];
+	employeeId?: string;
+	organizationId?: string;
+}
+
 export interface IDateRange {
 	start: Date;
 	end: Date;
