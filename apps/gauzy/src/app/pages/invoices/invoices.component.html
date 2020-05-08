@@ -13,6 +13,16 @@
 			<button
 				nbButton
 				status="info"
+				(click)="view()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="download-outline"> </nb-icon>
+				{{ 'BUTTONS.DOWNLOAD' | translate }}
+			</button>
+			<button
+				nbButton
+				status="info"
 				(click)="edit()"
 				class="mr-2"
 				[disabled]="disableButton"

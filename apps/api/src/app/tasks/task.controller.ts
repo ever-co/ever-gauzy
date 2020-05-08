@@ -8,13 +8,17 @@ import {
 	Param,
 	Body,
 	BadRequestException,
-	UseGuards
+	UseGuards,
+	Post
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Task } from './task.entity';
 import { CrudController, IPagination } from '../core';
 import { TaskService } from './task.service';
 import { AuthGuard } from '@nestjs/passport';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators/permissions';
+import { PermissionsEnum } from '@gauzy/models';
 
 @ApiTags('Tasks')
 @UseGuards(AuthGuard('jwt'))
@@ -39,13 +43,29 @@ export class TaskController extends CrudController<Task> {
 		@Query('data') data: string
 	): Promise<IPagination<Task>> {
 		const { relations, findInput } = JSON.parse(data);
-
 		return this.taskService.findAll({
 			where: findInput,
 			relations
 		});
 	}
 
+	@ApiOperation({ summary: 'create a task' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
+	@Post()
+	async createTask(@Body() entity: Task): Promise<any> {
+		return this.taskService.create(entity);
+	}
 	@ApiOperation({ summary: 'Update an existing task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -61,6 +81,8 @@ export class TaskController extends CrudController<Task> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
 	@Put(':id')
 	async update(@Param('id') id: string, @Body() entity: Task): Promise<any> {
 		//We are using create here because create calls the method save()
