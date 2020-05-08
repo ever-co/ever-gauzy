@@ -3,7 +3,6 @@ import {
 	UseGuards,
 	Put,
 	HttpStatus,
-	Param,
 	Body,
 	Get
 } from '@nestjs/common';
@@ -14,13 +13,10 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import {
 	RolesEnum,
-	OrganizationPermissionsEnum,
 	IUpdateTimesheetStatusInput,
 	IGetTimeSheetInput
 } from '@gauzy/models';
 import { UserRole } from '../shared/decorators/roles';
-import { OrganizationPermissionGuard } from '../shared/guards/auth/organization-permission.guard';
-import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('TimeSheet')
 @UseGuards(AuthGuard('jwt'))
@@ -64,8 +60,7 @@ export class TimeSheetController extends CrudController<Timesheet> {
 	// @UseGuards(OrganizationPermissionGuard)
 	// @Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
 	async updateStatus(
-		@Body() entity: IUpdateTimesheetStatusInput,
-		@UserRole() roles: RolesEnum
+		@Body() entity: IUpdateTimesheetStatusInput
 	): Promise<any> {
 		return this.timeSheetService.updateStatus(entity);
 	}
