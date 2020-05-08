@@ -80,7 +80,6 @@ export class TimeSheetService extends CrudService<Timesheet> {
 				}
 			},
 			relations: [
-				'client',
 				...(role === RolesEnum.ADMIN
 					? ['employee', 'employee.organization', 'employee.user']
 					: [])

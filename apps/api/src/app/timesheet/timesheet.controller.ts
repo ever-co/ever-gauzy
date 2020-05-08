@@ -4,7 +4,8 @@ import {
 	Put,
 	HttpStatus,
 	Body,
-	Get
+	Get,
+	Query
 } from '@nestjs/common';
 import { Timesheet } from './timesheet.entity';
 import { CrudController } from '../core/crud/crud.controller';
@@ -20,7 +21,7 @@ import { UserRole } from '../shared/decorators/roles';
 
 @ApiTags('TimeSheet')
 @UseGuards(AuthGuard('jwt'))
-@Controller('timesheet')
+@Controller()
 export class TimeSheetController extends CrudController<Timesheet> {
 	constructor(private readonly timeSheetService: TimeSheetService) {
 		super(timeSheetService);
@@ -40,9 +41,10 @@ export class TimeSheetController extends CrudController<Timesheet> {
 	// @UseGuards(OrganizationPermissionGuard)
 	// @Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
 	async get(
-		@Body() entity: IGetTimeSheetInput,
+		@Query() entity: IGetTimeSheetInput,
 		@UserRole() roles: RolesEnum
 	): Promise<any> {
+		console.log(entity);
 		return this.timeSheetService.getTimeSheets(entity, roles);
 	}
 

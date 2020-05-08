@@ -59,7 +59,7 @@
 <table class="table table-striped">
 	<thead>
 		<tr>
-			<th scope="col" *ngIf="organization?.allowDeleteTime">
+			<th scope="col">
 				<nb-checkbox
 					[indeterminate]="false"
 					#checkAllCheckbox
@@ -72,6 +72,8 @@
 			</th>
 			<th scope="col">Total Duration</th>
 			<th scope="col">Activites</th>
+			<th scope="col">ApprovedAt</th>
+			<th scope="col">SubmittedAt</th>
 			<th scope="col">Status</th>
 			<th scope="col">Action</th>
 		</tr>
@@ -79,7 +81,7 @@
 	<tbody>
 		<ng-template [ngIf]="timeSheets?.length > 0" [ngIfElse]="notFound">
 			<tr *ngFor="let timesheet of timeSheets">
-				<th scope="row" *ngIf="organization?.allowDeleteTime">
+				<th scope="row">
 					<nb-checkbox
 						[value]="timesheet.id"
 						[(ngModel)]="selectedIds[timesheet.id]"
@@ -101,28 +103,45 @@
 				</td>
 				<td>{{ timesheet.duration | durationFormat }}</td>
 				<td>{{ timesheet.keyboard }}</td>
+				<td>{{ timesheet.approvedAt || 'NA' }}</td>
+				<td>{{ timesheet.submittedAt || 'NA' }}</td>
 				<td>{{ timesheet.status }}</td>
 				<td>
 					<div class="action-button">
-						<button
-							*ngIf="organization?.allowModifyTime"
-							class="m-1"
-							nbButton
-							status="success"
-							size="small"
-							(click)="updateStatus(timesheet.id, 'approve')"
+						<ng-template
+							[ngIf]="timesheet.status == TimesheetStatus.PENDING"
 						>
-							Approve
-						</button>
-						<button
-							*ngIf="organization?.allowDeleteTime"
-							class="m-1"
-							nbButton
-							status="danger"
-							size="small"
-							(click)="updateStatus(timesheet.id, 'reject')"
-						>
-							Reject
+							<button
+								class="m-1"
+								nbButton
+								status="success"
+								size="small"
+								(click)="
+									updateStatus(
+										timesheet.id,
+										TimesheetStatus.APPROVED
+									)
+								"
+							>
+								Approve
+							</button>
+							<button
+								class="m-1"
+								nbButton
+								status="danger"
+								size="small"
+								(click)="
+									updateStatus(
+										timesheet.id,
+										TimesheetStatus.DENIED
+									)
+								"
+							>
+								Deny
+							</button>
+						</ng-template>
+						<button class="m-1" nbButton status="info" size="small">
+							View
 						</button>
 					</div>
 				</td>

@@ -21,6 +21,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ngx-approvals',
@@ -33,7 +34,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	checkboxAll = false;
 	selectedIds: any = {};
 	private _selectedDate: Date;
-	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox', { static: false })
 	checkAllCheckbox: NbCheckboxComponent;
 	organization: Organization;
@@ -45,12 +45,13 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	};
 	selectedRange: IDateRange = { start: null, end: null };
 	showBulkAction = false;
+	TimesheetStatus = TimesheetStatus;
 	bulkActionOptions = [
 		{
 			title: 'Approve'
 		},
 		{
-			title: 'Denied'
+			title: 'Deny'
 		}
 	];
 	dialogRef: NbDialogRef<any>;
@@ -89,20 +90,27 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		this.nbMenuService
 			.onItemClick()
 			.pipe(
-				takeUntil(this._ngDestroy$),
+				untilDestroyed(this),
 				filter(({ tag }) => tag === 'timesheet-bulk-acton'),
 				map(({ item: { title } }) => title)
 			)
 			.subscribe((title) => this.bulkAction(title));
 
-		this.store.user$.subscribe(() => {
+		this.store.user$.pipe(untilDestroyed(this)).subscribe(() => {
 			this.canChangeSelectedEmployee = this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			);
 		});
 
+		this.store.selectedOrganization$
+			.pipe(untilDestroyed(this))
+			.subscribe((organization: Organization) => {
+				this.organization = organization;
+				this.updateLogs$.next();
+			});
+
 		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((employee: SelectedEmployee) => {
 				if (employee) {
 					this.logRequest.employeeId = employee.id;
@@ -110,17 +118,13 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 				}
 			});
 
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization: Organization) => {
-				this.organization = organization;
-			});
-
 		this.updateLogs$
-			.pipe(takeUntil(this._ngDestroy$), debounceTime(500))
+			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
 				this.getTimeSheets();
 			});
+
+		this.updateLogs$.next();
 	}
 
 	async nextDay() {
@@ -201,7 +205,12 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		this.timeTrackerService
 			.updateStatus(timesheetId, status)
 			.then((data) => {
-				this.toastrService.success(data);
+				if (status === TimesheetStatus.APPROVED) {
+					this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
+				} else if (status === TimesheetStatus.DENIED) {
+					this.toastrService.success('TIMESHEET.DENIED_SUCCESS');
+				}
+				this.updateLogs$.next();
 			});
 	}
 
@@ -219,13 +228,10 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		if (action === 'Approve') {
 			this.updateStatus(timeSheetIds, TimesheetStatus.APPROVED);
 		}
-		if (action === 'Denied') {
+		if (action === 'Deny') {
 			this.updateStatus(timeSheetIds, TimesheetStatus.DENIED);
 		}
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }
