@@ -28,8 +28,7 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			title: 'Meeting 1',
 			start: new Date(),
 			groupId: 1,
-			allDay: true,
-			url: '/'
+			allDay: true
 		}
 	];
 	constructor(
@@ -56,11 +55,7 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			events: this.calendarEvents
 		};
 	}
-	async eventInfo() {
-		if (this.selectedInterview) {
-			this.dialogService.open(CandidateInterviewInfoComponent);
-		}
-	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
