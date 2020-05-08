@@ -32,7 +32,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
-	private _selectedDate: Date = new Date();
+	private _selectedDate: Date;
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox', { static: false })
 	checkAllCheckbox: NbCheckboxComponent;
@@ -56,7 +56,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	dialogRef: NbDialogRef<any>;
 	canChangeSelectedEmployee: boolean;
 	logRequest: {
-		date?: Date;
+		startDate?: Date;
+		endDate?: Date;
 		employeeId?: string;
 	} = {};
 
@@ -67,14 +68,21 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		private store: Store,
 		private toastrService: ToastrService,
 		private nbMenuService: NbMenuService
-	) {}
+	) {
+		this.selectedDate = new Date();
+	}
 
 	public get selectedDate(): Date {
 		return this._selectedDate;
 	}
 	public set selectedDate(value: Date) {
 		this._selectedDate = value;
-		this.logRequest.date = value;
+		this.logRequest.startDate = moment(value)
+			.startOf('month')
+			.toDate();
+		this.logRequest.endDate = moment(value)
+			.endOf('month')
+			.toDate();
 		this.updateLogs$.next();
 	}
 	async ngOnInit() {
@@ -130,13 +138,13 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	}
 
 	async getTimeSheets() {
-		const { date, employeeId } = this.logRequest;
-		const startDate = moment(date).format('YYYY-MM-DD') + ' 00:00:00';
-		const endDate = moment(date).format('YYYY-MM-DD') + ' 23:59:59';
+		const { startDate, endDate, employeeId } = this.logRequest;
+		const _startDate = moment(startDate).format('YYYY-MM-DD') + ' 00:00:00';
+		const _endDate = moment(endDate).format('YYYY-MM-DD') + ' 23:59:59';
 
 		const request: IGetTimeLogInput = {
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
+			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
 			organizationId: this.organization ? this.organization.id : null
 		};

@@ -41,8 +41,8 @@ export class TimeSheetController extends CrudController<Timesheet> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/')
-	@UseGuards(OrganizationPermissionGuard)
-	@Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
+	// @UseGuards(OrganizationPermissionGuard)
+	// @Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
 	async get(
 		@Body() entity: IGetTimeSheetInput,
 		@UserRole() roles: RolesEnum
@@ -61,8 +61,8 @@ export class TimeSheetController extends CrudController<Timesheet> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/status')
-	@UseGuards(OrganizationPermissionGuard)
-	@Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
+	// @UseGuards(OrganizationPermissionGuard)
+	// @Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
 	async updateStatus(
 		@Body() entity: IUpdateTimesheetStatusInput,
 		@UserRole() roles: RolesEnum
