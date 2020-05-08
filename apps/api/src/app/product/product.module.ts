@@ -8,15 +8,21 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { ProductOptionService } from '../product-option/product-option.service';
 import { ProductCreateHandler } from './commands/handlers/product.create.handler';
 import { ProductUpdateHandler } from './commands/handlers/product.update.handler';
+import { UserService } from '../user/user.service';
+import { User } from '../user/user.entity';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([Product, ProductOption]), CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([Product, ProductOption, User]),
+		CqrsModule
+	],
 	controllers: [ProductController],
 	providers: [
 		ProductService,
 		ProductOptionService,
 		ProductCreateHandler,
-		ProductUpdateHandler
+		ProductUpdateHandler,
+		UserService
 	],
 	exports: [ProductService]
 })

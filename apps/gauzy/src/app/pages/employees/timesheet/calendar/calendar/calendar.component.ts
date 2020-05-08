@@ -56,10 +56,10 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	) {
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
-			header: {
+			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'timeGridWeek'
+				right: 'dayGridMonth,timeGridWeek'
 			},
 			themeSystem: 'bootstrap',
 			plugins: [
@@ -120,15 +120,19 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(this.employeeId ? { employeeId: this.employeeId } : {}),
-			organizationId: this.organization ? this.organization.id : null
+			organizationId: this.organization.id
 		};
 
 		this.timeTrackerService.getTimeLogs(request).then((logs: TimeLog[]) => {
 			const events = logs.map(
 				(log: TimeLog): EventInput => {
+					const title = log.project ? log.project.name : 'No project';
+					// if (this.canChangeSelectedEmployee){
+					// 	title += ` (${log.employee.user.firstName} ${log.employee.user.lastName})`
+					// }
 					return {
 						id: log.id,
-						title: log.project ? log.project.name : 'No - Project',
+						title: title,
 						start: log.startedAt,
 						end: log.stoppedAt,
 						log: log
