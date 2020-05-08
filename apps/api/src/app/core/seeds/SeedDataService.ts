@@ -135,6 +135,7 @@ import {
 	createCandidateInterview,
 	createRandomCandidateInterview
 } from '../../candidate-interview/candidate-interview.seed';
+import { ProductOption } from '../../product-option/product-option.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -189,6 +190,7 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
+	ProductOption,
 	CandidateDocument,
 	CandidateFeedback,
 	CandidateInterview

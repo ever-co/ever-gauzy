@@ -17,7 +17,8 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@Column()
 	endTime: Date;
 
-	@ApiProperty({ type: String, isArray: true })
+	@ApiProperty({})
+	@Column('simple-array')
 	interviewers: string[];
 
 	@ApiProperty({ type: String })

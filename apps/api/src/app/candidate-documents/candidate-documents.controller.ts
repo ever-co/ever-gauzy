@@ -5,6 +5,9 @@ import { CandidateDocumentsService } from './candidate-documents.service';
 import { CandidateDocument } from './candidate-documents.entity';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { Permissions } from '../shared/decorators/permissions';
+import { PermissionsEnum } from '@gauzy/models';
 
 @ApiTags('candidate_documents')
 @UseGuards(AuthGuard('jwt'))
@@ -29,6 +32,8 @@ export class CandidateDocumentsController extends CrudController<
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW)
 	@Get()
 	async findDocument(
 		@Query('data') data: string
