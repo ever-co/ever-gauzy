@@ -40,11 +40,17 @@ export class CandidateInterviewMutationComponent
 	@ViewChild('candidateInterviewForm', { static: false })
 	candidateInterviewForm: CandidateInterviewFormComponent;
 
+	@ViewChild('notificationInterviewForm', { static: false })
+	notificationInterviewForm: CandidateInterviewFormComponent;
+
 	form: FormGroup;
+	notifyForm: FormGroup;
 	interview: ICandidateInterviewCreateInput;
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
 	employees: Employee[] = [];
+	isCandidateNotification = false;
+	isInterviewerNotification = false;
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
 		protected employeesService: EmployeesService,
@@ -79,19 +85,19 @@ export class CandidateInterviewMutationComponent
 	}
 	async addInterview() {
 		this.candidateInterviewForm.loadFormData();
-		const formInterview = this.candidateInterviewForm.form.value;
+		const interviewForm = this.candidateInterviewForm.form.value;
 		this.interview = {
 			title: this.form.get('title').value,
-			interviewers: formInterview.interviewers,
+			interviewers: interviewForm.interviewers,
 			location: this.form.get('location').value,
-			startTime: formInterview.startTime,
-			endTime: formInterview.endTime,
+			startTime: interviewForm.startTime,
+			endTime: interviewForm.endTime,
 			note: this.form.get('note').value
 		};
-		for (let i = 0; i < formInterview.interviewers.length; i++) {
+		for (let i = 0; i < interviewForm.interviewers.length; i++) {
 			try {
 				const res = await this.employeesService
-					.getAll(['user'], { id: formInterview.interviewers[i] })
+					.getAll(['user'], { id: interviewForm.interviewers[i] })
 					.pipe(first())
 					.toPromise();
 				this.employees.push(res.items[0]);
@@ -100,8 +106,13 @@ export class CandidateInterviewMutationComponent
 			}
 		}
 	}
+	addNotification() {
+		this.notificationInterviewForm.loadFormData();
+		// const notifyForm = this.notificationInterviewForm.form.value;
+	}
 	async add() {
 		this.addInterview();
+		this.addNotification();
 		try {
 			const interview = await this.candidateInterviewService.create({
 				...this.interview,
@@ -114,6 +125,14 @@ export class CandidateInterviewMutationComponent
 	}
 	previous() {
 		this.candidateInterviewForm.form.patchValue(this.interview);
+		this.employees = [];
+	}
+
+	checkedCandidate(checked: boolean) {
+		this.isCandidateNotification = checked;
+	}
+	checkedInterviewer(checked: boolean) {
+		this.isInterviewerNotification = checked;
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();
