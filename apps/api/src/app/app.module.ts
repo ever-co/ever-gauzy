@@ -134,6 +134,10 @@ import { RequestApprovalModule } from './request-approval/request-approval.modul
 						module: EmployeeAppointmentModule
 					},
 					{
+						path: '/appointment-employees',
+						module: AppointmentEmployeesModule
+					},
+					{
 						path: '/user-organization',
 						module: UserOrganizationModule
 					},
@@ -296,8 +300,8 @@ import { RequestApprovalModule } from './request-approval/request-approval.modul
 		ImportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
-		AppointmentEmployeesModule,
 		EmployeeAppointmentModule,
+		AppointmentEmployeesModule,
 		RoleModule,
 		OrganizationModule,
 		IncomeModule,

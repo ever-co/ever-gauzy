@@ -25,6 +25,7 @@ import { ManageAppointmentComponent } from './manage-appointment/manage-appointm
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { SharedModule } from '../../../@shared/shared.module';
+import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -61,6 +62,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		SharedModule
 	],
 	declarations: [AppointmentComponent, ManageAppointmentComponent],
-	providers: [EmployeeAppointmentService]
+	providers: [EmployeeAppointmentService, AppointmentEmployeesService]
 })
 export class AppointmentModule {}

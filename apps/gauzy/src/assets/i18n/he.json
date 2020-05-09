@@ -643,7 +643,8 @@
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "לשמור",
-				"SUMMARY": "Summary:"
+				"SUMMARY": "Summary",
+				"EMAIL_NOTIFICATION": "Email notification"
 			}
 		},
 		"ADD_CANDIATES": {
@@ -1287,7 +1288,9 @@
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
 		"CALENDAR": "Calendar",
-		"APPROVALS": "Approvals"
+		"APPROVALS": "Approvals",
+		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
+		"DENIED_SUCCESS": "Timesheet Successfully Denied"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",

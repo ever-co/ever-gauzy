@@ -15,6 +15,7 @@ import chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
 import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
+import { createSkills } from '../../skills/skill.seed';
 import { User } from '../../user/user.entity';
 import {
 	createDefaultSuperAdminUsers,
@@ -491,6 +492,8 @@ export class SeedDataService {
 			tenants,
 			tenantOrganizationsMap
 		);
+
+		await createSkills(this.connection);
 	}
 
 	/**

@@ -136,11 +136,11 @@ const entities = [
 	IntegrationMap,
 	IntegrationEntitySetting,
 	IntegrationEntitySettingTiedEntity,
-	AppointmentEmployees,
-	EmployeeAppointment,
 	RequestApproval,
 	RequestApprovalEmployee,
-	ApprovalsPolicy
+	ApprovalsPolicy,
+	EmployeeAppointment,
+	AppointmentEmployees
 ];
 
 @Module({
