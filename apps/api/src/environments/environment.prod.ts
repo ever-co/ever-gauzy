@@ -1,6 +1,10 @@
 require('dotenv').config();
 import { IEnvironment } from './ienvironment';
-import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import {
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	PreferredLanguageEnum
+} from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 const databaseConfig: TypeOrmModuleOptions = {
@@ -68,7 +72,8 @@ export const environment: IEnvironment = {
 		{
 			email: 'admin@ever.co',
 			password: 'admin',
-			imageUrl: 'assets/images/avatars/ruslan.jpg'
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		}
 	],
 
@@ -76,7 +81,8 @@ export const environment: IEnvironment = {
 		{
 			email: 'local.admin@ever.co',
 			password: 'admin',
-			imageUrl: 'assets/images/avatars/ruslan.jpg'
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		}
 	],
 
@@ -86,77 +92,88 @@ export const environment: IEnvironment = {
 			password: '123456',
 			firstName: 'Alish',
 			lastName: 'Meklyov',
-			imageUrl: 'assets/images/avatars/alish.jpg'
+			imageUrl: 'assets/images/avatars/alish.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'blagovest@ever.co',
 			password: '123456',
 			firstName: 'Blagovest',
 			lastName: 'Gerov',
-			imageUrl: 'assets/images/avatars/blagovest.jpg'
+			imageUrl: 'assets/images/avatars/blagovest.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'elvis@ever.co',
 			password: '123456',
 			firstName: 'Elvis',
 			lastName: 'Arabadjiiski',
-			imageUrl: 'assets/images/avatars/elvis.jpg'
+			imageUrl: 'assets/images/avatars/elvis.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'emil@ever.co',
 			password: '123456',
 			firstName: 'Emil',
 			lastName: 'Momchilov',
-			imageUrl: 'assets/images/avatars/emil.jpg'
+			imageUrl: 'assets/images/avatars/emil.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'boyan@ever.co',
 			password: '123456',
 			firstName: 'Boyan',
 			lastName: 'Stanchev',
-			imageUrl: 'assets/images/avatars/boyan.jpg'
+			imageUrl: 'assets/images/avatars/boyan.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'hristo@ever.co',
 			password: '123456',
 			firstName: 'Hristo',
 			lastName: 'Hristov',
-			imageUrl: 'assets/images/avatars/hristo.jpg'
+			imageUrl: 'assets/images/avatars/hristo.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'alex@ever.co',
 			password: '123456',
 			firstName: 'Aleksandar',
 			lastName: 'Tasev',
-			imageUrl: 'assets/images/avatars/alexander.jpg'
+			imageUrl: 'assets/images/avatars/alexander.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'milena@ever.co',
 			password: '123456',
 			firstName: 'Milena',
 			lastName: 'Dimova',
-			imageUrl: 'assets/images/avatars/milena.jpg'
+			imageUrl: 'assets/images/avatars/milena.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'rachit@ever.co',
 			password: '123456',
 			firstName: 'Rachit',
 			lastName: 'Magon',
-			imageUrl: 'assets/images/avatars/rachit.png'
+			imageUrl: 'assets/images/avatars/rachit.png',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'atanas@ever.co',
 			password: '123456',
 			firstName: 'Atanas',
 			lastName: 'Yonkov',
-			imageUrl: 'assets/images/avatars/atanas.jpeg'
+			imageUrl: 'assets/images/avatars/atanas.jpeg',
+			preferredLanguage: PreferredLanguageEnum.en
 		},
 		{
 			email: 'dimana@ever.co',
 			password: '123456',
 			firstName: 'Dimana',
 			lastName: 'Tsvetkova',
-			imageUrl: 'assets/images/avatars/dimana.jpeg'
+			imageUrl: 'assets/images/avatars/dimana.jpeg',
+			preferredLanguage: PreferredLanguageEnum.en
 		}
 	],
 	defaultCandidates: [
@@ -165,7 +182,8 @@ export const environment: IEnvironment = {
 			password: '123456',
 			firstName: 'Alish',
 			lastName: 'Meklyov',
-			imageUrl: 'assets/images/avatars/alish.jpg'
+			imageUrl: 'assets/images/avatars/alish.jpg',
+			preferredLanguage: PreferredLanguageEnum.en
 		}
 	],
 	defaultTeams: [
