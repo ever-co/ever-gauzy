@@ -1,3 +1,10 @@
+/*
+  - Request Approval is a request which is made by the employee. The employee can ask the approver for approvals different things.
+  E.g. business trips, job referral awards, etc.
+  - Request Approval table has the many to one relationship to ApprovalsPolicy table by approvalsPolicyId
+  - Request Approval table has the one to many relationships to RequestApprovalEmployee table
+  - Request Approval table has the many to many relationships to the Employee table through the RequestApprovalEmployee table.
+*/
 import {
 	Entity,
 	Index,
@@ -40,9 +47,12 @@ export class RequestApproval extends Base implements IRequestApproval {
 
 	@OneToMany(
 		(type) => RequestApprovalEmployee,
-		(requestApprovalEmployee) => requestApprovalEmployee.requestApproval
+		(employeeApprovals) => employeeApprovals.requestApproval,
+		{
+			cascade: true
+		}
 	)
-	requestApprovalEmployee?: RequestApprovalEmployee[];
+	employeeApprovals?: RequestApprovalEmployee[];
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

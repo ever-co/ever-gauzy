@@ -171,7 +171,7 @@ export class Employee extends TenantLocationBase implements IEmployee {
 
 	@OneToMany(
 		(type) => RequestApprovalEmployee,
-		(requestApprovalEmployee) => requestApprovalEmployee.employee
+		(requestApprovals) => requestApprovals.employee
 	)
-	requestApprovalEmployee?: RequestApprovalEmployee[];
+	requestApprovals?: RequestApprovalEmployee[];
 }

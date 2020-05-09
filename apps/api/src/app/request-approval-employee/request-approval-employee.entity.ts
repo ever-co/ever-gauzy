@@ -1,3 +1,7 @@
+/*
+  - Request Approval Employee table is the third table which will combine the employee table and the request approvals table.
+  - Request Approval Employee table has the many to one relationship to the RequestApproval table and the Employee table by requestApprovalId and employeeId
+*/
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { RequestApprovalEmployee as IRequestApprovalEmployee } from '@gauzy/models';
@@ -23,13 +27,19 @@ export class RequestApprovalEmployee extends Base
 
 	@ManyToOne(
 		(type) => RequestApproval,
-		(requestApproval) => requestApproval.requestApprovalEmployee
+		(requestApproval) => requestApproval.employeeApprovals,
+		{
+			onDelete: 'CASCADE'
+		}
 	)
 	public requestApproval!: RequestApproval;
 
 	@ManyToOne(
 		(type) => Employee,
-		(employee) => employee.requestApprovalEmployee
+		(employee) => employee.requestApprovals,
+		{
+			cascade: true
+		}
 	)
 	public employee!: Employee;
 

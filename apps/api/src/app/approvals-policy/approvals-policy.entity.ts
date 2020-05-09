@@ -1,3 +1,8 @@
+/*
+  Approvals Policy is predefined approvals types for the organization.
+E.g. for example, "Business Trip", "Borrow Items", ...
+  Approvals Policy table has the many to one relationship to the Organization table and Tenant by organizationId and tenantId
+*/
 import {
 	Entity,
 	Index,

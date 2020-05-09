@@ -70,6 +70,9 @@ import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedba
 import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
 import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
 import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
+import { ApprovalsPolicyModule } from './approvals-policy/approvals-policy.module';
+import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
+import { RequestApprovalModule } from './request-approval/request-approval.module';
 
 @Module({
 	imports: [
@@ -185,6 +188,10 @@ import { AppointmentEmployeesModule } from './appointment-employees/appointment-
 					{
 						path: 'time-off-policy',
 						module: TimeOffPolicyModule
+					},
+					{
+						path: '/approvals-policy',
+						module: ApprovalsPolicyModule
 					},
 					{
 						path: 'role-permissions',
@@ -305,11 +312,14 @@ import { AppointmentEmployeesModule } from './appointment-employees/appointment-
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
+		RequestApprovalEmployeeModule,
 		ProposalModule,
 		EmailModule,
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
+		ApprovalsPolicyModule,
+		RequestApprovalModule,
 		RolePermissionsModule,
 		TenantModule,
 		EmailTemplateModule,
