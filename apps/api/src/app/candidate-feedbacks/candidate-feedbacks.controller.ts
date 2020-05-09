@@ -1,10 +1,24 @@
-import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Query,
+	UseGuards,
+	Post,
+	Body,
+	Put,
+	Param,
+	Delete
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { IPagination } from '../core';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { AuthGuard } from '@nestjs/passport';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { PermissionsEnum, ICandidateFeedbackCreateInput } from '@gauzy/models';
+import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('candidate_feedbacks')
 @UseGuards(AuthGuard('jwt'))
@@ -35,5 +49,31 @@ export class CandidateFeedbacksController extends CrudController<
 	): Promise<IPagination<CandidateFeedback>> {
 		const { findInput } = JSON.parse(data);
 		return this.candidateFeedbacksService.findAll({ where: findInput });
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
+	@Post()
+	async createFeedBack(
+		@Body() entity: ICandidateFeedbackCreateInput
+	): Promise<any> {
+		return this.candidateFeedbacksService.create(entity);
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
+	@Put(':id')
+	async updateCandidateFeedback(
+		@Param() id: string,
+		@Body() entity: any
+	): Promise<any> {
+		return this.candidateFeedbacksService.update(id, { ...entity });
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
+	@Delete()
+	async deleteCandidateFeedback(@Param() id: string): Promise<any> {
+		return this.candidateFeedbacksService.delete(id);
 	}
 }
