@@ -184,7 +184,8 @@
 			"DURATION": "Duration",
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Location",
-			"NOTE": "Note"
+			"NOTE": "Note",
+			"PREFERRED_LANGUAGE": "Preferred Language"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -259,6 +260,7 @@
 			"ORGANIZATIONS": "Choose Organizations",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"PREFERRED_LANGUAGE": "Preferred Language",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -957,7 +959,13 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Main",
-			"USER_ORGANIZATIONS": "Organizations"
+			"USER_ORGANIZATIONS": "Organizations",
+			"PREFERRED_LANGUAGE": {
+				"en": "English",
+				"he": "Hebrew",
+				"bg": "Bulgarian",
+				"ru": "Russian"
+			}
 		},
 		"REMOVE_USER": "{{ name }} successfully removed"
 	},

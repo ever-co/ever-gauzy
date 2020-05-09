@@ -22,6 +22,7 @@ export interface User extends IBaseEntityModel {
 	employeeId?: string;
 	tenant: ITenant;
 	tags: Tag[];
+	preferredLanguage?: string;
 }
 
 export interface UserFindInput extends IBaseEntityModel {
@@ -35,6 +36,7 @@ export interface UserFindInput extends IBaseEntityModel {
 	hash?: string;
 	imageUrl?: string;
 	tags?: Tag[];
+	preferredLanguage?: PreferredLanguageEnum;
 }
 
 export interface UserRegistrationInput {
@@ -55,6 +57,7 @@ export interface UserCreateInput {
 	hash?: string;
 	imageUrl?: string;
 	tags?: Tag[];
+	preferredLanguage?: PreferredLanguageEnum;
 }
 
 export interface UserUpdateInput {
@@ -66,4 +69,12 @@ export interface UserUpdateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
+	preferredLanguage?: PreferredLanguageEnum;
+}
+
+export enum PreferredLanguageEnum {
+	en = 'en',
+	bg = 'bg',
+	he = 'he',
+	ru = 'ru'
 }

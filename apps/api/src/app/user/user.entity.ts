@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { User as IUser } from '@gauzy/models';
+import { User as IUser, PreferredLanguageEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
@@ -11,7 +11,8 @@ import {
 	IsOptional,
 	IsString,
 	MaxLength,
-	MinLength
+	MinLength,
+	IsEnum
 } from 'class-validator';
 import {
 	Column,
@@ -108,4 +109,9 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
+
+	@ApiProperty({ type: String, enum: PreferredLanguageEnum })
+	@IsEnum(PreferredLanguageEnum)
+	@Column({ nullable: true })
+	preferredLanguage?: string;
 }
