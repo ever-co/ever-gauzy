@@ -67,7 +67,6 @@ export class OrganizationComponent extends TranslationBaseComponent
 						.pipe(first())
 						.toPromise();
 					this.imageUrl = this.organization.imageUrl;
-					console.log(this.organization);
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}
@@ -93,15 +92,10 @@ export class OrganizationComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
 				if (!!result) {
-					console.log(result.skills);
-					// result.skills = result.skills.map(skill => skill.id);
-					console.log(result);
-					// delete result.skills;
 					await this.organizationsService.update(
 						this.organization.id,
 						result
 					);
-					// delete result.skills;
 					Object.assign(this.organization, result);
 					this.toastrService.primary(
 						this.organization.name + ' page is updated.',
