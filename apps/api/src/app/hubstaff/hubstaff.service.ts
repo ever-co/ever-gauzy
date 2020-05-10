@@ -8,7 +8,7 @@ import {
 import { map, catchError, switchMap } from 'rxjs/operators';
 import {
 	ICreateIntegrationDto,
-	IIntegration,
+	IIntegrationTenant,
 	IntegrationEnum,
 	IntegrationEntity,
 	IIntegrationMap,
@@ -16,7 +16,7 @@ import {
 	RolesEnum,
 	TimeLogType
 } from '@gauzy/models';
-import { IntegrationService } from '../integration/integration.service';
+import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
 import { OrganizationProjectsService } from '../organization-projects/organization-projects.service';
 import { IntegrationMapService } from '../integration-map/integration-map.service';
@@ -52,7 +52,7 @@ import { TenantService } from '../tenant/tenant.service';
 export class HubstaffService {
 	constructor(
 		private _httpService: HttpService,
-		private _integrationService: IntegrationService,
+		private _integrationService: IntegrationTenantService,
 		private _integrationSettingService: IntegrationSettingService,
 		private _organizationProjectService: OrganizationProjectsService,
 		private _integrationMapService: IntegrationMapService,
@@ -165,7 +165,9 @@ export class HubstaffService {
 		return integrationSetting;
 	}
 
-	async addIntegration(body: ICreateIntegrationDto): Promise<IIntegration> {
+	async addIntegration(
+		body: ICreateIntegrationDto
+	): Promise<IIntegrationTenant> {
 		const headers = {
 			'Content-Type': 'application/x-www-form-urlencoded'
 		};

@@ -112,7 +112,7 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	@IsOptional()
 	@Column({ nullable: true })
 	reWeeklyLimit?: number;
-	
+
 	@OneToMany(
 		(type) => OrganizationTeamEmployee,
 		(organizationTeamEmployee) => organizationTeamEmployee.employee
