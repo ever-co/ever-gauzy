@@ -10,7 +10,7 @@ import {
 	IDefaultUser,
 	RolesEnum,
 	ISeedUsers,
-	PreferredLanguageEnum
+	LanguagesEnum
 } from '@gauzy/models';
 import { Role } from '../role/role.entity';
 import { User } from './user.entity';
@@ -314,7 +314,7 @@ const generateRandomUser = async (
 	user.imageUrl = avatar;
 	user.tenant = tenant;
 
-	const languages = Object.values(PreferredLanguageEnum);
+	const languages = Object.values(LanguagesEnum);
 	user.preferredLanguage =
 		languages[Math.floor(Math.random() * languages.length)];
 

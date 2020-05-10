@@ -3,7 +3,7 @@ import { IEnvironment } from './ienvironment';
 import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	PreferredLanguageEnum
+	LanguagesEnum
 } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
@@ -73,7 +73,7 @@ export const environment: IEnvironment = {
 			email: 'admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		}
 	],
 
@@ -82,7 +82,7 @@ export const environment: IEnvironment = {
 			email: 'local.admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		}
 	],
 
@@ -93,7 +93,7 @@ export const environment: IEnvironment = {
 			firstName: 'Alish',
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'blagovest@ever.co',
@@ -101,7 +101,7 @@ export const environment: IEnvironment = {
 			firstName: 'Blagovest',
 			lastName: 'Gerov',
 			imageUrl: 'assets/images/avatars/blagovest.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'elvis@ever.co',
@@ -109,7 +109,7 @@ export const environment: IEnvironment = {
 			firstName: 'Elvis',
 			lastName: 'Arabadjiiski',
 			imageUrl: 'assets/images/avatars/elvis.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'emil@ever.co',
@@ -117,7 +117,7 @@ export const environment: IEnvironment = {
 			firstName: 'Emil',
 			lastName: 'Momchilov',
 			imageUrl: 'assets/images/avatars/emil.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'boyan@ever.co',
@@ -125,7 +125,7 @@ export const environment: IEnvironment = {
 			firstName: 'Boyan',
 			lastName: 'Stanchev',
 			imageUrl: 'assets/images/avatars/boyan.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'hristo@ever.co',
@@ -133,7 +133,7 @@ export const environment: IEnvironment = {
 			firstName: 'Hristo',
 			lastName: 'Hristov',
 			imageUrl: 'assets/images/avatars/hristo.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'alex@ever.co',
@@ -141,7 +141,7 @@ export const environment: IEnvironment = {
 			firstName: 'Aleksandar',
 			lastName: 'Tasev',
 			imageUrl: 'assets/images/avatars/alexander.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'milena@ever.co',
@@ -149,7 +149,7 @@ export const environment: IEnvironment = {
 			firstName: 'Milena',
 			lastName: 'Dimova',
 			imageUrl: 'assets/images/avatars/milena.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'rachit@ever.co',
@@ -157,7 +157,7 @@ export const environment: IEnvironment = {
 			firstName: 'Rachit',
 			lastName: 'Magon',
 			imageUrl: 'assets/images/avatars/rachit.png',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'atanas@ever.co',
@@ -165,7 +165,7 @@ export const environment: IEnvironment = {
 			firstName: 'Atanas',
 			lastName: 'Yonkov',
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		},
 		{
 			email: 'dimana@ever.co',
@@ -173,7 +173,7 @@ export const environment: IEnvironment = {
 			firstName: 'Dimana',
 			lastName: 'Tsvetkova',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		}
 	],
 	defaultCandidates: [
@@ -183,7 +183,7 @@ export const environment: IEnvironment = {
 			firstName: 'Alish',
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			preferredLanguage: PreferredLanguageEnum.en
+			preferredLanguage: LanguagesEnum.en
 		}
 	],
 	defaultTeams: [
