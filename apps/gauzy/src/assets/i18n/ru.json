@@ -459,7 +459,8 @@
 			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей",
 			"TOOLTIP_ACTIVITY_INFO": "Диапазон дат: 7 дней до даты: 6 месяцев",
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
-		}
+		},
+		"COMING_SOON": "Скоро появится"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
