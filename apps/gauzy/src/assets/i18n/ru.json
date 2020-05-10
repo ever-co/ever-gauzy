@@ -639,6 +639,10 @@
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
+				"INTERVIEWS": "Интервью",
+				"ON": "вкл",
+				"FROM": "от",
+				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
