@@ -1,3 +1,5 @@
 files:
-  - source: /apps/gauzy/src/assets/i18n/en.json
-    translation: /apps/gauzy/src/assets/i18n/%two_letters_code%.json
+    - source: /apps/gauzy/src/assets/i18n/en.json
+      translation: /apps/gauzy/src/assets/i18n/%two_letters_code%.json
+    - source: /apps/api/src/assets/i18n/en/*.json
+      translation: /apps/api/src/assets/i18n/%two_letters_code%/%original_file_name%.json

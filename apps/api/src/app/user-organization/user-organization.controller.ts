@@ -13,7 +13,8 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import {
 	UserOrganization as IUserOrganization,
-	RolesEnum
+	RolesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import { UserOrganizationService } from './user-organization.services';
 import { IPagination } from '../core';
@@ -22,6 +23,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Not } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { UserOrganizationDeleteCommand } from './commands/user-organization.delete.command';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('UserOrganization')
 @UseGuards(AuthGuard('jwt'))
@@ -70,12 +72,14 @@ export class UserOrganizationController extends CrudController<
 	@Delete(':id')
 	async delete(
 		@Param('id') id: string,
-		@Req() request
+		@Req() request,
+		@I18nLang() language: LanguagesEnum
 	): Promise<UserOrganization> {
 		return this.commandBus.execute(
 			new UserOrganizationDeleteCommand({
 				userOrganizationId: id,
-				requestingUser: request.user
+				requestingUser: request.user,
+				language
 			})
 		);
 	}

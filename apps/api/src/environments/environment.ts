@@ -79,7 +79,7 @@ export const environment: IEnvironment = {
 			email: 'admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 
@@ -88,7 +88,7 @@ export const environment: IEnvironment = {
 			email: 'local.admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 
@@ -102,7 +102,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-03-20',
 			endWork: null,
 			employeeLevel: 'D',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'blagovest@ever.co',
@@ -113,7 +113,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-03-19',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'elvis@ever.co',
@@ -124,7 +124,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-05-25',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'emil@ever.co',
@@ -135,7 +135,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-01-21',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'boyan@ever.co',
@@ -146,7 +146,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-01-21',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'hristo@ever.co',
@@ -157,7 +157,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-06-17',
 			endWork: null,
 			employeeLevel: 'B',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'alex@ever.co',
@@ -168,7 +168,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-08-01',
 			endWork: null,
 			employeeLevel: 'B',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'rachit@ever.co',
@@ -179,7 +179,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-11-27',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'atanas@ever.co',
@@ -190,7 +190,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-02-01',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'dimana@ever.co',
@@ -201,7 +201,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-11-26',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'sunko@ever.co',
@@ -212,7 +212,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-02-04',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'lubomir@ever.co',
@@ -223,7 +223,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-02-06',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'pavel@ever.co',
@@ -234,7 +234,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-03-16',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'yavor@ever.co',
@@ -245,7 +245,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-02-05',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'tsvetelina@ever.co',
@@ -256,7 +256,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-03-02',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'everq@ever.co',
@@ -267,7 +267,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-08-01',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'muiz@smooper.xyz',
@@ -278,7 +278,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-11-27',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'deko898@hotmail.com',
@@ -289,7 +289,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-03-07',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'ckhandla94@gmail.com',
@@ -300,7 +300,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-03-07',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'julia@ever.co',
@@ -311,7 +311,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-08-01',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: '',
@@ -322,7 +322,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-07-15',
 			endWork: '2019-10-15',
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultCandidates: [
@@ -333,7 +333,7 @@ export const environment: IEnvironment = {
 			lastName: 'Smith',
 			imageUrl: 'assets/images/avatars/alish.jpg',
 			candidateLevel: 'D',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'jaye@ever.co',
@@ -342,7 +342,7 @@ export const environment: IEnvironment = {
 			lastName: 'Jeffreys',
 			imageUrl: 'assets/images/avatars/alexander.jpg',
 			candidateLevel: 'B',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'kasey@ever.co',
@@ -351,7 +351,7 @@ export const environment: IEnvironment = {
 			lastName: 'Kraker',
 			imageUrl: 'assets/images/avatars/rachit.png',
 			candidateLevel: null,
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'norris@ever.co',
@@ -360,7 +360,7 @@ export const environment: IEnvironment = {
 			lastName: 'Nesbit',
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
 			candidateLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'estella@ever.co',
@@ -369,7 +369,7 @@ export const environment: IEnvironment = {
 			lastName: 'Ennis',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
 			candidateLevel: null,
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'greg@ever.co',
@@ -378,7 +378,7 @@ export const environment: IEnvironment = {
 			lastName: 'Grise',
 			imageUrl: 'assets/images/avatars/savov.jpg',
 			candidateLevel: 'A',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultTeams: [

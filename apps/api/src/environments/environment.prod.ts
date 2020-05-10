@@ -73,7 +73,7 @@ export const environment: IEnvironment = {
 			email: 'admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 
@@ -82,7 +82,7 @@ export const environment: IEnvironment = {
 			email: 'local.admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 
@@ -93,7 +93,7 @@ export const environment: IEnvironment = {
 			firstName: 'Alish',
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'blagovest@ever.co',
@@ -101,7 +101,7 @@ export const environment: IEnvironment = {
 			firstName: 'Blagovest',
 			lastName: 'Gerov',
 			imageUrl: 'assets/images/avatars/blagovest.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'elvis@ever.co',
@@ -109,7 +109,7 @@ export const environment: IEnvironment = {
 			firstName: 'Elvis',
 			lastName: 'Arabadjiiski',
 			imageUrl: 'assets/images/avatars/elvis.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'emil@ever.co',
@@ -117,7 +117,7 @@ export const environment: IEnvironment = {
 			firstName: 'Emil',
 			lastName: 'Momchilov',
 			imageUrl: 'assets/images/avatars/emil.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'boyan@ever.co',
@@ -125,7 +125,7 @@ export const environment: IEnvironment = {
 			firstName: 'Boyan',
 			lastName: 'Stanchev',
 			imageUrl: 'assets/images/avatars/boyan.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'hristo@ever.co',
@@ -133,7 +133,7 @@ export const environment: IEnvironment = {
 			firstName: 'Hristo',
 			lastName: 'Hristov',
 			imageUrl: 'assets/images/avatars/hristo.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'alex@ever.co',
@@ -141,7 +141,7 @@ export const environment: IEnvironment = {
 			firstName: 'Aleksandar',
 			lastName: 'Tasev',
 			imageUrl: 'assets/images/avatars/alexander.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'milena@ever.co',
@@ -149,7 +149,7 @@ export const environment: IEnvironment = {
 			firstName: 'Milena',
 			lastName: 'Dimova',
 			imageUrl: 'assets/images/avatars/milena.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'rachit@ever.co',
@@ -157,7 +157,7 @@ export const environment: IEnvironment = {
 			firstName: 'Rachit',
 			lastName: 'Magon',
 			imageUrl: 'assets/images/avatars/rachit.png',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'atanas@ever.co',
@@ -165,7 +165,7 @@ export const environment: IEnvironment = {
 			firstName: 'Atanas',
 			lastName: 'Yonkov',
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'dimana@ever.co',
@@ -173,7 +173,7 @@ export const environment: IEnvironment = {
 			firstName: 'Dimana',
 			lastName: 'Tsvetkova',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultCandidates: [
@@ -183,7 +183,7 @@ export const environment: IEnvironment = {
 			firstName: 'Alish',
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			preferredLanguage: LanguagesEnum.en
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultTeams: [
