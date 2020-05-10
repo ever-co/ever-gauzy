@@ -1,5 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Organization } from './organization.model';
+import { Tag } from './tag-entity.model';
 
 export interface Product extends IBaseEntityModel {
 	name: string;
@@ -12,6 +13,7 @@ export interface Product extends IBaseEntityModel {
 	productCategoryId: string;
 	type?: ProductType;
 	category?: ProductCategory;
+	tags?: Tag[];
 }
 
 export interface ProductType extends IBaseEntityModel {

@@ -12,4 +12,14 @@ export class SkillService extends CrudService<Skill> {
 	) {
 		super(skillRepository);
 	}
+
+	async findOneByName(name: string): Promise<Skill> {
+		const query = await this.repository
+			.createQueryBuilder('skill')
+			.where('"skill"."name" = :name', {
+				name
+			});
+		const item = await query.getOne();
+		return item;
+	}
 }

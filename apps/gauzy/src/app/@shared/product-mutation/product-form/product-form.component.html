@@ -87,6 +87,16 @@
 						</nb-select>
 					</div>
 				</div>
+				<div class="row">
+					<div class="col-sm-12">
+						<ngx-tags-color-input
+							[form]="form"
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+						>
+						</ngx-tags-color-input>
+					</div>
+				</div>
 				<div class="mb-4">
 					<label class="label" for="description">
 						{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}

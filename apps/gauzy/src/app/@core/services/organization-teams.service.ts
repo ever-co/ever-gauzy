@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	OrganizationTeams,
+	OrganizationTeam,
 	OrganizationTeamFindInput,
 	OrganizationTeamCreateInput
 } from '@gauzy/models';
@@ -22,10 +22,10 @@ export class OrganizationTeamsService {
 
 	create(
 		createInput: OrganizationTeamCreateInput
-	): Promise<OrganizationTeams> {
+	): Promise<OrganizationTeam> {
 		return this.http
-			.post<OrganizationTeams>(
-				'/api/organization-teams/create',
+			.post<OrganizationTeam>(
+				'/api/organization-team/create',
 				createInput
 			)
 			.pipe(first())
@@ -39,8 +39,8 @@ export class OrganizationTeamsService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: OrganizationTeams[]; total: number }>(
-				`/api/organization-teams`,
+			.get<{ items: OrganizationTeam[]; total: number }>(
+				`/api/organization-team`,
 				{
 					params: { data }
 				}
@@ -51,14 +51,14 @@ export class OrganizationTeamsService {
 
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put(`/api/organization-teams/${id}`, updateInput)
+			.put(`/api/organization-team/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization-teams/${id}`)
+			.delete(`/api/organization-team/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

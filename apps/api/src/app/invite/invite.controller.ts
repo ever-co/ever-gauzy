@@ -44,6 +44,7 @@ import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-org
 import { Request } from 'express';
 
 @ApiTags('Invite')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class InviteController {
 	constructor(

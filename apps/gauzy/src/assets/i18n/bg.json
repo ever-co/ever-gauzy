@@ -23,6 +23,7 @@
 		"INVITE": "Покана",
 		"SELECT_ALL": "Селектиране на всички",
 		"COPY_LINK": "Копирай линка",
+		"MANAGE_INTERVIEWS": "Manage Interviews",
 		"MANAGE_INVITES": "Управлявай поканите",
 		"RESEND": "Преизпрати",
 		"NEXT": "Следващ",
@@ -34,7 +35,10 @@
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
-		"SEND": "Send"
+		"SEND": "Send",
+		"ARCHIVE": "Archive",
+		"FIND_TIME": "Find time",
+		"DOWNLOAD": "Download"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -89,6 +93,9 @@
 		"CLIENTS": "Клиенти",
 		"DEPARTMENTS": "Отдели",
 		"DESCRIPTION": "Описание",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -165,7 +172,18 @@
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date",
-			"ORGANIZATION_NAME": "Organization Name"
+			"ORGANIZATION_NAME": "Organization Name",
+			"MEETING_AGENDA": "Agenda",
+			"MEETING_LOCATION": "Локация",
+			"MEETING_DESCRIPTION": "Description",
+			"MEETING_INVITEES": "Invitees",
+			"TITLE": "Title",
+			"DATE": "Дата",
+			"TIME": "Time",
+			"DURATION": "Duration",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Локация",
+			"NOTE": "Note"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -221,6 +239,7 @@
 			"UPLOADER_PLACEHOLDER": "Снимка",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
+			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -251,7 +270,22 @@
 				"ORGANIZATION": "Organization name",
 				"DURATION": "Duration",
 				"DESCRIPTION": "Description (optional)"
-			}
+			},
+			"ADD_INTERVIEW": {
+				"TITLE": "Title",
+				"DATE": "Дата",
+				"TIME": "Time",
+				"DURATION": "Duration",
+				"INTERVIEWERS": "Interviewers",
+				"LOCATION": "Локация",
+				"NOTE": "Note (optional)",
+				"TYPE": "Interview type"
+			},
+			"MEETING_AGENDA": "Agenda",
+			"MEETING_LOCATION": "Локация",
+			"MEETING_DESCRIPTION": "Description",
+			"BUFFER_TIME": "Buffer minutes",
+			"BREAK_TIME": "Break minutes"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -259,10 +293,16 @@
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Показване на изтритите"
+			"INCLUDE_DELETED": "Показване на изтритите",
+			"INCLUDE_ARCHIVED": "Include Archived"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+		},
+		"ARCHIVE_CONFIRMATION": {
+			"SURE": "Are you sure you want to archive",
+			"RECORD": "запис",
+			"CANDIDATE": "candidate"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -327,6 +367,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
+		"APPOINTMENTS": "Appointments",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
@@ -413,7 +454,9 @@
 			"SELECT_ORGANIZATION": "Select Organization",
 			"SYNCED_PROJECTS": "Projects synced",
 			"SETTINGS_UPDATED": "Updated settings for integration",
-			"SYNCED_ENTITIES": "Auto synced entities"
+			"SYNCED_ENTITIES": "Auto synced entities",
+			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
+			"DATE_RANGE_PLACEHOLDER": "Choose date between"
 		}
 	},
 	"DASHBOARD_PAGE": {
@@ -543,6 +586,17 @@
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
+	"INTERVIEW_INFO_MODAL": {
+		"SCHEDULED_BY": "Scheduled by",
+		"HOURS_AGO": "hour(s) ago",
+		"MINUTES_AGO": "minute(s) ago",
+		"DATE": "Дата",
+		"TIME": "Time",
+		"CANDIDATE": "Candidate",
+		"INTERVIEWERS": "Interviewers",
+		"LOCATION": "Локация",
+		"NOTE": "Note"
+	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
 		"ADD_CANDIATE": "Add Candidates",
@@ -550,6 +604,7 @@
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
 		"DELETED": "Изтрит",
+		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
@@ -581,7 +636,22 @@
 			"DOCUMENTS": "Documents",
 			"DOCUMENT_NAME": "Document name",
 			"DOCUMENT": "Document",
-			"FEEDBACK_DESCRIPTION": "Feedback description"
+			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"INTERVIEW": {
+				"INTERVIEW": "Interview",
+				"INTERVIEWS": "Interviews",
+				"ON": "on",
+				"FROM": "from",
+				"WITH": "with",
+				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"STEP_1": "Step 1",
+				"STEP_2": "Step 2",
+				"NEXT": "Next",
+				"PREVIOUS": "Previous",
+				"SAVE": "Запази",
+				"SUMMARY": "Summary",
+				"EMAIL_NOTIFICATION": "Email notification"
+			}
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Step 1",
@@ -677,6 +747,10 @@
 			"ORG_USERS_EDIT": "Създай/Редактирай/Изтрии потребители на организацията",
 			"ORG_INVITE_VIEW": "Виж покани на организацията",
 			"ORG_INVITE_EDIT": "Създай/Преизпрати/Изтрии покани",
+			"ORG_CANDIDATES_DOCUMENTS_VIEW": "View All Candidates Documents",
+			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
+			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
+			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
 			"ALL_ORG_VIEW": "Виж всички организации",
 			"ALL_ORG_EDIT": "Създай/Редактирай/Изтрии всички организации",
 			"POLICY_VIEW": "Виж Time Off политиката",
@@ -771,6 +845,9 @@
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
 		"TAGS_SELECT_DESCRIPTION": "Tag description"
+	},
+	"SKILLS_PAGE": {
+		"HEADER": "Skills"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
@@ -1004,6 +1081,10 @@
 		"SEND": {
 			"CONFIRMATION": "Are you sure you want to send this invoice to",
 			"ALREADY_SENT": "This invoice has already been sent to"
+		},
+		"VIEW": {
+			"FROM": "FROM",
+			"TO": "TO"
 		}
 	},
 	"HEADER": {
@@ -1072,6 +1153,7 @@
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
+			"CANDIDATE_PROFILE_UPDATE": "{{name}} profile updated.",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -1212,10 +1294,15 @@
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
 		"CALENDAR": "Calendar",
-		"APPROVALS": "Approvals"
+		"APPROVALS": "Approvals",
+		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
+		"DENIED_SUCCESS": "Timesheet Successfully Denied"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
+	},
+	"APPOINTMENTS_PAGE": {
+		"ADD_APPOINTMENT": "Add Appointment"
 	}
 }

@@ -27,6 +27,7 @@ import { ProductVariantPriceService } from '../../@core/services/product-variant
 import { UserFormsModule } from '../user/forms/user-forms.module';
 import { ProductTypeMutationComponent } from './product-type-mutation/product-type-mutation.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
+import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 
 @NgModule({
 	declarations: [
@@ -36,6 +37,7 @@ import { OrganizationsService } from '../../@core/services/organizations.service
 		ProductTypeMutationComponent
 	],
 	imports: [
+		TagsColorInputModule,
 		ThemeModule,
 		NgSelectModule,
 		NbRadioModule,

@@ -1,0 +1,60 @@
+.candidate-image {
+	max-width: 70px;
+	max-height: 70px;
+	border-radius: 13px;
+	margin-right: 24px;
+	margin-left: 24px;
+}
+
+.candidate-image-small {
+	max-width: 35px;
+	max-height: 35px;
+	border-radius: 13px;
+	margin-right: 4px;
+	margin-left: 4px;
+}
+
+.button-container {
+	justify-content: space-between;
+	flex-direction: row;
+	display: flex;
+}
+
+.summary {
+	min-width: 45rem;
+}
+
+.employeeName {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+}
+
+.summary-content,
+.notify-checkboxes {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.summary-content-text {
+	margin-right: 5rem;
+}
+
+.notify-checkboxes-card {
+	width: 48%;
+	margin-bottom: 1rem;
+}
+
+.notification-title {
+	color: #8f9bb3;
+	font-size: 15px;
+	padding: 0 0 5px 5px;
+}
+
+.title-icon {
+	color: #8f9bb3 !important;
+	font-size: 16px;
+}

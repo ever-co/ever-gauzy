@@ -1,15 +1,16 @@
+import { ICandidateInterview } from './../../../../../libs/models/src/lib/candidate-interview.model';
 import { ICandidateSource } from './../../../../../libs/models/src/lib/candidate-source.model';
 import { CandidateSkill } from './../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import {
 	Candidate as ICandidate,
-	Status,
 	PayPeriodEnum,
 	IEducation,
 	IExperience,
 	ISkill,
 	ICandidateFeedback,
-	ICandidateDocument
+	ICandidateDocument,
+	CandidateStatus
 } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsOptional, IsEnum } from 'class-validator';
@@ -34,6 +35,7 @@ import { CandidateEducation } from '../candidate-education/candidate-education.e
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { CandidateDocument } from '../candidate-documents/candidate-documents.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 
 @Entity('candidate')
 export class Candidate extends TenantLocationBase implements ICandidate {
@@ -48,6 +50,12 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 		name: 'candidate_education'
 	})
 	educations: IEducation[];
+
+	@ManyToOne((type) => CandidateInterview)
+	@JoinTable({
+		name: 'candidate_interview'
+	})
+	interview: ICandidateInterview[];
 
 	@ManyToOne((type) => CandidateExperience)
 	@JoinTable({
@@ -136,13 +144,11 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@Column({ nullable: true })
 	hiredDate?: Date;
 
+	@ApiProperty({ type: String, enum: CandidateStatus })
+	@IsEnum(CandidateStatus)
 	@IsOptional()
-	@Column({
-		type: 'enum',
-		enum: ['applied', 'rejected', 'hired'],
-		default: 'applied'
-	})
-	status?: Status;
+	@Column({ nullable: true, default: CandidateStatus.APPLIED })
+	status?: string;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -195,4 +201,8 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 	@IsOptional()
 	@Column({ nullable: true })
 	cvUrl?: string;
+
+	@ApiPropertyOptional({ type: Boolean, default: false })
+	@Column({ nullable: true, default: false })
+	isArchived?: boolean;
 }

@@ -15,6 +15,7 @@ import chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
 import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
+import { createSkills } from '../../skills/skill.seed';
 import { User } from '../../user/user.entity';
 import {
 	createDefaultSuperAdminUsers,
@@ -49,9 +50,10 @@ import {
 } from '../../user-organization/user-organization.seed';
 import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { createCountries } from '../../country/country.seed';
-import { OrganizationTeams } from '../../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../../organization-team/organization-team.entity';
+import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
 import { Country } from '../../country';
-import { createDefaultTeams } from '../../organization-teams/organization-teams.seed';
+import { createDefaultTeams } from '../../organization-team/organization-team.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
@@ -129,6 +131,14 @@ import {
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
 import { createDefaultIntegrations } from '../../integration/integration.seed';
+import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
+import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
+import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
+import {
+	createCandidateInterview,
+	createRandomCandidateInterview
+} from '../../candidate-interview/candidate-interview.seed';
+import { ProductOption } from '../../product-option/product-option.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -148,7 +158,8 @@ const allEntities = [
 	InvoiceItem,
 	Expense,
 	EmployeeSetting,
-	OrganizationTeams,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
 	OrganizationClients,
 	OrganizationVendor,
 	OrganizationDepartment,
@@ -171,6 +182,8 @@ const allEntities = [
 	Equipment,
 	EmployeeLevel,
 	ProductCategory,
+	AppointmentEmployees,
+	EmployeeAppointment,
 	ProductType,
 	CandidateSource,
 	CandidateEducation,
@@ -180,8 +193,10 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
+	ProductOption,
 	CandidateDocument,
-	CandidateFeedback
+	CandidateFeedback,
+	CandidateInterview
 ];
 
 @Injectable()
@@ -335,6 +350,7 @@ export class SeedDataService {
 		await createCandidateSources(this.connection, defaultCandidates);
 		await createCandidateDocuments(this.connection, defaultCandidates);
 		await createCandidateFeedbacks(this.connection, defaultCandidates);
+		await createCandidateInterview(this.connection, defaultCandidates);
 
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
@@ -454,6 +470,11 @@ export class SeedDataService {
 			tenants,
 			tenantCandidatesMap
 		);
+		await createRandomCandidateInterview(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
 		await createRandomCandidateSources(
 			this.connection,
 			tenants,
@@ -480,6 +501,8 @@ export class SeedDataService {
 			tenants,
 			tenantOrganizationsMap
 		);
+
+		await createSkills(this.connection);
 	}
 
 	/**

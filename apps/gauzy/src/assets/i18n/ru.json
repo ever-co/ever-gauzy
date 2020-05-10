@@ -23,6 +23,7 @@
 		"INVITE": "Пригласить",
 		"SELECT_ALL": "Выделить все",
 		"COPY_LINK": "Скопировать ссылку",
+		"MANAGE_INTERVIEWS": "Управление интервью",
 		"MANAGE_INVITES": "Управление приглашениями",
 		"RESEND": "Переслать",
 		"NEXT": "Следующий",
@@ -34,7 +35,10 @@
 		"UPDATE": "Обновить",
 		"AUTO_SYNC": "Автосинхронизация",
 		"VIEW": "Вид",
-		"SEND": "Отправить"
+		"SEND": "Отправить",
+		"ARCHIVE": "Архивировать",
+		"FIND_TIME": "Время поиска",
+		"DOWNLOAD": "Скачать"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -89,6 +93,9 @@
 		"CLIENTS": "Клиенты",
 		"DEPARTMENTS": "Департаменты",
 		"DESCRIPTION": "Описание",
+		"APPLIED": "Применяется",
+		"HIRED": "Наклонный",
+		"REJECTED": "Отклонено",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "Русский (Соединенные Штаты)",
@@ -165,7 +172,18 @@
 			"ENABLE_DISABLE_FUTURE_DATE": "Включить/Отключить будущие даты",
 			"ALLOW_FUTURE_DATE": "Разрешить переход на будущие периоды",
 			"REGISTRATION_DATE": "Дата регистрации",
-			"ORGANIZATION_NAME": "Название организации"
+			"ORGANIZATION_NAME": "Название организации",
+			"MEETING_AGENDA": "Повестка дня",
+			"MEETING_LOCATION": "Местоположение",
+			"MEETING_DESCRIPTION": "Описание",
+			"MEETING_INVITEES": "Приглашенные",
+			"TITLE": "Заголовок",
+			"DATE": "Дата",
+			"TIME": "Время",
+			"DURATION": "Продолжительность",
+			"INTERVIEWERS": "Интервьюеры",
+			"LOCATION": "Местоположение",
+			"NOTE": "Примечание"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -221,6 +239,7 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
+			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
@@ -251,7 +270,22 @@
 				"ORGANIZATION": "Название организации",
 				"DURATION": "Продолжительность",
 				"DESCRIPTION": "Описание (необязательно)"
-			}
+			},
+			"ADD_INTERVIEW": {
+				"TITLE": "Заголовок",
+				"DATE": "Дата",
+				"TIME": "Время",
+				"DURATION": "Продолжительность",
+				"INTERVIEWERS": "Интервьюеры",
+				"LOCATION": "Местоположение",
+				"NOTE": "Примечание (опционально)",
+				"TYPE": "Тип интервью"
+			},
+			"MEETING_AGENDA": "Повестка дня",
+			"MEETING_LOCATION": "Местоположение",
+			"MEETING_DESCRIPTION": "Описание",
+			"BUFFER_TIME": "Буферные минуты",
+			"BREAK_TIME": "Минут остановки"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -259,10 +293,16 @@
 			"LIMITS": "Лимиты"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Включать удаленные"
+			"INCLUDE_DELETED": "Включать удаленные",
+			"INCLUDE_ARCHIVED": "Включать в архив"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "Необходимо ввести дату, когда работник начал работу для генерации заработной платы работников, позволяет работнику участвовать в разделенных расходах, видеть статистику работников"
+		},
+		"ARCHIVE_CONFIRMATION": {
+			"SURE": "Вы уверены, что хотите архивировать",
+			"RECORD": "запись",
+			"CANDIDATE": "кандидат"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
@@ -327,6 +367,7 @@
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
+		"APPOINTMENTS": "Назначения",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -413,7 +454,9 @@
 			"SELECT_ORGANIZATION": "Выберите организацию",
 			"SYNCED_PROJECTS": "Проекты синхронизированы",
 			"SETTINGS_UPDATED": "Обновлены настройки интеграции",
-			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей"
+			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей",
+			"TOOLTIP_ACTIVITY_INFO": "Диапазон дат: 7 дней до даты: 6 месяцев",
+			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
 		}
 	},
 	"DASHBOARD_PAGE": {
@@ -543,6 +586,17 @@
 		"NOT_STARTED": "Не начато",
 		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д."
 	},
+	"INTERVIEW_INFO_MODAL": {
+		"SCHEDULED_BY": "Запланировано на",
+		"HOURS_AGO": "час(ы) назад",
+		"MINUTES_AGO": "минут назад",
+		"DATE": "Дата",
+		"TIME": "Время",
+		"CANDIDATE": "Кандидат",
+		"INTERVIEWERS": "Интервьюеры",
+		"LOCATION": "Местоположение",
+		"NOTE": "Примечание"
+	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
 		"ADD_CANDIATE": "Добавить Кандидатов",
@@ -550,6 +604,7 @@
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
 		"DELETED": "Удалено",
+		"ARCHIVED": "Архивирован",
 		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Управление Кандидатом",
@@ -581,7 +636,22 @@
 			"DOCUMENTS": "Документы",
 			"DOCUMENT_NAME": "Название документа",
 			"DOCUMENT": "Документ",
-			"FEEDBACK_DESCRIPTION": "Описание отзыва"
+			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"INTERVIEW": {
+				"INTERVIEW": "Интервью",
+				"INTERVIEWS": "Интервью",
+				"ON": "вкл",
+				"FROM": "от",
+				"WITH": "с",
+				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"STEP_1": "Шаг 1",
+				"STEP_2": "Шаг2",
+				"NEXT": "Следующий",
+				"PREVIOUS": "Предыдущий",
+				"SAVE": "Сохранить",
+				"SUMMARY": "Summary",
+				"EMAIL_NOTIFICATION": "Уведомление по e-mail"
+			}
 		},
 		"ADD_CANDIATES": {
 			"STEP_1": "Шаг 1",
@@ -677,6 +747,10 @@
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ORG_INVITE_VIEW": "Просмотреть приглашения организации",
 			"ORG_INVITE_EDIT": "Создание/повторение/удаление приглашений",
+			"ORG_CANDIDATES_DOCUMENTS_VIEW": "Просмотреть все документы",
+			"ORG_CANDIDATES_TASK_EDIT": "Создание/Редактирование задачи",
+			"ORG_CANDIDATES_INTERVIEW_EDIT": "Создать/редактировать интервью",
+			"ORG_INVENTORY_PRODUCT_EDIT": "Продукт управления",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
 			"POLICY_VIEW": "Просмотр политики отключения",
@@ -771,6 +845,9 @@
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
 		"TAGS_SELECT_DESCRIPTION": "Описание метки"
+	},
+	"SKILLS_PAGE": {
+		"HEADER": "Навыки"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
@@ -1004,6 +1081,10 @@
 		"SEND": {
 			"CONFIRMATION": "Вы уверены, что хотите отправить этот счет на",
 			"ALREADY_SENT": "Этот счет уже был отправлен на"
+		},
+		"VIEW": {
+			"FROM": "ИЗ",
+			"TO": "К"
 		}
 	},
 	"HEADER": {
@@ -1072,6 +1153,7 @@
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Требуется информация об опыте",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Требуется информация о документе",
 			"CANDIDATE_SKILLS_REQUIRED": "Требуется название навыка",
+			"CANDIDATE_PROFILE_UPDATE": "Профиль {{name}} обновлён.",
 			"NAME_REQUIRED": "Требуется имя!",
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
@@ -1212,10 +1294,15 @@
 		"DAILY": "Ежедневно",
 		"WEEKLY": "Еженедельно",
 		"CALENDAR": "Календарь",
-		"APPROVALS": "Утверждения"
+		"APPROVALS": "Утверждения",
+		"APPROVE_SUCCESS": "Сроки успешно утверждены",
+		"DENIED_SUCCESS": "Таблица времени успешно отклонена"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
 		"COMPLETE": "Все готово!"
+	},
+	"APPOINTMENTS_PAGE": {
+		"ADD_APPOINTMENT": "Добавить Назначение"
 	}
 }

@@ -6,7 +6,8 @@ import {
 	Body,
 	Put,
 	Param,
-	HttpCode
+	HttpCode,
+	UseGuards
 	// UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -16,9 +17,13 @@ import { Product } from './product.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { ProductCreateCommand } from './commands/product.create.command';
 import { ProductUpdateCommand } from './commands/product.update.command';
-// import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { AuthGuard } from '@nestjs/passport';
+import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { PermissionsEnum } from '@gauzy/models';
+import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('Product')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class ProductController extends CrudController<Product> {
 	constructor(
@@ -55,7 +60,8 @@ export class ProductController extends CrudController<Product> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	// @UseGuards(PermissionGuard)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('/create')
 	async createProduct(@Body() entity: Product, ...options: any[]) {
 		return this.commandBus.execute(new ProductCreateCommand(entity));

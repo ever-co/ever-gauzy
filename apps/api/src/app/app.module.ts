@@ -14,6 +14,7 @@ import { OrganizationModule } from './organization/organization.module';
 import { IncomeModule } from './income/income.module';
 import { ExpenseModule } from './expense/expense.module';
 import { EmployeeSettingModule } from './employee-setting';
+import { EmployeeAppointmentModule } from './employee-appointment';
 import { CoreModule } from './core';
 import { AuthModule } from './auth/auth.module';
 import { SeedDataService } from './core/seeds/SeedDataService';
@@ -26,7 +27,8 @@ import { OrganizationClientsModule } from './organization-clients/organization-c
 import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
 import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
-import { OrganizationTeamsModule } from './organization-teams/organization-teams.module';
+import { OrganizationTeamModule } from './organization-team/organization-team.module';
+import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { InviteModule } from './invite/invite.module';
@@ -67,6 +69,8 @@ import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedba
 import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
 import { IntegrationModule } from './integration/integration.module';
 import { IntegrationTenantModule } from './integration-tenant/integration-tenant.module';
+import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
+import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
 
 @Module({
 	imports: [
@@ -89,6 +93,10 @@ import { IntegrationTenantModule } from './integration-tenant/integration-tenant
 					{
 						path: '/candidate-feedbacks',
 						module: CandidateFeedbacksModule
+					},
+					{
+						path: '/candidate-interview',
+						module: CandidateInterviewModule
 					},
 					{
 						path: '/candidate-experience',
@@ -118,6 +126,14 @@ import { IntegrationTenantModule } from './integration-tenant/integration-tenant
 					{
 						path: '/employee-statistics',
 						module: EmployeeStatisticsModule
+					},
+					{
+						path: '/employee-appointment',
+						module: EmployeeAppointmentModule
+					},
+					{
+						path: '/appointment-employees',
+						module: AppointmentEmployeesModule
 					},
 					{
 						path: '/user-organization',
@@ -152,8 +168,8 @@ import { IntegrationTenantModule } from './integration-tenant/integration-tenant
 						module: EmployeeRecurringExpenseModule
 					},
 					{
-						path: '/organization-teams',
-						module: OrganizationTeamsModule
+						path: '/organization-team',
+						module: OrganizationTeamModule
 					},
 					{
 						path: '/proposal',
@@ -277,10 +293,13 @@ import { IntegrationTenantModule } from './integration-tenant/integration-tenant
 		CandidateExperienceModule,
 		CandidateSkillModule,
 		CandidateFeedbacksModule,
+		CandidateInterviewModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
+		EmployeeAppointmentModule,
+		AppointmentEmployeesModule,
 		RoleModule,
 		OrganizationModule,
 		IncomeModule,
@@ -293,7 +312,8 @@ import { IntegrationTenantModule } from './integration-tenant/integration-tenant
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
 		EmployeeRecurringExpenseModule,
-		OrganizationTeamsModule,
+		OrganizationTeamModule,
+		OrganizationTeamEmployeeModule,
 		ProposalModule,
 		EmailModule,
 		CountryModule,

@@ -12,25 +12,25 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationTeamsService } from './organization-teams.service';
+import { OrganizationTeamService } from './organization-team.service';
 import { IPagination } from '../core';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
-	OrganizationTeams as IIOrganizationTeams
+	OrganizationTeam as IIOrganizationTeam
 } from '@gauzy/models';
-import { OrganizationTeams } from './organization-teams.entity';
+import { OrganizationTeam } from './organization-team.entity';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Organization-Teams')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class OrganizationTeamsController extends CrudController<
-	OrganizationTeams
+export class OrganizationTeamController extends CrudController<
+	OrganizationTeam
 > {
 	constructor(
-		private readonly organizationTeamsService: OrganizationTeamsService
+		private readonly organizationTeamService: OrganizationTeamService
 	) {
-		super(organizationTeamsService);
+		super(organizationTeamService);
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -47,8 +47,8 @@ export class OrganizationTeamsController extends CrudController<
 	async createOrganizationTeam(
 		@Body() entity: IOrganizationTeamCreateInput,
 		...options: any[]
-	): Promise<OrganizationTeams> {
-		return this.organizationTeamsService.createOrgTeam(entity);
+	): Promise<OrganizationTeam> {
+		return this.organizationTeamService.createOrgTeam(entity);
 	}
 
 	@ApiOperation({
@@ -57,7 +57,7 @@ export class OrganizationTeamsController extends CrudController<
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found Teams',
-		type: OrganizationTeams
+		type: OrganizationTeam
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -66,10 +66,10 @@ export class OrganizationTeamsController extends CrudController<
 	@Get()
 	async findAllOrganizationTeams(
 		@Query('data') data: string
-	): Promise<IPagination<IIOrganizationTeams>> {
+	): Promise<IPagination<IIOrganizationTeam>> {
 		const { relations, findInput } = JSON.parse(data);
 
-		return this.organizationTeamsService.getAllOrgTeams({
+		return this.organizationTeamService.getAllOrgTeams({
 			where: findInput,
 			relations
 		});
@@ -95,7 +95,7 @@ export class OrganizationTeamsController extends CrudController<
 		@Param('id') id: string,
 		@Body() entity: IOrganizationTeamCreateInput,
 		...options: any[]
-	): Promise<OrganizationTeams> {
-		return this.organizationTeamsService.updateOrgTeam(id, entity);
+	): Promise<OrganizationTeam> {
+		return this.organizationTeamService.updateOrgTeam(id, entity);
 	}
 }

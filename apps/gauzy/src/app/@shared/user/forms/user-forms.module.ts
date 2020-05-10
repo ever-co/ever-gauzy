@@ -1,3 +1,4 @@
+import { ArchiveConfirmationComponent } from './archive-confirmation/archive-confirmation.component';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { NgModule } from '@angular/core';
 import { BasicInfoFormComponent } from './basic-info/basic-info-form.component';
@@ -52,17 +53,20 @@ export function HttpLoaderFactory(http: HttpClient) {
 	exports: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
-		ActionConfirmationComponent
+		ActionConfirmationComponent,
+		ArchiveConfirmationComponent
 	],
 	declarations: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
-		ActionConfirmationComponent
+		ActionConfirmationComponent,
+		ArchiveConfirmationComponent
 	],
 	entryComponents: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
-		ActionConfirmationComponent
+		ActionConfirmationComponent,
+		ArchiveConfirmationComponent
 	],
 	providers: [AuthService, RoleService, IncomeService, TagsService]
 })

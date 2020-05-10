@@ -29,7 +29,8 @@ import { OrganizationClients } from '../organization-clients/organization-client
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
-import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Proposal } from '../proposal/proposal.entity';
 import { Country } from '../country/country.entity';
 import { Invite } from '../invite/invite.entity';
@@ -70,6 +71,9 @@ import { CandidateExperience } from './../candidate-experience/candidate-experie
 import { CandidateFeedback } from './../candidate-feedbacks/candidate-feedbacks.entity';
 import { Integration } from '../integration/integration.entity';
 import { IntegrationType } from '../integration/integration-type.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { EmployeeAppointment } from '../employee-appointment';
+import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
 
 const entities = [
 	Invite,
@@ -89,7 +93,8 @@ const entities = [
 	OrganizationVendor,
 	OrganizationRecurringExpense,
 	EmployeeRecurringExpense,
-	OrganizationTeams,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
 	Proposal,
 	Country,
 	Email,
@@ -125,13 +130,16 @@ const entities = [
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
+	CandidateInterview,
 	Integration,
 	IntegrationType,
 	IntegrationSetting,
 	IntegrationTenant,
 	IntegrationMap,
 	IntegrationEntitySetting,
-	IntegrationEntitySettingTiedEntity
+	IntegrationEntitySettingTiedEntity,
+	EmployeeAppointment,
+	AppointmentEmployees
 ];
 
 @Module({

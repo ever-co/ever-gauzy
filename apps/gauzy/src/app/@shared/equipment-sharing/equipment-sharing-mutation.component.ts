@@ -11,7 +11,7 @@ import {
 	Equipment,
 	EquipmentSharingStatusEnum,
 	Employee,
-	OrganizationTeams
+	OrganizationTeam
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -58,7 +58,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	requestStatus: string;
 	participants = 'employees';
 
-	teams: OrganizationTeams[];
+	teams: OrganizationTeam[];
 	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
