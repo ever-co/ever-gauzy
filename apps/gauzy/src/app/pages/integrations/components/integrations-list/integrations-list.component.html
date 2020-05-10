@@ -5,6 +5,7 @@
 	<nb-card-body>
 		<div class="integration-filters">
 			<nb-select
+				class="group-select"
 				placeholder="Select Groups"
 				*ngIf="integrationGroups$ | async as integrationGroups"
 				[selected]="selectedIntegrationTypeId$ | async"
