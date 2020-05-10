@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
-
+import { AuthGuard } from '@nestjs/passport';
 import { IPagination } from '../core';
 import { CandidateInterview } from './candidate-interview.entity';
 import { CandidateInterviewService } from './candidate-interview.service';
@@ -18,6 +18,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 
 @ApiTags('candidate_interview')
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateInterviewController extends CrudController<
 	CandidateInterview
