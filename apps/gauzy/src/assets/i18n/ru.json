@@ -183,7 +183,8 @@
 			"DURATION": "Продолжительность",
 			"INTERVIEWERS": "Интервьюеры",
 			"LOCATION": "Местоположение",
-			"NOTE": "Примечание"
+			"NOTE": "Примечание",
+			"PREFERRED_LANGUAGE": "Предпочитаемый язык"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -258,6 +259,7 @@
 			"ORGANIZATIONS": "Выберите организации",
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -962,7 +964,13 @@
 			"HEADER": "Управление пользователем",
 			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
 			"MAIN": "Главная",
-			"USER_ORGANIZATIONS": "Организации"
+			"USER_ORGANIZATIONS": "Организации",
+			"PREFERRED_LANGUAGE": {
+				"en": "Russian",
+				"he": "Иврит",
+				"bg": "Болгарский",
+				"ru": "Русский"
+			}
 		},
 		"REMOVE_USER": "{{ name }} успешно удален"
 	},
