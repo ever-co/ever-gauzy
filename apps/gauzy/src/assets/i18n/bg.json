@@ -183,7 +183,8 @@
 			"DURATION": "Duration",
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Локация",
-			"NOTE": "Note"
+			"NOTE": "Note",
+			"PREFERRED_LANGUAGE": "Preferred Language"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -258,6 +259,7 @@
 			"ORGANIZATIONS": "Choose Organizations",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"PREFERRED_LANGUAGE": "Preferred Language",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -962,7 +964,13 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Основни",
-			"USER_ORGANIZATIONS": "Организации"
+			"USER_ORGANIZATIONS": "Организации",
+			"PREFERRED_LANGUAGE": {
+				"en": "English",
+				"he": "Иврит",
+				"bg": "Български",
+				"ru": "Руски"
+			}
 		},
 		"REMOVE_USER": "{{ name }} successfully removed"
 	},
