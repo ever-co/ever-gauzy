@@ -18,6 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../../@core/services';
 import { NbToastrService } from '@nebular/theme';
 import { AppointmentEmployeesService } from 'apps/gauzy/src/app/@core/services/appointment-employees.service';
+import * as moment from 'moment';
 
 @Component({
 	templateUrl: './manage-appointment.component.html'
@@ -77,7 +78,32 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 					: [],
 				Validators.required
 			],
-			selectedRange: this.selectedRange
+			selectedRange: this.selectedRange,
+			bufferTime:
+				this.employeeAppointment &&
+				this.employeeAppointment.bufferTimeInMins
+					? true
+					: false,
+			breakTime:
+				this.employeeAppointment &&
+				this.employeeAppointment.breakTimeInMins
+					? true
+					: false,
+			bufferTimeStart:
+				this.employeeAppointment &&
+				this.employeeAppointment.bufferTimeStart,
+			bufferTimeEnd:
+				this.employeeAppointment &&
+				this.employeeAppointment.bufferTimeEnd,
+			bufferTimeInMins:
+				this.employeeAppointment &&
+				this.employeeAppointment.bufferTimeInMins,
+			breakTimeInMins:
+				this.employeeAppointment &&
+				this.employeeAppointment.breakTimeInMins,
+			breakStartTime:
+				this.employeeAppointment &&
+				this.employeeAppointment.breakStartTime
 		});
 	}
 
@@ -125,7 +151,18 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			location: this.form.get('location').value,
 			description: this.form.get('description').value,
 			startDateTime: this.form.get('selectedRange').value.start,
-			endDateTime: this.form.get('selectedRange').value.end
+			endDateTime: this.form.get('selectedRange').value.end,
+			bufferTimeStart: this.form.get('bufferTimeStart').value,
+			bufferTimeEnd: this.form.get('bufferTimeEnd').value,
+			bufferTimeInMins: this.form.get('bufferTimeInMins').value,
+			breakTimeInMins: this.form.get('breakTimeInMins').value,
+			breakStartTime: new Date(
+				moment(this.form.get('selectedRange').value.start).format(
+					'YYYY-MM-DD'
+				) +
+					' ' +
+					this.form.get('breakStartTime').value
+			)
 		};
 
 		if (this.employeeAppointment) {
@@ -136,11 +173,14 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			this.employeeAppointment = await this.employeeAppointmentService.create(
 				employeeAppointmentRequest
 			);
-			for (let e of this.selectedEmployeeIds) {
-				await this.appointmentEmployeesService.add({
-					employeeId: e,
-					appointmentId: this.employeeAppointment.id
-				});
+
+			if (this.selectedEmployeeIds) {
+				for (let e of this.selectedEmployeeIds) {
+					await this.appointmentEmployeesService.add({
+						employeeId: e,
+						appointmentId: this.employeeAppointment.id
+					});
+				}
 			}
 		} else {
 			this.employeeAppointment = await this.employeeAppointmentService.update(
