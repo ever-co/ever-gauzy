@@ -13,7 +13,8 @@ import {
 	NbTooltipModule,
 	NbTreeGridModule,
 	NbSelectModule,
-	NbRouteTabsetModule
+	NbRouteTabsetModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -55,6 +56,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
+		NbCheckboxModule,
+		TimerPickerModule,
 		NbSpinnerModule,
 		TimerPickerModule,
 		NbRouteTabsetModule,

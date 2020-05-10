@@ -7,6 +7,11 @@ export interface EmployeeAppointment extends IBaseEntityModel {
 	agenda: string;
 	startDateTime: Date;
 	endDateTime: Date;
+	bufferTimeStart?: Boolean;
+	bufferTimeEnd?: Boolean;
+	bufferTimeInMins?: Number;
+	breakTimeInMins?: Number;
+	breakStartTime?: Date;
 	invitees?: AppointmentEmployees[];
 }
 
@@ -16,5 +21,10 @@ export interface IEmployeeAppointmentCreateInput {
 	agenda: string;
 	startDateTime: Date;
 	endDateTime: Date;
+	bufferTimeStart?: Boolean;
+	bufferTimeEnd?: Boolean;
+	bufferTimeInMins?: Number;
+	breakTimeInMins?: Number;
+	breakStartTime?: Date;
 	invitees?: AppointmentEmployees[];
 }
