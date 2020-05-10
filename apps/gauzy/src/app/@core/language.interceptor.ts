@@ -10,8 +10,6 @@ import { environment } from 'apps/gauzy/src/environments/environment';
 import { Store } from './services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 
-const baseUrl = environment.API_BASE_URL;
-
 @Injectable()
 export class LanguageInterceptor implements HttpInterceptor {
 	constructor(private store: Store, private translate: TranslateService) {}
