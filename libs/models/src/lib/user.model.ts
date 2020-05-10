@@ -36,7 +36,7 @@ export interface UserFindInput extends IBaseEntityModel {
 	hash?: string;
 	imageUrl?: string;
 	tags?: Tag[];
-	preferredLanguage?: PreferredLanguageEnum;
+	preferredLanguage?: LanguagesEnum;
 }
 
 export interface UserRegistrationInput {
@@ -57,7 +57,7 @@ export interface UserCreateInput {
 	hash?: string;
 	imageUrl?: string;
 	tags?: Tag[];
-	preferredLanguage?: PreferredLanguageEnum;
+	preferredLanguage?: LanguagesEnum;
 }
 
 export interface UserUpdateInput {
@@ -69,12 +69,12 @@ export interface UserUpdateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	preferredLanguage?: PreferredLanguageEnum;
+	preferredLanguage?: LanguagesEnum;
 }
 
-export enum PreferredLanguageEnum {
-	en = 'en',
-	bg = 'bg',
-	he = 'he',
-	ru = 'ru'
+export enum LanguagesEnum {
+	ENGLISH = 'en',
+	BULGARIAN = 'bg',
+	HEBREW = 'he',
+	RUSSIAN = 'ru'
 }

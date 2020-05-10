@@ -19,7 +19,7 @@ import {
 	UserFindInput,
 	RolesEnum,
 	Tag,
-	PreferredLanguageEnum
+	LanguagesEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { RoleService } from '../../../@core/services/role.service';
@@ -63,7 +63,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		(r) => r !== RolesEnum.EMPLOYEE
 	);
 
-	languages: string[] = Object.values(PreferredLanguageEnum);
+	languages: string[] = Object.values(LanguagesEnum);
 
 	constructor(
 		private fb: FormBuilder,
@@ -182,6 +182,14 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				'Success'
 			);
 			this.userSubmitted.emit();
+
+			/**
+			 * selectedUser is null for edit profile and populated in User edit
+			 * Update app language when current user's profile is modified.
+			 */
+			if (this.selectedUser && this.selectedUser.id !== this.store.userId)
+				return;
+			this.store.preferredLanguage = this.form.value['preferredLanguage'];
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}

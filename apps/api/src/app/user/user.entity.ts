@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { User as IUser, PreferredLanguageEnum } from '@gauzy/models';
+import { User as IUser, LanguagesEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
@@ -110,8 +110,8 @@ export class User extends Base implements IUser {
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@ApiProperty({ type: String, enum: PreferredLanguageEnum })
-	@IsEnum(PreferredLanguageEnum)
+	@ApiProperty({ type: String, enum: LanguagesEnum })
+	@IsEnum(LanguagesEnum)
 	@Column({ nullable: true })
 	preferredLanguage?: string;
 }
