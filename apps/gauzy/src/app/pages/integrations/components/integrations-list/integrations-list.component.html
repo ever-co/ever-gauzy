@@ -1,12 +1,47 @@
-<nb-card>
+<nb-card [nbSpinner]="isLoading$ | async">
 	<nb-card-header>
 		<h4>{{ 'INTEGRATIONS.AVALIABLE_INTEGRATIONS' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="integrations-list">
+		<div class="integration-filters">
+			<nb-select
+				placeholder="Select Groups"
+				*ngIf="integrationGroups$ | async as integrationGroups"
+				[selected]="selectedIntegrationTypeId$ | async"
+				fullWidth
+				(selectedChange)="setSelectedIntegrationType($event)"
+			>
+				<nb-option-group
+					*ngFor="let integrationGroup of integrationGroups"
+					title="{{ integrationGroup.groupName }}"
+				>
+					<nb-option
+						*ngFor="
+							let integrationType of integrationGroup.integrationTypes
+						"
+						[value]="integrationType.id"
+						>{{ integrationType.name }}</nb-option
+					>
+				</nb-option-group>
+			</nb-select>
+			<input
+				fullWidth
+				id="integrationSearch"
+				type="text"
+				nbInput
+				placeholder="Search integrations"
+				(keyup)="doSearch($event)"
+			/>
+		</div>
+		<div
+			class="integrations-list"
+			*ngIf="integrations$ | async as integrations"
+		>
 			<a
 				*ngFor="let integration of integrations"
-				[routerLink]="[integration.navigation_url]"
+				[routerLink]="
+					!integration.isComingSoon && [integration.navigation_url]
+				"
 				class="list-item"
 			>
 				<img
@@ -16,6 +51,14 @@
 					alt="image not found"
 					[title]="integration.title"
 				/>
+				<div
+					class="comingSoon-wrapper"
+					*ngIf="integration.isComingSoon"
+				>
+					<span class="comingSoon">{{
+						'INTEGRATIONS.COMING_SOON' | translate
+					}}</span>
+				</div>
 			</a>
 		</div>
 	</nb-card-body>

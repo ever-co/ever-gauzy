@@ -3,6 +3,20 @@
 	flex-wrap: wrap;
 }
 
+.integration-filters {
+	display: flex;
+	margin-bottom: 20px;
+
+	nb-select {
+		flex: 1 1 30%;
+		margin-right: 20px;
+	}
+
+	#integrationSearch {
+		flex: 1 1 70%;
+	}
+}
+
 .list-item {
 	width: 155px;
 	height: 155px;
@@ -11,6 +25,7 @@
 	border: 1px solid #ebedef;
 	border-radius: 2px;
 	margin: 0 60px 30px 0;
+	position: relative;
 
 	&:hover {
 		border: 1px solid #2aa7ff;
@@ -20,5 +35,55 @@
 
 	img {
 		width: 100%;
+	}
+
+	.comingSoon-wrapper {
+		position: absolute;
+		right: -5px;
+		top: -5px;
+		width: 100px;
+		height: 100px;
+		overflow: hidden;
+
+		.comingSoon {
+			position: absolute;
+			width: 130px;
+			transform: rotate(45deg);
+			top: 25px;
+			right: -27px;
+			background: linear-gradient(
+				rgb(103, 63, 189) 0%,
+				rgb(101, 105, 223) 100%
+			);
+			box-shadow: rgb(0, 0, 0) 0px 3px 10px -5px;
+			line-height: 25px;
+			color: rgb(255, 255, 255);
+			font-size: 10px;
+			font-weight: bold;
+			text-transform: uppercase;
+			text-align: center;
+
+			&::before {
+				content: '';
+				position: absolute;
+				left: 0px;
+				top: 100%;
+				border-left: 3px solid rgb(103, 63, 189);
+				border-right: 3px solid transparent;
+				border-bottom: 3px solid transparent;
+				border-top: 3px solid rgb(103, 63, 189);
+			}
+
+			&::after {
+				content: '';
+				position: absolute;
+				right: 0px;
+				top: 100%;
+				border-left: 3px solid transparent;
+				border-right: 3px solid rgb(103, 63, 189);
+				border-bottom: 3px solid transparent;
+				border-top: 3px solid rgb(103, 63, 189);
+			}
+		}
 	}
 }

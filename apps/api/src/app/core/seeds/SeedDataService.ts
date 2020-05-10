@@ -127,6 +127,8 @@ import {
 	createCandidateFeedbacks,
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
+import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
+import { createDefaultIntegrations } from '../../integration/integration.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -363,6 +365,11 @@ export class SeedDataService {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees
 		});
+
+		const integrationTypes = await createDefaultIntegrationTypes(
+			this.connection
+		);
+		await createDefaultIntegrations(this.connection, integrationTypes);
 	}
 
 	/**
