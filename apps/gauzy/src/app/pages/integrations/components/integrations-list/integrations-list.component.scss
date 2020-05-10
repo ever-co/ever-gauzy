@@ -17,6 +17,11 @@
 	}
 }
 
+a.disabled {
+	pointer-events: none;
+	cursor: default;
+}
+
 .list-item {
 	width: 155px;
 	height: 155px;

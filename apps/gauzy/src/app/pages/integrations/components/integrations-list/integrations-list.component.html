@@ -38,10 +38,9 @@
 			*ngIf="integrations$ | async as integrations"
 		>
 			<a
+				[class.disabled]="'disabled' ? integration.isComingSoon : ''"
 				*ngFor="let integration of integrations"
-				[routerLink]="
-					!integration.isComingSoon && [integration.navigation_url]
-				"
+				[routerLink]="[integration.navigation_url]"
 				class="list-item"
 			>
 				<img
