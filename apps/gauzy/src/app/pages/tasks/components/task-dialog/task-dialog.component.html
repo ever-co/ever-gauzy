@@ -50,6 +50,34 @@
 					</div>
 				</div>
 				<div class="col-sm-12">
+					<div class="form-group">
+						<nb-select
+							multiple
+							formControlName="members"
+							fullWidth
+							placeholder="{{
+								'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS'
+									| translate
+							}}"
+						>
+							<nb-option
+								*ngFor="let employee of employees"
+								[value]="employee.id"
+							>
+								<img
+									src="{{ employee.user.imageUrl }}"
+									alt="Smiley face"
+									height="40"
+									width="40"
+									style="margin-right:10px"
+								/>
+								{{ employee.user.firstName }}
+								{{ employee.user.lastName }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+				<div class="col-sm-12">
 					<input
 						class="name-input"
 						formControlName="title"

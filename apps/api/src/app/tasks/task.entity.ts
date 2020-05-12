@@ -60,6 +60,10 @@ export class Task extends Base implements ITask {
 	@Column()
 	readonly projectId?: string;
 
+	@ApiProperty({ type: String, readOnly: true })
+	@Column()
+	readonly members?: string;
+
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany(
 		(type) => InvoiceItem,
