@@ -17,7 +17,7 @@ export class PermissionGuard implements CanActivate {
 			'permissions',
 			context.getHandler()
 		);
-
+		const req = context.switchToHttp().getRequest();
 		let isAuthorized = false;
 
 		if (!permissions) {
@@ -48,6 +48,6 @@ export class PermissionGuard implements CanActivate {
 			}
 		}
 
-		return isAuthorized;
+		return isAuthorized || req.ownerGuardStatus;
 	}
 }

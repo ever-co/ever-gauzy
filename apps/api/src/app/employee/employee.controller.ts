@@ -24,6 +24,7 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import OwnerGuard from '../shared/guards/auth/owner.guard';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -52,6 +53,8 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UseGuards(OwnerGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	async update(
 		@Param('id') id: string,
 		@Body() entity: Employee

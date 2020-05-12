@@ -15,6 +15,7 @@ export class RoleGuard implements CanActivate {
 			'roles',
 			context.getHandler()
 		);
+		const req = context.switchToHttp().getRequest();
 
 		let isAuthorized = false;
 
@@ -25,6 +26,6 @@ export class RoleGuard implements CanActivate {
 			isAuthorized = await this._authService.hasRole(token, roles);
 		}
 
-		return isAuthorized;
+		return isAuthorized || req.ownerGuardStatus;
 	}
 }

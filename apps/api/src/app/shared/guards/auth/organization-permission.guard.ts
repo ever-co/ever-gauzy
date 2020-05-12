@@ -21,6 +21,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 			'permissions',
 			context.getHandler()
 		);
+		const req = context.switchToHttp().getRequest();
 
 		let isAuthorized = false;
 
@@ -54,7 +55,6 @@ export class OrganizationPermissionGuard implements CanActivate {
 				);
 			}
 		}
-
-		return isAuthorized;
+		return isAuthorized || req.ownerGuardStatus;
 	}
 }
