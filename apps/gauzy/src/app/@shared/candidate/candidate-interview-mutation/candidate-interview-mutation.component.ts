@@ -41,8 +41,11 @@ export class CandidateInterviewMutationComponent
 	@ViewChild('candidateInterviewForm', { static: false })
 	candidateInterviewForm: CandidateInterviewFormComponent;
 
-	@ViewChild('emailForm', { static: false })
-	emailForm: CandidateEmailComponent;
+	@ViewChild('emailCandidateForm', { static: false })
+	emailCandidateForm: CandidateEmailComponent;
+
+	@ViewChild('emailInterviewerForm', { static: false })
+	emailInterviewerForm: CandidateEmailComponent;
 
 	form: FormGroup;
 	notifyForm: FormGroup;
@@ -108,11 +111,15 @@ export class CandidateInterviewMutationComponent
 		}
 	}
 	addNotification() {
-		this.emailForm.loadFormData();
-		const emailForm = this.emailForm.form.value;
-		console.log('emailForm', emailForm);
+		this.emailCandidateForm.loadFormData();
+		const emailCandidateForm = this.emailCandidateForm.form.value;
+
+		this.emailInterviewerForm.loadFormData();
+		const emailInterviewerForm = this.emailInterviewerForm.form.value;
 	}
 	async add() {
+		this.employees = [];
+
 		this.addInterview();
 		this.addNotification();
 		try {
@@ -120,6 +127,7 @@ export class CandidateInterviewMutationComponent
 				...this.interview,
 				candidateId: this.selectedCandidate.id
 			});
+
 			this.closeDialog(interview);
 		} catch (error) {
 			this.errorHandler.handleError(error);

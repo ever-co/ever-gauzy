@@ -158,14 +158,14 @@
 					[templateData]="interview"
 					[employees]="employees"
 					[selectedCandidate]="selectedCandidate"
-					#emailForm
+					#emailCandidateForm
 					*ngIf="isCandidateNotification"
 				></ga-candidate-email>
 				<ga-candidate-email
 					[templateData]="interview"
 					[employees]="employees"
 					[selectedCandidate]="selectedCandidate"
-					#emailForm
+					#emailInterviewerForm
 					*ngIf="isInterviewerNotification"
 				></ga-candidate-email>
 

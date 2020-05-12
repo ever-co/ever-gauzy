@@ -2,9 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { ActivatedRoute } from '@angular/router';
-import { takeUntil, first } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 
 @Component({
 	selector: 'ga-candidate-email',
@@ -21,6 +19,7 @@ export class CandidateEmailComponent implements OnInit {
 	employeeList: string;
 	dateTemplate: string;
 	candidateName: string;
+	emailText: string;
 	candidateNameTemplate: string;
 	public textTemplate = '';
 	constructor(
@@ -39,10 +38,13 @@ export class CandidateEmailComponent implements OnInit {
 	}
 	loadFormData() {
 		this.form = this.fb.group({
-			text: ['']
+			text: [this.emailText]
 		});
-		console.log('text', this.form['text']);
 	}
+	public onChange(value: string) {
+		this.emailText = value;
+	}
+
 	setTemplate() {
 		this.candidateName =
 			this.selectedCandidate.user.firstName +
@@ -59,12 +61,14 @@ export class CandidateEmailComponent implements OnInit {
 
 		this.textTemplate = `
 	 	<p>You are invited to <strong> ${this.templateData.title}</strong></p>
-	 	<p>When <strong> ${this.dateTemplate}</strong></p>
+		<p>When <strong> ${this.dateTemplate}</strong></p>
+		<p>Where <strong> ${this.templateData.location || 'Online'}</strong></p>
 		<p>Interviewer(s) <strong>${this.employeeList}</strong></p>	`;
 
 		this.candidateNameTemplate = `
 	 	<p>Candidate <strong> ${this.candidateName}</strong></p>`;
 	}
+
 	getDate(startTime: Date, endTime: Date) {
 		this.dateTemplate =
 			startTime.toDateString() +

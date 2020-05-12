@@ -11,18 +11,17 @@
 			}}</span>
 		</div>
 	</nb-card-body>
-	<nb-card-body class="info-block ">
-		<strong> {{ templateData?.title }} </strong>
-		on
-		<strong>{{ dateTemplate }} </strong>
+	<nb-card-body class="info-block">
+		{{ templateData?.title }} on {{ dateTemplate }}
 	</nb-card-body>
-	<nb-card-body>
+	<nb-card-body class="editor">
 		<form [formGroup]="form" *ngIf="form">
 			<ckeditor
 				[formControl]="form.controls['text']"
+				(change)="onChange($event)"
 				[config]="{
 					width: '100%',
-					height: '180'
+					height: '200'
 				}"
 			></ckeditor>
 		</form>
