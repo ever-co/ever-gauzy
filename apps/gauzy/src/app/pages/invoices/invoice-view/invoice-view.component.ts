@@ -8,10 +8,8 @@ import {
 	InvoiceItem,
 	OrganizationClients,
 	Employee,
-	Organization,
-	InvoiceTypeEnum
+	Organization
 } from '@gauzy/models';
-import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Subject } from 'rxjs';
@@ -21,7 +19,6 @@ import { LocalDataSource } from 'ng2-smart-table';
 import * as jspdf from 'jspdf';
 import * as html2canvas from 'html2canvas';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { takeUntil } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-invoice-view',
