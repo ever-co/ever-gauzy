@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { EventType } from '@gauzy/models';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -74,8 +74,6 @@ export class EventTypeComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				console.log('form:::', formData);
-				if (formData) {
-				}
 			});
 	}
 
@@ -89,8 +87,6 @@ export class EventTypeComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				console.log('form:::', formData);
-				if (formData) {
-				}
 			});
 	}
 

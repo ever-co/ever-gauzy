@@ -1,13 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { NbDialogRef, NbToastrService } from '@nebular/theme';
+import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../../@core/services/store.service';
-import {
-	EmployeeSelectorComponent,
-	ALL_EMPLOYEES_SELECTED,
-	SelectedEmployee
-} from '../../../../@theme/components/header/selectors/employee/employee.component';
+import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { EventType } from '@gauzy/models';
 
@@ -34,8 +30,7 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 		private fb: FormBuilder,
 		protected dialogRef: NbDialogRef<EventTypeMutationComponent>,
 		private store: Store,
-		private translate: TranslateService,
-		private readonly toastrService: NbToastrService
+		private translate: TranslateService
 	) {
 		super(translate);
 	}
@@ -60,10 +55,6 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 			startYear: formValues.startDate.getFullYear()
 		};
 		this.dialogRef.close(formValues);
-	}
-
-	onEmployeeChange(selectedEmployee: SelectedEmployee) {
-		selectedEmployee === ALL_EMPLOYEES_SELECTED;
 	}
 
 	addOrEditEventType() {
