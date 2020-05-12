@@ -49,6 +49,7 @@
 		"mjml": "^4.6.2",
 		"moment": "^2.25.2",
 		"nest-router": "^1.0.9",
+		"nestjs-i18n": "^8.0.2",
 		"nodemailer": "^6.4.6",
 		"nodemon": "^1.19.4",
 		"passport": "^0.4.1",

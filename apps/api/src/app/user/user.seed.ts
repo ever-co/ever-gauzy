@@ -6,7 +6,12 @@ import { Connection } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { environment as env } from '@env-api/environment';
 import * as faker from 'faker';
-import { IDefaultUser, RolesEnum, ISeedUsers } from '@gauzy/models';
+import {
+	IDefaultUser,
+	RolesEnum,
+	ISeedUsers,
+	LanguagesEnum
+} from '@gauzy/models';
 import { Role } from '../role/role.entity';
 import { User } from './user.entity';
 import { getUserDummyImage } from '../core';
@@ -264,7 +269,13 @@ const generateDefaultUser = async (
 	tenant: Tenant
 ): Promise<User> => {
 	const user = new User();
-	const { firstName, lastName, email, imageUrl } = defaultUser;
+	const {
+		firstName,
+		lastName,
+		email,
+		imageUrl,
+		preferredLanguage
+	} = defaultUser;
 
 	user.email = email;
 	user.firstName = firstName;
@@ -273,6 +284,7 @@ const generateDefaultUser = async (
 	user.imageUrl = getUserDummyImage(user);
 	user.imageUrl = imageUrl;
 	user.tenant = tenant;
+	user.preferredLanguage = preferredLanguage;
 
 	user.hash = await bcrypt.hash(
 		defaultUser.password,
@@ -301,6 +313,10 @@ const generateRandomUser = async (
 	user.role = role;
 	user.imageUrl = avatar;
 	user.tenant = tenant;
+
+	const languages = Object.values(LanguagesEnum);
+	user.preferredLanguage =
+		languages[Math.floor(Math.random() * languages.length)];
 
 	user.hash = await bcrypt.hash(
 		'123456',

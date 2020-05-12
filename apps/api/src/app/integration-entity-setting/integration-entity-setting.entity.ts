@@ -9,19 +9,19 @@ import {
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { IIntegrationEntitySetting } from '@gauzy/models';
-import { Integration } from '../integration/integration.entity';
+import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
 
 @Entity('integration_entity_setting')
 export class IntegrationEntitySetting extends Base
 	implements IIntegrationEntitySetting {
-	@ApiPropertyOptional({ type: Integration })
+	@ApiPropertyOptional({ type: IntegrationTenant })
 	@ManyToOne(
-		(type) => Integration,
+		(type) => IntegrationTenant,
 		(integration) => integration.entitySettings
 	)
 	@JoinColumn()
-	integration?: Integration;
+	integration?: IntegrationTenant;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId(
