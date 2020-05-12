@@ -16,6 +16,7 @@ import chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
 import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
+import { createSkills } from '../../skills/skill.seed';
 import { User } from '../../user/user.entity';
 import {
 	createDefaultSuperAdminUsers,
@@ -129,6 +130,8 @@ import {
 	createCandidateFeedbacks,
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
+import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
+import { createDefaultIntegrations } from '../../integration/integration.seed';
 import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
 import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
 import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
@@ -385,6 +388,11 @@ export class SeedDataService {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees
 		});
+
+		const integrationTypes = await createDefaultIntegrationTypes(
+			this.connection
+		);
+		await createDefaultIntegrations(this.connection, integrationTypes);
 	}
 
 	/**
@@ -505,6 +513,8 @@ export class SeedDataService {
 			tenants,
 			tenantOrganizationsMap
 		);
+
+		await createSkills(this.connection);
 	}
 
 	/**

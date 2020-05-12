@@ -183,7 +183,8 @@
 			"DURATION": "Продолжительность",
 			"INTERVIEWERS": "Интервьюеры",
 			"LOCATION": "Местоположение",
-			"NOTE": "Примечание"
+			"NOTE": "Примечание",
+			"PREFERRED_LANGUAGE": "Предпочитаемый язык"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -258,6 +259,7 @@
 			"ORGANIZATIONS": "Выберите организации",
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -283,7 +285,9 @@
 			},
 			"MEETING_AGENDA": "Повестка дня",
 			"MEETING_LOCATION": "Местоположение",
-			"MEETING_DESCRIPTION": "Описание"
+			"MEETING_DESCRIPTION": "Описание",
+			"BUFFER_TIME": "Буферные минуты",
+			"BREAK_TIME": "Минут остановки"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -455,7 +459,8 @@
 			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей",
 			"TOOLTIP_ACTIVITY_INFO": "Диапазон дат: 7 дней до даты: 6 месяцев",
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
-		}
+		},
+		"COMING_SOON": "Скоро появится"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
@@ -637,13 +642,18 @@
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
+				"INTERVIEWS": "Интервью",
+				"ON": "вкл",
+				"FROM": "от",
+				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
 				"NEXT": "Следующий",
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
-				"SUMMARY": "Резюме:"
+				"SUMMARY": "Summary",
+				"EMAIL_NOTIFICATION": "Уведомление по e-mail"
 			}
 		},
 		"ADD_CANDIATES": {
@@ -740,10 +750,12 @@
 			"ORG_USERS_EDIT": "Создание/Редактирование/Удаление пользователей организации",
 			"ORG_INVITE_VIEW": "Просмотреть приглашения организации",
 			"ORG_INVITE_EDIT": "Создание/повторение/удаление приглашений",
-			"ORG_CANDIDATES_DOCUMENTS_VIEW": "View All Candidates Documents",
-			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
-			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
-			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
+			"ORG_CANDIDATES_DOCUMENTS_VIEW": "Просмотреть все документы",
+			"ORG_CANDIDATES_TASK_EDIT": "Создание/Редактирование задачи",
+			"ORG_CANDIDATES_INTERVIEW_EDIT": "Создать/редактировать интервью",
+			"ORG_INVENTORY_PRODUCT_EDIT": "Продукт управления",
+			"ORG_TAGS_EDIT": "Создание/Изменить/Удалить Теги",
+			"ORG_CANDIDATES_FEEDBACK_EDIT": "Создать/изменить/Удалить отзыв по Кандидату",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
 			"POLICY_VIEW": "Просмотр политики отключения",
@@ -955,7 +967,13 @@
 			"HEADER": "Управление пользователем",
 			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
 			"MAIN": "Главная",
-			"USER_ORGANIZATIONS": "Организации"
+			"USER_ORGANIZATIONS": "Организации",
+			"PREFERRED_LANGUAGE": {
+				"en": "Russian",
+				"he": "Иврит",
+				"bg": "Болгарский",
+				"ru": "Русский"
+			}
 		},
 		"REMOVE_USER": "{{ name }} успешно удален"
 	},
@@ -1287,7 +1305,9 @@
 		"DAILY": "Ежедневно",
 		"WEEKLY": "Еженедельно",
 		"CALENDAR": "Календарь",
-		"APPROVALS": "Утверждения"
+		"APPROVALS": "Утверждения",
+		"APPROVE_SUCCESS": "Сроки успешно утверждены",
+		"DENIED_SUCCESS": "Таблица времени успешно отклонена"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",

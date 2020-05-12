@@ -8,7 +8,11 @@ const routes: Routes = [
 		component: AppointmentComponent
 	},
 	{
-		path: 'add',
+		path: 'manage',
+		component: ManageAppointmentComponent
+	},
+	{
+		path: 'manage/:id',
 		component: ManageAppointmentComponent
 	}
 ];

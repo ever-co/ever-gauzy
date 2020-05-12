@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Params } from '@angular/router';
-import { Employee, Organization } from '@gauzy/models';
+import { Employee, Organization, LanguagesEnum } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject, Subscription } from 'rxjs';
@@ -27,6 +27,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	routeParams: Params;
 	selectedEmployee: Employee;
 	selectedOrganization: Organization;
+	languages: string[] = Object.values(LanguagesEnum);
 
 	constructor(
 		private readonly fb: FormBuilder,
@@ -71,7 +72,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			email: [employee.user.email, Validators.required],
 			firstName: [employee.user.firstName],
 			lastName: [employee.user.lastName],
-			imageUrl: [employee.user.imageUrl, Validators.required]
+			imageUrl: [employee.user.imageUrl, Validators.required],
+			preferredLanguage: [employee.user.preferredLanguage]
 		});
 	}
 

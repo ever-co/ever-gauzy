@@ -1,10 +1,23 @@
-import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Query,
+	UseGuards,
+	Post,
+	Body,
+	Delete,
+	Param
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
 import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
+import { RoleGuard } from '../shared/guards/auth/role.guard';
+import { Roles } from '../shared/decorators/roles';
+import { RolesEnum } from '@gauzy/models';
 
 @ApiTags('candidate_skills')
 @UseGuards(AuthGuard('jwt'))
@@ -31,5 +44,19 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	): Promise<IPagination<CandidateSkill>> {
 		const { findInput } = JSON.parse(data);
 		return this.candidateSkillService.findAll({ where: findInput });
+	}
+
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Post()
+	async addSkill(@Body() entity: CandidateSkill): Promise<any> {
+		return this.candidateSkillService.create(entity);
+	}
+
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Delete(':id')
+	deleteCandidateSkill(@Param() id: string): Promise<any> {
+		return this.candidateSkillService.delete(id);
 	}
 }

@@ -3,7 +3,8 @@ import {
 	Organization,
 	PermissionsEnum,
 	RolePermissions,
-	User
+	User,
+	LanguagesEnum
 } from '@gauzy/models';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
@@ -28,6 +29,7 @@ export interface PersistState {
 	token: string;
 	userId: string;
 	serverConnection: string;
+	preferredLanguage: LanguagesEnum;
 }
 
 export function createInitialAppState(): AppState {
@@ -41,11 +43,13 @@ export function createInitialPersistState(): PersistState {
 	const token = localStorage.getItem('token') || null;
 	const userId = localStorage.getItem('_userId') || null;
 	const serverConnection = localStorage.getItem('serverConnection') || null;
+	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
 
 	return {
 		token,
 		userId,
-		serverConnection
+		serverConnection,
+		preferredLanguage
 	} as PersistState;
 }
 
@@ -94,6 +98,9 @@ export class Store {
 	selectedDate$ = this.appQuery.select((state) => state.selectedDate);
 	userRolePermissions$ = this.appQuery.select(
 		(state) => state.userRolePermissions
+	);
+	preferredLanguage$ = this.persistQuery.select(
+		(state) => state.preferredLanguage
 	);
 
 	get selectedOrganization(): Organization {
@@ -227,6 +234,17 @@ export class Store {
 	set serverConnection(val: string) {
 		this.persistStore.update({
 			serverConnection: val
+		});
+	}
+
+	get preferredLanguage(): LanguagesEnum | null {
+		const { preferredLanguage } = this.persistQuery.getValue();
+		return preferredLanguage;
+	}
+
+	set preferredLanguage(preferredLanguage: LanguagesEnum) {
+		this.persistStore.update({
+			preferredLanguage: preferredLanguage
 		});
 	}
 

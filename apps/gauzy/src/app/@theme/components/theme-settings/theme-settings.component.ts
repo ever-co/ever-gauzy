@@ -1,17 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	NbThemeService,
 	NbLayoutDirectionService,
 	NbLayoutDirection
 } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '../../../@core/services/store.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { LanguagesEnum } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-theme-settings',
 	styleUrls: ['./theme-settings.component.scss'],
 	templateUrl: './theme-settings.component.html'
 })
-export class ThemeSettingsComponent {
+export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	themes = [
 		{
 			value: 'default',
@@ -33,38 +37,70 @@ export class ThemeSettingsComponent {
 
 	languages = [
 		{
-			value: 'en',
+			value: LanguagesEnum.ENGLISH,
 			name: 'SETTINGS_MENU.ENGLISH'
 		},
 		{
-			value: 'bg',
+			value: LanguagesEnum.BULGARIAN,
 			name: 'SETTINGS_MENU.BULGARIAN'
 		},
 		{
-			value: 'he',
+			value: LanguagesEnum.HEBREW,
 			name: 'SETTINGS_MENU.HEBREW'
 		},
 		{
-			value: 'ru',
+			value: LanguagesEnum.RUSSIAN,
 			name: 'SETTINGS_MENU.RUSSIAN'
 		}
 	];
 
 	currentTheme = 'default';
-	currentLang = 'en';
+	currentLang = LanguagesEnum.ENGLISH;
+
+	supportedLanguages = Object.values(LanguagesEnum);
+
+	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private themeService: NbThemeService,
 		private translate: TranslateService,
-		private directionService: NbLayoutDirectionService
+		private directionService: NbLayoutDirectionService,
+		private store: Store
 	) {
-		translate.addLangs(['en', 'bg', 'he', 'ru']);
-		translate.setDefaultLang('en');
+		translate.addLangs(this.supportedLanguages);
+		translate.setDefaultLang(LanguagesEnum.ENGLISH);
 
-		const browserLang = translate.getBrowserLang();
-		translate.use(browserLang.match(/en|bg|he|ru/) ? browserLang : 'en');
+		const browserLang = translate.getBrowserLang() as LanguagesEnum;
+		this.currentLang =
+			this.store.preferredLanguage ||
+			this.supportedLanguages.includes(browserLang)
+				? browserLang
+				: (translate.defaultLang as LanguagesEnum);
+		this.translate.use(this.currentLang);
+	}
 
-		this.currentLang = translate.defaultLang;
+	ngOnInit() {
+		this.store.user$.pipe(takeUntil(this._ngDestroy$)).subscribe((user) => {
+			if (
+				user &&
+				user.preferredLanguage &&
+				user.preferredLanguage !== this.currentLang
+			) {
+				this.currentLang = user.preferredLanguage as LanguagesEnum;
+				this.switchLanguage();
+			}
+		});
+		this.store.preferredLanguage$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((preferredLanguage) => {
+				if (
+					preferredLanguage &&
+					preferredLanguage !== this.currentLang
+				) {
+					this.currentLang = preferredLanguage;
+					this.switchLanguage();
+				}
+			});
 	}
 
 	toggleTheme() {
@@ -72,13 +108,22 @@ export class ThemeSettingsComponent {
 	}
 
 	switchLanguage() {
-		this.translate.use(this.currentLang);
-
-		if (this.currentLang === 'he') {
+		if (this.currentLang === LanguagesEnum.HEBREW) {
 			this.directionService.setDirection(NbLayoutDirection.RTL);
 		} else {
 			this.directionService.setDirection(NbLayoutDirection.LTR);
 		}
-		this.translate.use(this.currentLang);
+
+		this.store.preferredLanguage = this.currentLang;
+		this.translate.use(
+			this.supportedLanguages.includes(this.currentLang)
+				? this.currentLang
+				: this.translate.defaultLang
+		);
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }
