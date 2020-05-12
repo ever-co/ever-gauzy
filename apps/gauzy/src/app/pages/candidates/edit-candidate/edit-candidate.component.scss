@@ -10,6 +10,10 @@
 	background-color: rgb(0, 145, 255);
 }
 
+.notification:hover {
+	cursor: pointer;
+}
+
 .exist {
 	position: absolute;
 	font-size: 8px;

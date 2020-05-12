@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators, FormControl } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, IDateRange } from '@gauzy/models';
+import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 
 @Component({
@@ -14,7 +14,7 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	form: any;
 	employees: Employee[];
 	isMeeting: boolean;
-	selectedEmployeeIds: string[];
+	selectedEmployeeIds: ICandidateInterviewers[];
 	select = true;
 	selectedRange: IDateRange = { start: null, end: null };
 	private _ngDestroy$ = new Subject<void>();

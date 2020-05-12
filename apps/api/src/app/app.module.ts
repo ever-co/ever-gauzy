@@ -70,6 +70,7 @@ import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedba
 import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
 import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
 import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
+import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
 
 @Module({
 	imports: [
@@ -96,6 +97,10 @@ import { AppointmentEmployeesModule } from './appointment-employees/appointment-
 					{
 						path: '/candidate-interview',
 						module: CandidateInterviewModule
+					},
+					{
+						path: '/candidate-interviewers',
+						module: CandidateInterviewersModule
 					},
 					{
 						path: '/candidate-experience',
@@ -285,6 +290,7 @@ import { AppointmentEmployeesModule } from './appointment-employees/appointment-
 		CandidateSkillModule,
 		CandidateFeedbacksModule,
 		CandidateInterviewModule,
+		CandidateInterviewersModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,

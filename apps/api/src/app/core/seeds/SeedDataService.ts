@@ -1,3 +1,4 @@
+import { CandidateInterviewers } from './../../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateExperience } from './../../candidate-experience/candidate-experience.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
@@ -136,6 +137,10 @@ import {
 	createRandomCandidateInterview
 } from '../../candidate-interview/candidate-interview.seed';
 import { ProductOption } from '../../product-option/product-option.entity';
+import {
+	createCandidateInterviewers,
+	createRandomCandidateInterviewers
+} from '../../candidate-interviewers/candidate-interviewers.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -193,7 +198,8 @@ const allEntities = [
 	ProductOption,
 	CandidateDocument,
 	CandidateFeedback,
-	CandidateInterview
+	CandidateInterview,
+	CandidateInterviewers
 ];
 
 @Injectable()
@@ -348,6 +354,7 @@ export class SeedDataService {
 		await createCandidateDocuments(this.connection, defaultCandidates);
 		await createCandidateFeedbacks(this.connection, defaultCandidates);
 		await createCandidateInterview(this.connection, defaultCandidates);
+		await createCandidateInterviewers(this.connection, defaultCandidates);
 
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
@@ -463,6 +470,11 @@ export class SeedDataService {
 			tenantCandidatesMap
 		);
 		await createRandomCandidateInterview(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
+		await createRandomCandidateInterviewers(
 			this.connection,
 			tenants,
 			tenantCandidatesMap
