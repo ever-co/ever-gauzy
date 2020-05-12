@@ -1,5 +1,5 @@
 import { ThemeModule } from '../../../@theme/theme.module';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
@@ -8,6 +8,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { CandidateEmailComponent } from './candidate-email.component';
+import { CKEditorModule } from 'ng2-ckeditor';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -19,7 +20,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCardModule,
 		UserFormsModule,
 		NbButtonModule,
+		ReactiveFormsModule,
 		NbIconModule,
+		CKEditorModule,
 		FileUploaderModule,
 		TranslateModule.forChild({
 			loader: {

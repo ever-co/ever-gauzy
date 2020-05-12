@@ -24,7 +24,7 @@
 			(click)="closeDialog()"
 		></nb-icon>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="stepper">
 		<nb-stepper #stepper>
 			<nb-step [label]="step1">
 				<ng-template #step1>{{
@@ -155,12 +155,17 @@
 
 				<ga-candidate-email
 					[isCandidate]="true"
-					#notificationInterviewForm
+					[templateData]="interview"
+					[employees]="employees"
+					[selectedCandidate]="selectedCandidate"
+					#emailForm
 					*ngIf="isCandidateNotification"
 				></ga-candidate-email>
 				<ga-candidate-email
-					[isInterviewer]="true"
-					#notificationInterviewForm
+					[templateData]="interview"
+					[employees]="employees"
+					[selectedCandidate]="selectedCandidate"
+					#emailForm
 					*ngIf="isInterviewerNotification"
 				></ga-candidate-email>
 

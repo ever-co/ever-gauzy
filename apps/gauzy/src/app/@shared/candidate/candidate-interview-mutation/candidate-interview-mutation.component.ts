@@ -26,6 +26,7 @@ import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
+import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -40,8 +41,8 @@ export class CandidateInterviewMutationComponent
 	@ViewChild('candidateInterviewForm', { static: false })
 	candidateInterviewForm: CandidateInterviewFormComponent;
 
-	@ViewChild('notificationInterviewForm', { static: false })
-	notificationInterviewForm: CandidateInterviewFormComponent;
+	@ViewChild('emailForm', { static: false })
+	emailForm: CandidateEmailComponent;
 
 	form: FormGroup;
 	notifyForm: FormGroup;
@@ -107,8 +108,9 @@ export class CandidateInterviewMutationComponent
 		}
 	}
 	addNotification() {
-		this.notificationInterviewForm.loadFormData();
-		// const notifyForm = this.notificationInterviewForm.form.value;
+		this.emailForm.loadFormData();
+		const emailForm = this.emailForm.form.value;
+		console.log('emailForm', emailForm);
 	}
 	async add() {
 		this.addInterview();
