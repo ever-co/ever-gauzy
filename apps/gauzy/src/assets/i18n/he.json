@@ -754,6 +754,8 @@
 			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
 			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
 			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
+			"ORG_TAGS_EDIT": "Create/Edit/Delete Tags",
+			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
 			"POLICY_VIEW": "View Time Off Policy",
