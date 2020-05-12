@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
+import { Employee, IDateRange } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 
 @Component({
