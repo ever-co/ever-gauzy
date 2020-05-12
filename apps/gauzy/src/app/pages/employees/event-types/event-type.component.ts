@@ -74,8 +74,6 @@ export class EventTypeComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				console.log('form:::', formData);
-				if (formData) {
-				}
 			});
 	}
 
@@ -89,8 +87,6 @@ export class EventTypeComponent extends TranslationBaseComponent
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
 				console.log('form:::', formData);
-				if (formData) {
-				}
 			});
 	}
 
