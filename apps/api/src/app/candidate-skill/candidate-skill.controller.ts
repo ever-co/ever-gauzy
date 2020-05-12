@@ -47,14 +47,14 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	}
 
 	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post()
 	async addSkill(@Body() entity: CandidateSkill): Promise<any> {
 		return this.candidateSkillService.create(entity);
 	}
 
 	@UseGuards(RoleGuard)
-	@Roles(RolesEnum.CANDIDATE)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete(':id')
 	deleteCandidateSkill(@Param() id: string): Promise<any> {
 		return this.candidateSkillService.delete(id);
