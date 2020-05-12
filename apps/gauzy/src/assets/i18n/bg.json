@@ -183,7 +183,8 @@
 			"DURATION": "Duration",
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Локация",
-			"NOTE": "Note"
+			"NOTE": "Note",
+			"PREFERRED_LANGUAGE": "Preferred Language"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -258,6 +259,7 @@
 			"ORGANIZATIONS": "Choose Organizations",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"PREFERRED_LANGUAGE": "Preferred Language",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -457,7 +459,8 @@
 			"SYNCED_ENTITIES": "Auto synced entities",
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between"
-		}
+		},
+		"COMING_SOON": "Coming soon"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -751,6 +754,8 @@
 			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
 			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
 			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
+			"ORG_TAGS_EDIT": "Create/Edit/Delete Tags",
+			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "Виж всички организации",
 			"ALL_ORG_EDIT": "Създай/Редактирай/Изтрии всички организации",
 			"POLICY_VIEW": "Виж Time Off политиката",
@@ -962,7 +967,13 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Основни",
-			"USER_ORGANIZATIONS": "Организации"
+			"USER_ORGANIZATIONS": "Организации",
+			"PREFERRED_LANGUAGE": {
+				"en": "English",
+				"he": "Иврит",
+				"bg": "Български",
+				"ru": "Руски"
+			}
 		},
 		"REMOVE_USER": "{{ name }} successfully removed"
 	},

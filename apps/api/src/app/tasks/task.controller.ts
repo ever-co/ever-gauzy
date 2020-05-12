@@ -9,7 +9,8 @@ import {
 	Body,
 	BadRequestException,
 	UseGuards,
-	Post
+	Post,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Task } from './task.entity';
@@ -66,6 +67,7 @@ export class TaskController extends CrudController<Task> {
 	async createTask(@Body() entity: Task): Promise<any> {
 		return this.taskService.create(entity);
 	}
+
 	@ApiOperation({ summary: 'Update an existing task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -95,5 +97,12 @@ export class TaskController extends CrudController<Task> {
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_TASK_EDIT)
+	@Delete(':id')
+	async deleteTask(@Param('id') id: string): Promise<any> {
+		return this.taskService.delete(id);
 	}
 }

@@ -44,7 +44,9 @@ export const defaultRolePermissions = [
 			PermissionsEnum.SUPER_ADMIN_EDIT,
 			PermissionsEnum.PUBLIC_PAGE_EDIT,
 			PermissionsEnum.INVOICES_VIEW,
-			PermissionsEnum.INVOICES_EDIT
+			PermissionsEnum.INVOICES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
+			PermissionsEnum.ORG_TAGS_EDIT
 		]
 	},
 	{
@@ -82,7 +84,9 @@ export const defaultRolePermissions = [
 			PermissionsEnum.TIMESHEET_EDIT_TIME,
 			PermissionsEnum.PUBLIC_PAGE_EDIT,
 			PermissionsEnum.INVOICES_VIEW,
-			PermissionsEnum.INVOICES_EDIT
+			PermissionsEnum.INVOICES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
+			PermissionsEnum.ORG_TAGS_EDIT
 		]
 	},
 	{
@@ -113,7 +117,8 @@ export const defaultRolePermissions = [
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 			PermissionsEnum.ORG_PROPOSALS_VIEW,
-			PermissionsEnum.ORG_TIME_OFF_VIEW
+			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			PermissionsEnum.ORG_TAGS_EDIT
 		]
 	}
 ];
