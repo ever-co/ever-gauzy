@@ -1,0 +1,3 @@
+{
+	"CANNOT_DELETE_ALL_SUPER_ADMINS": "There must be at least {count} Super Admin per Tenant"
+}
