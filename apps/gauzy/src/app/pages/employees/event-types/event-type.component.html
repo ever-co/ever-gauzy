@@ -1,0 +1,49 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<h4>{{ 'EVENT_TYPE_PAGE.EVENT_TYPE' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3">
+			<button
+				nbButton
+				status="success"
+				(click)="openAddEventTypeDialog()"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+
+			<button
+				nbButton
+				[disabled]="!selectedEventType"
+				(click)="openEditEventTypeDialog()"
+				status="info"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				[disabled]="!selectedEventType"
+				(click)="delete()"
+				status="danger"
+				class="mr-2"
+			>
+				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
+				>{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+		<ng2-smart-table
+			class="employees-table"
+			style="cursor: pointer;"
+			[settings]="settingsSmartTable"
+			[source]="sourceSmartTable"
+			(userRowSelect)="selectEventType($event)"
+			(selectionChanged)="onEmployeeChange($event)"
+			#eventTypesTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>
