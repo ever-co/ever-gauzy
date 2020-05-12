@@ -11,3 +11,7 @@ export interface InvoiceItem extends IBaseEntityModel {
 	employeeId?: string;
 	projectId?: string;
 }
+
+export interface InvoiceItemFindInput {
+	invoiceId?: string;
+}

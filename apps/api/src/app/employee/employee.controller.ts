@@ -24,6 +24,7 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -122,6 +123,27 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<Employee> {
 		return this.employeeService.findOne(id);
+	}
+
+	@ApiOperation({ summary: 'Find employee by id in the same tenant.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found employee in the same tenant',
+		type: Employee
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('relations/:id')
+	async findByIdWithRelations(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<Employee> {
+		const { relations = [] } = data;
+		return this.employeeService.findOne(id, {
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

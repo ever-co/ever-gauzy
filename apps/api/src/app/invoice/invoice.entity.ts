@@ -14,12 +14,20 @@ import {
 	IsOptional,
 	IsEnum
 } from 'class-validator';
-import { Entity, Column, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
+import {
+	Entity,
+	Column,
+	JoinColumn,
+	OneToMany,
+	ManyToOne,
+	Unique
+} from 'typeorm';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('invoice')
+@Unique(['invoiceNumber'])
 export class Invoice extends Base implements IInvoice {
 	@ApiProperty({ type: Date })
 	@IsDate()
@@ -28,7 +36,7 @@ export class Invoice extends Base implements IInvoice {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({ name: 'invoiceNumber', nullable: true, type: 'numeric' })
 	invoiceNumber: number;
 
 	@ApiProperty({ type: Date })
@@ -56,10 +64,11 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true, type: 'numeric' })
 	tax: number;
 
-	@ApiProperty({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
+	@IsOptional()
 	@Column()
-	terms: string;
+	terms?: string;
 
 	@ApiPropertyOptional({ type: Number })
 	@IsNumber()

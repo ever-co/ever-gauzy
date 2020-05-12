@@ -44,9 +44,12 @@ export class EmployeesService {
 			.toPromise();
 	}
 
-	getEmployeeById(id: string) {
+	getEmployeeById(id: string, relations?: string[]) {
+		const data = JSON.stringify({ relations });
 		return this.http
-			.get<Employee>(`/api/employee/${id}`)
+			.get<Employee>(`/api/employee/relations/${id}`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
