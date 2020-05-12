@@ -14,7 +14,7 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	form: any;
 	employees: Employee[];
 	isMeeting: boolean;
-	selectedEmployeeIds: ICandidateInterviewers[];
+	selectedEmployeeIds: string[];
 	select = true;
 	selectedRange: IDateRange = { start: null, end: null };
 	private _ngDestroy$ = new Subject<void>();
