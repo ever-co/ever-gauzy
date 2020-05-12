@@ -5,9 +5,10 @@ import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../user-organization.services';
 import { DeleteResult } from 'typeorm';
 import { RoleService } from '../../../role/role.service';
-import { RolesEnum } from '@gauzy/models';
+import { RolesEnum, LanguagesEnum } from '@gauzy/models';
 import { User } from '../../../user/user.entity';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
 
 /**
  * 1. Remove user from given organization if user belongs to multiple organizations
@@ -22,7 +23,8 @@ export class UserOrganizationDeleteHandler
 	constructor(
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		private readonly roleService: RoleService
+		private readonly roleService: RoleService,
+		private readonly i18n: I18nService
 	) {}
 
 	public async execute(
@@ -43,7 +45,11 @@ export class UserOrganizationDeleteHandler
 
 		// 2. Handle Super Admin Deletion if applicable
 		if (roleName === RolesEnum.SUPER_ADMIN)
-			return this._removeSuperAdmin(input.requestingUser, userId);
+			return this._removeSuperAdmin(
+				input.requestingUser,
+				userId,
+				input.language
+			);
 
 		return this._removeUserFromOrganization(
 			userId,
@@ -67,7 +73,8 @@ export class UserOrganizationDeleteHandler
 
 	private async _removeSuperAdmin(
 		requestingUser: User,
-		userId: string
+		userId: string,
+		language: LanguagesEnum
 	): Promise<UserOrganization | DeleteResult> {
 		// 1. Check if the requesting user has permission to delete Super Admin
 		const { name: requestingUserRoleName } = await this.roleService.findOne(
@@ -90,7 +97,13 @@ export class UserOrganizationDeleteHandler
 
 		if (total === 1)
 			throw new BadRequestException(
-				'There must be at least 1 Super Admin per Tenant'
+				await this.i18n.translate(
+					'USER_ORGANIZATION.CANNOT_DELETE_ALL_SUPER_ADMINS',
+					{
+						lang: language,
+						args: { count: 1 }
+					}
+				)
 			);
 
 		// 3. Delete Super Admin user from all organizations

@@ -283,7 +283,9 @@
 			},
 			"MEETING_AGENDA": "Повестка дня",
 			"MEETING_LOCATION": "Местоположение",
-			"MEETING_DESCRIPTION": "Описание"
+			"MEETING_DESCRIPTION": "Описание",
+			"BUFFER_TIME": "Буферные минуты",
+			"BREAK_TIME": "Минут остановки"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -637,6 +639,10 @@
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
+				"INTERVIEWS": "Интервью",
+				"ON": "вкл",
+				"FROM": "от",
+				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",

@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
+import { ICandidateInterview } from '@gauzy/models';
+import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 
 @Component({
 	selector: 'ngx-candidate-interview-info',
@@ -8,8 +10,11 @@ import { NbDialogRef } from '@nebular/theme';
 })
 export class CandidateInterviewInfoComponent implements OnInit {
 	constructor(
-		protected dialogRef: NbDialogRef<CandidateInterviewInfoComponent>
+		protected dialogRef: NbDialogRef<CandidateInterviewInfoComponent>,
+		private readonly candidateInterviewService: CandidateInterviewService
 	) {}
+	candidateId: string;
+	interviewList: ICandidateInterview[];
 	interview = {
 		title: 'Interview',
 		interviewers: ['Denis', 'Mio'],
@@ -28,6 +33,7 @@ export class CandidateInterviewInfoComponent implements OnInit {
 	}
 
 	ngOnInit() {
+		// this.loadInterview();
 		this.hoursUpdate =
 			this.currentTime.getHours() - this.interview.updatedAt.getHours();
 		if (this.hoursUpdate === 0) {
@@ -37,4 +43,13 @@ export class CandidateInterviewInfoComponent implements OnInit {
 				this.interview.updatedAt.getMinutes();
 		}
 	}
+	// private async loadInterview() {
+	// 	const res = await this.candidateInterviewService.getAll({
+	// 		candidateId: this.candidateId
+	// 	});
+	// 	if (res) {
+	// 		this.interviewList = res.items;
+	// 	}
+	// 	console.log(this.interviewList);
+	// }
 }

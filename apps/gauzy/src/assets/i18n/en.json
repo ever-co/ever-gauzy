@@ -184,7 +184,8 @@
 			"DURATION": "Duration",
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Location",
-			"NOTE": "Note"
+			"NOTE": "Note",
+			"PREFERRED_LANGUAGE": "Preferred Language"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -259,6 +260,7 @@
 			"ORGANIZATIONS": "Choose Organizations",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"PREFERRED_LANGUAGE": "Preferred Language",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -284,7 +286,9 @@
 			},
 			"MEETING_AGENDA": "Agenda",
 			"MEETING_LOCATION": "Location",
-			"MEETING_DESCRIPTION": "Description"
+			"MEETING_DESCRIPTION": "Description",
+			"BUFFER_TIME": "Buffer minutes",
+			"BREAK_TIME": "Break minutes"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -456,7 +460,8 @@
 			"SYNCED_ENTITIES": "Auto synced entities",
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between"
-		}
+		},
+		"COMING_SOON": "Coming soon"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -638,6 +643,10 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
+				"INTERVIEWS": "Interviews",
+				"ON": "on",
+				"FROM": "from",
+				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
@@ -957,7 +966,13 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Main",
-			"USER_ORGANIZATIONS": "Organizations"
+			"USER_ORGANIZATIONS": "Organizations",
+			"PREFERRED_LANGUAGE": {
+				"en": "English",
+				"he": "Hebrew",
+				"bg": "Bulgarian",
+				"ru": "Russian"
+			}
 		},
 		"REMOVE_USER": "{{ name }} successfully removed"
 	},

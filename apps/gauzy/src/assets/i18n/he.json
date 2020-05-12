@@ -283,7 +283,9 @@
 			},
 			"MEETING_AGENDA": "Agenda",
 			"MEETING_LOCATION": "Location",
-			"MEETING_DESCRIPTION": "Description"
+			"MEETING_DESCRIPTION": "Description",
+			"BUFFER_TIME": "Buffer minutes",
+			"BREAK_TIME": "Break minutes"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -637,6 +639,10 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
+				"INTERVIEWS": "Interviews",
+				"ON": "on",
+				"FROM": "from",
+				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
