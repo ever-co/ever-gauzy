@@ -11,7 +11,7 @@ export class TasksStoreService {
 	private _tasks$: BehaviorSubject<Task[]> = new BehaviorSubject([]);
 	public tasks$: Observable<Task[]> = this._tasks$
 		.asObservable()
-		.pipe(map(this._mapToViewModel));
+		.pipe(map(this._mapToViewModel.bind(this)));
 
 	private _selectedTask$: BehaviorSubject<Task> = new BehaviorSubject(null);
 	public selectedTask$: Observable<Task> = this._selectedTask$.asObservable();
@@ -32,8 +32,21 @@ export class TasksStoreService {
 	private _mapToViewModel(tasks) {
 		return tasks.map((task) => ({
 			...task,
-			projectName: task.project ? task.project.name : undefined
+			projectName: task.project ? task.project.name : undefined,
+			employees: this._getTaskMembers(task)
 		}));
+	}
+
+	private _getTaskMembers(task: Task) {
+		if (task.members) {
+			const members = task.members.map((member) => {
+				if (member.user) {
+					return `${member.user.firstName} ${member.user.lastName}`;
+				}
+			});
+			return members.join(', ');
+		}
+		return '';
 	}
 
 	loadAllTasks(tasks: Task[]): void {

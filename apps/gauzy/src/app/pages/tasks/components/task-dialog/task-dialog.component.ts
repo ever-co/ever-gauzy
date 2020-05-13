@@ -34,6 +34,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	projects: OrganizationProjects[];
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
 	employees: Employee[] = [];
+	selectedMembers: string[];
 	selectedTask: Task;
 	organizationId: string;
 	selectedTags: any;
@@ -81,7 +82,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		tags
 	}: Task) {
 		const duration = moment.duration(estimate, 'seconds');
-
+		this.selectedMembers = (members || []).map((member) => member.id);
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
@@ -125,6 +126,13 @@ export class TaskDialogComponent extends TranslationBaseComponent
 
 	onSave() {
 		if (this.form.valid) {
+			this.form
+				.get('members')
+				.setValue(
+					(this.selectedMembers || [])
+						.map((id) => this.employees.find((e) => e.id === id))
+						.filter((e) => !!e)
+				);
 			this.dialogRef.close(this.form.value);
 		}
 	}
@@ -146,5 +154,9 @@ export class TaskDialogComponent extends TranslationBaseComponent
 			.toPromise();
 
 		this.employees = items;
+	}
+
+	onMembersSelected(members: string[]) {
+		this.selectedMembers = members;
 	}
 }
