@@ -1,3 +1,4 @@
+import { HelpCenterModule } from './../../../gauzy/src/app/pages/help-center/help-center.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
@@ -124,6 +125,7 @@ import { LanguagesEnum } from '@gauzy/models';
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
+					{ path: '/help-center', module: HelpCenterModule },
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
 
@@ -349,6 +351,7 @@ import { LanguagesEnum } from '@gauzy/models';
 					})
 			  ]
 			: []),
+		HelpCenterModule,
 		EquipmentModule,
 		EquipmentSharingModule,
 		TaskModule,

@@ -1,0 +1,24 @@
+<nb-layout>
+	<nb-sidebar>
+		<button
+			class="sidebar-button"
+			nbButton
+			status="primary"
+			(click)="addKnowledgeBase()"
+		>
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+			>{{ 'BUTTONS.ADD_KNOWLEDGE_BASE' | translate }}
+		</button>
+		<!-- <div *ngFor="let base of knowledgeBases">
+			{{ base.id }}
+		</div> -->
+		<ga-test
+			*ngFor="let base of knowledgeBases"
+			[childCategories]="base"
+		></ga-test>
+	</nb-sidebar>
+
+	<nb-layout-column class="colored-column-success"
+		>Layout Content</nb-layout-column
+	>
+</nb-layout>
