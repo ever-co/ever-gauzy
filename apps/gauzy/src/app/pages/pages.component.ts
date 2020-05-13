@@ -270,6 +270,16 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Event Types',
+					icon: 'calendar-outline',
+					link: '/pages/employees/event-types',
+					pathMatch: 'prefix',
+					data: {
+						translated: false,
+						translationKey: 'MENU.EVENT_TYPES'
+					}
+				},
+				{
 					title: 'Time Off',
 					icon: 'eye-off-2-outline',
 					link: '/pages/employees/time-off',
