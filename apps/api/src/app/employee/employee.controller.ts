@@ -24,6 +24,7 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -120,8 +121,14 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<Employee> {
-		return this.employeeService.findOne(id);
+	async findById(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Employee> {
+		const { relations = [] } = data;
+		return this.employeeService.findOne(id, {
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

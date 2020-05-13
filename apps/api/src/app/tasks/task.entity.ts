@@ -15,6 +15,7 @@ import { OrganizationProjects } from '../organization-projects/organization-proj
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { IsOptional } from 'class-validator';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('task')
 export class Task extends Base implements ITask {
@@ -59,6 +60,12 @@ export class Task extends Base implements ITask {
 	@RelationId((task: Task) => task.project)
 	@Column()
 	readonly projectId?: string;
+
+	@ManyToMany((type) => Employee, { cascade: ['update'] })
+	@JoinTable({
+		name: 'task_employee'
+	})
+	readonly members?: Employee[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
 	@OneToMany(
