@@ -943,6 +943,7 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
+		"TASK_MEMBERS": "Employees",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
 		"ESTIMATE_DAYS": "Дней",
