@@ -950,7 +950,7 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "פרויקטים",
-		"TASK_MEMBERS": "Employees",
+		"TASK_MEMBERS": "עובדים",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
@@ -1059,9 +1059,7 @@
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
 		"INVALID_DATES": "Invalid Dates",
-		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
-		"TAX_VALUE": "Tax cannot be a negative number",
-		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
+		"INVOICE_NUMBER_DUPLICATE": "Invoice Number already exists",
 		"DISCOUNT_TYPE": "Discount Type",
 		"TAX_TYPE": "Tax Type",
 		"PERCENT": "Percent",
@@ -1330,6 +1328,6 @@
 		"EVENT_NAME": "Event Type Name",
 		"EVENT_DURATION": "Duration",
 		"EVENT_DESCRIPTION": "Description",
-		"ACTIVE": "Active"
+		"ACTIVE": "פעיל"
 	}
 }
