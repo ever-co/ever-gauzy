@@ -1,4 +1,3 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
@@ -7,9 +6,6 @@ import {
 	ICandidateInterviewers
 } from '@gauzy/models';
 
-@Injectable({
-	providedIn: 'root'
-})
 export class CandidateInterviewersService {
 	constructor(private http: HttpClient) {}
 
