@@ -35,15 +35,28 @@ export class OrganizationsService {
 
 	getAll(
 		relations?: string[],
-		findInput?: Organization
+		findInput?: Organization,
+		orgIds?: string[]
 	): Promise<{ items: Organization[]; total: number }> {
-		const data = JSON.stringify({ relations, findInput });
+		const data = JSON.stringify({ relations, findInput, orgIds });
 		return this.http
 			.get<{ items: Organization[]; total: number }>(
 				`/api/organization`,
 				{
 					params: { data }
 				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getByIds(
+		orgIds?: string[]
+	): Promise<{ items: Organization[]; total: number }> {
+		return this.http
+			.get<{ items: Organization[]; total: number }>(
+				`/api/organization`,
+				{ params: { orgIds } }
 			)
 			.pipe(first())
 			.toPromise();

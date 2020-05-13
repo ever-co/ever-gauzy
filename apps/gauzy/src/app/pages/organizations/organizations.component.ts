@@ -17,6 +17,7 @@ import { OrganizationsEmployeesComponent } from './table-components/organization
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 
 interface SelectedRow {
 	data: Organization;
@@ -39,7 +40,8 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		private employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
-		private store: Store
+		private store: Store,
+		private userOrganizationService: UsersOrganizationsService
 	) {
 		super(translateService);
 	}
@@ -188,9 +190,23 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		}
 	}
 
+	private async getUserOrgs() {
+		const { items } = await this.userOrganizationService.getAll([], {
+			userId: this.store.userId
+		});
+
+		return items.map((item) => item.orgId);
+	}
+
 	private async _loadSmartTable() {
 		try {
-			const { items } = await this.organizationsService.getAll(['tags']);
+			const orgIds = await this.getUserOrgs();
+			const { items } = await this.organizationsService.getAll(
+				['tags'],
+				null,
+				orgIds
+			);
+
 			for (const org of items) {
 				const data = await this.employeesService
 					.getAll([], { organization: { id: org.id } })

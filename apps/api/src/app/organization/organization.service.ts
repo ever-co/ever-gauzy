@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions } from 'typeorm';
+import { Repository, FindOneOptions, In } from 'typeorm';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { Organization } from './organization.entity';
 
@@ -30,5 +30,17 @@ export class OrganizationService extends TenantAwareCrudService<Organization> {
 			{ profile_link },
 			findObj
 		);
+	}
+
+	async getByIds(orgIds: string[]) {
+		const result = await this.organizationRepository.find({
+			where: {
+				id: In(orgIds)
+			}
+		});
+		return {
+			items: result,
+			total: result.length
+		};
 	}
 }

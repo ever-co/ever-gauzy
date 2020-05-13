@@ -22,6 +22,7 @@ import { OrganizationCreateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
 import { AuthGuard } from '@nestjs/passport';
+import { In } from 'typeorm';
 
 @ApiTags('Organization')
 @Controller()
@@ -49,9 +50,18 @@ export class OrganizationController extends CrudController<Organization> {
 	async findAllOrganizations(
 		@Query('data') data: string
 	): Promise<IPagination<Organization>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput, orgIds } = JSON.parse(data);
+		let findObj = {};
+		if (findInput) {
+			findObj = Object.assign(findObj, findInput);
+		}
+		if (orgIds) {
+			findObj = Object.assign(findObj, {
+				id: In(orgIds)
+			});
+		}
 		return this.organizationService.findAll({
-			where: findInput,
+			where: findObj,
 			relations
 		});
 	}

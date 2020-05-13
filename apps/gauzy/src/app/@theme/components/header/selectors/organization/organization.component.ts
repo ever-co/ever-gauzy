@@ -4,6 +4,7 @@ import { Organization } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
 
 @Component({
 	selector: 'ga-organization-selector',
@@ -18,7 +19,8 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private organizationsService: OrganizationsService,
-		private store: Store
+		private store: Store,
+		private userOrganizationService: UsersOrganizationsService
 	) {}
 
 	ngOnInit() {
@@ -33,15 +35,28 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	private async getUserOrgs() {
+		const { items } = await this.userOrganizationService.getAll([], {
+			userId: this.store.userId
+		});
+
+		return items.map((item) => item.orgId);
+	}
+
 	private async loadOrganizations(): Promise<void> {
-		const { items = [] } = await this.organizationsService.getAll();
+		const userOrgs = await this.getUserOrgs();
+		const { items } = await this.organizationsService.getAll(
+			[],
+			null,
+			userOrgs
+		);
 
 		if (items.length > 0 && !this.store.selectedOrganization) {
 			// set first organizations as default
 			this.store.selectedOrganization = items[0];
 		}
 
-		this.organizations = items;
+		this.organizations = [...items];
 	}
 
 	private loadOrganizationsId() {
