@@ -75,6 +75,11 @@ export class TaskComponent extends TranslationBaseComponent
 					type: 'string',
 					filter: false
 				},
+				employees: {
+					title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS'),
+					type: 'string',
+					filter: false
+				},
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
 					type: 'custom',

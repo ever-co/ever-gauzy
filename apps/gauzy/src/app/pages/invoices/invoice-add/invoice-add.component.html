@@ -395,7 +395,7 @@
 		<button
 			(click)="addInvoice()"
 			status="success"
-			[disabled]="enableSaveButton || form.invalid"
+			[disabled]="disableSaveButton || form.invalid"
 			nbButton
 		>
 			{{ 'BUTTONS.SAVE' | translate }}

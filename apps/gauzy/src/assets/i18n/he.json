@@ -184,7 +184,8 @@
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Location",
 			"NOTE": "Note",
-			"PREFERRED_LANGUAGE": "Preferred Language"
+			"PREFERRED_LANGUAGE": "Preferred Language",
+			"DESCRIPTION": "Description"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -287,7 +288,10 @@
 			"MEETING_LOCATION": "Location",
 			"MEETING_DESCRIPTION": "Description",
 			"BUFFER_TIME": "Buffer minutes",
-			"BREAK_TIME": "Break minutes"
+			"BREAK_TIME": "Break minutes",
+			"DESCRIPTION": "Description",
+			"DURATION": "Duration",
+			"TITLE": "Title"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -365,11 +369,14 @@
 		"STARTS_ON": "Starts On",
 		"EXPENSE_HISTORY": "Expense History",
 		"NEW_EXPENSE_VALUE": "New Expense Value",
-		"OFFICIAL_NAME": "This name would be used in tax invoices etc."
+		"OFFICIAL_NAME": "This name would be used in tax invoices etc.",
+		"ADD_EVENT_TYPE": "Add Event Type",
+		"EDIT_EVENT_TYPE": " Edit Event Type"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
 		"APPOINTMENTS": "Appointments",
+		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
@@ -943,6 +950,7 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "פרויקטים",
+		"TASK_MEMBERS": "Employees",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
@@ -1315,5 +1323,13 @@
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment"
+	},
+	"EVENT_TYPE_PAGE": {
+		"EVENT_TYPE": "Event Types",
+		"MANAGE_EVENT_TYPE": "Manage Event Type",
+		"EVENT_NAME": "Event Type Name",
+		"EVENT_DURATION": "Duration",
+		"EVENT_DESCRIPTION": "Description",
+		"ACTIVE": "Active"
 	}
 }

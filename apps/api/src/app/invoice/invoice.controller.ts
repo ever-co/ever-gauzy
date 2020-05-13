@@ -35,8 +35,29 @@ export class InvoiceController extends CrudController<Invoice> {
 	): Promise<IPagination<IInvoice>> {
 		const { relations = [], findInput = null } = data;
 
-		return this.invoiceService.getAllInvoices({
+		return this.invoiceService.findAll({
 			where: findInput,
+			relations
+		});
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Get('highest')
+	async findHighestInvoiceNumber(): Promise<IPagination<IInvoice>> {
+		return this.invoiceService.getHighestInvoiceNumber();
+	}
+
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.INVOICES_VIEW)
+	@Get(':id')
+	async findByIdWithRelations(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IInvoice> {
+		const { relations = [] } = data;
+
+		return this.invoiceService.findOne(id, {
 			relations
 		});
 	}

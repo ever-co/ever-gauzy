@@ -198,6 +198,13 @@ const routes: Routes = [
 							).then((m) => m.AppointmentModule)
 					},
 					{
+						path: 'event-types',
+						loadChildren: () =>
+							import(
+								'./employees/event-types/event-type.module'
+							).then((m) => m.EventTypeModule)
+					},
+					{
 						path: 'time-off',
 						loadChildren: () =>
 							import('./time-off/time-off.module').then(
