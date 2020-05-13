@@ -121,24 +121,9 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<Employee> {
-		return this.employeeService.findOne(id);
-	}
-
-	@ApiOperation({ summary: 'Find employee by id in the same tenant.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found employee in the same tenant',
-		type: Employee
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@Get('relations/:id')
-	async findByIdWithRelations(
+	async findById(
 		@Param('id') id: string,
-		@Query('data', ParseJsonPipe) data: any
+		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Employee> {
 		const { relations = [] } = data;
 		return this.employeeService.findOne(id, {

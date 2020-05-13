@@ -47,7 +47,7 @@ export class EmployeesService {
 	getEmployeeById(id: string, relations?: string[]) {
 		const data = JSON.stringify({ relations });
 		return this.http
-			.get<Employee>(`/api/employee/relations/${id}`, {
+			.get<Employee>(`/api/employee/${id}`, {
 				params: { data }
 			})
 			.pipe(first())
