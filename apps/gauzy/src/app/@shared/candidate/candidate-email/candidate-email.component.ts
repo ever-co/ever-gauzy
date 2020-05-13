@@ -2,7 +2,6 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 
 @Component({
 	selector: 'ga-candidate-email',
@@ -15,13 +14,12 @@ export class CandidateEmailComponent implements OnInit {
 	@Input() selectedCandidate: Candidate;
 	@Input() employees: Employee[];
 	form: FormGroup;
-	formCV: FormGroup;
 	employeeList: string;
 	dateTemplate: string;
 	candidateName: string;
 	emailText: string;
 	candidateNameTemplate: string;
-	public textTemplate = '';
+	textTemplate: string;
 	constructor(
 		protected candidatesService: CandidatesService,
 		private readonly fb: FormBuilder

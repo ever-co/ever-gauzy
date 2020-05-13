@@ -1,8 +1,14 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	ChangeDetectorRef,
+	Input
+} from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, IDateRange } from '@gauzy/models';
+import { Employee, IDateRange, ICandidateInterview } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 
 @Component({
@@ -11,6 +17,12 @@ import { EmployeesService } from '../../../@core/services';
 	styleUrls: ['candidate-interview-form.component.scss']
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
+	constructor(
+		private readonly fb: FormBuilder,
+		private employeeService: EmployeesService,
+		private cdRef: ChangeDetectorRef
+	) {}
+	@Input() employeeIds: string[];
 	form: any;
 	employees: Employee[];
 	isMeeting: boolean;
@@ -18,11 +30,8 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	select = true;
 	selectedRange: IDateRange = { start: null, end: null };
 	private _ngDestroy$ = new Subject<void>();
-	constructor(
-		private readonly fb: FormBuilder,
-		private employeeService: EmployeesService,
-		private cdRef: ChangeDetectorRef
-	) {}
+
+	unic;
 
 	ngOnInit() {
 		this.loadFormData();
@@ -36,6 +45,15 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	findTime() {}
 	onMembersSelected(event) {
 		this.selectedEmployeeIds = event;
+	}
+	uniqIds(arr: string[]) {
+		const result = [];
+		for (const id of arr) {
+			if (!result.includes(id)) {
+				result.push(id);
+			}
+			return result;
+		}
 	}
 	loadFormData() {
 		this.form = this.fb.group({
