@@ -13,8 +13,7 @@ export enum COMPONENT_TYPE {
 }
 
 @Component({
-	templateUrl: './event-type-mutation.component.html',
-	styles: ['./event-type-mutation.component.scss']
+	templateUrl: './event-type-mutation.component.html'
 })
 export class EventTypeMutationComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -25,10 +24,11 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 	eventType: EventType;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
 	durationUnit: string = this.durationUnits[0];
+	duplicate: boolean;
 
 	constructor(
 		private fb: FormBuilder,
-		protected dialogRef: NbDialogRef<EventTypeMutationComponent>,
+		public dialogRef: NbDialogRef<EventTypeMutationComponent>,
 		private store: Store,
 		private translate: TranslateService
 	) {
@@ -55,6 +55,10 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 			startYear: formValues.startDate.getFullYear()
 		};
 		this.dialogRef.close(formValues);
+	}
+
+	onEmployeeChange(ev) {
+		console.log(ev);
 	}
 
 	addOrEditEventType() {

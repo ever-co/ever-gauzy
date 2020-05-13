@@ -103,6 +103,8 @@ export class EventTypeComponent extends TranslationBaseComponent
 		}
 	}
 
+	delete() {}
+
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(takeUntil(this._ngDestroy$))
