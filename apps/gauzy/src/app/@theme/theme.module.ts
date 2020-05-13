@@ -13,7 +13,8 @@ import {
 	NbIconModule,
 	NbThemeModule,
 	NbPopoverModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbLayoutDirectionService
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
@@ -111,7 +112,8 @@ const PIPES = [
 		UsersService,
 		SelectorService,
 		UsersOrganizationsService,
-		OrganizationsService
+		OrganizationsService,
+		NbLayoutDirectionService
 	]
 })
 export class ThemeModule {

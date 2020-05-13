@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, forkJoin } from 'rxjs';
 import {
-	IIntegration,
+	IIntegrationTenant,
 	IIntegrationSetting,
 	IHubstaffOrganization,
 	IHubstaffProject,
@@ -129,7 +129,6 @@ export class HubstaffService {
 	}
 
 	authorizeClient(client_id: string): void {
-		//  'http://localhost:4200/pages/integrations/hubstaff';
 		localStorage.setItem('client_id', client_id);
 		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${
 			environment.HUBSTAFF_REDIRECT_URI
@@ -141,7 +140,7 @@ export class HubstaffService {
 	addIntegration(
 		code: string,
 		client_secret: string
-	): Observable<IIntegration> {
+	): Observable<IIntegrationTenant> {
 		const client_id = localStorage.getItem('client_id');
 
 		const getAccessTokensDto = {
@@ -153,7 +152,7 @@ export class HubstaffService {
 
 		return this._store.selectedOrganization$.pipe(
 			switchMap(({ tenantId }) =>
-				this._http.post<IIntegration>(
+				this._http.post<IIntegrationTenant>(
 					'/api/integrations/hubstaff/add-integration',
 					{
 						...getAccessTokensDto,

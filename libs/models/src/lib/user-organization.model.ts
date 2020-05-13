@@ -1,5 +1,5 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { User } from './user.model';
+import { User, LanguagesEnum } from './user.model';
 
 export interface UserOrganization extends IBaseEntityModel {
 	userId: string;
@@ -26,4 +26,5 @@ export interface UserOrganizationCreateInput {
 export interface UserOrganizationDeleteInput {
 	userOrganizationId: string;
 	requestingUser: User;
+	language?: LanguagesEnum;
 }

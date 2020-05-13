@@ -37,6 +37,85 @@
 					</div>
 				</div>
 				<div class="row">
+					<div class="col-3">
+						<div class="form-group">
+							<nb-checkbox formControlName="bufferTime">
+								Buffer Time
+							</nb-checkbox>
+						</div>
+					</div>
+					<div class="col-3" *ngIf="form.get('bufferTime').value">
+						<div class="form-group">
+							<nb-checkbox formControlName="bufferTimeStart">
+								Buffer at Start
+							</nb-checkbox>
+						</div>
+					</div>
+					<div class="col-3" *ngIf="form.get('bufferTime').value">
+						<div class="form-group">
+							<nb-checkbox formControlName="bufferTimeEnd">
+								Buffer at End
+							</nb-checkbox>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div
+						class="col-6 form-group"
+						*ngIf="form.get('bufferTime').value"
+					>
+						<input
+							fullWidth
+							id="bufferTimeInMins"
+							type="number"
+							nbInput
+							formControlName="bufferTimeInMins"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.BUFFER_TIME' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-3">
+						<div class="form-group">
+							<nb-checkbox formControlName="breakTime">
+								Break Time
+							</nb-checkbox>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div
+						class="col-6 form-group"
+						*ngIf="form.get('breakTime').value"
+					>
+						<ga-timer-picker
+							name="break_start_time"
+							[min]="form.get('selectedRange').value.start"
+							[max]="form.get('selectedRange').value.end"
+							formControlName="breakStartTime"
+						></ga-timer-picker>
+					</div>
+				</div>
+				<div class="row">
+					<div
+						class="col-6 form-group"
+						*ngIf="form.get('breakTime').value"
+					>
+						<input
+							fullWidth
+							id="breakTimeInMins"
+							type="number"
+							nbInput
+							formControlName="breakTimeInMins"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.BREAK_TIME' | translate
+							}}"
+						/>
+					</div>
+				</div>
+				<div class="row">
 					<div class="col-9">
 						<div class="form-group">
 							<label for="location" class="label">{{

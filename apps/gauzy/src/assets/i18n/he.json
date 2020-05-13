@@ -183,7 +183,9 @@
 			"DURATION": "Duration",
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Location",
-			"NOTE": "Note"
+			"NOTE": "Note",
+			"PREFERRED_LANGUAGE": "Preferred Language",
+			"DESCRIPTION": "Description"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -258,6 +260,7 @@
 			"ORGANIZATIONS": "Choose Organizations",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"PREFERRED_LANGUAGE": "Preferred Language",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -283,7 +286,12 @@
 			},
 			"MEETING_AGENDA": "Agenda",
 			"MEETING_LOCATION": "Location",
-			"MEETING_DESCRIPTION": "Description"
+			"MEETING_DESCRIPTION": "Description",
+			"BUFFER_TIME": "Buffer minutes",
+			"BREAK_TIME": "Break minutes",
+			"DESCRIPTION": "Description",
+			"DURATION": "Duration",
+			"TITLE": "Title"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -361,11 +369,14 @@
 		"STARTS_ON": "Starts On",
 		"EXPENSE_HISTORY": "Expense History",
 		"NEW_EXPENSE_VALUE": "New Expense Value",
-		"OFFICIAL_NAME": "This name would be used in tax invoices etc."
+		"OFFICIAL_NAME": "This name would be used in tax invoices etc.",
+		"ADD_EVENT_TYPE": "Add Event Type",
+		"EDIT_EVENT_TYPE": " Edit Event Type"
 	},
 	"MENU": {
 		"DASHBOARD": "לוח מחוונים",
 		"APPOINTMENTS": "Appointments",
+		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "הכנסה",
 		"EXPENSES": "הוצאות",
@@ -455,7 +466,8 @@
 			"SYNCED_ENTITIES": "Auto synced entities",
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between"
-		}
+		},
+		"COMING_SOON": "Coming soon"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -637,6 +649,10 @@
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
+				"INTERVIEWS": "Interviews",
+				"ON": "on",
+				"FROM": "from",
+				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
@@ -676,7 +692,7 @@
 		"SETTINGS": "הגדרות",
 		"ROLES": "Roles",
 		"RECURRING_EXPENSE": "Organization Recurring Expense",
-		"EMPLOYMENT_TYPES": "Employment Types",
+		"EMPLOYMENT_TYPES": "סוגי תעסוקה",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
 		"EDIT": {
@@ -745,6 +761,8 @@
 			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
 			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
 			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
+			"ORG_TAGS_EDIT": "Create/Edit/Delete Tags",
+			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "View All Organizations",
 			"ALL_ORG_EDIT": "Create/Edit/Delete All Organizations",
 			"POLICY_VIEW": "View Time Off Policy",
@@ -932,6 +950,7 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "פרויקטים",
+		"TASK_MEMBERS": "Employees",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
@@ -956,7 +975,13 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "עיקרי",
-			"USER_ORGANIZATIONS": "ארגונים"
+			"USER_ORGANIZATIONS": "ארגונים",
+			"PREFERRED_LANGUAGE": {
+				"en": "English",
+				"he": "Hebrew",
+				"bg": "Bulgarian",
+				"ru": "Russian"
+			}
 		},
 		"REMOVE_USER": "{{ name }} successfully removed"
 	},
@@ -1298,5 +1323,13 @@
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment"
+	},
+	"EVENT_TYPE_PAGE": {
+		"EVENT_TYPE": "Event Types",
+		"MANAGE_EVENT_TYPE": "Manage Event Type",
+		"EVENT_NAME": "Event Type Name",
+		"EVENT_DURATION": "Duration",
+		"EVENT_DESCRIPTION": "Description",
+		"ACTIVE": "Active"
 	}
 }

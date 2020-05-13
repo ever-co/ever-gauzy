@@ -59,7 +59,7 @@ import { ProductVariantPrice } from '../product-variant-price/product-variant-pr
 import { ProductCategory } from '../product-category/product-category.entity';
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
-import { Integration } from '../integration/integration.entity';
+import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
@@ -69,6 +69,8 @@ import { CandidateDocument } from '../candidate-documents/candidate-documents.en
 import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateFeedback } from './../candidate-feedbacks/candidate-feedbacks.entity';
+import { Integration } from '../integration/integration.entity';
+import { IntegrationType } from '../integration/integration-type.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import { EmployeeAppointment } from '../employee-appointment';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
@@ -131,8 +133,10 @@ const entities = [
 	CandidateSkill,
 	CandidateExperience,
 	CandidateInterview,
-	IntegrationSetting,
 	Integration,
+	IntegrationType,
+	IntegrationSetting,
+	IntegrationTenant,
 	IntegrationMap,
 	IntegrationEntitySetting,
 	IntegrationEntitySettingTiedEntity,

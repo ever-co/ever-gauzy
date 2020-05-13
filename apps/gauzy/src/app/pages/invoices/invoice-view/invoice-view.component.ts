@@ -10,10 +10,8 @@ import {
 	Employee,
 	Organization
 } from '@gauzy/models';
-import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { EmployeesService } from '../../../@core/services/employees.service';
-import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { TasksService } from '../../../@core/services/tasks.service';
@@ -46,12 +44,11 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private route: ActivatedRoute,
 		private invoicesService: InvoicesService,
-		private invoiceItemService: InvoiceItemService,
-		private organizationClientsService: OrganizationClientsService,
 		private employeeService: EmployeesService,
+		private organizationClientsService: OrganizationClientsService,
+		private organizationService: OrganizationsService,
 		private projectService: OrganizationProjectsService,
-		private taskService: TasksService,
-		private organizationService: OrganizationsService
+		private taskService: TasksService
 	) {
 		super(translateService);
 	}
@@ -70,14 +67,16 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 			this._applyTranslationOnSmartTable();
 			this.invoiceDate = this.invoice.invoiceDate.toString().slice(0, 10);
 			this.dueDate = this.invoice.dueDate.toString().slice(0, 10);
-			await this.getInvoiceItems();
 			this.loadTableData();
 		}
 	}
 
 	async getInvoice() {
-		const invoice = await this.invoicesService.getById(this.invoiceId);
+		const invoice = await this.invoicesService.getById(this.invoiceId, [
+			'invoiceItems'
+		]);
 		this.invoice = invoice;
+		this.invoiceItems = invoice.invoiceItems;
 		const client = await this.organizationClientsService.getById(
 			this.invoice.clientId
 		);
@@ -85,14 +84,6 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		this.organizationService
 			.getById(this.invoice.organizationId)
 			.subscribe((org) => (this.organization = org));
-	}
-
-	async getInvoiceItems() {
-		const allItems = await this.invoiceItemService.getAll();
-		const invoiceItems = allItems.items.filter(
-			(i) => i.invoiceId === this.invoice.id
-		);
-		this.invoiceItems = invoiceItems;
 	}
 
 	loadSmartTable() {
@@ -142,74 +133,62 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		};
 	}
 
-	loadTableData() {
-		this.employeeService
-			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (employees) => {
-				this.employees = employees.items.filter((emp) => {
-					return (
-						emp.orgId === this.invoice.organizationId ||
-						this.invoice.organizationId === ''
-					);
-				});
-				const items = [];
-				let data;
-				for (const item of this.invoiceItems) {
-					if (item.employeeId) {
-						const employee = this.employees.filter(
-							(e) => e.id === item.employeeId
-						);
-						data = {
-							description: item.description,
-							quantity: item.quantity,
-							price: item.price,
-							totalValue: +item.totalValue,
-							name: `${employee[0].user.firstName} ${employee[0].user.lastName}`,
-							currency: this.invoice.currency
-						};
-					} else if (item.projectId) {
-						const project = await this.projectService.getById(
-							item.projectId
-						);
-						data = {
-							description: item.description,
-							quantity: item.quantity,
-							price: item.price,
-							totalValue: +item.totalValue,
-							id: item.id,
-							name: project.name,
-							currency: this.invoice.currency
-						};
-					} else if (item.taskId) {
-						const task = await this.taskService.getById(
-							item.taskId
-						);
-						data = {
-							description: item.description,
-							quantity: item.quantity,
-							price: item.price,
-							totalValue: +item.totalValue,
-							id: item.id,
-							name: task.title,
-							currency: this.invoice.currency
-						};
-					} else {
-						delete this.settingsSmartTable['columns']['name'];
-						data = {
-							description: item.description,
-							quantity: item.quantity,
-							price: item.price,
-							totalValue: +item.totalValue,
-							id: item.id,
-							currency: this.invoice.currency
-						};
-					}
-					items.push(data);
-				}
-				this.smartTableSource.load(items);
-				this.loadTable = true;
-			});
+	async loadTableData() {
+		const items = [];
+		let data;
+		for (const item of this.invoiceItems) {
+			if (item.employeeId) {
+				const employee = await this.employeeService.getEmployeeById(
+					item.employeeId,
+					['user']
+				);
+				data = {
+					description: item.description,
+					quantity: item.quantity,
+					price: item.price,
+					totalValue: +item.totalValue,
+					name: `${employee.user.firstName} ${employee.user.lastName}`,
+					currency: this.invoice.currency
+				};
+			} else if (item.projectId) {
+				const project = await this.projectService.getById(
+					item.projectId
+				);
+				data = {
+					description: item.description,
+					quantity: item.quantity,
+					price: item.price,
+					totalValue: +item.totalValue,
+					id: item.id,
+					name: project.name,
+					currency: this.invoice.currency
+				};
+			} else if (item.taskId) {
+				const task = await this.taskService.getById(item.taskId);
+				data = {
+					description: item.description,
+					quantity: item.quantity,
+					price: item.price,
+					totalValue: +item.totalValue,
+					id: item.id,
+					name: task.title,
+					currency: this.invoice.currency
+				};
+			} else {
+				delete this.settingsSmartTable['columns']['name'];
+				data = {
+					description: item.description,
+					quantity: item.quantity,
+					price: item.price,
+					totalValue: +item.totalValue,
+					id: item.id,
+					currency: this.invoice.currency
+				};
+			}
+			items.push(data);
+		}
+		this.smartTableSource.load(items);
+		this.loadTable = true;
 	}
 
 	download() {

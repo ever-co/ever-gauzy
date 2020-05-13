@@ -130,10 +130,16 @@ import {
 	createCandidateFeedbacks,
 	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
+import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
+import { createDefaultIntegrations } from '../../integration/integration.seed';
 import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
 import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
-import { ProductOption } from '../../product-option/product-option.entity';
 import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
+import {
+	createCandidateInterview,
+	createRandomCandidateInterview
+} from '../../candidate-interview/candidate-interview.seed';
+import { ProductOption } from '../../product-option/product-option.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -345,6 +351,7 @@ export class SeedDataService {
 		await createCandidateSources(this.connection, defaultCandidates);
 		await createCandidateDocuments(this.connection, defaultCandidates);
 		await createCandidateFeedbacks(this.connection, defaultCandidates);
+		await createCandidateInterview(this.connection, defaultCandidates);
 
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
@@ -380,12 +387,10 @@ export class SeedDataService {
 			orgs: defaultOrganizations
 		});
 
-		// await createDefaultApprovalPolicy(this.connection, {
-		// 	org: defaultOrganizations[0],
-		// 	tenant,
-		// 	type: 0,
-		// 	description: 'test'
-		// });
+		const integrationTypes = await createDefaultIntegrationTypes(
+			this.connection
+		);
+		await createDefaultIntegrations(this.connection, integrationTypes);
 	}
 
 	/**
@@ -466,6 +471,11 @@ export class SeedDataService {
 			tenantCandidatesMap
 		);
 		await createRandomCandidateFeedbacks(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
+		await createRandomCandidateInterview(
 			this.connection,
 			tenants,
 			tenantCandidatesMap

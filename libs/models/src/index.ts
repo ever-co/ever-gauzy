@@ -56,6 +56,7 @@ export * from './lib/request-approval.model';
 export * from './lib/request-approval-employee.model';
 export * from './lib/employee-appointment.model';
 export * from './lib/appointment-employees.model';
+export * from './lib/event-type.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

@@ -37,20 +37,6 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 
 	async send() {
 		await this.invoicesService.update(this.invoice.id, {
-			invoiceNumber: this.invoice.invoiceNumber,
-			invoiceDate: this.invoice.invoiceDate,
-			dueDate: this.invoice.dueDate,
-			currency: this.invoice.currency,
-			discountValue: this.invoice.discountValue,
-			discountType: this.invoice.discountType,
-			tax: this.invoice.tax,
-			taxType: this.invoice.taxType,
-			terms: this.invoice.terms,
-			paid: this.invoice.paid,
-			totalValue: this.invoice.totalValue,
-			clientId: this.invoice.clientId,
-			invoiceType: this.invoice.invoiceType,
-			organizationId: this.invoice.organizationId,
 			sentTo: this.client.organizationId
 		});
 		this.dialogRef.close();

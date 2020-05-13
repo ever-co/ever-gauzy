@@ -183,7 +183,9 @@
 			"DURATION": "Продолжительность",
 			"INTERVIEWERS": "Интервьюеры",
 			"LOCATION": "Местоположение",
-			"NOTE": "Примечание"
+			"NOTE": "Примечание",
+			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
+			"DESCRIPTION": "Описание"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -258,6 +260,7 @@
 			"ORGANIZATIONS": "Выберите организации",
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "Название школы",
 				"DEGREE": "Диплом",
@@ -283,7 +286,12 @@
 			},
 			"MEETING_AGENDA": "Повестка дня",
 			"MEETING_LOCATION": "Местоположение",
-			"MEETING_DESCRIPTION": "Описание"
+			"MEETING_DESCRIPTION": "Описание",
+			"BUFFER_TIME": "Буферные минуты",
+			"BREAK_TIME": "Минут остановки",
+			"DESCRIPTION": "Description",
+			"DURATION": "Duration",
+			"TITLE": "Title"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -361,11 +369,14 @@
 		"STARTS_ON": "Начинается при",
 		"EXPENSE_HISTORY": "История расходов",
 		"NEW_EXPENSE_VALUE": "Новое значение расхода",
-		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д."
+		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д.",
+		"ADD_EVENT_TYPE": "Add Event Type",
+		"EDIT_EVENT_TYPE": " Edit Event Type"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
 		"APPOINTMENTS": "Назначения",
+		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -455,7 +466,8 @@
 			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей",
 			"TOOLTIP_ACTIVITY_INFO": "Диапазон дат: 7 дней до даты: 6 месяцев",
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
-		}
+		},
+		"COMING_SOON": "Скоро появится"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
@@ -637,6 +649,10 @@
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
+				"INTERVIEWS": "Интервью",
+				"ON": "вкл",
+				"FROM": "от",
+				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
@@ -745,6 +761,8 @@
 			"ORG_CANDIDATES_TASK_EDIT": "Создание/Редактирование задачи",
 			"ORG_CANDIDATES_INTERVIEW_EDIT": "Создать/редактировать интервью",
 			"ORG_INVENTORY_PRODUCT_EDIT": "Продукт управления",
+			"ORG_TAGS_EDIT": "Создание/Изменить/Удалить Теги",
+			"ORG_CANDIDATES_FEEDBACK_EDIT": "Создать/изменить/Удалить отзыв по Кандидату",
 			"ALL_ORG_VIEW": "Просмотр всех организаций",
 			"ALL_ORG_EDIT": "Создание/Изменить/Удалить все организации",
 			"POLICY_VIEW": "Просмотр политики отключения",
@@ -932,6 +950,7 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
+		"TASK_MEMBERS": "Employees",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
 		"ESTIMATE_DAYS": "Дней",
@@ -956,7 +975,13 @@
 			"HEADER": "Управление пользователем",
 			"EDIT_EXISTING_USER": "Изменить существующего пользователя",
 			"MAIN": "Главная",
-			"USER_ORGANIZATIONS": "Организации"
+			"USER_ORGANIZATIONS": "Организации",
+			"PREFERRED_LANGUAGE": {
+				"en": "Russian",
+				"he": "Иврит",
+				"bg": "Болгарский",
+				"ru": "Русский"
+			}
 		},
 		"REMOVE_USER": "{{ name }} успешно удален"
 	},
@@ -1298,5 +1323,13 @@
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Добавить Назначение"
+	},
+	"EVENT_TYPE_PAGE": {
+		"EVENT_TYPE": "Event Types",
+		"MANAGE_EVENT_TYPE": "Manage Event Type",
+		"EVENT_NAME": "Event Type Name",
+		"EVENT_DURATION": "Duration",
+		"EVENT_DESCRIPTION": "Description",
+		"ACTIVE": "Active"
 	}
 }

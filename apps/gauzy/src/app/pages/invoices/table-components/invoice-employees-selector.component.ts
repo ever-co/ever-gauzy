@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Employee } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { EmployeesService } from '../../../@core/services';
 
 @Component({
 	template: `
@@ -32,7 +33,10 @@ export class InvoiceEmployeesSelectorComponent extends TranslationBaseComponent
 	employee: Employee;
 	employees: Employee[];
 
-	constructor(readonly translateService: TranslateService) {
+	constructor(
+		readonly translateService: TranslateService,
+		readonly employeeService: EmployeesService
+	) {
 		super(translateService);
 	}
 
@@ -43,10 +47,10 @@ export class InvoiceEmployeesSelectorComponent extends TranslationBaseComponent
 	async getEmployees() {
 		this.employees = this.rowData.allEmployees;
 		if (this.employees) {
-			const employee = this.employees.filter(
+			const employee = this.employees.find(
 				(e) => e.id === this.rowData.selectedEmployee
 			);
-			this.employee = employee[0];
+			this.employee = employee;
 		}
 	}
 

@@ -56,7 +56,6 @@ import { ProductCategoriesModule } from './product-category/product-category-mod
 import { ProductTypesModule } from './product-type/product-type-module';
 import { ProductModule } from './product/product.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
-import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
 import { ProductVariantModule } from './product-variant/product-variant.module';
@@ -68,11 +67,16 @@ import { CandidateDocumentsModule } from './candidate-documents/candidate-docume
 import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
 import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedbacks.module';
 import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
+import { IntegrationModule } from './integration/integration.module';
+import { IntegrationTenantModule } from './integration-tenant/integration-tenant.module';
 import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
 import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
 import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
 import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
 import { RequestApprovalModule } from './request-approval/request-approval.module';
+import * as path from 'path';
+import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
+import { LanguagesEnum } from '@gauzy/models';
 
 @Module({
 	imports: [
@@ -246,12 +250,16 @@ import { RequestApprovalModule } from './request-approval/request-approval.modul
 						module: HubstaffModule
 					},
 					{
-						path: '/integration',
-						module: IntegrationModule
+						path: '/integration-tenant',
+						module: IntegrationTenantModule
 					},
 					{
 						path: '/integration-entity-setting',
 						module: IntegrationEntitySettingModule
+					},
+					{
+						path: '/integration',
+						module: IntegrationModule
 					},
 					{
 						path: '/invoices',
@@ -360,14 +368,24 @@ import { RequestApprovalModule } from './request-approval/request-approval.modul
 		ProductCategoriesModule,
 		ProductTypesModule,
 		ProductModule,
-		IntegrationSettingModule,
 		IntegrationModule,
+		IntegrationSettingModule,
+		IntegrationTenantModule,
 		IntegrationMapModule,
 		ProductVariantPriceModule,
 		ProductVariantModule,
 		ProductVariantSettingsModule,
 		IntegrationEntitySettingModule,
-		IntegrationEntitySettingTiedEntityModule
+		IntegrationEntitySettingTiedEntityModule,
+		I18nModule.forRoot({
+			fallbackLanguage: LanguagesEnum.ENGLISH,
+			parser: I18nJsonParser,
+			parserOptions: {
+				path: path.join(__dirname, '/assets/i18n/'),
+				watch: !environment.production
+			},
+			resolvers: [new HeaderResolver(['language'])]
+		})
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

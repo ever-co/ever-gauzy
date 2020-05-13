@@ -47,6 +47,7 @@ import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
 import { HubstaffTokenInterceptor } from './@core/hubstaff-token-interceptor';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
+import { LanguageInterceptor } from './@core/language.interceptor';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -115,6 +116,11 @@ if (environment.SENTRY_DNS) {
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: LanguageInterceptor,
 			multi: true
 		},
 		ServerConnectionService,

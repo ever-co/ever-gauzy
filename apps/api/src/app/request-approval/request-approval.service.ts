@@ -1,6 +1,10 @@
 import { CrudService, IPagination } from '../core';
 import { RequestApproval } from './request-approval.entity';
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	NotFoundException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, Repository } from 'typeorm';
 import {
@@ -170,8 +174,11 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 				}
 			);
 
+			if (!requestApproval) {
+				throw new NotFoundException('Request Approval not found');
+			}
+
 			if (
-				requestApproval &&
 				requestApproval.employeeApprovals &&
 				requestApproval.employeeApprovals.length > 0
 			) {
@@ -196,7 +203,7 @@ export class RequestApprovalService extends CrudService<RequestApproval> {
 
 			return this.requestApprovalRepository.save(requestApproval);
 		} catch (err /*: WriteError*/) {
-			throw new BadRequestException(err);
+			throw err;
 		}
 	}
 }

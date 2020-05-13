@@ -3,7 +3,11 @@
 // The list of file replacements can be found in `angular.json`.
 require('dotenv').config();
 import { IEnvironment } from './ienvironment';
-import { CurrenciesEnum, DefaultValueDateTypeEnum } from '@gauzy/models';
+import {
+	CurrenciesEnum,
+	DefaultValueDateTypeEnum,
+	LanguagesEnum
+} from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 const databaseConfig: TypeOrmModuleOptions = {
@@ -74,7 +78,8 @@ export const environment: IEnvironment = {
 		{
 			email: 'admin@ever.co',
 			password: 'admin',
-			imageUrl: 'assets/images/avatars/ruslan.jpg'
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 
@@ -82,7 +87,8 @@ export const environment: IEnvironment = {
 		{
 			email: 'local.admin@ever.co',
 			password: 'admin',
-			imageUrl: 'assets/images/avatars/ruslan.jpg'
+			imageUrl: 'assets/images/avatars/ruslan.jpg',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 
@@ -95,7 +101,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/alish.jpg',
 			startedWorkOn: '2018-03-20',
 			endWork: null,
-			employeeLevel: 'D'
+			employeeLevel: 'D',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'blagovest@ever.co',
@@ -105,7 +112,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/blagovest.jpg',
 			startedWorkOn: '2018-03-19',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'elvis@ever.co',
@@ -115,7 +123,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/elvis.jpg',
 			startedWorkOn: '2018-05-25',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'emil@ever.co',
@@ -125,7 +134,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/emil.jpg',
 			startedWorkOn: '2019-01-21',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'boyan@ever.co',
@@ -135,7 +145,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/boyan.jpg',
 			startedWorkOn: '2019-01-21',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'hristo@ever.co',
@@ -145,7 +156,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/hristo.jpg',
 			startedWorkOn: '2019-06-17',
 			endWork: null,
-			employeeLevel: 'B'
+			employeeLevel: 'B',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'alex@ever.co',
@@ -155,7 +167,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/alexander.jpg',
 			startedWorkOn: '2019-08-01',
 			endWork: null,
-			employeeLevel: 'B'
+			employeeLevel: 'B',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'rachit@ever.co',
@@ -165,7 +178,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/rachit.png',
 			startedWorkOn: '2019-11-27',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'atanas@ever.co',
@@ -175,7 +189,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
 			startedWorkOn: '2020-02-01',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'dimana@ever.co',
@@ -185,7 +200,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
 			startedWorkOn: '2019-11-26',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'sunko@ever.co',
@@ -195,7 +211,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/savov.jpg',
 			startedWorkOn: '2020-02-04',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'lubomir@ever.co',
@@ -205,7 +222,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/lubomir.jpg',
 			startedWorkOn: '2020-02-06',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'pavel@ever.co',
@@ -215,7 +233,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/pavel.jpg',
 			startedWorkOn: '2020-03-16',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'yavor@ever.co',
@@ -225,7 +244,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/yavor.jpg',
 			startedWorkOn: '2020-02-05',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'tsvetelina@ever.co',
@@ -235,7 +255,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/tsvetelina.jpg',
 			startedWorkOn: '2020-03-02',
 			endWork: null,
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'everq@ever.co',
@@ -245,7 +266,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
 			startedWorkOn: '2018-08-01',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'muiz@smooper.xyz',
@@ -255,7 +277,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/muiz.jpg',
 			startedWorkOn: '2019-11-27',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'deko898@hotmail.com',
@@ -265,7 +288,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/dejan.jpg',
 			startedWorkOn: '2020-03-07',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'ckhandla94@gmail.com',
@@ -275,7 +299,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/chetan.png',
 			startedWorkOn: '2020-03-07',
 			endWork: null,
-			employeeLevel: null
+			employeeLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'julia@ever.co',
@@ -285,7 +310,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/julia.png',
 			startedWorkOn: '2018-08-01',
 			endWork: null,
-			employeeLevel: 'C'
+			employeeLevel: 'C',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: '',
@@ -295,7 +321,8 @@ export const environment: IEnvironment = {
 			imageUrl: 'assets/images/avatars/milena.png',
 			startedWorkOn: '2019-07-15',
 			endWork: '2019-10-15',
-			employeeLevel: 'A'
+			employeeLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultCandidates: [
@@ -305,7 +332,8 @@ export const environment: IEnvironment = {
 			firstName: 'John',
 			lastName: 'Smith',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			candidateLevel: 'D'
+			candidateLevel: 'D',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'jaye@ever.co',
@@ -313,7 +341,8 @@ export const environment: IEnvironment = {
 			firstName: 'Jaye',
 			lastName: 'Jeffreys',
 			imageUrl: 'assets/images/avatars/alexander.jpg',
-			candidateLevel: 'B'
+			candidateLevel: 'B',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'kasey@ever.co',
@@ -321,7 +350,8 @@ export const environment: IEnvironment = {
 			firstName: 'Kasey',
 			lastName: 'Kraker',
 			imageUrl: 'assets/images/avatars/rachit.png',
-			candidateLevel: null
+			candidateLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'norris@ever.co',
@@ -329,7 +359,8 @@ export const environment: IEnvironment = {
 			firstName: 'Norris ',
 			lastName: 'Nesbit',
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
-			candidateLevel: 'A'
+			candidateLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'estella@ever.co',
@@ -337,7 +368,8 @@ export const environment: IEnvironment = {
 			firstName: 'Estella',
 			lastName: 'Ennis',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
-			candidateLevel: null
+			candidateLevel: null,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'greg@ever.co',
@@ -345,7 +377,8 @@ export const environment: IEnvironment = {
 			firstName: 'Greg ',
 			lastName: 'Grise',
 			imageUrl: 'assets/images/avatars/savov.jpg',
-			candidateLevel: 'A'
+			candidateLevel: 'A',
+			preferredLanguage: LanguagesEnum.ENGLISH
 		}
 	],
 	defaultTeams: [

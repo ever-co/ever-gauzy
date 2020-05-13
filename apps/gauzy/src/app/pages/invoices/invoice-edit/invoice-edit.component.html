@@ -251,11 +251,11 @@
 			<div class="total">
 				<div class="total-item">
 					{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}:
-					{{ subtotal.toFixed(2) }}
+					{{ currency.value }} {{ subtotal.toFixed(2) }}
 				</div>
 				<div class="total-item">
 					{{ 'INVOICES_PAGE.TOTAL' | translate }}:
-					{{ total.toFixed(2) }}
+					{{ currency.value }} {{ total.toFixed(2) }}
 				</div>
 			</div>
 		</div>
