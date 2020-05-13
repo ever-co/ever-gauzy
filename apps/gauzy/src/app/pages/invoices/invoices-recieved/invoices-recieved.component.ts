@@ -50,12 +50,11 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
 				if (organization) {
-					const allInvoices = await this.invoicesService.getAll();
-					const invoices = allInvoices.items.filter(
-						(i) => i.sentTo === organization.id
-					);
+					const invoices = await this.invoicesService.getAll([], {
+						sentTo: organization.id
+					});
 					this.loading = false;
-					this.smartTableSource.load(invoices);
+					this.smartTableSource.load(invoices.items);
 				}
 			});
 	}
