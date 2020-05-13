@@ -184,7 +184,8 @@
 			"INTERVIEWERS": "Интервьюеры",
 			"LOCATION": "Местоположение",
 			"NOTE": "Примечание",
-			"PREFERRED_LANGUAGE": "Предпочитаемый язык"
+			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
+			"DESCRIPTION": "Описание"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -287,7 +288,10 @@
 			"MEETING_LOCATION": "Местоположение",
 			"MEETING_DESCRIPTION": "Описание",
 			"BUFFER_TIME": "Буферные минуты",
-			"BREAK_TIME": "Минут остановки"
+			"BREAK_TIME": "Минут остановки",
+			"DESCRIPTION": "Description",
+			"DURATION": "Duration",
+			"TITLE": "Title"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -365,11 +369,14 @@
 		"STARTS_ON": "Начинается при",
 		"EXPENSE_HISTORY": "История расходов",
 		"NEW_EXPENSE_VALUE": "Новое значение расхода",
-		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д."
+		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д.",
+		"ADD_EVENT_TYPE": "Add Event Type",
+		"EDIT_EVENT_TYPE": " Edit Event Type"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
 		"APPOINTMENTS": "Назначения",
+		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -1316,5 +1323,13 @@
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Добавить Назначение"
+	},
+	"EVENT_TYPE_PAGE": {
+		"EVENT_TYPE": "Event Types",
+		"MANAGE_EVENT_TYPE": "Manage Event Type",
+		"EVENT_NAME": "Event Type Name",
+		"EVENT_DURATION": "Duration",
+		"EVENT_DESCRIPTION": "Description",
+		"ACTIVE": "Active"
 	}
 }
