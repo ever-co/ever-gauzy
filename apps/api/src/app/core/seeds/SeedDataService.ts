@@ -71,6 +71,7 @@ import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
+import { createDefaultApprovalPolicyForOrg } from '../../approval-policy/approval-policy.seed';
 import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
 import {
 	createOrganizationVendors,
@@ -380,6 +381,10 @@ export class SeedDataService {
 		await createDefaultTimeOffPolicy(this.connection, {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees
+		});
+
+		await createDefaultApprovalPolicyForOrg(this.connection, {
+			orgs: defaultOrganizations
 		});
 
 		const integrationTypes = await createDefaultIntegrationTypes(
