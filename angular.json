@@ -74,16 +74,12 @@
 							"optimization": true,
 							"outputHashing": "all",
 							"serviceWorker": true,
-							"sourceMap": {
-								"hidden": true,
-								"scripts": true,
-								"styles": false
-							},
+							"sourceMap": false,
 							"extractCss": true,
 							"namedChunks": false,
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
 							"aot": true,
-							"extractLicenses": true,
+							"extractLicenses": false,
 							"vendorChunk": false,
 							"buildOptimizer": false,
 							"budgets": [
