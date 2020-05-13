@@ -27,6 +27,7 @@ import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+
 @Entity('employee')
 export class Employee extends TenantLocationBase implements IEmployee {
 	@ManyToMany((type) => Tag)

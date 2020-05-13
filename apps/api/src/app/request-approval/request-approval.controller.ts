@@ -3,7 +3,9 @@ import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalService } from './request-approval.service';
 import {
 	RequestApproval as IRequestApproval,
-	PermissionsEnum
+	PermissionsEnum,
+	RequestApprovalCreateInput as IRequestApprovalCreateInput,
+	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
 import {
 	Query,
@@ -32,7 +34,7 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		super(requestApprovalService);
 	}
 
-	@ApiOperation({ summary: 'Find all policies.' })
+	@ApiOperation({ summary: 'Find all request approvals.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
@@ -43,11 +45,127 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.POLICY_VIEW)
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
 	@Get()
-	findAllApprovalsPolicies(@Query('data') data: string): string {
+	findAllRequestApprovals(
+		@Query('data') data: string
+	): Promise<IPagination<IRequestApproval>> {
 		const { relations, findInput } = JSON.parse(data);
 
-		return '';
+		return this.requestApprovalService.findAllRequestApprovals({
+			where: findInput,
+			relations
+		});
+	}
+
+	@ApiOperation({ summary: 'Find all request approval.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: RequestApproval
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
+	@Get('employee/:id')
+	findRequestApprovalsByEmployeeId(
+		@Param('id') id: string,
+		@Query('data') data: string
+	): Promise<IPagination<IRequestApproval>> {
+		const { relations, findInput } = JSON.parse(data);
+
+		return this.requestApprovalService.findRequestApprovalsByEmployeeId({
+			where: findInput,
+			relations
+		});
+	}
+
+	@ApiOperation({ summary: 'create a request approval.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: RequestApproval
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
+	@Post()
+	async createRequestApproval(
+		@Body() entity: IRequestApprovalCreateInput
+	): Promise<RequestApproval> {
+		return this.requestApprovalService.createRequestApproval(entity);
+	}
+
+	@ApiOperation({ summary: 'employee accept request approval.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: RequestApproval
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
+	@Put('approval/:id')
+	async employeeApprovalRequestApproval(
+		@Param('id') id: string
+	): Promise<RequestApproval> {
+		return this.requestApprovalService.updateStatusRequestApproval(
+			id,
+			RequestApprovalStatusTypesEnum.APPROVED
+		);
+	}
+
+	@ApiOperation({ summary: 'employee refuse request approval.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: RequestApproval
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
+	@Put('refuse/:id')
+	async employeeRefuseRequestApproval(
+		@Param('id') id: string
+	): Promise<RequestApproval> {
+		return this.requestApprovalService.updateStatusRequestApproval(
+			id,
+			RequestApprovalStatusTypesEnum.REFUSED
+		);
+	}
+
+	@ApiOperation({ summary: 'update a request approval.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found policies',
+		type: RequestApproval
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
+	@Put(':id')
+	async updateRequestApproval(
+		@Param('id') id: string,
+		@Body() entity: IRequestApprovalCreateInput
+	): Promise<RequestApproval> {
+		return this.requestApprovalService.updateRequestApproval(id, entity);
 	}
 }

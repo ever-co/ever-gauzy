@@ -51,7 +51,7 @@ export * from './lib/tenant.model';
 export * from './lib/http-status.enum';
 export * from './lib/product.model';
 export * from './lib/seed.model';
-export * from './lib/approvals-policy.model';
+export * from './lib/approval-policy.model';
 export * from './lib/request-approval.model';
 export * from './lib/request-approval-employee.model';
 export * from './lib/employee-appointment.model';

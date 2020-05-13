@@ -1,7 +1,7 @@
 /*
-  Approvals Policy is predefined approvals types for the organization.
+  Approval Policy is predefined approval types for the organization.
 E.g. for example, "Business Trip", "Borrow Items", ...
-  Approvals Policy table has the many to one relationship to the Organization table and Tenant by organizationId and tenantId
+  Approval Policy table has the many to one relationship to the Organization table and Tenant by organizationId and tenantId
 */
 import {
 	Entity,
@@ -12,14 +12,14 @@ import {
 	RelationId
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { ApprovalsPolicy as IApprovalsPolicy } from '@gauzy/models';
+import { ApprovalPolicy as IApprovalPolicy } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 import { Organization } from '../organization/organization.entity';
 import { Tenant } from '../tenant/tenant.entity';
 
-@Entity('approvals-policy')
-export class ApprovalsPolicy extends Base implements IApprovalsPolicy {
+@Entity('approval_policy')
+export class ApprovalPolicy extends Base implements IApprovalPolicy {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -33,7 +33,7 @@ export class ApprovalsPolicy extends Base implements IApprovalsPolicy {
 	organization: Organization;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((policy: ApprovalsPolicy) => policy.organization)
+	@RelationId((policy: ApprovalPolicy) => policy.organization)
 	@IsString()
 	@Column({ nullable: true })
 	organizationId: string;
@@ -44,7 +44,7 @@ export class ApprovalsPolicy extends Base implements IApprovalsPolicy {
 	tenant: Tenant;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((policy: ApprovalsPolicy) => policy.tenant)
+	@RelationId((policy: ApprovalPolicy) => policy.tenant)
 	@IsString()
 	@Column({ nullable: true })
 	tenantId: string;

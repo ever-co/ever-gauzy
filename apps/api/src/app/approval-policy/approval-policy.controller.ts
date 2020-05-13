@@ -1,11 +1,10 @@
-import { CrudController, IPagination } from '../core';
-import { ApprovalsPolicy } from './approvals-policy.entity';
-import { ApprovalsPolicyService } from './approvals-policy.service';
+import { CrudController } from '../core';
+import { ApprovalPolicy } from './approval-policy.entity';
+import { ApprovalPolicyService } from './approval-policy.service';
 import {
-	ApprovalsPolicy as IApprovalsPolicy,
 	PermissionsEnum,
-	ApprovalsPolicyCreateInput as IApprovalsPolicyCreateInput,
-	ApprovalsPolicyUpdateInput as IApprovalsPolicyUpdateInput
+	ApprovalPolicyCreateInput as IApprovalPolicyCreateInput,
+	ApprovalPolicyUpdateInput as IApprovalPolicyUpdateInput
 } from '@gauzy/models';
 import {
 	Query,
@@ -24,34 +23,31 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('approvals-policy')
+@ApiTags('approval-policy')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class ApprovalsPolicyControler extends CrudController<ApprovalsPolicy> {
-	constructor(
-		private readonly approvalsPolicyService: ApprovalsPolicyService
-	) {
-		super(approvalsPolicyService);
+export class ApprovalPolicyController extends CrudController<ApprovalPolicy> {
+	constructor(private readonly approvalPolicyService: ApprovalPolicyService) {
+		super(approvalPolicyService);
 	}
 
-	@ApiOperation({ summary: 'Find all policies.' })
+	@ApiOperation({ summary: 'Find all approval policies.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
-		type: ApprovalsPolicy
+		type: ApprovalPolicy
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.APPROVALS_POLICY_VIEW)
+	@Permissions(PermissionsEnum.APPROVAL_POLICY_VIEW)
 	@Get()
-	findAllApprovalsPolicies(@Query('data') data: string): any {
-		console.log('data1111', data);
+	findAllApprovalPolicies(@Query('data') data: string): any {
 		const { findInput, relations } = JSON.parse(data);
 
-		return this.approvalsPolicyService.getAllPolicies({
+		return this.approvalPolicyService.findAllApprovalPolicies({
 			where: findInput,
 			relations
 		});
@@ -68,13 +64,12 @@ export class ApprovalsPolicyControler extends CrudController<ApprovalsPolicy> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.APPROVALS_POLICY_EDIT)
+	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Post('')
-	async createTimeOffPolicy(
-		@Body() entity: IApprovalsPolicyCreateInput
-	): Promise<ApprovalsPolicy> {
-		console.log('entity', entity);
-		return this.approvalsPolicyService.create(entity);
+	async createApprovalPolicy(
+		@Body() entity: IApprovalPolicyCreateInput
+	): Promise<ApprovalPolicy> {
+		return this.approvalPolicyService.create(entity);
 	}
 
 	@ApiOperation({ summary: 'Update record' })
@@ -93,12 +88,12 @@ export class ApprovalsPolicyControler extends CrudController<ApprovalsPolicy> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.APPROVALS_POLICY_EDIT)
+	@Permissions(PermissionsEnum.APPROVAL_POLICY_EDIT)
 	@Put(':id')
-	async updateOrganizationTeam(
+	async updateApprovalPolicy(
 		@Param('id') id: string,
-		@Body() entity: IApprovalsPolicyUpdateInput
-	): Promise<ApprovalsPolicy> {
-		return this.approvalsPolicyService.update(id, entity);
+		@Body() entity: IApprovalPolicyUpdateInput
+	): Promise<ApprovalPolicy> {
+		return this.approvalPolicyService.update(id, entity);
 	}
 }

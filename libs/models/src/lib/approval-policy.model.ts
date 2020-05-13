@@ -1,6 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
-export interface ApprovalsPolicy extends IBaseEntityModel {
+export interface ApprovalPolicy extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId?: string;
 	name?: string;
@@ -8,7 +8,7 @@ export interface ApprovalsPolicy extends IBaseEntityModel {
 	description: string;
 }
 
-export interface ApprovalsPolicyCreateInput extends IBaseEntityModel {
+export interface ApprovalPolicyCreateInput extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId?: string;
 	name?: string;
@@ -16,7 +16,7 @@ export interface ApprovalsPolicyCreateInput extends IBaseEntityModel {
 	description?: string;
 }
 
-export interface ApprovalsPolicyUpdateInput extends IBaseEntityModel {
+export interface ApprovalPolicyUpdateInput extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId?: string;
 	name?: string;
@@ -24,10 +24,16 @@ export interface ApprovalsPolicyUpdateInput extends IBaseEntityModel {
 	description?: string;
 }
 
-export interface ApprovalsPolicyFindInput extends IBaseEntityModel {
+export interface ApprovalPolicyFindInput extends IBaseEntityModel {
 	organizationId?: string;
 	tenantId?: string;
 	name?: string;
 	type?: number;
 	description?: string;
+}
+
+export enum ApprovalPolicyTypesEnum {
+	TIMEO_OFF = 1,
+	EQUIPMENT_SHARING = 2,
+	BUSINESS_TRIP = 3
 }
