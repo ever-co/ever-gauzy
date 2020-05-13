@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
@@ -6,6 +7,7 @@ import {
 	ICandidateInterviewers
 } from '@gauzy/models';
 
+@Injectable()
 export class CandidateInterviewersService {
 	constructor(private http: HttpClient) {}
 
