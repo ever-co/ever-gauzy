@@ -10,9 +10,9 @@ import { NbDialogRef } from '@nebular/theme';
 			</nb-card-header>
 			<nb-card-body>
 				<span>
-					{{ 'FORM.ARCHIVE_CONFIRMATION.SURE' | translate }}
+					{{ 'FORM.DELETE_CONFIRMATION.SURE' | translate }}
 					{{ recordType }}
-					{{ 'FORM.ARCHIVE_CONFIRMATION.RECORD' | translate }}?
+					{{ 'FORM.DELETE_CONFIRMATION.RECORD' | translate }}?
 				</span>
 			</nb-card-body>
 			<nb-card-footer>

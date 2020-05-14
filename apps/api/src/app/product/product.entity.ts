@@ -17,6 +17,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { ProductOption } from '../product-option/product-option.entity';
 import { Tag } from '../tags/tag.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('product')
 export class Product extends Base implements IProduct {
@@ -73,4 +74,13 @@ export class Product extends Base implements IProduct {
 		(productOption) => productOption.product
 	)
 	options: ProductOption[];
+
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany(
+		(type) => InvoiceItem,
+		(invoiceItem) => invoiceItem.product,
+		{ onDelete: 'SET NULL' }
+	)
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
 }
