@@ -30,7 +30,7 @@ export class TimeLog extends Base implements ITimeLog {
 	readonly employeeId: string;
 
 	@ApiProperty({ type: Timesheet })
-	@ManyToOne(() => Timesheet, { nullable: true })
+	@ManyToOne(() => Timesheet, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	timesheet?: Timesheet;
 

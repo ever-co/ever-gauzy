@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TimeTrackerService } from '../time-tracker.service';
 import { TimeLogType, Organization, User, IDateRange } from '@gauzy/models';
 import * as moment from 'moment';
@@ -8,17 +8,18 @@ import { toUTC } from 'libs/utils';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { Store } from '../../../@core/services/store.service';
 import { NgForm } from '@angular/forms';
+import { TimesheetService } from '../../timesheet/timesheet.service';
 
 @Component({
 	selector: 'ngx-time-tracker',
 	templateUrl: './time-tracker.component.html',
 	styleUrls: ['./time-tracker.component.scss']
 })
-export class TimeTrackerComponent implements OnInit {
+export class TimeTrackerComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	employeesId: string;
-	time: string = '00:00:00';
-	current_time: string = '00:00:00';
+	time = '00:00:00';
+	current_time = '00:00:00';
 	running: boolean;
 	today: Date = new Date();
 	selectedRange: IDateRange = { start: null, end: null };
@@ -27,10 +28,10 @@ export class TimeTrackerComponent implements OnInit {
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
+		private timesheetService: TimesheetService,
 		private toastrService: ToastrService,
 		private store: Store
 	) {
-		//this.updateTimePickerLimit(new Date());
 		this.store.selectedOrganization$.subscribe(
 			(organization: Organization) => {
 				this.organization = organization;
@@ -101,7 +102,6 @@ export class TimeTrackerComponent implements OnInit {
 		this.timeTrackerService.$current_session_dueration
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((time) => {
-				console.log(time);
 				this.current_time = moment.utc(time * 1000).format('HH:mm:ss');
 			});
 		this.timeTrackerService.$running
@@ -126,7 +126,7 @@ export class TimeTrackerComponent implements OnInit {
 		const startedAt = toUTC(this.selectedRange.start).toDate();
 		const stoppedAt = toUTC(this.selectedRange.end).toDate();
 
-		let addRequestData = Object.assign(
+		const addRequestData = Object.assign(
 			{
 				startedAt,
 				stoppedAt
@@ -134,7 +134,7 @@ export class TimeTrackerComponent implements OnInit {
 			this.timeTrackerService.timerConfig
 		);
 
-		this.timeTrackerService
+		this.timesheetService
 			.addTime(addRequestData)
 			.then((timeLog) => {
 				if (
@@ -158,11 +158,8 @@ export class TimeTrackerComponent implements OnInit {
 
 	setTimeType(type: string) {
 		this.timeType =
-			type == 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
+			type === 'TRACKED' ? TimeLogType.TRACKED : TimeLogType.MANUAL;
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

@@ -23,7 +23,8 @@ import {
 	RelationId,
 	ManyToMany,
 	JoinTable,
-	OneToOne
+	OneToOne,
+	AfterLoad
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role/role.entity';
@@ -114,4 +115,11 @@ export class User extends Base implements IUser {
 	@IsEnum(LanguagesEnum)
 	@Column({ nullable: true })
 	preferredLanguage?: string;
+	
+	name: string;
+	@AfterLoad()
+	getDuration() {
+		const name = this.firstName + ' ' + this.lastName;
+		this.name = name;
+	}
 }
