@@ -71,6 +71,9 @@ import { IntegrationModule } from './integration/integration.module';
 import { IntegrationTenantModule } from './integration-tenant/integration-tenant.module';
 import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
 import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
+import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
+import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
+import { RequestApprovalModule } from './request-approval/request-approval.module';
 import * as path from 'path';
 import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
 import { LanguagesEnum } from '@gauzy/models';
@@ -195,6 +198,14 @@ import { LanguagesEnum } from '@gauzy/models';
 						module: TimeOffPolicyModule
 					},
 					{
+						path: '/approval-policy',
+						module: ApprovalPolicyModule
+					},
+					{
+						path: '/request-approval',
+						module: RequestApprovalModule
+					},
+					{
 						path: 'role-permissions',
 						module: RolePermissionsModule
 					},
@@ -317,11 +328,14 @@ import { LanguagesEnum } from '@gauzy/models';
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
+		RequestApprovalEmployeeModule,
 		ProposalModule,
 		EmailModule,
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
+		ApprovalPolicyModule,
+		RequestApprovalModule,
 		RolePermissionsModule,
 		TenantModule,
 		EmailTemplateModule,

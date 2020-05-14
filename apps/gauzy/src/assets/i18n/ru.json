@@ -289,9 +289,9 @@
 			"MEETING_DESCRIPTION": "Описание",
 			"BUFFER_TIME": "Буферные минуты",
 			"BREAK_TIME": "Минут остановки",
-			"DESCRIPTION": "Description",
-			"DURATION": "Duration",
-			"TITLE": "Title"
+			"DESCRIPTION": "Описание",
+			"DURATION": "Продолжительность",
+			"TITLE": "Заголовок"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -370,13 +370,13 @@
 		"EXPENSE_HISTORY": "История расходов",
 		"NEW_EXPENSE_VALUE": "Новое значение расхода",
 		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д.",
-		"ADD_EVENT_TYPE": "Add Event Type",
-		"EDIT_EVENT_TYPE": " Edit Event Type"
+		"ADD_EVENT_TYPE": "Добавить тип события",
+		"EDIT_EVENT_TYPE": " Изменить тип события"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
 		"APPOINTMENTS": "Назначения",
-		"EVENT_TYPES": "Event Types",
+		"EVENT_TYPES": "Типы событий",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -950,7 +950,7 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
-		"TASK_MEMBERS": "Employees",
+		"TASK_MEMBERS": "Сотрудники",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
 		"ESTIMATE_DAYS": "Дней",
@@ -1059,9 +1059,7 @@
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
 		"INVALID_DATES": "Неверные даты",
-		"INVOICE_NUMBER_VALUE": "Номер счета не может быть отрицательным числом или нулевым",
-		"TAX_VALUE": "Налог не может быть отрицательным числом",
-		"DISCOUNT_VALUE": "Значение скидки не может быть отрицательным числом",
+		"INVOICE_NUMBER_DUPLICATE": "Номер счета уже существует",
 		"DISCOUNT_TYPE": "Тип скидки",
 		"TAX_TYPE": "Тип налога",
 		"PERCENT": "Процент",
@@ -1325,11 +1323,11 @@
 		"ADD_APPOINTMENT": "Добавить Назначение"
 	},
 	"EVENT_TYPE_PAGE": {
-		"EVENT_TYPE": "Event Types",
-		"MANAGE_EVENT_TYPE": "Manage Event Type",
-		"EVENT_NAME": "Event Type Name",
-		"EVENT_DURATION": "Duration",
-		"EVENT_DESCRIPTION": "Description",
-		"ACTIVE": "Active"
+		"EVENT_TYPE": "Типы событий",
+		"MANAGE_EVENT_TYPE": "Управление Типом События",
+		"EVENT_NAME": "Название типа события",
+		"EVENT_DURATION": "Продолжительность",
+		"EVENT_DESCRIPTION": "Описание",
+		"ACTIVE": "Активный"
 	}
 }
