@@ -19,6 +19,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import * as jspdf from 'jspdf';
 import * as html2canvas from 'html2canvas';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { ProductService } from '../../../@core/services/product.service';
 
 @Component({
 	selector: 'ga-invoice-view',
@@ -48,7 +49,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		private organizationClientsService: OrganizationClientsService,
 		private organizationService: OrganizationsService,
 		private projectService: OrganizationProjectsService,
-		private taskService: TasksService
+		private taskService: TasksService,
+		private productService: ProductService
 	) {
 		super(translateService);
 	}
@@ -126,7 +128,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 					type: 'text',
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
-						return `${row.currency} ${row.price}`;
+						return `${row.currency} ${row.price * row.quantity}`;
 					}
 				}
 			}
@@ -172,6 +174,19 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 					totalValue: +item.totalValue,
 					id: item.id,
 					name: task.title,
+					currency: this.invoice.currency
+				};
+			} else if (item.productId) {
+				const product = await this.productService.getById(
+					item.productId
+				);
+				data = {
+					description: item.description,
+					quantity: item.quantity,
+					price: item.price,
+					totalValue: +item.totalValue,
+					id: item.id,
+					name: product.name,
 					currency: this.invoice.currency
 				};
 			} else {

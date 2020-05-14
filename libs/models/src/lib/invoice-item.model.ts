@@ -10,6 +10,7 @@ export interface InvoiceItem extends IBaseEntityModel {
 	taskId?: string;
 	employeeId?: string;
 	projectId?: string;
+	productId?: string;
 }
 
 export interface InvoiceItemFindInput {

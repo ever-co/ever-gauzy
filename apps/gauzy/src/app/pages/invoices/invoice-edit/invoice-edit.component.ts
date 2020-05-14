@@ -30,6 +30,8 @@ import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-pr
 import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
 import { EmployeesService } from '../../../@core/services';
 import { TasksService } from '../../../@core/services/tasks.service';
+import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
+import { ProductService } from '../../../@core/services/product.service';
 
 @Component({
 	selector: 'ga-invoice-edit',
@@ -51,7 +53,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
-		private taskService: TasksService
+		private taskService: TasksService,
+		private productService: ProductService
 	) {
 		super(translate);
 		this.initializeForm();
@@ -218,6 +221,18 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					editable: false
 				};
 				break;
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				this.settingsSmartTable['columns']['product'] = {
+					title: this.getTranslation(
+						'INVOICES_PAGE.INVOICE_ITEM.PRODUCT'
+					),
+					type: 'custom',
+					renderComponent: InvoiceProductsSelectorComponent,
+					filter: false,
+					addable: false,
+					editable: false
+				};
+				break;
 			default:
 				break;
 		}
@@ -245,7 +260,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				filter: false
 			};
 		} else if (
-			this.invoice.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS
+			this.invoice.invoiceType ===
+				InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
+			this.invoice.invoiceType === InvoiceTypeEnum.BY_PRODUCTS
 		) {
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
@@ -453,6 +470,15 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							invoiceId: this.invoice.id,
 							taskId: invoiceItem.task.id
 						});
+					} else if (invoiceItem.product) {
+						await this.invoiceItemService.update(invoiceItem.id, {
+							description: invoiceItem.description,
+							price: invoiceItem.price,
+							quantity: invoiceItem.quantity,
+							totalValue: invoiceItem.totalValue,
+							invoiceId: this.invoice.id,
+							productId: invoiceItem.product.id
+						});
 					} else {
 						await this.invoiceItemService.update(invoiceItem.id, {
 							description: invoiceItem.description,
@@ -489,6 +515,15 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
 							taskId: invoiceItem.task.id
+						});
+					} else if (invoiceItem.product) {
+						await this.invoiceItemService.add({
+							description: invoiceItem.description,
+							price: invoiceItem.price,
+							quantity: invoiceItem.quantity,
+							totalValue: invoiceItem.totalValue,
+							invoiceId: this.invoice.id,
+							productId: invoiceItem.product.id
 						});
 					} else {
 						await this.invoiceItemService.add({
@@ -557,6 +592,18 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					totalValue: +item.totalValue,
 					id: item.id,
 					task: task
+				};
+			} else if (item.productId) {
+				const product = await this.productService.getById(
+					item.productId
+				);
+				data = {
+					description: item.description,
+					quantity: item.quantity,
+					price: item.price,
+					totalValue: +item.totalValue,
+					id: item.id,
+					product: product
 				};
 			} else {
 				data = {

@@ -13,6 +13,7 @@ import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { Subject } from 'rxjs';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -127,6 +128,17 @@ export class InvoicesComponent extends TranslationBaseComponent
 					taskId: item.taskId
 				});
 			}
+		} else if (this.selectedInvoice.invoiceItems[0].productId) {
+			for (const item of this.selectedInvoice.invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					price: item.price,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id,
+					productId: item.productId
+				});
+			}
 		} else {
 			for (const item of this.selectedInvoice.invoiceItems) {
 				await this.invoiceItemService.add({
@@ -230,18 +242,24 @@ export class InvoicesComponent extends TranslationBaseComponent
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'text',
-					sortDirection: 'asc'
+					sortDirection: 'asc',
+					width: '40%'
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'text',
+					filter: false,
+					width: '40%',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
 					}
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-					type: 'text'
+					type: 'custom',
+					renderComponent: InvoicePaidComponent,
+					filter: false,
+					width: '15%'
 				}
 			}
 		};
