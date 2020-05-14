@@ -1,6 +1,7 @@
 <nb-card>
 	<nb-card-header class="d-flex">
 		<img
+			*ngIf="!isCalendar"
 			class="candidate-image"
 			[src]="selectedCandidate?.user.imageUrl"
 			alt="Candidate Avatar"
@@ -12,7 +13,7 @@
 						| translate
 				}}
 			</h5>
-			<span>
+			<span *ngIf="!isCalendar">
 				{{ selectedCandidate?.user.firstName }}
 				{{ selectedCandidate?.user.lastName }}
 			</span>
@@ -24,23 +25,37 @@
 			(click)="closeDialog()"
 		></nb-icon>
 	</nb-card-header>
-	<nb-card-body>
+	<nb-card-body class="stepper">
 		<nb-stepper #stepper>
 			<nb-step [label]="step1">
 				<ng-template #step1>{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_1'
 						| translate
 				}}</ng-template>
+				<div class="form-group" *ngIf="isCalendar">
+					<label for="note" class="label">{{
+						'FORM.LABELS.CANDIDATE' | translate
+					}}</label>
+					<ga-candidate-select
+						[allCandidates]="candidates"
+						(selectedChange)="onCandidateSelected($event)"
+						[selectedCandidateId]="selectedCandidateId"
+					>
+					</ga-candidate-select>
+				</div>
+
 				<ga-candidate-interview-form
 					#candidateInterviewForm
+					[employeeIds]="editData?.interviewers"
 				></ga-candidate-interview-form>
+
 				<div class="text-right">
 					<button
 						status="success"
 						[disabled]="candidateInterviewForm.form.invalid"
 						nbButton
 						nbStepperNext
-						(click)="addInterview()"
+						(click)="next()"
 					>
 						{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
@@ -71,12 +86,18 @@
 					<nb-card-body class="summary-content">
 						<div class="summary-content-text">
 							<strong> {{ interview?.title }} </strong>
-							on
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
+									| translate
+							}}
 							<strong
 								>{{
 									interview?.startTime | date: 'fullDate'
 								}} </strong
-							>from
+							>{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
+									| translate
+							}}
 							<strong>{{
 								interview?.startTime | date: 'shortTime'
 							}}</strong
@@ -84,7 +105,10 @@
 							<strong>{{
 								interview?.endTime | date: 'shortTime'
 							}}</strong>
-							with
+							{{
+								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH'
+									| translate
+							}}
 							<strong>
 								{{ selectedCandidate?.user.firstName }}
 								{{ selectedCandidate?.user.lastName }}</strong
@@ -125,10 +149,18 @@
 						<nb-card-body>
 							<nb-checkbox
 								(checkedChange)="checkedCandidate($event)"
-								><strong>Notify candidate </strong>
+								><strong
+									>{{
+										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NOTIFY_CANDIDATE'
+											| translate
+									}}
+								</strong>
 							</nb-checkbox>
 							<div class="label">
-								Send interview details to
+								{{
+									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.DETAILS'
+										| translate
+								}}
 								{{ selectedCandidate?.user.firstName }}
 								{{ selectedCandidate?.user.lastName }}
 							</div>
@@ -139,15 +171,24 @@
 							<nb-checkbox
 								(checkedChange)="checkedInterviewer($event)"
 								><strong>
-									Notify interviewer(s)</strong
+									{{
+										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NOTIFY_INTERVIEWERS'
+											| translate
+									}}</strong
 								></nb-checkbox
 							>
 							<div class="label">
-								Send interview details to
+								{{
+									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.DETAILS'
+										| translate
+								}}
 								<strong>
 									{{ employees.length }}
 								</strong>
-								interviewer(s)
+								{{
+									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWERS'
+										| translate
+								}}
 							</div>
 						</nb-card-body>
 					</nb-card>
@@ -155,12 +196,17 @@
 
 				<ga-candidate-email
 					[isCandidate]="true"
-					#notificationInterviewForm
+					[templateData]="interview"
+					[employees]="employees"
+					[selectedCandidate]="selectedCandidate"
+					#emailCandidateForm
 					*ngIf="isCandidateNotification"
 				></ga-candidate-email>
 				<ga-candidate-email
-					[isInterviewer]="true"
-					#notificationInterviewForm
+					[templateData]="interview"
+					[employees]="employees"
+					[selectedCandidate]="selectedCandidate"
+					#emailInterviewerForm
 					*ngIf="isInterviewerNotification"
 				></ga-candidate-email>
 

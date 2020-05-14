@@ -182,6 +182,7 @@
 			"DATE": "Date",
 			"TIME": "Time",
 			"DURATION": "Duration",
+			"CANDIDATE": "Candidate",
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Location",
 			"NOTE": "Note",
@@ -242,7 +243,7 @@
 			"UPLOADER_PLACEHOLDER": "Image",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
-			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
+			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -610,7 +611,7 @@
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
-		"ADD_CANDIATE": "Add Candidates",
+		"ADD_CANDIDATE": "Add Candidates",
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
@@ -622,7 +623,7 @@
 			"DEVELOPER": "Developer",
 			"DEPARTMENT": "Department",
 			"POSITION": "Position",
-			"CANDIATE_DEPARTMENTS": "Employee's Departments:",
+			"CANDIDATE_DEPARTMENTS": "Employee's Departments:",
 			"EMPLOYMENT_TYPE": "Employment Type",
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
@@ -651,7 +652,9 @@
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
 				"INTERVIEWS": "Interviews",
+				"ADD_INTERVIEW": "Add interview",
 				"ON": "on",
+				"TO": "To",
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
@@ -660,16 +663,20 @@
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "Save",
+				"EMAIL_NOTIFICATION": "Email notification",
 				"SUMMARY": "Summary",
-				"EMAIL_NOTIFICATION": "Email notification"
+				"DETAILS": "Send interview details to",
+				"NOTIFY_CANDIDATE": "Notify candidate",
+				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
+				"INTERVIEWERS": "interviewer(s)"
 			}
 		},
-		"ADD_CANDIATES": {
+		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
 			"STEP_2": "Step 2",
 			"STEP_3": "Step 3",
 			"UPLOAD_CV": "Upload CV",
-			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"ADD_ANOTHER_CANDIDATE": "Add Another Candidate",
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
