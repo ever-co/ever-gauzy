@@ -27,7 +27,6 @@ import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
 import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
-import { CandidateStore } from '../../../@core/services/candidate-store.service';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
