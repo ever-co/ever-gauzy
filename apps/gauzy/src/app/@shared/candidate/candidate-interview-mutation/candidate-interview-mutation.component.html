@@ -32,12 +32,11 @@
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_1'
 						| translate
 				}}</ng-template>
-				<div class="form-group">
+				<div class="form-group" *ngIf="isCalendar">
 					<label for="note" class="label">{{
 						'FORM.LABELS.CANDIDATE' | translate
 					}}</label>
 					<ga-candidate-select
-						*ngIf="isCalendar"
 						[allCandidates]="candidates"
 						(selectedChange)="onCandidateSelected($event)"
 						[selectedCandidateId]="selectedCandidateId"

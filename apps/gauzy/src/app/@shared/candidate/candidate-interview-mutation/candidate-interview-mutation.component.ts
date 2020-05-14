@@ -108,6 +108,12 @@ export class CandidateInterviewMutationComponent
 	next() {
 		this.candidateInterviewForm.loadFormData();
 		const interviewForm = this.candidateInterviewForm.form.value;
+
+		//if editing
+		if (interviewForm.interviewers === null) {
+			interviewForm.interviewers = this.candidateInterviewForm.employeeIds;
+		}
+
 		this.interview = {
 			title: this.form.get('title').value,
 			interviewers: interviewForm.interviewers,
@@ -116,10 +122,7 @@ export class CandidateInterviewMutationComponent
 			endTime: interviewForm.endTime,
 			note: this.form.get('note').value
 		};
-		//if editing
-		if (interviewForm.interviewers === null) {
-			interviewForm.interviewers = this.candidateInterviewForm.employeeIds; //to do
-		}
+
 		this.getEmployeeInfo(interviewForm.interviewers);
 	}
 
