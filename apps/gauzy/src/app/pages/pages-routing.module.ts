@@ -252,6 +252,13 @@ const routes: Routes = [
 							).then((m) => m.WorkInProgressModule)
 					},
 					{
+						path: 'help-center',
+						loadChildren: () =>
+							import('./help-center/help-center.module').then(
+								(m) => m.HelpCenterModule
+							)
+					},
+					{
 						path: 'equipment-sharing',
 						loadChildren: () =>
 							import(

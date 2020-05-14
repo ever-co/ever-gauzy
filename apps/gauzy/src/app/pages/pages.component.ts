@@ -437,6 +437,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translated: false,
 						translationKey: 'MENU.EMAIL_TEMPLATES'
 					}
+				},
+				{
+					title: 'Help Center',
+					icon: 'question-mark-circle-outline',
+					link: '/pages/organization/help-center',
+					data: {
+						translated: false,
+						translationKey: 'MENU.HELP_CENTER'
+					}
 				}
 			]
 		},

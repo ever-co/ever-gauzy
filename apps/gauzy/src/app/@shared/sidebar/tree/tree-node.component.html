@@ -1,0 +1,13 @@
+<a (click)="selectEvents.emit(node)" class="label">
+	{{ node.label }}
+</a>
+<div *ngIf="node.children.length" class="children">
+	<ng-template ngFor let-child [ngForOf]="node.children">
+		<ga-tree-node
+			[node]="child"
+			[selectedNode]="selectedNode"
+			(select)="selectEvents.emit($event)"
+		>
+		</ga-tree-node>
+	</ng-template>
+</div>
