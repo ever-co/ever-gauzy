@@ -74,7 +74,9 @@ import { IntegrationType } from '../integration/integration-type.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import { EmployeeAppointment } from '../employee-appointment';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
-
+import { RequestApproval } from '../request-approval/request-approval.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 const entities = [
 	Invite,
 	User,
@@ -138,6 +140,9 @@ const entities = [
 	IntegrationMap,
 	IntegrationEntitySetting,
 	IntegrationEntitySettingTiedEntity,
+	RequestApproval,
+	RequestApprovalEmployee,
+	ApprovalPolicy,
 	EmployeeAppointment,
 	AppointmentEmployees
 ];
