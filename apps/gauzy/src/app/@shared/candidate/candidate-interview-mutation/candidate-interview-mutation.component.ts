@@ -22,12 +22,12 @@ import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { ActivatedRoute } from '@angular/router';
-import { takeUntil, first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
 import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
+import { CandidateStore } from '../../../@core/services/candidate-store.service';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -37,7 +37,9 @@ import { CandidateEmailComponent } from '../candidate-email/candidate-email.comp
 export class CandidateInterviewMutationComponent
 	implements OnInit, AfterViewInit, OnDestroy {
 	@Input() editData: ICandidateInterview;
+	@Input() selectedCandidate: Candidate = null;
 	@Input() interviewId = null;
+	@Input() isCalendar: boolean;
 
 	@ViewChild('stepper', { static: false })
 	stepper: NbStepperComponent;
@@ -52,12 +54,14 @@ export class CandidateInterviewMutationComponent
 	emailInterviewerForm: CandidateEmailComponent;
 
 	form: FormGroup;
+	formInvalid = false;
 	candidateForm: FormGroup;
 	interviewerForm: FormGroup;
 	interview: ICandidateInterviewCreateInput;
 	private _ngDestroy$ = new Subject<void>();
-	selectedCandidate: Candidate;
 	employees: Employee[] = [];
+	candidates: Candidate[] = [];
+	selectedCandidateId = null;
 	isCandidateNotification = false;
 	isInterviewerNotification = false;
 	constructor(
@@ -67,22 +71,15 @@ export class CandidateInterviewMutationComponent
 		protected store: Store,
 		private candidateInterviewService: CandidateInterviewService,
 		protected candidatesService: CandidatesService,
-		private errorHandler: ErrorHandlingService,
-		private route: ActivatedRoute
+		private errorHandler: ErrorHandlingService
 	) {}
 
 	ngOnInit() {
-		this.route.params
+		this.candidatesService
+			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
-
-				const { items } = await this.candidatesService
-					.getAll(['user', 'organizationPosition', 'tags'], { id })
-					.pipe(first())
-					.toPromise();
-
-				this.selectedCandidate = items[0];
+			.subscribe((candidates) => {
+				this.candidates = candidates.items;
 			});
 	}
 
@@ -98,6 +95,17 @@ export class CandidateInterviewMutationComponent
 	closeDialog(interview: ICandidateInterview = null) {
 		this.dialogRef.close(interview);
 	}
+	async onCandidateSelected(id: string) {
+		if (this.selectedCandidate === null) {
+			const res = await this.candidatesService
+				.getAll(['user'], {
+					id: id
+				})
+				.pipe(first())
+				.toPromise();
+			this.selectedCandidate = res.items[0]; //to do
+		}
+	}
 	next() {
 		this.candidateInterviewForm.loadFormData();
 		const interviewForm = this.candidateInterviewForm.form.value;
@@ -109,9 +117,14 @@ export class CandidateInterviewMutationComponent
 			endTime: interviewForm.endTime,
 			note: this.form.get('note').value
 		};
+		//if editing
+		if (interviewForm.interviewers === null) {
+			interviewForm.interviewers = this.candidateInterviewForm.employeeIds; //to do
+		}
 		this.getEmployeeInfo(interviewForm.interviewers);
 	}
-	async getEmployeeInfo(employeeIds: string) {
+
+	async getEmployeeInfo(employeeIds: string[]) {
 		for (let i = 0; i < employeeIds.length; i++) {
 			try {
 				const res = await this.employeesService
@@ -124,6 +137,7 @@ export class CandidateInterviewMutationComponent
 			}
 		}
 	}
+
 	notification() {
 		if (this.emailCandidateForm) {
 			this.emailCandidateForm.loadFormData();

@@ -51,7 +51,12 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 
 	async add() {
 		const dialog = this.dialogService.open(
-			CandidateInterviewMutationComponent
+			CandidateInterviewMutationComponent,
+			{
+				context: {
+					selectedCandidate: this.selectedCandidate
+				}
+			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
@@ -76,6 +81,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					{
 						context: {
 							editData: interview,
+							selectedCandidate: this.selectedCandidate,
 							interviewId: id
 						}
 					}

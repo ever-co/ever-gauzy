@@ -8,7 +8,7 @@ import {
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, IDateRange, ICandidateInterview } from '@gauzy/models';
+import { Employee, IDateRange } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 
 @Component({
@@ -17,21 +17,21 @@ import { EmployeesService } from '../../../@core/services';
 	styleUrls: ['candidate-interview-form.component.scss']
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
+	@Input() employeeIds: string[];
+
+	form: any;
+	employees: Employee[];
+	isMeeting: boolean;
+	selectedEmployeeIds = null;
+	select = true;
+	selectedRange: IDateRange = { start: null, end: null };
+	private _ngDestroy$ = new Subject<void>();
+
 	constructor(
 		private readonly fb: FormBuilder,
 		private employeeService: EmployeesService,
 		private cdRef: ChangeDetectorRef
 	) {}
-	@Input() employeeIds: string[];
-	form: any;
-	employees: Employee[];
-	isMeeting: boolean;
-	selectedEmployeeIds: string[];
-	select = true;
-	selectedRange: IDateRange = { start: null, end: null };
-	private _ngDestroy$ = new Subject<void>();
-
-	unic;
 
 	ngOnInit() {
 		this.loadFormData();
@@ -46,15 +46,7 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	onMembersSelected(event) {
 		this.selectedEmployeeIds = event;
 	}
-	uniqIds(arr: string[]) {
-		const result = [];
-		for (const id of arr) {
-			if (!result.includes(id)) {
-				result.push(id);
-			}
-			return result;
-		}
-	}
+
 	loadFormData() {
 		this.form = this.fb.group({
 			title: [''],
@@ -65,17 +57,18 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			note: ['']
 		});
 	}
-	resetLocation() {
-		this.form.patchValue({ location: '' });
-	}
-	detectChanges(value) {
+
+	detectChanges(value: boolean) {
 		if (value) {
 			this.form.controls['location'].setValidators(Validators.required);
 			this.cdRef.detectChanges();
 		} else {
 			this.form.controls['location'].clearValidators();
-			// this.cdRef.detectChanges();
+			this.cdRef.detectChanges();
 		}
+	}
+	resetLocation() {
+		this.form.patchValue({ location: '' });
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

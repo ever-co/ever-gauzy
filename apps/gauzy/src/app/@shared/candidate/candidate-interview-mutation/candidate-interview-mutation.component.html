@@ -1,6 +1,7 @@
 <nb-card>
 	<nb-card-header class="d-flex">
 		<img
+			*ngIf="!isCalendar"
 			class="candidate-image"
 			[src]="selectedCandidate?.user.imageUrl"
 			alt="Candidate Avatar"
@@ -12,7 +13,7 @@
 						| translate
 				}}
 			</h5>
-			<span>
+			<span *ngIf="!isCalendar">
 				{{ selectedCandidate?.user.firstName }}
 				{{ selectedCandidate?.user.lastName }}
 			</span>
@@ -31,10 +32,24 @@
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_1'
 						| translate
 				}}</ng-template>
+				<div class="form-group">
+					<label for="note" class="label">{{
+						'FORM.LABELS.CANDIDATE' | translate
+					}}</label>
+					<ga-candidate-select
+						*ngIf="isCalendar"
+						[allCandidates]="candidates"
+						(selectedChange)="onCandidateSelected($event)"
+						[selectedCandidateId]="selectedCandidateId"
+					>
+					</ga-candidate-select>
+				</div>
+
 				<ga-candidate-interview-form
 					#candidateInterviewForm
 					[employeeIds]="editData?.interviewers"
 				></ga-candidate-interview-form>
+
 				<div class="text-right">
 					<button
 						status="success"
