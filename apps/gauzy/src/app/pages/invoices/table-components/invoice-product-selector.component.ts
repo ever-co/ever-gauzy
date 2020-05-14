@@ -1,9 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { OrganizationProjects, Product } from '@gauzy/models';
+import { Product } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductService } from '../../../@core/services/product.service';
