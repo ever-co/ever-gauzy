@@ -1,5 +1,5 @@
-<nb-layout>
-	<nb-sidebar>
+<nb-card class="sidemenu">
+	<nb-card-body class="sidebar">
 		<button
 			class="sidebar-button"
 			nbButton
@@ -9,19 +9,37 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD_KNOWLEDGE_BASE' | translate }}
 		</button>
-		<!-- <div *ngFor="let base of knowledgeBases">
-			{{ base.id }}
-		</div> -->
-		<ga-tree
-			[rootNode]="knowledgeBases"
-			[selectedNode]="selectedTreeNode"
-			(select)="handleSelection($event)"
+		<tree
+			class="sidebar-menu"
+			[tree]="tree"
+			(nodeSelected)="onEvent($event)"
+			(nodeRemoved)="handleRemoved($event)"
+			(nodeRenamed)="handleRenamed($event)"
+			(nodeCreated)="onNodeCreated($event)"
 		>
-			></ga-tree
+		</tree>
+		<!-- <tree
+			class="sidebar-menu"
+			#treeFonts
+			[tree]="tree"
+			[settings]="{ rootIsVisible: false }"
+			(menuItemSelected)="onMenuItemSelected($event)"
+			(nodeRemoved)="onNodeRemoved($event)"
+			(nodeRenamed)="onNodeRenamed($event)"
+			(nodeSelected)="onNodeSelected($event)"
+			(nodeMoved)="onNodeMoved($event)"
+			(nodeCreated)="onNodeCreated($event)"
+			(nodeExpanded)="onNodeExpanded($event)"
+			(nodeCollapsed)="onNodeCollapsed($event)"
 		>
-	</nb-sidebar>
-
-	<nb-layout-column class="colored-column-success"
-		>Layout Content</nb-layout-column
-	>
-</nb-layout>
+		</tree> -->
+	</nb-card-body>
+	<nb-card-body>
+		<div>
+			<h5>{{ articleName }}</h5>
+		</div>
+		<div>
+			<p>Article content for {{ articleNameContent }}</p>
+		</div>
+	</nb-card-body>
+</nb-card>

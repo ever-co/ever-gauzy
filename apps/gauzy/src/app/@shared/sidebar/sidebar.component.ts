@@ -1,73 +1,94 @@
-import { Component } from '@angular/core';
-import { TreeNode } from './tree/tree.component';
+import { Component, OnInit } from '@angular/core';
+import { TreeModel } from 'ng2-tree';
 
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
 	styleUrls: ['./sidebar.component.scss']
 })
-export class SidebarComponent {
-	public knowledgeBases: TreeNode;
-	public selectedTreeNode: TreeNode | null;
+export class SidebarComponent implements OnInit {
+	constructor() {}
+	// static articleName = 'Chose any article';
+	// static articleNameContent = 'any article you will chose';
+	public articleName = 'Chose any article';
+	public articleNameContent = 'any article you will chose';
+	public tree: TreeModel = {
+		value: 'Knowledge Bases',
+		children: [
+			{
+				value: 'Knowledge Base 1',
+				children: [
+					{
+						value: 'Article1',
+						icon: ''
+					},
+					{
+						value: 'Article2',
+						icon: ''
+					},
+					{
+						value: 'Category1_1',
+						children: [
+							{
+								value: 'Article1_1',
+								icon: ''
+							}
+						]
+					}
+				]
+			},
+			{
+				value: 'Knowledge Base2',
+				children: [
+					{
+						value: 'Article3',
+						icon: ''
+					}
+				]
+			}
+		]
+	};
+	// public settings: Ng2TreeSettings = {
+	// 	rootIsVisible: false,
+	// 	showCheckboxes: true
+	// };
 
+	public onEvent(node: TreeModel): void {
+		this.articleName = node.node.value;
+		this.articleNameContent = node.node.value;
+	}
+
+	// public onNodeRemoved(e: TreeModel): void {
+	// 	SidebarComponent.onEvent(e, 'Removed');
+	// }
+
+	// public onNodeMoved(e: TreeModel): void {
+	// 	SidebarComponent.onEvent(e, 'Moved');
+	// }
+
+	// public onNodeRenamed(e: TreeModel): void {
+	// 	SidebarComponent.onEvent(e, 'Renamed');
+	// }
+
+	// public onNodeCreated(e: TreeModel): void {
+	// 	SidebarComponent.onEvent(e, 'Created');
+	// }
+
+	// public onNodeSelected(e: TreeModel): void {
+	// 	SidebarComponent.onEvent(e, 'Selected');
+	// }
+
+	// public onNodeUnselected(e: TreeModel): void {
+	// 	SidebarComponent.onEvent(e, 'Unselected');
+	// }
+
+	// public onNodeExpanded(e: TreeModel): void {
+	// 	SidebarComponent.onEvent(e, 'Expanded');
+	// }
+
+	// public onNodeCollapsed(e: TreeModel): void {
+	// 	SidebarComponent.onEvent(e, 'Collapsed');
+	// }
 	addKnowledgeBase() {}
-	public handleSelection(node: TreeNode): void {
-		this.selectedTreeNode = node;
-
-		console.group('Selected Tree Node');
-		console.log('Label:', node.label);
-		console.log('Children:', node.children.length);
-		console.groupEnd();
-	}
-	constructor() {
-		this.selectedTreeNode = null;
-		this.knowledgeBases = {
-			label: 'first',
-			children: [
-				{
-					label: 'second-a',
-					children: [
-						{
-							label: 'third-a',
-							children: [
-								{
-									label: 'fourth-a',
-									children: [
-										{
-											label: 'fifth-a',
-											children: []
-										}
-									]
-								}
-							]
-						}
-					]
-				},
-				{
-					label: 'second-b',
-					children: [
-						{
-							label: 'third-a',
-							children: []
-						}
-					]
-				}
-			]
-		};
-
-		// 	{
-		// 		label: 'first',
-		// 		children: [
-		// 			{
-		// 				label: 'second-a',
-		// 				children: []
-		// 			},
-		// 			{
-		// 				label: 'second-b',
-		// 				children: []
-		// 			},
-		// 		]
-		// 	}
-		// ];
-	}
+	ngOnInit() {}
 }

@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TreeModule } from 'ng2-tree';
 import {
 	NbCardModule,
 	NbIconModule,
@@ -14,7 +15,6 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/selectors.module';
 import { HttpClient } from '@angular/common/http';
 import { SidebarComponent } from './sidebar.component';
-import { TreeModule } from './tree/tree.module';
 
 @NgModule({
 	imports: [
