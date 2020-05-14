@@ -11,6 +11,14 @@ export class SidebarComponent {
 	public selectedTreeNode: TreeNode | null;
 
 	addKnowledgeBase() {}
+	public handleSelection(node: TreeNode): void {
+		this.selectedTreeNode = node;
+
+		console.group('Selected Tree Node');
+		console.log('Label:', node.label);
+		console.log('Children:', node.children.length);
+		console.groupEnd();
+	}
 	constructor() {
 		this.selectedTreeNode = null;
 		this.knowledgeBases = {
