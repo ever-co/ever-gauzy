@@ -1059,6 +1059,7 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"SELECT_PRODUCT": "Select Product",
 		"INVALID_DATES": "Invalid Dates",
 		"INVOICE_NUMBER_DUPLICATE": "Invoice Number already exists",
 		"DISCOUNT_TYPE": "Discount Type",
@@ -1068,6 +1069,8 @@
 		"SUBTOTAL": "Subtotal",
 		"TOTAL": "Total",
 		"NAME": "Name",
+		"PAID": "Paid",
+		"NOT_PAID": "Not Paid",
 		"RECIEVED_INVOICES": "Recieved Invoices",
 		"SEND_INVOICE": "Invoice Sent",
 		"INVOICE_TYPE": {
@@ -1076,6 +1079,7 @@
 			"BY_EMPLOYEE_HOURS": "By Employee Hours",
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
+			"BY_PRODUCTS": "By Products",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items"
 		},
 		"INVOICE_ITEM": {
@@ -1090,6 +1094,7 @@
 			"HOURLY_RATE": "Hourly Rate",
 			"HOURS_WORKED": "Hours Worked",
 			"PROJECT": "Project",
+			"PRODUCT": "Product",
 			"NO_ITEMS": "Please add invoice items",
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",

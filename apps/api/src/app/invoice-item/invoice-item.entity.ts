@@ -7,6 +7,7 @@ import { Invoice } from '../invoice/invoice.entity';
 import { Task } from '../tasks/task.entity';
 import { Employee } from '../employee/employee.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
+import { Product } from '../product/product.entity';
 
 @Entity('invoice_item')
 export class InvoiceItem extends Base implements IInvoiceItem {
@@ -59,6 +60,12 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	@Column({ nullable: true })
 	projectId?: string;
 
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	productId?: string;
+
 	@ApiPropertyOptional({ type: Invoice })
 	@ManyToOne(
 		(type) => Invoice,
@@ -91,4 +98,12 @@ export class InvoiceItem extends Base implements IInvoiceItem {
 	)
 	@JoinColumn()
 	project?: OrganizationProjects;
+
+	@ApiPropertyOptional({ type: Product })
+	@ManyToOne(
+		(type) => Product,
+		(product) => product.invoiceItems
+	)
+	@JoinColumn()
+	product?: Product;
 }

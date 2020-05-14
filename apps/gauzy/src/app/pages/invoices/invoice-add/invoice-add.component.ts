@@ -12,7 +12,8 @@ import {
 	Task,
 	Employee,
 	InvoiceTypeEnum,
-	DiscountTaxTypeEnum
+	DiscountTaxTypeEnum,
+	Product
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -31,6 +32,8 @@ import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-pr
 import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { EmployeesService } from '../../../@core/services';
+import { ProductService } from '../../../@core/services/product.service';
+import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -57,12 +60,15 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	projects: OrganizationProjects[];
 	employees: Employee[];
 	selectedEmployeeIds: string[];
+	products: Product[];
+	selectedProducts: Product[];
 	invoiceType: string;
 	selectedInvoiceType: string;
 	shouldLoadTable: boolean;
 	isEmployeeHourTable: boolean;
 	isProjectHourTable: boolean;
 	isTaskHourTable: boolean;
+	isProductTable: boolean;
 	disableSaveButton = true;
 	organizationId: string;
 	subtotal = 0;
@@ -85,13 +91,13 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private invoiceItemService: InvoiceItemService,
 		private tasksService: TasksService,
 		private errorHandler: ErrorHandlingService,
-		private employeeService: EmployeesService
+		private employeeService: EmployeesService,
+		private productService: ProductService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		// this.getTasks();
 		this._loadOrganizationData();
 		this.initializeForm();
 		this.form.get('currency').disable();
@@ -123,7 +129,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			taxType: ['', Validators.required],
 			invoiceType: [''],
 			project: [''],
-			task: ['']
+			task: [''],
+			product: ['']
 		});
 	}
 
@@ -187,6 +194,18 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					editable: false
 				};
 				break;
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				this.settingsSmartTable['columns']['product'] = {
+					title: this.getTranslation(
+						'INVOICES_PAGE.INVOICE_ITEM.PRODUCT'
+					),
+					type: 'custom',
+					renderComponent: InvoiceProductsSelectorComponent,
+					filter: false,
+					addable: false,
+					editable: false
+				};
+				break;
 			default:
 				break;
 		}
@@ -213,7 +232,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				type: 'text',
 				filter: false
 			};
-		} else if (this.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS) {
+		} else if (
+			this.invoiceType === InvoiceTypeEnum.DETAILS_INVOICE_ITEMS ||
+			this.invoiceType === InvoiceTypeEnum.BY_PRODUCTS
+		) {
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
 				type: 'text',
@@ -370,6 +392,17 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						taskId: invoiceItem.task.id
 					});
 				}
+			} else if (tableData[0].product) {
+				for (const invoiceItem of tableData) {
+					await this.invoiceItemService.add({
+						description: invoiceItem.description,
+						price: invoiceItem.price,
+						quantity: invoiceItem.quantity,
+						totalValue: invoiceItem.totalValue,
+						invoiceId: createdInvoice.id,
+						productId: invoiceItem.product.id
+					});
+				}
 			} else {
 				for (const invoiceItem of tableData) {
 					await this.invoiceItemService.add({
@@ -457,6 +490,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						.subscribe((data) => {
 							this.tasks = data.items;
 						});
+
+					const products = await this.productService.getAll([], {
+						organizationId: organization.id
+					});
+					this.products = products.items;
 				}
 			});
 	}
@@ -467,18 +505,27 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			this.isEmployeeHourTable = true;
 			this.isProjectHourTable = false;
 			this.isTaskHourTable = false;
+			this.isProductTable = false;
 		} else if ($event === InvoiceTypeEnum.BY_PROJECT_HOURS) {
 			this.isEmployeeHourTable = false;
 			this.isProjectHourTable = true;
 			this.isTaskHourTable = false;
+			this.isProductTable = false;
 		} else if ($event === InvoiceTypeEnum.BY_TASK_HOURS) {
 			this.isEmployeeHourTable = false;
 			this.isProjectHourTable = false;
 			this.isTaskHourTable = true;
+			this.isProductTable = false;
+		} else if ($event === InvoiceTypeEnum.BY_PRODUCTS) {
+			this.isEmployeeHourTable = false;
+			this.isProjectHourTable = false;
+			this.isTaskHourTable = false;
+			this.isProductTable = true;
 		} else {
 			this.isEmployeeHourTable = false;
 			this.isProjectHourTable = false;
 			this.isTaskHourTable = false;
+			this.isProductTable = false;
 		}
 	}
 
@@ -534,6 +581,21 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 					fakeQuantity++;
 				}
 			}
+		} else if (this.invoiceType === InvoiceTypeEnum.BY_PRODUCTS) {
+			if (this.selectedProducts.length) {
+				for (const product of this.selectedProducts) {
+					const data = {
+						description: 'Desc',
+						price: fakePrice,
+						quantity: fakeQuantity,
+						product: product,
+						totalValue: fakePrice * fakeQuantity
+					};
+					fakeData.push(data);
+					fakePrice++;
+					fakeQuantity++;
+				}
+			}
 		}
 
 		if (fakeData.length) {
@@ -566,6 +628,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	selectProject($event) {
 		this.selectedProjects = $event;
+	}
+
+	selectProduct($event) {
+		this.selectedProducts = $event;
 	}
 
 	searchClient(term: string, item: any) {
