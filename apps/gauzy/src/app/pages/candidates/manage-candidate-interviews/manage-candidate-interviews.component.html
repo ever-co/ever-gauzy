@@ -1,10 +1,22 @@
 <nb-card>
 	<nb-card-header>
 		<div class="main-header">
-			<p>Calendar</p>
+			<h4>
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWS'
+						| translate
+				}}
+			</h4>
+			<button nbButton status="primary" (click)="add()">
+				<nb-icon icon="plus-outline"></nb-icon>
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
+						| translate
+				}}
+			</button>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<full-calendar [options]="calendarOptions"></full-calendar>
+		<full-calendar #calendar [options]="calendarOptions"></full-calendar>
 	</nb-card-body>
 </nb-card>

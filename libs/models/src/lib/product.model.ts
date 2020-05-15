@@ -16,6 +16,10 @@ export interface Product extends IBaseEntityModel {
 	tags?: Tag[];
 }
 
+export interface ProductFindInput {
+	organizationId?: string;
+}
+
 export interface ProductType extends IBaseEntityModel {
 	name: string;
 	organizationId?: string;

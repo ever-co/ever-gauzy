@@ -4,7 +4,7 @@ import { NbSelectModule } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { CandidateMultiSelectComponent } from './candidate-multi-select.component';
+import { CandidateSelectComponent } from './candidate-select.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -22,9 +22,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [CandidateMultiSelectComponent],
-	entryComponents: [CandidateMultiSelectComponent],
-	exports: [CandidateMultiSelectComponent],
+	declarations: [CandidateSelectComponent],
+	entryComponents: [CandidateSelectComponent],
+	exports: [CandidateSelectComponent],
 	providers: []
 })
-export class CandidateMultiSelectModule {}
+export class CandidateSelectModule {}
