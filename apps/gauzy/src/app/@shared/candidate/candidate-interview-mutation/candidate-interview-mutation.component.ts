@@ -152,7 +152,7 @@ export class CandidateInterviewMutationComponent
 
 	async addInterviewer(id: string, employeeId: string) {
 		try {
-			const interviewer = await this.candidateInterviewersService.create({
+			await this.candidateInterviewersService.create({
 				interviewId: id,
 				employeeId: employeeId
 			});
@@ -192,8 +192,8 @@ export class CandidateInterviewMutationComponent
 					// 	{ ...this.interview }
 					// );
 
-					// TO DO : check res
-					const res = await this.candidateInterviewersService.findByInterviewId(
+					// TO DO : check
+					await this.candidateInterviewersService.findByInterviewId(
 						interview.id
 					);
 				}
