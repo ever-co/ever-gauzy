@@ -468,7 +468,6 @@ export class SeedDataService {
 			tenants,
 			tenantCandidatesMap
 		);
-
 		await createRandomCandidateSources(
 			this.connection,
 			tenants,

@@ -38,7 +38,8 @@
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
-		"DOWNLOAD": "Download"
+		"DOWNLOAD": "Download",
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -436,6 +437,7 @@
 		"TIMESHEETS": "Timesheets",
 		"SCHEDULES": "Schedules",
 		"EMAIL_TEMPLATES": "Email Templates",
+		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",

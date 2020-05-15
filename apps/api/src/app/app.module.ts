@@ -1,3 +1,5 @@
+import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
+import { HelpCenterModule } from './../../../gauzy/src/app/pages/help-center/help-center.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
@@ -71,7 +73,6 @@ import { IntegrationModule } from './integration/integration.module';
 import { IntegrationTenantModule } from './integration-tenant/integration-tenant.module';
 import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
 import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
-import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
 import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
 import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
 import { RequestApprovalModule } from './request-approval/request-approval.module';
@@ -128,6 +129,7 @@ import { EventTypeModule } from './event-types/event-type.module';
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
+					{ path: '/help-center', module: HelpCenterModule },
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
 
@@ -369,6 +371,7 @@ import { EventTypeModule } from './event-types/event-type.module';
 					})
 			  ]
 			: []),
+		HelpCenterModule,
 		EquipmentModule,
 		EquipmentSharingModule,
 		TaskModule,

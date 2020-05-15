@@ -1,0 +1,14 @@
+@import '~angular-tree-component/dist/angular-tree-component.css';
+
+.sidemenu {
+	flex-direction: row;
+	min-height: 800px;
+}
+
+.sidebar {
+	max-width: 300px;
+}
+
+.sidebar-button {
+	margin-bottom: 10px;
+}
