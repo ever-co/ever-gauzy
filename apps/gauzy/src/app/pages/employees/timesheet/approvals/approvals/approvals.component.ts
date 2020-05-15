@@ -1,6 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import {
 	IGetTimeLogInput,
 	Organization,
@@ -22,6 +21,8 @@ import { filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
+import { Router } from '@angular/router';
+import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 
 @Component({
 	selector: 'ngx-approvals',
@@ -65,8 +66,9 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 
 	constructor(
-		private timeTrackerService: TimeTrackerService,
+		private timesheetService: TimesheetService,
 		private store: Store,
+		private router: Router,
 		private toastrService: ToastrService,
 		private nbMenuService: NbMenuService
 	) {
@@ -152,7 +154,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			...(employeeId ? { employeeId } : {}),
 			organizationId: this.organization ? this.organization.id : null
 		};
-		this.timeSheets = await this.timeTrackerService
+		this.timeSheets = await this.timesheetService
 			.getTimeSheets(request)
 			.then((logs) => {
 				this.selectedIds = {};
@@ -202,11 +204,25 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	}
 
 	updateStatus(timesheetId: string | string[], status: TimesheetStatus) {
-		this.timeTrackerService.updateStatus(timesheetId, status).then(() => {
+		this.timesheetService.updateStatus(timesheetId, status).then(() => {
 			if (status === TimesheetStatus.APPROVED) {
 				this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
 			} else if (status === TimesheetStatus.DENIED) {
 				this.toastrService.success('TIMESHEET.DENIED_SUCCESS');
+			}
+			this.updateLogs$.next();
+		});
+	}
+
+	submitTimeheet(
+		timesheetId: string | string[],
+		status: 'submit' | 'unsubmit'
+	) {
+		this.timesheetService.submitTimeheet(timesheetId, status).then(() => {
+			if (status === 'submit') {
+				this.toastrService.success('TIMESHEET.SUBMIT_SUCCESS');
+			} else if (status === 'unsubmit') {
+				this.toastrService.success('TIMESHEET.UNSUBMIT_SUCCESS');
 			}
 			this.updateLogs$.next();
 		});
@@ -229,6 +245,10 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		if (action === 'Deny') {
 			this.updateStatus(timeSheetIds, TimesheetStatus.DENIED);
 		}
+	}
+
+	redirectToView(timesheet: Timesheet) {
+		this.router.navigate(['/pages/employees/timesheets/', timesheet.id]);
 	}
 
 	ngOnDestroy() {}

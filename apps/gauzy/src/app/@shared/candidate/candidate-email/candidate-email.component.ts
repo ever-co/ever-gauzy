@@ -1,10 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Candidate } from '@gauzy/models';
+import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { Subject } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import { takeUntil, first } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-candidate-email',
@@ -12,50 +9,78 @@ import { takeUntil, first } from 'rxjs/operators';
 	styleUrls: ['candidate-email.component.scss']
 })
 export class CandidateEmailComponent implements OnInit {
-	@Input() isInterviewer: boolean;
 	@Input() isCandidate: boolean;
+	@Input() templateData: ICandidateInterview;
+	@Input() selectedCandidate: Candidate;
+	@Input() employees: Employee[];
 	form: FormGroup;
-	formCV: FormGroup;
-	public value = `
-	<p>
-		You invited to 
-		<strong> </strong>
-	</p>
-	<p>When <strong> </strong></p>
-	
-	<p>Interviewer(s) <strong> </strong></p>
-
-	
-`;
-	private _ngDestroy$ = new Subject<void>();
-	selectedCandidate: Candidate;
-
+	employeeList: string;
+	dateTemplate: string;
+	candidateName: string;
+	emailText: string;
+	candidateNameTemplate: string;
+	textTemplate: string;
 	constructor(
 		protected candidatesService: CandidatesService,
-		private route: ActivatedRoute,
 		private readonly fb: FormBuilder
 	) {}
 
 	ngOnInit() {
 		this.loadFormData();
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
-
-				const { items } = await this.candidatesService
-					.getAll(['user', 'organizationPosition', 'tags'], { id })
-					.pipe(first())
-					.toPromise();
-
-				this.selectedCandidate = items[0];
-			});
+		this.setTemplate();
+		this.form.patchValue({
+			text: this.isCandidate
+				? this.textTemplate
+				: this.textTemplate + this.candidateNameTemplate
+		});
 	}
-
-	public valueChange(value: any): void {}
 	loadFormData() {
 		this.form = this.fb.group({
-			text: ['']
+			text: [this.emailText]
 		});
+	}
+	public onChange(value: string) {
+		this.emailText = value;
+	}
+
+	setTemplate() {
+		this.candidateName =
+			this.selectedCandidate.user.firstName +
+			' ' +
+			this.selectedCandidate.user.lastName;
+
+		this.getDate(this.templateData.startTime, this.templateData.endTime);
+
+		const res = [];
+		this.employees.map((employee) => {
+			res.push(employee.user.firstName + ' ' + employee.user.lastName);
+		});
+		this.employeeList = res.join(', ');
+
+		this.textTemplate = `
+	 	<p>You are invited to <strong> ${this.templateData.title}</strong></p>
+		<p>When <strong> ${this.dateTemplate}</strong></p>
+		<p>Where <strong> ${this.templateData.location || 'Online'}</strong></p>
+		<p>Interviewer(s) <strong>${this.employeeList}</strong></p>	`;
+
+		this.candidateNameTemplate = `
+	 	<p>Candidate <strong> ${this.candidateName}</strong></p>`;
+	}
+
+	getDate(startTime: Date, endTime: Date) {
+		this.dateTemplate =
+			startTime.toDateString() +
+			', ' +
+			this.getTime(startTime) +
+			'-' +
+			this.getTime(endTime);
+	}
+	getTime(time: Date) {
+		const hours = time.getHours();
+		let minutes: any = time.getMinutes();
+		if (minutes === 0) {
+			minutes = '00';
+		}
+		return hours + ':' + minutes;
 	}
 }

@@ -15,7 +15,8 @@ import { AuthGuard } from '@nestjs/passport';
 import {
 	RolesEnum,
 	IUpdateTimesheetStatusInput,
-	IGetTimeSheetInput
+	IGetTimeSheetInput,
+	ISubmitTimesheetInput
 } from '@gauzy/models';
 import { UserRole } from '../shared/decorators/roles';
 
@@ -44,7 +45,6 @@ export class TimeSheetController extends CrudController<Timesheet> {
 		@Query() entity: IGetTimeSheetInput,
 		@UserRole() roles: RolesEnum
 	): Promise<any> {
-		console.log(entity);
 		return this.timeSheetService.getTimeSheets(entity, roles);
 	}
 
@@ -65,5 +65,20 @@ export class TimeSheetController extends CrudController<Timesheet> {
 		@Body() entity: IUpdateTimesheetStatusInput
 	): Promise<any> {
 		return this.timeSheetService.updateStatus(entity);
+	}
+
+	@ApiOperation({ summary: 'Submit timesheet' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The timesheet has been successfully submit.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Put('/submit')
+	async submitTimeheet(@Body() entity: ISubmitTimesheetInput): Promise<any> {
+		return this.timeSheetService.submitTimeheet(entity);
 	}
 }

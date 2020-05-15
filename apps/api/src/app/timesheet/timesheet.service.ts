@@ -7,7 +7,9 @@ import * as moment from 'moment';
 import {
 	RolesEnum,
 	IUpdateTimesheetStatusInput,
-	IGetTimeSheetInput
+	IGetTimeSheetInput,
+	ISubmitTimesheetInput,
+	TimesheetStatus
 } from '@gauzy/models';
 import { RequestContext } from '../core/context';
 
@@ -35,13 +37,13 @@ export class TimeSheetService extends CrudService<Timesheet> {
 			timesheet = await this.timeSheetRepository.save({
 				employeeId: employeeId,
 				startedAt: from_date.toISOString(),
-				stoppedAt: from_date.toISOString()
+				stoppedAt: to_date.toISOString()
 			});
 		}
 		return timesheet;
 	}
 
-	async updateStatus({ ids, status }: IUpdateTimesheetStatusInput) {
+	async submitTimeheet({ ids, status }: ISubmitTimesheetInput) {
 		if (typeof ids === 'string') {
 			ids = [ids];
 		}
@@ -50,7 +52,30 @@ export class TimeSheetService extends CrudService<Timesheet> {
 				id: In(ids)
 			},
 			{
-				status: status
+				submittedAt: status === 'submit' ? new Date() : null
+			}
+		);
+		return timesheet;
+	}
+
+	async updateStatus({ ids, status }: IUpdateTimesheetStatusInput) {
+		if (typeof ids === 'string') {
+			ids = [ids];
+		}
+
+		let approvedBy: string = null;
+		if (status === TimesheetStatus.APPROVED) {
+			const user = RequestContext.currentUser();
+			approvedBy = user.id;
+		}
+
+		const timesheet = await this.timeSheetRepository.update(
+			{
+				id: In(ids)
+			},
+			{
+				status: status,
+				approvedById: approvedBy
 			}
 		);
 		return timesheet;

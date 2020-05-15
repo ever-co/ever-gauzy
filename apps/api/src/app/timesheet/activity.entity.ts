@@ -8,7 +8,7 @@ import { TimeSlot } from './time-slot.entity';
 @Entity('activity')
 export class Activity extends Base implements IActivity {
 	@ApiProperty({ type: TimeSlot })
-	@ManyToOne(() => TimeSlot, { nullable: true })
+	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	timeSlot: TimeSlot;
 

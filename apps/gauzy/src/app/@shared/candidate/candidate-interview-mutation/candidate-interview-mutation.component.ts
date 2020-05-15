@@ -4,7 +4,8 @@ import {
 	OnInit,
 	ViewChild,
 	AfterViewInit,
-	OnDestroy
+	OnDestroy,
+	Input
 } from '@angular/core';
 import {
 	NbDialogRef,
@@ -21,11 +22,11 @@ import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { ActivatedRoute } from '@angular/router';
-import { takeUntil, first } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
+import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -34,21 +35,32 @@ import { EmployeesService } from '../../../@core/services';
 })
 export class CandidateInterviewMutationComponent
 	implements OnInit, AfterViewInit, OnDestroy {
+	@Input() editData: ICandidateInterview;
+	@Input() selectedCandidate: Candidate = null;
+	@Input() interviewId = null;
+	@Input() isCalendar: boolean;
+
 	@ViewChild('stepper', { static: false })
 	stepper: NbStepperComponent;
 
 	@ViewChild('candidateInterviewForm', { static: false })
 	candidateInterviewForm: CandidateInterviewFormComponent;
 
-	@ViewChild('notificationInterviewForm', { static: false })
-	notificationInterviewForm: CandidateInterviewFormComponent;
+	@ViewChild('emailCandidateForm', { static: false })
+	emailCandidateForm: CandidateEmailComponent;
+
+	@ViewChild('emailInterviewerForm', { static: false })
+	emailInterviewerForm: CandidateEmailComponent;
 
 	form: FormGroup;
-	notifyForm: FormGroup;
+	formInvalid = false;
+	candidateForm: FormGroup;
+	interviewerForm: FormGroup;
 	interview: ICandidateInterviewCreateInput;
 	private _ngDestroy$ = new Subject<void>();
-	selectedCandidate: Candidate;
 	employees: Employee[] = [];
+	candidates: Candidate[] = [];
+	selectedCandidateId = null;
 	isCandidateNotification = false;
 	isInterviewerNotification = false;
 	constructor(
@@ -58,34 +70,50 @@ export class CandidateInterviewMutationComponent
 		protected store: Store,
 		private candidateInterviewService: CandidateInterviewService,
 		protected candidatesService: CandidatesService,
-		private errorHandler: ErrorHandlingService,
-		private route: ActivatedRoute
+		private errorHandler: ErrorHandlingService
 	) {}
 
 	ngOnInit() {
-		this.route.params
+		this.candidatesService
+			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
-
-				const { items } = await this.candidatesService
-					.getAll(['user', 'organizationPosition', 'tags'], { id })
-					.pipe(first())
-					.toPromise();
-
-				this.selectedCandidate = items[0];
+			.subscribe((candidates) => {
+				this.candidates = candidates.items;
 			});
 	}
 
 	async ngAfterViewInit() {
 		this.form = this.candidateInterviewForm.form;
+		//if editing
+		if (this.editData) {
+			this.candidateInterviewForm.form.patchValue(this.editData);
+			this.candidateInterviewForm.selectedRange.end = this.editData.endTime;
+			this.candidateInterviewForm.selectedRange.start = this.editData.startTime;
+		}
 	}
 	closeDialog(interview: ICandidateInterview = null) {
 		this.dialogRef.close(interview);
 	}
-	async addInterview() {
+	async onCandidateSelected(id: string) {
+		if (this.selectedCandidate === null) {
+			const res = await this.candidatesService
+				.getAll(['user'], {
+					id: id
+				})
+				.pipe(first())
+				.toPromise();
+			this.selectedCandidate = res.items[0]; //to do
+		}
+	}
+	next() {
 		this.candidateInterviewForm.loadFormData();
 		const interviewForm = this.candidateInterviewForm.form.value;
+
+		//if editing
+		if (interviewForm.interviewers === null) {
+			interviewForm.interviewers = this.candidateInterviewForm.employeeIds;
+		}
+
 		this.interview = {
 			title: this.form.get('title').value,
 			interviewers: interviewForm.interviewers,
@@ -94,10 +122,15 @@ export class CandidateInterviewMutationComponent
 			endTime: interviewForm.endTime,
 			note: this.form.get('note').value
 		};
-		for (let i = 0; i < interviewForm.interviewers.length; i++) {
+
+		this.getEmployeeInfo(interviewForm.interviewers);
+	}
+
+	async getEmployeeInfo(employeeIds: string[]) {
+		for (let i = 0; i < employeeIds.length; i++) {
 			try {
 				const res = await this.employeesService
-					.getAll(['user'], { id: interviewForm.interviewers[i] })
+					.getAll(['user'], { id: employeeIds[i] })
 					.pipe(first())
 					.toPromise();
 				this.employees.push(res.items[0]);
@@ -106,18 +139,38 @@ export class CandidateInterviewMutationComponent
 			}
 		}
 	}
-	addNotification() {
-		this.notificationInterviewForm.loadFormData();
-		// const notifyForm = this.notificationInterviewForm.form.value;
+
+	notification() {
+		if (this.emailCandidateForm) {
+			this.emailCandidateForm.loadFormData();
+			// const emailCandidateForm = this.emailCandidateForm.form.value;
+		}
+
+		if (this.emailInterviewerForm) {
+			this.emailInterviewerForm.loadFormData();
+			// const emailInterviewerForm = this.emailInterviewerForm.form.value;
+		}
 	}
 	async add() {
-		this.addInterview();
-		this.addNotification();
+		this.employees = [];
+		this.next();
+		this.notification();
+		let interview: ICandidateInterview;
 		try {
-			const interview = await this.candidateInterviewService.create({
-				...this.interview,
-				candidateId: this.selectedCandidate.id
-			});
+			if (this.interviewId !== null) {
+				// editing interview
+				interview = await this.candidateInterviewService.update(
+					this.interviewId,
+					{ ...this.interview }
+				);
+				this.interviewId = null;
+			} else {
+				// creating interview
+				interview = await this.candidateInterviewService.create({
+					...this.interview,
+					candidateId: this.selectedCandidate.id
+				});
+			}
 			this.closeDialog(interview);
 		} catch (error) {
 			this.errorHandler.handleError(error);

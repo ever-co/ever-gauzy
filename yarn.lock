@@ -16049,6 +16049,11 @@ moment@^2.25.2:
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.25.2.tgz#0f521c1c99322cc55dee08678225fb4e3b4393ca"
   integrity sha512-2BZ14aoZMfyeTmjPi2LHdPKLvb6v4uz8QruMFzHTWd1Rl98p3TWLK6GsRFqQoJOKDZmVetzYO1iU6u1QgGJelQ==
 
+moment@^2.25.3:
+  version "2.25.3"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.25.3.tgz#252ff41319cf41e47761a1a88cab30edfe9808c0"
+  integrity sha512-PuYv0PHxZvzc15Sp8ybUCoQ+xpyPWvjOuK72a5ovzp2LI32rJXOiIfyoFoYvG3s6EwwrdkMyWuRiEHSZRLJNdg==
+
 morgan@^1.9.1:
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/morgan/-/morgan-1.9.1.tgz#0a8d16734a1d9afbc824b99df87e738e58e2da59"
@@ -16385,6 +16390,13 @@ ngx-filepond@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/ngx-filepond/-/ngx-filepond-5.0.1.tgz#0b6797be56e4382aa37b301fcb524f90b74f2035"
   integrity sha512-ohilvQVFE6uv+MPV6zx0H7roKGb5jXuAuzsfFouH3u4fpKzISZyWa0bvIzKW+UNTpzFQ6pIdCn8yBCA9MaSkCg==
+  dependencies:
+    tslib "^1.9.0"
+
+ngx-moment@^3.5.0:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/ngx-moment/-/ngx-moment-3.5.0.tgz#97a4575a05d038612229b9fe09c4910353020613"
+  integrity sha512-QC/5XNC0BW6WkJkwZT4r2A29j/8sJAmhuQJrEnEdpW35GvkemccuxEUAwo/PwkzPB/CHaquR00E6P2HVEQ1iEg==
   dependencies:
     tslib "^1.9.0"
 
