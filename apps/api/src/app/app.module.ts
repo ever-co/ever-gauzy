@@ -78,6 +78,7 @@ import { RequestApprovalModule } from './request-approval/request-approval.modul
 import * as path from 'path';
 import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
 import { LanguagesEnum } from '@gauzy/models';
+import { EventTypeModule } from './event-types/event-type.module';
 
 @Module({
 	imports: [
@@ -297,6 +298,10 @@ import { LanguagesEnum } from '@gauzy/models';
 					{
 						path: '/product-variant-settings',
 						module: ProductVariantSettingsModule
+					},
+					{
+						path: '/event-type',
+						module: EventTypeModule
 					}
 				]
 			}
@@ -350,6 +355,7 @@ import { LanguagesEnum } from '@gauzy/models';
 		InvoiceModule,
 		InvoiceItemModule,
 		EmployeeLevelModule,
+		EventTypeModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
