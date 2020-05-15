@@ -115,11 +115,15 @@ export class User extends Base implements IUser {
 	@IsEnum(LanguagesEnum)
 	@Column({ nullable: true })
 	preferredLanguage?: string;
-	
-	name: string;
+
+	name?: string;
+
+	employeeId?: string;
+
 	@AfterLoad()
-	getDuration() {
+	afterLoad?() {
 		const name = this.firstName + ' ' + this.lastName;
 		this.name = name;
+		this.employeeId = this.employee ? this.employee.id : null;
 	}
 }
