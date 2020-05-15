@@ -1,7 +1,9 @@
-import { Column, Entity } from 'typeorm';
+import { ICandidateInterviewers } from './../../../../../libs/models/src/lib/candidate-interviewers.model';
+import { Column, Entity, ManyToOne, JoinTable } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ICandidateInterview } from '@gauzy/models';
+import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 
 @Entity('candidate_interview')
 export class CandidateInterview extends Base implements ICandidateInterview {
@@ -17,10 +19,11 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@Column()
 	endTime: Date;
 
-	@ApiProperty({})
-	@Column('simple-array')
-	interviewers: string[];
-
+	@ManyToOne((type) => CandidateInterviewers)
+	@JoinTable({
+		name: 'candidate_interviewers'
+	})
+	interviewers?: ICandidateInterviewers[];
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	candidateId?: string;

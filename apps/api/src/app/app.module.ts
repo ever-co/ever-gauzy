@@ -1,3 +1,4 @@
+import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
 import { HelpCenterModule } from './../../../gauzy/src/app/pages/help-center/help-center.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
@@ -105,6 +106,10 @@ import { EventTypeModule } from './event-types/event-type.module';
 					{
 						path: '/candidate-interview',
 						module: CandidateInterviewModule
+					},
+					{
+						path: '/candidate-interviewers',
+						module: CandidateInterviewersModule
 					},
 					{
 						path: '/candidate-experience',
@@ -315,6 +320,7 @@ import { EventTypeModule } from './event-types/event-type.module';
 		CandidateSkillModule,
 		CandidateFeedbacksModule,
 		CandidateInterviewModule,
+		CandidateInterviewersModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,

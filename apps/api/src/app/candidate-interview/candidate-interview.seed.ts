@@ -8,7 +8,6 @@ const candidateInterviewList: ICandidateInterview[] = [
 		title: 'Interview 1',
 		startTime: new Date(2013, 0, 24, 14, 30, 0, 0),
 		endTime: new Date(2013, 0, 24, 15, 30, 0, 0),
-		interviewers: ['Denis', 'Drus'],
 		location: '',
 		note: ''
 	},
@@ -16,7 +15,6 @@ const candidateInterviewList: ICandidateInterview[] = [
 		title: 'Interview 2',
 		startTime: new Date(2013, 0, 24, 14, 30, 0, 0),
 		endTime: new Date(2013, 0, 24, 15, 30, 0, 0),
-		interviewers: ['Miro'],
 		location: '',
 		note: ''
 	}
