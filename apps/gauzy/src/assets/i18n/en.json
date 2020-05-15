@@ -959,6 +959,7 @@
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Project",
 		"TASK_MEMBERS": "Employees",
+		"TASK_TEAMS": "Teams",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",

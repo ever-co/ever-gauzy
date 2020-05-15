@@ -50,13 +50,47 @@
 					</div>
 				</div>
 				<div class="col-sm-12">
+					<nb-radio-group
+						(valueChange)="onParticipantsChange($event)"
+						[value]="participants"
+					>
+						<nb-radio class="nb-radio" [value]="'employees'"
+							>Employees
+						</nb-radio>
+						<nb-radio class="nb-radio" [value]="'teams'"
+							>Teams
+						</nb-radio>
+					</nb-radio-group>
+				</div>
+				<div class="col-sm-12">
 					<div class="form-group">
-						<ga-employee-multi-select
-							[selectedEmployeeIds]="selectedMembers"
-							[allEmployees]="employees"
-							(selectedChange)="onMembersSelected($event)"
-						>
-						</ga-employee-multi-select>
+						<ng-container *ngIf="participants === 'employees'">
+							<ga-employee-multi-select
+								[selectedEmployeeIds]="selectedMembers"
+								[allEmployees]="employees"
+								(selectedChange)="onMembersSelected($event)"
+							>
+							</ga-employee-multi-select>
+						</ng-container>
+						<ng-container *ngIf="participants === 'teams'">
+							<nb-select
+								formControlName="teams"
+								multiple
+								[selected]="selectedTeams"
+								(selectedChange)="onTeamsSelected($event)"
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
+								}}"
+							>
+								<nb-option
+									*ngFor="let team of teams"
+									[value]="team.id"
+								>
+									{{ team.name }}</nb-option
+								>
+							</nb-select>
+						</ng-container>
 					</div>
 				</div>
 				<div class="col-sm-12">
