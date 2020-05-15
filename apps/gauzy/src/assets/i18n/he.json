@@ -1326,7 +1326,9 @@
 		"CALENDAR": "Calendar",
 		"APPROVALS": "Approvals",
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
-		"DENIED_SUCCESS": "Timesheet Successfully Denied"
+		"DENIED_SUCCESS": "Timesheet Successfully Denied",
+		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
+		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
