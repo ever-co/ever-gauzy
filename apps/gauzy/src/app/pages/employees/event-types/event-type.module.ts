@@ -8,7 +8,8 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbDialogModule
+	NbDialogModule,
+	NbToastrModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -18,6 +19,8 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { EventTypeComponent } from './event-type.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { EventTypeMutationModule } from './event-type-mutation/event-type-mutation.module';
+import { EventTypeService } from '../../../@core/services/event-type.service';
+import { UserFormsModule } from '../../../@shared/user/forms/user-forms.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -27,6 +30,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	imports: [
 		EventTypeRoutingModule,
 		ThemeModule,
+		NbToastrModule,
 		EmployeeSelectorsModule,
 		NbCardModule,
 		FormsModule,
@@ -37,6 +41,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		NbSpinnerModule,
 		EventTypeMutationModule,
+		UserFormsModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
@@ -47,6 +52,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		})
 	],
 	declarations: [EventTypeComponent],
-	providers: []
+	providers: [EventTypeService]
 })
 export class EventTypeModule {}

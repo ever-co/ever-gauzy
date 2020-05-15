@@ -2,10 +2,9 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../../@core/services/store.service';
 import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { EventType } from '@gauzy/models';
+import { EventTypeViewModel } from '../event-type.component';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -21,15 +20,13 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
-	eventType: EventType;
+	eventType: EventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
 	durationUnit: string = this.durationUnits[0];
-	duplicate: boolean;
 
 	constructor(
 		private fb: FormBuilder,
 		public dialogRef: NbDialogRef<EventTypeMutationComponent>,
-		private store: Store,
 		private translate: TranslateService
 	) {
 		super(translate);
@@ -64,29 +61,24 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 	addOrEditEventType() {
 		this.dialogRef.close(
 			Object.assign(
-				{ employee: this.employeeSelector.selectedEmployee },
+				{
+					employee: this.employeeSelector.selectedEmployee,
+					id: this.eventType ? this.eventType.id : null
+				},
 				this.form.value
 			)
 		);
 	}
 
 	private _initializeForm() {
-		if (this.eventType) {
-			this.form = this.fb.group({
-				title: this.eventType.title,
-				description: this.eventType.description,
-				duration: this.eventType.duration,
-				durationUnit: this.eventType.durationUnit,
-				active: this.eventType.isActive
-			});
-		} else {
-			this.form = this.fb.group({
-				title: '',
-				description: '',
-				duration: undefined,
-				durationUnit: this.durationUnits[0],
-				active: false
-			});
-		}
+		this.form = this.fb.group({
+			title: this.eventType ? this.eventType.title : '',
+			description: this.eventType ? this.eventType.description : '',
+			duration: this.eventType ? this.eventType.duration : undefined,
+			durationUnit: this.eventType
+				? this.eventType.durationUnit
+				: this.durationUnits[0],
+			isActive: this.eventType ? this.eventType.isActive : false
+		});
 	}
 }

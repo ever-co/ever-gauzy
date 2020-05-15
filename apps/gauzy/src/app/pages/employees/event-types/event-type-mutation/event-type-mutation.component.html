@@ -1,10 +1,7 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h4 *ngIf="eventType; else headerAdd">
-			{{
-				(duplicate ? 'POP_UPS.DUPLICATE' : 'POP_UPS.EDIT_EVENT_TYPE')
-					| translate
-			}}
+			{{ 'POP_UPS.EDIT_EVENT_TYPE' | translate }}
 		</h4>
 		<ng-template #headerAdd>
 			<h4>{{ 'POP_UPS.ADD_EVENT_TYPE' | translate }}</h4>
@@ -12,7 +9,6 @@
 		<ga-employee-selector
 			#employeeSelector
 			fullWidth
-			[hidden]="eventType && !duplicate"
 			[skipGlobalChange]="true"
 			class="employees"
 			placeholder="Organization"
@@ -113,7 +109,7 @@
 				<div class="row">
 					<div class="col">
 						<div class="form-group">
-							<nb-checkbox formControlName="active">
+							<nb-checkbox formControlName="isActive">
 								<span
 									nbTooltip="{{
 										'EVENT_TYPE_PAGE.ACTIVE' | translate
