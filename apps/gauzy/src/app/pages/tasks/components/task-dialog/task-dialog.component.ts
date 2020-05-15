@@ -1,5 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Task, OrganizationProjects, Employee } from '@gauzy/models';
+import {
+	Task,
+	OrganizationProjects,
+	Employee,
+	OrganizationTeam
+} from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
@@ -10,12 +15,14 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 import * as moment from 'moment';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { first } from 'rxjs/operators';
+import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
 
 const initialTaskValue = {
 	title: '',
 	project: null,
 	status: '',
 	members: null,
+	teams: null,
 	estimate: null,
 	dueDate: null,
 	description: '',
@@ -34,10 +41,13 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	projects: OrganizationProjects[];
 	statuses: string[] = ['Todo', 'In Progress', 'For Testing', 'Completed'];
 	employees: Employee[] = [];
+	teams: OrganizationTeam[] = [];
 	selectedMembers: string[];
+	selectedTeams: string[];
 	selectedTask: Task;
 	organizationId: string;
 	selectedTags: any;
+	participants = 'employees';
 
 	constructor(
 		public dialogRef: NbDialogRef<TaskDialogComponent>,
@@ -48,7 +58,8 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private readonly toastrService: NbToastrService,
 		private errorHandler: ErrorHandlingService,
-		private employeesService: EmployeesService
+		private employeesService: EmployeesService,
+		private organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translateService);
 	}
@@ -56,6 +67,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	ngOnInit() {
 		this.loadProjects();
 		this.loadEmployees();
+		this.loadTeams();
 		this.initializeForm(this.selectedTask || initialTaskValue);
 	}
 
@@ -77,12 +89,17 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		project,
 		status,
 		members,
+		teams,
 		estimate,
 		dueDate,
 		tags
 	}: Task) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedMembers = (members || []).map((member) => member.id);
+		this.selectedTeams = (teams || []).map((team) => team.id);
+		if (teams && teams.length > 0) {
+			this.participants = 'teams';
+		}
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
@@ -99,7 +116,8 @@ export class TaskDialogComponent extends TranslationBaseComponent
 			],
 			dueDate: [dueDate],
 			description: [description],
-			tags: []
+			tags: [],
+			teams: [this.selectedTeams]
 		});
 	}
 
@@ -133,6 +151,13 @@ export class TaskDialogComponent extends TranslationBaseComponent
 						.map((id) => this.employees.find((e) => e.id === id))
 						.filter((e) => !!e)
 				);
+			this.form
+				.get('teams')
+				.setValue(
+					(this.selectedTeams || [])
+						.map((id) => this.teams.find((e) => e.id === id))
+						.filter((e) => !!e)
+				);
 			this.dialogRef.close(this.form.value);
 		}
 	}
@@ -158,5 +183,29 @@ export class TaskDialogComponent extends TranslationBaseComponent
 
 	onMembersSelected(members: string[]) {
 		this.selectedMembers = members;
+	}
+
+	async loadTeams() {
+		const organizationId = this._organizationsStore.selectedOrganization.id;
+		if (!organizationId) {
+			return;
+		}
+		this.teams = (
+			await this.organizationTeamsService.getAll(['members'])
+		).items.filter((org) => {
+			return org.organizationId === organizationId;
+		});
+	}
+
+	onParticipantsChange(participants: string) {
+		this.selectedMembers = [];
+		this.selectedTeams = [];
+		this.form.get('members').setValue([]);
+		this.form.get('teams').setValue([]);
+		this.participants = participants;
+	}
+
+	onTeamsSelected(teamsSelection: string[]) {
+		this.selectedTeams = teamsSelection;
 	}
 }

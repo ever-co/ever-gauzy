@@ -10,6 +10,7 @@ import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.compon
 import { PictureNameTagsComponent } from './picture-name-tags/picture-name-tags.component';
 import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
 import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
+import { TaskTeamsComponent } from './task-teams/task-teams.component';
 
 @NgModule({
 	imports: [
@@ -31,7 +32,8 @@ import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-
 		NotesWithTagsComponent,
 		PictureNameTagsComponent,
 		TaskEstimateComponent,
-		EmployeeWithLinksComponent
+		EmployeeWithLinksComponent,
+		TaskTeamsComponent
 	],
 	declarations: [
 		DateViewComponent,
@@ -39,7 +41,8 @@ import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-
 		NotesWithTagsComponent,
 		PictureNameTagsComponent,
 		TaskEstimateComponent,
-		EmployeeWithLinksComponent
+		EmployeeWithLinksComponent,
+		TaskTeamsComponent
 	],
 	providers: []
 })

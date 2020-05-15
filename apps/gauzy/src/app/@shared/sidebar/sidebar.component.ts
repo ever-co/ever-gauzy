@@ -1,15 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { TreeModel } from 'ng2-tree';
+import { Component } from '@angular/core';
+import { TreeModel, NodeEvent, MenuItemSelectedEvent } from 'ng2-tree';
 
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
 	styleUrls: ['./sidebar.component.scss']
 })
-export class SidebarComponent implements OnInit {
-	constructor() {}
-	// static articleName = 'Chose any article';
-	// static articleNameContent = 'any article you will chose';
+export class SidebarComponent {
 	public articleName = 'Chose any article';
 	public articleNameContent = 'any article you will chose';
 	public tree: TreeModel = {
@@ -18,77 +15,79 @@ export class SidebarComponent implements OnInit {
 			{
 				value: 'Knowledge Base 1',
 				children: [
-					{
-						value: 'Article1',
-						icon: ''
-					},
-					{
-						value: 'Article2',
-						icon: ''
-					},
-					{
-						value: 'Category1_1',
-						children: [
-							{
-								value: 'Article1_1',
-								icon: ''
-							}
-						]
-					}
+					{ value: 'calendar', icon: 'attach-outline' },
+					{ value: 'download', icon: 'attach-outline' },
+					{ value: 'group', icon: 'attach-outline' },
+					{ value: 'print', icon: 'attach-outline' }
 				]
 			},
 			{
-				value: 'Knowledge Base2',
+				value: 'Knowledge Base 2',
 				children: [
-					{
-						value: 'Article3',
-						icon: ''
-					}
+					{ value: 'pointer', icon: 'attach-outline' },
+					{ value: 'grab', icon: 'attach-outline' },
+					{ value: 'thumbs up', icon: 'calendar-outline' },
+					{ value: 'thumbs down', icon: 'calendar-outline' }
+				]
+			},
+			{
+				value: 'Knowledge Base 3',
+				children: [
+					{ value: 'file', icon: 'calendar-outline' },
+					{ value: 'audio', icon: 'calendar-outline' },
+					{ value: 'movie', icon: 'calendar-outline' },
+					{ value: 'archive', icon: 'calendar-outline' }
 				]
 			}
 		]
 	};
-	// public settings: Ng2TreeSettings = {
-	// 	rootIsVisible: false,
-	// 	showCheckboxes: true
-	// };
 
-	public onEvent(node: TreeModel): void {
-		this.articleName = node.node.value;
-		this.articleNameContent = node.node.value;
+	private static logEvent(e: NodeEvent, message: string): void {
+		console.log(e);
+		console.log(`${message}: ${e.node.value}`);
+	}
+	public changeValue(e: NodeEvent) {
+		this.articleNameContent = e.node.value;
+		this.articleName = e.node.value;
 	}
 
-	// public onNodeRemoved(e: TreeModel): void {
-	// 	SidebarComponent.onEvent(e, 'Removed');
-	// }
+	public onNodeRemoved(e: NodeEvent): void {
+		SidebarComponent.logEvent(e, 'Removed');
+	}
 
-	// public onNodeMoved(e: TreeModel): void {
-	// 	SidebarComponent.onEvent(e, 'Moved');
-	// }
+	public onNodeMoved(e: NodeEvent): void {
+		SidebarComponent.logEvent(e, 'Moved');
+	}
 
-	// public onNodeRenamed(e: TreeModel): void {
-	// 	SidebarComponent.onEvent(e, 'Renamed');
-	// }
+	public onNodeRenamed(e: NodeEvent): void {
+		SidebarComponent.logEvent(e, 'Renamed');
+	}
 
-	// public onNodeCreated(e: TreeModel): void {
-	// 	SidebarComponent.onEvent(e, 'Created');
-	// }
+	public onNodeCreated(e: NodeEvent): void {
+		SidebarComponent.logEvent(e, 'Created');
+	}
 
-	// public onNodeSelected(e: TreeModel): void {
-	// 	SidebarComponent.onEvent(e, 'Selected');
-	// }
+	public onNodeSelected(e: NodeEvent): void {
+		SidebarComponent.logEvent(e, 'Selected');
+		this.changeValue(e);
+	}
 
-	// public onNodeUnselected(e: TreeModel): void {
-	// 	SidebarComponent.onEvent(e, 'Unselected');
-	// }
+	public onNodeUnselected(e: NodeEvent): void {
+		SidebarComponent.logEvent(e, 'Unselected');
+	}
 
-	// public onNodeExpanded(e: TreeModel): void {
-	// 	SidebarComponent.onEvent(e, 'Expanded');
-	// }
+	public onMenuItemSelected(e: MenuItemSelectedEvent) {
+		SidebarComponent.logEvent(
+			e,
+			`You selected ${e.selectedItem} menu item`
+		);
+	}
 
-	// public onNodeCollapsed(e: TreeModel): void {
-	// 	SidebarComponent.onEvent(e, 'Collapsed');
-	// }
-	addKnowledgeBase() {}
-	ngOnInit() {}
+	public onNodeExpanded(e: NodeEvent): void {
+		SidebarComponent.logEvent(e, 'Expanded');
+	}
+
+	public onNodeCollapsed(e: NodeEvent): void {
+		SidebarComponent.logEvent(e, 'Collapsed');
+	}
 }

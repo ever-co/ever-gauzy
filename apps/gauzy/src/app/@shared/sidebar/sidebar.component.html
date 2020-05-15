@@ -1,38 +1,28 @@
 <nb-card class="sidemenu">
 	<nb-card-body class="sidebar">
-		<button
-			class="sidebar-button"
-			nbButton
-			status="primary"
-			(click)="addKnowledgeBase()"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD_KNOWLEDGE_BASE' | translate }}
-		</button>
-		<tree
-			class="sidebar-menu"
-			[tree]="tree"
-			(nodeSelected)="onEvent($event)"
-			(nodeRemoved)="handleRemoved($event)"
-			(nodeRenamed)="handleRenamed($event)"
-			(nodeCreated)="onNodeCreated($event)"
-		>
-		</tree>
-		<!-- <tree
-			class="sidebar-menu"
-			#treeFonts
-			[tree]="tree"
-			[settings]="{ rootIsVisible: false }"
-			(menuItemSelected)="onMenuItemSelected($event)"
-			(nodeRemoved)="onNodeRemoved($event)"
-			(nodeRenamed)="onNodeRenamed($event)"
-			(nodeSelected)="onNodeSelected($event)"
-			(nodeMoved)="onNodeMoved($event)"
-			(nodeCreated)="onNodeCreated($event)"
-			(nodeExpanded)="onNodeExpanded($event)"
-			(nodeCollapsed)="onNodeCollapsed($event)"
-		>
-		</tree> -->
+		<div class="tree-container">
+			<div class="tree-content">
+				<tree
+					[tree]="tree"
+					(nodeRemoved)="onNodeRemoved($event)"
+					(nodeRenamed)="onNodeRenamed($event)"
+					(nodeSelected)="onNodeSelected($event)"
+					(nodeMoved)="onNodeMoved($event)"
+					(nodeCreated)="onNodeCreated($event)"
+				>
+					<ng-template let-node>
+						<nb-icon
+							icon="attach-outline"
+							class="title-icon"
+						></nb-icon>
+						<span
+							class="node-name"
+							[innerHTML]="node?.value"
+						></span>
+					</ng-template>
+				</tree>
+			</div>
+		</div>
 	</nb-card-body>
 	<nb-card-body>
 		<div>

@@ -958,6 +958,7 @@
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
 		"TASK_MEMBERS": "Сотрудники",
+		"TASK_TEAMS": "Teams",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
 		"ESTIMATE_DAYS": "Дней",
@@ -1325,7 +1326,9 @@
 		"CALENDAR": "Календарь",
 		"APPROVALS": "Утверждения",
 		"APPROVE_SUCCESS": "Сроки успешно утверждены",
-		"DENIED_SUCCESS": "Таблица времени успешно отклонена"
+		"DENIED_SUCCESS": "Таблица времени успешно отклонена",
+		"SUBMIT_SUCCESS": "Сроки успешно отправлены",
+		"UNSUBMIT_SUCCESS": "Таблица времени успешно отменена"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",

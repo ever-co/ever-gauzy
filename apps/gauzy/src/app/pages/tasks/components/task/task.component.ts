@@ -14,6 +14,7 @@ import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-compone
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { TaskEstimateComponent } from 'apps/gauzy/src/app/@shared/table-components/task-estimate/task-estimate.component';
 import { EmployeeWithLinksComponent } from 'apps/gauzy/src/app/@shared/table-components/employee-with-links/employee-with-links.component';
+import { TaskTeamsComponent } from 'apps/gauzy/src/app/@shared/table-components/task-teams/task-teams.component';
 
 @Component({
 	selector: 'ngx-task',
@@ -81,6 +82,12 @@ export class TaskComponent extends TranslationBaseComponent
 					type: 'custom',
 					filter: false,
 					renderComponent: EmployeeWithLinksComponent
+				},
+				teams: {
+					title: this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
+					type: 'custom',
+					filter: false,
+					renderComponent: TaskTeamsComponent
 				},
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
