@@ -38,7 +38,8 @@
 		"SEND": "Отправить",
 		"ARCHIVE": "Архивировать",
 		"FIND_TIME": "Время поиска",
-		"DOWNLOAD": "Скачать"
+		"DOWNLOAD": "Скачать",
+		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -435,6 +436,7 @@
 		"TIMESHEETS": "Сроки",
 		"SCHEDULES": "Графики",
 		"EMAIL_TEMPLATES": "Шаблоны писем",
+		"HELP_CENTER": "Центр поддержки",
 		"REPORTS": "Отчёты",
 		"TIME_REPORTS": "Отчеты по времени",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
