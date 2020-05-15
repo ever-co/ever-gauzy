@@ -48,6 +48,11 @@ export interface IUpdateTimesheetStatusInput {
 	status?: TimesheetStatus;
 }
 
+export interface ISubmitTimesheetInput {
+	ids: string | string[];
+	status: 'submit' | 'unsubmit';
+}
+
 export interface IGetTimeSheetInput {
 	startDate?: string;
 	endDate?: string;
@@ -184,6 +189,7 @@ export interface IManualTimeInput {
 }
 
 export interface IGetTimeLogInput {
+	timesheetId?: string;
 	startDate?: string;
 	endDate?: string;
 	projectId?: string[];

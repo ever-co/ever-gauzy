@@ -1,4 +1,3 @@
-import { CandidateInterviewers } from './../../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateExperience } from './../../candidate-experience/candidate-experience.entity';
 // Modified code from https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit.
 // MIT License, see https://github.com/alexitaylor/angular-graphql-nestjs-postgres-starter-kit/blob/master/LICENSE
@@ -72,6 +71,7 @@ import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
+import { createDefaultApprovalPolicyForOrg } from '../../approval-policy/approval-policy.seed';
 import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
 import {
 	createOrganizationVendors,
@@ -134,16 +134,7 @@ import { createDefaultIntegrationTypes } from '../../integration/integration-typ
 import { createDefaultIntegrations } from '../../integration/integration.seed';
 import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
 import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
-import { CandidateInterview } from '../../candidate-interview/candidate-interview.entity';
-import {
-	createCandidateInterview,
-	createRandomCandidateInterview
-} from '../../candidate-interview/candidate-interview.seed';
 import { ProductOption } from '../../product-option/product-option.entity';
-import {
-	createCandidateInterviewers,
-	createRandomCandidateInterviewers
-} from '../../candidate-interviewers/candidate-interviewers.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -200,9 +191,7 @@ const allEntities = [
 	ProductVariantPrice,
 	ProductOption,
 	CandidateDocument,
-	CandidateFeedback,
-	CandidateInterview,
-	CandidateInterviewers
+	CandidateFeedback
 ];
 
 @Injectable()
@@ -356,8 +345,6 @@ export class SeedDataService {
 		await createCandidateSources(this.connection, defaultCandidates);
 		await createCandidateDocuments(this.connection, defaultCandidates);
 		await createCandidateFeedbacks(this.connection, defaultCandidates);
-		await createCandidateInterview(this.connection, defaultCandidates);
-		await createCandidateInterviewers(this.connection, defaultCandidates);
 
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
@@ -387,6 +374,10 @@ export class SeedDataService {
 		await createDefaultTimeOffPolicy(this.connection, {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees
+		});
+
+		await createDefaultApprovalPolicyForOrg(this.connection, {
+			orgs: defaultOrganizations
 		});
 
 		const integrationTypes = await createDefaultIntegrationTypes(
@@ -477,16 +468,7 @@ export class SeedDataService {
 			tenants,
 			tenantCandidatesMap
 		);
-		await createRandomCandidateInterview(
-			this.connection,
-			tenants,
-			tenantCandidatesMap
-		);
-		await createRandomCandidateInterviewers(
-			this.connection,
-			tenants,
-			tenantCandidatesMap
-		);
+
 		await createRandomCandidateSources(
 			this.connection,
 			tenants,

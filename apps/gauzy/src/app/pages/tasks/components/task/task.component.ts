@@ -13,6 +13,7 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { TaskEstimateComponent } from 'apps/gauzy/src/app/@shared/table-components/task-estimate/task-estimate.component';
+import { EmployeeWithLinksComponent } from 'apps/gauzy/src/app/@shared/table-components/employee-with-links/employee-with-links.component';
 
 @Component({
 	selector: 'ngx-task',
@@ -74,6 +75,12 @@ export class TaskComponent extends TranslationBaseComponent
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'string',
 					filter: false
+				},
+				employees: {
+					title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS'),
+					type: 'custom',
+					filter: false,
+					renderComponent: EmployeeWithLinksComponent
 				},
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
@@ -141,6 +148,30 @@ export class TaskComponent extends TranslationBaseComponent
 				...data,
 				id: this.selectedTask.id
 			});
+			this.selectTask({ isSelected: false, data: null });
+		}
+	}
+
+	async duplicateTaskDIalog() {
+		const dialog = this.dialogService.open(TaskDialogComponent, {
+			context: {
+				selectedTask: this.selectedTask
+			}
+		});
+
+		const data = await dialog.onClose.pipe(first()).toPromise();
+
+		if (data) {
+			const { estimateDays, estimateHours, estimateMinutes } = data;
+
+			const estimate =
+				estimateDays * 24 * 60 * 60 +
+				estimateHours * 60 * 60 +
+				estimateMinutes * 60;
+
+			estimate ? (data.estimate = estimate) : (data.estimate = null);
+
+			this._store.createTask(data);
 			this.selectTask({ isSelected: false, data: null });
 		}
 	}

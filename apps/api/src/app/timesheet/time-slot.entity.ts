@@ -54,7 +54,7 @@ export class TimeSlot extends Base implements ITimeSlot {
 
 	stoppedAt: Date;
 	@AfterLoad()
-	getStoppedAt() {
+	getStoppedAt?() {
 		this.stoppedAt = moment(this.startedAt)
 			.add(10, 'minutes')
 			.toDate();

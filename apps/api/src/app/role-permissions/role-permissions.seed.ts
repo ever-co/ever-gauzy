@@ -33,6 +33,10 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.POLICY_EDIT,
 			PermissionsEnum.POLICY_VIEW,
+			PermissionsEnum.APPROVAL_POLICY_EDIT,
+			PermissionsEnum.APPROVAL_POLICY_VIEW,
+			PermissionsEnum.REQUEST_APPROVAL_EDIT,
+			PermissionsEnum.REQUEST_APPROVAL_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 			PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
@@ -74,6 +78,10 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.POLICY_EDIT,
 			PermissionsEnum.POLICY_VIEW,
+			PermissionsEnum.APPROVAL_POLICY_EDIT,
+			PermissionsEnum.APPROVAL_POLICY_VIEW,
+			PermissionsEnum.REQUEST_APPROVAL_EDIT,
+			PermissionsEnum.REQUEST_APPROVAL_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 			PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
@@ -109,7 +117,11 @@ export const defaultRolePermissions = [
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 			PermissionsEnum.ORG_PROPOSALS_VIEW,
-			PermissionsEnum.ORG_TIME_OFF_VIEW
+			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			PermissionsEnum.APPROVAL_POLICY_EDIT,
+			PermissionsEnum.APPROVAL_POLICY_VIEW,
+			PermissionsEnum.REQUEST_APPROVAL_EDIT,
+			PermissionsEnum.REQUEST_APPROVAL_VIEW
 		]
 	},
 	{

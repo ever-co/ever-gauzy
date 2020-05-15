@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
-import { Product } from '@gauzy/models';
+import { Product, ProductFindInput } from '@gauzy/models';
 
 @Injectable()
 export class ProductService {
@@ -9,9 +9,22 @@ export class ProductService {
 
 	constructor(private http: HttpClient) {}
 
-	getAll(): Promise<{ items: Product[] }> {
+	getAll(
+		relations?: string[],
+		findInput?: ProductFindInput
+	): Promise<{ items: Product[] }> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: Product[] }>(this.PRODUCTS_URL)
+			.get<{ items: Product[] }>(this.PRODUCTS_URL, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getById(id: string) {
+		return this.http
+			.get<Product>(`${this.PRODUCTS_URL}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

@@ -9,6 +9,7 @@ import { IncomeExpenseAmountComponent } from './income-amount/income-amount.comp
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
 import { PictureNameTagsComponent } from './picture-name-tags/picture-name-tags.component';
 import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
+import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
 
 @NgModule({
 	imports: [
@@ -29,14 +30,16 @@ import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
 		IncomeExpenseAmountComponent,
 		NotesWithTagsComponent,
 		PictureNameTagsComponent,
-		TaskEstimateComponent
+		TaskEstimateComponent,
+		EmployeeWithLinksComponent
 	],
 	declarations: [
 		DateViewComponent,
 		IncomeExpenseAmountComponent,
 		NotesWithTagsComponent,
 		PictureNameTagsComponent,
-		TaskEstimateComponent
+		TaskEstimateComponent,
+		EmployeeWithLinksComponent
 	],
 	providers: []
 })

@@ -273,6 +273,12 @@
 										| translate
 								}}
 							</nb-option>
+							<nb-option value="By Products">
+								{{
+									'INVOICES_PAGE.INVOICE_TYPE.BY_PRODUCTS'
+										| translate
+								}}
+							</nb-option>
 							<nb-option value="Details Invoice Items">
 								{{
 									'INVOICES_PAGE.INVOICE_TYPE.DETAILS_INVOICE_ITEMS'
@@ -347,6 +353,34 @@
 						</ng-select>
 					</div>
 				</div>
+				<div class="col-sm-3" *ngIf="isProductTable">
+					<div class="form-group">
+						<ng-select
+							[(items)]="products"
+							bindName="name"
+							placeholder="{{
+								'INVOICES_PAGE.SELECT_PRODUCT' | translate
+							}}"
+							formControlName="product"
+							id="inputProduct"
+							(change)="selectProduct($event)"
+							[multiple]="true"
+						>
+							<ng-template
+								ng-option-tmp
+								let-item="item"
+								let-index="index"
+							>
+								{{ item.name }}
+							</ng-template>
+							<ng-template ng-label-tmp let-item="item">
+								<div class="selector-template">
+									<span>{{ item.name }}</span>
+								</div>
+							</ng-template>
+						</ng-select>
+					</div>
+				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-6">
@@ -395,7 +429,7 @@
 		<button
 			(click)="addInvoice()"
 			status="success"
-			[disabled]="enableSaveButton || form.invalid"
+			[disabled]="disableSaveButton || form.invalid"
 			nbButton
 		>
 			{{ 'BUTTONS.SAVE' | translate }}

@@ -24,7 +24,7 @@ export class EditCandidateComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
-	selectedInterview = false;
+	isInterview = false;
 	candidateName = 'Candidate';
 	candidateId: string;
 	interviewList: ICandidateInterview[];
@@ -74,14 +74,12 @@ export class EditCandidateComponent extends TranslationBaseComponent
 			candidateId: this.candidateId
 		});
 		if (res) {
-			this.selectedInterview = true;
+			this.isInterview = true;
 		}
 	}
 	async interviewInfo() {
-		if (this.selectedInterview) {
+		if (this.isInterview) {
 			this.dialogService.open(CandidateInterviewInfoComponent);
-		} else {
-			alert("You don't have any new interviews");
 		}
 	}
 

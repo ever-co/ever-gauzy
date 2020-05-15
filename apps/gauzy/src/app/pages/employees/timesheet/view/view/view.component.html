@@ -1,0 +1,142 @@
+<nb-card class="employee-edit">
+	<nb-card-header class="header">
+		<h4>
+			{{ 'MENU.TIMESHEETS' | translate }}
+			({{ timesheet?.startedAt | amDateFormat: 'LL' }} -
+			{{ timesheet?.stoppedAt | amDateFormat: 'LL' }})
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<ngx-back-navigation></ngx-back-navigation>
+		<div *ngFor="let daylogs of timeLogs | keyvalue">
+			<h5 class="mb-3">
+				{{ daylogs.key }}
+			</h5>
+
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th scope="col">Project</th>
+						<th scope="col">Employee</th>
+						<th scope="col">Log type</th>
+						<th scope="col">Duration</th>
+						<th scope="col">Time span</th>
+						<th scope="col">Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					<ng-template
+						[ngIf]="daylogs.value?.length > 0"
+						[ngIfElse]="notFound"
+					>
+						<tr *ngFor="let log of daylogs.value">
+							<td>
+								<span *ngIf="log?.task; else noProfject">{{
+									log?.project?.name
+								}}</span>
+								<ng-template #noProfject>
+									<span>No project</span>
+								</ng-template>
+								<div class="mt-2 small">
+									<span *ngIf="log?.task; else noToDo">
+										<strong>TO-DO : </strong>
+										{{ log?.task?.title }}</span
+									>
+									<ng-template #noToDo>
+										<span>No to-do</span>
+									</ng-template>
+								</div>
+							</td>
+							<td>
+								<div class="name-container">
+									<ngx-avatar
+										[name]="
+											log?.employee?.user?.firstName +
+											' ' +
+											log?.employee?.user?.lastName
+										"
+										[src]="log?.employee?.user?.imageUrl"
+									></ngx-avatar>
+								</div>
+							</td>
+							<td>{{ log.logType }}</td>
+							<td>{{ log.duration | durationFormat }}</td>
+							<td>
+								<span class="start-timer">
+									{{
+										log.startedAt
+											| utcToLocal
+											| timeFormat: true
+									}}
+								</span>
+								-
+								<span
+									class="end-timer"
+									*ngIf="log.stoppedAt; else runningTimer"
+								>
+									{{
+										log.stoppedAt
+											| utcToLocal
+											| timeFormat: true
+									}}
+								</span>
+								<ng-template #runningTimer>
+									<span class="running-timer">
+										Till now
+									</span>
+								</ng-template>
+							</td>
+							<td>
+								<div
+									class="action-button"
+									*ngIf="
+										timesheet?.status !=
+											TimesheetStatus.APPROVED;
+										else noEditAction
+									"
+								>
+									<button
+										[disabled]="!log.stoppedAt"
+										class="m-1"
+										nbButton
+										status="success"
+										size="small"
+									>
+										Edit
+									</button>
+									<button
+										[disabled]="!log.stoppedAt"
+										class="m-1"
+										nbButton
+										status="danger"
+										size="small"
+									>
+										Delete
+									</button>
+								</div>
+								<ng-template #noEditAction>
+									<button
+										[disabled]="true"
+										class="m-1"
+										nbButton
+										status="default"
+										size="small"
+									>
+										Immutable Time
+									</button>
+								</ng-template>
+							</td>
+						</tr>
+					</ng-template>
+					<ng-template #notFound>
+						<tr>
+							<td colspan="6" class="text-center">
+								No logs found.
+							</td>
+						</tr>
+					</ng-template>
+				</tbody>
+			</table>
+		</div>
+	</nb-card-body>
+</nb-card>

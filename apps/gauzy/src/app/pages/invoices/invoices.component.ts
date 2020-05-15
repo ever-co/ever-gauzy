@@ -13,6 +13,7 @@ import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { Subject } from 'rxjs';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -33,6 +34,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	loading = true;
 	disableButton = true;
 	hasInvoiceEditPermission: boolean;
+	invoices: Invoice[];
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -75,9 +77,9 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	async duplicate() {
-		const { items } = await this.invoicesService.getAll();
+		const invoiceNumber = await this.invoicesService.getHighestInvoiceNumber();
 		const createdInvoice = await this.invoicesService.add({
-			invoiceNumber: +items[items.length - 1].invoiceNumber + 1,
+			invoiceNumber: +invoiceNumber['max'] + 1,
 			invoiceDate: this.selectedInvoice.invoiceDate,
 			dueDate: this.selectedInvoice.dueDate,
 			currency: this.selectedInvoice.currency,
@@ -93,14 +95,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 			invoiceType: this.selectedInvoice.invoiceType
 		});
 
-		const allItems = await this.invoiceItemService.getAll();
-
-		const invoiceItems = allItems.items.filter(
-			(i) => i.invoiceId === this.selectedInvoice.id
-		);
-
-		if (invoiceItems[0].employeeId) {
-			for (const item of invoiceItems) {
+		if (this.selectedInvoice.invoiceItems[0].employeeId) {
+			for (const item of this.selectedInvoice.invoiceItems) {
 				await this.invoiceItemService.add({
 					description: item.description,
 					price: item.price,
@@ -110,8 +106,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 					employeeId: item.employeeId
 				});
 			}
-		} else if (invoiceItems[0].projectId) {
-			for (const item of invoiceItems) {
+		} else if (this.selectedInvoice.invoiceItems[0].projectId) {
+			for (const item of this.selectedInvoice.invoiceItems) {
 				await this.invoiceItemService.add({
 					description: item.description,
 					price: item.price,
@@ -121,8 +117,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 					projectId: item.projectId
 				});
 			}
-		} else if (invoiceItems[0].taskId) {
-			for (const item of invoiceItems) {
+		} else if (this.selectedInvoice.invoiceItems[0].taskId) {
+			for (const item of this.selectedInvoice.invoiceItems) {
 				await this.invoiceItemService.add({
 					description: item.description,
 					price: item.price,
@@ -132,8 +128,19 @@ export class InvoicesComponent extends TranslationBaseComponent
 					taskId: item.taskId
 				});
 			}
+		} else if (this.selectedInvoice.invoiceItems[0].productId) {
+			for (const item of this.selectedInvoice.invoiceItems) {
+				await this.invoiceItemService.add({
+					description: item.description,
+					price: item.price,
+					quantity: item.quantity,
+					totalValue: item.totalValue,
+					invoiceId: createdInvoice.id,
+					productId: item.productId
+				});
+			}
 		} else {
-			for (const item of invoiceItems) {
+			for (const item of this.selectedInvoice.invoiceItems) {
 				await this.invoiceItemService.add({
 					description: item.description,
 					price: item.price,
@@ -177,10 +184,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			.toPromise();
 
 		if (result) {
-			const items = await this.invoiceItemService.getAll();
-			const itemsToDelete = items.items.filter(
-				(i) => i.invoiceId === this.selectedInvoice.id
-			);
+			const itemsToDelete = this.selectedInvoice.invoiceItems;
 			await this.invoicesService.delete(this.selectedInvoice.id);
 
 			for (const item of itemsToDelete) {
@@ -203,10 +207,22 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	async loadSettings() {
-		this.selectedInvoice = null;
-		const { items } = await this.invoicesService.getAll();
-		this.loading = false;
-		this.smartTableSource.load(items);
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (org) => {
+				if (org) {
+					this.selectedInvoice = null;
+					const { items } = await this.invoicesService.getAll(
+						['invoiceItems'],
+						{
+							organizationId: org.id
+						}
+					);
+					this.invoices = items;
+					this.loading = false;
+					this.smartTableSource.load(items);
+				}
+			});
 	}
 
 	async selectInvoice($event: SelectedInvoice) {
@@ -226,18 +242,24 @@ export class InvoicesComponent extends TranslationBaseComponent
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'text',
-					sortDirection: 'asc'
+					sortDirection: 'asc',
+					width: '40%'
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'text',
+					filter: false,
+					width: '40%',
 					valuePrepareFunction: (cell, row) => {
-						return `${row.currency} ${cell}`;
+						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
 					}
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-					type: 'text'
+					type: 'custom',
+					renderComponent: InvoicePaidComponent,
+					filter: false,
+					width: '15%'
 				}
 			}
 		};

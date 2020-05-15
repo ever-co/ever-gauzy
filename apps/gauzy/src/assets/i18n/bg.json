@@ -181,10 +181,12 @@
 			"DATE": "Дата",
 			"TIME": "Time",
 			"DURATION": "Duration",
+			"CANDIDATE": "Candidate",
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Локация",
 			"NOTE": "Note",
-			"PREFERRED_LANGUAGE": "Preferred Language"
+			"PREFERRED_LANGUAGE": "Preferred Language",
+			"DESCRIPTION": "Description"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -240,7 +242,7 @@
 			"UPLOADER_PLACEHOLDER": "Снимка",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
-			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
+			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -287,7 +289,10 @@
 			"MEETING_LOCATION": "Локация",
 			"MEETING_DESCRIPTION": "Description",
 			"BUFFER_TIME": "Buffer minutes",
-			"BREAK_TIME": "Break minutes"
+			"BREAK_TIME": "Break minutes",
+			"DESCRIPTION": "Description",
+			"DURATION": "Duration",
+			"TITLE": "Title"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -365,11 +370,14 @@
 		"STARTS_ON": "Starts On",
 		"EXPENSE_HISTORY": "Expense History",
 		"NEW_EXPENSE_VALUE": "New Expense Value",
-		"OFFICIAL_NAME": "This name would be used in tax invoices etc."
+		"OFFICIAL_NAME": "This name would be used in tax invoices etc.",
+		"ADD_EVENT_TYPE": "Add Event Type",
+		"EDIT_EVENT_TYPE": " Edit Event Type"
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
 		"APPOINTMENTS": "Appointments",
+		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
@@ -602,7 +610,7 @@
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
-		"ADD_CANDIATE": "Add Candidates",
+		"ADD_CANDIDATE": "Add Candidates",
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
@@ -614,7 +622,7 @@
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция",
-			"CANDIATE_DEPARTMENTS": "Отдел на Служителя:",
+			"CANDIDATE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYMENT_TYPE": "Employment Type",
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
@@ -643,7 +651,9 @@
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
 				"INTERVIEWS": "Interviews",
+				"ADD_INTERVIEW": "Add interview",
 				"ON": "on",
+				"TO": "To",
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
@@ -652,16 +662,20 @@
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "Запази",
+				"EMAIL_NOTIFICATION": "Email notification",
 				"SUMMARY": "Summary",
-				"EMAIL_NOTIFICATION": "Email notification"
+				"DETAILS": "Send interview details to",
+				"NOTIFY_CANDIDATE": "Notify candidate",
+				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
+				"INTERVIEWERS": "interviewer(s)"
 			}
 		},
-		"ADD_CANDIATES": {
+		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
 			"STEP_2": "Step 2",
 			"STEP_3": "Step 3",
 			"UPLOAD_CV": "Upload CV",
-			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"ADD_ANOTHER_CANDIDATE": "Add Another Candidate",
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
@@ -943,6 +957,7 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
+		"TASK_MEMBERS": "Служители",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
@@ -1050,10 +1065,9 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"SELECT_PRODUCT": "Select Product",
 		"INVALID_DATES": "Invalid Dates",
-		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
-		"TAX_VALUE": "Tax cannot be a negative number",
-		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
+		"INVOICE_NUMBER_DUPLICATE": "Invoice Number already exists",
 		"DISCOUNT_TYPE": "Discount Type",
 		"TAX_TYPE": "Tax Type",
 		"PERCENT": "Percent",
@@ -1061,6 +1075,8 @@
 		"SUBTOTAL": "Subtotal",
 		"TOTAL": "Total",
 		"NAME": "Име",
+		"PAID": "Paid",
+		"NOT_PAID": "Not Paid",
 		"RECIEVED_INVOICES": "Recieved Invoices",
 		"SEND_INVOICE": "Invoice Sent",
 		"INVOICE_TYPE": {
@@ -1069,6 +1085,7 @@
 			"BY_EMPLOYEE_HOURS": "By Employee Hours",
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
+			"BY_PRODUCTS": "By Products",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items"
 		},
 		"INVOICE_ITEM": {
@@ -1083,6 +1100,7 @@
 			"HOURLY_RATE": "Hourly Rate",
 			"HOURS_WORKED": "Hours Worked",
 			"PROJECT": "Проект",
+			"PRODUCT": "Product",
 			"NO_ITEMS": "Please add invoice items",
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
@@ -1315,5 +1333,13 @@
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment"
+	},
+	"EVENT_TYPE_PAGE": {
+		"EVENT_TYPE": "Event Types",
+		"MANAGE_EVENT_TYPE": "Manage Event Type",
+		"EVENT_NAME": "Event Type Name",
+		"EVENT_DURATION": "Duration",
+		"EVENT_DESCRIPTION": "Description",
+		"ACTIVE": "Активен"
 	}
 }

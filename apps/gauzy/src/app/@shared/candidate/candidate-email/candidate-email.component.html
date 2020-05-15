@@ -1,3 +1,35 @@
-<nb-card>
-	<nb-card-body> </nb-card-body>
+<nb-card class="email-wrap">
+	<nb-card-body class="info-block">
+		<div *ngIf="isCandidate">
+			<span>{{
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate
+			}}</span>
+			<span class="email">{{ selectedCandidate?.user.email }}</span>
+		</div>
+		<div *ngIf="!isCandidate">
+			<span>{{
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate
+			}}</span>
+			<span class="email" *ngFor="let employee of employees">{{
+				employee?.user.email
+			}}</span>
+		</div>
+	</nb-card-body>
+	<nb-card-body class="info-block">
+		{{ templateData?.title }}
+		{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON' | translate }}
+		{{ dateTemplate }}
+	</nb-card-body>
+	<nb-card-body class="editor">
+		<form [formGroup]="form" *ngIf="form">
+			<ckeditor
+				[formControl]="form.controls['text']"
+				(change)="onChange($event)"
+				[config]="{
+					width: '100%',
+					height: '200'
+				}"
+			></ckeditor>
+		</form>
+	</nb-card-body>
 </nb-card>

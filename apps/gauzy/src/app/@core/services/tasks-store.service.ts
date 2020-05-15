@@ -32,7 +32,8 @@ export class TasksStoreService {
 	private _mapToViewModel(tasks) {
 		return tasks.map((task) => ({
 			...task,
-			projectName: task.project ? task.project.name : undefined
+			projectName: task.project ? task.project.name : undefined,
+			employees: task.members ? task.members : undefined
 		}));
 	}
 

@@ -1,0 +1,152 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h4 *ngIf="eventType; else headerAdd">
+			{{
+				(duplicate ? 'POP_UPS.DUPLICATE' : 'POP_UPS.EDIT_EVENT_TYPE')
+					| translate
+			}}
+		</h4>
+		<ng-template #headerAdd>
+			<h4>{{ 'POP_UPS.ADD_EVENT_TYPE' | translate }}</h4>
+		</ng-template>
+		<ga-employee-selector
+			#employeeSelector
+			fullWidth
+			[hidden]="eventType && !duplicate"
+			[skipGlobalChange]="true"
+			class="employees"
+			placeholder="Organization"
+			[defaultSelected]="false"
+			(selectionChanged)="onEmployeeChange($event)"
+		></ga-employee-selector>
+		<!-- TODO: FIX dialogRef.close() -->
+		<nb-icon
+			class="ml-auto mt-1 close"
+			(click)="dialogRef.close()"
+			icon="close-outline"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form" *ngIf="form">
+			<div
+				class="row"
+				*ngIf="
+					!(
+						employeeSelector &&
+						employeeSelector.selectedEmployee &&
+						employeeSelector.selectedEmployee.id
+					)
+				"
+			></div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label for="title" class="label">{{
+							'FORM.LABELS.TITLE' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="title"
+							type="text"
+							nbInput
+							formControlName="title"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.TITLE' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<label for="description" class="label">{{
+							'FORM.LABELS.DESCRIPTION' | translate
+						}}</label>
+						<input
+							fullWidth
+							id="description"
+							type="text"
+							nbInput
+							formControlName="description"
+							placeholder="{{
+								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
+							}}"
+						/>
+					</div>
+				</div>
+			</div>
+			<div>
+				<label for="title" class="label">{{
+					'FORM.LABELS.DURATION' | translate
+				}}</label>
+				<div class="row">
+					<div class="col-6">
+						<div class="form-group">
+							<input
+								placeholder="{{
+									'FORM.PLACEHOLDERS.DURATION' | translate
+								}}"
+								fullWidth
+								id="durationInput"
+								type="number"
+								nbInput
+								formControlName="duration"
+							/>
+						</div>
+					</div>
+					<div class="col-sm-6">
+						<nb-select
+							class="d-block"
+							[selected]="unit"
+							formControlName="durationUnit"
+						>
+							<nb-option
+								*ngFor="let unit of durationUnits"
+								value="{{ unit }}"
+							>
+								{{ unit }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						<div class="form-group">
+							<nb-checkbox formControlName="active">
+								<span
+									nbTooltip="{{
+										'EVENT_TYPE_PAGE.ACTIVE' | translate
+									}}"
+									>{{
+										'EVENT_TYPE_PAGE.ACTIVE' | translate
+									}}</span
+								>
+							</nb-checkbox>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button
+			(click)="dialogRef.close()"
+			status="danger"
+			class="mr-3"
+			nbButton
+		>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			[disabled]="form.invalid"
+			(click)="addOrEditEventType()"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
+
+<!-- [disabled]="form.invalid" -->

@@ -6,6 +6,7 @@ import { UserFindInput } from './user.model';
 import { OrganizationTeam } from './organization-team-model';
 import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
+import { RequestApprovalEmployee } from './request-approval-employee.model';
 
 export interface Employee extends IBaseEntityModel, ILocation {
 	endWork?: any;
@@ -31,6 +32,7 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	employeeLevel?: string;
 	anonymousBonus?: boolean;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	requestApprovalEmployee?: RequestApprovalEmployee[];
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {

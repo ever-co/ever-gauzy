@@ -16,7 +16,7 @@ import { TimeSlot } from './time-slot.entity';
 @Unique(['employeeId', 'startedAt'])
 export class TimeSlotMinute extends Base implements ITimeSlotMinute {
 	@ApiProperty({ type: TimeSlot })
-	@ManyToOne(() => TimeSlot, { nullable: true })
+	@ManyToOne(() => TimeSlot, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	timeSlot: TimeSlot;
 

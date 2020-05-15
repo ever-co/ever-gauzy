@@ -23,6 +23,16 @@
 			<button
 				nbButton
 				status="info"
+				(click)="duplicateTaskDIalog()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.DUPLICATE' | translate }}
+			</button>
+			<button
+				nbButton
+				status="info"
 				(click)="editTaskDIalog()"
 				class="mr-2"
 				[disabled]="disableButton"

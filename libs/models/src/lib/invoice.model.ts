@@ -13,7 +13,7 @@ export interface Invoice extends IBaseEntityModel {
 	paid: boolean;
 	tax: number;
 	taxType: string;
-	terms: string;
+	terms?: string;
 	totalValue?: number;
 	clientId?: string;
 	organizationId?: string;
@@ -24,10 +24,37 @@ export interface Invoice extends IBaseEntityModel {
 	sentTo?: string;
 }
 
+export interface InvoiceUpdateInput {
+	invoiceDate?: Date;
+	invoiceNumber?: number;
+	dueDate?: Date;
+	currency?: string;
+	discountValue?: number;
+	discountType?: string;
+	paid?: boolean;
+	tax?: number;
+	taxType?: string;
+	terms?: string;
+	totalValue?: number;
+	clientId?: string;
+	organizationId?: string;
+	invoiceType?: string;
+	sentTo?: string;
+}
+
+export interface InvoiceFindInput {
+	organizationId?: string;
+	clientId?: string;
+	invoiceId?: string;
+	sentTo?: string;
+	invoiceNumber?: string;
+}
+
 export enum InvoiceTypeEnum {
 	BY_EMPLOYEE_HOURS = 'By Employee Hours',
 	BY_PROJECT_HOURS = 'By Project Hours',
 	BY_TASK_HOURS = 'By Task Hours',
+	BY_PRODUCTS = 'By Products',
 	DETAILS_INVOICE_ITEMS = 'Details Invoice Items'
 }
 

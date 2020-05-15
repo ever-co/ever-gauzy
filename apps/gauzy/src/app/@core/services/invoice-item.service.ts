@@ -1,15 +1,21 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { InvoiceItem } from '@gauzy/models';
+import { InvoiceItem, InvoiceItemFindInput } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
 export class InvoiceItemService {
 	constructor(private http: HttpClient) {}
 
-	getAll(): Promise<{ items: InvoiceItem[] }> {
+	getAll(
+		relations?: string[],
+		findInput?: InvoiceItemFindInput
+	): Promise<{ items: InvoiceItem[] }> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: InvoiceItem[] }>('/api/invoice-item')
+			.get<{ items: InvoiceItem[] }>('/api/invoice-item', {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
