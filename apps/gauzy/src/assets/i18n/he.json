@@ -323,7 +323,8 @@
 			"EXPENSE": "הוצאה",
 			"USER": "user",
 			"INVITATION": "invitation",
-			"DELETE_USER": " from database as it is associated only to current organization"
+			"DELETE_USER": " from database as it is associated only to current organization",
+			"EVENT_TYPE": "Event type"
 		}
 	},
 	"POP_UPS": {
@@ -1303,6 +1304,12 @@
 			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Pleace try again.",
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
+		},
+		"EVENT_TYPES": {
+			"ADD_EVENT_TYPE": "New event type created",
+			"EDIT_EVENT_TYPE": "Event type edited",
+			"DELETE_EVENT_TYPE": "Event type deleted",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
