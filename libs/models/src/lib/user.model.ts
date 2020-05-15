@@ -10,6 +10,7 @@ import { ITenant } from '@gauzy/models';
 
 export interface User extends IBaseEntityModel {
 	thirdPartyId?: string;
+	name?: string;
 	firstName?: string;
 	lastName?: string;
 	email?: string;

@@ -12,7 +12,8 @@ import {
 	NbDatepickerModule,
 	NbContextMenuModule,
 	NbIconModule,
-	NbDialogModule
+	NbDialogModule,
+	NbPopoverModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
@@ -21,6 +22,7 @@ import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer
 import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/task-select/task-select.module';
 import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/project-select.module';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
+import { MomentModule } from 'ngx-moment';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
@@ -42,7 +44,9 @@ import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/he
 		TaskSelectModule,
 		ProjectSelectModule,
 		NbIconModule,
-		EmployeeSelectorsModule
+		EmployeeSelectorsModule,
+		NbPopoverModule,
+		MomentModule
 	]
 })
 export class ApprovalsModule {}
