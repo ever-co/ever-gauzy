@@ -69,9 +69,6 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		this.loadEmployees();
 		this.loadTeams();
 		this.initializeForm(this.selectedTask || initialTaskValue);
-		if (this.selectedTask.teams && this.selectedTask.teams.length > 0) {
-			this.participants = 'teams';
-		}
 	}
 
 	private async loadProjects() {
@@ -100,6 +97,9 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedMembers = (members || []).map((member) => member.id);
 		this.selectedTeams = (teams || []).map((team) => team.id);
+		if (teams && teams.length > 0) {
+			this.participants = 'teams';
+		}
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],
