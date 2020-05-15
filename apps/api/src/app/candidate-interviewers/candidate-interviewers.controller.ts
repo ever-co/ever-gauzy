@@ -6,7 +6,8 @@ import {
 	Query,
 	Body,
 	Post,
-	UseGuards
+	UseGuards,
+	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -62,9 +63,18 @@ export class CandidateInterviewersController extends CrudController<
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
 	@Post()
-	async createInterview(
+	async createInterviewer(
 		@Body() entity: ICandidateInterviewersCreateInput
 	): Promise<any> {
 		return this.candidateInterviewersService.create(entity);
+	}
+
+	@Get('getByInterviewId/:interviewId')
+	async findByName(
+		@Param('interviewId') interviewId: string
+	): Promise<CandidateInterviewers[]> {
+		return this.candidateInterviewersService.findInterviewersByInterviewId(
+			interviewId
+		);
 	}
 }

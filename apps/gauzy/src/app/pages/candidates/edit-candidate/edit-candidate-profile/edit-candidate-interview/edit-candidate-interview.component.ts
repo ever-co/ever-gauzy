@@ -65,9 +65,10 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		}
 	}
 	private async loadInterview() {
-		this.interviewResult = await this.candidateInterviewService.getAll({
-			candidateId: this.candidateId
-		});
+		this.interviewResult = await this.candidateInterviewService.getAll(
+			['interviewers'],
+			{ candidateId: this.candidateId }
+		);
 		if (this.interviewResult) {
 			this.interviewList = this.interviewResult.items;
 		}

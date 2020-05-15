@@ -44,8 +44,11 @@ export class CandidateInterviewController extends CrudController<
 	async findInterview(
 		@Query('data') data: string
 	): Promise<IPagination<CandidateInterview>> {
-		const { findInput } = JSON.parse(data);
-		return this.candidateInterviewService.findAll({ where: findInput });
+		const { relations, findInput } = JSON.parse(data);
+		return this.candidateInterviewService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({

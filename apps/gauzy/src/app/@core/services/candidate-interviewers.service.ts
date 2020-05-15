@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
@@ -6,8 +6,9 @@ import {
 	ICandidateInterviewersCreateInput,
 	ICandidateInterviewers
 } from '@gauzy/models';
-
-@Injectable()
+@Injectable({
+	providedIn: 'root'
+})
 export class CandidateInterviewersService {
 	constructor(private http: HttpClient) {}
 
@@ -48,6 +49,16 @@ export class CandidateInterviewersService {
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/candidate-interviewers/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+	findByInterviewId(
+		interviewId: string
+	): Promise<{ items: ICandidateInterviewers[] }> {
+		return this.http
+			.get<{ items: ICandidateInterviewers[] }>(
+				`/api/candidate-interviewers/getByInterviewId/${interviewId}`
+			)
 			.pipe(first())
 			.toPromise();
 	}

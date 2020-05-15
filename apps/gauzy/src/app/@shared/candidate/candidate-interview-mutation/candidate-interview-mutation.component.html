@@ -115,7 +115,7 @@
 							>
 						</div>
 
-						<div class="employeeName">
+						<!-- <div class="employeeName">
 							<span
 								*ngFor="let employee of employees"
 								nbTooltip=" {{ employee?.user.firstName }}
@@ -128,7 +128,7 @@
 									alt="employee Avatar"
 								/>
 							</span>
-						</div>
+						</div> -->
 					</nb-card-body>
 				</nb-card>
 				<div class=" notification-title">
@@ -183,7 +183,7 @@
 										| translate
 								}}
 								<strong>
-									{{ employees.length }}
+									<!-- {{ employees.length }} -->
 								</strong>
 								{{
 									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWERS'
@@ -194,7 +194,7 @@
 					</nb-card>
 				</div>
 
-				<ga-candidate-email
+				<!-- <ga-candidate-email
 					[isCandidate]="true"
 					[templateData]="interview"
 					[employees]="employees"
@@ -208,7 +208,7 @@
 					[selectedCandidate]="selectedCandidate"
 					#emailInterviewerForm
 					*ngIf="isInterviewerNotification"
-				></ga-candidate-email>
+				></ga-candidate-email> -->
 
 				<div class="button-container">
 					<button

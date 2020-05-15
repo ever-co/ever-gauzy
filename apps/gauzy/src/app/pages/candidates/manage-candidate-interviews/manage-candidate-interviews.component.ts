@@ -13,6 +13,7 @@ import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/cand
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { first } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-manage-candidate-interviews',
@@ -30,6 +31,7 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	calendarEvents: EventInput[] = [];
 	constructor(
 		readonly translateService: TranslateService,
+		private router: Router,
 		private dialogService: NbDialogService,
 		private candidateInterviewService: CandidateInterviewService,
 		private toastrService: NbToastrService
@@ -37,8 +39,14 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 		super(translateService);
 		this.loadInterviews();
 		this.calendarOptions = {
-			eventClick: () => {
-				this.dialogService.open(CandidateInterviewInfoComponent);
+			eventClick: (event) => {
+				const id = event.event._def.extendedProps.id;
+				console.log(event);
+				this.dialogService.open(CandidateInterviewInfoComponent, {
+					context: {
+						interviewId: id
+					}
+				});
 			},
 			initialView: 'timeGridWeek',
 			header: {
@@ -59,7 +67,9 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	}
 
 	async loadInterviews() {
-		const res = await this.candidateInterviewService.getAll();
+		const res = await this.candidateInterviewService.getAll([
+			'interviewers'
+		]);
 		if (res) {
 			for (const interview of res.items) {
 				this.calendarEvents.push({

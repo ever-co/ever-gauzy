@@ -8,7 +8,7 @@ import {
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, IDateRange } from '@gauzy/models';
+import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 
 @Component({
@@ -17,7 +17,7 @@ import { EmployeesService } from '../../../@core/services';
 	styleUrls: ['candidate-interview-form.component.scss']
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
-	@Input() employeeIds: string[];
+	@Input() employeeIds: ICandidateInterviewers[];
 
 	form: any;
 	employees: Employee[];
@@ -48,6 +48,12 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	}
 
 	loadFormData() {
+		// const interviewers: ICandidateInterviewers[] = [];
+		// if (this.selectedEmployeeIds) {
+		// 	for (const emp of this.selectedEmployeeIds) {
+		// 		interviewers.push({ employeeId: emp });
+		// 	}
+		// }
 		this.form = this.fb.group({
 			title: [''],
 			startTime: [this.selectedRange.start],

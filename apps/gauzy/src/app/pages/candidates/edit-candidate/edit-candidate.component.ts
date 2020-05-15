@@ -70,9 +70,12 @@ export class EditCandidateComponent extends TranslationBaseComponent
 		this.loadInterview();
 	}
 	private async loadInterview() {
-		const res = await this.candidateInterviewService.getAll({
-			candidateId: this.candidateId
-		});
+		const res = await this.candidateInterviewService.getAll(
+			['interviewers'],
+			{
+				candidateId: this.candidateId
+			}
+		);
 		if (res) {
 			this.isInterview = true;
 		}

@@ -2,16 +2,16 @@
 	<nb-card-header class="d-flex">
 		<div>
 			<h5 class="title">
-				{{ interview.title }}
+				{{ currentInterview?.title }}
 			</h5>
 			<p *ngIf="!isMinutes" class="interview-info">
 				{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
-				{{ interview.interviewers }} {{ hoursUpdate }}
+				<!-- {{ currentInterview.interviewers }} {{ hoursUpdate }} -->
 				{{ 'INTERVIEW_INFO_MODAL.HOURS_AGO' | translate }}
 			</p>
 			<p *ngIf="isMinutes" class="interview-info">
 				{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
-				{{ interview.interviewers }} {{ hoursUpdate }}
+				<!-- {{ currentInterview.interviewers }} {{ hoursUpdate }} -->
 				{{ 'INTERVIEW_INFO_MODAL.MINUTES_AGO' | translate }}
 			</p>
 		</div>
@@ -30,7 +30,7 @@
 				</p>
 			</div>
 			<p class="interview-data">
-				{{ interview.startTime | date: 'fullDate' }}
+				<!-- {{ currentInterview.startTime | date: 'fullDate' }} -->
 			</p>
 		</div>
 		<div>
@@ -41,8 +41,8 @@
 				</p>
 			</div>
 			<p class="interview-data">
-				{{ interview.startTime | date: 'mediumTime' }} -
-				{{ interview.endTime | date: 'longTime' }}
+				<!-- {{ currentInterview.startTime | date: 'mediumTime' }} - -->
+				<!-- {{ currentInterview.endTime | date: 'longTime' }} -->
 			</p>
 		</div>
 		<div>
@@ -52,7 +52,7 @@
 					{{ 'INTERVIEW_INFO_MODAL.CANDIDATE' | translate }}
 				</p>
 			</div>
-			<p class="interview-data">{{ candidateName }}</p>
+			<!-- <p class="interview-data">{{ candidateName }}</p> -->
 		</div>
 		<div>
 			<div class="interview-info">
@@ -61,25 +61,25 @@
 					{{ 'INTERVIEW_INFO_MODAL.INTERVIEWERS' | translate }}
 				</p>
 			</div>
-			<p class="interview-data">{{ interview.interviewers }}</p>
+			<!-- <p class="interview-data">{{ currentInterview?.interviewers }}</p> -->
 		</div>
-		<div>
+		<div *ngIf="currentInterview?.location">
 			<div class="interview-info">
 				<nb-icon icon="navigation-2-outline" class="icons"></nb-icon>
 				<p class="interview-text">
 					{{ 'INTERVIEW_INFO_MODAL.LOCATION' | translate }}
 				</p>
 			</div>
-			<p class="interview-data">{{ interview.location }}</p>
+			<p class="interview-data">{{ currentInterview?.location }}</p>
 		</div>
-		<div>
+		<div *ngIf="currentInterview?.note">
 			<div class="interview-info">
 				<nb-icon icon="edit-outline" class="icons"></nb-icon>
 				<p class="interview-text">
 					{{ 'INTERVIEW_INFO_MODAL.NOTE' | translate }}
 				</p>
 			</div>
-			<p class="interview-data">{{ interview.note }}</p>
+			<p class="interview-data">{{ currentInterview?.note }}</p>
 		</div>
 	</nb-card-body>
 </nb-card>

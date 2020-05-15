@@ -12,11 +12,11 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	title: string;
 
 	@ApiProperty({ type: Date })
-	@Column()
+	@Column({ nullable: true })
 	startTime: Date;
 
 	@ApiProperty({ type: Date })
-	@Column()
+	@Column({ nullable: true })
 	endTime: Date;
 
 	@ManyToOne((type) => CandidateInterviewers)

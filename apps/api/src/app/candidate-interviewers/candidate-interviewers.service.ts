@@ -16,4 +16,14 @@ export class CandidateInterviewersService extends CrudService<
 	) {
 		super(candidateInterviewersRepository);
 	}
+	async findInterviewersByInterviewId(
+		interviewId: string
+	): Promise<CandidateInterviewers[]> {
+		return await this.repository
+			.createQueryBuilder('candidate_interviewers')
+			.where('candidate_interviewers.interviewId = :interviewId', {
+				interviewId
+			})
+			.getMany();
+	}
 }
