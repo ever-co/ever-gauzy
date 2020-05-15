@@ -54,8 +54,12 @@
 						(valueChange)="onParticipantsChange($event)"
 						[value]="participants"
 					>
-						<nb-radio [value]="'employees'">Employees </nb-radio>
-						<nb-radio [value]="'teams'">Teams </nb-radio>
+						<nb-radio class="nb-radio" [value]="'employees'"
+							>Employees
+						</nb-radio>
+						<nb-radio class="nb-radio" [value]="'teams'"
+							>Teams
+						</nb-radio>
 					</nb-radio-group>
 				</div>
 				<div class="col-sm-12">
