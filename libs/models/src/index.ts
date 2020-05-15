@@ -4,6 +4,7 @@ export * from './lib/candidate-document.model';
 export * from './lib/candidate.model';
 export * from './lib/candidate-experience.model';
 export * from './lib/candidate-education.model';
+export * from './lib/candidate-interviewers.model';
 export * from './lib/candidate-skill.model';
 export * from './lib/candidate-feedback.model';
 export * from './lib/candidate-interview.model';

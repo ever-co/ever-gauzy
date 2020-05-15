@@ -71,6 +71,7 @@ import { IntegrationModule } from './integration/integration.module';
 import { IntegrationTenantModule } from './integration-tenant/integration-tenant.module';
 import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
 import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
+import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
 import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
 import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
 import { RequestApprovalModule } from './request-approval/request-approval.module';
@@ -103,6 +104,10 @@ import { LanguagesEnum } from '@gauzy/models';
 					{
 						path: '/candidate-interview',
 						module: CandidateInterviewModule
+					},
+					{
+						path: '/candidate-interviewers',
+						module: CandidateInterviewersModule
 					},
 					{
 						path: '/candidate-experience',
@@ -308,6 +313,7 @@ import { LanguagesEnum } from '@gauzy/models';
 		CandidateSkillModule,
 		CandidateFeedbacksModule,
 		CandidateInterviewModule,
+		CandidateInterviewersModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,

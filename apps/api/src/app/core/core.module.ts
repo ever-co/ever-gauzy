@@ -4,7 +4,7 @@
 // Originally MIT Licensed
 // - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`
-
+import { CandidateInterviewers } from './../candidate-interviewers/candidate-interviewers.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
@@ -133,6 +133,8 @@ const entities = [
 	CandidateSkill,
 	CandidateExperience,
 	CandidateInterview,
+	CandidateInterviewers,
+	IntegrationSetting,
 	Integration,
 	IntegrationType,
 	IntegrationSetting,
