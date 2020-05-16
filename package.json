@@ -306,7 +306,6 @@
 		"tsickle": "^0.38.1",
 		"tslint": "^5.19.0",
 		"tslint-config-prettier": "^1.18.0",
-		"tslint-language-service": "^0.9.9",
 		"typescript": "~3.5.3",
 		"webpack-bundle-analyzer": "^3.4.1"
 	},
