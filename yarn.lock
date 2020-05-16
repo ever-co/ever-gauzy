@@ -4623,10 +4623,10 @@ angular2-chartjs@^0.5.1:
   dependencies:
     chart.js "^2.3.0"
 
-angular2-toaster@^7.0.0:
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/angular2-toaster/-/angular2-toaster-7.0.0.tgz#8d72716b6b267cf36576bf77361bb3ab09e9d093"
-  integrity sha512-+nKyzg7X9r9knVghyURR63eXpbvErd/Hm7c7rx/v4gfqI7jNAkWHxO1tikVKEQFoD+au6Fu54LOGhEmXb0ECxg==
+angular2-toaster@^8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/angular2-toaster/-/angular2-toaster-8.0.0.tgz#9f5df2c9df00b96475cd179c4b4e4fad5a6dc7ac"
+  integrity sha512-MRDswCmhqFLBiot7C7SIq96NyU5aT9pwIVdYgmYJtXHp7N6fXk6QzuMSMhVvK12edUJntgmUft+SZfh45Oq0Wg==
 
 ansi-align@^2.0.0:
   version "2.0.0"
@@ -22418,10 +22418,10 @@ tsconfig-paths@^3.4.0, tsconfig-paths@^3.8.0:
     minimist "^1.2.0"
     strip-bom "^3.0.0"
 
-tsickle@^0.37.0:
-  version "0.37.1"
-  resolved "https://registry.yarnpkg.com/tsickle/-/tsickle-0.37.1.tgz#2f8a87c1b15766e866457bd06fb6c0e0d84eed09"
-  integrity sha512-0GwgOJEnsmRsrONXCvcbAWY0CvdqF3UugPVoupUpA8Ul0qCPTuqqq0ou/hLqtKZOyyulzCP6MYRjb9/J1g9bJg==
+tsickle@^0.38.1:
+  version "0.38.1"
+  resolved "https://registry.yarnpkg.com/tsickle/-/tsickle-0.38.1.tgz#30762db759d40c435943093b6972c7f2efb384ef"
+  integrity sha512-4xZfvC6+etRu6ivKCNqMOd1FqcY/m6JY3Y+yr5+Xw+i751ciwrWINi6x/3l1ekcODH9GZhlf0ny2LpzWxnjWYA==
 
 tslib@1.10.0:
   version "1.10.0"
