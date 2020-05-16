@@ -32,7 +32,7 @@ export class SidebarComponent {
 		}
 	];
 	public options = {};
-	@ViewChild(TreeComponent, { static: false })
+	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
 	onTap(a: any) {

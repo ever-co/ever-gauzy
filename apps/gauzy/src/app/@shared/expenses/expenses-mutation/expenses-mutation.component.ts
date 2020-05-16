@@ -45,7 +45,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	form: FormGroup;
 	expense: ExpenseViewModel;

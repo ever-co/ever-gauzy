@@ -78,7 +78,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
 
-	@ViewChild('expensesTable', { static: false }) expensesTable;
+	@ViewChild('expensesTable') expensesTable;
 
 	loadSettingsSmartTable() {
 		this.smartTableSettings = {

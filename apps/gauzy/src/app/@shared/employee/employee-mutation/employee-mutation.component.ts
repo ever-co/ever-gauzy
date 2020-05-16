@@ -26,9 +26,9 @@ import { FormGroup } from '@angular/forms';
 	styleUrls: ['employee-mutation.component.scss']
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
-	@ViewChild('stepper', { static: false })
+	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 	form: FormGroup;
 	role: Role;

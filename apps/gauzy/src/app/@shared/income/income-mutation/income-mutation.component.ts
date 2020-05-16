@@ -29,7 +29,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 })
 export class IncomeMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
 	income?: Income;

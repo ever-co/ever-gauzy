@@ -18,7 +18,7 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	public form: FormGroup;
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	eventType: EventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];

@@ -10,7 +10,7 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 	styleUrls: ['./user-mutation.component.scss']
 })
 export class UserMutationComponent implements OnInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 	tags: Tag[];
 	selectedTags: any;

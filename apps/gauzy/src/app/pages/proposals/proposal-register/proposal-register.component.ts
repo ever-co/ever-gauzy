@@ -28,7 +28,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
 	proposal?: Proposal;

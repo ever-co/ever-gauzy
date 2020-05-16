@@ -46,7 +46,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('settingsTable', { static: false }) settingsTable;
+	@ViewChild('settingsTable') settingsTable;
 
 	settingsSmartTable: object;
 	selectedOrganization: Organization;

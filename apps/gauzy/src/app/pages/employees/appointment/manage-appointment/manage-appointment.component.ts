@@ -30,7 +30,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	employees: Employee[];
 	@Input() employeeAppointment: EmployeeAppointment;
 
-	@ViewChild('start_time', { static: false })
+	@ViewChild('start_time')
 	@Output()
 	save = new EventEmitter<EmployeeAppointment>();
 	@Output() cancel = new EventEmitter<string>();

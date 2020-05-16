@@ -45,7 +45,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 	employeeName: string;
 	_selectedOrganizationId: string;
 
-	@ViewChild('eventTypesTable', { static: false }) eventTypesTable;
+	@ViewChild('eventTypesTable') eventTypesTable;
 
 	loading = true;
 	defaultEventTypes: EventTypeViewModel[] = [
