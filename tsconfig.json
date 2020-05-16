@@ -11,7 +11,7 @@
 		"experimentalDecorators": true,
 		"importHelpers": true,
 		"target": "es2015",
-		"module": "commonjs",
+		"module": "esnext",
 		"typeRoots": ["node_modules/@types"],
 		"lib": ["dom", "es2018", "esnext.array"],
 		"skipLibCheck": true,
