@@ -2,30 +2,32 @@ gauzy desktop with nstudio electron
 
 how to:
 
--   install dependencies
+- install dependencies
 
 ```bash
-yarn install
+ yarn install
 ```
 
--   serve app
+- serve app
+```bash
+yarn serve.electron.gauzy-desktop
+``` 
 
-        	```bash
-        	yarn serve.electron.gauzy-desktop
-        	```
 
--   build - local
-    `bash yarn build.electron.gauzy-desktop.local`
+- build local
+```bash 
+yarn build.electron.gauzy-desktop.local
+```
 
-        	- linux
-        		```bash
-        		yarn build.electron.gauzy-desktop.linux
-        		```
-        	- windows
-        		```bash
-        		yarn build.electron.gauzy-desktop.windows
-        		```
-        	- mac
-        		```bash
-        		yarn build.electron.gauzy-desktop.mac
-        		```
+- build linux
+```bash
+yarn build.electron.gauzy-desktop.linux
+```
+- build windows
+```bash
+yarn build.electron.gauzy-desktop.windows
+```
+- build mac
+```bash
+yarn build.electron.gauzy-desktop.mac
+```
