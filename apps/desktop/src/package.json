@@ -20,7 +20,7 @@
 		"npmRebuild": false,
 		"directories": {
 			"buildResources": "icons",
-			"output": "../electrongauzydesktop-packages"
+			"output": "../desktop-packages"
 		},
 		"mac": {
 			"category": "public.app-category.developer-tools",
@@ -37,13 +37,13 @@
 				"deb",
 				"tar.gz"
 			],
-			"synopsis": "GauzyDesktop",
+			"synopsis": "Desktop",
 			"category": "Development"
 		},
 		"nsis": {
 			"createDesktopShortcut": "always",
 			"installerIcon": "icon.ico",
-			"artifactName": "GauzyDesktop-Setup-${version}.${ext}"
+			"artifactName": "Desktop-Setup-${version}.${ext}"
 		}
 	}
 }

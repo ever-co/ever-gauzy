@@ -23,12 +23,13 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	resizable: true,
 	focusable: true,
 	fullscreenable: true,
-	kiosk: false,
+	kiosk: true,
 	// to hide title bar, uncomment:
 	// titleBarStyle: 'hidden',
 	webPreferences: {
 		devTools: debugMode,
-		nodeIntegration: debugMode
+		nodeIntegration: debugMode,
+		webSecurity: false
 	}
 };
 

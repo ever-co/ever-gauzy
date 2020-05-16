@@ -20,7 +20,7 @@
 		"api-interface": {
 			"tags": []
 		},
-		"electron-gauzy-desktop": {
+		"desktop": {
 			"tags": []
 		}
 	}

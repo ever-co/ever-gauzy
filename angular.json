@@ -269,7 +269,7 @@
 				}
 			}
 		},
-		"electron-gauzy-desktop": {
+		"desktop": {
 			"projectType": "application",
 			"schematics": {
 				"@nrwl/workspace:component": {
@@ -283,7 +283,7 @@
 				"build": {
 					"builder": "@angular-devkit/build-angular:browser",
 					"options": {
-						"outputPath": "dist/apps/electron-gauzy-desktop",
+						"outputPath": "dist/apps/desktop",
 						"index": "apps/gauzy/src/index.html",
 						"main": "apps/gauzy/src/main.ts",
 						"polyfills": "apps/gauzy/src/polyfills.ts",
@@ -298,7 +298,7 @@
 							"apps/gauzy/src/silent-refresh.html",
 							{
 								"glob": "**/*",
-								"input": "apps/electron-gauzy-desktop/src/",
+								"input": "apps/desktop/src/",
 								"ignore": ["**/*.ts"],
 								"output": ""
 							}
@@ -359,12 +359,12 @@
 				"serve": {
 					"builder": "@angular-devkit/build-angular:dev-server",
 					"options": {
-						"browserTarget": "electron-gauzy-desktop:build",
+						"browserTarget": "desktop:build",
 						"proxyConfig": "apps/gauzy/proxy.conf.json"
 					},
 					"configurations": {
 						"production": {
-							"browserTarget": "electron-gauzy-desktop:build:production",
+							"browserTarget": "desktop:build:production",
 							"proxyConfig": "apps/gauzy/proxy.prod.conf.json"
 						}
 					}
