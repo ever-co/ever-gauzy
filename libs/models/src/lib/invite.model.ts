@@ -47,7 +47,6 @@ export interface ICreateEmailInvitesInput {
 	invitedById: string;
 	inviteType: any;
 	startedWorkOn: string;
-	languageCode: LanguagesEnum;
 }
 
 export interface ICreateOrganizationClientInviteInput {

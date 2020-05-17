@@ -9,7 +9,8 @@ import {
 	Role as IOrganizationRole,
 	User,
 	ICreateOrganizationClientInviteInput,
-	RolesEnum
+	RolesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -92,7 +93,8 @@ export class InviteService extends CrudService<Invite> {
 	 */
 	async createBulk(
 		emailInvites: ICreateEmailInvitesInput,
-		originUrl: string
+		originUrl: string,
+		languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
 		const invites: Invite[] = [];
 
@@ -103,8 +105,7 @@ export class InviteService extends CrudService<Invite> {
 			clientIds,
 			departmentIds,
 			organizationId,
-			invitedById,
-			languageCode
+			invitedById
 		} = emailInvites;
 
 		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(

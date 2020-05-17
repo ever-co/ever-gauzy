@@ -71,10 +71,13 @@ export class InviteController {
 	async createManyWithEmailsId(
 		@Body() entity: ICreateEmailInvitesInput,
 		@Req() request: Request,
-		@I18nLang() language: LanguagesEnum
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
-		entity.languageCode = language;
-		return this.inviteService.createBulk(entity, request.get('Origin'));
+		return this.inviteService.createBulk(
+			entity,
+			request.get('Origin'),
+			languageCode
+		);
 	}
 
 	@ApiOperation({ summary: 'Get invite.' })
