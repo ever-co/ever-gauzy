@@ -27,9 +27,12 @@ export class UsersService {
 			.toPromise();
 	}
 
-	getUserById(id: string): Promise<User> {
+	getUserById(id: string, relations?: string[]): Promise<User> {
+		const data = JSON.stringify({ relations });
 		return this.http
-			.get<User>(`${this.API_URL}/${id}`)
+			.get<User>(`${this.API_URL}/${id}`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
