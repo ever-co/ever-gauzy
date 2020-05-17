@@ -112,7 +112,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		try {
 			const user = this.selectedUser
 				? this.selectedUser
-				: await this.userService.getUserById(this.store.userId);
+				: await this.userService.getUserById(this.store.userId, [
+						'tags'
+				  ]);
 
 			const role =
 				this.selectedUser && this.selectedUser.role
