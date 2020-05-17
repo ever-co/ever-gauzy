@@ -187,8 +187,8 @@ const routes: Routes = [
 						path: 'schedules',
 						loadChildren: () =>
 							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+								'./employees/schedules/schedule.module'
+							).then((m) => m.ScheduleModule)
 					},
 					{
 						path: 'appointments',

@@ -7,12 +7,33 @@ import {
 	IsBoolean,
 	IsNumber
 } from 'class-validator';
-import { Column, Entity, OneToMany, JoinColumn } from 'typeorm';
+import {
+	Column,
+	Entity,
+	OneToMany,
+	JoinColumn,
+	ManyToOne,
+	RelationId
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { Employee } from '../employee/employee.entity';
 
 @Entity('employee_appointment')
 export class EmployeeAppointment extends Base implements IEmployeeAppointment {
+	@ApiProperty({ type: Employee })
+	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	employee?: Employee;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId(
+		(employeeAppointment: EmployeeAppointment) =>
+			employeeAppointment.employee
+	)
+	@Column({ nullable: true })
+	readonly employeeId?: string;
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

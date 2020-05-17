@@ -1,7 +1,7 @@
 import { CrudService, IPagination } from '../core';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindManyOptions } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -17,9 +17,11 @@ export class EmployeeAppointmentService extends CrudService<
 		super(employeeAppointmentRepository);
 	}
 
-	async findAllAppointments(): Promise<IPagination<EmployeeAppointment>> {
-		const total = await this.employeeAppointmentRepository.count();
-		const items = await this.employeeAppointmentRepository.find();
+	async findAllAppointments(
+		filter?: FindManyOptions<EmployeeAppointment>
+	): Promise<IPagination<EmployeeAppointment>> {
+		const total = await this.employeeAppointmentRepository.count(filter);
+		const items = await this.employeeAppointmentRepository.find(filter);
 
 		return { items, total };
 	}

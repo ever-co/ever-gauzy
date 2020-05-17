@@ -2,7 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { EmployeeAppointment } from '@gauzy/models';
+import {
+	EmployeeAppointment,
+	IEmployeeAppointmentCreateInput,
+	IEmployeeAppointmentFindInput
+} from '@gauzy/models';
 
 @Injectable()
 export class EmployeeAppointmentService {
@@ -10,9 +14,16 @@ export class EmployeeAppointmentService {
 
 	constructor(private http: HttpClient) {}
 
-	getAll(): Observable<{ items: EmployeeAppointment[] }> {
+	getAll(
+		relations?: string[],
+		findInput?: IEmployeeAppointmentFindInput
+	): Observable<{ items: EmployeeAppointment[] }> {
+		const data = JSON.stringify({ relations, findInput });
 		return this.http.get<{ items: EmployeeAppointment[] }>(
-			this.EMPLOYEE_APPOINTMENT_URL
+			this.EMPLOYEE_APPOINTMENT_URL,
+			{
+				params: { data }
+			}
 		);
 	}
 
@@ -26,7 +37,7 @@ export class EmployeeAppointmentService {
 		employeeAppointment: EmployeeAppointment
 	): Promise<EmployeeAppointment> {
 		return this.http
-			.post<EmployeeAppointment>(
+			.post<IEmployeeAppointmentCreateInput>(
 				`${this.EMPLOYEE_APPOINTMENT_URL}/create`,
 				employeeAppointment
 			)

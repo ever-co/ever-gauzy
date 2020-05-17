@@ -1,0 +1,38 @@
+<div class="header">
+	<div class="row">
+		<div class="col">
+			<h5 class="mb-3">
+				{{ 'SCHEDULE.DATE_SPECIFIC_AVAILIBILITY' | translate }}
+			</h5>
+		</div>
+		<div class="col text-right">
+			<button
+				[disabled]="!dateSelected"
+				(click)="saveSelectedDateRange()"
+				status="success"
+				nbButton
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+			<button
+				style="margin-left: 15px;"
+				[disabled]="!dateSelected"
+				(click)="discardSelectedDates()"
+				status="warning"
+				nbButton
+			>
+				{{ 'BUTTONS.DISCARD' | translate }}
+			</button>
+		</div>
+	</div>
+</div>
+
+<div class="filters row mb-3">
+	<div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
+		<ga-employee-selector
+			class="header-selector employee-selector"
+		></ga-employee-selector>
+	</div>
+</div>
+
+<full-calendar #calendar [options]="calendarOptions"></full-calendar>

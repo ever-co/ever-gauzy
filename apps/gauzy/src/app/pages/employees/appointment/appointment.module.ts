@@ -59,11 +59,11 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCheckboxModule,
 		TimerPickerModule,
 		NbSpinnerModule,
-		TimerPickerModule,
 		NbRouteTabsetModule,
 		EmployeeMultiSelectModule,
 		SharedModule
 	],
+	exports: [AppointmentComponent],
 	declarations: [AppointmentComponent, ManageAppointmentComponent],
 	providers: [EmployeeAppointmentService, AppointmentEmployeesService]
 })
