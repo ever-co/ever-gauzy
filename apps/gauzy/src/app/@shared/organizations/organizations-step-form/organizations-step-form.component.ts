@@ -50,7 +50,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 	orgLocationForm: FormGroup;
 	orgBonusForm: FormGroup;
 	orgSettingsForm: FormGroup;
-	tags: Tag[];
+	tags: Tag[] = [];
 
 	@Output()
 	createOrganization = new EventEmitter();
@@ -207,8 +207,9 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy {
 		};
 		this.createOrganization.emit(consolidatedFormValues);
 	}
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+
+	selectedTagsEvent(currentSelection: Tag[]) {
+		this.orgMainForm.get('tags').setValue(currentSelection);
 	}
 
 	ngOnDestroy() {

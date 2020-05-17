@@ -31,7 +31,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	productCategories: ProductCategory[];
 	options: Array<ProductOption> = [];
 	variants: Array<ProductVariant> = [];
-	tags: Tag[];
+	tags: Tag[] = [];
 
 	@Output() save = new EventEmitter<Product>();
 	@Output() cancel = new EventEmitter<string>();
@@ -57,11 +57,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	private _initializeForm() {
-		if (this.product) {
-			this.tags = this.product.tags;
-		}
 		this.form = this.fb.group({
-			tags: [],
+			tags: [this.product ? this.product.tags : ''],
 			name: [this.product ? this.product.name : '', Validators.required],
 			code: [this.product ? this.product.code : '', Validators.required],
 			productTypeId: [
@@ -75,6 +72,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			enabled: [this.product ? this.product.enabled : true],
 			description: [this.product ? this.product.description : '']
 		});
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	async loadProductTypes() {
@@ -132,7 +130,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	onCancel() {
 		this.cancel.emit('PRODUCT_EDIT');
 	}
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+	selectedTagsEvent(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 }

@@ -239,7 +239,6 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		if (this.expense) {
-			this.tags = this.expense.tags;
 			this.form = this.fb.group({
 				id: [this.expense.id],
 				amount: [this.expense.amount, Validators.required],
@@ -290,6 +289,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.valueDate = this.form.get('valueDate');
 		this.amount = this.form.get('amount');
 		this.notes = this.form.get('notes');
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	private calculateTaxes() {
@@ -377,8 +377,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			});
 	}
 
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
+	selectedTagsHandler(currentSelection: Tag) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	onEmployeeChange(selectedEmployee: SelectedEmployee) {
