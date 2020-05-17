@@ -3,7 +3,7 @@ import { OrganizationProjects } from './organization-projects.model';
 import { Employee } from './employee.model';
 import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 import { Organization } from './organization.model';
-import { User } from './user.model';
+import { User, LanguagesEnum } from './user.model';
 
 export interface OrganizationClients extends IBaseEntityWithMembers {
 	name: string;
@@ -55,6 +55,7 @@ export interface OrganizationClientsCreateInput extends IBaseEntityModel {
 }
 
 export interface OrganizationClientsInviteInput extends IBaseEntityModel {
+	languageCode: LanguagesEnum;
 	originalUrl?: string;
 	inviterUser?: User;
 }

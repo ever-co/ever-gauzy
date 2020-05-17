@@ -1,6 +1,7 @@
 import {
 	EmployeeCreateInput as IEmployeeCreateInput,
-	PermissionsEnum
+	PermissionsEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import {
 	Body,
@@ -25,6 +26,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { ParseJsonPipe } from '../shared';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -166,6 +168,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Post('/createBulk')
 	async createBulk(
 		@Body() input: IEmployeeCreateInput[],
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<Employee[]> {
 		/**
@@ -179,6 +182,8 @@ export class EmployeeController extends CrudController<Employee> {
 					(entity.user.imageUrl = getUserDummyImage(entity.user))
 			);
 
-		return this.commandBus.execute(new EmployeeBulkCreateCommand(input));
+		return this.commandBus.execute(
+			new EmployeeBulkCreateCommand(input, languageCode)
+		);
 	}
 }

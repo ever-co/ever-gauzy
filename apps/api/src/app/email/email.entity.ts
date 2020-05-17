@@ -16,7 +16,6 @@ export class Email extends Base implements IEmail {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
 	@Column()
 	content: string;
 

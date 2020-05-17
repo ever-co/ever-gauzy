@@ -24,7 +24,7 @@ export class InviteAcceptUserHandler
 	public async execute(
 		command: InviteAcceptUserCommand
 	): Promise<UpdateResult | Invite> {
-		const { input } = command;
+		const { input, languageCode } = command;
 
 		const organization = await this.organizationService.findOne(
 			input.organization.id,
@@ -35,14 +35,17 @@ export class InviteAcceptUserHandler
 			input.user.imageUrl = getUserDummyImage(input.user);
 		}
 
-		await this.authService.register({
-			...input,
-			user: {
-				...input.user,
-				tenant: organization.tenant
+		await this.authService.register(
+			{
+				...input,
+				user: {
+					...input.user,
+					tenant: organization.tenant
+				},
+				organizationId: organization.id
 			},
-			organizationId: organization.id
-		});
+			languageCode
+		);
 
 		return await this.inviteService.update(input.inviteId, {
 			status: InviteStatusEnum.ACCEPTED

@@ -18,7 +18,6 @@ import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Invite } from './invite.entity';
-import * as nodemailer from 'nodemailer';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { Organization } from '../organization/organization.entity';
@@ -104,7 +103,8 @@ export class InviteService extends CrudService<Invite> {
 			clientIds,
 			departmentIds,
 			organizationId,
-			invitedById
+			invitedById,
+			languageCode
 		} = emailInvites;
 
 		const projects: IOrganizationProjects[] = await this.organizationProjectsRepository.findByIds(
@@ -189,7 +189,8 @@ export class InviteService extends CrudService<Invite> {
 					role: role.name,
 					organization: organization.name,
 					registerUrl,
-					originUrl
+					originUrl,
+					languageCode
 				});
 			} else if (
 				emailInvites.inviteType.indexOf('/pages/employees') > -1
@@ -200,7 +201,8 @@ export class InviteService extends CrudService<Invite> {
 					clients,
 					departments,
 					originUrl,
-					organization: organization.name
+					organization: organization.name,
+					languageCode
 				});
 			}
 		});
@@ -217,7 +219,8 @@ export class InviteService extends CrudService<Invite> {
 			clientId,
 			organizationId,
 			invitedById,
-			originalUrl
+			originalUrl,
+			languageCode
 		} = inviteInput;
 
 		const client: IOrganizationClients = await this.organizationClientsRepository.findOne(
@@ -254,6 +257,7 @@ export class InviteService extends CrudService<Invite> {
 			inviterUser,
 			organization,
 			createdInvite,
+			languageCode,
 			originalUrl
 		);
 

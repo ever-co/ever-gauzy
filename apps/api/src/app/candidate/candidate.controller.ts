@@ -20,10 +20,12 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import {
 	PermissionsEnum,
-	CandidateCreateInput as ICandidateCreateInput
+	CandidateCreateInput as ICandidateCreateInput,
+	LanguagesEnum
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { CandidateCreateCommand, CandidateBulkCreateCommand } from './commands';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Candidate')
 @UseGuards(AuthGuard('jwt'))
@@ -137,6 +139,7 @@ export class CandidateController extends CrudController<Candidate> {
 	@Post('/createBulk')
 	async createBulk(
 		@Body() input: ICandidateCreateInput[],
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<Candidate[]> {
 		/**
@@ -149,6 +152,8 @@ export class CandidateController extends CrudController<Candidate> {
 					(entity.user.imageUrl = getUserDummyImage(entity.user))
 			);
 
-		return this.commandBus.execute(new CandidateBulkCreateCommand(input));
+		return this.commandBus.execute(
+			new CandidateBulkCreateCommand(input, languageCode)
+		);
 	}
 }

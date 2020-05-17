@@ -5,7 +5,8 @@ import {
 	IInviteAcceptInput,
 	IInviteResendInput,
 	PermissionsEnum,
-	LinkClientOrganizationInviteInput
+	LinkClientOrganizationInviteInput,
+	LanguagesEnum
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -42,6 +43,7 @@ import { PermissionGuard } from './../shared/guards/auth/permission.guard';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-organization-clients.command';
 import { Request } from 'express';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Invite')
 @UseGuards(AuthGuard('jwt'))
@@ -68,8 +70,10 @@ export class InviteController {
 	@Post('/emails')
 	async createManyWithEmailsId(
 		@Body() entity: ICreateEmailInvitesInput,
-		@Req() request: Request
+		@Req() request: Request,
+		@I18nLang() language: LanguagesEnum
 	): Promise<ICreateEmailInvitesOutput> {
+		entity.languageCode = language;
 		return this.inviteService.createBulk(entity, request.get('Origin'));
 	}
 
@@ -137,10 +141,13 @@ export class InviteController {
 	@Post('employee')
 	async acceptEmployeeInvite(
 		@Body() entity: IInviteAcceptInput,
-		@Req() request: Request
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
 		entity.originalUrl = request.get('Origin');
-		return this.commandBus.execute(new InviteAcceptEmployeeCommand(entity));
+		return this.commandBus.execute(
+			new InviteAcceptEmployeeCommand(entity, languageCode)
+		);
 	}
 
 	@ApiOperation({ summary: 'Accept user invite.' })
@@ -156,10 +163,13 @@ export class InviteController {
 	@Post('user')
 	async acceptUserInvite(
 		@Body() entity: IInviteAcceptInput,
-		@Req() request: Request
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<UpdateResult | Invite> {
 		entity.originalUrl = request.get('Origin');
-		return this.commandBus.execute(new InviteAcceptUserCommand(entity));
+		return this.commandBus.execute(
+			new InviteAcceptUserCommand(entity, languageCode)
+		);
 	}
 
 	@ApiOperation({ summary: 'Resend invite.' })
@@ -224,13 +234,15 @@ export class InviteController {
 	@Put('organization-client/:id')
 	async inviteClient(
 		@Param('id') id: string,
-		@Req() request
+		@Req() request,
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<OrganizationClients> {
 		return this.commandBus.execute(
 			new InviteOrganizationClientsCommand({
 				id,
 				originalUrl: request.get('Origin'),
-				inviterUser: request.user
+				inviterUser: request.user,
+				languageCode
 			})
 		);
 	}

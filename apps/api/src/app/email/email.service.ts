@@ -2,7 +2,8 @@ import { environment } from '@env-api/environment';
 import {
 	OrganizationClients,
 	OrganizationDepartment,
-	OrganizationProjects
+	OrganizationProjects,
+	LanguagesEnum
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,6 +23,7 @@ export interface InviteUserModel {
 	role: string;
 	organization: string;
 	registerUrl: string;
+	languageCode: LanguagesEnum;
 	originUrl?: string;
 }
 
@@ -29,6 +31,7 @@ export interface InviteEmployeeModel {
 	email: string;
 	registerUrl: string;
 	organization: string;
+	languageCode: LanguagesEnum;
 	projects?: OrganizationProjects[];
 	clients?: OrganizationClients[];
 	departments?: OrganizationDepartment[];
@@ -84,17 +87,14 @@ export class EmailService extends CrudService<IEmail> {
 		}
 	});
 
-	languageCode: string;
-
 	inviteOrganizationClient(
 		organizationClient: OrganizationClients,
 		inviterUser: User,
 		organization: Organization,
 		invite: Invite,
+		languageCode: LanguagesEnum,
 		originUrl?: string
 	) {
-		this.languageCode = 'en';
-
 		this.email
 			.send({
 				template: 'invite-organization-client',
@@ -102,7 +102,7 @@ export class EmailService extends CrudService<IEmail> {
 					to: `${organizationClient.primaryEmail}`
 				},
 				locals: {
-					locale: this.languageCode,
+					locale: languageCode,
 					name: organizationClient.name,
 					host: originUrl || environment.host,
 					id: organizationClient.id,
@@ -117,7 +117,7 @@ export class EmailService extends CrudService<IEmail> {
 				}
 			})
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, this.languageCode);
+				this.createEmailRecord(res.originalMessage, languageCode);
 			})
 			.catch(console.error);
 	}
@@ -128,10 +128,9 @@ export class EmailService extends CrudService<IEmail> {
 			role,
 			organization,
 			registerUrl,
-			originUrl
+			originUrl,
+			languageCode
 		} = inviteUserModel;
-
-		this.languageCode = 'en';
 
 		this.email
 			.send({
@@ -140,7 +139,7 @@ export class EmailService extends CrudService<IEmail> {
 					to: `${email}`
 				},
 				locals: {
-					locale: this.languageCode,
+					locale: languageCode,
 					role: role,
 					organization: organization,
 					generatedUrl: registerUrl,
@@ -148,7 +147,7 @@ export class EmailService extends CrudService<IEmail> {
 				}
 			})
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, this.languageCode);
+				this.createEmailRecord(res.originalMessage, languageCode);
 			})
 			.catch(console.error);
 	}
@@ -159,10 +158,9 @@ export class EmailService extends CrudService<IEmail> {
 			registerUrl,
 			projects,
 			organization,
-			originUrl
+			originUrl,
+			languageCode
 		} = inviteEmployeeModel;
-
-		this.languageCode = 'en';
 
 		this.email
 			.send({
@@ -171,7 +169,7 @@ export class EmailService extends CrudService<IEmail> {
 					to: `${email}`
 				},
 				locals: {
-					locale: this.languageCode,
+					locale: languageCode,
 					role: projects,
 					organization,
 					generatedUrl: registerUrl,
@@ -179,14 +177,12 @@ export class EmailService extends CrudService<IEmail> {
 				}
 			})
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, this.languageCode);
+				this.createEmailRecord(res.originalMessage, languageCode);
 			})
 			.catch(console.error);
 	}
 
-	welcomeUser(user: User, originUrl?: string) {
-		this.languageCode = 'en';
-
+	welcomeUser(user: User, languageCode: LanguagesEnum, originUrl?: string) {
 		this.email
 			.send({
 				template: 'welcome-user',
@@ -194,20 +190,23 @@ export class EmailService extends CrudService<IEmail> {
 					to: `${user.email}`
 				},
 				locals: {
-					locale: this.languageCode,
+					locale: languageCode,
 					email: user.email,
 					host: originUrl || environment.host
 				}
 			})
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, this.languageCode);
+				this.createEmailRecord(res.originalMessage, languageCode);
 			})
 			.catch(console.error);
 	}
 
-	requestPassword(user: User, url: string, originUrl?: string) {
-		this.languageCode = 'en';
-
+	requestPassword(
+		user: User,
+		url: string,
+		languageCode: LanguagesEnum,
+		originUrl?: string
+	) {
 		this.email
 			.send({
 				template: 'password',
@@ -216,13 +215,13 @@ export class EmailService extends CrudService<IEmail> {
 					subject: 'Forgotten Password'
 				},
 				locals: {
-					locale: this.languageCode,
+					locale: languageCode,
 					generatedUrl: url,
 					host: originUrl || environment.host
 				}
 			})
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, this.languageCode);
+				this.createEmailRecord(res.originalMessage, languageCode);
 			})
 			.catch(console.error);
 	}

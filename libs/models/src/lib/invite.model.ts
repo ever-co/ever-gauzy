@@ -4,7 +4,7 @@
 
 import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { User, UserRegistrationInput } from './user.model';
+import { User, UserRegistrationInput, LanguagesEnum } from './user.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Organization } from './organization.model';
 import { OrganizationClients } from './organization-clients.model';
@@ -47,6 +47,7 @@ export interface ICreateEmailInvitesInput {
 	invitedById: string;
 	inviteType: any;
 	startedWorkOn: string;
+	languageCode: LanguagesEnum;
 }
 
 export interface ICreateOrganizationClientInviteInput {
@@ -56,6 +57,7 @@ export interface ICreateOrganizationClientInviteInput {
 	roleId: string;
 	invitedById: string;
 	originalUrl: string;
+	languageCode: LanguagesEnum;
 }
 
 export interface ICreateEmailInvitesOutput {
