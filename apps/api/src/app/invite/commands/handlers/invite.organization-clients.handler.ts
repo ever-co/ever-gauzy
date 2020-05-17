@@ -4,7 +4,6 @@ import {
 	RolesEnum
 } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { OrganizationService } from '../../../organization/organization.service';
 import { User } from '../../../user/user.entity';
 import { UserService } from '../../../user/user.service';
 import { InternalServerErrorException } from '@nestjs/common';
