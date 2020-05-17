@@ -15,6 +15,8 @@
 		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
+		"DISCARD": "Сбросить",
+		"CLEAR_ALL": "Очистить все",
 		"BACK": "Обратно",
 		"SENT": "Отправлено",
 		"ACCEPTED": "Принято",
@@ -1353,5 +1355,8 @@
 		"EVENT_DURATION": "Продолжительность",
 		"EVENT_DESCRIPTION": "Описание",
 		"ACTIVE": "Активный"
+	},
+	"SCHEDULE": {
+		"DATE_SPECIFIC_AVAILIBILITY": "Специфичная доступность"
 	}
 }
