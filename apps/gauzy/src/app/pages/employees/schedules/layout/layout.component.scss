@@ -1,16 +1,5 @@
-:host {
-  ::ng-deep {
-    .route-tabset {
-      margin-bottom: 16px !important;
-    }
-  }
-}
-:host {
-  height: 100%;
-  nb-card {
-    height: 100%;
-    nb-card-body {
-      height: 100%;
-    }
+::ng-deep {
+  .route-tabset {
+    margin-bottom: 16px !important;
   }
 }

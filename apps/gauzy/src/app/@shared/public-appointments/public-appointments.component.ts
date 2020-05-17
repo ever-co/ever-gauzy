@@ -1,11 +1,4 @@
-import {
-	Component,
-	EventEmitter,
-	Input,
-	Output,
-	OnInit,
-	OnDestroy
-} from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
@@ -13,7 +6,6 @@ import { TimeOff } from '@gauzy/models';
 import { EmployeeAppointmentService } from '../../@core/services/employee-appointment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { timeOff } from './test-data';
-import * as moment from 'moment';
 import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 
