@@ -473,6 +473,15 @@
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between"
 		},
+		"UPWORK_PAGE": {
+			"ACTIVITIES": "Activities",
+			"REPORTS": "Reports",
+			"TRANSACTIONS": "Transactions",
+			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
+			"API_KEY": "Upwork API key",
+			"SECRET": "Upwork Secret",
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy."
+		},
 		"COMING_SOON": "Coming soon"
 	},
 	"DASHBOARD_PAGE": {
