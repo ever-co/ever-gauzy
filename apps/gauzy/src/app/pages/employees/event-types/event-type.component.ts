@@ -12,7 +12,6 @@ import { EventTypeMutationComponent } from './event-type-mutation/event-type-mut
 import { EventTypeService } from '../../../@core/services/event-type.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { PictureNameTagsComponent } from '../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 export interface EventTypeViewModel {
