@@ -28,10 +28,12 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	})
 	@Get()
 	async findAllProductCategories(
-		@Query('findInput') findInput: string
+		@Query('data') data: string
 	): Promise<IPagination<ProductCategory>> {
+		const { relations, findInput } = JSON.parse(data);
 		return this.productCategoriesService.findAll({
-			where: findInput
+			where: findInput,
+			relations
 		});
 	}
 }

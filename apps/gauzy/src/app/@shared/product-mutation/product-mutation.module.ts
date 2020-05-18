@@ -27,13 +27,15 @@ import { ProductVariantPriceService } from '../../@core/services/product-variant
 import { UserFormsModule } from '../user/forms/user-forms.module';
 import { ProductTypeMutationComponent } from './product-type-mutation/product-type-mutation.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
+import { ProductCategoryMutationComponent } from './product-category-mutation/product-category-mutation.component';
 
 @NgModule({
 	declarations: [
 		ProductMutationComponent,
 		ProductFormComponent,
 		ProductVariantFormComponent,
-		ProductTypeMutationComponent
+		ProductTypeMutationComponent,
+		ProductCategoryMutationComponent
 	],
 	imports: [
 		ThemeModule,

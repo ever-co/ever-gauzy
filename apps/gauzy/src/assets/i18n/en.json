@@ -845,7 +845,11 @@
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
 		"PRODUCT_TYPE_SAVED": "Product type saved",
-		"PRODUCT_TYPE_DELETED": "Product type deleted"
+		"PRODUCT_TYPE_DELETED": "Product type deleted",
+		"EDIT_PRODUCT_CATEGORY": "Edit product category",
+		"ADD_PRODUCT_CATEGORY": "Add product category",
+		"PRODUCT_CATEGORY_SAVED": "Product category saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category deleted"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

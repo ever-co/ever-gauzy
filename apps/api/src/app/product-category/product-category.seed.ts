@@ -12,8 +12,9 @@ export const createDefaultProductCategories = async (
 	organizations.forEach((organization) => {
 		for (let i = 0; i < 3; i++) {
 			const category = new ProductCategory();
-			category.name = 'product category 1';
+			category.name = 'product category';
 			category.organizationId = organization.id;
+			category.organization = organization;
 			productCategories.push(category);
 		}
 	});
