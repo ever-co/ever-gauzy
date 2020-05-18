@@ -1210,5 +1210,9 @@
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
+	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "This field is required!",
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
 	}
 }
