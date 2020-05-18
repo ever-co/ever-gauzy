@@ -9,6 +9,8 @@ export class EmployeeSelectComponent {
 	@Input() selectedEmployeeIds: string[];
 	@Input() allEmployees: Employee[];
 
+	@Input() disabled = false;
+
 	@Output() selectedChange = new EventEmitter();
 
 	constructor() {}
