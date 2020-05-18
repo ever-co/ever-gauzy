@@ -954,6 +954,7 @@
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
+		"MY_TASK_HEADER": "My Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",
@@ -964,6 +965,7 @@
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Project",
 		"TASK_MEMBERS": "Employees",
+		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Teams",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",

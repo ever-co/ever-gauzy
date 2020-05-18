@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Employee, EmployeeFindInput } from './employee.model';
 import { Organization, OrganizationFindInput } from './organization.model';
+import { Tag } from '..';
 
 export interface IEventType extends IBaseEntityModel {
 	title: string;
@@ -12,6 +13,7 @@ export interface IEventType extends IBaseEntityModel {
 	organizationId: string;
 	employee?: Employee;
 	organization: Organization;
+	tags?: Tag[];
 }
 
 export interface IEventTypeFindInput extends IBaseEntityModel {
@@ -22,6 +24,7 @@ export interface IEventTypeFindInput extends IBaseEntityModel {
 	isActive?: boolean;
 	employee?: EmployeeFindInput;
 	organization?: OrganizationFindInput;
+	tags?: Tag[];
 }
 
 export interface IEventTypeCreateInput {
@@ -32,6 +35,7 @@ export interface IEventTypeCreateInput {
 	durationUnit: string;
 	isActive: boolean;
 	organizationId: string;
+	tags?: Tag[];
 }
 
 export interface IEventTypeUpdateInput {
@@ -42,4 +46,5 @@ export interface IEventTypeUpdateInput {
 	durationUnit?: string;
 	isActive?: boolean;
 	organizationId?: string;
+	tags?: Tag[];
 }

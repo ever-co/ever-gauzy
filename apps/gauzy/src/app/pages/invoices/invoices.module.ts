@@ -43,6 +43,8 @@ import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 import { ProductService } from '../../@core/services/product.service';
 import { InvoiceProductsSelectorComponent } from './table-components/invoice-product-selector.component';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
+import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -50,6 +52,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
+		TagsColorInputModule,
 		InvoicesRoutingModule,
 		NbCardModule,
 		NbSpinnerModule,

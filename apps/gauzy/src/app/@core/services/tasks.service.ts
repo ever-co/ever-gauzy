@@ -38,6 +38,12 @@ export class TasksService extends TranslationBaseComponent {
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
+	getMyTasks(): Observable<ITaskResponse> {
+		return this._http
+			.get<ITaskResponse>(`${this.API_URL}/me`)
+			.pipe(catchError((error) => this.errorHandler(error)));
+	}
+
 	getById(id: string) {
 		return this._http
 			.get<Task>(`${this.API_URL}/${id}`)

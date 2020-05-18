@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../employee.service';
-import { Employee, EmployeeCreateInput } from '@gauzy/models';
+import { Employee, EmployeeCreateInput, LanguagesEnum } from '@gauzy/models';
 import { EmployeeBulkCreateCommand } from '../employee.bulk.create.command';
 import { AuthService } from '../../../auth/auth.service';
 import { EmailService } from '../../../email';
@@ -17,21 +17,24 @@ export class EmployeeBulkCreateHandler
 	public async execute(
 		command: EmployeeBulkCreateCommand
 	): Promise<Employee[]> {
-		const { input } = command;
+		const { input, languageCode } = command;
 		const inputWithHash = await this._loadPasswordHash(input);
 
 		const createdEmployees = await this.employeeService.createBulk(
 			inputWithHash
 		);
 
-		this._sendWelcomeEmail(createdEmployees);
+		this._sendWelcomeEmail(createdEmployees, languageCode);
 
 		return createdEmployees;
 	}
 
-	private _sendWelcomeEmail(employees: Employee[]) {
+	private _sendWelcomeEmail(
+		employees: Employee[],
+		languageCode: LanguagesEnum
+	) {
 		employees.map((employee) =>
-			this.emailService.welcomeUser(employee.user)
+			this.emailService.welcomeUser(employee.user, languageCode)
 		);
 	}
 

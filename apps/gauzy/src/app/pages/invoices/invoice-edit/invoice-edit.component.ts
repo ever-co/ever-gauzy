@@ -13,7 +13,8 @@ import {
 	Employee,
 	PermissionsEnum,
 	InvoiceTypeEnum,
-	DiscountTaxTypeEnum
+	DiscountTaxTypeEnum,
+	Tag
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -79,6 +80,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	invoiceDate: Date;
 	dueDate: Date;
 	hasInvoiceEditPermission: boolean;
+	tags: Tag[] = [];
 
 	subtotal = 0;
 	total = 0;
@@ -103,7 +105,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 	async getInvoice() {
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems'
+			'invoiceItems',
+			'tags'
 		]);
 		this.invoice = invoice;
 		this.invoiceItems = this.invoice.invoiceItems;
@@ -143,7 +146,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			client: ['', Validators.required],
 			currency: ['', Validators.required],
 			discountType: ['', Validators.required],
-			taxType: ['', Validators.required]
+			taxType: ['', Validators.required],
+			tags: []
 		});
 	}
 
@@ -158,6 +162,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.form.get('discountType').setValue(invoice.discountType);
 		this.form.get('taxType').setValue(invoice.taxType);
 		this.invoiceLoaded = true;
+		this.tags = invoice.tags;
 	}
 
 	loadSmartTable() {
@@ -354,7 +359,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 	async updateInvoice() {
 		const tableData = await this.smartTableSource.getAll();
-		console.log(tableData);
 		if (tableData.length) {
 			const invoiceData = this.form.value;
 			if (
@@ -438,7 +442,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
 				clientId: invoiceData.client.id,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tags: this.tags
 			});
 
 			for (const invoiceItem of tableData) {
@@ -772,6 +777,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 	cancel() {
 		this.router.navigate(['/pages/accounting/invoices']);
+	}
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.tags = currentTagSelection;
 	}
 
 	ngOnDestroy() {

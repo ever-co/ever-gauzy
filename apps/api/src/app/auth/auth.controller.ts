@@ -16,11 +16,15 @@ import { User as IUser } from '../user/user.entity';
 import { CommandBus } from '@nestjs/cqrs';
 import { AuthRegisterCommand } from './commands';
 import { RequestContext } from '../core/context';
-import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import {
+	UserRegistrationInput as IUserRegistrationInput,
+	LanguagesEnum
+} from '@gauzy/models';
 import { getUserDummyImage } from '../core';
 import { environment as env } from '@env-api/environment';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Auth')
 @Controller()
@@ -63,13 +67,16 @@ export class AuthController {
 	async create(
 		@Body() entity: IUserRegistrationInput,
 		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<IUser> {
 		if (!entity.user.imageUrl) {
 			entity.user.imageUrl = getUserDummyImage(entity.user);
 		}
 		entity.originalUrl = request.get('Origin');
-		return this.commandBus.execute(new AuthRegisterCommand(entity));
+		return this.commandBus.execute(
+			new AuthRegisterCommand(entity, languageCode)
+		);
 	}
 
 	@HttpCode(HttpStatus.OK)
@@ -90,10 +97,12 @@ export class AuthController {
 	async requestPass(
 		@Body() findObj,
 		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<{ id: string; token: string } | null> {
 		return await this.authService.requestPassword(
 			findObj,
+			languageCode,
 			request.get('Origin')
 		);
 	}
