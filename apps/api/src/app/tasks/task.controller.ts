@@ -20,12 +20,17 @@ import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionsEnum } from '@gauzy/models';
+import { EmployeeService } from '../employee/employee.service';
+import { RequestContext } from '../core/context';
 
 @ApiTags('Tasks')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class TaskController extends CrudController<Task> {
-	constructor(private readonly taskService: TaskService) {
+	constructor(
+		private readonly taskService: TaskService,
+		private readonly employeeService: EmployeeService
+	) {
 		super(taskService);
 	}
 
@@ -48,6 +53,27 @@ export class TaskController extends CrudController<Task> {
 			where: findInput,
 			relations
 		});
+	}
+
+	@ApiOperation({ summary: 'Find my tasks.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tasks',
+		type: Task
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@Get('me')
+	async findMyTasks(): Promise<IPagination<Task>> {
+		//If user is not an employee, then this will return 404
+		const employee = await this.employeeService.findOne({
+			where: {
+				user: { id: RequestContext.currentUser().id }
+			}
+		});
+		return this.taskService.getMyTasks(employee.id);
 	}
 
 	@ApiOperation({ summary: 'create a task' })

@@ -15,6 +15,8 @@
 		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
+		"DISCARD": "Сбросить",
+		"CLEAR_ALL": "Очистить все",
 		"BACK": "Обратно",
 		"SENT": "Отправлено",
 		"ACCEPTED": "Принято",
@@ -38,7 +40,8 @@
 		"SEND": "Отправить",
 		"ARCHIVE": "Архивировать",
 		"FIND_TIME": "Время поиска",
-		"DOWNLOAD": "Скачать"
+		"DOWNLOAD": "Скачать",
+		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -323,7 +326,8 @@
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
 			"INVITATION": "приглашение",
-			"DELETE_USER": " из базы данных, которая связана только с текущей организацией"
+			"DELETE_USER": " из базы данных, которая связана только с текущей организацией",
+			"EVENT_TYPE": "Тип события"
 		}
 	},
 	"POP_UPS": {
@@ -434,6 +438,7 @@
 		"TIMESHEETS": "Сроки",
 		"SCHEDULES": "Графики",
 		"EMAIL_TEMPLATES": "Шаблоны писем",
+		"HELP_CENTER": "Центр поддержки",
 		"REPORTS": "Отчёты",
 		"TIME_REPORTS": "Отчеты по времени",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
@@ -948,6 +953,7 @@
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
+		"MY_TASK_HEADER": "My Tasks",
 		"ADD_TASKS": "Добавить задачи",
 		"EDIT_TASKS": "Редактировать задачи",
 		"TASKS_TITLE": "Заголовок",
@@ -958,6 +964,7 @@
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
 		"TASK_MEMBERS": "Сотрудники",
+		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Команды",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
@@ -1303,6 +1310,12 @@
 			"DELETE_ACCOUNT_WRONG_DATA": "Неправильный ввод! Повторите попытку.",
 			"ACCOUNT_DELETED": "Ваш аккаунт был успешно удален!",
 			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
+		},
+		"EVENT_TYPES": {
+			"ADD_EVENT_TYPE": "Создан новый тип события",
+			"EDIT_EVENT_TYPE": "Тип события отредактирован",
+			"DELETE_EVENT_TYPE": "Тип события удален",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1344,5 +1357,8 @@
 		"EVENT_DURATION": "Продолжительность",
 		"EVENT_DESCRIPTION": "Описание",
 		"ACTIVE": "Активный"
+	},
+	"SCHEDULE": {
+		"DATE_SPECIFIC_AVAILIBILITY": "Специфичная доступность"
 	}
 }

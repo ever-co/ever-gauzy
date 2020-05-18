@@ -171,7 +171,6 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		if (this.income) {
-			this.tags = this.income.tags;
 			this.form = this.fb.group({
 				valueDate: [
 					new Date(this.income.valueDate),
@@ -188,7 +187,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				notes: this.income.notes,
 				currency: this.income.currency,
 				isBonus: this.income.isBonus,
-				tags: this.income.tags
+				tags: [this.income.tags]
 			});
 		} else {
 			this.form = this.fb.group({
@@ -207,6 +206,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			this._loadDefaultCurrency();
 		}
 		this.notes = this.form.get('notes');
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	private async _loadDefaultCurrency() {
@@ -221,7 +221,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			this.currency.setValue(orgData.currency);
 		}
 	}
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 }

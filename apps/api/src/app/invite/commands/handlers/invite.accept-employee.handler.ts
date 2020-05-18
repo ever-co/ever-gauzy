@@ -33,7 +33,7 @@ export class InviteAcceptEmployeeHandler
 	public async execute(
 		command: InviteAcceptEmployeeCommand
 	): Promise<UpdateResult | Invite> {
-		const { input } = command;
+		const { input, languageCode } = command;
 
 		const invite = await this.inviteService.findOne({
 			where: { id: input.inviteId },
@@ -61,15 +61,18 @@ export class InviteAcceptEmployeeHandler
 			input.user.imageUrl = getUserDummyImage(input.user);
 		}
 
-		const user = await this.authService.register({
-			...input,
-			user: {
-				...input.user,
-				tenant: {
-					id: organization.tenantId
+		const user = await this.authService.register(
+			{
+				...input,
+				user: {
+					...input.user,
+					tenant: {
+						id: organization.tenantId
+					}
 				}
-			}
-		});
+			},
+			languageCode
+		);
 
 		const employee = await this.employeeService.create({
 			user,

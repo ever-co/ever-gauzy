@@ -3,6 +3,7 @@
 	[selected]="selectedEmployeeIds"
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth
+	[disabled]="disabled"
 	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate }}"
 >
 	<nb-option *ngFor="let employee of allEmployees" [value]="employee.id">

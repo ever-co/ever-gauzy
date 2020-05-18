@@ -31,6 +31,8 @@
 						<ngx-timer-range-picker
 							name="selectedRange"
 							[maxDate]="today"
+							[disabledDates]="blockedDates"
+							[blockedSlots]="blockedSlots"
 							formControlName="selectedRange"
 						>
 						</ngx-timer-range-picker>

@@ -3,7 +3,8 @@ import {
 	Task,
 	OrganizationProjects,
 	Employee,
-	OrganizationTeam
+	OrganizationTeam,
+	Tag
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
@@ -46,7 +47,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	selectedTeams: string[];
 	selectedTask: Task;
 	organizationId: string;
-	selectedTags: any;
+	tags: Tag[] = [];
 	participants = 'employees';
 
 	constructor(
@@ -116,9 +117,11 @@ export class TaskDialogComponent extends TranslationBaseComponent
 			],
 			dueDate: [dueDate],
 			description: [description],
-			tags: [],
+			tags: [tags],
 			teams: [this.selectedTeams]
 		});
+
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	addNewProject = (name: string): Promise<OrganizationProjects> => {
@@ -162,9 +165,8 @@ export class TaskDialogComponent extends TranslationBaseComponent
 		}
 	}
 
-	selectedTagsHandler(ev) {
-		// we dont need this, at least we dont need for create or update TASK
-		// this.tags = ev;
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	private async loadEmployees() {

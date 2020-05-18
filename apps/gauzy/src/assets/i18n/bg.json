@@ -15,6 +15,8 @@
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Да",
 		"SAVE": "Запази",
+		"DISCARD": "Discard",
+		"CLEAR_ALL": "Clear All",
 		"BACK": "Обратно",
 		"SENT": "Изпратено",
 		"ACCEPTED": "Прието",
@@ -38,7 +40,8 @@
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
-		"DOWNLOAD": "Download"
+		"DOWNLOAD": "Download",
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -323,7 +326,8 @@
 			"EXPENSE": "Разходи",
 			"USER": "user",
 			"INVITATION": "покана",
-			"DELETE_USER": " from database as it is associated only to current organization"
+			"DELETE_USER": " from database as it is associated only to current organization",
+			"EVENT_TYPE": "Event type"
 		}
 	},
 	"POP_UPS": {
@@ -434,6 +438,7 @@
 		"TIMESHEETS": "Timesheets",
 		"SCHEDULES": "Schedules",
 		"EMAIL_TEMPLATES": "Email Templates",
+		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
@@ -948,6 +953,7 @@
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
+		"MY_TASK_HEADER": "My Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",
@@ -958,6 +964,7 @@
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
 		"TASK_MEMBERS": "Служители",
+		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Отбори",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
@@ -1303,6 +1310,12 @@
 			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Pleace try again.",
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
+		},
+		"EVENT_TYPES": {
+			"ADD_EVENT_TYPE": "New event type created",
+			"EDIT_EVENT_TYPE": "Event type edited",
+			"DELETE_EVENT_TYPE": "Event type deleted",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1344,5 +1357,8 @@
 		"EVENT_DURATION": "Duration",
 		"EVENT_DESCRIPTION": "Description",
 		"ACTIVE": "Активен"
+	},
+	"SCHEDULE": {
+		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availibility"
 	}
 }

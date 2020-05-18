@@ -1,0 +1,8 @@
+<ng-container *ngIf="value">
+	<ng-container *ngIf="view === 'members'">
+		<ngx-employee-with-links [value]="value"></ngx-employee-with-links>
+	</ng-container>
+	<ng-container *ngIf="view === 'teams'">
+		<ngx-task-teams [value]="value"></ngx-task-teams>
+	</ng-container>
+</ng-container>
