@@ -124,7 +124,6 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	}
 
 	selectProductCategory($event: SelectedProductCategory) {
-		console.log($event);
 		if ($event.isSelected) {
 			this.selectedItem = $event.data;
 			this.disableButton = false;
