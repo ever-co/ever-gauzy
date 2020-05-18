@@ -7,28 +7,28 @@ import { TasksService } from './tasks.service';
 @Injectable({
 	providedIn: 'root'
 })
-export class TasksStoreService {
-	private _tasks$: BehaviorSubject<Task[]> = new BehaviorSubject([]);
-	public tasks$: Observable<Task[]> = this._tasks$
+export class MyTasksStoreService {
+	private _myTasks$: BehaviorSubject<Task[]> = new BehaviorSubject([]);
+	public myTasks$: Observable<Task[]> = this._myTasks$
 		.asObservable()
 		.pipe(map(this._mapToViewModel));
 
 	private _selectedTask$: BehaviorSubject<Task> = new BehaviorSubject(null);
 	public selectedTask$: Observable<Task> = this._selectedTask$.asObservable();
 
-	get tasks(): Task[] {
-		return this._tasks$.getValue();
+	get myTasks(): Task[] {
+		return this._myTasks$.getValue();
 	}
 
 	constructor(private _taskService: TasksService) {
-		if (!this.tasks.length) {
+		if (!this.myTasks.length) {
 			this.fetchTasks();
 		}
 	}
 
 	fetchTasks() {
 		this._taskService
-			.getAllTasks()
+			.getMyTasks()
 			.pipe(tap(({ items }) => this.loadAllTasks(items)))
 			.subscribe();
 	}
@@ -42,7 +42,7 @@ export class TasksStoreService {
 	}
 
 	loadAllTasks(tasks: Task[]): void {
-		this._tasks$.next(tasks);
+		this._myTasks$.next(tasks);
 	}
 
 	createTask(task: Task): void {
@@ -50,8 +50,8 @@ export class TasksStoreService {
 			.createTask(task)
 			.pipe(
 				tap((createdTask) => {
-					const tasks = [...this.tasks, createdTask];
-					this._tasks$.next(tasks);
+					const tasks = [...this.myTasks, createdTask];
+					this._myTasks$.next(tasks);
 				})
 			)
 			.subscribe();
@@ -62,11 +62,11 @@ export class TasksStoreService {
 			.editTask(task)
 			.pipe(
 				tap(() => {
-					const tasks = [...this.tasks];
+					const tasks = [...this.myTasks];
 					const newState = tasks.map((t) =>
 						t.id === task.id ? task : t
 					);
-					this._tasks$.next(newState);
+					this._myTasks$.next(newState);
 				})
 			)
 			.subscribe();
@@ -77,9 +77,9 @@ export class TasksStoreService {
 			.deleteTask(id)
 			.pipe(
 				tap(() => {
-					const tasks = [...this.tasks];
+					const tasks = [...this.myTasks];
 					const newState = tasks.filter((t) => t.id !== id);
-					this._tasks$.next(newState);
+					this._myTasks$.next(newState);
 				})
 			)
 			.subscribe();

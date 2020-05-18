@@ -2,10 +2,10 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
-import { TaskDialogComponent } from '../task-dialog/task-dialog.component';
+import { MyTaskDialogComponent } from '../my-task-dialog/my-task-dialog.component';
 import { first, takeUntil } from 'rxjs/operators';
 import { Task, Tag } from '@gauzy/models';
-import { TasksStoreService } from 'apps/gauzy/src/app/@core/services/tasks-store.service';
+import { MyTasksStoreService } from 'apps/gauzy/src/app/@core/services/my-tasks-store.service';
 import { Observable, Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,15 +13,14 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { TaskEstimateComponent } from 'apps/gauzy/src/app/@shared/table-components/task-estimate/task-estimate.component';
-import { EmployeeWithLinksComponent } from 'apps/gauzy/src/app/@shared/table-components/employee-with-links/employee-with-links.component';
-import { TaskTeamsComponent } from 'apps/gauzy/src/app/@shared/table-components/task-teams/task-teams.component';
+import { AssignedToComponent } from 'apps/gauzy/src/app/@shared/table-components/assigned-to/assigned-to.component';
 
 @Component({
-	selector: 'ngx-task',
-	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.scss']
+	selector: 'ngx-my-task',
+	templateUrl: './my-task.component.html',
+	styleUrls: ['./my-task.component.scss']
 })
-export class TaskComponent extends TranslationBaseComponent
+export class MyTaskComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('tasksTable', { static: false }) tasksTable;
 	private _ngDestroy$: Subject<void> = new Subject();
@@ -36,11 +35,11 @@ export class TaskComponent extends TranslationBaseComponent
 
 	constructor(
 		private dialogService: NbDialogService,
-		private _store: TasksStoreService,
+		private _store: MyTasksStoreService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
-		this.tasks$ = this._store.tasks$;
+		this.tasks$ = this._store.myTasks$;
 	}
 
 	ngOnInit() {
@@ -78,17 +77,11 @@ export class TaskComponent extends TranslationBaseComponent
 					type: 'string',
 					filter: false
 				},
-				employees: {
-					title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS'),
+				assignTo: {
+					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
 					type: 'custom',
 					filter: false,
-					renderComponent: EmployeeWithLinksComponent
-				},
-				teams: {
-					title: this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
-					type: 'custom',
-					filter: false,
-					renderComponent: TaskTeamsComponent
+					renderComponent: AssignedToComponent
 				},
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
@@ -112,7 +105,7 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async createTaskDialog() {
-		const dialog = this.dialogService.open(TaskDialogComponent, {
+		const dialog = this.dialogService.open(MyTaskDialogComponent, {
 			context: {}
 		});
 
@@ -134,7 +127,7 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async editTaskDIalog() {
-		const dialog = this.dialogService.open(TaskDialogComponent, {
+		const dialog = this.dialogService.open(MyTaskDialogComponent, {
 			context: {
 				selectedTask: this.selectedTask
 			}
@@ -161,9 +154,12 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	async duplicateTaskDIalog() {
-		const dialog = this.dialogService.open(TaskDialogComponent, {
+		const selectedTask: Task = Object.assign({}, this.selectedTask);
+		// while duplicate my task, default selected employee should be logged in employee
+		selectedTask.members = null;
+		const dialog = this.dialogService.open(MyTaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask
+				selectedTask: selectedTask
 			}
 		});
 

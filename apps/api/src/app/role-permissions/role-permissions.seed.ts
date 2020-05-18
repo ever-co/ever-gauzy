@@ -121,7 +121,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.APPROVAL_POLICY_EDIT,
 			PermissionsEnum.APPROVAL_POLICY_VIEW,
 			PermissionsEnum.REQUEST_APPROVAL_EDIT,
-			PermissionsEnum.REQUEST_APPROVAL_VIEW
+			PermissionsEnum.REQUEST_APPROVAL_VIEW,
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
 		]
 	},
 	{
