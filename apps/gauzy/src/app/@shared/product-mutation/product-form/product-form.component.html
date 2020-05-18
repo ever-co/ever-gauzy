@@ -36,13 +36,14 @@
 							}"
 						/>
 						<div
-							class="text-danger"
 							*ngIf="
 								form.controls['name'].errors &&
-								form.controls['name'].errors.required
+								form.controls['name'].touched
 							"
 						>
-							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							<div *ngIf="form.controls['name'].errors.required">
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</div>
 						</div>
 					</div>
 					<div class="col-sm-6 mb-4">
@@ -63,13 +64,14 @@
 							}"
 						/>
 						<div
-							class="text-danger"
 							*ngIf="
 								form.controls['code'].errors &&
-								form.controls['code'].errors.required
+								form.controls['code'].touched
 							"
 						>
-							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							<div *ngIf="form.controls['code'].errors.required">
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -99,13 +101,19 @@
 							>
 						</nb-select>
 						<div
-							class="text-danger"
 							*ngIf="
 								form.controls['productTypeId'].errors &&
-								form.controls['productTypeId'].errors.required
+								form.controls['productTypeId'].touched
 							"
 						>
-							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							<div
+								*ngIf="
+									form.controls['productTypeId'].errors
+										.required
+								"
+							>
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</div>
 						</div>
 					</div>
 					<div class="col-sm-6 mb-4">
@@ -135,14 +143,19 @@
 							>
 						</nb-select>
 						<div
-							class="text-danger"
 							*ngIf="
 								form.controls['productCategoryId'].errors &&
-								form.controls['productCategoryId'].errors
-									.required
+								form.controls['productCategoryId'].touched
 							"
 						>
-							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							<div
+								*ngIf="
+									form.controls['productCategoryId'].errors
+										.required
+								"
+							>
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -174,8 +187,19 @@
 					</div>
 				</div>
 				<div class="options-wrap mb-4">
-					<div *ngFor="let option of options" class="option">
+					<div
+						*ngFor="let option of options"
+						class="option"
+						(click)="onEditOption($event)"
+					>
 						{{ option.name }}
+						<span class="option-delete">
+							<nb-icon
+								class="ml-auto mt-1 close"
+								icon="close-outline"
+								(click)="onRemoveOption($event)"
+							></nb-icon>
+						</span>
 					</div>
 				</div>
 				<div class="row d-bottom">
@@ -187,12 +211,10 @@
 							fullWidth
 							id="addOption"
 							type="text"
-							[(ngModel)]="optionValue"
+							[(ngModel)]="activeOption.name"
 							[ngModelOptions]="{ standalone: true }"
 							nbInput
-							[placeholder]="
-								'INVENTORY_PAGE.ADD_OPTION' | translate
-							"
+							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
 						/>
 					</div>
 					<div class="col-sm-4">
@@ -203,7 +225,7 @@
 							fullWidth
 							id="optionCode"
 							type="text"
-							[(ngModel)]="optionCode"
+							[(ngModel)]="activeOption.code"
 							[ngModelOptions]="{ standalone: true }"
 							nbInput
 							[placeholder]="'INVENTORY_PAGE.CODE' | translate"
@@ -213,9 +235,13 @@
 						<button
 							status="success"
 							nbButton
-							(click)="onAddOption()"
+							(click)="onSaveOption()"
 						>
-							{{ 'INVENTORY_PAGE.ADD_OPTION' | translate }}
+							{{
+								optionMode === 'create'
+									? ('INVENTORY_PAGE.ADD_OPTION' | translate)
+									: ('INVENTORY_PAGE.EDIT_OPTION' | translate)
+							}}
 						</button>
 					</div>
 				</div>

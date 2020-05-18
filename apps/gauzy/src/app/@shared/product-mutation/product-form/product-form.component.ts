@@ -6,7 +6,8 @@ import {
 	ProductType,
 	ProductCategory,
 	ProductOption,
-	ProductVariant
+	ProductVariant,
+	ProductOptionUI
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -23,8 +24,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 	form: FormGroup;
 	@Input() product: Product;
 
-	optionValue = '';
-	optionCode = '';
+	activeOption: ProductOptionUI = {};
+	optionMode = 'create';
 
 	productTypes: ProductType[];
 	productCategories: ProductCategory[];
@@ -110,12 +111,56 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.save.emit(productRequest);
 	}
 
-	onAddOption() {
-		if (!(this.optionValue && this.optionCode)) return;
+	onSaveOption() {
+		if (!(this.activeOption.name && this.activeOption.code)) return;
 
-		this.options.push({ name: this.optionValue, code: this.optionCode });
-		this.optionValue = '';
-		this.optionCode = '';
+		switch (this.optionMode) {
+			case 'create':
+				this.options.push({
+					name: this.activeOption.name,
+					code: this.activeOption.code
+				});
+				break;
+			case 'edit': {
+				const target = this.options.find(
+					(option) => option.name === this.activeOption.oldName
+				);
+				target.name = this.activeOption.name;
+				target.code = this.activeOption.code;
+				break;
+			}
+		}
+
+		this.optionMode = 'create';
+		this.activeOption = {};
+	}
+
+	onRemoveOption($event: any) {
+		const optionElement = $event.path.find((el: any) =>
+			el.classList.contains('option')
+		);
+		const removeOptionTitle = optionElement ? optionElement.innerText : '';
+
+		if (!removeOptionTitle) return;
+
+		this.options = this.options.filter(
+			(option) => option.name !== removeOptionTitle
+		);
+	}
+
+	onEditOption($event: any) {
+		this.optionMode = 'edit';
+		const target = this.options.find(
+			(option) => option.name === $event.target.innerText
+		);
+
+		if (!target) return;
+
+		this.activeOption = {
+			name: target.name,
+			code: target.code,
+			oldName: target.name
+		};
 	}
 
 	onEditProductVariant(productVariantId: string) {
