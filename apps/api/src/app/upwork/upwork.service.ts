@@ -1,237 +1,163 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { EmployeeService } from '../employee/employee.service';
-import { UserService } from '../user/user.service';
-import * as fs from 'fs';
-import * as fse from 'fs-extra';
-import * as csv from 'csv-parser';
-import { IncomeCreateCommand } from '../income/commands/income.create.command';
-import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
-import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
-import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
+import * as UpworkApi from 'upwork-api';
+import { environment } from '@env-api/environment';
 import {
-	OrganizationVendorEnum,
-	ExpenseCategoriesEnum,
-	IncomeTypeEnum
+	IAccessTokenSecretPair,
+	IAccessToken,
+	IAccessTokenDto,
+	IntegrationEnum
 } from '@gauzy/models';
-import { Expense } from '../expense/expense.entity';
-import { Income } from '../income/income.entity';
-import { reflect } from '../core';
-import { v4 as uuidv4 } from 'uuid';
+import { IntegrationTenantCreateCommand } from '../integration-tenant/commands';
+import {
+	IntegrationSettingGetCommand,
+	IntegrationSettingGetManyCommand,
+	IntegrationSettingCreateCommand
+} from '../integration-setting/commands';
+import { arrayToObject } from '../core';
 
 @Injectable()
 export class UpworkService {
-	private commandBusMapper = {
-		[IncomeTypeEnum.HOURLY]: {
-			command: ({ dto, client }) =>
-				new IncomeCreateCommand({
-					...dto,
-					clientName: client.name,
-					clientId: client.id
-				})
-		},
-		[ExpenseCategoriesEnum.SERVICE_FEE]: {
-			command: ({ dto, category, vendor }) =>
-				new ExpenseCreateCommand({
-					...dto,
-					vendor,
-					category
-				})
+	private _upworkApi: UpworkApi;
+
+	constructor(private commandBus: CommandBus) {}
+
+	private async _consumerHasAccessToken(consumerKey: string) {
+		const integrationSetting = await this.commandBus.execute(
+			new IntegrationSettingGetCommand({
+				where: { settingsValue: consumerKey },
+				relations: ['integration']
+			})
+		);
+
+		if (!integrationSetting) {
+			return false;
 		}
-	};
-	constructor(
-		private _userService: UserService,
-		private _employeeService: EmployeeService,
-		private _orgVendorService: OrganizationVendorsService,
-		private _orgClientService: OrganizationClientsService,
-		private _expenseCategoryService: ExpenseCategoriesService,
-		private commandBus: CommandBus
-	) {}
 
-	async handleTransactions(file, { orgId }) {
-		const uuid = uuidv4();
-		const dirPath = `./apps/api/src/app/integrations/upwork/csv/${uuid}`;
-		const csvData = file.buffer.toString();
-		const filePath = `${dirPath}/${file.originalname}`;
-		let results = [];
+		const integrationSettings = await this.commandBus.execute(
+			new IntegrationSettingGetManyCommand({
+				where: { integration: integrationSetting.integration }
+			})
+		);
+		const integrationSettingMap = arrayToObject(
+			integrationSettings,
+			'settingsName',
+			'settingsValue'
+		);
 
-		fs.mkdirSync(dirPath, { recursive: true });
-		fs.writeFileSync(filePath, csvData);
+		if (
+			integrationSettingMap.accessToken &&
+			integrationSettingMap.accessTokenSecret
+		) {
+			return {
+				integrationId: integrationSetting.id,
+				...integrationSettingMap
+			};
+		}
 
-		const csvReader = fs
-			.createReadStream(filePath)
-			.pipe(csv())
-			.on('data', (data) => (results = results.concat(data)));
+		return false;
+	}
+
+	async getAccessTokenSecretPair(config): Promise<IAccessTokenSecretPair> {
+		const consumerAcessToken = await this._consumerHasAccessToken(
+			config.consumerKey
+		);
+
+		// access token live forever, if user already registered app, retern the access token;
+		if (consumerAcessToken) {
+			return consumerAcessToken;
+		}
+
+		this._upworkApi = new UpworkApi(config);
 
 		return new Promise((resolve, reject) => {
-			csvReader.on('end', async () => {
-				fse.removeSync(dirPath);
-				const transactions = await results
-					.filter(
-						(result) =>
-							result.Type === IncomeTypeEnum.HOURLY ||
-							result.Type === ExpenseCategoriesEnum.SERVICE_FEE
-					)
-					.map(async (result) => {
-						const {
-							Date: date,
-							Amount,
-							Freelancer,
-							Currency,
-							Team
-						} = result;
-						const [firstName, lastName] = Freelancer.split(' ');
+			this._upworkApi.getAuthorizationUrl(
+				environment.upworkConfig.callbackUrl,
+				async (error, url, requestToken, requestTokenSecret) => {
+					if (error)
+						reject(`can't get authorization url, error: ${error}`);
 
-						const { record: user } = await this._findRecordOrThrow(
-							this._userService,
-							{
-								where: {
-									firstName,
-									lastName
+					await this.commandBus.execute(
+						new IntegrationTenantCreateCommand({
+							name: IntegrationEnum.UPWORK,
+							entitySettings: [],
+							settings: [
+								{
+									settingsName: 'consumerKey',
+									settingsValue: config.consumerKey
+								},
+								{
+									settingsName: 'consumerSecret',
+									settingsValue: config.consumerSecret
+								},
+								{
+									settingsName: 'requestToken',
+									settingsValue: requestToken
+								},
+								{
+									settingsName: 'requestTokenSecret',
+									settingsValue: requestTokenSecret
 								}
-							},
-							`User: ${Freelancer} not found`
-						);
-
-						const {
-							record: employee
-						} = await this._findRecordOrThrow(
-							this._employeeService,
-							{ where: { user } },
-							`Employee ${Freelancer} not found`
-						);
-
-						const {
-							record: category
-						} = await this._findRecordOrThrow(
-							this._expenseCategoryService,
-							{
-								where: {
-									name: ExpenseCategoriesEnum.SERVICE_FEE
-								}
-							},
-							`Category: ${ExpenseCategoriesEnum.SERVICE_FEE} not found`
-						);
-
-						const {
-							record: vendor
-						} = await this._findRecordOrThrow(
-							this._orgVendorService,
-							{
-								where: {
-									name: OrganizationVendorEnum.UPWORK,
-									organizationId: orgId
-								}
-							},
-							`Vendor: ${OrganizationVendorEnum.UPWORK} not found`
-						);
-
-						const {
-							record: client
-						} = await this._findRecordOrThrow(
-							this._orgClientService,
-							{
-								where: { name: Team, organizationId: orgId }
-							},
-							`Client: ${Team} not found`
-						);
-
-						const dto = {
-							amount: Amount as number,
-							reference: result['Ref ID'],
-							valueDate: new Date(date),
-							employeeId: employee.id,
-							currency: Currency,
-							orgId
-						};
-
-						const cmd = this.commandBusMapper[result.Type];
-
-						return await this.commandBus.execute(
-							cmd.command({
-								dto,
-								client,
-								vendor,
-								category
-							})
-						);
-					});
-
-				const processedTransactions = await Promise.all(
-					transactions.map(reflect)
-				);
-				const {
-					rejectedTransactions,
-					totalExpenses,
-					totalIncomes
-				} = this._proccessTransactions(processedTransactions);
-
-				if (rejectedTransactions.length) {
-					const errors = rejectedTransactions.map(
-						({ error }) => error.response.message
+							]
+						})
 					);
-					const message = this._formatErrorMesage(
-						[...new Set(errors)],
-						totalExpenses,
-						totalIncomes
-					);
-					reject(new BadRequestException(message));
+					return resolve({ url, requestToken, requestTokenSecret });
 				}
-				resolve({ totalExpenses, totalIncomes });
-			});
+			);
 		});
 	}
 
-	private _formatErrorMesage(errors, totalExpenses, totalIncomes): string {
-		return `Total succeed expenses transactions: ${totalExpenses}.
-			Total succeed incomes transactions: ${totalIncomes}.
-			Failed transactions: ${errors.join(', ')}
-		`;
-	}
+	getAccessToken({
+		requestToken,
+		verifier
+	}: IAccessTokenDto): Promise<IAccessToken> {
+		return new Promise(async (resolve, reject) => {
+			const { integration } = await this.commandBus.execute(
+				new IntegrationSettingGetCommand({
+					where: { settingsValue: requestToken },
+					relations: ['integration']
+				})
+			);
 
-	private _proccessTransactions(processedTransactions) {
-		const {
-			rejectedTransactions,
-			totalExpenses,
-			totalIncomes
-		} = processedTransactions.reduce(
-			(prev, current) => {
-				return {
-					rejectedTransactions:
-						current.status === 'rejected'
-							? prev.rejectedTransactions.concat(current)
-							: prev.rejectedTransactions,
-					totalExpenses:
-						current.item instanceof Expense
-							? (prev.totalExpenses++, prev.totalExpenses)
-							: prev.totalExpenses,
-					totalIncomes:
-						current.item instanceof Income
-							? (prev.totalIncomes++, prev.totalIncomes)
-							: prev.totalIncomes
-				};
-			},
-			{
-				rejectedTransactions: [],
-				totalExpenses: 0,
-				totalIncomes: 0
-			}
-		);
+			const integrationSettings = await this.commandBus.execute(
+				new IntegrationSettingGetManyCommand({
+					where: { integration }
+				})
+			);
+			const integrationSetting = arrayToObject(
+				integrationSettings,
+				'settingsName',
+				'settingsValue'
+			);
 
-		return {
-			rejectedTransactions,
-			totalExpenses,
-			totalIncomes
-		};
-	}
+			this._upworkApi.getAccessToken(
+				requestToken,
+				integrationSetting.requestTokenSecret,
+				verifier,
+				async (error, accessToken, accessTokenSecret) => {
+					if (error) reject(new Error(error));
+					await this.commandBus.execute(
+						new IntegrationSettingCreateCommand({
+							integration,
+							settingsName: 'accessToken',
+							settingsValue: accessToken
+						})
+					);
+					await this.commandBus.execute(
+						new IntegrationSettingCreateCommand({
+							integration,
+							settingsName: 'accessTokenSecret',
+							settingsValue: accessTokenSecret
+						})
+					);
 
-	private async _findRecordOrThrow(service, condition, errorMsg) {
-		const response = await service.findOneOrFail(condition);
-		if (response.success) {
-			return { record: response.record };
-		}
-
-		throw new BadRequestException(errorMsg);
+					resolve({
+						integrationId: integration.id,
+						accessToken,
+						accessTokenSecret
+					});
+				}
+			);
+		});
 	}
 }
