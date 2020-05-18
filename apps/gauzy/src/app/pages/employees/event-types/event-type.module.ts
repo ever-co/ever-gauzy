@@ -21,6 +21,8 @@ import { EmployeeSelectorsModule } from '../../../@theme/components/header/selec
 import { EventTypeMutationModule } from './event-type-mutation/event-type-mutation.module';
 import { EventTypeService } from '../../../@core/services/event-type.service';
 import { UserFormsModule } from '../../../@shared/user/forms/user-forms.module';
+import { TagsColorInputModule } from '../../../@shared/tags/tags-color-input/tags-color-input.module';
+import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -28,6 +30,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
+		TagsColorInputModule,
 		EventTypeRoutingModule,
 		ThemeModule,
 		NbToastrModule,

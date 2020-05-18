@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../../@theme/components/header/selectors/employee/employee.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { EventTypeViewModel } from '../event-type.component';
+import { Tag } from '@gauzy/models';
 
 export enum COMPONENT_TYPE {
 	EMPLOYEE = 'EMPLOYEE',
@@ -17,6 +18,7 @@ export enum COMPONENT_TYPE {
 export class EventTypeMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	public form: FormGroup;
+	tags: Tag[] = [];
 
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
@@ -59,6 +61,7 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 	}
 
 	addOrEditEventType() {
+		this.form.get('tags').setValue(this.tags);
 		this.dialogRef.close(
 			Object.assign(
 				{
@@ -71,6 +74,9 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 	}
 
 	private _initializeForm() {
+		if (this.eventType) {
+			this.tags = this.eventType.tags;
+		}
 		this.form = this.fb.group({
 			title: this.eventType ? this.eventType.title : '',
 			description: this.eventType ? this.eventType.description : '',
@@ -78,7 +84,11 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 			durationUnit: this.eventType
 				? this.eventType.durationUnit
 				: this.durationUnits[0],
-			isActive: this.eventType ? this.eventType.isActive : false
+			isActive: this.eventType ? this.eventType.isActive : false,
+			tags: []
 		});
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

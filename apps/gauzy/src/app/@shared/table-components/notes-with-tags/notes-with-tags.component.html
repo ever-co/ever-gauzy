@@ -1,7 +1,11 @@
 <div>
 	<div *ngIf="rowData.notes">{{ rowData.notes }}</div>
-	<div *ngIf="rowData.description">{{ rowData.description }}</div>
+	<div *ngIf="rowData.description" [hidden]="rowData.title">
+		{{ rowData.description }}
+	</div>
 	<div *ngIf="rowData.purpose">{{ rowData.purpose }}</div>
+	<div *ngIf="rowData.invoiceNumber">{{ rowData.invoiceNumber }}</div>
+	<div *ngIf="rowData.title">{{ rowData.title }}</div>
 	<div class="tags">
 		<nb-badge
 			*ngFor="let tag of rowData?.tags"

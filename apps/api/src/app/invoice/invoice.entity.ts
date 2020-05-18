@@ -20,15 +20,25 @@ import {
 	JoinColumn,
 	OneToMany,
 	ManyToOne,
-	Unique
+	Unique,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])
 export class Invoice extends Base implements IInvoice {
+	@ApiProperty({ type: Tag })
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_invoice'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: Date })
 	@IsDate()
 	@Column({ nullable: true })
