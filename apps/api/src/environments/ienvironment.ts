@@ -11,6 +11,7 @@ import {
 } from '@gauzy/models';
 import { IFacebookConfig } from './IFacebookConfig';
 import { IGoogleConfig } from './IGoogleConfig';
+import { IUpworkConfig } from './IUpworkConfig';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -67,4 +68,5 @@ export interface IEnvironment {
 	};
 
 	defaultHubstaffUserPass?: string;
+	upworkConfig?: IUpworkConfig;
 }

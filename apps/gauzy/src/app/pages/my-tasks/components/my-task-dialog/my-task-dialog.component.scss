@@ -1,25 +1,25 @@
 .body {
-	width: 550px;
+  width: 550px;
 }
 .description {
-	margin-top: 10px;
-	height: 150px;
+  margin-top: 10px;
+  height: 150px;
 }
 
 .name-input {
-	min-width: 100%;
+  min-width: 100%;
 }
 
 .estimate-inputs {
-	display: flex;
-	justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 
-	input {
-		width: 30%;
-		padding: 0.4rem !important;
-	}
+  input {
+    width: 30%;
+    padding: 0.4rem !important;
+  }
 }
 
 .nb-radio {
-	display: inline-block;
+  display: inline-block;
 }
