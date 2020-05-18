@@ -1,14 +1,28 @@
 @import '~angular-tree-component/dist/angular-tree-component.css';
 
 .sidemenu {
-	flex-direction: row;
-	min-height: 800px;
+  flex-direction: row;
+  min-height: 800px;
 }
 
 .sidebar {
-	max-width: 300px;
+  max-width: 300px;
 }
 
 .sidebar-button {
-	margin-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.add-base-field {
+  flex-direction: row;
+}
+
+.input-button {
+  position: absolute;
+  margin-left: -58px;
+}
+
+.privacy-button {
+  margin-left: 10px;
+  margin-right: 10px;
 }
