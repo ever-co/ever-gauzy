@@ -87,12 +87,15 @@ export class MyTaskDialogComponent extends TranslationBaseComponent
 		const duration = moment.duration(estimate, 'seconds');
 		// select members from database of default value
 		this.selectedMembers = (members || []).map((member) => member.id);
-		// select default id of logged in user
-		if (members === null && this.store.user) {
-			this.selectedMembers = [this.store.user.employeeId];
-		}
 		// employee id of logged in user, if value is null, disable the save button
-		this.employeeId = this.store.user.employeeId || null;
+		this.employeeId = null;
+		if (this.store.user) {
+			this.employeeId = this.store.user.employeeId || null;
+		}
+		// select default id of logged in user
+		if (members === null) {
+			this.selectedMembers = [this.employeeId];
+		}
 		this.form = this.fb.group({
 			title: [title, Validators.required],
 			project: [project],

@@ -13,8 +13,6 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { TaskEstimateComponent } from 'apps/gauzy/src/app/@shared/table-components/task-estimate/task-estimate.component';
-import { EmployeeWithLinksComponent } from 'apps/gauzy/src/app/@shared/table-components/employee-with-links/employee-with-links.component';
-import { TaskTeamsComponent } from 'apps/gauzy/src/app/@shared/table-components/task-teams/task-teams.component';
 import { AssignedToComponent } from 'apps/gauzy/src/app/@shared/table-components/assigned-to/assigned-to.component';
 
 @Component({
