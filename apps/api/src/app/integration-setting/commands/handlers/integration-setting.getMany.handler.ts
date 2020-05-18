@@ -1,4 +1,4 @@
-import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IntegrationSettingGetManyCommand } from '..';
 import { IntegrationSettingService } from '../../integration-setting.service';
 import { IIntegrationSetting } from '@gauzy/models';
