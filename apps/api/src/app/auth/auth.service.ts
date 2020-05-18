@@ -1,5 +1,8 @@
 import { environment as env, environment } from '@env-api/environment';
-import { UserRegistrationInput as IUserRegistrationInput } from '@gauzy/models';
+import {
+	UserRegistrationInput as IUserRegistrationInput,
+	LanguagesEnum
+} from '@gauzy/models';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
@@ -62,6 +65,7 @@ export class AuthService {
 
 	async requestPassword(
 		findObj: any,
+		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<{ id: string; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
@@ -77,7 +81,12 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
-				this.emailService.requestPassword(user, url, originUrl);
+				this.emailService.requestPassword(
+					user,
+					url,
+					languageCode,
+					originUrl
+				);
 
 				return {
 					id: user.id,
@@ -115,7 +124,10 @@ export class AuthService {
 	 * 2. Addition of new user to organization
 	 * 3. User invite accept scenario
 	 */
-	async register(input: IUserRegistrationInput): Promise<User> {
+	async register(
+		input: IUserRegistrationInput,
+		languageCode: LanguagesEnum
+	): Promise<User> {
 		let tenant = input.user.tenant;
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOne(
@@ -144,7 +156,11 @@ export class AuthService {
 			);
 		}
 
-		this.emailService.welcomeUser(input.user, input.originalUrl);
+		this.emailService.welcomeUser(
+			input.user,
+			languageCode,
+			input.originalUrl
+		);
 
 		return user;
 	}

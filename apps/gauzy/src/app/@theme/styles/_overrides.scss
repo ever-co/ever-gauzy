@@ -85,16 +85,16 @@ body {
 		font-size: 0.8125rem;
 		line-height: 1.5rem;
 	}
-	
+
 	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
 		color: nb-theme(text-primary-hover-color);
 	}
-	
+
 	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
 		color: nb-theme(text-primary-active-color);
 		background: nb-theme(background-basic-color-1);
 	}
-	
+
 	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
 		color: nb-theme(text-primary-active-color);
 		background: nb-theme(background-basic-color-1);
@@ -113,7 +113,7 @@ body {
 		border-width: 1px;
 		border-style: solid;
 	}
-	
+
 	tr {
 		background-color: nb-theme(background-basic-color-1) !important;
 	}
@@ -139,15 +139,15 @@ body {
 	.info-text {
 		color: nb-theme(text-basic-color) !important;
 	}
-	nb-icon {
+	a > nb-icon {
 		color: nb-theme(text-basic-color) !important;
 	}
 	.records {
-		box-shadow: 0px 0px 16px 9px  nb-theme(shadow) !important;
+		box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
 		background: nb-theme(background-basic-color-1) !important;
 	}
 	.profit-history {
-		box-shadow: 0px 0px 16px 9px  nb-theme(shadow) !important;
+		box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
 		background: nb-theme(background-basic-color-1) !important;
 	}
 	tr {
@@ -156,7 +156,6 @@ body {
 	.table {
 		color: nb-theme(text-basic-color) !important;
 	}
-
 }
 
 @mixin f-window-mode($padding-top) {

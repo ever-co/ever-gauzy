@@ -47,7 +47,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	repeatPasswordErrorMsg: string;
 
 	matchPassword = true;
-	tags: Tag[];
+	tags: Tag[] = [];
 	selectedTags: any;
 
 	@Input()
@@ -112,7 +112,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		try {
 			const user = this.selectedUser
 				? this.selectedUser
-				: await this.userService.getUserById(this.store.userId);
+				: await this.userService.getUserById(this.store.userId, [
+						'tags'
+				  ]);
 
 			const role =
 				this.selectedUser && this.selectedUser.role
@@ -196,7 +198,6 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	private _initializeForm(user: User) {
-		this.tags = user.tags;
 		this.form = this.fb.group({
 			firstName: [user.firstName],
 			lastName: [user.lastName],
@@ -221,6 +222,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			tags: [user.tags],
 			preferredLanguage: [user.preferredLanguage]
 		});
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	bindFormControls() {
@@ -232,8 +234,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		this.validations.passwordControl();
 		this.validations.repeatPasswordControl();
 	}
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
+
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	ngOnDestroy(): void {

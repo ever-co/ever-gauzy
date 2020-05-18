@@ -158,12 +158,10 @@ export class EditOrganizationSettingsComponent extends TranslationBaseComponent
 	private async _loadOrganization(id: string) {
 		try {
 			this.organization = await this.organizationService
-				.getById(id)
+				.getById(id, null, ['tags'])
 				.pipe(first())
 				.toPromise();
 			this.organizationEditStore.selectedOrganization = this.organization;
-			//NEED TO ADD TAGS TO GETBYID
-			// this.organization.tags = [];
 		} catch (error) {
 			this.toastrService.danger(
 				error.error.message || error.message,

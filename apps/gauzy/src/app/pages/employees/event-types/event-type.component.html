@@ -27,7 +27,7 @@
 			<button
 				nbButton
 				[disabled]="!selectedEventType"
-				(click)="delete()"
+				(click)="deleteEventType()"
 				status="danger"
 				class="mr-2"
 			>
@@ -37,6 +37,7 @@
 		</div>
 		<ng2-smart-table
 			class="employees-table"
+			*ngIf="canShowTable()"
 			style="cursor: pointer;"
 			[settings]="settingsSmartTable"
 			[source]="sourceSmartTable"

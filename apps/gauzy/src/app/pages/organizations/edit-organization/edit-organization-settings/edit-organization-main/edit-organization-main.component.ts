@@ -25,7 +25,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	employeesCount: number;
 	form: FormGroup;
 	currencies: string[] = Object.values(CurrenciesEnum);
-	tags: Tag[];
+	tags: Tag[] = [];
 	selectedTags: any;
 
 	constructor(
@@ -91,9 +91,8 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		this.tags = this.organization.tags;
 		this.form = this.fb.group({
-			tags: [this.tags],
+			tags: [this.organization.tags],
 			currency: [this.organization.currency, Validators.required],
 			name: [this.organization.name, Validators.required],
 			officialName: [this.organization.officialName],
@@ -105,8 +104,10 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 					: null
 			]
 		});
+		this.tags = this.form.get('tags').value || [];
 	}
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+
+	selectedTagsEvent(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 }

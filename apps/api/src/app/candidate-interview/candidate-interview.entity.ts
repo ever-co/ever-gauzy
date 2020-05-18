@@ -1,5 +1,5 @@
 import { ICandidateInterviewers } from './../../../../../libs/models/src/lib/candidate-interviewers.model';
-import { Column, Entity, JoinTable, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinTable } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ICandidateInterview } from '@gauzy/models';
@@ -24,7 +24,6 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 		name: 'candidate_interviewers'
 	})
 	interviewers?: ICandidateInterviewers[];
-
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	candidateId?: string;

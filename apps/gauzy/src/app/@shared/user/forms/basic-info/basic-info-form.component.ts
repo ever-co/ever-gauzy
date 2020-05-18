@@ -13,7 +13,6 @@ import { first } from 'rxjs/operators';
 import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ValidationService } from 'apps/gauzy/src/app/@core/services/validation.service';
-import { TagsService } from 'apps/gauzy/src/app/@core/services/tags.service';
 import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
@@ -33,6 +32,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	@Input() public isCandidate: boolean;
 	@Input() public isSuperAdmin: boolean;
 	@Input() public createdById: string;
+	@Input() public selectedTags: Tag[];
 
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(e) => e !== RolesEnum.EMPLOYEE
@@ -55,7 +55,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	hiredDate: any;
 	rejectDate: any;
 	tags: Tag[] = [];
-	selectedTags: any;
 	items: any;
 
 	constructor(
@@ -64,7 +63,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		private readonly roleService: RoleService,
 		readonly translateService: TranslateService,
 		private readonly validatorService: ValidationService,
-		private readonly tagsService: TagsService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -75,8 +73,6 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 			role === RolesEnum.SUPER_ADMIN ? this.isSuperAdmin : true
 		);
 		this.loadFormData();
-
-		// this.getAllTags();
 	}
 
 	get uploaderPlaceholder() {
@@ -133,7 +129,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 				appliedDate: [''],
 				hiredDate: [''],
 				rejectDate: [''],
-				tags: ['']
+				tags: [this.selectedTags]
 			},
 			{
 				validator: this.validatorService.validateDate
@@ -152,7 +148,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		this.appliedDate = this.form.get('appliedDate');
 		this.hiredDate = this.form.get('hiredDate');
 		this.rejectDate = this.form.get('rejectDate');
-		this.selectedTags = this.form.get('selectedTags');
+		this.tags = this.form.get('tags').value || [];
 	};
 
 	get showImageMeta() {
@@ -183,7 +179,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 						imageUrl: this.imageUrl.value,
 						role,
 						tenant: this.tenant,
-						tags: this.selectedTags
+						tags: this.form.get('tags').value
 					},
 					password: this.password.value,
 					organizationId,
@@ -200,9 +196,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 		this.imageUrl.setValue('');
 	}
 
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
-		this.selectedTags = ev;
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	ngAfterViewInit() {

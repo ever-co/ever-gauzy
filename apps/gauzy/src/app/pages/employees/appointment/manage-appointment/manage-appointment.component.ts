@@ -19,6 +19,7 @@ import { EmployeesService } from '../../../../@core/services';
 import { NbToastrService } from '@nebular/theme';
 import { AppointmentEmployeesService } from 'apps/gauzy/src/app/@core/services/appointment-employees.service';
 import * as moment from 'moment';
+import { Store } from '../../../../@core/services/store.service';
 
 @Component({
 	templateUrl: './manage-appointment.component.html'
@@ -28,6 +29,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	employees: Employee[];
+	blockedDates: number[] = [1589308200000];
+	blockedSlots: string[] = ['14:20'];
 	@Input() employeeAppointment: EmployeeAppointment;
 
 	@ViewChild('start_time', { static: false })
@@ -42,6 +45,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private router: Router,
 		private fb: FormBuilder,
+		private store: Store,
 		private employeeService: EmployeesService,
 		private employeeAppointmentService: EmployeeAppointmentService,
 		private appointmentEmployeesService: AppointmentEmployeesService,
@@ -162,7 +166,10 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				) +
 					' ' +
 					this.form.get('breakStartTime').value
-			)
+			),
+			employeeId: this.store.selectedEmployee
+				? this.store.selectedEmployee.id
+				: null
 		};
 
 		if (this.employeeAppointment) {

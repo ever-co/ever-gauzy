@@ -22,6 +22,13 @@ const routes: Routes = [
 					)
 			},
 			{
+				path: 'employee',
+				loadChildren: () =>
+					import(
+						'../@shared/public-appointments/public-appointments.module'
+					).then((m) => m.PublicAppointmentsModule)
+			},
+			{
 				path: '**',
 				component: NotFoundComponent
 			}
