@@ -7,18 +7,8 @@ import {
 	OnDestroy,
 	Input
 } from '@angular/core';
-import {
-	NbDialogRef,
-	NbToastrService,
-	NbStepperComponent
-} from '@nebular/theme';
-import {
-	Candidate,
-	ICandidateInterviewCreateInput,
-	ICandidateInterview,
-	Employee,
-	ICandidateInterviewers
-} from '@gauzy/models';
+import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
+import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
@@ -29,6 +19,7 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import { EmployeesService } from '../../../@core/services';
 import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -41,6 +32,7 @@ export class CandidateInterviewMutationComponent
 	@Input() selectedCandidate: Candidate = null;
 	@Input() interviewId = null;
 	@Input() isCalendar: boolean;
+	@Input() header: string;
 
 	@ViewChild('stepper', { static: false })
 	stepper: NbStepperComponent;
@@ -55,18 +47,16 @@ export class CandidateInterviewMutationComponent
 	emailInterviewerForm: CandidateEmailComponent;
 
 	form: FormGroup;
-	formInvalid = false;
 	candidateForm: FormGroup;
 	interviewerForm: FormGroup;
-	interview: ICandidateInterviewCreateInput;
+	interview: any;
 	private _ngDestroy$ = new Subject<void>();
 	employees: Employee[] = [];
 	candidates: Candidate[] = [];
 	selectedInterviewers: string[];
-	selectedCandidateId = null;
 	isCandidateNotification = false;
 	isInterviewerNotification = false;
-	empty = {
+	emptyInterview = {
 		title: '',
 		interviewers: null,
 		startTime: null,
@@ -76,12 +66,12 @@ export class CandidateInterviewMutationComponent
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
 		protected employeesService: EmployeesService,
-		protected toastrService: NbToastrService,
 		protected store: Store,
 		private candidateInterviewService: CandidateInterviewService,
 		protected candidatesService: CandidatesService,
 		private errorHandler: ErrorHandlingService,
-		private candidateInterviewersService: CandidateInterviewersService
+		private candidateInterviewersService: CandidateInterviewersService,
+		readonly translateService: TranslateService
 	) {}
 
 	ngOnInit() {
@@ -97,33 +87,16 @@ export class CandidateInterviewMutationComponent
 		this.form = this.candidateInterviewForm.form;
 		//if editing
 		if (this.editData) {
-			this.candidateInterviewForm.form.patchValue(this.editData);
+			this.form.patchValue(this.editData);
 			this.candidateInterviewForm.selectedRange.end = this.editData.endTime;
 			this.candidateInterviewForm.selectedRange.start = this.editData.startTime;
 		}
 	}
 
-	async onCandidateSelected(id: string) {
-		if (this.selectedCandidate === null) {
-			const res = await this.candidatesService
-				.getAll(['user'], {
-					id: id
-				})
-				.pipe(first())
-				.toPromise();
-			this.selectedCandidate = res.items[0]; //TO DO
-		}
-	}
 	next() {
 		this.candidateInterviewForm.loadFormData();
 		const interviewForm = this.candidateInterviewForm.form.value;
 		this.selectedInterviewers = interviewForm.interviewers;
-
-		//if editing
-		if (interviewForm.interviewers === null) {
-			interviewForm.interviewers = this.candidateInterviewForm.employeeIds;
-		}
-
 		this.interview = {
 			title: this.form.get('title').value,
 			interviewers: interviewForm.interviewers,
@@ -132,21 +105,61 @@ export class CandidateInterviewMutationComponent
 			endTime: interviewForm.endTime,
 			note: this.form.get('note').value
 		};
-
-		// this.getEmployeeInfo(interviewForm.interviewers);
+		//	if editing
+		if (interviewForm.interviewers === null) {
+			interviewForm.interviewers = this.candidateInterviewForm.employeeIds;
+		}
+		this.getEmployees(interviewForm.interviewers);
 	}
 
-	async getEmployeeInfo(employeeIds: ICandidateInterviewers[]) {
-		for (let i = 0; i < employeeIds.length; i++) {
-			try {
-				const res = await this.employeesService
-					.getAll(['user'], { id: employeeIds[i].employeeId })
-					.pipe(first())
-					.toPromise();
-				this.employees.push(res.items[0]);
-			} catch (error) {
-				this.errorHandler.handleError(error);
+	async getEmployees(employeeIds: string[]) {
+		try {
+			for (const id of employeeIds) {
+				this.employees.push(
+					await this.employeesService.getEmployeeById(id, ['user'])
+				);
 			}
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
+	async save() {
+		this.employees = [];
+		this.notification();
+		const interview: ICandidateInterview = null;
+		if (this.interviewId !== null) {
+			this.editInterview();
+		} else {
+			this.createInterview(interview);
+		}
+		this.closeDialog(interview);
+	}
+
+	async createInterview(interview: ICandidateInterview) {
+		interview = await this.candidateInterviewService.create({
+			...this.emptyInterview,
+			candidateId: this.selectedCandidate.id
+		});
+		//create interviewers
+		for (const interviewer of this.selectedInterviewers) {
+			this.addInterviewer(interview.id, interviewer);
+		}
+		//find interviewers for this interview
+		const interviewers = await this.candidateInterviewersService.findByInterviewId(
+			interview.id
+		);
+		try {
+			await this.candidateInterviewService.update(interview.id, {
+				title: this.interview.title,
+				interviewers: interviewers ? interviewers : null,
+				location: this.interview.location,
+				startTime: this.interview.startTime,
+				endTime: this.interview.endTime,
+				note: this.interview.note
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
 		}
 	}
 
@@ -161,73 +174,74 @@ export class CandidateInterviewMutationComponent
 		}
 	}
 
-	async add() {
-		this.employees = [];
-		this.next();
-		this.notification();
-
-		let interview: ICandidateInterview;
+	async editInterview() {
+		let deletedIds = [];
+		let newIds = [];
+		const oldIds = this.editData.interviewers.map(
+			(item) => item.employeeId
+		);
+		deletedIds = oldIds.filter(
+			(item) => !this.interview.interviewers.includes(item)
+		);
+		newIds = this.interview.interviewers.filter(
+			(item: string) => !oldIds.includes(item)
+		);
 		try {
-			if (this.interviewId !== null) {
-				// editing interview
-				interview = await this.candidateInterviewService.update(
-					this.interviewId,
-					{ ...this.interview }
-				);
-				this.interviewId = null;
-			} else {
-				// TO DO
-				// creating interview
-				interview = await this.candidateInterviewService.create({
-					...this.empty,
-					candidateId: this.selectedCandidate.id
-				});
-				if (this.selectedInterviewers) {
-					for (const interviewer of this.selectedInterviewers) {
-						this.addInterviewer(interview.id, interviewer);
-					}
-
-					// interview = await this.candidateInterviewService.update(
-					// 	interview.id,
-					// 	{ ...this.interview }
-					// );
-
-					// TO DO : check
-					await this.candidateInterviewersService.findByInterviewId(
-						interview.id
-					);
-				}
-			}
-			this.closeDialog(interview);
+			await this.candidateInterviewService.update(this.interviewId, {
+				...this.interview
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
+		for (const id of deletedIds) {
+			await this.candidateInterviewersService.deleteByEmployeeId(id);
+		}
+		for (const id of newIds) {
+			this.addInterviewer(this.interviewId, id);
+		}
+		this.interviewId = null;
 	}
+
+	async onCandidateSelected(id: string) {
+		if (this.selectedCandidate === null) {
+			const res = await this.candidatesService
+				.getAll(['user'], {
+					id: id
+				})
+				.pipe(first())
+				.toPromise();
+			this.selectedCandidate = res.items[0]; //TO DO : previous
+		}
+	}
+
 	notification() {
 		if (this.emailCandidateForm) {
 			this.emailCandidateForm.loadFormData();
-			// const emailCandidateForm = this.emailCandidateForm.form.value;
 		}
-
 		if (this.emailInterviewerForm) {
 			this.emailInterviewerForm.loadFormData();
-			// const emailInterviewerForm = this.emailInterviewerForm.form.value;
 		}
 	}
+
 	closeDialog(interview: ICandidateInterview = null) {
 		this.dialogRef.close(interview);
 	}
+
 	previous() {
 		this.candidateInterviewForm.form.patchValue(this.interview);
+		this.isCandidateNotification = false;
+		this.isInterviewerNotification = false;
 		this.employees = [];
 	}
 
 	checkedCandidate(checked: boolean) {
 		this.isCandidateNotification = checked;
 	}
+
 	checkedInterviewer(checked: boolean) {
 		this.isInterviewerNotification = checked;
 	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

@@ -52,12 +52,27 @@ export class CandidateInterviewersService {
 			.pipe(first())
 			.toPromise();
 	}
-	findByInterviewId(
-		interviewId: string
-	): Promise<{ items: ICandidateInterviewers[] }> {
+	findByInterviewId(interviewId: string): Promise<ICandidateInterviewers[]> {
 		return this.http
-			.get<{ items: ICandidateInterviewers[] }>(
+			.get<ICandidateInterviewers[]>(
 				`/api/candidate-interviewers/getByInterviewId/${interviewId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+	deleteByInterviewId(interviewId: string): Promise<any> {
+		return this.http
+			.delete(
+				`/api/candidate-interviewers/deleteByInterviewId/${interviewId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	deleteByEmployeeId(employeeId: string): Promise<any> {
+		return this.http
+			.delete(
+				`/api/candidate-interviewers/deleteByEmployeeId/${employeeId}`
 			)
 			.pipe(first())
 			.toPromise();

@@ -26,4 +26,30 @@ export class CandidateInterviewersService extends CrudService<
 			})
 			.getMany();
 	}
+	async deleteInterviewersByInterviewId(interviewId: string): Promise<any> {
+		const interviewers = await this.repository
+			.createQueryBuilder('candidate_interviewers')
+			.where('candidate_interviewers.interviewId = :interviewId', {
+				interviewId
+			})
+			.getMany();
+
+		for (const interviewer of interviewers) {
+			await this.delete(interviewer.id);
+		}
+		return;
+	}
+	async deleteInterviewersByEmployeeId(employeeId: string): Promise<any> {
+		const interviewers = await this.repository
+			.createQueryBuilder('candidate_interviewers')
+			.where('candidate_interviewers.employeeId = :employeeId', {
+				employeeId
+			})
+			.getMany();
+
+		for (const interviewer of interviewers) {
+			await this.delete(interviewer.id);
+		}
+		return;
+	}
 }

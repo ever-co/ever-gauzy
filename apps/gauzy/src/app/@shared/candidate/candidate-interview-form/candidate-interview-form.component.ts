@@ -17,13 +17,13 @@ import { EmployeesService } from '../../../@core/services';
 	styleUrls: ['candidate-interview-form.component.scss']
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
-	@Input() employeeIds: ICandidateInterviewers[];
+	@Input() interviewers: ICandidateInterviewers[];
 
 	form: any;
 	employees: Employee[];
+	employeeIds: string[];
 	isMeeting: boolean;
 	selectedEmployeeIds = null;
-	select = true;
 	selectedRange: IDateRange = { start: null, end: null };
 	private _ngDestroy$ = new Subject<void>();
 
@@ -41,19 +41,19 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			.subscribe((employees) => {
 				this.employees = employees.items;
 			});
+
+		//if editing
+		this.employeeIds = this.interviewers
+			? this.interviewers.map((item) => item.employeeId)
+			: [];
 	}
-	findTime() {}
-	onMembersSelected(event) {
+	findTime() {} //TO DO
+
+	onMembersSelected(event: string[]) {
 		this.selectedEmployeeIds = event;
 	}
 
 	loadFormData() {
-		// const interviewers: ICandidateInterviewers[] = [];
-		// if (this.selectedEmployeeIds) {
-		// 	for (const emp of this.selectedEmployeeIds) {
-		// 		interviewers.push({ employeeId: emp });
-		// 	}
-		// }
 		this.form = this.fb.group({
 			title: [''],
 			startTime: [this.selectedRange.start],
