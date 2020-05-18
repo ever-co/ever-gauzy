@@ -180,12 +180,14 @@ export class CandidateInterviewMutationComponent
 		const oldIds = this.editData.interviewers.map(
 			(item) => item.employeeId
 		);
-		deletedIds = oldIds.filter(
-			(item) => !this.interview.interviewers.includes(item)
-		);
-		newIds = this.interview.interviewers.filter(
-			(item: string) => !oldIds.includes(item)
-		);
+		if (this.interview.interviewers) {
+			deletedIds = oldIds.filter(
+				(item) => !this.interview.interviewers.includes(item)
+			);
+			newIds = this.interview.interviewers.filter(
+				(item: string) => !oldIds.includes(item)
+			);
+		}
 		try {
 			await this.candidateInterviewService.update(this.interviewId, {
 				...this.interview

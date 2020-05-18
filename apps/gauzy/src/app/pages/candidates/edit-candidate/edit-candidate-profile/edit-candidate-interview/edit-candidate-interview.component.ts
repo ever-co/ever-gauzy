@@ -23,7 +23,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: Candidate;
-	interviewId = null;
 	employees: Employee[];
 	form: FormGroup;
 	interviewResult: any;
@@ -79,7 +78,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		}
 	}
 	async editInterview(id: string) {
-		this.interviewId = id; //?
 		const currentInterview = await this.candidateInterviewService.findById(
 			id
 		);
