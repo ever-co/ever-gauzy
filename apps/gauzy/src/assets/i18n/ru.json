@@ -953,7 +953,7 @@
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
-		"MY_TASK_HEADER": "My Tasks",
+		"MY_TASK_HEADER": "Мои задачи",
 		"ADD_TASKS": "Добавить задачи",
 		"EDIT_TASKS": "Редактировать задачи",
 		"TASKS_TITLE": "Заголовок",
@@ -964,7 +964,7 @@
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
 		"TASK_MEMBERS": "Сотрудники",
-		"TASK_ASSIGNED_TO": "Assigned To",
+		"TASK_ASSIGNED_TO": "Назначено",
 		"TASK_TEAMS": "Команды",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
