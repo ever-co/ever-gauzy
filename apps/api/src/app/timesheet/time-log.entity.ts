@@ -30,7 +30,7 @@ export class TimeLog extends Base implements ITimeLog {
 	readonly employeeId: string;
 
 	@ApiProperty({ type: Timesheet })
-	@ManyToOne(() => Timesheet, { nullable: true })
+	@ManyToOne(() => Timesheet, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	timesheet?: Timesheet;
 
@@ -103,7 +103,7 @@ export class TimeLog extends Base implements ITimeLog {
 	duration: number;
 
 	@AfterLoad()
-	getDuration() {
+	getDuration?() {
 		const end = this.stoppedAt ? this.stoppedAt : new Date();
 		this.duration = moment(end).diff(moment(this.startedAt), 'seconds');
 	}

@@ -23,6 +23,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { CandidateEmailModule } from '../candidate-email/candidate-email.module';
+import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -48,6 +49,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TimerPickerModule,
 		CandidateEmailModule,
 		EmployeeMultiSelectModule,
+		CandidateSelectModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

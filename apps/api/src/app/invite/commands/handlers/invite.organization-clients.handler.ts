@@ -4,7 +4,6 @@ import {
 	RolesEnum
 } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { OrganizationService } from '../../../organization/organization.service';
 import { User } from '../../../user/user.entity';
 import { UserService } from '../../../user/user.service';
 import { InternalServerErrorException } from '@nestjs/common';
@@ -22,7 +21,6 @@ export class InviteOrganizationClientsHandler
 	constructor(
 		private readonly organizationClientsService: OrganizationClientsService,
 		private readonly inviteService: InviteService,
-		private readonly organizationService: OrganizationService,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService
 	) {}
@@ -31,7 +29,7 @@ export class InviteOrganizationClientsHandler
 		command: InviteOrganizationClientsCommand
 	): Promise<OrganizationClients> {
 		const {
-			input: { id, originalUrl, inviterUser }
+			input: { id, originalUrl, inviterUser, languageCode }
 		} = command;
 
 		const organizationClient: OrganizationClients = await this.organizationClientsService.findOne(
@@ -63,7 +61,8 @@ export class InviteOrganizationClientsHandler
 			clientId: organizationClient.id,
 			organizationId: organizationClient.organizationId,
 			invitedById: inviterUser.id,
-			originalUrl
+			originalUrl,
+			languageCode
 		});
 
 		await this.organizationClientsService.update(id, {

@@ -1,4 +1,10 @@
-import { Component, ViewChild, OnDestroy, OnInit } from '@angular/core';
+import {
+	Component,
+	ViewChild,
+	OnDestroy,
+	OnInit,
+	forwardRef
+} from '@angular/core';
 import { OptionsInput, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -11,12 +17,22 @@ import { EmployeeAppointmentService } from '../../../@core/services/employee-app
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
-import { EmployeeAppointment } from '@gauzy/models';
+import { EmployeeAppointment, TimeOff } from '@gauzy/models';
 import * as moment from 'moment';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
+	selector: 'ga-appointment-calendar',
 	templateUrl: './appointment.component.html',
-	styleUrls: ['./appointment.component.scss']
+	styleUrls: ['./appointment.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => AppointmentComponent),
+			multi: true
+		}
+	]
 })
 export class AppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -27,9 +43,30 @@ export class AppointmentComponent extends TranslationBaseComponent
 	calendarOptions: OptionsInput;
 
 	calendarEvents: EventInput[] = [];
+	timeOff: TimeOff[] = [
+		{
+			start: new Date(
+				moment()
+					.hour(0)
+					.minute(0)
+					.second(0)
+					.subtract(2, 'days')
+					.format()
+			),
+			end: new Date(
+				moment()
+					.hour(0)
+					.minute(0)
+					.second(0)
+					.subtract(1, 'days')
+					.format()
+			)
+		}
+	];
 
 	constructor(
 		private router: Router,
+		private store: Store,
 		private employeeAppointmentService: EmployeeAppointmentService,
 		readonly translateService: TranslateService
 	) {
@@ -68,13 +105,23 @@ export class AppointmentComponent extends TranslationBaseComponent
 	}
 
 	private _loadAppointments() {
+		const findObj = {
+			employee: {
+				id: this.store.selectedEmployee
+					? this.store.selectedEmployee.id
+					: null
+			}
+		};
+
 		this.employeeAppointmentService
-			.getAll()
+			.getAll(['employee', 'employee.user'], findObj)
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((appointments) => {
+				console.log(appointments);
 				appointments.items.forEach((o) => {
 					this._prepareEvent(o);
 				});
+				this.markUnavailability();
 				this.calendarOptions.events = this.calendarEvents;
 			});
 	}
@@ -169,6 +216,16 @@ export class AppointmentComponent extends TranslationBaseComponent
 				}
 			});
 		}
+	}
+
+	markUnavailability() {
+		this.timeOff.forEach((o) =>
+			this.calendarEvents.push({
+				start: o.start,
+				end: o.end,
+				backgroundColor: 'lightyellow'
+			})
+		);
 	}
 
 	manageAppointments() {

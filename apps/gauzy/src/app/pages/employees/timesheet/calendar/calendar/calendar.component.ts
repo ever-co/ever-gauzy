@@ -21,13 +21,13 @@ import {
 	TimeLog
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
-import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
+import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 
 @Component({
 	selector: 'ngx-calendar',
@@ -50,7 +50,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	employeeId: string;
 
 	constructor(
-		private timeTrackerService: TimeTrackerService,
+		private timesheetService: TimesheetService,
 		private store: Store,
 		private nbDialogService: NbDialogService
 	) {
@@ -123,7 +123,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			organizationId: this.organization.id
 		};
 
-		this.timeTrackerService.getTimeLogs(request).then((logs: TimeLog[]) => {
+		this.timesheetService.getTimeLogs(request).then((logs: TimeLog[]) => {
 			const events = logs.map(
 				(log: TimeLog): EventInput => {
 					const title = log.project ? log.project.name : 'No project';

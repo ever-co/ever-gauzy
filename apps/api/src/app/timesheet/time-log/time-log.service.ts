@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository, InjectConnection } from '@nestjs/typeorm';
-import { Repository, Between, In, Connection } from 'typeorm';
+import { Repository, In, Connection } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	TimeLogType,
@@ -43,11 +43,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 
 	async getTimeLogs(request: IGetTimeLogInput, role?: RolesEnum) {
 		let employeeId: string;
-		const startDate = moment(request.startDate).format(
-			'YYYY-MM-DD HH:mm:ss'
-		);
-		const endDate = moment(request.endDate).format('YYYY-MM-DD HH:mm:ss');
-
 		if (role === RolesEnum.ADMIN) {
 			if (request.employeeId) {
 				employeeId = request.employeeId;
@@ -74,18 +69,32 @@ export class TimeLogService extends CrudService<TimeLog> {
 			],
 			where: (qb) => {
 				qb.where({
-					startedAt: Between(startDate, endDate),
-					deletedAt: null,
-					...(employeeId ? { employeeId } : {})
+					deletedAt: null
 				});
-				qb.andWhere('"startedAt" Between :startDate AND :endDate', {
-					startDate,
-					endDate
-				});
+				if (request.timesheetId) {
+					qb.andWhere('"timesheetId" = :timesheetId', {
+						timesheetId: request.timesheetId
+					});
+				}
+				if (employeeId) {
+					qb.andWhere('"employeeId" = :employeeId', { employeeId });
+				}
+				if (request.startDate && request.endDate) {
+					const startDate = moment(request.startDate).format(
+						'YYYY-MM-DD HH:mm:ss'
+					);
+					const endDate = moment(request.endDate).format(
+						'YYYY-MM-DD HH:mm:ss'
+					);
+					qb.andWhere('"startedAt" Between :startDate AND :endDate', {
+						startDate,
+						endDate
+					});
+				}
 				qb.andWhere('"deletedAt" IS NULL');
-				if (request.employeeId) {
+				if (employeeId) {
 					qb.andWhere('"employeeId" = :employeeId', {
-						employeeId: request.employeeId
+						employeeId: employeeId
 					});
 				}
 				if (request.organizationId) {

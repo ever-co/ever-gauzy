@@ -15,6 +15,8 @@
 		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
+		"DISCARD": "Сбросить",
+		"CLEAR_ALL": "Очистить все",
 		"BACK": "Обратно",
 		"SENT": "Отправлено",
 		"ACCEPTED": "Принято",
@@ -38,7 +40,8 @@
 		"SEND": "Отправить",
 		"ARCHIVE": "Архивировать",
 		"FIND_TIME": "Время поиска",
-		"DOWNLOAD": "Скачать"
+		"DOWNLOAD": "Скачать",
+		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -181,6 +184,7 @@
 			"DATE": "Дата",
 			"TIME": "Время",
 			"DURATION": "Продолжительность",
+			"CANDIDATE": "Кандидат",
 			"INTERVIEWERS": "Интервьюеры",
 			"LOCATION": "Местоположение",
 			"NOTE": "Примечание",
@@ -241,7 +245,7 @@
 			"UPLOADER_PLACEHOLDER": "Изображение",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
-			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
+			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
@@ -289,9 +293,9 @@
 			"MEETING_DESCRIPTION": "Описание",
 			"BUFFER_TIME": "Буферные минуты",
 			"BREAK_TIME": "Минут остановки",
-			"DESCRIPTION": "Description",
-			"DURATION": "Duration",
-			"TITLE": "Title"
+			"DESCRIPTION": "Описание",
+			"DURATION": "Продолжительность",
+			"TITLE": "Заголовок"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -322,7 +326,8 @@
 			"EXPENSE": "Расходная",
 			"USER": "пользователь",
 			"INVITATION": "приглашение",
-			"DELETE_USER": " из базы данных, которая связана только с текущей организацией"
+			"DELETE_USER": " из базы данных, которая связана только с текущей организацией",
+			"EVENT_TYPE": "Тип события"
 		}
 	},
 	"POP_UPS": {
@@ -370,13 +375,13 @@
 		"EXPENSE_HISTORY": "История расходов",
 		"NEW_EXPENSE_VALUE": "Новое значение расхода",
 		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д.",
-		"ADD_EVENT_TYPE": "Add Event Type",
-		"EDIT_EVENT_TYPE": " Edit Event Type"
+		"ADD_EVENT_TYPE": "Добавить тип события",
+		"EDIT_EVENT_TYPE": " Изменить тип события"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
 		"APPOINTMENTS": "Назначения",
-		"EVENT_TYPES": "Event Types",
+		"EVENT_TYPES": "Типы событий",
 		"ACCOUNTING": "Бухгалтер",
 		"INCOME": "Доход",
 		"EXPENSES": "Затраты",
@@ -433,6 +438,7 @@
 		"TIMESHEETS": "Сроки",
 		"SCHEDULES": "Графики",
 		"EMAIL_TEMPLATES": "Шаблоны писем",
+		"HELP_CENTER": "Центр поддержки",
 		"REPORTS": "Отчёты",
 		"TIME_REPORTS": "Отчеты по времени",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
@@ -609,7 +615,7 @@
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
-		"ADD_CANDIATE": "Добавить Кандидатов",
+		"ADD_CANDIDATE": "Добавить Кандидатов",
 		"APPLIED": "Применяется",
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
@@ -621,7 +627,7 @@
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Департамент",
 			"POSITION": "Позиция",
-			"CANDIATE_DEPARTMENTS": "Кафедры работника:",
+			"CANDIDATE_DEPARTMENTS": "Кафедры работника:",
 			"EMPLOYMENT_TYPE": "Тип занятости",
 			"ACCOUNT": "Аккаунт",
 			"EMPLOYMENT": "Занятость",
@@ -650,7 +656,9 @@
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
 				"INTERVIEWS": "Интервью",
+				"ADD_INTERVIEW": "Добавить интервью",
 				"ON": "вкл",
+				"TO": "Кому",
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
@@ -659,16 +667,20 @@
 				"NEXT": "Следующий",
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
+				"EMAIL_NOTIFICATION": "Уведомление по e-mail",
 				"SUMMARY": "Summary",
-				"EMAIL_NOTIFICATION": "Уведомление по e-mail"
+				"DETAILS": "Отправить данные интервью",
+				"NOTIFY_CANDIDATE": "Уведомлять кандидата",
+				"NOTIFY_INTERVIEWERS": "Уведомить интервьюера (ов)",
+				"INTERVIEWERS": "интервьюер(ы)"
 			}
 		},
-		"ADD_CANDIATES": {
+		"ADD_CANDIDATES": {
 			"STEP_1": "Шаг 1",
 			"STEP_2": "Шаг2",
 			"STEP_3": "Шаг3",
 			"UPLOAD_CV": "Загрузить CV",
-			"ADD_ANOTHER_CANDIATE": "Добавить еще один Кандидат",
+			"ADD_ANOTHER_CANDIDATE": "Добавить еще один Кандидат",
 			"FINISHED_ADDING": "Я добавил все текущие Кандидаты",
 			"NEXT": "Следующий",
 			"PREVIOUS": "Предыдущий"
@@ -941,6 +953,7 @@
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
+		"MY_TASK_HEADER": "My Tasks",
 		"ADD_TASKS": "Добавить задачи",
 		"EDIT_TASKS": "Редактировать задачи",
 		"TASKS_TITLE": "Заголовок",
@@ -950,7 +963,9 @@
 		"TASK_UPDATED": "Задача обновлена",
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
-		"TASK_MEMBERS": "Employees",
+		"TASK_MEMBERS": "Сотрудники",
+		"TASK_ASSIGNED_TO": "Assigned To",
+		"TASK_TEAMS": "Команды",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
 		"ESTIMATE_DAYS": "Дней",
@@ -1058,10 +1073,9 @@
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
+		"SELECT_PRODUCT": "Выберите продукт",
 		"INVALID_DATES": "Неверные даты",
-		"INVOICE_NUMBER_VALUE": "Номер счета не может быть отрицательным числом или нулевым",
-		"TAX_VALUE": "Налог не может быть отрицательным числом",
-		"DISCOUNT_VALUE": "Значение скидки не может быть отрицательным числом",
+		"INVOICE_NUMBER_DUPLICATE": "Номер счета уже существует",
 		"DISCOUNT_TYPE": "Тип скидки",
 		"TAX_TYPE": "Тип налога",
 		"PERCENT": "Процент",
@@ -1069,6 +1083,8 @@
 		"SUBTOTAL": "Итого",
 		"TOTAL": "Итого",
 		"NAME": "Имя",
+		"PAID": "Оплачено",
+		"NOT_PAID": "Не оплачено",
 		"RECIEVED_INVOICES": "Полученные счета",
 		"SEND_INVOICE": "Счет отправлен",
 		"INVOICE_TYPE": {
@@ -1077,6 +1093,7 @@
 			"BY_EMPLOYEE_HOURS": "По часам сотрудника",
 			"BY_PROJECT_HOURS": "По часам проекта",
 			"BY_TASK_HOURS": "По часам задания",
+			"BY_PRODUCTS": "По товарам",
 			"DETAILS_INVOICE_ITEMS": "Детали накладной"
 		},
 		"INVOICE_ITEM": {
@@ -1091,6 +1108,7 @@
 			"HOURLY_RATE": "Почасовая ставка",
 			"HOURS_WORKED": "Часы работы",
 			"PROJECT": "Проект",
+			"PRODUCT": "Товар",
 			"NO_ITEMS": "Пожалуйста, добавьте элементы счета",
 			"INVALID_ITEM": "Неверный элемент счета",
 			"EMPLOYEE_VALUE": "Сотрудник не может быть пустым",
@@ -1292,6 +1310,12 @@
 			"DELETE_ACCOUNT_WRONG_DATA": "Неправильный ввод! Повторите попытку.",
 			"ACCOUNT_DELETED": "Ваш аккаунт был успешно удален!",
 			"RECORD_TYPE": "Если да, то введите 'УДАЛИТЬ ВСЕ ДАННЫЕ' для подтверждения."
+		},
+		"EVENT_TYPES": {
+			"ADD_EVENT_TYPE": "Создан новый тип события",
+			"EDIT_EVENT_TYPE": "Тип события отредактирован",
+			"DELETE_EVENT_TYPE": "Тип события удален",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1315,7 +1339,9 @@
 		"CALENDAR": "Календарь",
 		"APPROVALS": "Утверждения",
 		"APPROVE_SUCCESS": "Сроки успешно утверждены",
-		"DENIED_SUCCESS": "Таблица времени успешно отклонена"
+		"DENIED_SUCCESS": "Таблица времени успешно отклонена",
+		"SUBMIT_SUCCESS": "Сроки успешно отправлены",
+		"UNSUBMIT_SUCCESS": "Таблица времени успешно отменена"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
@@ -1325,11 +1351,14 @@
 		"ADD_APPOINTMENT": "Добавить Назначение"
 	},
 	"EVENT_TYPE_PAGE": {
-		"EVENT_TYPE": "Event Types",
-		"MANAGE_EVENT_TYPE": "Manage Event Type",
-		"EVENT_NAME": "Event Type Name",
-		"EVENT_DURATION": "Duration",
-		"EVENT_DESCRIPTION": "Description",
-		"ACTIVE": "Active"
+		"EVENT_TYPE": "Типы событий",
+		"MANAGE_EVENT_TYPE": "Управление Типом События",
+		"EVENT_NAME": "Название типа события",
+		"EVENT_DURATION": "Продолжительность",
+		"EVENT_DESCRIPTION": "Описание",
+		"ACTIVE": "Активный"
+	},
+	"SCHEDULE": {
+		"DATE_SPECIFIC_AVAILIBILITY": "Специфичная доступность"
 	}
 }

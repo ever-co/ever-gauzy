@@ -11,11 +11,11 @@ import {
 	OrganizationProjects
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
-import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 
 interface WeeklyDayData {
 	project?: OrganizationProjects;
@@ -42,7 +42,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	weekDayList: string[] = [];
 
 	constructor(
-		private timeTrackerService: TimeTrackerService,
+		private timesheetService: TimesheetService,
 		private store: Store
 	) {}
 
@@ -100,6 +100,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.getLogs();
 			});
+
+		this.updateLogs$.next();
 	}
 
 	async nextDay() {
@@ -128,7 +130,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			organizationId: this.organization ? this.organization.id : null
 		};
 
-		this.timeTrackerService.getTimeLogs(request).then((logs: TimeLog[]) => {
+		this.timesheetService.getTimeLogs(request).then((logs: TimeLog[]) => {
 			this.weekData = _.chain(logs)
 				.groupBy('projectId')
 				.map((logs: TimeLog[], _projectId) => {
@@ -136,7 +138,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 						.groupBy((log) =>
 							moment(log.startedAt).format('YYYY-MM-DD')
 						)
-						.mapObject((logs: TimeLog[], date) => {
+						.mapObject((logs: TimeLog[]) => {
 							const sum = logs.reduce(
 								(iteratee: any, log: any) => {
 									return iteratee + log.duration;

@@ -15,6 +15,8 @@
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Да",
 		"SAVE": "Запази",
+		"DISCARD": "Discard",
+		"CLEAR_ALL": "Clear All",
 		"BACK": "Обратно",
 		"SENT": "Изпратено",
 		"ACCEPTED": "Прието",
@@ -38,7 +40,8 @@
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
-		"DOWNLOAD": "Download"
+		"DOWNLOAD": "Download",
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -181,6 +184,7 @@
 			"DATE": "Дата",
 			"TIME": "Time",
 			"DURATION": "Duration",
+			"CANDIDATE": "Candidate",
 			"INTERVIEWERS": "Interviewers",
 			"LOCATION": "Локация",
 			"NOTE": "Note",
@@ -241,7 +245,7 @@
 			"UPLOADER_PLACEHOLDER": "Снимка",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
-			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
+			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -322,7 +326,8 @@
 			"EXPENSE": "Разходи",
 			"USER": "user",
 			"INVITATION": "покана",
-			"DELETE_USER": " from database as it is associated only to current organization"
+			"DELETE_USER": " from database as it is associated only to current organization",
+			"EVENT_TYPE": "Event type"
 		}
 	},
 	"POP_UPS": {
@@ -433,6 +438,7 @@
 		"TIMESHEETS": "Timesheets",
 		"SCHEDULES": "Schedules",
 		"EMAIL_TEMPLATES": "Email Templates",
+		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
@@ -609,7 +615,7 @@
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
-		"ADD_CANDIATE": "Add Candidates",
+		"ADD_CANDIDATE": "Add Candidates",
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
@@ -621,7 +627,7 @@
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция",
-			"CANDIATE_DEPARTMENTS": "Отдел на Служителя:",
+			"CANDIDATE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYMENT_TYPE": "Employment Type",
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
@@ -650,7 +656,9 @@
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
 				"INTERVIEWS": "Interviews",
+				"ADD_INTERVIEW": "Add interview",
 				"ON": "on",
+				"TO": "To",
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
@@ -659,16 +667,20 @@
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "Запази",
+				"EMAIL_NOTIFICATION": "Email notification",
 				"SUMMARY": "Summary",
-				"EMAIL_NOTIFICATION": "Email notification"
+				"DETAILS": "Send interview details to",
+				"NOTIFY_CANDIDATE": "Notify candidate",
+				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
+				"INTERVIEWERS": "interviewer(s)"
 			}
 		},
-		"ADD_CANDIATES": {
+		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
 			"STEP_2": "Step 2",
 			"STEP_3": "Step 3",
 			"UPLOAD_CV": "Upload CV",
-			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"ADD_ANOTHER_CANDIDATE": "Add Another Candidate",
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
@@ -941,6 +953,7 @@
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
+		"MY_TASK_HEADER": "My Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",
@@ -950,7 +963,9 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
-		"TASK_MEMBERS": "Employees",
+		"TASK_MEMBERS": "Служители",
+		"TASK_ASSIGNED_TO": "Assigned To",
+		"TASK_TEAMS": "Отбори",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
@@ -1058,10 +1073,9 @@
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"SELECT_PRODUCT": "Select Product",
 		"INVALID_DATES": "Invalid Dates",
-		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
-		"TAX_VALUE": "Tax cannot be a negative number",
-		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
+		"INVOICE_NUMBER_DUPLICATE": "Invoice Number already exists",
 		"DISCOUNT_TYPE": "Discount Type",
 		"TAX_TYPE": "Tax Type",
 		"PERCENT": "Percent",
@@ -1069,6 +1083,8 @@
 		"SUBTOTAL": "Subtotal",
 		"TOTAL": "Total",
 		"NAME": "Име",
+		"PAID": "Paid",
+		"NOT_PAID": "Not Paid",
 		"RECIEVED_INVOICES": "Recieved Invoices",
 		"SEND_INVOICE": "Invoice Sent",
 		"INVOICE_TYPE": {
@@ -1077,6 +1093,7 @@
 			"BY_EMPLOYEE_HOURS": "By Employee Hours",
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
+			"BY_PRODUCTS": "By Products",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items"
 		},
 		"INVOICE_ITEM": {
@@ -1091,6 +1108,7 @@
 			"HOURLY_RATE": "Hourly Rate",
 			"HOURS_WORKED": "Hours Worked",
 			"PROJECT": "Проект",
+			"PRODUCT": "Product",
 			"NO_ITEMS": "Please add invoice items",
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
@@ -1292,6 +1310,12 @@
 			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Pleace try again.",
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
+		},
+		"EVENT_TYPES": {
+			"ADD_EVENT_TYPE": "New event type created",
+			"EDIT_EVENT_TYPE": "Event type edited",
+			"DELETE_EVENT_TYPE": "Event type deleted",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1315,7 +1339,9 @@
 		"CALENDAR": "Calendar",
 		"APPROVALS": "Approvals",
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
-		"DENIED_SUCCESS": "Timesheet Successfully Denied"
+		"DENIED_SUCCESS": "Timesheet Successfully Denied",
+		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
+		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -1330,6 +1356,9 @@
 		"EVENT_NAME": "Event Type Name",
 		"EVENT_DURATION": "Duration",
 		"EVENT_DESCRIPTION": "Description",
-		"ACTIVE": "Active"
+		"ACTIVE": "Активен"
+	},
+	"SCHEDULE": {
+		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availibility"
 	}
 }

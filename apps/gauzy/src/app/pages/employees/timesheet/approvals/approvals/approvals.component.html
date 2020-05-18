@@ -38,9 +38,7 @@
 		</div>
 	</div>
 	<div class="employee-select col-sm-3">
-		<ga-employee-selector
-			class="header-selector employee-selector"
-		></ga-employee-selector>
+		<!-- <ga-employee-selector class="header-selector employee-selector"></ga-employee-selector> -->
 	</div>
 </div>
 <div class="bulk-actions row">
@@ -59,21 +57,18 @@
 <table class="table table-striped">
 	<thead>
 		<tr>
-			<th scope="col">
-				<nb-checkbox
-					[indeterminate]="false"
-					#checkAllCheckbox
-					(change)="toggleCheckbox($event, 'all')"
-					status="primary"
-				></nb-checkbox>
-			</th>
+			<!-- <th scope="col">
+				<nb-checkbox [indeterminate]="false" #checkAllCheckbox (change)="toggleCheckbox($event, 'all')"
+					status="primary"></nb-checkbox>
+			</th> -->
 			<th scope="col">
 				Employee
 			</th>
-			<th scope="col">Total Duration</th>
+			<th scope="col">Total Time</th>
 			<th scope="col">Activites</th>
-			<th scope="col">ApprovedAt</th>
-			<th scope="col">SubmittedAt</th>
+			<th scope="col">Duration</th>
+			<th scope="col">Approved At</th>
+			<th scope="col">Submitted At</th>
 			<th scope="col">Status</th>
 			<th scope="col">Action</th>
 		</tr>
@@ -81,68 +76,120 @@
 	<tbody>
 		<ng-template [ngIf]="timeSheets?.length > 0" [ngIfElse]="notFound">
 			<tr *ngFor="let timesheet of timeSheets">
-				<th scope="row">
-					<nb-checkbox
-						[value]="timesheet.id"
-						[(ngModel)]="selectedIds[timesheet.id]"
-						(change)="toggleCheckbox($event)"
-						status="primary"
-					></nb-checkbox>
-				</th>
+				<!-- <th scope="row">
+					<nb-checkbox [value]="timesheet.id" [(ngModel)]="selectedIds[timesheet.id]"
+						(change)="toggleCheckbox($event)" status="primary"></nb-checkbox>
+				</th> -->
 				<td>
 					<div class="name-container">
 						<ngx-avatar
-							[name]="
-								timesheet?.employee?.user?.firstName +
-								' ' +
-								timesheet?.employee?.user?.lastName
-							"
+							[name]="timesheet?.employee?.user?.name"
 							[src]="timesheet?.employee?.user?.imageUrl"
 						></ngx-avatar>
 					</div>
 				</td>
 				<td>{{ timesheet.duration | durationFormat }}</td>
 				<td>{{ timesheet.keyboard }}</td>
-				<td>{{ timesheet.approvedAt || 'NA' }}</td>
-				<td>{{ timesheet.submittedAt || 'NA' }}</td>
+				<td>
+					{{ timesheet.startedAt | amDateFormat: 'LL' }} -
+					{{ timesheet.stoppedAt | amDateFormat: 'LL' }}
+				</td>
+				<td>{{ timesheet.approvedAt | amDateFormat: 'LL' }}</td>
+				<td>{{ timesheet.submittedAt | amDateFormat: 'LL' }}</td>
 				<td>{{ timesheet.status }}</td>
 				<td>
 					<div class="action-button">
-						<ng-template
-							[ngIf]="timesheet.status == TimesheetStatus.PENDING"
+						<button
+							outline
+							nbButton
+							[nbPopover]="templateRef"
+							nbPopoverPlacement="bottom"
 						>
-							<button
-								class="m-1"
-								nbButton
-								status="success"
-								size="small"
-								(click)="
-									updateStatus(
-										timesheet.id,
-										TimesheetStatus.APPROVED
-									)
-								"
-							>
-								Approve
-							</button>
-							<button
-								class="m-1"
-								nbButton
-								status="danger"
-								size="small"
-								(click)="
-									updateStatus(
-										timesheet.id,
-										TimesheetStatus.DENIED
-									)
-								"
-							>
-								Deny
-							</button>
-						</ng-template>
-						<button class="m-1" nbButton status="info" size="small">
-							View
+							Action
 						</button>
+
+						<ng-template #templateRef>
+							<div class="menu-item">
+								<button
+									class="m-1"
+									(click)="redirectToView(timesheet)"
+									nbButton
+									ghost
+									size="small"
+								>
+									View
+								</button>
+							</div>
+							<div
+								class="menu-item"
+								*ngIf="!timesheet.submittedAt"
+							>
+								<button
+									class="m-1"
+									nbButton
+									ghost
+									size="small"
+									(click)="
+										submitTimeheet(timesheet.id, 'submit')
+									"
+								>
+									Submit Timesheet
+								</button>
+							</div>
+							<div
+								class="menu-item"
+								*ngIf="timesheet.submittedAt"
+								(click)="
+									submitTimeheet(timesheet.id, 'unsubmit')
+								"
+							>
+								<button class="m-1" nbButton ghost size="small">
+									Unsubmit Timesheet
+								</button>
+							</div>
+							<div
+								class="menu-item"
+								*ngIf="
+									timesheet.status != TimesheetStatus.APPROVED
+								"
+							>
+								<button
+									class="m-1"
+									nbButton
+									ghost
+									size="small"
+									(click)="
+										updateStatus(
+											timesheet.id,
+											TimesheetStatus.APPROVED
+										)
+									"
+								>
+									Approve
+								</button>
+							</div>
+							<div
+								class="menu-item"
+								*ngIf="
+									timesheet.status != TimesheetStatus.DENIED
+								"
+							>
+								<button
+									class="m-1"
+									nbButton
+									ghost
+									size="small"
+									(click)="
+										updateStatus(
+											timesheet.id,
+											TimesheetStatus.DENIED
+										)
+									"
+								>
+									Deny
+								</button>
+							</div>
+						</ng-template>
 					</div>
 				</td>
 			</tr>

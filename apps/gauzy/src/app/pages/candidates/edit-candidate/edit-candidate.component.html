@@ -31,8 +31,8 @@
 					</div>
 				</div>
 				<div class="notification" (click)="interviewInfo()">
-					<nb-icon class="bell" icon="bell"></nb-icon>
-					<div *ngIf="selectedInterview" class="exist"></div>
+					<nb-icon class="bell" icon="bell-outline"></nb-icon>
+					<div *ngIf="isInterview" class="exist"></div>
 				</div>
 				<div
 					*ngIf="hasEditPermission"

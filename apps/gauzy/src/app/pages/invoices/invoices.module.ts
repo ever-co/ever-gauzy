@@ -40,6 +40,9 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { InvoicesRecievedComponent } from './invoices-recieved/invoices-recieved.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
+import { ProductService } from '../../@core/services/product.service';
+import { InvoiceProductsSelectorComponent } from './table-components/invoice-product-selector.component';
+import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -83,7 +86,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TasksService,
 		OrganizationClientsService,
 		OrganizationProjectsService,
-		EmployeesService
+		EmployeesService,
+		ProductService
 	],
 	entryComponents: [
 		InvoicesComponent,
@@ -94,7 +98,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceEditComponent,
 		InvoicesRecievedComponent,
 		InvoiceSendMutationComponent,
-		InvoiceViewComponent
+		InvoiceViewComponent,
+		InvoiceProductsSelectorComponent,
+		InvoicePaidComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -105,7 +111,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceEditComponent,
 		InvoicesRecievedComponent,
 		InvoiceSendMutationComponent,
-		InvoiceViewComponent
+		InvoiceViewComponent,
+		InvoiceProductsSelectorComponent,
+		InvoicePaidComponent
 	]
 })
 export class InvoicesModule {}

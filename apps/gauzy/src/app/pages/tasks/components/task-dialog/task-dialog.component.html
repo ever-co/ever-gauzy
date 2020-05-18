@@ -19,6 +19,9 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
+						<label class="label">{{
+							'CONTEXT_MENU.PROJECT' | translate
+						}}</label>
 						<ng-select
 							[addTag]="addNewProject"
 							[items]="projects"
@@ -36,6 +39,9 @@
 				</div>
 				<div class="col-sm-6">
 					<div class="form-group">
+						<label class="label">{{
+							'TASKS_PAGE.TASKS_STATUS' | translate
+						}}</label>
 						<ng-select
 							[items]="statuses"
 							nbInput
@@ -50,16 +56,59 @@
 					</div>
 				</div>
 				<div class="col-sm-12">
+					<nb-radio-group
+						(valueChange)="onParticipantsChange($event)"
+						[value]="participants"
+					>
+						<nb-radio class="nb-radio" [value]="'employees'"
+							>Employees
+						</nb-radio>
+						<nb-radio class="nb-radio" [value]="'teams'"
+							>Teams
+						</nb-radio>
+					</nb-radio-group>
+				</div>
+				<div class="col-sm-12">
 					<div class="form-group">
-						<ga-employee-multi-select
-							[selectedEmployeeIds]="selectedMembers"
-							[allEmployees]="employees"
-							(selectedChange)="onMembersSelected($event)"
-						>
-						</ga-employee-multi-select>
+						<ng-container *ngIf="participants === 'employees'">
+							<label class="label">{{
+								'TASKS_PAGE.TASK_MEMBERS' | translate
+							}}</label>
+							<ga-employee-multi-select
+								[selectedEmployeeIds]="selectedMembers"
+								[allEmployees]="employees"
+								(selectedChange)="onMembersSelected($event)"
+							>
+							</ga-employee-multi-select>
+						</ng-container>
+						<ng-container *ngIf="participants === 'teams'">
+							<label class="label">{{
+								'TASKS_PAGE.TASK_TEAMS' | translate
+							}}</label>
+							<nb-select
+								formControlName="teams"
+								multiple
+								[selected]="selectedTeams"
+								(selectedChange)="onTeamsSelected($event)"
+								fullWidth
+								placeholder="{{
+									'FORM.PLACEHOLDERS.CHOOSE_TEAMS' | translate
+								}}"
+							>
+								<nb-option
+									*ngFor="let team of teams"
+									[value]="team.id"
+								>
+									{{ team.name }}</nb-option
+								>
+							</nb-select>
+						</ng-container>
 					</div>
 				</div>
 				<div class="col-sm-12">
+					<label class="label">{{
+						'TASKS_PAGE.TASKS_TITLE' | translate
+					}}</label>
 					<input
 						class="name-input"
 						formControlName="title"
@@ -70,12 +119,11 @@
 				</div>
 				<div class="col-sm-12">
 					<div class="formGroup">
-						<ngx-tags-color-input
-							[form]="form"
-							[selectedTags]="selectedTask?.tags"
+						<ga-tags-color-input
+							[selectedTags]="tags"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 						>
-						</ngx-tags-color-input>
+						</ga-tags-color-input>
 					</div>
 				</div>
 				<div class="col-sm-6">
@@ -150,6 +198,9 @@
 				</div>
 
 				<div class="col-sm-12">
+					<label class="label">{{
+						'TASKS_PAGE.TASKS_DESCRIPTION' | translate
+					}}</label>
 					<textarea
 						formControlName="description"
 						nbInput

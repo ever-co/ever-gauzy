@@ -4,7 +4,7 @@
 // Originally MIT Licensed
 // - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`
-
+import { CandidateInterviewers } from './../candidate-interviewers/candidate-interviewers.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
@@ -74,6 +74,10 @@ import { IntegrationType } from '../integration/integration-type.entity';
 import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
 import { EmployeeAppointment } from '../employee-appointment';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { RequestApproval } from '../request-approval/request-approval.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
+import { EventType } from '../event-types/event-type.entity';
 
 const entities = [
 	Invite,
@@ -131,6 +135,8 @@ const entities = [
 	CandidateSkill,
 	CandidateExperience,
 	CandidateInterview,
+	CandidateInterviewers,
+	IntegrationSetting,
 	Integration,
 	IntegrationType,
 	IntegrationSetting,
@@ -138,8 +144,12 @@ const entities = [
 	IntegrationMap,
 	IntegrationEntitySetting,
 	IntegrationEntitySettingTiedEntity,
+	RequestApproval,
+	RequestApprovalEmployee,
+	ApprovalPolicy,
 	EmployeeAppointment,
-	AppointmentEmployees
+	AppointmentEmployees,
+	EventType
 ];
 
 @Module({

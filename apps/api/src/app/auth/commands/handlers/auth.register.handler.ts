@@ -14,7 +14,7 @@ export class AuthRegisterHandler
 	) {}
 
 	public async execute(command: AuthRegisterCommand): Promise<User> {
-		const { input } = command;
+		const { input, languageCode } = command;
 
 		if (
 			input.user &&
@@ -30,6 +30,6 @@ export class AuthRegisterHandler
 			if (role.name !== RolesEnum.SUPER_ADMIN)
 				throw new UnauthorizedException();
 		}
-		return await this.authService.register(input);
+		return await this.authService.register(input, languageCode);
 	}
 }

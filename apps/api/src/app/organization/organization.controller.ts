@@ -79,9 +79,8 @@ export class OrganizationController extends CrudController<Organization> {
 			findObj['select'] = JSON.parse(select);
 		}
 		if (relations) {
-			findObj['relations'] = JSON.parse(relations);
+			findObj['relations'] = relations;
 		}
-
 		return this.organizationService.findOne(id, findObj);
 	}
 

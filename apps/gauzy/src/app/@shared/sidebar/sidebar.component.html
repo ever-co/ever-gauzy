@@ -1,0 +1,27 @@
+<nb-card class="sidemenu">
+	<nb-card-body class="sidebar">
+		<button
+			class="sidebar-button"
+			(click)="addNode()"
+			status="primary"
+			nbButton
+		>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<h5>Knowledge bases</h5>
+		<tree-root
+			#tree
+			[nodes]="nodes"
+			[options]="options"
+			(click)="onTap($event)"
+		></tree-root>
+	</nb-card-body>
+	<nb-card-body>
+		<div>
+			<h5>{{ articleName }}</h5>
+		</div>
+		<div>
+			<p>Article content for {{ articleNameContent }}</p>
+		</div>
+	</nb-card-body>
+</nb-card>

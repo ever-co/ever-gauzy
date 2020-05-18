@@ -11,7 +11,7 @@ export class TasksStoreService {
 	private _tasks$: BehaviorSubject<Task[]> = new BehaviorSubject([]);
 	public tasks$: Observable<Task[]> = this._tasks$
 		.asObservable()
-		.pipe(map(this._mapToViewModel.bind(this)));
+		.pipe(map(this._mapToViewModel));
 
 	private _selectedTask$: BehaviorSubject<Task> = new BehaviorSubject(null);
 	public selectedTask$: Observable<Task> = this._selectedTask$.asObservable();
@@ -22,31 +22,23 @@ export class TasksStoreService {
 
 	constructor(private _taskService: TasksService) {
 		if (!this.tasks.length) {
-			this._taskService
-				.getAllTasks()
-				.pipe(tap(({ items }) => this.loadAllTasks(items)))
-				.subscribe();
+			this.fetchTasks();
 		}
+	}
+
+	fetchTasks() {
+		this._taskService
+			.getAllTasks()
+			.pipe(tap(({ items }) => this.loadAllTasks(items)))
+			.subscribe();
 	}
 
 	private _mapToViewModel(tasks) {
 		return tasks.map((task) => ({
 			...task,
 			projectName: task.project ? task.project.name : undefined,
-			employees: this._getTaskMembers(task)
+			employees: task.members ? task.members : undefined
 		}));
-	}
-
-	private _getTaskMembers(task: Task) {
-		if (task.members) {
-			const members = task.members.map((member) => {
-				if (member.user) {
-					return `${member.user.firstName} ${member.user.lastName}`;
-				}
-			});
-			return members.join(', ');
-		}
-		return '';
 	}
 
 	loadAllTasks(tasks: Task[]): void {

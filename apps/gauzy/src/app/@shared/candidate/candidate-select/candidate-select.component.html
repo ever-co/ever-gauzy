@@ -1,9 +1,8 @@
 <nb-select
-	multiple
-	[selected]="selectedCandidateIds"
+	[selected]="selectedCandidateId"
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth
-	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATES' | translate }}"
+	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate }}"
 >
 	<nb-option *ngFor="let candidate of allCandidates" [value]="candidate.id">
 		<img
