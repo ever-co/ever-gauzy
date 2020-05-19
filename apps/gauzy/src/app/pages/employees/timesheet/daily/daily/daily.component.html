@@ -34,7 +34,7 @@
 					Today
 				</button>
 			</div>
-			<nb-rangepicker #formpicker [max]="today"></nb-rangepicker>
+			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
 		</div>
 	</div>
 	<div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
@@ -148,7 +148,7 @@
 							nbButton
 							status="success"
 							size="small"
-							(click)="openEdit(addEditDialog, log)"
+							(click)="openEdit(log)"
 						>
 							Edit
 						</button>
@@ -175,7 +175,7 @@
 	</tbody>
 </table>
 
-<ng-template #addEditDialog let-context let-ref="dialogRef">
+<!-- <ng-template #addEditDialog let-context let-ref="dialogRef">
 	<nb-card>
 		<nb-card-header class="header">
 			<h4>Edit time logs</h4>
@@ -288,4 +288,4 @@
 			</form>
 		</nb-card-body>
 	</nb-card>
-</ng-template>
+</ng-template> -->

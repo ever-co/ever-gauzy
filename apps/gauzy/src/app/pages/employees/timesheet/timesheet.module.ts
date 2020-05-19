@@ -6,6 +6,7 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { NbRouteTabsetModule, NbCardModule } from '@nebular/theme';
 import { LayoutComponent } from './layout/layout.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { EditTimeLogModalModule } from '../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
 
 @NgModule({
 	declarations: [LayoutComponent],
@@ -17,7 +18,8 @@ import { TranslateModule } from '@ngx-translate/core';
 		SharedModule,
 		NbRouteTabsetModule,
 		NbCardModule,
-		TranslateModule
+		TranslateModule,
+		EditTimeLogModalModule
 	]
 })
 export class TimesheetModule {}

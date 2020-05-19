@@ -1,11 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	TemplateRef,
-	OnDestroy
-} from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {
 	IGetTimeLogInput,
 	TimeLog,
@@ -17,18 +11,18 @@ import { toUTC, toLocal } from 'libs/utils';
 import {
 	NbCheckboxComponent,
 	NbDialogService,
-	NbDialogRef,
 	NbMenuService
 } from '@nebular/theme';
 import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { NgForm } from '@angular/forms';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
+import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-daily',
@@ -40,13 +34,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
-	timesheetRequest: {
-		startDate?: Date;
-		endDate?: Date;
-		employeeId?: string;
-	} = {};
 
-	private _selectedDate: Date = new Date();
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
@@ -64,26 +52,20 @@ export class DailyComponent implements OnInit, OnDestroy {
 			title: 'Delete'
 		}
 	];
-	dialogRef: NbDialogRef<any>;
 	canChangeSelectedEmployee: boolean;
 	logRequest: {
 		date?: Date;
 		employeeId?: string;
+		organizationId?: string;
 	} = {};
 
 	updateLogs$: Subject<any> = new Subject();
 
 	public get selectedDate(): Date {
-		return this._selectedDate;
+		return this.logRequest.date;
 	}
 	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-		this.timesheetRequest.startDate = moment(value)
-			.startOf('isoWeek')
-			.toDate();
-		this.timesheetRequest.endDate = moment(value)
-			.endOf('isoWeek')
-			.toDate();
+		this.logRequest.date = value;
 		this.updateLogs$.next();
 	}
 
@@ -92,10 +74,29 @@ export class DailyComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
 		private store: Store,
-		private nbMenuService: NbMenuService
+		private nbMenuService: NbMenuService,
+		private activatedRoute: ActivatedRoute,
+		private router: Router
 	) {}
 
 	async ngOnInit() {
+		if (this.activatedRoute.snapshot.queryParams) {
+			const query = this.activatedRoute.snapshot.queryParams;
+			if (query.startDate) {
+				this.logRequest.date = toLocal(query.startDate).toDate();
+			} else {
+				this.logRequest.date = this.today;
+			}
+
+			if (query.organizationId) {
+				this.logRequest.organizationId = query.organizationId;
+			}
+
+			if (query.employeeId) {
+				this.logRequest.employeeId = query.employeeId;
+			}
+		}
+
 		this.nbMenuService
 			.onItemClick()
 			.pipe(
@@ -150,16 +151,28 @@ export class DailyComponent implements OnInit, OnDestroy {
 	}
 
 	async getLogs() {
-		const { date, employeeId } = this.logRequest;
-		const startDate = moment(date).format('YYYY-MM-DD') + ' 00:00:00';
-		const endDate = moment(date).format('YYYY-MM-DD') + ' 23:59:59';
+		if (!this.organization) {
+			return;
+		}
+
+		const { employeeId } = this.logRequest;
+		const startDate = moment(this.logRequest.date).startOf('day');
+		const endDate = moment(this.logRequest.date).endOf('day');
 
 		const request: IGetTimeLogInput = {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
-			organizationId: this.organization ? this.organization.id : null
+			organizationId: this.organization.id
 		};
+
+		this.router.navigate([], {
+			// skipLocationChange: true,
+			//relativeTo: this.activatedRoute,
+			queryParams: request,
+			queryParamsHandling: 'merge'
+		});
+
 		this.timeLogs = await this.timesheetService
 			.getTimeLogs(request)
 			.then((logs) => {
@@ -209,48 +222,12 @@ export class DailyComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	addTime(f: NgForm) {
-		if (!f.valid) {
-			return;
-		}
-		const startedAt = toUTC(this.selectedRange.start).toDate();
-		const stoppedAt = toUTC(this.selectedRange.end).toDate();
-
-		const addRequestData = {
-			startedAt,
-			stoppedAt,
-			isBillable: this.addEditTimeRequest.isBillable,
-			projectId: this.addEditTimeRequest.projectId,
-			taskId: this.addEditTimeRequest.taskId,
-			description: this.addEditTimeRequest.description
-		};
-
-		(this.addEditTimeRequest.id
-			? this.timesheetService.updateTime(
-					this.addEditTimeRequest.id,
-					addRequestData
-			  )
-			: this.timesheetService.addTime(addRequestData)
-		)
-			.then(() => {
-				this.updateLogs$.next();
-				f.resetForm();
-				this.dialogRef.close();
-				this.selectedRange = { start: null, end: null };
+	openEdit(timeLog: TimeLog) {
+		this.dialogService
+			.open(EditTimeLogModalComponent, { context: timeLog as any })
+			.onClose.subscribe(() => {
 				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
-			})
-			.catch((error) => {
-				this.toastrService.danger(error);
 			});
-	}
-
-	openEdit(dialog: TemplateRef<any>, timeLog: TimeLog) {
-		this.addEditTimeRequest = Object.assign({}, timeLog);
-		this.selectedRange = {
-			start: toLocal(timeLog.startedAt).toDate(),
-			end: toLocal(timeLog.stoppedAt).toDate()
-		};
-		this.dialogRef = this.dialogService.open(dialog, { context: timeLog });
 	}
 
 	onDeleteConfirm(log) {

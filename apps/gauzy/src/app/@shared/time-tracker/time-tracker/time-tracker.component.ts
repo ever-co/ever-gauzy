@@ -94,6 +94,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
+		console.log('ngOnInit', { moment });
 		this.timeTrackerService.$dueration
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((time) => {
