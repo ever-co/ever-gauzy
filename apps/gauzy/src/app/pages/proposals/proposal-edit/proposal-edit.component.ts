@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { ProposalViewModel } from '../proposals.component';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-proposal-edit',
@@ -27,6 +28,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	}
 
 	proposal: ProposalViewModel;
+	tags: Tag[] = [];
 	form: FormGroup;
 
 	ngOnInit() {
@@ -40,6 +42,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	}
 
 	private _initializeForm() {
+		this.tags = this.proposal.tags;
 		this.form = this.fb.group({
 			jobPostUrl: [this.proposal.jobPostUrl],
 			valueDate: [this.proposal.valueDate],
@@ -56,7 +59,8 @@ export class ProposalEditComponent extends TranslationBaseComponent
 				await this.proposalsService.update(this.proposal.id, {
 					jobPostContent: result.jobPostContent,
 					jobPostUrl: result.jobPostUrl,
-					proposalContent: result.proposalContent
+					proposalContent: result.proposalContent,
+					tags: this.tags
 				});
 
 				// TODO translate
@@ -78,5 +82,8 @@ export class ProposalEditComponent extends TranslationBaseComponent
 				);
 			}
 		}
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }
