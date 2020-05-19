@@ -26,8 +26,7 @@
 				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 			</button>
 		</div>
-
-		<h5>Knowledge bases</h5>
+		<h5>{{ 'BUTTONS.KNOWLEDGE_BASES' | translate }}</h5>
 		<tree-root
 			#tree
 			[nodes]="nodes"
@@ -38,30 +37,39 @@
 	<nb-card-body>
 		<button
 			*ngIf="isChosenArticle"
-			class="add-icon-button"
+			class="main-buttons"
 			(click)="addIcon()"
 			status="success"
 			nbButton
 		>
-			add icon
+			{{ 'BUTTONS.ADD_ICON' | translate }}
 		</button>
 		<button
-			*ngIf="isChosenArticle"
-			class="privacy-button"
-			(click)="changePrivacy()"
+			*ngIf="isChosenArticle && showPrivateButton"
+			class="main-buttons"
+			(click)="makePrivate()"
 			status="primary"
 			nbButton
 		>
-			make private/public
+			{{ 'BUTTONS.MAKE_PRIVATE' | translate }}
+		</button>
+		<button
+			*ngIf="isChosenArticle && showPublicButton"
+			class="main-buttons"
+			(click)="makePublic()"
+			status="primary"
+			nbButton
+		>
+			{{ 'BUTTONS.MAKE_PUBLIC' | translate }}
 		</button>
 		<button
 			*ngIf="isChosenArticle"
-			class="delete-button"
+			class="main-buttons"
 			(click)="onDeleteArticle()"
 			status="warning"
 			nbButton
 		>
-			delete
+			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 
 		<div>
