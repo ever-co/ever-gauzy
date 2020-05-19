@@ -473,6 +473,15 @@
 			"TOOLTIP_ACTIVITY_INFO": "Диапазон дат: 7 дней до даты: 6 месяцев",
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
 		},
+		"UPWORK_PAGE": {
+			"ACTIVITIES": "Действия",
+			"REPORTS": "Отчёты",
+			"TRANSACTIONS": "Транзакции",
+			"SUCCESSFULLY_AUTHORIZED": "Успешно авторизованы",
+			"API_KEY": "API ключ обновления",
+			"SECRET": "Секрет обхода",
+			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи."
+		},
 		"COMING_SOON": "Скоро появится"
 	},
 	"DASHBOARD_PAGE": {
