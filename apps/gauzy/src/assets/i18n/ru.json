@@ -41,7 +41,11 @@
 		"ARCHIVE": "Архивировать",
 		"FIND_TIME": "Время поиска",
 		"DOWNLOAD": "Скачать",
-		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний"
+		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний",
+		"ADD_ICON": "добавить значок",
+		"MAKE_PRIVATE": "сделать приватным",
+		"MAKE_PUBLIC": "сделать публичным",
+		"KNOWLEDGE_BASES": "Базы знаний"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -671,6 +675,7 @@
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
 				"NEXT": "Следующий",
@@ -1369,6 +1374,7 @@
 		"ACTIVE": "Активный"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Специфичная доступность"
+		"DATE_SPECIFIC_AVAILIBILITY": "Определенная дата наличия",
+		"RECURRING_AVAILIBILITY": "Повторяющаяся доступность"
 	}
 }
