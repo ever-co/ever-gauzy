@@ -16,8 +16,7 @@ import { OrganizationTeamService } from './organization-team.service';
 import { IPagination } from '../core';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
-	OrganizationTeam as IIOrganizationTeam,
-	OrganizationTeamEmployee
+	OrganizationTeam as IIOrganizationTeam
 } from '@gauzy/models';
 import { OrganizationTeam } from './organization-team.entity';
 import { AuthGuard } from '@nestjs/passport';
