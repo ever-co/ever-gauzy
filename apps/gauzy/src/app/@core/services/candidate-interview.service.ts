@@ -23,9 +23,10 @@ export class CandidateInterviewService {
 	}
 
 	getAll(
+		relations: string[],
 		findInput?: ICandidateInterviewFindInput
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: ICandidateInterview[]; total: number }>(
 				`/api/candidate-interview`,
@@ -33,6 +34,13 @@ export class CandidateInterviewService {
 					params: { data }
 				}
 			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	findById(id: string): Promise<ICandidateInterview> {
+		return this.http
+			.get<ICandidateInterview>(`/api/candidate-interview/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
+import { ICandidateInterviewersDeleteInput } from '@gauzy/models';
 
 @Injectable()
 export class CandidateInterviewersService extends CrudService<
@@ -15,5 +16,31 @@ export class CandidateInterviewersService extends CrudService<
 		>
 	) {
 		super(candidateInterviewersRepository);
+	}
+
+	async getInterviewersByInterviewId(
+		interviewId: string
+	): Promise<CandidateInterviewers[]> {
+		return await this.repository
+			.createQueryBuilder('candidate_interviewers')
+			.where('candidate_interviewers.interviewId = :interviewId', {
+				interviewId
+			})
+			.getMany();
+	}
+
+	async getInterviewersByEmployeeId(
+		employeeId: ICandidateInterviewersDeleteInput
+	): Promise<any> {
+		return await this.repository
+			.createQueryBuilder('candidate_interviewers')
+			.where('candidate_interviewers.employeeId = :employeeId', {
+				employeeId
+			})
+			.getMany();
+	}
+
+	async deleteBulk(ids: string[]) {
+		return await this.repository.delete(ids);
 	}
 }
