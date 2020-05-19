@@ -12,7 +12,6 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
-import { JobTitleComponent } from './table-components/job-title/job-title.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';

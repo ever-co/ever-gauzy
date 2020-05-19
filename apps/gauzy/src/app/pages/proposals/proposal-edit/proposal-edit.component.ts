@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { ProposalViewModel } from '../proposals.component';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
@@ -29,6 +29,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 
 	proposal: ProposalViewModel;
 	tags: Tag[] = [];
+	form: FormGroup;
 
 	ngOnInit() {
 		this.proposal = this.store.selectedProposal;
@@ -41,9 +42,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	}
 
 	private _initializeForm() {
-		if (this.proposal) {
-			this.tags = this.proposal.tags;
-		}
+		this.tags = this.proposal.tags;
 		this.form = this.fb.group({
 			jobPostUrl: [this.proposal.jobPostUrl],
 			valueDate: [this.proposal.valueDate],
