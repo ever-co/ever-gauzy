@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateSpecificAvailibilityComponent } from './date-specific-availibility.component';
+import { AvailabilitySlotsComponent } from './availability-slots.component';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: DateSpecificAvailibilityComponent
+		component: AvailabilitySlotsComponent
 	}
 ];
 
@@ -13,4 +13,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class DateSpecificAvailibilityRouteModule {}
+export class AvailabilitySlotsRouteModule {}

@@ -6,17 +6,24 @@ import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import * as moment from 'moment';
-import { Organization, PermissionsEnum, Employee } from '@gauzy/models';
+import {
+	Organization,
+	PermissionsEnum,
+	Employee,
+	IAvailabilitySlotsCreateInput
+} from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
-import { AvailibilitySlotsService } from 'apps/gauzy/src/app/@core/services/availability-slots.service';
+import { AvailabilitySlotsService } from 'apps/gauzy/src/app/@core/services/availability-slots.service';
 import { takeUntil } from 'rxjs/operators';
+import { ActivatedRoute } from '@angular/router';
 
 export interface IAvailabilitySlotsView {
+	id?: string;
 	startTime: Date;
 	endTime: Date;
 	allDay: boolean;
-	type: string;
+	type?: string;
 	employeeId?: string;
 	organizationId?: string;
 	employee?: Employee;
@@ -24,24 +31,26 @@ export interface IAvailabilitySlotsView {
 }
 
 @Component({
-	templateUrl: './date-specific-availibility.component.html'
+	templateUrl: './availability-slots.component.html'
 })
-export class DateSpecificAvailibilityComponent implements OnInit, OnDestroy {
+export class AvailabilitySlotsComponent implements OnInit, OnDestroy {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	calendarComponent: FullCalendarComponent;
-	private _ngDestroy$ = new Subject<void>();
-
+	calendarEvents: EventInput[] = [];
 	calendarOptions: OptionsInput;
 
+	private _ngDestroy$ = new Subject<void>();
+	recurringAvailabilityMode: boolean = false;
 	_selectedOrganizationId: string;
 	selectedEmployeeId: string;
 	canChangeSelectedEmployee: boolean;
 	dateSelected: boolean;
-	calendarEvents: EventInput[] = [];
+	removedEvents: EventInput[] = [];
 
 	constructor(
 		private store: Store,
-		private availabilitySlotsService: AvailibilitySlotsService
+		private route: ActivatedRoute,
+		private availabilitySlotsService: AvailabilitySlotsService
 	) {
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
@@ -62,13 +71,28 @@ export class DateSpecificAvailibilityComponent implements OnInit, OnDestroy {
 			height: 'auto',
 			selectOverlap: false,
 			events: this.getEvents.bind(this),
-			dateClick: this.handleDateClick.bind(this),
+			editable: true,
+			eventOverlap: false,
+			eventClick: this.unselectEvent.bind(this),
 			selectAllow: (select) => moment().diff(select.start) <= 0,
 			select: this.handleSelectRange.bind(this)
 		};
 	}
 
 	ngOnInit() {
+		if (
+			this.route.snapshot['_routerState'].url.includes(
+				'recurring-availability'
+			)
+		) {
+			this.recurringAvailabilityMode = true;
+			delete this.calendarOptions.selectAllow;
+			this.calendarOptions.headerToolbar = {
+				center: '',
+				right: ''
+			};
+		}
+
 		this.store.user$.subscribe(() => {
 			this.canChangeSelectedEmployee = this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -105,8 +129,15 @@ export class DateSpecificAvailibilityComponent implements OnInit, OnDestroy {
 		callback(this.calendarEvents);
 	}
 
-	handleDateClick(arg) {
-		console.log('handleDateClick', arg);
+	unselectEvent(o) {
+		if (o.event.extendedProps && o.event.extendedProps.id) {
+			this.removedEvents.push(o.event);
+		}
+		this.calendarEvents = this.calendarEvents.filter(
+			(e) => !moment(e.start).isSame(moment(o.event.start))
+		);
+
+		this.calendar.getApi().refetchEvents();
 	}
 
 	handleSelectRange(o) {
@@ -115,26 +146,25 @@ export class DateSpecificAvailibilityComponent implements OnInit, OnDestroy {
 		this._prepareEvent({
 			startTime: o.start,
 			endTime: o.end,
-			allDay: o.allDay,
-			type: 'Default'
+			allDay: o.allDay
 		});
 
 		this.calendar.getApi().refetchEvents();
 	}
 
 	async saveSelectedDateRange() {
-		const payload = [];
+		const payload: IAvailabilitySlotsCreateInput[] = [];
 		for (let e of this.calendarEvents) {
 			payload.push({
 				startTime: new Date(e.start.toString()),
 				endTime: new Date(e.end.toString()),
 				employeeId: this.selectedEmployeeId,
 				organizationId: this.store.selectedOrganization.id,
-				type: 'Default',
+				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
 				allDay: e.allDay
 			});
 		}
-		await this.availabilitySlotsService.create(payload);
+		await this.availabilitySlotsService.createBulk(payload);
 	}
 
 	discardSelectedDates() {
@@ -148,12 +178,14 @@ export class DateSpecificAvailibilityComponent implements OnInit, OnDestroy {
 
 		if (isOrganizationId) {
 			findObj = {
+				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
 				organization: {
 					id: this._selectedOrganizationId
 				}
 			};
 		} else {
 			findObj = {
+				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
 				employee: {
 					id: this.selectedEmployeeId
 				}
@@ -161,7 +193,10 @@ export class DateSpecificAvailibilityComponent implements OnInit, OnDestroy {
 		}
 
 		const slots = await this.availabilitySlotsService.getAll([], findObj);
-		console.log(slots);
+		for (let o of slots.items) {
+			this._prepareEvent(o);
+		}
+		this.calendar.getApi().refetchEvents();
 	}
 
 	private _prepareEvent(slot: IAvailabilitySlotsView) {
@@ -171,7 +206,10 @@ export class DateSpecificAvailibilityComponent implements OnInit, OnDestroy {
 		this.calendarEvents.push({
 			start: eventStartTime,
 			end: eventEndTime,
-			allDay: slot.allDay
+			allDay: slot.allDay,
+			extendedProps: {
+				id: slot.id
+			}
 		});
 	}
 
