@@ -41,7 +41,11 @@
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
-		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
+		"ADD_ICON": "add icon",
+		"MAKE_PRIVATE": "make private",
+		"MAKE_PUBLIC": "make public",
+		"KNOWLEDGE_BASES": "Knowledge bases"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -671,6 +675,7 @@
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
 				"NEXT": "Next",
@@ -1369,6 +1374,7 @@
 		"ACTIVE": "Активен"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availibility"
+		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availability",
+		"RECURRING_AVAILIBILITY": "Recurring Availability"
 	}
 }
