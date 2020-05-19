@@ -16,10 +16,13 @@ import { OrganizationTeamService } from './organization-team.service';
 import { IPagination } from '../core';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
-	OrganizationTeam as IIOrganizationTeam
+	OrganizationTeam as IIOrganizationTeam,
+	OrganizationTeamEmployee
 } from '@gauzy/models';
 import { OrganizationTeam } from './organization-team.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { EmployeeService } from '../employee/employee.service';
+import { RequestContext } from '../core/context';
 
 @ApiTags('Organization-Teams')
 @UseGuards(AuthGuard('jwt'))
@@ -28,7 +31,8 @@ export class OrganizationTeamController extends CrudController<
 	OrganizationTeam
 > {
 	constructor(
-		private readonly organizationTeamService: OrganizationTeamService
+		private readonly organizationTeamService: OrganizationTeamService,
+		private readonly employeeService: EmployeeService
 	) {
 		super(organizationTeamService);
 	}
@@ -97,5 +101,38 @@ export class OrganizationTeamController extends CrudController<
 		...options: any[]
 	): Promise<OrganizationTeam> {
 		return this.organizationTeamService.updateOrgTeam(id, entity);
+	}
+
+	@ApiOperation({
+		summary: 'Find all organization Teams.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found Teams',
+		type: OrganizationTeam
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get('me')
+	async findMyTeams(
+		@Query('data') data: string
+	): Promise<IPagination<IIOrganizationTeam>> {
+		//If user is not an employee, then this will return 404
+		const employee = await this.employeeService.findOne({
+			where: {
+				user: { id: RequestContext.currentUser().id }
+			}
+		});
+		const { relations, findInput } = JSON.parse(data);
+
+		return this.organizationTeamService.getMyOrgTeams(
+			{
+				where: findInput,
+				relations
+			},
+			employee.id
+		);
 	}
 }

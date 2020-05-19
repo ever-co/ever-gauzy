@@ -44,4 +44,33 @@ export class TaskService extends CrudService<Task> {
 			.getMany();
 		return { items, total };
 	}
+
+	async getTeamTasks(employeeId) {
+		const items = await this.taskRepository
+			.createQueryBuilder('task')
+			.leftJoinAndSelect('task.project', 'project')
+			.leftJoinAndSelect('task.tags', 'tags')
+			.leftJoinAndSelect('task.members', 'members')
+			.leftJoinAndSelect('task.teams', 'teams')
+			.where((qb) => {
+				const subQuery = qb
+					.subQuery()
+					.select('"task_team_sub"."taskId"')
+					.from('task_team', 'task_team_sub')
+					.innerJoin(
+						'organization_team_employee',
+						'organization_team_employee_sub',
+						'"organization_team_employee_sub"."organizationTeamId" = "task_team_sub"."organizationTeamId"'
+					)
+					.where(
+						'"organization_team_employee_sub"."employeeId" = :employeeId'
+					)
+					.distinct(true)
+					.getQuery();
+				return '"task_teams"."taskId" IN ' + subQuery;
+			})
+			.setParameter('employeeId', employeeId)
+			.getMany();
+		return { items, total: items.length };
+	}
 }

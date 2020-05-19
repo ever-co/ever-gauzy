@@ -44,6 +44,12 @@ export class TasksService extends TranslationBaseComponent {
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
+	getTeamTasks(): Observable<ITaskResponse> {
+		return this._http
+			.get<ITaskResponse>(`${this.API_URL}/team`)
+			.pipe(catchError((error) => this.errorHandler(error)));
+	}
+
 	getById(id: string) {
 		return this._http
 			.get<Task>(`${this.API_URL}/${id}`)

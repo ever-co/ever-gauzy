@@ -954,6 +954,7 @@
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
 		"MY_TASK_HEADER": "My Tasks",
+		"TEAM_TASKS_HEADER": "Team's Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",

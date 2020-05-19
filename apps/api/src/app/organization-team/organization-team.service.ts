@@ -104,4 +104,23 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 
 		return { items, total };
 	}
+
+	async getMyOrgTeams(
+		filter: FindManyOptions<OrganizationTeam>,
+		employeeId
+	): Promise<IPagination<IOrganizationTeam>> {
+		const teams: OrganizationTeam[] = [];
+		const items = await this.organizationTeamRepository.find(filter);
+
+		for (const orgTeams of items) {
+			for (const teamEmp of orgTeams.members) {
+				if (employeeId === teamEmp.employeeId) {
+					teams.push(orgTeams);
+					break;
+				}
+			}
+		}
+
+		return { items: teams, total: teams.length };
+	}
 }
