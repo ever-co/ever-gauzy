@@ -76,6 +76,27 @@ export class TaskController extends CrudController<Task> {
 		return this.taskService.getMyTasks(employee.id);
 	}
 
+	@ApiOperation({ summary: 'Find my team tasks.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tasks',
+		type: Task
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@Get('team')
+	async findTeamTasks(): Promise<IPagination<Task>> {
+		//If user is not an employee, then this will return 404
+		const employee = await this.employeeService.findOne({
+			where: {
+				user: { id: RequestContext.currentUser().id }
+			}
+		});
+		return this.taskService.getTeamTasks(employee.id);
+	}
+
 	@ApiOperation({ summary: 'create a task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,

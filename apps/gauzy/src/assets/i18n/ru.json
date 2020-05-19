@@ -954,6 +954,7 @@
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
 		"MY_TASK_HEADER": "Мои задачи",
+		"TEAM_TASKS_HEADER": "Team's Tasks",
 		"ADD_TASKS": "Добавить задачи",
 		"EDIT_TASKS": "Редактировать задачи",
 		"TASKS_TITLE": "Заголовок",

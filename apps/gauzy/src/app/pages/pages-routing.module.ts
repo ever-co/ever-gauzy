@@ -113,9 +113,9 @@ const routes: Routes = [
 					{
 						path: 'team',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./team-tasks/team-tasks.module').then(
+								(m) => m.TeamTasksModule
+							)
 					}
 				]
 			},
