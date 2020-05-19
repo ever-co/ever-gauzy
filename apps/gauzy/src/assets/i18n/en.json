@@ -41,7 +41,11 @@
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
-		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
+		"ADD_ICON": "add icon",
+		"MAKE_PRIVATE": "make private",
+		"MAKE_PUBLIC": "make public",
+		"KNOWLEDGE_BASES": "Knowledge bases"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
