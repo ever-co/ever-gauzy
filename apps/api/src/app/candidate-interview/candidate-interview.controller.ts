@@ -17,6 +17,7 @@ import { CandidateInterviewService } from './candidate-interview.service';
 import { ICandidateInterviewCreateInput, PermissionsEnum } from '@gauzy/models';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('candidate_interview')
 @UseGuards(AuthGuard('jwt'))
@@ -43,9 +44,9 @@ export class CandidateInterviewController extends CrudController<
 	})
 	@Get()
 	async findInterview(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateInterview>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations = [], findInput = null } = data;
 		return this.candidateInterviewService.findAll({
 			where: findInput,
 			relations

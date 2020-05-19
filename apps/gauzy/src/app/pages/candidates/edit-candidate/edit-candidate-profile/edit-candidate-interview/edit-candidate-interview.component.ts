@@ -106,7 +106,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	async removeInterview(id: string) {
 		try {
 			await this.candidateInterviewService.delete(id);
-			await this.candidateInterviewersService.deleteByInterviewId(id);
+			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
 			this.toastrSuccess('DELETED');
 			this.loadInterview();
 		} catch (error) {

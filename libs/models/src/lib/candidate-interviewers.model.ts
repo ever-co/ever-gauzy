@@ -14,3 +14,7 @@ export interface ICandidateInterviewersCreateInput {
 	interviewId: string;
 	employeeId: string;
 }
+export interface ICandidateInterviewersDeleteInput {
+	interviewId?: string;
+	employeeId?: string;
+}

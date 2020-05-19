@@ -21,6 +21,12 @@ import {
 	PermissionsEnum,
 	ICandidateInterviewersCreateInput
 } from '@gauzy/models';
+import { ParseJsonPipe } from '../shared';
+import { CommandBus } from '@nestjs/cqrs';
+import {
+	CandidateInterviewersEmployeeBulkDeleteCommand,
+	CandidateInterviewersInterviewBulkDeleteCommand
+} from './commands';
 
 @ApiTags('candidate_interviewers')
 @UseGuards(AuthGuard('jwt'))
@@ -29,7 +35,8 @@ export class CandidateInterviewersController extends CrudController<
 	CandidateInterviewers
 > {
 	constructor(
-		private readonly candidateInterviewersService: CandidateInterviewersService
+		private readonly candidateInterviewersService: CandidateInterviewersService,
+		private readonly commandBus: CommandBus
 	) {
 		super(candidateInterviewersService);
 	}
@@ -47,9 +54,9 @@ export class CandidateInterviewersController extends CrudController<
 	})
 	@Get()
 	async findInterviewers(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateInterviewers>> {
-		const { findInput } = JSON.parse(data);
+		const { findInput = null } = data;
 		return this.candidateInterviewersService.findAll({ where: findInput });
 	}
 
@@ -88,7 +95,7 @@ export class CandidateInterviewersController extends CrudController<
 	async findByInterviewId(
 		@Param('interviewId') interviewId: string
 	): Promise<CandidateInterviewers[]> {
-		return this.candidateInterviewersService.findInterviewersByInterviewId(
+		return this.candidateInterviewersService.getInterviewersByInterviewId(
 			interviewId
 		);
 	}
@@ -107,12 +114,13 @@ export class CandidateInterviewersController extends CrudController<
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
-	@Delete('deleteByInterviewId/:interviewId')
-	async deleteByInterviewId(
-		@Param('interviewId') interviewId: string
+	@Delete('deleteBulkByInterviewId')
+	async deleteBulkByInterviewId(
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
-		return this.candidateInterviewersService.deleteInterviewersByInterviewId(
-			interviewId
+		const { id = null } = data;
+		return this.commandBus.execute(
+			new CandidateInterviewersInterviewBulkDeleteCommand(id)
 		);
 	}
 
@@ -130,12 +138,13 @@ export class CandidateInterviewersController extends CrudController<
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
-	@Delete('deleteByEmployeeId/:employeeId')
-	async deleteByEmployeeId(
-		@Param('employeeId') employeeId: string
+	@Delete('deleteBulkByEmployeeId')
+	async deleteBulkByEmployeeId(
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<any> {
-		return this.candidateInterviewersService.deleteInterviewersByEmployeeId(
-			employeeId
+		const { deleteInput = null } = data;
+		return this.commandBus.execute(
+			new CandidateInterviewersEmployeeBulkDeleteCommand(deleteInput)
 		);
 	}
 }

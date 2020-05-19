@@ -195,11 +195,12 @@ export class CandidateInterviewMutationComponent
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
-		for (const id of deletedIds) {
-			await this.candidateInterviewersService.deleteByEmployeeId(id);
-		}
+		await this.candidateInterviewersService.deleteBulkByEmployeeId(
+			deletedIds
+		);
+
 		for (const id of newIds) {
-			this.addInterviewer(this.interviewId, id);
+			this.addInterviewer(this.interviewId, id); //to do bulk
 		}
 		this.interviewId = null;
 	}
