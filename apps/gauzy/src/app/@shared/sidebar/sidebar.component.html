@@ -8,15 +8,62 @@
 		>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
+		<div *ngIf="isVisible" class="add-base-field">
+			<input
+				type="text"
+				size="24"
+				ngModel
+				maxlength="18"
+				(keyup.enter)="addName($event)"
+				nbInput
+			/>
+			<button
+				class="input-button"
+				status="danger"
+				(click)="onCloseInput()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
+		</div>
+
 		<h5>Knowledge bases</h5>
 		<tree-root
 			#tree
 			[nodes]="nodes"
 			[options]="options"
-			(click)="onTap($event)"
+			[focused]="true"
 		></tree-root>
 	</nb-card-body>
 	<nb-card-body>
+		<button
+			*ngIf="isChosenArticle"
+			class="add-icon-button"
+			(click)="addIcon()"
+			status="success"
+			nbButton
+		>
+			add icon
+		</button>
+		<button
+			*ngIf="isChosenArticle"
+			class="privacy-button"
+			(click)="changePrivacy()"
+			status="primary"
+			nbButton
+		>
+			make private/public
+		</button>
+		<button
+			*ngIf="isChosenArticle"
+			class="delete-button"
+			(click)="onDeleteArticle()"
+			status="warning"
+			nbButton
+		>
+			delete
+		</button>
+
 		<div>
 			<h5>{{ articleName }}</h5>
 		</div>

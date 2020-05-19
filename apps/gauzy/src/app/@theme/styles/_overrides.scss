@@ -1,179 +1,179 @@
 @import './themes';
 
 ::-webkit-scrollbar {
-	display: none;
+  display: none;
 }
 
 body {
-	-ms-overflow-style: none;
+  -ms-overflow-style: none;
 }
 
 @mixin nb-overrides() {
-	// overrides bootstrap svg style
-	nb-icon svg {
-		vertical-align: top;
-	}
+  // overrides bootstrap svg style
+  nb-icon svg {
+    vertical-align: top;
+  }
 
-	nb-auth-block .links nb-icon {
-		font-size: 2.5rem;
-	}
+  nb-auth-block .links nb-icon {
+    font-size: 2.5rem;
+  }
 
-	nb-select.size-medium button {
-		padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
+  nb-select.size-medium button {
+    padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
 
-		nb-icon {
-			right: 0.41rem !important;
-		}
-	}
+    nb-icon {
+      right: 0.41rem !important;
+    }
+  }
 
-	nb-flip-card {
-		.front-container {
-			-webkit-backface-visibility: visible;
-		}
-		.back-container {
-			-webkit-backface-visibility: hidden;
-		}
+  nb-flip-card {
+    .front-container {
+      -webkit-backface-visibility: visible;
+    }
+    .back-container {
+      -webkit-backface-visibility: hidden;
+    }
 
-		.flipped {
-			.front-container {
-				-webkit-backface-visibility: hidden;
-			}
-			.back-container {
-				-webkit-backface-visibility: visible;
-			}
-		}
-	}
+    .flipped {
+      .front-container {
+        -webkit-backface-visibility: hidden;
+      }
+      .back-container {
+        -webkit-backface-visibility: visible;
+      }
+    }
+  }
 
-	nb-layout {
-		.scrollable-container {
-			overflow-y: scroll !important;
-		}
-	}
+  nb-layout {
+    .scrollable-container {
+      overflow-y: scroll !important;
+    }
+  }
 
-	nb-layout .layout .layout-container nb-sidebar {
-		&,
-		.main-container-fixed {
-			top: nb-theme(header-height);
-		}
-	}
+  nb-layout .layout .layout-container nb-sidebar {
+    &,
+    .main-container-fixed {
+      top: nb-theme(header-height);
+    }
+  }
 
-	//Override padding from 1.25rem to 0.5rem
-	nb-layout .layout .layout-container .content nb-layout-footer nav {
-		padding: 0.5rem;
-	}
+  //Override padding from 1.25rem to 0.5rem
+  nb-layout .layout .layout-container .content nb-layout-footer nav {
+    padding: 0.5rem;
+  }
 
-	@media screen and (min-width: nb-theme(layout-window-mode-max-width) + 20px) {
-		@include f-window-mode(nb-theme(layout-window-mode-padding-top) / 4);
-	}
+  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 20px) {
+    @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 4);
+  }
 
-	@media screen and (min-width: nb-theme(layout-window-mode-max-width) + 150px) {
-		@include f-window-mode(nb-theme(layout-window-mode-padding-top) / 2);
-	}
+  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 150px) {
+    @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 2);
+  }
 
-	@media screen and (min-width: nb-theme(layout-window-mode-max-width) + 300px) {
-		@include f-window-mode(nb-theme(layout-window-mode-padding-top));
-	}
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-		background: nb-theme(background-basic-color-1);
-		color: nb-theme(text-basic-color);
-		padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
-		transition-duration: 0.15s;
-		transition-property: border, background-color, color, box-shadow;
-		transition-timing-function: ease-in;
-		font-family: Open Sans, sans-serif;
-		font-weight: 600;
-		font-size: 0.8125rem;
-		line-height: 1.5rem;
-	}
+  @media screen and (min-width: nb-theme(layout-window-mode-max-width) + 300px) {
+    @include f-window-mode(nb-theme(layout-window-mode-padding-top));
+  }
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+    background: nb-theme(background-basic-color-1);
+    color: nb-theme(text-basic-color);
+    padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
+    transition-duration: 0.15s;
+    transition-property: border, background-color, color, box-shadow;
+    transition-timing-function: ease-in;
+    font-family: Open Sans, sans-serif;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    line-height: 1.5rem;
+  }
 
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
-		color: nb-theme(text-primary-hover-color);
-	}
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
+    color: nb-theme(text-primary-hover-color);
+  }
 
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-		color: nb-theme(text-primary-active-color);
-		background: nb-theme(background-basic-color-1);
-	}
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
+    color: nb-theme(text-primary-active-color);
+    background: nb-theme(background-basic-color-1);
+  }
 
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
-		color: nb-theme(text-primary-active-color);
-		background: nb-theme(background-basic-color-1);
-	}
-	.ng-value-container .ng-input input {
-		background-color: nb-theme(background-basic-color-1);
-		color: nb-theme(text-basic-color);
-	}
-	.ng-dropdown-panel {
-		box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
-		border-bottom-left-radius: nb-theme(border-radius);
-		border-bottom-right-radius: nb-theme(border-radius);
-		box-shadow: nb-theme(shadow);
-		transform: translateY(1px);
-		border-color: nb-theme(color-primary-transparent-active-border);
-		border-width: 1px;
-		border-style: solid;
-	}
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
+    color: nb-theme(text-primary-active-color);
+    background: nb-theme(background-basic-color-1);
+  }
+  .ng-value-container .ng-input input {
+    background-color: nb-theme(background-basic-color-1);
+    color: nb-theme(text-basic-color);
+  }
+  .ng-dropdown-panel {
+    box-shadow: 0 0 nb-theme(outline-width) ng-theme(outline-color);
+    border-bottom-left-radius: nb-theme(border-radius);
+    border-bottom-right-radius: nb-theme(border-radius);
+    box-shadow: nb-theme(shadow);
+    transform: translateY(1px);
+    border-color: nb-theme(color-primary-transparent-active-border);
+    border-width: 1px;
+    border-style: solid;
+  }
 
-	tr {
-		background-color: nb-theme(background-basic-color-1) !important;
-	}
-	.ng-select .ng-select-container {
-		background-color: nb-theme(background-basic-color-1) !important;
-		color: nb-theme(text-basic-color) !important;
-	}
-	.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-		background-color: nb-theme(background-basic-color-1) !important;
-		color: nb-theme(text-basic-color) !important;
-	}
-	.setting-block {
-		background-color: nb-theme(background-basic-color-2) !important;
-		color: nb-theme(text-basic-color) !important;
-	}
-	.info-block-wrapper {
-		background-color: nb-theme(background-basic-color-2) !important;
-		color: nb-theme(text-basic-color) !important;
-	}
-	.info-block-wrapper .info-block--highlight {
-		background: nb-theme(background-basic-color-3) !important;
-	}
-	.info-text {
-		color: nb-theme(text-basic-color) !important;
-	}
-	a > nb-icon {
-		color: nb-theme(text-basic-color) !important;
-	}
-	.records {
-		box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
-		background: nb-theme(background-basic-color-1) !important;
-	}
-	.profit-history {
-		box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
-		background: nb-theme(background-basic-color-1) !important;
-	}
-	tr {
-		background-color: nb-theme(background-basic-color-1) !important;
-	}
-	.table {
-		color: nb-theme(text-basic-color) !important;
-	}
+  tr {
+    background-color: nb-theme(background-basic-color-1) !important;
+  }
+  .ng-select .ng-select-container {
+    background-color: nb-theme(background-basic-color-1) !important;
+    color: nb-theme(text-basic-color) !important;
+  }
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+    background-color: nb-theme(background-basic-color-1) !important;
+    color: nb-theme(text-basic-color) !important;
+  }
+  .setting-block {
+    background-color: nb-theme(background-basic-color-2) !important;
+    color: nb-theme(text-basic-color) !important;
+  }
+  .info-block-wrapper {
+    background-color: nb-theme(background-basic-color-2) !important;
+    color: nb-theme(text-basic-color) !important;
+  }
+  .info-block-wrapper .info-block--highlight {
+    background: nb-theme(background-basic-color-3) !important;
+  }
+  .info-text {
+    color: nb-theme(text-basic-color) !important;
+  }
+  a > nb-icon {
+    color: nb-theme(text-basic-color) !important;
+  }
+  .records {
+    box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
+    background: nb-theme(background-basic-color-1) !important;
+  }
+  .profit-history {
+    box-shadow: 0px 0px 16px 9px nb-theme(shadow) !important;
+    background: nb-theme(background-basic-color-1) !important;
+  }
+  tr {
+    background-color: nb-theme(background-basic-color-1) !important;
+  }
+  .table {
+    color: nb-theme(text-basic-color) !important;
+  }
 }
 
 @mixin f-window-mode($padding-top) {
-	nb-layout.window-mode nb-layout-header.fixed {
-		top: $padding-top;
-	}
+  nb-layout.window-mode nb-layout-header.fixed {
+    top: $padding-top;
+  }
 
-	nb-sidebar .main-container-fixed {
-		height: calc(
-			100vh - #{nb-theme(header-height)} - #{$padding-top}
-		) !important;
-		top: calc(#{nb-theme(header-height)} + #{$padding-top}) !important;
-	}
+  nb-sidebar .main-container-fixed {
+    height: calc(
+      100vh - #{nb-theme(header-height)} - #{$padding-top}
+    ) !important;
+    top: calc(#{nb-theme(header-height)} + #{$padding-top}) !important;
+  }
 }
 
 ng2-smart-table tbody tr {
-	&:hover,
-	&.selected {
-		background-color: nb-theme(background-basic-color-3) !important;
-	}
+  &:hover,
+  &.selected {
+    background-color: nb-theme(background-basic-color-3) !important;
+  }
 }
