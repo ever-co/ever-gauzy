@@ -4,7 +4,9 @@ import {
 	Index,
 	JoinColumn,
 	RelationId,
-	ManyToOne
+	ManyToOne,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional, IsDate } from 'class-validator';
@@ -12,9 +14,15 @@ import { Base } from '../core/entities/base';
 import { Proposal as IProposal } from '@gauzy/models';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('proposal')
 export class Proposal extends Base implements IProposal {
+	@ApiProperty({ type: Tag })
+	@ManyToMany((type) => Tag)
+	@JoinTable({ name: 'tag_proposal' })
+	tags: Tag[];
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

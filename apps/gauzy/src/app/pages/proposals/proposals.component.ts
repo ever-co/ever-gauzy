@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
-import { Proposal, PermissionsEnum } from '@gauzy/models';
+import { Proposal, PermissionsEnum, Tag } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
@@ -15,6 +15,7 @@ import { ActionConfirmationComponent } from '../../@shared/user/forms/action-con
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 export interface ProposalViewModel {
 	id: string;
@@ -27,6 +28,7 @@ export interface ProposalViewModel {
 	proposalContent?: string;
 	status?: string;
 	author?: string;
+	tags?: Tag[];
 }
 
 interface SelectedRowModel {
@@ -259,7 +261,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
 					type: 'custom',
 					width: '25%',
-					renderComponent: JobTitleComponent
+					renderComponent: NotesWithTagsComponent
 				},
 				jobPostLink: {
 					title: this.getTranslation('SM_TABLE.VIEW_JOB_POST'),
@@ -301,7 +303,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 		let items: Proposal[];
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
-				['employee', 'organization'],
+				['employee', 'organization', 'tags'],
 				{
 					employeeId: this.selectedEmployeeId,
 					organizationId: this._selectedOrganizationId
@@ -313,7 +315,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			this.totalProposals = response.total;
 		} else {
 			const response = await this.proposalsService.getAll(
-				['organization', 'employee', 'employee.user'],
+				['organization', 'employee', 'employee.user', 'tags'],
 				{ organizationId: orgId },
 				this.selectedDate
 			);
@@ -355,6 +357,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 							.join(' '),
 						jobPostContent: i.jobPostContent,
 						proposalContent: i.proposalContent,
+						tags: i.tags,
 						status: i.status,
 						author: i.employee.user
 							? i.employee.user.firstName +
@@ -374,6 +377,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			}
 
 			this.smartTableSource.load(proposalVM);
+
 			this.showTable = true;
 
 			this.chartData[0] = {
