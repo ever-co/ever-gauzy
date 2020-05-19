@@ -78,11 +78,16 @@ export class EditCandidateComponent extends TranslationBaseComponent
 		);
 		if (res) {
 			this.isInterview = true;
+			this.interviewList = res.items;
 		}
 	}
 	async interviewInfo() {
 		if (this.isInterview) {
-			this.dialogService.open(CandidateInterviewInfoComponent);
+			this.dialogService.open(CandidateInterviewInfoComponent, {
+				context: {
+					interviewList: this.interviewList
+				}
+			});
 		}
 	}
 

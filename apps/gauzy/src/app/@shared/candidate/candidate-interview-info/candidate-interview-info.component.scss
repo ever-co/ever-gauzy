@@ -1,28 +1,39 @@
+.card {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.arrow-icon {
+  font-size: 24px;
+}
+
 .icons {
-	margin-right: 10px;
-	color: grey !important;
+  margin-right: 10px;
+  color: grey !important;
 }
 
 .interview-info {
-	padding-left: 15px;
-	display: flex;
-	flex-direction: row;
-	min-width: 500px;
+  padding-left: 15px;
+  display: flex;
+  flex-direction: row;
+  min-width: 500px;
 }
 
 .interview-data {
-	color: black;
-	padding-left: 45px;
-	margin-top: -15px;
-	font-size: 18px;
-	font-weight: 600;
+  color: black;
+  padding-left: 45px;
+  margin-top: -15px;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .interview-text {
-	font-size: 14px;
-	color: grey !important;
+  font-size: 14px;
+  color: grey !important;
 }
 
 .title {
-	padding-left: 15px;
+  padding-left: 15px;
 }

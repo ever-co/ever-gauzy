@@ -10,9 +10,9 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 })
 export class CandidateInterviewInfoComponent implements OnInit {
 	@Input() interviewId: string;
+	@Input() interviewList: ICandidateInterview[];
 	candidateId: string;
 	currentInterview: ICandidateInterview;
-	interviewList: ICandidateInterview[];
 	isMinutes = false;
 	hoursUpdate: number;
 	currentTime: Date = new Date();
@@ -28,6 +28,7 @@ export class CandidateInterviewInfoComponent implements OnInit {
 
 	ngOnInit() {
 		this.loadInterview();
+		this.currentInterview = this.interviewList[0];
 	}
 	setTime(interview: ICandidateInterview) {
 		// this.hoursUpdate =
@@ -40,18 +41,23 @@ export class CandidateInterviewInfoComponent implements OnInit {
 		// }
 	}
 	private async loadInterview() {
-		const res = await this.candidateInterviewService.getAll([
-			'interviewers'
-		]);
-		if (res) {
-			this.interviewList = res.items;
-
-			for (const interview of res.items) {
-				if (this.interviewId === interview.id) {
-					this.currentInterview = interview;
-				}
-			}
-		}
+		// const res = await this.candidateInterviewService.getAll([
+		// 	'interviewers'
+		// ]);
+		// if (res) {
+		// 	this.interviewList = res.items;
+		// 	for (const interview of res.items) {
+		// 		if (this.interviewId === interview.id) {
+		// 			this.currentInterview = interview;
+		// 		}
+		// 	}
+		// }
 		// this.setTime(this.currentInterview);
+	}
+	previous() {
+		this.currentInterview = this.interviewList[0]; //to do
+	}
+	next() {
+		this.currentInterview = this.interviewList[1]; //to do
 	}
 }
