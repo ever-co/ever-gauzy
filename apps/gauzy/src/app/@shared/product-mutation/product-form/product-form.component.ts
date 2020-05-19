@@ -6,13 +6,18 @@ import {
 	ProductType,
 	ProductCategory,
 	ProductOption,
-	ProductVariant,
-	ProductOptionUI
+	ProductVariant
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
 import { Store } from '../../../@core/services/store.service';
+
+export interface ProductOptionUI {
+	name?: string;
+	code?: string;
+	searchName?: string;
+}
 
 @Component({
 	selector: 'ngx-product-form',
@@ -123,7 +128,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 				break;
 			case 'edit': {
 				const target = this.options.find(
-					(option) => option.name === this.activeOption.oldName
+					(option) => option.name === this.activeOption.searchName
 				);
 				target.name = this.activeOption.name;
 				target.code = this.activeOption.code;
@@ -135,31 +140,23 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.activeOption = {};
 	}
 
-	onRemoveOption($event: any) {
-		const optionElement = $event.path.find((el: any) =>
-			el.classList.contains('option')
-		);
-		const removeOptionTitle = optionElement ? optionElement.innerText : '';
-
-		if (!removeOptionTitle) return;
+	onRemoveOption(optionInput: ProductOption) {
+		if (!optionInput) return;
 
 		this.options = this.options.filter(
-			(option) => option.name !== removeOptionTitle
+			(option) => option.name !== optionInput.name
 		);
 	}
 
-	onEditOption($event: any) {
-		this.optionMode = 'edit';
-		const target = this.options.find(
-			(option) => option.name === $event.target.innerText
-		);
+	onEditOption(optionTarget: ProductOption) {
+		if (!optionTarget) return;
 
-		if (!target) return;
+		this.optionMode = 'edit';
 
 		this.activeOption = {
-			name: target.name,
-			code: target.code,
-			oldName: target.name
+			name: optionTarget.name,
+			code: optionTarget.code,
+			searchName: optionTarget.name
 		};
 	}
 

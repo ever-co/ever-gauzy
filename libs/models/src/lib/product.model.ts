@@ -63,13 +63,6 @@ export interface ProductOption extends IBaseEntityModel {
 	code: string;
 }
 
-export interface ProductOptionUI {
-	name?: string;
-	code?: string;
-	oldName?: string;
-	oldCode?: string;
-}
-
 export enum BillingInvoicingPolicyEnum {
 	QUANTITY_ORDERED = 'Quantity ordered',
 	QUANTITY_DELIVERED = 'Quantity Delivered'

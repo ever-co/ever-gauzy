@@ -41,7 +41,10 @@
 								form.controls['name'].touched
 							"
 						>
-							<div *ngIf="form.controls['name'].errors.required">
+							<div
+								class="text-danger"
+								*ngIf="form.controls['name'].errors.required"
+							>
 								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 							</div>
 						</div>
@@ -69,7 +72,10 @@
 								form.controls['code'].touched
 							"
 						>
-							<div *ngIf="form.controls['code'].errors.required">
+							<div
+								class="text-danger"
+								*ngIf="form.controls['code'].errors.required"
+							>
 								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
 							</div>
 						</div>
@@ -107,6 +113,7 @@
 							"
 						>
 							<div
+								class="text-danger"
 								*ngIf="
 									form.controls['productTypeId'].errors
 										.required
@@ -149,6 +156,7 @@
 							"
 						>
 							<div
+								class="text-danger"
 								*ngIf="
 									form.controls['productCategoryId'].errors
 										.required
@@ -190,14 +198,14 @@
 					<div
 						*ngFor="let option of options"
 						class="option"
-						(click)="onEditOption($event)"
+						(click)="onEditOption(option)"
 					>
 						{{ option.name }}
 						<span class="option-delete">
 							<nb-icon
 								class="ml-auto mt-1 close"
 								icon="close-outline"
-								(click)="onRemoveOption($event)"
+								(click)="onRemoveOption(option)"
 							></nb-icon>
 						</span>
 					</div>
