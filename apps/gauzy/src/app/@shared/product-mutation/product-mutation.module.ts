@@ -28,6 +28,7 @@ import { UserFormsModule } from '../user/forms/user-forms.module';
 import { ProductTypeMutationComponent } from './product-type-mutation/product-type-mutation.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ProductCategoryMutationComponent } from './product-category-mutation/product-category-mutation.component';
+import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 
 @NgModule({
 	declarations: [
@@ -51,6 +52,7 @@ import { ProductCategoryMutationComponent } from './product-category-mutation/pr
 		NbCheckboxModule,
 		NbToastrModule,
 		UserFormsModule,
+		ImageUploaderModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

@@ -9,7 +9,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 import { Location } from '@angular/common';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
 import { ProductCategoryMutationComponent } from '../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
-import { OrganizationRowComponent } from '../org-row/organization-row.component';
+import { ImageRowComponent } from '../org-row/image-row.component';
 
 export interface SelectedProductCategory {
 	data: ProductCategory;
@@ -52,15 +52,22 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				organization: {
-					title: this.getTranslation('INVENTORY_PAGE.ORGANIZATION'),
-					width: '40%',
+				imageUrl: {
+					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
+					width: '10%',
+					filter: false,
 					type: 'custom',
-					renderComponent: OrganizationRowComponent
+					renderComponent: ImageRowComponent
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
-					type: 'string'
+					type: 'string',
+					width: '40%'
+				},
+				description: {
+					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
+					type: 'string',
+					filter: false
 				}
 			}
 		};

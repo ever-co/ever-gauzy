@@ -1,11 +1,13 @@
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { ProductType, Organization, ProductCategory } from '@gauzy/models';
+import { ProductType, ProductCategory } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { NbDialogRef } from '@nebular/theme';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
+import { Store } from '../../../@core/services/store.service';
+import { Subject } from 'rxjs';
+import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ngx-product-type-mutation',
@@ -13,35 +15,37 @@ import { ProductCategoryService } from '../../../@core/services/product-category
 	styleUrls: ['./product-category-mutation.component.scss']
 })
 export class ProductCategoryMutationComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
+	private ngDestroy$ = new Subject<void>();
+
 	form: FormGroup;
 	@Input() productCategory: ProductCategory;
-	organizations: Organization[];
-	selectedOrganization: Organization;
+
+	languages: Array<string>;
+	hoverState: boolean;
 
 	constructor(
 		public dialogRef: NbDialogRef<ProductCategory>,
 		readonly translationService: TranslateService,
 		private fb: FormBuilder,
 		private productCategoryService: ProductCategoryService,
-		private organizationService: OrganizationsService
+		private store: Store,
+		private toastrService: ToastrService
 	) {
 		super(translationService);
 	}
 
 	ngOnInit() {
-		this._loadOrganizations();
 		this._initializeForm();
-
-		if (this.productCategory) {
-			this.selectedOrganization = this.productCategory.organization;
-		}
+		this.languages = this.translateService.getLangs();
 	}
 
 	async onSaveRequest() {
 		const productCategoryRequest = {
 			name: this.form.get('name').value,
-			organization: this.selectedOrganization
+			organization: this.store.selectedOrganization,
+			description: this.form.get('description').value,
+			imageUrl: this.form.get('imageUrl').value
 		};
 
 		let productCategory: ProductCategory;
@@ -60,18 +64,8 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 		this.closeDialog(productCategory);
 	}
 
-	selectOrganiztion(organization: Organization) {
-		if (!organization) return;
-		this.selectedOrganization = organization;
-	}
-
 	async closeDialog(productType?: ProductType) {
 		this.dialogRef.close(productType);
-	}
-
-	private async _loadOrganizations() {
-		const { items } = await this.organizationService.getAll();
-		this.organizations = items;
 	}
 
 	private _initializeForm() {
@@ -83,7 +77,26 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 			name: [
 				this.productCategory ? this.productCategory.name : '',
 				Validators.required
+			],
+			imageUrl: [
+				this.productCategory ? this.productCategory.imageUrl : null
+			],
+			description: [
+				this.productCategory ? this.productCategory.description : null
 			]
 		});
+	}
+
+	//tstodo toaster Service
+	handleImageUploadError(error: any) {
+		this.toastrService.danger(
+			error.error.message || error.message,
+			'Error'
+		);
+	}
+
+	ngOnDestroy(): void {
+		this.ngDestroy$.next();
+		this.ngDestroy$.complete();
 	}
 }

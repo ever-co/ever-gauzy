@@ -16,3 +16,47 @@
 	color: #fff;
 	margin-right: 10px;
 }
+
+form {
+	max-width: 500px;
+}
+
+.category-img {
+	width: fit-content;
+	height: fit-content;
+	position: relative;
+	padding-top: 20px;
+
+	div {
+		pointer-events: none;
+		background: black;
+		position: absolute;
+		height: 100%;
+		width: 100%;
+		border-radius: 13px;
+	}
+
+	img {
+		height: auto;
+		border-radius: 13px;
+		width: 100%;
+	}
+
+	input {
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		position: absolute;
+		z-index: 3;
+		cursor: pointer;
+	}
+
+	svg {
+		z-index: 2;
+		transition: opacity 0.2s ease-in;
+		opacity: 0.3;
+		position: absolute;
+		top: calc(50% - 68px / 2);
+		left: calc(50% - 68px / 2);
+	}
+}

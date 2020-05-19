@@ -24,7 +24,7 @@ import { ProductTypesComponent } from './product-type/product-types.component';
 import { ProductTypeMutationComponent } from '../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { ProductCategoriesComponent } from './product-category/product-categories.component';
 import { ProductCategoryMutationComponent } from '../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
-import { OrganizationRowComponent } from './org-row/organization-row.component';
+import { ImageRowComponent } from './org-row/image-row.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -35,7 +35,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InventoryComponent,
 		ProductTypesComponent,
 		ProductCategoriesComponent,
-		OrganizationRowComponent
+		ImageRowComponent
 	],
 	imports: [
 		UserFormsModule,
@@ -64,7 +64,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		ProductVariantFormComponent,
 		ProductTypeMutationComponent,
 		ProductCategoryMutationComponent,
-		OrganizationRowComponent
+		ImageRowComponent
 	]
 })
 export class InventoryModule {}

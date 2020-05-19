@@ -850,7 +850,9 @@
 		"EDIT_PRODUCT_CATEGORY": "Edit product category",
 		"ADD_PRODUCT_CATEGORY": "Add product category",
 		"PRODUCT_CATEGORY_SAVED": "Product category saved",
-		"PRODUCT_CATEGORY_DELETED": "Product category deleted"
+		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
+		"IMAGE": "Image",
+		"LANGUAGE": "Language"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

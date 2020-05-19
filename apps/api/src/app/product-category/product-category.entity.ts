@@ -8,8 +8,8 @@ import {
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ProductCategory as IProductCategory } from '@gauzy/models';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional } from 'class-validator';
 import { Product } from '../product/product.entity';
 import { Organization } from '../organization/organization.entity';
 
@@ -19,6 +19,16 @@ export class ProductCategory extends Base implements IProductCategory {
 	@IsString()
 	@Column()
 	name: string;
+
+	@ApiProperty({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	description: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsOptional()
+	@Column({ nullable: true })
+	imageUrl: string;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId(
