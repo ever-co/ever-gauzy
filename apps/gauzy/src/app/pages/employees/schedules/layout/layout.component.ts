@@ -7,12 +7,12 @@ import { Component, OnInit } from '@angular/core';
 export class LayoutComponent implements OnInit {
 	tabs = [
 		{
-			title: 'Date Specific Availibility',
-			route: '/pages/employees/schedules/date-specific-availibility'
+			title: 'Date Specific Availability',
+			route: '/pages/employees/schedules/date-specific-availability'
 		},
 		{
-			title: 'Recurring Availibility',
-			route: '/pages/employees/schedules/recurring-availibility'
+			title: 'Recurring Availability',
+			route: '/pages/employees/schedules/recurring-availability'
 		}
 	];
 

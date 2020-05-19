@@ -1374,6 +1374,7 @@
 		"ACTIVE": "Active"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availibility"
+		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availability",
+		"RECURRING_AVAILIBILITY": "Recurring Availability"
 	}
 }

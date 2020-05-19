@@ -5,7 +5,7 @@ import { LayoutComponent } from './layout/layout.component';
 const routes: Routes = [
 	{
 		path: '',
-		redirectTo: 'date-specific-availibility',
+		redirectTo: 'date-specific-availability',
 		pathMatch: 'full'
 	},
 	{
@@ -13,11 +13,24 @@ const routes: Routes = [
 		component: LayoutComponent,
 		children: [
 			{
-				path: 'date-specific-availibility',
+				path: 'date-specific-availability',
 				loadChildren: () =>
 					import(
-						'./date-specific-availibility/date-specific-availibility.module'
-					).then((m) => m.DateSpecificAvailibilityModule)
+						'./availability-slots/availability-slots.module'
+					).then((m) => m.AvailabilitySlotsModule)
+			}
+		]
+	},
+	{
+		path: '',
+		component: LayoutComponent,
+		children: [
+			{
+				path: 'recurring-availability',
+				loadChildren: () =>
+					import(
+						'./availability-slots/availability-slots.module'
+					).then((m) => m.AvailabilitySlotsModule)
 			}
 		]
 	}
