@@ -4,6 +4,15 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form #f="ngForm">
+			<div class="form-group" *ngIf="!employeeId">
+				<ga-employee-multi-select
+					name="employeeId"
+					[multiple]="false"
+					[(ngModel)]="addEditRequest.employeeId"
+				>
+				</ga-employee-multi-select>
+			</div>
+
 			<div class="form-group">
 				<div class="row">
 					<div class="col-12">

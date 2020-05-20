@@ -6,8 +6,8 @@ import {
 	UnauthorizedException
 } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
-import { InjectRepository, InjectConnection } from '@nestjs/typeorm';
-import { Repository, In, Connection, Between } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	TimeLogType,
@@ -17,15 +17,13 @@ import {
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
-import { TimeSheetService } from '../timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet.service';
 import { Employee } from '../../employee/employee.entity';
 import { TimeSlotService } from '../time-slot.service';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
 	constructor(
-		@InjectConnection() private connection: Connection,
-
 		@Inject(forwardRef(() => TimeSheetService))
 		private readonly timesheetService: TimeSheetService,
 
@@ -114,40 +112,24 @@ export class TimeLogService extends CrudService<TimeLog> {
 				'Please select valid Date start and end time'
 			);
 		}
-		const user = RequestContext.currentUser();
 
-		const employee = await this.employeeRepository.findOne(
-			user.employeeId,
-			{
-				relations: ['organization']
-			}
+		const confict = await this.checkConfictTime(
+			request,
+			request.employeeId
 		);
-
-		if (!employee.organization || !employee.organization.allowManualTime) {
-			throw new UnauthorizedException(
-				'You have not sufficient permission to add time'
-			);
-		}
-
-		const confict = await this.checkConfictTime(request, user.employeeId);
 		const timesheet = await this.timesheetService.createOrFindTimeSheet(
-			user.employeeId,
+			request.employeeId,
 			request.startedAt
 		);
 
 		let newTimeLog: TimeLog;
 		if (!confict) {
-			const duration = moment(request.stoppedAt).diff(
-				request.startedAt,
-				'seconds'
-			);
 			newTimeLog = await this.timeLogRepository.save({
-				duration,
 				startedAt: request.startedAt,
 				stoppedAt: request.stoppedAt,
 				timesheetId: timesheet.id,
 				isBilled: false,
-				employeeId: user.employeeId,
+				employeeId: request.employeeId,
 				projectId: request.projectId || null,
 				taskId: request.taskId || null,
 				clientId: request.clientId || null,
@@ -162,7 +144,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 			);
 			timeSlots = timeSlots.map((slot) => ({
 				...slot,
-				employeeId: user.employeeId,
+				employeeId: request.employeeId,
 				keyboard: 0,
 				mouse: 0,
 				overall: 0
@@ -182,35 +164,21 @@ export class TimeLogService extends CrudService<TimeLog> {
 				'Please select valid Date start and end time'
 			);
 		}
+		const timeLog = await this.timeLogRepository.findOne(request.id);
 
 		const user = RequestContext.currentUser();
-		// const employee = await this.employeeRepository.findOne(
-		// 	user.employeeId,
-		// 	{
-		// 		relations: ['organization']
-		// 	}
-		// );
 
-		// if (!employee.organization || !employee.organization.allowModifyTime) {
-		// 	throw new UnauthorizedException(
-		// 		'You have not sufficient permission to update time'
-		// 	);
-		// }
-
-		const confict = await this.checkConfictTime(request, user.employeeId);
+		const confict = await this.checkConfictTime(
+			request,
+			timeLog.employeeId
+		);
 
 		const timesheet = await this.timesheetService.createOrFindTimeSheet(
-			user.employeeId,
+			timeLog.employeeId,
 			request.startedAt
 		);
 
 		if (!confict) {
-			const duration = moment(request.stoppedAt).diff(
-				request.startedAt,
-				'seconds'
-			);
-
-			const timeLog = await this.timeLogRepository.findOne(request.id);
 			const timeSlots = this.timeSlotService.generateTimeSlots(
 				timeLog.startedAt,
 				timeLog.stoppedAt
@@ -223,11 +191,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 			await this.timeLogRepository.update(
 				{ id: request.id },
 				{
-					duration,
 					startedAt: request.startedAt,
 					stoppedAt: request.stoppedAt,
 					timesheetId: timesheet.id,
-					employeeId: user.employeeId,
 					projectId: request.projectId || null,
 					taskId: request.taskId || null,
 					clientId: request.clientId || null,
@@ -250,17 +216,15 @@ export class TimeLogService extends CrudService<TimeLog> {
 				.map((timeslot) => new Date(timeslot.startedAt));
 
 			if (startTimes.length > 0) {
-				const deletedData = await this.timeSlotService.delete({
-					employeeId: user.employeeId,
+				await this.timeSlotService.delete({
+					employeeId: timeLog.employeeId,
 					startedAt: In(startTimes)
 				});
-
-				console.log({ deletedData });
 			}
 
 			updateTimeSlots = updateTimeSlots.map((slot) => ({
 				...slot,
-				employeeId: user.employeeId,
+				employeeId: timeLog.employeeId,
 				keyboard: 0,
 				mouse: 0,
 				overall: 0

@@ -36,8 +36,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 		return this.val;
 	}
 
-	private _ngDestroy$ = new Subject<void>();
-
 	constructor(private organizationProjects: OrganizationProjectsService) {}
 
 	ngOnInit() {
@@ -64,8 +62,5 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

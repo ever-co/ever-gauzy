@@ -1,20 +1,20 @@
 <nb-select
-	multiple
-	[selected]="selectedEmployeeIds"
+	[multiple]="multiple"
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth
 	[disabled]="disabled"
+	[(ngModel)]="employeeId"
 	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate }}"
 >
 	<nb-option *ngFor="let employee of allEmployees" [value]="employee.id">
 		<img
-			src="{{ employee.user.imageUrl }}"
+			src="{{ employee.user?.imageUrl }}"
 			alt="Smiley face"
 			height="40"
 			width="40"
 			style="margin-right:10px"
 		/>
-		{{ employee.user.firstName }}
-		{{ employee.user.lastName }}
+		{{ employee.user?.firstName }}
+		{{ employee.user?.lastName }}
 	</nb-option>
 </nb-select>

@@ -11,7 +11,7 @@ import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
 import { TimeLogType, TimerStatus } from '@gauzy/models';
 import * as moment from 'moment';
-import { TimeSheetService } from '../timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet.service';
 import { TimeSlotService } from '../time-slot.service';
 
 @Injectable()

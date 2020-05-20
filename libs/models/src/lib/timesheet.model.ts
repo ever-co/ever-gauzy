@@ -178,6 +178,7 @@ export interface ITimerToggleInput {
 
 export interface IManualTimeInput {
 	id?: string;
+	employeeId?: string;
 	projectId?: string;
 	taskId?: string;
 	clientId?: string;

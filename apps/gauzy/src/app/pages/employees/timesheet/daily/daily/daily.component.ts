@@ -15,7 +15,6 @@ import {
 } from '@nebular/theme';
 import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
@@ -72,7 +71,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 	constructor(
 		private timesheetService: TimesheetService,
 		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
 		private store: Store,
 		private nbMenuService: NbMenuService,
 		private activatedRoute: ActivatedRoute,
@@ -167,8 +165,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 		};
 
 		this.router.navigate([], {
-			// skipLocationChange: true,
-			//relativeTo: this.activatedRoute,
 			queryParams: request,
 			queryParamsHandling: 'merge'
 		});
@@ -222,11 +218,18 @@ export class DailyComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	openAdd() {
+		this.dialogService
+			.open(EditTimeLogModalComponent)
+			.onClose.subscribe(() => {
+				this.updateLogs$.next();
+			});
+	}
 	openEdit(timeLog: TimeLog) {
 		this.dialogService
-			.open(EditTimeLogModalComponent, { context: timeLog as any })
+			.open(EditTimeLogModalComponent, { context: { timeLog } })
 			.onClose.subscribe(() => {
-				this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');
+				this.updateLogs$.next();
 			});
 	}
 

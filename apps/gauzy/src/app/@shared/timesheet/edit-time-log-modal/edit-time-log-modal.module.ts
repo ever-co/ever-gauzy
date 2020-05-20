@@ -7,7 +7,13 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { FormsModule } from '@angular/forms';
-import { NbCardModule, NbCheckboxModule, NbButtonModule } from '@nebular/theme';
+import {
+	NbCardModule,
+	NbCheckboxModule,
+	NbButtonModule,
+	NbDialogModule
+} from '@nebular/theme';
+import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 
 @NgModule({
 	declarations: [EditTimeLogModalComponent],
@@ -23,7 +29,9 @@ import { NbCardModule, NbCheckboxModule, NbButtonModule } from '@nebular/theme';
 		FormsModule,
 		NbCardModule,
 		NbButtonModule,
-		NbCheckboxModule
+		NbDialogModule.forChild(),
+		NbCheckboxModule,
+		EmployeeMultiSelectModule
 	]
 })
 export class EditTimeLogModalModule {}
