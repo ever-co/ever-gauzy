@@ -41,7 +41,11 @@
 		"ARCHIVE": "Архивировать",
 		"FIND_TIME": "Время поиска",
 		"DOWNLOAD": "Скачать",
-		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний"
+		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний",
+		"ADD_ICON": "добавить значок",
+		"REMOVE_ICON": "удалить значок",
+		"MAKE_PRIVATE": "сделать приватным",
+		"MAKE_PUBLIC": "сделать публичным"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -620,7 +624,9 @@
 		"CANDIDATE": "Кандидат",
 		"INTERVIEWERS": "Интервьюеры",
 		"LOCATION": "Местоположение",
-		"NOTE": "Примечание"
+		"NOTE": "Примечание",
+		"OF": "из",
+		"INTERVIEWERS_LOWER_CASE": "интервьюеры"
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
@@ -671,6 +677,7 @@
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
 				"NEXT": "Следующий",
@@ -1145,7 +1152,10 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Страница, которую вы ищете, не существует"
 	},
 	"HELP_PAGE": {
-		"HELP": "Помогите"
+		"HELP": "Помогите",
+		"KNOWLEDGE_BASES": "Базы знаний",
+		"CHOSE_ICON": "Выберите значок для установки",
+		"ARTICLE_CONTENT": "Содержание статьи для"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
@@ -1369,6 +1379,7 @@
 		"ACTIVE": "Активный"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Специфичная доступность"
+		"DATE_SPECIFIC_AVAILIBILITY": "Определенная дата наличия",
+		"RECURRING_AVAILIBILITY": "Повторяющаяся доступность"
 	}
 }
