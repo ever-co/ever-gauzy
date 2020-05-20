@@ -51,12 +51,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				organization: {
-					title: this.getTranslation('INVENTORY_PAGE.ORGANIZATION'),
-					width: '40%',
-					type: 'custom',
-					renderComponent: ImageRowComponent
-				},
+				// todo replace with product type image
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string'

@@ -13,12 +13,6 @@ import { ProductTypeService } from '../../../@core/services/product-type.service
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
 import { Store } from '../../../@core/services/store.service';
 
-export interface ProductOptionUI {
-	name?: string;
-	code?: string;
-	searchName?: string;
-}
-
 @Component({
 	selector: 'ngx-product-form',
 	templateUrl: './product-form.component.html',
@@ -29,7 +23,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	form: FormGroup;
 	@Input() product: Product;
 
-	activeOption: ProductOptionUI = {};
+	activeOption: ProductOption;
 	optionMode = 'create';
 
 	productTypes: ProductType[];
@@ -58,6 +52,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 		this.options = this.product ? this.product.options : [];
 		this.variants = this.product ? this.product.variants : [];
+
+		this.resetOptionForm();
 	}
 
 	private _initializeForm() {
@@ -119,25 +115,14 @@ export class ProductFormComponent extends TranslationBaseComponent
 	onSaveOption() {
 		if (!(this.activeOption.name && this.activeOption.code)) return;
 
-		switch (this.optionMode) {
-			case 'create':
-				this.options.push({
-					name: this.activeOption.name,
-					code: this.activeOption.code
-				});
-				break;
-			case 'edit': {
-				const target = this.options.find(
-					(option) => option.name === this.activeOption.searchName
-				);
-				target.name = this.activeOption.name;
-				target.code = this.activeOption.code;
-				break;
-			}
+		if (this.optionMode === 'create') {
+			this.options.push({
+				name: this.activeOption.name,
+				code: this.activeOption.code
+			});
 		}
 
-		this.optionMode = 'create';
-		this.activeOption = {};
+		this.resetOptionForm();
 	}
 
 	onRemoveOption(optionInput: ProductOption) {
@@ -146,18 +131,20 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.options = this.options.filter(
 			(option) => option.name !== optionInput.name
 		);
+
+		this.resetOptionForm();
 	}
 
 	onEditOption(optionTarget: ProductOption) {
 		if (!optionTarget) return;
 
 		this.optionMode = 'edit';
+		this.activeOption = optionTarget;
+	}
 
-		this.activeOption = {
-			name: optionTarget.name,
-			code: optionTarget.code,
-			searchName: optionTarget.name
-		};
+	resetOptionForm() {
+		this.activeOption = { name: '', code: '' };
+		this.optionMode = 'create';
 	}
 
 	onEditProductVariant(productVariantId: string) {

@@ -25,7 +25,12 @@ form {
 	width: fit-content;
 	height: fit-content;
 	position: relative;
-	padding-top: 20px;
+	margin-top: 20px;
+	margin-right: 30px;
+	min-width: 150px;
+	min-height: 150px;
+	background: rgb(226, 224, 224);
+	border-radius: 13px;
 
 	div {
 		pointer-events: none;

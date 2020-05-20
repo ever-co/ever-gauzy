@@ -25,7 +25,9 @@
 						<!-- not working yet -->
 						<nb-select
 							id="lang"
-							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+							[placeholder]="
+								'INVENTORY_PAGE.LANGUAGE' | translate
+							"
 							class="d-block"
 							size="medium"
 							fullWidth="true"
@@ -104,7 +106,7 @@
 						></div>
 
 						<img
-							*ngIf="!!form"
+							*ngIf="form && form.get('imageUrl').value"
 							[src]="form.get('imageUrl').value"
 							alt="Category Image"
 							(mouseenter)="hoverState = true"
@@ -113,6 +115,7 @@
 					</div>
 				</div>
 			</div>
+			<hr />
 			<div class="row">
 				<div class="col-sm-12">
 					<label class="label" for="description">{{
