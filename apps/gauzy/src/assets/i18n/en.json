@@ -949,6 +949,7 @@
 		"IS_EQUIPMENT": "Is equipment",
 		"TRACK_INVENTORY": "Track inventory",
 		"ADD_OPTION": "Add option",
+		"EDIT_OPTION": "Edit option",
 		"INTERNATIONAL_REFERENCE": "International reference",
 		"CODE": "Code",
 		"NOTES": "Notes",
@@ -966,7 +967,13 @@
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
 		"PRODUCT_TYPE_SAVED": "Product type saved",
-		"PRODUCT_TYPE_DELETED": "Product type deleted"
+		"PRODUCT_TYPE_DELETED": "Product type deleted",
+		"EDIT_PRODUCT_CATEGORY": "Edit product category",
+		"ADD_PRODUCT_CATEGORY": "Add product category",
+		"PRODUCT_CATEGORY_SAVED": "Product category saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
+		"IMAGE": "Image",
+		"LANGUAGE": "Language"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -1367,6 +1374,10 @@
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
+	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "This field is required!",
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment"

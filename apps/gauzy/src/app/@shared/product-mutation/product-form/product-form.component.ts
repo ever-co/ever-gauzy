@@ -24,8 +24,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 	form: FormGroup;
 	@Input() product: Product;
 
-	optionValue = '';
-	optionCode = '';
+	activeOption: ProductOption;
+	optionMode = 'create';
 
 	productTypes: ProductType[];
 	productCategories: ProductCategory[];
@@ -54,6 +54,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 		this.options = this.product ? this.product.options : [];
 		this.variants = this.product ? this.product.variants : [];
+
+		this.resetOptionForm();
 	}
 
 	private _initializeForm() {
@@ -83,7 +85,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	async loadProductCategories() {
-		const res = await this.productCategoryService.getAll({
+		const res = await this.productCategoryService.getAll([], {
 			organizationId: this.store.selectedOrganization.id
 		});
 		this.productCategories = res.items;
@@ -115,12 +117,39 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.save.emit(productRequest);
 	}
 
-	onAddOption() {
-		if (!(this.optionValue && this.optionCode)) return;
+	onSaveOption() {
+		if (!(this.activeOption.name && this.activeOption.code)) return;
 
-		this.options.push({ name: this.optionValue, code: this.optionCode });
-		this.optionValue = '';
-		this.optionCode = '';
+		if (this.optionMode === 'create') {
+			this.options.push({
+				name: this.activeOption.name,
+				code: this.activeOption.code
+			});
+		}
+
+		this.resetOptionForm();
+	}
+
+	onRemoveOption(optionInput: ProductOption) {
+		if (!optionInput) return;
+
+		this.options = this.options.filter(
+			(option) => option.name !== optionInput.name
+		);
+
+		this.resetOptionForm();
+	}
+
+	onEditOption(optionTarget: ProductOption) {
+		if (!optionTarget) return;
+
+		this.optionMode = 'edit';
+		this.activeOption = optionTarget;
+	}
+
+	resetOptionForm() {
+		this.activeOption = { name: '', code: '' };
+		this.optionMode = 'create';
 	}
 
 	onEditProductVariant(productVariantId: string) {
