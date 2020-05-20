@@ -4,5 +4,8 @@
 		"types": ["node", "jest", "googlemaps"],
 		"target": "es5"
 	},
-	"include": ["**/*.ts"]
+	"include": ["**/*.ts"],
+	"angularCompilerOptions": {
+		"enableIvy": false
+	}
 }

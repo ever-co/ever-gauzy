@@ -1,12 +1,13 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
-    "types": []
-  },
-  "files": [
-    "src/main.ts",
-    "src/polyfills.ts"
-  ],
-  "include": ["src/**/*.d.ts", "**/*.d.ts", "../../node_modules/@nebular/**/*.ts"]
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../../dist/out-tsc",
+		"types": []
+	},
+	"files": ["src/main.ts", "src/polyfills.ts"],
+	"include": [
+		"src/**/*.d.ts",
+		"**/*.d.ts",
+		"../../node_modules/@nebular/**/*.d.ts"
+	]
 }

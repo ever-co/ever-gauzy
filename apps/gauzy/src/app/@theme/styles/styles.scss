@@ -19,6 +19,9 @@
 @import '~@ng-select/ng-select/themes/default.theme.css';
 @import './includes/fullcalendar';
 
+@import './includes/tabset';
+@import './includes/ng-select';
+
 // install the framework and custom global styles
 @include nb-install() {
 	// framework global styles
@@ -30,7 +33,4 @@
 	@include ngx-pace-theme();
 
 	@include nb-overrides();
-
-	@import './includes/tabset';
-	@import './includes/ng-select';
 }

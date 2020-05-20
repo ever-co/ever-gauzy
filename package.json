@@ -110,8 +110,9 @@
 	],
 	"dependencies": {
 		"@agm/core": "^1.0.0-beta.6",
+		"@akveo/ng2-completer": "^9.0.1",
 		"@angular/animations": "^9.1.7",
-		"@angular/cdk": "^8.1.4",
+		"@angular/cdk": "^9.1.7",
 		"@angular/common": "^9.1.7",
 		"@angular/compiler": "^9.1.7",
 		"@angular/core": "^9.1.7",
@@ -136,7 +137,6 @@
 		"@nebular/eva-icons": "^5.0.0",
 		"@nebular/security": "^5.0.0",
 		"@nebular/theme": "^5.0.0",
-		"@akveo/ng2-completer": "^9.0.1",
 		"@ng-select/ng-select": "^3.7.3",
 		"@ngx-translate/core": "^11.0.1",
 		"@ngx-translate/http-loader": "^4.0.0",

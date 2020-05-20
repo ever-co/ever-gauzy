@@ -80,7 +80,6 @@
 							"extractCss": true,
 							"namedChunks": false,
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
-							"aot": true,
 							"extractLicenses": false,
 							"vendorChunk": false,
 							"buildOptimizer": false,
