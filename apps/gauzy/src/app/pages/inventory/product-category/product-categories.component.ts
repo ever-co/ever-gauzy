@@ -9,7 +9,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 import { Location } from '@angular/common';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
 import { ProductCategoryMutationComponent } from '../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
-import { ImageRowComponent } from '../org-row/image-row.component';
+import { ImageRowComponent } from '../img-row/image-row.component';
 
 export interface SelectedProductCategory {
 	data: ProductCategory;

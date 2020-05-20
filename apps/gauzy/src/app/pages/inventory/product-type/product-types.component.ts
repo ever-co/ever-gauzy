@@ -9,7 +9,6 @@ import { first } from 'rxjs/operators';
 import { ProductTypeMutationComponent } from '../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Location } from '@angular/common';
-import { ImageRowComponent } from '../org-row/image-row.component';
 
 export interface SelectedProductType {
 	data: ProductType;
