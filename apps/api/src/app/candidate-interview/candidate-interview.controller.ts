@@ -73,7 +73,7 @@ export class CandidateInterviewController extends CrudController<
 	@ApiOperation({ summary: 'Find interview by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found interview in the same tenant',
+		description: 'Found interview',
 		type: CandidateInterview
 	})
 	@ApiResponse({
@@ -85,5 +85,24 @@ export class CandidateInterviewController extends CrudController<
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<CandidateInterview> {
 		return this.candidateInterviewService.findOne(id);
+	}
+
+	@ApiOperation({ summary: 'Find interview by candidate id' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found interview',
+		type: CandidateInterview
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
+	@Get('findByCandidateId/:id')
+	async findByCandidateId(
+		@Param('id') id: string
+	): Promise<CandidateInterview[]> {
+		return this.candidateInterviewService.findByCandidateId(id);
 	}
 }

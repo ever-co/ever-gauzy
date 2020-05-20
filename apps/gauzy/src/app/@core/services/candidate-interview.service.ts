@@ -45,6 +45,14 @@ export class CandidateInterviewService {
 			.toPromise();
 	}
 
+	findByCandidateId(candidateId: string): Promise<ICandidateInterview[]> {
+		return this.http
+			.get<ICandidateInterview[]>(
+				`/api/candidate-interview/findByCandidateId/${candidateId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
 			.put(`/api/candidate-interview/${id}`, updateInput)
