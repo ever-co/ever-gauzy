@@ -948,6 +948,7 @@
 		"IS_EQUIPMENT": "Оборудование",
 		"TRACK_INVENTORY": "Отслеживать инвентарь",
 		"ADD_OPTION": "Добавить опцию",
+		"EDIT_OPTION": "Изменить опцию",
 		"INTERNATIONAL_REFERENCE": "Международная ссылка",
 		"CODE": "Код",
 		"NOTES": "Заметки",
@@ -965,7 +966,13 @@
 		"EDIT_PRODUCT_TYPE": "Изменить тип товара",
 		"ADD_PRODUCT_TYPE": "Добавить тип товара",
 		"PRODUCT_TYPE_SAVED": "Тип товара сохранен",
-		"PRODUCT_TYPE_DELETED": "Тип товара удален"
+		"PRODUCT_TYPE_DELETED": "Тип товара удален",
+		"EDIT_PRODUCT_CATEGORY": "Редактировать категорию товара",
+		"ADD_PRODUCT_CATEGORY": "Добавить категорию товара",
+		"PRODUCT_CATEGORY_SAVED": "Категория товара сохранена",
+		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
+		"IMAGE": "Изображение",
+		"LANGUAGE": "Язык"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -1366,6 +1373,10 @@
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
 		"COMPLETE": "Все готово!"
+	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "Это поле обязательно!",
+		"ENTER_POSITIVE_NUMBER": "Пожалуйста, введите положительное число!"
 	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Добавить Назначение"
