@@ -34,7 +34,7 @@ export class ProductCategory extends Base implements IProductCategory {
 	@RelationId(
 		(productCategory: ProductCategory) => productCategory.organization
 	)
-	organizationId: string;
+	readonly organizationId: string;
 
 	@OneToMany(
 		(type) => Product,
