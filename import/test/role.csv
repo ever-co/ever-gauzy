@@ -1,8 +1,0 @@
-id,createdAt,updatedAt,name
-7af8ebb8-7ec9-4914-a37f-ece02a3a0ed4,Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),SUPER_ADMIN
-b0e5ae26-7ebb-4215-96a7-bdfd3199cc2d,Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),ADMIN
-12d8c1d2-a903-44fa-b541-f96e73aac5cd,Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),DATA_ENTRY
-4bf4c49c-23cb-4397-b786-2c9b238ea2f7,Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),EMPLOYEE
-97b53842-b407-4443-bf69-24da4981fba4,Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),CANDIDATE
-0c3c5105-373f-4bf7-afc4-61cd92b51902,Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),MANAGER
-bd3701e3-904c-417e-9660-4e4b2c783433,Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:10:58 GMT+0300 (Eastern European Summer Time),VIEWER
