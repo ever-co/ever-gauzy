@@ -8,7 +8,7 @@
 		>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="isVisible" class="add-base-field">
+		<div *ngIf="isVisibleAdd" class="add-base-field">
 			<input
 				type="text"
 				size="24"
@@ -26,13 +26,9 @@
 				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 			</button>
 		</div>
-		<h5>{{ 'BUTTONS.KNOWLEDGE_BASES' | translate }}</h5>
-		<tree-root
-			#tree
-			[nodes]="nodes"
-			[options]="options"
-			[focused]="true"
-		></tree-root>
+		<h5>{{ 'HELP_PAGE.KNOWLEDGE_BASES' | translate }}</h5>
+		<tree-root #tree [nodes]="nodes" [options]="options" [focused]="true">
+		</tree-root>
 	</nb-card-body>
 	<nb-card-body>
 		<button
@@ -43,6 +39,15 @@
 			nbButton
 		>
 			{{ 'BUTTONS.ADD_ICON' | translate }}
+		</button>
+		<button
+			*ngIf="isChosenArticle"
+			class="main-buttons"
+			(click)="removeIcon()"
+			status="warning"
+			nbButton
+		>
+			{{ 'BUTTONS.REMOVE_ICON' | translate }}
 		</button>
 		<button
 			*ngIf="isChosenArticle && showPrivateButton"
@@ -65,18 +70,63 @@
 		<button
 			*ngIf="isChosenArticle"
 			class="main-buttons"
-			(click)="onDeleteArticle()"
+			(click)="onEditArticle()"
 			status="warning"
+			nbButton
+		>
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			*ngIf="isChosenArticle"
+			class="main-buttons"
+			(click)="onDeleteArticle()"
+			status="danger"
 			nbButton
 		>
 			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
+		<div *ngIf="isVisibleEdit" class="edit-node-field">
+			<input
+				type="text"
+				size="24"
+				ngModel
+				maxlength="18"
+				(keyup.enter)="editName($event)"
+				nbInput
+			/>
+			<button
+				class="input-button"
+				status="danger"
+				(click)="onCloseEdit()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<div *ngIf="iconsShow && isChosenArticle">
+			<p>{{ 'HELP_PAGE.CHOSE_ICON' | translate }}</p>
+			<div class="add-icon-field">
+				<div *ngFor="let icon of icons">
+					<button
+						status="basic"
+						class="main-buttons"
+						(click)="onIconset(icon)"
+						nbButton
+					>
+						{{ icon }}
+					</button>
+				</div>
+			</div>
+		</div>
 
 		<div>
 			<h5>{{ articleName }}</h5>
 		</div>
 		<div>
-			<p>Article content for {{ articleNameContent }}</p>
+			<p>
+				{{ 'HELP_PAGE.ARTICLE_CONTENT' | translate }}
+				{{ articleNameContent }}
+			</p>
 		</div>
 	</nb-card-body>
 </nb-card>

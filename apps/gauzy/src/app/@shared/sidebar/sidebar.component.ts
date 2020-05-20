@@ -7,52 +7,63 @@ import { ITreeOptions, TreeComponent } from 'angular-tree-component';
 	styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent {
+	public icons = ['🔥', '📎', '🌐', '🔎'];
+	public chosenIcon = '';
 	public articleName = 'Chose any article';
 	public articleNameContent = 'any article you will chose';
 	public showPrivateButton = false;
 	public showPublicButton = false;
 	public nodeId = 0;
-	public isVisible = false;
+	public flag = 0;
+	public isVisibleAdd = false;
+	public isVisibleEdit = false;
+	public iconsShow = false;
 	public isChosenArticle = false;
 	public value = '';
 	public nodes = [
 		{
 			id: 1,
 			name: 'Knowledge base1',
+			data: '',
 			children: [
-				{ id: 2, name: 'article1.1' },
-				{ id: 3, name: 'article1.2' }
+				{ id: 2, name: 'article1.1', data: '' },
+				{ id: 3, name: 'article1.2', data: '' }
 			]
 		},
 		{
 			id: 4,
 			name: 'Knowledge base2',
+			data: '',
 			children: [
-				{ id: 5, name: 'article2.1' },
+				{ id: 5, name: 'article2.1', data: '' },
 				{
 					id: 6,
 					name: 'Base2.2',
-					children: [{ id: 7, name: 'article3.1' }]
+					data: '',
+					children: [{ id: 7, name: 'article3.1', data: '' }]
 				}
 			]
 		},
 		{
 			id: 8,
 			name: 'Knowledge base3',
+			data: '',
 			children: [
-				{ id: 9, name: 'article1.1' },
-				{ id: 10, name: 'article1.2' }
+				{ id: 9, name: 'article1.1', data: '' },
+				{ id: 10, name: 'article1.2', data: '' }
 			]
 		},
 		{
 			id: 11,
 			name: 'Knowledge base4',
+			data: '',
 			children: [
-				{ id: 12, name: 'article2.1' },
+				{ id: 12, name: 'article2.1', data: '' },
 				{
 					id: 13,
 					name: 'Base2.2',
-					children: [{ id: 14, name: 'article3.1' }]
+					data: '',
+					children: [{ id: 14, name: 'article3.1', data: '' }]
 				}
 			]
 		}
@@ -82,13 +93,14 @@ export class SidebarComponent {
 		allowDrop: (node) => {
 			return true;
 		},
-		animateExpand: true
+		animateExpand: true,
+		displayField: 'name'
 	};
 	@ViewChild(TreeComponent, { static: false })
 	private tree: TreeComponent;
 
 	addNode() {
-		this.isVisible = true;
+		this.isVisibleAdd = true;
 	}
 
 	addName(event: any) {
@@ -97,18 +109,64 @@ export class SidebarComponent {
 		this.nodes.push({
 			id: 20,
 			name: `${this.value}`,
+			data: '',
 			children: []
 		});
 		this.tree.treeModel.update();
-		this.isVisible = false;
+		this.isVisibleAdd = false;
 	}
 
 	onCloseInput() {
-		this.isVisible = false;
+		this.isVisibleAdd = false;
 		this.value = '';
 	}
 
-	addIcon() {}
+	addIcon() {
+		this.iconsShow = true;
+		this.flag = 0;
+		this.chosenIcon = '';
+	}
+
+	onIconset(icon) {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId).data;
+		for (const i of this.icons) {
+			if (someNode.name.indexOf(i) === -1) {
+				this.flag += 1;
+			} else {
+				this.chosenIcon = i;
+			}
+		}
+		if (this.flag === this.icons.length)
+			someNode.name = `${icon} ${someNode.name}`;
+		if (this.flag === this.icons.length - 1)
+			someNode.name = someNode.name.replace(this.chosenIcon, icon);
+		this.tree.treeModel.update();
+		if (!someNode.children) {
+			this.articleNameContent = someNode.name;
+			this.articleName = someNode.name;
+		}
+		this.iconsShow = false;
+	}
+
+	removeIcon() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId).data;
+		this.flag = 0;
+		for (const i of this.icons) {
+			if (someNode.name.indexOf(i) === -1) {
+				this.flag += 1;
+			} else {
+				this.chosenIcon = i;
+			}
+		}
+		if (this.flag === this.icons.length - 1) {
+			someNode.name = someNode.name.slice(this.chosenIcon.length);
+		}
+		this.tree.treeModel.update();
+		if (!someNode.children) {
+			this.articleNameContent = someNode.name;
+			this.articleName = someNode.name;
+		}
+	}
 
 	makePrivate() {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
@@ -123,6 +181,26 @@ export class SidebarComponent {
 			);
 			newNode.show();
 		}
+	}
+
+	onEditArticle() {
+		this.isVisibleEdit = true;
+	}
+
+	editName(event: any) {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		someNode.data.name = event.target.value;
+		this.tree.treeModel.update();
+		if (!someNode.data.children) {
+			this.articleNameContent = event.target.value;
+			this.articleName = event.target.value;
+		}
+		this.isVisibleEdit = false;
+	}
+
+	onCloseEdit() {
+		this.isVisibleEdit = false;
+		this.value = '';
 	}
 
 	onDeleteArticle() {
