@@ -136,6 +136,7 @@
 		"@nebular/eva-icons": "^5.0.0",
 		"@nebular/security": "^5.0.0",
 		"@nebular/theme": "^5.0.0",
+		"@akveo/ng2-completer": "^9.0.1",
 		"@ng-select/ng-select": "^3.7.3",
 		"@ngx-translate/core": "^11.0.1",
 		"@ngx-translate/http-loader": "^4.0.0",

@@ -9,6 +9,11 @@
   dependencies:
     tslib "^1.9.0"
 
+"@akveo/ng2-completer@^9.0.1":
+  version "9.0.1"
+  resolved "https://registry.yarnpkg.com/@akveo/ng2-completer/-/ng2-completer-9.0.1.tgz#49d2914fb62b78cc6ae5aed861ea7fa4ed5863d1"
+  integrity sha512-iACL0heOUmGV1GBKD3srwBJMFLZykld1MiTDvmbgEEXMhavp0UA45GdNsv7BBKI9XauuFKpOqHLlC+fT6DLGAQ==
+
 "@angular-devkit/architect@0.803.23":
   version "0.803.23"
   resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.803.23.tgz#a73ae2edede539f37fbfb09e4085ac24ec3781c9"
