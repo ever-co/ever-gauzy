@@ -14,7 +14,8 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbBadgeModule,
-	NbDatepickerModule
+	NbDatepickerModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -24,6 +25,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
@@ -39,6 +41,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbCardModule,
 		NbButtonModule,
 		NgSelectModule,
+		NbRadioModule,
 		NbIconModule,
 		FormsModule,
 		ReactiveFormsModule,
@@ -56,7 +59,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		}),
 		NbSpinnerModule,
-		NbDatepickerModule
+		NbDatepickerModule,
+		EmployeeMultiSelectModule
 	],
 	entryComponents: [TaskDialogComponent]
 })

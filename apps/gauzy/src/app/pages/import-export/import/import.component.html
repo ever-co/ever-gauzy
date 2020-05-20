@@ -95,9 +95,7 @@
 							<strong>{{ item?.file?.name }}</strong>
 						</td>
 						<td *ngIf="uploader.options.isHTML5" nowrap>
-							{{
-								item?.file?.size / 1024 / 1024 | number: '.2'
-							}}
+							{{ item?.file?.size / 1024 / 1024 | number: '.2' }}
 							MB
 						</td>
 						<td *ngIf="uploader.options.isHTML5">

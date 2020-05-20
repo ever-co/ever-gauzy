@@ -1,0 +1,82 @@
+<nb-card class="sidemenu">
+	<nb-card-body class="sidebar">
+		<button
+			class="sidebar-button"
+			(click)="addNode()"
+			status="primary"
+			nbButton
+		>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<div *ngIf="isVisible" class="add-base-field">
+			<input
+				type="text"
+				size="24"
+				ngModel
+				maxlength="18"
+				(keyup.enter)="addName($event)"
+				nbInput
+			/>
+			<button
+				class="input-button"
+				status="danger"
+				(click)="onCloseInput()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<h5>{{ 'BUTTONS.KNOWLEDGE_BASES' | translate }}</h5>
+		<tree-root
+			#tree
+			[nodes]="nodes"
+			[options]="options"
+			[focused]="true"
+		></tree-root>
+	</nb-card-body>
+	<nb-card-body>
+		<button
+			*ngIf="isChosenArticle"
+			class="main-buttons"
+			(click)="addIcon()"
+			status="success"
+			nbButton
+		>
+			{{ 'BUTTONS.ADD_ICON' | translate }}
+		</button>
+		<button
+			*ngIf="isChosenArticle && showPrivateButton"
+			class="main-buttons"
+			(click)="makePrivate()"
+			status="primary"
+			nbButton
+		>
+			{{ 'BUTTONS.MAKE_PRIVATE' | translate }}
+		</button>
+		<button
+			*ngIf="isChosenArticle && showPublicButton"
+			class="main-buttons"
+			(click)="makePublic()"
+			status="primary"
+			nbButton
+		>
+			{{ 'BUTTONS.MAKE_PUBLIC' | translate }}
+		</button>
+		<button
+			*ngIf="isChosenArticle"
+			class="main-buttons"
+			(click)="onDeleteArticle()"
+			status="warning"
+			nbButton
+		>
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+
+		<div>
+			<h5>{{ articleName }}</h5>
+		</div>
+		<div>
+			<p>Article content for {{ articleNameContent }}</p>
+		</div>
+	</nb-card-body>
+</nb-card>

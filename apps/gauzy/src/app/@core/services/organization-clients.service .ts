@@ -32,6 +32,13 @@ export class OrganizationClientsService {
 			.toPromise();
 	}
 
+	getById(id: string) {
+		return this.http
+			.get<OrganizationClients>(`/api/organization-clients/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAll(
 		relations?: string[],
 		findInput?: OrganizationClientsFindInput

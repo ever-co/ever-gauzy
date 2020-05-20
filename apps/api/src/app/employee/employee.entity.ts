@@ -21,10 +21,12 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
-import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 
 @Entity('employee')
 export class Employee extends TenantLocationBase implements IEmployee {
@@ -112,11 +114,11 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	@Column({ nullable: true })
 	reWeeklyLimit?: number;
 
-	@ManyToMany((type) => OrganizationTeams) // , orgTeams => orgTeams.members
-	@JoinTable({
-		name: 'organization_team_employee'
-	})
-	teams?: OrganizationTeams[];
+	@OneToMany(
+		(type) => OrganizationTeamEmployee,
+		(organizationTeamEmployee) => organizationTeamEmployee.employee
+	)
+	teams?: OrganizationTeam[];
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()
@@ -167,4 +169,10 @@ export class Employee extends TenantLocationBase implements IEmployee {
 	)
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	@OneToMany(
+		(type) => RequestApprovalEmployee,
+		(requestApprovals) => requestApprovals.employee
+	)
+	requestApprovals?: RequestApprovalEmployee[];
 }

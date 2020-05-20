@@ -14,7 +14,13 @@ import {
 } from '@angular/forms';
 import { UsersService } from '../../../@core/services/users.service';
 import { Store } from '../../../@core/services/store.service';
-import { User, UserFindInput, RolesEnum, Tag } from '@gauzy/models';
+import {
+	User,
+	UserFindInput,
+	RolesEnum,
+	Tag,
+	LanguagesEnum
+} from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { RoleService } from '../../../@core/services/role.service';
 import { Subject } from 'rxjs';
@@ -41,7 +47,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	repeatPasswordErrorMsg: string;
 
 	matchPassword = true;
-	tags: Tag[];
+	tags: Tag[] = [];
 	selectedTags: any;
 
 	@Input()
@@ -56,6 +62,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	allRoles: string[] = Object.values(RolesEnum).filter(
 		(r) => r !== RolesEnum.EMPLOYEE
 	);
+
+	languages: string[] = Object.values(LanguagesEnum);
 
 	constructor(
 		private fb: FormBuilder,
@@ -104,7 +112,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		try {
 			const user = this.selectedUser
 				? this.selectedUser
-				: await this.userService.getUserById(this.store.userId);
+				: await this.userService.getUserById(this.store.userId, [
+						'tags'
+				  ]);
 
 			const role =
 				this.selectedUser && this.selectedUser.role
@@ -138,7 +148,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			firstName: this.form.value['firstName'],
 			imageUrl: this.form.value['imageUrl'],
 			lastName: this.form.value['lastName'],
-			tags: this.form.value['tags']
+			tags: this.form.value['tags'],
+			preferredLanguage: this.form.value['preferredLanguage']
 		};
 
 		if (this.form.value['password']) {
@@ -173,13 +184,20 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				'Success'
 			);
 			this.userSubmitted.emit();
+
+			/**
+			 * selectedUser is null for edit profile and populated in User edit
+			 * Update app language when current user's profile is modified.
+			 */
+			if (this.selectedUser && this.selectedUser.id !== this.store.userId)
+				return;
+			this.store.preferredLanguage = this.form.value['preferredLanguage'];
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
 	}
 
 	private _initializeForm(user: User) {
-		this.tags = user.tags;
 		this.form = this.fb.group({
 			firstName: [user.firstName],
 			lastName: [user.lastName],
@@ -201,8 +219,10 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				]
 			],
 			roleName: [user.role.name],
-			tags: [user.tags]
+			tags: [user.tags],
+			preferredLanguage: [user.preferredLanguage]
 		});
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	bindFormControls() {
@@ -214,8 +234,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		this.validations.passwordControl();
 		this.validations.repeatPasswordControl();
 	}
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
+
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	ngOnDestroy(): void {

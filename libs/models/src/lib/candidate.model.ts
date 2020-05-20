@@ -4,7 +4,7 @@ import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
 import { UserFindInput, User } from './user.model';
-import { OrganizationTeams } from './organization-teams-model';
+import { OrganizationTeam } from './organization-team-model';
 import {
 	ITenant,
 	OrganizationDepartment,
@@ -22,8 +22,8 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	userId: string;
 	organization: Organization;
 	orgId: string;
-	status?: Status;
-	teams?: OrganizationTeams[];
+	status?: string;
+	teams?: OrganizationTeam[];
 	tenant: ITenant;
 	organizationDepartments?: OrganizationDepartment[];
 	organizationPosition?: OrganizationPositions;
@@ -45,9 +45,14 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	cvUrl?: string;
 	feedbacks?: ICandidateFeedback[];
 	rating?: number;
+	isArchived?: boolean;
 }
 
-export type Status = 'applied' | 'rejected' | 'hired';
+export enum CandidateStatus {
+	APPLIED = 'APPLIED',
+	REJECTED = 'HIRED',
+	HIRED = 'REJECTED'
+}
 
 export interface CandidateFindInput extends IBaseEntityModel {
 	organization?: OrganizationFindInput;

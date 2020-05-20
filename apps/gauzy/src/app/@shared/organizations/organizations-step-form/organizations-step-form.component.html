@@ -192,8 +192,19 @@
 								</div>
 							</div>
 						</div>
+						<div class="row">
+							<div class="col-6">
+								<ga-tags-color-input
+									[selectedTags]="tags"
+									(selectedTagsEvent)="
+										selectedTagsEvent($event)
+									"
+								>
+								</ga-tags-color-input>
+							</div>
+						</div>
 
-						<div class="">
+						<div class="" style="margin-top: 20px;">
 							<button
 								[disabled]="orgMainForm.invalid"
 								nbButton

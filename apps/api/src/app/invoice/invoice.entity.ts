@@ -14,13 +14,31 @@ import {
 	IsOptional,
 	IsEnum
 } from 'class-validator';
-import { Entity, Column, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
+import {
+	Entity,
+	Column,
+	JoinColumn,
+	OneToMany,
+	ManyToOne,
+	Unique,
+	ManyToMany,
+	JoinTable
+} from 'typeorm';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('invoice')
+@Unique(['invoiceNumber'])
 export class Invoice extends Base implements IInvoice {
+	@ApiProperty({ type: Tag })
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_invoice'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: Date })
 	@IsDate()
 	@Column({ nullable: true })
@@ -28,7 +46,7 @@ export class Invoice extends Base implements IInvoice {
 
 	@ApiProperty({ type: Number })
 	@IsNumber()
-	@Column({ nullable: true, type: 'numeric' })
+	@Column({ name: 'invoiceNumber', nullable: true, type: 'numeric' })
 	invoiceNumber: number;
 
 	@ApiProperty({ type: Date })
@@ -56,10 +74,11 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true, type: 'numeric' })
 	tax: number;
 
-	@ApiProperty({ type: String })
+	@ApiPropertyOptional({ type: String })
 	@IsString()
+	@IsOptional()
 	@Column()
-	terms: string;
+	terms?: string;
 
 	@ApiPropertyOptional({ type: Number })
 	@IsNumber()
@@ -87,6 +106,12 @@ export class Invoice extends Base implements IInvoice {
 	@IsOptional()
 	@Column({ nullable: true })
 	invoiceType?: string;
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	sentTo?: string;
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()

@@ -87,12 +87,14 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
-						<ngx-tags-color-input
+						<ngx-skills-input
 							[form]="form"
-							[selectedTags]="tags"
-							(selectedTagsEvent)="selectedTagsHandler($event)"
+							[selectedSkills]="skills"
+							(selectedSkillsEvent)="
+								selectedSkillsHandler($event)
+							"
 						>
-						</ngx-tags-color-input>
+						</ngx-skills-input>
 					</div>
 				</div>
 			</div>

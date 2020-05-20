@@ -6,7 +6,6 @@ import {
 	TemplateRef,
 	OnDestroy
 } from '@angular/core';
-import { TimeTrackerService } from 'apps/gauzy/src/app/@shared/time-tracker/time-tracker.service';
 import {
 	IGetTimeLogInput,
 	TimeLog,
@@ -29,6 +28,7 @@ import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/for
 import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
+import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 
 @Component({
 	selector: 'ngx-daily',
@@ -40,6 +40,12 @@ export class DailyComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
+	timesheetRequest: {
+		startDate?: Date;
+		endDate?: Date;
+		employeeId?: string;
+	} = {};
+
 	private _selectedDate: Date = new Date();
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox', { static: false })
@@ -67,22 +73,28 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 	updateLogs$: Subject<any> = new Subject();
 
+	public get selectedDate(): Date {
+		return this._selectedDate;
+	}
+	public set selectedDate(value: Date) {
+		this._selectedDate = value;
+		this.timesheetRequest.startDate = moment(value)
+			.startOf('isoWeek')
+			.toDate();
+		this.timesheetRequest.endDate = moment(value)
+			.endOf('isoWeek')
+			.toDate();
+		this.updateLogs$.next();
+	}
+
 	constructor(
-		private timeTrackerService: TimeTrackerService,
+		private timesheetService: TimesheetService,
 		private dialogService: NbDialogService,
 		private toastrService: ToastrService,
 		private store: Store,
 		private nbMenuService: NbMenuService
 	) {}
 
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-		this.logRequest.date = value;
-		this.updateLogs$.next();
-	}
 	async ngOnInit() {
 		this.nbMenuService
 			.onItemClick()
@@ -119,6 +131,8 @@ export class DailyComponent implements OnInit, OnDestroy {
 			.subscribe(() => {
 				this.getLogs();
 			});
+
+		this.updateLogs$.next();
 	}
 
 	async nextDay() {
@@ -146,7 +160,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			...(employeeId ? { employeeId } : {}),
 			organizationId: this.organization ? this.organization.id : null
 		};
-		this.timeLogs = await this.timeTrackerService
+		this.timeLogs = await this.timesheetService
 			.getTimeLogs(request)
 			.then((logs) => {
 				this.selectedIds = {};
@@ -212,11 +226,11 @@ export class DailyComponent implements OnInit, OnDestroy {
 		};
 
 		(this.addEditTimeRequest.id
-			? this.timeTrackerService.updateTime(
+			? this.timesheetService.updateTime(
 					this.addEditTimeRequest.id,
 					addRequestData
 			  )
-			: this.timeTrackerService.addTime(addRequestData)
+			: this.timesheetService.addTime(addRequestData)
 		)
 			.then(() => {
 				this.updateLogs$.next();
@@ -244,7 +258,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			.open(DeleteConfirmationComponent)
 			.onClose.subscribe((type) => {
 				if (type === 'ok') {
-					this.timeTrackerService.deleteLogs(log.id).then(() => {
+					this.timesheetService.deleteLogs(log.id).then(() => {
 						const index = this.timeLogs.indexOf(log);
 						this.timeLogs.splice(index, 1);
 					});
@@ -267,7 +281,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 								}
 							}
 						}
-						this.timeTrackerService.deleteLogs(logIds).then(() => {
+						this.timesheetService.deleteLogs(logIds).then(() => {
 							this.updateLogs$.next();
 						});
 					}

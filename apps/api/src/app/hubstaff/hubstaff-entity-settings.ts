@@ -23,7 +23,7 @@ export const PROJECT_TIED_ENTITIES = [
 		sync: true
 	},
 	{
-		entity: IntegrationEntity.NOTE,
+		entity: IntegrationEntity.ACTIVITY,
 		sync: true
 	}
 ] as DeepPartial<IntegrationEntitySetting>;

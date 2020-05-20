@@ -2,7 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { User as IUser } from '@gauzy/models';
+import { User as IUser, LanguagesEnum } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsAscii,
@@ -11,7 +11,8 @@ import {
 	IsOptional,
 	IsString,
 	MaxLength,
-	MinLength
+	MinLength,
+	IsEnum
 } from 'class-validator';
 import {
 	Column,
@@ -22,7 +23,8 @@ import {
 	RelationId,
 	ManyToMany,
 	JoinTable,
-	OneToOne
+	OneToOne,
+	AfterLoad
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role/role.entity';
@@ -108,4 +110,20 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
+
+	@ApiProperty({ type: String, enum: LanguagesEnum })
+	@IsEnum(LanguagesEnum)
+	@Column({ nullable: true })
+	preferredLanguage?: string;
+
+	name?: string;
+
+	employeeId?: string;
+
+	@AfterLoad()
+	afterLoad?() {
+		const name = this.firstName + ' ' + this.lastName;
+		this.name = name;
+		this.employeeId = this.employee ? this.employee.id : null;
+	}
 }

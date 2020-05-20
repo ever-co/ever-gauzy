@@ -6,7 +6,8 @@ import {
 	ProductType,
 	ProductCategory,
 	ProductOption,
-	ProductVariant
+	ProductVariant,
+	Tag
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -30,6 +31,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	productCategories: ProductCategory[];
 	options: Array<ProductOption> = [];
 	variants: Array<ProductVariant> = [];
+	tags: Tag[] = [];
 
 	@Output() save = new EventEmitter<Product>();
 	@Output() cancel = new EventEmitter<string>();
@@ -58,6 +60,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 	private _initializeForm() {
 		this.form = this.fb.group({
+			tags: [this.product ? this.product.tags : ''],
 			name: [this.product ? this.product.name : '', Validators.required],
 			code: [this.product ? this.product.code : '', Validators.required],
 			productTypeId: [
@@ -71,6 +74,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			enabled: [this.product ? this.product.enabled : true],
 			description: [this.product ? this.product.description : '']
 		});
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	async loadProductTypes() {
@@ -89,6 +93,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 	onSaveRequest() {
 		const productRequest = {
+			tags: this.form.get('tags').value,
 			name: this.form.get('name').value,
 			code: this.form.get('code').value,
 			productTypeId: this.form.get('productTypeId').value,
@@ -153,5 +158,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 	onCancel() {
 		this.cancel.emit('PRODUCT_EDIT');
+	}
+	selectedTagsEvent(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 }

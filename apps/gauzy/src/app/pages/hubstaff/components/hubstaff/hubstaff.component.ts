@@ -156,6 +156,7 @@ export class HubstaffComponent extends TranslationBaseComponent
 	}
 
 	autoSync() {
+		this.loading = true;
 		this._hubstaffService
 			.autoSync({
 				integrationId: this.integrationId,

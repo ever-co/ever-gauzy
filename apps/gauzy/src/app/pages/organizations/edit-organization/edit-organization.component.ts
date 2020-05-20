@@ -6,7 +6,8 @@ import {
 	OrganizationRecurringExpense,
 	RecurringExpenseDeletionEnum,
 	RecurringExpenseDefaultCategoriesEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	Tag
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
@@ -46,6 +47,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	hasEditExpensePermission = false;
 	private _ngDestroy$ = new Subject<void>();
 	fetchedHistories: Object = {};
+	tags: Tag[];
 
 	loading = true;
 
@@ -93,6 +95,7 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 					.getById(id)
 					.pipe(first())
 					.toPromise();
+
 				this.selectedOrgFromHeader = this.selectedOrg;
 				this.loadEmployeesCount();
 				this._loadOrgRecurringExpense();
@@ -194,7 +197,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 	}
 
 	async addOrganizationRecurringExpense() {
-		console.log(this.selectedDate);
 		const result = await this.dialogService
 			.open(RecurringExpenseMutationComponent, {
 				context: {

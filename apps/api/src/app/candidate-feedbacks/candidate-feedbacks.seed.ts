@@ -10,7 +10,7 @@ const candidateFeedbackList: ICandidateFeedback[] = [
 	},
 	{
 		description: 'Feedback 2',
-		rating: 3.5
+		rating: 3
 	}
 ];
 export const createCandidateFeedbacks = async (

@@ -22,17 +22,22 @@ export class TasksStoreService {
 
 	constructor(private _taskService: TasksService) {
 		if (!this.tasks.length) {
-			this._taskService
-				.getAllTasks()
-				.pipe(tap(({ items }) => this.loadAllTasks(items)))
-				.subscribe();
+			this.fetchTasks();
 		}
+	}
+
+	fetchTasks() {
+		this._taskService
+			.getAllTasks()
+			.pipe(tap(({ items }) => this.loadAllTasks(items)))
+			.subscribe();
 	}
 
 	private _mapToViewModel(tasks) {
 		return tasks.map((task) => ({
 			...task,
-			projectName: task.project ? task.project.name : undefined
+			projectName: task.project ? task.project.name : undefined,
+			employees: task.members ? task.members : undefined
 		}));
 	}
 

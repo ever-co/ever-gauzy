@@ -25,6 +25,13 @@
 						/>
 					</div>
 				</div>
+				<div class="col-sm-3">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+					>
+					</ga-tags-color-input>
+				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-3">
@@ -251,11 +258,11 @@
 			<div class="total">
 				<div class="total-item">
 					{{ 'INVOICES_PAGE.SUBTOTAL' | translate }}:
-					{{ subtotal.toFixed(2) }}
+					{{ currency.value }} {{ subtotal.toFixed(2) }}
 				</div>
 				<div class="total-item">
 					{{ 'INVOICES_PAGE.TOTAL' | translate }}:
-					{{ total.toFixed(2) }}
+					{{ currency.value }} {{ total.toFixed(2) }}
 				</div>
 			</div>
 		</div>
@@ -268,7 +275,7 @@
 			status="success"
 			(click)="updateInvoice()"
 			*ngIf="hasInvoiceEditPermission"
-			[disabled]="enableSaveButton || form.invalid"
+			[disabled]="form.invalid"
 			nbButton
 		>
 			{{ 'BUTTONS.SAVE' | translate }}

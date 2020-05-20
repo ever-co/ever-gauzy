@@ -70,6 +70,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Recieved Invoices',
+					icon: 'bulb-outline',
+					link: '/pages/accounting/invoices/recieved-invoices',
+					data: {
+						translated: false,
+						translationKey: 'MENU.INVOICES_RECIEVED'
+					}
+				},
+				{
 					title: 'Income',
 					icon: 'plus-circle-outline',
 					link: '/pages/accounting/income',
@@ -251,6 +260,26 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Appointments',
+					icon: 'calendar-outline',
+					link: '/pages/employees/appointments',
+					pathMatch: 'prefix',
+					data: {
+						translated: false,
+						translationKey: 'MENU.APPOINTMENTS'
+					}
+				},
+				{
+					title: 'Event Types',
+					icon: 'calendar-outline',
+					link: '/pages/employees/event-types',
+					pathMatch: 'prefix',
+					data: {
+						translated: false,
+						translationKey: 'MENU.EVENT_TYPES'
+					}
+				},
+				{
 					title: 'Time Off',
 					icon: 'eye-off-2-outline',
 					link: '/pages/employees/time-off',
@@ -407,6 +436,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.EMAIL_TEMPLATES'
+					}
+				},
+				{
+					title: 'Help Center',
+					icon: 'question-mark-circle-outline',
+					link: '/pages/organization/help-center',
+					data: {
+						translated: false,
+						translationKey: 'MENU.HELP_CENTER'
 					}
 				}
 			]

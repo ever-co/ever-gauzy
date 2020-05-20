@@ -1,3 +1,5 @@
+import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
+import { HelpCenterModule } from './../../../gauzy/src/app/pages/help-center/help-center.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
@@ -14,6 +16,7 @@ import { OrganizationModule } from './organization/organization.module';
 import { IncomeModule } from './income/income.module';
 import { ExpenseModule } from './expense/expense.module';
 import { EmployeeSettingModule } from './employee-setting';
+import { EmployeeAppointmentModule } from './employee-appointment';
 import { CoreModule } from './core';
 import { AuthModule } from './auth/auth.module';
 import { SeedDataService } from './core/seeds/SeedDataService';
@@ -26,7 +29,8 @@ import { OrganizationClientsModule } from './organization-clients/organization-c
 import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
 import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
-import { OrganizationTeamsModule } from './organization-teams/organization-teams.module';
+import { OrganizationTeamModule } from './organization-team/organization-team.module';
+import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { InviteModule } from './invite/invite.module';
@@ -54,7 +58,6 @@ import { ProductCategoriesModule } from './product-category/product-category-mod
 import { ProductTypesModule } from './product-type/product-type-module';
 import { ProductModule } from './product/product.module';
 import { IntegrationSettingModule } from './integration-setting/integration-setting.module';
-import { IntegrationModule } from './integration/integration.module';
 import { IntegrationMapModule } from './integration-map/integration-map.module';
 import { ProductVariantPriceModule } from './product-variant-price/product-variant-price-module';
 import { ProductVariantModule } from './product-variant/product-variant.module';
@@ -66,6 +69,18 @@ import { CandidateDocumentsModule } from './candidate-documents/candidate-docume
 import { CandidateExperienceModule } from './candidate-experience/candidate-experience.module';
 import { CandidateFeedbacksModule } from './candidate-feedbacks/candidate-feedbacks.module';
 import { ProductVariantSettingsModule } from './product-settings/product-settings.module';
+import { IntegrationModule } from './integration/integration.module';
+import { IntegrationTenantModule } from './integration-tenant/integration-tenant.module';
+import { CandidateInterviewModule } from './candidate-interview/candidate-interview.module';
+import { AppointmentEmployeesModule } from './appointment-employees/appointment-employees.module';
+import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
+import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
+import { RequestApprovalModule } from './request-approval/request-approval.module';
+import * as path from 'path';
+import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
+import { LanguagesEnum } from '@gauzy/models';
+import { EventTypeModule } from './event-types/event-type.module';
+import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 
 @Module({
 	imports: [
@@ -90,6 +105,14 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 						module: CandidateFeedbacksModule
 					},
 					{
+						path: '/candidate-interview',
+						module: CandidateInterviewModule
+					},
+					{
+						path: '/candidate-interviewers',
+						module: CandidateInterviewersModule
+					},
+					{
 						path: '/candidate-experience',
 						module: CandidateExperienceModule
 					},
@@ -107,6 +130,7 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 					{ path: '/organization', module: OrganizationModule },
 					{ path: '/income', module: IncomeModule },
 					{ path: '/expense', module: ExpenseModule },
+					{ path: '/help-center', module: HelpCenterModule },
 					{ path: '/equipment', module: EquipmentModule },
 					{ path: '/employee-level', module: EmployeeLevelModule },
 
@@ -117,6 +141,14 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 					{
 						path: '/employee-statistics',
 						module: EmployeeStatisticsModule
+					},
+					{
+						path: '/employee-appointment',
+						module: EmployeeAppointmentModule
+					},
+					{
+						path: '/appointment-employees',
+						module: AppointmentEmployeesModule
 					},
 					{
 						path: '/user-organization',
@@ -151,8 +183,8 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 						module: EmployeeRecurringExpenseModule
 					},
 					{
-						path: '/organization-teams',
-						module: OrganizationTeamsModule
+						path: '/organization-team',
+						module: OrganizationTeamModule
 					},
 					{
 						path: '/proposal',
@@ -173,6 +205,14 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 					{
 						path: 'time-off-policy',
 						module: TimeOffPolicyModule
+					},
+					{
+						path: '/approval-policy',
+						module: ApprovalPolicyModule
+					},
+					{
+						path: '/request-approval',
+						module: RequestApprovalModule
 					},
 					{
 						path: 'role-permissions',
@@ -219,12 +259,16 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 						module: HubstaffModule
 					},
 					{
-						path: '/integration',
-						module: IntegrationModule
+						path: '/integration-tenant',
+						module: IntegrationTenantModule
 					},
 					{
 						path: '/integration-entity-setting',
 						module: IntegrationEntitySettingModule
+					},
+					{
+						path: '/integration',
+						module: IntegrationModule
 					},
 					{
 						path: '/invoices',
@@ -257,6 +301,14 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 					{
 						path: '/product-variant-settings',
 						module: ProductVariantSettingsModule
+					},
+					{
+						path: '/event-type',
+						module: EventTypeModule
+					},
+					{
+						path: '/availability-slots',
+						module: AvailabilitySlotsModule
 					}
 				]
 			}
@@ -272,10 +324,14 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 		CandidateExperienceModule,
 		CandidateSkillModule,
 		CandidateFeedbacksModule,
+		CandidateInterviewModule,
+		CandidateInterviewersModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
 		EmployeeStatisticsModule,
+		EmployeeAppointmentModule,
+		AppointmentEmployeesModule,
 		RoleModule,
 		OrganizationModule,
 		IncomeModule,
@@ -288,12 +344,16 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
 		EmployeeRecurringExpenseModule,
-		OrganizationTeamsModule,
+		OrganizationTeamModule,
+		OrganizationTeamEmployeeModule,
+		RequestApprovalEmployeeModule,
 		ProposalModule,
 		EmailModule,
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
+		ApprovalPolicyModule,
+		RequestApprovalModule,
 		RolePermissionsModule,
 		TenantModule,
 		EmailTemplateModule,
@@ -302,6 +362,8 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 		InvoiceModule,
 		InvoiceItemModule,
 		EmployeeLevelModule,
+		EventTypeModule,
+		AvailabilitySlotsModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
@@ -315,6 +377,7 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 					})
 			  ]
 			: []),
+		HelpCenterModule,
 		EquipmentModule,
 		EquipmentSharingModule,
 		TaskModule,
@@ -326,14 +389,24 @@ import { ProductVariantSettingsModule } from './product-settings/product-setting
 		ProductCategoriesModule,
 		ProductTypesModule,
 		ProductModule,
-		IntegrationSettingModule,
 		IntegrationModule,
+		IntegrationSettingModule,
+		IntegrationTenantModule,
 		IntegrationMapModule,
 		ProductVariantPriceModule,
 		ProductVariantModule,
 		ProductVariantSettingsModule,
 		IntegrationEntitySettingModule,
-		IntegrationEntitySettingTiedEntityModule
+		IntegrationEntitySettingTiedEntityModule,
+		I18nModule.forRoot({
+			fallbackLanguage: LanguagesEnum.ENGLISH,
+			parser: I18nJsonParser,
+			parserOptions: {
+				path: path.join(__dirname, '/assets/i18n/'),
+				watch: !environment.production
+			},
+			resolvers: [new HeaderResolver(['language'])]
+		})
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

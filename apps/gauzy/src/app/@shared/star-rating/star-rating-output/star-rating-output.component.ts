@@ -32,7 +32,7 @@ export class StarRatingOutputComponent {
 				this.stars.push({ icon: StarsIcon.BORDERED, active: false });
 				continue;
 			}
-			if (doublePart > 0.25 && doublePart < 0.75) {
+			if (doublePart >= 0.25 && doublePart < 0.75) {
 				this.stars.push({ icon: StarsIcon.HALF, active: true });
 				continue;
 			}

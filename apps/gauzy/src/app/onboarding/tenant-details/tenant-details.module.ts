@@ -8,6 +8,7 @@ import { OrganizationsStepFormModule } from '../../@shared/organizations/organiz
 import { ThemeModule } from '../../@theme/theme.module';
 import { TenantDetailsRoutingModule } from './tenant-details-routing.module';
 import { TenantDetailsComponent } from './tenant-details.component';
+import { TagsService } from '../../@core/services/tags.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, '../../assets/i18n/', '.json');
@@ -27,7 +28,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	providers: [TenantService],
+	providers: [TenantService, TagsService],
 	declarations: [TenantDetailsComponent]
 })
 export class TenantDetailsModule {}

@@ -2,8 +2,8 @@ import { Module, HttpModule } from '@nestjs/common';
 import { HubstaffService } from './hubstaff.service';
 import { HubstaffController } from './hubstaff.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Integration } from '../integration/integration.entity';
-import { IntegrationService } from '../integration/integration.service';
+import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
+import { IntegrationTenantService } from '../integration-tenant/integration-tenant.service';
 import { Tenant } from '../tenant/tenant.entity';
 import { TenantService } from '../tenant/tenant.service';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
@@ -17,6 +17,12 @@ import { IntegrationEntitySetting } from '../integration-entity-setting/integrat
 import { CqrsModule } from '@nestjs/cqrs';
 import { IntegrationEntitySettingTiedEntity } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.entity';
 import { IntegrationEntitySettingTiedEntityService } from '../integration-entity-setting-tied-entity/integration-entity-setting-tied-entitiy.service';
+import { RoleService } from '../role/role.service';
+import { Organization } from '../organization/organization.entity';
+import { OrganizationService } from '../organization/organization.service';
+import { Role } from '../role/role.entity';
+import { User } from '../user/user.entity';
+import { UserService } from '../user/user.service';
 import { UserModule } from '../user/user.module';
 import { RoleModule } from '../role/role.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
@@ -25,13 +31,16 @@ import { RolePermissionsModule } from '../role-permissions/role-permissions.modu
 	imports: [
 		HttpModule,
 		TypeOrmModule.forFeature([
-			Integration,
+			IntegrationTenant,
 			Tenant,
 			IntegrationSetting,
 			IntegrationMap,
 			OrganizationProjects,
 			IntegrationEntitySetting,
-			IntegrationEntitySettingTiedEntity
+			IntegrationEntitySettingTiedEntity,
+			Role,
+			Organization,
+			User
 		]),
 		CqrsModule,
 		RoleModule,
@@ -41,13 +50,16 @@ import { RolePermissionsModule } from '../role-permissions/role-permissions.modu
 	controllers: [HubstaffController],
 	providers: [
 		HubstaffService,
-		IntegrationService,
+		IntegrationTenantService,
 		TenantService,
 		IntegrationSettingService,
 		IntegrationMapService,
 		OrganizationProjectsService,
 		IntegrationEntitySettingService,
-		IntegrationEntitySettingTiedEntityService
+		IntegrationEntitySettingTiedEntityService,
+		OrganizationService,
+		RoleService,
+		UserService
 	]
 })
 export class HubstaffModule {}

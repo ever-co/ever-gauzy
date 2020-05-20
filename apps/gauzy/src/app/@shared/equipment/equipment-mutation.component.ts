@@ -66,6 +66,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 			],
 			id: [this.equipment ? this.equipment.id : null]
 		});
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	async saveEquipment() {
@@ -83,7 +84,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 	async closeDialog(equipment?: Equipment) {
 		this.dialogRef.close(equipment);
 	}
-	selectedTagsEvent(ev) {
-		this.tags = ev;
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.tags = currentTagSelection;
 	}
 }

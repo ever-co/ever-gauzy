@@ -14,9 +14,12 @@ import { ScreenShotService } from './screenshot.service';
 import { TimeSlotService } from './time-slot.service';
 import { TimeLogController } from './time-log/time-log.controller';
 import { TimeLogService } from './time-log/time-log.service';
+import { CqrsModule } from '@nestjs/cqrs';
+import { CommandHandlers } from './commands/handlers';
+import { TimeSheetController } from './timesheet.controller';
 
 @Module({
-	controllers: [TimerController, TimeLogController],
+	controllers: [TimerController, TimeLogController, TimeSheetController],
 	imports: [
 		TypeOrmModule.forFeature([
 			TimeSlot,
@@ -25,7 +28,8 @@ import { TimeLogService } from './time-log/time-log.service';
 			TimeLog,
 			Timesheet,
 			Employee
-		])
+		]),
+		CqrsModule
 	],
 	providers: [
 		TimerService,
@@ -33,7 +37,8 @@ import { TimeLogService } from './time-log/time-log.service';
 		ActivityService,
 		ScreenShotService,
 		TimeLogService,
-		TimeSlotService
+		TimeSlotService,
+		...CommandHandlers
 	],
 	exports: [
 		TimeSheetService,

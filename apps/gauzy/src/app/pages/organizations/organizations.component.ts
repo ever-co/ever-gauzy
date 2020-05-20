@@ -14,9 +14,9 @@ import { OrganizationsMutationComponent } from '../../@shared/organizations/orga
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { OrganizationsCurrencyComponent } from './table-components/organizations-currency/organizations-currency.component';
 import { OrganizationsEmployeesComponent } from './table-components/organizations-employees/organizations-employees.component';
-import { OrganizationsFullnameComponent } from './table-components/organizations-fullname/organizations-fullname.component';
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 
 interface SelectedRow {
 	data: Organization;
@@ -62,7 +62,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
 					type: 'custom',
-					renderComponent: OrganizationsFullnameComponent
+					renderComponent: PictureNameTagsComponent
 				},
 				totalEmployees: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
@@ -115,7 +115,6 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	selectOrganization(data: SelectedRow) {
 		if (data.isSelected) {
 			this.selectedOrganization = data.data;
-		
 		} else {
 			this.selectedOrganization = null;
 		}
@@ -191,8 +190,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	private async _loadSmartTable() {
 		try {
-			const { items } = await this.organizationsService.getAll();
-
+			const { items } = await this.organizationsService.getAll(['tags']);
 			for (const org of items) {
 				const data = await this.employeesService
 					.getAll([], { organization: { id: org.id } })

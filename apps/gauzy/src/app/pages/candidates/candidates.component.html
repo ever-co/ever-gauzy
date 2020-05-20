@@ -5,18 +5,33 @@
 				{{ 'CANDIDATES_PAGE.HEADER' | translate }}
 				{{ organizationName }}
 			</h4>
-			<button
-				*ngIf="
-					organizationInvitesAllowed &&
-					hasInviteViewOrEditPermission &&
-					hasEditPermission
-				"
-				nbButton
-				status="primary"
-				(click)="manageInvites()"
-			>
-				{{ 'BUTTONS.MANAGE_INVITES' | translate }}
-			</button>
+			<div>
+				<button
+					class="interview-button"
+					*ngIf="
+						organizationInvitesAllowed &&
+						hasInviteViewOrEditPermission &&
+						hasEditPermission
+					"
+					nbButton
+					status="primary"
+					(click)="manageInterviews()"
+				>
+					{{ 'BUTTONS.MANAGE_INTERVIEWS' | translate }}
+				</button>
+				<button
+					*ngIf="
+						organizationInvitesAllowed &&
+						hasInviteViewOrEditPermission &&
+						hasEditPermission
+					"
+					nbButton
+					status="primary"
+					(click)="manageInvites()"
+				>
+					{{ 'BUTTONS.MANAGE_INVITES' | translate }}
+				</button>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
@@ -49,21 +64,21 @@
 			</button>
 			<button
 				nbButton
-				[disabled]="!selectedCandidate"
-				(click)="delete()"
+				[disabled]="!selectedCandidate || selectedCandidate?.isArchived"
+				(click)="archive()"
 				status="danger"
 				class="mr-2"
 			>
-				<nb-icon class="mr-1" icon="trash-2-outline"></nb-icon
-				>{{ 'BUTTONS.DELETE' | translate }}
+				<nb-icon class="mr-1" icon="archive-outline"></nb-icon
+				>{{ 'BUTTONS.ARCHIVE' | translate }}
 			</button>
 
 			<nb-checkbox
-				(checkedChange)="changeIncludeDeleted($event)"
+				(checkedChange)="changeIncludeArchived($event)"
 				status="danger"
 				class="float-right py-auto"
 				>{{
-					'FORM.CHECKBOXES.INCLUDE_DELETED' | translate
+					'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate
 				}}</nb-checkbox
 			>
 		</div>

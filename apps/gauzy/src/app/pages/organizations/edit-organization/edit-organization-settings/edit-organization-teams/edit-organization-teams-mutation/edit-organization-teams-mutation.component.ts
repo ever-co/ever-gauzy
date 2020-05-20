@@ -1,5 +1,5 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { OrganizationTeams, Employee } from '@gauzy/models';
+import { OrganizationTeam, Employee } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-edit-organization-teams-mutation',
@@ -12,7 +12,7 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	@Input()
 	organizationId: string;
 	@Input()
-	team?: OrganizationTeams;
+	team?: OrganizationTeam;
 
 	@Output()
 	canceled = new EventEmitter();
@@ -26,7 +26,7 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	ngOnInit() {
 		if (this.team) {
 			this.selectedEmployees = this.team.members.map(
-				(member) => member.id
+				(member) => member.employeeId
 			);
 			this.name = this.team.name;
 		}

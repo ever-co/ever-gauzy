@@ -9,7 +9,7 @@ import {
 import { Observable } from 'rxjs/Observable';
 import { HubstaffService } from './services/hubstaff.service';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, throwError } from 'rxjs';
 import { HttpStatus } from '@gauzy/models';
 
 @Injectable()
@@ -72,7 +72,7 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 						);
 					}
 				} else {
-					return next.handle(req);
+					return throwError(error);
 				}
 			})
 		);

@@ -6,6 +6,7 @@ import { UserOrganization } from '../../../user-organization/user-organization.e
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
+import { RequestContext } from '../../../core/context';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler
@@ -22,18 +23,22 @@ export class OrganizationCreateHandler
 	): Promise<Organization> {
 		const { input } = command;
 
-		//1. Get roleId for Super Admin user
-
-		// SUPER ADMIN DOES NOT EXIST, CHANGED ONLY FOR TESTING INTEGRATION
-
+		//1. Get roleId for Super Admin user of the Tenant
 		const { id: roleId } = await this.roleService.findOne({
 			name: RolesEnum.SUPER_ADMIN
 		});
 
-		// 2. Get all Super Admin Users
+		// 2. Get all Super Admin Users of the Tenant
+		// have to get user from context, as user service is not tenant-aware
+		const user = RequestContext.currentUser();
+		const { tenantId } = user;
+
 		const { items: superAdminUsers } = await this.userService.findAll({
 			relations: ['role'],
-			where: { role: { id: roleId } }
+			where: {
+				tenant: { id: tenantId },
+				role: { id: roleId }
+			}
 		});
 
 		// 3. Create organization

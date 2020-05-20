@@ -3,9 +3,10 @@ import { Organization, OrganizationFindInput } from './organization.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Location as ILocation } from './location.model';
 import { UserFindInput } from './user.model';
-import { OrganizationTeams } from './organization-teams-model';
+import { OrganizationTeam } from './organization-team-model';
 import { ITenant } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
+import { RequestApprovalEmployee } from './request-approval-employee.model';
 
 export interface Employee extends IBaseEntityModel, ILocation {
 	endWork?: any;
@@ -16,7 +17,7 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	orgId: string;
 	valueDate?: Date;
 	isActive: boolean;
-	teams?: OrganizationTeams[];
+	teams?: OrganizationTeam[];
 	payPeriod?: string;
 	billRateValue?: number;
 	billRateCurrency?: string;
@@ -31,6 +32,7 @@ export interface Employee extends IBaseEntityModel, ILocation {
 	employeeLevel?: string;
 	anonymousBonus?: boolean;
 	organizationEmploymentTypes?: OrganizationEmploymentType[];
+	requestApprovalEmployee?: RequestApprovalEmployee[];
 }
 
 export interface EmployeeFindInput extends IBaseEntityModel {

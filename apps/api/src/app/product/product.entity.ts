@@ -5,7 +5,9 @@ import {
 	OneToMany,
 	RelationId,
 	JoinColumn,
-	ManyToOne
+	ManyToOne,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { Product as IProduct } from '@gauzy/models';
 import { ProductVariant } from '../product-variant/product-variant.entity';
@@ -14,9 +16,17 @@ import { ProductCategory } from '../product-category/product-category.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { ProductOption } from '../product-option/product-option.entity';
+import { Tag } from '../tags/tag.entity';
+import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
 @Entity('product')
 export class Product extends Base implements IProduct {
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_product'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column()
@@ -64,4 +74,13 @@ export class Product extends Base implements IProduct {
 		(productOption) => productOption.product
 	)
 	options: ProductOption[];
+
+	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
+	@OneToMany(
+		(type) => InvoiceItem,
+		(invoiceItem) => invoiceItem.product,
+		{ onDelete: 'SET NULL' }
+	)
+	@JoinColumn()
+	invoiceItems?: InvoiceItem[];
 }

@@ -18,7 +18,6 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
-import { EmployeesService } from '../../../../../@core/services/employees.service';
 
 @Component({
 	selector: 'ga-edit-employee-employment',
@@ -47,7 +46,6 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly toastrService: NbToastrService,
 		private readonly employeeStore: EmployeeStore,
-		private readonly employeeService: EmployeesService,
 		private readonly employeeLevelService: EmployeeLevelService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly organizationPositionsService: OrganizationPositionsService,
@@ -124,8 +122,8 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	selectedTagsHandler(tags: Tag[]) {
-		this.tags = tags;
+	selectedTagsHandler(currentSelection: Tag[]) {
+		this.form.get('tags').setValue(currentSelection);
 	}
 
 	private _initializeForm(employee: Employee) {
@@ -146,7 +144,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			]
 		});
 
-		this.tags = employee.tags;
+		this.tags = this.form.get('tags').value || [];
 	}
 
 	ngOnDestroy() {

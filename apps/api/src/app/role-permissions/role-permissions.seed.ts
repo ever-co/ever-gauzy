@@ -23,12 +23,21 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT,
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW,
 			PermissionsEnum.ORG_USERS_VIEW,
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.POLICY_EDIT,
 			PermissionsEnum.POLICY_VIEW,
+			PermissionsEnum.APPROVAL_POLICY_EDIT,
+			PermissionsEnum.APPROVAL_POLICY_VIEW,
+			PermissionsEnum.REQUEST_APPROVAL_EDIT,
+			PermissionsEnum.REQUEST_APPROVAL_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 			PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
@@ -40,7 +49,9 @@ export const defaultRolePermissions = [
 			PermissionsEnum.SUPER_ADMIN_EDIT,
 			PermissionsEnum.PUBLIC_PAGE_EDIT,
 			PermissionsEnum.INVOICES_VIEW,
-			PermissionsEnum.INVOICES_EDIT
+			PermissionsEnum.INVOICES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
+			PermissionsEnum.ORG_TAGS_EDIT
 		]
 	},
 	{
@@ -58,12 +69,21 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT,
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_DOCUMENTS_VIEW,
 			PermissionsEnum.ORG_USERS_VIEW,
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.POLICY_EDIT,
 			PermissionsEnum.POLICY_VIEW,
+			PermissionsEnum.APPROVAL_POLICY_EDIT,
+			PermissionsEnum.APPROVAL_POLICY_VIEW,
+			PermissionsEnum.REQUEST_APPROVAL_EDIT,
+			PermissionsEnum.REQUEST_APPROVAL_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 			PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
@@ -74,7 +94,9 @@ export const defaultRolePermissions = [
 			PermissionsEnum.TIMESHEET_EDIT_TIME,
 			PermissionsEnum.PUBLIC_PAGE_EDIT,
 			PermissionsEnum.INVOICES_VIEW,
-			PermissionsEnum.INVOICES_EDIT
+			PermissionsEnum.INVOICES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
+			PermissionsEnum.ORG_TAGS_EDIT
 		]
 	},
 	{
@@ -86,7 +108,11 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_INCOMES_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			PermissionsEnum.INVOICES_VIEW,
-			PermissionsEnum.INVOICES_EDIT
+			PermissionsEnum.INVOICES_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
+			PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT,
+			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT
 		]
 	},
 	{
@@ -94,7 +120,12 @@ export const defaultRolePermissions = [
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 			PermissionsEnum.ORG_PROPOSALS_VIEW,
-			PermissionsEnum.ORG_TIME_OFF_VIEW
+			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			PermissionsEnum.APPROVAL_POLICY_EDIT,
+			PermissionsEnum.APPROVAL_POLICY_VIEW,
+			PermissionsEnum.REQUEST_APPROVAL_EDIT,
+			PermissionsEnum.REQUEST_APPROVAL_VIEW,
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
 		]
 	},
 	{
@@ -102,7 +133,8 @@ export const defaultRolePermissions = [
 		defaultEnabledPermissions: [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 			PermissionsEnum.ORG_PROPOSALS_VIEW,
-			PermissionsEnum.ORG_TIME_OFF_VIEW
+			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			PermissionsEnum.ORG_TAGS_EDIT
 		]
 	}
 ];

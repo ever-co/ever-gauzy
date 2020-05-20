@@ -15,6 +15,7 @@ import chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
 import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
+import { createSkills } from '../../skills/skill.seed';
 import { User } from '../../user/user.entity';
 import {
 	createDefaultSuperAdminUsers,
@@ -49,9 +50,10 @@ import {
 } from '../../user-organization/user-organization.seed';
 import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { createCountries } from '../../country/country.seed';
-import { OrganizationTeams } from '../../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../../organization-team/organization-team.entity';
+import { OrganizationTeamEmployee } from '../../organization-team-employee/organization-team-employee.entity';
 import { Country } from '../../country';
-import { createDefaultTeams } from '../../organization-teams/organization-teams.seed';
+import { createDefaultTeams } from '../../organization-team/organization-team.seed';
 import { RolePermissions } from '../../role-permissions/role-permissions.entity';
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
@@ -69,6 +71,7 @@ import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
 import { EmployeeLevel } from '../../organization_employeeLevel/organization-employee-level.entity';
 import { createDefaultTimeOffPolicy } from '../../time-off-policy/time-off-policy.seed';
+import { createDefaultApprovalPolicyForOrg } from '../../approval-policy/approval-policy.seed';
 import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
 import {
 	createOrganizationVendors,
@@ -123,6 +126,15 @@ import {
 	createRandomCandidateDocuments
 } from '../../candidate-documents/candidate-documents.seed';
 import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
+import {
+	createCandidateFeedbacks,
+	createRandomCandidateFeedbacks
+} from '../../candidate-feedbacks/candidate-feedbacks.seed';
+import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
+import { createDefaultIntegrations } from '../../integration/integration.seed';
+import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
+import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
+import { ProductOption } from '../../product-option/product-option.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -142,7 +154,8 @@ const allEntities = [
 	InvoiceItem,
 	Expense,
 	EmployeeSetting,
-	OrganizationTeams,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
 	OrganizationClients,
 	OrganizationVendor,
 	OrganizationDepartment,
@@ -165,6 +178,8 @@ const allEntities = [
 	Equipment,
 	EmployeeLevel,
 	ProductCategory,
+	AppointmentEmployees,
+	EmployeeAppointment,
 	ProductType,
 	CandidateSource,
 	CandidateEducation,
@@ -174,6 +189,7 @@ const allEntities = [
 	ProductVariant,
 	ProductVariantSettings,
 	ProductVariantPrice,
+	ProductOption,
 	CandidateDocument,
 	CandidateFeedback
 ];
@@ -327,8 +343,8 @@ export class SeedDataService {
 		);
 
 		await createCandidateSources(this.connection, defaultCandidates);
-
 		await createCandidateDocuments(this.connection, defaultCandidates);
+		await createCandidateFeedbacks(this.connection, defaultCandidates);
 
 		//Employee level data that need connection, tenant, organization, role, users, employee
 		await createDefaultTeams(
@@ -359,6 +375,15 @@ export class SeedDataService {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees
 		});
+
+		await createDefaultApprovalPolicyForOrg(this.connection, {
+			orgs: defaultOrganizations
+		});
+
+		const integrationTypes = await createDefaultIntegrationTypes(
+			this.connection
+		);
+		await createDefaultIntegrations(this.connection, integrationTypes);
 	}
 
 	/**
@@ -438,6 +463,11 @@ export class SeedDataService {
 			tenants,
 			tenantCandidatesMap
 		);
+		await createRandomCandidateFeedbacks(
+			this.connection,
+			tenants,
+			tenantCandidatesMap
+		);
 		await createRandomCandidateSources(
 			this.connection,
 			tenants,
@@ -464,6 +494,8 @@ export class SeedDataService {
 			tenants,
 			tenantOrganizationsMap
 		);
+
+		await createSkills(this.connection);
 	}
 
 	/**

@@ -4,7 +4,7 @@
 // Originally MIT Licensed
 // - see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // - original code `Copyright (c) 2018 Sumanth Chinthagunta`
-
+import { CandidateInterviewers } from './../candidate-interviewers/candidate-interviewers.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
@@ -29,7 +29,8 @@ import { OrganizationClients } from '../organization-clients/organization-client
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
-import { OrganizationTeams } from '../organization-teams/organization-teams.entity';
+import { OrganizationTeam } from '../organization-team/organization-team.entity';
+import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Proposal } from '../proposal/proposal.entity';
 import { Country } from '../country/country.entity';
 import { Invite } from '../invite/invite.entity';
@@ -58,7 +59,7 @@ import { ProductVariantPrice } from '../product-variant-price/product-variant-pr
 import { ProductCategory } from '../product-category/product-category.entity';
 import { CandidateSource } from '../candidate-source/candidate-source.entity';
 import { IntegrationSetting } from '../integration-setting/integration-setting.entity';
-import { Integration } from '../integration/integration.entity';
+import { IntegrationTenant } from '../integration-tenant/integration-tenant.entity';
 import { IntegrationMap } from '../integration-map/integration-map.entity';
 import { Candidate } from '../candidate/candidate.entity';
 import { IntegrationEntitySetting } from '../integration-entity-setting/integration-entity-setting.entity';
@@ -68,6 +69,16 @@ import { CandidateDocument } from '../candidate-documents/candidate-documents.en
 import { CandidateSkill } from '../candidate-skill/candidate-skill.entity';
 import { CandidateExperience } from './../candidate-experience/candidate-experience.entity';
 import { CandidateFeedback } from './../candidate-feedbacks/candidate-feedbacks.entity';
+import { Integration } from '../integration/integration.entity';
+import { IntegrationType } from '../integration/integration-type.entity';
+import { CandidateInterview } from '../candidate-interview/candidate-interview.entity';
+import { EmployeeAppointment } from '../employee-appointment';
+import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { RequestApproval } from '../request-approval/request-approval.entity';
+import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
+import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
+import { EventType } from '../event-types/event-type.entity';
+import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
 
 const entities = [
 	Invite,
@@ -87,7 +98,8 @@ const entities = [
 	OrganizationVendor,
 	OrganizationRecurringExpense,
 	EmployeeRecurringExpense,
-	OrganizationTeams,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
 	Proposal,
 	Country,
 	Email,
@@ -123,11 +135,23 @@ const entities = [
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
+	CandidateInterview,
+	CandidateInterviewers,
 	IntegrationSetting,
 	Integration,
+	IntegrationType,
+	IntegrationSetting,
+	IntegrationTenant,
 	IntegrationMap,
 	IntegrationEntitySetting,
-	IntegrationEntitySettingTiedEntity
+	IntegrationEntitySettingTiedEntity,
+	RequestApproval,
+	RequestApprovalEmployee,
+	ApprovalPolicy,
+	EmployeeAppointment,
+	AppointmentEmployees,
+	EventType,
+	AvailabilitySlots
 ];
 
 @Module({

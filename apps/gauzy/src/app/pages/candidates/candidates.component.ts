@@ -12,11 +12,12 @@ import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mu
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { Router, ActivatedRoute } from '@angular/router';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
 import { CandidateSourceService } from '../../@core/services/candidate-source.service';
+import { CandidateFeedbacksService } from '../../@core/services/candidate-feedbacks.service';
+import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -40,7 +41,10 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 	candidateName = 'Candidate';
 
-	includeDeleted = false;
+	candidateSource: string;
+	candidateRating: number;
+
+	includeArchived = false;
 	loading = true;
 	hasEditPermission = false;
 	hasInviteEditPermission = false;
@@ -58,7 +62,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private translate: TranslateService,
 		private errorHandler: ErrorHandlingService,
-		private candidateSourceService: CandidateSourceService
+		private candidateSourceService: CandidateSourceService,
+		private candidateFeedbacksService: CandidateFeedbacksService
 	) {
 		super(translate);
 	}
@@ -142,15 +147,15 @@ export class CandidatesComponent extends TranslationBaseComponent
 			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
 		]);
 	}
-	async delete() {
+	async archive() {
 		this.dialogService
-			.open(DeleteConfirmationComponent, {
+			.open(ArchiveConfirmationComponent, {
 				context: {
 					recordType:
 						this.selectedCandidate.fullName +
 						' ' +
 						this.getTranslation(
-							'FORM.DELETE_CONFIRMATION.CANDIDATE'
+							'FORM.ARCHIVE_CONFIRMATION.CANDIDATE'
 						)
 				}
 			})
@@ -158,12 +163,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.subscribe(async (result) => {
 				if (result) {
 					try {
-						await this.candidatesService.delete(
+						await this.candidatesService.setCandidateAsArchived(
 							this.selectedCandidate.id
 						);
 
 						this.toastrService.primary(
-							this.candidateName + ' has been deleted.',
+							this.candidateName + '  set as archived.',
 							'Success'
 						);
 
@@ -187,11 +192,34 @@ export class CandidatesComponent extends TranslationBaseComponent
 	manageInvites() {
 		this.router.navigate(['/pages/employees/candidates/invites']);
 	}
+	manageInterviews() {
+		this.router.navigate(['/pages/employees/candidates/interviews']);
+	}
+	async getCandidateSource(id: string) {
+		this.candidateSource = null;
+		const res = await this.candidateSourceService.getAll({
+			candidateId: id
+		});
+		if (res) {
+			return (this.candidateSource = res.items[0]);
+		}
+	}
+	async getCandidateRating(id: string) {
+		const res = await this.candidateFeedbacksService.getAll({
+			candidateId: id
+		});
+		if (res) {
+			this.candidateRating = 0;
+			for (let i = 0; i < res.total; i++) {
+				this.candidateRating += +res.items[i].rating / res.total;
+			}
+		}
+	}
 	private async loadPage() {
 		this.selectedCandidate = null;
 
 		const { items } = await this.candidatesService
-			.getAll(['user', 'source'], {
+			.getAll(['user', 'source', 'tags'], {
 				organization: { id: this.selectedOrganizationId }
 			})
 			.pipe(first())
@@ -202,28 +230,25 @@ export class CandidatesComponent extends TranslationBaseComponent
 		const result = [];
 
 		for (const candidate of items) {
-			let source = null;
-			const res = await this.candidateSourceService.getAll({
-				candidateId: candidate.id
-			});
-			if (res) {
-				source = res.items[0];
-			}
-
+			await this.getCandidateSource(candidate.id);
+			await this.getCandidateRating(candidate.id);
 			result.push({
 				fullName: `${candidate.user.firstName} ${candidate.user.lastName}`,
 				email: candidate.user.email,
 				id: candidate.id,
-				source: source,
+				source: this.candidateSource,
+				rating: this.candidateRating,
 				status: candidate.status,
+				isArchived: candidate.isArchived,
 				imageUrl: candidate.user.imageUrl,
-				tag: candidate.tags
+				tags: candidate.tags
 			});
 		}
-
-		if (!this.includeDeleted) {
+		if (!this.includeArchived) {
 			result.forEach((candidate) => {
-				candidatesVm.push(candidate);
+				if (!candidate.isArchived) {
+					candidatesVm.push(candidate);
+				}
 			});
 		} else {
 			candidatesVm = result;
@@ -277,8 +302,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 		};
 	}
 
-	changeIncludeDeleted(checked: boolean) {
-		this.includeDeleted = checked;
+	changeIncludeArchived(checked: boolean) {
+		this.includeArchived = checked;
 		this.loadPage();
 	}
 

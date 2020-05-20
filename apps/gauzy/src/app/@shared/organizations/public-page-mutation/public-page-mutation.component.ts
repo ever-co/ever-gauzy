@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Validators, FormBuilder, FormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { Income, Organization, Tag, Skill } from '@gauzy/models';
+import { Income, Organization, Skill } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -21,7 +21,6 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 
 	organizationId: string;
 
-	tags: Tag[] = [];
 	skills: Skill[] = [];
 
 	get banner() {
@@ -74,11 +73,11 @@ export class PublicPageMutationComponent extends TranslationBaseComponent
 				founded: this.organization.founded,
 				short_description: this.organization.short_description,
 				overview: this.organization.overview,
-				tags: []
+				skills: []
 			});
 		}
 	}
-	selectedTagsHandler(ev: any) {
-		this.form.get('tags').setValue(ev);
+	selectedSkillsHandler(ev: any) {
+		this.form.get('skills').setValue(ev);
 	}
 }

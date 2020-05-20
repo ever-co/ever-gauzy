@@ -37,6 +37,11 @@ const routes: Routes = [
 					)
 			}
 		]
+	},
+	{
+		path: ':id',
+		loadChildren: () =>
+			import('./view/view.module').then((m) => m.ViewModule)
 	}
 ];
 

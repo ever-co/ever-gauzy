@@ -15,6 +15,8 @@
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Да",
 		"SAVE": "Запази",
+		"DISCARD": "Discard",
+		"CLEAR_ALL": "Clear All",
 		"BACK": "Обратно",
 		"SENT": "Изпратено",
 		"ACCEPTED": "Прието",
@@ -23,6 +25,7 @@
 		"INVITE": "Покана",
 		"SELECT_ALL": "Селектиране на всички",
 		"COPY_LINK": "Копирай линка",
+		"MANAGE_INTERVIEWS": "Manage Interviews",
 		"MANAGE_INVITES": "Управлявай поканите",
 		"RESEND": "Преизпрати",
 		"NEXT": "Следващ",
@@ -33,7 +36,12 @@
 		"SYNC": "Sync",
 		"UPDATE": "Update",
 		"AUTO_SYNC": "Auto sync",
-		"VIEW": "View"
+		"VIEW": "View",
+		"SEND": "Send",
+		"ARCHIVE": "Archive",
+		"FIND_TIME": "Find time",
+		"DOWNLOAD": "Download",
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -88,6 +96,9 @@
 		"CLIENTS": "Клиенти",
 		"DEPARTMENTS": "Отдели",
 		"DESCRIPTION": "Описание",
+		"APPLIED": "Applied",
+		"HIRED": "Hired",
+		"REJECTED": "Rejected",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -164,7 +175,21 @@
 			"ENABLE_DISABLE_FUTURE_DATE": "Enable/Disable future dates",
 			"ALLOW_FUTURE_DATE": "Allow switching to future periods",
 			"REGISTRATION_DATE": "Registration Date",
-			"ORGANIZATION_NAME": "Organization Name"
+			"ORGANIZATION_NAME": "Organization Name",
+			"MEETING_AGENDA": "Agenda",
+			"MEETING_LOCATION": "Локация",
+			"MEETING_DESCRIPTION": "Description",
+			"MEETING_INVITEES": "Invitees",
+			"TITLE": "Title",
+			"DATE": "Дата",
+			"TIME": "Time",
+			"DURATION": "Duration",
+			"CANDIDATE": "Candidate",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Локация",
+			"NOTE": "Note",
+			"PREFERRED_LANGUAGE": "Preferred Language",
+			"DESCRIPTION": "Description"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -220,6 +245,7 @@
 			"UPLOADER_PLACEHOLDER": "Снимка",
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
+			"ADD_REMOVE_CANDIDATE": "Add Candidate",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -238,6 +264,7 @@
 			"ORGANIZATIONS": "Choose Organizations",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"PREFERRED_LANGUAGE": "Preferred Language",
 			"ADD_EDUCATION": {
 				"SCHOOL_NAME": "School name",
 				"DEGREE": "Degree/Diploma",
@@ -250,7 +277,25 @@
 				"ORGANIZATION": "Organization name",
 				"DURATION": "Duration",
 				"DESCRIPTION": "Description (optional)"
-			}
+			},
+			"ADD_INTERVIEW": {
+				"TITLE": "Title",
+				"DATE": "Дата",
+				"TIME": "Time",
+				"DURATION": "Duration",
+				"INTERVIEWERS": "Interviewers",
+				"LOCATION": "Локация",
+				"NOTE": "Note (optional)",
+				"TYPE": "Interview type"
+			},
+			"MEETING_AGENDA": "Agenda",
+			"MEETING_LOCATION": "Локация",
+			"MEETING_DESCRIPTION": "Description",
+			"BUFFER_TIME": "Buffer minutes",
+			"BREAK_TIME": "Break minutes",
+			"DESCRIPTION": "Description",
+			"DURATION": "Duration",
+			"TITLE": "Title"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -258,10 +303,16 @@
 			"LIMITS": "Limits"
 		},
 		"CHECKBOXES": {
-			"INCLUDE_DELETED": "Показване на изтритите"
+			"INCLUDE_DELETED": "Показване на изтритите",
+			"INCLUDE_ARCHIVED": "Include Archived"
 		},
 		"NOTIFICATIONS": {
 			"STARTED_WORK_ON": "It's required to enter the date when the employee started work to generate employee payroll, enable the employee to participate in split expenses, see employee statistics"
+		},
+		"ARCHIVE_CONFIRMATION": {
+			"SURE": "Are you sure you want to archive",
+			"RECORD": "запис",
+			"CANDIDATE": "candidate"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -275,7 +326,8 @@
 			"EXPENSE": "Разходи",
 			"USER": "user",
 			"INVITATION": "покана",
-			"DELETE_USER": " from database as it is associated only to current organization"
+			"DELETE_USER": " from database as it is associated only to current organization",
+			"EVENT_TYPE": "Event type"
 		}
 	},
 	"POP_UPS": {
@@ -322,10 +374,14 @@
 		"STARTS_ON": "Starts On",
 		"EXPENSE_HISTORY": "Expense History",
 		"NEW_EXPENSE_VALUE": "New Expense Value",
-		"OFFICIAL_NAME": "This name would be used in tax invoices etc."
+		"OFFICIAL_NAME": "This name would be used in tax invoices etc.",
+		"ADD_EVENT_TYPE": "Add Event Type",
+		"EDIT_EVENT_TYPE": " Edit Event Type"
 	},
 	"MENU": {
 		"DASHBOARD": "Табло",
+		"APPOINTMENTS": "Appointments",
+		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
 		"INCOME": "Доход",
 		"EXPENSES": "Разходи",
@@ -374,6 +430,7 @@
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
 		"RECURRING_INVOICES": "Recurring Invoices",
+		"INVOICES_RECIEVED": "Recieved Invoices",
 		"ESTIMATES": "Estimates",
 		"MY_TASKS": "My Tasks",
 		"TEAM_TASKS": "Team's Tasks",
@@ -381,6 +438,7 @@
 		"TIMESHEETS": "Timesheets",
 		"SCHEDULES": "Schedules",
 		"EMAIL_TEMPLATES": "Email Templates",
+		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
@@ -411,8 +469,20 @@
 			"SELECT_ORGANIZATION": "Select Organization",
 			"SYNCED_PROJECTS": "Projects synced",
 			"SETTINGS_UPDATED": "Updated settings for integration",
-			"SYNCED_ENTITIES": "Auto synced entities"
-		}
+			"SYNCED_ENTITIES": "Auto synced entities",
+			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
+			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+		},
+		"UPWORK_PAGE": {
+			"ACTIVITIES": "Activities",
+			"REPORTS": "Reports",
+			"TRANSACTIONS": "Transactions",
+			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
+			"API_KEY": "Upwork API key",
+			"SECRET": "Upwork Secret",
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy."
+		},
+		"COMING_SOON": "Coming soon"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -541,20 +611,32 @@
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
+	"INTERVIEW_INFO_MODAL": {
+		"SCHEDULED_BY": "Scheduled by",
+		"HOURS_AGO": "hour(s) ago",
+		"MINUTES_AGO": "minute(s) ago",
+		"DATE": "Дата",
+		"TIME": "Time",
+		"CANDIDATE": "Candidate",
+		"INTERVIEWERS": "Interviewers",
+		"LOCATION": "Локация",
+		"NOTE": "Note"
+	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
-		"ADD_CANDIATE": "Add Candidates",
+		"ADD_CANDIDATE": "Add Candidates",
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
 		"DELETED": "Изтрит",
+		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
 		"EDIT_CANDIDATE": {
 			"HEADER": "Manage Candidate",
 			"DEVELOPER": "Разработчик",
 			"DEPARTMENT": "Отдел",
 			"POSITION": "Позиция",
-			"CANDIATE_DEPARTMENTS": "Отдел на Служителя:",
+			"CANDIDATE_DEPARTMENTS": "Отдел на Служителя:",
 			"EMPLOYMENT_TYPE": "Employment Type",
 			"ACCOUNT": "Account",
 			"EMPLOYMENT": "Employment",
@@ -579,14 +661,35 @@
 			"DOCUMENTS": "Documents",
 			"DOCUMENT_NAME": "Document name",
 			"DOCUMENT": "Document",
-			"FEEDBACK_DESCRIPTION": "Feedback description"
+			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"INTERVIEW": {
+				"INTERVIEW": "Interview",
+				"INTERVIEWS": "Interviews",
+				"ADD_INTERVIEW": "Add interview",
+				"ON": "on",
+				"TO": "To",
+				"FROM": "from",
+				"WITH": "with",
+				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"STEP_1": "Step 1",
+				"STEP_2": "Step 2",
+				"NEXT": "Next",
+				"PREVIOUS": "Previous",
+				"SAVE": "Запази",
+				"EMAIL_NOTIFICATION": "Email notification",
+				"SUMMARY": "Summary",
+				"DETAILS": "Send interview details to",
+				"NOTIFY_CANDIDATE": "Notify candidate",
+				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
+				"INTERVIEWERS": "interviewer(s)"
+			}
 		},
-		"ADD_CANDIATES": {
+		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
 			"STEP_2": "Step 2",
 			"STEP_3": "Step 3",
 			"UPLOAD_CV": "Upload CV",
-			"ADD_ANOTHER_CANDIATE": "Add Another Candidate",
+			"ADD_ANOTHER_CANDIDATE": "Add Another Candidate",
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
@@ -675,6 +778,12 @@
 			"ORG_USERS_EDIT": "Създай/Редактирай/Изтрии потребители на организацията",
 			"ORG_INVITE_VIEW": "Виж покани на организацията",
 			"ORG_INVITE_EDIT": "Създай/Преизпрати/Изтрии покани",
+			"ORG_CANDIDATES_DOCUMENTS_VIEW": "View All Candidates Documents",
+			"ORG_CANDIDATES_TASK_EDIT": "Create/Edit Task",
+			"ORG_CANDIDATES_INTERVIEW_EDIT": "Create/Edit Interview",
+			"ORG_INVENTORY_PRODUCT_EDIT": "Management Product",
+			"ORG_TAGS_EDIT": "Create/Edit/Delete Tags",
+			"ORG_CANDIDATES_FEEDBACK_EDIT": "Create/Edit/Delete Candidate Feedback",
 			"ALL_ORG_VIEW": "Виж всички организации",
 			"ALL_ORG_EDIT": "Създай/Редактирай/Изтрии всички организации",
 			"POLICY_VIEW": "Виж Time Off политиката",
@@ -686,6 +795,8 @@
 			"ACCESS_PRIVATE_PROJECTS": "Access Private Projects",
 			"TIMESHEET_EDIT_TIME": "Edit Time in Timesheet",
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
+			"INVOICES_VIEW": "View Invoices",
+			"INVOICES_EDIT": "Edit Invoices",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Администрация"
@@ -768,6 +879,9 @@
 		"TAGS_SELECT_COLOR": "Tag color",
 		"TAGS_SELECT_DESCRIPTION": "Tag description"
 	},
+	"SKILLS_PAGE": {
+		"HEADER": "Skills"
+	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
 		"ADD_EQUIPMENT": "Add Equipment",
@@ -837,10 +951,19 @@
 		"RETAIL_PRICE_CURRENCY": "Retail price currency",
 		"QUANTITY": "Quantity",
 		"TAXES": "Taxes",
-		"BILLING_INVOICING_POLICY": "Billing invoicing policy"
+		"BILLING_INVOICING_POLICY": "Billing invoicing policy",
+		"PRODUCT_TYPES": "Product types",
+		"PRODUCT_CATEGORIES": "Product categories",
+		"ORGANIZATION": "Organization",
+		"EDIT_PRODUCT_TYPE": "Edit product type",
+		"ADD_PRODUCT_TYPE": "Add product type",
+		"PRODUCT_TYPE_SAVED": "Product type saved",
+		"PRODUCT_TYPE_DELETED": "Product type deleted"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
+		"MY_TASK_HEADER": "My Tasks",
+		"TEAM_TASKS_HEADER": "Team's Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",
@@ -850,6 +973,9 @@
 		"TASK_UPDATED": "Task updated",
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
+		"TASK_MEMBERS": "Служители",
+		"TASK_ASSIGNED_TO": "Assigned To",
+		"TASK_TEAMS": "Отбори",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
 		"ESTIMATE_DAYS": "Days",
@@ -874,7 +1000,13 @@
 			"HEADER": "Manage User",
 			"EDIT_EXISTING_USER": "Edit Existing User",
 			"MAIN": "Основни",
-			"USER_ORGANIZATIONS": "Организации"
+			"USER_ORGANIZATIONS": "Организации",
+			"PREFERRED_LANGUAGE": {
+				"en": "English",
+				"he": "Иврит",
+				"bg": "Български",
+				"ru": "Руски"
+			}
 		},
 		"REMOVE_USER": "{{ name }} successfully removed"
 	},
@@ -947,25 +1079,31 @@
 		"INVOICES_SELECT_CLIENT": "Клиент",
 		"ADD_INVOICE": "Add Invoice",
 		"EDIT_INVOICE": "Edit Invoice",
+		"VIEW_INVOICE": "View Invoice",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
+		"SELECT_PRODUCT": "Select Product",
 		"INVALID_DATES": "Invalid Dates",
-		"INVOICE_NUMBER_VALUE": "Invoice Number cannot be a negative number or zero",
-		"TAX_VALUE": "Tax cannot be a negative number",
-		"DISCOUNT_VALUE": "Discount Value cannot be a negative number",
+		"INVOICE_NUMBER_DUPLICATE": "Invoice Number already exists",
 		"DISCOUNT_TYPE": "Discount Type",
 		"TAX_TYPE": "Tax Type",
 		"PERCENT": "Percent",
 		"FLAT": "Flat",
 		"SUBTOTAL": "Subtotal",
 		"TOTAL": "Total",
+		"NAME": "Име",
+		"PAID": "Paid",
+		"NOT_PAID": "Not Paid",
+		"RECIEVED_INVOICES": "Recieved Invoices",
+		"SEND_INVOICE": "Invoice Sent",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
 			"BY_EMPLOYEE_HOURS": "By Employee Hours",
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
+			"BY_PRODUCTS": "By Products",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items"
 		},
 		"INVOICE_ITEM": {
@@ -980,11 +1118,20 @@
 			"HOURLY_RATE": "Hourly Rate",
 			"HOURS_WORKED": "Hours Worked",
 			"PROJECT": "Проект",
+			"PRODUCT": "Product",
 			"NO_ITEMS": "Please add invoice items",
 			"INVALID_ITEM": "Invalid Invoice Item",
 			"EMPLOYEE_VALUE": "Employee cannot be empty",
 			"PROJECT_VALUE": "Project cannot be empty",
 			"TASK_VALUE": "Task cannot be empty"
+		},
+		"SEND": {
+			"CONFIRMATION": "Are you sure you want to send this invoice to",
+			"ALREADY_SENT": "This invoice has already been sent to"
+		},
+		"VIEW": {
+			"FROM": "FROM",
+			"TO": "TO"
 		}
 	},
 	"HEADER": {
@@ -1053,6 +1200,7 @@
 			"CANDIDATE_EXPERIENCE_REQUIRED": "Experience information is required",
 			"CANDIDATE_DOCUMENT_REQUIRED": "Document information is required",
 			"CANDIDATE_SKILLS_REQUIRED": "Skill's name is required",
+			"CANDIDATE_PROFILE_UPDATE": "{{name}} profile updated.",
 			"NAME_REQUIRED": "Name is required!",
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
@@ -1172,6 +1320,12 @@
 			"DELETE_ACCOUNT_WRONG_DATA": "Wrong input! Pleace try again.",
 			"ACCOUNT_DELETED": "Your account was deleted successfully!",
 			"RECORD_TYPE": "If Yes, please type 'REMOVE ALL DATA' to confirm."
+		},
+		"EVENT_TYPES": {
+			"ADD_EVENT_TYPE": "New event type created",
+			"EDIT_EVENT_TYPE": "Event type edited",
+			"DELETE_EVENT_TYPE": "Event type deleted",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1193,10 +1347,28 @@
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
 		"CALENDAR": "Calendar",
-		"APPROVALS": "Approvals"
+		"APPROVALS": "Approvals",
+		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
+		"DENIED_SUCCESS": "Timesheet Successfully Denied",
+		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
+		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit"
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
+	},
+	"APPOINTMENTS_PAGE": {
+		"ADD_APPOINTMENT": "Add Appointment"
+	},
+	"EVENT_TYPE_PAGE": {
+		"EVENT_TYPE": "Event Types",
+		"MANAGE_EVENT_TYPE": "Manage Event Type",
+		"EVENT_NAME": "Event Type Name",
+		"EVENT_DURATION": "Duration",
+		"EVENT_DESCRIPTION": "Description",
+		"ACTIVE": "Активен"
+	},
+	"SCHEDULE": {
+		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availibility"
 	}
 }

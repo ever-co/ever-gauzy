@@ -1,10 +1,19 @@
-import { Controller, HttpStatus, Param, Put, Body } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Param,
+	Put,
+	Body,
+	UseGuards
+} from '@nestjs/common';
 import { CrudController } from '../core';
 
 import { IntegrationEntitySettingTiedEntity } from './integration-entity-setting-tied-entitiy.entity';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IntegrationEntitySettingTiedEntityService } from './integration-entity-setting-tied-entitiy.service';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class IntegrationEntitySettingTiedEntityController extends CrudController<
 	IntegrationEntitySettingTiedEntity

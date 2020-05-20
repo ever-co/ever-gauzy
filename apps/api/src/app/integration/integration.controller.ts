@@ -1,34 +1,57 @@
-import { Controller, HttpStatus, Get, Query, Param } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { CrudController } from '../core';
 import { Integration } from './integration.entity';
 import { IntegrationService } from './integration.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { IntegrationType } from './integration-type.entity';
+import { ApiResponse, ApiOperation } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
+import { IntegrationTypeGetCommand, IntegrationGetCommand } from './commands';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class IntegrationController extends CrudController<Integration> {
-	constructor(private integrationService: IntegrationService) {
-		super(integrationService);
+	constructor(
+		private _integrationService: IntegrationService,
+		private _commandBus: CommandBus
+	) {
+		super(_integrationService);
 	}
 
-	@ApiOperation({ summary: 'Find integration.' })
+	@ApiOperation({
+		summary: 'Find all integration types.'
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found policies',
-		type: Integration
+		description: 'Found integration types',
+		type: IntegrationType
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id')
-	async getById(
-		@Param('id') id,
-		@Query('data') data: string
-	): Promise<Integration> {
-		const { relations } = JSON.parse(data);
+	@Get('/types')
+	async getIntegrationTypes(): Promise<IntegrationType[]> {
+		return await this._commandBus.execute(new IntegrationTypeGetCommand());
+	}
 
-		return this.integrationService.findOne(id, {
-			relations
-		});
+	@ApiOperation({
+		summary: 'Find all integrations.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found integrations',
+		type: IntegrationType
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async getIntegrations(@Query('filters') filters): Promise<Integration[]> {
+		const integrationFilter = JSON.parse(filters);
+		return await this._commandBus.execute(
+			new IntegrationGetCommand(integrationFilter)
+		);
 	}
 }

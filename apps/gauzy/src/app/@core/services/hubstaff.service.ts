@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, forkJoin } from 'rxjs';
 import {
-	IIntegration,
+	IIntegrationTenant,
 	IIntegrationSetting,
 	IHubstaffOrganization,
 	IHubstaffProject,
@@ -16,10 +16,27 @@ import { Store } from './store.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { environment } from 'apps/gauzy/src/environments/environment';
 import { cloneDeep } from 'lodash';
+import * as moment from 'moment';
+
+const TODAY = new Date();
+
+const DEFAULT_DATE_RANGE = {
+	start: new Date(
+		moment()
+			.subtract(7, 'days')
+			.format('YYYY-MM-DD')
+	),
+	end: TODAY
+};
 
 interface IEntitiesSettings {
 	previousValue: IIntegrationEntitySetting[];
 	currentValue: IIntegrationEntitySetting[];
+}
+
+interface IDateRangeActivityFilter {
+	start: Date;
+	end: Date;
 }
 
 @Injectable({
@@ -33,10 +50,20 @@ export class HubstaffService {
 		previousValue: [],
 		currentValue: []
 	});
+	private _dateRangeActivity$: BehaviorSubject<
+		IDateRangeActivityFilter
+	> = new BehaviorSubject(DEFAULT_DATE_RANGE);
+
 	public entitiesToSync$: Observable<
 		IEntitiesSettings
 	> = this._entitiesToSync$.asObservable();
+
+	public dateRangeActivity$: Observable<
+		IDateRangeActivityFilter
+	> = this._dateRangeActivity$.asObservable();
+
 	integrationId: string;
+
 	constructor(private _http: HttpClient, private _store: Store) {}
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
@@ -102,7 +129,6 @@ export class HubstaffService {
 	}
 
 	authorizeClient(client_id: string): void {
-		//  'http://localhost:4200/pages/integrations/hubstaff';
 		localStorage.setItem('client_id', client_id);
 		const url = `https://account.hubstaff.com/authorizations/new?response_type=code&redirect_uri=${
 			environment.HUBSTAFF_REDIRECT_URI
@@ -114,7 +140,7 @@ export class HubstaffService {
 	addIntegration(
 		code: string,
 		client_secret: string
-	): Observable<IIntegration> {
+	): Observable<IIntegrationTenant> {
 		const client_id = localStorage.getItem('client_id');
 
 		const getAccessTokensDto = {
@@ -126,7 +152,7 @@ export class HubstaffService {
 
 		return this._store.selectedOrganization$.pipe(
 			switchMap(({ tenantId }) =>
-				this._http.post<IIntegration>(
+				this._http.post<IIntegrationTenant>(
 					'/api/integrations/hubstaff/add-integration',
 					{
 						...getAccessTokensDto,
@@ -163,11 +189,25 @@ export class HubstaffService {
 		);
 	}
 
+	setActivityDateRange({ start, end }) {
+		this._dateRangeActivity$.next({
+			start: start || DEFAULT_DATE_RANGE.start,
+			end: this._setEndDate(start)
+		});
+	}
+
+	private _setEndDate(start) {
+		const end = moment(start)
+			.add(7, 'days')
+			.toDate();
+		return end > TODAY ? TODAY : end;
+	}
+
 	autoSync({ integrationId, hubstaffOrganizations, organizationId }) {
 		const entitiesToSync = this._entitiesToSync$
 			.getValue()
 			.currentValue.filter((setting) => setting.sync);
-
+		const dateRange = this._dateRangeActivity$.getValue();
 		// organizations are already fetched ---> skip fetch for this just integrate in DB
 
 		const organizationSetting = entitiesToSync.find(
@@ -196,7 +236,8 @@ export class HubstaffService {
 					this._forkEntities(
 						entitiesToSync,
 						organizations,
-						integrationId
+						integrationId,
+						dateRange
 					)
 				)
 			);
@@ -206,6 +247,7 @@ export class HubstaffService {
 			entitiesToSync,
 			hubstaffOrganizations,
 			integrationId,
+			dateRange,
 			organizationId
 		);
 	}
@@ -214,6 +256,7 @@ export class HubstaffService {
 		entitiesToSync,
 		organizations,
 		integrationId,
+		dateRange,
 		organizationId?
 	) {
 		return forkJoin(
@@ -222,6 +265,7 @@ export class HubstaffService {
 					`/api/integrations/hubstaff/auto-sync/${integrationId}`,
 					{
 						entitiesToSync,
+						dateRange,
 						gauzyId: organizationId
 							? organizationId
 							: organization.gauzyId,

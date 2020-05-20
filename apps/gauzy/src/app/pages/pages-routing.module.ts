@@ -106,16 +106,16 @@ const routes: Routes = [
 					{
 						path: 'me',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./my-tasks/my-tasks.module').then(
+								(m) => m.MyTasksModule
+							)
 					},
 					{
 						path: 'team',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./team-tasks/team-tasks.module').then(
+								(m) => m.TeamTasksModule
+							)
 					}
 				]
 			},
@@ -187,8 +187,22 @@ const routes: Routes = [
 						path: 'schedules',
 						loadChildren: () =>
 							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+								'./employees/schedules/schedule.module'
+							).then((m) => m.ScheduleModule)
+					},
+					{
+						path: 'appointments',
+						loadChildren: () =>
+							import(
+								'./employees/appointment/appointment.module'
+							).then((m) => m.AppointmentModule)
+					},
+					{
+						path: 'event-types',
+						loadChildren: () =>
+							import(
+								'./employees/event-types/event-type.module'
+							).then((m) => m.EventTypeModule)
 					},
 					{
 						path: 'time-off',
@@ -236,6 +250,13 @@ const routes: Routes = [
 							import(
 								'./work-in-progress/work-in-progress.module'
 							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'help-center',
+						loadChildren: () =>
+							import('./help-center/help-center.module').then(
+								(m) => m.HelpCenterModule
+							)
 					},
 					{
 						path: 'equipment-sharing',

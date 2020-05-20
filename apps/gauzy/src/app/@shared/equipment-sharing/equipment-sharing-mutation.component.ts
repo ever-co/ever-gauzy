@@ -11,7 +11,7 @@ import {
 	Equipment,
 	EquipmentSharingStatusEnum,
 	Employee,
-	OrganizationTeams
+	OrganizationTeam
 } from '@gauzy/models';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -58,7 +58,7 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 	requestStatus: string;
 	participants = 'employees';
 
-	teams: OrganizationTeams[];
+	teams: OrganizationTeam[];
 	equipmentItems: Equipment[];
 	selectedEmployees: string[] = [];
 	selectedTeams: string[] = [];
@@ -91,7 +91,6 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();
 	}
-
 	async initializeForm() {
 		this.form = this.fb.group({
 			equipment: [
@@ -187,7 +186,10 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent
 		this.teams = (
 			await this.organizationTeamsService.getAll(['members'])
 		).items.filter((org) => {
-			return org.id === this.selectedOrgId || this.selectedOrgId === '';
+			return (
+				org.organizationId === this.selectedOrgId ||
+				this.selectedOrgId === ''
+			);
 		});
 	}
 

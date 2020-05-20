@@ -1,6 +1,7 @@
 import {
 	EmployeeCreateInput as IEmployeeCreateInput,
-	PermissionsEnum
+	PermissionsEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import {
 	Body,
@@ -24,6 +25,8 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
+import { ParseJsonPipe } from '../shared';
+import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -120,8 +123,14 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<Employee> {
-		return this.employeeService.findOne(id);
+	async findById(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Employee> {
+		const { relations = [] } = data;
+		return this.employeeService.findOne(id, {
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
@@ -159,6 +168,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@Post('/createBulk')
 	async createBulk(
 		@Body() input: IEmployeeCreateInput[],
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	): Promise<Employee[]> {
 		/**
@@ -172,6 +182,8 @@ export class EmployeeController extends CrudController<Employee> {
 					(entity.user.imageUrl = getUserDummyImage(entity.user))
 			);
 
-		return this.commandBus.execute(new EmployeeBulkCreateCommand(input));
+		return this.commandBus.execute(
+			new EmployeeBulkCreateCommand(input, languageCode)
+		);
 	}
 }

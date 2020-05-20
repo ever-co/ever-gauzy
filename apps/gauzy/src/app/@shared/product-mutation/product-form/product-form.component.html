@@ -167,6 +167,15 @@
 						</div>
 					</div>
 				</div>
+				<div class="row">
+					<div class="col-sm-12">
+						<ga-tags-color-input
+							[selectedTags]="tags"
+							(selectedTagsEvent)="selectedTagsEvent($event)"
+						>
+						</ga-tags-color-input>
+					</div>
+				</div>
 				<div class="mb-4">
 					<label class="label" for="description">
 						{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}

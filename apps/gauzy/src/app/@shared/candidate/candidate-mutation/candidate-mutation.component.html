@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header class="d-flex">
-		<h5>{{ 'CANDIDATES_PAGE.ADD_CANDIATE' | translate }}</h5>
+		<h5>{{ 'CANDIDATES_PAGE.ADD_CANDIDATE' | translate }}</h5>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -11,7 +11,7 @@
 		<nb-stepper #stepper>
 			<nb-step [label]="step1">
 				<ng-template #step1>{{
-					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_1' | translate
+					'CANDIDATES_PAGE.ADD_CANDIDATES.STEP_1' | translate
 				}}</ng-template>
 				<ga-user-basic-info-form #userBasicInfo [isCandidate]="true">
 				</ga-user-basic-info-form>
@@ -22,13 +22,13 @@
 						nbButton
 						nbStepperNext
 					>
-						{{ 'CANDIDATES_PAGE.ADD_CANDIATES.NEXT' | translate }}
+						{{ 'CANDIDATES_PAGE.ADD_CANDIDATES.NEXT' | translate }}
 					</button>
 				</div>
 			</nb-step>
 			<nb-step [label]="step2">
 				<ng-template #step2>{{
-					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_2' | translate
+					'CANDIDATES_PAGE.ADD_CANDIDATES.STEP_2' | translate
 				}}</ng-template>
 				<div class="file-uploader">
 					<div class="label">
@@ -40,28 +40,29 @@
 				<div class="button-container">
 					<button status="primary" nbButton nbStepperPrevious>
 						{{
-							'CANDIDATES_PAGE.ADD_CANDIATES.PREVIOUS' | translate
+							'CANDIDATES_PAGE.ADD_CANDIDATES.PREVIOUS'
+								| translate
 						}}
 					</button>
 					<button status="success" nbButton nbStepperNext>
-						{{ 'CANDIDATES_PAGE.ADD_CANDIATES.NEXT' | translate }}
+						{{ 'CANDIDATES_PAGE.ADD_CANDIDATES.NEXT' | translate }}
 					</button>
 				</div>
 			</nb-step>
 			<nb-step [label]="step3">
 				<ng-template #step3>{{
-					'CANDIDATES_PAGE.ADD_CANDIATES.STEP_3' | translate
+					'CANDIDATES_PAGE.ADD_CANDIDATES.STEP_3' | translate
 				}}</ng-template>
 				<div class="step-container button-container">
 					<button nbButton (click)="addCandidate()">
 						{{
-							'CANDIDATES_PAGE.ADD_CANDIATES.ADD_ANOTHER_CANDIATE'
+							'CANDIDATES_PAGE.ADD_CANDIDATES.ADD_ANOTHER_CANDIDATE'
 								| translate
 						}}
 					</button>
 					<button status="success" (click)="add()" nbButton>
 						{{
-							'CANDIDATES_PAGE.ADD_CANDIATES.FINISHED_ADDING'
+							'CANDIDATES_PAGE.ADD_CANDIDATES.FINISHED_ADDING'
 								| translate
 						}}
 					</button>

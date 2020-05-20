@@ -29,6 +29,7 @@ import { ProductTypeMutationComponent } from './product-type-mutation/product-ty
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ProductCategoryMutationComponent } from './product-category-mutation/product-category-mutation.component';
 import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
+import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 
 @NgModule({
 	declarations: [
@@ -39,6 +40,7 @@ import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 		ProductCategoryMutationComponent
 	],
 	imports: [
+		TagsColorInputModule,
 		ThemeModule,
 		NgSelectModule,
 		NbRadioModule,

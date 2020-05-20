@@ -4,134 +4,211 @@ import {
 	PermissionsEnum,
 	RolePermissions,
 	User,
-	Tag
+	LanguagesEnum
 } from '@gauzy/models';
-import { BehaviorSubject } from 'rxjs';
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
+import { Injectable } from '@angular/core';
+import {
+	resetStores,
+	StoreConfig,
+	Store as AkitaStore,
+	Query
+} from '@datorama/akita';
 
+export interface AppState {
+	user: User;
+	userRolePermissions: RolePermissions[];
+	selectedOrganization: Organization;
+	selectedEmployee: SelectedEmployee;
+	selectedProposal: ProposalViewModel;
+	selectedDate: Date;
+}
+
+export interface PersistState {
+	token: string;
+	userId: string;
+	serverConnection: string;
+	preferredLanguage: LanguagesEnum;
+}
+
+export function createInitialAppState(): AppState {
+	return {
+		selectedDate: new Date(),
+		userRolePermissions: []
+	} as AppState;
+}
+
+export function createInitialPersistState(): PersistState {
+	const token = localStorage.getItem('token') || null;
+	const userId = localStorage.getItem('_userId') || null;
+	const serverConnection = localStorage.getItem('serverConnection') || null;
+	const preferredLanguage = localStorage.getItem('preferredLanguage') || null;
+
+	return {
+		token,
+		userId,
+		serverConnection,
+		preferredLanguage
+	} as PersistState;
+}
+
+@Injectable({ providedIn: 'root' })
+@StoreConfig({ name: 'app' })
+export class AppStore extends AkitaStore<AppState> {
+	constructor() {
+		super(createInitialAppState());
+	}
+}
+@Injectable({ providedIn: 'root' })
+@StoreConfig({ name: 'persist' })
+export class PersistStore extends AkitaStore<PersistState> {
+	constructor() {
+		super(createInitialPersistState());
+	}
+}
+@Injectable({ providedIn: 'root' })
+export class AppQuery extends Query<AppState> {
+	constructor(protected store: AppStore) {
+		super(store);
+	}
+}
+
+@Injectable({ providedIn: 'root' })
+export class PersistQuery extends Query<PersistState> {
+	constructor(protected store: PersistStore) {
+		super(store);
+	}
+}
+
+@Injectable({ providedIn: 'root' })
 export class Store {
-	private _selectedOrganization: Organization;
-	private _selectedProposal: ProposalViewModel;
-	private _userRolePermissions: RolePermissions[];
-	private _user: User;
-	private _selectedTags: Tag[];
-	Permissions: boolean;
+	constructor(
+		protected appStore: AppStore,
+		protected appQuery: AppQuery,
+		protected persistStore: PersistStore,
+		protected persistQuery: PersistQuery
+	) {}
 
-	user$: BehaviorSubject<User> = new BehaviorSubject(this.user);
-	selectedTags$: BehaviorSubject<Tag[]> = new BehaviorSubject(
-		this.selectedTags
+	user$ = this.appQuery.select((state) => state.user);
+	selectedOrganization$ = this.appQuery.select(
+		(state) => state.selectedOrganization
 	);
-	selectedOrganization$: BehaviorSubject<Organization> = new BehaviorSubject(
-		this.selectedOrganization
+	selectedEmployee$ = this.appQuery.select((state) => state.selectedEmployee);
+	selectedDate$ = this.appQuery.select((state) => state.selectedDate);
+	userRolePermissions$ = this.appQuery.select(
+		(state) => state.userRolePermissions
 	);
-
-	private _selectedEmployee: SelectedEmployee;
-	selectedEmployee$: BehaviorSubject<SelectedEmployee> = new BehaviorSubject(
-		this.selectedEmployee
+	preferredLanguage$ = this.persistQuery.select(
+		(state) => state.preferredLanguage
 	);
-
-	private _selectedDate: Date;
-	selectedDate$: BehaviorSubject<Date> = new BehaviorSubject(
-		this.selectedDate
-	);
-
-	userRolePermissions$: BehaviorSubject<
-		RolePermissions[]
-	> = new BehaviorSubject(this.userRolePermissions);
 
 	get selectedOrganization(): Organization {
-		return this._selectedOrganization;
-	}
-	get selectedTags(): Tag[] {
-		return this._selectedTags;
+		const { selectedOrganization } = this.appQuery.getValue();
+		return selectedOrganization;
 	}
 
 	set selectedEmployee(employee: SelectedEmployee) {
-		this._selectedEmployee = employee;
-		this.selectedEmployee$.next(employee);
+		this.appStore.update({
+			selectedEmployee: employee
+		});
 	}
 
 	get selectedEmployee(): SelectedEmployee {
-		return this._selectedEmployee;
+		const { selectedEmployee } = this.appQuery.getValue();
+		return selectedEmployee;
 	}
 
 	set selectedOrganization(organization: Organization) {
-		this.selectedOrganization$.next(organization);
-		this._selectedOrganization = organization;
-	}
-	set selectedTags(tag: Tag[]) {
-		this.selectedTags$.next(tag);
-		this._selectedTags = tag;
+		this.appStore.update({
+			selectedOrganization: organization
+		});
 	}
 
 	get token(): string | null {
-		return localStorage.getItem('token') || null;
+		const { token } = this.persistQuery.getValue();
+		return token;
 	}
 
 	set token(token: string) {
-		if (token == null) {
-			localStorage.removeItem('token');
-		} else {
-			localStorage.setItem('token', token);
-		}
+		this.persistStore.update({
+			token: token
+		});
 	}
 
 	get userId(): User['id'] | null {
-		return localStorage.getItem('_userId') || null;
+		const { userId } = this.persistQuery.getValue();
+		return userId;
 	}
 
 	set userId(id: User['id'] | null) {
-		if (id == null) {
-			localStorage.removeItem('_userId');
-		} else {
-			localStorage.setItem('_userId', id);
-		}
+		this.persistStore.update({
+			userId: id
+		});
 	}
 
 	get user(): User {
-		return this._user;
+		const { user } = this.appQuery.getValue();
+		return user;
 	}
 
 	set user(user: User) {
-		this._user = user;
-		this.user$.next(user);
+		this.appStore.update({
+			user: user
+		});
 	}
 
 	get selectedDate() {
-		return this._selectedDate;
+		const { selectedDate } = this.appQuery.getValue();
+		if (selectedDate instanceof Date) {
+			return selectedDate;
+		}
+
+		const date = new Date(selectedDate);
+		this.appStore.update({
+			selectedDate: date
+		});
+
+		return date;
 	}
 
 	set selectedDate(date: Date) {
-		this._selectedDate = date;
-		this.selectedDate$.next(date);
+		this.appStore.update({
+			selectedDate: date
+		});
 	}
 
 	get selectedProposal(): ProposalViewModel {
-		return this._selectedProposal;
+		const { selectedProposal } = this.appQuery.getValue();
+		return selectedProposal;
 	}
 
 	set selectedProposal(proposal: ProposalViewModel) {
-		this._selectedProposal = proposal;
+		this.appStore.update({
+			selectedProposal: proposal
+		});
 	}
 
 	get userRolePermissions(): RolePermissions[] {
-		return this._userRolePermissions;
+		const { userRolePermissions } = this.appQuery.getValue();
+		return userRolePermissions;
 	}
 
 	set userRolePermissions(rolePermissions: RolePermissions[]) {
-		this._userRolePermissions = rolePermissions;
-		this.userRolePermissions$.next(rolePermissions);
+		this.appStore.update({
+			userRolePermissions: rolePermissions
+		});
 	}
 
 	hasPermission(permission: PermissionsEnum) {
-		return !!(this._userRolePermissions || []).find(
+		const { userRolePermissions } = this.appQuery.getValue();
+		return !!(userRolePermissions || []).find(
 			(p) => p.permission === permission && p.enabled
 		);
 	}
 
 	getDateFromOrganizationSettings() {
-		const dateObj = this._selectedDate;
+		const dateObj = this.selectedDate;
 
 		switch (this.selectedOrganization.defaultValueDateType) {
 			case DefaultValueDateTypeEnum.TODAY: {
@@ -150,14 +227,28 @@ export class Store {
 	}
 
 	get serverConnection() {
-		return localStorage.getItem('serverConnection');
+		const { serverConnection } = this.persistQuery.getValue();
+		return serverConnection;
 	}
 
 	set serverConnection(val: string) {
-		localStorage.setItem('serverConnection', val);
+		this.persistStore.update({
+			serverConnection: val
+		});
+	}
+
+	get preferredLanguage(): LanguagesEnum | null {
+		const { preferredLanguage } = this.persistQuery.getValue();
+		return preferredLanguage;
+	}
+
+	set preferredLanguage(preferredLanguage: LanguagesEnum) {
+		this.persistStore.update({
+			preferredLanguage: preferredLanguage
+		});
 	}
 
 	clear() {
-		localStorage.clear();
+		resetStores();
 	}
 }

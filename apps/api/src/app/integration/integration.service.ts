@@ -3,39 +3,13 @@ import { Repository } from 'typeorm';
 import { CrudService } from '../core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Integration } from './integration.entity';
-import { TenantService } from '../tenant/tenant.service';
-import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { IIntegration } from '@gauzy/models';
 
 @Injectable()
 export class IntegrationService extends CrudService<Integration> {
 	constructor(
 		@InjectRepository(Integration)
-		readonly repository: Repository<Integration>,
-		private _tenantService: TenantService,
-		private _integrationSettingService: IntegrationSettingService
+		readonly repository: Repository<Integration>
 	) {
 		super(repository);
 	}
-
-	async addIntegration(createIntegrationDto): Promise<IIntegration> {
-		const { record: tenant } = await this._tenantService.findOneOrFail(
-			createIntegrationDto.tenantId
-		);
-		const integration = await this.create({
-			tenant,
-			name: createIntegrationDto.name,
-			entitySettings: createIntegrationDto.entitySettings
-		});
-		const settingsDto = createIntegrationDto.settings.map((setting) => ({
-			...setting,
-			integration
-		}));
-
-		await this._integrationSettingService.create(settingsDto);
-
-		return integration;
-	}
-
-	async updateIntegration(updateIntegrationDto) {}
 }

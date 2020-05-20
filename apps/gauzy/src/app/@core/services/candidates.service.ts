@@ -55,4 +55,11 @@ export class CandidatesService {
 			createInput
 		);
 	}
+
+	setCandidateAsArchived(id: string): Promise<Candidate> {
+		return this.http
+			.put<Candidate>(`/api/candidate/${id}`, { isArchived: true })
+			.pipe(first())
+			.toPromise();
+	}
 }
