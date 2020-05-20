@@ -16,6 +16,7 @@ import { SelectedEmployee } from '../../../@theme/components/header/selectors/em
 })
 export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
+	mode: 'create' | 'update' = 'create';
 
 	addEditRequest: any = {
 		isBillable: true,
@@ -26,22 +27,18 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	selectedRange: IDateRange = { start: null, end: null };
 	organization: Organization;
 
-	private _timeLog: TimeLog;
 	employeeId: string;
 	employee: SelectedEmployee;
 
 	@Input()
-	public get timeLog(): TimeLog {
-		return this._timeLog;
-	}
-	public set timeLog(value: TimeLog) {
+	public set timeLog(value: TimeLog | Partial<TimeLog>) {
 		const timeLog = Object.assign({}, value);
 		this.selectedRange = {
 			start: timeLog.startedAt,
 			end: timeLog.stoppedAt
 		};
 		this.addEditRequest = timeLog;
-		this._timeLog = timeLog;
+		this.mode = timeLog.id ? 'update' : 'create';
 	}
 
 	constructor(

@@ -78,7 +78,12 @@
 			</div>
 		</nb-card-body>
 		<nb-card-footer>
-			<button nbButton (click)="ref.close()">Close</button>
+			<button class="mr-2" nbButton (click)="openDialog(data)">
+				Edit
+			</button>
+			<button nbButton (click)="ref.close()" status="default">
+				Close
+			</button>
 		</nb-card-footer>
 	</nb-card>
 </ng-template>

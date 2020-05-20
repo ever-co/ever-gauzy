@@ -1,6 +1,6 @@
 <nb-card>
 	<nb-card-header class="header">
-		<h4>Edit time logs</h4>
+		<h4>{{ mode == 'update' ? 'Edit' : 'Add' }} time logs</h4>
 	</nb-card-header>
 	<nb-card-body>
 		<form #f="ngForm">
@@ -105,7 +105,7 @@
 					class="mr-2"
 					(click)="addTime(f)"
 				>
-					{{ !addEditRequest.id ? 'Add Time' : 'Update Time' }}
+					{{ mode == 'create' ? 'Add Time' : 'Update Time' }}
 				</button>
 				<button nbButton status="default" (click)="close()">
 					Close
