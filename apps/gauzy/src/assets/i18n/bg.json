@@ -43,9 +43,9 @@
 		"DOWNLOAD": "Download",
 		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
 		"ADD_ICON": "add icon",
+		"REMOVE_ICON": "remove icon",
 		"MAKE_PRIVATE": "make private",
-		"MAKE_PUBLIC": "make public",
-		"KNOWLEDGE_BASES": "Knowledge bases"
+		"MAKE_PUBLIC": "make public"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -624,7 +624,9 @@
 		"CANDIDATE": "Candidate",
 		"INTERVIEWERS": "Interviewers",
 		"LOCATION": "Локация",
-		"NOTE": "Note"
+		"NOTE": "Note",
+		"OF": "of",
+		"INTERVIEWERS_LOWER_CASE": "interviewers"
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -1150,7 +1152,10 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
 	},
 	"HELP_PAGE": {
-		"HELP": "Помощ"
+		"HELP": "Помощ",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"CHOSE_ICON": "Chose icon to set",
+		"ARTICLE_CONTENT": "Article content for"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "За нас"
