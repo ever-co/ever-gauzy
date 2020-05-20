@@ -15,7 +15,6 @@
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Ok",
 		"SAVE": "Save",
-		"DISCARD": "Discard",
 		"CLEAR_ALL": "Clear All",
 		"BACK": "BACK",
 		"SENT": "Sent",
@@ -1332,6 +1331,10 @@
 			"EDIT_EVENT_TYPE": "Event type edited",
 			"DELETE_EVENT_TYPE": "Event type deleted",
 			"ERROR": "{{ error }}"
+		},
+		"AVAILABILITY_SLOTS": {
+			"SAVE": "Availabiliy Slots saved",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1375,7 +1378,7 @@
 		"ACTIVE": "Active"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availability",
-		"RECURRING_AVAILIBILITY": "Recurring Availability"
+		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
+		"RECURRING_AVAILABILITY": "Recurring Availability"
 	}
 }

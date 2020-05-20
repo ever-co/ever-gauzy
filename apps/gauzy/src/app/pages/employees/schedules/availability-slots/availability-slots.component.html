@@ -4,8 +4,8 @@
 			<h5 class="mb-3">
 				{{
 					(!recurringAvailabilityMode
-						? 'SCHEDULE.DATE_SPECIFIC_AVAILIBILITY'
-						: 'SCHEDULE.RECURRING_AVAILIBILITY'
+						? 'SCHEDULE.DATE_SPECIFIC_AVAILABILITY'
+						: 'SCHEDULE.RECURRING_AVAILABILITY'
 					) | translate
 				}}
 			</h5>
@@ -18,15 +18,6 @@
 				nbButton
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
-			</button>
-			<button
-				style="margin-left: 15px;"
-				[disabled]="!dateSelected"
-				(click)="discardSelectedDates()"
-				status="warning"
-				nbButton
-			>
-				{{ 'BUTTONS.DISCARD' | translate }}
 			</button>
 		</div>
 	</div>
