@@ -625,7 +625,9 @@
 		"CANDIDATE": "Candidate",
 		"INTERVIEWERS": "Interviewers",
 		"LOCATION": "Location",
-		"NOTE": "Note"
+		"NOTE": "Note",
+		"OF": "of",
+		"INTERVIEWERS_LOWER_CASE": "interviewers"
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",

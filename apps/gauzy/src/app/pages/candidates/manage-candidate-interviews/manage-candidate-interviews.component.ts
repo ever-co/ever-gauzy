@@ -13,7 +13,6 @@ import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/cand
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { first } from 'rxjs/operators';
-import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-manage-candidate-interviews',
@@ -31,7 +30,6 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	calendarEvents: EventInput[] = [];
 	constructor(
 		readonly translateService: TranslateService,
-		private router: Router,
 		private dialogService: NbDialogService,
 		private candidateInterviewService: CandidateInterviewService,
 		private toastrService: NbToastrService

@@ -24,9 +24,7 @@ export class EditCandidateComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: Candidate;
-	isInterview = false;
 	candidateName = 'Candidate';
-	candidateId: string;
 	interviewList: ICandidateInterview[];
 	hasEditPermission = false;
 	constructor(
@@ -56,36 +54,32 @@ export class EditCandidateComponent extends TranslationBaseComponent
 				const id = params.id;
 
 				const { items } = await this.candidatesService
-					.getAll(['user', 'organizationPosition', 'tags'], { id })
+					.getAll(['user'], { id })
 					.pipe(first())
 					.toPromise();
 
 				this.selectedCandidate = items[0];
-
+				this.loadInterview();
 				const checkUsername = this.selectedCandidate.user.username;
 				this.candidateName = checkUsername
 					? checkUsername
 					: 'Candidate';
 			});
-		this.loadInterview();
 	}
 	private async loadInterview() {
-		const res = await this.candidateInterviewService.getAll(
-			['interviewers'],
-			{
-				candidateId: this.candidateId
-			}
+		const res = await this.candidateInterviewService.findByCandidateId(
+			this.selectedCandidate.id
 		);
 		if (res) {
-			this.isInterview = true;
-			this.interviewList = res.items;
+			this.interviewList = res;
 		}
 	}
 	async interviewInfo() {
-		if (this.isInterview) {
+		if (this.interviewList.length > 0) {
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
-					interviewList: this.interviewList
+					interviewList: this.interviewList,
+					selectedCandidate: this.selectedCandidate
 				}
 			});
 		}

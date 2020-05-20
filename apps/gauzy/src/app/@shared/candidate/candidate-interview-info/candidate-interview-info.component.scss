@@ -1,12 +1,48 @@
+.card-wrap {
+  min-width: 40rem;
+}
+
 .card {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  padding: 0 10px;
+  border: none;
+}
+
+.card-info {
+  margin: 0 auto;
+}
+
+.header {
+  padding: 0 5px;
+}
+
+.pages {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 15px 10px 0px;
+}
+
+.disable {
+  pointer-events: none;
+  color: #ededed !important;
+}
+
+.show {
+  pointer-events: visible;
+  color: grey !important;
 }
 
 .arrow-icon {
   font-size: 24px;
+}
+
+.arrow-icon:focus {
+  font-size: 28px;
 }
 
 .icons {
@@ -15,7 +51,6 @@
 }
 
 .interview-info {
-  padding-left: 15px;
   display: flex;
   flex-direction: row;
   min-width: 500px;
@@ -23,7 +58,7 @@
 
 .interview-data {
   color: black;
-  padding-left: 45px;
+  padding-left: 30px;
   margin-top: -15px;
   font-size: 18px;
   font-weight: 600;
@@ -32,8 +67,4 @@
 .interview-text {
   font-size: 14px;
   color: grey !important;
-}
-
-.title {
-  padding-left: 15px;
 }
