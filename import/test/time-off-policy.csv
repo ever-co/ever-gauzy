@@ -1,0 +1,2 @@
+id,createdAt,updatedAt,name,organizationId,requiresApproval,paid
+185ad894-998e-477f-a948-125527074697,Fri Apr 10 2020 22:12:22 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:12:22 GMT+0300 (Eastern European Summer Time),Default Policy,22dfa284-5c96-40d8-9d72-411f9c987f71,false,true

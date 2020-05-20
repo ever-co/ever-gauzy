@@ -1,0 +1,4 @@
+id,createdAt,updatedAt,name,organizationId
+bfb15c86-0b92-4dde-9f8e-b31255e49521,Fri Apr 10 2020 22:12:12 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:12:12 GMT+0300 (Eastern European Summer Time),Employees,22dfa284-5c96-40d8-9d72-411f9c987f71
+6fb9e261-8f46-4ef6-9fbe-702a5c71681b,Fri Apr 10 2020 22:12:12 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:12:12 GMT+0300 (Eastern European Summer Time),Candidates,22dfa284-5c96-40d8-9d72-411f9c987f71
+3aa7f9ab-d0cf-4faf-89a7-14fc61bdc2ca,Fri Apr 10 2020 22:12:12 GMT+0300 (Eastern European Summer Time),Fri Apr 10 2020 22:12:12 GMT+0300 (Eastern European Summer Time),Contractors,22dfa284-5c96-40d8-9d72-411f9c987f71
