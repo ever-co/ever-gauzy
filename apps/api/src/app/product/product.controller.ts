@@ -7,8 +7,8 @@ import {
 	Put,
 	Param,
 	HttpCode,
-	UseGuards
-	// UseGuards
+	UseGuards,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
@@ -21,6 +21,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { ProductDeleteCommand } from './commands';
+import { DeleteResult } from 'typeorm';
 
 @ApiTags('Product')
 @UseGuards(AuthGuard('jwt'))
@@ -88,5 +90,23 @@ export class ProductController extends CrudController<Product> {
 		@Body() entity: Product
 	): Promise<any> {
 		return this.commandBus.execute(new ProductUpdateCommand(id, entity));
+	}
+
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(
+		@Param('id') id: string,
+		...options: any[]
+	): Promise<DeleteResult> {
+		return this.commandBus.execute(new ProductDeleteCommand(id));
 	}
 }

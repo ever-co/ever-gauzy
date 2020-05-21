@@ -39,4 +39,8 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 	): Promise<ProductVariant> {
 		return this.productVariantRepository.save(productVariant);
 	}
+
+	deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
+		return this.productVariantRepository.remove(productVariants);
+	}
 }

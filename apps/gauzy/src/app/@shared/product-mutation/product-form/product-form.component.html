@@ -168,31 +168,35 @@
 					</div>
 				</div>
 				<div class="row">
-					<div class="col-sm-12">
+					<div class="col-sm-12 mb-4">
+						<label class="label" for="description">
+							{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}
+						</label>
+						<textarea
+							formControlName="description"
+							nbInput
+							fullWidth
+							id="description"
+							[placeholder]="
+								'INVENTORY_PAGE.DESCRIPTION' | translate
+							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['description'].invalid &&
+									form.controls['description'].touched
+							}"
+						>
+						</textarea>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-12 mb-4">
 						<ga-tags-color-input
 							[selectedTags]="tags"
 							(selectedTagsEvent)="selectedTagsEvent($event)"
 						>
 						</ga-tags-color-input>
 					</div>
-				</div>
-				<div class="mb-4">
-					<label class="label" for="description">
-						{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}
-					</label>
-					<textarea
-						formControlName="description"
-						nbInput
-						fullWidth
-						id="description"
-						[placeholder]="'INVENTORY_PAGE.DESCRIPTION' | translate"
-						[ngClass]="{
-							'status-danger':
-								form.controls['description'].invalid &&
-								form.controls['description'].touched
-						}"
-					>
-					</textarea>
 				</div>
 				<div class="row">
 					<div class="col-sm-12 mb-4">

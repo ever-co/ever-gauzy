@@ -23,4 +23,12 @@ export class ProductVariantSettingService extends CrudService<
 			newProductVariantSettings
 		);
 	}
+
+	async deleteMany(
+		productVariantPrices: ProductVariantSettings[]
+	): Promise<ProductVariantSettings[]> {
+		return this.productVariantSettingsRepository.remove(
+			productVariantPrices
+		);
+	}
 }
