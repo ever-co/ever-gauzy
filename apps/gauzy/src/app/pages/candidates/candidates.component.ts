@@ -219,7 +219,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 		this.selectedCandidate = null;
 
 		const { items } = await this.candidatesService
-			.getAll(['user', 'source'], {
+			.getAll(['user', 'source', 'tags'], {
 				organization: { id: this.selectedOrganizationId }
 			})
 			.pipe(first())
@@ -241,7 +241,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				status: candidate.status,
 				isArchived: candidate.isArchived,
 				imageUrl: candidate.user.imageUrl,
-				tag: candidate.tags
+				tags: candidate.tags
 			});
 		}
 		if (!this.includeArchived) {

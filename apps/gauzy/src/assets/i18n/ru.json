@@ -15,6 +15,8 @@
 		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
+		"DISCARD": "Сбросить",
+		"CLEAR_ALL": "Очистить все",
 		"BACK": "Обратно",
 		"SENT": "Отправлено",
 		"ACCEPTED": "Принято",
@@ -39,7 +41,11 @@
 		"ARCHIVE": "Архивировать",
 		"FIND_TIME": "Время поиска",
 		"DOWNLOAD": "Скачать",
-		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний"
+		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний",
+		"ADD_ICON": "добавить значок",
+		"REMOVE_ICON": "удалить значок",
+		"MAKE_PRIVATE": "сделать приватным",
+		"MAKE_PUBLIC": "сделать публичным"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -471,6 +477,15 @@
 			"TOOLTIP_ACTIVITY_INFO": "Диапазон дат: 7 дней до даты: 6 месяцев",
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
 		},
+		"UPWORK_PAGE": {
+			"ACTIVITIES": "Действия",
+			"REPORTS": "Отчёты",
+			"TRANSACTIONS": "Транзакции",
+			"SUCCESSFULLY_AUTHORIZED": "Успешно авторизованы",
+			"API_KEY": "API ключ обновления",
+			"SECRET": "Секрет обхода",
+			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи."
+		},
 		"COMING_SOON": "Скоро появится"
 	},
 	"DASHBOARD_PAGE": {
@@ -609,7 +624,9 @@
 		"CANDIDATE": "Кандидат",
 		"INTERVIEWERS": "Интервьюеры",
 		"LOCATION": "Местоположение",
-		"NOTE": "Примечание"
+		"NOTE": "Примечание",
+		"OF": "из",
+		"INTERVIEWERS_LOWER_CASE": "интервьюеры"
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
@@ -660,6 +677,7 @@
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
 				"NEXT": "Следующий",
@@ -930,6 +948,7 @@
 		"IS_EQUIPMENT": "Оборудование",
 		"TRACK_INVENTORY": "Отслеживать инвентарь",
 		"ADD_OPTION": "Добавить опцию",
+		"EDIT_OPTION": "Изменить опцию",
 		"INTERNATIONAL_REFERENCE": "Международная ссылка",
 		"CODE": "Код",
 		"NOTES": "Заметки",
@@ -947,10 +966,18 @@
 		"EDIT_PRODUCT_TYPE": "Изменить тип товара",
 		"ADD_PRODUCT_TYPE": "Добавить тип товара",
 		"PRODUCT_TYPE_SAVED": "Тип товара сохранен",
-		"PRODUCT_TYPE_DELETED": "Тип товара удален"
+		"PRODUCT_TYPE_DELETED": "Тип товара удален",
+		"EDIT_PRODUCT_CATEGORY": "Редактировать категорию товара",
+		"ADD_PRODUCT_CATEGORY": "Добавить категорию товара",
+		"PRODUCT_CATEGORY_SAVED": "Категория товара сохранена",
+		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
+		"IMAGE": "Изображение",
+		"LANGUAGE": "Язык"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
+		"MY_TASK_HEADER": "Мои задачи",
+		"TEAM_TASKS_HEADER": "Задачи команды",
 		"ADD_TASKS": "Добавить задачи",
 		"EDIT_TASKS": "Редактировать задачи",
 		"TASKS_TITLE": "Заголовок",
@@ -961,6 +988,7 @@
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
 		"TASK_MEMBERS": "Сотрудники",
+		"TASK_ASSIGNED_TO": "Назначено",
 		"TASK_TEAMS": "Команды",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
@@ -1131,7 +1159,10 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Страница, которую вы ищете, не существует"
 	},
 	"HELP_PAGE": {
-		"HELP": "Помогите"
+		"HELP": "Помогите",
+		"KNOWLEDGE_BASES": "Базы знаний",
+		"CHOSE_ICON": "Выберите значок для установки",
+		"ARTICLE_CONTENT": "Содержание статьи для"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
@@ -1343,6 +1374,10 @@
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
 		"COMPLETE": "Все готово!"
 	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "Это поле обязательно!",
+		"ENTER_POSITIVE_NUMBER": "Пожалуйста, введите положительное число!"
+	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Добавить Назначение"
 	},
@@ -1353,5 +1388,9 @@
 		"EVENT_DURATION": "Продолжительность",
 		"EVENT_DESCRIPTION": "Описание",
 		"ACTIVE": "Активный"
+	},
+	"SCHEDULE": {
+		"DATE_SPECIFIC_AVAILIBILITY": "Определенная дата наличия",
+		"RECURRING_AVAILIBILITY": "Повторяющаяся доступность"
 	}
 }

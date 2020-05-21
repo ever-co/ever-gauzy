@@ -41,11 +41,17 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 				this.productVariant.billingInvoicingPolicy || '',
 				Validators.required
 			],
-			quantity: [this.productVariant.quantity || 0, Validators.required],
-			taxes: [this.productVariant.taxes || 0, Validators.required],
+			quantity: [
+				this.productVariant.quantity || 0,
+				[Validators.required, Validators.min(0)]
+			],
+			taxes: [
+				this.productVariant.taxes || 0,
+				[Validators.required, Validators.min(0)]
+			],
 			retailPrice: [
 				this.productVariant.price.retailPrice || 0,
-				Validators.required
+				[Validators.required, Validators.min(0)]
 			],
 			retailPriceCurrency: [
 				this.productVariant.price.retailPriceCurrency ||
@@ -54,7 +60,7 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 			],
 			unitCost: [
 				this.productVariant.price.unitCost || 0,
-				Validators.required
+				[Validators.required, Validators.min(0)]
 			],
 			unitCostCurrency: [
 				this.productVariant.price.unitCostCurrency ||

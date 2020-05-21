@@ -1,68 +1,35 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	Input,
-	Output,
-	EventEmitter
-} from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { TagsService } from '../../../@core/services/tags.service';
-import { NgModel, FormGroup } from '@angular/forms';
+import { Tag } from '@gauzy/models';
 
 @Component({
-	selector: 'ngx-tags-color-input',
+	selector: 'ga-tags-color-input',
 	templateUrl: './tags-color-input.component.html',
 	styleUrls: ['./tags-color-input.component.scss']
 })
 export class TagsColorInputComponent implements OnInit {
-	@ViewChild('shownInput', { static: true })
-	shownInput: NgModel;
-
-	@Input('tags')
-	tags: any;
-
-	@Input('form')
-	form: FormGroup;
+	tags: Tag[];
 
 	@Input('selectedTags')
-	selectedTags: any;
+	selectedTags: Tag[];
 
-	@Input('items')
-	items: any;
+	selectedTagIds: string[];
 
 	@Output()
-	selectedTagsEvent: EventEmitter<any> = new EventEmitter<any>();
+	selectedTagsEvent = new EventEmitter<Tag[]>();
 
 	constructor(private readonly tagsService: TagsService) {}
 
-	async onChange() {
-		const tags = [];
-
-		for (const tag of this.selectedTags) {
-			const tagToCheck = await this.tagsService.findByName(tag.name);
-			if (!tagToCheck) {
-				const tagNew = await this.tagsService.insertTag({
-					name: tag.name,
-					description: '',
-					color: ''
-				});
-				if (tagNew.id) {
-					tags.push(tagNew);
-				}
-			} else {
-				tags.push(tagToCheck);
-			}
-		}
-
-		this.selectedTagsEvent.emit(tags);
+	async onChange(currentSelection: string[]) {
+		const selectedTags = this.tags.filter((tag) =>
+			currentSelection.includes(tag.id)
+		);
+		this.selectedTagsEvent.emit(selectedTags);
 	}
 
-	ngOnInit() {
-		this.getAllTags();
-	}
-
-	selectedTagsHandler(ev) {
-		this.form.get('selectedTags').setValue(ev);
+	async ngOnInit() {
+		await this.getAllTags();
+		this.selectedTagIds = this.selectedTags.map((tag: Tag) => tag.id);
 	}
 
 	async getAllTags() {

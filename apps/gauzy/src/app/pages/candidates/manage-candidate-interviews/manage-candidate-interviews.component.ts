@@ -37,8 +37,14 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 		super(translateService);
 		this.loadInterviews();
 		this.calendarOptions = {
-			eventClick: () => {
-				this.dialogService.open(CandidateInterviewInfoComponent);
+			eventClick: (event) => {
+				const id = event.event._def.extendedProps.id;
+				console.log(event);
+				this.dialogService.open(CandidateInterviewInfoComponent, {
+					context: {
+						interviewId: id
+					}
+				});
 			},
 			initialView: 'timeGridWeek',
 			header: {
@@ -59,7 +65,9 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	}
 
 	async loadInterviews() {
-		const res = await this.candidateInterviewService.getAll();
+		const res = await this.candidateInterviewService.getAll([
+			'interviewers'
+		]);
 		if (res) {
 			for (const interview of res.items) {
 				this.calendarEvents.push({

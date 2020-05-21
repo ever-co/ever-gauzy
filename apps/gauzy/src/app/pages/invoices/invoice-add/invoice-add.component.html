@@ -31,6 +31,13 @@
 						/>
 					</div>
 				</div>
+				<div class="col-sm-3">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+					>
+					</ga-tags-color-input>
+				</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-3">

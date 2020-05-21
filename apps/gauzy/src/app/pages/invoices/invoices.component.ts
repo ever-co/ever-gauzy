@@ -4,7 +4,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Invoice, PermissionsEnum } from '@gauzy/models';
+import { Invoice, PermissionsEnum, Tag } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router } from '@angular/router';
 import { first, takeUntil } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { Subject } from 'rxjs';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -35,6 +36,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 	disableButton = true;
 	hasInvoiceEditPermission: boolean;
 	invoices: Invoice[];
+	tags: Tag[];
 
 	private _ngDestroy$ = new Subject<void>();
 
@@ -92,7 +94,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 			totalValue: this.selectedInvoice.totalValue,
 			clientId: this.selectedInvoice.clientId,
 			organizationId: this.selectedInvoice.organizationId,
-			invoiceType: this.selectedInvoice.invoiceType
+			invoiceType: this.selectedInvoice.invoiceType,
+			tags: this.selectedInvoice.tags
 		});
 
 		if (this.selectedInvoice.invoiceItems[0].employeeId) {
@@ -213,7 +216,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				if (org) {
 					this.selectedInvoice = null;
 					const { items } = await this.invoicesService.getAll(
-						['invoiceItems'],
+						['invoiceItems', 'tags'],
 						{
 							organizationId: org.id
 						}
@@ -241,9 +244,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 			columns: {
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
-					type: 'text',
+					type: 'custom',
 					sortDirection: 'asc',
-					width: '40%'
+					width: '40%',
+					renderComponent: NotesWithTagsComponent
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),

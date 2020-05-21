@@ -10,7 +10,8 @@ import {
 	Get,
 	Post,
 	Put,
-	HttpCode
+	HttpCode,
+	Query
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeAppointmentService } from './employee-appointment.service';
@@ -38,17 +39,22 @@ export class EmployeeAppointmentController extends CrudController<
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found employee appointments',
-		type: EmployeeAppointmentService
+		type: EmployeeAppointment
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
 	@Get()
-	async findAllEmployeeAppointments(): Promise<
-		IPagination<EmployeeAppointment>
-	> {
-		return this.employeeAppointmentService.findAllAppointments();
+	async findAllEmployeeAppointments(
+		@Query('data') data: string
+	): Promise<IPagination<EmployeeAppointment>> {
+		const { relations, findInput } = JSON.parse(data);
+
+		return this.employeeAppointmentService.findAllAppointments({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })

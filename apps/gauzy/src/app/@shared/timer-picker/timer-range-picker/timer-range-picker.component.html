@@ -13,6 +13,7 @@
 				#dateModel="ngModel"
 			/>
 			<nb-datepicker
+				[filter]="filter"
 				[max]="maxDate"
 				(dateChange)="updateTimePickerLimit($event)"
 				#datepicker
@@ -26,6 +27,7 @@
 				name="start_time"
 				[min]="minSlotStartTime"
 				[max]="maxSlotStartTime"
+				[blockedSlots]="blockedSlots"
 				(change)="chnageStartTime($event)"
 				[(ngModel)]="startTime"
 				#startTimeModel="ngModel"
@@ -40,6 +42,7 @@
 				name="end_time"
 				[min]="minSlotEndTime"
 				[max]="maxSlotEndTime"
+				[blockedSlots]="blockedSlots"
 				[(ngModel)]="endTime"
 				#endTimeModel="ngModel"
 			></ga-timer-picker>

@@ -222,7 +222,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 	private async _loadCandidateData() {
 		const { id } = this.routeParams;
 		const { items } = await this.candidatesService
-			.getAll(['user'], { id })
+			.getAll(['user', 'tags'], { id })
 			.pipe(first())
 			.toPromise();
 

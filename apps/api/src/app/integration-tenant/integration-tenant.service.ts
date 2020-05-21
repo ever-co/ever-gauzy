@@ -5,7 +5,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IntegrationTenant } from './integration-tenant.entity';
 import { TenantService } from '../tenant/tenant.service';
 import { IntegrationSettingService } from '../integration-setting/integration-setting.service';
-import { IIntegrationTenant } from '@gauzy/models';
 
 @Injectable()
 export class IntegrationTenantService extends CrudService<IntegrationTenant> {
@@ -18,7 +17,7 @@ export class IntegrationTenantService extends CrudService<IntegrationTenant> {
 		super(repository);
 	}
 
-	async addIntegration(createIntegrationDto): Promise<IIntegrationTenant> {
+	async addIntegration(createIntegrationDto): Promise<IntegrationTenant> {
 		const { record: tenant } = await this._tenantService.findOneOrFail(
 			createIntegrationDto.tenantId
 		);

@@ -8,7 +8,7 @@ import {
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee, IDateRange } from '@gauzy/models';
+import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 
 @Component({
@@ -17,13 +17,13 @@ import { EmployeesService } from '../../../@core/services';
 	styleUrls: ['candidate-interview-form.component.scss']
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
-	@Input() employeeIds: string[];
+	@Input() interviewers: ICandidateInterviewers[];
 
 	form: any;
 	employees: Employee[];
+	employeeIds: string[];
 	isMeeting: boolean;
 	selectedEmployeeIds = null;
-	select = true;
 	selectedRange: IDateRange = { start: null, end: null };
 	private _ngDestroy$ = new Subject<void>();
 
@@ -41,9 +41,15 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			.subscribe((employees) => {
 				this.employees = employees.items;
 			});
+
+		//if editing
+		this.employeeIds = this.interviewers
+			? this.interviewers.map((item) => item.employeeId)
+			: [];
 	}
-	findTime() {}
-	onMembersSelected(event) {
+	findTime() {} //TO DO
+
+	onMembersSelected(event: string[]) {
 		this.selectedEmployeeIds = event;
 	}
 

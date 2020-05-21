@@ -15,6 +15,8 @@
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Да",
 		"SAVE": "Запази",
+		"DISCARD": "Discard",
+		"CLEAR_ALL": "Clear All",
 		"BACK": "Обратно",
 		"SENT": "Изпратено",
 		"ACCEPTED": "Прието",
@@ -39,7 +41,11 @@
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
-		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
+		"ADD_ICON": "add icon",
+		"REMOVE_ICON": "remove icon",
+		"MAKE_PRIVATE": "make private",
+		"MAKE_PUBLIC": "make public"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -471,6 +477,15 @@
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between"
 		},
+		"UPWORK_PAGE": {
+			"ACTIVITIES": "Activities",
+			"REPORTS": "Reports",
+			"TRANSACTIONS": "Transactions",
+			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
+			"API_KEY": "Upwork API key",
+			"SECRET": "Upwork Secret",
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy."
+		},
 		"COMING_SOON": "Coming soon"
 	},
 	"DASHBOARD_PAGE": {
@@ -609,7 +624,9 @@
 		"CANDIDATE": "Candidate",
 		"INTERVIEWERS": "Interviewers",
 		"LOCATION": "Локация",
-		"NOTE": "Note"
+		"NOTE": "Note",
+		"OF": "of",
+		"INTERVIEWERS_LOWER_CASE": "interviewers"
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -660,6 +677,7 @@
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
 				"NEXT": "Next",
@@ -930,6 +948,7 @@
 		"IS_EQUIPMENT": "Is equipment",
 		"TRACK_INVENTORY": "Track inventory",
 		"ADD_OPTION": "Add option",
+		"EDIT_OPTION": "Edit option",
 		"INTERNATIONAL_REFERENCE": "International reference",
 		"CODE": "Code",
 		"NOTES": "Бележки",
@@ -947,10 +966,18 @@
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
 		"PRODUCT_TYPE_SAVED": "Product type saved",
-		"PRODUCT_TYPE_DELETED": "Product type deleted"
+		"PRODUCT_TYPE_DELETED": "Product type deleted",
+		"EDIT_PRODUCT_CATEGORY": "Edit product category",
+		"ADD_PRODUCT_CATEGORY": "Add product category",
+		"PRODUCT_CATEGORY_SAVED": "Product category saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
+		"IMAGE": "Снимка",
+		"LANGUAGE": "Език (Language)"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
+		"MY_TASK_HEADER": "My Tasks",
+		"TEAM_TASKS_HEADER": "Team's Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",
@@ -961,6 +988,7 @@
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Проект",
 		"TASK_MEMBERS": "Служители",
+		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Отбори",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
@@ -1131,7 +1159,10 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
 	},
 	"HELP_PAGE": {
-		"HELP": "Помощ"
+		"HELP": "Помощ",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"CHOSE_ICON": "Chose icon to set",
+		"ARTICLE_CONTENT": "Article content for"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "За нас"
@@ -1343,6 +1374,10 @@
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
 	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "This field is required!",
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
+	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment"
 	},
@@ -1353,5 +1388,9 @@
 		"EVENT_DURATION": "Duration",
 		"EVENT_DESCRIPTION": "Description",
 		"ACTIVE": "Активен"
+	},
+	"SCHEDULE": {
+		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availability",
+		"RECURRING_AVAILIBILITY": "Recurring Availability"
 	}
 }

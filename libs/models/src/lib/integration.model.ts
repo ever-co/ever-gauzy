@@ -51,6 +51,12 @@ export interface IIntegrationFilter {
 	searchQuery: string;
 }
 
+export interface IIntegrationTenantCreateDto {
+	name: string;
+	entitySettings?: IIntegrationEntitySetting[];
+	settings?: any[];
+}
+
 export enum IntegrationEnum {
 	UPWORK = 'Upwork',
 	HUBSTAFF = 'Hubstaff'

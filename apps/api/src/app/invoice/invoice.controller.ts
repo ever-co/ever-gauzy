@@ -70,6 +70,9 @@ export class InvoiceController extends CrudController<Invoice> {
 		@Param('id') id: string,
 		@Body() entity: IInvoice
 	): Promise<any> {
-		return this.invoiceService.update(id, entity);
+		return this.invoiceService.create({
+			id,
+			...entity
+		});
 	}
 }

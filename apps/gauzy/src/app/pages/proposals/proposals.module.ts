@@ -29,6 +29,7 @@ import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
 import { SharedModule } from '../../@shared/shared.module';
+import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -36,6 +37,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		TagsColorInputModule,
 		SharedModule,
 		ProposalsRoutingModule,
 		ThemeModule,

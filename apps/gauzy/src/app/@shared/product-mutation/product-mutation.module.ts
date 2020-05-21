@@ -27,6 +27,8 @@ import { ProductVariantPriceService } from '../../@core/services/product-variant
 import { UserFormsModule } from '../user/forms/user-forms.module';
 import { ProductTypeMutationComponent } from './product-type-mutation/product-type-mutation.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
+import { ProductCategoryMutationComponent } from './product-category-mutation/product-category-mutation.component';
+import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 
 @NgModule({
@@ -34,7 +36,8 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 		ProductMutationComponent,
 		ProductFormComponent,
 		ProductVariantFormComponent,
-		ProductTypeMutationComponent
+		ProductTypeMutationComponent,
+		ProductCategoryMutationComponent
 	],
 	imports: [
 		TagsColorInputModule,
@@ -51,6 +54,7 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 		NbCheckboxModule,
 		NbToastrModule,
 		UserFormsModule,
+		ImageUploaderModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

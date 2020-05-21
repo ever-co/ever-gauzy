@@ -8,7 +8,7 @@ import { ViewCell } from 'ng2-smart-table';
 export class TaskTeamsComponent implements ViewCell {
 	@Input()
 	rowData: any;
-
+	@Input()
 	value: any;
 
 	constructor() {}

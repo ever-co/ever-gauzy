@@ -11,6 +11,7 @@ import { PictureNameTagsComponent } from './picture-name-tags/picture-name-tags.
 import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
 import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
 import { TaskTeamsComponent } from './task-teams/task-teams.component';
+import { AssignedToComponent } from './assigned-to/assigned-to.component';
 
 @NgModule({
 	imports: [
@@ -33,7 +34,8 @@ import { TaskTeamsComponent } from './task-teams/task-teams.component';
 		PictureNameTagsComponent,
 		TaskEstimateComponent,
 		EmployeeWithLinksComponent,
-		TaskTeamsComponent
+		TaskTeamsComponent,
+		AssignedToComponent
 	],
 	declarations: [
 		DateViewComponent,
@@ -42,8 +44,10 @@ import { TaskTeamsComponent } from './task-teams/task-teams.component';
 		PictureNameTagsComponent,
 		TaskEstimateComponent,
 		EmployeeWithLinksComponent,
-		TaskTeamsComponent
+		TaskTeamsComponent,
+		AssignedToComponent
 	],
+	exports: [NotesWithTagsComponent],
 	providers: []
 })
 export class TableComponentsModule {}

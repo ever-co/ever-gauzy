@@ -106,16 +106,16 @@ const routes: Routes = [
 					{
 						path: 'me',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./my-tasks/my-tasks.module').then(
+								(m) => m.MyTasksModule
+							)
 					},
 					{
 						path: 'team',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./team-tasks/team-tasks.module').then(
+								(m) => m.TeamTasksModule
+							)
 					}
 				]
 			},
@@ -187,8 +187,8 @@ const routes: Routes = [
 						path: 'schedules',
 						loadChildren: () =>
 							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+								'./employees/schedules/schedule.module'
+							).then((m) => m.ScheduleModule)
 					},
 					{
 						path: 'appointments',

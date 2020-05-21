@@ -44,6 +44,7 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this._store.fetchTasks();
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
 	}
