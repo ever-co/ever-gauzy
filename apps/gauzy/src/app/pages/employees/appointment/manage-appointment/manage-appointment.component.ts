@@ -33,7 +33,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	blockedSlots: string[] = ['14:20'];
 	@Input() employeeAppointment: EmployeeAppointment;
 
-	@ViewChild('start_time', { static: false })
+	@ViewChild('start_time')
 	@Output()
 	save = new EventEmitter<EmployeeAppointment>();
 	@Output() cancel = new EventEmitter<string>();

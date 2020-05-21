@@ -41,7 +41,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
-	@ViewChild('timerPopover', { static: false })
+	@ViewChild('timerPopover')
 	timerPopover: NbPopoverDirective;
 
 	showDateSelector = true;

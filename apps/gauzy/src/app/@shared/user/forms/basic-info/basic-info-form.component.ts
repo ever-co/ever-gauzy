@@ -25,7 +25,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 	implements OnInit, AfterViewInit {
 	UPLOADER_PLACEHOLDER = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
-	@ViewChild('imagePreview', { static: false })
+	@ViewChild('imagePreview')
 	imagePreviewElement: ElementRef;
 
 	@Input() public isEmployee: boolean;

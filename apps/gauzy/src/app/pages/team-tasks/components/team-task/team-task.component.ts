@@ -22,7 +22,7 @@ import { AssignedToComponent } from 'apps/gauzy/src/app/@shared/table-components
 })
 export class TaskComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('tasksTable', { static: false }) tasksTable;
+	@ViewChild('tasksTable') tasksTable;
 	private _ngDestroy$: Subject<void> = new Subject();
 	settingsSmartTable: object;
 	loading = false;

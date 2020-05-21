@@ -29,7 +29,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	form: FormGroup;
 	disableButton = true;
 
-	@ViewChild('equipmentSharingTable', { static: false })
+	@ViewChild('equipmentSharingTable')
 	equipmentSharingTable;
 
 	constructor(

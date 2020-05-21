@@ -69,7 +69,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
 
-	@ViewChild('employeesTable', { static: false }) employeesTable;
+	@ViewChild('employeesTable') employeesTable;
 
 	constructor(
 		private employeesService: EmployeesService,

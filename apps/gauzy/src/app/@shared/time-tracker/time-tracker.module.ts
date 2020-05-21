@@ -36,7 +36,7 @@ import { ProjectSelectModule } from '../project-select/project-select.module';
 	exports: [TimeTrackerComponent]
 })
 export class TimeTrackerModule {
-	static forRoot(): ModuleWithProviders {
+	static forRoot(): ModuleWithProviders<TimeTrackerModule> {
 		return {
 			ngModule: TimeTrackerModule,
 			providers: [TimeTrackerService]
