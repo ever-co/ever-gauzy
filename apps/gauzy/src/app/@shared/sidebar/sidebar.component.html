@@ -77,6 +77,15 @@
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
+			*ngIf="isChosenArticle && showPrivateButton"
+			class="main-buttons"
+			(click)="onEditArticleDesc()"
+			status="warning"
+			nbButton
+		>
+			{{ 'BUTTONS.EDIT_DESCRIPTION' | translate }}
+		</button>
+		<button
 			*ngIf="isChosenArticle"
 			class="main-buttons"
 			(click)="onDeleteArticle()"
@@ -86,12 +95,32 @@
 			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 		<div *ngIf="isVisibleEdit" class="edit-node-field">
+			<p>{{ 'BUTTONS.EDIT_NAME' | translate }}</p>
 			<input
 				type="text"
 				size="24"
 				ngModel
 				maxlength="18"
 				(keyup.enter)="editName($event)"
+				nbInput
+			/>
+			<button
+				class="input-button"
+				status="danger"
+				(click)="onCloseEdit()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<div *ngIf="isVisibleEditDesc" class="edit-node-field">
+			<p>{{ 'BUTTONS.EDIT_DESCRIPTION' | translate }}</p>
+			<input
+				type="text"
+				size="24"
+				ngModel
+				maxlength="18"
+				(keyup.enter)="editDesc($event)"
 				nbInput
 			/>
 			<button

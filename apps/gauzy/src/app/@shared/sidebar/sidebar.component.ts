@@ -11,13 +11,13 @@ export class SidebarComponent {
 	public chosenIcon = '';
 	public articleName = 'Chose any article';
 	public articleDesc = 'any article you will chose';
-	// public articleContent = 'any article you will chose';
 	public showPrivateButton = false;
 	public showPublicButton = false;
 	public nodeId = 0;
 	public flag = 0;
 	public isVisibleAdd = false;
 	public isVisibleEdit = false;
+	public isVisibleEditDesc = false;
 	public iconsShow = false;
 	public isChosenArticle = false;
 	public value = '';
@@ -216,14 +216,26 @@ export class SidebarComponent {
 		someNode.data.name = event.target.value;
 		this.tree.treeModel.update();
 		if (!someNode.data.children) {
-			this.articleDesc = event.target.value;
 			this.articleName = event.target.value;
 		}
 		this.isVisibleEdit = false;
 	}
 
+	onEditArticleDesc() {
+		this.isVisibleEditDesc = true;
+	}
+
+	editDesc(event: any) {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		someNode.data.description = event.target.value;
+		this.tree.treeModel.update();
+		if (!someNode.data.children) {
+			this.articleDesc = event.target.value;
+		}
+		this.isVisibleEditDesc = false;
+	}
+
 	onCloseEdit() {
-		this.isVisibleEdit = false;
 		this.value = '';
 	}
 
