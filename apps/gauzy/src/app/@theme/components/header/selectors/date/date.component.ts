@@ -17,7 +17,7 @@ export class DateSelectorComponent implements OnInit {
 	date = new Date();
 	max;
 	min;
-	@ViewChild('month', { static: false })
+	@ViewChild('month')
 	monthRef: NbCalendarMonthPickerComponent<any, any>;
 
 	constructor(private store: Store) {}

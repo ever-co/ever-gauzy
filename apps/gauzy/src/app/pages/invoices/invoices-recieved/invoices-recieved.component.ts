@@ -28,7 +28,7 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 	selectedInvoice: Invoice;
 	disableButton = true;
 
-	@ViewChild('invoicesTable', { static: false }) invoicesTable;
+	@ViewChild('invoicesTable') invoicesTable;
 
 	constructor(
 		private store: Store,

@@ -51,7 +51,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
 
-	@ViewChild('candidatesTable', { static: false }) candidatesTable;
+	@ViewChild('candidatesTable') candidatesTable;
 
 	constructor(
 		private candidatesService: CandidatesService,

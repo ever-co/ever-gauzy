@@ -26,7 +26,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 })
 export class HubstaffComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('projectsTable', { static: false }) projectsTable;
+	@ViewChild('projectsTable') projectsTable;
 	private _ngDestroy$: Subject<void> = new Subject();
 	settingsSmartTable: object;
 	organizations$: Observable<IHubstaffOrganization[]>;

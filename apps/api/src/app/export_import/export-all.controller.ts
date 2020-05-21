@@ -29,6 +29,10 @@ export class ExportAllController implements OnDestroy {
 		await this.exportService.deleteCsvFiles();
 		this.exportService.deleteArchive();
 	}
+	@Get('template')
+	async downloadTemplate(@Res() res) {
+		await this.exportService.downloadTemplate(res);
+	}
 
 	ngOnDestroy() {}
 }

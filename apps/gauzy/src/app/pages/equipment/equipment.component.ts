@@ -33,7 +33,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 	tags: any;
 	selectedTags: any;
 
-	@ViewChild('equipmentTable', { static: false }) equipmentTable;
+	@ViewChild('equipmentTable') equipmentTable;
 
 	ngOnInit(): void {
 		this.loadSmartTable();

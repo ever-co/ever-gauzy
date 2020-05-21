@@ -34,16 +34,16 @@ export class CandidateInterviewMutationComponent
 	@Input() isCalendar: boolean;
 	@Input() header: string;
 
-	@ViewChild('stepper', { static: false })
+	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
-	@ViewChild('candidateInterviewForm', { static: false })
+	@ViewChild('candidateInterviewForm')
 	candidateInterviewForm: CandidateInterviewFormComponent;
 
-	@ViewChild('emailCandidateForm', { static: false })
+	@ViewChild('emailCandidateForm')
 	emailCandidateForm: CandidateEmailComponent;
 
-	@ViewChild('emailInterviewerForm', { static: false })
+	@ViewChild('emailInterviewerForm')
 	emailInterviewerForm: CandidateEmailComponent;
 
 	form: FormGroup;

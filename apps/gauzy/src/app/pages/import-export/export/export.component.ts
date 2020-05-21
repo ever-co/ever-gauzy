@@ -17,5 +17,11 @@ export class ExportComponent implements OnInit, OnDestroy {
 			.subscribe((data) => saveAs(data, `export.zip`));
 	}
 
+	onDownloadTemplates() {
+		this.exportAll
+			.downloadTemplates()
+			.subscribe((data) => saveAs(data, `template.zip`));
+	}
+
 	ngOnDestroy() {}
 }

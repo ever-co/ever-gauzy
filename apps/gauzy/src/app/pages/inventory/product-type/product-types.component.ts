@@ -28,7 +28,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
 
-	@ViewChild('productTypesTable', { static: false }) productTypesTable;
+	@ViewChild('productTypesTable') productTypesTable;
 
 	constructor(
 		readonly translateService: TranslateService,

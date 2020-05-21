@@ -35,9 +35,9 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	maxSlotEndTime: string;
 	minSlotEndTime: string;
 
-	@ViewChild('dateModel', { static: false }) dateModel: NgModel;
-	@ViewChild('startTimeModel', { static: false }) startTimeModel: NgModel;
-	@ViewChild('endTimeModel', { static: false }) endTimeModel: NgModel;
+	@ViewChild('dateModel') dateModel: NgModel;
+	@ViewChild('startTimeModel') startTimeModel: NgModel;
+	@ViewChild('endTimeModel') endTimeModel: NgModel;
 
 	private _maxDate: Date = null;
 	private _disabledDates: number[] = [];
