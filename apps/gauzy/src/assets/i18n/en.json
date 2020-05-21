@@ -41,7 +41,11 @@
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
-		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
+		"ADD_ICON": "add icon",
+		"REMOVE_ICON": "remove icon",
+		"MAKE_PRIVATE": "make private",
+		"MAKE_PUBLIC": "make public"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -408,8 +412,8 @@
 			"EXPORT": "Export",
 			"MERGE": "merge data",
 			"CLEAN_UP": "clean up before import",
-			"EXPORT_MESSAGE": "Click export to download all tables from the database.",
-			"IMPORT_MESSAGE": "Click import to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
+			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database or click \"DOWNLOAD TEMPLATES\" to download zip archive with CSV templates ",
+			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
 			"SELECT_FILE": "Select File",
 			"DROP_FILE": "Drop the file here",
 			"BROWSE": "BROWSE",
@@ -422,7 +426,8 @@
 			"CANCEL": "Cancel",
 			"REMOVE": "Remove",
 			"WRONG_FILE_NAME": "Wrong file name!!!",
-			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\""
+			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\"",
+			"DOWNLOAD_TEMPLATES": "Download templates"
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
@@ -621,7 +626,9 @@
 		"CANDIDATE": "Candidate",
 		"INTERVIEWERS": "Interviewers",
 		"LOCATION": "Location",
-		"NOTE": "Note"
+		"NOTE": "Note",
+		"OF": "of",
+		"INTERVIEWERS_LOWER_CASE": "interviewers"
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -672,6 +679,7 @@
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
 				"NEXT": "Next",
@@ -942,6 +950,7 @@
 		"IS_EQUIPMENT": "Is equipment",
 		"TRACK_INVENTORY": "Track inventory",
 		"ADD_OPTION": "Add option",
+		"EDIT_OPTION": "Edit option",
 		"INTERNATIONAL_REFERENCE": "International reference",
 		"CODE": "Code",
 		"NOTES": "Notes",
@@ -959,11 +968,18 @@
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
 		"PRODUCT_TYPE_SAVED": "Product type saved",
-		"PRODUCT_TYPE_DELETED": "Product type deleted"
+		"PRODUCT_TYPE_DELETED": "Product type deleted",
+		"EDIT_PRODUCT_CATEGORY": "Edit product category",
+		"ADD_PRODUCT_CATEGORY": "Add product category",
+		"PRODUCT_CATEGORY_SAVED": "Product category saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
+		"IMAGE": "Image",
+		"LANGUAGE": "Language"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
 		"MY_TASK_HEADER": "My Tasks",
+		"TEAM_TASKS_HEADER": "Team's Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",
@@ -1145,7 +1161,10 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
 	},
 	"HELP_PAGE": {
-		"HELP": "Help"
+		"HELP": "Help",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"CHOSE_ICON": "Chose icon to set",
+		"ARTICLE_CONTENT": "Article content for"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "About"
@@ -1357,6 +1376,10 @@
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
 	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "This field is required!",
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
+	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment"
 	},
@@ -1369,6 +1392,7 @@
 		"ACTIVE": "Active"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availibility"
+		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availability",
+		"RECURRING_AVAILIBILITY": "Recurring Availability"
 	}
 }

@@ -5,7 +5,10 @@ import {
 	Body,
 	Get,
 	Query,
-	UseGuards
+	UseGuards,
+	Put,
+	Param,
+	HttpCode
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProposalService } from './proposal.service';
@@ -71,5 +74,18 @@ export class ProposalController extends CrudController<Proposal> {
 		...options: any[]
 	): Promise<Proposal> {
 		return this.proposalService.create(entity);
+	}
+
+	@UseGuards(PermissionGuard)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	async updateProposal(
+		@Param('id') id: string,
+		@Body() entity: any
+	): Promise<any> {
+		return this.proposalService.create({
+			id,
+			...entity
+		});
 	}
 }

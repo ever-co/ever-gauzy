@@ -8,15 +8,25 @@ import {
 import { first } from 'rxjs/operators';
 
 @Injectable()
-export class AvailibilitySlotsService {
+export class AvailabilitySlotsService {
 	AVAILIBILITY_SLOTS_BASE_URI = '/api/availability-slots';
 
 	constructor(private http: HttpClient) {}
 
-	create(createInput: IAvailabilitySlotsCreateInput[]): Promise<any> {
+	create(createInput: IAvailabilitySlotsCreateInput): Promise<any> {
 		return this.http
 			.post<IAvailabilitySlots>(
 				this.AVAILIBILITY_SLOTS_BASE_URI,
+				createInput
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	createBulk(createInput: IAvailabilitySlotsCreateInput[]): Promise<any> {
+		return this.http
+			.post<IAvailabilitySlots[]>(
+				this.AVAILIBILITY_SLOTS_BASE_URI + '/bulk',
 				createInput
 			)
 			.pipe(first())

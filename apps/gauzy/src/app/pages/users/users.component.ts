@@ -68,7 +68,7 @@ export class UsersComponent extends TranslationBaseComponent
 	tags: Tag[];
 	selectedTags: any;
 
-	@ViewChild('usersTable', { static: false }) usersTable;
+	@ViewChild('usersTable') usersTable;
 
 	constructor(
 		private dialogService: NbDialogService,

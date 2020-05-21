@@ -9,7 +9,6 @@ import { first } from 'rxjs/operators';
 import { ProductTypeMutationComponent } from '../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Location } from '@angular/common';
-import { OrganizationRowComponent } from './org-row/organization-row.component';
 
 export interface SelectedProductType {
 	data: ProductType;
@@ -29,7 +28,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
 
-	@ViewChild('productTypesTable', { static: false }) productTypesTable;
+	@ViewChild('productTypesTable') productTypesTable;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -51,12 +50,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		this.settingsSmartTable = {
 			actions: false,
 			columns: {
-				organization: {
-					title: this.getTranslation('INVENTORY_PAGE.ORGANIZATION'),
-					width: '40%',
-					type: 'custom',
-					renderComponent: OrganizationRowComponent
-				},
+				// todo replace with product type image
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string'

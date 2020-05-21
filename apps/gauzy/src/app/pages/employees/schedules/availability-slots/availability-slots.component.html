@@ -2,7 +2,12 @@
 	<div class="row">
 		<div class="col">
 			<h5 class="mb-3">
-				{{ 'SCHEDULE.DATE_SPECIFIC_AVAILIBILITY' | translate }}
+				{{
+					(!recurringAvailabilityMode
+						? 'SCHEDULE.DATE_SPECIFIC_AVAILIBILITY'
+						: 'SCHEDULE.RECURRING_AVAILIBILITY'
+					) | translate
+				}}
 			</h5>
 		</div>
 		<div class="col text-right">

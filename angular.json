@@ -6,7 +6,8 @@
 			"versionMismatch": false
 		},
 		"defaultCollection": "@nrwl/angular",
-		"packageManager": "yarn"
+		"packageManager": "yarn",
+		"analytics": false
 	},
 	"version": 1,
 	"newProjectRoot": "",
@@ -25,6 +26,7 @@
 				"build": {
 					"builder": "@angular-devkit/build-angular:browser",
 					"options": {
+						"aot": true,
 						"outputPath": "dist/apps/gauzy",
 						"index": "apps/gauzy/src/index.html",
 						"main": "apps/gauzy/src/main.ts",
@@ -78,7 +80,6 @@
 							"extractCss": true,
 							"namedChunks": false,
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
-							"aot": true,
 							"extractLicenses": false,
 							"vendorChunk": false,
 							"buildOptimizer": false,
@@ -87,6 +88,10 @@
 									"type": "initial",
 									"maximumWarning": "2mb",
 									"maximumError": "20mb"
+								},
+								{
+									"type": "anyComponentStyle",
+									"maximumWarning": "6kb"
 								}
 							]
 						}

@@ -47,6 +47,7 @@ import { AssignedToComponent } from './assigned-to/assigned-to.component';
 		TaskTeamsComponent,
 		AssignedToComponent
 	],
+	exports: [NotesWithTagsComponent],
 	providers: []
 })
 export class TableComponentsModule {}

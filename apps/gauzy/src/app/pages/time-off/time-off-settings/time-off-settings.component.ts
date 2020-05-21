@@ -66,7 +66,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	loading = false;
 	hasEditPermission = false;
 
-	@ViewChild('timeOffPolicyTable', { static: false }) timeOffPolicyTable;
+	@ViewChild('timeOffPolicyTable') timeOffPolicyTable;
 
 	async ngOnInit() {
 		this.loadSettingsSmartTable();

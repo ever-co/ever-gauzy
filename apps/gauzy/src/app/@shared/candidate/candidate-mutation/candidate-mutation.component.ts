@@ -28,13 +28,13 @@ import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 	styleUrls: ['candidate-mutation.component.scss']
 })
 export class CandidateMutationComponent implements OnInit, AfterViewInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 
-	@ViewChild('candidateCv', { static: false })
+	@ViewChild('candidateCv')
 	candidateCv: CandidateCvComponent;
 
-	@ViewChild('stepper', { static: false })
+	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
 	form: FormGroup;

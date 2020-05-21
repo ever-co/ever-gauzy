@@ -42,9 +42,7 @@ export class ImportAllController implements OnDestroy {
 			})
 		})
 	)
-	async uploadFile(@UploadedFiles() file) {
-		await this.importAllService.unzip();
-	}
+	async uploadFile(@UploadedFiles() file) {}
 
 	ngOnDestroy() {}
 }

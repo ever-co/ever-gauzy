@@ -54,7 +54,7 @@ export class InvitesComponent extends TranslationBaseComponent
 
 	hasInviteEditPermission = false;
 
-	@ViewChild('employeesTable', { static: false }) employeesTable;
+	@ViewChild('employeesTable') employeesTable;
 
 	constructor(
 		private dialogService: NbDialogService,

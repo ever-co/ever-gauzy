@@ -40,7 +40,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('invoicesTable', { static: false }) invoicesTable;
+	@ViewChild('invoicesTable') invoicesTable;
 
 	constructor(
 		readonly translateService: TranslateService,

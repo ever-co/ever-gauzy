@@ -51,7 +51,10 @@
 							| translate
 					}}
 				</h6>
-				<div class="px-5" [innerHTML]="jobPostContent"></div>
+				<ga-notes-with-tags
+					style="padding-bottom: 15px; padding-left: 15px;"
+					[rowData]="proposal"
+				></ga-notes-with-tags>
 			</nb-card>
 			<nb-card class="prop-card">
 				<h6>
