@@ -12,8 +12,11 @@
       white-space: nowrap;
       overflow: hidden;
       min-width: 200px;
+      flex: none;
 
       nb-list-item {
+        cursor: pointer;
+
         &:first-child {
           border-top: none;
         }
@@ -22,9 +25,8 @@
           border-bottom: none;
         }
 
-        cursor: pointer;
-
         &:hover {
+          color: #3366ff;
         }
 
         .email-list-item {
@@ -43,9 +45,11 @@
       }
     }
 
-    .email-content {
+    .email-container {
       border-left: 1px solid nb-theme(list-item-divider-color);
-      padding: 1rem 2rem;
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
   }
 }
