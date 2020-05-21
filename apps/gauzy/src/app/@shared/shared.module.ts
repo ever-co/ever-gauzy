@@ -11,7 +11,7 @@ import { RouterModule } from '@angular/router';
 	exports: [BackNavigationModule, ...Pipes, ...Components]
 })
 export class SharedModule {
-	static forRoot(): ModuleWithProviders {
+	static forRoot(): ModuleWithProviders<SharedModule> {
 		return {
 			ngModule: SharedModule,
 			providers: []

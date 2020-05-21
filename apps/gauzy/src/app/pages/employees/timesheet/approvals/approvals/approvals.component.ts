@@ -35,7 +35,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	checkboxAll = false;
 	selectedIds: any = {};
 	private _selectedDate: Date;
-	@ViewChild('checkAllCheckbox', { static: false })
+	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
 	organization: Organization;
 	addEditTimeRequest: any = {

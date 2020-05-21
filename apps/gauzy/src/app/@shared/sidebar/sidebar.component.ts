@@ -89,6 +89,7 @@ export class SidebarComponent {
 			]
 		}
 	];
+
 	options: ITreeOptions = {
 		isExpandedField: 'expanded',
 		actionMapping: {
@@ -117,7 +118,8 @@ export class SidebarComponent {
 		animateExpand: true,
 		displayField: 'name'
 	};
-	@ViewChild(TreeComponent, { static: false })
+
+	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
 	addNode() {

@@ -17,7 +17,7 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 		private store: Store
 	) {}
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	policies: TimeOffPolicy[] = [];
 

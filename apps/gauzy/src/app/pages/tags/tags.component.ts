@@ -32,7 +32,7 @@ export class TagsComponent extends TranslationBaseComponent
 	data: SelectedTag;
 	disableButton = true;
 
-	@ViewChild('tagsTable', { static: false }) tagsTable;
+	@ViewChild('tagsTable') tagsTable;
 
 	constructor(
 		private dialogService: NbDialogService,

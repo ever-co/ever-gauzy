@@ -48,7 +48,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 	_selectedOrganizationId: string;
 	tags?: Tag[];
 
-	@ViewChild('eventTypesTable', { static: false }) eventTypesTable;
+	@ViewChild('eventTypesTable') eventTypesTable;
 
 	loading = true;
 	defaultEventTypes: EventTypeViewModel[] = [
