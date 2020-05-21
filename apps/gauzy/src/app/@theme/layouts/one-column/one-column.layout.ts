@@ -41,7 +41,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		private directionService: NbLayoutDirectionService,
 		private router: Router
 	) {}
-	@ViewChild(NbLayoutComponent, { static: false }) layout: NbLayoutComponent;
+	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: any;
 	showOrganizationsSelector = false;

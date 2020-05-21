@@ -20,7 +20,7 @@ import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/b
 })
 export class EditUserMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 	@Input()
 	userOrganization: UserOrganization;

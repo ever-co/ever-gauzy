@@ -19,13 +19,15 @@ import { Permissions } from '../shared/decorators/permissions';
 import { CandidateInterviewersService } from './candidate-interviewers.service';
 import {
 	PermissionsEnum,
-	ICandidateInterviewersCreateInput
+	ICandidateInterviewersCreateInput,
+	ICandidateInterviewers
 } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	CandidateInterviewersEmployeeBulkDeleteCommand,
-	CandidateInterviewersInterviewBulkDeleteCommand
+	CandidateInterviewersInterviewBulkDeleteCommand,
+	CandidateInterviewersBulkCreateCommand
 } from './commands';
 
 @ApiTags('candidate_interviewers')
@@ -75,6 +77,26 @@ export class CandidateInterviewersController extends CrudController<
 		@Body() entity: ICandidateInterviewersCreateInput
 	): Promise<any> {
 		return this.candidateInterviewersService.create(entity);
+	}
+
+	@ApiOperation({ summary: 'Create interviewers in Bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Interviewers have been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@Post('createBulk')
+	async createBulk(@Body() input: any): Promise<ICandidateInterviewers[]> {
+		const { interviewId = null, employeeIds = [] } = input;
+		return this.commandBus.execute(
+			new CandidateInterviewersBulkCreateCommand(interviewId, employeeIds)
+		);
 	}
 
 	@ApiOperation({

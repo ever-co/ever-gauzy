@@ -10,4 +10,10 @@ export class ExportAllService {
 	downloadAllData() {
 		return this.http.get(`/api/download`, { responseType: 'blob' });
 	}
+
+	downloadTemplates() {
+		return this.http.get(`/api/download/template`, {
+			responseType: 'blob'
+		});
+	}
 }

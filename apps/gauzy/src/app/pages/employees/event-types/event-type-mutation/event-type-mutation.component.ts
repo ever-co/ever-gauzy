@@ -20,7 +20,7 @@ export class EventTypeMutationComponent extends TranslationBaseComponent
 	public form: FormGroup;
 	tags: Tag[] = [];
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	eventType: EventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];

@@ -31,7 +31,7 @@ export class InventoryComponent extends TranslationBaseComponent
 	form: FormGroup;
 	disableButton = true;
 
-	@ViewChild('inventoryTable', { static: false }) inventoryTable;
+	@ViewChild('inventoryTable') inventoryTable;
 
 	ngOnInit(): void {
 		this.loadSmartTable();

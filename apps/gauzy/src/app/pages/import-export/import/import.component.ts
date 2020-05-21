@@ -1,10 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FileUploader } from 'ng2-file-upload';
 import { NbToastrService, NbGlobalPhysicalPosition } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 const URL = '/api/import';
 @Component({
@@ -12,20 +11,21 @@ const URL = '/api/import';
 	templateUrl: './import.component.html',
 	styleUrls: ['./import.component.scss']
 })
-export class ImportComponent implements OnInit, OnDestroy {
+export class ImportComponent extends TranslationBaseComponent
+	implements OnInit {
 	uploader: FileUploader;
 	hasBaseDropZoneOver: boolean;
 	hasAnotherDropZoneOver: boolean;
 	response: string;
 	selectedFile: File = null;
 	exportName = false;
-	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
 		private toastrService: NbToastrService,
-		private translate: TranslateService,
+		readonly translateService: TranslateService,
 		private http: HttpClient
 	) {
+		super(translateService);
 		this.uploader = new FileUploader({
 			url: URL,
 			itemAlias: 'file'
@@ -63,21 +63,5 @@ export class ImportComponent implements OnInit, OnDestroy {
 			);
 		}
 		event.target.value = '';
-	}
-
-	getTranslation(prefix: string) {
-		let result = '';
-		this.translate
-			.get(prefix)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((res) => {
-				result = res;
-			});
-		return result;
-	}
-
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
 	}
 }

@@ -15,7 +15,6 @@
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Ok",
 		"SAVE": "Save",
-		"DISCARD": "Discard",
 		"CLEAR_ALL": "Clear All",
 		"BACK": "BACK",
 		"SENT": "Sent",
@@ -251,6 +250,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
+			"ADD_REMOVE_CANDIDATES": "Add Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -412,8 +412,8 @@
 			"EXPORT": "Export",
 			"MERGE": "merge data",
 			"CLEAN_UP": "clean up before import",
-			"EXPORT_MESSAGE": "Click export to download all tables from the database.",
-			"IMPORT_MESSAGE": "Click import to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
+			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database or click \"DOWNLOAD TEMPLATES\" to download zip archive with CSV templates ",
+			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
 			"SELECT_FILE": "Select File",
 			"DROP_FILE": "Drop the file here",
 			"BROWSE": "BROWSE",
@@ -426,7 +426,8 @@
 			"CANCEL": "Cancel",
 			"REMOVE": "Remove",
 			"WRONG_FILE_NAME": "Wrong file name!!!",
-			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\""
+			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\"",
+			"DOWNLOAD_TEMPLATES": "Download templates"
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
@@ -616,19 +617,7 @@
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
-	"INTERVIEW_INFO_MODAL": {
-		"SCHEDULED_BY": "Scheduled by",
-		"HOURS_AGO": "hour(s) ago",
-		"MINUTES_AGO": "minute(s) ago",
-		"DATE": "Date",
-		"TIME": "Time",
-		"CANDIDATE": "Candidate",
-		"INTERVIEWERS": "Interviewers",
-		"LOCATION": "Location",
-		"NOTE": "Note",
-		"OF": "of",
-		"INTERVIEWERS_LOWER_CASE": "interviewers"
-	},
+
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
 		"ADD_CANDIDATE": "Add Candidates",
@@ -691,6 +680,21 @@
 				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
 				"INTERVIEWERS": "interviewer(s)"
 			}
+		},
+		"INTERVIEW_INFO_MODAL": {
+			"SCHEDULED": "Scheduled",
+			"HOURS_AGO": " hour(s) ago",
+			"LESS_MINUTE": " less than minute ago",
+			"MINUTES_AGO": " minutes ago",
+			"DAYS_AGO": " day(s) ago",
+			"DATE": "Date",
+			"TIME": "Time",
+			"CANDIDATE": "Candidate",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Location",
+			"NOTE": "Note",
+			"OF": "of",
+			"INTERVIEWERS_LOWER_CASE": "interviewers"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
@@ -1346,6 +1350,10 @@
 			"EDIT_EVENT_TYPE": "Event type edited",
 			"DELETE_EVENT_TYPE": "Event type deleted",
 			"ERROR": "{{ error }}"
+		},
+		"AVAILABILITY_SLOTS": {
+			"SAVE": "Availabiliy Slots saved",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1393,7 +1401,7 @@
 		"ACTIVE": "Active"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availability",
-		"RECURRING_AVAILIBILITY": "Recurring Availability"
+		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
+		"RECURRING_AVAILABILITY": "Recurring Availability"
 	}
 }

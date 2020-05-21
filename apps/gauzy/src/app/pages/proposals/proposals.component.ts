@@ -77,7 +77,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 
 	private _selectedOrganizationId: string;
 
-	@ViewChild('proposalsTable', { static: false }) proposalsTable;
+	@ViewChild('proposalsTable') proposalsTable;
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
