@@ -15,7 +15,6 @@
 		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
-		"DISCARD": "Сбросить",
 		"CLEAR_ALL": "Очистить все",
 		"BACK": "Обратно",
 		"SENT": "Отправлено",
@@ -1344,6 +1343,10 @@
 			"EDIT_EVENT_TYPE": "Тип события отредактирован",
 			"DELETE_EVENT_TYPE": "Тип события удален",
 			"ERROR": "{{ error }}"
+		},
+		"AVAILABILITY_SLOTS": {
+			"SAVE": "Доступные слоты сохранены",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1391,7 +1394,7 @@
 		"ACTIVE": "Активный"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Определенная дата наличия",
-		"RECURRING_AVAILIBILITY": "Повторяющаяся доступность"
+		"DATE_SPECIFIC_AVAILABILITY": "Определенная дата наличия",
+		"RECURRING_AVAILABILITY": "Повторяющаяся доступность"
 	}
 }
