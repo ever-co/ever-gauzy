@@ -3,7 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
-import { ICandidateInterviewersDeleteInput } from '@gauzy/models';
+import {
+	ICandidateInterviewersDeleteInput,
+	ICandidateInterviewersCreateInput
+} from '@gauzy/models';
 
 @Injectable()
 export class CandidateInterviewersService extends CrudService<
@@ -42,5 +45,8 @@ export class CandidateInterviewersService extends CrudService<
 
 	async deleteBulk(ids: string[]) {
 		return await this.repository.delete(ids);
+	}
+	async createBulk(createInput: ICandidateInterviewersCreateInput[]) {
+		return await this.repository.save(createInput);
 	}
 }

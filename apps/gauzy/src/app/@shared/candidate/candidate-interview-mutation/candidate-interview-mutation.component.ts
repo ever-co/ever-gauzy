@@ -141,10 +141,8 @@ export class CandidateInterviewMutationComponent
 			...this.emptyInterview,
 			candidateId: this.selectedCandidate.id
 		});
-		//create interviewers
-		for (const interviewer of this.selectedInterviewers) {
-			this.addInterviewer(interview.id, interviewer);
-		}
+		this.addInterviewers(interview.id, this.selectedInterviewers);
+
 		//find interviewers for this interview
 		const interviewers = await this.candidateInterviewersService.findByInterviewId(
 			interview.id
@@ -163,12 +161,12 @@ export class CandidateInterviewMutationComponent
 		}
 	}
 
-	async addInterviewer(id: string, employeeId: string) {
+	async addInterviewers(interviewId: string, employeeIds: string[]) {
 		try {
-			await this.candidateInterviewersService.create({
-				interviewId: id,
-				employeeId: employeeId
-			});
+			await this.candidateInterviewersService.createBulk(
+				interviewId,
+				employeeIds
+			);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -198,10 +196,7 @@ export class CandidateInterviewMutationComponent
 		await this.candidateInterviewersService.deleteBulkByEmployeeId(
 			deletedIds
 		);
-
-		for (const id of newIds) {
-			this.addInterviewer(this.interviewId, id); //to do bulk
-		}
+		this.addInterviewers(this.interview.id, newIds);
 		this.interviewId = null;
 	}
 
