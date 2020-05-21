@@ -82,11 +82,6 @@ export class DateSelectorComponent implements OnInit {
 	}
 
 	clickOutside(event) {
-		/**
-		 * the usage of document.getElementById('dashboard-calendar')
-		 * has to be replaced / redesigned as it does not permit two or more date instances
-		 * to be loaded in the dom at the same time.
-		 */
 		if (
 			!document
 				.getElementById('dashboard-calendar')
