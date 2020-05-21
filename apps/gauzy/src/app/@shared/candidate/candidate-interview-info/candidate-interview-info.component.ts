@@ -47,12 +47,13 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 			if (res) {
 				this.interviewList = [];
 				this.interviewList.push(res);
+
+				const candidate = await this.candidatesService.getCandidateById(
+					res.candidateId,
+					['user']
+				);
+				this.selectedCandidate = candidate;
 			}
-			const candidate = await this.candidatesService.getCandidateById(
-				res.candidateId,
-				['user']
-			);
-			this.selectedCandidate = candidate;
 		}
 		this.currentInterview = this.interviewList[0];
 		this.getData(this.currentInterview.id);
