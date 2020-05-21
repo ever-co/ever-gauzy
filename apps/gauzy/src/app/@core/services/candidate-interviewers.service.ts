@@ -24,6 +24,19 @@ export class CandidateInterviewersService {
 			.toPromise();
 	}
 
+	createBulk(
+		interviewId: string,
+		employeeIds: string[]
+	): Promise<ICandidateInterviewers[]> {
+		return this.http
+			.post<ICandidateInterviewers[]>(
+				'/api/candidate-interviewers/createBulk',
+				{ interviewId, employeeIds }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAll(
 		findInput?: ICandidateInterviewersFindInput
 	): Promise<{ items: any[]; total: number }> {

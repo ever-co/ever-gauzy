@@ -20,6 +20,7 @@ import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-ha
 	selector: 'ngx-edit-candidate-profile',
 	templateUrl: './edit-candidate-profile.component.html',
 	styleUrls: [
+		'./edit-candidate-profile.component.scss',
 		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	],
 	providers: [CandidateStore]
