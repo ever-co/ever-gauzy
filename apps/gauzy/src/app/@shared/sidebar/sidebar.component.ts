@@ -1,16 +1,28 @@
+import { nodes } from './../../../../../../libs/models/src/lib/help-center-menu.model';
 import { Component, ViewChild } from '@angular/core';
 import { ITreeOptions, TreeComponent } from 'angular-tree-component';
+import { FormGroup, FormBuilder } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { IHelpCenter } from '@gauzy/models';
+import { isEqual } from './delete-node';
 
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
-	styleUrls: ['./sidebar.component.scss']
+	styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent {
+	constructor(
+		private readonly fb: FormBuilder,
+		private sanitizer: DomSanitizer
+	) {}
+	form: FormGroup;
+	public showDataEdit = false;
 	public icons = ['🔥', '📎', '🌐', '🔎'];
 	public chosenIcon = '';
 	public articleName = 'Chose any article';
 	public articleDesc = 'any article you will chose';
+	public articleData: SafeHtml;
 	public showPrivateButton = false;
 	public showPublicButton = false;
 	public nodeId = 0;
@@ -21,75 +33,7 @@ export class SidebarComponent {
 	public iconsShow = false;
 	public isChosenArticle = false;
 	public value = '';
-	public nodes = [
-		{
-			id: 1,
-			name: 'Knowledge base1',
-			description: 'desc1',
-			data: '',
-			children: [
-				{ id: 2, name: 'article1.1', description: 'desc1', data: '' },
-				{ id: 3, name: 'article1.2', description: 'desc1', data: '' }
-			]
-		},
-		{
-			id: 4,
-			name: 'Knowledge base2',
-			description: 'desc1',
-			data: '',
-			children: [
-				{ id: 5, name: 'article2.1', description: 'desc1', data: '' },
-				{
-					id: 6,
-					name: 'Base2.2',
-					description: 'desc1',
-					data: '',
-					children: [
-						{
-							id: 7,
-							name: 'article3.1',
-							description: 'desc1',
-							data: ''
-						}
-					]
-				}
-			]
-		},
-		{
-			id: 8,
-			name: 'Knowledge base3',
-			description: 'desc1',
-			data: '',
-			children: [
-				{ id: 9, name: 'article1.1', description: 'desc1', data: '' },
-				{ id: 10, name: 'article1.2', description: 'desc1', data: '' }
-			]
-		},
-		{
-			id: 11,
-			name: 'Knowledge base4',
-			description: 'desc1',
-			data: '',
-			children: [
-				{ id: 12, name: 'article2.1', description: 'desc1', data: '' },
-				{
-					id: 13,
-					name: 'Base2.2',
-					description: 'desc1',
-					data: '',
-					children: [
-						{
-							id: 14,
-							name: 'article3.1',
-							description: 'desc1',
-							data: ''
-						}
-					]
-				}
-			]
-		}
-	];
-
+	public nodes: IHelpCenter[] = nodes;
 	options: ITreeOptions = {
 		isExpandedField: 'expanded',
 		actionMapping: {
@@ -102,12 +46,14 @@ export class SidebarComponent {
 						this.showPublicButton = false;
 						this.articleDesc = node.data.description;
 						this.articleName = node.data.name;
+						this.articleData = node.data.data;
+						this.loadFormData();
 					} else {
 						this.showPrivateButton = false;
 						this.showPublicButton = true;
 					}
-				}
-			}
+				},
+			},
 		},
 		allowDrag: (node) => {
 			return true;
@@ -116,7 +62,7 @@ export class SidebarComponent {
 			return true;
 		},
 		animateExpand: true,
-		displayField: 'name'
+		displayField: 'name',
 	};
 
 	@ViewChild(TreeComponent)
@@ -134,7 +80,7 @@ export class SidebarComponent {
 			name: `${this.value}`,
 			description: 'desc1',
 			data: '',
-			children: []
+			children: [],
 		});
 		this.tree.treeModel.update();
 		this.isVisibleAdd = false;
@@ -236,32 +182,40 @@ export class SidebarComponent {
 	}
 
 	onCloseEdit() {
+		this.isVisibleEdit = false;
+		this.value = '';
+	}
+
+	onCloseDesc() {
+		this.isVisibleEditDesc = false;
 		this.value = '';
 	}
 
 	onDeleteArticle() {
-		this.isEqual(this.nodes, this.nodeId);
+		isEqual(this.nodes, this.nodeId);
 		this.tree.treeModel.update();
 		this.isChosenArticle = false;
 		this.articleName = 'Chose any article';
 		this.articleDesc = 'any article you will chose';
 	}
 
-	isEqual(graph, id) {
-		const succeesCondition = (node) => node.id === id;
-		const i = graph.findIndex(succeesCondition);
-		if (i >= 0) {
-			graph.splice(i, 1);
-			return true;
-		}
-		for (let i = 0; i < graph.length; i++) {
-			if (graph[i].children) {
-				if (this.isEqual(graph[i].children, id)) {
-					if (graph[i].children.length === 0) {
-						delete graph[i].children;
-					}
-				}
-			}
-		}
+	loadFormData() {
+		this.form = this.fb.group({
+			text: [this.articleData],
+		});
+	}
+
+	onChange(value: string) {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		this.articleData = this.sanitizer.bypassSecurityTrustHtml(value);
+		someNode.data.data = this.articleData;
+	}
+
+	editArticleData() {
+		this.showDataEdit = true;
+	}
+
+	onSaveData() {
+		this.showDataEdit = false;
 	}
 }

@@ -74,7 +74,7 @@
 			status="warning"
 			nbButton
 		>
-			{{ 'BUTTONS.EDIT' | translate }}
+			{{ 'HELP_PAGE.EDIT_NAME' | translate }}
 		</button>
 		<button
 			*ngIf="isChosenArticle && showPrivateButton"
@@ -83,7 +83,7 @@
 			status="warning"
 			nbButton
 		>
-			{{ 'BUTTONS.EDIT_DESCRIPTION' | translate }}
+			{{ 'HELP_PAGE.EDIT_DESCRIPTION' | translate }}
 		</button>
 		<button
 			*ngIf="isChosenArticle"
@@ -95,7 +95,7 @@
 			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 		<div *ngIf="isVisibleEdit" class="edit-node-field">
-			<p>{{ 'BUTTONS.EDIT_NAME' | translate }}</p>
+			<p>{{ 'HELP_PAGE.EDIT_NAME' | translate }}</p>
 			<input
 				type="text"
 				size="24"
@@ -114,7 +114,7 @@
 			</button>
 		</div>
 		<div *ngIf="isVisibleEditDesc" class="edit-node-field">
-			<p>{{ 'BUTTONS.EDIT_DESCRIPTION' | translate }}</p>
+			<p>{{ 'HELP_PAGE.EDIT_DESCRIPTION' | translate }}</p>
 			<input
 				type="text"
 				size="24"
@@ -126,7 +126,7 @@
 			<button
 				class="input-button"
 				status="danger"
-				(click)="onCloseEdit()"
+				(click)="onCloseDesc()"
 				nbButton
 			>
 				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
@@ -151,10 +151,42 @@
 		<div>
 			<h5>{{ articleName }}</h5>
 		</div>
-		<div>
-			<p>
+		<div *ngIf="isChosenArticle && showPrivateButton">
+			<h6>
 				{{ articleDesc }}
-			</p>
+			</h6>
 		</div>
+		<div *ngIf="isChosenArticle && showPrivateButton">
+			<div [innerHTML]="articleData"></div>
+			<button
+				class="main-buttons"
+				(click)="editArticleData()"
+				status="primary"
+				nbButton
+			>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+		</div>
+		<nb-card class="content-card">
+			<form [formGroup]="form" *ngIf="showDataEdit">
+				<ckeditor
+					[formControl]="form.controls['text']"
+					(change)="onChange($event)"
+					[config]="{
+						width: '100%',
+						height: '200'
+					}"
+				></ckeditor>
+				<button
+					*ngIf="isChosenArticle"
+					class="main-buttons"
+					(click)="onSaveData()"
+					status="success"
+					nbButton
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</form>
+		</nb-card>
 	</nb-card-body>
 </nb-card>
