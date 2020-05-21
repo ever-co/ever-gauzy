@@ -13,7 +13,7 @@ import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { first, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
@@ -128,12 +128,13 @@ export class CandidateInterviewMutationComponent
 		this.employees = [];
 		this.notification();
 		const interview: ICandidateInterview = null;
+		let createdInterview = null;
 		if (this.interviewId !== null) {
 			this.editInterview();
 		} else {
-			this.createInterview(interview);
+			createdInterview = this.createInterview(interview);
 		}
-		this.closeDialog(interview);
+		this.closeDialog(createdInterview);
 	}
 
 	async createInterview(interview: ICandidateInterview) {
@@ -148,14 +149,18 @@ export class CandidateInterviewMutationComponent
 			interview.id
 		);
 		try {
-			await this.candidateInterviewService.update(interview.id, {
-				title: this.interview.title,
-				interviewers: interviewers ? interviewers : null,
-				location: this.interview.location,
-				startTime: this.interview.startTime,
-				endTime: this.interview.endTime,
-				note: this.interview.note
-			});
+			const createdInterview = await this.candidateInterviewService.update(
+				interview.id,
+				{
+					title: this.interview.title,
+					interviewers: interviewers ? interviewers : null,
+					location: this.interview.location,
+					startTime: this.interview.startTime,
+					endTime: this.interview.endTime,
+					note: this.interview.note
+				}
+			);
+			return createdInterview;
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -196,20 +201,15 @@ export class CandidateInterviewMutationComponent
 		await this.candidateInterviewersService.deleteBulkByEmployeeId(
 			deletedIds
 		);
-		this.addInterviewers(this.interview.id, newIds);
+		this.addInterviewers(this.interviewId, newIds);
 		this.interviewId = null;
 	}
 
 	async onCandidateSelected(id: string) {
-		if (this.selectedCandidate === null) {
-			const res = await this.candidatesService
-				.getAll(['user'], {
-					id: id
-				})
-				.pipe(first())
-				.toPromise();
-			this.selectedCandidate = res.items[0]; //TO DO : previous
-		}
+		const candidate = await this.candidatesService.getCandidateById(id, [
+			'user'
+		]);
+		this.selectedCandidate = candidate;
 	}
 
 	notification() {
