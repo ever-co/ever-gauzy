@@ -47,7 +47,10 @@
 			></ga-employee-selector>
 		</nb-action>
 
-		<nb-action *ngIf="showDateSelector" class="show-large-up">
+		<nb-action
+			*ngIf="showDateSelector && !showExtraActions"
+			class="show-large-up"
+		>
 			<ga-date-selector class="date-selector"></ga-date-selector>
 		</nb-action>
 
@@ -138,7 +141,7 @@
 	</div>
 
 	<ga-date-selector
-		*ngIf="showDateSelector"
+		*ngIf="showDateSelector && showExtraActions"
 		class="date-selector"
 	></ga-date-selector>
 
