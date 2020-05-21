@@ -975,7 +975,8 @@
 		"PRODUCT_CATEGORY_SAVED": "Категория товара сохранена",
 		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
 		"IMAGE": "Изображение",
-		"LANGUAGE": "Язык"
+		"LANGUAGE": "Язык",
+		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -1224,7 +1225,8 @@
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
 			"PHONE_REQUIRED": "Требуется указать телефон!",
-			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!"
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!",
+			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!"
 		}
 	},
 	"ACCEPT_INVITE": {
