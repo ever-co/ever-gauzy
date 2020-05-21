@@ -1165,7 +1165,9 @@
 	"HELP_PAGE": {
 		"HELP": "עזרה",
 		"KNOWLEDGE_BASES": "Knowledge bases",
-		"CHOSE_ICON": "Chose icon to set"
+		"CHOSE_ICON": "Chose icon to set",
+		"EDIT_DESCRIPTION": "edit description",
+		"EDIT_NAME": "edit name"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "עלינו"
