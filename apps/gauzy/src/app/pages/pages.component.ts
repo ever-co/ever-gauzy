@@ -290,6 +290,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Approvals',
+					icon: 'flip-2-outline',
+					link: '/pages/employees/approvals',
+					data: {
+						translated: false,
+						translationKey: 'MENU.APPROVALS'
+					}
+				},
+				{
 					title: 'Candidates',
 					icon: 'person-done-outline',
 					link: '/pages/employees/candidates',

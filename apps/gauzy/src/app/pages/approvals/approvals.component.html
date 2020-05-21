@@ -1,0 +1,26 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'TIME_OFF_PAGE.HEADER' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="card-row">
+			<div *ngFor="let item of listApprovals; let i = index" class="card-col">
+				<div class="req">
+					<div class="req-icon">
+						<nb-icon [icon]="item?.icon"></nb-icon>
+					</div>
+
+					<div class="req-content">
+						<div class="req-title">
+							<p>{{ item.title }}</p>
+						</div>
+
+						<div class="req-btn">
+							<button status="primary" nbButton>New Request</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>
