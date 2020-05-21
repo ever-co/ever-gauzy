@@ -29,6 +29,7 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;
 	selectedInterview = true;
+	selectedCandidateIds: string[];
 	candidates: Candidate[] = [];
 	calendarEvents: EventInput[] = [];
 	constructor(
