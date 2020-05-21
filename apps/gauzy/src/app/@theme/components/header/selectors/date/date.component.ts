@@ -8,8 +8,8 @@ import { min, addYears, subYears } from 'date-fns';
 	templateUrl: './date.component.html',
 	styleUrls: ['./date.component.scss'],
 	host: {
-		'(document:click)': 'clickOutside($event)'
-	}
+		'(document:click)': 'clickOutside($event)',
+	},
 })
 export class DateSelectorComponent implements OnInit {
 	loadCalendar = false;
@@ -82,6 +82,11 @@ export class DateSelectorComponent implements OnInit {
 	}
 
 	clickOutside(event) {
+		/**
+		 * the usage of document.getElementById('dashboard-calendar')
+		 * has to be replaced / redesigned as it does not permit two or more date instances
+		 * to be loaded in the dom at the same time.
+		 */
 		if (
 			!document
 				.getElementById('dashboard-calendar')
