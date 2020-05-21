@@ -6,7 +6,7 @@
 	></nb-icon>
 	<div class="card">
 		<nb-icon
-			*ngIf="interviewList.length > 1"
+			*ngIf="interviewList?.length > 1"
 			icon="arrow-ios-back"
 			class="arrow-icon"
 			(click)="previous()"
@@ -19,15 +19,12 @@
 					<h5>
 						{{ currentInterview?.title }}
 					</h5>
-					<p *ngIf="!isMinutes" class="interview-info">
-						{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
-						{{ hoursUpdate }}
-						{{ 'INTERVIEW_INFO_MODAL.HOURS_AGO' | translate }}
-					</p>
-					<p *ngIf="isMinutes" class="interview-info">
-						{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
-						{{ hoursUpdate }}
-						{{ 'INTERVIEW_INFO_MODAL.MINUTES_AGO' | translate }}
+					<p class="interview-info">
+						{{
+							'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.SCHEDULED'
+								| translate
+						}}
+						{{ timeUpdate }}
 					</p>
 				</div>
 			</nb-card-header>
@@ -39,30 +36,39 @@
 							class="icons"
 						></nb-icon>
 						<p class="interview-text">
-							{{ 'INTERVIEW_INFO_MODAL.DATE' | translate }}
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.DATE'
+									| translate
+							}}
 						</p>
 					</div>
 					<p class="interview-data">
-						{{ currentInterview.startTime | date: 'fullDate' }}
+						{{ currentInterview?.startTime | date: 'fullDate' }}
 					</p>
 				</div>
 				<div>
 					<div class="interview-info">
 						<nb-icon icon="clock-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{ 'INTERVIEW_INFO_MODAL.TIME' | translate }}
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.TIME'
+									| translate
+							}}
 						</p>
 					</div>
 					<p class="interview-data">
-						{{ currentInterview.startTime | date: 'shortTime' }} -
-						{{ currentInterview.endTime | date: 'shortTime' }}
+						{{ currentInterview?.startTime | date: 'shortTime' }} -
+						{{ currentInterview?.endTime | date: 'shortTime' }}
 					</p>
 				</div>
 				<div>
 					<div class="interview-info">
 						<nb-icon icon="person-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{ 'INTERVIEW_INFO_MODAL.CANDIDATE' | translate }}
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.CANDIDATE'
+									| translate
+							}}
 						</p>
 					</div>
 					<p class="interview-data">
@@ -75,7 +81,8 @@
 						<nb-icon icon="people-outline" class="icons"></nb-icon>
 						<p class="interview-text">
 							{{
-								'INTERVIEW_INFO_MODAL.INTERVIEWERS' | translate
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWERS'
+									| translate
 							}}
 						</p>
 					</div>
@@ -90,7 +97,10 @@
 							class="icons"
 						></nb-icon>
 						<p class="interview-text">
-							{{ 'INTERVIEW_INFO_MODAL.LOCATION' | translate }}
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.LOCATION'
+									| translate
+							}}
 						</p>
 					</div>
 					<p class="interview-data">
@@ -101,7 +111,10 @@
 					<div class="interview-info">
 						<nb-icon icon="edit-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{ 'INTERVIEW_INFO_MODAL.NOTE' | translate }}
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.NOTE'
+									| translate
+							}}
 						</p>
 					</div>
 					<p class="interview-data">{{ currentInterview?.note }}</p>
@@ -110,18 +123,22 @@
 		</div>
 
 		<nb-icon
-			*ngIf="interviewList.length > 1"
+			*ngIf="interviewList?.length > 1"
 			icon="arrow-ios-forward"
 			class="arrow-icon"
 			(click)="next()"
 			[ngClass]="{ disable: !isNextBtn, show: isNextBtn }"
 		></nb-icon>
 	</div>
-	<div class="pages" *ngIf="interviewList.length > 1">
+	<div class="pages" *ngIf="interviewList?.length > 1">
 		<div class="interview-text">
-			{{ index }} {{ 'INTERVIEW_INFO_MODAL.OF' | translate }}
+			{{ index }}
+			{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.OF' | translate }}
 			{{ interviewList.length }}
-			{{ 'INTERVIEW_INFO_MODAL.INTERVIEWERS_LOWER_CASE' | translate }}
+			{{
+				'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWERS_LOWER_CASE'
+					| translate
+			}}
 		</div>
 	</div>
 </nb-card>

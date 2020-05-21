@@ -39,7 +39,7 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 		this.calendarOptions = {
 			eventClick: (event) => {
 				const id = event.event._def.extendedProps.id;
-				console.log(event);
+
 				this.dialogService.open(CandidateInterviewInfoComponent, {
 					context: {
 						interviewId: id

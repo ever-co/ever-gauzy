@@ -26,12 +26,16 @@ export class CandidatesService {
 		);
 	}
 
-	getCandidateById(id: string) {
+	getCandidateById(id: string, relations?: string[]): Promise<Candidate> {
+		const data = JSON.stringify({ relations });
 		return this.http
-			.get<Candidate>(`/api/candidate/${id}`)
+			.get<Candidate>(`/api/candidate/${id}`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
+
 	delete(id: string): Promise<Candidate> {
 		return this.http
 			.delete<Candidate>(`/api/candidate/${id}`)
