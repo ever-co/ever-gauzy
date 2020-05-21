@@ -1165,7 +1165,9 @@
 	"HELP_PAGE": {
 		"HELP": "Помогите",
 		"KNOWLEDGE_BASES": "Базы знаний",
-		"CHOSE_ICON": "Выберите значок для установки"
+		"CHOSE_ICON": "Выберите значок для установки",
+		"EDIT_DESCRIPTION": "редактировать описание",
+		"EDIT_NAME": "изменить имя"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
