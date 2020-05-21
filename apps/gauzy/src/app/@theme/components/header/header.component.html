@@ -38,7 +38,10 @@
 			</button>
 		</nb-action>
 
-		<nb-action *ngIf="showEmployeesSelector" class="show-large-up">
+		<nb-action
+			*ngIf="showEmployeesSelector && !showExtraActions"
+			class="show-large-up"
+		>
 			<ga-employee-selector
 				class="header-selector employee-selector"
 			></ga-employee-selector>
@@ -119,7 +122,7 @@
 <div
 	(window:resize)="closeExtraActionsIfLarge($event)"
 	class="extra-actions"
-	[hidden]="!showExtraActions"
+	*ngIf="showExtraActions"
 >
 	<div>
 		<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>
