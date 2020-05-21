@@ -249,6 +249,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
+			"ADD_REMOVE_CANDIDATES": "Добавить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
@@ -615,19 +616,6 @@
 		"NOT_STARTED": "Не начато",
 		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д."
 	},
-	"INTERVIEW_INFO_MODAL": {
-		"SCHEDULED_BY": "Запланировано на",
-		"HOURS_AGO": "час(ы) назад",
-		"MINUTES_AGO": "минут назад",
-		"DATE": "Дата",
-		"TIME": "Время",
-		"CANDIDATE": "Кандидат",
-		"INTERVIEWERS": "Интервьюеры",
-		"LOCATION": "Местоположение",
-		"NOTE": "Примечание",
-		"OF": "из",
-		"INTERVIEWERS_LOWER_CASE": "интервьюеры"
-	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
 		"ADD_CANDIDATE": "Добавить Кандидатов",
@@ -690,6 +678,21 @@
 				"NOTIFY_INTERVIEWERS": "Уведомить интервьюера (ов)",
 				"INTERVIEWERS": "интервьюер(ы)"
 			}
+		},
+		"INTERVIEW_INFO_MODAL": {
+			"SCHEDULED": "Запланированный",
+			"HOURS_AGO": " час(ы) назад",
+			"LESS_MINUTE": " меньше минуты назад",
+			"MINUTES_AGO": " минут назад",
+			"DAYS_AGO": " дн. назад",
+			"DATE": "Дата",
+			"TIME": "Время",
+			"CANDIDATE": "Кандидат",
+			"INTERVIEWERS": "Интервьюеры",
+			"LOCATION": "Местоположение",
+			"NOTE": "Примечание",
+			"OF": "из",
+			"INTERVIEWERS_LOWER_CASE": "интервьюеры"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Шаг 1",
