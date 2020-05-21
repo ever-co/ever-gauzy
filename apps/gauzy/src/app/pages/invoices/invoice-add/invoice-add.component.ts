@@ -766,13 +766,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return false;
 		}
 
-		if (d1 > d2) {
-			return true;
-		}
-
-		if (d1 < d2) {
-			return false;
-		}
+		return d1 > d2;
 	}
 
 	addNewClient = (name: string): Promise<OrganizationClients> => {
