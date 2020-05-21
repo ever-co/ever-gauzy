@@ -1,4 +1,5 @@
 @import 'var';
+
 .form-group input {
   width: 100%;
 }
@@ -20,6 +21,7 @@ nb-card-body {
   nb-route-tabset {
     ul.route-tabset {
       padding: 0;
+
       @include respond(dsk) {
         flex-wrap: wrap;
       }
@@ -32,12 +34,15 @@ nb-card-body {
       @include respond(dsk) {
         padding: px2rem(10px) px2rem(20px);
       }
+
       @include respond(1440px) {
         padding: px2rem(10px) px2rem(25px);
       }
+
       @include respond(xxl) {
         padding: px2rem(10px) px2rem(20px);
       }
+
       nb-icon {
         display: block;
         margin: auto;
