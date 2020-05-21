@@ -113,15 +113,28 @@ export class InventoryComponent extends TranslationBaseComponent
 			.onClose.pipe(first())
 			.toPromise();
 
-		if (result) {
-			await this.productService.delete(this.selectedItem.id);
-			this.loadSettings();
-			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.INVENTORY_ITEM_DELETED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+		if (!result) return;
+
+		try {
+			const res = await this.productService.delete(this.selectedItem.id);
+
+			if (res.affected > 0) {
+				this.loadSettings();
+				this.toastrService.primary(
+					this.getTranslation(
+						'INVENTORY_PAGE.INVENTORY_ITEM_DELETED'
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
+		} catch {
+			this.toastrService.success(
+				this.getTranslation('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
+		} finally {
+			this.disableButton = true;
 		}
-		this.disableButton = true;
 	}
 
 	async loadSettings() {

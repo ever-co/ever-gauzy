@@ -977,7 +977,8 @@
 		"PRODUCT_CATEGORY_SAVED": "Product category saved",
 		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
 		"IMAGE": "Image",
-		"LANGUAGE": "Language"
+		"LANGUAGE": "Language",
+		"PRODUCT_VARIANT_DELETED": "Product variant deleted!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -1227,7 +1228,8 @@
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",
-			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!"
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
+			"SOMETHING_BAD_HAPPENED": "Something bad happened!"
 		}
 	},
 	"ACCEPT_INVITE": {

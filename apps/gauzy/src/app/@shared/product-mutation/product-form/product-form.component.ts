@@ -159,6 +159,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	onCancel() {
 		this.cancel.emit('PRODUCT_EDIT');
 	}
+
 	selectedTagsEvent(currentSelection: Tag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
