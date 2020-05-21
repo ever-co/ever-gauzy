@@ -4,7 +4,7 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { Column, Entity, Index } from 'typeorm';
 import { Base } from '../core/entities/base';
 
-@Entity('email')
+@Entity('email-sent')
 export class Email extends Base implements IEmail {
 	@ApiProperty({ type: String })
 	@IsString()

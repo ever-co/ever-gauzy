@@ -1,0 +1,40 @@
+<nb-card>
+	<nb-card-header>
+		<button
+			(click)="openFiltersDialog()"
+			nbButton
+			status="primary"
+			size="small"
+		>
+			<nb-icon icon="plus-outline"></nb-icon>
+			Add Filter
+		</button>
+
+		<!-- here should have *ngFor filters with X appearing onmouseover -->
+	</nb-card-header>
+	<nb-card-body>
+		<div class="content-container">
+			<nb-list>
+				<nb-list-item
+					(click)="selectEmail(email)"
+					*ngFor="let email of fakeEmails"
+				>
+					<div class="email-list-item">
+						<span>To: <b>boyan@ever.co</b></span>
+						<span>From: <b>System</b></span>
+						<span>Template: <b>Welcome</b></span>
+					</div>
+				</nb-list-item>
+			</nb-list>
+			<div class="email-content">
+				<span
+					>Lorem ipsum dolor sit, amet consectetur adipisicing elit.
+					Culpa, eaque recusandae, inventore quasi possimus sed neque
+					optio, dolorum consequuntur similique accusamus quibusdam
+					consectetur explicabo tempora asperiores mollitia
+					necessitatibus animi impedit?</span
+				>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

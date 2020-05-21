@@ -543,6 +543,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Email History',
+					icon: 'email-outline',
+					link: '/pages/settings/email-history',
+					data: {
+						translated: false,
+						translationKey: 'MENU.EMAIL_HISTORY'
+					}
+				},
+				{
 					title: 'Import/Export',
 					icon: 'flip-outline',
 					data: {

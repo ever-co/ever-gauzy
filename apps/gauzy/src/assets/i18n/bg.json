@@ -402,6 +402,7 @@
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни",
+		"EMAIL_HISTORY": "Email History",
 		"USERS": "Потребители",
 		"ROLES": "Роли и Позволения",
 		"DANGER_ZONE": "Опасна Зона",
@@ -967,7 +968,7 @@
 		"EDIT_PRODUCT_TYPE": "Промени типа на продукта",
 		"ADD_PRODUCT_TYPE": "Добави тип на продукта",
 		"PRODUCT_TYPE_SAVED": "Продуктовият тип е запазен",
-		"PRODUCT_TYPE_DELETED": "Продуктовият тип е изтрит"
+		"PRODUCT_TYPE_DELETED": "Продуктовият тип е изтрит",
 		"EDIT_PRODUCT_CATEGORY": "Edit product category",
 		"ADD_PRODUCT_CATEGORY": "Add product category",
 		"PRODUCT_CATEGORY_SAVED": "Product category saved",

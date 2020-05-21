@@ -1,0 +1,51 @@
+@import '../../../@theme/styles/themes.scss';
+
+@include nb-install-component {
+  nb-card-body {
+    padding: 0;
+  }
+
+  .content-container {
+    display: flex;
+
+    nb-list {
+      white-space: nowrap;
+      overflow: hidden;
+      min-width: 200px;
+
+      nb-list-item {
+        &:first-child {
+          border-top: none;
+        }
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        cursor: pointer;
+
+        &:hover {
+        }
+
+        .email-list-item {
+          display: flex;
+          justify-content: center;
+          flex-direction: column;
+
+          span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+            width: 180px;
+          }
+        }
+      }
+    }
+
+    .email-content {
+      border-left: 1px solid nb-theme(list-item-divider-color);
+      padding: 1rem 2rem;
+    }
+  }
+}
