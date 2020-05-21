@@ -98,7 +98,7 @@ export class SidebarComponent {
 		displayField: 'name'
 	};
 
-	@ViewChild(TreeComponent, { static: false })
+	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
 	addNode() {
