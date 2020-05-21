@@ -17,6 +17,10 @@ import { Subject } from 'rxjs';
 import { AvailabilitySlotsService } from 'apps/gauzy/src/app/@core/services/availability-slots.service';
 import { takeUntil } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
+import { NbToastrService } from '@nebular/theme';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
+import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
 export interface IAvailabilitySlotsView {
 	id?: string;
@@ -33,7 +37,8 @@ export interface IAvailabilitySlotsView {
 @Component({
 	templateUrl: './availability-slots.component.html'
 })
-export class AvailabilitySlotsComponent implements OnInit, OnDestroy {
+export class AvailabilitySlotsComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	calendarComponent: FullCalendarComponent;
 	calendarEvents: EventInput[] = [];
@@ -50,8 +55,13 @@ export class AvailabilitySlotsComponent implements OnInit, OnDestroy {
 	constructor(
 		private store: Store,
 		private route: ActivatedRoute,
-		private availabilitySlotsService: AvailabilitySlotsService
+		private errorHandler: ErrorHandlingService,
+		private toastrService: NbToastrService,
+		private availabilitySlotsService: AvailabilitySlotsService,
+		readonly translateService: TranslateService
 	) {
+		super(translateService);
+
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {
@@ -132,6 +142,7 @@ export class AvailabilitySlotsComponent implements OnInit, OnDestroy {
 	unselectEvent(o) {
 		if (o.event.extendedProps && o.event.extendedProps.id) {
 			this.removedEvents.push(o.event);
+			this.dateSelected = true;
 		}
 		this.calendarEvents = this.calendarEvents.filter(
 			(e) => !moment(e.start).isSame(moment(o.event.start))
@@ -153,24 +164,39 @@ export class AvailabilitySlotsComponent implements OnInit, OnDestroy {
 	}
 
 	async saveSelectedDateRange() {
-		const payload: IAvailabilitySlotsCreateInput[] = [];
-		for (let e of this.calendarEvents) {
-			payload.push({
-				startTime: new Date(e.start.toString()),
-				endTime: new Date(e.end.toString()),
-				employeeId: this.selectedEmployeeId,
-				organizationId: this.store.selectedOrganization.id,
-				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
-				allDay: e.allDay
-			});
-		}
-		await this.availabilitySlotsService.createBulk(payload);
-	}
+		try {
+			const payload: IAvailabilitySlotsCreateInput[] = [];
+			for (let e of this.calendarEvents) {
+				!e.extendedProps['id'] &&
+					payload.push({
+						startTime: new Date(e.start.toString()),
+						endTime: new Date(e.end.toString()),
+						employeeId: this.selectedEmployeeId,
+						organizationId: this.store.selectedOrganization.id,
+						type: this.recurringAvailabilityMode
+							? 'Recurring'
+							: 'Default',
+						allDay: e.allDay
+					});
+			}
+			payload.length > 0 &&
+				(await this.availabilitySlotsService.createBulk(payload));
 
-	discardSelectedDates() {
-		this.calendarEvents = [];
-		this.dateSelected = false;
-		this.calendar.getApi().refetchEvents();
+			for (let e of this.removedEvents) {
+				await this.availabilitySlotsService.delete(
+					e.extendedProps['id']
+				);
+			}
+
+			this.toastrService.primary(
+				this.getTranslation('NOTES.AVAILABILITY_SLOTS.SAVE'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			this.dateSelected = false;
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
 	}
 
 	async fetchAvailableSlots(isOrganizationId) {
@@ -192,9 +218,49 @@ export class AvailabilitySlotsComponent implements OnInit, OnDestroy {
 			};
 		}
 
-		const slots = await this.availabilitySlotsService.getAll([], findObj);
-		for (let o of slots.items) {
-			this._prepareEvent(o);
+		try {
+			const slots = await this.availabilitySlotsService.getAll(
+				[],
+				findObj
+			);
+			const start = this.calendar.getApi().view.currentStart;
+
+			if (this.recurringAvailabilityMode) {
+				for (let o of slots.items) {
+					// Convert recurring events to current date range of full calendar
+					const startDay = moment(o.startTime).day();
+					const startHours = moment(o.startTime).hours();
+					const startMinutes = moment(o.startTime).minutes();
+
+					const endDay = moment(o.endTime).day();
+					const endHours = moment(o.endTime).hours();
+					const endMinutes = moment(o.endTime).minutes();
+
+					const eventStartDate = moment(start)
+						.add(startDay, 'days')
+						.set('hours', startHours)
+						.set('minutes', startMinutes);
+					const eventEndDate = moment(start)
+						.add(endDay, 'days')
+						.set('hours', endHours)
+						.set('minutes', endMinutes);
+
+					o.startTime = new Date(eventStartDate.format());
+					o.endTime = new Date(eventEndDate.format());
+				}
+			}
+
+			this.calendarEvents = [];
+			for (let o of slots.items) {
+				this._prepareEvent(o);
+			}
+		} catch (error) {
+			this.toastrService.danger(
+				this.getTranslation('NOTES.AVAILABILITY_SLOTS.ERROR', {
+					error: error.error.message || error.message
+				}),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
 		}
 		this.calendar.getApi().refetchEvents();
 	}
