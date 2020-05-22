@@ -19,7 +19,7 @@ export interface SelectedProductCategory {
 @Component({
 	selector: 'ngx-product-categories',
 	templateUrl: './product-categories.component.html',
-	styleUrls: ['./product-categories.component.scss']
+	styleUrls: ['./product-categories.component.scss'],
 })
 export class ProductCategoriesComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -29,7 +29,7 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
 
-	@ViewChild('productCategoriesTable')
+	@ViewChild('productCategoriesTable', { static: true })
 	productCategoriesTable;
 
 	constructor(
@@ -57,26 +57,26 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 					width: '10%',
 					filter: false,
 					type: 'custom',
-					renderComponent: ImageRowComponent
+					renderComponent: ImageRowComponent,
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string',
-					width: '40%'
+					width: '40%',
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'string',
-					filter: false
-				}
-			}
+					filter: false,
+				},
+			},
 		};
 	}
 
 	async loadSettings() {
 		this.selectedItem = null;
 		const { items } = await this.productCategoryService.getAll([
-			'organization'
+			'organization',
 		]);
 
 		this.loading = false;
@@ -94,8 +94,8 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 			ProductCategoryMutationComponent,
 			{
 				context: {
-					productCategory: this.selectedItem
-				}
+					productCategory: this.selectedItem,
+				},
 			}
 		);
 
