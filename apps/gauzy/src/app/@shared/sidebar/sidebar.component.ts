@@ -17,11 +17,10 @@ export class SidebarComponent {
 		private sanitizer: DomSanitizer
 	) {}
 	form: FormGroup;
-	public showDataEdit = false;
 	public icons = ['🔥', '📎', '🌐', '🔎'];
 	public chosenIcon = '';
 	public articleName = 'Chose any article';
-	public articleDesc = 'any article you will chose';
+	public articleDesc = '';
 	public articleData: SafeHtml;
 	public showPrivateButton = false;
 	public showPublicButton = false;
@@ -29,7 +28,6 @@ export class SidebarComponent {
 	public flag = 0;
 	public isVisibleAdd = false;
 	public isVisibleEdit = false;
-	public isVisibleEditDesc = false;
 	public iconsShow = false;
 	public isChosenArticle = false;
 	public value = '';
@@ -51,6 +49,7 @@ export class SidebarComponent {
 					} else {
 						this.showPrivateButton = false;
 						this.showPublicButton = true;
+						this.articleName = 'Chose any article';
 					}
 				},
 			},
@@ -136,6 +135,7 @@ export class SidebarComponent {
 			this.articleDesc = someNode.description;
 			this.articleName = someNode.name;
 		}
+		this.iconsShow = false;
 	}
 
 	makePrivate() {
@@ -153,42 +153,14 @@ export class SidebarComponent {
 		}
 	}
 
-	onEditArticle() {
-		this.isVisibleEdit = true;
-	}
-
-	editName(event: any) {
+	editNameCategory(event: any) {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		someNode.data.name = event.target.value;
-		this.tree.treeModel.update();
-		if (!someNode.data.children) {
-			this.articleName = event.target.value;
-		}
 		this.isVisibleEdit = false;
 	}
 
-	onEditArticleDesc() {
-		this.isVisibleEditDesc = true;
-	}
-
-	editDesc(event: any) {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		someNode.data.description = event.target.value;
-		this.tree.treeModel.update();
-		if (!someNode.data.children) {
-			this.articleDesc = event.target.value;
-		}
-		this.isVisibleEditDesc = false;
-	}
-
-	onCloseEdit() {
-		this.isVisibleEdit = false;
-		this.value = '';
-	}
-
-	onCloseDesc() {
-		this.isVisibleEditDesc = false;
-		this.value = '';
+	onEditArticle() {
+		this.isVisibleEdit = true;
 	}
 
 	onDeleteArticle() {
@@ -201,21 +173,25 @@ export class SidebarComponent {
 
 	loadFormData() {
 		this.form = this.fb.group({
-			text: [this.articleData],
+			name: [this.articleName],
+			desc: [this.articleDesc],
+			data: [this.articleData],
 		});
 	}
 
-	onChange(value: string) {
+	editData(value: string) {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		this.articleData = this.sanitizer.bypassSecurityTrustHtml(value);
 		someNode.data.data = this.articleData;
 	}
 
-	editArticleData() {
-		this.showDataEdit = true;
-	}
-
-	onSaveData() {
-		this.showDataEdit = false;
+	submit() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		someNode.data.description = this.form.controls.desc.value;
+		someNode.data.name = this.form.controls.name.value;
+		this.articleDesc = someNode.data.description;
+		this.articleName = someNode.data.name;
+		this.tree.treeModel.update();
+		this.isVisibleEdit = false;
 	}
 }
