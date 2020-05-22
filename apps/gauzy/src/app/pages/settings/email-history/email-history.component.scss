@@ -13,6 +13,8 @@
       overflow: hidden;
       min-width: 320px;
       flex: none;
+      overflow-y: scroll;
+      max-height: 560px;
 
       nb-list-item {
         cursor: pointer;
@@ -20,10 +22,6 @@
         &:first-child {
           border-top: none;
         }
-
-        // &:last-child {
-        //   border-bottom: none;
-        // }
 
         &:hover {
           color: #3366ff;

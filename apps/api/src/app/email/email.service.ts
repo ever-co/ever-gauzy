@@ -25,6 +25,7 @@ export interface InviteUserModel {
 	organization: Organization;
 	registerUrl: string;
 	languageCode: LanguagesEnum;
+	invitedBy: User;
 	originUrl?: string;
 }
 
@@ -33,6 +34,7 @@ export interface InviteEmployeeModel {
 	registerUrl: string;
 	organization: Organization;
 	languageCode: LanguagesEnum;
+	invitedBy: User;
 	projects?: OrganizationProjects[];
 	clients?: OrganizationClients[];
 	departments?: OrganizationDepartment[];
@@ -138,7 +140,8 @@ export class EmailService extends CrudService<IEmail> {
 			organization,
 			registerUrl,
 			originUrl,
-			languageCode
+			languageCode,
+			invitedBy
 		} = inviteUserModel;
 
 		const sendOptions = {
@@ -163,7 +166,8 @@ export class EmailService extends CrudService<IEmail> {
 					email,
 					languageCode,
 					message: res.originalMessage,
-					organization
+					organization,
+					user: invitedBy
 				});
 			})
 			.catch(console.error);
@@ -176,7 +180,8 @@ export class EmailService extends CrudService<IEmail> {
 			projects,
 			organization,
 			originUrl,
-			languageCode
+			languageCode,
+			invitedBy
 		} = inviteEmployeeModel;
 
 		const sendOptions = {
@@ -201,7 +206,8 @@ export class EmailService extends CrudService<IEmail> {
 					email,
 					languageCode,
 					message: res.originalMessage,
-					organization
+					organization,
+					user: invitedBy
 				});
 			})
 			.catch(console.error);
@@ -284,7 +290,7 @@ export class EmailService extends CrudService<IEmail> {
 		languageCode: LanguagesEnum;
 		message: any;
 		organization?: Organization;
-		userId?: string;
+		user?: User;
 	}): Promise<IEmail> {
 		const emailEntity = new IEmail();
 
@@ -294,7 +300,7 @@ export class EmailService extends CrudService<IEmail> {
 			languageCode,
 			message,
 			organization,
-			userId
+			user
 		} = createEmailOptions;
 
 		const emailTemplate = await this.emailTemplateRepository.findOne({
@@ -311,8 +317,8 @@ export class EmailService extends CrudService<IEmail> {
 			emailEntity.organizationId = organization.id;
 		}
 
-		if (userId) {
-			emailEntity.userId = userId;
+		if (user) {
+			emailEntity.user = user;
 		}
 
 		return this.emailRepository.save(emailEntity);

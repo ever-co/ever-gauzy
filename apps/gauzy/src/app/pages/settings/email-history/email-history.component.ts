@@ -37,6 +37,7 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._onDestroy$))
 			.subscribe((org) => {
+				console.log(org);
 				if (org) {
 					this._getAllEmails(org.id);
 				}
@@ -52,16 +53,18 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 		console.log('Opening Filters Dialog');
 	}
 
-	private _getAllEmails(orgId: string) {
+	private _getAllEmails(organizationId: string) {
 		try {
 			this.emailService
-				.getAll(['emailTemplate'], {
-					orgId
+				.getAll(['emailTemplate', 'user'], {
+					organizationId
 				})
 				.then((data) => {
 					console.log(data);
 					this.emails = data.items;
 					this.loading = false;
+
+					this.selectedEmail = null;
 				});
 		} catch (error) {
 			console.error(error);

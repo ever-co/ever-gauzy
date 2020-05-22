@@ -128,13 +128,13 @@ export class InviteService extends CrudService<Invite> {
 			roleId
 		);
 
+		const user = await this.userService.findOne(invitedById, {
+			relations: ['role']
+		});
+
 		if (role.name === RolesEnum.SUPER_ADMIN) {
-			const { role: inviterRole } = await this.userService.findOne(
-				invitedById,
-				{
-					relations: ['role']
-				}
-			);
+			const { role: inviterRole } = user;
+
 			if (inviterRole.name !== RolesEnum.SUPER_ADMIN)
 				throw new UnauthorizedException();
 		}
@@ -191,7 +191,8 @@ export class InviteService extends CrudService<Invite> {
 					organization: organization,
 					registerUrl,
 					originUrl,
-					languageCode
+					languageCode,
+					invitedBy: user
 				});
 			} else if (
 				emailInvites.inviteType.indexOf('/pages/employees') > -1
@@ -203,7 +204,8 @@ export class InviteService extends CrudService<Invite> {
 					departments,
 					originUrl,
 					organization: organization,
-					languageCode
+					languageCode,
+					invitedBy: user
 				});
 			}
 		});

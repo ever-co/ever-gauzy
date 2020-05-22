@@ -1,14 +1,22 @@
-import { Email as IEmail, User } from '@gauzy/models';
+import { Email as IEmail } from '@gauzy/models';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
-import { Column, Entity, Index, OneToOne, JoinColumn } from 'typeorm';
+import {
+	Column,
+	Entity,
+	Index,
+	OneToOne,
+	JoinColumn,
+	ManyToOne
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { EmailTemplate } from '../email-template/email-template.entity';
+import { User } from '../user/user.entity';
 
 @Entity('email-sent')
 export class Email extends Base implements IEmail {
 	@ApiProperty({ type: EmailTemplate })
-	@OneToOne((type) => EmailTemplate, {
+	@ManyToOne((type) => EmailTemplate, {
 		nullable: false,
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -41,9 +49,12 @@ export class Email extends Base implements IEmail {
 	@Column({ nullable: true })
 	organizationId: string;
 
-	@ApiPropertyOptional({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	userId?: string;
+	@ApiProperty({ type: User })
+	@ManyToOne((type) => User, {
+		nullable: true,
+		cascade: true,
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	user?: User;
 }

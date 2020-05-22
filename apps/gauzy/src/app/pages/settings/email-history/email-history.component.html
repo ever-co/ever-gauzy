@@ -25,7 +25,12 @@
 						>
 						<span
 							>From:
-							<b>{{ !email.userId ? 'System' : 'IDK' }}</b></span
+							<b>{{
+								email.user ? email.user.email : 'System'
+							}}</b></span
+						>
+						<span
+							>Subject: <b>{{ email.name }}</b></span
 						>
 						<span
 							>Template:
