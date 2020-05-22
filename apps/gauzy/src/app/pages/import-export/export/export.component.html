@@ -18,4 +18,16 @@
 		<nb-icon icon="arrow-circle-down-outline"></nb-icon
 		>{{ 'MENU.IMPORT_EXPORT.EXPORT' | translate }}
 	</button>
+	<button
+		style="margin-left: 1%"
+		class="button-export"
+		nbButton
+		outline
+		status="primary"
+		size="large"
+		(click)="onDownloadTemplates()"
+	>
+		<nb-icon icon="file-text-outline"></nb-icon>
+		{{ 'MENU.IMPORT_EXPORT.DOWNLOAD_TEMPLATES' | translate }}
+	</button>
 </div>

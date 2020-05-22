@@ -15,9 +15,11 @@ import { HttpLoaderFactory } from '../../@theme/components/header/selectors/sele
 import { HttpClient } from '@angular/common/http';
 import { SidebarComponent } from './sidebar.component';
 import { TreeModule } from 'angular-tree-component';
+import { CKEditorModule } from 'ng2-ckeditor';
 
 @NgModule({
 	imports: [
+		CKEditorModule,
 		TreeModule.forRoot(),
 		ThemeModule,
 		FormsModule,

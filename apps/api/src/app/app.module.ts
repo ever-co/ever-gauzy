@@ -80,6 +80,7 @@ import * as path from 'path';
 import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
 import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
+import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 
 @Module({
 	imports: [
@@ -304,6 +305,10 @@ import { EventTypeModule } from './event-types/event-type.module';
 					{
 						path: '/event-type',
 						module: EventTypeModule
+					},
+					{
+						path: '/availability-slots',
+						module: AvailabilitySlotsModule
 					}
 				]
 			}
@@ -358,6 +363,7 @@ import { EventTypeModule } from './event-types/event-type.module';
 		InvoiceItemModule,
 		EmployeeLevelModule,
 		EventTypeModule,
+		AvailabilitySlotsModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({

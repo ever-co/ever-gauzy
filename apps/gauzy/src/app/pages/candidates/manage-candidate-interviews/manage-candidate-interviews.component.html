@@ -7,13 +7,22 @@
 						| translate
 				}}
 			</h4>
-			<button nbButton status="primary" (click)="add()">
-				<nb-icon icon="plus-outline"></nb-icon>
-				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
-						| translate
-				}}
-			</button>
+			<div class="buttons">
+				<ga-candidate-multi-select
+					class="multi-select"
+					[allCandidates]="candidates"
+					(selectedChange)="onCandidateSelected($event)"
+					[selectedCandidateIds]="selectedCandidateIds"
+				>
+				</ga-candidate-multi-select>
+				<button nbButton status="primary" (click)="add()">
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
+							| translate
+					}}
+				</button>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>

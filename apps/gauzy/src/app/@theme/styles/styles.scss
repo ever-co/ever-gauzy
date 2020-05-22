@@ -18,19 +18,18 @@
 // install ng-select default theme
 @import '~@ng-select/ng-select/themes/default.theme.css';
 @import './includes/fullcalendar';
+@import './includes/tabset';
+@import './includes/ng-select';
 
 // install the framework and custom global styles
 @include nb-install() {
-	// framework global styles
-	@include nb-theme-global();
-	@include nb-auth-global();
-	@include nb-bootstrap-global();
+  // framework global styles
+  @include nb-theme-global();
+  @include nb-auth-global();
+  @include nb-bootstrap-global();
 
-	// loading progress bar
-	@include ngx-pace-theme();
+  // loading progress bar
+  @include ngx-pace-theme();
 
-	@include nb-overrides();
-
-	@import './includes/tabset';
-	@import './includes/ng-select';
+  @include nb-overrides();
 }

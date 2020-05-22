@@ -13,7 +13,8 @@ import {
 	Employee,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
-	Product
+	Product,
+	Tag
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationSelectInput } from '@gauzy/models';
@@ -73,6 +74,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	organizationId: string;
 	subtotal = 0;
 	total = 0;
+	tags: Tag[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	get currency() {
 		return this.form.get('currency');
@@ -130,7 +132,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			invoiceType: [''],
 			project: [''],
 			task: [''],
-			product: ['']
+			product: [''],
+			tags: ['']
 		});
 	}
 
@@ -356,7 +359,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				totalValue: +this.total.toFixed(2),
 				clientId: invoiceData.client.id,
 				organizationId: this.organization.id,
-				invoiceType: this.selectedInvoiceType
+				invoiceType: this.selectedInvoiceType,
+				tags: this.tags
 			});
 
 			if (tableData[0].selectedEmployee) {
@@ -762,13 +766,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 			return false;
 		}
 
-		if (d1 > d2) {
-			return true;
-		}
-
-		if (d1 < d2) {
-			return false;
-		}
+		return d1 > d2;
 	}
 
 	addNewClient = (name: string): Promise<OrganizationClients> => {
@@ -800,6 +798,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.translateService.onLangChange.subscribe(() => {
 			this.loadSmartTable();
 		});
+	}
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.tags = currentTagSelection;
 	}
 
 	ngOnDestroy() {

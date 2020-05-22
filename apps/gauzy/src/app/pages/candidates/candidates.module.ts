@@ -64,6 +64,8 @@ import { CandidateInterviewMutationModule } from '../../@shared/candidate/candid
 import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { CandidateInterviewInfoModule } from '../../@shared/candidate/candidate-interview-info/candidate-interview-info.module';
+import { CandidateInterviewersService } from '../../@core/services/candidate-interviewers.service';
+import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-multi-select/candidate-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -136,7 +138,8 @@ const COMPONENTS = [
 		EmployeeLocationModule,
 		EmployeeRatesModule,
 		StarRatingInputModule,
-		StarRatingOutputModule
+		StarRatingOutputModule,
+		CandidateMultiSelectModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
@@ -149,7 +152,8 @@ const COMPONENTS = [
 		InviteGuard,
 		CountryService,
 		OrganizationEmploymentTypesService,
-		CandidatesService
+		CandidatesService,
+		CandidateInterviewersService
 	]
 })
 export class CandidatesModule {}

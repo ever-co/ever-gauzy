@@ -72,6 +72,15 @@
 					</div>
 				</div>
 			</div>
+			<div class="row">
+				<div class="col">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+					>
+					</ga-tags-color-input>
+				</div>
+			</div>
 			<div>
 				<label for="title" class="label">{{
 					'FORM.LABELS.DURATION' | translate

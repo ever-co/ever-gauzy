@@ -1,3 +1,4 @@
+export * from './lib/help-center-menu.model';
 export * from './lib/user.model';
 export * from './lib/employee.model';
 export * from './lib/candidate-document.model';
@@ -58,6 +59,8 @@ export * from './lib/request-approval-employee.model';
 export * from './lib/employee-appointment.model';
 export * from './lib/appointment-employees.model';
 export * from './lib/event-type.model';
+export * from './lib/upwork.model';
+export * from './lib/availability-slots.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

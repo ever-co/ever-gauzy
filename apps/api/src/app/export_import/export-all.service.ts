@@ -290,6 +290,13 @@ export class ExportAllService implements OnDestroy {
 		});
 	}
 
+	async downloadTemplate(res) {
+		return new Promise((resolve, reject) => {
+			res.download('./export/template.zip');
+			resolve();
+		});
+	}
+
 	async deleteCsvFiles(): Promise<any> {
 		return new Promise((resolve, reject) => {
 			let id$ = '';

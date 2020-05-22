@@ -8,14 +8,16 @@ import { CommandHandlers } from './commands/handlers';
 import { CqrsModule } from '@nestjs/cqrs';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
+import { Employee } from '../employee/employee.entity';
+import { EmployeeService } from '../employee/employee.service';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([Task, OrganizationProjects, User]),
+		TypeOrmModule.forFeature([Task, OrganizationProjects, User, Employee]),
 		CqrsModule
 	],
 	controllers: [TaskController],
-	providers: [TaskService, ...CommandHandlers, UserService],
+	providers: [TaskService, EmployeeService, ...CommandHandlers, UserService],
 	exports: [TaskService]
 })
 export class TaskModule {}

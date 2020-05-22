@@ -431,5 +431,11 @@ export const environment: IEnvironment = {
 	},
 
 	defaultHubstaffUserPass:
-		process.env.INTEGRATED_HUBSTAFF_USER_PASS || 'hubstaff'
+		process.env.INTEGRATED_HUBSTAFF_USER_PASS || 'hubstaff',
+
+	upworkConfig: {
+		callbackUrl:
+			process.env.UWPROK_CALLBACK_URL ||
+			'http://localhost:4200/#/pages/integrations/upwork'
+	}
 };

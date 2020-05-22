@@ -62,4 +62,21 @@ export class OrganizationTeamsService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	getMyTeams(
+		relations?: string[],
+		findInput?: OrganizationTeamFindInput
+	): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ relations, findInput });
+
+		return this.http
+			.get<{ items: OrganizationTeam[]; total: number }>(
+				`/api/organization-team/me`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
 }

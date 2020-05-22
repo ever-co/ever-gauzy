@@ -4,7 +4,9 @@ import {
 	Index,
 	ManyToOne,
 	RelationId,
-	JoinColumn
+	JoinColumn,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -18,9 +20,15 @@ import { Base } from '../core/entities/base';
 import { IEventType } from '@gauzy/models';
 import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('eventType')
 export class EventType extends Base implements IEventType {
+	@ApiProperty({ type: Tag })
+	@ManyToMany((type) => Tag)
+	@JoinTable({ name: 'tag_eventType' })
+	tags?: Tag[];
+
 	@ApiProperty({ type: Employee })
 	@ManyToOne((type) => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

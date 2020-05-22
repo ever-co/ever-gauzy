@@ -7,16 +7,21 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	UseGuards
+	UseGuards,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
 import { ProductVariant } from './product-variant.entity';
 import { ProductVariantService } from './product-variant.service';
-import { ProductVariantCreateCommand } from './commands';
+import {
+	ProductVariantCreateCommand,
+	ProductVariantDeleteCommand
+} from './commands';
 import { CommandBus } from '@nestjs/cqrs';
 import { Product } from '../product/product.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { DeleteResult } from 'typeorm';
 
 @ApiTags('ProductVariant')
 @UseGuards(AuthGuard('jwt'))
@@ -87,5 +92,23 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 		@Body() productVariant: ProductVariant
 	): Promise<ProductVariant> {
 		return this.productVariantService.updateVariant(productVariant);
+	}
+
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete(':id')
+	async delete(
+		@Param('id') id: string,
+		...options: any[]
+	): Promise<DeleteResult> {
+		return this.commandBus.execute(new ProductVariantDeleteCommand(id));
 	}
 }

@@ -14,7 +14,7 @@ import { Store } from '../../../@core/services/store.service';
 export class EmployeeWithLinksComponent implements ViewCell {
 	@Input()
 	rowData: any;
-
+	@Input()
 	value: any;
 
 	constructor(private store: Store, private readonly router: Router) {}

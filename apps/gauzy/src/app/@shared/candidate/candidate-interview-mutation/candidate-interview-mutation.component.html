@@ -8,10 +8,7 @@
 		/>
 		<div>
 			<h5>
-				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
-						| translate
-				}}
+				{{ header }}
 			</h5>
 			<span *ngIf="!isCalendar">
 				{{ selectedCandidate?.user.firstName }}
@@ -46,7 +43,7 @@
 
 				<ga-candidate-interview-form
 					#candidateInterviewForm
-					[employeeIds]="editData?.interviewers"
+					[interviewers]="editData?.interviewers"
 				></ga-candidate-interview-form>
 
 				<div class="text-right">
@@ -149,6 +146,7 @@
 						<nb-card-body>
 							<nb-checkbox
 								(checkedChange)="checkedCandidate($event)"
+								[checked]="isCandidateNotification"
 								><strong
 									>{{
 										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NOTIFY_CANDIDATE'
@@ -170,6 +168,7 @@
 						<nb-card-body>
 							<nb-checkbox
 								(checkedChange)="checkedInterviewer($event)"
+								[checked]="isInterviewerNotification"
 								><strong>
 									{{
 										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NOTIFY_INTERVIEWERS'
@@ -226,7 +225,7 @@
 						status="success"
 						nbButton
 						nbStepperSave
-						(click)="add()"
+						(click)="save()"
 					>
 						{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SAVE'

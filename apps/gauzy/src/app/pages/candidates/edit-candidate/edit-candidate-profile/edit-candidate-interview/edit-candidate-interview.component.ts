@@ -10,6 +10,7 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { FormGroup } from '@angular/forms';
 import { Candidate, Employee, ICandidateInterview } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -22,7 +23,6 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: Candidate;
-	interviewId = null;
 	employees: Employee[];
 	form: FormGroup;
 	interviewResult: any;
@@ -33,6 +33,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		private readonly candidateInterviewService: CandidateInterviewService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
+		private candidateInterviewersService: CandidateInterviewersService,
 		private toastrService: NbToastrService
 	) {
 		super(translate);
@@ -54,6 +55,9 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			CandidateInterviewMutationComponent,
 			{
 				context: {
+					header: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
+					),
 					selectedCandidate: this.selectedCandidate
 				}
 			}
@@ -65,38 +69,44 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		}
 	}
 	private async loadInterview() {
-		this.interviewResult = await this.candidateInterviewService.getAll({
-			candidateId: this.candidateId
-		});
+		this.interviewResult = await this.candidateInterviewService.getAll(
+			['interviewers'],
+			{ candidateId: this.candidateId }
+		);
 		if (this.interviewResult) {
 			this.interviewList = this.interviewResult.items;
 		}
 	}
 	async editInterview(id: string) {
-		this.interviewId = id;
-		for (const interview of this.interviewResult.items) {
-			if (interview.id === id) {
-				const dialog = this.dialogService.open(
-					CandidateInterviewMutationComponent,
-					{
-						context: {
-							editData: interview,
-							selectedCandidate: this.selectedCandidate,
-							interviewId: id
-						}
-					}
-				);
-				const data = await dialog.onClose.pipe(first()).toPromise();
-				if (data) {
-					this.toastrSuccess('UPDATED');
-					this.loadInterview();
+		const currentInterview = await this.candidateInterviewService.findById(
+			id
+		);
+		currentInterview.interviewers = await this.candidateInterviewersService.findByInterviewId(
+			id
+		);
+		const dialog = this.dialogService.open(
+			CandidateInterviewMutationComponent,
+			{
+				context: {
+					header: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
+					),
+					editData: currentInterview,
+					selectedCandidate: this.selectedCandidate,
+					interviewId: id
 				}
 			}
+		);
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('UPDATED');
+			this.loadInterview();
 		}
 	}
 	async removeInterview(id: string) {
 		try {
 			await this.candidateInterviewService.delete(id);
+			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
 			this.toastrSuccess('DELETED');
 			this.loadInterview();
 		} catch (error) {

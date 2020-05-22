@@ -85,8 +85,12 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<User> {
-		return this.userService.findOne(id);
+	async findOneById(
+		@Param('id', UUIDValidationPipe) id: string,
+		@Query('data') data: string
+	): Promise<User> {
+		const { relations } = JSON.parse(data);
+		return this.userService.findOne(id, { relations });
 	}
 
 	@ApiOperation({ summary: 'Find all users.' })

@@ -78,6 +78,7 @@ import { RequestApproval } from '../request-approval/request-approval.entity';
 import { RequestApprovalEmployee } from '../request-approval-employee/request-approval-employee.entity';
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { EventType } from '../event-types/event-type.entity';
+import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
 
 const entities = [
 	Invite,
@@ -149,7 +150,8 @@ const entities = [
 	ApprovalPolicy,
 	EmployeeAppointment,
 	AppointmentEmployees,
-	EventType
+	EventType,
+	AvailabilitySlots
 ];
 
 @Module({
