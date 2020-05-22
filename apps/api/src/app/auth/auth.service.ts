@@ -69,7 +69,7 @@ export class AuthService {
 		originUrl?: string
 	): Promise<{ id: string; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role']
+			relations: ['role', 'employee']
 		});
 
 		let token: string;

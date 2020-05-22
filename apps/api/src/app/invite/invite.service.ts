@@ -188,7 +188,7 @@ export class InviteService extends CrudService<Invite> {
 				this.emailService.inviteUser({
 					email: item.email,
 					role: role.name,
-					organization: organization.name,
+					organization: organization,
 					registerUrl,
 					originUrl,
 					languageCode
@@ -202,7 +202,7 @@ export class InviteService extends CrudService<Invite> {
 					clients,
 					departments,
 					originUrl,
-					organization: organization.name,
+					organization: organization,
 					languageCode
 				});
 			}

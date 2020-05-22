@@ -20,9 +20,19 @@
 					*ngFor="let email of emails"
 				>
 					<div class="email-list-item">
-						<span>To: <b>boyan@ever.co</b></span>
-						<span>From: <b>System</b></span>
-						<span>Template: <b>Welcome</b></span>
+						<span
+							>To: <b>{{ email.email }}</b></span
+						>
+						<span
+							>From:
+							<b>{{ !email.userId ? 'System' : 'IDK' }}</b></span
+						>
+						<span
+							>Template:
+							<b>{{
+								email.emailTemplate.name | titlecase
+							}}</b></span
+						>
 					</div>
 				</nb-list-item>
 			</nb-list>

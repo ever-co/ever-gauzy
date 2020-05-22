@@ -17,11 +17,12 @@ import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
 import { Email as IEmail } from './email.entity';
 import { Invite } from '../invite/invite.entity';
+import { Employee } from '../employee/employee.entity';
 
 export interface InviteUserModel {
 	email: string;
 	role: string;
-	organization: string;
+	organization: Organization;
 	registerUrl: string;
 	languageCode: LanguagesEnum;
 	originUrl?: string;
@@ -30,7 +31,7 @@ export interface InviteUserModel {
 export interface InviteEmployeeModel {
 	email: string;
 	registerUrl: string;
-	organization: string;
+	organization: Organization;
 	languageCode: LanguagesEnum;
 	projects?: OrganizationProjects[];
 	clients?: OrganizationClients[];
@@ -95,29 +96,37 @@ export class EmailService extends CrudService<IEmail> {
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	) {
+		const sendOptions = {
+			template: 'invite-organization-client',
+			message: {
+				to: `${organizationClient.primaryEmail}`
+			},
+			locals: {
+				locale: languageCode,
+				name: organizationClient.name,
+				host: originUrl || environment.host,
+				id: organizationClient.id,
+				inviterName: inviterUser
+					? (inviterUser.firstName || '') +
+					  (inviterUser.lastName || '')
+					: '',
+				organizationName: organization && organization.name,
+				generatedUrl:
+					originUrl +
+					`#/auth/accept-client-invite?email=${organizationClient.primaryEmail}&token=${invite.token}`
+			}
+		};
+
 		this.email
-			.send({
-				template: 'invite-organization-client',
-				message: {
-					to: `${organizationClient.primaryEmail}`
-				},
-				locals: {
-					locale: languageCode,
-					name: organizationClient.name,
-					host: originUrl || environment.host,
-					id: organizationClient.id,
-					inviterName: inviterUser
-						? (inviterUser.firstName || '') +
-						  (inviterUser.lastName || '')
-						: '',
-					organizationName: organization && organization.name,
-					generatedUrl:
-						originUrl +
-						`#/auth/accept-client-invite?email=${organizationClient.primaryEmail}&token=${invite.token}`
-				}
-			})
+			.send(sendOptions)
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, languageCode);
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email: organizationClient.primaryEmail,
+					languageCode,
+					message: res.originalMessage,
+					organization
+				});
 			})
 			.catch(console.error);
 	}
@@ -132,22 +141,30 @@ export class EmailService extends CrudService<IEmail> {
 			languageCode
 		} = inviteUserModel;
 
+		const sendOptions = {
+			template: 'invite-user',
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				locale: languageCode,
+				role: role,
+				organization: organization.name,
+				generatedUrl: registerUrl,
+				host: originUrl || environment.host
+			}
+		};
+
 		this.email
-			.send({
-				template: 'invite-user',
-				message: {
-					to: `${email}`
-				},
-				locals: {
-					locale: languageCode,
-					role: role,
-					organization: organization,
-					generatedUrl: registerUrl,
-					host: originUrl || environment.host
-				}
-			})
+			.send(sendOptions)
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, languageCode);
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email,
+					languageCode,
+					message: res.originalMessage,
+					organization
+				});
 			})
 			.catch(console.error);
 	}
@@ -162,78 +179,143 @@ export class EmailService extends CrudService<IEmail> {
 			languageCode
 		} = inviteEmployeeModel;
 
+		const sendOptions = {
+			template: 'invite-employee',
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				locale: languageCode,
+				role: projects,
+				organization: organization.name,
+				generatedUrl: registerUrl,
+				host: originUrl || environment.host
+			}
+		};
+
 		this.email
-			.send({
-				template: 'invite-employee',
-				message: {
-					to: `${email}`
-				},
-				locals: {
-					locale: languageCode,
-					role: projects,
-					organization,
-					generatedUrl: registerUrl,
-					host: originUrl || environment.host
-				}
-			})
+			.send(sendOptions)
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, languageCode);
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email,
+					languageCode,
+					message: res.originalMessage,
+					organization
+				});
 			})
 			.catch(console.error);
 	}
 
 	welcomeUser(user: User, languageCode: LanguagesEnum, originUrl?: string) {
+		const sendOptions = {
+			template: 'welcome-user',
+			message: {
+				to: `${user.email}`
+			},
+			locals: {
+				locale: languageCode,
+				email: user.email,
+				host: originUrl || environment.host
+			}
+		};
+
 		this.email
-			.send({
-				template: 'welcome-user',
-				message: {
-					to: `${user.email}`
-				},
-				locals: {
-					locale: languageCode,
-					email: user.email,
-					host: originUrl || environment.host
-				}
-			})
+			.send(sendOptions)
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, languageCode);
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email: user.email,
+					languageCode,
+					message: res.originalMessage
+				});
 			})
 			.catch(console.error);
 	}
 
-	requestPassword(
+	async requestPassword(
 		user: User,
 		url: string,
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	) {
+		const sendOptions = {
+			template: 'password',
+			message: {
+				to: `${user.email}`,
+				subject: 'Forgotten Password'
+			},
+			locals: {
+				locale: languageCode,
+				generatedUrl: url,
+				host: originUrl || environment.host
+			}
+		};
+
+		let organization: Organization = null;
+
+		// TODO!: here find a way to get the employee with its organization
+		if (user.employee) {
+			// const employee = await this.employeeRepository.findOne(user.employee.id, {
+			// 	relations: ['organization']
+			// });
+			// organization = employee.organization;
+		}
+
+		console.log(organization);
+
 		this.email
-			.send({
-				template: 'password',
-				message: {
-					to: `${user.email}`,
-					subject: 'Forgotten Password'
-				},
-				locals: {
-					locale: languageCode,
-					generatedUrl: url,
-					host: originUrl || environment.host
-				}
-			})
+			.send(sendOptions)
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, languageCode);
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email: user.email,
+					languageCode,
+					message: res.originalMessage,
+					organization
+				});
 			})
 			.catch(console.error);
 	}
 
-	createEmailRecord(message, languageCode): Promise<IEmail> {
-		const email = new IEmail();
+	async createEmailRecord(createEmailOptions: {
+		templateName: string;
+		email: string;
+		languageCode: LanguagesEnum;
+		message: any;
+		organization?: Organization;
+		userId?: string;
+	}): Promise<IEmail> {
+		const emailEntity = new IEmail();
 
-		email.name = message.subject;
-		email.content = message.html;
-		email.languageCode = languageCode;
+		const {
+			templateName: template,
+			email,
+			languageCode,
+			message,
+			organization,
+			userId
+		} = createEmailOptions;
 
-		return this.emailRepository.save(email);
+		const emailTemplate = await this.emailTemplateRepository.findOne({
+			name: template + '/html',
+			languageCode
+		});
+
+		emailEntity.name = message.subject;
+		emailEntity.email = email;
+		emailEntity.content = message.html;
+		emailEntity.emailTemplate = emailTemplate;
+
+		if (organization) {
+			emailEntity.organizationId = organization.id;
+		}
+
+		if (userId) {
+			emailEntity.userId = userId;
+		}
+
+		return this.emailRepository.save(emailEntity);
 	}
 
 	// tested e-mail send functionality

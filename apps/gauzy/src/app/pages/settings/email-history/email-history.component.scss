@@ -11,7 +11,7 @@
     nb-list {
       white-space: nowrap;
       overflow: hidden;
-      min-width: 200px;
+      min-width: 320px;
       flex: none;
 
       nb-list-item {
@@ -21,9 +21,9 @@
           border-top: none;
         }
 
-        &:last-child {
-          border-bottom: none;
-        }
+        // &:last-child {
+        //   border-bottom: none;
+        // }
 
         &:hover {
           color: #3366ff;
@@ -39,7 +39,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             display: block;
-            width: 180px;
+            width: 280px;
           }
         }
       }
