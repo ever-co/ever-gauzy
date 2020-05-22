@@ -889,7 +889,8 @@
 		"TAGS_DELETE_TAG": "Tag deleted",
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
-		"TAGS_SELECT_DESCRIPTION": "Tag description"
+		"TAGS_SELECT_DESCRIPTION": "Tag description",
+		"ADD_NEW_TAG": "Add new Tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
