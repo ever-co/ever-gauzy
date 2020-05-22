@@ -308,6 +308,7 @@
 		"tslint-config-prettier": "^1.18.0",
 		"webpack-bundle-analyzer": "^3.8.0",
 		"terser-webpack-plugin": "^3.0.1",
+		"terser": "^4.7.0",
 		"typescript": "~3.8.3"
 	},
 	"engines": {
