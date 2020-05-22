@@ -1,9 +1,13 @@
 <nb-card class="card-wrap">
-	<nb-icon
-		class="ml-auto mt-3  mr-3 close"
-		icon="close-outline"
-		(click)="closeDialog()"
-	></nb-icon>
+	<div class="ml-auto mt-3 mr-3">
+		<nb-icon icon="edit-outline" class="icons" (click)="edit()"></nb-icon>
+		<nb-icon
+			icon="close-outline"
+			class="icons"
+			(click)="closeDialog()"
+		></nb-icon>
+	</div>
+
 	<div class="card">
 		<nb-icon
 			*ngIf="interviewList?.length > 1"
