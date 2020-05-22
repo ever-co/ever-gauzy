@@ -684,7 +684,7 @@
 		"INTERVIEW_INFO_MODAL": {
 			"SCHEDULED": "Scheduled",
 			"HOURS_AGO": " hour(s) ago",
-			"LESS_MINUTE": " less than  a minute ago",
+			"LESS_MINUTE": " less than a minute ago",
 			"MINUTES_AGO": " minutes ago",
 			"DAYS_AGO": " day(s) ago",
 			"DATE": "Date",
