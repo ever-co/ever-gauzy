@@ -249,7 +249,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
-			"ADD_REMOVE_CANDIDATES": "Добавить Кандидатов",
+			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
@@ -887,7 +887,8 @@
 		"TAGS_DELETE_TAG": "Метка удалена",
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
-		"TAGS_SELECT_DESCRIPTION": "Описание метки"
+		"TAGS_SELECT_DESCRIPTION": "Описание метки",
+		"ADD_NEW_TAG": "Добавить новый тег"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"

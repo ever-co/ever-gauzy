@@ -249,7 +249,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
-			"ADD_REMOVE_CANDIDATES": "Add Candidates",
+			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -682,7 +682,7 @@
 		"INTERVIEW_INFO_MODAL": {
 			"SCHEDULED": "Scheduled",
 			"HOURS_AGO": " hour(s) ago",
-			"LESS_MINUTE": " less than minute ago",
+			"LESS_MINUTE": " less than a minute ago",
 			"MINUTES_AGO": " minutes ago",
 			"DAYS_AGO": " day(s) ago",
 			"DATE": "Дата",
@@ -887,7 +887,8 @@
 		"TAGS_DELETE_TAG": "Tag deleted",
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
-		"TAGS_SELECT_DESCRIPTION": "Tag description"
+		"TAGS_SELECT_DESCRIPTION": "Tag description",
+		"ADD_NEW_TAG": "Add new Tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
