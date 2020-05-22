@@ -1,15 +1,16 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ProductType } from '@gauzy/models';
+import { ProductType, Organization } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first } from 'rxjs/operators';
+import { first, take } from 'rxjs/operators';
 import { ProductTypeMutationComponent } from '../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Location } from '@angular/common';
 import { IconRowComponent } from '../icon-row/icon-row.component';
+import { Store } from '../../../@core/services/store.service';
 
 export interface SelectedProductType {
 	data: ProductType;
@@ -26,6 +27,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	loading = true;
 	selectedItem: ProductType;
+	selectedOrganization: Organization;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
 
@@ -36,15 +38,20 @@ export class ProductTypesComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private productTypeService: ProductTypeService,
 		private toastrService: NbToastrService,
-		private location: Location
+		private location: Location,
+		private store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		this.store.selectedOrganization$.pipe(take(1)).subscribe((org) => {
+			this.selectedOrganization = org;
+			this.loadSettings();
+		});
+
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadSettings();
 	}
 
 	async loadSmartTable() {
@@ -74,9 +81,14 @@ export class ProductTypesComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedItem = null;
-		const { items } = await this.productTypeService.getAll([
-			'organization',
-		]);
+		const searchCriteria = this.selectedOrganization
+			? { organization: { id: this.selectedOrganization.id } }
+			: null;
+
+		const { items } = await this.productTypeService.getAll(
+			['organization'],
+			searchCriteria
+		);
 
 		this.loading = false;
 		this.smartTableSource.load(items);
