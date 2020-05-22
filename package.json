@@ -68,16 +68,18 @@
 		"postinstall": "electron-rebuild install-app-deps",
 		"postinstall.electron": "node tools/electron/postinstall",
 		"postinstall.web": "node tools/web/postinstall",
-		"build:desktop": "npm run prepare:desktop && ng build desktop --prod --base-href ./",
+		"build:desktop": "npm run prepare:desktop && ng build desktop --prod --base-href ./ && ng build desktop-api --prod",
 		"build:desktop:local": "npm run build:desktop && electron dist/apps/desktop",
-		"build:desktop:linux": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder build --linux",
+		"build:desktop:linux": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder -c.electronVersion=8.3.0 build --linux",
 		"build:desktop.windows": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder build --windows",
 		"build:desktop.mac": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder build --mac",
 		"prepare:desktop": "npm run postinstall.electron && tsc -p apps/desktop/tsconfig.json",
 		"serve:desktop.target": "nx serve desktop",
 		"serve:desktop": "wait-on http-get://localhost:4200/ && electron apps/desktop/src --serve",
 		"start:desktop": "npm run prepare:desktop && npm-run-all -p serve.electron.gauzy-desktop.target serve.electron.gauzy-desktop",
-		"start.gauzy": "npm run postinstall.web && nx serve gauzy"
+		"start.gauzy": "npm run postinstall.web && nx serve gauzy",
+		"build:desktop:mac:quick": "cd dist/apps/desktop && npx electron-builder -c.electronVersion=8.3.0 build --mac",
+		"build:desktop:local:quick": "electron dist/apps/desktop"
 	},
 	"config": {
 		"commitizen": {

@@ -26,7 +26,6 @@
 				"build": {
 					"builder": "@angular-devkit/build-angular:browser",
 					"options": {
-						"aot": true,
 						"outputPath": "dist/apps/gauzy",
 						"index": "apps/gauzy/src/index.html",
 						"main": "apps/gauzy/src/main.ts",
@@ -80,6 +79,7 @@
 							"extractCss": true,
 							"namedChunks": false,
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
+							"aot": true,
 							"extractLicenses": false,
 							"vendorChunk": false,
 							"buildOptimizer": false,
@@ -88,10 +88,6 @@
 									"type": "initial",
 									"maximumWarning": "2mb",
 									"maximumError": "20mb"
-								},
-								{
-									"type": "anyComponentStyle",
-									"maximumWarning": "6kb"
 								}
 							]
 						}
@@ -371,6 +367,41 @@
 						"production": {
 							"browserTarget": "desktop:build:production",
 							"proxyConfig": "apps/gauzy/proxy.prod.conf.json"
+						}
+					}
+				}
+			}
+		},
+		"desktop-api": {
+			"root": "apps/api",
+			"sourceRoot": "apps/api/src",
+			"projectType": "application",
+			"prefix": "api",
+			"schematics": {},
+			"architect": {
+				"build": {
+					"builder": "@nrwl/node:build",
+					"options": {
+						"outputPath": "dist/apps/desktop/api",
+						"main": "apps/api/src/main.ts",
+						"showCircularDependencies": false,
+						"sourceMap": true,
+						"maxWorkers": 4,
+						"tsConfig": "apps/api/tsconfig.app.json",
+						"assets": ["apps/api/src/assets"]
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": true,
+							"inspect": false,
+							"sourceMap": false,
+							"fileReplacements": [
+								{
+									"replace": "apps/api/src/environments/environment.ts",
+									"with": "apps/api/src/environments/environment.prod.ts"
+								}
+							]
 						}
 					}
 				}

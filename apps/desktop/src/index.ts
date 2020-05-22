@@ -1,6 +1,7 @@
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, ClientRequest } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
+import { fork } from 'child_process';
 
 let serve;
 const args = process.argv.slice(1);
@@ -23,7 +24,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	resizable: true,
 	focusable: true,
 	fullscreenable: true,
-	kiosk: true,
+	// kiosk: true,
 	// to hide title bar, uncomment:
 	// titleBarStyle: 'hidden',
 	webPreferences: {
@@ -99,8 +100,23 @@ function createWindow() {
 	}
 }
 
+function apiBackgroundProcess() {
+	const serverProcess = fork(
+		path.join(__dirname, '../electron-api/main.js'),
+		['--subprocess', app.getVersion()]
+	);
+
+	serverProcess.on('message', (msg) => {
+		if (msg === 'Listening at http://localhost:3000/api') {
+			createWindow();
+		}
+	});
+}
 try {
-	app.on('ready', createWindow);
+	app.on('ready', () => {
+		apiBackgroundProcess();
+		// createWindow()
+	});
 
 	app.on('window-all-closed', quit);
 
