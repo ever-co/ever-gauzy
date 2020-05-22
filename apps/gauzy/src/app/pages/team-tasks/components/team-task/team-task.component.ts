@@ -14,11 +14,15 @@ import { NotesWithTagsComponent } from 'apps/gauzy/src/app/@shared/table-compone
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { TaskEstimateComponent } from 'apps/gauzy/src/app/@shared/table-components/task-estimate/task-estimate.component';
 import { AssignedToComponent } from 'apps/gauzy/src/app/@shared/table-components/assigned-to/assigned-to.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
+import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
+import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
 
 @Component({
 	selector: 'ngx-team-task',
 	templateUrl: './team-task.component.html',
-	styleUrls: ['./team-task.component.scss']
+	styleUrls: ['./team-task.component.scss'],
 })
 export class TaskComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -32,11 +36,16 @@ export class TaskComponent extends TranslationBaseComponent
 	tasks$: Observable<Task[]>;
 	selectedTask: Task;
 	tags: Tag[];
+	teams;
 
 	constructor(
 		private dialogService: NbDialogService,
 		private _store: TeamTasksStoreService,
-		readonly translateService: TranslateService
+		private _organizationsStore: Store,
+		readonly translateService: TranslateService,
+		private organizationTeamsService: OrganizationTeamsService,
+		private usersOrganizationsService: UsersOrganizationsService,
+		private organizationsService: OrganizationsService
 	) {
 		super(translateService);
 		this.tasks$ = this._store.tasks$;
@@ -44,6 +53,7 @@ export class TaskComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this._store.fetchTasks();
+		this.loadTeams();
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
 	}
@@ -63,50 +73,63 @@ export class TaskComponent extends TranslationBaseComponent
 				title: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'string',
-					width: '10%'
+					width: '10%',
 				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_DESCRIPTION'),
 					type: 'custom',
 					filter: false,
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
 				},
 				projectName: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'string',
-					filter: false
+					filter: false,
 				},
 				assignTo: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
 					type: 'custom',
-					filter: false,
-					renderComponent: AssignedToComponent
+					filter: {
+						type: 'list',
+						config: {
+							selectText: 'Select',
+							list: (this.teams || []).map((team) => {
+								if (team) {
+									return {
+										title: team.name,
+										value: team.name,
+									};
+								}
+							}),
+						},
+					},
+					renderComponent: AssignedToComponent,
 				},
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: TaskEstimateComponent
+					renderComponent: TaskEstimateComponent,
 				},
 				dueDate: {
 					title: this.getTranslation('TASKS_PAGE.DUE_DATE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'string',
-					filter: false
-				}
-			}
+					filter: false,
+				},
+			},
 		};
 	}
 
 	async createTaskDialog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
-			context: {}
+			context: {},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -126,11 +149,36 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 	}
 
+	async loadTeams() {
+		if (!this._organizationsStore.selectedOrganization) {
+			const {
+				items: userOrg,
+			} = await this.usersOrganizationsService.getAll([], {
+				userId: this._organizationsStore.userId,
+			});
+			const org = await this.organizationsService
+				.getById(userOrg[0].orgId)
+				.pipe(first())
+				.toPromise();
+			this._organizationsStore.selectedOrganization = org;
+		}
+		const organizationId = this._organizationsStore.selectedOrganization.id;
+		if (!organizationId) {
+			return;
+		}
+		this.teams = (
+			await this.organizationTeamsService.getMyTeams(['members'])
+		).items.filter((org) => {
+			return org.organizationId === organizationId;
+		});
+		this._loadTableSettings();
+	}
+
 	async editTaskDIalog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask
-			}
+				selectedTask: this.selectedTask,
+			},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -147,7 +195,7 @@ export class TaskComponent extends TranslationBaseComponent
 
 			this._store.editTask({
 				...data,
-				id: this.selectedTask.id
+				id: this.selectedTask.id,
 			});
 			this.selectTask({ isSelected: false, data: null });
 		}
@@ -156,8 +204,8 @@ export class TaskComponent extends TranslationBaseComponent
 	async duplicateTaskDIalog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask
-			}
+				selectedTask: this.selectedTask,
+			},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();

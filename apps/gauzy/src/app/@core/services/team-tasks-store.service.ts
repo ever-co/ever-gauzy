@@ -5,13 +5,13 @@ import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
 @Injectable({
-	providedIn: 'root'
+	providedIn: 'root',
 })
 export class TeamTasksStoreService {
 	private _tasks$: BehaviorSubject<Task[]> = new BehaviorSubject([]);
 	public tasks$: Observable<Task[]> = this._tasks$
 		.asObservable()
-		.pipe(map(this._mapToViewModel));
+		.pipe(map(this._mapToViewModel.bind(this)));
 
 	private _selectedTask$: BehaviorSubject<Task> = new BehaviorSubject(null);
 	public selectedTask$: Observable<Task> = this._selectedTask$.asObservable();
@@ -37,8 +37,16 @@ export class TeamTasksStoreService {
 		return tasks.map((task) => ({
 			...task,
 			projectName: task.project ? task.project.name : undefined,
-			employees: task.members ? task.members : undefined
+			employees: task.members ? task.members : undefined,
+			assignTo: this._getTeamNames(task),
 		}));
+	}
+
+	private _getTeamNames(task) {
+		if (task.teams && Array.isArray(task.teams)) {
+			return task.teams.map((team) => team.name);
+		}
+		return [];
 	}
 
 	loadAllTasks(tasks: Task[]): void {
