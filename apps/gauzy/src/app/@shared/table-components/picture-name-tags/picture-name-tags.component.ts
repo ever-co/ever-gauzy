@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
+import { getContrastColor } from 'libs/utils';
 
 @Component({
 	template: `
@@ -38,6 +39,7 @@ import { ViewCell } from 'ng2-smart-table';
 				class="color"
 				position="centered"
 				[style.background]="tag.color"
+				[style.color]="backgroundContrast(tag.color)"
 				text="{{ tag.name }}"
 			>
 			</nb-badge>
@@ -68,12 +70,16 @@ import { ViewCell } from 'ng2-smart-table';
 				height: 100%;
 				max-width: 70px;
 			}
-		`
-	]
+		`,
+	],
 })
 export class PictureNameTagsComponent implements ViewCell {
 	@Input()
 	rowData: any;
 
 	value: string | number;
+
+	backgroundContrast(bgColor: string) {
+		return getContrastColor(bgColor);
+	}
 }
