@@ -14,7 +14,8 @@ if (isCircleEnv) {
 
 module.exports = {
 	optimization: {
-		minimize: true,
+		// for now let's disable minimize in CircleCI
+		minimize: !isCircleCI,
 		minimizer: [
 			new TerserPlugin({
 				parallel: isCircleEnv ? 2 : true,
