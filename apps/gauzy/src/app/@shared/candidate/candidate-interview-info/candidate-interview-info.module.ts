@@ -7,10 +7,11 @@ import {
 	NbIconModule,
 	NbButtonModule,
 	NbCardModule,
-	NbTabsetModule
+	NbTabsetModule,
 } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
+import { CandidateInterviewMutationModule } from '../candidate-interview-mutation/candidate-interview-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -24,16 +25,17 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbIconModule,
 		NbTabsetModule,
+		CandidateInterviewMutationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	exports: [CandidateInterviewInfoComponent],
 	declarations: [CandidateInterviewInfoComponent],
-	entryComponents: [CandidateInterviewInfoComponent]
+	entryComponents: [CandidateInterviewInfoComponent],
 })
 export class CandidateInterviewInfoModule {}

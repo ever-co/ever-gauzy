@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
 import { ICandidateInterview, Candidate } from '@gauzy/models';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { EmployeesService } from '../../../@core/services';
@@ -7,10 +7,12 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
+import { first } from 'rxjs/operators';
 @Component({
 	selector: 'ngx-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
-	styleUrls: ['./candidate-interview-info.component.scss']
+	styleUrls: ['./candidate-interview-info.component.scss'],
 })
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -30,15 +32,36 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 		private candidateInterviewersService: CandidateInterviewersService,
 		private employeesService: EmployeesService,
 		private candidatesService: CandidatesService,
+		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
+		private toastrService: NbToastrService,
 		private candidateInterviewService: CandidateInterviewService
 	) {
 		super(translateService);
 	}
-	closeDialog() {
-		this.dialogRef.close();
+	async edit() {
+		this.currentInterview.interviewers = await this.candidateInterviewersService.findByInterviewId(
+			this.currentInterview.id
+		);
+		const dialog = this.dialogService.open(
+			CandidateInterviewMutationComponent,
+			{
+				context: {
+					header: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
+					),
+					editData: this.currentInterview,
+					selectedCandidate: this.selectedCandidate,
+					interviewId: this.currentInterview.id,
+				},
+			}
+		);
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('UPDATED');
+			this.loadData();
+		}
 	}
-
 	async ngOnInit() {
 		if (this.interviewId) {
 			const res = await this.candidateInterviewService.findById(
@@ -56,6 +79,9 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 			}
 		}
 		this.currentInterview = this.interviewList[0];
+		this.loadData();
+	}
+	loadData() {
 		this.getData(this.currentInterview.id);
 		this.setTime(this.currentInterview.updatedAt);
 	}
@@ -86,8 +112,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 		const currentIndex = this.interviewList.indexOf(this.currentInterview);
 		const newIndex = currentIndex === 0 ? currentIndex : currentIndex - 1;
 		this.currentInterview = this.interviewList[newIndex];
-		this.getData(this.currentInterview.id);
-		this.setTime(this.currentInterview.updatedAt);
+		this.loadData();
 		if (currentIndex === 1) {
 			this.isPreviousBtn = false;
 		}
@@ -101,8 +126,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 				? currentIndex
 				: currentIndex + 1;
 		this.currentInterview = this.interviewList[newIndex];
-		this.getData(this.currentInterview.id);
-		this.setTime(this.currentInterview.updatedAt);
+		this.loadData();
 		if (currentIndex === this.interviewList.length - 2) {
 			this.isNextBtn = false;
 		}
@@ -134,5 +158,14 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 					'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.DAYS_AGO'
 				);
 		}
+	}
+	private toastrSuccess(text: string) {
+		this.toastrService.success(
+			this.getTranslation('TOASTR.TITLE.SUCCESS'),
+			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
+		);
+	}
+	closeDialog() {
+		this.dialogRef.close();
 	}
 }
