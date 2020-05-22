@@ -14,24 +14,24 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { OrganizationClientsEditByEmployeeCommand } from './commands/organization-clients.edit-by-employee.command';
-import { OrganizationClients } from './organization-clients.entity';
-import { OrganizationClientsService } from './organization-clients.service';
+import { OrganizationContactsEditByEmployeeCommand } from './commands/organization-contacts.edit-by-employee.command';
+import { OrganizationContacts } from './organization-contacts.entity';
+import { OrganizationContactsService } from './organization-contacts.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { AuthGuard } from '@nestjs/passport';
 
-@ApiTags('Organization-Clients')
+@ApiTags('Organization-Contact')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class OrganizationClientsController extends CrudController<
-	OrganizationClients
+export class OrganizationContactsController extends CrudController<
+	OrganizationContacts
 > {
 	constructor(
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactsService,
 		private readonly commandBus: CommandBus
 	) {
-		super(organizationClientsService);
+		super(organizationContactService);
 	}
 
 	@ApiOperation({
@@ -40,7 +40,7 @@ export class OrganizationClientsController extends CrudController<
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found projects',
-		type: OrganizationClients
+		type: OrganizationContacts
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -49,17 +49,17 @@ export class OrganizationClientsController extends CrudController<
 	@Get('employee/:id')
 	async findByEmployee(
 		@Param('id') id: string
-	): Promise<IPagination<OrganizationClients>> {
-		return this.organizationClientsService.findByEmployee(id);
+	): Promise<IPagination<OrganizationContacts>> {
+		return this.organizationContactService.findByEmployee(id);
 	}
 
 	@ApiOperation({
-		summary: 'Find all organization clients recurring expense.'
+		summary: 'Find all organization contacts recurring expense.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found clients recurring expense',
-		type: OrganizationClients
+		description: 'Found contacts recurring expense',
+		type: OrganizationContacts
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -68,10 +68,10 @@ export class OrganizationClientsController extends CrudController<
 	@Get()
 	async findAllEmployees(
 		@Query('data') data: string
-	): Promise<IPagination<OrganizationClients>> {
+	): Promise<IPagination<OrganizationContacts>> {
 		const { relations, findInput } = JSON.parse(data);
 
-		return this.organizationClientsService.findAll({
+		return this.organizationContactService.findAll({
 			where: findInput,
 			relations
 		});
@@ -99,7 +99,7 @@ export class OrganizationClientsController extends CrudController<
 		@Body() entity: EditEntityByMemberInput
 	): Promise<any> {
 		return this.commandBus.execute(
-			new OrganizationClientsEditByEmployeeCommand(entity)
+			new OrganizationContactsEditByEmployeeCommand(entity)
 		);
 	}
 }

@@ -25,7 +25,7 @@ import { EmployeeStatisticsModule } from './employee-statistics/employee-statist
 import { OrganizationDepartmentModule } from './organization-department/organization-department.module';
 import { OrganizationRecurringExpenseModule } from './organization-recurring-expense/organization-recurring-expense.module';
 import { EmployeeRecurringExpenseModule } from './employee-recurring-expense/employee-recurring-expense.module';
-import { OrganizationClientsModule } from './organization-clients/organization-clients.module';
+import { OrganizationContactsModule } from './organization-contacts/organization-contacts.module';
 import { OrganizationPositionsModule } from './organization-positions/organization-positions.module';
 import { OrganizationProjectsModule } from './organization-projects/organization-projects.module';
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
@@ -159,8 +159,8 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 						module: OrganizationDepartmentModule
 					},
 					{
-						path: '/organization-clients',
-						module: OrganizationClientsModule
+						path: '/organization-contacts',
+						module: OrganizationContactsModule
 					},
 					{
 						path: '/organization-positions',
@@ -339,7 +339,7 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 		UserOrganizationModule,
 		OrganizationDepartmentModule,
 		OrganizationRecurringExpenseModule,
-		OrganizationClientsModule,
+		OrganizationContactsModule,
 		OrganizationPositionsModule,
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,

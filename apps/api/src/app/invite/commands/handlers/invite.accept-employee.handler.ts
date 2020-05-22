@@ -6,7 +6,7 @@ import { getUserDummyImage } from '../../../core';
 import { Employee } from '../../../employee/employee.entity';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
-import { OrganizationClientsService } from '../../../organization-clients/organization-clients.service';
+import { OrganizationContactsService } from '../../../organization-contacts/organization-contacts.service';
 import { OrganizationDepartmentService } from '../../../organization-department/organization-department.service';
 import { OrganizationProjectsService } from '../../../organization-projects/organization-projects.service';
 import { InviteService } from '../../invite.service';
@@ -25,7 +25,7 @@ export class InviteAcceptEmployeeHandler
 		private readonly employeeService: EmployeeService,
 		private readonly organizationService: OrganizationService,
 		private readonly organizationProjectService: OrganizationProjectsService,
-		private readonly organizationClientService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactsService,
 		private readonly organizationDepartmentsService: OrganizationDepartmentService,
 		private readonly authService: AuthService
 	) {}
@@ -107,7 +107,7 @@ export class InviteAcceptEmployeeHandler
 			let members = client.members || [];
 			members = [...members, employee];
 			//This will call save() on the client (and not really create a new organization client)
-			this.organizationClientService.create({
+			this.organizationContactService.create({
 				...client,
 				members
 			});

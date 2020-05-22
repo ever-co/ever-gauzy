@@ -40,14 +40,14 @@ import { OrganizationDepartment } from '../organization-department/organization-
 import { OrganizationDepartmentService } from '../organization-department/organization-department.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContacts } from '../organization-contacts/organization-contacts.entity';
 import { InvoiceService } from '../invoice/invoice.service';
 import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItemService } from '../invoice-item/invoice-item.service';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { EmployeeLevelService } from '../organization_employeeLevel/organization-employee-level.service';
 import { EmployeeLevel } from '../organization_employeeLevel/organization-employee-level.entity';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContactsService } from '../organization-contacts/organization-contacts.service';
 import { OrganizationEmploymentType } from '../organization-employment-type/organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from '../organization-employment-type/organization-employment-type.service';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
@@ -103,7 +103,7 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 			OrganizationDepartment,
 			OrganizationProjects,
 			Role,
-			OrganizationClients,
+			OrganizationContacts,
 			Invoice,
 			InvoiceItem,
 			EmployeeLevel,
@@ -146,7 +146,7 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 		InvoiceService,
 		InvoiceItemService,
 		EmployeeLevelService,
-		OrganizationClientsService,
+		OrganizationContactsService,
 		OrganizationDepartmentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,
@@ -187,7 +187,7 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 		InvoiceService,
 		InvoiceItemService,
 		EmployeeLevelService,
-		OrganizationClientsService,
+		OrganizationContactsService,
 		OrganizationDepartmentService,
 		OrganizationEmploymentTypeService,
 		OrganizationPositionsService,

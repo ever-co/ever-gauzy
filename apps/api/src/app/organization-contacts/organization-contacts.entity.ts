@@ -20,7 +20,7 @@ import {
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import {
-	OrganizationClients as IOrganizationClients,
+	OrganizationContacts as IOrganizationContacts,
 	ClientOrganizationInviteStatus
 } from '@gauzy/models';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
@@ -28,8 +28,9 @@ import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
 
-@Entity('organization_client')
-export class OrganizationClients extends Base implements IOrganizationClients {
+@Entity('organization_contact')
+export class OrganizationContacts extends Base
+	implements IOrganizationContacts {
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -103,7 +104,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	clientOrganization?: Organization;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((client: OrganizationClients) => client.clientOrganization)
+	@RelationId((client: OrganizationContacts) => client.clientOrganization)
 	@Column({ nullable: true })
 	readonly clientOrganizationId?: string;
 
@@ -131,7 +132,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 
 	@ManyToMany((type) => Employee, { cascade: ['update'] })
 	@JoinTable({
-		name: 'organization_client_employee'
+		name: 'organization_contact_employee'
 	})
 	members?: Employee[];
 }

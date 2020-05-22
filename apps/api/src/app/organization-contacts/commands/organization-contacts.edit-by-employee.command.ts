@@ -1,8 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
 import { EditEntityByMemberInput as IOrganizationDepartmentEditByEmployeeInput } from '@gauzy/models';
 
-export class OrganizationClientsEditByEmployeeCommand implements ICommand {
-	static readonly type = '[OrganizationClients] Edit By Employee';
+export class OrganizationContactsEditByEmployeeCommand implements ICommand {
+	static readonly type = '[OrganizationContacts] Edit By Employee';
 
 	constructor(
 		public readonly input: IOrganizationDepartmentEditByEmployeeInput

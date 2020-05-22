@@ -94,7 +94,7 @@ export class InviteService {
 			.toPromise();
 	}
 
-	inviteOrganizationClient(
+	inviteOrganizationContact(
 		organizationClientId: string
 	): Promise<OrganizationClients> {
 		return this.http

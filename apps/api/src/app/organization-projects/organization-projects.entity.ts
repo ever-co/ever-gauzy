@@ -22,7 +22,7 @@ import {
 	OrganizationProjects as IOrganizationProjects,
 	CurrenciesEnum
 } from '@gauzy/models';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContacts } from '../organization-contacts/organization-contacts.entity';
 import { Employee } from '../employee/employee.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 
@@ -42,9 +42,9 @@ export class OrganizationProjects extends Base
 	@Column()
 	organizationId: string;
 
-	@ApiPropertyOptional({ type: OrganizationClients })
+	@ApiPropertyOptional({ type: OrganizationContacts })
 	@ManyToOne(
-		(type) => OrganizationClients,
+		(type) => OrganizationContacts,
 		(client) => client.projects,
 		{
 			nullable: true,
@@ -52,7 +52,7 @@ export class OrganizationProjects extends Base
 		}
 	)
 	@JoinColumn()
-	client?: OrganizationClients;
+	client?: OrganizationContacts;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

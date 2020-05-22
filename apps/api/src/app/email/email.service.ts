@@ -1,6 +1,6 @@
 import { environment } from '@env-api/environment';
 import {
-	OrganizationClients,
+	OrganizationContacts,
 	OrganizationDepartment,
 	OrganizationProjects,
 	LanguagesEnum
@@ -33,7 +33,7 @@ export interface InviteEmployeeModel {
 	organization: string;
 	languageCode: LanguagesEnum;
 	projects?: OrganizationProjects[];
-	clients?: OrganizationClients[];
+	clients?: OrganizationContacts[];
 	departments?: OrganizationDepartment[];
 	originUrl?: string;
 }
@@ -87,8 +87,8 @@ export class EmailService extends CrudService<IEmail> {
 		}
 	});
 
-	inviteOrganizationClient(
-		organizationClient: OrganizationClients,
+	inviteOrganizationContact(
+		organizationContact: OrganizationContacts,
 		inviterUser: User,
 		organization: Organization,
 		invite: Invite,
@@ -99,13 +99,13 @@ export class EmailService extends CrudService<IEmail> {
 			.send({
 				template: 'invite-organization-client',
 				message: {
-					to: `${organizationClient.primaryEmail}`
+					to: `${organizationContact.primaryEmail}`
 				},
 				locals: {
 					locale: languageCode,
-					name: organizationClient.name,
+					name: organizationContact.name,
 					host: originUrl || environment.host,
-					id: organizationClient.id,
+					id: organizationContact.id,
 					inviterName: inviterUser
 						? (inviterUser.firstName || '') +
 						  (inviterUser.lastName || '')
@@ -113,7 +113,7 @@ export class EmailService extends CrudService<IEmail> {
 					organizationName: organization && organization.name,
 					generatedUrl:
 						originUrl +
-						`#/auth/accept-client-invite?email=${organizationClient.primaryEmail}&token=${invite.token}`
+						`#/auth/accept-client-invite?email=${organizationContact.primaryEmail}&token=${invite.token}`
 				}
 			})
 			.then((res) => {

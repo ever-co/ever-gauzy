@@ -8,7 +8,7 @@ import * as csv from 'csv-parser';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
 import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
 import { OrganizationVendorsService } from '../organization-vendors/organization-vendors.service';
-import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
+import { OrganizationContactsService } from '../organization-contacts/organization-contacts.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import {
 	OrganizationVendorEnum,
@@ -44,7 +44,7 @@ export class UpworkTransactionService {
 		private _userService: UserService,
 		private _employeeService: EmployeeService,
 		private _orgVendorService: OrganizationVendorsService,
-		private _orgClientService: OrganizationClientsService,
+		private _orgContactsService: OrganizationContactsService,
 		private _expenseCategoryService: ExpenseCategoriesService,
 		private commandBus: CommandBus
 	) {}
@@ -130,7 +130,7 @@ export class UpworkTransactionService {
 						const {
 							record: client
 						} = await this._findRecordOrThrow(
-							this._orgClientService,
+							this._orgContactsService,
 							{
 								where: { name: Team, organizationId: orgId }
 							},

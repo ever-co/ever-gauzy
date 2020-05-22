@@ -4,7 +4,7 @@ import {
 	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
 	OrganizationProjects as IOrganizationProjects,
-	OrganizationClients as IOrganizationClients,
+	OrganizationContacts as IOrganizationContacts,
 	OrganizationDepartment as IOrganizationDepartment,
 	Role as IOrganizationRole,
 	User,
@@ -19,7 +19,7 @@ import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Invite } from './invite.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContacts } from '../organization-contacts/organization-contacts.entity';
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { Organization } from '../organization/organization.entity';
 import { EmailService } from '../email/email.service';
@@ -36,9 +36,9 @@ export class InviteService extends CrudService<Invite> {
 			OrganizationProjects
 		>,
 
-		@InjectRepository(OrganizationClients)
-		private readonly organizationClientsRepository: Repository<
-			OrganizationClients
+		@InjectRepository(OrganizationContacts)
+		private readonly organizationContactsRepository: Repository<
+			OrganizationContacts
 		>,
 
 		@InjectRepository(OrganizationDepartment)
@@ -116,7 +116,7 @@ export class InviteService extends CrudService<Invite> {
 			departmentIds || []
 		);
 
-		const clients: IOrganizationClients[] = await this.organizationClientsRepository.findByIds(
+		const clients: IOrganizationContacts[] = await this.organizationContactsRepository.findByIds(
 			clientIds || []
 		);
 
@@ -211,7 +211,7 @@ export class InviteService extends CrudService<Invite> {
 		return { items, total: items.length, ignored: existingInvites.length };
 	}
 
-	async createOrganizationClientInvite(
+	async createOrganizationContactInvite(
 		inviteInput: ICreateOrganizationClientInviteInput
 	): Promise<Invite> {
 		const {
@@ -224,7 +224,7 @@ export class InviteService extends CrudService<Invite> {
 			languageCode
 		} = inviteInput;
 
-		const client: IOrganizationClients = await this.organizationClientsRepository.findOne(
+		const client: IOrganizationContacts = await this.organizationContactsRepository.findOne(
 			clientId
 		);
 
@@ -253,7 +253,7 @@ export class InviteService extends CrudService<Invite> {
 
 		const createdInvite = await this.repository.save(invite);
 
-		this.emailService.inviteOrganizationClient(
+		this.emailService.inviteOrganizationContact(
 			client,
 			inviterUser,
 			organization,

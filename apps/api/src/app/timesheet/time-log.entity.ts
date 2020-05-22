@@ -13,7 +13,7 @@ import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { Timesheet } from './timesheet.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContacts } from '../organization-contacts/organization-contacts.entity';
 import { Task } from '../tasks/task.entity';
 import * as moment from 'moment';
 
@@ -59,10 +59,10 @@ export class TimeLog extends Base implements ITimeLog {
 	@Column({ nullable: true })
 	readonly taskId?: string;
 
-	@ApiProperty({ type: OrganizationClients })
-	@ManyToOne(() => OrganizationClients, { nullable: true })
+	@ApiProperty({ type: OrganizationContacts })
+	@ManyToOne(() => OrganizationContacts, { nullable: true })
 	@JoinColumn()
-	client?: OrganizationClients;
+	client?: OrganizationContacts;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((timeLog: TimeLog) => timeLog.client)

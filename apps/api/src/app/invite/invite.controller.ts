@@ -34,14 +34,14 @@ import { UpdateResult } from 'typeorm';
 import { IPagination } from '../core';
 import { InviteAcceptEmployeeCommand } from './commands/invite.accept-employee.command';
 import { InviteAcceptUserCommand } from './commands/invite.accept-user.command';
-import { InviteOrganizationClientsCommand } from './commands/invite.organization-clients.command';
+import { InviteOrganizationContactsCommand } from './commands/invite.organization-contacts.command';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { InviteResendCommand } from './commands/invite.resend.command';
 import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
-import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-organization-clients.command';
+import { OrganizationContacts } from '../organization-contacts/organization-contacts.entity';
+import { InviteLinkOrganizationContactsCommand } from './commands/invite.link-organization-contacts.command';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 
@@ -234,14 +234,14 @@ export class InviteController {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(AuthGuard('jwt'), PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
-	@Put('organization-client/:id')
+	@Put('organization-contact/:id')
 	async inviteClient(
 		@Param('id') id: string,
 		@Req() request,
 		@I18nLang() languageCode: LanguagesEnum
-	): Promise<OrganizationClients> {
+	): Promise<OrganizationContacts> {
 		return this.commandBus.execute(
-			new InviteOrganizationClientsCommand({
+			new InviteOrganizationContactsCommand({
 				id,
 				originalUrl: request.get('Origin'),
 				inviterUser: request.user,
@@ -265,12 +265,12 @@ export class InviteController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put('link-organization-client')
+	@Put('link-organization-contact')
 	async linkInviteClient(
 		@Body() input: LinkClientOrganizationInviteInput
-	): Promise<OrganizationClients> {
+	): Promise<OrganizationContacts> {
 		return this.commandBus.execute(
-			new InviteLinkOrganizationClientsCommand(input)
+			new InviteLinkOrganizationContactsCommand(input)
 		);
 	}
 }

@@ -77,7 +77,7 @@ export class InviteClientComponent extends TranslationBaseComponent
 		const organizationClient: OrganizationClients = await this.addOrEditClient();
 		try {
 			if (organizationClient) {
-				const invited = this.inviteService.inviteOrganizationClient(
+				const invited = this.inviteService.inviteOrganizationContact(
 					organizationClient.id
 				);
 				this.closeDialog(invited);

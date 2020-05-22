@@ -1,5 +1,5 @@
 import {
-	OrganizationClients,
+	OrganizationContacts,
 	ClientOrganizationInviteStatus,
 	RolesEnum
 } from '@gauzy/models';
@@ -7,32 +7,32 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { User } from '../../../user/user.entity';
 import { UserService } from '../../../user/user.service';
 import { InternalServerErrorException } from '@nestjs/common';
-import { InviteOrganizationClientsCommand } from '../invite.organization-clients.command';
-import { OrganizationClientsService } from '../../../organization-clients/organization-clients.service';
+import { InviteOrganizationContactsCommand } from '../invite.organization-contacts.command';
+import { OrganizationContactsService } from '../../../organization-contacts/organization-contacts.service';
 import { InviteService } from '../../invite.service';
 import { RoleService } from '../../../role/role.service';
 
 /**
  * Sends an invitation email to the organization client's primaryEmail
  */
-@CommandHandler(InviteOrganizationClientsCommand)
-export class InviteOrganizationClientsHandler
-	implements ICommandHandler<InviteOrganizationClientsCommand> {
+@CommandHandler(InviteOrganizationContactsCommand)
+export class InviteOrganizationContactsHandler
+	implements ICommandHandler<InviteOrganizationContactsCommand> {
 	constructor(
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactsService: OrganizationContactsService,
 		private readonly inviteService: InviteService,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService
 	) {}
 
 	public async execute(
-		command: InviteOrganizationClientsCommand
-	): Promise<OrganizationClients> {
+		command: InviteOrganizationContactsCommand
+	): Promise<OrganizationContacts> {
 		const {
 			input: { id, originalUrl, inviterUser, languageCode }
 		} = command;
 
-		const organizationClient: OrganizationClients = await this.organizationClientsService.findOne(
+		const organizationClient: OrganizationContacts = await this.organizationContactsService.findOne(
 			id
 		);
 
@@ -55,7 +55,7 @@ export class InviteOrganizationClientsHandler
 			where: { name: RolesEnum.VIEWER }
 		});
 
-		this.inviteService.createOrganizationClientInvite({
+		this.inviteService.createOrganizationContactInvite({
 			emailId: organizationClient.primaryEmail,
 			roleId,
 			clientId: organizationClient.id,
@@ -65,7 +65,7 @@ export class InviteOrganizationClientsHandler
 			languageCode
 		});
 
-		await this.organizationClientsService.update(id, {
+		await this.organizationContactsService.update(id, {
 			inviteStatus: ClientOrganizationInviteStatus.INVITED
 		});
 

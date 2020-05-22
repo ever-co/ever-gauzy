@@ -5,7 +5,7 @@ import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-m
 import { Organization } from './organization.model';
 import { User, LanguagesEnum } from './user.model';
 
-export interface OrganizationClients extends IBaseEntityWithMembers {
+export interface OrganizationContacts extends IBaseEntityWithMembers {
 	name: string;
 	organizationId: string;
 	primaryEmail: string;
@@ -25,7 +25,7 @@ export interface OrganizationClients extends IBaseEntityWithMembers {
 	inviteStatus?: string;
 }
 
-export interface OrganizationClientsFindInput extends IBaseEntityModel {
+export interface OrganizationContactsFindInput extends IBaseEntityModel {
 	name?: string;
 	organizationId?: string;
 	primaryEmail?: string;
@@ -38,7 +38,7 @@ export interface OrganizationClientsFindInput extends IBaseEntityModel {
 	notes?: string;
 }
 
-export interface OrganizationClientsCreateInput extends IBaseEntityModel {
+export interface OrganizationContactsCreateInput extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	primaryEmail?: string;
@@ -54,7 +54,7 @@ export interface OrganizationClientsCreateInput extends IBaseEntityModel {
 	notes?: string;
 }
 
-export interface OrganizationClientsInviteInput extends IBaseEntityModel {
+export interface OrganizationContactsInviteInput extends IBaseEntityModel {
 	languageCode: LanguagesEnum;
 	originalUrl?: string;
 	inviterUser?: User;

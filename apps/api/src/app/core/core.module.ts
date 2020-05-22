@@ -25,7 +25,7 @@ import { UserOrganization } from '../user-organization/user-organization.entity'
 import { OrganizationDepartment } from '../organization-department/organization-department.entity';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 import { EmployeeRecurringExpense } from '../employee-recurring-expense/employee-recurring-expense.entity';
-import { OrganizationClients } from '../organization-clients/organization-clients.entity';
+import { OrganizationContacts } from '../organization-contacts/organization-contacts.entity';
 import { OrganizationPositions } from '../organization-positions/organization-positions.entity';
 import { OrganizationVendor } from '../organization-vendors/organization-vendors.entity';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
@@ -92,7 +92,7 @@ const entities = [
 	EmployeeSetting,
 	UserOrganization,
 	OrganizationDepartment,
-	OrganizationClients,
+	OrganizationContacts,
 	OrganizationPositions,
 	OrganizationProjects,
 	OrganizationVendor,
