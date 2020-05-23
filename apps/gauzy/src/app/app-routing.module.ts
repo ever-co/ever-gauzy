@@ -15,8 +15,8 @@ import { AppModuleGuard } from './app.module.guards';
 import { AcceptInvitePage } from './auth/accept-invite/accept-invite.component';
 import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 import { NoAuthGuard } from './@core/auth/no-auth.guard';
-import { OnboardOrganizationClientModule } from './auth/onboard-organization-client/onboard-organization-client.module';
-import { AcceptClientInvitePage } from './auth/onboard-organization-client/accept-client-invite.component';
+import { OnboardOrganizationClientModule } from './auth/onboard-organization-contact/onboard-organization-contact.module';
+import { AcceptClientInvitePage } from './auth/onboard-organization-contact/accept-client-invite.component';
 
 const routes: Routes = [
 	{

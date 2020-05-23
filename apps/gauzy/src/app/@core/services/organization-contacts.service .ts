@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-	OrganizationClientsCreateInput,
-	OrganizationClients,
-	OrganizationClientsFindInput,
+	OrganizationContactsCreateInput,
+	OrganizationContacts,
+	OrganizationContactsFindInput,
 	EditEntityByMemberInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
@@ -11,22 +11,25 @@ import { first } from 'rxjs/operators';
 @Injectable({
 	providedIn: 'root'
 })
-export class OrganizationClientsService {
+export class OrganizationContactsService {
 	constructor(private http: HttpClient) {}
 
 	create(
-		createInput: OrganizationClientsCreateInput
-	): Promise<OrganizationClients> {
+		createInput: OrganizationContactsCreateInput
+	): Promise<OrganizationContacts> {
 		return this.http
-			.post<OrganizationClients>('/api/organization-clients', createInput)
+			.post<OrganizationContacts>(
+				'/api/organization-contacts',
+				createInput
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	getAllByEmployee(id: string): Promise<OrganizationClients[]> {
+	getAllByEmployee(id: string): Promise<OrganizationContacts[]> {
 		return this.http
-			.get<OrganizationClients[]>(
-				`/api/organization-clients/employee/${id}`
+			.get<OrganizationContacts[]>(
+				`/api/organization-contacts/employee/${id}`
 			)
 			.pipe(first())
 			.toPromise();
@@ -34,20 +37,20 @@ export class OrganizationClientsService {
 
 	getById(id: string) {
 		return this.http
-			.get<OrganizationClients>(`/api/organization-clients/${id}`)
+			.get<OrganizationContacts>(`/api/organization-contacts/${id}`)
 			.pipe(first())
 			.toPromise();
 	}
 
 	getAll(
 		relations?: string[],
-		findInput?: OrganizationClientsFindInput
+		findInput?: OrganizationContactsFindInput
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
-			.get<{ items: OrganizationClients[]; total: number }>(
-				`/api/organization-clients`,
+			.get<{ items: OrganizationContacts[]; total: number }>(
+				`/api/organization-contacts`,
 				{
 					params: { data }
 				}
@@ -59,24 +62,24 @@ export class OrganizationClientsService {
 	getByName(
 		relations?: string[],
 		findInput?: string
-	): Promise<OrganizationClientsFindInput> {
+	): Promise<OrganizationContactsFindInput> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get(`/api/organization-clients`, { params: { data } })
+			.get(`/api/organization-contacts`, { params: { data } })
 			.pipe(first())
 			.toPromise();
 	}
 
 	updateByEmployee(updateInput: EditEntityByMemberInput): Promise<any> {
 		return this.http
-			.put(`/api/organization-clients/employee`, updateInput)
+			.put(`/api/organization-contacts/employee`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`/api/organization-clients/${id}`)
+			.delete(`/api/organization-contacts/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

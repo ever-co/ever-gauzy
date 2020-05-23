@@ -12,7 +12,7 @@ import { Store } from '../../@core/services/store.service';
 import { InvoiceItemService } from '../../@core/services/invoice-item.service';
 import { Subject } from 'rxjs';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
-import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
+import { OrganizationContactsService } from '../../@core/services/organization-contacts.service ';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
@@ -49,7 +49,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private toastrService: NbToastrService,
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactsService: OrganizationContactsService,
 		private router: Router
 	) {
 		super(translateService);
@@ -166,7 +166,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	async send() {
 		if (this.selectedInvoice) {
-			const client = await this.organizationClientsService.getById(
+			const client = await this.organizationContactsService.getById(
 				this.selectedInvoice.clientId
 			);
 			if (client.organizationId) {

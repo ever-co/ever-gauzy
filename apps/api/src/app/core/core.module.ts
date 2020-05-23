@@ -32,6 +32,7 @@ import { OrganizationProjects } from '../organization-projects/organization-proj
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
 import { Proposal } from '../proposal/proposal.entity';
+import { Contact } from '../contact/contact.entity';
 import { Country } from '../country/country.entity';
 import { Invite } from '../invite/invite.entity';
 import { Email } from '../email/email.entity';
@@ -101,6 +102,7 @@ const entities = [
 	OrganizationTeam,
 	OrganizationTeamEmployee,
 	Proposal,
+	Contact,
 	Country,
 	Email,
 	TimeOffPolicy,

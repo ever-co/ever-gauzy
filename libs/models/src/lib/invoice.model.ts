@@ -1,6 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Organization } from './organization.model';
-import { OrganizationClients } from './organization-clients.model';
+import { OrganizationContacts } from './organization-contacts.model';
 import { InvoiceItem } from './invoice-item.model';
 import { Tag } from './tag-entity.model';
 
@@ -19,7 +19,7 @@ export interface Invoice extends IBaseEntityModel {
 	clientId?: string;
 	organizationId?: string;
 	fromOrganization?: Organization;
-	toClient?: OrganizationClients;
+	toClient?: OrganizationContacts;
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;
 	sentTo?: string;

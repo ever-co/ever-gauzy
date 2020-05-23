@@ -19,17 +19,20 @@ import {
 	IsEnum
 } from 'class-validator';
 import { Base } from '../core/entities/base';
+
 import {
 	OrganizationContacts as IOrganizationContacts,
 	ClientOrganizationInviteStatus
 } from '@gauzy/models';
+
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
+import { Contact } from '../contact/contact.entity';
 
 @Entity('organization_contact')
-export class OrganizationContacts extends Base
+export class OrganizationContacts extends Contact
 	implements IOrganizationContacts {
 	@ApiProperty({ type: String })
 	@IsString()
@@ -44,29 +47,11 @@ export class OrganizationContacts extends Base
 	@Column()
 	organizationId: string;
 
-	@ApiProperty({ type: String })
-	@IsEmail()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	primaryEmail: string;
-
 	@ApiPropertyOptional({ type: String, isArray: true })
 	emailAddresses?: string[];
 
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	primaryPhone: string;
-
 	@ApiPropertyOptional({ type: String, isArray: true })
 	phones?: string[];
-
-	@ApiProperty({ type: String })
-	@IsString()
-	@IsOptional()
-	@Column({ nullable: true })
-	country?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -104,14 +89,14 @@ export class OrganizationContacts extends Base
 	clientOrganization?: Organization;
 
 	@ApiProperty({ type: String, readOnly: true })
-	@RelationId((client: OrganizationContacts) => client.clientOrganization)
+	@RelationId((contact: OrganizationContacts) => contact.clientOrganization)
 	@Column({ nullable: true })
 	readonly clientOrganizationId?: string;
 
 	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
 	@OneToMany(
 		(type) => OrganizationProjects,
-		(projects) => projects.client
+		(projects) => projects.contact
 	)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
@@ -135,4 +120,15 @@ export class OrganizationContacts extends Base
 		name: 'organization_contact_employee'
 	})
 	members?: Employee[];
+
+	@ManyToMany(
+		(type) => Contact,
+		(contact) => contact.id,
+		{ cascade: ['update'] }
+	)
+	@JoinTable({
+		name: 'organization_contact_contact'
+	})
+	@JoinColumn()
+	contact?: Contact;
 }

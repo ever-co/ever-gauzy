@@ -1,11 +1,11 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tag, Task, Employee } from '..';
-import { OrganizationClients } from './organization-clients.model';
+import { OrganizationContacts } from './organization-contacts.model';
 import { OrganizationProjects } from './organization-projects.model';
 
 export interface Timesheet extends IBaseEntityModel {
 	employee: Employee;
-	approvedBy?: OrganizationClients;
+	approvedBy?: OrganizationContacts;
 	duration?: number;
 	keyboard?: number;
 	mouse?: number;

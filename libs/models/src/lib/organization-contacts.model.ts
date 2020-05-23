@@ -1,18 +1,16 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Employee } from './employee.model';
+import { Contact } from './contact.model';
 import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 import { Organization } from './organization.model';
 import { User, LanguagesEnum } from './user.model';
 
-export interface OrganizationContacts extends IBaseEntityWithMembers {
+export interface OrganizationContacts extends Contact {
 	name: string;
 	organizationId: string;
-	primaryEmail: string;
 	emailAddresses?: string[];
-	primaryPhone: string;
 	phones?: string[];
-	country?: string;
 	street?: string;
 	city?: string;
 	zipCode?: number;

@@ -45,14 +45,14 @@ export class OrganizationProjects extends Base
 	@ApiPropertyOptional({ type: OrganizationContacts })
 	@ManyToOne(
 		(type) => OrganizationContacts,
-		(client) => client.projects,
+		(contact) => contact.projects,
 		{
 			nullable: true,
 			onDelete: 'CASCADE'
 		}
 	)
 	@JoinColumn()
-	client?: OrganizationContacts;
+	contact?: OrganizationContacts;
 
 	@ApiPropertyOptional({ type: Date })
 	@IsDate()

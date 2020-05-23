@@ -3,8 +3,8 @@ import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { FormBuilder, Validators } from '@angular/forms';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
-import { OrganizationClients } from '@gauzy/models';
+import { OrganizationContactsService } from 'apps/gauzy/src/app/@core/services/organization-contacts.service ';
+import { OrganizationContacts } from '@gauzy/models';
 import { UsersService } from 'apps/gauzy/src/app/@core/services';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
 
@@ -19,7 +19,7 @@ export class InviteClientComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private readonly toastrService: NbToastrService,
 		private readonly fb: FormBuilder,
-		private readonly organizationClientService: OrganizationClientsService,
+		private readonly organizationContactService: OrganizationContactsService,
 		private readonly usersService: UsersService,
 		private readonly inviteService: InviteService
 	) {
@@ -33,24 +33,26 @@ export class InviteClientComponent extends TranslationBaseComponent
 	organizationId = '';
 
 	@Input()
-	organizationClient?: OrganizationClients = undefined;
+	organizationContact?: OrganizationContacts = undefined;
 
 	ngOnInit(): void {
 		this.form = this.fb.group(
 			{
 				name: [
-					this.organizationClient ? this.organizationClient.name : '',
+					this.organizationContact
+						? this.organizationContact.name
+						: '',
 					Validators.required
 				],
 				primaryEmail: [
-					this.organizationClient
-						? this.organizationClient.primaryEmail
+					this.organizationContact
+						? this.organizationContact.primaryEmail
 						: '',
 					[Validators.required, Validators.email]
 				],
 				primaryPhone: [
-					this.organizationClient
-						? this.organizationClient.primaryPhone
+					this.organizationContact
+						? this.organizationContact.primaryPhone
 						: '',
 					Validators.required
 				]
@@ -69,16 +71,16 @@ export class InviteClientComponent extends TranslationBaseComponent
 		);
 	}
 
-	closeDialog(organizationClient?) {
-		this.dialogRef.close(organizationClient);
+	closeDialog(organizationContact?) {
+		this.dialogRef.close(organizationContact);
 	}
 
 	async inviteClient() {
-		const organizationClient: OrganizationClients = await this.addOrEditClient();
+		const organizationContact: OrganizationContacts = await this.addOrEditClient();
 		try {
-			if (organizationClient) {
+			if (organizationContact) {
 				const invited = this.inviteService.inviteOrganizationContact(
-					organizationClient.id
+					organizationContact.id
 				);
 				this.closeDialog(invited);
 			}
@@ -90,15 +92,15 @@ export class InviteClientComponent extends TranslationBaseComponent
 		}
 	}
 
-	async addOrEditClient(): Promise<OrganizationClients> {
+	async addOrEditClient(): Promise<OrganizationContacts> {
 		try {
-			if (this.organizationClient) {
-				return await this.organizationClientService.create({
-					...this.organizationClient,
+			if (this.organizationContact) {
+				return await this.organizationContactService.create({
+					...this.organizationContact,
 					...this.form.getRawValue()
 				});
 			} else if (this.form.valid) {
-				return await this.organizationClientService.create({
+				return await this.organizationContactService.create({
 					organizationId: this.organizationId,
 					...this.form.getRawValue()
 				});

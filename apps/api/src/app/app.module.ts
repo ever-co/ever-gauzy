@@ -4,6 +4,7 @@ import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
+import { ContactModule } from './contact/contact.module';
 import { SkillModule } from './skills/skill.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
@@ -115,6 +116,10 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 					{
 						path: '/candidate-experience',
 						module: CandidateExperienceModule
+					},
+					{
+						path: '/contact',
+						module: ContactModule
 					},
 					{
 						path: '/candidate-skills',

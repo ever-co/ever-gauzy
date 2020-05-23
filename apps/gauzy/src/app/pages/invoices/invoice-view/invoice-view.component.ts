@@ -6,11 +6,11 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 import {
 	Invoice,
 	InvoiceItem,
-	OrganizationClients,
+	OrganizationContacts,
 	Employee,
 	Organization
 } from '@gauzy/models';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactsService } from '../../../@core/services/organization-contacts.service ';
 import { EmployeesService } from '../../../@core/services/employees.service';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
@@ -33,7 +33,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 	invoiceDate: string;
 	dueDate: string;
 	invoiceItems: InvoiceItem[];
-	client: OrganizationClients;
+	client: OrganizationContacts;
 	organization: Organization;
 	settingsSmartTable: object;
 	loadTable = false;
@@ -46,7 +46,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private invoicesService: InvoicesService,
 		private employeeService: EmployeesService,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactsService: OrganizationContactsService,
 		private organizationService: OrganizationsService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
@@ -79,7 +79,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		]);
 		this.invoice = invoice;
 		this.invoiceItems = invoice.invoiceItems;
-		const client = await this.organizationClientsService.getById(
+		const client = await this.organizationContactsService.getById(
 			this.invoice.clientId
 		);
 		this.client = client;

@@ -5,7 +5,7 @@ import { EditOrganizationSettingsComponent } from './edit-organization/edit-orga
 import { EditOrganizationComponent } from './edit-organization/edit-organization.component';
 import { EditOrganizationLocationComponent } from './edit-organization/edit-organization-settings/edit-organization-location/edit-organization-location.component';
 import { EditOrganizationDepartmentsComponent } from './edit-organization/edit-organization-settings/edit-organization-departments/edit-organization-departments.component';
-import { EditOrganizationClientsComponent } from './edit-organization/edit-organization-settings/edit-organization-clients/edit-organization-clients.component';
+import { EditOrganizationContactsComponent } from './edit-organization/edit-organization-settings/edit-organization-contacts/edit-organization-contacts.component';
 import { EditOrganizationPositionsComponent } from './edit-organization/edit-organization-settings/edit-organization-positions/edit-organization-positions.component';
 import { EditOrganizationVendorsComponent } from './edit-organization/edit-organization-settings/edit-organization-vendors/edit-organization-vendors.component';
 import { EditOrganizationProjectsComponent } from './edit-organization/edit-organization-settings/edit-organization-projects/edit-organization-projects.component';
@@ -48,7 +48,7 @@ const routes: Routes = [
 			},
 			{
 				path: 'clients',
-				component: EditOrganizationClientsComponent
+				component: EditOrganizationContactsComponent
 			},
 			{
 				path: 'positions',

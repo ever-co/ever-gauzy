@@ -7,7 +7,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { User, UserRegistrationInput, LanguagesEnum } from './user.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Organization } from './organization.model';
-import { OrganizationClients } from './organization-clients.model';
+import { OrganizationContacts } from './organization-contacts.model';
 import { OrganizationDepartment } from './organization-department.model';
 
 export interface Invite extends IBaseEntityModel {
@@ -21,7 +21,7 @@ export interface Invite extends IBaseEntityModel {
 	role?: Role;
 	invitedBy?: User;
 	projects?: OrganizationProjects[];
-	clients?: OrganizationClients[];
+	clients?: OrganizationContacts[];
 	departments?: OrganizationDepartment[];
 	organization?: Organization;
 }

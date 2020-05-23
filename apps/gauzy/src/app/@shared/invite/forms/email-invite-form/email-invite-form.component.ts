@@ -5,7 +5,7 @@ import {
 	InvitationTypeEnum,
 	OrganizationProjects,
 	RolesEnum,
-	OrganizationClients,
+	OrganizationContacts,
 	OrganizationDepartment
 } from '@gauzy/models';
 import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
@@ -22,7 +22,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 export class EmailInviteFormComponent implements OnInit {
 	@Input() public organizationProjects: OrganizationProjects[];
 
-	@Input() public organizationClients: OrganizationClients[];
+	@Input() public organizationContacts: OrganizationContacts[];
 
 	@Input() public organizationDepartments: OrganizationDepartment[];
 
@@ -137,7 +137,7 @@ export class EmailInviteFormComponent implements OnInit {
 
 	selectAllClients() {
 		this.clients.setValue(
-			this.organizationClients
+			this.organizationContacts
 				.filter((client) => !!client.id)
 				.map((client) => client.id)
 		);

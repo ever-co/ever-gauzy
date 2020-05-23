@@ -15,7 +15,7 @@ import {
 	IExpenseCategory,
 	IOrganizationVendor,
 	Tag,
-	OrganizationClients,
+	OrganizationContacts,
 	OrganizationProjects
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -27,7 +27,7 @@ import {
 	SelectedEmployee
 } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactsService } from '../../../@core/services/organization-contacts.service ';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { Subject, Observable } from 'rxjs';
@@ -80,7 +80,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		private organizationsService: OrganizationsService,
 		private organizationVendorsService: OrganizationVendorsService,
 		private store: Store,
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactsService: OrganizationContactsService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
 		private readonly toastrService: NbToastrService,
@@ -184,7 +184,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		}
 	};
 
-	addNewClient = (name: string): Promise<OrganizationClients> => {
+	addNewClient = (name: string): Promise<OrganizationContacts> => {
 		try {
 			this.toastrService.primary(
 				this.getTranslation(
@@ -195,7 +195,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
-			return this.organizationClientsService.create({
+			return this.organizationContactsService.create({
 				name,
 				organizationId: this.organizationId
 			});
@@ -318,9 +318,12 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private async loadClients() {
-		const res = await this.organizationClientsService.getAll(['projects'], {
-			organizationId: this.organizationId
-		});
+		const res = await this.organizationContactsService.getAll(
+			['projects'],
+			{
+				organizationId: this.organizationId
+			}
+		);
 
 		if (res) {
 			res.items.forEach((client) => {

@@ -19,7 +19,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { EmployeeStore } from 'apps/gauzy/src/app/@core/services/employee-store.service';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
+import { OrganizationContactsService } from 'apps/gauzy/src/app/@core/services/organization-contacts.service ';
 import { OrganizationDepartmentsService } from 'apps/gauzy/src/app/@core/services/organization-departments.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
@@ -38,9 +38,9 @@ import {
 	ThemeModule
 } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
-import { EditOrganizationClientMutationComponent } from './edit-organization-clients/edit-organization-clients-mutation/edit-organization-clients-mutation.component';
-import { EditOrganizationClientsComponent } from './edit-organization-clients/edit-organization-clients.component';
-import { InviteClientComponent } from './edit-organization-clients/invite-client/invite-client.component';
+import { EditOrganizationClientMutationComponent } from './edit-organization-contacts/edit-organization-contacts-mutation/edit-organization-contacts-mutation.component';
+import { EditOrganizationContactsComponent } from './edit-organization-contacts/edit-organization-contacts.component';
+import { InviteClientComponent } from './edit-organization-contacts/invite-client/invite-client.component';
 import { EditOrganizationDepartmentsMutationComponent } from './edit-organization-departments/edit-organization-departments-mutation/edit-organization-departments-mutation.component';
 import { EditOrganizationDepartmentsComponent } from './edit-organization-departments/edit-organization-departments.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
@@ -102,7 +102,7 @@ import { InviteService } from '../../../../@core/services/invite.service';
 		OrganizationVendorsService,
 		OrganizationExpenseCategoriesService,
 		OrganizationPositionsService,
-		OrganizationClientsService,
+		OrganizationContactsService,
 		OrganizationEditStore,
 		EmployeeStore,
 		InviteService
@@ -118,7 +118,7 @@ import { InviteService } from '../../../../@core/services/invite.service';
 		EditOrganizationExpenseCategoriesComponent,
 		EditOrganizationPositionsComponent,
 		EditOrganizationPositionsComponent,
-		EditOrganizationClientsComponent,
+		EditOrganizationContactsComponent,
 		EditOrganizationProjectsComponent,
 		EditOrganizationTeamsComponent,
 		EditOrganizationTeamsMutationComponent,

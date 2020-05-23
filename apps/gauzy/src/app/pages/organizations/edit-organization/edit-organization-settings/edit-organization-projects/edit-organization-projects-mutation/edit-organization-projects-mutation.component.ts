@@ -4,7 +4,7 @@ import {
 	CurrenciesEnum,
 	Employee,
 	Organization,
-	OrganizationClients,
+	OrganizationContacts,
 	OrganizationProjects,
 	ProjectTypeEnum
 } from '@gauzy/models';
@@ -19,7 +19,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 	@Input()
 	organization: Organization;
 	@Input()
-	clients?: OrganizationClients[];
+	clients?: OrganizationContacts[];
 	@Input()
 	project: OrganizationProjects;
 

@@ -2,13 +2,13 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	Employee,
-	OrganizationClients,
+	OrganizationContacts,
 	OrganizationProjects
 } from '@gauzy/models';
 
 @Component({
-	selector: 'ga-edit-organization-clients-mutation',
-	templateUrl: './edit-organization-clients-mutation.component.html'
+	selector: 'ga-edit-organization-contacts-mutation',
+	templateUrl: './edit-organization-contacts-mutation.component.html'
 })
 export class EditOrganizationClientMutationComponent implements OnInit {
 	@Input()
@@ -16,7 +16,7 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 	@Input()
 	organizationId: string;
 	@Input()
-	client?: OrganizationClients;
+	client?: OrganizationContacts;
 	@Input()
 	projectsWithoutClients: OrganizationProjects[];
 

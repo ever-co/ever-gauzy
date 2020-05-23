@@ -1,6 +1,12 @@
-import { contactType, Contact as IContact } from '@gauzy/models';
+import { ContactType, Contact as IContact } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsEmail, IsOptional } from 'class-validator';
+import {
+	IsNotEmpty,
+	IsString,
+	IsEmail,
+	IsOptional,
+	IsEnum
+} from 'class-validator';
 import { Column, Entity, Index } from 'typeorm';
 import { Base } from '../core/entities/base';
 @Entity('contact')
@@ -15,13 +21,11 @@ export class Contact extends Base implements IContact {
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
-	@IsOptional()
 	firstName?: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
 	@Column({ nullable: true })
-	@IsOptional()
 	lastName?: string;
 
 	@ApiProperty({ type: String })
@@ -31,13 +35,19 @@ export class Contact extends Base implements IContact {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@Column({ nullable: true })
-	contactType: contactType;
+	@IsEnum(ContactType)
+	@Column({ nullable: false, default: ContactType.Client })
+	contactType: string;
 
 	@ApiProperty({ type: String })
-	@IsEmail()
+	@IsString()
 	@Column({ nullable: false })
-	email: string;
+	primaryEmail: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: false })
+	primaryPhone: string;
 
 	@ApiProperty({ type: String })
 	@IsString()

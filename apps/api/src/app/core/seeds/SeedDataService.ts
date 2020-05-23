@@ -66,6 +66,8 @@ import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
 } from '../../organization/employment-types.seed';
+import { Contact } from '../../contact/contact.entity';
+
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { Equipment } from '../../equipment';
 import { createEmployeeLevels } from '../../organization_employeeLevel/organization-employee-level.seed';
@@ -145,6 +147,7 @@ const allEntities = [
 	ExpenseCategory,
 	EquipmentSharing,
 	User,
+	Contact,
 	Employee,
 	Candidate,
 	Role,

@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import {
 	Employee,
-	OrganizationClients,
-	OrganizationClientsCreateInput,
+	OrganizationContacts,
+	OrganizationContactsCreateInput,
 	OrganizationProjects
 } from '@gauzy/models';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
+import { OrganizationContactsService } from 'apps/gauzy/src/app/@core/services/organization-contacts.service ';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -18,10 +18,10 @@ import { InviteClientComponent } from './invite-client/invite-client.component';
 
 @Component({
 	selector: 'ga-edit-org-clients',
-	templateUrl: './edit-organization-clients.component.html',
-	styleUrls: ['./edit-organization-clients.component.scss']
+	templateUrl: './edit-organization-contacts.component.html',
+	styleUrls: ['./edit-organization-contacts.component.scss']
 })
-export class EditOrganizationClientsComponent extends TranslationBaseComponent
+export class EditOrganizationContactsComponent extends TranslationBaseComponent
 	implements OnInit {
 	private _ngDestroy$ = new Subject<void>();
 
@@ -29,7 +29,7 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 
 	showAddCard: boolean;
 
-	clients: OrganizationClients[] = [];
+	clients: OrganizationContacts[] = [];
 
 	projectsWithoutClients: OrganizationProjects[];
 
@@ -37,10 +37,10 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 
 	employees: Employee[] = [];
 
-	clientToEdit: OrganizationClients;
+	clientToEdit: OrganizationContacts;
 
 	constructor(
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactsService: OrganizationContactsService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
@@ -65,7 +65,7 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 	}
 
 	async removeClient(id: string, name: string) {
-		await this.organizationClientsService.delete(id);
+		await this.organizationContactsService.delete(id);
 
 		this.toastrService.primary(
 			this.getTranslation(
@@ -80,9 +80,9 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 		this.loadClients();
 	}
 
-	private async addOrEditClient(client: OrganizationClientsCreateInput) {
+	private async addOrEditClient(client: OrganizationContactsCreateInput) {
 		if (client.name && client.primaryEmail && client.primaryPhone) {
-			await this.organizationClientsService.create(client);
+			await this.organizationContactsService.create(client);
 
 			this.showAddCard = !this.showAddCard;
 			this.selectProjects = [];
@@ -115,7 +115,7 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const res = await this.organizationClientsService.getAll(
+		const res = await this.organizationContactsService.getAll(
 			['projects', 'members', 'members.user'],
 			{
 				organizationId: this.organizationId
@@ -155,7 +155,7 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 		this.showAddCard = !this.showAddCard;
 	}
 
-	async editClient(client: OrganizationClients) {
+	async editClient(client: OrganizationContacts) {
 		await this.loadProjectsWithoutClients();
 		this.clientToEdit = client;
 		this.showAddCard = true;
@@ -167,12 +167,12 @@ export class EditOrganizationClientsComponent extends TranslationBaseComponent
 		this.showAddCard = true;
 	}
 
-	async invite(selectedOrganizationClient?: OrganizationClients) {
+	async invite(selectedOrganizationClient?: OrganizationContacts) {
 		try {
 			const dialog = this.dialogService.open(InviteClientComponent, {
 				context: {
 					organizationId: this.organizationId,
-					organizationClient: selectedOrganizationClient
+					organizationContact: selectedOrganizationClient
 				}
 			});
 

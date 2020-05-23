@@ -1,16 +1,18 @@
-import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 
-export interface Contact extends IBaseEntityModel {
+export interface Contact extends IBaseEntityWithMembers {
 	businessName?: string;
 	firstName?: string;
 	lastName?: string;
 	address: string;
-	contactType: contactType;
-	email: string;
+	contactType: string;
+	primaryEmail: string;
+	primaryPhone: string;
 	country?: string;
 }
 
-export enum contactType {
-	Person = 'Person',
-	Business = 'Business'
+export enum ContactType {
+	Client = 'Client',
+	Customer = 'Customer',
+	Lead = 'Lead'
 }

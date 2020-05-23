@@ -5,7 +5,7 @@ import { Store } from '../../../@core/services/store.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	Invoice,
-	OrganizationClients,
+	OrganizationContacts,
 	CurrenciesEnum,
 	OrganizationSelectInput,
 	InvoiceItem,
@@ -18,7 +18,7 @@ import {
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
-import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
+import { OrganizationContactsService } from '../../../@core/services/organization-contacts.service ';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -50,7 +50,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private toastrService: NbToastrService,
 		private organizationsService: OrganizationsService,
-		private organizationClientsService: OrganizationClientsService,
+		private organizationContactsService: OrganizationContactsService,
 		private route: ActivatedRoute,
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
@@ -73,8 +73,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	organization: Organization;
 	itemsToDelete: string[] = [];
 	invoiceItems: InvoiceItem[];
-	selectedClient: OrganizationClients;
-	clients: OrganizationClients[];
+	selectedClient: OrganizationContacts;
+	clients: OrganizationContacts[];
 	employees: Employee[];
 	currencies = Object.values(CurrenciesEnum);
 	invoiceDate: Date;
@@ -339,7 +339,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 						this.currency.setValue(orgData.currency);
 					}
 
-					const res = await this.organizationClientsService.getAll(
+					const res = await this.organizationContactsService.getAll(
 						['projects'],
 						{
 							organizationId: organization.id

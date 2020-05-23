@@ -2,14 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import {
 	Employee,
 	Organization,
-	OrganizationClients,
+	OrganizationContacts,
 	OrganizationProjects,
 	OrganizationProjectsCreateInput,
 	PermissionsEnum
 } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
-import { OrganizationClientsService } from 'apps/gauzy/src/app/@core/services/organization-clients.service ';
+import { OrganizationContactsService } from 'apps/gauzy/src/app/@core/services/organization-contacts.service ';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -30,13 +30,13 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 	organization: Organization;
 	showAddCard: boolean;
 	projects: OrganizationProjects[];
-	clients: OrganizationClients[];
+	clients: OrganizationContacts[];
 	employees: Employee[] = [];
 	projectToEdit: OrganizationProjects;
 	viewPrivateProjects: boolean;
 
 	constructor(
-		private readonly organizationClientsService: OrganizationClientsService,
+		private readonly organizationContactsService: OrganizationContactsService,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: NbToastrService,
 		private store: Store,
@@ -167,9 +167,12 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const res = await this.organizationClientsService.getAll(['projects'], {
-			organizationId: this.organization.id
-		});
+		const res = await this.organizationContactsService.getAll(
+			['projects'],
+			{
+				organizationId: this.organization.id
+			}
+		);
 		if (res) {
 			this.clients = res.items;
 		}
