@@ -10,9 +10,9 @@ import {
 	Body,
 	Param,
 	HttpStatus,
-	HttpCode
+	HttpCode,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Base } from '../entities/base';
 import { DeepPartial } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -22,13 +22,14 @@ import { PaginationParams } from './pagination-params';
 
 @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
 @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Forbidden' })
+@ApiBearerAuth()
 export abstract class CrudController<T extends Base> {
 	protected constructor(private readonly crudService: ICrudService<T>) {}
 
 	@ApiOperation({ summary: 'find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found records' /* type: IPagination<T> */
+		description: 'Found records' /* type: IPagination<T> */,
 	})
 	@Get()
 	async findAll(filter?: PaginationParams<T>): Promise<IPagination<T>> {
@@ -38,11 +39,11 @@ export abstract class CrudController<T extends Base> {
 	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found one record' /*, type: T*/
+		description: 'Found one record' /*, type: T*/,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get(':id')
 	async findById(@Param('id') id: string): Promise<T> {
@@ -52,12 +53,12 @@ export abstract class CrudController<T extends Base> {
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
+		description: 'The record has been successfully created.' /*, type: T*/,
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
@@ -71,16 +72,16 @@ export abstract class CrudController<T extends Base> {
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		description: 'The record has been successfully edited.',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -95,11 +96,11 @@ export abstract class CrudController<T extends Base> {
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
-		description: 'The record has been successfully deleted'
+		description: 'The record has been successfully deleted',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
