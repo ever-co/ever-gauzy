@@ -44,11 +44,11 @@ export class OrganizationTeamEmployee extends Base
 	@IsString()
 	@ManyToOne((type) => Role, { nullable: true })
 	@JoinColumn()
-	role?: Role;
+	public role?: Role;
 
 	@RelationId(
 		(organizationTeamEmployee: OrganizationTeamEmployee) =>
 			organizationTeamEmployee.role
 	)
-	readonly roleId?: string;
+	public roleId?: string;
 }

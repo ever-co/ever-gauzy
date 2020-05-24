@@ -11,6 +11,7 @@ import { Employee } from '../employee/employee.entity';
 import { User } from '../user/user.entity';
 import { OrganizationTeam } from './organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
+import { Role } from '../role/role.entity';
 
 @Injectable()
 export class OrganizationTeamService extends CrudService<OrganizationTeam> {
@@ -22,7 +23,9 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 		@InjectRepository(User)
-		private readonly userRepository: Repository<User>
+		private readonly userRepository: Repository<User>,
+		@InjectRepository(Role)
+		private readonly roleRepository: Repository<Role>
 	) {
 		super(organizationTeamRepository);
 	}
@@ -35,17 +38,26 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 		organizationTeam.organizationId = entity.organizationId;
 
 		const employees = await this.employeeRepository.findByIds(
-			entity.members,
+			[...new Set([...entity.members, ...entity.managers])],
 			{
 				relations: ['user']
 			}
 		);
+
+		const managerRole = await this.roleRepository.findOne({
+			where: { name: 'MANAGER' }
+		});
 
 		const teamEmployees: OrganizationTeamEmployee[] = [];
 		employees.forEach((employee) => {
 			const teamEmployee = new OrganizationTeamEmployee();
 			teamEmployee.employeeId = employee.id;
 			teamEmployee.employee = employee;
+			if (entity.managers.includes(employee.id)) {
+				teamEmployee.roleId = managerRole.id;
+				teamEmployee.role = managerRole;
+			}
+
 			teamEmployees.push(teamEmployee);
 		});
 		organizationTeam.members = teamEmployees;
@@ -64,17 +76,25 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 			organizationTeam.name = entity.name;
 			organizationTeam.organizationId = entity.organizationId;
 			const employees = await this.employeeRepository.findByIds(
-				entity.members,
+				[...new Set([...entity.members, ...entity.managers])],
 				{
 					relations: ['user']
 				}
 			);
+
+			const managerRole = await this.roleRepository.findOne({
+				where: { name: 'MANAGER' }
+			});
 
 			const teamEmployees: OrganizationTeamEmployee[] = [];
 			employees.forEach((employee) => {
 				const teamEmployee = new OrganizationTeamEmployee();
 				teamEmployee.employeeId = employee.id;
 				teamEmployee.employee = employee;
+				if (entity.managers.includes(employee.id)) {
+					teamEmployee.roleId = managerRole.id;
+					teamEmployee.role = managerRole;
+				}
 				teamEmployees.push(teamEmployee);
 			});
 			organizationTeam.members = teamEmployees;
