@@ -44,7 +44,9 @@
 		"ADD_ICON": "add icon",
 		"REMOVE_ICON": "remove icon",
 		"MAKE_PRIVATE": "make private",
-		"MAKE_PUBLIC": "make public"
+		"MAKE_PUBLIC": "make public",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"SELECT": "Select"
 	},
 	"SM_TABLE": {
 		"DATE": "תאריך",
@@ -1403,5 +1405,10 @@
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
 		"RECURRING_AVAILABILITY": "Recurring Availability"
+	},
+	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENTS": "Book an appointment",
+		"SELECT_EVENT_TYPES": "Please select an event type",
+		"PICK_DATETIME": "Pick a date and time"
 	}
 }
