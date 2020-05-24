@@ -3,10 +3,12 @@ import {
 	Employee,
 	Organization,
 	OrganizationTeamCreateInput,
-	OrganizationTeam
+	OrganizationTeam,
+	RolesEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -14,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 
 @Component({
 	selector: 'ga-edit-org-teams',
@@ -31,11 +34,15 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 	teams: OrganizationTeam[];
 	employees: Employee[] = [];
 	teamToEdit: OrganizationTeam;
+	managerId: string;
+	managerRole: RolesEnum = RolesEnum.MANAGER;
 	loading = true;
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private employeesService: EmployeesService,
+		private roleService: RoleService,
+		private readonly store: Store,
 		private readonly toastrService: NbToastrService,
 		private dialogService: NbDialogService,
 		private readonly organizationEditStore: OrganizationEditStore,
@@ -52,6 +59,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 					this.organizationId = organization.id;
 					this.loadTeams();
 					this.loadEmployees();
+					this.loadRole(this.managerRole);
 				}
 			});
 	}
@@ -188,5 +196,20 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		}
 
 		this.loading = false;
+	}
+
+	private async loadRole(roleName: RolesEnum) {
+		if (!this.organizationId) {
+			return;
+		}
+		const role = await this.roleService
+			.getRoleByName({
+				name: roleName,
+				tenant: this.store.user.tenant
+			})
+			.pipe(first())
+			.toPromise();
+
+		this.managerId = role.id;
 	}
 }

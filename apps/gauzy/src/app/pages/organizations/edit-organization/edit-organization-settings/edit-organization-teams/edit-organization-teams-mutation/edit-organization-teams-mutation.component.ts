@@ -12,6 +12,8 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	@Input()
 	organizationId: string;
 	@Input()
+	managerId: string;
+	@Input()
 	team?: OrganizationTeam;
 
 	@Output()
@@ -20,14 +22,19 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	addOrEditTeam = new EventEmitter();
 
 	members: string[];
+	managers: string[];
 	name: string;
 	selectedEmployees: string[];
+	selectedManagers: string[];
 
 	ngOnInit() {
 		if (this.team) {
-			this.selectedEmployees = this.team.members.map(
-				(member) => member.employeeId
-			);
+			this.selectedEmployees = this.team.members
+				.filter((member) => member.roleId !== this.managerId)
+				.map((member) => member.employeeId);
+			this.selectedManagers = this.team.members
+				.filter((member) => member.roleId === this.managerId)
+				.map((member) => member.employeeId);
 			this.name = this.team.name;
 		}
 	}
@@ -36,6 +43,7 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 		this.addOrEditTeam.emit({
 			name: this.name,
 			members: this.members || this.selectedEmployees,
+			managers: this.managers || this.selectedManagers,
 			organizationId: this.organizationId
 		});
 
@@ -44,6 +52,10 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 
 	onMembersSelected(members: string[]) {
 		this.members = members;
+	}
+
+	onManagersSelected(managers: string[]) {
+		this.managers = managers;
 	}
 
 	cancel() {

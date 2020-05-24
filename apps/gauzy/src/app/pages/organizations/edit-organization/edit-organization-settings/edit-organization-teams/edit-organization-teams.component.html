@@ -14,6 +14,7 @@
 			*ngIf="showAddCard"
 			[employees]="employees"
 			[organizationId]="organizationId"
+			[managerId]="managerId"
 			[team]="teamToEdit"
 			(canceled)="cancel()"
 			(addOrEditTeam)="addOrEditTeam($event)"
@@ -48,6 +49,12 @@
 							>{{ member.employee.user.firstName }}
 							{{ member.employee.user.lastName }}
 						</span>
+						<div class="manager">
+							<nb-icon
+								*ngIf="member.roleId"
+								icon="star"
+							></nb-icon>
+						</div>
 					</div>
 				</div>
 
