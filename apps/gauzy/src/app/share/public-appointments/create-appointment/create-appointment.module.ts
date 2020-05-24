@@ -8,6 +8,7 @@ import { NbCardModule, NbSpinnerModule, NbButtonModule } from '@nebular/theme';
 import { EventTypeService } from '../../../@core/services/event-type.service';
 import { CreateAppointmentRoutingModule } from './create-appointment.routing.module';
 import { AppointmentModule } from '../../../pages/employees/appointment/appointment.module';
+import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -32,6 +33,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 	declarations: [CreateAppointmentComponent],
 	entryComponents: [CreateAppointmentComponent],
 	exports: [CreateAppointmentComponent],
-	providers: [EventTypeService],
+	providers: [EventTypeService, AvailabilitySlotsService],
 })
 export class CreateAppointmentModule {}
