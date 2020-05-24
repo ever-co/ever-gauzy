@@ -44,7 +44,9 @@
 		"ADD_ICON": "добавить значок",
 		"REMOVE_ICON": "удалить значок",
 		"MAKE_PRIVATE": "сделать приватным",
-		"MAKE_PUBLIC": "сделать публичным"
+		"MAKE_PUBLIC": "сделать публичным",
+		"KNOWLEDGE_BASES": "Базы знаний",
+		"SELECT": "Выбрать"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -1403,5 +1405,10 @@
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Определенная дата наличия",
 		"RECURRING_AVAILABILITY": "Повторяющаяся доступность"
+	},
+	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENTS": "Заказать прием",
+		"SELECT_EVENT_TYPES": "Пожалуйста, выберите тип события",
+		"PICK_DATETIME": "Выберите дату и время"
 	}
 }
