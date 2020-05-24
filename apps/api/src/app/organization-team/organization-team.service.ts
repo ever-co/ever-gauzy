@@ -37,12 +37,16 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 		organizationTeam.name = entity.name;
 		organizationTeam.organizationId = entity.organizationId;
 
-		const employees = await this.employeeRepository.findByIds(
-			[...new Set([...entity.members, ...entity.managers])],
-			{
-				relations: ['user']
-			}
-		);
+		let members: string[];
+		if (entity.members && entity.managers) {
+			members = [...new Set([...entity.members, ...entity.managers])];
+		} else {
+			members = entity.members || entity.managers;
+		}
+
+		const employees = await this.employeeRepository.findByIds(members, {
+			relations: ['user']
+		});
 
 		const managerRole = await this.roleRepository.findOne({
 			where: { name: 'MANAGER' }
@@ -53,11 +57,10 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 			const teamEmployee = new OrganizationTeamEmployee();
 			teamEmployee.employeeId = employee.id;
 			teamEmployee.employee = employee;
-			if (entity.managers.includes(employee.id)) {
+			if (entity.managers && entity.managers.includes(employee.id)) {
 				teamEmployee.roleId = managerRole.id;
 				teamEmployee.role = managerRole;
 			}
-
 			teamEmployees.push(teamEmployee);
 		});
 		organizationTeam.members = teamEmployees;
@@ -75,12 +78,17 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 			const organizationTeam = new OrganizationTeam();
 			organizationTeam.name = entity.name;
 			organizationTeam.organizationId = entity.organizationId;
-			const employees = await this.employeeRepository.findByIds(
-				[...new Set([...entity.members, ...entity.managers])],
-				{
-					relations: ['user']
-				}
-			);
+
+			let members: string[];
+			if (entity.members && entity.managers) {
+				members = [...new Set([...entity.members, ...entity.managers])];
+			} else {
+				members = entity.members || entity.managers;
+			}
+
+			const employees = await this.employeeRepository.findByIds(members, {
+				relations: ['user']
+			});
 
 			const managerRole = await this.roleRepository.findOne({
 				where: { name: 'MANAGER' }
@@ -91,7 +99,7 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 				const teamEmployee = new OrganizationTeamEmployee();
 				teamEmployee.employeeId = employee.id;
 				teamEmployee.employee = employee;
-				if (entity.managers.includes(employee.id)) {
+				if (entity.managers && entity.managers.includes(employee.id)) {
 					teamEmployee.roleId = managerRole.id;
 					teamEmployee.role = managerRole;
 				}

@@ -65,7 +65,12 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 	}
 
 	async addOrEditTeam(team: OrganizationTeamCreateInput) {
-		if (team.name && team.name.trim().length && team.members.length) {
+		if (
+			team.name &&
+			team.name.trim().length &&
+			((team.members && team.members.length) ||
+				(team.managers && team.managers.length))
+		) {
 			if (this.teamToEdit) {
 				try {
 					await this.organizationTeamsService.update(
