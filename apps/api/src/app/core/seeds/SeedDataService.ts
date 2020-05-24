@@ -61,7 +61,10 @@ import {
 	createRandomTenants,
 } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
-import { createEmailTemplates } from '../../email-template/email-template.seed';
+import {
+	createEmailTemplates,
+	createDefaultEmailTemplates,
+} from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes,
@@ -262,7 +265,7 @@ export class SeedDataService {
 
 			await createCountries(this.connection);
 
-			await createEmailTemplates(this.connection);
+			await createDefaultEmailTemplates(this.connection);
 
 			await this.seedDefaultData(categories);
 
@@ -386,6 +389,8 @@ export class SeedDataService {
 			this.connection
 		);
 		await createDefaultIntegrations(this.connection, integrationTypes);
+
+		await createEmailTemplates(this.connection, defaultOrganizations);
 	}
 
 	/**
@@ -498,6 +503,8 @@ export class SeedDataService {
 		);
 
 		await createSkills(this.connection);
+
+		await createEmailTemplates(this.connection, tenantOrganizationsMap);
 	}
 
 	/**

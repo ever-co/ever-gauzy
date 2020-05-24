@@ -3,14 +3,14 @@ import {
 	OrganizationClients,
 	OrganizationDepartment,
 	OrganizationProjects,
-	LanguagesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as Email from 'email-templates';
 import * as Handlebars from 'handlebars';
 import * as nodemailer from 'nodemailer';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { CrudService } from '../core';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { Organization } from '../organization/organization.entity';
@@ -55,22 +55,22 @@ export class EmailService extends CrudService<IEmail> {
 
 	email = new Email({
 		message: {
-			from: 'Gauzy@Ever.co',
+			from: 'Gauzy@Ever.co'
 		},
 		transport: {
-			jsonTransport: true,
+			jsonTransport: true
 		},
 		i18n: {},
 		views: {
 			options: {
-				extension: 'hbs',
-			},
+				extension: 'hbs'
+			}
 		},
 		preview: {
 			open: {
 				app: 'firefox',
-				wait: false,
-			},
+				wait: false
+			}
 		},
 		render: (view, locals) => {
 			return new Promise(async (resolve, reject) => {
@@ -78,6 +78,7 @@ export class EmailService extends CrudService<IEmail> {
 				const emailTemplate = await this.emailTemplateRepository.find({
 					name: view,
 					languageCode: locals.locale || 'en',
+					organization: { id: locals.organizationId }
 				});
 				if (!emailTemplate || emailTemplate.length < 1) {
 					return resolve('');
@@ -88,7 +89,7 @@ export class EmailService extends CrudService<IEmail> {
 
 				return resolve(html);
 			});
-		},
+		}
 	});
 
 	emailInvoice(
@@ -100,23 +101,23 @@ export class EmailService extends CrudService<IEmail> {
 			.send({
 				template: 'email-invoice',
 				message: {
-					to: `${email}`,
+					to: `${email}`
 					// attachments: [{
 					// 	filename: 'Invoice.pdf'
 					// }]
 				},
 				locals: {
 					locale: languageCode,
-					host: originUrl || environment.host,
-				},
+					host: originUrl || environment.host
+				}
 			})
 			.then((res) => {
 				this.createEmailRecord({
-          templateName: 'email-invoice',
-          email,
-          languageCode,
-          message: res.originalMessage          
-        });
+					templateName: 'email-invoice',
+					email,
+					languageCode,
+					message: res.originalMessage
+				});
 			})
 			.catch(console.error);
 	}
@@ -144,6 +145,7 @@ export class EmailService extends CrudService<IEmail> {
 					  (inviterUser.lastName || '')
 					: '',
 				organizationName: organization && organization.name,
+				organizationId: organization.id,
 				generatedUrl:
 					originUrl +
 					`#/auth/accept-client-invite?email=${organizationClient.primaryEmail}&token=${invite.token}`
@@ -183,7 +185,8 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				role: role,
-				organization: organization.name,
+				organizationName: organization.name,
+				organizationId: organization.id,
 				generatedUrl: registerUrl,
 				host: originUrl || environment.host
 			}
@@ -223,7 +226,8 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				role: projects,
-				organization: organization.name,
+				organizationName: organization.name,
+				organizationId: organization.id,
 				generatedUrl: registerUrl,
 				host: originUrl || environment.host
 			}
@@ -247,8 +251,8 @@ export class EmailService extends CrudService<IEmail> {
 	async welcomeUser(
 		user: User,
 		languageCode: LanguagesEnum,
-		originUrl?: string,
-		organizationId?: string
+		organizationId?: string,
+		originUrl?: string
 	) {
 		const sendOptions = {
 			template: 'welcome-user',
@@ -258,7 +262,8 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				email: user.email,
-				host: originUrl || environment.host
+				host: originUrl || environment.host,
+				organizationId: organizationId ? organizationId : IsNull()
 			}
 		};
 
@@ -288,8 +293,10 @@ export class EmailService extends CrudService<IEmail> {
 		user: User,
 		url: string,
 		languageCode: LanguagesEnum,
+		organizationId: string,
 		originUrl?: string
 	) {
+		console.log('organizationId:', organizationId);
 		const sendOptions = {
 			template: 'password',
 			message: {
@@ -299,12 +306,13 @@ export class EmailService extends CrudService<IEmail> {
 			locals: {
 				locale: languageCode,
 				generatedUrl: url,
-				host: originUrl || environment.host
+				host: originUrl || environment.host,
+				organizationId: organizationId
 			}
 		};
 
 		const organization = await this.organizationRepository.findOne(
-			user.employee.orgId
+			organizationId
 		);
 
 		this.email
@@ -371,8 +379,8 @@ export class EmailService extends CrudService<IEmail> {
 			secure: false, // true for 465, false for other ports
 			auth: {
 				user: testAccount.user,
-				pass: testAccount.pass,
-			},
+				pass: testAccount.pass
+			}
 		});
 
 		// Gmail example:
@@ -394,7 +402,7 @@ export class EmailService extends CrudService<IEmail> {
 				'Hello! <br><br> We received a password change request.<br><br>If you requested to reset your password<br><br>' +
 				'<a href=' +
 				url +
-				'>Click here</a>',
+				'>Click here</a>'
 		});
 
 		console.log('Message sent: %s', info.messageId);
