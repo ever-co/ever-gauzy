@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { TransactionsComponent } from './components/transactions/transactions.component';
+import { ContractsComponent } from './components/contracts/contracts.component';
 
 const routes: Routes = [
 	{
@@ -15,7 +16,7 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				redirectTo: 'activities',
+				redirectTo: 'contracts',
 				pathMatch: 'full'
 			},
 			{
@@ -29,6 +30,10 @@ const routes: Routes = [
 			{
 				path: 'transactions',
 				component: TransactionsComponent
+			},
+			{
+				path: 'contracts',
+				component: ContractsComponent
 			}
 		]
 	}
