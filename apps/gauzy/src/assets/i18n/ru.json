@@ -667,6 +667,7 @@
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"SCHEDULED_INTERVIEWS": "Запланированные интервью",
 				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
@@ -694,7 +695,7 @@
 			"LOCATION": "Местоположение",
 			"NOTE": "Примечание",
 			"OF": "из",
-			"INTERVIEWERS_LOWER_CASE": "интервьюеры"
+			"INTERVIEWS_LOWER_CASE": "интервью"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Шаг 1",
