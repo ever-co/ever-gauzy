@@ -32,6 +32,8 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	calendarOptions: OptionsInput;
 	selectedInterview = true;
 	isCandidate = false;
+	candidateList: EventInput[] = [];
+	employeeList: EventInput[] = [];
 	isEmployee = false;
 	candidates: Candidate[] = [];
 	employees: Employee[] = [];
@@ -111,11 +113,18 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	}
 
 	async onCandidateSelected(ids: string[]) {
+		console.log(this.employeeList);
 		if (!ids[0]) {
 			//if no one is selected
-			this.calendarOptions.events = this.calendarEvents;
+			this.isCandidate = false;
+			this.calendarOptions.events = this.isEmployee
+				? this.employeeList
+				: this.calendarEvents;
 		} else {
-			this.calendarOptions.events = this.calendarEvents;
+			this.calendarOptions.events = this.isEmployee
+				? this.employeeList
+				: this.calendarEvents;
+
 			const result = [];
 			for (const id of ids) {
 				for (const event of this.calendarOptions
@@ -125,16 +134,24 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 					}
 				}
 			}
+			this.isCandidate = true;
+			this.candidateList = result;
 			this.calendarOptions.events = result;
 		}
 	}
 	async onEmployeeSelected(ids: string[]) {
-		// TO DO
 		if (!ids[0]) {
-			this.calendarOptions.events = this.calendarEvents;
+			this.isEmployee = false;
+			this.calendarOptions.events = this.isCandidate
+				? this.candidateList
+				: this.calendarEvents;
 		} else {
-			this.calendarOptions.events = this.calendarEvents;
+			this.calendarOptions.events = this.isCandidate
+				? this.candidateList
+				: this.calendarEvents;
+
 			const result = [];
+
 			for (const event of this.calendarOptions.events as EventInput[]) {
 				const res = await this.candidateInterviewersService.findByInterviewId(
 					event.id as string
@@ -149,9 +166,12 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 					}
 				}
 			}
+			this.employeeList = result;
 			this.calendarOptions.events = result;
+			this.isEmployee = true;
 		}
 	}
+
 	async getInterviewers() {
 		for (const event of this.calendarOptions.events as EventInput[]) {
 			return await this.candidateInterviewersService.findByInterviewId(
