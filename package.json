@@ -226,6 +226,7 @@
 	"devDependencies": {
 		"@angular-devkit/build-angular": "~0.901.6",
 		"@angular-devkit/build-ng-packagr": "~0.901.6",
+		"@angular-builders/custom-webpack": "^9.1.0",
 		"@angular/cli": "^9.1.6",
 		"@angular/compiler-cli": "^9.1.7",
 		"@angular/language-service": "^9.1.7",
@@ -305,8 +306,10 @@
 		"tsconfig-paths": "^3.9.0",
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",
-		"typescript": "~3.8.3",
-		"webpack-bundle-analyzer": "^3.8.0"
+		"webpack-bundle-analyzer": "^3.8.0",
+		"terser-webpack-plugin": "^3.0.1",
+		"terser": "^4.7.0",
+		"typescript": "~3.8.3"
 	},
 	"engines": {
 		"node": ">=10.15.0",

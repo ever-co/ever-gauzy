@@ -44,7 +44,9 @@
 		"ADD_ICON": "add icon",
 		"REMOVE_ICON": "remove icon",
 		"MAKE_PRIVATE": "make private",
-		"MAKE_PUBLIC": "make public"
+		"MAKE_PUBLIC": "make public",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"SELECT": "Select"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -685,7 +687,7 @@
 		"INTERVIEW_INFO_MODAL": {
 			"SCHEDULED": "Scheduled",
 			"HOURS_AGO": " hour(s) ago",
-			"LESS_MINUTE": " less than  a minute ago",
+			"LESS_MINUTE": " less than a minute ago",
 			"MINUTES_AGO": " minutes ago",
 			"DAYS_AGO": " day(s) ago",
 			"DATE": "Date",
@@ -890,7 +892,8 @@
 		"TAGS_DELETE_TAG": "Tag deleted",
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
-		"TAGS_SELECT_DESCRIPTION": "Tag description"
+		"TAGS_SELECT_DESCRIPTION": "Tag description",
+		"ADD_NEW_TAG": "Add new Tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -1405,5 +1408,10 @@
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
 		"RECURRING_AVAILABILITY": "Recurring Availability"
+	},
+	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENTS": "Book an appointment",
+		"SELECT_EVENT_TYPES": "Please select an event type",
+		"PICK_DATETIME": "Pick a date and time"
 	}
 }
