@@ -3,14 +3,11 @@ import { LeadAttribute } from './lead-attribute.model';
 
 
 
-export interface Lead extends BaseEntityModel
+export interface Lead extends BaseEntityModel, LeadCreateInput
 {
   leadAttributes: LeadAttribute[];
   saleRepresentative: Employee;
   // client: Client;
-
-  saleRepresentativeId?: string;
-  // clientId: string;
 }
 
 export type LeadFindInput = Partial<LeadCreateInput>;

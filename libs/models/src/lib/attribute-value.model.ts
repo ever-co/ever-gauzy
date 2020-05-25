@@ -3,12 +3,10 @@ import { BaseEntityModel } from '@gauzy/models';
 
 
 
-export interface AttributeValue extends BaseEntityModel
+export interface AttributeValue extends BaseEntityModel, AttributeValueCreateInput
 {
   attributeDefinition: AttributeDefinition;
   values: string[];
-
-  attributeDefinitionId?: string;
 }
 
 export type AttributeValueFindInput = Partial<Pick<AttributeValueCreateInput, 'attributeDefinitionId'>>;

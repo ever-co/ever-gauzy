@@ -4,15 +4,12 @@ import { AttributeDefinition } from './attribute-definition.model';
 
 
 
-export interface StageAttribute extends BaseEntityModel
+export interface StageAttribute extends BaseEntityModel, StageAttributeCreateInput
 {
   attributeDefinition: AttributeDefinition;
   isMultivalued: boolean;
   isMandatory: boolean;
   stage: Stage;
-
-  attributeDefinitionId: string;
-  stageId: string;
 }
 
 export type StageAttributeFindInput = Partial<StageAttributeCreateInput>;

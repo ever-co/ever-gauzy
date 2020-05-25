@@ -5,15 +5,11 @@ import { AttributeValue } from './attribute-value.model';
 
 
 
-export interface LeadAttribute extends BaseEntityModel
+export interface LeadAttribute extends BaseEntityModel, LeadAttributeCreateInput
 {
   attributeValue: AttributeValue;
   stageAttribute: StageAttribute;
   lead: Lead;
-
-  attributeValueId?: string;
-  stageAttributeId?: string;
-  leadId?: string;
 }
 
 export type LeadAttributeFindInput = Partial<LeadAttributeCreateInput>;

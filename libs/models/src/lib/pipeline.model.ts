@@ -2,14 +2,11 @@ import { BaseEntityModel, Organization } from '@gauzy/models';
 
 
 
-export interface Pipeline extends BaseEntityModel
+export interface Pipeline extends BaseEntityModel, PipelineCreateInput
 {
   organization: Organization;
   description: string;
   reference: string;
-  name: string;
-
-  organizationId?: string;
 }
 
 export type PipelineFindInput = Partial<PipelineCreateInput>;

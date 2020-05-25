@@ -1,14 +1,14 @@
-import { BaseEntityModel } from '@gauzy/models';
 import { StageAttribute, StageAttributeCreateInput } from './stage-attribute.model';
+import { BaseEntityModel } from '@gauzy/models';
 import { Pipeline } from './pipeline.model';
 
 
 
 export interface Stage extends BaseEntityModel
 {
-  entryStageAttributes: StageAttributeCreateInput[];
-  exitStageAttributes: StageAttributeCreateInput[];
-  pipelineId?: string;
+  entryStageAttributes: StageAttribute[];
+  exitStageAttributes: StageAttribute[];
+  pipelineId: string;
   pipeline: Pipeline;
   reference: string;
   name: string;

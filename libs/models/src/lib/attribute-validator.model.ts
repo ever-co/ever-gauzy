@@ -13,6 +13,6 @@ export interface AttributeValidatorCreateInput
 {
   parameters?: string[];
   description: string;
+  reference: string;
   script: string;
-  tag: string;
 }
