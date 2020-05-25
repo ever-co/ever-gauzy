@@ -62,5 +62,14 @@ export * from './lib/event-type.model';
 export * from './lib/upwork.model';
 export * from './lib/availability-slots.model';
 
+export * from './lib/attribute-validator.model';
+export * from './lib/attribute-definition.model';
+export * from './lib/attribute-value.model';
+export * from './lib/stage-attribute.model';
+export * from './lib/lead-attribute.model';
+export * from './lib/pipeline.model';
+export * from './lib/stage.model';
+export * from './lib/lead.model';
+
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
