@@ -79,6 +79,14 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { EventType } from '../event-types/event-type.entity';
 import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
+import { AttributeDefinition } from '../attribute-definition';
+import { AttributeValidator } from '../attribute-validator';
+import { AttributeValue } from '../attribute-value';
+import { StageAttribute } from '../stage-attribute';
+import { LeadAttribute } from '../lead-attribute';
+import { Pipeline } from '../pipeline';
+import { Stage } from '../stage';
+import { Lead } from '../lead';
 
 const entities = [
 	Invite,
@@ -151,7 +159,18 @@ const entities = [
 	EmployeeAppointment,
 	AppointmentEmployees,
 	EventType,
-	AvailabilitySlots
+	AvailabilitySlots,
+  //
+  // Pipelines
+  //
+  Lead,
+  Stage,
+  Pipeline,
+  LeadAttribute,
+  AttributeValue,
+  StageAttribute,
+  AttributeValidator,
+  AttributeDefinition,
 ];
 
 @Module({
