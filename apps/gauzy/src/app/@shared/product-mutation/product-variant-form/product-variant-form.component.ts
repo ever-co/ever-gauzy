@@ -16,6 +16,7 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 export class ProductVariantFormComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Output() save = new EventEmitter<any>();
+	@Output() delete = new EventEmitter<any>();
 	@Output() cancel = new EventEmitter<string>();
 
 	currencies = Object.values(CurrenciesEnum);
@@ -41,11 +42,17 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 				this.productVariant.billingInvoicingPolicy || '',
 				Validators.required
 			],
-			quantity: [this.productVariant.quantity || 0, Validators.required],
-			taxes: [this.productVariant.taxes || 0, Validators.required],
+			quantity: [
+				this.productVariant.quantity || 0,
+				[Validators.required, Validators.min(0)]
+			],
+			taxes: [
+				this.productVariant.taxes || 0,
+				[Validators.required, Validators.min(0)]
+			],
 			retailPrice: [
 				this.productVariant.price.retailPrice || 0,
-				Validators.required
+				[Validators.required, Validators.min(0)]
 			],
 			retailPriceCurrency: [
 				this.productVariant.price.retailPriceCurrency ||
@@ -54,7 +61,7 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 			],
 			unitCost: [
 				this.productVariant.price.unitCost || 0,
-				Validators.required
+				[Validators.required, Validators.min(0)]
 			],
 			unitCostCurrency: [
 				this.productVariant.price.unitCostCurrency ||
@@ -120,5 +127,9 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 		};
 
 		this.save.emit(productVariantRequest);
+	}
+
+	onDelete() {
+		this.delete.emit(this.productVariant);
 	}
 }

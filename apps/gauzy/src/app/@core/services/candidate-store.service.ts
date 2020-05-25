@@ -1,9 +1,11 @@
 import { UserFindInput, Candidate, CandidateUpdateInput } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
+import { Injectable } from "@angular/core";
 
 /**
  * Service used to update candidate
  */
+@Injectable()
 export class CandidateStore {
 	private _selectedCandidate: Candidate;
 	private _userForm: UserFindInput;

@@ -8,15 +8,25 @@ import {
 import { first } from 'rxjs/operators';
 
 @Injectable()
-export class AvailibilitySlotsService {
-	AVAILIBILITY_SLOTS_BASE_URI = '/api/availability-slots';
+export class AvailabilitySlotsService {
+	AVAILABILITY_SLOTS_BASE_URI = '/api/availability-slots';
 
 	constructor(private http: HttpClient) {}
 
-	create(createInput: IAvailabilitySlotsCreateInput[]): Promise<any> {
+	create(createInput: IAvailabilitySlotsCreateInput): Promise<any> {
 		return this.http
 			.post<IAvailabilitySlots>(
-				this.AVAILIBILITY_SLOTS_BASE_URI,
+				this.AVAILABILITY_SLOTS_BASE_URI,
+				createInput
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	createBulk(createInput: IAvailabilitySlotsCreateInput[]): Promise<any> {
+		return this.http
+			.post<IAvailabilitySlots[]>(
+				this.AVAILABILITY_SLOTS_BASE_URI + '/bulk',
 				createInput
 			)
 			.pipe(first())
@@ -30,7 +40,7 @@ export class AvailibilitySlotsService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: IAvailabilitySlots[]; total: number }>(
-				this.AVAILIBILITY_SLOTS_BASE_URI,
+				this.AVAILABILITY_SLOTS_BASE_URI,
 				{
 					params: { data }
 				}
@@ -44,14 +54,14 @@ export class AvailibilitySlotsService {
 		updateInput: IAvailabilitySlotsCreateInput
 	): Promise<any> {
 		return this.http
-			.put(`${this.AVAILIBILITY_SLOTS_BASE_URI}/${id}`, updateInput)
+			.put(`${this.AVAILABILITY_SLOTS_BASE_URI}/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`${this.AVAILIBILITY_SLOTS_BASE_URI}/${id}`)
+			.delete(`${this.AVAILABILITY_SLOTS_BASE_URI}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

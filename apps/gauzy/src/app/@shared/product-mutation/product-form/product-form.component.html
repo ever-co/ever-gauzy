@@ -15,7 +15,7 @@
 		></nb-icon>
 	</nb-card-header>
 	<nb-card-body>
-		<form [formGroup]="form" *ngIf="form">
+		<form [formGroup]="form" *ngIf="form" class="mb-4">
 			<div class="form-group">
 				<div class="row">
 					<div class="col-sm-6 mb-4">
@@ -29,7 +29,25 @@
 							nbInput
 							formControlName="name"
 							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
+							[ngClass]="{
+								'status-danger':
+									form.controls['name'].invalid &&
+									form.controls['name'].touched
+							}"
 						/>
+						<div
+							*ngIf="
+								form.controls['name'].errors &&
+								form.controls['name'].touched
+							"
+						>
+							<div
+								class="text-danger"
+								*ngIf="form.controls['name'].errors.required"
+							>
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</div>
+						</div>
 					</div>
 					<div class="col-sm-6 mb-4">
 						<label class="label" for="codeInput">
@@ -42,7 +60,25 @@
 							nbInput
 							formControlName="code"
 							[placeholder]="'INVENTORY_PAGE.CODE' | translate"
+							[ngClass]="{
+								'status-danger':
+									form.controls['code'].invalid &&
+									form.controls['code'].touched
+							}"
 						/>
+						<div
+							*ngIf="
+								form.controls['code'].errors &&
+								form.controls['code'].touched
+							"
+						>
+							<div
+								class="text-danger"
+								*ngIf="form.controls['code'].errors.required"
+							>
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="row" *ngIf="productTypes && productCategories">
@@ -57,13 +93,35 @@
 							[placeholder]="
 								'INVENTORY_PAGE.PRODUCT_TYPE' | translate
 							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['productTypeId'].invalid &&
+									form.controls['productTypeId'].touched
+							}"
 						>
 							<nb-option
 								*ngFor="let productType of productTypes"
 								[value]="productType.id"
-								>{{ productType.name }}</nb-option
+							>
+								{{ productType.name }}</nb-option
 							>
 						</nb-select>
+						<div
+							*ngIf="
+								form.controls['productTypeId'].errors &&
+								form.controls['productTypeId'].touched
+							"
+						>
+							<div
+								class="text-danger"
+								*ngIf="
+									form.controls['productTypeId'].errors
+										.required
+								"
+							>
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</div>
+						</div>
 					</div>
 					<div class="col-sm-6 mb-4">
 						<label class="label" for="productCategoryId">
@@ -76,6 +134,12 @@
 							[placeholder]="
 								'INVENTORY_PAGE.PRODUCT_CATEGORY' | translate
 							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['productCategoryId']
+										.invalid &&
+									form.controls['productCategoryId'].touched
+							}"
 						>
 							<nb-option
 								*ngFor="
@@ -85,29 +149,54 @@
 								>{{ productCategory.name }}</nb-option
 							>
 						</nb-select>
+						<div
+							*ngIf="
+								form.controls['productCategoryId'].errors &&
+								form.controls['productCategoryId'].touched
+							"
+						>
+							<div
+								class="text-danger"
+								*ngIf="
+									form.controls['productCategoryId'].errors
+										.required
+								"
+							>
+								{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+							</div>
+						</div>
 					</div>
 				</div>
 				<div class="row">
-					<div class="col-sm-12">
+					<div class="col-sm-12 mb-4">
+						<label class="label" for="description">
+							{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}
+						</label>
+						<textarea
+							formControlName="description"
+							nbInput
+							fullWidth
+							id="description"
+							[placeholder]="
+								'INVENTORY_PAGE.DESCRIPTION' | translate
+							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['description'].invalid &&
+									form.controls['description'].touched
+							}"
+						>
+						</textarea>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-12 mb-4">
 						<ga-tags-color-input
 							[selectedTags]="tags"
 							(selectedTagsEvent)="selectedTagsEvent($event)"
 						>
 						</ga-tags-color-input>
 					</div>
-				</div>
-				<div class="mb-4">
-					<label class="label" for="description">
-						{{ 'INVENTORY_PAGE.DESCRIPTION' | translate }}
-					</label>
-					<textarea
-						formControlName="description"
-						nbInput
-						fullWidth
-						id="description"
-						[placeholder]="'INVENTORY_PAGE.DESCRIPTION' | translate"
-					>
-					</textarea>
 				</div>
 				<div class="row">
 					<div class="col-sm-12 mb-4">
@@ -119,8 +208,19 @@
 					</div>
 				</div>
 				<div class="options-wrap mb-4">
-					<div *ngFor="let option of options" class="option">
+					<div
+						*ngFor="let option of options"
+						class="option"
+						(click)="onEditOption(option)"
+					>
 						{{ option.name }}
+						<span class="option-delete">
+							<nb-icon
+								class="ml-auto mt-1 close"
+								icon="close-outline"
+								(click)="onRemoveOption(option)"
+							></nb-icon>
+						</span>
 					</div>
 				</div>
 				<div class="row d-bottom">
@@ -132,12 +232,10 @@
 							fullWidth
 							id="addOption"
 							type="text"
-							[(ngModel)]="optionValue"
+							[(ngModel)]="activeOption.name"
 							[ngModelOptions]="{ standalone: true }"
 							nbInput
-							[placeholder]="
-								'INVENTORY_PAGE.ADD_OPTION' | translate
-							"
+							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
 						/>
 					</div>
 					<div class="col-sm-4">
@@ -148,7 +246,7 @@
 							fullWidth
 							id="optionCode"
 							type="text"
-							[(ngModel)]="optionCode"
+							[(ngModel)]="activeOption.code"
 							[ngModelOptions]="{ standalone: true }"
 							nbInput
 							[placeholder]="'INVENTORY_PAGE.CODE' | translate"
@@ -158,9 +256,13 @@
 						<button
 							status="success"
 							nbButton
-							(click)="onAddOption()"
+							(click)="onSaveOption()"
 						>
-							{{ 'INVENTORY_PAGE.ADD_OPTION' | translate }}
+							{{
+								optionMode === 'create'
+									? ('INVENTORY_PAGE.ADD_OPTION' | translate)
+									: ('INVENTORY_PAGE.EDIT_OPTION' | translate)
+							}}
 						</button>
 					</div>
 				</div>
@@ -186,7 +288,12 @@
 		<button (click)="onCancel()" status="warning" class="mr-3" nbButton>
 			{{ 'BUTTONS.CLOSE' | translate }}
 		</button>
-		<button status="success" nbButton (click)="onSaveRequest()">
+		<button
+			status="success"
+			[disabled]="form.invalid"
+			nbButton
+			(click)="onSaveRequest()"
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

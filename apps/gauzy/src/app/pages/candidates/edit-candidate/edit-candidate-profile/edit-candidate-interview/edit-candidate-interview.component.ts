@@ -8,21 +8,21 @@ import { first, takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { FormGroup } from '@angular/forms';
-import { Candidate, Employee, ICandidateInterview } from '@gauzy/models';
+import { Candidate, Employee } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
 	templateUrl: './edit-candidate-interview.component.html',
-	styleUrls: ['./edit-candidate-interview.component.scss']
+	styleUrls: ['./edit-candidate-interview.component.scss'],
 })
 export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	interviewList: ICandidateInterview[];
+	interviewList: any[];
 	candidateId: string;
 	selectedCandidate: Candidate;
-	interviewId = null;
 	employees: Employee[];
 	form: FormGroup;
 	interviewResult: any;
@@ -33,6 +33,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		private readonly candidateInterviewService: CandidateInterviewService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
+		private candidateInterviewersService: CandidateInterviewersService,
 		private toastrService: NbToastrService
 	) {
 		super(translate);
@@ -54,8 +55,11 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			CandidateInterviewMutationComponent,
 			{
 				context: {
-					selectedCandidate: this.selectedCandidate
-				}
+					header: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
+					),
+					selectedCandidate: this.selectedCandidate,
+				},
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -65,38 +69,66 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		}
 	}
 	private async loadInterview() {
-		this.interviewResult = await this.candidateInterviewService.getAll({
-			candidateId: this.candidateId
-		});
+		this.interviewResult = await this.candidateInterviewService.getAll(
+			['interviewers'],
+			{ candidateId: this.candidateId }
+		);
 		if (this.interviewResult) {
 			this.interviewList = this.interviewResult.items;
+			this.loadEmployee();
 		}
 	}
 	async editInterview(id: string) {
-		this.interviewId = id;
-		for (const interview of this.interviewResult.items) {
-			if (interview.id === id) {
-				const dialog = this.dialogService.open(
-					CandidateInterviewMutationComponent,
-					{
-						context: {
-							editData: interview,
-							selectedCandidate: this.selectedCandidate,
-							interviewId: id
-						}
+		const currentInterview = await this.candidateInterviewService.findById(
+			id
+		);
+		currentInterview.interviewers = await this.candidateInterviewersService.findByInterviewId(
+			id
+		);
+		const dialog = this.dialogService.open(
+			CandidateInterviewMutationComponent,
+			{
+				context: {
+					header: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
+					),
+					editData: currentInterview,
+					selectedCandidate: this.selectedCandidate,
+					interviewId: id,
+				},
+			}
+		);
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('UPDATED');
+			this.loadInterview();
+		}
+	}
+	async loadEmployee() {
+		for (const item of this.interviewList) {
+			const employees = [];
+			const interviewers = await this.candidateInterviewersService.findByInterviewId(
+				item.id
+			);
+			if (interviewers) {
+				item.interviewers = [];
+				for (const interviewer of interviewers) {
+					const res = await this.employeesService.getEmployeeById(
+						interviewer.employeeId,
+						['user']
+					);
+					if (res) {
+						employees.push(res);
 					}
-				);
-				const data = await dialog.onClose.pipe(first()).toPromise();
-				if (data) {
-					this.toastrSuccess('UPDATED');
-					this.loadInterview();
 				}
+				item.interviewers.push(employees);
 			}
 		}
 	}
 	async removeInterview(id: string) {
 		try {
 			await this.candidateInterviewService.delete(id);
+			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
 			this.toastrSuccess('DELETED');
 			this.loadInterview();
 		} catch (error) {
@@ -112,7 +144,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
+				error: error.error ? error.error.message : error.message,
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);

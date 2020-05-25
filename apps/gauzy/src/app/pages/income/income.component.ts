@@ -53,7 +53,7 @@ export class IncomeComponent extends TranslationBaseComponent
 	hasEditPermission = false;
 	tags: Tag[] = [];
 
-	@ViewChild('incomeTable', { static: false }) incomeTable;
+	@ViewChild('incomeTable') incomeTable;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;

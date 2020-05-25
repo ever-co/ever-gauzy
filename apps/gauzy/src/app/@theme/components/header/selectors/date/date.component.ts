@@ -8,8 +8,8 @@ import { min, addYears, subYears } from 'date-fns';
 	templateUrl: './date.component.html',
 	styleUrls: ['./date.component.scss'],
 	host: {
-		'(document:click)': 'clickOutside($event)'
-	}
+		'(document:click)': 'clickOutside($event)',
+	},
 })
 export class DateSelectorComponent implements OnInit {
 	loadCalendar = false;
@@ -17,7 +17,7 @@ export class DateSelectorComponent implements OnInit {
 	date = new Date();
 	max;
 	min;
-	@ViewChild('month', { static: false })
+	@ViewChild('month')
 	monthRef: NbCalendarMonthPickerComponent<any, any>;
 
 	constructor(private store: Store) {}

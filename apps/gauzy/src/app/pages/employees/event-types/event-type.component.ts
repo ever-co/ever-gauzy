@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { IEventType } from '@gauzy/models';
+import { IEventType, Tag } from '@gauzy/models';
 import { ActivatedRoute } from '@angular/router';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import { EventTypeMutationComponent } from './event-type-mutation/event-type-mut
 import { EventTypeService } from '../../../@core/services/event-type.service';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
+import { NotesWithTagsComponent } from '../../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 export interface EventTypeViewModel {
 	title: string;
@@ -22,6 +23,7 @@ export interface EventTypeViewModel {
 	isActive: boolean;
 	duration: Number;
 	durationUnit: string;
+	tags: Tag[];
 }
 
 interface SelectedRowModel {
@@ -44,8 +46,9 @@ export class EventTypeComponent extends TranslationBaseComponent
 	selectedEmployeeId: string;
 	employeeName: string;
 	_selectedOrganizationId: string;
+	tags?: Tag[];
 
-	@ViewChild('eventTypesTable', { static: false }) eventTypesTable;
+	@ViewChild('eventTypesTable') eventTypesTable;
 
 	loading = true;
 	defaultEventTypes: EventTypeViewModel[] = [
@@ -57,7 +60,8 @@ export class EventTypeComponent extends TranslationBaseComponent
 			durationUnit: 'Minute(s)',
 			isActive: false,
 			Active: 'No',
-			durationFormat: '15 Minute(s)'
+			durationFormat: '15 Minute(s)',
+			tags: []
 		},
 		{
 			id: null,
@@ -67,7 +71,8 @@ export class EventTypeComponent extends TranslationBaseComponent
 			durationUnit: 'Minute(s)',
 			isActive: false,
 			Active: 'No',
-			durationFormat: '30 Minute(s)'
+			durationFormat: '30 Minute(s)',
+			tags: []
 		},
 		{
 			id: null,
@@ -77,7 +82,8 @@ export class EventTypeComponent extends TranslationBaseComponent
 			durationUnit: 'Minute(s)',
 			isActive: false,
 			Active: 'No',
-			durationFormat: '60 Minute(s)'
+			durationFormat: '60 Minute(s)',
+			tags: []
 		}
 	];
 
@@ -185,7 +191,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 
 		try {
 			const { items } = await this.eventTypeService.getAll(
-				['employee', 'employee.user'],
+				['employee', 'employee.user', 'tags'],
 				findObj
 			);
 			let eventTypeVM: EventTypeViewModel[] = items.map((i) => ({
@@ -197,7 +203,8 @@ export class EventTypeComponent extends TranslationBaseComponent
 				id: i.id,
 				duration: i.duration,
 				durationUnit: i.durationUnit,
-				employee: i.employee
+				employee: i.employee,
+				tags: i.tags
 			}));
 
 			eventTypeVM = eventTypeVM.concat(
@@ -234,7 +241,8 @@ export class EventTypeComponent extends TranslationBaseComponent
 			description: formData.description,
 			duration: formData.duration,
 			durationUnit: formData.durationUnit,
-			isActive: formData.isActive
+			isActive: formData.isActive,
+			tags: this.tags
 		};
 	}
 
@@ -253,6 +261,7 @@ export class EventTypeComponent extends TranslationBaseComponent
 	}
 
 	async addEventType(completedForm: any, formData: any) {
+		completedForm.tags = formData.tags;
 		try {
 			await this.eventTypeService.create({
 				...completedForm,
@@ -316,7 +325,8 @@ export class EventTypeComponent extends TranslationBaseComponent
 								...completedForm,
 								employeeId: formData.employee
 									? formData.employee.id
-									: null
+									: null,
+								tags: formData.tags
 							});
 						}
 						this.toastrService.primary(
@@ -400,8 +410,9 @@ export class EventTypeComponent extends TranslationBaseComponent
 			columns: {
 				title: {
 					title: this.getTranslation('EVENT_TYPE_PAGE.EVENT_NAME'),
-					type: 'text',
-					class: 'align-row'
+					type: 'custom',
+					class: 'align-row',
+					renderComponent: NotesWithTagsComponent
 				},
 				durationFormat: {
 					title: this.getTranslation(

@@ -2,6 +2,7 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Organization } from './organization.model';
 import { OrganizationClients } from './organization-clients.model';
 import { InvoiceItem } from './invoice-item.model';
+import { Tag } from './tag-entity.model';
 
 export interface Invoice extends IBaseEntityModel {
 	invoiceDate: Date;
@@ -22,6 +23,7 @@ export interface Invoice extends IBaseEntityModel {
 	invoiceItems?: InvoiceItem[];
 	invoiceType?: string;
 	sentTo?: string;
+	tags?: Tag[];
 }
 
 export interface InvoiceUpdateInput {
@@ -40,6 +42,7 @@ export interface InvoiceUpdateInput {
 	organizationId?: string;
 	invoiceType?: string;
 	sentTo?: string;
+	tags?: Tag[];
 }
 
 export interface InvoiceFindInput {
@@ -48,6 +51,7 @@ export interface InvoiceFindInput {
 	invoiceId?: string;
 	sentTo?: string;
 	invoiceNumber?: string;
+	tags?: Tag[];
 }
 
 export enum InvoiceTypeEnum {

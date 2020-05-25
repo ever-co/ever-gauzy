@@ -17,7 +17,7 @@ import { ICandidateDocument } from '@gauzy/models';
 })
 export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('candidateCv', { static: false })
+	@ViewChild('candidateCv')
 	candidateCv: CandidateCvComponent;
 	private _ngDestroy$ = new Subject<void>();
 	documentId = null;

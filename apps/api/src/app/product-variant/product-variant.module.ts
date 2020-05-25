@@ -11,6 +11,7 @@ import { ProductVariantPrice } from '../product-variant-price/product-variant-pr
 import { ProductVariantSettings } from '../product-settings/product-settings.entity';
 import { ProductService } from '../product/product.service';
 import { Product } from '../product/product.entity';
+import { ProductVariantDeleteHandler } from './commands/handlers/product-variant.delete.handler';
 
 @Module({
 	imports: [
@@ -26,6 +27,7 @@ import { Product } from '../product/product.entity';
 	providers: [
 		ProductVariantService,
 		ProductVariantCreateHandler,
+		ProductVariantDeleteHandler,
 		ProductVariantPriceService,
 		ProductVariantSettingService,
 		ProductService

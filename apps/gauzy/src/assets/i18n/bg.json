@@ -15,7 +15,6 @@
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Да",
 		"SAVE": "Запази",
-		"DISCARD": "Discard",
 		"CLEAR_ALL": "Clear All",
 		"BACK": "Обратно",
 		"SENT": "Изпратено",
@@ -41,7 +40,13 @@
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
-		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
+		"ADD_ICON": "add icon",
+		"REMOVE_ICON": "remove icon",
+		"MAKE_PRIVATE": "make private",
+		"MAKE_PUBLIC": "make public",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"SELECT": "Select"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -246,6 +251,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
+			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -407,8 +413,8 @@
 			"EXPORT": "Export",
 			"MERGE": "merge data",
 			"CLEAN_UP": "clean up before import",
-			"EXPORT_MESSAGE": "Click export to download all tables from the database.",
-			"IMPORT_MESSAGE": "Click import to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
+			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database or click \"DOWNLOAD TEMPLATES\" to download zip archive with CSV templates ",
+			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
 			"SELECT_FILE": "Select File",
 			"DROP_FILE": "Drop the file here",
 			"BROWSE": "BROWSE",
@@ -421,7 +427,8 @@
 			"CANCEL": "Отказ",
 			"REMOVE": "Remove",
 			"WRONG_FILE_NAME": "Wrong file name!!!",
-			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\""
+			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\"",
+			"DOWNLOAD_TEMPLATES": "Download templates"
 		},
 		"TAGS": "Тагове",
 		"EQUIPMENT": "Equipment",
@@ -472,6 +479,15 @@
 			"SYNCED_ENTITIES": "Auto synced entities",
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+		},
+		"UPWORK_PAGE": {
+			"ACTIVITIES": "Activities",
+			"REPORTS": "Reports",
+			"TRANSACTIONS": "Transactions",
+			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
+			"API_KEY": "Upwork API key",
+			"SECRET": "Upwork Secret",
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy."
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -602,17 +618,6 @@
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
-	"INTERVIEW_INFO_MODAL": {
-		"SCHEDULED_BY": "Scheduled by",
-		"HOURS_AGO": "hour(s) ago",
-		"MINUTES_AGO": "minute(s) ago",
-		"DATE": "Дата",
-		"TIME": "Time",
-		"CANDIDATE": "Candidate",
-		"INTERVIEWERS": "Interviewers",
-		"LOCATION": "Локация",
-		"NOTE": "Note"
-	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
 		"ADD_CANDIDATE": "Add Candidates",
@@ -662,6 +667,8 @@
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"SCHEDULED_INTERVIEWS": "Scheduled interviews",
+				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
 				"NEXT": "Next",
@@ -674,6 +681,21 @@
 				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
 				"INTERVIEWERS": "interviewer(s)"
 			}
+		},
+		"INTERVIEW_INFO_MODAL": {
+			"SCHEDULED": "Scheduled",
+			"HOURS_AGO": " hour(s) ago",
+			"LESS_MINUTE": " less than a minute ago",
+			"MINUTES_AGO": " minutes ago",
+			"DAYS_AGO": " day(s) ago",
+			"DATE": "Дата",
+			"TIME": "Time",
+			"CANDIDATE": "Candidate",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Локация",
+			"NOTE": "Note",
+			"OF": "of",
+			"INTERVIEWS_LOWER_CASE": "interviews"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
@@ -868,7 +890,8 @@
 		"TAGS_DELETE_TAG": "Tag deleted",
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
-		"TAGS_SELECT_DESCRIPTION": "Tag description"
+		"TAGS_SELECT_DESCRIPTION": "Tag description",
+		"ADD_NEW_TAG": "Add new Tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -932,6 +955,7 @@
 		"IS_EQUIPMENT": "Is equipment",
 		"TRACK_INVENTORY": "Track inventory",
 		"ADD_OPTION": "Add option",
+		"EDIT_OPTION": "Edit option",
 		"INTERNATIONAL_REFERENCE": "International reference",
 		"CODE": "Code",
 		"NOTES": "Бележки",
@@ -949,11 +973,19 @@
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
 		"PRODUCT_TYPE_SAVED": "Product type saved",
-		"PRODUCT_TYPE_DELETED": "Product type deleted"
+		"PRODUCT_TYPE_DELETED": "Product type deleted",
+		"EDIT_PRODUCT_CATEGORY": "Edit product category",
+		"ADD_PRODUCT_CATEGORY": "Add product category",
+		"PRODUCT_CATEGORY_SAVED": "Product category saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
+		"IMAGE": "Снимка",
+		"LANGUAGE": "Език (Language)",
+		"PRODUCT_VARIANT_DELETED": "Product variant deleted!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
 		"MY_TASK_HEADER": "My Tasks",
+		"TEAM_TASKS_HEADER": "Team's Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",
@@ -1135,7 +1167,11 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
 	},
 	"HELP_PAGE": {
-		"HELP": "Помощ"
+		"HELP": "Помощ",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"CHOSE_ICON": "Chose icon to set",
+		"EDIT_DESCRIPTION": "edit description",
+		"EDIT_NAME": "edit name"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "За нас"
@@ -1195,7 +1231,8 @@
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",
-			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!"
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
+			"SOMETHING_BAD_HAPPENED": "Something bad happened!"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1316,6 +1353,10 @@
 			"EDIT_EVENT_TYPE": "Event type edited",
 			"DELETE_EVENT_TYPE": "Event type deleted",
 			"ERROR": "{{ error }}"
+		},
+		"AVAILABILITY_SLOTS": {
+			"SAVE": "Availabiliy Slots saved",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1347,6 +1388,10 @@
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
 	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "This field is required!",
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
+	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment"
 	},
@@ -1359,6 +1404,12 @@
 		"ACTIVE": "Активен"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availibility"
+		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
+		"RECURRING_AVAILABILITY": "Recurring Availability"
+	},
+	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENTS": "Book an appointment",
+		"SELECT_EVENT_TYPES": "Please select an event type",
+		"PICK_DATETIME": "Pick a date and time"
 	}
 }

@@ -48,7 +48,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 	private _selectedDate: Date = new Date();
 	private _ngDestroy$ = new Subject<void>();
-	@ViewChild('checkAllCheckbox', { static: false })
+	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
 	organization: Organization;
 	addEditTimeRequest: any = {

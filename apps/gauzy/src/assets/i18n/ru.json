@@ -15,7 +15,6 @@
 		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
-		"DISCARD": "Сбросить",
 		"CLEAR_ALL": "Очистить все",
 		"BACK": "Обратно",
 		"SENT": "Отправлено",
@@ -41,7 +40,13 @@
 		"ARCHIVE": "Архивировать",
 		"FIND_TIME": "Время поиска",
 		"DOWNLOAD": "Скачать",
-		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний"
+		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний",
+		"ADD_ICON": "добавить значок",
+		"REMOVE_ICON": "удалить значок",
+		"MAKE_PRIVATE": "сделать приватным",
+		"MAKE_PUBLIC": "сделать публичным",
+		"KNOWLEDGE_BASES": "Базы знаний",
+		"SELECT": "Выбрать"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -246,6 +251,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
+			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
@@ -407,8 +413,8 @@
 			"EXPORT": "Экспорт",
 			"MERGE": "объединение данных",
 			"CLEAN_UP": "очистить перед импортом",
-			"EXPORT_MESSAGE": "Нажмите на экспорт, чтобы загрузить все таблицы из базы данных.",
-			"IMPORT_MESSAGE": "Нажмите на импорт, чтобы вставить все таблицы в базу данных. Имя файла для загрузки должно быть: \"экспорт. Также выберите между параметрами \"объединить данные\" и \"очистить перед импортом\".",
+			"EXPORT_MESSAGE": "Нажмите \"ЭКСПОРТ\", чтобы загрузить все таблицы из базы данных или нажмите \"ЗАКАЗАТЬ ТЕМПЛЕКТЫ\", чтобы загрузить zip-архив с шаблонами CSV ",
+			"IMPORT_MESSAGE": "Нажмите \"ВАЖНО\" для вставки всех таблиц в базу данных. Имя файла для загрузки должно быть: \"export. Также выберите между параметрами \"объединить данные\" и \"очистить перед импортом\".",
 			"SELECT_FILE": "Выбрать файл",
 			"DROP_FILE": "Перетащите файл сюда",
 			"BROWSE": "ДРУЗЬЕ",
@@ -421,7 +427,8 @@
 			"CANCEL": "Отменить",
 			"REMOVE": "Удалить",
 			"WRONG_FILE_NAME": "Неправильное имя файла!!!",
-			"CORRECT_FILE_NAME": "Имя файла должно быть: \"export.zip\""
+			"CORRECT_FILE_NAME": "Имя файла должно быть: \"export.zip\"",
+			"DOWNLOAD_TEMPLATES": "Скачать шаблоны"
 		},
 		"TAGS": "Теги",
 		"EQUIPMENT": "Оборудование",
@@ -472,6 +479,15 @@
 			"SYNCED_ENTITIES": "Автоматическая синхронизация сущностей",
 			"TOOLTIP_ACTIVITY_INFO": "Диапазон дат: 7 дней до даты: 6 месяцев",
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между"
+		},
+		"UPWORK_PAGE": {
+			"ACTIVITIES": "Действия",
+			"REPORTS": "Отчёты",
+			"TRANSACTIONS": "Транзакции",
+			"SUCCESSFULLY_AUTHORIZED": "Успешно авторизованы",
+			"API_KEY": "API ключ обновления",
+			"SECRET": "Секрет обхода",
+			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи."
 		},
 		"COMING_SOON": "Скоро появится"
 	},
@@ -602,17 +618,6 @@
 		"NOT_STARTED": "Не начато",
 		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д."
 	},
-	"INTERVIEW_INFO_MODAL": {
-		"SCHEDULED_BY": "Запланировано на",
-		"HOURS_AGO": "час(ы) назад",
-		"MINUTES_AGO": "минут назад",
-		"DATE": "Дата",
-		"TIME": "Время",
-		"CANDIDATE": "Кандидат",
-		"INTERVIEWERS": "Интервьюеры",
-		"LOCATION": "Местоположение",
-		"NOTE": "Примечание"
-	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
 		"ADD_CANDIDATE": "Добавить Кандидатов",
@@ -662,6 +667,8 @@
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"SCHEDULED_INTERVIEWS": "Запланированные интервью",
+				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
 				"NEXT": "Следующий",
@@ -674,6 +681,21 @@
 				"NOTIFY_INTERVIEWERS": "Уведомить интервьюера (ов)",
 				"INTERVIEWERS": "интервьюер(ы)"
 			}
+		},
+		"INTERVIEW_INFO_MODAL": {
+			"SCHEDULED": "Запланированный",
+			"HOURS_AGO": " час(ы) назад",
+			"LESS_MINUTE": " меньше минуты назад",
+			"MINUTES_AGO": " минут назад",
+			"DAYS_AGO": " дн. назад",
+			"DATE": "Дата",
+			"TIME": "Время",
+			"CANDIDATE": "Кандидат",
+			"INTERVIEWERS": "Интервьюеры",
+			"LOCATION": "Местоположение",
+			"NOTE": "Примечание",
+			"OF": "из",
+			"INTERVIEWS_LOWER_CASE": "интервью"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Шаг 1",
@@ -868,7 +890,8 @@
 		"TAGS_DELETE_TAG": "Метка удалена",
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
-		"TAGS_SELECT_DESCRIPTION": "Описание метки"
+		"TAGS_SELECT_DESCRIPTION": "Описание метки",
+		"ADD_NEW_TAG": "Добавить новый тег"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
@@ -932,6 +955,7 @@
 		"IS_EQUIPMENT": "Оборудование",
 		"TRACK_INVENTORY": "Отслеживать инвентарь",
 		"ADD_OPTION": "Добавить опцию",
+		"EDIT_OPTION": "Изменить опцию",
 		"INTERNATIONAL_REFERENCE": "Международная ссылка",
 		"CODE": "Код",
 		"NOTES": "Заметки",
@@ -949,11 +973,19 @@
 		"EDIT_PRODUCT_TYPE": "Изменить тип товара",
 		"ADD_PRODUCT_TYPE": "Добавить тип товара",
 		"PRODUCT_TYPE_SAVED": "Тип товара сохранен",
-		"PRODUCT_TYPE_DELETED": "Тип товара удален"
+		"PRODUCT_TYPE_DELETED": "Тип товара удален",
+		"EDIT_PRODUCT_CATEGORY": "Редактировать категорию товара",
+		"ADD_PRODUCT_CATEGORY": "Добавить категорию товара",
+		"PRODUCT_CATEGORY_SAVED": "Категория товара сохранена",
+		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
+		"IMAGE": "Изображение",
+		"LANGUAGE": "Язык",
+		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
-		"MY_TASK_HEADER": "My Tasks",
+		"MY_TASK_HEADER": "Мои задачи",
+		"TEAM_TASKS_HEADER": "Задачи команды",
 		"ADD_TASKS": "Добавить задачи",
 		"EDIT_TASKS": "Редактировать задачи",
 		"TASKS_TITLE": "Заголовок",
@@ -964,7 +996,7 @@
 		"TASK_DELETED": "Задача удалена",
 		"TASKS_PROJECT": "Проект",
 		"TASK_MEMBERS": "Сотрудники",
-		"TASK_ASSIGNED_TO": "Assigned To",
+		"TASK_ASSIGNED_TO": "Назначено",
 		"TASK_TEAMS": "Команды",
 		"DUE_DATE": "Срок сдачи",
 		"ESTIMATE": "Оценить",
@@ -1135,7 +1167,11 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Страница, которую вы ищете, не существует"
 	},
 	"HELP_PAGE": {
-		"HELP": "Помогите"
+		"HELP": "Помогите",
+		"KNOWLEDGE_BASES": "Базы знаний",
+		"CHOSE_ICON": "Выберите значок для установки",
+		"EDIT_DESCRIPTION": "редактировать описание",
+		"EDIT_NAME": "изменить имя"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
@@ -1195,7 +1231,8 @@
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
 			"PHONE_REQUIRED": "Требуется указать телефон!",
-			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!"
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!",
+			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1316,6 +1353,10 @@
 			"EDIT_EVENT_TYPE": "Тип события отредактирован",
 			"DELETE_EVENT_TYPE": "Тип события удален",
 			"ERROR": "{{ error }}"
+		},
+		"AVAILABILITY_SLOTS": {
+			"SAVE": "Доступные слоты сохранены",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1347,6 +1388,10 @@
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
 		"COMPLETE": "Все готово!"
 	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "Это поле обязательно!",
+		"ENTER_POSITIVE_NUMBER": "Пожалуйста, введите положительное число!"
+	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Добавить Назначение"
 	},
@@ -1359,6 +1404,12 @@
 		"ACTIVE": "Активный"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Специфичная доступность"
+		"DATE_SPECIFIC_AVAILABILITY": "Определенная дата наличия",
+		"RECURRING_AVAILABILITY": "Повторяющаяся доступность"
+	},
+	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENTS": "Заказать прием",
+		"SELECT_EVENT_TYPES": "Пожалуйста, выберите тип события",
+		"PICK_DATETIME": "Выберите дату и время"
 	}
 }

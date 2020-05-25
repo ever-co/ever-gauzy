@@ -55,9 +55,7 @@
 			[ngModelOptions]="{ standalone: true }"
 			class="radio-group"
 		>
-			<nb-radio [value]="false" [checked]="true" (click)="resetLocation()"
-				>Call</nb-radio
-			>
+			<nb-radio [value]="false" [checked]="true">Call</nb-radio>
 			<nb-radio [value]="true">Meeting</nb-radio>
 		</nb-radio-group>
 		<div class="location" *ngIf="isMeeting">

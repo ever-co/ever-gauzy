@@ -1,8 +1,13 @@
 <nb-card>
 	<nb-card-header class="d-flex">
-		<h5>
-			{{ 'INVENTORY_PAGE.EDIT_PRODUCT_VARIANT' | translate }}
-		</h5>
+		<div class="flex-row">
+			<button (click)="onCancel()" nbButton status="primary" class="mr-4">
+				<nb-icon icon="arrow-back-outline"></nb-icon>
+			</button>
+			<h5>
+				{{ 'INVENTORY_PAGE.EDIT_PRODUCT_VARIANT' | translate }}
+			</h5>
+		</div>
 		<nb-icon
 			class="ml-auto mt-1 close"
 			icon="close-outline"
@@ -30,7 +35,25 @@
 								'INVENTORY_PAGE.INTERNATIONAL_REFERENCE'
 									| translate
 							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['internationalReference']
+										.invalid &&
+									form.controls['internationalReference']
+										.touched
+							}"
 						/>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['internationalReference']
+									.errors &&
+								form.controls['internationalReference'].errors
+									.required
+							"
+						>
+							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+						</div>
 					</div>
 					<div class="col-sm-6 mb-4">
 						<label class="label" for="invoicingPolicyInput">
@@ -47,13 +70,27 @@
 									| translate
 							"
 							formControlName="invoicingPolicy"
+							[ngClass]="{
+								'status-danger':
+									form.controls['invoicingPolicy'].invalid &&
+									form.controls['invoicingPolicy'].touched
+							}"
 						>
 							<nb-option
 								*ngFor="let policy of billingInvoicingPolicies"
 								value="{{ policy }}"
-								>{{ policy }}</nb-option
-							>
+								>{{ policy }}
+							</nb-option>
 						</nb-select>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['invoicingPolicy'].errors &&
+								form.controls['invoicingPolicy'].errors.required
+							"
+						>
+							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+						</div>
 					</div>
 				</div>
 				<div class="row">
@@ -70,7 +107,30 @@
 							[placeholder]="
 								'INVENTORY_PAGE.QUANTITY' | translate
 							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['quantity'].invalid &&
+									form.controls['quantity'].touched
+							}"
 						/>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['quantity'].errors &&
+								form.controls['quantity'].errors.required
+							"
+						>
+							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+						</div>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['quantity'].errors &&
+								form.controls['quantity'].errors.min
+							"
+						>
+							{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
+						</div>
 					</div>
 					<div class="col-sm-6 mb-4">
 						<label class="label" for="taxesInput">
@@ -83,7 +143,30 @@
 							formControlName="taxes"
 							nbInput
 							[placeholder]="'INVENTORY_PAGE.TAXES' | translate"
+							[ngClass]="{
+								'status-danger':
+									form.controls['taxes'].invalid &&
+									form.controls['taxes'].touched
+							}"
 						/>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['taxes'].errors &&
+								form.controls['taxes'].errors.required
+							"
+						>
+							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+						</div>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['taxes'].errors &&
+								form.controls['taxes'].errors.min
+							"
+						>
+							{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
+						</div>
 					</div>
 				</div>
 				<hr />
@@ -95,13 +178,36 @@
 						<input
 							fullWidth
 							id="retailPriceInput"
-							type="text"
+							type="number"
 							formControlName="retailPrice"
 							nbInput
 							[placeholder]="
 								'INVENTORY_PAGE.RETAIL_PRICE' | translate
 							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['retailPrice'].invalid &&
+									form.controls['retailPrice'].touched
+							}"
 						/>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['retailPrice'].errors &&
+								form.controls['retailPrice'].errors.required
+							"
+						>
+							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+						</div>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['retailPrice'].errors &&
+								form.controls['retailPrice'].errors.min
+							"
+						>
+							{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
+						</div>
 					</div>
 					<div class="col-sm-4 mb-4">
 						<label class="label" for="retailPriceCurrencyInput">
@@ -118,13 +224,29 @@
 								'INVENTORY_PAGE.RETAIL_PRICE_CURRENCY'
 									| translate
 							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['retailPriceCurrency']
+										.invalid &&
+									form.controls['retailPriceCurrency'].touched
+							}"
 						>
 							<nb-option
 								*ngFor="let currency of currencies"
 								value="{{ currency }}"
-								>{{ currency }}</nb-option
-							>
+								>{{ currency }}
+							</nb-option>
 						</nb-select>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['retailPriceCurrency'].errors &&
+								form.controls['retailPriceCurrency'].errors
+									.required
+							"
+						>
+							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+						</div>
 					</div>
 				</div>
 				<div class="row">
@@ -141,7 +263,30 @@
 							[placeholder]="
 								'INVENTORY_PAGE.UNIT_COST' | translate
 							"
+							[ngClass]="{
+								'status-danger':
+									form.controls['unitCost'].invalid &&
+									form.controls['unitCost'].touched
+							}"
 						/>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['unitCost'].errors &&
+								form.controls['unitCost'].errors.required
+							"
+						>
+							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+						</div>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['unitCost'].errors &&
+								form.controls['unitCost'].errors.min
+							"
+						>
+							{{ 'VALIDATION.ENTER_POSITIVE_NUMBER' | translate }}
+						</div>
 					</div>
 					<div class="col-sm-4 mb-4">
 						<label class="label" for="unitCostCurrency">
@@ -156,13 +301,28 @@
 								'INVENTORY_PAGE.UNIT_COST_CURRENCY' | translate
 							"
 							formControlName="unitCostCurrency"
+							[ngClass]="{
+								'status-danger':
+									form.controls['unitCostCurrency'].invalid &&
+									form.controls['unitCostCurrency'].touched
+							}"
 						>
 							<nb-option
 								*ngFor="let currency of currencies"
 								value="{{ currency }}"
-								>{{ currency }}</nb-option
-							>
+								>{{ currency }}
+							</nb-option>
 						</nb-select>
+						<div
+							class="text-danger"
+							*ngIf="
+								form.controls['unitCostCurrency'].errors &&
+								form.controls['unitCostCurrency'].errors
+									.required
+							"
+						>
+							{{ 'VALIDATION.FIELD_REQUIRED' | translate }}
+						</div>
 					</div>
 				</div>
 				<div class="row mb-4">
@@ -238,10 +398,15 @@
 		</form>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button (click)="onCancel()" status="warning" class="mr-3" nbButton>
-			{{ 'BUTTONS.CANCEL' | translate }}
+		<button (click)="onDelete()" status="danger" class="mr-3" nbButton>
+			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
-		<button status="success" nbButton (click)="onSaveRequest()">
+		<button
+			status="success"
+			[disabled]="form.invalid"
+			nbButton
+			(click)="onSaveRequest()"
+		>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
