@@ -82,6 +82,15 @@ import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 
+import { AttributeDefinitionModule } from './attribute-definition';
+import { AttributeValidatorModule } from './attribute-validator';
+import { StageAttributeModule } from './stage-attribute';
+import { AttributeValueModule } from './attribute-value';
+import { LeadAttributeModule } from './lead-attribute';
+import { PipelineModule } from './pipeline';
+import { StageModule } from './stage';
+import { LeadModule } from './lead';
+
 @Module({
 	imports: [
 		RouterModule.forRoutes([
@@ -309,7 +318,39 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 					{
 						path: '/availability-slots',
 						module: AvailabilitySlotsModule
-					}
+					},
+          {
+            path: '/lead',
+            module: LeadModule,
+          },
+          {
+            path: '/stages',
+            module: StageModule,
+          },
+          {
+            path: '/pipelines',
+            module: PipelineModule,
+          },
+          {
+            path: '/lead-attributes',
+            module: LeadAttributeModule,
+          },
+          {
+            path: '/attribute-values',
+            module: AttributeValueModule,
+          },
+          {
+            path: '/stage-attributes',
+            module: StageAttributeModule,
+          },
+          {
+            path: '/attribute-validators',
+            module: AttributeValidatorModule,
+          },
+          {
+            path: '/attribute-definitions',
+            module: AttributeDefinitionModule,
+          }
 				]
 			}
 		]),
