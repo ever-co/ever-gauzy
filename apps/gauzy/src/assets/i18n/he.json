@@ -667,6 +667,7 @@
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"SCHEDULED_INTERVIEWS": "Scheduled interviews",
 				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
@@ -694,7 +695,7 @@
 			"LOCATION": "Location",
 			"NOTE": "Note",
 			"OF": "of",
-			"INTERVIEWERS_LOWER_CASE": "interviewers"
+			"INTERVIEWS_LOWER_CASE": "interviews"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
