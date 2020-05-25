@@ -32,7 +32,7 @@ import { Organization } from '../organization/organization.entity';
 		FacebookStrategy,
 		JwtStrategy
 	],
-	exports: [AuthService]
+	exports: [AuthService, UserService]
 })
 export class AuthModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
