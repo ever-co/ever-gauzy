@@ -108,6 +108,28 @@ export enum TimeLogType {
 	MANUAL = 'MANUAL'
 }
 
+export enum TimeLogSourceEnum {
+	MOBILE = 'Mobile',
+	WEB_TIMER = 'WebTimer',
+	DESKTOP = 'Desktop',
+	BROWSER = 'Browser',
+	HUBSTAFF = 'Hubstaff',
+	UPWORK = 'Upwork'
+}
+
+export interface TimeLogFilters {
+	organizationId?: string;
+	startDate?: Date;
+	endDate?: Date;
+	employeeId?: string[];
+	logType?: TimeLogType[];
+	source?: TimeLogSourceEnum[];
+	activityLevel?: {
+		start: number;
+		end: number;
+	};
+}
+
 export interface TimeSlot extends IBaseEntityModel {
 	employee: Employee;
 	project?: OrganizationProjects;
@@ -195,6 +217,6 @@ export interface IGetTimeLogInput {
 	endDate?: string;
 	projectId?: string[];
 	clientId?: string[];
-	employeeId?: string;
+	employeeId?: string | string[];
 	organizationId?: string;
 }

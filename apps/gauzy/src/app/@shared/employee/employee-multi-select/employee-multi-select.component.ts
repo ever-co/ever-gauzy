@@ -6,10 +6,8 @@ import {
 	OnInit,
 	forwardRef
 } from '@angular/core';
-import { Employee, Organization } from '@gauzy/models';
-import { EmployeesService } from '../../../@core/services/employees.service';
+import { Employee } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-employee-multi-select',
@@ -24,9 +22,22 @@ import { Store } from '../../../@core/services/store.service';
 })
 export class EmployeeSelectComponent implements OnInit {
 	@Output() selectedChange = new EventEmitter();
-	@Input() allEmployees: Employee[];
+
 	@Input() multiple = true;
 	@Input() disabled = false;
+	@Input() placeholder = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
+
+	employees: Employee[];
+	private _allEmployees: Employee[];
+	@Input()
+	public get allEmployees(): Employee[] {
+		return this._allEmployees;
+	}
+	public set allEmployees(value: Employee[]) {
+		this._allEmployees = value;
+		this.employees = this._allEmployees;
+	}
+
 	@Input()
 	public get selectedEmployeeIds(): string[] | string {
 		return this.employeeId;
@@ -34,16 +45,11 @@ export class EmployeeSelectComponent implements OnInit {
 	public set selectedEmployeeIds(value: string[] | string) {
 		this.employeeId = value;
 	}
-
-	organization: Organization;
 	val: string[] | string;
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
-	constructor(
-		private employeesService: EmployeesService,
-		private store: Store
-	) {}
+	constructor() {}
 
 	set employeeId(val: string[] | string) {
 		// this value is updated by programmatic changes if( val !== undefined && this.val !== val){
@@ -56,24 +62,10 @@ export class EmployeeSelectComponent implements OnInit {
 		return this.val;
 	}
 
-	ngOnInit(): void {
-		this.organization = this.store.selectedOrganization;
-		if (!this.allEmployees) {
-			this.loadEmployees();
-		}
-	}
+	ngOnInit(): void {}
 
 	onMembersSelected(selectEvent: any): void {
 		this.selectedChange.emit(selectEvent);
-	}
-
-	private async loadEmployees(): Promise<void> {
-		const { items = [] } = await this.employeesService
-			.getAll(['user'], {
-				orgId: this.organization.id
-			})
-			.toPromise();
-		this.allEmployees = items;
 	}
 
 	writeValue(value: any) {

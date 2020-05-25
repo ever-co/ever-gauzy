@@ -5,7 +5,8 @@ import {
 	TimeLog,
 	Organization,
 	IDateRange,
-	PermissionsEnum
+	PermissionsEnum,
+	TimeLogFilters
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
 import {
@@ -33,6 +34,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
+	selectedDate: Date = new Date();
 
 	private _ngDestroy$ = new Subject<void>();
 	@ViewChild('checkAllCheckbox')
@@ -52,21 +54,9 @@ export class DailyComponent implements OnInit, OnDestroy {
 		}
 	];
 	canChangeSelectedEmployee: boolean;
-	logRequest: {
-		date?: Date;
-		employeeId?: string;
-		organizationId?: string;
-	} = {};
+	logRequest: TimeLogFilters = {};
 
 	updateLogs$: Subject<any> = new Subject();
-
-	public get selectedDate(): Date {
-		return this.logRequest.date;
-	}
-	public set selectedDate(value: Date) {
-		this.logRequest.date = value;
-		this.updateLogs$.next();
-	}
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -81,9 +71,12 @@ export class DailyComponent implements OnInit, OnDestroy {
 		if (this.activatedRoute.snapshot.queryParams) {
 			const query = this.activatedRoute.snapshot.queryParams;
 			if (query.startDate) {
-				this.logRequest.date = toLocal(query.startDate).toDate();
-			} else {
-				this.logRequest.date = this.today;
+				this.logRequest.startDate = toLocal(query.startDate).toDate();
+				this.selectedDate = this.logRequest.startDate;
+			}
+
+			if (query.endDate) {
+				this.logRequest.endDate = toLocal(query.endDate).toDate();
 			}
 
 			if (query.organizationId) {
@@ -110,15 +103,6 @@ export class DailyComponent implements OnInit, OnDestroy {
 			);
 		});
 
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employee: SelectedEmployee) => {
-				if (employee) {
-					this.logRequest.employeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization: Organization) => {
@@ -134,34 +118,24 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
-	async nextDay() {
-		const date = moment(this.selectedDate).add(1, 'day');
-		if (date.isAfter(this.today)) {
-			return;
-		}
-		this.selectedDate = date.toDate();
+	async filtersChange($event) {
+		this.logRequest = $event;
+		this.selectedDate = this.logRequest.startDate;
+		this.updateLogs$.next();
 	}
-
-	async previousDay() {
-		this.selectedDate = moment(this.selectedDate)
-			.subtract(1, 'day')
-			.toDate();
-	}
-
 	async getLogs() {
 		if (!this.organization) {
 			return;
 		}
 
-		const { employeeId } = this.logRequest;
-		const startDate = moment(this.logRequest.date).startOf('day');
-		const endDate = moment(this.logRequest.date).endOf('day');
+		const { employeeId, startDate, endDate } = this.logRequest;
 
 		const request: IGetTimeLogInput = {
+			organizationId: this.organization.id,
+			...this.logRequest,
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeId ? { employeeId } : {}),
-			organizationId: this.organization.id
+			...(employeeId ? { employeeId } : {})
 		};
 
 		this.router.navigate([], {

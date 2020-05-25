@@ -7,6 +7,7 @@ import {
 	TimesheetStatus,
 	Timesheet
 } from '@gauzy/models';
+import { toParams } from 'libs/utils';
 
 @Injectable({
 	providedIn: 'root'
@@ -65,8 +66,9 @@ export class TimesheetService {
 	}
 
 	getTimeLogs(request?: IGetTimeLogInput) {
+		const params = toParams(request);
 		return this.http
-			.get('/api/timesheet/time-log', { params: { ...request } })
+			.get('/api/timesheet/time-log', { params })
 			.toPromise()
 			.then((data: TimeLog[]) => {
 				return data;

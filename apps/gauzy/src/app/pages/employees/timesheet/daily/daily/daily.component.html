@@ -10,287 +10,146 @@
 </div>
 
 <div class="filters row mb-3">
-	<div class="bulk-actions col-sm-3">
-		<div class="input-group">
-			<div class="input-group-append" id="button-addon4">
-				<button nbButton status="primary" (click)="previousDay()">
-					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
-				</button>
-			</div>
-			<input
-				type="text"
-				nbInput
-				class="form-control ml-1"
-				placeholder="Select Date"
-				[(ngModel)]="selectedDate"
-				[nbDatepicker]="formpicker"
-			/>
-			<div class="input-group-append ml-1" id="button-addon4">
-				<button nbButton status="primary" (click)="nextDay()">
-					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
-				</button>
-			</div>
-			<div class="input-group-append ml-1" id="button-addon4">
-				<button
-					nbButton
-					status="primary"
-					(click)="selectedDate = today"
-				>
-					Today
-				</button>
-			</div>
-			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
-		</div>
+	<div class="col">
+		<ngx-filters (filtersChange)="filtersChange($event)"></ngx-filters>
 	</div>
-	<div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
+	<!-- <div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
 		<ga-employee-selector
 			class="header-selector employee-selector"
 		></ga-employee-selector>
-	</div>
+	</div> -->
 </div>
-<div class="bulk-actions row">
-	<div class="bulk-actions mb-3 col-sm-3">
-		<button
-			nbButton
-			status="default"
-			*ngIf="showBulkAction"
-			[nbContextMenu]="bulkActionOptions"
-			nbContextMenuTag="time-logs-bulk-acton"
+
+<div class="log-container">
+	<div class="bulk-actions row">
+		<div class="bulk-actions mb-3 col-sm-3">
+			<button
+				nbButton
+				status="default"
+				*ngIf="showBulkAction"
+				[nbContextMenu]="bulkActionOptions"
+				nbContextMenuTag="time-logs-bulk-acton"
+			>
+				Bulk action <nb-icon icon="chevron-down-outline"></nb-icon>
+			</button>
+		</div>
+	</div>
+
+	<div
+		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
+	>
+		<div class="col-auto check-box" *ngIf="organization?.allowDeleteTime">
+			<nb-checkbox
+				[indeterminate]="false"
+				#checkAllCheckbox
+				(change)="toggleCheckbox($event, 'all')"
+				status="primary"
+			>
+			</nb-checkbox>
+		</div>
+		<div class="col project-name">
+			Project
+		</div>
+		<div class="col employee-name" *ngIf="canChangeSelectedEmployee">
+			Employee
+		</div>
+		<div class="col">Log type</div>
+		<div class="col">Duration</div>
+		<div class="col">Time span</div>
+		<div class="col action">Action</div>
+	</div>
+	<ng-template [ngIf]="timeLogs?.length > 0" [ngIfElse]="notFound">
+		<div
+			class="row border-bottom py-3 align-items-center"
+			*ngFor="let log of timeLogs"
 		>
-			Bulk action <nb-icon icon="chevron-down-outline"></nb-icon>
-		</button>
-		<!-- <nb-select class="d-block m-0" placeholder="Bulk action" *ngIf="checkAllCheckbox.checked || checkAllCheckbox.indeterminate" (selectedChange)="bulkAction($event)">
-					<nb-option value="">Bulk action</nb-option>
-					<nb-option value="delete">Delete</nb-option>
-				</nb-select> -->
-	</div>
-</div>
-<table class="table table-striped">
-	<thead>
-		<tr>
-			<th scope="col" *ngIf="organization?.allowDeleteTime">
+			<div
+				class="col-auto check-box"
+				*ngIf="organization?.allowDeleteTime"
+			>
 				<nb-checkbox
-					[indeterminate]="false"
-					#checkAllCheckbox
-					(change)="toggleCheckbox($event, 'all')"
+					[value]="log.id"
+					[(ngModel)]="selectedIds[log.id]"
+					(change)="toggleCheckbox($event)"
 					status="primary"
 				></nb-checkbox>
-			</th>
-			<th scope="col">Project</th>
-			<th *ngIf="canChangeSelectedEmployee" scope="col">
-				Employee
-			</th>
-			<th scope="col">Log type</th>
-			<th scope="col">Duration</th>
-			<th scope="col">Time span</th>
-			<th scope="col">Action</th>
-		</tr>
-	</thead>
-	<tbody>
-		<ng-template [ngIf]="timeLogs?.length > 0" [ngIfElse]="notFound">
-			<tr *ngFor="let log of timeLogs">
-				<th scope="row" *ngIf="organization?.allowDeleteTime">
-					<nb-checkbox
-						[value]="log.id"
-						[(ngModel)]="selectedIds[log.id]"
-						(change)="toggleCheckbox($event)"
-						status="primary"
-					></nb-checkbox>
-				</th>
-				<td>
-					<span *ngIf="log?.task; else noProfject">{{
-						log?.project?.name
-					}}</span>
-					<ng-template #noProfject>
-						<span>No project</span>
+			</div>
+			<div class="col project-name">
+				<span *ngIf="log?.task; else noProfject">{{
+					log?.project?.name
+				}}</span>
+				<ng-template #noProfject>
+					<span>No project</span>
+				</ng-template>
+				<div class="mt-2 small">
+					<span *ngIf="log?.task; else noToDo">
+						<strong>TO-DO : </strong>
+						{{ log?.task?.title }}</span
+					>
+					<ng-template #noToDo>
+						<span>No to-do</span>
 					</ng-template>
-					<div class="mt-2 small">
-						<span *ngIf="log?.task; else noToDo">
-							<strong>TO-DO : </strong>
-							{{ log?.task?.title }}</span
-						>
-						<ng-template #noToDo>
-							<span>No to-do</span>
-						</ng-template>
-					</div>
-				</td>
-				<td *ngIf="canChangeSelectedEmployee">
-					<div class="name-container">
-						<ngx-avatar
-							[name]="
-								log?.employee?.user?.firstName +
-								' ' +
-								log?.employee?.user?.lastName
-							"
-							[src]="log?.employee?.user?.imageUrl"
-						></ngx-avatar>
-					</div>
-				</td>
-				<td>{{ log.logType }}</td>
-				<td>{{ log.duration | durationFormat }}</td>
-				<td>
-					<span class="start-timer">{{
-						log.startedAt | utcToLocal | timeFormat: true
-					}}</span>
-					-
-					<span
-						class="end-timer"
-						*ngIf="log.stoppedAt; else runningTimer"
-						>{{
-							log.stoppedAt | utcToLocal | timeFormat: true
-						}}</span
-					>
-					<ng-template #runningTimer>
-						<span class="running-timer"> Till now </span>
-					</ng-template>
-				</td>
-				<td>
-					<div class="action-button">
-						<button
-							*ngIf="organization?.allowModifyTime"
-							[disabled]="!log.stoppedAt"
-							class="m-1"
-							nbButton
-							status="success"
-							size="small"
-							(click)="openEdit(log)"
-						>
-							Edit
-						</button>
-						<button
-							*ngIf="organization?.allowDeleteTime"
-							[disabled]="!log.stoppedAt"
-							class="m-1"
-							nbButton
-							status="danger"
-							size="small"
-							(click)="onDeleteConfirm(log)"
-						>
-							Delete
-						</button>
-					</div>
-				</td>
-			</tr>
-		</ng-template>
-		<ng-template #notFound>
-			<tr>
-				<td colspan="6" class="text-center">No logs found.</td>
-			</tr>
-		</ng-template>
-	</tbody>
-</table>
-
-<!-- <ng-template #addEditDialog let-context let-ref="dialogRef">
-	<nb-card>
-		<nb-card-header class="header">
-			<h4>Edit time logs</h4>
-		</nb-card-header>
-		<nb-card-body>
-			<form #f="ngForm">
-				<div class="form-group">
-					<div class="row">
-						<div class="col-12">
-							<ngx-timer-range-picker
-								name="selectedRange"
-								[maxDate]="today"
-								[(ngModel)]="selectedRange"
-							>
-							</ngx-timer-range-picker>
-						</div>
-
-						<div class="col-12">
-							<nb-checkbox
-								[(ngModel)]="addEditTimeRequest.isBillable"
-								name="isBillable"
-								status="primary"
-							>
-								{{
-									'TIMER_TRACKER.IS_BILLABLE' | translate
-								}}</nb-checkbox
-							>
-						</div>
-					</div>
 				</div>
-
-				<div class="form-group">
-					<label>{{
-						'TIMER_TRACKER.SELECT_PROJECT' | translate
-					}}</label>
-					<ga-project-selector
-						name="projectId"
-						[(ngModel)]="addEditTimeRequest.projectId"
-						#projectInput="ngModel"
-						[required]="organization.requireProject"
-					></ga-project-selector>
-
-					<div
-						*ngIf="projectInput.invalid && f.submitted"
-						class="invalid-feedback d-block"
-					>
-						<div *ngIf="projectInput.errors.required">
-							Please selct project
-						</div>
-					</div>
+			</div>
+			<div class="col employee-name" *ngIf="canChangeSelectedEmployee">
+				<div class="name-container">
+					<ngx-avatar
+						[name]="
+							log?.employee?.user?.firstName +
+							' ' +
+							log?.employee?.user?.lastName
+						"
+						[src]="log?.employee?.user?.imageUrl"
+					></ngx-avatar>
 				</div>
-
-				<div class="form-group">
-					<label>{{ 'TIMER_TRACKER.SELECT_TASK' | translate }}</label>
-					<ga-task-selector
-						name="taskId"
-						[projectId]="addEditTimeRequest.projectId"
-						[(ngModel)]="addEditTimeRequest.taskId"
-						#taskInput="ngModel"
-						[required]="organization.requireTask"
-					></ga-task-selector>
-
-					<div
-						*ngIf="taskInput.invalid && f.submitted"
-						class="invalid-feedback d-block"
-					>
-						<div *ngIf="taskInput.errors.required">
-							Please selct task
-						</div>
-					</div>
-				</div>
-
-				<div class="form-group">
-					<label>{{ 'TIMER_TRACKER.DESCRIPTION' | translate }}</label>
-					<textarea
-						class="form-control"
-						rows="2"
-						[placeholder]="'TIMER_TRACKER.DESCRIPTION' | translate"
-						name="description"
-						[(ngModel)]="addEditTimeRequest.description"
-						#descriptionInput="ngModel"
-						[required]="organization.requireDescription"
-					></textarea>
-
-					<div
-						*ngIf="descriptionInput.invalid && f.submitted"
-						class="invalid-feedback d-block"
-					>
-						<div *ngIf="descriptionInput.errors.required">
-							Description is required
-						</div>
-					</div>
-				</div>
-
-				<div class="form-group">
+			</div>
+			<div class="col">{{ log.logType }}</div>
+			<div class="col">{{ log.duration | durationFormat }}</div>
+			<div class="col">
+				<span class="start-timer">{{
+					log.startedAt | utcToLocal | timeFormat: true
+				}}</span>
+				-
+				<span
+					class="end-timer"
+					*ngIf="log.stoppedAt; else runningTimer"
+					>{{ log.stoppedAt | utcToLocal | timeFormat: true }}</span
+				>
+				<ng-template #runningTimer>
+					<span class="running-timer"> Till now </span>
+				</ng-template>
+			</div>
+			<div class="col action">
+				<div class="action-button">
 					<button
+						*ngIf="organization?.allowModifyTime"
+						[disabled]="!log.stoppedAt"
+						class="m-1"
 						nbButton
-						status="primary"
-						class="mr-2"
-						(click)="addTime(f)"
+						status="success"
+						size="small"
+						(click)="openEdit(log)"
 					>
-						{{
-							!addEditTimeRequest.id ? 'Add Time' : 'Update Time'
-						}}
+						Edit
 					</button>
-					<button nbButton status="default" (click)="ref.close()">
-						Close
+					<button
+						*ngIf="organization?.allowDeleteTime"
+						[disabled]="!log.stoppedAt"
+						class="m-1"
+						nbButton
+						status="danger"
+						size="small"
+						(click)="onDeleteConfirm(log)"
+					>
+						Delete
 					</button>
 				</div>
-			</form>
-		</nb-card-body>
-	</nb-card>
-</ng-template> -->
+			</div>
+		</div>
+	</ng-template>
+	<ng-template #notFound>
+		<div class="row font-weight-bold py-3 align-items-center">
+			<div class="col text-center">No logs found.</div>
+		</div>
+	</ng-template>
+</div>

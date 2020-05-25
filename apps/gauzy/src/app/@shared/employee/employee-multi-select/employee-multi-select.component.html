@@ -4,9 +4,9 @@
 	fullWidth
 	[disabled]="disabled"
 	[(ngModel)]="employeeId"
-	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES' | translate }}"
+	placeholder="{{ placeholder | translate }}"
 >
-	<nb-option *ngFor="let employee of allEmployees" [value]="employee.id">
+	<nb-option *ngFor="let employee of employees" [value]="employee.id">
 		<img
 			src="{{ employee.user?.imageUrl }}"
 			alt="Smiley face"
