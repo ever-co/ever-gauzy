@@ -9,7 +9,7 @@ import { Column, Entity } from 'typeorm';
 @Entity( 'attribute_validators' )
 export class AttributeValidator extends Base implements IAttributeValidator
 {
-  @Column({ type: 'string', array: true, default: [ 'value' ] })
+  @Column({ type: 'jsonb', default: '[ "value" ]' })
   @ApiProperty({ type: String, isArray: true })
   public parameters: string[];
 

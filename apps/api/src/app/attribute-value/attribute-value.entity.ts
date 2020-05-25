@@ -13,9 +13,9 @@ export class AttributeValue extends Base implements IAttributeValue
   @OneToOne( () => AttributeDefinition )
   public attributeDefinition: AttributeDefinition;
 
-  @Column({ array: true, default: [], type: 'text' })
   @ApiProperty({ type: String, isArray: true })
   @IsNotEmpty({ each: true })
+  @Column({ type: 'jsonb' })
   public values: string[];
 
   @ApiProperty({ type: String })
