@@ -6,6 +6,7 @@ import {
 	AfterViewInit,
 	OnDestroy,
 	Input,
+	ChangeDetectorRef,
 } from '@angular/core';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
@@ -19,7 +20,6 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import { EmployeesService } from '../../../@core/services';
 import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -67,11 +67,11 @@ export class CandidateInterviewMutationComponent
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
 		protected employeesService: EmployeesService,
 		protected store: Store,
+		private cdRef: ChangeDetectorRef,
 		private candidateInterviewService: CandidateInterviewService,
 		protected candidatesService: CandidatesService,
 		private errorHandler: ErrorHandlingService,
-		private candidateInterviewersService: CandidateInterviewersService,
-		readonly translateService: TranslateService
+		private candidateInterviewersService: CandidateInterviewersService
 	) {}
 
 	ngOnInit() {
@@ -88,6 +88,8 @@ export class CandidateInterviewMutationComponent
 		//if editing
 		if (this.editData) {
 			this.form.patchValue(this.editData);
+			this.form.patchValue({ valid: true });
+			this.cdRef.detectChanges();
 			this.candidateInterviewForm.selectedRange.end = this.editData.endTime;
 			this.candidateInterviewForm.selectedRange.start = this.editData.startTime;
 		}
@@ -232,6 +234,7 @@ export class CandidateInterviewMutationComponent
 
 	previous() {
 		this.candidateInterviewForm.form.patchValue(this.interview);
+		this.candidateInterviewForm.form.patchValue({ valid: true });
 		this.isCandidateNotification = false;
 		this.isInterviewerNotification = false;
 		this.employees = [];
