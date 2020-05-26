@@ -24,7 +24,6 @@ import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-ha
 import {
 	EmployeeSelectorComponent,
 	SelectedEmployee,
-	ALL_EMPLOYEES_SELECTED,
 } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 
 export interface IAvailabilitySlotsView {
