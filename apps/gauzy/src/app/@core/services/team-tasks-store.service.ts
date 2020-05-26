@@ -26,9 +26,9 @@ export class TeamTasksStoreService {
 		}
 	}
 
-	fetchTasks() {
+	fetchTasks(employeeId = '') {
 		this._taskService
-			.getTeamTasks()
+			.getTeamTasks({}, employeeId)
 			.pipe(tap(({ items }) => this.loadAllTasks(items)))
 			.subscribe();
 	}

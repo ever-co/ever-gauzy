@@ -18,7 +18,6 @@ export class AssignedToComponent implements ViewCell {
 
 	ngOnInit() {
 		if (this.rowData) {
-			console.log(this.value);
 			if (this.rowData.members && this.rowData.members.length > 0) {
 				this.view = 'members';
 				this.value = [...this.rowData.members];

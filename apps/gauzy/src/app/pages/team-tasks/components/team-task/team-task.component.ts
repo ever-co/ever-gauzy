@@ -16,8 +16,7 @@ import { TaskEstimateComponent } from 'apps/gauzy/src/app/@shared/table-componen
 import { AssignedToComponent } from 'apps/gauzy/src/app/@shared/table-components/assigned-to/assigned-to.component';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { OrganizationTeamsService } from 'apps/gauzy/src/app/@core/services/organization-teams.service';
-import { UsersOrganizationsService } from 'apps/gauzy/src/app/@core/services/users-organizations.service';
-import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
+import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 
 @Component({
 	selector: 'ngx-team-task',
@@ -43,19 +42,28 @@ export class TaskComponent extends TranslationBaseComponent
 		private _store: TeamTasksStoreService,
 		private _organizationsStore: Store,
 		readonly translateService: TranslateService,
-		private organizationTeamsService: OrganizationTeamsService,
-		private usersOrganizationsService: UsersOrganizationsService,
-		private organizationsService: OrganizationsService
+		private organizationTeamsService: OrganizationTeamsService
 	) {
 		super(translateService);
 		this.tasks$ = this._store.tasks$;
 	}
 
 	ngOnInit() {
-		this._store.fetchTasks();
 		this.loadTeams();
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
+
+		this._organizationsStore.selectedEmployee$.subscribe(
+			(selectedEmployee: SelectedEmployee) => {
+				if (selectedEmployee) {
+					this.loadTeams(selectedEmployee.id);
+					this._store.fetchTasks(selectedEmployee.id);
+				}
+			}
+		);
+		this._organizationsStore.selectedOrganization$.subscribe((data) => {
+			this.loadTeams();
+		});
 	}
 
 	private _applyTranslationOnSmartTable() {
@@ -149,29 +157,24 @@ export class TaskComponent extends TranslationBaseComponent
 		}
 	}
 
-	async loadTeams() {
-		if (!this._organizationsStore.selectedOrganization) {
-			const {
-				items: userOrg,
-			} = await this.usersOrganizationsService.getAll([], {
-				userId: this._organizationsStore.userId,
+	async loadTeams(employeeId?: string) {
+		if (this._organizationsStore.selectedOrganization) {
+			const organizationId = this._organizationsStore.selectedOrganization
+				.id;
+			if (!organizationId) {
+				return;
+			}
+			this.teams = (
+				await this.organizationTeamsService.getMyTeams(
+					['members'],
+					{},
+					employeeId
+				)
+			).items.filter((org) => {
+				return org.organizationId === organizationId;
 			});
-			const org = await this.organizationsService
-				.getById(userOrg[0].orgId)
-				.pipe(first())
-				.toPromise();
-			this._organizationsStore.selectedOrganization = org;
+			this._loadTableSettings();
 		}
-		const organizationId = this._organizationsStore.selectedOrganization.id;
-		if (!organizationId) {
-			return;
-		}
-		this.teams = (
-			await this.organizationTeamsService.getMyTeams(['members'])
-		).items.filter((org) => {
-			return org.organizationId === organizationId;
-		});
-		this._loadTableSettings();
 	}
 
 	async editTaskDIalog() {

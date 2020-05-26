@@ -8,7 +8,8 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	UseGuards
+	UseGuards,
+	HttpException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -16,12 +17,13 @@ import { OrganizationTeamService } from './organization-team.service';
 import { IPagination } from '../core';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
-	OrganizationTeam as IIOrganizationTeam
+	OrganizationTeam as IIOrganizationTeam,
 } from '@gauzy/models';
 import { OrganizationTeam } from './organization-team.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { EmployeeService } from '../employee/employee.service';
 import { RequestContext } from '../core/context';
+import { RoleService } from '../role/role.service';
 
 @ApiTags('Organization-Teams')
 @UseGuards(AuthGuard('jwt'))
@@ -31,7 +33,8 @@ export class OrganizationTeamController extends CrudController<
 > {
 	constructor(
 		private readonly organizationTeamService: OrganizationTeamService,
-		private readonly employeeService: EmployeeService
+		private readonly employeeService: EmployeeService,
+		private readonly roleService: RoleService
 	) {
 		super(organizationTeamService);
 	}
@@ -39,12 +42,12 @@ export class OrganizationTeamController extends CrudController<
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
+		description: 'The record has been successfully created.' /*, type: T*/,
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@Post('/create')
 	async createOrganizationTeam(
@@ -55,16 +58,16 @@ export class OrganizationTeamController extends CrudController<
 	}
 
 	@ApiOperation({
-		summary: 'Find all organization Teams.'
+		summary: 'Find all organization Teams.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found Teams',
-		type: OrganizationTeam
+		type: OrganizationTeam,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get()
 	async findAllOrganizationTeams(
@@ -74,23 +77,23 @@ export class OrganizationTeamController extends CrudController<
 
 		return this.organizationTeamService.getAllOrgTeams({
 			where: findInput,
-			relations
+			relations,
 		});
 	}
 
 	@ApiOperation({ summary: 'Update an organization Team' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		description: 'The record has been successfully edited.',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -103,35 +106,70 @@ export class OrganizationTeamController extends CrudController<
 	}
 
 	@ApiOperation({
-		summary: 'Find all organization Teams.'
+		summary: 'Find all organization Teams.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found Teams',
-		type: OrganizationTeam
+		type: OrganizationTeam,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get('me')
 	async findMyTeams(
 		@Query('data') data: string
 	): Promise<IPagination<IIOrganizationTeam>> {
-		//If user is not an employee, then this will return 404
-		const employee = await this.employeeService.findOne({
-			where: {
-				user: { id: RequestContext.currentUser().id }
-			}
-		});
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput, employeeId } = JSON.parse(data);
+		// If user is not an employee, then this will return 404
+		let employee: any = { id: undefined };
+		let role;
+		try {
+			employee = await this.employeeService.findOne({
+				where: {
+					user: { id: RequestContext.currentUser().id },
+				},
+			});
+		} catch (e) {}
 
-		return this.organizationTeamService.getMyOrgTeams(
-			{
-				where: findInput,
-				relations
-			},
-			employee.id
-		);
+		try {
+			const roleId = RequestContext.currentUser().roleId;
+			if (roleId) {
+				role = await this.roleService.findOne(roleId);
+			}
+		} catch (e) {}
+
+		// selected user not passed
+		if (employeeId) {
+			if (role.name === 'ADMIN' || role.name === 'SUPER_ADMIN') {
+				return this.findAllOrganizationTeams(data);
+			} else if (employeeId === employee.id) {
+				return this.organizationTeamService.getMyOrgTeams(
+					{
+						where: findInput,
+						relations,
+					},
+					employee.id
+				);
+			} else {
+				throw new HttpException(
+					'Unauthorized',
+					HttpStatus.UNAUTHORIZED
+				);
+			}
+		} else {
+			if (role.name === 'ADMIN' || role.name === 'SUPER_ADMIN') {
+				return this.findAllOrganizationTeams(data);
+			} else {
+				return this.organizationTeamService.getMyOrgTeams(
+					{
+						where: findInput,
+						relations,
+					},
+					employee.id
+				);
+			}
+		}
 	}
 }

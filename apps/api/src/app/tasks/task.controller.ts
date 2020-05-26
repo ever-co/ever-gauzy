@@ -10,7 +10,8 @@ import {
 	BadRequestException,
 	UseGuards,
 	Post,
-	Delete
+	Delete,
+	HttpException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Task } from './task.entity';
@@ -22,6 +23,7 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionsEnum } from '@gauzy/models';
 import { EmployeeService } from '../employee/employee.service';
 import { RequestContext } from '../core/context';
+import { RoleService } from '../role/role.service';
 
 @ApiTags('Tasks')
 @UseGuards(AuthGuard('jwt'))
@@ -29,7 +31,8 @@ import { RequestContext } from '../core/context';
 export class TaskController extends CrudController<Task> {
 	constructor(
 		private readonly taskService: TaskService,
-		private readonly employeeService: EmployeeService
+		private readonly employeeService: EmployeeService,
+		private readonly roleService: RoleService
 	) {
 		super(taskService);
 	}
@@ -38,11 +41,11 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get()
 	async findAllTimeOffPolicies(
@@ -51,7 +54,7 @@ export class TaskController extends CrudController<Task> {
 		const { relations, findInput } = JSON.parse(data);
 		return this.taskService.findAll({
 			where: findInput,
-			relations
+			relations,
 		});
 	}
 
@@ -59,19 +62,19 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Records not found'
+		description: 'Records not found',
 	})
 	@Get('me')
 	async findMyTasks(): Promise<IPagination<Task>> {
 		//If user is not an employee, then this will return 404
 		const employee = await this.employeeService.findOne({
 			where: {
-				user: { id: RequestContext.currentUser().id }
-			}
+				user: { id: RequestContext.currentUser().id },
+			},
 		});
 		return this.taskService.getMyTasks(employee.id);
 	}
@@ -80,32 +83,65 @@ export class TaskController extends CrudController<Task> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tasks',
-		type: Task
+		type: Task,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Records not found'
+		description: 'Records not found',
 	})
 	@Get('team')
-	async findTeamTasks(): Promise<IPagination<Task>> {
-		//If user is not an employee, then this will return 404
-		const employee = await this.employeeService.findOne({
-			where: {
-				user: { id: RequestContext.currentUser().id }
+	async findTeamTasks(
+		@Query('data') data: string
+	): Promise<IPagination<Task>> {
+		const { employeeId } = JSON.parse(data);
+		// If user is not an employee, then this will return 404
+		let employee: any = { id: undefined };
+		let role;
+		try {
+			employee = await this.employeeService.findOne({
+				where: {
+					user: { id: RequestContext.currentUser().id },
+				},
+			});
+		} catch (e) {}
+
+		try {
+			const roleId = RequestContext.currentUser().roleId;
+			if (roleId) {
+				role = await this.roleService.findOne(roleId);
 			}
-		});
-		return this.taskService.getTeamTasks(employee.id);
+		} catch (e) {}
+
+		// selected user not passed
+		if (employeeId) {
+			if (role.name === 'ADMIN' || role.name === 'SUPER_ADMIN') {
+				return this.taskService.getTeamTasks(employeeId);
+			} else if (employee.id === employeeId) {
+				return this.taskService.getTeamTasks(employeeId);
+			} else {
+				throw new HttpException(
+					'Unauthorized',
+					HttpStatus.UNAUTHORIZED
+				);
+			}
+		} else {
+			if (role.name === 'ADMIN' || role.name === 'SUPER_ADMIN') {
+				return this.taskService.getTeamTasks();
+			} else {
+				return this.taskService.getTeamTasks(employee.id);
+			}
+		}
 	}
 
 	@ApiOperation({ summary: 'create a task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
+		description: 'The record has been successfully created.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
@@ -118,16 +154,16 @@ export class TaskController extends CrudController<Task> {
 	@ApiOperation({ summary: 'Update an existing task' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		description: 'The record has been successfully edited.',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
@@ -139,7 +175,7 @@ export class TaskController extends CrudController<Task> {
 		try {
 			return this.taskService.create({
 				id,
-				...entity
+				...entity,
 			});
 		} catch (error) {
 			throw new BadRequestException(error);
