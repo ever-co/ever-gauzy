@@ -50,6 +50,8 @@
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
+		"START_DATE": "Start Date",
+		"END_DATE": "End Date",
 		"CLIENT_NAME": "Client Name",
 		"NAME": "Name",
 		"VENDOR": "Vendor",
@@ -488,7 +490,9 @@
 			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
 			"API_KEY": "Upwork API key",
 			"SECRET": "Upwork Secret",
-			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy."
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy.",
+			"CONTRACTS": "Contracts",
+			"SYNCED_CONTRACTS": "Synced Contracts"
 		},
 		"COMING_SOON": "Coming soon"
 	},
