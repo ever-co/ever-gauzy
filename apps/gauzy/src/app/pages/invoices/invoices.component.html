@@ -13,7 +13,7 @@
 			<button
 				nbButton
 				status="info"
-				(click)="view()"
+				(click)="download()"
 				class="mr-2"
 				[disabled]="disableButton"
 			>
@@ -49,6 +49,16 @@
 			>
 				<nb-icon class="mr-1" icon="upload-outline"> </nb-icon>
 				{{ 'BUTTONS.SEND' | translate }}
+			</button>
+			<button
+				nbButton
+				status="info"
+				(click)="email()"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="email-outline"> </nb-icon>
+				{{ 'BUTTONS.EMAIL' | translate }}
 			</button>
 			<button
 				nbButton
