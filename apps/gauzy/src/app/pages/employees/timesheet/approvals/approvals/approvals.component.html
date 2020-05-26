@@ -5,40 +5,11 @@
 </div>
 
 <div class="filters row mb-3">
-	<div class="bulk-actions col-sm-3">
-		<div class="input-group">
-			<div class="input-group-append" id="button-addon4">
-				<button nbButton status="primary" (click)="previousDay()">
-					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
-				</button>
-			</div>
-			<input
-				type="text"
-				nbInput
-				class="form-control ml-1"
-				placeholder="Select Date"
-				[(ngModel)]="selectedDate"
-				[nbDatepicker]="formpicker"
-			/>
-			<div class="input-group-append ml-1" id="button-addon4">
-				<button nbButton status="primary" (click)="nextDay()">
-					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
-				</button>
-			</div>
-			<div class="input-group-append ml-1" id="button-addon4">
-				<button
-					nbButton
-					status="primary"
-					(click)="selectedDate = today"
-				>
-					Today
-				</button>
-			</div>
-			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
-		</div>
-	</div>
-	<div class="employee-select col-sm-3">
-		<!-- <ga-employee-selector class="header-selector employee-selector"></ga-employee-selector> -->
+	<div class="col">
+		<ngx-filters
+			dateRange="month"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
 	</div>
 </div>
 <div class="bulk-actions row">

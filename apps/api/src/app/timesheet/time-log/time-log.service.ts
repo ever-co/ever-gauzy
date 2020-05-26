@@ -40,7 +40,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 	}
 
 	async getTimeLogs(request: IGetTimeLogInput, role?: RolesEnum) {
-		let employeeId: string;
+		let employeeId: string | string[];
 		if (role === RolesEnum.ADMIN) {
 			if (request.employeeId) {
 				employeeId = request.employeeId;
@@ -74,9 +74,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 						timesheetId: request.timesheetId
 					});
 				}
-				if (employeeId) {
-					qb.andWhere('"employeeId" = :employeeId', { employeeId });
-				}
 				if (request.startDate && request.endDate) {
 					const startDate = moment(request.startDate).format(
 						'YYYY-MM-DD HH:mm:ss'
@@ -91,9 +88,15 @@ export class TimeLogService extends CrudService<TimeLog> {
 				}
 				qb.andWhere('"deletedAt" IS NULL');
 				if (employeeId) {
-					qb.andWhere('"employeeId" = :employeeId', {
-						employeeId: employeeId
-					});
+					if (employeeId instanceof Array) {
+						qb.andWhere('"employeeId" IN (:...employeeId)', {
+							employeeId: employeeId
+						});
+					} else {
+						qb.andWhere('"employeeId" = :employeeId', {
+							employeeId
+						});
+					}
 				}
 				if (request.organizationId) {
 					qb.andWhere(

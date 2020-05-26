@@ -8,21 +8,19 @@ import {
 	PermissionsEnum,
 	TimeLogFilters
 } from '@gauzy/models';
-import { toUTC, toLocal } from 'libs/utils';
+import { toUTC } from 'libs/utils';
 import {
 	NbCheckboxComponent,
 	NbDialogService,
 	NbMenuService
 } from '@nebular/theme';
-import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { takeUntil, filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'ngx-daily',
@@ -63,31 +61,10 @@ export class DailyComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private store: Store,
 		private nbMenuService: NbMenuService,
-		private activatedRoute: ActivatedRoute,
 		private router: Router
 	) {}
 
 	async ngOnInit() {
-		if (this.activatedRoute.snapshot.queryParams) {
-			const query = this.activatedRoute.snapshot.queryParams;
-			if (query.startDate) {
-				this.logRequest.startDate = toLocal(query.startDate).toDate();
-				this.selectedDate = this.logRequest.startDate;
-			}
-
-			if (query.endDate) {
-				this.logRequest.endDate = toLocal(query.endDate).toDate();
-			}
-
-			if (query.organizationId) {
-				this.logRequest.organizationId = query.organizationId;
-			}
-
-			if (query.employeeId) {
-				this.logRequest.employeeId = query.employeeId;
-			}
-		}
-
 		this.nbMenuService
 			.onItemClick()
 			.pipe(
@@ -118,7 +95,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
-	async filtersChange($event) {
+	async filtersChange($event: TimeLogFilters) {
 		this.logRequest = $event;
 		this.selectedDate = this.logRequest.startDate;
 		this.updateLogs$.next();
@@ -138,10 +115,10 @@ export class DailyComponent implements OnInit, OnDestroy {
 			...(employeeId ? { employeeId } : {})
 		};
 
-		this.router.navigate([], {
-			queryParams: request,
-			queryParamsHandling: 'merge'
-		});
+		// this.router.navigate([], {
+		// 	queryParams: request,
+		// 	queryParamsHandling: 'merge'
+		// });
 
 		this.timeLogs = await this.timesheetService
 			.getTimeLogs(request)

@@ -5,10 +5,11 @@
 </div>
 
 <div class="filters row mb-3">
-	<div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
-		<ga-employee-selector
-			class="header-selector employee-selector"
-		></ga-employee-selector>
+	<div class="col">
+		<ngx-filters
+			[dateRange]="null"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
 	</div>
 </div>
 

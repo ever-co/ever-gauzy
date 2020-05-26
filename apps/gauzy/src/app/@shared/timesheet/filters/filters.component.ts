@@ -17,9 +17,10 @@ import {
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
-import { debounceTime } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
+import { toLocal } from 'libs/utils';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ngx-filters',
@@ -33,7 +34,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	TimeLogSourceEnum = TimeLogSourceEnum;
 	updateLogs$: Subject<any> = new Subject();
 
-	@Input() dateRange: 'day' | 'week' | 'month' = 'day';
+	@Input() dateRange: 'day' | 'week' | 'month' | null = 'day';
 	@Input() filters: TimeLogFilters = {};
 	@Output() filtersChange: EventEmitter<TimeLogFilters> = new EventEmitter();
 
@@ -57,12 +58,36 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private store: Store,
+		private activatedRoute: ActivatedRoute,
 		private employeesService: EmployeesService
 	) {}
 
 	ngOnInit() {
+		// if (this.activatedRoute.snapshot.queryParams) {
+		// 	const query = this.activatedRoute.snapshot.queryParams;
+		// 	if (query.startDate) {
+		// 		this.filters.startDate = toLocal(query.startDate).toDate();
+		// 		this.selectedDate = this.filters.startDate;
+		// 	}
+
+		// 	if (query.endDate) {
+		// 		this.filters.endDate = toLocal(query.endDate).toDate();
+		// 	}
+
+		// 	if (query.organizationId) {
+		// 		this.filters.organizationId = query.organizationId;
+		// 	}
+
+		// 	if (query.employeeId) {
+		// 		this.filters.employeeId = query.employeeId;
+		// 	}
+		// }
+
 		this.selectedDate = this.today;
 		this.updateLogs$.pipe(untilDestroyed(this)).subscribe(() => {
+			Object.keys(this.filters).forEach((key) =>
+				this.filters[key] === undefined ? delete this.filters[key] : {}
+			);
 			this.filtersChange.emit(this.filters);
 		});
 

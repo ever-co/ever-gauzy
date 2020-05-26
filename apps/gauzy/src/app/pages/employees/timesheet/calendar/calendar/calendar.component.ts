@@ -19,13 +19,13 @@ import {
 	Organization,
 	PermissionsEnum,
 	TimeLog,
-	RolesEnum
+	RolesEnum,
+	TimeLogFilters
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject, merge } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
@@ -35,22 +35,19 @@ import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/
 	selector: 'ngx-calendar',
 	templateUrl: './calendar.component.html',
 	styleUrls: ['./calendar.component.scss']
-	// encapsulation: ViewEncapsulation.None,
 })
 export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	@ViewChild('viewLogTemplate', { static: true })
 	viewLogTemplate: TemplateRef<any>;
-
 	calendarComponent: FullCalendarComponent; // the #calendar in the template
-
 	calendarOptions: OptionsInput;
-
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
 	canChangeSelectedEmployee: boolean;
 	employeeId: string;
 	loading: boolean;
+	logRequest: TimeLogFilters = {};
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -122,15 +119,11 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
 				this.updateLogs$.next();
 			});
+	}
 
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
-				if (employee) {
-					this.employeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
+	filtersChange($event: TimeLogFilters) {
+		this.logRequest = $event;
+		this.updateLogs$.next();
 	}
 
 	ngAfterViewInit() {
@@ -149,10 +142,10 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		const _endDate = moment(arg.end).format('YYYY-MM-DD') + ' 23:59:59';
 
 		const request: IGetTimeLogInput = {
+			organizationId: this.organization.id,
+			...this.logRequest,
 			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(this.employeeId ? { employeeId: this.employeeId } : {}),
-			organizationId: this.organization.id
+			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 
 		this.timesheetService.getTimeLogs(request).then((logs: TimeLog[]) => {
