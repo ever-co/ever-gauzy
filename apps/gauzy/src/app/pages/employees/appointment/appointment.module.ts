@@ -14,7 +14,7 @@ import {
 	NbTreeGridModule,
 	NbSelectModule,
 	NbRouteTabsetModule,
-	NbCheckboxModule
+	NbCheckboxModule,
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -27,6 +27,7 @@ import { EmployeeAppointmentService } from '../../../@core/services/employee-app
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
+import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -53,18 +54,22 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+				deps: [HttpClient],
+			},
 		}),
 		NbCheckboxModule,
 		TimerPickerModule,
 		NbSpinnerModule,
 		NbRouteTabsetModule,
 		EmployeeMultiSelectModule,
-		SharedModule
+		SharedModule,
 	],
-	exports: [AppointmentComponent],
+	exports: [AppointmentComponent, ManageAppointmentComponent],
 	declarations: [AppointmentComponent, ManageAppointmentComponent],
-	providers: [EmployeeAppointmentService, AppointmentEmployeesService]
+	providers: [
+		EmployeeAppointmentService,
+		AppointmentEmployeesService,
+		AvailabilitySlotsService,
+	],
 })
 export class AppointmentModule {}

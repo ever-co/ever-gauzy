@@ -10,7 +10,7 @@ import {
 	Organization,
 	PermissionsEnum,
 	Employee,
-	IAvailabilitySlotsCreateInput
+	IAvailabilitySlotsCreateInput,
 } from '@gauzy/models';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
@@ -21,6 +21,11 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import {
+	EmployeeSelectorComponent,
+	SelectedEmployee,
+	ALL_EMPLOYEES_SELECTED,
+} from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 
 export interface IAvailabilitySlotsView {
 	id?: string;
@@ -35,11 +40,15 @@ export interface IAvailabilitySlotsView {
 }
 
 @Component({
-	templateUrl: './availability-slots.component.html'
+	templateUrl: './availability-slots.component.html',
 })
 export class AvailabilitySlotsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
+	@ViewChild('calendar', { static: true })
+	calendar: FullCalendarComponent;
+	@ViewChild('employeeSelector')
+	employeeSelector: EmployeeSelectorComponent;
+
 	calendarComponent: FullCalendarComponent;
 	calendarEvents: EventInput[] = [];
 	calendarOptions: OptionsInput;
@@ -67,14 +76,14 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'dayGridMonth,timeGridWeek'
+				right: 'dayGridMonth,timeGridWeek',
 			},
 			themeSystem: 'bootstrap',
 			plugins: [
 				dayGridPlugin,
 				timeGrigPlugin,
 				interactionPlugin,
-				bootstrapPlugin
+				bootstrapPlugin,
 			],
 			weekends: true,
 			selectable: true,
@@ -85,7 +94,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			eventOverlap: false,
 			eventClick: this.unselectEvent.bind(this),
 			selectAllow: (select) => moment().diff(select.start) <= 0,
-			select: this.handleSelectRange.bind(this)
+			select: this.handleSelectRange.bind(this),
 		};
 	}
 
@@ -99,7 +108,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			delete this.calendarOptions.selectAllow;
 			this.calendarOptions.headerToolbar = {
 				center: '',
-				right: ''
+				right: '',
 			};
 		}
 
@@ -109,19 +118,6 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			);
 		});
 
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this.selectedEmployeeId = employee.id;
-					this.fetchAvailableSlots(null);
-				} else {
-					if (this._selectedOrganizationId) {
-						this.fetchAvailableSlots(true);
-					}
-				}
-			});
-
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
@@ -130,6 +126,17 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				}
 				this.fetchAvailableSlots(true);
 			});
+	}
+
+	onEmployeeChange(selectedEmployee: SelectedEmployee) {
+		if (selectedEmployee && selectedEmployee.id) {
+			this.selectedEmployeeId = selectedEmployee.id;
+			this.fetchAvailableSlots(null);
+		} else {
+			if (this._selectedOrganizationId) {
+				this.fetchAvailableSlots(true);
+			}
+		}
 	}
 
 	getEvents(arg, callback) {
@@ -157,7 +164,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 		this._prepareEvent({
 			startTime: o.start,
 			endTime: o.end,
-			allDay: o.allDay
+			allDay: o.allDay,
 		});
 
 		this.calendar.getApi().refetchEvents();
@@ -176,7 +183,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 						type: this.recurringAvailabilityMode
 							? 'Recurring'
 							: 'Default',
-						allDay: e.allDay
+						allDay: e.allDay,
 					});
 			}
 			payload.length > 0 &&
@@ -206,15 +213,15 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			findObj = {
 				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
 				organization: {
-					id: this._selectedOrganizationId
-				}
+					id: this._selectedOrganizationId,
+				},
 			};
 		} else {
 			findObj = {
 				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
 				employee: {
-					id: this.selectedEmployeeId
-				}
+					id: this.selectedEmployeeId,
+				},
 			};
 		}
 
@@ -257,7 +264,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.AVAILABILITY_SLOTS.ERROR', {
-					error: error.error.message || error.message
+					error: error.error.message || error.message,
 				}),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
@@ -274,8 +281,8 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			end: eventEndTime,
 			allDay: slot.allDay,
 			extendedProps: {
-				id: slot.id
-			}
+				id: slot.id,
+			},
 		});
 	}
 
