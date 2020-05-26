@@ -64,4 +64,11 @@ export class InvoicesService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	sendEmail(email: String): Promise<any> {
+		return this.http
+			.put<any>(`/api/invoices/email/${email}`, {})
+			.pipe(first())
+			.toPromise();
+	}
 }

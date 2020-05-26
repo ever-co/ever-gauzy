@@ -14,6 +14,9 @@ import { Subject } from 'rxjs';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
+import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
+import { OrganizationsService } from '../../@core/services/organizations.service';
+import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -48,7 +51,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
 		private organizationClientsService: OrganizationClientsService,
-		private router: Router
+		private router: Router,
+		private organizationService: OrganizationsService
 	) {
 		super(translateService);
 	}
@@ -161,19 +165,48 @@ export class InvoicesComponent extends TranslationBaseComponent
 		]);
 	}
 
-	async send() {
+	download() {
 		if (this.selectedInvoice) {
-			const client = await this.organizationClientsService.getById(
-				this.selectedInvoice.clientId
-			);
-			if (client.organizationId) {
-				this.dialogService.open(InvoiceSendMutationComponent, {
-					context: {
-						client: client,
-						invoice: this.selectedInvoice
+			this.organizationService
+				.getById(this.selectedInvoice.organizationId)
+				.subscribe(async (org) => {
+					const client = await this.organizationClientsService.getById(
+						this.selectedInvoice.clientId
+					);
+					if (client.organizationId) {
+						this.dialogService.open(
+							InvoiceDownloadMutationComponent,
+							{
+								context: {
+									client: client,
+									invoice: this.selectedInvoice,
+									organization: org
+								}
+							}
+						);
 					}
 				});
-			}
+		}
+	}
+
+	async send() {
+		if (this.selectedInvoice) {
+			this.organizationService
+				.getById(this.selectedInvoice.organizationId)
+				.subscribe(async (org) => {
+					const client = await this.organizationClientsService.getById(
+						this.selectedInvoice.clientId
+					);
+					if (client.organizationId) {
+						this.dialogService.open(InvoiceSendMutationComponent, {
+							context: {
+								client: client,
+								invoice: this.selectedInvoice,
+								organization: org
+							}
+						});
+					}
+				});
 		}
 	}
 
@@ -204,6 +237,27 @@ export class InvoicesComponent extends TranslationBaseComponent
 		this.router.navigate([
 			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
 		]);
+	}
+
+	email() {
+		if (this.selectedInvoice) {
+			this.organizationService
+				.getById(this.selectedInvoice.organizationId)
+				.subscribe(async (org) => {
+					const client = await this.organizationClientsService.getById(
+						this.selectedInvoice.clientId
+					);
+					if (client.organizationId) {
+						this.dialogService.open(InvoiceEmailMutationComponent, {
+							context: {
+								client: client,
+								invoice: this.selectedInvoice,
+								organization: org
+							}
+						});
+					}
+				});
+		}
 	}
 
 	async loadSettings() {

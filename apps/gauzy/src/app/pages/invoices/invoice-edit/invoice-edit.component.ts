@@ -354,7 +354,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 	async updateInvoice() {
 		const tableData = await this.smartTableSource.getAll();
-		console.log(tableData);
 		if (tableData.length) {
 			const invoiceData = this.form.value;
 			if (

@@ -87,6 +87,31 @@ export class EmailService extends CrudService<IEmail> {
 		}
 	});
 
+	emailInvoice(
+		languageCode: LanguagesEnum,
+		email: string,
+		originUrl?: string
+	) {
+		this.email
+			.send({
+				template: 'email-invoice',
+				message: {
+					to: `${email}`
+					// attachments: [{
+					// 	filename: 'Invoice.pdf'
+					// }]
+				},
+				locals: {
+					locale: languageCode,
+					host: originUrl || environment.host
+				}
+			})
+			.then((res) => {
+				this.createEmailRecord(res.originalMessage, languageCode);
+			})
+			.catch(console.error);
+	}
+
 	inviteOrganizationClient(
 		organizationClient: OrganizationClients,
 		inviterUser: User,

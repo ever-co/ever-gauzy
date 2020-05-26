@@ -41,7 +41,8 @@
 		"ARCHIVE": "Archive",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
-		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base"
+		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
+		"EMAIL": "Email"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
@@ -1115,12 +1116,20 @@
 			"TASK_VALUE": "Task cannot be empty"
 		},
 		"SEND": {
-			"CONFIRMATION": "Are you sure you want to send this invoice to",
+			"CONFIRMATION": "Send this invoice to",
 			"ALREADY_SENT": "This invoice has already been sent to"
 		},
 		"VIEW": {
 			"FROM": "FROM",
 			"TO": "TO"
+		},
+		"DOWNLOAD": {
+			"CONFIRMATION": "Download this invoice ?",
+			"INVOICE_DOWNLOAD": "Invoice downloaded"
+		},
+		"EMAIL": {
+			"EMAIL_INVOICE": "Send this invoice by email ?",
+			"EMAIL_SENT": "Email Sent"
 		}
 	},
 	"HEADER": {

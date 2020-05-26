@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { OrganizationClients, Invoice } from '@gauzy/models';
+import { OrganizationClients, Invoice, Organization } from '@gauzy/models';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 
 @Component({
@@ -14,6 +14,7 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 	client: OrganizationClients;
 	invoice: Invoice;
+	organization: Organization;
 	alreadySent = false;
 
 	constructor(

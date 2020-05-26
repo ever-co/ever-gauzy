@@ -17,15 +17,10 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 	`,
 	styles: []
 })
-export class InvoicePaidComponent extends TranslationBaseComponent
-	implements OnInit {
+export class InvoicePaidComponent extends TranslationBaseComponent {
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
 	rowData: any;
-
-	ngOnInit() {
-		console.log(this.rowData);
-	}
 }
