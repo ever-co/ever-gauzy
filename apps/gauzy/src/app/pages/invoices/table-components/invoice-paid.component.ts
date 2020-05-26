@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
