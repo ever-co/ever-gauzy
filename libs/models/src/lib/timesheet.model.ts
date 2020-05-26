@@ -211,6 +211,14 @@ export interface IManualTimeInput {
 	isBillable?: boolean;
 }
 
+export interface IGetTimesheetInput {
+	startDate?: string;
+	endDate?: string;
+	projectId?: string[];
+	clientId?: string[];
+	employeeId?: string | string[];
+}
+
 export interface IGetTimeLogInput {
 	timesheetId?: string;
 	startDate?: string;

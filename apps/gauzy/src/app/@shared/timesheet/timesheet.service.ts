@@ -5,7 +5,8 @@ import {
 	IGetTimeLogInput,
 	IManualTimeInput,
 	TimesheetStatus,
-	Timesheet
+	Timesheet,
+	IGetTimesheetInput
 } from '@gauzy/models';
 import { toParams } from 'libs/utils';
 
@@ -38,7 +39,7 @@ export class TimesheetService {
 			});
 	}
 
-	getTimeSheets(request?: IGetTimeLogInput) {
+	getTimeSheets(request?: IGetTimesheetInput) {
 		return this.http
 			.get('/api/timesheet', { params: { ...request } })
 			.toPromise()
