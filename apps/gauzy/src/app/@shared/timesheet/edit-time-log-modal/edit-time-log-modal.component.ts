@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy, Inject } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { IDateRange, Organization, TimeLog } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { TimesheetService } from '../timesheet.service';

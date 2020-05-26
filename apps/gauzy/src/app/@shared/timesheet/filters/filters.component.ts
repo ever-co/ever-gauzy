@@ -19,8 +19,6 @@ import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
-import { toLocal } from 'libs/utils';
-import { ActivatedRoute } from '@angular/router';
 
 @Component({
 	selector: 'ngx-filters',
@@ -58,7 +56,6 @@ export class FiltersComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private store: Store,
-		private activatedRoute: ActivatedRoute,
 		private employeesService: EmployeesService
 	) {}
 

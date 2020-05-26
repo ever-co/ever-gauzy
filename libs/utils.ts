@@ -16,7 +16,7 @@ export function getContrastColor(hex: string) {
 		return {
 			red: parseInt(hexValue.substring(0, 2), 16),
 			blue: parseInt(hexValue.substring(2, 4), 16),
-			green: parseInt(hexValue.substring(4, 6), 16),
+			green: parseInt(hexValue.substring(4, 6), 16)
 		};
 	};
 	const { red, green, blue } = hexToRGB(hex);
@@ -57,7 +57,7 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 // It will use for pass nested object or array in query params in get method.
 export function toParams(query) {
 	let params: HttpParams = new HttpParams();
-	Object.keys(query).map((key) => {
+	Object.keys(query).forEach((key) => {
 		console.log(key, query[key]);
 		if (isJsObject(query[key])) {
 			params = toSubParams(params, key, query[key]);
@@ -70,7 +70,7 @@ export function toParams(query) {
 }
 
 function toSubParams(params: HttpParams, key: string, object: any) {
-	Object.keys(object).map((childKey) => {
+	Object.keys(object).forEach((childKey) => {
 		if (isJsObject(object[childKey])) {
 			params = toSubParams(
 				params,

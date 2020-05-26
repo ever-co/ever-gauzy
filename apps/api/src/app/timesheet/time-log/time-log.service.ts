@@ -2,8 +2,7 @@ import {
 	Injectable,
 	BadRequestException,
 	forwardRef,
-	Inject,
-	UnauthorizedException
+	Inject
 } from '@nestjs/common';
 import { TimeLog } from '../time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,7 +17,6 @@ import {
 import * as moment from 'moment';
 import { CrudService } from '../../core';
 import { TimeSheetService } from '../timesheet/timesheet.service';
-import { Employee } from '../../employee/employee.entity';
 import { TimeSlotService } from '../time-slot.service';
 
 @Injectable()
@@ -31,10 +29,7 @@ export class TimeLogService extends CrudService<TimeLog> {
 		private readonly timeSlotService: TimeSlotService,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
-
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly timeLogRepository: Repository<TimeLog>
 	) {
 		super(timeLogRepository);
 	}
@@ -190,8 +185,6 @@ export class TimeLogService extends CrudService<TimeLog> {
 			);
 		}
 		const timeLog = await this.timeLogRepository.findOne(request.id);
-
-		const user = RequestContext.currentUser();
 
 		const confict = await this.checkConfictTime(
 			request,

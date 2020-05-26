@@ -3,11 +3,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TimesheetRoutingModule } from './timesheet-routing.module';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
-import {
-	NbRouteTabsetModule,
-	NbCardModule,
-	NbDialogModule
-} from '@nebular/theme';
+import { NbRouteTabsetModule, NbCardModule } from '@nebular/theme';
 import { LayoutComponent } from './layout/layout.component';
 import { TranslateModule } from '@ngx-translate/core';
 
