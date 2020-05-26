@@ -984,7 +984,8 @@
 		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
 		"IMAGE": "Изображение",
 		"LANGUAGE": "Язык",
-		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!"
+		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!",
+		"ICON": "Иконка"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",

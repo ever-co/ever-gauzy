@@ -984,7 +984,8 @@
 		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
 		"IMAGE": "תמונה",
 		"LANGUAGE": "Language",
-		"PRODUCT_VARIANT_DELETED": "Product variant deleted!"
+		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
+		"ICON": "Icon"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
