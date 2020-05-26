@@ -104,6 +104,28 @@ export class TimeLogService extends CrudService<TimeLog> {
 						{ organizationId: request.organizationId }
 					);
 				}
+				if (request.source) {
+					if (request.source instanceof Array) {
+						qb.andWhere('"source" IN (:...source)', {
+							source: request.source
+						});
+					} else {
+						qb.andWhere('"source" = :source', {
+							source: request.source
+						});
+					}
+				}
+				if (request.logType) {
+					if (request.logType instanceof Array) {
+						qb.andWhere('"logType" IN (:...logType)', {
+							logType: request.logType
+						});
+					} else {
+						qb.andWhere('"logType" = :logType', {
+							logType: request.logType
+						});
+					}
+				}
 			}
 		});
 		return logs;

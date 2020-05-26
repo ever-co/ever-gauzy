@@ -218,5 +218,8 @@ export interface IGetTimeLogInput {
 	projectId?: string[];
 	clientId?: string[];
 	employeeId?: string | string[];
+	source?: TimeLogSourceEnum | TimeLogSourceEnum[];
+	logType?: TimeLogType | TimeLogType[];
+	activityLevel?: { start: number; end: number };
 	organizationId?: string;
 }
