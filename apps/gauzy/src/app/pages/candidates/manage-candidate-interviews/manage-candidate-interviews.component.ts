@@ -14,12 +14,14 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { first, takeUntil } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { Candidate } from '@gauzy/models';
+import { Candidate, Employee } from '@gauzy/models';
+import { EmployeesService } from '../../../@core/services';
+import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 
 @Component({
 	selector: 'ngx-manage-candidate-interviews',
 	templateUrl: './manage-candidate-interviews.component.html',
-	styleUrls: ['./manage-candidate-interviews.component.scss']
+	styleUrls: ['./manage-candidate-interviews.component.scss'],
 })
 export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -29,15 +31,21 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;
 	selectedInterview = true;
-	selectedCandidateIds: string[];
+	isCandidate = false;
+	candidateList: EventInput[] = [];
+	employeeList: EventInput[] = [];
+	isEmployee = false;
 	candidates: Candidate[] = [];
+	employees: Employee[] = [];
 	calendarEvents: EventInput[] = [];
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
 		private candidateInterviewService: CandidateInterviewService,
+		private candidateInterviewersService: CandidateInterviewersService,
 		private toastrService: NbToastrService,
-		private candidatesService: CandidatesService
+		private candidatesService: CandidatesService,
+		private employeesService: EmployeesService
 	) {
 		super(translateService);
 	}
@@ -48,6 +56,12 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			.subscribe((candidates) => {
 				this.candidates = candidates.items;
 			});
+		this.employeesService
+			.getAll(['user'])
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((employees) => {
+				this.employees = employees.items;
+			});
 		this.loadInterviews();
 	}
 	async loadInterviews() {
@@ -56,28 +70,28 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 				const id = event.event._def.extendedProps.id;
 				this.dialogService.open(CandidateInterviewInfoComponent, {
 					context: {
-						interviewId: id
-					}
+						interviewId: id,
+					},
 				});
 			},
 			initialView: 'timeGridWeek',
 			header: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'timeGridWeek'
+				right: 'timeGridWeek',
 			},
 			themeSystem: 'bootstrap',
 			plugins: [
 				dayGridPlugin,
 				timeGrigPlugin,
 				interactionPlugin,
-				bootstrapPlugin
+				bootstrapPlugin,
 			],
 			weekends: true,
-			height: 'auto'
+			height: 'auto',
 		};
 		const res = await this.candidateInterviewService.getAll([
-			'interviewers'
+			'interviewers',
 		]);
 		if (res) {
 			this.calendarEvents = [];
@@ -86,30 +100,92 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 					title: interview.title,
 					start: interview.startTime,
 					end: interview.endTime,
+					candidateId: interview.candidateId,
+					id: interview.id,
 					extendedProps: {
-						id: interview.id
+						id: interview.id,
 					},
-					backgroundColor: '#36f'
+					backgroundColor: '#36f',
 				});
 			}
 			this.calendarOptions.events = this.calendarEvents;
 		}
 	}
 
-	async onCandidateSelected(id: string) {
-		// TO DO
-		// const candidate = await this.candidatesService.getCandidateById(id, [
-		// 	'user'
-		// ]);
-		// this.selectedCandidate = candidate;
+	async onCandidateSelected(ids: string[]) {
+		console.log(this.employeeList);
+		if (!ids[0]) {
+			//if no one is selected
+			this.isCandidate = false;
+			this.calendarOptions.events = this.isEmployee
+				? this.employeeList
+				: this.calendarEvents;
+		} else {
+			this.calendarOptions.events = this.isEmployee
+				? this.employeeList
+				: this.calendarEvents;
+
+			const result = [];
+			for (const id of ids) {
+				for (const event of this.calendarOptions
+					.events as EventInput[]) {
+					if (event.candidateId === id) {
+						result.push(event);
+					}
+				}
+			}
+			this.isCandidate = true;
+			this.candidateList = result;
+			this.calendarOptions.events = result;
+		}
+	}
+	async onEmployeeSelected(ids: string[]) {
+		if (!ids[0]) {
+			this.isEmployee = false;
+			this.calendarOptions.events = this.isCandidate
+				? this.candidateList
+				: this.calendarEvents;
+		} else {
+			this.calendarOptions.events = this.isCandidate
+				? this.candidateList
+				: this.calendarEvents;
+
+			const result = [];
+
+			for (const event of this.calendarOptions.events as EventInput[]) {
+				const res = await this.candidateInterviewersService.findByInterviewId(
+					event.id as string
+				);
+				if (res) {
+					for (const item of res) {
+						for (const id of ids) {
+							if (item.employeeId === id) {
+								result.push(event);
+							}
+						}
+					}
+				}
+			}
+			this.employeeList = result;
+			this.calendarOptions.events = result;
+			this.isEmployee = true;
+		}
+	}
+
+	async getInterviewers() {
+		for (const event of this.calendarOptions.events as EventInput[]) {
+			return await this.candidateInterviewersService.findByInterviewId(
+				event.id as string
+			);
+		}
 	}
 	async add() {
 		const dialog = this.dialogService.open(
 			CandidateInterviewMutationComponent,
 			{
 				context: {
-					isCalendar: true
-				}
+					isCalendar: true,
+				},
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();

@@ -15,7 +15,7 @@ import {
 	NbSelectModule,
 	NbBadgeModule,
 	NbDatepickerModule,
-	NbRadioModule
+	NbRadioModule,
 } from '@nebular/theme';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -55,13 +55,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+				deps: [HttpClient],
+			},
 		}),
 		NbSpinnerModule,
 		NbDatepickerModule,
-		EmployeeMultiSelectModule
+		EmployeeMultiSelectModule,
 	],
-	entryComponents: [TaskDialogComponent]
+	entryComponents: [TaskDialogComponent],
 })
 export class TeamTasksModule {}

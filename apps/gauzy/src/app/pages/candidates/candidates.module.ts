@@ -23,7 +23,7 @@ import {
 	NbSelectModule,
 	NbDatepickerModule,
 	NbActionsModule,
-	NbTabsetModule
+	NbTabsetModule,
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -66,6 +66,7 @@ import { FullCalendarModule } from '@fullcalendar/angular';
 import { CandidateInterviewInfoModule } from '../../@shared/candidate/candidate-interview-info/candidate-interview-info.module';
 import { CandidateInterviewersService } from '../../@core/services/candidate-interviewers.service';
 import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-multi-select/candidate-multi-select.module';
+import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -92,7 +93,7 @@ const COMPONENTS = [
 	EditCandidateSkillsComponent,
 	EditCandidateEducationComponent,
 	EditCandidateExperienceFormComponent,
-	ManageCandidateInterviewsComponent
+	ManageCandidateInterviewsComponent,
 ];
 
 @NgModule({
@@ -124,8 +125,8 @@ const COMPONENTS = [
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+				deps: [HttpClient],
+			},
 		}),
 		NbSpinnerModule,
 		NbDatepickerModule,
@@ -139,13 +140,14 @@ const COMPONENTS = [
 		EmployeeRatesModule,
 		StarRatingInputModule,
 		StarRatingOutputModule,
-		CandidateMultiSelectModule
+		CandidateMultiSelectModule,
+		EmployeeMultiSelectModule,
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
 		CandidateStatusComponent,
 		CandidateSourceComponent,
-		ManageCandidateInviteComponent
+		ManageCandidateInviteComponent,
 	],
 	providers: [
 		OrganizationsService,
@@ -153,7 +155,7 @@ const COMPONENTS = [
 		CountryService,
 		OrganizationEmploymentTypesService,
 		CandidatesService,
-		CandidateInterviewersService
-	]
+		CandidateInterviewersService,
+	],
 })
 export class CandidatesModule {}

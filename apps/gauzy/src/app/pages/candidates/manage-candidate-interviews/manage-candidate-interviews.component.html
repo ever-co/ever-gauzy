@@ -3,16 +3,21 @@
 		<div class="main-header">
 			<h4>
 				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWS'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULED_INTERVIEWS'
 						| translate
 				}}
 			</h4>
 			<div class="buttons">
+				<ga-employee-multi-select
+					class="multi-select"
+					[allEmployees]="employees"
+					(selectedChange)="onEmployeeSelected($event)"
+				>
+				</ga-employee-multi-select>
 				<ga-candidate-multi-select
 					class="multi-select"
 					[allCandidates]="candidates"
 					(selectedChange)="onCandidateSelected($event)"
-					[selectedCandidateIds]="selectedCandidateIds"
 				>
 				</ga-candidate-multi-select>
 				<button nbButton status="primary" (click)="add()">

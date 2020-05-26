@@ -5,7 +5,8 @@ import {
 	ViewChild,
 	AfterViewInit,
 	OnDestroy,
-	Input
+	Input,
+	ChangeDetectorRef,
 } from '@angular/core';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
@@ -19,12 +20,11 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import { EmployeesService } from '../../../@core/services';
 import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
 	templateUrl: 'candidate-interview-mutation.component.html',
-	styleUrls: ['candidate-interview-mutation.component.scss']
+	styleUrls: ['candidate-interview-mutation.component.scss'],
 })
 export class CandidateInterviewMutationComponent
 	implements OnInit, AfterViewInit, OnDestroy {
@@ -61,17 +61,17 @@ export class CandidateInterviewMutationComponent
 		interviewers: null,
 		startTime: null,
 		endTime: null,
-		note: ''
+		note: '',
 	};
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
 		protected employeesService: EmployeesService,
 		protected store: Store,
+		private cdRef: ChangeDetectorRef,
 		private candidateInterviewService: CandidateInterviewService,
 		protected candidatesService: CandidatesService,
 		private errorHandler: ErrorHandlingService,
-		private candidateInterviewersService: CandidateInterviewersService,
-		readonly translateService: TranslateService
+		private candidateInterviewersService: CandidateInterviewersService
 	) {}
 
 	ngOnInit() {
@@ -88,6 +88,8 @@ export class CandidateInterviewMutationComponent
 		//if editing
 		if (this.editData) {
 			this.form.patchValue(this.editData);
+			this.form.patchValue({ valid: true });
+			this.cdRef.detectChanges();
 			this.candidateInterviewForm.selectedRange.end = this.editData.endTime;
 			this.candidateInterviewForm.selectedRange.start = this.editData.startTime;
 		}
@@ -103,7 +105,7 @@ export class CandidateInterviewMutationComponent
 			location: this.form.get('location').value,
 			startTime: interviewForm.startTime,
 			endTime: interviewForm.endTime,
-			note: this.form.get('note').value
+			note: this.form.get('note').value,
 		};
 		//	if editing
 		if (interviewForm.interviewers === null) {
@@ -130,7 +132,7 @@ export class CandidateInterviewMutationComponent
 		const interview: ICandidateInterview = null;
 		let createdInterview = null;
 		if (this.interviewId !== null) {
-			this.editInterview();
+			createdInterview = this.editInterview();
 		} else {
 			createdInterview = this.createInterview(interview);
 		}
@@ -140,7 +142,7 @@ export class CandidateInterviewMutationComponent
 	async createInterview(interview: ICandidateInterview) {
 		interview = await this.candidateInterviewService.create({
 			...this.emptyInterview,
-			candidateId: this.selectedCandidate.id
+			candidateId: this.selectedCandidate.id,
 		});
 		this.addInterviewers(interview.id, this.selectedInterviewers);
 
@@ -157,7 +159,7 @@ export class CandidateInterviewMutationComponent
 					location: this.interview.location,
 					startTime: this.interview.startTime,
 					endTime: this.interview.endTime,
-					note: this.interview.note
+					note: this.interview.note,
 				}
 			);
 			return createdInterview;
@@ -180,6 +182,7 @@ export class CandidateInterviewMutationComponent
 	async editInterview() {
 		let deletedIds = [];
 		let newIds = [];
+		let updatedInterview;
 		const oldIds = this.editData.interviewers.map(
 			(item) => item.employeeId
 		);
@@ -192,9 +195,12 @@ export class CandidateInterviewMutationComponent
 			);
 		}
 		try {
-			await this.candidateInterviewService.update(this.interviewId, {
-				...this.interview
-			});
+			updatedInterview = await this.candidateInterviewService.update(
+				this.interviewId,
+				{
+					...this.interview,
+				}
+			);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -203,11 +209,12 @@ export class CandidateInterviewMutationComponent
 		);
 		this.addInterviewers(this.interviewId, newIds);
 		this.interviewId = null;
+		return updatedInterview;
 	}
 
 	async onCandidateSelected(id: string) {
 		const candidate = await this.candidatesService.getCandidateById(id, [
-			'user'
+			'user',
 		]);
 		this.selectedCandidate = candidate;
 	}
@@ -227,6 +234,7 @@ export class CandidateInterviewMutationComponent
 
 	previous() {
 		this.candidateInterviewForm.form.patchValue(this.interview);
+		this.candidateInterviewForm.form.patchValue({ valid: true });
 		this.isCandidateNotification = false;
 		this.isInterviewerNotification = false;
 		this.employees = [];

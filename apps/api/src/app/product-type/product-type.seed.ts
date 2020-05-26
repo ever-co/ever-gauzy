@@ -1,25 +1,28 @@
 import { Connection } from 'typeorm';
 import { Organization } from '@gauzy/models';
 import { ProductType } from './product-type.entity';
+import { environment as env } from '@env-api/environment';
 
 export const createDefaultProductTypes = async (
 	connection: Connection,
 	organizations: Organization[]
 ): Promise<ProductType[]> => {
-	const productTypes: ProductType[] = [];
+	const seedProductTypes = [];
 
-	//TODO: Get this from env ?
-	organizations.forEach((organization) => {
-		const productType1 = new ProductType();
-		productType1.name = 'product type 1';
-		productType1.organizationId = organization.id;
-		productType1.organization = organization;
-		productTypes.push(productType1);
+	organizations.forEach(async (organization) => {
+		env.defaultProductTypes.forEach((seedProductType) => {
+			const newType = new ProductType();
+			newType.name = seedProductType.name;
+			newType.description = seedProductType.description;
+			newType.icon = seedProductType.icon;
+			newType.organization = organization;
+			seedProductTypes.push(newType);
+		});
 	});
 
-	await insertProductTypes(connection, productTypes);
+	await insertProductTypes(connection, seedProductTypes);
 
-	return productTypes;
+	return seedProductTypes;
 };
 
 const insertProductTypes = async (

@@ -44,10 +44,14 @@
 		"ADD_ICON": "добавить значок",
 		"REMOVE_ICON": "удалить значок",
 		"MAKE_PRIVATE": "сделать приватным",
-		"MAKE_PUBLIC": "сделать публичным"
+		"MAKE_PUBLIC": "сделать публичным",
+		"KNOWLEDGE_BASES": "Базы знаний",
+		"SELECT": "Выбрать"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
+		"START_DATE": "Дата начала",
+		"END_DATE": "Дата окончания",
 		"CLIENT_NAME": "Имя клиента",
 		"NAME": "Имя",
 		"VENDOR": "Продавец",
@@ -249,7 +253,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
-			"ADD_REMOVE_CANDIDATES": "Добавить Кандидатов",
+			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
@@ -485,7 +489,9 @@
 			"SUCCESSFULLY_AUTHORIZED": "Успешно авторизованы",
 			"API_KEY": "API ключ обновления",
 			"SECRET": "Секрет обхода",
-			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи."
+			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи.",
+			"CONTRACTS": "Контракты",
+			"SYNCED_CONTRACTS": "Синхронизированные контракты"
 		},
 		"COMING_SOON": "Скоро появится"
 	},
@@ -665,6 +671,7 @@
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"SCHEDULED_INTERVIEWS": "Запланированные интервью",
 				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
@@ -692,7 +699,7 @@
 			"LOCATION": "Местоположение",
 			"NOTE": "Примечание",
 			"OF": "из",
-			"INTERVIEWERS_LOWER_CASE": "интервьюеры"
+			"INTERVIEWS_LOWER_CASE": "интервью"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Шаг 1",
@@ -887,7 +894,8 @@
 		"TAGS_DELETE_TAG": "Метка удалена",
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
-		"TAGS_SELECT_DESCRIPTION": "Описание метки"
+		"TAGS_SELECT_DESCRIPTION": "Описание метки",
+		"ADD_NEW_TAG": "Добавить новый тег"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
@@ -976,7 +984,8 @@
 		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
 		"IMAGE": "Изображение",
 		"LANGUAGE": "Язык",
-		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!"
+		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!",
+		"ICON": "Иконка"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -1402,5 +1411,10 @@
 	"SCHEDULE": {
 		"DATE_SPECIFIC_AVAILABILITY": "Определенная дата наличия",
 		"RECURRING_AVAILABILITY": "Повторяющаяся доступность"
+	},
+	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENTS": "Заказать прием",
+		"SELECT_EVENT_TYPES": "Пожалуйста, выберите тип события",
+		"PICK_DATETIME": "Выберите дату и время"
 	}
 }

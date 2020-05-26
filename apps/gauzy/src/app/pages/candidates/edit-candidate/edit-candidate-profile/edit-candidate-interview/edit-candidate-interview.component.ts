@@ -8,19 +8,19 @@ import { first, takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { FormGroup } from '@angular/forms';
-import { Candidate, Employee, ICandidateInterview } from '@gauzy/models';
+import { Candidate, Employee } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
 	templateUrl: './edit-candidate-interview.component.html',
-	styleUrls: ['./edit-candidate-interview.component.scss']
+	styleUrls: ['./edit-candidate-interview.component.scss'],
 })
 export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	interviewList: ICandidateInterview[];
+	interviewList: any[];
 	candidateId: string;
 	selectedCandidate: Candidate;
 	employees: Employee[];
@@ -58,8 +58,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					header: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
 					),
-					selectedCandidate: this.selectedCandidate
-				}
+					selectedCandidate: this.selectedCandidate,
+				},
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -75,6 +75,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		);
 		if (this.interviewResult) {
 			this.interviewList = this.interviewResult.items;
+			this.loadEmployee();
 		}
 	}
 	async editInterview(id: string) {
@@ -93,14 +94,35 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					),
 					editData: currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: id
-				}
+					interviewId: id,
+				},
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
 		if (data) {
 			this.toastrSuccess('UPDATED');
 			this.loadInterview();
+		}
+	}
+	async loadEmployee() {
+		for (const item of this.interviewList) {
+			const employees = [];
+			const interviewers = await this.candidateInterviewersService.findByInterviewId(
+				item.id
+			);
+			if (interviewers) {
+				item.interviewers = [];
+				for (const interviewer of interviewers) {
+					const res = await this.employeesService.getEmployeeById(
+						interviewer.employeeId,
+						['user']
+					);
+					if (res) {
+						employees.push(res);
+					}
+				}
+				item.interviewers.push(employees);
+			}
 		}
 	}
 	async removeInterview(id: string) {
@@ -122,7 +144,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
+				error: error.error ? error.error.message : error.message,
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);
