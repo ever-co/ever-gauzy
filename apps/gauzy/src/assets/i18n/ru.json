@@ -38,6 +38,8 @@
 		"VIEW": "Вид",
 		"SEND": "Отправить",
 		"ARCHIVE": "Архивировать",
+		"HIRE": "Нанять",
+		"REJECT": "Отклонить",
 		"FIND_TIME": "Время поиска",
 		"DOWNLOAD": "Скачать",
 		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний",
@@ -294,7 +296,9 @@
 				"INTERVIEWERS": "Интервьюеры",
 				"LOCATION": "Местоположение",
 				"NOTE": "Примечание (опционально)",
-				"TYPE": "Тип интервью"
+				"TYPE": "Тип интервью",
+				"CALL": "Звонок",
+				"MEETING": "Встреча"
 			},
 			"MEETING_AGENDA": "Повестка дня",
 			"MEETING_LOCATION": "Местоположение",
@@ -321,6 +325,13 @@
 			"SURE": "Вы уверены, что хотите архивировать",
 			"RECORD": "запись",
 			"CANDIDATE": "кандидат"
+		},
+		"CANDIDATE_ACTION_CONFIRMATION": {
+			"SURE": "Вы уверены, что хотите ",
+			"RECORD": "запись",
+			"CANDIDATE": "кандидат",
+			"HIRE": "нанять",
+			"REJECT": "отклонить"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
@@ -662,6 +673,7 @@
 			"DOCUMENT_NAME": "Название документа",
 			"DOCUMENT": "Документ",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"LEAVE_FEEDBACK": "Оставить отзыв о ",
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
 				"INTERVIEWS": "Интервью",
@@ -683,7 +695,10 @@
 				"DETAILS": "Отправить данные интервью",
 				"NOTIFY_CANDIDATE": "Уведомлять кандидата",
 				"NOTIFY_INTERVIEWERS": "Уведомить интервьюера (ов)",
-				"INTERVIEWERS": "интервьюер(ы)"
+				"INTERVIEWERS": "интервьюер(ы)",
+				"HIRE": "Нанять",
+				"POSTPONE": "Отложить",
+				"REJECT": "Отклонить"
 			}
 		},
 		"INTERVIEW_INFO_MODAL": {
@@ -1284,6 +1299,7 @@
 		},
 		"CANDIDATE": {
 			"INVALID_FORM": "Пожалуйста, заполните форму",
+			"INVALID_FEEDBACK_INFO": "Пожалуйста, добавьте информацию об отзыве",
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Пожалуйста, добавьте название навыка",
 				"INVALID_FORM": "Пожалуйста, заполните форму",
