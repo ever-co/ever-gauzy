@@ -216,7 +216,10 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.loading = loading;
 	}
 	hasOverflow(el) {
-		const curOverflow = el && el.style ? el.style.overflow : 'hidden';
+		if (!el) {
+			return;
+		}
+		const curOverflow = el.style ? el.style.overflow : 'hidden';
 
 		if (!curOverflow || curOverflow === 'visible')
 			el.style.overflow = 'hidden';
