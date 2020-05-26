@@ -92,4 +92,12 @@ export enum ProductTypesIconsEnum {
 	STAR = 'star-outline',
 	SHOPPING_BAG = 'shopping-bag-outline',
 	SHARE = 'share-outline',
+	ACTIVITY = 'activity-outline',
+	ALERT = 'alert-triangle-outline',
+	BULB = 'bulb-outline',
+	CHECKMARK = 'checkmark-circle-outline',
+	GLOBE = 'globe-2-outline',
+	LAYERS = 'layers-outline',
+	PHONE = 'phone-outline',
+	SHOPPING_CART = 'shopping-cart-outline',
 }

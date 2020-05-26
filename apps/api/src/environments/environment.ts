@@ -426,7 +426,7 @@ export const environment: IEnvironment = {
 			name: 'Physical Products',
 			description:
 				'Can be touched or tangible, solid, dust or liquid state in a container.',
-			icon: ProductTypesIconsEnum.RADIO_BTN_OFF,
+			icon: ProductTypesIconsEnum.CHECKMARK,
 		},
 		{
 			name: 'Digital Products',
@@ -450,12 +450,12 @@ export const environment: IEnvironment = {
 			name: 'Supplies',
 			description:
 				'Items purchased and typically used up during the year.',
-			icon: ProductTypesIconsEnum.SETTINGS,
+			icon: ProductTypesIconsEnum.SHOPPING_CART,
 		},
 		{
 			name: 'Experiences',
 			description: 'Knowledge or skill in a particular job or activity',
-			icon: ProductTypesIconsEnum.STAR,
+			icon: ProductTypesIconsEnum.LAYERS,
 		},
 		{
 			name: 'Specialty Goods',
@@ -470,7 +470,19 @@ export const environment: IEnvironment = {
 		{
 			name: 'Industrial goods',
 			description: 'Bought and used for industrial and business use',
-			icon: ProductTypesIconsEnum.HOME,
+			icon: ProductTypesIconsEnum.RADIO_BTN_OFF,
+		},
+		{
+			name: 'Amenities',
+			description:
+				'Any feature that provides comfort, convenience, or pleasure',
+			icon: ProductTypesIconsEnum.STAR,
+		},
+		{
+			name: 'Animals',
+			description:
+				'Animals consume organic material, breathe oxygen, are able to move',
+			icon: ProductTypesIconsEnum.HEART,
 		},
 	],
 	defaultProductCategories: [
@@ -531,6 +543,12 @@ export const environment: IEnvironment = {
 			description:
 				'Used to make a room or building suitable for living or working in',
 			imageUrl: 'assets/images/products/furniture.png',
+		},
+		{
+			name: 'Pets',
+			description:
+				"An animal kept primarily for a person's company or entertainment rather than as a working animal",
+			imageUrl: 'assets/images/products/dog.png',
 		},
 	],
 	sentry: {
