@@ -21,13 +21,16 @@
 	</nb-card-header>
 	<nb-card-body class="card-container" *ngIf="teams">
 		<nb-card
-			style="padding: 0 !important"
+			style="padding: 0 !important;"
 			class="card-body"
 			*ngFor="let team of teams"
 		>
 			<nb-card-header style="padding: 0.5rem;">
 				<div class="header-container">
-					<div>{{ team.name }}</div>
+					<div *ngFor="let item of teams">
+						<ga-notes-with-tags [rowData]="item">
+						</ga-notes-with-tags>
+					</div>
 					<div class="members-count">
 						{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
 						{{ team.members.length }}
@@ -47,6 +50,24 @@
 						<span
 							>{{ member.employee.user.firstName }}
 							{{ member.employee.user.lastName }}
+
+							<!-- <span *ngFor="let tag of getTagsByEmployeeId(member.employee.id)">
+              {{tag.name}}
+            </span> -->
+							<div class="tags fix-everything-else">
+								<nb-badge
+									*ngFor="
+										let tag of getTagsByEmployeeId(
+											member.employee.id
+										)
+									"
+									class="color fix-everything"
+									position="centered"
+									[style.background]="tag.color"
+									text="{{ tag.name }}"
+								>
+								</nb-badge>
+							</div>
 						</span>
 					</div>
 				</div>

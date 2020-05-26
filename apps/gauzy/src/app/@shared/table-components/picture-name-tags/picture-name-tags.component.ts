@@ -3,6 +3,7 @@ import { ViewCell } from 'ng2-smart-table';
 import { getContrastColor } from 'libs/utils';
 
 @Component({
+	selector: 'ga-picture-name-tags',
 	template: `
 		<div
 			*ngIf="rowData.imageUrl"
