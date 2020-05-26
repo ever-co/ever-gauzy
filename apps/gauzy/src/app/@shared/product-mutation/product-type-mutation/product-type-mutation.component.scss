@@ -1,18 +1,31 @@
 .d-bottom {
-	display: flex;
-	align-items: flex-end;
-	align-content: flex-end;
+  display: flex;
+  align-items: flex-end;
+  align-content: flex-end;
 }
 
 .options-wrap {
-	display: flex;
+  display: flex;
 }
 
 .option {
-	padding: 5px 10px;
-	font-size: 12px;
-	background: #3366ff;
-	border-radius: 7px;
-	color: #fff;
-	margin-right: 10px;
+  padding: 5px 10px;
+  font-size: 12px;
+  background: #3366ff;
+  border-radius: 7px;
+  color: #fff;
+  margin-right: 10px;
+}
+
+.flex-end {
+  display: flex;
+  align-items: flex-end;
+}
+
+nb-card-body {
+  overflow: visible;
+}
+
+ng-select {
+  border-radius: 0.25rem;
 }
