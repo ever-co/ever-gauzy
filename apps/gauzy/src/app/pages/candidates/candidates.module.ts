@@ -67,6 +67,7 @@ import { CandidateInterviewInfoModule } from '../../@shared/candidate/candidate-
 import { CandidateInterviewersService } from '../../@core/services/candidate-interviewers.service';
 import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-multi-select/candidate-multi-select.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -142,6 +143,7 @@ const COMPONENTS = [
 		StarRatingOutputModule,
 		CandidateMultiSelectModule,
 		EmployeeMultiSelectModule,
+		CandidateInterviewFeedbackModule,
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [

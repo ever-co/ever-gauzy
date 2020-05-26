@@ -18,6 +18,7 @@ import { CandidateSourceComponent } from './table-components/candidate-source/ca
 import { CandidateSourceService } from '../../@core/services/candidate-source.service';
 import { CandidateFeedbacksService } from '../../@core/services/candidate-feedbacks.service';
 import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
+import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation /candidate-action-confirmation.component';
 
 interface CandidateViewModel {
 	fullName: string;
@@ -27,7 +28,7 @@ interface CandidateViewModel {
 
 @Component({
 	templateUrl: './candidates.component.html',
-	styleUrls: ['./candidates.component.scss']
+	styleUrls: ['./candidates.component.scss'],
 })
 export class CandidatesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -144,7 +145,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	}
 	edit() {
 		this.router.navigate([
-			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
+			'/pages/employees/candidates/edit/' + this.selectedCandidate.id,
 		]);
 	}
 	async archive() {
@@ -156,8 +157,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 						' ' +
 						this.getTranslation(
 							'FORM.ARCHIVE_CONFIRMATION.CANDIDATE'
-						)
-				}
+						),
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -184,8 +185,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 			context: {
 				invitationType: InvitationTypeEnum.CANDIDATE,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId
-			}
+				currentUserId: this.store.userId,
+			},
 		});
 		await dialog.onClose.pipe(first()).toPromise();
 	}
@@ -198,7 +199,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	async getCandidateSource(id: string) {
 		this.candidateSource = null;
 		const res = await this.candidateSourceService.getAll({
-			candidateId: id
+			candidateId: id,
 		});
 		if (res) {
 			return (this.candidateSource = res.items[0]);
@@ -206,7 +207,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	}
 	async getCandidateRating(id: string) {
 		const res = await this.candidateFeedbacksService.getAll({
-			candidateId: id
+			candidateId: id,
 		});
 		if (res) {
 			this.candidateRating = 0;
@@ -220,7 +221,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 		const { items } = await this.candidatesService
 			.getAll(['user', 'source', 'tags'], {
-				organization: { id: this.selectedOrganizationId }
+				organization: { id: this.selectedOrganizationId },
 			})
 			.pipe(first())
 			.toPromise();
@@ -241,7 +242,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				status: candidate.status,
 				isArchived: candidate.isArchived,
 				imageUrl: candidate.user.imageUrl,
-				tags: candidate.tags
+				tags: candidate.tags,
 			});
 		}
 		if (!this.includeArchived) {
@@ -270,12 +271,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					class: 'align-row',
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
-					class: 'email-column'
+					class: 'email-column',
 				},
 				source: {
 					title: this.getTranslation('SM_TABLE.SOURCE'),
@@ -283,7 +284,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 					class: 'text-center',
 					width: '200px',
 					renderComponent: CandidateSourceComponent,
-					filter: false
+					filter: false,
 				},
 
 				status: {
@@ -292,13 +293,13 @@ export class CandidatesComponent extends TranslationBaseComponent
 					class: 'text-center',
 					width: '200px',
 					renderComponent: CandidateStatusComponent,
-					filter: false
-				}
+					filter: false,
+				},
 			},
 			pager: {
 				display: true,
-				perPage: 8
-			}
+				perPage: 8,
+			},
 		};
 	}
 
@@ -306,7 +307,62 @@ export class CandidatesComponent extends TranslationBaseComponent
 		this.includeArchived = checked;
 		this.loadPage();
 	}
+	async reject() {
+		this.dialogService
+			.open(CandidateActionConfirmationComponent, {
+				context: {
+					recordType: this.selectedCandidate.fullName,
+					isReject: true,
+				},
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.candidatesService.setCandidateAsRejected(
+							this.selectedCandidate.id
+						);
 
+						this.toastrService.success(
+							this.candidateName + '  set as rejected.',
+							'Success'
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
+			});
+	}
+	async hire() {
+		this.dialogService
+			.open(CandidateActionConfirmationComponent, {
+				context: {
+					recordType: this.selectedCandidate.fullName,
+					isReject: false,
+				},
+			})
+			.onClose.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (result) => {
+				if (result) {
+					try {
+						await this.candidatesService.setCandidateAsHired(
+							this.selectedCandidate.id
+						);
+
+						this.toastrService.success(
+							this.candidateName + '  set as hired.',
+							'Success'
+						);
+
+						this.loadPage();
+					} catch (error) {
+						this.errorHandler.handleError(error);
+					}
+				}
+			});
+	}
 	private _applyTranslationOnSmartTable() {
 		this.translate.onLangChange
 			.pipe(takeUntil(this._ngDestroy$))

@@ -4,7 +4,7 @@
 
 <div *ngIf="!rowData.isArchived">
 	<div class="text-center d-block" *ngIf="rowData.status === 'APPLIED'">
-		<div class="badge-success">
+		<div class="badge-primary">
 			{{ 'CANDIDATES_PAGE.APPLIED' | translate }}
 		</div>
 	</div>
@@ -21,7 +21,7 @@
 </div>
 
 <div class="text-center d-block" *ngIf="rowData.isArchived">
-	<div class="badge-danger">
+	<div class="badge-warning">
 		{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
 	</div>
 </div>

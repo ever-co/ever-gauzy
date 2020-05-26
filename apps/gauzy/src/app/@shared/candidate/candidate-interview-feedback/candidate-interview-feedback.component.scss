@@ -1,0 +1,64 @@
+.card-wrap {
+  min-width: 40rem;
+}
+
+.buttons {
+  flex-direction: row;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.form-btn {
+  width: 10rem;
+}
+
+.form {
+  flex-direction: column;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 1rem;
+}
+
+.label-wrap {
+  flex-direction: row;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+#description {
+  min-height: 15rem;
+  margin-top: 0.5rem;
+}
+
+.form-group {
+  width: 100%;
+}
+
+.radio-group {
+  flex-direction: row;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.fas {
+  padding-left: 3px;
+  font-size: 15px;
+}
+
+.success {
+  color: #00d68f;
+}
+
+.primary {
+  color: #3366ff;
+}
+
+.error {
+  color: #ff3d71;
+}
