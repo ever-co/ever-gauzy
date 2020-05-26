@@ -21,10 +21,10 @@ nb-card-body {
   nb-route-tabset {
     ul.route-tabset {
       padding: 0;
-
-      @include respond(dsk) {
-        flex-wrap: wrap;
-      }
+      flex-wrap: wrap;
+      // @include respond(dsk) {
+      //   flex-wrap: wrap;
+      // }
     }
 
     .tab-link {
