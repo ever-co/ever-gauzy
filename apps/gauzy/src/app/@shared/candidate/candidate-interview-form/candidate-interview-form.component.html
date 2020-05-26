@@ -55,8 +55,12 @@
 			[ngModelOptions]="{ standalone: true }"
 			class="radio-group"
 		>
-			<nb-radio [value]="false" [checked]="true">Call</nb-radio>
-			<nb-radio [value]="true">Meeting</nb-radio>
+			<nb-radio [value]="false" [checked]="true">{{
+				'FORM.PLACEHOLDERS.ADD_INTERVIEW.CALL' | translate
+			}}</nb-radio>
+			<nb-radio [value]="true">{{
+				'FORM.PLACEHOLDERS.ADD_INTERVIEW.MEETING' | translate
+			}}</nb-radio>
 		</nb-radio-group>
 		<div class="location" *ngIf="isMeeting">
 			<label for="location" class="label">{{

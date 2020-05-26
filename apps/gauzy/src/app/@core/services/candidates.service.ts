@@ -4,7 +4,8 @@ import {
 	CandidateCreateInput as ICandidateCreateInput,
 	CandidateFindInput,
 	Candidate,
-	CandidateUpdateInput
+	CandidateUpdateInput,
+	CandidateStatus,
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -21,7 +22,7 @@ export class CandidatesService {
 		return this.http.get<{ items: Candidate[]; total: number }>(
 			`/api/candidate`,
 			{
-				params: { data }
+				params: { data },
 			}
 		);
 	}
@@ -30,7 +31,7 @@ export class CandidatesService {
 		const data = JSON.stringify({ relations });
 		return this.http
 			.get<Candidate>(`/api/candidate/${id}`, {
-				params: { data }
+				params: { data },
 			})
 			.pipe(first())
 			.toPromise();
@@ -63,6 +64,23 @@ export class CandidatesService {
 	setCandidateAsArchived(id: string): Promise<Candidate> {
 		return this.http
 			.put<Candidate>(`/api/candidate/${id}`, { isArchived: true })
+			.pipe(first())
+			.toPromise();
+	}
+
+	setCandidateAsHired(id: string): Promise<Candidate> {
+		return this.http
+			.put<Candidate>(`/api/candidate/${id}`, {
+				status: CandidateStatus.HIRED,
+			})
+			.pipe(first())
+			.toPromise();
+	}
+	setCandidateAsRejected(id: string): Promise<Candidate> {
+		return this.http
+			.put<Candidate>(`/api/candidate/${id}`, {
+				status: CandidateStatus.REJECTED,
+			})
 			.pipe(first())
 			.toPromise();
 	}
