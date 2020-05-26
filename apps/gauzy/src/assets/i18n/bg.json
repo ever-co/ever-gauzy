@@ -50,6 +50,8 @@
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
+		"START_DATE": "Начална дата",
+		"END_DATE": "Крайна дата",
 		"CLIENT_NAME": "Клиентско име",
 		"NAME": "Име",
 		"VENDOR": "Доставчик",
@@ -487,7 +489,9 @@
 			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
 			"API_KEY": "Upwork API key",
 			"SECRET": "Upwork Secret",
-			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy."
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy.",
+			"CONTRACTS": "Contracts",
+			"SYNCED_CONTRACTS": "Synced Contracts"
 		},
 		"COMING_SOON": "Coming soon"
 	},
