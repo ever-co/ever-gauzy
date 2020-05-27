@@ -168,8 +168,7 @@
 				"build": {
 					"builder": "@nrwl/node:build",
 					"options": {
-						"webpackConfig": "tools/build/webpack.config.js",
-						"outputPath": "../api",
+						"outputPath": "dist/apps/api",
 						"main": "apps/api/src/main.ts",
 						"showCircularDependencies": false,
 						"sourceMap": true,
