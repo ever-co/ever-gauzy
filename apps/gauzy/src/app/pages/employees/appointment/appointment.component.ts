@@ -17,11 +17,13 @@ import { EmployeeAppointmentService } from '../../../@core/services/employee-app
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
-import { EmployeeAppointment, TimeOff } from '@gauzy/models';
+import { EmployeeAppointment, TimeOff, IEventType } from '@gauzy/models';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
+import { NbToastrService } from '@nebular/theme';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-appointment-calendar',
@@ -35,16 +37,23 @@ import { AvailabilitySlotsService } from '../../../@core/services/availability-s
 		},
 	],
 })
-export class AppointmentComponent implements OnInit, OnDestroy {
+export class AppointmentComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input('showHeader')
 	showHeader: boolean = true;
 
+	@Input('appointmentFormURL')
+	appointmentFormURL: string;
+
+	@Input('selectedEventType')
+	selectedEventType: IEventType;
+
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;
-
+	allowedDuration: Number;
 	calendarEvents: EventInput[] = [];
 	timeOff: TimeOff[] = [
 		{
@@ -70,10 +79,12 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 	constructor(
 		private router: Router,
 		private store: Store,
+		private toastrService: NbToastrService,
 		private availabilitySlotsService: AvailabilitySlotsService,
 		private employeeAppointmentService: EmployeeAppointmentService,
 		readonly translateService: TranslateService
 	) {
+		super(translateService);
 		this._loadAppointments();
 
 		this.calendarOptions = {
@@ -106,10 +117,37 @@ export class AppointmentComponent implements OnInit, OnDestroy {
 		};
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		if (this.selectedEventType) {
+			this.allowedDuration =
+				this.selectedEventType.durationUnit === 'Day(s)'
+					? this.selectedEventType.duration * 24 * 60
+					: this.selectedEventType.durationUnit === 'Hour(s)'
+					? this.selectedEventType.duration * 60
+					: this.selectedEventType.duration * 1;
+		}
+	}
 
 	handleSelectRange(o) {
-		console.log(o);
+		if (
+			moment(o.end).diff(moment(o.start), 'minutes') !==
+			this.allowedDuration
+		) {
+			this.toastrService.danger(
+				this.getTranslation('APPOINTMENTS_PAGE.DURATION_ERROR'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		} else {
+			this.router.navigate(
+				[this.appointmentFormURL || this.getRoute('manage')],
+				{
+					state: {
+						dateStart: o.start,
+						dateEnd: o.end,
+					},
+				}
+			);
+		}
 	}
 
 	getRoute(name: string) {

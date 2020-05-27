@@ -18,7 +18,7 @@ import { CandidateSourceComponent } from './table-components/candidate-source/ca
 import { CandidateSourceService } from '../../@core/services/candidate-source.service';
 import { CandidateFeedbacksService } from '../../@core/services/candidate-feedbacks.service';
 import { ArchiveConfirmationComponent } from '../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
-import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation /candidate-action-confirmation.component';
+import { CandidateActionConfirmationComponent } from '../../@shared/user/forms/candidate-action-confirmation/candidate-action-confirmation.component';
 
 interface CandidateViewModel {
 	fullName: string;
