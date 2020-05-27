@@ -77,7 +77,7 @@ import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
 import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
 import { RequestApprovalModule } from './request-approval/request-approval.module';
 import * as path from 'path';
-import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
+import { HeaderResolver, I18nJsonParser, I18nModule } from 'nestjs-i18n';
 import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
@@ -90,6 +90,8 @@ import { LeadAttributeModule } from './lead-attribute';
 import { PipelineModule } from './pipeline';
 import { StageModule } from './stage';
 import { LeadModule } from './lead';
+
+
 
 @Module({
 	imports: [
@@ -439,6 +441,16 @@ import { LeadModule } from './lead';
 		ProductVariantSettingsModule,
 		IntegrationEntitySettingModule,
 		IntegrationEntitySettingTiedEntityModule,
+
+    LeadModule,
+    StageModule,
+    PipelineModule,
+    LeadAttributeModule,
+    AttributeValueModule,
+    StageAttributeModule,
+    AttributeValidatorModule,
+    AttributeDefinitionModule,
+
 		I18nModule.forRoot({
 			fallbackLanguage: LanguagesEnum.ENGLISH,
 			parser: I18nJsonParser,
