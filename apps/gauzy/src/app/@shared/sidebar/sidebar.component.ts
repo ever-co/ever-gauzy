@@ -1,27 +1,35 @@
-import { nodes } from './../../../../../../libs/models/src/lib/help-center-menu.model';
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { ITreeOptions, TreeComponent } from 'angular-tree-component';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { IHelpCenter } from '@gauzy/models';
 import { isEqual } from './delete-node';
+import { HelpCenterService } from '../../@core/services/help-center.service';
+import { Subject } from 'rxjs';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
 	styleUrls: ['./sidebar.component.scss'],
 })
-export class SidebarComponent {
+export class SidebarComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
+	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private readonly fb: FormBuilder,
-		private sanitizer: DomSanitizer
-	) {}
+		private sanitizer: DomSanitizer,
+		private helpService: HelpCenterService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
 	form: FormGroup;
-	public showDataEdit = false;
 	public icons = ['🔥', '📎', '🌐', '🔎'];
 	public chosenIcon = '';
 	public articleName = 'Chose any article';
-	public articleDesc = 'any article you will chose';
+	public articleDesc = '';
 	public articleData: SafeHtml;
 	public showPrivateButton = false;
 	public showPublicButton = false;
@@ -29,11 +37,10 @@ export class SidebarComponent {
 	public flag = 0;
 	public isVisibleAdd = false;
 	public isVisibleEdit = false;
-	public isVisibleEditDesc = false;
 	public iconsShow = false;
 	public isChosenArticle = false;
 	public value = '';
-	public nodes: IHelpCenter[] = nodes;
+	public nodes: IHelpCenter[] = [];
 	options: ITreeOptions = {
 		isExpandedField: 'expanded',
 		actionMapping: {
@@ -46,11 +53,12 @@ export class SidebarComponent {
 						this.showPublicButton = false;
 						this.articleDesc = node.data.description;
 						this.articleName = node.data.name;
-						this.articleData = node.data.data;
+						this.articleData = node.data.data as SafeHtml;
 						this.loadFormData();
 					} else {
 						this.showPrivateButton = false;
 						this.showPublicButton = true;
+						this.articleName = 'Chose any article';
 					}
 				},
 			},
@@ -72,16 +80,16 @@ export class SidebarComponent {
 		this.isVisibleAdd = true;
 	}
 
-	addName(event: any) {
+	async addName(event: any) {
 		this.isChosenArticle = false;
 		this.value = event.target.value;
-		this.nodes.push({
-			id: 20,
+		await this.helpService.create({
 			name: `${this.value}`,
-			description: 'desc1',
+			description: '',
 			data: '',
 			children: [],
 		});
+		this.loadMenu();
 		this.tree.treeModel.update();
 		this.isVisibleAdd = false;
 	}
@@ -136,6 +144,7 @@ export class SidebarComponent {
 			this.articleDesc = someNode.description;
 			this.articleName = someNode.name;
 		}
+		this.iconsShow = false;
 	}
 
 	makePrivate() {
@@ -153,46 +162,19 @@ export class SidebarComponent {
 		}
 	}
 
+	editNameCategory(event: any) {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		someNode.data.name = event.target.value;
+		this.isVisibleEdit = false;
+	}
+
 	onEditArticle() {
 		this.isVisibleEdit = true;
 	}
 
-	editName(event: any) {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		someNode.data.name = event.target.value;
-		this.tree.treeModel.update();
-		if (!someNode.data.children) {
-			this.articleName = event.target.value;
-		}
-		this.isVisibleEdit = false;
-	}
-
-	onEditArticleDesc() {
-		this.isVisibleEditDesc = true;
-	}
-
-	editDesc(event: any) {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		someNode.data.description = event.target.value;
-		this.tree.treeModel.update();
-		if (!someNode.data.children) {
-			this.articleDesc = event.target.value;
-		}
-		this.isVisibleEditDesc = false;
-	}
-
-	onCloseEdit() {
-		this.isVisibleEdit = false;
-		this.value = '';
-	}
-
-	onCloseDesc() {
-		this.isVisibleEditDesc = false;
-		this.value = '';
-	}
-
-	onDeleteArticle() {
+	async onDeleteArticle() {
 		isEqual(this.nodes, this.nodeId);
+		await this.helpService.delete(`${this.nodeId}`);
 		this.tree.treeModel.update();
 		this.isChosenArticle = false;
 		this.articleName = 'Chose any article';
@@ -201,21 +183,40 @@ export class SidebarComponent {
 
 	loadFormData() {
 		this.form = this.fb.group({
-			text: [this.articleData],
+			name: [this.articleName],
+			desc: [this.articleDesc],
+			data: [this.articleData],
 		});
 	}
 
-	onChange(value: string) {
+	editData(value: string) {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		this.articleData = this.sanitizer.bypassSecurityTrustHtml(value);
-		someNode.data.data = this.articleData;
+		someNode.data.data = this.articleData as string;
 	}
 
-	editArticleData() {
-		this.showDataEdit = true;
+	submit() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		someNode.data.description = this.form.controls.desc.value;
+		someNode.data.name = this.form.controls.name.value;
+		this.articleDesc = someNode.data.description;
+		this.articleName = someNode.data.name;
+		this.tree.treeModel.update();
+		this.isVisibleEdit = false;
 	}
 
-	onSaveData() {
-		this.showDataEdit = false;
+	private async loadMenu() {
+		const result = await this.helpService.getAll();
+		if (result) {
+			this.nodes = result.items;
+		}
+	}
+	ngOnInit() {
+		this.loadMenu();
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }
