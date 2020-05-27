@@ -203,6 +203,10 @@ import { HelpCenterModule } from './help-center/help-center.module';
 						module: EmailModule,
 					},
 					{
+						path: '/email-template',
+						module: EmailTemplateModule
+					},
+					{
 						path: 'time-off-policy',
 						module: TimeOffPolicyModule,
 					},
@@ -349,6 +353,7 @@ import { HelpCenterModule } from './help-center/help-center.module';
 		RequestApprovalEmployeeModule,
 		ProposalModule,
 		EmailModule,
+		EmailTemplateModule,
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
@@ -356,7 +361,6 @@ import { HelpCenterModule } from './help-center/help-center.module';
 		RequestApprovalModule,
 		RolePermissionsModule,
 		TenantModule,
-		EmailTemplateModule,
 		TagModule,
 		SkillModule,
 		InvoiceModule,
