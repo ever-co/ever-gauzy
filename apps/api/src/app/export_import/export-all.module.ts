@@ -75,7 +75,7 @@ import { TimeSlot } from '../timesheet/time-slot.entity';
 import { Activity } from '../timesheet/activity.entity';
 import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
-import { TimeSheetService } from '../timesheet/timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
 import { ActivityService } from '../timesheet/activity.service';
 import { ScreenShotService } from '../timesheet/screenshot.service';
 import { TimeSlotService } from '../timesheet/time-slot.service';

@@ -11,8 +11,7 @@ import { RequestContext } from '../../core/context';
 import { Employee } from '../../employee/employee.entity';
 import { TimeLogType, TimerStatus } from '@gauzy/models';
 import * as moment from 'moment';
-import { Timesheet } from '../timesheet.entity';
-import { TimeSheetService } from '../timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet.service';
 import { TimeSlotService } from '../time-slot.service';
 
 @Injectable()
@@ -25,9 +24,6 @@ export class TimerService {
 
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
-
-		@InjectRepository(Timesheet)
-		private readonly timesheetRepository: Repository<Timesheet>,
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>
@@ -52,7 +48,7 @@ export class TimerService {
 				startedAt: 'DESC'
 			}
 		});
-		let stauts: TimerStatus = {
+		const stauts: TimerStatus = {
 			duration: 0,
 			running: false,
 			lastLog: null
