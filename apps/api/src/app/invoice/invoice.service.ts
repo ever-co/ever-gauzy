@@ -4,8 +4,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { getConnection } from 'typeorm';
-import { LanguagesEnum } from '@gauzy/models';
-import { EmailService } from '../email';
 
 @Injectable()
 export class InvoiceService extends CrudService<Invoice> {
