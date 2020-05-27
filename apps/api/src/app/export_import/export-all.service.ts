@@ -176,12 +176,12 @@ export class ExportAllService implements OnDestroy {
 		return new Promise((resolve, reject) => {
 			const id = uuidv4();
 			this.idCsv.next(id);
-			fs.access(`/Users/Ari/Downloads/${id}/csv`, (error) => {
+			fs.access(`./export/${id}/csv`, (error) => {
 				if (!error) {
 					return null;
 				} else {
 					fs.mkdir(
-						`/Users/Ari/Downloads/${id}/csv`,
+						`./export/${id}/csv`,
 						{ recursive: true },
 						(err) => {
 							if (err) reject(err);
@@ -200,9 +200,7 @@ export class ExportAllService implements OnDestroy {
 				const fileNameS = id + '_export.zip';
 				this.idZip.next(fileNameS);
 
-				const output = fs.createWriteStream(
-					`/Users/Ari/Downloads/${fileNameS}`
-				);
+				const output = fs.createWriteStream(`./export/${fileNameS}`);
 
 				const archive = archiver('zip', {
 					zlib: { level: 9 },
@@ -236,7 +234,7 @@ export class ExportAllService implements OnDestroy {
 					});
 
 				archive.pipe(output);
-				archive.directory(`/Users/Ari/Downloads/${id$}/csv`, false);
+				archive.directory(`./export/${id$}/csv`, false);
 				archive.finalize();
 			}
 		});
@@ -264,7 +262,7 @@ export class ExportAllService implements OnDestroy {
 				});
 
 				const csvWriter = createCsvWriter({
-					path: `/Users/Ari/Downloads/${id$}/csv/${this.services[service_count].nameFile}.csv`,
+					path: `./export/${id$}/csv/${this.services[service_count].nameFile}.csv`,
 					header: dataIn,
 				});
 
@@ -286,7 +284,7 @@ export class ExportAllService implements OnDestroy {
 				.subscribe((filename) => {
 					fileName = filename;
 				});
-			res.download(`/Users/Ari/Downloads/${fileName}`);
+			res.download(`./export/${fileName}`);
 
 			resolve();
 		});
@@ -294,7 +292,7 @@ export class ExportAllService implements OnDestroy {
 
 	async downloadTemplate(res) {
 		return new Promise((resolve, reject) => {
-			res.download('/Users/Ari/Downloads/template.zip');
+			res.download('./export/template.zip');
 			resolve();
 		});
 	}
@@ -307,9 +305,9 @@ export class ExportAllService implements OnDestroy {
 				id$ = id;
 			});
 
-			fs.access(`/Users/Ari/Downloads/${id$}`, (error) => {
+			fs.access(`./export/${id$}`, (error) => {
 				if (!error) {
-					fse.removeSync(`/Users/Ari/Downloads/${id$}`);
+					fse.removeSync(`./export/${id$}`);
 					resolve();
 				} else {
 					return null;
@@ -326,9 +324,9 @@ export class ExportAllService implements OnDestroy {
 					fileName = fileName$;
 				});
 
-			fs.access(`/Users/Ari/Downloads/${fileName}`, (error) => {
+			fs.access(`./export/${fileName}`, (error) => {
 				if (!error) {
-					fse.removeSync(`/Users/Ari/Downloads/${fileName}`);
+					fse.removeSync(`./export/${fileName}`);
 					resolve();
 				} else {
 					return null;
