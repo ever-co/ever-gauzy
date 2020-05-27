@@ -10,7 +10,7 @@ import {
 	FindManyOptions,
 	FindOneOptions,
 	Repository,
-	UpdateResult
+	UpdateResult,
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { mergeMap } from 'rxjs/operators';
@@ -19,7 +19,7 @@ import { Base } from '../entities/base';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import { environment as env } from '@env-api/environment';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { ITryRequest } from './try-request';
 
 export abstract class CrudService<T extends Base> implements ICrudService<T> {
@@ -50,12 +50,12 @@ export abstract class CrudService<T extends Base> implements ICrudService<T> {
 			);
 			return {
 				success: true,
-				record
+				record,
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error
+				error,
 			};
 		}
 	}

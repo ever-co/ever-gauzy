@@ -22,6 +22,9 @@
 		},
 		"desktop": {
 			"tags": []
+		},
+		"desktop-api": {
+			"tags": []
 		}
 	}
 }

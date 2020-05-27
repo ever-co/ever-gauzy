@@ -17,17 +17,23 @@
 		"productName": "GauzyDesktop",
 		"copyright": "Copyright © 2018-2019 gauzy",
 		"asar": false,
-		"npmRebuild": false,
+		"npmRebuild": true,
 		"directories": {
 			"buildResources": "icons",
 			"output": "../desktop-packages"
 		},
 		"mac": {
 			"category": "public.app-category.developer-tools",
-			"icon": "icon.png"
+			"icon": "icon.png",
+			"target": [
+				"pkg",
+				"dmg"
+			]
 		},
 		"win": {
-			"target": "nsis",
+			"target": [
+				"nsis"
+			],
 			"icon": "icon.ico"
 		},
 		"linux": {
@@ -44,6 +50,13 @@
 			"createDesktopShortcut": "always",
 			"installerIcon": "icon.ico",
 			"artifactName": "Desktop-Setup-${version}.${ext}"
-		}
+		},
+		"files": [
+			"./**/*",
+			"./node_modules/**/*"
+		]
+	},
+	"dependencies": {
+		"sqlite3": "^4.2.0"
 	}
 }

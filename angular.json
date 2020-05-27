@@ -5,7 +5,7 @@
 			"typescriptMismatch": false,
 			"versionMismatch": false
 		},
-		"defaultCollection": "@nrwl/angular",
+		"defaultCollection": "@nstudio/xplat",
 		"packageManager": "yarn",
 		"analytics": false
 	},
@@ -168,7 +168,8 @@
 				"build": {
 					"builder": "@nrwl/node:build",
 					"options": {
-						"outputPath": "dist/apps/api",
+						"webpackConfig": "tools/build/webpack.config.js",
+						"outputPath": "../api",
 						"main": "apps/api/src/main.ts",
 						"showCircularDependencies": false,
 						"sourceMap": true,
@@ -382,6 +383,7 @@
 				"build": {
 					"builder": "@nrwl/node:build",
 					"options": {
+						"webpackConfig": "tools/build/webpack.config.js",
 						"outputPath": "dist/apps/desktop/api",
 						"main": "apps/api/src/main.ts",
 						"showCircularDependencies": false,

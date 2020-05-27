@@ -1,8 +1,10 @@
-import { app, BrowserWindow, ipcMain, screen, ClientRequest } from 'electron';
+import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import * as path from 'path';
+require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
+require('sqlite3');
 import * as url from 'url';
 import { fork } from 'child_process';
-
+require(path.join(__dirname, 'api/main.js'));
 let serve;
 const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
@@ -30,8 +32,8 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	webPreferences: {
 		devTools: debugMode,
 		nodeIntegration: debugMode,
-		webSecurity: false
-	}
+		webSecurity: false,
+	},
 };
 
 /**
@@ -69,7 +71,7 @@ function createWindow() {
 	let launchPath;
 	if (serve) {
 		require('electron-reload')(__dirname, {
-			electron: require(`${__dirname}/../../../node_modules/electron`)
+			electron: require(`${__dirname}/../../../node_modules/electron`),
 		});
 		launchPath = 'http://localhost:4200';
 		win.loadURL(launchPath);
@@ -77,7 +79,7 @@ function createWindow() {
 		launchPath = url.format({
 			pathname: path.join(__dirname, 'index.html'),
 			protocol: 'file:',
-			slashes: true
+			slashes: true,
 		});
 		win.loadURL(launchPath);
 	}
@@ -114,8 +116,10 @@ function apiBackgroundProcess() {
 }
 try {
 	app.on('ready', () => {
-		apiBackgroundProcess();
-		// createWindow()
+		// apiBackgroundProcess();
+		setTimeout(() => {
+			createWindow();
+		}, 5000);
 	});
 
 	app.on('window-all-closed', quit);
