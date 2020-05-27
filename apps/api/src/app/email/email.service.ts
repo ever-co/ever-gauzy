@@ -17,7 +17,6 @@ import { Organization } from '../organization/organization.entity';
 import { User } from '../user/user.entity';
 import { Email as IEmail } from './email.entity';
 import { Invite } from '../invite/invite.entity';
-import { Employee } from '../employee/employee.entity';
 
 export interface InviteUserModel {
 	email: string;
@@ -47,7 +46,9 @@ export class EmailService extends CrudService<IEmail> {
 		@InjectRepository(IEmail)
 		private readonly emailRepository: Repository<IEmail>,
 		@InjectRepository(EmailTemplate)
-		private readonly emailTemplateRepository: Repository<EmailTemplate>
+		private readonly emailTemplateRepository: Repository<EmailTemplate>,
+		@InjectRepository(Organization)
+		private readonly organizationRepository: Repository<Organization>
 	) {
 		super(emailRepository);
 	}
@@ -213,7 +214,12 @@ export class EmailService extends CrudService<IEmail> {
 			.catch(console.error);
 	}
 
-	welcomeUser(user: User, languageCode: LanguagesEnum, originUrl?: string) {
+	async welcomeUser(
+		user: User,
+		languageCode: LanguagesEnum,
+		originUrl?: string,
+		organizationId?: string
+	) {
 		const sendOptions = {
 			template: 'welcome-user',
 			message: {
@@ -226,6 +232,14 @@ export class EmailService extends CrudService<IEmail> {
 			}
 		};
 
+		let organization: Organization;
+
+		if (organizationId) {
+			organization = await this.organizationRepository.findOne(
+				organizationId
+			);
+		}
+
 		this.email
 			.send(sendOptions)
 			.then((res) => {
@@ -233,7 +247,8 @@ export class EmailService extends CrudService<IEmail> {
 					templateName: sendOptions.template,
 					email: user.email,
 					languageCode,
-					message: res.originalMessage
+					message: res.originalMessage,
+					organization
 				});
 			})
 			.catch(console.error);
@@ -258,17 +273,9 @@ export class EmailService extends CrudService<IEmail> {
 			}
 		};
 
-		let organization: Organization = null;
-
-		// TODO!: here find a way to get the employee with its organization
-		if (user.employee) {
-			// const employee = await this.employeeRepository.findOne(user.employee.id, {
-			// 	relations: ['organization']
-			// });
-			// organization = employee.organization;
-		}
-
-		console.log(organization);
+		const organization = await this.organizationRepository.findOne(
+			user.employee.orgId
+		);
 
 		this.email
 			.send(sendOptions)

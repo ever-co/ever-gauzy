@@ -26,6 +26,7 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { DangerZoneMutationModule } from '../../@shared/settings/danger-zone-mutation.module';
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
+import { EmailFiltersComponent } from './email-history/email-filters/email-filters.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -62,7 +63,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		SettingsComponent,
 		EditRolesPermissionsComponent,
 		DangerZoneComponent,
-		EmailHistoryComponent
+		EmailHistoryComponent,
+		EmailFiltersComponent
 	],
 	providers: [RolePermissionsService, RoleService]
 })

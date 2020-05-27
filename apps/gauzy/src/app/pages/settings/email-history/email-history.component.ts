@@ -6,6 +6,7 @@ import { Email } from '@gauzy/models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '../../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
+import { EmailFiltersComponent } from './email-filters/email-filters.component';
 
 @Component({
 	selector: 'ngx-email-history',
@@ -37,8 +38,8 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._onDestroy$))
 			.subscribe((org) => {
-				console.log(org);
 				if (org) {
+					// TODO: Here reset all filters!
 					this._getAllEmails(org.id);
 				}
 			});
@@ -49,7 +50,9 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 	}
 
 	openFiltersDialog() {
-		// this.dialogService.open(.....)
+		this.dialogService.open(EmailFiltersComponent, {
+			context: {}
+		});
 		console.log('Opening Filters Dialog');
 	}
 
@@ -60,7 +63,6 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 					organizationId
 				})
 				.then((data) => {
-					console.log(data);
 					this.emails = data.items;
 					this.loading = false;
 
