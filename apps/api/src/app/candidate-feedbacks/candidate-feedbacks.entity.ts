@@ -1,10 +1,8 @@
-import { ICandidateInterviewers } from './../../../../../libs/models/src/lib/candidate-interviewers.model';
-import { Column, Entity, OneToOne, JoinColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ICandidateFeedback, CandidateStatus } from '@gauzy/models';
 import { IsEnum, IsOptional } from 'class-validator';
-import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 
 @Entity('candidate_feedbacks')
 export class CandidateFeedback extends Base implements ICandidateFeedback {
