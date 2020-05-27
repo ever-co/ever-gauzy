@@ -35,6 +35,9 @@
 					}}</label>
 					<ga-candidate-select
 						[allCandidates]="candidates"
+						[placeholder]="
+							'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate
+						"
 						(selectedChange)="onCandidateSelected($event)"
 						[selectedCandidateId]="selectedCandidateId"
 					>

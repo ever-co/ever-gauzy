@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
 import { first } from 'rxjs/operators';
 @Component({
-	selector: 'ngx-candidate-interview-info',
+	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
 	styleUrls: ['./candidate-interview-info.component.scss'],
 })

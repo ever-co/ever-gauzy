@@ -46,9 +46,9 @@
 							{{ selectedCandidate.user.lastName }}</strong
 						>
 					</div>
-					<div *ngFor="let employees of interview.interviewers">
+					<div>
 						<span
-							*ngFor="let employee of employees"
+							*ngFor="let employee of interview.employees"
 							nbTooltip=" {{ employee?.user?.firstName }}
 					{{ employee?.user?.lastName }}"
 							nbTooltipPlacement="top"
