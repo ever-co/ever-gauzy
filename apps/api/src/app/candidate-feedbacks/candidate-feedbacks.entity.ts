@@ -27,6 +27,6 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 	@ApiProperty({ type: String, enum: CandidateStatus })
 	@IsEnum(CandidateStatus)
 	@IsOptional()
-	@Column({ nullable: true, default: CandidateStatus.APPLIED })
+	@Column({ nullable: true })
 	status?: string;
 }

@@ -93,6 +93,12 @@
 						}}</strong>
 						{{ feedback.interviewTitle }}
 					</p>
+					<p *ngIf="feedback.status">
+						<strong>{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.STATUS' | translate
+						}}</strong>
+						{{ feedback.status }}
+					</p>
 
 					{{ feedback.description }}
 				</div>

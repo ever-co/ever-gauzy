@@ -2,7 +2,7 @@
 	[selected]="selectedCandidateId"
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth
-	placeholder="placeholder "
+	placeholder="{{ placeholder }} "
 >
 	<nb-option *ngFor="let candidate of allCandidates" [value]="candidate.id">
 		<img
