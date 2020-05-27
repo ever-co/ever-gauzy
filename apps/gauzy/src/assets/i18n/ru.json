@@ -43,8 +43,7 @@
 		"FIND_TIME": "Время поиска",
 		"DOWNLOAD": "Скачать",
 		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний",
-		"ADD_ICON": "добавить значок",
-		"REMOVE_ICON": "удалить значок",
+		"CHOOSE_ICON": "Выберите иконку",
 		"MAKE_PRIVATE": "сделать приватным",
 		"MAKE_PUBLIC": "сделать публичным",
 		"KNOWLEDGE_BASES": "Базы знаний",
@@ -1202,9 +1201,7 @@
 	"HELP_PAGE": {
 		"HELP": "Помогите",
 		"KNOWLEDGE_BASES": "Базы знаний",
-		"CHOSE_ICON": "Выберите значок для установки",
-		"EDIT_DESCRIPTION": "редактировать описание",
-		"EDIT_NAME": "изменить имя"
+		"CHOSE_ICON": "Выберите значок для установки"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
