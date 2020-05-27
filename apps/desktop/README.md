@@ -5,35 +5,46 @@ how to:
 -   install dependencies
 
 ```bash
- yarn install
+
+yarn install
+
 ```
 
--   serve app
+**build executable for mac**
+
+rebuild sqlite3 for mac
 
 ```bash
-yarn serve:desktop
+yarn build:sqlite:mac
 ```
 
--   build local
+build desktop
 
 ```bash
-yarn build:desktop:local
+yarn build:desktop
 ```
 
--   build linux
+build execute app
 
 ```bash
-yarn build:desktop:linux
+build:desktop:mac:quick
 ```
 
--   build windows
+**build execute app for windows**
+rebuild sqlite3 for windows
 
 ```bash
-yarn build:desktop:windows
+yarn build:sqlite:windows
 ```
 
--   build mac
+build desktop
 
 ```bash
-yarn build:desktop:mac
+yarn build:desktop
+```
+
+build execute app
+
+```bash
+build:desktop:windows:quick
 ```
