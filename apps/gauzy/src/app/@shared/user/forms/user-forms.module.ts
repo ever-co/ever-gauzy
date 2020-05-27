@@ -23,7 +23,7 @@ import { FileUploaderModule } from '../../file-uploader-input/file-uploader-inpu
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { CandidateActionConfirmationComponent } from './candidate-action-confirmation /candidate-action-confirmation.component';
+import { CandidateActionConfirmationComponent } from './candidate-action-confirmation/candidate-action-confirmation.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
