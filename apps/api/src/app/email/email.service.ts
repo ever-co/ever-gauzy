@@ -111,7 +111,12 @@ export class EmailService extends CrudService<IEmail> {
 				},
 			})
 			.then((res) => {
-				this.createEmailRecord(res.originalMessage, languageCode);
+				this.createEmailRecord({
+          templateName: 'email-invoice',
+          email,
+          languageCode,
+          message: res.originalMessage          
+        });
 			})
 			.catch(console.error);
 	}
