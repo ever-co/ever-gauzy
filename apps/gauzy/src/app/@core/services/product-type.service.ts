@@ -9,6 +9,13 @@ export class ProductTypeService {
 
 	constructor(private http: HttpClient) {}
 
+	getById(id: string = ''): Promise<ProductType> {
+		return this.http
+			.get<ProductType>(`${this.PRODUCT_TYPES_URL}/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAll(
 		relations?: string[],
 		findInput?: any
@@ -16,7 +23,21 @@ export class ProductTypeService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: ProductType[] }>(this.PRODUCT_TYPES_URL, {
-				params: { data }
+				params: { data },
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllTranslated(
+		langCode: string,
+		relations?: string[],
+		findInput?: any
+	): Promise<{ items: ProductType[] }> {
+		const data = JSON.stringify({ relations, findInput, langCode });
+		return this.http
+			.get<{ items: ProductType[] }>(`${this.PRODUCT_TYPES_URL}`, {
+				params: { data },
 			})
 			.pipe(first())
 			.toPromise();

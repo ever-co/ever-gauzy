@@ -1,4 +1,8 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import {
+	Translation as ITranslation,
+	Translatable as ITranslatable,
+} from './translation.model';
 import { Organization } from './organization.model';
 import { Tag } from './tag-entity.model';
 
@@ -20,12 +24,23 @@ export interface ProductFindInput {
 	organizationId?: string;
 }
 
-export interface ProductType extends IBaseEntityModel {
-	name: string;
+export interface ProductType extends ITranslatable<ProductType> {
 	organizationId?: string;
-	description: string;
 	icon: string;
 	organization: Organization;
+	translations: ProductTypeTranslation[];
+}
+
+export interface ProductTypeTranslated extends ITranslatable<ProductType> {
+	icon: string;
+	name: string;
+	description: string;
+}
+
+export interface ProductTypeTranslation extends ITranslation<ProductType> {
+	name: string;
+	description: string;
+	reference?: ProductType;
 }
 
 export interface ProductCategory extends IBaseEntityModel {

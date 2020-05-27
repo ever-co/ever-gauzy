@@ -35,12 +35,7 @@ export interface ISeedUsers {
 	candidateUsers: User[];
 }
 
-export interface IDefaultProductType {
-	name: string;
-	description: string;
-	icon: string;
-}
-
+//tstodo remove this
 export interface IDefaultProductCategory {
 	name: string;
 	description: string;

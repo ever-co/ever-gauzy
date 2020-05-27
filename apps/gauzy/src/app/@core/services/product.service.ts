@@ -11,12 +11,13 @@ export class ProductService {
 
 	getAll(
 		relations?: string[],
-		findInput?: ProductFindInput
+		findInput?: ProductFindInput,
+		languageCode?: string
 	): Promise<{ items: Product[] }> {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
-			.get<{ items: Product[] }>(this.PRODUCTS_URL, {
-				params: { data }
+			.get<{ items: Product[] }>(`${this.PRODUCTS_URL}/${languageCode}`, {
+				params: { data },
 			})
 			.pipe(first())
 			.toPromise();
