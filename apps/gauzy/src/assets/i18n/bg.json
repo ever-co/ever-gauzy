@@ -43,8 +43,7 @@
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
 		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
-		"ADD_ICON": "add icon",
-		"REMOVE_ICON": "remove icon",
+		"CHOOSE_ICON": "Choose icon",
 		"MAKE_PRIVATE": "make private",
 		"MAKE_PUBLIC": "make public",
 		"KNOWLEDGE_BASES": "Knowledge bases",
@@ -1202,9 +1201,7 @@
 	"HELP_PAGE": {
 		"HELP": "Помощ",
 		"KNOWLEDGE_BASES": "Knowledge bases",
-		"CHOSE_ICON": "Chose icon to set",
-		"EDIT_DESCRIPTION": "edit description",
-		"EDIT_NAME": "edit name"
+		"CHOSE_ICON": "Chose icon to set"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "За нас"
