@@ -48,7 +48,8 @@
 		"MAKE_PRIVATE": "make private",
 		"MAKE_PUBLIC": "make public",
 		"KNOWLEDGE_BASES": "Knowledge bases",
-		"SELECT": "Select"
+		"SELECT": "Select",
+		"EMAIL": "Eлектронна поща"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -255,6 +256,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
+			"ADD_REMOVE_EMPLOYEE": "Add Interviewer",
 			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
@@ -673,10 +675,13 @@
 			"DOCUMENT_NAME": "Document name",
 			"DOCUMENT": "Document",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"INTERVIEW_FEEDBACK": "Interview: ",
 			"LEAVE_FEEDBACK": "Leave a feedback about the ",
+			"STATUS": "Selected status: ",
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
 				"INTERVIEWS": "Interviews",
+				"INTERVIEWER": "Interviewer: ",
 				"ADD_INTERVIEW": "Add interview",
 				"ON": "on",
 				"TO": "To",
@@ -748,7 +753,6 @@
 		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
-
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
@@ -1169,12 +1173,20 @@
 			"TASK_VALUE": "Task cannot be empty"
 		},
 		"SEND": {
-			"CONFIRMATION": "Are you sure you want to send this invoice to",
+			"CONFIRMATION": "Send this invoice to",
 			"ALREADY_SENT": "This invoice has already been sent to"
 		},
 		"VIEW": {
 			"FROM": "FROM",
 			"TO": "TO"
+		},
+		"DOWNLOAD": {
+			"CONFIRMATION": "Download this invoice ?",
+			"INVOICE_DOWNLOAD": "Invoice downloaded"
+		},
+		"EMAIL": {
+			"EMAIL_INVOICE": "Send this invoice by email ?",
+			"EMAIL_SENT": "Email Sent"
 		}
 	},
 	"HEADER": {
