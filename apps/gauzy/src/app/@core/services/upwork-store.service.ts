@@ -6,7 +6,7 @@ import { tap, switchMap } from 'rxjs/operators';
 import { Store } from './store.service';
 
 @Injectable({
-	providedIn: 'root'
+	providedIn: 'root',
 })
 export class UpworkStoreService {
 	private _config$: BehaviorSubject<IUpworkApiConfig> = new BehaviorSubject(
@@ -53,7 +53,7 @@ export class UpworkStoreService {
 		return this._us.syncContracts({
 			integrationId,
 			organizationId,
-			contracts
+			contracts,
 		});
 	}
 

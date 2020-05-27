@@ -13,16 +13,16 @@ import {
 	IUpworkApiConfig,
 	IIntegrationMap,
 	CurrenciesEnum,
-	ProjectTypeEnum
+	ProjectTypeEnum,
 } from '@gauzy/models';
 import {
 	IntegrationTenantCreateCommand,
-	IntegrationTenantGetCommand
+	IntegrationTenantGetCommand,
 } from '../integration-tenant/commands';
 import {
 	IntegrationSettingGetCommand,
 	IntegrationSettingGetManyCommand,
-	IntegrationSettingCreateCommand
+	IntegrationSettingCreateCommand,
 } from '../integration-setting/commands';
 import { arrayToObject } from '../core';
 import { Engagements } from 'upwork-api/lib/routers/hr/engagements.js';
@@ -39,7 +39,7 @@ export class UpworkService {
 		const integrationSetting = await this.commandBus.execute(
 			new IntegrationSettingGetCommand({
 				where: { settingsValue: consumerKey },
-				relations: ['integration']
+				relations: ['integration'],
 			})
 		);
 		if (!integrationSetting) {
@@ -48,7 +48,7 @@ export class UpworkService {
 
 		const integrationSettings = await this.commandBus.execute(
 			new IntegrationSettingGetManyCommand({
-				where: { integration: integrationSetting.integration }
+				where: { integration: integrationSetting.integration },
 			})
 		);
 		const integrationSettingMap = arrayToObject(
@@ -63,7 +63,7 @@ export class UpworkService {
 		) {
 			return {
 				integrationId: integrationSetting.integration.id,
-				...integrationSettingMap
+				...integrationSettingMap,
 			};
 		}
 
@@ -96,21 +96,21 @@ export class UpworkService {
 							settings: [
 								{
 									settingsName: 'consumerKey',
-									settingsValue: config.consumerKey
+									settingsValue: config.consumerKey,
 								},
 								{
 									settingsName: 'consumerSecret',
-									settingsValue: config.consumerSecret
+									settingsValue: config.consumerSecret,
 								},
 								{
 									settingsName: 'requestToken',
-									settingsValue: requestToken
+									settingsValue: requestToken,
 								},
 								{
 									settingsName: 'requestTokenSecret',
-									settingsValue: requestTokenSecret
-								}
-							]
+									settingsValue: requestTokenSecret,
+								},
+							],
 						})
 					);
 					return resolve({ url, requestToken, requestTokenSecret });
@@ -121,19 +121,19 @@ export class UpworkService {
 
 	getAccessToken({
 		requestToken,
-		verifier
+		verifier,
 	}: IAccessTokenDto): Promise<IAccessToken> {
 		return new Promise(async (resolve, reject) => {
 			const { integration } = await this.commandBus.execute(
 				new IntegrationSettingGetCommand({
 					where: { settingsValue: requestToken },
-					relations: ['integration']
+					relations: ['integration'],
 				})
 			);
 
 			const integrationSettings = await this.commandBus.execute(
 				new IntegrationSettingGetManyCommand({
-					where: { integration }
+					where: { integration },
 				})
 			);
 			const integrationSetting = arrayToObject(
@@ -152,21 +152,21 @@ export class UpworkService {
 						new IntegrationSettingCreateCommand({
 							integration,
 							settingsName: 'accessToken',
-							settingsValue: accessToken
+							settingsValue: accessToken,
 						})
 					);
 					await this.commandBus.execute(
 						new IntegrationSettingCreateCommand({
 							integration,
 							settingsName: 'accessTokenSecret',
-							settingsValue: accessTokenSecret
+							settingsValue: accessTokenSecret,
 						})
 					);
 
 					resolve({
 						integrationId: integration.id,
 						accessToken,
-						accessTokenSecret
+						accessTokenSecret,
 					});
 				}
 			);
@@ -179,14 +179,14 @@ export class UpworkService {
 		);
 		const integrationSettings = await this.commandBus.execute(
 			new IntegrationSettingGetManyCommand({
-				where: { integration }
+				where: { integration },
 			})
 		);
 		const {
 			accessToken,
 			consumerKey,
 			consumerSecret,
-			accessTokenSecret: accessSecret
+			accessTokenSecret: accessSecret,
 		} = arrayToObject(integrationSettings, 'settingsName', 'settingsValue');
 
 		return { accessToken, consumerKey, consumerSecret, accessSecret };
@@ -209,7 +209,7 @@ export class UpworkService {
 							reject(error);
 						} else {
 							const {
-								engagements: { engagement }
+								engagements: { engagement },
 							} = data;
 							resolve(engagement);
 						}
@@ -222,7 +222,7 @@ export class UpworkService {
 	async syncContracts({
 		integrationId,
 		organizationId,
-		contracts
+		contracts,
 	}): Promise<IIntegrationMap[]> {
 		return await Promise.all(
 			await contracts.map(
@@ -234,10 +234,10 @@ export class UpworkService {
 								organizationId,
 								public: true,
 								type: ProjectTypeEnum.RATE,
-								currency: CurrenciesEnum.BGN
+								currency: CurrenciesEnum.BGN,
 							},
 							integrationId,
-							sourceId
+							sourceId,
 						})
 					);
 				}
@@ -250,7 +250,7 @@ export class UpworkService {
 		const api = new UpworkApi(getWorkDiaryDto.config);
 		const workdiary = new Workdiary(api);
 		const params = {
-			offset: 0
+			offset: 0,
 		};
 		return new Promise((resolve, reject) => {
 			workdiary.getByContract(

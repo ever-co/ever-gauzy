@@ -9,6 +9,6 @@ import { CommandHandlers } from './commands/handlers';
 @Module({
 	imports: [TypeOrmModule.forFeature([IntegrationMap]), CqrsModule],
 	controllers: [IntegrationMapController],
-	providers: [IntegrationMapService, ...CommandHandlers]
+	providers: [IntegrationMapService, ...CommandHandlers],
 })
 export class IntegrationMapModule {}
