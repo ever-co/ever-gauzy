@@ -32,6 +32,7 @@ export class EventTypeCreateHandler
 		eventType.title = input.title;
 		eventType.durationUnit = input.durationUnit;
 		eventType.duration = input.duration;
+		eventType.tags = input.tags;
 
 		return await this.eventTypeService.create(eventType);
 	}

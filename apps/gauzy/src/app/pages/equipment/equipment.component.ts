@@ -20,7 +20,7 @@ export interface SelectedEquipment {
 
 @Component({
 	templateUrl: './equipment.component.html',
-	styleUrls: ['./equipment.component.scss']
+	styleUrls: ['./equipment.component.scss'],
 })
 export class EquipmentComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -33,7 +33,7 @@ export class EquipmentComponent extends TranslationBaseComponent
 	tags: any;
 	selectedTags: any;
 
-	@ViewChild('equipmentTable', { static: false }) equipmentTable;
+	@ViewChild('equipmentTable') equipmentTable;
 
 	ngOnInit(): void {
 		this.loadSmartTable();
@@ -58,43 +58,43 @@ export class EquipmentComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: PictureNameTagsComponent,
 				},
 				type: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_TYPE'),
-					type: 'string'
+					type: 'string',
 				},
 				SN: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_SN'),
-					type: 'string'
+					type: 'string',
 				},
 				manufacturedYear: {
 					title: this.getTranslation(
 						'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
 					),
 					type: 'number',
-					filter: false
+					filter: false,
 				},
 				initialCost: {
 					title: this.getTranslation(
 						'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST'
 					),
 					type: 'number',
-					filter: false
+					filter: false,
 				},
 				currency: {
 					title: this.getTranslation(
 						'EQUIPMENT_PAGE.EQUIPMENT_CURRENCY'
 					),
 					type: 'string',
-					filter: false
+					filter: false,
 				},
 				maxSharePeriod: {
 					title: this.getTranslation(
 						'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
 					),
 					type: 'number',
-					filter: false
+					filter: false,
 				},
 				autoApproveShare: {
 					title: this.getTranslation(
@@ -102,9 +102,9 @@ export class EquipmentComponent extends TranslationBaseComponent
 					),
 					type: 'custom',
 					filter: false,
-					renderComponent: AutoApproveComponent
-				}
-			}
+					renderComponent: AutoApproveComponent,
+				},
+			},
 		};
 	}
 
@@ -121,8 +121,8 @@ export class EquipmentComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EquipmentMutationComponent, {
 			context: {
 				equipment: this.selectedEquipment,
-				tags: this.selectedTags
-			}
+				tags: this.selectedTags,
+			},
 		});
 		const equipment = await dialog.onClose.pipe(first()).toPromise();
 		this.selectedEquipment = null;

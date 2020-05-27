@@ -4,7 +4,7 @@ import {
 	Input,
 	OnInit,
 	Output,
-	ViewChild
+	ViewChild,
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Organization, UserOrganization, RolesEnum } from '@gauzy/models';
@@ -16,11 +16,11 @@ import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/b
 
 @Component({
 	selector: 'ga-edit-user-mutation',
-	templateUrl: './edit-user-mutation.component.html'
+	templateUrl: './edit-user-mutation.component.html',
 })
 export class EditUserMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 	@Input()
 	userOrganization: UserOrganization;
@@ -53,7 +53,7 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 
 	private async _initializeForm() {
 		this.form = this.fb.group({
-			users: this.users
+			users: this.users,
 		});
 	}
 
@@ -61,7 +61,7 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 		const { items } = await this.usersOrganizationsService.getAll([
 			'user',
 			'user.role',
-			'user.tags'
+			'user.tags',
 		]);
 
 		const usersVm = [];
@@ -84,7 +84,7 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 					id: orgUser.userId,
 					isActive: orgUser.isActive,
 					imageUrl: orgUser.user.imageUrl,
-					user: orgUser.user
+					user: orgUser.user,
 				});
 			}
 		}
@@ -113,7 +113,7 @@ export class EditUserMutationComponent extends TranslationBaseComponent
 				this.addOrEditUser.emit({
 					userId: this.selectedUsersIds[i],
 					orgId: organization.id,
-					isActive: true
+					isActive: true,
 				});
 			}
 		}

@@ -18,7 +18,7 @@ export interface SelectedEquipmentSharing {
 
 @Component({
 	templateUrl: './equipment-sharing.component.html',
-	styleUrls: ['./equipment-sharing.component.scss']
+	styleUrls: ['./equipment-sharing.component.scss'],
 })
 export class EquipmentSharingComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -29,7 +29,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 	form: FormGroup;
 	disableButton = true;
 
-	@ViewChild('equipmentSharingTable', { static: false })
+	@ViewChild('equipmentSharingTable')
 	equipmentSharingTable;
 
 	constructor(
@@ -61,14 +61,14 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 							return equipment.name;
 						}
 						return '-';
-					}
+					},
 				},
 				shareRequestDay: {
 					title: this.getTranslation(
 						'EQUIPMENT_SHARING_PAGE.SHARE_REQUIEST_DATE'
 					),
 					type: 'date',
-					valuePrepareFunction: this._formatDate
+					valuePrepareFunction: this._formatDate,
 				},
 				shareStartDay: {
 					title: this.getTranslation(
@@ -76,7 +76,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					),
 					type: 'date',
 					valuePrepareFunction: this._formatDate,
-					filter: false
+					filter: false,
 				},
 				shareEndDay: {
 					title: this.getTranslation(
@@ -84,14 +84,14 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 					),
 					type: 'date',
 					valuePrepareFunction: this._formatDate,
-					filter: false
+					filter: false,
 				},
 				status: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.STATUS'),
 					type: 'string',
-					filter: false
-				}
-			}
+					filter: false,
+				},
+			},
 		};
 	}
 
@@ -99,7 +99,7 @@ export class EquipmentSharingComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(
 			EquipmentSharingMutationComponent,
 			{
-				context: { equipmentSharing: this.selectedEquipmentSharing }
+				context: { equipmentSharing: this.selectedEquipmentSharing },
 			}
 		);
 

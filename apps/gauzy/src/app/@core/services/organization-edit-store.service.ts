@@ -1,9 +1,11 @@
 import { Organization } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
+import { Injectable } from '@angular/core';
 
 /**
  * Service used to update organization
  */
+@Injectable()
 export class OrganizationEditStore {
 	private _selectedOrganization: Organization;
 

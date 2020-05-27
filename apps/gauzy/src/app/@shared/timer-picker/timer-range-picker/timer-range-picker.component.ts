@@ -4,7 +4,7 @@ import {
 	forwardRef,
 	Input,
 	ViewChild,
-	AfterViewInit
+	AfterViewInit,
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { IDateRange } from '@gauzy/models';
@@ -20,9 +20,9 @@ import { debounceTime } from 'rxjs/operators';
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => TimerRangePickerComponent),
-			multi: true
-		}
-	]
+			multi: true,
+		},
+	],
 })
 export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	onChange: any = () => {};
@@ -35,9 +35,9 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	maxSlotEndTime: string;
 	minSlotEndTime: string;
 
-	@ViewChild('dateModel', { static: false }) dateModel: NgModel;
-	@ViewChild('startTimeModel', { static: false }) startTimeModel: NgModel;
-	@ViewChild('endTimeModel', { static: false }) endTimeModel: NgModel;
+	@ViewChild('dateModel') dateModel: NgModel;
+	@ViewChild('startTimeModel') startTimeModel: NgModel;
+	@ViewChild('endTimeModel') endTimeModel: NgModel;
 
 	private _maxDate: Date = null;
 	private _disabledDates: number[] = [];
@@ -97,7 +97,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				);
 				this.selectedRange = {
 					start: isNaN(start.getTime()) ? null : start,
-					end: isNaN(start.getTime()) ? null : end
+					end: isNaN(start.getTime()) ? null : end,
 				};
 			});
 	}
@@ -110,7 +110,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				hour: moment().get('hour'),
 				minute: moment().get('minute') - (moment().minutes() % 10),
 				second: 0,
-				millisecond: 0
+				millisecond: 0,
 			});
 			if (!this.date) {
 				this.date = mTime.toDate();
@@ -166,9 +166,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	writeValue(value: IDateRange) {
 		if (value) {
 			if (!value.start) {
-				value.start = moment()
-					.subtract(30, 'minutes')
-					.toDate();
+				value.start = moment().subtract(30, 'minutes').toDate();
 			}
 			if (!value.end) {
 				value.end = new Date();

@@ -8,7 +8,7 @@ import { TimeOffService } from '../../../@core/services/time-off.service';
 @Component({
 	selector: 'ngx-time-off-request-mutation',
 	templateUrl: './time-off-request-mutation.component.html',
-	styleUrls: ['../time-off-mutation.components.scss']
+	styleUrls: ['../time-off-mutation.components.scss'],
 })
 export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 	constructor(
@@ -17,7 +17,7 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 		private store: Store
 	) {}
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	policies: TimeOffPolicy[] = [];
 
@@ -44,8 +44,8 @@ export class TimeOffRequestMutationComponent implements OnInit, OnDestroy {
 		if (this.organizationId) {
 			const findObj: {} = {
 				organization: {
-					id: this.organizationId
-				}
+					id: this.organizationId,
+				},
 			};
 
 			const { items } = await this.timeOffService.getAllPolicies(

@@ -17,7 +17,7 @@ export interface SelectedInvoice {
 @Component({
 	selector: 'ga-invoices-recieved',
 	templateUrl: './invoices-recieved.component.html',
-	styleUrls: ['./invoices-recieved.component.scss']
+	styleUrls: ['./invoices-recieved.component.scss'],
 })
 export class InvoicesRecievedComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -28,7 +28,7 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 	selectedInvoice: Invoice;
 	disableButton = true;
 
-	@ViewChild('invoicesTable', { static: false }) invoicesTable;
+	@ViewChild('invoicesTable') invoicesTable;
 
 	constructor(
 		private store: Store,
@@ -51,7 +51,7 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 			.subscribe(async (organization) => {
 				if (organization) {
 					const invoices = await this.invoicesService.getAll([], {
-						sentTo: organization.id
+						sentTo: organization.id,
 					});
 					this.loading = false;
 					this.smartTableSource.load(invoices.items);
@@ -61,7 +61,7 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 
 	view() {
 		this.router.navigate([
-			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
+			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`,
 		]);
 	}
 
@@ -72,20 +72,20 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'string',
-					sortDirection: 'asc'
+					sortDirection: 'asc',
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'string',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${cell}`;
-					}
+					},
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-					type: 'string'
-				}
-			}
+					type: 'string',
+				},
+			},
 		};
 	}
 

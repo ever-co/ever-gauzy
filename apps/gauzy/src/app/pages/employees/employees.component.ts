@@ -33,7 +33,7 @@ interface EmployeeViewModel {
 
 @Component({
 	templateUrl: './employees.component.html',
-	styleUrls: ['./employees.component.scss']
+	styleUrls: ['./employees.component.scss'],
 })
 export class EmployeesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -69,7 +69,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 	hasInviteViewOrEditPermission = false;
 	organizationInvitesAllowed = false;
 
-	@ViewChild('employeesTable', { static: false }) employeesTable;
+	@ViewChild('employeesTable') employeesTable;
 
 	constructor(
 		private employeesService: EmployeesService,
@@ -219,7 +219,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 	edit() {
 		this.router.navigate([
-			'/pages/employees/edit/' + this.selectedEmployee.id
+			'/pages/employees/edit/' + this.selectedEmployee.id,
 		]);
 	}
 
@@ -232,8 +232,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 			context: {
 				invitationType: InvitationTypeEnum.EMPLOYEE,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId
-			}
+				currentUserId: this.store.userId,
+			},
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
@@ -246,8 +246,10 @@ export class EmployeesComponent extends TranslationBaseComponent
 					recordType:
 						this.selectedEmployee.fullName +
 						' ' +
-						this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
-				}
+						this.getTranslation(
+							'FORM.DELETE_CONFIRMATION.EMPLOYEE'
+						),
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -274,8 +276,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 			context: {
 				endWorkValue: this.selectedEmployee.endWork,
-				employeeFullName: this.selectedEmployee.fullName
-			}
+				employeeFullName: this.selectedEmployee.fullName,
+			},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -302,8 +304,8 @@ export class EmployeesComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 			context: {
 				backToWork: true,
-				employeeFullName: this.selectedEmployee.fullName
-			}
+				employeeFullName: this.selectedEmployee.fullName,
+			},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -334,7 +336,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 
 		const { items } = await this.employeesService
 			.getAll(['user', 'tags'], {
-				organization: { id: this.selectedOrganizationId }
+				organization: { id: this.selectedOrganizationId },
 			})
 			.pipe(first())
 			.toPromise();
@@ -366,7 +368,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 				averageExpenses: Math.floor(this.averageExpense),
 				averageBonus: Math.floor(this.averageBonus),
 				bonusDate: Date.now(),
-				startedWorkOn: emp.startedWorkOn
+				startedWorkOn: emp.startedWorkOn,
 			});
 		}
 		if (!this.includeDeleted) {
@@ -405,33 +407,33 @@ export class EmployeesComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					class: 'align-row',
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
-					class: 'email-column'
+					class: 'email-column',
 				},
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
-					renderComponent: EmployeeAverageIncomeComponent
+					renderComponent: EmployeeAverageIncomeComponent,
 				},
 				averageExpenses: {
 					title: this.getTranslation('SM_TABLE.EXPENSES'),
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
-					renderComponent: EmployeeAverageExpensesComponent
+					renderComponent: EmployeeAverageExpensesComponent,
 				},
 				averageBonus: {
 					title: this.getTranslation('SM_TABLE.BONUS_AVG'),
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
-					renderComponent: EmployeeAverageBonusComponent
+					renderComponent: EmployeeAverageBonusComponent,
 				},
 				bonus: {
 					title: `${this.getTranslation(
@@ -440,7 +442,7 @@ export class EmployeesComponent extends TranslationBaseComponent
 					type: 'custom',
 					filter: false,
 					class: 'text-center',
-					renderComponent: EmployeeBonusComponent
+					renderComponent: EmployeeBonusComponent,
 				},
 				workStatus: {
 					title: this.getTranslation('SM_TABLE.WORK_STATUS'),
@@ -448,13 +450,13 @@ export class EmployeesComponent extends TranslationBaseComponent
 					class: 'text-center',
 					width: '200px',
 					renderComponent: EmployeeWorkStatusComponent,
-					filter: false
-				}
+					filter: false,
+				},
 			},
 			pager: {
 				display: true,
-				perPage: 8
-			}
+				perPage: 8,
+			},
 		};
 	}
 

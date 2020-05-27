@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '../../../@core/services/store.service';
-import { Proposal, ProposalStatusEnum } from '@gauzy/models';
+import { Proposal, ProposalStatusEnum, Tag } from '@gauzy/models';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +13,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 @Component({
 	selector: 'ga-proposal-register',
 	templateUrl: './proposal-register.component.html',
-	styleUrls: ['././proposal-register.component.scss']
+	styleUrls: ['././proposal-register.component.scss'],
 })
 export class ProposalRegisterComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -28,7 +28,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
 	proposal?: Proposal;
@@ -40,6 +40,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	jobPostContent = '';
 	proposalContent = '';
+	tags: Tag[] = [];
 
 	ngOnInit() {
 		this._initializeForm();
@@ -56,7 +57,8 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 			jobPostUrl: ['', Validators.required],
 			valueDate: [new Date(), Validators.required],
 			jobPostContent: '',
-			proposalContent: ''
+			proposalContent: '',
+			tags: '',
 		});
 	}
 
@@ -74,7 +76,8 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 						valueDate: result.valueDate,
 						jobPostContent: result.jobPostContent,
 						proposalContent: result.proposalContent,
-						status: this.statuses[0]
+						status: this.statuses[0],
+						tags: this.tags,
 					});
 
 					// TODO translate
@@ -101,13 +104,16 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 					this.getTranslation(
 						'NOTES.PROPOSALS.REGISTER_PROPOSAL_ERROR',
 						{
-							error: error.message || error.message
+							error: error.message || error.message,
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
 			}
 		}
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 
 	ngOnDestroy() {

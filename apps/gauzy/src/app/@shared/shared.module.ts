@@ -8,13 +8,13 @@ import { RouterModule } from '@angular/router';
 @NgModule({
 	declarations: [...Pipes, ...Components],
 	imports: [CommonModule, BackNavigationModule, RouterModule],
-	exports: [BackNavigationModule, ...Pipes, ...Components]
+	exports: [BackNavigationModule, ...Pipes, ...Components],
 })
 export class SharedModule {
-	static forRoot(): ModuleWithProviders {
+	static forRoot(): ModuleWithProviders<SharedModule> {
 		return {
 			ngModule: SharedModule,
-			providers: []
+			providers: [],
 		};
 	}
 }

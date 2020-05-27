@@ -19,7 +19,7 @@ export interface SelectedTag {
 @Component({
 	selector: 'ngx-tags',
 	templateUrl: './tags.component.html',
-	styleUrls: ['./tags.component.scss']
+	styleUrls: ['./tags.component.scss'],
 })
 export class TagsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -32,7 +32,7 @@ export class TagsComponent extends TranslationBaseComponent
 	data: SelectedTag;
 	disableButton = true;
 
-	@ViewChild('tagsTable', { static: false }) tagsTable;
+	@ViewChild('tagsTable') tagsTable;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -61,7 +61,7 @@ export class TagsComponent extends TranslationBaseComponent
 
 	async add() {
 		const dialog = this.dialogService.open(TagsMutationComponent, {
-			context: {}
+			context: {},
 		});
 		const addData = await dialog.onClose.pipe(first()).toPromise();
 		this.selectedTag = null;
@@ -94,8 +94,8 @@ export class TagsComponent extends TranslationBaseComponent
 	async edit() {
 		const dialog = this.dialogService.open(TagsMutationComponent, {
 			context: {
-				tag: this.tag
-			}
+				tag: this.tag,
+			},
 		});
 
 		const editData = await dialog.onClose.pipe(first()).toPromise();
@@ -121,14 +121,14 @@ export class TagsComponent extends TranslationBaseComponent
 					type: 'custom',
 					width: '20%',
 					class: 'text-center',
-					renderComponent: TagsColorComponent
+					renderComponent: TagsColorComponent,
 				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
 					type: 'string',
-					filter: false
-				}
-			}
+					filter: false,
+				},
+			},
 		};
 	}
 

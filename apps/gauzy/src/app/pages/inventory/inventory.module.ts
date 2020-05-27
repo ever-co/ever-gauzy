@@ -8,7 +8,7 @@ import {
 	NbIconModule,
 	NbSpinnerModule,
 	NbDialogModule,
-	NbCheckboxModule
+	NbCheckboxModule,
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -22,7 +22,10 @@ import { ProductVariantFormComponent } from '../../@shared/product-mutation/prod
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ProductTypesComponent } from './product-type/product-types.component';
 import { ProductTypeMutationComponent } from '../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
-import { OrganizationRowComponent } from './product-type/org-row/organization-row.component';
+import { ProductCategoriesComponent } from './product-category/product-categories.component';
+import { ProductCategoryMutationComponent } from '../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
+import { ImageRowComponent } from './img-row/image-row.component';
+import { IconRowComponent } from './icon-row/icon-row.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -32,7 +35,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 	declarations: [
 		InventoryComponent,
 		ProductTypesComponent,
-		OrganizationRowComponent
+		ProductCategoriesComponent,
+		ImageRowComponent,
+		IconRowComponent,
 	],
 	imports: [
 		UserFormsModule,
@@ -51,16 +56,18 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+				deps: [HttpClient],
+			},
 		}),
-		NbSpinnerModule
+		NbSpinnerModule,
 	],
 	entryComponents: [
 		ProductMutationComponent,
 		ProductVariantFormComponent,
 		ProductTypeMutationComponent,
-		OrganizationRowComponent
-	]
+		ProductCategoryMutationComponent,
+		ImageRowComponent,
+		IconRowComponent,
+	],
 })
 export class InventoryModule {}

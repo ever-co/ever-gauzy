@@ -1,6 +1,5 @@
-@import '~@nebular/theme/styles/theming';
 // @nebular out of the box themes
-@import '~@nebular/theme/styles/themes';
+@import 'themes';
 
 $break-xs: 360px;
 $break-sm: 480px;
@@ -12,118 +11,118 @@ $break-xxl: 1280px;
 $break-dsk: 1532px;
 
 @function px2rem($px, $default: 14px) {
-	$em: $px/$default;
-	@return #{$em}rem;
+  $em: $px/$default;
+  @return #{$em}rem;
 }
 
 @mixin respond($media) {
-	@if $media==xs {
-		@media only screen and (max-width: $break-xs) {
-			@content;
-		}
-	} @else if $media==sm {
-		@media only screen and (max-width: $break-sm) {
-			@content;
-		}
-	} @else if $media==md {
-		@media only screen and (max-width: $break-md) {
-			@content;
-		}
-	} @else if $media==lg {
-		@media only screen and (max-width: $break-lg) {
-			@content;
-		}
-	} @else if $media==ipad {
-		@media only screen and (max-width: $break-ipad) {
-			@content;
-		}
-	} @else if $media==xl {
-		@media only screen and (max-width: $break-xl) {
-			@content;
-		}
-	} @else if $media==xxl {
-		@media only screen and (max-width: $break-xxl) {
-			@content;
-		}
-	} @else if $media==dsk {
-		@media only screen and (max-width: $break-dsk) {
-			@content;
-		}
-	} @else {
-		@media only screen and (max-width: $media) {
-			@content;
-		}
-	}
+  @if $media==xs {
+    @media only screen and (max-width: $break-xs) {
+      @content;
+    }
+  } @else if $media==sm {
+    @media only screen and (max-width: $break-sm) {
+      @content;
+    }
+  } @else if $media==md {
+    @media only screen and (max-width: $break-md) {
+      @content;
+    }
+  } @else if $media==lg {
+    @media only screen and (max-width: $break-lg) {
+      @content;
+    }
+  } @else if $media==ipad {
+    @media only screen and (max-width: $break-ipad) {
+      @content;
+    }
+  } @else if $media==xl {
+    @media only screen and (max-width: $break-xl) {
+      @content;
+    }
+  } @else if $media==xxl {
+    @media only screen and (max-width: $break-xxl) {
+      @content;
+    }
+  } @else if $media==dsk {
+    @media only screen and (max-width: $break-dsk) {
+      @content;
+    }
+  } @else {
+    @media only screen and (max-width: $media) {
+      @content;
+    }
+  }
 }
 
 @mixin respond-to($media) {
-	@if $media==xs {
-		@media only screen and (min-width: $break-xs) {
-			@content;
-		}
-	} @else if $media==sm {
-		@media only screen and (min-width: $break-sm) {
-			@content;
-		}
-	} @else if $media==md {
-		@media only screen and (min-width: $break-md) {
-			@content;
-		}
-	} @else if $media==lg {
-		@media only screen and (min-width: $break-lg) {
-			@content;
-		}
-	} @else if $media==ipad {
-		@media only screen and (min-width: $break-ipad) {
-			@content;
-		}
-	} @else if $media==xl {
-		@media only screen and (min-width: $break-xl) {
-			@content;
-		}
-	} @else if $media==dsk {
-		@media only screen and (min-width: $break-dsk) {
-			@content;
-		}
-	} @else {
-		@media only screen and (min-width: $media) {
-			@content;
-		}
-	}
+  @if $media==xs {
+    @media only screen and (min-width: $break-xs) {
+      @content;
+    }
+  } @else if $media==sm {
+    @media only screen and (min-width: $break-sm) {
+      @content;
+    }
+  } @else if $media==md {
+    @media only screen and (min-width: $break-md) {
+      @content;
+    }
+  } @else if $media==lg {
+    @media only screen and (min-width: $break-lg) {
+      @content;
+    }
+  } @else if $media==ipad {
+    @media only screen and (min-width: $break-ipad) {
+      @content;
+    }
+  } @else if $media==xl {
+    @media only screen and (min-width: $break-xl) {
+      @content;
+    }
+  } @else if $media==dsk {
+    @media only screen and (min-width: $break-dsk) {
+      @content;
+    }
+  } @else {
+    @media only screen and (min-width: $media) {
+      @content;
+    }
+  }
 }
 
 @mixin respond-only($media) {
-	@if $media==xs {
-		@media only screen and (min-width: $break-xs) {
-			@content;
-		}
-	} @else if $media==sm {
-		@media only screen and (min-width: $break-xs + 1) and (max-width: $break-sm) {
-			@content;
-		}
-	} @else if $media==md {
-		@media only screen and (min-width: $break-sm + 1) and (max-width: $break-md) {
-			@content;
-		}
-	} @else if $media==lg {
-		@media only screen and (min-width: $break-md + 1) and (max-width: $break-ipad) {
-			@content;
-		}
-	} @else if $media==ipad {
-		@media only screen and (min-width: $break-ipad + 1) and (max-width: $break-lg) {
-			@content;
-		}
-	} @else if $media==xl {
-		@media only screen and (min-width: $break-lg + 1) and (max-width: $break-xl) {
-			@content;
-		}
-	} @else if $media==dsk {
-		@media only screen and (min-width: $break-lg + 1) and (max-width: $break-dsk) {
-			@content;
-		}
-	} @else {
-		@media only screen and (min-width: $media) {
-			@content;
-		}
-	}
+  @if $media==xs {
+    @media only screen and (min-width: $break-xs) {
+      @content;
+    }
+  } @else if $media==sm {
+    @media only screen and (min-width: $break-xs + 1) and (max-width: $break-sm) {
+      @content;
+    }
+  } @else if $media==md {
+    @media only screen and (min-width: $break-sm + 1) and (max-width: $break-md) {
+      @content;
+    }
+  } @else if $media==lg {
+    @media only screen and (min-width: $break-md + 1) and (max-width: $break-ipad) {
+      @content;
+    }
+  } @else if $media==ipad {
+    @media only screen and (min-width: $break-ipad + 1) and (max-width: $break-lg) {
+      @content;
+    }
+  } @else if $media==xl {
+    @media only screen and (min-width: $break-lg + 1) and (max-width: $break-xl) {
+      @content;
+    }
+  } @else if $media==dsk {
+    @media only screen and (min-width: $break-lg + 1) and (max-width: $break-dsk) {
+      @content;
+    }
+  } @else {
+    @media only screen and (min-width: $media) {
+      @content;
+    }
+  }
 }

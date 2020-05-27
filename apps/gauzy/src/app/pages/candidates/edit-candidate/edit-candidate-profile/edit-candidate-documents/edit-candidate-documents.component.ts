@@ -13,11 +13,11 @@ import { ICandidateDocument } from '@gauzy/models';
 @Component({
 	selector: 'ga-edit-candidate-documents',
 	templateUrl: './edit-candidate-documents.component.html',
-	styleUrls: ['./edit-candidate-documents.component.scss']
+	styleUrls: ['./edit-candidate-documents.component.scss'],
 })
 export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('candidateCv', { static: false })
+	@ViewChild('candidateCv')
 	candidateCv: CandidateCvComponent;
 	private _ngDestroy$ = new Subject<void>();
 	documentId = null;
@@ -50,19 +50,19 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	}
 	private async _initializeForm() {
 		this.form = new FormGroup({
-			documents: this.fb.array([])
+			documents: this.fb.array([]),
 		});
 		const documentForm = this.form.controls.documents as FormArray;
 		documentForm.push(
 			this.fb.group({
 				name: ['', Validators.required],
-				documentUrl: ['', Validators.required]
+				documentUrl: ['', Validators.required],
 			})
 		);
 	}
 	private async loadDocuments() {
 		const res = await this.candidateDocumentsService.getAll({
-			candidateId: this.candidateId
+			candidateId: this.candidateId,
 		});
 		if (res) {
 			this.documentList = res.items;
@@ -114,7 +114,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	async updateDocument(formValue: ICandidateDocument) {
 		try {
 			await this.candidateDocumentsService.update(this.documentId, {
-				...formValue
+				...formValue,
 			});
 			this.loadDocuments();
 			this.toastrSuccess('UPDATED');
@@ -130,7 +130,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 		try {
 			await this.candidateDocumentsService.create({
 				...formValue,
-				candidateId: this.candidateId
+				candidateId: this.candidateId,
 			});
 			this.toastrSuccess('CREATED');
 			this.loadDocuments();
@@ -154,7 +154,7 @@ export class EditCandidateDocumentsComponent extends TranslationBaseComponent
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
+				error: error.error ? error.error.message : error.message,
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);

@@ -2,19 +2,19 @@ import { Component, Input } from '@angular/core';
 import { ViewCell } from 'ng2-smart-table';
 import {
 	SelectedEmployee,
-	ALL_EMPLOYEES_SELECTED
+	ALL_EMPLOYEES_SELECTED,
 } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Router } from '@angular/router';
 import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ngx-employee-with-links',
-	templateUrl: './employee-with-links.component.html'
+	templateUrl: './employee-with-links.component.html',
 })
 export class EmployeeWithLinksComponent implements ViewCell {
 	@Input()
 	rowData: any;
-
+	@Input()
 	value: any;
 
 	constructor(private store: Store, private readonly router: Router) {}

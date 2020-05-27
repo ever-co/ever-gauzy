@@ -8,16 +8,18 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbSidebarModule,
-	NbLayoutModule
+	NbLayoutModule,
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/selectors.module';
 import { HttpClient } from '@angular/common/http';
 import { SidebarComponent } from './sidebar.component';
 import { TreeModule } from 'angular-tree-component';
+import { CKEditorModule } from 'ng2-ckeditor';
 
 @NgModule({
 	imports: [
+		CKEditorModule,
 		TreeModule.forRoot(),
 		ThemeModule,
 		FormsModule,
@@ -33,11 +35,11 @@ import { TreeModule } from 'angular-tree-component';
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	declarations: [SidebarComponent],
-	exports: [SidebarComponent]
+	exports: [SidebarComponent],
 })
 export class SidebarModule {}

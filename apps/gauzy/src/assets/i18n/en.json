@@ -15,7 +15,6 @@
 		"ADD_EXISTING": "Add Existing",
 		"OK": "Ok",
 		"SAVE": "Save",
-		"DISCARD": "Discard",
 		"CLEAR_ALL": "Clear All",
 		"BACK": "BACK",
 		"SENT": "Sent",
@@ -39,13 +38,23 @@
 		"VIEW": "View",
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
+		"HIRE": "Hire",
+		"REJECT": "Reject",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
 		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
-		"EMAIL": "Email"
+		"EMAIL": "Email",
+		"ADD_ICON": "add icon",
+		"REMOVE_ICON": "remove icon",
+		"MAKE_PRIVATE": "make private",
+		"MAKE_PUBLIC": "make public",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"SELECT": "Select"
 	},
 	"SM_TABLE": {
 		"DATE": "Date",
+		"START_DATE": "Start Date",
+		"END_DATE": "End Date",
 		"CLIENT_NAME": "Client Name",
 		"NAME": "Name",
 		"VENDOR": "Vendor",
@@ -248,6 +257,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Add or Remove Employees",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
+			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
 			"ADD_ORGANIZATIONS": "Add Organizations",
@@ -288,7 +298,9 @@
 				"INTERVIEWERS": "Interviewers",
 				"LOCATION": "Location",
 				"NOTE": "Note (optional)",
-				"TYPE": "Interview type"
+				"TYPE": "Interview type",
+				"CALL": "Call",
+				"MEETING": "Meeting"
 			},
 			"MEETING_AGENDA": "Agenda",
 			"MEETING_LOCATION": "Location",
@@ -315,6 +327,13 @@
 			"SURE": "Are you sure you want to archive",
 			"RECORD": "record",
 			"CANDIDATE": "candidate"
+		},
+		"CANDIDATE_ACTION_CONFIRMATION": {
+			"SURE": "Are you sure you want to ",
+			"RECORD": "record",
+			"CANDIDATE": "candidate",
+			"HIRE": "hire",
+			"REJECT": "reject"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -409,8 +428,8 @@
 			"EXPORT": "Export",
 			"MERGE": "merge data",
 			"CLEAN_UP": "clean up before import",
-			"EXPORT_MESSAGE": "Click export to download all tables from the database.",
-			"IMPORT_MESSAGE": "Click import to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
+			"EXPORT_MESSAGE": "Click \"EXPORT\" to download all tables from the database or click \"DOWNLOAD TEMPLATES\" to download zip archive with CSV templates ",
+			"IMPORT_MESSAGE": "Click \"IMPORT\" to insert all tables in the database. The name of the file for upload should be: \"export.zip\". Chose also between options \"merge data\" and \"clean up before import\".",
 			"SELECT_FILE": "Select File",
 			"DROP_FILE": "Drop the file here",
 			"BROWSE": "BROWSE",
@@ -423,7 +442,8 @@
 			"CANCEL": "Cancel",
 			"REMOVE": "Remove",
 			"WRONG_FILE_NAME": "Wrong file name!!!",
-			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\""
+			"CORRECT_FILE_NAME": "The file name should be: \"export.zip\"",
+			"DOWNLOAD_TEMPLATES": "Download templates"
 		},
 		"TAGS": "Tags",
 		"EQUIPMENT": "Equipment",
@@ -474,6 +494,17 @@
 			"SYNCED_ENTITIES": "Auto synced entities",
 			"TOOLTIP_ACTIVITY_INFO": "Date range Limit: 7 days Earliest Date: 6 full months",
 			"DATE_RANGE_PLACEHOLDER": "Choose date between"
+		},
+		"UPWORK_PAGE": {
+			"ACTIVITIES": "Activities",
+			"REPORTS": "Reports",
+			"TRANSACTIONS": "Transactions",
+			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
+			"API_KEY": "Upwork API key",
+			"SECRET": "Upwork Secret",
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy.",
+			"CONTRACTS": "Contracts",
+			"SYNCED_CONTRACTS": "Synced Contracts"
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -604,17 +635,7 @@
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
-	"INTERVIEW_INFO_MODAL": {
-		"SCHEDULED_BY": "Scheduled by",
-		"HOURS_AGO": "hour(s) ago",
-		"MINUTES_AGO": "minute(s) ago",
-		"DATE": "Date",
-		"TIME": "Time",
-		"CANDIDATE": "Candidate",
-		"INTERVIEWERS": "Interviewers",
-		"LOCATION": "Location",
-		"NOTE": "Note"
-	},
+
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
 		"ADD_CANDIDATE": "Add Candidates",
@@ -655,6 +676,7 @@
 			"DOCUMENT_NAME": "Document name",
 			"DOCUMENT": "Document",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"LEAVE_FEEDBACK": "Leave a feedback about the ",
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
 				"INTERVIEWS": "Interviews",
@@ -664,6 +686,8 @@
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"SCHEDULED_INTERVIEWS": "Scheduled interviews",
+				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
 				"NEXT": "Next",
@@ -674,8 +698,26 @@
 				"DETAILS": "Send interview details to",
 				"NOTIFY_CANDIDATE": "Notify candidate",
 				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
-				"INTERVIEWERS": "interviewer(s)"
+				"INTERVIEWERS": "interviewer(s)",
+				"HIRE": "Hire",
+				"POSTPONE": "Postpone",
+				"REJECT": "Reject"
 			}
+		},
+		"INTERVIEW_INFO_MODAL": {
+			"SCHEDULED": "Scheduled",
+			"HOURS_AGO": " hour(s) ago",
+			"LESS_MINUTE": " less than a minute ago",
+			"MINUTES_AGO": " minutes ago",
+			"DAYS_AGO": " day(s) ago",
+			"DATE": "Date",
+			"TIME": "Time",
+			"CANDIDATE": "Candidate",
+			"INTERVIEWERS": "Interviewers",
+			"LOCATION": "Location",
+			"NOTE": "Note",
+			"OF": "of",
+			"INTERVIEWS_LOWER_CASE": "interviews"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
@@ -870,7 +912,8 @@
 		"TAGS_DELETE_TAG": "Tag deleted",
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
-		"TAGS_SELECT_DESCRIPTION": "Tag description"
+		"TAGS_SELECT_DESCRIPTION": "Tag description",
+		"ADD_NEW_TAG": "Add new Tag"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -934,6 +977,7 @@
 		"IS_EQUIPMENT": "Is equipment",
 		"TRACK_INVENTORY": "Track inventory",
 		"ADD_OPTION": "Add option",
+		"EDIT_OPTION": "Edit option",
 		"INTERNATIONAL_REFERENCE": "International reference",
 		"CODE": "Code",
 		"NOTES": "Notes",
@@ -951,10 +995,20 @@
 		"EDIT_PRODUCT_TYPE": "Edit product type",
 		"ADD_PRODUCT_TYPE": "Add product type",
 		"PRODUCT_TYPE_SAVED": "Product type saved",
-		"PRODUCT_TYPE_DELETED": "Product type deleted"
+		"PRODUCT_TYPE_DELETED": "Product type deleted",
+		"EDIT_PRODUCT_CATEGORY": "Edit product category",
+		"ADD_PRODUCT_CATEGORY": "Add product category",
+		"PRODUCT_CATEGORY_SAVED": "Product category saved",
+		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
+		"IMAGE": "Image",
+		"LANGUAGE": "Language",
+		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
+		"ICON": "Icon"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
+		"MY_TASK_HEADER": "My Tasks",
+		"TEAM_TASKS_HEADER": "Team's Tasks",
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"TASKS_TITLE": "Title",
@@ -965,6 +1019,7 @@
 		"TASK_DELETED": "Task deleted",
 		"TASKS_PROJECT": "Project",
 		"TASK_MEMBERS": "Employees",
+		"TASK_ASSIGNED_TO": "Assigned To",
 		"TASK_TEAMS": "Teams",
 		"DUE_DATE": "Due Date",
 		"ESTIMATE": "Estimate",
@@ -1143,7 +1198,11 @@
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist"
 	},
 	"HELP_PAGE": {
-		"HELP": "Help"
+		"HELP": "Help",
+		"KNOWLEDGE_BASES": "Knowledge bases",
+		"CHOSE_ICON": "Chose icon to set",
+		"EDIT_DESCRIPTION": "edit description",
+		"EDIT_NAME": "edit name"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "About"
@@ -1203,7 +1262,8 @@
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",
-			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!"
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
+			"SOMETHING_BAD_HAPPENED": "Something bad happened!"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1250,6 +1310,7 @@
 		},
 		"CANDIDATE": {
 			"INVALID_FORM": "Please fill the form",
+			"INVALID_FEEDBACK_INFO": "Please add feedback information",
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
 				"INVALID_FORM": "Please fill the form",
@@ -1324,6 +1385,10 @@
 			"EDIT_EVENT_TYPE": "Event type edited",
 			"DELETE_EVENT_TYPE": "Event type deleted",
 			"ERROR": "{{ error }}"
+		},
+		"AVAILABILITY_SLOTS": {
+			"SAVE": "Availabiliy Slots saved",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1355,6 +1420,10 @@
 		"FIRST_ORGANIZATION": "Let's create your first organization",
 		"COMPLETE": "You're all set!"
 	},
+	"VALIDATION": {
+		"FIELD_REQUIRED": "This field is required!",
+		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
+	},
 	"APPOINTMENTS_PAGE": {
 		"ADD_APPOINTMENT": "Add Appointment"
 	},
@@ -1367,6 +1436,12 @@
 		"ACTIVE": "Active"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Date Specific Availibility"
+		"DATE_SPECIFIC_AVAILABILITY": "Date Specific Availability",
+		"RECURRING_AVAILABILITY": "Recurring Availability"
+	},
+	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENTS": "Book an appointment",
+		"SELECT_EVENT_TYPES": "Please select an event type",
+		"PICK_DATETIME": "Pick a date and time"
 	}
 }

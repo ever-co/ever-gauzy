@@ -1,85 +1,148 @@
-<nb-card>
-	<nb-card-header class="d-flex">
-		<div>
-			<h5 class="title">
-				{{ interview.title }}
-			</h5>
-			<p *ngIf="!isMinutes" class="interview-info">
-				{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
-				{{ interview.interviewers }} {{ hoursUpdate }}
-				{{ 'INTERVIEW_INFO_MODAL.HOURS_AGO' | translate }}
-			</p>
-			<p *ngIf="isMinutes" class="interview-info">
-				{{ 'INTERVIEW_INFO_MODAL.SCHEDULED_BY' | translate }}
-				{{ interview.interviewers }} {{ hoursUpdate }}
-				{{ 'INTERVIEW_INFO_MODAL.MINUTES_AGO' | translate }}
-			</p>
-		</div>
+<nb-card class="card-wrap">
+	<div class="ml-auto mt-3 mr-3">
+		<nb-icon icon="edit-outline" class="icons" (click)="edit()"></nb-icon>
 		<nb-icon
-			class="ml-auto mt-1 close"
 			icon="close-outline"
+			class="icons"
 			(click)="closeDialog()"
 		></nb-icon>
-	</nb-card-header>
-	<nb-card-body>
-		<div>
-			<div class="interview-info">
-				<nb-icon icon="calendar-outline" class="icons"></nb-icon>
-				<p class="interview-text">
-					{{ 'INTERVIEW_INFO_MODAL.DATE' | translate }}
-				</p>
-			</div>
-			<p class="interview-data">
-				{{ interview.startTime | date: 'fullDate' }}
-			</p>
+	</div>
+
+	<div class="card">
+		<nb-icon
+			*ngIf="interviewList?.length > 1"
+			icon="arrow-ios-back"
+			class="arrow-icon"
+			(click)="previous()"
+			[ngClass]="{ show: isPreviousBtn, disable: !isPreviousBtn }"
+		></nb-icon>
+
+		<div class="card-info">
+			<nb-card-header class="d-flex header">
+				<div>
+					<h5>
+						{{ currentInterview?.title }}
+					</h5>
+					<p class="interview-info">
+						{{
+							'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.SCHEDULED'
+								| translate
+						}}
+						{{ timeUpdate }}
+					</p>
+				</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div>
+					<div class="interview-info">
+						<nb-icon
+							icon="calendar-outline"
+							class="icons"
+						></nb-icon>
+						<p class="interview-text">
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.DATE'
+									| translate
+							}}
+						</p>
+					</div>
+					<p class="interview-data">
+						{{ currentInterview?.startTime | date: 'fullDate' }}
+					</p>
+				</div>
+				<div>
+					<div class="interview-info">
+						<nb-icon icon="clock-outline" class="icons"></nb-icon>
+						<p class="interview-text">
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.TIME'
+									| translate
+							}}
+						</p>
+					</div>
+					<p class="interview-data">
+						{{ currentInterview?.startTime | date: 'shortTime' }} -
+						{{ currentInterview?.endTime | date: 'shortTime' }}
+					</p>
+				</div>
+				<div>
+					<div class="interview-info">
+						<nb-icon icon="person-outline" class="icons"></nb-icon>
+						<p class="interview-text">
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.CANDIDATE'
+									| translate
+							}}
+						</p>
+					</div>
+					<p class="interview-data">
+						{{ selectedCandidate?.user.firstName }}
+						{{ selectedCandidate?.user.lastName }}
+					</p>
+				</div>
+				<div>
+					<div class="interview-info">
+						<nb-icon icon="people-outline" class="icons"></nb-icon>
+						<p class="interview-text">
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWERS'
+									| translate
+							}}
+						</p>
+					</div>
+					<p class="interview-data">
+						{{ nameList }}
+					</p>
+				</div>
+				<div *ngIf="currentInterview?.location">
+					<div class="interview-info">
+						<nb-icon
+							icon="navigation-2-outline"
+							class="icons"
+						></nb-icon>
+						<p class="interview-text">
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.LOCATION'
+									| translate
+							}}
+						</p>
+					</div>
+					<p class="interview-data">
+						{{ currentInterview?.location }}
+					</p>
+				</div>
+				<div *ngIf="currentInterview?.note">
+					<div class="interview-info">
+						<nb-icon icon="edit-outline" class="icons"></nb-icon>
+						<p class="interview-text">
+							{{
+								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.NOTE'
+									| translate
+							}}
+						</p>
+					</div>
+					<p class="interview-data">{{ currentInterview?.note }}</p>
+				</div>
+			</nb-card-body>
 		</div>
-		<div>
-			<div class="interview-info">
-				<nb-icon icon="clock-outline" class="icons"></nb-icon>
-				<p class="interview-text">
-					{{ 'INTERVIEW_INFO_MODAL.TIME' | translate }}
-				</p>
-			</div>
-			<p class="interview-data">
-				{{ interview.startTime | date: 'mediumTime' }} -
-				{{ interview.endTime | date: 'longTime' }}
-			</p>
+
+		<nb-icon
+			*ngIf="interviewList?.length > 1"
+			icon="arrow-ios-forward"
+			class="arrow-icon"
+			(click)="next()"
+			[ngClass]="{ disable: !isNextBtn, show: isNextBtn }"
+		></nb-icon>
+	</div>
+	<div class="pages" *ngIf="interviewList?.length > 1">
+		<div class="interview-text">
+			{{ index }}
+			{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.OF' | translate }}
+			{{ interviewList.length }}
+			{{
+				'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWS_LOWER_CASE'
+					| translate
+			}}
 		</div>
-		<div>
-			<div class="interview-info">
-				<nb-icon icon="person-outline" class="icons"></nb-icon>
-				<p class="interview-text">
-					{{ 'INTERVIEW_INFO_MODAL.CANDIDATE' | translate }}
-				</p>
-			</div>
-			<p class="interview-data">{{ candidateName }}</p>
-		</div>
-		<div>
-			<div class="interview-info">
-				<nb-icon icon="people-outline" class="icons"></nb-icon>
-				<p class="interview-text">
-					{{ 'INTERVIEW_INFO_MODAL.INTERVIEWERS' | translate }}
-				</p>
-			</div>
-			<p class="interview-data">{{ interview.interviewers }}</p>
-		</div>
-		<div>
-			<div class="interview-info">
-				<nb-icon icon="navigation-2-outline" class="icons"></nb-icon>
-				<p class="interview-text">
-					{{ 'INTERVIEW_INFO_MODAL.LOCATION' | translate }}
-				</p>
-			</div>
-			<p class="interview-data">{{ interview.location }}</p>
-		</div>
-		<div>
-			<div class="interview-info">
-				<nb-icon icon="edit-outline" class="icons"></nb-icon>
-				<p class="interview-text">
-					{{ 'INTERVIEW_INFO_MODAL.NOTE' | translate }}
-				</p>
-			</div>
-			<p class="interview-data">{{ interview.note }}</p>
-		</div>
-	</nb-card-body>
+	</div>
 </nb-card>

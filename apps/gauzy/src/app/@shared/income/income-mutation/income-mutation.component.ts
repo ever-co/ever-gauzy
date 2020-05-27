@@ -3,14 +3,14 @@ import {
 	Validators,
 	FormBuilder,
 	FormGroup,
-	AbstractControl
+	AbstractControl,
 } from '@angular/forms';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import {
 	Income,
 	OrganizationSelectInput,
 	Tag,
-	OrganizationClients
+	OrganizationClients,
 } from '@gauzy/models';
 import { CurrenciesEnum } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -25,11 +25,11 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 @Component({
 	selector: 'ngx-income-mutation',
 	templateUrl: './income-mutation.component.html',
-	styleUrls: ['./income-mutation.component.scss']
+	styleUrls: ['./income-mutation.component.scss'],
 })
 export class IncomeMutationComponent extends TranslationBaseComponent
 	implements OnInit {
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 
 	income?: Income;
@@ -46,28 +46,28 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	fakeClients = [
 		{
 			clientName: 'CUEAudio',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
+			clientId: (Math.floor(Math.random() * 101) + 1).toString(),
 		},
 		{
 			clientName: 'Urwex',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
+			clientId: (Math.floor(Math.random() * 101) + 1).toString(),
 		},
 		{
 			clientName: 'Nabo',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
+			clientId: (Math.floor(Math.random() * 101) + 1).toString(),
 		},
 		{
 			clientName: 'Gauzy',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
+			clientId: (Math.floor(Math.random() * 101) + 1).toString(),
 		},
 		{
 			clientName: 'Everbie',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
+			clientId: (Math.floor(Math.random() * 101) + 1).toString(),
 		},
 		{
 			clientName: 'Random Client',
-			clientId: (Math.floor(Math.random() * 101) + 1).toString()
-		}
+			clientId: (Math.floor(Math.random() * 101) + 1).toString(),
+		},
 	];
 
 	get valueDate() {
@@ -124,12 +124,12 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	private async _getClients() {
 		this.organizationId = this.store.selectedOrganization.id;
 		const { items } = await this.organizationClientsService.getAll([], {
-			organizationId: this.store.selectedOrganization.id
+			organizationId: this.store.selectedOrganization.id,
 		});
 		items.forEach((i) => {
 			this.clients = [
 				...this.clients,
-				{ clientName: i.name, clientId: i.id }
+				{ clientName: i.name, clientId: i.id },
 			];
 		});
 	}
@@ -151,14 +151,14 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
 					{
-						name: name
+						name: name,
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 			return this.organizationClientsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -174,33 +174,33 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			this.form = this.fb.group({
 				valueDate: [
 					new Date(this.income.valueDate),
-					Validators.required
+					Validators.required,
 				],
 				amount: [this.income.amount, Validators.required],
 				client: [
 					{
 						clientId: this.income.clientId,
-						clientName: this.income.clientName
+						clientName: this.income.clientName,
 					},
-					Validators.required
+					Validators.required,
 				],
 				notes: this.income.notes,
 				currency: this.income.currency,
 				isBonus: this.income.isBonus,
-				tags: [this.income.tags]
+				tags: [this.income.tags],
 			});
 		} else {
 			this.form = this.fb.group({
 				valueDate: [
 					this.store.getDateFromOrganizationSettings(),
-					Validators.required
+					Validators.required,
 				],
 				amount: ['', Validators.required],
 				client: [null, Validators.required],
 				notes: '',
 				currency: '',
 				isBonus: false,
-				tags: []
+				tags: [],
 			});
 
 			this._loadDefaultCurrency();
@@ -212,7 +212,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	private async _loadDefaultCurrency() {
 		const orgData = await this.organizationsService
 			.getById(this.store.selectedOrganization.id, [
-				OrganizationSelectInput.currency
+				OrganizationSelectInput.currency,
 			])
 			.pipe(first())
 			.toPromise();

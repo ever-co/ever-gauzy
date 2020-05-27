@@ -5,11 +5,15 @@ import { User } from '../user/user.entity';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
 import { CandidateInterviewersService } from './candidate-interviewers.service';
 import { CandidateInterviewersController } from './candidate-interviewers.controller';
-
+import { CommandHandlers } from './commands/handlers';
+import { CqrsModule } from '@nestjs/cqrs';
 @Module({
-	imports: [TypeOrmModule.forFeature([CandidateInterviewers, User])],
-	providers: [CandidateInterviewersService, UserService],
+	imports: [
+		TypeOrmModule.forFeature([CandidateInterviewers, User]),
+		CqrsModule,
+	],
+	providers: [CandidateInterviewersService, UserService, ...CommandHandlers],
 	controllers: [CandidateInterviewersController],
-	exports: [CandidateInterviewersService]
+	exports: [CandidateInterviewersService],
 })
 export class CandidateInterviewersModule {}

@@ -14,7 +14,7 @@ import {
 	NbThemeModule,
 	NbPopoverModule,
 	NbTooltipModule,
-	NbLayoutDirectionService
+	NbLayoutDirectionService,
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
@@ -22,7 +22,7 @@ import {
 	FooterComponent,
 	HeaderComponent,
 	SearchInputComponent,
-	TinyMCEComponent
+	TinyMCEComponent,
 } from './components';
 import {
 	CapitalizePipe,
@@ -30,12 +30,12 @@ import {
 	RoundPipe,
 	TimingPipe,
 	NumberWithCommasPipe,
-	EvaIconsPipe
+	EvaIconsPipe,
 } from './pipes';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
-	TwoColumnsLayoutComponent
+	TwoColumnsLayoutComponent,
 } from './layouts';
 import { WindowModeBlockScrollService } from './services/window-mode-block-scroll.service';
 import { DEFAULT_THEME } from './styles/theme.default';
@@ -81,9 +81,9 @@ const NB_MODULES = [
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
-			deps: [HttpClient]
-		}
-	})
+			deps: [HttpClient],
+		},
+	}),
 ];
 const COMPONENTS = [
 	HeaderComponent,
@@ -93,7 +93,7 @@ const COMPONENTS = [
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
-	ThemeSettingsComponent
+	ThemeSettingsComponent,
 ];
 const PIPES = [
 	CapitalizePipe,
@@ -101,7 +101,7 @@ const PIPES = [
 	RoundPipe,
 	TimingPipe,
 	NumberWithCommasPipe,
-	EvaIconsPipe
+	EvaIconsPipe,
 ];
 
 @NgModule({
@@ -113,22 +113,22 @@ const PIPES = [
 		SelectorService,
 		UsersOrganizationsService,
 		OrganizationsService,
-		NbLayoutDirectionService
-	]
+		NbLayoutDirectionService,
+	],
 })
 export class ThemeModule {
-	static forRoot(): ModuleWithProviders {
-		return <ModuleWithProviders>{
+	static forRoot(): ModuleWithProviders<ThemeModule> {
+		return {
 			ngModule: ThemeModule,
 			providers: [
 				...NbThemeModule.forRoot(
 					{
-						name: 'default'
+						name: 'default',
 					},
 					[DEFAULT_THEME, COSMIC_THEME, CORPORATE_THEME, DARK_THEME]
 				).providers,
-				WindowModeBlockScrollService
-			]
+				WindowModeBlockScrollService,
+			],
 		};
 	}
 }

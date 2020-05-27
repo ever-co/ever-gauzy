@@ -6,7 +6,7 @@ import {
 	NbLogoutComponent,
 	NbRegisterComponent,
 	NbRequestPasswordComponent,
-	NbResetPasswordComponent
+	NbResetPasswordComponent,
 } from '@nebular/auth';
 import { AuthGuard } from './@core/auth/auth.guard';
 import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
@@ -23,7 +23,7 @@ const routes: Routes = [
 		path: 'pages',
 		loadChildren: () =>
 			import('./pages/pages.module').then((m) => m.PagesModule),
-		canActivate: [AuthGuard, AppModuleGuard]
+		canActivate: [AuthGuard, AppModuleGuard],
 	},
 	{
 		path: 'onboarding',
@@ -31,13 +31,13 @@ const routes: Routes = [
 			import('./onboarding/onboarding.module').then(
 				(m) => m.OnboardingModule
 			),
-		canActivate: [AuthGuard, AppModuleGuard]
+		canActivate: [AuthGuard, AppModuleGuard],
 	},
 	{
 		path: 'share',
 		loadChildren: () =>
 			import('./share/share.module').then((m) => m.ShareModule),
-		canActivate: []
+		canActivate: [],
 	},
 	{
 		path: 'auth',
@@ -47,55 +47,58 @@ const routes: Routes = [
 			{
 				path: '',
 				component: NbLoginComponent,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard],
 			},
 			{
 				path: 'login',
 				component: NbLoginComponent,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard],
 			},
 			{
 				path: 'register',
 				component: NbRegisterComponent,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard],
 			},
 			{
 				path: 'logout',
-				component: NbLogoutComponent
+				component: NbLogoutComponent,
 			},
 			{
 				path: 'request-password',
 				component: NbRequestPasswordComponent,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard],
 			},
 			{
 				path: 'reset-password',
 				component: NbResetPasswordComponent,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard],
 			},
 			{
 				path: 'accept-invite',
 				component: AcceptInvitePage,
-				canActivate: [NoAuthGuard]
+				canActivate: [NoAuthGuard],
 			},
 			{
 				path: 'accept-client-invite',
 				component: AcceptClientInvitePage,
-				canActivate: [NoAuthGuard]
-			}
-		]
+				canActivate: [NoAuthGuard],
+			},
+		],
 	},
 	{
 		path: 'server-down',
-		loadChildren: './server-down/server-down.module#ServerDownModule'
+		loadChildren: () =>
+			import('./server-down/server-down.module').then(
+				(m) => m.ServerDownModule
+			),
 	},
 	{ path: 'sign-in/success', component: SignInSuccessComponent },
 	{ path: '', redirectTo: 'pages', pathMatch: 'full' },
-	{ path: '**', redirectTo: 'pages' }
+	{ path: '**', redirectTo: 'pages' },
 ];
 
 const config: ExtraOptions = {
-	useHash: true
+	useHash: true,
 };
 
 @NgModule({
@@ -103,8 +106,8 @@ const config: ExtraOptions = {
 		RouterModule.forRoot(routes, config),
 		SignInSuccessModule,
 		AcceptInviteModule,
-		OnboardOrganizationClientModule
+		OnboardOrganizationClientModule,
 	],
-	exports: [RouterModule]
+	exports: [RouterModule],
 })
 export class AppRoutingModule {}

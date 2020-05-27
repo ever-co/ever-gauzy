@@ -1,4 +1,16 @@
 .flex-column {
-	display: flex;
-	flex-direction: column;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.text-danger {
+  max-width: 100%;
+  font-size: 12px;
+  margin-top: 5px;
 }

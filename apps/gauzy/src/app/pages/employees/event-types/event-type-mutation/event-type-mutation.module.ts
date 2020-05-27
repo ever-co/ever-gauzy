@@ -10,7 +10,7 @@ import {
 	NbSelectModule,
 	NbRadioModule,
 	NbCheckboxModule,
-	NbTooltipModule
+	NbTooltipModule,
 } from '@nebular/theme';
 import { EventTypeMutationComponent } from './event-type-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -18,6 +18,7 @@ import { EmployeeSelectorsModule } from '../../../../@theme/components/header/se
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { HttpClient } from '@angular/common/http';
+import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color-input/tags-color-input.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -25,6 +26,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		TagsColorInputModule,
 		ThemeModule,
 		NbCardModule,
 		NbButtonModule,
@@ -43,13 +45,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	exports: [EventTypeMutationComponent],
 	declarations: [EventTypeMutationComponent],
 	entryComponents: [EventTypeMutationComponent],
-	providers: []
+	providers: [],
 })
 export class EventTypeMutationModule {}

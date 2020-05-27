@@ -9,7 +9,7 @@ import {
 	UserOrganizationCreateInput,
 	RolesEnum,
 	User,
-	Tag
+	Tag,
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -38,7 +38,7 @@ interface UserViewModel {
 
 @Component({
 	templateUrl: './users.component.html',
-	styleUrls: ['./users.component.scss']
+	styleUrls: ['./users.component.scss'],
 })
 export class UsersComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -68,7 +68,7 @@ export class UsersComponent extends TranslationBaseComponent
 	tags: Tag[];
 	selectedTags: any;
 
-	@ViewChild('usersTable', { static: false }) usersTable;
+	@ViewChild('usersTable') usersTable;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -147,8 +147,8 @@ export class UsersComponent extends TranslationBaseComponent
 	async add() {
 		const dialog = this.dialogService.open(UserMutationComponent, {
 			context: {
-				isSuperAdmin: this.hasSuperAdminPermission
-			}
+				isSuperAdmin: this.hasSuperAdminPermission,
+			},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -162,7 +162,7 @@ export class UsersComponent extends TranslationBaseComponent
 					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
 					{
 						username: this.userName.trim(),
-						orgname: this.store.selectedOrganization.name
+						orgname: this.store.selectedOrganization.name,
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -184,7 +184,7 @@ export class UsersComponent extends TranslationBaseComponent
 					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
 					{
 						username: this.userName.trim(),
-						orgname: this.store.selectedOrganization.name
+						orgname: this.store.selectedOrganization.name,
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -201,8 +201,8 @@ export class UsersComponent extends TranslationBaseComponent
 				invitationType: InvitationTypeEnum.USER,
 				selectedOrganizationId: this.selectedOrganizationId,
 				currentUserId: this.store.userId,
-				isSuperAdmin: this.hasSuperAdminPermission
-			}
+				isSuperAdmin: this.hasSuperAdminPermission,
+			},
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
@@ -223,8 +223,8 @@ export class UsersComponent extends TranslationBaseComponent
 					recordType:
 						this.selectedUser.fullName +
 						' ' +
-						this.getTranslation('FORM.DELETE_CONFIRMATION.USER')
-				}
+						this.getTranslation('FORM.DELETE_CONFIRMATION.USER'),
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -238,7 +238,7 @@ export class UsersComponent extends TranslationBaseComponent
 							this.getTranslation(
 								'NOTES.ORGANIZATIONS.DELETE_USER_FROM_ORGANIZATION',
 								{
-									username: this.userName
+									username: this.userName,
 								}
 							),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -250,7 +250,7 @@ export class UsersComponent extends TranslationBaseComponent
 							this.getTranslation(
 								'NOTES.ORGANIZATIONS.DATA_ERROR',
 								{
-									error: error.error.message || error.message
+									error: error.error.message || error.message,
 								}
 							),
 							this.getTranslation('TOASTR.TITLE.ERROR')
@@ -273,7 +273,7 @@ export class UsersComponent extends TranslationBaseComponent
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.tags'],
 			{
-				orgId: this.organization.id
+				orgId: this.organization.id,
 			}
 		);
 
@@ -303,8 +303,8 @@ export class UsersComponent extends TranslationBaseComponent
 				context: {
 					recordType: `${fullName} ${this.getTranslation(
 						confirmationMessage
-					)}`
-				}
+					)}`,
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -316,7 +316,7 @@ export class UsersComponent extends TranslationBaseComponent
 
 						this.toastrService.primary(
 							this.getTranslation('USERS_PAGE.REMOVE_USER', {
-								name: fullName
+								name: fullName,
 							}),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
@@ -338,7 +338,7 @@ export class UsersComponent extends TranslationBaseComponent
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.role', 'user.tags'],
 			{
-				orgId: this.selectedOrganizationId
+				orgId: this.selectedOrganizationId,
 			}
 		);
 
@@ -352,8 +352,9 @@ export class UsersComponent extends TranslationBaseComponent
 					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
 			) {
 				usersVm.push({
-					fullName: `${orgUser.user.firstName || ''} ${orgUser.user
-						.lastName || ''}`,
+					fullName: `${orgUser.user.firstName || ''} ${
+						orgUser.user.lastName || ''
+					}`,
 					email: orgUser.user.email,
 					tags: orgUser.user.tags,
 					id: orgUser.id,
@@ -364,7 +365,7 @@ export class UsersComponent extends TranslationBaseComponent
 						? this.getTranslation(
 								`USERS_PAGE.ROLE.${orgUser.user.role.name}`
 						  )
-						: ''
+						: '',
 				});
 			}
 		}
@@ -387,21 +388,21 @@ export class UsersComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					class: 'align-row',
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
-					type: 'email'
+					type: 'email',
 				},
 				roleName: {
 					title: this.getTranslation('SM_TABLE.ROLE'),
-					type: 'text'
-				}
+					type: 'text',
+				},
 			},
 			pager: {
 				display: true,
-				perPage: 8
-			}
+				perPage: 8,
+			},
 		};
 	}
 

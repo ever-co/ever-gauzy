@@ -7,10 +7,10 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 @Component({
 	selector: 'ga-user-mutation',
 	templateUrl: './user-mutation.component.html',
-	styleUrls: ['./user-mutation.component.scss']
+	styleUrls: ['./user-mutation.component.scss'],
 })
 export class UserMutationComponent implements OnInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 	tags: Tag[];
 	selectedTags: any;

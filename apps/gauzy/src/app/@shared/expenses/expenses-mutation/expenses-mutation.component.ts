@@ -4,7 +4,7 @@ import {
 	FormBuilder,
 	Validators,
 	FormGroup,
-	AbstractControl
+	AbstractControl,
 } from '@angular/forms';
 import { ExpenseViewModel } from '../../../pages/expenses/expenses.component';
 import {
@@ -16,7 +16,7 @@ import {
 	IOrganizationVendor,
 	Tag,
 	OrganizationClients,
-	OrganizationProjects
+	OrganizationProjects,
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { Store } from '../../../@core/services/store.service';
@@ -24,7 +24,7 @@ import { first, takeUntil } from 'rxjs/operators';
 import {
 	EmployeeSelectorComponent,
 	ALL_EMPLOYEES_SELECTED,
-	SelectedEmployee
+	SelectedEmployee,
 } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationVendorsService } from '../../../@core/services/organization-vendors.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
@@ -39,13 +39,13 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 @Component({
 	selector: 'ga-expenses-mutation',
 	templateUrl: './expenses-mutation.component.html',
-	styleUrls: ['./expenses-mutation.component.scss']
+	styleUrls: ['./expenses-mutation.component.scss'],
 })
 export class ExpensesMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('employeeSelector', { static: false })
+	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	form: FormGroup;
 	expense: ExpenseViewModel;
@@ -107,7 +107,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.organizationId = this.store.selectedOrganization.id;
 		const { items: vendors } = await this.organizationVendorsService.getAll(
 			{
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
 			}
 		);
 		this.vendors = vendors;
@@ -130,14 +130,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		if (this.form.value.client === null) {
 			this.form.value.client = {
 				clientName: null,
-				clientId: null
+				clientId: null,
 			};
 		}
 
 		if (this.form.value.project === null) {
 			this.form.value.project = {
 				projectName: null,
-				projectId: null
+				projectId: null,
 			};
 		}
 
@@ -170,14 +170,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
 					{
-						name: name
+						name: name,
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 			return this.organizationVendorsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -190,14 +190,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CLIENTS.ADD_CLIENT',
 					{
-						name: name
+						name: name,
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 			return this.organizationClientsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -211,14 +211,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				this.getTranslation(
 					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
 					{
-						name: name
+						name: name,
 					}
 				),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -249,7 +249,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				currency: [this.expense.currency],
 				valueDate: [
 					new Date(this.expense.valueDate),
-					Validators.required
+					Validators.required,
 				],
 				purpose: [this.expense.purpose],
 				client: [null],
@@ -259,7 +259,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				rateValue: [this.expense.rateValue],
 				receipt: [this.expense.receipt],
 				splitExpense: [this.expense.splitExpense],
-				tags: [this.expense.tags]
+				tags: [this.expense.tags],
 			});
 		} else {
 			this.form = this.fb.group({
@@ -271,7 +271,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				currency: [''],
 				valueDate: [
 					this.store.getDateFromOrganizationSettings(),
-					Validators.required
+					Validators.required,
 				],
 				purpose: [''],
 				client: [null],
@@ -281,7 +281,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				rateValue: [0],
 				receipt: [this.defaultImage],
 				splitExpense: [false],
-				tags: []
+				tags: [],
 			});
 
 			this._loadDefaultCurrency();
@@ -319,14 +319,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	private async loadClients() {
 		const res = await this.organizationClientsService.getAll(['projects'], {
-			organizationId: this.organizationId
+			organizationId: this.organizationId,
 		});
 
 		if (res) {
 			res.items.forEach((client) => {
 				this.clients.push({
 					clientName: client.name,
-					clientId: client.id
+					clientId: client.id,
 				});
 			});
 		}
@@ -334,14 +334,14 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	private async loadProjects() {
 		const res = await this.organizationProjectsService.getAll(['client'], {
-			organizationId: this.organizationId
+			organizationId: this.organizationId,
 		});
 
 		if (res) {
 			res.items.forEach((project) => {
 				this.projects.push({
 					projectName: project.name,
-					projectId: project.id
+					projectId: project.id,
 				});
 			});
 		}
@@ -350,7 +350,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	private async _loadDefaultCurrency() {
 		const orgData = await this.organizationsService
 			.getById(this.store.selectedOrganization.id, [
-				OrganizationSelectInput.currency
+				OrganizationSelectInput.currency,
 			])
 			.pipe(first())
 			.toPromise();
@@ -368,8 +368,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(AttachReceiptComponent, {
 				context: {
-					currentReceipt: this.form.value.receipt
-				}
+					currentReceipt: this.form.value.receipt,
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((newReceipt) => {

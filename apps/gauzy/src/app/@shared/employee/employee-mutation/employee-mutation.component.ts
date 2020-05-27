@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import {
 	NbDialogRef,
 	NbToastrService,
-	NbStepperComponent
+	NbStepperComponent,
 } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
@@ -10,7 +10,7 @@ import {
 	Employee,
 	User,
 	Role,
-	EmployeeCreateInput
+	EmployeeCreateInput,
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
@@ -23,12 +23,12 @@ import { FormGroup } from '@angular/forms';
 @Component({
 	selector: 'ga-employee-mutation',
 	templateUrl: 'employee-mutation.component.html',
-	styleUrls: ['employee-mutation.component.scss']
+	styleUrls: ['employee-mutation.component.scss'],
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
-	@ViewChild('stepper', { static: false })
+	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 	form: FormGroup;
 	role: Role;
@@ -50,7 +50,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		this.role = await this.roleService
 			.getRoleByName({
 				name: RolesEnum.EMPLOYEE,
-				tenant: this.store.user.tenant
+				tenant: this.store.user.tenant,
 			})
 			.pipe(first())
 			.toPromise();
@@ -69,7 +69,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			imageUrl: this.form.get('imageUrl').value,
 			tenant: null,
 			role: this.role,
-			tags: this.userBasicInfo.selectedTags
+			tags: this.userBasicInfo.selectedTags,
 		};
 
 		const offerDate = this.form.get('offerDate').value || null;
@@ -84,7 +84,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			offerDate,
 			acceptDate,
 			rejectDate,
-			tags: this.userBasicInfo.selectedTags
+			tags: this.userBasicInfo.selectedTags,
 		};
 		this.employees.push(newEmployee);
 		this.userBasicInfo.loadFormData();

@@ -9,7 +9,7 @@ import {
 	NbDatepickerModule,
 	NbButtonModule,
 	NbSelectModule,
-	NbBadgeModule
+	NbBadgeModule,
 } from '@nebular/theme';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -23,6 +23,7 @@ import { FileUploaderModule } from '../../file-uploader-input/file-uploader-inpu
 import { TagsService } from '../../../@core/services/tags.service';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
+import { CandidateActionConfirmationComponent } from './candidate-action-confirmation /candidate-action-confirmation.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -46,28 +47,31 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	exports: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent,
-		ArchiveConfirmationComponent
+		ArchiveConfirmationComponent,
+		CandidateActionConfirmationComponent,
 	],
 	declarations: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent,
-		ArchiveConfirmationComponent
+		ArchiveConfirmationComponent,
+		CandidateActionConfirmationComponent,
 	],
 	entryComponents: [
 		BasicInfoFormComponent,
 		DeleteConfirmationComponent,
 		ActionConfirmationComponent,
-		ArchiveConfirmationComponent
+		ArchiveConfirmationComponent,
+		CandidateActionConfirmationComponent,
 	],
-	providers: [AuthService, RoleService, IncomeService, TagsService]
+	providers: [AuthService, RoleService, IncomeService, TagsService],
 })
 export class UserFormsModule {}

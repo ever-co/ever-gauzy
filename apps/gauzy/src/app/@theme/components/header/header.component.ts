@@ -4,14 +4,14 @@ import {
 	OnDestroy,
 	OnInit,
 	ViewChild,
-	AfterViewInit
+	AfterViewInit,
 } from '@angular/core';
 import {
 	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
 	NbMenuItem,
-	NbPopoverDirective
+	NbPopoverDirective,
 } from '@nebular/theme';
 import { LayoutService } from '../../../@core/utils';
 import { Subject } from 'rxjs';
@@ -27,7 +27,7 @@ import * as moment from 'moment';
 @Component({
 	selector: 'ngx-header',
 	styleUrls: ['./header.component.scss'],
-	templateUrl: './header.component.html'
+	templateUrl: './header.component.html',
 })
 export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	hasPermissionE = false;
@@ -41,7 +41,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 	user: User;
 	@Input() showEmployeesSelector;
 	@Input() showOrganizationsSelector;
-	@ViewChild('timerPopover', { static: false })
+	@ViewChild('timerPopover')
 	timerPopover: NbPopoverDirective;
 
 	showDateSelector = true;
@@ -87,8 +87,8 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			.subscribe((e) => {
 				this.router.navigate([e.item.link], {
 					queryParams: {
-						openAddDialog: true
-					}
+						openAddDialog: true,
+					},
 				});
 			});
 
@@ -203,7 +203,7 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 			{
 				title: this.getTranslation('CONTEXT_MENU.TIMER'),
 				icon: 'clock-outline',
-				link: '#'
+				link: '#',
 				//hidden: this.hasEditPermission
 			},
 			// TODO: divider
@@ -211,80 +211,80 @@ export class HeaderComponent implements OnInit, OnDestroy, AfterViewInit {
 				title: this.getTranslation('CONTEXT_MENU.ADD_INCOME'),
 				icon: 'plus-circle-outline',
 				link: 'pages/accounting/income',
-				hidden: !this.hasPermissionI || !this.hasPermissionIEdit
+				hidden: !this.hasPermissionI || !this.hasPermissionIEdit,
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_EXPENSE'),
 				icon: 'minus-circle-outline',
 				link: 'pages/accounting/expenses',
-				hidden: !this.hasPermissionE || !this.hasPermissionEEdit
+				hidden: !this.hasPermissionE || !this.hasPermissionEEdit,
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.INVOICE'),
 				icon: 'archive-outline',
-				link: '#'
+				link: '#',
 				//hidden: this.hasEditPermission
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROPOSAL'),
 				icon: 'paper-plane-outline',
 				link: 'pages/proposals/register',
-				hidden: !this.hasPermissionP || !this.hasPermissionPEdit
+				hidden: !this.hasPermissionP || !this.hasPermissionPEdit,
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CONTRACT'),
 				icon: 'file-text-outline',
-				link: '#'
+				link: '#',
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.TEAM'),
 				icon: 'people-outline',
-				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/teams`
+				link: `pages/organizations/edit/${this._selectedOrganizationId}/settings/teams`,
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.TASK'),
 				icon: 'calendar-outline',
-				link: 'pages/tasks/dashboard'
+				link: 'pages/tasks/dashboard',
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.CLIENT'),
 				icon: 'person-done-outline',
-				link: '#'
+				link: '#',
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.PROJECT'),
 				icon: 'color-palette-outline',
-				link: '#'
+				link: '#',
 			},
 			// TODO: divider
 			{
 				title: this.getTranslation('CONTEXT_MENU.ADD_EMPLOYEE'),
 				icon: 'people-outline',
-				link: 'pages/employees'
-			}
+				link: 'pages/employees',
+			},
 		];
 
 		this.supportContextMenu = [
 			{
 				title: this.getTranslation('CONTEXT_MENU.CHAT'),
-				icon: 'message-square-outline'
+				icon: 'message-square-outline',
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.FAQ'),
-				icon: 'clipboard-outline'
+				icon: 'clipboard-outline',
 			},
 			{
 				title: this.getTranslation('CONTEXT_MENU.HELP'),
 				icon: 'question-mark-circle-outline',
-				link: 'pages/help'
+				link: 'pages/help',
 			},
 			{
 				title: this.getTranslation('MENU.ABOUT'),
 				icon: 'droplet-outline',
-				link: 'pages/about'
-			}
+				link: 'pages/about',
+			},
 		];
 	}
 

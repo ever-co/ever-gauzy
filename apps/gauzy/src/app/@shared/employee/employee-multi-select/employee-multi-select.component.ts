@@ -3,11 +3,13 @@ import { Employee } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-employee-multi-select',
-	templateUrl: './employee-multi-select.component.html'
+	templateUrl: './employee-multi-select.component.html',
 })
 export class EmployeeSelectComponent {
 	@Input() selectedEmployeeIds: string[];
 	@Input() allEmployees: Employee[];
+
+	@Input() disabled = false;
 
 	@Output() selectedChange = new EventEmitter();
 

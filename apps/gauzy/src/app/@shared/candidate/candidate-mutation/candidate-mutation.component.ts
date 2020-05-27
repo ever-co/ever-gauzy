@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import {
 	NbDialogRef,
 	NbToastrService,
-	NbStepperComponent
+	NbStepperComponent,
 } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
@@ -11,7 +11,7 @@ import {
 	Role,
 	CandidateCreateInput,
 	Candidate,
-	ICandidateDocument
+	ICandidateDocument,
 } from '@gauzy/models';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { RoleService } from '../../../@core/services/role.service';
@@ -25,16 +25,16 @@ import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 @Component({
 	selector: 'ga-candidate-mutation',
 	templateUrl: 'candidate-mutation.component.html',
-	styleUrls: ['candidate-mutation.component.scss']
+	styleUrls: ['candidate-mutation.component.scss'],
 })
 export class CandidateMutationComponent implements OnInit, AfterViewInit {
-	@ViewChild('userBasicInfo', { static: false })
+	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 
-	@ViewChild('candidateCv', { static: false })
+	@ViewChild('candidateCv')
 	candidateCv: CandidateCvComponent;
 
-	@ViewChild('stepper', { static: false })
+	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
 	form: FormGroup;
@@ -59,7 +59,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		this.role = await this.roleService
 			.getRoleByName({
 				name: RolesEnum.CANDIDATE,
-				tenant: this.store.user.tenant
+				tenant: this.store.user.tenant,
 			})
 			.pipe(first())
 			.toPromise();
@@ -78,7 +78,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			imageUrl: this.form.get('imageUrl').value,
 			tenant: null,
 			role: this.role,
-			tags: this.userBasicInfo.selectedTags
+			tags: this.userBasicInfo.selectedTags,
 		};
 		const appliedDate = this.form.get('appliedDate').value || null;
 		const rejectDate = this.form.get('rejectDate').value || null;
@@ -98,7 +98,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			appliedDate,
 			hiredDate,
 			rejectDate,
-			tags: this.userBasicInfo.selectedTags
+			tags: this.userBasicInfo.selectedTags,
 		};
 
 		this.candidates.push(newCandidate);

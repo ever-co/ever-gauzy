@@ -7,7 +7,7 @@ import {
 	NbButtonModule,
 	NbTooltipModule,
 	NbCheckboxModule,
-	NbDatepickerModule
+	NbDatepickerModule,
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -31,15 +31,15 @@ import { ProjectSelectModule } from '../project-select/project-select.module';
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,
-		ProjectSelectModule
+		ProjectSelectModule,
 	],
-	exports: [TimeTrackerComponent]
+	exports: [TimeTrackerComponent],
 })
 export class TimeTrackerModule {
-	static forRoot(): ModuleWithProviders {
+	static forRoot(): ModuleWithProviders<TimeTrackerModule> {
 		return {
 			ngModule: TimeTrackerModule,
-			providers: [TimeTrackerService]
+			providers: [TimeTrackerService],
 		};
 	}
 }

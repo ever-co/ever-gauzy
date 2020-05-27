@@ -14,11 +14,11 @@ export class ExportAllController implements OnDestroy {
 	@ApiOperation({ summary: 'Find all exports.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found tables'
+		description: 'Found tables',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get()
 	async exportAll(@Res() res) {
@@ -28,6 +28,10 @@ export class ExportAllController implements OnDestroy {
 		await this.exportService.downloadToUser(res);
 		await this.exportService.deleteCsvFiles();
 		this.exportService.deleteArchive();
+	}
+	@Get('template')
+	async downloadTemplate(@Res() res) {
+		await this.exportService.downloadTemplate(res);
 	}
 
 	ngOnDestroy() {}

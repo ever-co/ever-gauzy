@@ -4,7 +4,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { Invoice, PermissionsEnum } from '@gauzy/models';
+import { Invoice, PermissionsEnum, Tag } from '@gauzy/models';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { Router } from '@angular/router';
 import { first, takeUntil } from 'rxjs/operators';
@@ -17,6 +17,7 @@ import { InvoicePaidComponent } from './table-components/invoice-paid.component'
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -26,7 +27,7 @@ export interface SelectedInvoice {
 @Component({
 	selector: 'ngx-invoices',
 	templateUrl: './invoices.component.html',
-	styleUrls: ['./invoices.component.scss']
+	styleUrls: ['./invoices.component.scss'],
 })
 export class InvoicesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -38,10 +39,11 @@ export class InvoicesComponent extends TranslationBaseComponent
 	disableButton = true;
 	hasInvoiceEditPermission: boolean;
 	invoices: Invoice[];
+	tags: Tag[];
 
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('invoicesTable', { static: false }) invoicesTable;
+	@ViewChild('invoicesTable') invoicesTable;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -76,7 +78,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	edit() {
 		this.router.navigate([
-			`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`
+			`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`,
 		]);
 	}
 
@@ -96,7 +98,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 			totalValue: this.selectedInvoice.totalValue,
 			clientId: this.selectedInvoice.clientId,
 			organizationId: this.selectedInvoice.organizationId,
-			invoiceType: this.selectedInvoice.invoiceType
+			invoiceType: this.selectedInvoice.invoiceType,
+			tags: this.selectedInvoice.tags,
 		});
 
 		if (this.selectedInvoice.invoiceItems[0].employeeId) {
@@ -107,7 +110,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					employeeId: item.employeeId
+					employeeId: item.employeeId,
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].projectId) {
@@ -118,7 +121,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					projectId: item.projectId
+					projectId: item.projectId,
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].taskId) {
@@ -129,7 +132,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					taskId: item.taskId
+					taskId: item.taskId,
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].productId) {
@@ -140,7 +143,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					productId: item.productId
+					productId: item.productId,
 				});
 			}
 		} else {
@@ -150,7 +153,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					price: item.price,
 					quantity: item.quantity,
 					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id
+					invoiceId: createdInvoice.id,
 				});
 			}
 		}
@@ -161,7 +164,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 		);
 
 		this.router.navigate([
-			`/pages/accounting/invoices/edit/${createdInvoice.id}`
+			`/pages/accounting/invoices/edit/${createdInvoice.id}`,
 		]);
 	}
 
@@ -180,8 +183,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 								context: {
 									client: client,
 									invoice: this.selectedInvoice,
-									organization: org
-								}
+									organization: org,
+								},
 							}
 						);
 					}
@@ -202,8 +205,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 							context: {
 								client: client,
 								invoice: this.selectedInvoice,
-								organization: org
-							}
+								organization: org,
+							},
 						});
 					}
 				});
@@ -235,7 +238,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	view() {
 		this.router.navigate([
-			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
+			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`,
 		]);
 	}
 
@@ -252,8 +255,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 							context: {
 								client: client,
 								invoice: this.selectedInvoice,
-								organization: org
-							}
+								organization: org,
+							},
 						});
 					}
 				});
@@ -267,9 +270,9 @@ export class InvoicesComponent extends TranslationBaseComponent
 				if (org) {
 					this.selectedInvoice = null;
 					const { items } = await this.invoicesService.getAll(
-						['invoiceItems'],
+						['invoiceItems', 'tags'],
 						{
-							organizationId: org.id
+							organizationId: org.id,
 						}
 					);
 					this.invoices = items;
@@ -295,9 +298,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 			columns: {
 				invoiceNumber: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
-					type: 'text',
+					type: 'custom',
 					sortDirection: 'asc',
-					width: '40%'
+					width: '40%',
+					renderComponent: NotesWithTagsComponent,
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
@@ -306,16 +310,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 					width: '40%',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
-					}
+					},
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 					type: 'custom',
 					renderComponent: InvoicePaidComponent,
 					filter: false,
-					width: '15%'
-				}
-			}
+					width: '15%',
+				},
+			},
 		};
 	}
 

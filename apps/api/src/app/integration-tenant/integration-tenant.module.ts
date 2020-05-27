@@ -12,6 +12,8 @@ import { IntegrationEntitySetting } from '../integration-entity-setting/integrat
 import { RoleModule } from '../role/role.module';
 import { UserModule } from '../user/user.module';
 import { RolePermissionsModule } from '../role-permissions/role-permissions.module';
+import { CqrsModule } from '@nestjs/cqrs';
+import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
@@ -19,18 +21,20 @@ import { RolePermissionsModule } from '../role-permissions/role-permissions.modu
 			IntegrationTenant,
 			IntegrationSetting,
 			Tenant,
-			IntegrationEntitySetting
+			IntegrationEntitySetting,
 		]),
 		RoleModule,
 		UserModule,
-		RolePermissionsModule
+		RolePermissionsModule,
+		CqrsModule,
 	],
 	controllers: [IntegrationTenantController],
 	providers: [
 		IntegrationTenantService,
 		IntegrationSettingService,
 		TenantService,
-		IntegrationEntitySettingService
-	]
+		IntegrationEntitySettingService,
+		...CommandHandlers,
+	],
 })
 export class IntegrationTenantModule {}

@@ -6,13 +6,13 @@ import {
 	IDateRange,
 	PermissionsEnum,
 	TimesheetStatus,
-	Timesheet
+	Timesheet,
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import {
 	NbCheckboxComponent,
 	NbDialogRef,
-	NbMenuService
+	NbMenuService,
 } from '@nebular/theme';
 import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -27,7 +27,7 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 @Component({
 	selector: 'ngx-approvals',
 	templateUrl: './approvals.component.html',
-	styleUrls: ['./approvals.component.scss']
+	styleUrls: ['./approvals.component.scss'],
 })
 export class ApprovalsComponent implements OnInit, OnDestroy {
 	timeSheets: Timesheet[];
@@ -35,25 +35,25 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	checkboxAll = false;
 	selectedIds: any = {};
 	private _selectedDate: Date;
-	@ViewChild('checkAllCheckbox', { static: false })
+	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
 	organization: Organization;
 	addEditTimeRequest: any = {
 		isBillable: true,
 		projectId: null,
 		taskId: null,
-		description: ''
+		description: '',
 	};
 	selectedRange: IDateRange = { start: null, end: null };
 	showBulkAction = false;
 	TimesheetStatus = TimesheetStatus;
 	bulkActionOptions = [
 		{
-			title: 'Approve'
+			title: 'Approve',
 		},
 		{
-			title: 'Deny'
-		}
+			title: 'Deny',
+		},
 	];
 	dialogRef: NbDialogRef<any>;
 	canChangeSelectedEmployee: boolean;
@@ -80,12 +80,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	}
 	public set selectedDate(value: Date) {
 		this._selectedDate = value;
-		this.logRequest.startDate = moment(value)
-			.startOf('month')
-			.toDate();
-		this.logRequest.endDate = moment(value)
-			.endOf('month')
-			.toDate();
+		this.logRequest.startDate = moment(value).startOf('month').toDate();
+		this.logRequest.endDate = moment(value).endOf('month').toDate();
 		this.updateLogs$.next();
 	}
 	async ngOnInit() {
@@ -152,7 +148,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
-			organizationId: this.organization ? this.organization.id : null
+			organizationId: this.organization ? this.organization.id : null,
 		};
 		this.timeSheets = await this.timesheetService
 			.getTimeSheets(request)

@@ -25,7 +25,7 @@ interface SelectedRowModel {
 
 @Component({
 	templateUrl: './income.component.html',
-	styleUrls: ['./income.component.scss']
+	styleUrls: ['./income.component.scss'],
 })
 export class IncomeComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -53,7 +53,7 @@ export class IncomeComponent extends TranslationBaseComponent
 	hasEditPermission = false;
 	tags: Tag[] = [];
 
-	@ViewChild('incomeTable', { static: false }) incomeTable;
+	@ViewChild('incomeTable') incomeTable;
 
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
@@ -151,30 +151,30 @@ export class IncomeComponent extends TranslationBaseComponent
 					type: 'custom',
 					width: '20%',
 					renderComponent: DateViewComponent,
-					filter: false
+					filter: false,
 				},
 				clientName: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
-					type: 'string'
+					type: 'string',
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
 					type: 'custom',
 					width: '15%',
 					filter: false,
-					renderComponent: IncomeExpenseAmountComponent
+					renderComponent: IncomeExpenseAmountComponent,
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
-				}
+					renderComponent: NotesWithTagsComponent,
+				},
 			},
 			pager: {
 				display: true,
-				perPage: 8
-			}
+				perPage: 8,
+			},
 		};
 	}
 
@@ -209,14 +209,14 @@ export class IncomeComponent extends TranslationBaseComponent
 					notes: result.notes,
 					currency: result.currency,
 					isBonus: result.isBonus,
-					tags: result.tags
+					tags: result.tags,
 				});
 
 				this.toastrService.primary(
 					this.getTranslation('NOTES.INCOME.ADD_INCOME', {
 						name: result.employee
 							? `${result.employee.firstName} ${result.employee.lastName}`
-							: this.getTranslation('SM_TABLE.EMPLOYEE')
+							: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					}),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
 				);
@@ -228,7 +228,9 @@ export class IncomeComponent extends TranslationBaseComponent
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation('NOTES.INCOME.INCOME_ERROR', {
-						error: error.error ? error.error.message : error.message
+						error: error.error
+							? error.error.message
+							: error.message,
 					}),
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
@@ -240,8 +242,8 @@ export class IncomeComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(IncomeMutationComponent, {
 				context: {
-					income: this.selectedIncome.data
-				}
+					income: this.selectedIncome.data,
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -257,13 +259,13 @@ export class IncomeComponent extends TranslationBaseComponent
 								notes: result.notes,
 								currency: result.currency,
 								isBonus: result.isBonus,
-								tags: result.tags
+								tags: result.tags,
 							}
 						);
 
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.EDIT_INCOME', {
-								name: this.employeeName
+								name: this.employeeName,
 							}),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
@@ -285,8 +287,8 @@ export class IncomeComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: this.getTranslation('INCOME_PAGE.INCOME')
-				}
+					recordType: this.getTranslation('INCOME_PAGE.INCOME'),
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -298,7 +300,7 @@ export class IncomeComponent extends TranslationBaseComponent
 
 						this.toastrService.primary(
 							this.getTranslation('NOTES.INCOME.DELETE_INCOME', {
-								name: this.employeeName
+								name: this.employeeName,
 							}),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
 						);
@@ -327,8 +329,8 @@ export class IncomeComponent extends TranslationBaseComponent
 		if (orgId) {
 			findObj = {
 				organization: {
-					id: orgId
-				}
+					id: orgId,
+				},
 			};
 			this.smartTableSettings['columns']['employee'] = {
 				title: this.getTranslation('SM_TABLE.EMPLOYEE'),
@@ -339,13 +341,13 @@ export class IncomeComponent extends TranslationBaseComponent
 					if (user) {
 						return `${user.firstName} ${user.lastName}`;
 					}
-				}
+				},
 			};
 		} else {
 			findObj = {
 				employee: {
-					id: employeId
-				}
+					id: employeId,
+				},
 			};
 			delete this.smartTableSettings['columns']['employee'];
 		}

@@ -4,7 +4,7 @@ import {
 	Invite,
 	OrganizationProjects,
 	OrganizationClients,
-	OrganizationDepartment
+	OrganizationDepartment,
 } from '@gauzy/models';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +17,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 @Component({
 	selector: 'ga-invite-mutation',
 	templateUrl: './invite-mutation.component.html',
-	styleUrls: ['./invite-mutation.component.scss']
+	styleUrls: ['./invite-mutation.component.scss'],
 })
 export class InviteMutationComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -33,7 +33,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 	@Input()
 	isSuperAdmin: boolean;
 
-	@ViewChild('emailInviteForm', { static: false })
+	@ViewChild('emailInviteForm')
 	emailInviteForm: EmailInviteFormComponent;
 
 	organizationProjects: OrganizationProjects[];
@@ -78,21 +78,21 @@ export class InviteMutationComponent extends TranslationBaseComponent
 
 	async loadProjects() {
 		const res = await this.organizationProjectsService.getAll([], {
-			organizationId: this.selectedOrganizationId
+			organizationId: this.selectedOrganizationId,
 		});
 		this.organizationProjects = res.items;
 	}
 
 	async loadClients() {
 		const res = await this.organizationClientsService.getAll([], {
-			organizationId: this.selectedOrganizationId
+			organizationId: this.selectedOrganizationId,
 		});
 		this.organizationClients = res.items;
 	}
 
 	async loadDepartments() {
 		const res = await this.organizationDepartmentsService.getAll([], {
-			organizationId: this.selectedOrganizationId
+			organizationId: this.selectedOrganizationId,
 		});
 		this.organizationDepartments = res.items;
 	}
@@ -106,14 +106,14 @@ export class InviteMutationComponent extends TranslationBaseComponent
 			const {
 				items,
 				total,
-				ignored
+				ignored,
 			} = await this.emailInviteForm.saveInvites();
 
 			if (ignored > 0) {
 				this.toastrService.warning(
 					this.getTranslation('INVITE_PAGE.IGNORED', {
 						total,
-						ignored
+						ignored,
 					}),
 					this.getTranslation('TOASTR.TITLE.WARNING')
 				);

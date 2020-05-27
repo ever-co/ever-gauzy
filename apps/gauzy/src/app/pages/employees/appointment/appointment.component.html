@@ -1,5 +1,5 @@
 <nb-card>
-	<nb-card-header>
+	<nb-card-header *ngIf="showHeader">
 		<div class="main-header">
 			<h4>{{ 'MENU.APPOINTMENTS' | translate }}</h4>
 			<button nbButton status="info" (click)="manageAppointments()">

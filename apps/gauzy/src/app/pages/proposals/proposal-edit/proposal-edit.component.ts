@@ -1,17 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { Store } from '../../../@core/services/store.service';
 import { ProposalViewModel } from '../proposals.component';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProposalsService } from '../../../@core/services/proposals.service';
 import { NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-proposal-edit',
 	templateUrl: './proposal-edit.component.html',
-	styleUrls: ['./proposal-edit.component.scss']
+	styleUrls: ['./proposal-edit.component.scss'],
 })
 export class ProposalEditComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -27,6 +28,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	}
 
 	proposal: ProposalViewModel;
+	tags: Tag[] = [];
 	form: FormGroup;
 
 	ngOnInit() {
@@ -40,11 +42,12 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	}
 
 	private _initializeForm() {
+		this.tags = this.proposal.tags;
 		this.form = this.fb.group({
 			jobPostUrl: [this.proposal.jobPostUrl],
 			valueDate: [this.proposal.valueDate],
 			jobPostContent: this.proposal.jobPostContent,
-			proposalContent: this.proposal.proposalContent
+			proposalContent: this.proposal.proposalContent,
 		});
 	}
 
@@ -56,7 +59,8 @@ export class ProposalEditComponent extends TranslationBaseComponent
 				await this.proposalsService.update(this.proposal.id, {
 					jobPostContent: result.jobPostContent,
 					jobPostUrl: result.jobPostUrl,
-					proposalContent: result.proposalContent
+					proposalContent: result.proposalContent,
+					tags: this.tags,
 				});
 
 				// TODO translate
@@ -71,12 +75,15 @@ export class ProposalEditComponent extends TranslationBaseComponent
 					this.getTranslation(
 						'NOTES.PROPOSALS.REGISTER_PROPOSAL_ERROR',
 						{
-							error: error.error.message || error.message
+							error: error.error.message || error.message,
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
 			}
 		}
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

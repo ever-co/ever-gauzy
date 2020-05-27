@@ -26,12 +26,12 @@ export const environment: Environment = {
 	LINKEDIN_AUTH_LINK: '#',
 	NO_INTERNET_LOGO: 'assets/images/logos/logo_Gauzy.svg',
 	SENTRY_DNS: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
-	HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff'
+	HUBSTAFF_REDIRECT_URI: 'http://localhost:4200/pages/integrations/hubstaff',
 };
 
 export const cloudinaryConfiguration: CloudinaryConfiguration = {
 	cloud_name: environment.CLOUDINARY_CLOUD_NAME,
-	api_key: environment.CLOUDINARY_API_KEY
+	api_key: environment.CLOUDINARY_API_KEY,
 };
 
 /*

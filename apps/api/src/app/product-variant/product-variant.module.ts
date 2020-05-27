@@ -11,6 +11,7 @@ import { ProductVariantPrice } from '../product-variant-price/product-variant-pr
 import { ProductVariantSettings } from '../product-settings/product-settings.entity';
 import { ProductService } from '../product/product.service';
 import { Product } from '../product/product.entity';
+import { ProductVariantDeleteHandler } from './commands/handlers/product-variant.delete.handler';
 
 @Module({
 	imports: [
@@ -18,18 +19,19 @@ import { Product } from '../product/product.entity';
 			ProductVariant,
 			ProductVariantPrice,
 			ProductVariantSettings,
-			Product
+			Product,
 		]),
-		CqrsModule
+		CqrsModule,
 	],
 	controllers: [ProductVariantController],
 	providers: [
 		ProductVariantService,
 		ProductVariantCreateHandler,
+		ProductVariantDeleteHandler,
 		ProductVariantPriceService,
 		ProductVariantSettingService,
-		ProductService
+		ProductService,
 	],
-	exports: [ProductVariantService]
+	exports: [ProductVariantService],
 })
 export class ProductVariantModule {}

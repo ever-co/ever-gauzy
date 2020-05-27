@@ -7,6 +7,7 @@ import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { HttpClient } from '@angular/common/http';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TagsService } from '../../../@core/services/tags.service';
 
 @NgModule({
 	imports: [
@@ -19,11 +20,12 @@ import { NgSelectModule } from '@ng-select/ng-select';
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	exports: [TagsColorInputComponent],
-	declarations: [TagsColorInputComponent]
+	declarations: [TagsColorInputComponent],
+	providers: [TagsService],
 })
 export class TagsColorInputModule {}

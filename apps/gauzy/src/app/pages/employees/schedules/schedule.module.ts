@@ -5,7 +5,7 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { NbRouteTabsetModule, NbCardModule } from '@nebular/theme';
 import { LayoutComponent } from './layout/layout.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { AvailibilitySlotsService } from '../../../@core/services/availability-slots.service';
+import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 
 @NgModule({
 	declarations: [LayoutComponent],
@@ -17,8 +17,8 @@ import { AvailibilitySlotsService } from '../../../@core/services/availability-s
 		SharedModule,
 		NbRouteTabsetModule,
 		NbCardModule,
-		TranslateModule
+		TranslateModule,
 	],
-	providers: [AvailibilitySlotsService]
+	providers: [AvailabilitySlotsService],
 })
 export class ScheduleModule {}

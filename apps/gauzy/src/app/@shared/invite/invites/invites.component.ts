@@ -33,7 +33,7 @@ interface InviteViewModel {
 @Component({
 	selector: 'ga-invites',
 	templateUrl: './invites.component.html',
-	styleUrls: ['./invites.component.scss']
+	styleUrls: ['./invites.component.scss'],
 })
 export class InvitesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -54,7 +54,7 @@ export class InvitesComponent extends TranslationBaseComponent
 
 	hasInviteEditPermission = false;
 
-	@ViewChild('employeesTable', { static: false }) employeesTable;
+	@ViewChild('employeesTable') employeesTable;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -107,8 +107,8 @@ export class InvitesComponent extends TranslationBaseComponent
 			context: {
 				invitationType: this.invitationType,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId
-			}
+				currentUserId: this.store.userId,
+			},
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
@@ -140,7 +140,7 @@ export class InvitesComponent extends TranslationBaseComponent
 			const { items } = await this.inviteService.getAll(
 				['projects', 'invitedBy', 'role', 'clients', 'departments'],
 				{
-					organizationId: this.selectedOrganizationId
+					organizationId: this.selectedOrganizationId,
 				}
 			);
 			invites = items.filter((invite) => {
@@ -164,9 +164,9 @@ export class InvitesComponent extends TranslationBaseComponent
 				email: invite.email,
 				expireDate: moment(invite.expireDate).fromNow(),
 				imageUrl: invite.invitedBy ? invite.invitedBy.imageUrl : '',
-				fullName: `${(invite.invitedBy && invite.invitedBy.firstName) ||
-					''} ${(invite.invitedBy && invite.invitedBy.lastName) ||
-					''}`,
+				fullName: `${
+					(invite.invitedBy && invite.invitedBy.firstName) || ''
+				} ${(invite.invitedBy && invite.invitedBy.lastName) || ''}`,
 				roleName: invite.role
 					? this.getTranslation(`USERS_PAGE.ROLE.${invite.role.name}`)
 					: '',
@@ -183,7 +183,7 @@ export class InvitesComponent extends TranslationBaseComponent
 					(department) => department.name
 				),
 				id: invite.id,
-				inviteUrl: `auth/accept-invite?email=${invite.email}&token=${invite.token}`
+				inviteUrl: `auth/accept-invite?email=${invite.email}&token=${invite.token}`,
 			});
 		}
 
@@ -204,47 +204,47 @@ export class InvitesComponent extends TranslationBaseComponent
 			columns: {
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
-					type: 'email'
+					type: 'email',
 				},
 				roleName: {
 					title: this.getTranslation('SM_TABLE.ROLE'),
-					type: 'text'
+					type: 'text',
 				},
 				projects: {
 					title: this.getTranslation('SM_TABLE.PROJECTS'),
 					type: 'custom',
 					renderComponent: ProjectNamesComponent,
-					filter: false
+					filter: false,
 				},
 				clients: {
 					title: this.getTranslation('SM_TABLE.CLIENTS'),
 					type: 'custom',
 					renderComponent: ClientNamesComponent,
-					filter: false
+					filter: false,
 				},
 				departments: {
 					title: this.getTranslation('SM_TABLE.DEPARTMENTS'),
 					type: 'custom',
 					renderComponent: DepartmentNamesComponent,
-					filter: false
+					filter: false,
 				},
 				fullName: {
 					title: this.getTranslation('SM_TABLE.INVITED_BY'),
-					type: 'text'
+					type: 'text',
 				},
 				expireDate: {
 					title: this.getTranslation('SM_TABLE.EXPIRE_DATE'),
-					type: 'text'
+					type: 'text',
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'text'
-				}
+					type: 'text',
+				},
 			},
 			pager: {
 				display: true,
-				perPage: 8
-			}
+				perPage: 8,
+			},
 		};
 
 		if (this.invitationType === InvitationTypeEnum.EMPLOYEE) {
@@ -274,8 +274,8 @@ export class InvitesComponent extends TranslationBaseComponent
 						' ' +
 						this.getTranslation(
 							'FORM.DELETE_CONFIRMATION.INVITATION'
-						)
-				}
+						),
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -303,8 +303,8 @@ export class InvitesComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(ResendConfirmationComponent, {
 				context: {
-					email: this.selectedInvite.email
-				}
+					email: this.selectedInvite.email,
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -312,7 +312,7 @@ export class InvitesComponent extends TranslationBaseComponent
 					try {
 						await this.inviteService.resendInvite({
 							id: this.selectedInvite.id,
-							invitedById: this.store.userId
+							invitedById: this.store.userId,
 						});
 
 						this.toastrService.primary(

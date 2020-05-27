@@ -20,7 +20,10 @@
 		"paths": {
 			"@gauzy/api-interface": ["libs/api-interface/src/index.ts"],
 			"@gauzy/models": ["libs/models/src/index.ts"],
-			"@env-api/environment": ["apps/api/src/environments/environment.ts"]
+			"@env-api/environment": [
+				"apps/api/src/environments/environment.ts"
+			],
+			"ng2-completer": ["node_modules/@akveo/ng2-completer"]
 		},
 		"preserveConstEnums": true,
 		"allowSyntheticDefaultImports": true,

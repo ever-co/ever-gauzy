@@ -27,7 +27,7 @@ interface SelectedRow {
 
 @Component({
 	templateUrl: './organizations.component.html',
-	styleUrls: ['./organizations.component.scss']
+	styleUrls: ['./organizations.component.scss'],
 })
 export class OrganizationsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -46,7 +46,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	private _ngDestroy$ = new Subject<void>();
 
-	@ViewChild('settingsTable', { static: false }) settingsTable;
+	@ViewChild('settingsTable') settingsTable;
 
 	settingsSmartTable: object;
 	selectedOrganization: Organization;
@@ -62,7 +62,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: PictureNameTagsComponent,
 				},
 				totalEmployees: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
@@ -70,14 +70,14 @@ export class OrganizationsComponent extends TranslationBaseComponent
 					width: '200px',
 					class: 'text-center',
 					filter: false,
-					renderComponent: OrganizationsEmployeesComponent
+					renderComponent: OrganizationsEmployeesComponent,
 				},
 				currency: {
 					title: this.getTranslation('SM_TABLE.CURRENCY'),
 					type: 'custom',
 					class: 'text-center',
 					width: '200px',
-					renderComponent: OrganizationsCurrencyComponent
+					renderComponent: OrganizationsCurrencyComponent,
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
@@ -85,13 +85,13 @@ export class OrganizationsComponent extends TranslationBaseComponent
 					class: 'text-center',
 					width: '200px',
 					filter: false,
-					renderComponent: OrganizationsStatusComponent
-				}
+					renderComponent: OrganizationsStatusComponent,
+				},
 			},
 			pager: {
 				display: true,
-				perPage: 8
-			}
+				perPage: 8,
+			},
 		};
 	}
 
@@ -139,7 +139,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 					this.getTranslation(
 						'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
 						{
-							name: result.name
+							name: result.name,
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -153,7 +153,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	async editOrganization() {
 		this.router.navigate([
-			'/pages/organizations/edit/' + this.selectedOrganization.id
+			'/pages/organizations/edit/' + this.selectedOrganization.id,
 		]);
 	}
 
@@ -161,8 +161,8 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Organization'
-				}
+					recordType: 'Organization',
+				},
 			})
 			.onClose.pipe(first())
 			.toPromise();
@@ -176,7 +176,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 					this.getTranslation(
 						'NOTES.ORGANIZATIONS.DELETE_ORGANIZATION',
 						{
-							name: this.selectedOrganization.name
+							name: this.selectedOrganization.name,
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')

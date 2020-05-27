@@ -7,7 +7,7 @@ import {
 	ProductCategory,
 	ProductOption,
 	ProductVariant,
-	Tag
+	Tag,
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -17,15 +17,15 @@ import { Store } from '../../../@core/services/store.service';
 @Component({
 	selector: 'ngx-product-form',
 	templateUrl: './product-form.component.html',
-	styleUrls: ['./product-form.component.scss']
+	styleUrls: ['./product-form.component.scss'],
 })
 export class ProductFormComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	@Input() product: Product;
 
-	optionValue = '';
-	optionCode = '';
+	activeOption: ProductOption;
+	optionMode = 'create';
 
 	productTypes: ProductType[];
 	productCategories: ProductCategory[];
@@ -54,6 +54,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 		this.options = this.product ? this.product.options : [];
 		this.variants = this.product ? this.product.variants : [];
+
+		this.resetOptionForm();
 	}
 
 	private _initializeForm() {
@@ -63,28 +65,28 @@ export class ProductFormComponent extends TranslationBaseComponent
 			code: [this.product ? this.product.code : '', Validators.required],
 			productTypeId: [
 				this.product ? this.product.productTypeId : '',
-				Validators.required
+				Validators.required,
 			],
 			productCategoryId: [
 				this.product ? this.product.productCategoryId : '',
-				Validators.required
+				Validators.required,
 			],
 			enabled: [this.product ? this.product.enabled : true],
-			description: [this.product ? this.product.description : '']
+			description: [this.product ? this.product.description : ''],
 		});
 		this.tags = this.form.get('tags').value || [];
 	}
 
 	async loadProductTypes() {
 		const res = await this.productTypeService.getAll([], {
-			organizationId: this.store.selectedOrganization.id
+			organizationId: this.store.selectedOrganization.id,
 		});
 		this.productTypes = res.items;
 	}
 
 	async loadProductCategories() {
-		const res = await this.productCategoryService.getAll({
-			organizationId: this.store.selectedOrganization.id
+		const res = await this.productCategoryService.getAll([], {
+			organizationId: this.store.selectedOrganization.id,
 		});
 		this.productCategories = res.items;
 	}
@@ -105,7 +107,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			}),
 			type: this.productTypes.find((p) => {
 				return p.id === this.form.get('productTypeId').value;
-			})
+			}),
 		};
 
 		if (this.product) {
@@ -115,12 +117,39 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.save.emit(productRequest);
 	}
 
-	onAddOption() {
-		if (!(this.optionValue && this.optionCode)) return;
+	onSaveOption() {
+		if (!(this.activeOption.name && this.activeOption.code)) return;
 
-		this.options.push({ name: this.optionValue, code: this.optionCode });
-		this.optionValue = '';
-		this.optionCode = '';
+		if (this.optionMode === 'create') {
+			this.options.push({
+				name: this.activeOption.name,
+				code: this.activeOption.code,
+			});
+		}
+
+		this.resetOptionForm();
+	}
+
+	onRemoveOption(optionInput: ProductOption) {
+		if (!optionInput) return;
+
+		this.options = this.options.filter(
+			(option) => option.name !== optionInput.name
+		);
+
+		this.resetOptionForm();
+	}
+
+	onEditOption(optionTarget: ProductOption) {
+		if (!optionTarget) return;
+
+		this.optionMode = 'edit';
+		this.activeOption = optionTarget;
+	}
+
+	resetOptionForm() {
+		this.activeOption = { name: '', code: '' };
+		this.optionMode = 'create';
 	}
 
 	onEditProductVariant(productVariantId: string) {
@@ -130,6 +159,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	onCancel() {
 		this.cancel.emit('PRODUCT_EDIT');
 	}
+
 	selectedTagsEvent(currentSelection: Tag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}

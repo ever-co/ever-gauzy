@@ -9,10 +9,11 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { ExpenseCategory } from '../expense-categories/expense-category.entity';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
 import { UserService } from '../user/user.service';
-import { UpworkService } from './upwork.service';
+import { UpworkTransactionService } from './upwork-transaction.service';
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationClientsService } from '../organization-clients/organization-clients.service';
 import { UpworkController } from './upwork.controller';
+import { UpworkService } from './upwork.service';
 
 @Module({
 	imports: [
@@ -21,18 +22,19 @@ import { UpworkController } from './upwork.controller';
 			Employee,
 			OrganizationVendor,
 			OrganizationClients,
-			ExpenseCategory
+			ExpenseCategory,
 		]),
-		CqrsModule
+		CqrsModule,
 	],
 	controllers: [UpworkController],
 	providers: [
+		UpworkTransactionService,
 		UpworkService,
 		UserService,
 		EmployeeService,
 		OrganizationVendorsService,
 		OrganizationClientsService,
-		ExpenseCategoriesService
-	]
+		ExpenseCategoriesService,
+	],
 })
 export class UpworkModule {}

@@ -19,11 +19,11 @@ import { TaskTeamsComponent } from 'apps/gauzy/src/app/@shared/table-components/
 @Component({
 	selector: 'ngx-task',
 	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.scss']
+	styleUrls: ['./task.component.scss'],
 })
 export class TaskComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('tasksTable', { static: false }) tasksTable;
+	@ViewChild('tasksTable') tasksTable;
 	private _ngDestroy$: Subject<void> = new Subject();
 	settingsSmartTable: object;
 	loading = false;
@@ -44,6 +44,7 @@ export class TaskComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		this._store.fetchTasks();
 		this._loadTableSettings();
 		this._applyTranslationOnSmartTable();
 	}
@@ -63,56 +64,56 @@ export class TaskComponent extends TranslationBaseComponent
 				title: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'string',
-					width: '10%'
+					width: '10%',
 				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_DESCRIPTION'),
 					type: 'custom',
 					filter: false,
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
 				},
 				projectName: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'string',
-					filter: false
+					filter: false,
 				},
 				employees: {
 					title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS'),
 					type: 'custom',
 					filter: false,
-					renderComponent: EmployeeWithLinksComponent
+					renderComponent: EmployeeWithLinksComponent,
 				},
 				teams: {
 					title: this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
 					type: 'custom',
 					filter: false,
-					renderComponent: TaskTeamsComponent
+					renderComponent: TaskTeamsComponent,
 				},
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: TaskEstimateComponent
+					renderComponent: TaskEstimateComponent,
 				},
 				dueDate: {
 					title: this.getTranslation('TASKS_PAGE.DUE_DATE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'string',
-					filter: false
-				}
-			}
+					filter: false,
+				},
+			},
 		};
 	}
 
 	async createTaskDialog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
-			context: {}
+			context: {},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -135,8 +136,8 @@ export class TaskComponent extends TranslationBaseComponent
 	async editTaskDIalog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask
-			}
+				selectedTask: this.selectedTask,
+			},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -153,7 +154,7 @@ export class TaskComponent extends TranslationBaseComponent
 
 			this._store.editTask({
 				...data,
-				id: this.selectedTask.id
+				id: this.selectedTask.id,
 			});
 			this.selectTask({ isSelected: false, data: null });
 		}
@@ -162,8 +163,8 @@ export class TaskComponent extends TranslationBaseComponent
 	async duplicateTaskDIalog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask
-			}
+				selectedTask: this.selectedTask,
+			},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();

@@ -13,7 +13,8 @@ import {
 	Employee,
 	PermissionsEnum,
 	InvoiceTypeEnum,
-	DiscountTaxTypeEnum
+	DiscountTaxTypeEnum,
+	Tag,
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
@@ -36,7 +37,7 @@ import { ProductService } from '../../../@core/services/product.service';
 @Component({
 	selector: 'ga-invoice-edit',
 	templateUrl: './invoice-edit.component.html',
-	styleUrls: ['./invoice-edit.component.scss']
+	styleUrls: ['./invoice-edit.component.scss'],
 })
 export class InvoiceEditComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -79,6 +80,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	invoiceDate: Date;
 	dueDate: Date;
 	hasInvoiceEditPermission: boolean;
+	tags: Tag[] = [];
 
 	subtotal = 0;
 	total = 0;
@@ -103,7 +105,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 	async getInvoice() {
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems'
+			'invoiceItems',
+			'tags',
 		]);
 		this.invoice = invoice;
 		this.invoiceItems = this.invoice.invoiceItems;
@@ -127,23 +130,24 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			invoiceDate: ['', Validators.required],
 			invoiceNumber: [
 				'',
-				Validators.compose([Validators.required, Validators.min(1)])
+				Validators.compose([Validators.required, Validators.min(1)]),
 			],
 			dueDate: ['', Validators.required],
 			discountValue: [
 				'',
-				Validators.compose([Validators.required, Validators.min(0)])
+				Validators.compose([Validators.required, Validators.min(0)]),
 			],
 			tax: [
 				'',
-				Validators.compose([Validators.required, Validators.min(0)])
+				Validators.compose([Validators.required, Validators.min(0)]),
 			],
 			terms: [''],
 			paid: [''],
 			client: ['', Validators.required],
 			currency: ['', Validators.required],
 			discountType: ['', Validators.required],
-			taxType: ['', Validators.required]
+			taxType: ['', Validators.required],
+			tags: [],
 		});
 	}
 
@@ -158,6 +162,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.form.get('discountType').setValue(invoice.discountType);
 		this.form.get('taxType').setValue(invoice.taxType);
 		this.invoiceLoaded = true;
+		this.tags = invoice.tags;
 	}
 
 	loadSmartTable() {
@@ -166,19 +171,19 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				addButtonContent: '<i class="nb-plus"></i>',
 				createButtonContent: '<i class="nb-checkmark"></i>',
 				cancelButtonContent: '<i class="nb-close"></i>',
-				confirmCreate: true
+				confirmCreate: true,
 			},
 			edit: {
 				editButtonContent: '<i class="nb-edit"></i>',
 				saveButtonContent: '<i class="nb-checkmark"></i>',
 				cancelButtonContent: '<i class="nb-close"></i>',
-				confirmSave: true
+				confirmSave: true,
 			},
 			delete: {
 				deleteButtonContent: '<i class="nb-trash"></i>',
-				confirmDelete: true
+				confirmDelete: true,
 			},
-			columns: {}
+			columns: {},
 		};
 		let price = {};
 		let quantity = {};
@@ -194,7 +199,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					filter: false,
 					addable: false,
 					editable: false,
-					width: '25%'
+					width: '25%',
 				};
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
@@ -206,7 +211,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					renderComponent: InvoiceProjectsSelectorComponent,
 					filter: false,
 					addable: false,
-					editable: false
+					editable: false,
 				};
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
@@ -218,7 +223,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					renderComponent: InvoiceTasksSelectorComponent,
 					filter: false,
 					addable: false,
-					editable: false
+					editable: false,
 				};
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
@@ -230,7 +235,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					renderComponent: InvoiceProductsSelectorComponent,
 					filter: false,
 					addable: false,
-					editable: false
+					editable: false,
 				};
 				break;
 			default:
@@ -250,14 +255,14 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${this.currency.value} ${cell}`;
-				}
+				},
 			};
 			quantity = {
 				title: this.getTranslation(
 					'INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'
 				),
 				type: 'text',
-				filter: false
+				filter: false,
 			};
 		} else if (
 			this.invoice.invoiceType ===
@@ -270,21 +275,21 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				filter: false,
 				valuePrepareFunction: (cell, row) => {
 					return `${this.currency.value} ${cell}`;
-				}
+				},
 			};
 			quantity = {
 				title: this.getTranslation(
 					'INVOICES_PAGE.INVOICE_ITEM.QUANTITY'
 				),
 				type: 'text',
-				filter: false
+				filter: false,
 			};
 		}
 		this.settingsSmartTable['columns']['description'] = {
 			title: this.getTranslation(
 				'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
 			),
-			type: 'text'
+			type: 'text',
 		};
 		this.settingsSmartTable['columns']['price'] = price;
 		this.settingsSmartTable['columns']['quantity'] = quantity;
@@ -298,7 +303,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			valuePrepareFunction: (cell, row) => {
 				return `${this.currency.value} ${row.quantity * row.price}`;
 			},
-			filter: false
+			filter: false,
 		};
 	}
 
@@ -325,7 +330,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 					const orgData = await this.organizationsService
 						.getById(organization.id, [
-							OrganizationSelectInput.currency
+							OrganizationSelectInput.currency,
 						])
 						.pipe(first())
 						.toPromise();
@@ -337,7 +342,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					const res = await this.organizationClientsService.getAll(
 						['projects'],
 						{
-							organizationId: organization.id
+							organizationId: organization.id,
 						}
 					);
 
@@ -407,7 +412,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			}
 
 			const invoice = await this.invoicesService.getAll([], {
-				invoiceNumber: invoiceData.invoiceNumber
+				invoiceNumber: invoiceData.invoiceNumber,
 			});
 
 			if (
@@ -437,7 +442,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
 				clientId: invoiceData.client.id,
-				organizationId: this.organization.id
+				organizationId: this.organization.id,
+				tags: this.tags,
 			});
 
 			for (const invoiceItem of tableData) {
@@ -449,7 +455,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
-							employeeId: invoiceItem.selectedEmployee
+							employeeId: invoiceItem.selectedEmployee,
 						});
 					} else if (invoiceItem.project) {
 						await this.invoiceItemService.update(invoiceItem.id, {
@@ -458,7 +464,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
-							projectId: invoiceItem.project.id
+							projectId: invoiceItem.project.id,
 						});
 					} else if (invoiceItem.task) {
 						await this.invoiceItemService.update(invoiceItem.id, {
@@ -467,7 +473,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
-							taskId: invoiceItem.task.id
+							taskId: invoiceItem.task.id,
 						});
 					} else if (invoiceItem.product) {
 						await this.invoiceItemService.update(invoiceItem.id, {
@@ -476,7 +482,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
-							productId: invoiceItem.product.id
+							productId: invoiceItem.product.id,
 						});
 					} else {
 						await this.invoiceItemService.update(invoiceItem.id, {
@@ -484,7 +490,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
-							invoiceId: this.invoice.id
+							invoiceId: this.invoice.id,
 						});
 					}
 				} else {
@@ -495,7 +501,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
-							employeeId: invoiceItem.selectedEmployee
+							employeeId: invoiceItem.selectedEmployee,
 						});
 					} else if (invoiceItem.project) {
 						await this.invoiceItemService.add({
@@ -504,7 +510,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
-							projectId: invoiceItem.project.id
+							projectId: invoiceItem.project.id,
 						});
 					} else if (invoiceItem.task) {
 						await this.invoiceItemService.add({
@@ -513,7 +519,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
-							taskId: invoiceItem.task.id
+							taskId: invoiceItem.task.id,
 						});
 					} else if (invoiceItem.product) {
 						await this.invoiceItemService.add({
@@ -522,7 +528,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
 							invoiceId: this.invoice.id,
-							productId: invoiceItem.product.id
+							productId: invoiceItem.product.id,
 						});
 					} else {
 						await this.invoiceItemService.add({
@@ -530,7 +536,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 							price: invoiceItem.price,
 							quantity: invoiceItem.quantity,
 							totalValue: invoiceItem.totalValue,
-							invoiceId: this.invoice.id
+							invoiceId: this.invoice.id,
 						});
 					}
 				}
@@ -568,7 +574,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					totalValue: +item.totalValue,
 					id: item.id,
 					allEmployees: this.employees,
-					selectedEmployee: item.employeeId
+					selectedEmployee: item.employeeId,
 				};
 			} else if (item.projectId) {
 				const project = await this.projectService.getById(
@@ -580,7 +586,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
-					project: project
+					project: project,
 				};
 			} else if (item.taskId) {
 				const task = await this.taskService.getById(item.taskId);
@@ -590,7 +596,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
-					task: task
+					task: task,
 				};
 			} else if (item.productId) {
 				const product = await this.productService.getById(
@@ -602,7 +608,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
-					product: product
+					product: product,
 				};
 			} else {
 				data = {
@@ -610,7 +616,7 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					price: item.price,
 					totalValue: +item.totalValue,
-					id: item.id
+					id: item.id,
 				};
 			}
 			items.push(data);
@@ -771,6 +777,9 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 
 	cancel() {
 		this.router.navigate(['/pages/accounting/invoices']);
+	}
+	selectedTagsEvent(currentTagSelection: Tag[]) {
+		this.tags = currentTagSelection;
 	}
 
 	ngOnDestroy() {

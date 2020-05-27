@@ -32,7 +32,7 @@
 				</div>
 				<div class="notification" (click)="interviewInfo()">
 					<nb-icon class="bell" icon="bell-outline"></nb-icon>
-					<div *ngIf="isInterview" class="exist"></div>
+					<div *ngIf="interviewList?.length > 0" class="exist"></div>
 				</div>
 				<div
 					*ngIf="hasEditPermission"

@@ -9,7 +9,7 @@ import {
 	catchError,
 	finalize,
 	first,
-	takeUntil
+	takeUntil,
 } from 'rxjs/operators';
 import { IHubstaffOrganization, IHubstaffProject } from '@gauzy/models';
 import { Observable, of, Subject } from 'rxjs';
@@ -22,11 +22,11 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 @Component({
 	selector: 'ngx-hubstaff',
 	templateUrl: './hubstaff.component.html',
-	styleUrls: ['./hubstaff.component.scss']
+	styleUrls: ['./hubstaff.component.scss'],
 })
 export class HubstaffComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('projectsTable', { static: false }) projectsTable;
+	@ViewChild('projectsTable') projectsTable;
 	private _ngDestroy$: Subject<void> = new Subject();
 	settingsSmartTable: object;
 	organizations$: Observable<IHubstaffOrganization[]>;
@@ -93,19 +93,19 @@ export class HubstaffComponent extends TranslationBaseComponent
 				add: false,
 				edit: false,
 				delete: false,
-				select: true
+				select: true,
 			},
 			columns: {
 				name: {
 					title: this.getTranslation('SM_TABLE.NAME'),
-					type: 'string'
+					type: 'string',
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string',
-					filter: false
-				}
-			}
+					filter: false,
+				},
+			},
 		};
 	}
 
@@ -161,7 +161,7 @@ export class HubstaffComponent extends TranslationBaseComponent
 			.autoSync({
 				integrationId: this.integrationId,
 				hubstaffOrganizations: this.organizations,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
 			})
 			.pipe(
 				tap((res) => {
@@ -184,7 +184,7 @@ export class HubstaffComponent extends TranslationBaseComponent
 
 	async setSettings() {
 		const dialog = this._dialogService.open(SettingsDialogComponent, {
-			context: {}
+			context: {},
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();

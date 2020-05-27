@@ -12,7 +12,7 @@ import {
 	NbTooltipModule,
 	NbDatepickerModule,
 	NbRadioModule,
-	NbSpinnerModule
+	NbSpinnerModule,
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -46,6 +46,8 @@ import { InvoicePaidComponent } from './table-components/invoice-paid.component'
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceViewInnerComponent } from './invoice-view/inner-component/invoice-view-inner.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
+import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -53,6 +55,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
+		TagsColorInputModule,
 		InvoicesRoutingModule,
 		NbCardModule,
 		NbSpinnerModule,
@@ -78,9 +82,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	providers: [
 		InvoicesService,
@@ -90,7 +94,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		OrganizationClientsService,
 		OrganizationProjectsService,
 		EmployeesService,
-		ProductService
+		ProductService,
 	],
 	entryComponents: [
 		InvoicesComponent,
@@ -106,7 +110,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaidComponent,
 		InvoiceEmailMutationComponent,
 		InvoiceViewInnerComponent,
-		InvoiceDownloadMutationComponent
+		InvoiceDownloadMutationComponent,
 	],
 	declarations: [
 		InvoicesComponent,
@@ -122,7 +126,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaidComponent,
 		InvoiceEmailMutationComponent,
 		InvoiceViewInnerComponent,
-		InvoiceDownloadMutationComponent
-	]
+		InvoiceDownloadMutationComponent,
+	],
 })
 export class InvoicesModule {}

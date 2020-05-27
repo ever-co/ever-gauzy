@@ -3,7 +3,7 @@ import {
 	OnInit,
 	OnDestroy,
 	ErrorHandler,
-	ViewChild
+	ViewChild,
 } from '@angular/core';
 import { AuthService } from '../../../@core/services/auth.service';
 import { RolesEnum, Employee, PermissionsEnum } from '@gauzy/models';
@@ -38,7 +38,7 @@ interface SelectedRowModel {
 @Component({
 	selector: 'ga-time-off-settings',
 	templateUrl: './time-off-settings.component.html',
-	styleUrls: ['./time-off-settings.component.scss']
+	styleUrls: ['./time-off-settings.component.scss'],
 })
 export class TimeOffSettingsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -66,7 +66,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 	loading = false;
 	hasEditPermission = false;
 
-	@ViewChild('timeOffPolicyTable', { static: false }) timeOffPolicyTable;
+	@ViewChild('timeOffPolicyTable') timeOffPolicyTable;
 
 	async ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -103,7 +103,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('TIME_OFF_PAGE.POLICY.NAME'),
 					type: 'string',
-					filter: true
+					filter: true,
 				},
 				requiresApproval: {
 					title: this.getTranslation(
@@ -112,20 +112,20 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 					type: 'custom',
 					width: '20%',
 					filter: false,
-					renderComponent: RequestApprovalIcon
+					renderComponent: RequestApprovalIcon,
 				},
 				paid: {
 					title: this.getTranslation('TIME_OFF_PAGE.POLICY.PAID'),
 					type: 'custom',
 					width: '20%',
 					filter: false,
-					renderComponent: PaidIcon
-				}
+					renderComponent: PaidIcon,
+				},
 			},
 			pager: {
 				display: true,
-				perPage: 8
-			}
+				perPage: 8,
+			},
 		};
 	}
 
@@ -162,8 +162,8 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(TimeOffSettingsMutationComponent, {
 				context: {
-					policy: this.selectedPolicy.data
-				}
+					policy: this.selectedPolicy.data,
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
@@ -197,8 +197,8 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Policy'
-				}
+					recordType: 'Policy',
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -233,8 +233,8 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 		if (orgId) {
 			findObj = {
 				organization: {
-					id: orgId
-				}
+					id: orgId,
+				},
 			};
 
 			try {
@@ -249,7 +249,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 						name: i.name,
 						requiresApproval: i.requiresApproval,
 						paid: i.paid,
-						employees: i.employees
+						employees: i.employees,
 					};
 				});
 
@@ -258,7 +258,7 @@ export class TimeOffSettingsComponent extends TranslationBaseComponent
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation('', {
-						error: error.error.message || error.message
+						error: error.error.message || error.message,
 					}),
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);

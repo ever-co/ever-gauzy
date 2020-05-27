@@ -1,9 +1,11 @@
 import { Employee, EmployeeUpdateInput, UserFindInput } from '@gauzy/models';
 import { BehaviorSubject } from 'rxjs';
+import { Injectable } from '@angular/core';
 
 /**
  * Service used to update employee
  */
+@Injectable()
 export class EmployeeStore {
 	private _selectedEmployee: Employee;
 	private _userForm: UserFindInput;

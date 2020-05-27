@@ -4,21 +4,21 @@ import {
 	OnInit,
 	ViewChild,
 	TemplateRef,
-	OnDestroy
+	OnDestroy,
 } from '@angular/core';
 import {
 	IGetTimeLogInput,
 	TimeLog,
 	Organization,
 	IDateRange,
-	PermissionsEnum
+	PermissionsEnum,
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
 import {
 	NbCheckboxComponent,
 	NbDialogService,
 	NbDialogRef,
-	NbMenuService
+	NbMenuService,
 } from '@nebular/theme';
 import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -33,7 +33,7 @@ import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet
 @Component({
 	selector: 'ngx-daily',
 	templateUrl: './daily.component.html',
-	styleUrls: ['./daily.component.scss']
+	styleUrls: ['./daily.component.scss'],
 })
 export class DailyComponent implements OnInit, OnDestroy {
 	timeLogs: TimeLog[];
@@ -48,21 +48,21 @@ export class DailyComponent implements OnInit, OnDestroy {
 
 	private _selectedDate: Date = new Date();
 	private _ngDestroy$ = new Subject<void>();
-	@ViewChild('checkAllCheckbox', { static: false })
+	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
 	organization: Organization;
 	addEditTimeRequest: any = {
 		isBillable: true,
 		projectId: null,
 		taskId: null,
-		description: ''
+		description: '',
 	};
 	selectedRange: IDateRange = { start: null, end: null };
 	showBulkAction = false;
 	bulkActionOptions = [
 		{
-			title: 'Delete'
-		}
+			title: 'Delete',
+		},
 	];
 	dialogRef: NbDialogRef<any>;
 	canChangeSelectedEmployee: boolean;
@@ -81,9 +81,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.timesheetRequest.startDate = moment(value)
 			.startOf('isoWeek')
 			.toDate();
-		this.timesheetRequest.endDate = moment(value)
-			.endOf('isoWeek')
-			.toDate();
+		this.timesheetRequest.endDate = moment(value).endOf('isoWeek').toDate();
 		this.updateLogs$.next();
 	}
 
@@ -158,7 +156,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
-			organizationId: this.organization ? this.organization.id : null
+			organizationId: this.organization ? this.organization.id : null,
 		};
 		this.timeLogs = await this.timesheetService
 			.getTimeLogs(request)
@@ -222,7 +220,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			isBillable: this.addEditTimeRequest.isBillable,
 			projectId: this.addEditTimeRequest.projectId,
 			taskId: this.addEditTimeRequest.taskId,
-			description: this.addEditTimeRequest.description
+			description: this.addEditTimeRequest.description,
 		};
 
 		(this.addEditTimeRequest.id
@@ -248,7 +246,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 		this.addEditTimeRequest = Object.assign({}, timeLog);
 		this.selectedRange = {
 			start: toLocal(timeLog.startedAt).toDate(),
-			end: toLocal(timeLog.stoppedAt).toDate()
+			end: toLocal(timeLog.stoppedAt).toDate(),
 		};
 		this.dialogRef = this.dialogService.open(dialog, { context: timeLog });
 	}

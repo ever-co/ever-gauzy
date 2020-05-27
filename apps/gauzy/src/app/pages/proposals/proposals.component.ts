@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { takeUntil } from 'rxjs/operators';
 import { LocalDataSource } from 'ng2-smart-table';
 import { NbToastrService, NbDialogService } from '@nebular/theme';
-import { Proposal, PermissionsEnum } from '@gauzy/models';
+import { Proposal, PermissionsEnum, Tag } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
@@ -12,9 +12,9 @@ import { DateViewComponent } from '../../@shared/table-components/date-view/date
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { ActionConfirmationComponent } from '../../@shared/user/forms/action-confirmation/action-confirmation.component';
-import { JobTitleComponent } from './table-components/job-title/job-title.component';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 
 export interface ProposalViewModel {
 	id: string;
@@ -27,6 +27,7 @@ export interface ProposalViewModel {
 	proposalContent?: string;
 	status?: string;
 	author?: string;
+	tags?: Tag[];
 }
 
 interface SelectedRowModel {
@@ -39,7 +40,7 @@ interface SelectedRowModel {
 @Component({
 	selector: 'ga-proposals',
 	templateUrl: './proposals.component.html',
-	styleUrls: ['./proposals.component.scss']
+	styleUrls: ['./proposals.component.scss'],
 })
 export class ProposalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -76,7 +77,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 
 	private _selectedOrganizationId: string;
 
-	@ViewChild('proposalsTable', { static: false }) proposalsTable;
+	@ViewChild('proposalsTable') proposalsTable;
 
 	ngOnInit() {
 		this.loadSettingsSmartTable();
@@ -142,7 +143,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 
 	details() {
 		this.router.navigate([
-			`/pages/sales/proposals/details/${this.selectedProposal.data.id}`
+			`/pages/sales/proposals/details/${this.selectedProposal.data.id}`,
 		]);
 	}
 
@@ -150,8 +151,8 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Proposal'
-				}
+					recordType: 'Proposal',
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -180,8 +181,8 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(ActionConfirmationComponent, {
 				context: {
-					recordType: 'status'
-				}
+					recordType: 'status',
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -190,7 +191,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 						await this.proposalsService.update(
 							this.selectedProposal.data.id,
 							{
-								status: 'ACCEPTED'
+								status: 'ACCEPTED',
 							}
 						);
 						// TODO translate
@@ -213,8 +214,8 @@ export class ProposalsComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(ActionConfirmationComponent, {
 				context: {
-					recordType: 'status'
-				}
+					recordType: 'status',
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -223,7 +224,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 						await this.proposalsService.update(
 							this.selectedProposal.data.id,
 							{
-								status: 'SENT'
+								status: 'SENT',
 							}
 						);
 
@@ -253,18 +254,18 @@ export class ProposalsComponent extends TranslationBaseComponent
 					type: 'custom',
 					width: '25%',
 					renderComponent: DateViewComponent,
-					filter: false
+					filter: false,
 				},
 				jobTitle: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
 					type: 'custom',
 					width: '25%',
-					renderComponent: JobTitleComponent
+					renderComponent: NotesWithTagsComponent,
 				},
 				jobPostLink: {
 					title: this.getTranslation('SM_TABLE.VIEW_JOB_POST'),
 					type: 'html',
-					filter: false
+					filter: false,
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
@@ -272,9 +273,9 @@ export class ProposalsComponent extends TranslationBaseComponent
 					width: '10rem',
 					class: 'text-center',
 					filter: false,
-					renderComponent: ProposalStatusComponent
-				}
-			}
+					renderComponent: ProposalStatusComponent,
+				},
+			},
 		};
 
 		if (!this.selectedEmployeeId) {
@@ -283,8 +284,8 @@ export class ProposalsComponent extends TranslationBaseComponent
 				author: {
 					title: this.getTranslation('SM_TABLE.AUTHOR'),
 					type: 'string',
-					width: '25%'
-				}
+					width: '25%',
+				},
 			};
 		}
 	}
@@ -301,10 +302,10 @@ export class ProposalsComponent extends TranslationBaseComponent
 		let items: Proposal[];
 		if (this.selectedEmployeeId) {
 			const response = await this.proposalsService.getAll(
-				['employee', 'organization'],
+				['employee', 'organization', 'tags'],
 				{
 					employeeId: this.selectedEmployeeId,
-					organizationId: this._selectedOrganizationId
+					organizationId: this._selectedOrganizationId,
 				},
 				this.selectedDate
 			);
@@ -313,7 +314,7 @@ export class ProposalsComponent extends TranslationBaseComponent
 			this.totalProposals = response.total;
 		} else {
 			const response = await this.proposalsService.getAll(
-				['organization', 'employee', 'employee.user'],
+				['organization', 'employee', 'employee.user', 'tags'],
 				{ organizationId: orgId },
 				this.selectedDate
 			);
@@ -355,12 +356,13 @@ export class ProposalsComponent extends TranslationBaseComponent
 							.join(' '),
 						jobPostContent: i.jobPostContent,
 						proposalContent: i.proposalContent,
+						tags: i.tags,
 						status: i.status,
 						author: i.employee.user
 							? i.employee.user.firstName +
 							  ' ' +
 							  i.employee.user.lastName
-							: ''
+							: '',
 					};
 				});
 
@@ -374,16 +376,17 @@ export class ProposalsComponent extends TranslationBaseComponent
 			}
 
 			this.smartTableSource.load(proposalVM);
+
 			this.showTable = true;
 
 			this.chartData[0] = {
 				name: 'Accepted Proposals',
-				value: this.countAccepted
+				value: this.countAccepted,
 			};
 
 			this.chartData[1] = {
 				name: 'Total Proposals',
-				value: this.totalProposals
+				value: this.totalProposals,
 			};
 		} catch (error) {
 			this.toastrService.danger(error.message || error.message, 'Error');

@@ -5,7 +5,7 @@ import {
 	PermissionsEnum,
 	IExpenseCategory,
 	IOrganizationVendor,
-	Tag
+	Tag,
 } from '@gauzy/models';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -59,7 +59,7 @@ interface SelectedRowModel {
 
 @Component({
 	templateUrl: './expenses.component.html',
-	styleUrls: ['./expenses.component.scss']
+	styleUrls: ['./expenses.component.scss'],
 })
 export class ExpensesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -78,7 +78,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	private _selectedOrganizationId: string;
 
-	@ViewChild('expensesTable', { static: false }) expensesTable;
+	@ViewChild('expensesTable') expensesTable;
 
 	loadSettingsSmartTable() {
 		this.smartTableSettings = {
@@ -91,34 +91,34 @@ export class ExpensesComponent extends TranslationBaseComponent
 					type: 'custom',
 					width: '10%',
 					renderComponent: DateViewComponent,
-					filter: false
+					filter: false,
 				},
 				vendorName: {
 					title: this.getTranslation('SM_TABLE.VENDOR'),
-					type: 'string'
+					type: 'string',
 				},
 				categoryName: {
 					title: this.getTranslation('SM_TABLE.CATEGORY'),
-					type: 'string'
+					type: 'string',
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
 					type: 'custom',
 					width: '10%',
 					filter: false,
-					renderComponent: IncomeExpenseAmountComponent
+					renderComponent: IncomeExpenseAmountComponent,
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
 				},
 				purpose: {
 					title: 'Purpose',
-					type: 'string'
-				}
-			}
+					type: 'string',
+				},
+			},
 		};
 	}
 
@@ -231,7 +231,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 			rateValue: formData.rateValue,
 			receipt: formData.receipt,
 			splitExpense: formData.splitExpense,
-			tags: formData.tags
+			tags: formData.tags,
 		};
 	}
 
@@ -240,14 +240,14 @@ export class ExpensesComponent extends TranslationBaseComponent
 			await this.expenseService.create({
 				...completedForm,
 				employeeId: formData.employee ? formData.employee.id : null,
-				orgId: this.store.selectedOrganization.id
+				orgId: this.store.selectedOrganization.id,
 			});
 
 			this.toastrService.primary(
 				this.getTranslation('NOTES.EXPENSES.ADD_EXPENSE', {
 					name: formData.employee
 						? `${formData.employee.firstName} ${formData.employee.lastName}`
-						: this.getTranslation('SM_TABLE.EMPLOYEE')
+						: this.getTranslation('SM_TABLE.EMPLOYEE'),
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
@@ -281,8 +281,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 		this.dialogService
 			.open(ExpensesMutationComponent, {
 				context: {
-					expense: this.selectedExpense.data
-				}
+					expense: this.selectedExpense.data,
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
@@ -296,7 +296,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 							this.getTranslation(
 								'NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG',
 								{
-									name: this.employeeName
+									name: this.employeeName,
 								}
 							),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -324,8 +324,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 			.open(ExpensesMutationComponent, {
 				context: {
 					expense: this.selectedExpense.data,
-					duplicate: true
-				}
+					duplicate: true,
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (formData) => {
@@ -342,8 +342,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 				context: {
 					recordType: this.getTranslation(
 						'FORM.DELETE_CONFIRMATION.EXPENSE'
-					)
-				}
+					),
+				},
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -357,7 +357,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 							this.getTranslation(
 								'NOTES.EXPENSES.DELETE_EXPENSE',
 								{
-									name: this.employeeName
+									name: this.employeeName,
 								}
 							),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -391,8 +391,8 @@ export class ExpensesComponent extends TranslationBaseComponent
 		if (orgId) {
 			findObj = {
 				organization: {
-					id: orgId
-				}
+					id: orgId,
+				},
 			};
 
 			this.smartTableSettings['columns']['employee'] = {
@@ -406,13 +406,13 @@ export class ExpensesComponent extends TranslationBaseComponent
 					if (user) {
 						return `${user.firstName} ${user.lastName}`;
 					}
-				}
+				},
 			};
 		} else {
 			findObj = {
 				employee: {
-					id: employeeId
-				}
+					id: employeeId,
+				},
 			};
 
 			delete this.smartTableSettings['columns']['employee'];
@@ -450,7 +450,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 					rateValue: i.rateValue,
 					receipt: i.receipt,
 					splitExpense: i.splitExpense,
-					tags: i.tags
+					tags: i.tags,
 				};
 			});
 
@@ -459,7 +459,7 @@ export class ExpensesComponent extends TranslationBaseComponent
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('NOTES.EXPENSES.EXPENSES_ERROR', {
-					error: error.error.message || error.message
+					error: error.error.message || error.message,
 				}),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);

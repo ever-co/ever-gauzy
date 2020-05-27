@@ -4,13 +4,13 @@ import {
 	Inject,
 	PLATFORM_ID,
 	ViewChild,
-	OnInit
+	OnInit,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import {
 	NbLayoutComponent,
 	NbLayoutDirectionService,
-	NbLayoutDirection
+	NbLayoutDirection,
 } from '@nebular/theme';
 import { UsersService } from '../../../@core/services/users.service';
 
@@ -27,7 +27,7 @@ import { Router } from '@angular/router';
 @Component({
 	selector: 'ngx-one-column-layout',
 	styleUrls: ['./one-column.layout.scss'],
-	templateUrl: './one-column.layout.html'
+	templateUrl: './one-column.layout.html',
 })
 export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 	constructor(
@@ -41,7 +41,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 		private directionService: NbLayoutDirectionService,
 		private router: Router
 	) {}
-	@ViewChild(NbLayoutComponent, { static: false }) layout: NbLayoutComponent;
+	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: any;
 	showOrganizationsSelector = false;
@@ -49,7 +49,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 
 	userMenu = [
 		{ title: 'Profile', link: '/pages/auth/profile' },
-		{ title: 'Log out', link: '/auth/logout' }
+		{ title: 'Log out', link: '/auth/logout' },
 	];
 
 	layout_direction: NbLayoutDirection = this.directionService.getDirection();
@@ -76,7 +76,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 			'employee',
 			'role',
 			'role.rolePermissions',
-			'tenant'
+			'tenant',
 		]);
 
 		//When a new user registers & logs in for the first time, he/she does not have tenantId.
@@ -97,7 +97,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 			this.showOrganizationsSelector = true;
 		} else {
 			const {
-				items: userOrg
+				items: userOrg,
 			} = await this.usersOrganizationsService.getAll([], { userId: id });
 			const org = await this.organizationsService
 				.getById(userOrg[0].orgId)
@@ -121,7 +121,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 					id: emp[0].id,
 					firstName: this.user.firstName,
 					lastName: this.user.lastName,
-					imageUrl: this.user.imageUrl
+					imageUrl: this.user.imageUrl,
 				};
 			} else {
 				this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;

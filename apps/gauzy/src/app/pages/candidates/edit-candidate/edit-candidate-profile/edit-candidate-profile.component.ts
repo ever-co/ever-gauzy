@@ -4,7 +4,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import {
 	Candidate,
 	CandidateUpdateInput,
-	UserUpdateInput
+	UserUpdateInput,
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -20,9 +20,10 @@ import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-ha
 	selector: 'ngx-edit-candidate-profile',
 	templateUrl: './edit-candidate-profile.component.html',
 	styleUrls: [
-		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
+		'./edit-candidate-profile.component.scss',
+		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss',
 	],
-	providers: [CandidateStore]
+	providers: [CandidateStore],
 })
 export class EditCandidateProfileComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -81,7 +82,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'person-outline',
 				responsive: true,
-				route: this.getRoute('account')
+				route: this.getRoute('account'),
 			},
 			{
 				title: this.getTranslation(
@@ -89,7 +90,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'browser-outline',
 				responsive: true,
-				route: this.getRoute('employment')
+				route: this.getRoute('employment'),
 			},
 			{
 				title: this.getTranslation(
@@ -97,7 +98,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'map-outline',
 				responsive: true,
-				route: this.getRoute('hiring')
+				route: this.getRoute('hiring'),
 			},
 			{
 				title: this.getTranslation(
@@ -105,7 +106,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'pin-outline',
 				responsive: true,
-				route: this.getRoute('location')
+				route: this.getRoute('location'),
 			},
 			{
 				title: this.getTranslation(
@@ -113,7 +114,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'pricetags-outline',
 				responsive: true,
-				route: this.getRoute('rates')
+				route: this.getRoute('rates'),
 			},
 			{
 				title: this.getTranslation(
@@ -121,7 +122,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'layers-outline',
 				responsive: true,
-				route: this.getRoute('tasks')
+				route: this.getRoute('tasks'),
 			},
 			{
 				title: this.getTranslation(
@@ -129,7 +130,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'book-open-outline',
 				responsive: true,
-				route: this.getRoute('experience')
+				route: this.getRoute('experience'),
 			},
 			{
 				title: this.getTranslation(
@@ -137,7 +138,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'archive-outline',
 				responsive: true,
-				route: this.getRoute('history')
+				route: this.getRoute('history'),
 			},
 			{
 				title: this.getTranslation(
@@ -145,7 +146,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'file-text-outline',
 				responsive: true,
-				route: this.getRoute('documents')
+				route: this.getRoute('documents'),
 			},
 			{
 				title: this.getTranslation(
@@ -153,7 +154,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'people-outline',
 				responsive: true,
-				route: this.getRoute('interview')
+				route: this.getRoute('interview'),
 			},
 			{
 				title: this.getTranslation(
@@ -161,8 +162,8 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent
 				),
 				icon: 'message-square-outline',
 				responsive: true,
-				route: this.getRoute('feedbacks')
-			}
+				route: this.getRoute('feedbacks'),
+			},
 		];
 	}
 

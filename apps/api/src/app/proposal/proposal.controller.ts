@@ -5,7 +5,10 @@ import {
 	Body,
 	Get,
 	Query,
-	UseGuards
+	UseGuards,
+	Put,
+	Param,
+	HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProposalService } from './proposal.service';
@@ -13,7 +16,7 @@ import { Proposal } from './proposal.entity';
 import { CrudController } from '../core/crud/crud.controller';
 import {
 	ProposalCreateInput as IProposalCreateInput,
-	Proposal as IProposal
+	Proposal as IProposal,
 } from '@gauzy/models';
 import { IPagination } from '../core';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
@@ -33,11 +36,11 @@ export class ProposalController extends CrudController<Proposal> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found proposals',
-		type: Proposal
+		type: Proposal,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
@@ -56,12 +59,12 @@ export class ProposalController extends CrudController<Proposal> {
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
+		description: 'The record has been successfully created.' /*, type: T*/,
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
@@ -71,5 +74,18 @@ export class ProposalController extends CrudController<Proposal> {
 		...options: any[]
 	): Promise<Proposal> {
 		return this.proposalService.create(entity);
+	}
+
+	@UseGuards(PermissionGuard)
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Put(':id')
+	async updateProposal(
+		@Param('id') id: string,
+		@Body() entity: any
+	): Promise<any> {
+		return this.proposalService.create({
+			id,
+			...entity,
+		});
 	}
 }

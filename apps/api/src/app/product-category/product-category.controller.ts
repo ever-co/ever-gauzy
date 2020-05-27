@@ -4,6 +4,7 @@ import { CrudController, IPagination } from '../core';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
 import { AuthGuard } from '@nestjs/passport';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Product-Categories')
 @UseGuards(AuthGuard('jwt'))
@@ -16,23 +17,25 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	}
 
 	@ApiOperation({
-		summary: 'Find all product categories.'
+		summary: 'Find all product categories.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found product categories.',
-		type: ProductCategory
+		type: ProductCategory,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get()
 	async findAllProductCategories(
-		@Query('findInput') findInput: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ProductCategory>> {
+		const { relations = [], findInput = null } = data;
 		return this.productCategoriesService.findAll({
-			where: findInput
+			where: findInput,
+			relations,
 		});
 	}
 }

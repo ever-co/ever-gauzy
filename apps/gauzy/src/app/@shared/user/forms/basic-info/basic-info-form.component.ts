@@ -4,7 +4,7 @@ import {
 	ElementRef,
 	Input,
 	OnInit,
-	AfterViewInit
+	AfterViewInit,
 } from '@angular/core';
 import { Validators, FormBuilder } from '@angular/forms';
 import { RolesEnum, Tag, ITenant } from '@gauzy/models';
@@ -19,13 +19,13 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 @Component({
 	selector: 'ga-user-basic-info-form',
 	templateUrl: 'basic-info-form.component.html',
-	styleUrls: ['basic-info-form.component.scss']
+	styleUrls: ['basic-info-form.component.scss'],
 })
 export class BasicInfoFormComponent extends TranslationBaseComponent
 	implements OnInit, AfterViewInit {
 	UPLOADER_PLACEHOLDER = 'FORM.PLACEHOLDERS.UPLOADER_PLACEHOLDER';
 
-	@ViewChild('imagePreview', { static: false })
+	@ViewChild('imagePreview')
 	imagePreviewElement: ElementRef;
 
 	@Input() public isEmployee: boolean;
@@ -97,7 +97,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 				lastName: [''],
 				email: [
 					'',
-					Validators.compose([Validators.required, Validators.email])
+					Validators.compose([Validators.required, Validators.email]),
 				],
 				imageUrl: [
 					'',
@@ -107,32 +107,32 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 								`(http)?s?:?(\/\/[^"']*\.(?:png|jpg|jpeg|gif|png|svg))`,
 								'g'
 							)
-						)
-					])
+						),
+					]),
 				],
 				password: [
 					'',
 					Validators.compose([
 						Validators.required,
-						Validators.minLength(4)
-					])
+						Validators.minLength(4),
+					]),
 				],
 				startedWorkOn: [''],
 				role: [
 					'',
 					this.isCandidate || this.isEmployee
 						? null
-						: Validators.required
+						: Validators.required,
 				],
 				offerDate: [''],
 				acceptDate: [''],
 				appliedDate: [''],
 				hiredDate: [''],
 				rejectDate: [''],
-				tags: [this.selectedTags]
+				tags: [this.selectedTags],
 			},
 			{
-				validator: this.validatorService.validateDate
+				validator: this.validatorService.validateDate,
 			}
 		);
 
@@ -164,7 +164,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 			const role = await this.roleService
 				.getRoleByName({
 					name: this.role.value ? this.role.value : defaultRoleName,
-					tenant: this.store.user.tenant
+					tenant: this.store.user.tenant,
 				})
 				.pipe(first())
 				.toPromise();
@@ -179,11 +179,11 @@ export class BasicInfoFormComponent extends TranslationBaseComponent
 						imageUrl: this.imageUrl.value,
 						role,
 						tenant: this.tenant,
-						tags: this.form.get('tags').value
+						tags: this.form.get('tags').value,
 					},
 					password: this.password.value,
 					organizationId,
-					createdById
+					createdById,
 				})
 				.pipe(first())
 				.toPromise();
