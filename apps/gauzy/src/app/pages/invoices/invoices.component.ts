@@ -15,6 +15,9 @@ import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutati
 import { OrganizationClientsService } from '../../@core/services/organization-clients.service ';
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
+import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
+import { OrganizationsService } from '../../@core/services/organizations.service';
+import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -24,7 +27,7 @@ export interface SelectedInvoice {
 @Component({
 	selector: 'ngx-invoices',
 	templateUrl: './invoices.component.html',
-	styleUrls: ['./invoices.component.scss']
+	styleUrls: ['./invoices.component.scss'],
 })
 export class InvoicesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -50,7 +53,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 		private invoicesService: InvoicesService,
 		private invoiceItemService: InvoiceItemService,
 		private organizationClientsService: OrganizationClientsService,
-		private router: Router
+		private router: Router,
+		private organizationService: OrganizationsService
 	) {
 		super(translateService);
 	}
@@ -74,7 +78,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	edit() {
 		this.router.navigate([
-			`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`
+			`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`,
 		]);
 	}
 
@@ -95,7 +99,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			clientId: this.selectedInvoice.clientId,
 			organizationId: this.selectedInvoice.organizationId,
 			invoiceType: this.selectedInvoice.invoiceType,
-			tags: this.selectedInvoice.tags
+			tags: this.selectedInvoice.tags,
 		});
 
 		if (this.selectedInvoice.invoiceItems[0].employeeId) {
@@ -106,7 +110,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					employeeId: item.employeeId
+					employeeId: item.employeeId,
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].projectId) {
@@ -117,7 +121,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					projectId: item.projectId
+					projectId: item.projectId,
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].taskId) {
@@ -128,7 +132,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					taskId: item.taskId
+					taskId: item.taskId,
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].productId) {
@@ -139,7 +143,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					productId: item.productId
+					productId: item.productId,
 				});
 			}
 		} else {
@@ -149,7 +153,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					price: item.price,
 					quantity: item.quantity,
 					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id
+					invoiceId: createdInvoice.id,
 				});
 			}
 		}
@@ -160,23 +164,52 @@ export class InvoicesComponent extends TranslationBaseComponent
 		);
 
 		this.router.navigate([
-			`/pages/accounting/invoices/edit/${createdInvoice.id}`
+			`/pages/accounting/invoices/edit/${createdInvoice.id}`,
 		]);
+	}
+
+	download() {
+		if (this.selectedInvoice) {
+			this.organizationService
+				.getById(this.selectedInvoice.organizationId)
+				.subscribe(async (org) => {
+					const client = await this.organizationClientsService.getById(
+						this.selectedInvoice.clientId
+					);
+					if (client.organizationId) {
+						this.dialogService.open(
+							InvoiceDownloadMutationComponent,
+							{
+								context: {
+									client: client,
+									invoice: this.selectedInvoice,
+									organization: org,
+								},
+							}
+						);
+					}
+				});
+		}
 	}
 
 	async send() {
 		if (this.selectedInvoice) {
-			const client = await this.organizationClientsService.getById(
-				this.selectedInvoice.clientId
-			);
-			if (client.organizationId) {
-				this.dialogService.open(InvoiceSendMutationComponent, {
-					context: {
-						client: client,
-						invoice: this.selectedInvoice
+			this.organizationService
+				.getById(this.selectedInvoice.organizationId)
+				.subscribe(async (org) => {
+					const client = await this.organizationClientsService.getById(
+						this.selectedInvoice.clientId
+					);
+					if (client.organizationId) {
+						this.dialogService.open(InvoiceSendMutationComponent, {
+							context: {
+								client: client,
+								invoice: this.selectedInvoice,
+								organization: org,
+							},
+						});
 					}
 				});
-			}
 		}
 	}
 
@@ -205,8 +238,29 @@ export class InvoicesComponent extends TranslationBaseComponent
 
 	view() {
 		this.router.navigate([
-			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
+			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`,
 		]);
+	}
+
+	email() {
+		if (this.selectedInvoice) {
+			this.organizationService
+				.getById(this.selectedInvoice.organizationId)
+				.subscribe(async (org) => {
+					const client = await this.organizationClientsService.getById(
+						this.selectedInvoice.clientId
+					);
+					if (client.organizationId) {
+						this.dialogService.open(InvoiceEmailMutationComponent, {
+							context: {
+								client: client,
+								invoice: this.selectedInvoice,
+								organization: org,
+							},
+						});
+					}
+				});
+		}
 	}
 
 	async loadSettings() {
@@ -218,7 +272,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					const { items } = await this.invoicesService.getAll(
 						['invoiceItems', 'tags'],
 						{
-							organizationId: org.id
+							organizationId: org.id,
 						}
 					);
 					this.invoices = items;
@@ -247,7 +301,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					type: 'custom',
 					sortDirection: 'asc',
 					width: '40%',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
@@ -256,16 +310,16 @@ export class InvoicesComponent extends TranslationBaseComponent
 					width: '40%',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
-					}
+					},
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 					type: 'custom',
 					renderComponent: InvoicePaidComponent,
 					filter: false,
-					width: '15%'
-				}
-			}
+					width: '15%',
+				},
+			},
 		};
 	}
 

@@ -1,13 +1,18 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h5>
-			Send invoice to client
+			{{ 'INVOICES_PAGE.SEND.CONFIRMATION' | translate }}
+			{{ client.name }} ?
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
 		<span *ngIf="!alreadySent">
-			{{ 'INVOICES_PAGE.SEND.CONFIRMATION' | translate }}
-			{{ client.name }}?
+			<ga-invoice-view-inner
+				[invoice]="invoice"
+				[client]="client"
+				[organization]="organization"
+			>
+			</ga-invoice-view-inner>
 		</span>
 		<span *ngIf="alreadySent">
 			{{ 'INVOICES_PAGE.SEND.ALREADY_SENT' | translate }}
