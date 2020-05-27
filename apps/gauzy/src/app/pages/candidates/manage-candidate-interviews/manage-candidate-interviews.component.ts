@@ -19,7 +19,7 @@ import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 
 @Component({
-	selector: 'ngx-manage-candidate-interviews',
+	selector: 'ga-manage-candidate-interviews',
 	templateUrl: './manage-candidate-interviews.component.html',
 	styleUrls: ['./manage-candidate-interviews.component.scss'],
 })
@@ -113,7 +113,6 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	}
 
 	async onCandidateSelected(ids: string[]) {
-		console.log(this.employeeList);
 		if (!ids[0]) {
 			//if no one is selected
 			this.isCandidate = false;

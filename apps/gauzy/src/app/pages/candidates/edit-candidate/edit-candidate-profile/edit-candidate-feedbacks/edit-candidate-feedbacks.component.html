@@ -21,7 +21,7 @@
 							"
 						>
 							<div [formGroupName]="i">
-								<div class="col-12 add-card-wrap ">
+								<div class="col-12 add-card-wrap">
 									<div class="label-wrap">
 										<label
 											for="description"
@@ -86,6 +86,14 @@
 					<ga-star-rating-output
 						[rate]="feedback.rating"
 					></ga-star-rating-output>
+					<p *ngIf="feedback.interviewTitle">
+						<strong>{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW_FEEDBACK'
+								| translate
+						}}</strong>
+						{{ feedback.interviewTitle }}
+					</p>
+
 					{{ feedback.description }}
 				</div>
 

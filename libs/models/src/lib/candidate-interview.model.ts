@@ -1,5 +1,6 @@
+import { Employee } from './employee.model';
+import { ICandidateFeedback, ICandidateInterviewers } from '@gauzy/models';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-import { ICandidateInterviewers } from '..';
 
 export interface ICandidateInterview extends IBaseEntityModel {
 	title: string;
@@ -9,6 +10,8 @@ export interface ICandidateInterview extends IBaseEntityModel {
 	startTime: Date;
 	endTime: Date;
 	note?: string;
+	feedbacks?: ICandidateFeedback[];
+	employees?: Employee[];
 }
 
 export interface ICandidateInterviewFindInput extends IBaseEntityModel {
@@ -19,6 +22,7 @@ export interface ICandidateInterviewFindInput extends IBaseEntityModel {
 	startTime?: Date;
 	endTime?: Date;
 	note?: string;
+	feedbacks?: ICandidateFeedback[];
 }
 
 export interface ICandidateInterviewCreateInput {
@@ -29,4 +33,5 @@ export interface ICandidateInterviewCreateInput {
 	note?: string;
 	startTime: Date;
 	endTime: Date;
+	feedbacks?: ICandidateFeedback[];
 }
