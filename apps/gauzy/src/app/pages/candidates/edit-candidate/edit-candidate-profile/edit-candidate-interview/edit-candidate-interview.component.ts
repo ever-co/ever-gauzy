@@ -11,6 +11,7 @@ import { FormGroup } from '@angular/forms';
 import { Candidate, Employee } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
+import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -68,6 +69,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			this.loadInterview();
 		}
 	}
+
 	private async loadInterview() {
 		this.interviewResult = await this.candidateInterviewService.getAll(
 			['interviewers'],
@@ -78,6 +80,24 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			this.loadEmployee();
 		}
 	}
+
+	async addInterviewFeedback(id: string) {
+		const dialog = this.dialogService.open(
+			CandidateInterviewFeedbackComponent,
+			{
+				context: {
+					candidateId: this.selectedCandidate.id,
+					interviewId: id,
+				},
+			}
+		);
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.toastrSuccess('CREATED');
+			this.loadInterview();
+		}
+	}
+
 	async editInterview(id: string) {
 		const currentInterview = await this.candidateInterviewService.findById(
 			id
@@ -104,6 +124,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			this.loadInterview();
 		}
 	}
+
 	async loadEmployee() {
 		for (const item of this.interviewList) {
 			const employees = [];
@@ -135,12 +156,14 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			this.toastrError(error);
 		}
 	}
+
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.CANDIDATE_EDIT_${text}`)
 		);
 	}
+
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
