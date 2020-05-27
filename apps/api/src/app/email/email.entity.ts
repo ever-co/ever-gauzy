@@ -24,6 +24,12 @@ export class Email extends Base implements IEmail {
 	@JoinColumn()
 	emailTemplate: EmailTemplate;
 
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsNotEmpty()
+	@Column({ nullable: true })
+	emailTemplateId: string;
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -33,7 +39,6 @@ export class Email extends Base implements IEmail {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@IsNotEmpty()
 	@Column()
 	content: string;
 

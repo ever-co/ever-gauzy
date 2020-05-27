@@ -4,6 +4,7 @@ import { CrudController } from '../core/crud/crud.controller';
 import { Email } from './email.entity';
 import { EmailService } from './email.service';
 import { IPagination } from '../core';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Email')
 @Controller()
@@ -23,10 +24,10 @@ export class EmailController extends CrudController<Email> {
 		description: 'No records found'
 	})
 	@Get()
-	async findAllEmployees(
-		@Query('data') data: string
+	async findAllEmails(
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<Email>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 
 		const response = await this.emailService.findAll({
 			where: findInput,

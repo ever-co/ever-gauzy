@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { EmailService } from '../../../@core/services/email.service';
-import { Email } from '@gauzy/models';
+import { Email, Organization } from '@gauzy/models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Store } from '../../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { EmailFiltersComponent } from './email-filters/email-filters.component';
 
 @Component({
@@ -15,6 +15,8 @@ import { EmailFiltersComponent } from './email-filters/email-filters.component';
 })
 export class EmailHistoryComponent implements OnInit, OnDestroy {
 	private _onDestroy$ = new Subject<void>();
+
+	private _selectedOrganization: Organization;
 
 	loading = true;
 
@@ -31,7 +33,8 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 		private dialogService: NbDialogService,
 		private emailService: EmailService,
 		private sanitizer: DomSanitizer,
-		private store: Store
+		private store: Store,
+		private toastrService: NbToastrService
 	) {}
 
 	ngOnInit() {
@@ -39,8 +42,9 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._onDestroy$))
 			.subscribe((org) => {
 				if (org) {
+					this._selectedOrganization = org;
 					// TODO: Here reset all filters!
-					this._getAllEmails(org.id);
+					this._getSelectedOrganizationEmails(org.id);
 				}
 			});
 	}
@@ -49,26 +53,55 @@ export class EmailHistoryComponent implements OnInit, OnDestroy {
 		this.selectedEmail = email;
 	}
 
-	openFiltersDialog() {
-		this.dialogService.open(EmailFiltersComponent, {
-			context: {}
-		});
-		console.log('Opening Filters Dialog');
+	async openFiltersDialog() {
+		const filters = await this.dialogService
+			.open(EmailFiltersComponent, {
+				context: {}
+			})
+			.onClose.pipe(first())
+			.toPromise();
+
+		if (filters) {
+			debugger;
+			this._getSelectedOrganizationEmails(
+				this._selectedOrganization.id,
+				filters
+			);
+		}
 	}
 
-	private _getAllEmails(organizationId: string) {
+	getEmailLanguageFullName(languageCode: 'en' | 'bg' | 'he' | 'ru') {
+		switch (languageCode) {
+			case 'en':
+				return 'English';
+			case 'bg':
+				return 'Bulgarian';
+			case 'he':
+				return 'Hebrew';
+			case 'ru':
+				return 'Russian';
+		}
+	}
+
+	private _getSelectedOrganizationEmails(
+		organizationId: string,
+		filters?: any
+	) {
 		try {
 			this.emailService
 				.getAll(['emailTemplate', 'user'], {
-					organizationId
+					organizationId,
+					...filters
 				})
 				.then((data) => {
+					console.log(data);
 					this.emails = data.items;
 					this.loading = false;
 
 					this.selectedEmail = null;
 				});
 		} catch (error) {
+			// TODO: toastr
 			console.error(error);
 			this.loading = false;
 		}

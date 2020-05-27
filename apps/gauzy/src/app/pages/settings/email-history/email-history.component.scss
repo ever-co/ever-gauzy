@@ -5,6 +5,10 @@
     padding: 0;
   }
 
+  h2 {
+    text-align: center;
+  }
+
   .content-container {
     display: flex;
 
@@ -48,6 +52,14 @@
       width: 100%;
       display: flex;
       justify-content: center;
+      flex-direction: column;
+      padding: 2rem;
+
+      .email-details {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+      }
     }
   }
 }

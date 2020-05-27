@@ -203,6 +203,10 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 						module: EmailModule
 					},
 					{
+						path: '/email-template',
+						module: EmailTemplateModule
+					},
+					{
 						path: 'time-off-policy',
 						module: TimeOffPolicyModule
 					},
@@ -349,6 +353,7 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 		RequestApprovalEmployeeModule,
 		ProposalModule,
 		EmailModule,
+		EmailTemplateModule,
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
@@ -356,7 +361,6 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 		RequestApprovalModule,
 		RolePermissionsModule,
 		TenantModule,
-		EmailTemplateModule,
 		TagModule,
 		SkillModule,
 		InvoiceModule,

@@ -550,7 +550,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translated: false,
 						translationKey: 'MENU.EMAIL_HISTORY'
 						// permissionKeys: [
-						// 	// PermissionsEnum.VIEW_ALL_EMAILS
+						// 	PermissionsEnum.VIEW_ALL_EMAILS
 						// ]
 					}
 				},
