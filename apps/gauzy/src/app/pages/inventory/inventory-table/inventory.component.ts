@@ -20,7 +20,7 @@ export interface SelectedProduct {
 @Component({
 	selector: 'ngx-inventory',
 	templateUrl: './inventory.component.html',
-	styleUrls: ['./inventory.component.scss']
+	styleUrls: ['./inventory.component.scss'],
 })
 export class InventoryComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -56,16 +56,16 @@ export class InventoryComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: PictureNameTagsComponent,
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
-					type: 'string'
+					type: 'string',
 				},
 				type: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
-					valuePrepareFunction: (type: ProductType) => type.name
+					valuePrepareFunction: (type: ProductType) => type.name,
 				},
 				category: {
 					title: this.getTranslation(
@@ -73,7 +73,7 @@ export class InventoryComponent extends TranslationBaseComponent
 					),
 					type: 'string',
 					valuePrepareFunction: (category: ProductCategory) =>
-						category.name
+						category.name,
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
@@ -81,9 +81,9 @@ export class InventoryComponent extends TranslationBaseComponent
 					filter: false,
 					valuePrepareFunction: (description: string) => {
 						return description.slice(0, 15) + '...';
-					}
-				}
-			}
+					},
+				},
+			},
 		};
 	}
 
@@ -93,13 +93,13 @@ export class InventoryComponent extends TranslationBaseComponent
 
 	manageProductCategories() {
 		this.router.navigate([
-			'/pages/organization/inventory/product-categories'
+			'/pages/organization/inventory/product-categories',
 		]);
 	}
 
 	async save() {
 		const dialog = this.dialogService.open(ProductMutationComponent, {
-			context: { product: this.selectedItem }
+			context: { product: this.selectedItem },
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();
@@ -113,15 +113,28 @@ export class InventoryComponent extends TranslationBaseComponent
 			.onClose.pipe(first())
 			.toPromise();
 
-		if (result) {
-			await this.productService.delete(this.selectedItem.id);
-			this.loadSettings();
-			this.toastrService.primary(
-				this.getTranslation('INVENTORY_PAGE.INVENTORY_ITEM_DELETED'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
+		if (!result) return;
+
+		try {
+			const res = await this.productService.delete(this.selectedItem.id);
+
+			if (res.affected > 0) {
+				this.loadSettings();
+				this.toastrService.primary(
+					this.getTranslation(
+						'INVENTORY_PAGE.INVENTORY_ITEM_DELETED'
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
+		} catch {
+			this.toastrService.success(
+				this.getTranslation('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
+		} finally {
+			this.disableButton = true;
 		}
-		this.disableButton = true;
 	}
 
 	async loadSettings() {

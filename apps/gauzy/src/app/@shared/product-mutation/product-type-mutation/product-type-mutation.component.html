@@ -16,20 +16,37 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form [formGroup]="form" *ngIf="form">
+			<div class="form-group mb-3">
+				<label class="label" for="lang">
+					{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
+				</label>
+				<!-- not working yet -->
+				<nb-select
+					id="lang"
+					[placeholder]="'INVENTORY_PAGE.LANGUAGE' | translate"
+					class="d-block"
+					size="medium"
+					fullWidth="true"
+				>
+					<nb-option *ngFor="let lang of languages" [value]="lang">
+						{{ lang }}
+					</nb-option>
+				</nb-select>
+			</div>
 			<div class="form-group">
 				<div class="row">
-					<div class="col-sm-12 mb-4">
-						<label class="label" for="organizationId">
-							{{ 'INVENTORY_PAGE.ORGANIZATION' | translate }}
+					<div class="col-sm-4 mb-4">
+						<label class="label" for="nameInput">
+							{{ 'INVENTORY_PAGE.NAME' | translate }}
 						</label>
 						<ng-select
+							class="icon-select"
 							[clearable]="false"
-							[items]="organizations"
+							[items]="icons"
 							bindLabel="name"
-							placeholder="Select Company"
+							[placeholder]="'INVENTORY_PAGE.ICON' | translate"
 							id="organizationId"
-							[(ngModel)]="selectedOrganization"
-							(change)="selectOrganiztion($event)"
+							[(ngModel)]="selectedIcon"
 							[ngModelOptions]="{ standalone: true }"
 						>
 							<ng-template
@@ -37,31 +54,16 @@
 								let-item="item"
 								let-index="index"
 							>
-								<img
-									*ngIf="item.imageUrl"
-									[src]="item.imageUrl"
-									width="40"
-									height="40"
-								/>
-								{{ item.name }}
+								<nb-icon [icon]="item"></nb-icon>
 							</ng-template>
 							<ng-template ng-label-tmp let-item="item">
 								<div class="selector-template">
-									<img
-										*ngIf="item.imageUrl"
-										height="25"
-										width="25"
-										[src]="item.imageUrl"
-									/>
-									<span>{{ item.name }}</span>
+									<nb-icon [icon]="item"></nb-icon>
 								</div>
 							</ng-template>
 						</ng-select>
 					</div>
-					<div class="col-sm-12 mb-4">
-						<label class="label" for="nameInput">
-							{{ 'INVENTORY_PAGE.NAME' | translate }}
-						</label>
+					<div class="col-sm-8 mb-4 flex-end">
 						<input
 							fullWidth
 							id="nameInput"
@@ -70,6 +72,23 @@
 							formControlName="name"
 							[placeholder]="'INVENTORY_PAGE.NAME' | translate"
 						/>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-12">
+						<label class="label" for="description">{{
+							'INVENTORY_PAGE.DESCRIPTION' | translate
+						}}</label>
+						<textarea
+							fullWidth
+							id="description"
+							type="text"
+							nbInput
+							formControlName="description"
+							[placeholder]="
+								'INVENTORY_PAGE.DESCRIPTION' | translate
+							"
+						></textarea>
 					</div>
 				</div>
 			</div>

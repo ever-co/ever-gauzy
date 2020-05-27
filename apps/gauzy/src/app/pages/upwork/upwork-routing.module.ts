@@ -3,11 +3,12 @@ import { RouterModule, Routes } from '@angular/router';
 import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { TransactionsComponent } from './components/transactions/transactions.component';
+import { ContractsComponent } from './components/contracts/contracts.component';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: UpworkAuthorizeComponent
+		component: UpworkAuthorizeComponent,
 	},
 	{
 		path: ':id',
@@ -15,27 +16,31 @@ const routes: Routes = [
 		children: [
 			{
 				path: '',
-				redirectTo: 'activities',
-				pathMatch: 'full'
+				redirectTo: 'contracts',
+				pathMatch: 'full',
 			},
 			{
 				path: 'activities',
-				component: TransactionsComponent
+				component: TransactionsComponent,
 			},
 			{
 				path: 'reports',
-				component: TransactionsComponent
+				component: TransactionsComponent,
 			},
 			{
 				path: 'transactions',
-				component: TransactionsComponent
-			}
-		]
-	}
+				component: TransactionsComponent,
+			},
+			{
+				path: 'contracts',
+				component: ContractsComponent,
+			},
+		],
+	},
 ];
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
-	exports: [RouterModule]
+	exports: [RouterModule],
 })
 export class UpworkRoutingModule {}

@@ -8,7 +8,7 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	Post
+	Post,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -21,11 +21,12 @@ import { Permissions } from '../shared/decorators/permissions';
 import {
 	PermissionsEnum,
 	CandidateCreateInput as ICandidateCreateInput,
-	LanguagesEnum
+	LanguagesEnum,
 } from '@gauzy/models';
 import { CommandBus } from '@nestjs/cqrs';
 import { CandidateCreateCommand, CandidateBulkCreateCommand } from './commands';
 import { I18nLang } from 'nestjs-i18n';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Candidate')
 @UseGuards(AuthGuard('jwt'))
@@ -41,16 +42,16 @@ export class CandidateController extends CrudController<Candidate> {
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		description: 'The record has been successfully edited.',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -63,7 +64,7 @@ export class CandidateController extends CrudController<Candidate> {
 		try {
 			return this.candidateService.create({
 				id,
-				...entity
+				...entity,
 			});
 		} catch (error) {
 			console.log(error);
@@ -75,11 +76,11 @@ export class CandidateController extends CrudController<Candidate> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidates in the tenant',
-		type: Candidate
+		type: Candidate,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get()
 	async findAllCandidates(
@@ -89,30 +90,36 @@ export class CandidateController extends CrudController<Candidate> {
 		return this.candidateService.findAll({ where: findInput, relations });
 	}
 
-	@ApiOperation({ summary: 'Find Candidate by id in the same tenant.' })
+	@ApiOperation({ summary: 'Find Candidate by id ' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',
-		type: Candidate
+		type: Candidate,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get(':id')
-	async findById(@Param('id') id: string): Promise<Candidate> {
-		return this.candidateService.findOne(id);
+	async findById(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Candidate> {
+		const { relations = [] } = data;
+		return this.candidateService.findOne(id, {
+			relations,
+		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
+		description: 'The record has been successfully created.' /*, type: T*/,
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
@@ -127,12 +134,12 @@ export class CandidateController extends CrudController<Candidate> {
 	@ApiOperation({ summary: 'Create records in Bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Records have been successfully created.' /*, type: T*/
+		description: 'Records have been successfully created.' /*, type: T*/,
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)

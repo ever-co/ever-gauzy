@@ -3,20 +3,20 @@ import { Injectable } from '@angular/core';
 import {
 	IAvailabilitySlots,
 	IAvailabilitySlotsCreateInput,
-	IAvailabilitySlotsFindInput
+	IAvailabilitySlotsFindInput,
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
 export class AvailabilitySlotsService {
-	AVAILIBILITY_SLOTS_BASE_URI = '/api/availability-slots';
+	AVAILABILITY_SLOTS_BASE_URI = '/api/availability-slots';
 
 	constructor(private http: HttpClient) {}
 
 	create(createInput: IAvailabilitySlotsCreateInput): Promise<any> {
 		return this.http
 			.post<IAvailabilitySlots>(
-				this.AVAILIBILITY_SLOTS_BASE_URI,
+				this.AVAILABILITY_SLOTS_BASE_URI,
 				createInput
 			)
 			.pipe(first())
@@ -26,7 +26,7 @@ export class AvailabilitySlotsService {
 	createBulk(createInput: IAvailabilitySlotsCreateInput[]): Promise<any> {
 		return this.http
 			.post<IAvailabilitySlots[]>(
-				this.AVAILIBILITY_SLOTS_BASE_URI + '/bulk',
+				this.AVAILABILITY_SLOTS_BASE_URI + '/bulk',
 				createInput
 			)
 			.pipe(first())
@@ -40,9 +40,9 @@ export class AvailabilitySlotsService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: IAvailabilitySlots[]; total: number }>(
-				this.AVAILIBILITY_SLOTS_BASE_URI,
+				this.AVAILABILITY_SLOTS_BASE_URI,
 				{
-					params: { data }
+					params: { data },
 				}
 			)
 			.pipe(first())
@@ -54,14 +54,14 @@ export class AvailabilitySlotsService {
 		updateInput: IAvailabilitySlotsCreateInput
 	): Promise<any> {
 		return this.http
-			.put(`${this.AVAILIBILITY_SLOTS_BASE_URI}/${id}`, updateInput)
+			.put(`${this.AVAILABILITY_SLOTS_BASE_URI}/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
 		return this.http
-			.delete(`${this.AVAILIBILITY_SLOTS_BASE_URI}/${id}`)
+			.delete(`${this.AVAILABILITY_SLOTS_BASE_URI}/${id}`)
 			.pipe(first())
 			.toPromise();
 	}

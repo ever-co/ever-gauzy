@@ -8,7 +8,7 @@ import {
 	Post,
 	UseGuards,
 	Param,
-	Delete
+	Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -19,13 +19,15 @@ import { Permissions } from '../shared/decorators/permissions';
 import { CandidateInterviewersService } from './candidate-interviewers.service';
 import {
 	PermissionsEnum,
-	ICandidateInterviewersCreateInput
+	ICandidateInterviewersCreateInput,
+	ICandidateInterviewers,
 } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	CandidateInterviewersEmployeeBulkDeleteCommand,
-	CandidateInterviewersInterviewBulkDeleteCommand
+	CandidateInterviewersInterviewBulkDeleteCommand,
+	CandidateInterviewersBulkCreateCommand,
 } from './commands';
 
 @ApiTags('candidate_interviewers')
@@ -41,16 +43,16 @@ export class CandidateInterviewersController extends CrudController<
 		super(candidateInterviewersService);
 	}
 	@ApiOperation({
-		summary: 'Find all candidate interviewers.'
+		summary: 'Find all candidate interviewers.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate interviewers',
-		type: CandidateInterviewers
+		type: CandidateInterviewers,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get()
 	async findInterviewers(
@@ -61,12 +63,12 @@ export class CandidateInterviewersController extends CrudController<
 	}
 
 	@ApiOperation({
-		summary: 'Create new record interviewers'
+		summary: 'Create new record interviewers',
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'Success Add Interviewers',
-		type: CandidateInterviewers
+		type: CandidateInterviewers,
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
@@ -77,17 +79,37 @@ export class CandidateInterviewersController extends CrudController<
 		return this.candidateInterviewersService.create(entity);
 	}
 
+	@ApiOperation({ summary: 'Create interviewers in Bulk' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Interviewers have been successfully created.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong',
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
+	@Post('createBulk')
+	async createBulk(@Body() input: any): Promise<ICandidateInterviewers[]> {
+		const { interviewId = null, employeeIds = [] } = input;
+		return this.commandBus.execute(
+			new CandidateInterviewersBulkCreateCommand(interviewId, employeeIds)
+		);
+	}
+
 	@ApiOperation({
-		summary: 'Find Interviewers By Interview Id.'
+		summary: 'Find Interviewers By Interview Id.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate interviewers',
-		type: CandidateInterviewers
+		type: CandidateInterviewers,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
@@ -101,16 +123,16 @@ export class CandidateInterviewersController extends CrudController<
 	}
 
 	@ApiOperation({
-		summary: 'Delete Interviewers By Interview Id.'
+		summary: 'Delete Interviewers By Interview Id.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate interviewers',
-		type: CandidateInterviewers
+		type: CandidateInterviewers,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)
@@ -125,16 +147,16 @@ export class CandidateInterviewersController extends CrudController<
 	}
 
 	@ApiOperation({
-		summary: 'Delete Interviewers By employeeId.'
+		summary: 'Delete Interviewers By employeeId.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate interviewers',
-		type: CandidateInterviewers
+		type: CandidateInterviewers,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT)

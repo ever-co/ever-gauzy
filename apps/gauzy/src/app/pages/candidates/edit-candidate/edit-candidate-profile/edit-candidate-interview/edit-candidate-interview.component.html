@@ -15,43 +15,66 @@
 		<nb-card *ngFor="let interview of interviewList; let i = index">
 			<nb-card-body class="interviews-card">
 				<div class="interviews-line">
-					<nb-icon icon="calendar-outline"></nb-icon>
-					<strong> {{ interview?.title }} </strong>
-					{{
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
-							| translate
-					}}
-					<strong
-						>{{ interview?.startTime | date: 'fullDate' }} </strong
-					>{{
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
-							| translate
-					}}
-					<strong>{{
-						interview?.startTime | date: 'shortTime'
-					}}</strong
-					>-
-					<strong>{{
-						interview?.endTime | date: 'shortTime'
-					}}</strong>
-					{{
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH'
-							| translate
-					}}
-					<strong>
-						{{ selectedCandidate.user.firstName }}
-						{{ selectedCandidate.user.lastName }}</strong
-					>
+					<div>
+						<nb-icon icon="calendar-outline"></nb-icon>
+						<strong> {{ interview?.title }} </strong>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
+								| translate
+						}}
+						<strong
+							>{{
+								interview?.startTime | date: 'fullDate'
+							}} </strong
+						>{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
+								| translate
+						}}
+						<strong>{{
+							interview?.startTime | date: 'shortTime'
+						}}</strong
+						>-
+						<strong>{{
+							interview?.endTime | date: 'shortTime'
+						}}</strong>
+						{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH'
+								| translate
+						}}
+						<strong>
+							{{ selectedCandidate.user.firstName }}
+							{{ selectedCandidate.user.lastName }}</strong
+						>
+					</div>
+					<div *ngFor="let employees of interview.interviewers">
+						<span
+							*ngFor="let employee of employees"
+							nbTooltip=" {{ employee?.user?.firstName }}
+					{{ employee?.user?.lastName }}"
+							nbTooltipPlacement="top"
+						>
+							<img
+								class="candidate-image-small"
+								[src]="employee?.user?.imageUrl"
+								alt="employee Avatar"
+							/>
+						</span>
+					</div>
 				</div>
-				<nb-actions class="float-right" e="medium">
+				<nb-actions class="float-right icon-wrap" e="medium">
+					<nb-action
+						(click)="addInterviewFeedback(interview.id)"
+						class="d-inline pr-0 icons"
+						icon="message-square-outline"
+					></nb-action>
 					<nb-action
 						(click)="editInterview(interview.id)"
-						class="d-inline pr-0"
+						class="d-inline pr-0 icons"
 						icon="edit"
 					></nb-action>
 					<nb-action
 						(click)="removeInterview(interview.id)"
-						class="d-inline pr-0"
+						class="d-inline pr-0 icons"
 						icon="close"
 					></nb-action>
 				</nb-actions>

@@ -16,7 +16,7 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 	async findAllProductVariants(): Promise<IPagination<ProductVariant>> {
 		const total = await this.productVariantRepository.count();
 		const items = await this.productVariantRepository.find({
-			relations: ['settings', 'price']
+			relations: ['settings', 'price'],
 		});
 
 		return { items, total };
@@ -38,5 +38,9 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 		productVariant: ProductVariant
 	): Promise<ProductVariant> {
 		return this.productVariantRepository.save(productVariant);
+	}
+
+	deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
+		return this.productVariantRepository.remove(productVariants);
 	}
 }

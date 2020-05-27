@@ -38,13 +38,19 @@
 			</button>
 		</nb-action>
 
-		<nb-action *ngIf="showEmployeesSelector" class="show-large-up">
+		<nb-action
+			*ngIf="showEmployeesSelector && !showExtraActions"
+			class="show-large-up"
+		>
 			<ga-employee-selector
 				class="header-selector employee-selector"
 			></ga-employee-selector>
 		</nb-action>
 
-		<nb-action *ngIf="showDateSelector" class="show-large-up">
+		<nb-action
+			*ngIf="showDateSelector && !showExtraActions"
+			class="show-large-up"
+		>
 			<ga-date-selector class="date-selector"></ga-date-selector>
 		</nb-action>
 
@@ -119,7 +125,7 @@
 <div
 	(window:resize)="closeExtraActionsIfLarge($event)"
 	class="extra-actions"
-	[hidden]="!showExtraActions"
+	*ngIf="showExtraActions"
 >
 	<div>
 		<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>
@@ -135,7 +141,7 @@
 	</div>
 
 	<ga-date-selector
-		*ngIf="showDateSelector"
+		*ngIf="showDateSelector && showExtraActions"
 		class="date-selector"
 	></ga-date-selector>
 

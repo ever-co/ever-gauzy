@@ -21,4 +21,10 @@ export class ProductVariantPriceService extends CrudService<
 		const newProductVariantPrice = new ProductVariantPrice();
 		return this.productVariantPriceRepository.save(newProductVariantPrice);
 	}
+
+	async deleteMany(
+		productVariantPrices: ProductVariantPrice[]
+	): Promise<ProductVariantPrice[]> {
+		return this.productVariantPriceRepository.remove(productVariantPrices);
+	}
 }

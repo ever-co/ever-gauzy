@@ -9,7 +9,7 @@ import {
 	NbIconModule,
 	NbTooltipModule,
 	NbTabsetModule,
-	NbRouteTabsetModule
+	NbRouteTabsetModule,
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -17,6 +17,9 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TransactionsComponent } from './components/transactions/transactions.component';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { ContractsComponent } from './components/contracts/contracts.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -25,10 +28,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 	declarations: [
 		UpworkComponent,
 		UpworkAuthorizeComponent,
-		TransactionsComponent
+		TransactionsComponent,
+		ContractsComponent,
 	],
 	imports: [
 		CommonModule,
+		Ng2SmartTableModule,
 		UpworkRoutingModule,
 		NbCardModule,
 		NbButtonModule,
@@ -39,13 +44,14 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		NbTabsetModule,
 		NbRouteTabsetModule,
+		TableComponentsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
-	]
+				deps: [HttpClient],
+			},
+		}),
+	],
 })
 export class UpworkModule {}

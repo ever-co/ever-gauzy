@@ -1,0 +1,58 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>{{ 'PUBLIC_APPOINTMENTS.BOOK_APPOINTMENTS' | translate }}</h4>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="employee-info" *ngIf="employee">
+			<img
+				class="employee-image"
+				[src]="employee.user.imageUrl"
+				alt="Employee Avatar"
+			/>
+			<div class="employee-details">
+				<span class="employee-name"
+					>{{ employee.user.firstName }}
+					{{ employee.user.lastName }}</span
+				>
+				<div class="employee-position">
+					{{ employee.organizationPosition?.name }}
+				</div>
+				<div class="transparent">
+					<strong>{{ employee.user.email }}</strong>
+				</div>
+			</div>
+		</div>
+
+		<div class="body-header">
+			<h5>{{ 'PUBLIC_APPOINTMENTS.SELECT_EVENT_TYPES' | translate }}</h5>
+		</div>
+		<div>
+			<div class="row block-content" *ngFor="let eventType of eventTypes">
+				<div class="col-3">
+					<div class="block-info">
+						<strong>
+							{{ eventType.title }}
+						</strong>
+					</div>
+				</div>
+				<div class="col-3">
+					Duration:
+					<strong>
+						{{ eventType.duration }} {{ eventType.durationUnit }}
+					</strong>
+				</div>
+				<div class="col-3 text-right">
+					<button
+						(click)="selectEventType(eventType.id)"
+						status="success"
+						nbButton
+					>
+						{{ 'BUTTONS.SELECT' | translate }}
+					</button>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+</nb-card>

@@ -4,11 +4,14 @@ import { Observable } from 'rxjs';
 import {
 	IAccessTokenSecretPair,
 	IAccessTokenDto,
-	IAccessToken
+	IAccessToken,
+	IEngagement,
+	IUpworkApiConfig,
+	IIntegrationMap,
 } from '@gauzy/models';
 
 @Injectable({
-	providedIn: 'root'
+	providedIn: 'root',
 })
 export class UpworkService {
 	constructor(private http: HttpClient) {}
@@ -31,6 +34,27 @@ export class UpworkService {
 		return this.http.post<IAccessToken>(
 			'/api/integrations/upwork/access-token',
 			accessTokenDto
+		);
+	}
+
+	getContracts(config): Observable<IEngagement[]> {
+		const data = JSON.stringify({ config });
+		return this.http.get<IEngagement[]>(
+			'/api/integrations/upwork/freelancer-contracts',
+			{ params: { data } }
+		);
+	}
+
+	getConfig(integrationId): Observable<IUpworkApiConfig> {
+		return this.http.get<IUpworkApiConfig>(
+			`/api/integrations/upwork/config/${integrationId}`
+		);
+	}
+
+	syncContracts(syncContractsDto): Observable<IIntegrationMap[]> {
+		return this.http.post<IIntegrationMap[]>(
+			`/api/integrations/upwork/sync-contracts`,
+			syncContractsDto
 		);
 	}
 }
