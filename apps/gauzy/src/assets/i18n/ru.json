@@ -1414,7 +1414,8 @@
 		"ENTER_POSITIVE_NUMBER": "Пожалуйста, введите положительное число!"
 	},
 	"APPOINTMENTS_PAGE": {
-		"ADD_APPOINTMENT": "Добавить Назначение"
+		"ADD_APPOINTMENT": "Добавить Назначение",
+		"DURATION_ERROR": "Выбранная длительность недопустима"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Типы событий",
@@ -1431,6 +1432,8 @@
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENTS": "Заказать прием",
 		"SELECT_EVENT_TYPES": "Пожалуйста, выберите тип события",
-		"PICK_DATETIME": "Выберите дату и время"
+		"PICK_DATETIME": "Выберите дату и время",
+		"DURATION": "Продолжительность:",
+		"EVENT_TYPE": "Тип события:"
 	}
 }
