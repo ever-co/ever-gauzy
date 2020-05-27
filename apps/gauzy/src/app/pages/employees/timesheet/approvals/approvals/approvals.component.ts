@@ -6,7 +6,8 @@ import {
 	IDateRange,
 	PermissionsEnum,
 	TimesheetStatus,
-	Timesheet
+	Timesheet,
+	TimeLogFilters
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import {
@@ -14,12 +15,10 @@ import {
 	NbDialogRef,
 	NbMenuService
 } from '@nebular/theme';
-import * as moment from 'moment';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { filter, map, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Router } from '@angular/router';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
@@ -57,11 +56,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	];
 	dialogRef: NbDialogRef<any>;
 	canChangeSelectedEmployee: boolean;
-	logRequest: {
-		startDate?: Date;
-		endDate?: Date;
-		employeeId?: string;
-	} = {};
+	logRequest: TimeLogFilters = {};
 
 	updateLogs$: Subject<any> = new Subject();
 
@@ -71,23 +66,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		private router: Router,
 		private toastrService: ToastrService,
 		private nbMenuService: NbMenuService
-	) {
-		this.selectedDate = new Date();
-	}
+	) {}
 
-	public get selectedDate(): Date {
-		return this._selectedDate;
-	}
-	public set selectedDate(value: Date) {
-		this._selectedDate = value;
-		this.logRequest.startDate = moment(value)
-			.startOf('month')
-			.toDate();
-		this.logRequest.endDate = moment(value)
-			.endOf('month')
-			.toDate();
-		this.updateLogs$.next();
-	}
 	async ngOnInit() {
 		this.nbMenuService
 			.onItemClick()
@@ -111,15 +91,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 				this.updateLogs$.next();
 			});
 
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
-				if (employee) {
-					this.logRequest.employeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
@@ -129,30 +100,21 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
-	async nextDay() {
-		const date = moment(this.selectedDate).add(1, 'month');
-		if (date.isAfter(this.today)) {
-			return;
-		}
-		this.selectedDate = date.toDate();
-	}
-
-	async previousDay() {
-		this.selectedDate = moment(this.selectedDate)
-			.subtract(1, 'month')
-			.toDate();
+	filtersChange($event) {
+		this.logRequest = $event;
+		this.updateLogs$.next();
 	}
 
 	async getTimeSheets() {
-		const { startDate, endDate, employeeId } = this.logRequest;
-		const _startDate = moment(startDate).format('YYYY-MM-DD') + ' 00:00:00';
-		const _endDate = moment(endDate).format('YYYY-MM-DD') + ' 23:59:59';
-
+		if (!this.organization) {
+			return;
+		}
+		const { startDate, endDate } = this.logRequest;
 		const request: IGetTimeLogInput = {
-			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
-			...(employeeId ? { employeeId } : {}),
-			organizationId: this.organization ? this.organization.id : null
+			organizationId: this.organization.id,
+			...this.logRequest,
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 		this.timeSheets = await this.timesheetService
 			.getTimeSheets(request)

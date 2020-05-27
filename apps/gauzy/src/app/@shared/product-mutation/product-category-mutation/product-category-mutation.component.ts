@@ -1,7 +1,7 @@
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { ProductType, ProductCategory } from '@gauzy/models';
+import { ProductCategory } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
@@ -12,7 +12,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 @Component({
 	selector: 'ngx-product-type-mutation',
 	templateUrl: './product-category-mutation.component.html',
-	styleUrls: ['./product-category-mutation.component.scss']
+	styleUrls: ['./product-category-mutation.component.scss'],
 })
 export class ProductCategoryMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -45,7 +45,7 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 			name: this.form.get('name').value,
 			organization: this.store.selectedOrganization,
 			description: this.form.get('description').value,
-			imageUrl: this.form.get('imageUrl').value
+			imageUrl: this.form.get('imageUrl').value,
 		};
 
 		let productCategory: ProductCategory;
@@ -64,30 +64,29 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent
 		this.closeDialog(productCategory);
 	}
 
-	async closeDialog(productType?: ProductType) {
-		this.dialogRef.close(productType);
+	async closeDialog(productCategory?: ProductCategory) {
+		this.dialogRef.close(productCategory);
 	}
 
 	private _initializeForm() {
 		this.form = this.fb.group({
 			organizationId: [
 				this.productCategory ? this.productCategory.organizationId : '',
-				Validators.required
+				Validators.required,
 			],
 			name: [
 				this.productCategory ? this.productCategory.name : '',
-				Validators.required
+				Validators.required,
 			],
 			imageUrl: [
-				this.productCategory ? this.productCategory.imageUrl : null
+				this.productCategory ? this.productCategory.imageUrl : null,
 			],
 			description: [
-				this.productCategory ? this.productCategory.description : null
-			]
+				this.productCategory ? this.productCategory.description : null,
+			],
 		});
 	}
 
-	//tstodo toaster Service
 	handleImageUploadError(error: any) {
 		this.toastrService.danger(
 			error.error.message || error.message,

@@ -23,6 +23,7 @@ import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/task-select/task-se
 import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/project-select.module';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { MomentModule } from 'ngx-moment';
+import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
@@ -46,7 +47,8 @@ import { MomentModule } from 'ngx-moment';
 		NbIconModule,
 		EmployeeSelectorsModule,
 		NbPopoverModule,
-		MomentModule
+		MomentModule,
+		FiltersModule
 	]
 })
 export class ApprovalsModule {}

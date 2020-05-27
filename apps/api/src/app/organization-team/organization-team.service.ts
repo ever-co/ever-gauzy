@@ -4,7 +4,7 @@ import { Repository, FindManyOptions } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
-	OrganizationTeam as IOrganizationTeam
+	OrganizationTeam as IOrganizationTeam,
 } from '@gauzy/models';
 import { IPagination } from '../core';
 import { Employee } from '../employee/employee.entity';
@@ -33,11 +33,12 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 		const organizationTeam = new OrganizationTeam();
 		organizationTeam.name = entity.name;
 		organizationTeam.organizationId = entity.organizationId;
+		organizationTeam.tags = entity.tags;
 
 		const employees = await this.employeeRepository.findByIds(
 			entity.members,
 			{
-				relations: ['user']
+				relations: ['user', 'tags'],
 			}
 		);
 
@@ -63,10 +64,11 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 			const organizationTeam = new OrganizationTeam();
 			organizationTeam.name = entity.name;
 			organizationTeam.organizationId = entity.organizationId;
+			organizationTeam.tags = entity.tags;
 			const employees = await this.employeeRepository.findByIds(
 				entity.members,
 				{
-					relations: ['user']
+					relations: ['user', 'tags'],
 				}
 			);
 

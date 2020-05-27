@@ -8,11 +8,12 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 import { takeUntil } from 'rxjs/operators';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 import { ICandidateFeedback } from '@gauzy/models';
+import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 
 @Component({
 	selector: 'ga-edit-candidate-feedbacks',
 	templateUrl: './edit-candidate-feedbacks.component.html',
-	styleUrls: ['./edit-candidate-feedbacks.component.scss']
+	styleUrls: ['./edit-candidate-feedbacks.component.scss'],
 })
 export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -27,7 +28,8 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
-		private candidateStore: CandidateStore
+		private candidateStore: CandidateStore,
+		private candidateInterviewService: CandidateInterviewService
 	) {
 		super(translateService);
 	}
@@ -45,22 +47,36 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	private async _initializeForm() {
 		this.form = new FormGroup({
-			feedbacks: this.fb.array([])
+			feedbacks: this.fb.array([]),
 		});
 		const feedbackForm = this.form.controls.feedbacks as FormArray;
 		feedbackForm.push(
 			this.fb.group({
 				description: ['', Validators.required],
-				rating: ['', Validators.required]
+				rating: ['', Validators.required],
 			})
 		);
 	}
 	private async loadFeedbacks() {
 		const res = await this.candidateFeedbacksService.getAll({
-			candidateId: this.candidateId
+			candidateId: this.candidateId,
 		});
 		if (res) {
 			this.feedbackList = res.items;
+			this.loadInterviews(this.feedbackList);
+		}
+	}
+
+	async loadInterviews(feedbackList: ICandidateFeedback[]) {
+		for (const item of feedbackList) {
+			if (item.interviewId) {
+				const res = await this.candidateInterviewService.findById(
+					item.interviewId
+				);
+				if (res) {
+					item.interviewTitle = res.title;
+				}
+			}
 		}
 	}
 	showCard() {
@@ -97,7 +113,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	async updateFeedback(formValue: ICandidateFeedback) {
 		try {
 			await this.candidateFeedbacksService.update(this.feedbackId, {
-				...formValue
+				...formValue,
 			});
 			this.loadFeedbacks();
 			this.toastrSuccess('UPDATED');
@@ -112,7 +128,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		try {
 			await this.candidateFeedbacksService.create({
 				...formValue,
-				candidateId: this.candidateId
+				candidateId: this.candidateId,
 			});
 			this.toastrSuccess('CREATED');
 			this.loadFeedbacks();
@@ -136,7 +152,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message
+				error: error.error ? error.error.message : error.message,
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);

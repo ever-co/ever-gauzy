@@ -40,11 +40,14 @@ import { TagService } from '../tags/tag.service';
 import { TaskService } from '../tasks/task.service';
 import { TenantService } from '../tenant/tenant.service';
 import { TimeOffPolicyService } from '../time-off-policy/time-off-policy.service';
-import { TimeSheetService } from '../timesheet/timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
 import { ActivityService } from '../timesheet/activity.service';
 import { ScreenShotService } from '../timesheet/screenshot.service';
 import { TimeSlotService } from '../timesheet/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
+import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
+import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
+import { CandidateService } from '../candidate/candidate.service';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {
@@ -129,6 +132,12 @@ export class ExportAllService implements OnDestroy {
 		{ service: this.screenShotService, nameFile: 'screenshot' },
 		{ service: this.timeLogService, nameFile: 'time_log' },
 		{ service: this.timeSlotService, nameFile: 'time_slot' },
+		{
+			service: this.appointmentEmployeeService,
+			nameFile: 'appointment_employees',
+		},
+		{ service: this.approvalPolicyService, nameFile: 'approval_policy' },
+		{ service: this.candidateService, nameFile: 'candidate' },
 	];
 
 	constructor(
@@ -169,7 +178,10 @@ export class ExportAllService implements OnDestroy {
 		private activityService: ActivityService,
 		private screenShotService: ScreenShotService,
 		private timeLogService: TimeLogService,
-		private timeSlotService: TimeSlotService
+		private timeSlotService: TimeSlotService,
+		private appointmentEmployeeService: AppointmentEmployeesService,
+		private approvalPolicyService: ApprovalPolicyService,
+		private candidateService: CandidateService
 	) {}
 
 	async createFolders(): Promise<any> {

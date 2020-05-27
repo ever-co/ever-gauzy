@@ -8,20 +8,27 @@ import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	LanguagesEnum,
+	ProductTypesIconsEnum,
 } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 const databaseConfig: TypeOrmModuleOptions = {
-	type: 'sqlite', // TODO: process process.env.DB_TYPE value (we need to create different options obj depending on it)
+
+
+
+
+
+	type: process.env.DB_TYPE || 'sqlite', // 'postgres'
 	// host: process.env.DB_HOST || 'localhost',
 	// port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5433,
-	database: path.join(__dirname, 'gauzy.sqlite3'),
+	database: process.env.DB_NAME || path.join(__dirname, 'gauzy.sqlite3'), // || 'postgres'
 	// username: process.env.DB_USER || 'postgres',
-	// password: process.env.DB_PASS || '123',
+	// password: process.env.DB_PASS || 'root', // '123'
 	keepConnectionAlive: true,
 	logging: true,
 	synchronize: true,
-	// uuidExtension: 'pgcrypto'
+
+	// uuidExtension: 'pgcrypto',
 };
 
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
@@ -419,6 +426,136 @@ export const environment: IEnvironment = {
 				'muiz@smooper.xyz',
 				'ckhandla94@gmail.com',
 			],
+		},
+	],
+	defaultProductTypes: [
+		{
+			name: 'Physical Products',
+			description:
+				'Can be touched or tangible, solid, dust or liquid state in a container.',
+			icon: ProductTypesIconsEnum.CHECKMARK,
+		},
+		{
+			name: 'Digital Products',
+			description:
+				'Any product you sell online that doesn’t have physical form or substance',
+			icon: ProductTypesIconsEnum.FLASH,
+		},
+		{
+			name: 'Consumer Products',
+			description:
+				'Final goods, are products that are bought by individuals or households for personal use.',
+			icon: ProductTypesIconsEnum.HEART,
+		},
+		{
+			name: 'Raw materials',
+			description:
+				'Unprocessed material, or primary commodity, is a basic material that is used to produce goods',
+			icon: ProductTypesIconsEnum.SHOPPING_BAG,
+		},
+		{
+			name: 'Supplies',
+			description:
+				'Items purchased and typically used up during the year.',
+			icon: ProductTypesIconsEnum.SHOPPING_CART,
+		},
+		{
+			name: 'Experiences',
+			description: 'Knowledge or skill in a particular job or activity',
+			icon: ProductTypesIconsEnum.LAYERS,
+		},
+		{
+			name: 'Specialty Goods',
+			description: 'Have particularly unique characteristics',
+			icon: ProductTypesIconsEnum.STAR,
+		},
+		{
+			name: 'Common',
+			description: null,
+			icon: ProductTypesIconsEnum.HOME,
+		},
+		{
+			name: 'Industrial goods',
+			description: 'Bought and used for industrial and business use',
+			icon: ProductTypesIconsEnum.RADIO_BTN_OFF,
+		},
+		{
+			name: 'Amenities',
+			description:
+				'Any feature that provides comfort, convenience, or pleasure',
+			icon: ProductTypesIconsEnum.STAR,
+		},
+		{
+			name: 'Animals',
+			description:
+				'Animals consume organic material, breathe oxygen, are able to move',
+			icon: ProductTypesIconsEnum.HEART,
+		},
+	],
+	defaultProductCategories: [
+		{
+			name: 'Software',
+			description:
+				'a collection of data or computer instructions that tell the computer how to work',
+			imageUrl: 'assets/images/products/software.png',
+		},
+		{
+			name: 'Food',
+			description:
+				'Any substance consumed to provide nutritional support for an organism',
+			imageUrl: 'assets/images/products/food.png',
+		},
+		{
+			name: 'Transport',
+			description:
+				'The movement of people or goods from one place to another',
+			imageUrl: 'assets/images/products/transport.png',
+		},
+		{
+			name: 'Education',
+			description:
+				'Aquisition of knowledge, skills, values, beliefs, and habits',
+			imageUrl: 'assets/images/products/education.png',
+		},
+		{
+			name: 'Clothing',
+			description: 'Items worn on the body',
+			imageUrl: 'assets/images/products/clothing.png',
+		},
+		{
+			name: 'Office',
+			description:
+				'A place for commercial, professional, or bureaucratic work.',
+			imageUrl: 'assets/images/products/office.png',
+		},
+		{
+			name: 'Advertisement',
+			description:
+				'How a company encourages people to buy their products, services or ideas',
+			imageUrl: 'assets/images/products/advertisement.png',
+		},
+		{
+			name: 'Health',
+			description:
+				'State of complete physical, mental, and social well-being',
+			imageUrl: 'assets/images/products/health.png',
+		},
+		{
+			name: 'Sport',
+			description: 'An activity involving physical exertion and skill',
+			imageUrl: 'assets/images/products/sport.png',
+		},
+		{
+			name: 'Furniture',
+			description:
+				'Used to make a room or building suitable for living or working in',
+			imageUrl: 'assets/images/products/furniture.png',
+		},
+		{
+			name: 'Pets',
+			description:
+				"An animal kept primarily for a person's company or entertainment rather than as a working animal",
+			imageUrl: 'assets/images/products/dog.png',
 		},
 	],
 	sentry: {

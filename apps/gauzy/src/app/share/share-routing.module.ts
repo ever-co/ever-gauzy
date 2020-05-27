@@ -12,32 +12,46 @@ const routes: Routes = [
 			{
 				path: '',
 				redirectTo: 'organization',
-				pathMatch: 'full'
+				pathMatch: 'full',
 			},
 			{
 				path: 'organization/:link',
 				loadChildren: () =>
 					import('./organization/organization.module').then(
 						(m) => m.OrganizationModule
-					)
+					),
 			},
 			{
-				path: 'employee',
+				path: 'employee/:id',
 				loadChildren: () =>
 					import(
-						'../@shared/public-appointments/public-appointments.module'
-					).then((m) => m.PublicAppointmentsModule)
+						'./public-appointments/public-appointments.module'
+					).then((m) => m.PublicAppointmentsModule),
+			},
+			{
+				path: 'employee/:employeeid/create-appointment',
+				loadChildren: () =>
+					import(
+						'./public-appointments/appointment-form/appointment-form.module'
+					).then((m) => m.AppointmentFormModule),
+			},
+			{
+				path: 'employee/:id/:eventId',
+				loadChildren: () =>
+					import(
+						'./public-appointments/create-appointment/create-appointment.module'
+					).then((m) => m.CreateAppointmentModule),
 			},
 			{
 				path: '**',
-				component: NotFoundComponent
-			}
-		]
-	}
+				component: NotFoundComponent,
+			},
+		],
+	},
 ];
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
-	exports: [RouterModule]
+	exports: [RouterModule],
 })
 export class ShareRoutingModule {}

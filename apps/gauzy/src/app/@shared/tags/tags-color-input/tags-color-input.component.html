@@ -2,27 +2,12 @@
 	<label class="label" for="addTags">
 		{{ 'TAGS_PAGE.HEADER' | translate }}
 	</label>
-	<!-- <nb-select
-		class="d-block"
-		multiple
-		id="addTags"
-		(selectedChange)="onChange($event)"
-		[(selected)]="selectedTagIds"
-	>
-		<nb-option *ngFor="let tag of tags" value="{{ tag.id }}">
-			<nb-badge
-				class="tag-color"
-				[style.background]="tag.color"
-				text=""
-			></nb-badge>
-			{{ tag.name }}
-		</nb-option>
-	</nb-select> -->
-
 	<ng-select
 		[items]="tags"
 		multiple="true"
 		bindLabel="name"
+		[loading]="loading"
+		[addTag]="addTag"
 		(change)="selectedTagsEvent.emit($event)"
 		[ngModel]="selectedTags"
 		[closeOnSelect]="false"
@@ -42,10 +27,16 @@
 			<nb-badge
 				class="tag-color tag-label"
 				[style.background]="tag.color"
+				[style.color]="backgroundContrast(tag.color)"
 				text="X"
 				(click)="clear(tag)"
 			></nb-badge>
 			<span>{{ tag.name }}</span>
+		</ng-template>
+
+		<ng-template ng-tag-tmp let-newTagName="searchTerm">
+			<b>{{ 'TAGS_PAGE.ADD_NEW_TAG' | translate }}</b
+			>: {{ newTagName }}
 		</ng-template>
 	</ng-select>
 </div>

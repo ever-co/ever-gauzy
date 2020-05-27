@@ -3,7 +3,8 @@ import {
 	ViewChild,
 	OnDestroy,
 	OnInit,
-	forwardRef
+	forwardRef,
+	Input,
 } from '@angular/core';
 import { OptionsInput, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -12,15 +13,17 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
-import { EmployeeAppointment, TimeOff } from '@gauzy/models';
+import { EmployeeAppointment, TimeOff, IEventType } from '@gauzy/models';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
+import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
+import { NbToastrService } from '@nebular/theme';
+import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-appointment-calendar',
@@ -30,18 +33,27 @@ import { Store } from '../../../@core/services/store.service';
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => AppointmentComponent),
-			multi: true
-		}
-	]
+			multi: true,
+		},
+	],
 })
 export class AppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
+	@Input('showHeader')
+	showHeader: boolean = true;
+
+	@Input('appointmentFormURL')
+	appointmentFormURL: string;
+
+	@Input('selectedEventType')
+	selectedEventType: IEventType;
+
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;
-
+	allowedDuration: Number;
 	calendarEvents: EventInput[] = [];
 	timeOff: TimeOff[] = [
 		{
@@ -60,13 +72,15 @@ export class AppointmentComponent extends TranslationBaseComponent
 					.second(0)
 					.subtract(1, 'days')
 					.format()
-			)
-		}
+			),
+		},
 	];
 
 	constructor(
 		private router: Router,
 		private store: Store,
+		private toastrService: NbToastrService,
+		private availabilitySlotsService: AvailabilitySlotsService,
 		private employeeAppointmentService: EmployeeAppointmentService,
 		readonly translateService: TranslateService
 	) {
@@ -77,28 +91,64 @@ export class AppointmentComponent extends TranslationBaseComponent
 			eventClick: (event) => {
 				let eventObject = event.event._def;
 				this.router.navigate([
-					this.getRoute('manage') + '/' + eventObject.extendedProps.id
+					this.getRoute('manage') +
+						'/' +
+						eventObject.extendedProps.id,
 				]);
 			},
 			initialView: 'timeGridWeek',
 			header: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'timeGridWeek'
+				right: 'timeGridWeek',
 			},
 			themeSystem: 'bootstrap',
 			plugins: [
 				dayGridPlugin,
 				timeGrigPlugin,
 				interactionPlugin,
-				bootstrapPlugin
+				bootstrapPlugin,
 			],
+			selectable: true,
+			selectAllow: (select) => moment().diff(select.start) <= 0,
+			select: this.handleSelectRange.bind(this),
 			weekends: true,
-			height: 'auto'
+			height: 'auto',
 		};
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void {
+		if (this.selectedEventType) {
+			this.allowedDuration =
+				this.selectedEventType.durationUnit === 'Day(s)'
+					? this.selectedEventType.duration * 24 * 60
+					: this.selectedEventType.durationUnit === 'Hour(s)'
+					? this.selectedEventType.duration * 60
+					: this.selectedEventType.duration * 1;
+		}
+	}
+
+	handleSelectRange(o) {
+		if (
+			moment(o.end).diff(moment(o.start), 'minutes') !==
+			this.allowedDuration
+		) {
+			this.toastrService.danger(
+				this.getTranslation('APPOINTMENTS_PAGE.DURATION_ERROR'),
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		} else {
+			this.router.navigate(
+				[this.appointmentFormURL || this.getRoute('manage')],
+				{
+					state: {
+						dateStart: o.start,
+						dateEnd: o.end,
+					},
+				}
+			);
+		}
+	}
 
 	getRoute(name: string) {
 		return `/pages/employees/appointments/${name}`;
@@ -109,8 +159,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 			employee: {
 				id: this.store.selectedEmployee
 					? this.store.selectedEmployee.id
-					: null
-			}
+					: null,
+			},
 		};
 
 		this.employeeAppointmentService
@@ -144,9 +194,9 @@ export class AppointmentComponent extends TranslationBaseComponent
 				start: new Date(moment(appointment.startDateTime).format()),
 				end: eventStartTime,
 				extendedProps: {
-					id: appointment.id
+					id: appointment.id,
 				},
-				backgroundColor: 'grey'
+				backgroundColor: 'grey',
 			});
 		}
 
@@ -164,9 +214,9 @@ export class AppointmentComponent extends TranslationBaseComponent
 				start: eventEndTime,
 				end: new Date(moment(appointment.endDateTime).format()),
 				extendedProps: {
-					id: appointment.id
+					id: appointment.id,
 				},
-				backgroundColor: 'grey'
+				backgroundColor: 'grey',
 			});
 		}
 
@@ -177,8 +227,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 				start: eventStartTime,
 				end: breakEventStartTime,
 				extendedProps: {
-					id: appointment.id
-				}
+					id: appointment.id,
+				},
 			});
 
 			let afterBreakStartTime = new Date(
@@ -194,17 +244,17 @@ export class AppointmentComponent extends TranslationBaseComponent
 				start: breakEventStartTime,
 				end: afterBreakStartTime,
 				extendedProps: {
-					id: appointment.id
+					id: appointment.id,
 				},
-				backgroundColor: 'lightblue'
+				backgroundColor: 'lightblue',
 			});
 			this.calendarEvents.push({
 				title: appointment.agenda,
 				start: afterBreakStartTime,
 				end: eventEndTime,
 				extendedProps: {
-					id: appointment.id
-				}
+					id: appointment.id,
+				},
 			});
 		} else {
 			this.calendarEvents.push({
@@ -212,8 +262,8 @@ export class AppointmentComponent extends TranslationBaseComponent
 				start: eventStartTime,
 				end: eventEndTime,
 				extendedProps: {
-					id: appointment.id
-				}
+					id: appointment.id,
+				},
 			});
 		}
 	}
@@ -223,7 +273,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 			this.calendarEvents.push({
 				start: o.start,
 				end: o.end,
-				backgroundColor: 'lightyellow'
+				backgroundColor: 'lightyellow',
 			})
 		);
 	}

@@ -1,0 +1,21 @@
+<div class="contracts-container">
+	<div class="mb-3 mt-3">
+		<button
+			nbButton
+			[disabled]="!selectedContracts"
+			(click)="syncContracts()"
+			status="primary"
+		>
+			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+			>{{ 'BUTTONS.SYNC' | translate }}
+		</button>
+	</div>
+	<ng2-smart-table
+		class="contracts-table"
+		[settings]="smartTableSettings"
+		(userRowSelect)="selectContracts($event)"
+		[source]="contracts$ | async"
+		#contractsTable
+	>
+	</ng2-smart-table>
+</div>

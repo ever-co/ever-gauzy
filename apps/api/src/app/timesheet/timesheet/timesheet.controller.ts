@@ -7,8 +7,8 @@ import {
 	Get,
 	Query
 } from '@nestjs/common';
-import { Timesheet } from './timesheet.entity';
-import { CrudController } from '../core/crud/crud.controller';
+import { Timesheet } from '../timesheet.entity';
+import { CrudController } from '../../core/crud/crud.controller';
 import { TimeSheetService } from './timesheet.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -18,7 +18,7 @@ import {
 	IGetTimeSheetInput,
 	ISubmitTimesheetInput
 } from '@gauzy/models';
-import { UserRole } from '../shared/decorators/roles';
+import { UserRole } from '../../shared/decorators/roles';
 
 @ApiTags('TimeSheet')
 @UseGuards(AuthGuard('jwt'))

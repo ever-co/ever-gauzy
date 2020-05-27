@@ -5,40 +5,14 @@
 </div>
 
 <div class="filters row mb-3">
-	<div class="bulk-actions col-sm-3">
-		<div class="input-group">
-			<div class="input-group-append" id="button-addon4">
-				<button nbButton status="primary" (click)="previousDay()">
-					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
-				</button>
-			</div>
-			<input
-				type="text"
-				nbInput
-				class="form-control ml-1"
-				placeholder="Select Date"
-				[(ngModel)]="selectedDate"
-				[nbDatepicker]="formpicker"
-			/>
-			<div class="input-group-append ml-1" id="button-addon4">
-				<button nbButton status="primary" (click)="nextDay()">
-					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
-				</button>
-			</div>
-			<div class="input-group-append ml-1" id="button-addon4">
-				<button
-					nbButton
-					status="primary"
-					(click)="selectedDate = today"
-				>
-					Today
-				</button>
-			</div>
-			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
-		</div>
-	</div>
-	<div class="employee-select col-sm-3">
-		<!-- <ga-employee-selector class="header-selector employee-selector"></ga-employee-selector> -->
+	<div class="col">
+		<ngx-filters
+			dateRange="month"
+			[hasLogTypeFilter]="false"
+			[hasSourceFilter]="false"
+			[hasActivityLevelFilter]="false"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
 	</div>
 </div>
 <div class="bulk-actions row">
@@ -54,150 +28,135 @@
 		</button>
 	</div>
 </div>
-<table class="table table-striped">
-	<thead>
-		<tr>
-			<!-- <th scope="col">
-				<nb-checkbox [indeterminate]="false" #checkAllCheckbox (change)="toggleCheckbox($event, 'all')"
-					status="primary"></nb-checkbox>
-			</th> -->
-			<th scope="col">
-				Employee
-			</th>
-			<th scope="col">Total Time</th>
-			<th scope="col">Activites</th>
-			<th scope="col">Duration</th>
-			<th scope="col">Approved At</th>
-			<th scope="col">Submitted At</th>
-			<th scope="col">Status</th>
-			<th scope="col">Action</th>
-		</tr>
-	</thead>
-	<tbody>
-		<ng-template [ngIf]="timeSheets?.length > 0" [ngIfElse]="notFound">
-			<tr *ngFor="let timesheet of timeSheets">
-				<!-- <th scope="row">
-					<nb-checkbox [value]="timesheet.id" [(ngModel)]="selectedIds[timesheet.id]"
-						(change)="toggleCheckbox($event)" status="primary"></nb-checkbox>
-				</th> -->
-				<td>
-					<div class="name-container">
-						<ngx-avatar
-							[name]="timesheet?.employee?.user?.name"
-							[src]="timesheet?.employee?.user?.imageUrl"
-						></ngx-avatar>
-					</div>
-				</td>
-				<td>{{ timesheet.duration | durationFormat }}</td>
-				<td>{{ timesheet.keyboard }}</td>
-				<td>
-					{{ timesheet.startedAt | amDateFormat: 'LL' }} -
-					{{ timesheet.stoppedAt | amDateFormat: 'LL' }}
-				</td>
-				<td>{{ timesheet.approvedAt | amDateFormat: 'LL' }}</td>
-				<td>{{ timesheet.submittedAt | amDateFormat: 'LL' }}</td>
-				<td>{{ timesheet.status }}</td>
-				<td>
-					<div class="action-button">
-						<button
-							outline
-							nbButton
-							[nbPopover]="templateRef"
-							nbPopoverPlacement="bottom"
-						>
-							Action
-						</button>
+<div class="row-table">
+	<div
+		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
+	>
+		<div class="col employee-name">Employee</div>
+		<div class="col">Total Time</div>
+		<div class="col">Activites</div>
+		<div class="col">Duration</div>
+		<div class="col">Approved At</div>
+		<div class="col">Submitted At</div>
+		<div class="col">Status</div>
+		<div class="col action">Action</div>
+	</div>
+	<ng-template [ngIf]="timeSheets?.length > 0" [ngIfElse]="notFound">
+		<div
+			class="row border-bottom py-3 align-items-center"
+			*ngFor="let timesheet of timeSheets"
+		>
+			<div class="col employee-name">
+				<div class="name-container">
+					<ngx-avatar
+						[name]="timesheet?.employee?.user?.name"
+						[src]="timesheet?.employee?.user?.imageUrl"
+					>
+					</ngx-avatar>
+				</div>
+			</div>
+			<div class="col">{{ timesheet.duration | durationFormat }}</div>
+			<div class="col">{{ timesheet.keyboard }}</div>
+			<div class="col">
+				{{ timesheet.startedAt | amDateFormat: 'LL' }} -
+				{{ timesheet.stoppedAt | amDateFormat: 'LL' }}
+			</div>
+			<div class="col">
+				{{ timesheet.approvedAt | amDateFormat: 'LL' }}
+			</div>
+			<div class="col">
+				{{ timesheet.submittedAt | amDateFormat: 'LL' }}
+			</div>
+			<div class="col">{{ timesheet.status }}</div>
+			<div class="col action">
+				<div class="action-button">
+					<button
+						outline
+						nbButton
+						[nbPopover]="templateRef"
+						nbPopoverPlacement="bottom"
+					>
+						Action
+					</button>
 
-						<ng-template #templateRef>
-							<div class="menu-item">
-								<button
-									class="m-1"
-									(click)="redirectToView(timesheet)"
-									nbButton
-									ghost
-									size="small"
-								>
-									View
-								</button>
-							</div>
-							<div
-								class="menu-item"
-								*ngIf="!timesheet.submittedAt"
+					<ng-template #templateRef>
+						<div class="menu-item">
+							<button
+								class="m-1"
+								(click)="redirectToView(timesheet)"
+								nbButton
+								ghost
+								size="small"
 							>
-								<button
-									class="m-1"
-									nbButton
-									ghost
-									size="small"
-									(click)="
-										submitTimeheet(timesheet.id, 'submit')
-									"
-								>
-									Submit Timesheet
-								</button>
-							</div>
-							<div
-								class="menu-item"
-								*ngIf="timesheet.submittedAt"
+								View
+							</button>
+						</div>
+						<div class="menu-item" *ngIf="!timesheet.submittedAt">
+							<button
+								class="m-1"
+								nbButton
+								ghost
+								size="small"
+								(click)="submitTimeheet(timesheet.id, 'submit')"
+							>
+								Submit Timesheet
+							</button>
+						</div>
+						<div
+							class="menu-item"
+							*ngIf="timesheet.submittedAt"
+							(click)="submitTimeheet(timesheet.id, 'unsubmit')"
+						>
+							<button class="m-1" nbButton ghost size="small">
+								Unsubmit Timesheet
+							</button>
+						</div>
+						<div
+							class="menu-item"
+							*ngIf="timesheet.status != TimesheetStatus.APPROVED"
+						>
+							<button
+								class="m-1"
+								nbButton
+								ghost
+								size="small"
 								(click)="
-									submitTimeheet(timesheet.id, 'unsubmit')
+									updateStatus(
+										timesheet.id,
+										TimesheetStatus.APPROVED
+									)
 								"
 							>
-								<button class="m-1" nbButton ghost size="small">
-									Unsubmit Timesheet
-								</button>
-							</div>
-							<div
-								class="menu-item"
-								*ngIf="
-									timesheet.status != TimesheetStatus.APPROVED
+								Approve
+							</button>
+						</div>
+						<div
+							class="menu-item"
+							*ngIf="timesheet.status != TimesheetStatus.DENIED"
+						>
+							<button
+								class="m-1"
+								nbButton
+								ghost
+								size="small"
+								(click)="
+									updateStatus(
+										timesheet.id,
+										TimesheetStatus.DENIED
+									)
 								"
 							>
-								<button
-									class="m-1"
-									nbButton
-									ghost
-									size="small"
-									(click)="
-										updateStatus(
-											timesheet.id,
-											TimesheetStatus.APPROVED
-										)
-									"
-								>
-									Approve
-								</button>
-							</div>
-							<div
-								class="menu-item"
-								*ngIf="
-									timesheet.status != TimesheetStatus.DENIED
-								"
-							>
-								<button
-									class="m-1"
-									nbButton
-									ghost
-									size="small"
-									(click)="
-										updateStatus(
-											timesheet.id,
-											TimesheetStatus.DENIED
-										)
-									"
-								>
-									Deny
-								</button>
-							</div>
-						</ng-template>
-					</div>
-				</td>
-			</tr>
-		</ng-template>
-		<ng-template #notFound>
-			<tr>
-				<td colspan="6" class="text-center">No logs found.</td>
-			</tr>
-		</ng-template>
-	</tbody>
-</table>
+								Deny
+							</button>
+						</div>
+					</ng-template>
+				</div>
+			</div>
+		</div>
+	</ng-template>
+	<ng-template #notFound>
+		<div class="row font-weight-bold py-3 align-items-center">
+			<div class="col text-center">No logs found.</div>
+		</div>
+	</ng-template>
+</div>

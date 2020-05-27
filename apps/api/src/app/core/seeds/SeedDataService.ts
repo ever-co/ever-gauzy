@@ -135,6 +135,7 @@ import { createDefaultIntegrations } from '../../integration/integration.seed';
 import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
 import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
 import { ProductOption } from '../../product-option/product-option.entity';
+import { HelpCenter } from '../../help-center/help-center.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -185,6 +186,7 @@ const allEntities = [
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
+	HelpCenter,
 	Product,
 	ProductVariant,
 	ProductVariantSettings,

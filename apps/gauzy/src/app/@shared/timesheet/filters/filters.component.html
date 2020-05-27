@@ -1,0 +1,137 @@
+<div class="row">
+	<div class="bulk-actions col-auto">
+		<div class="input-group" *ngIf="hasDateRangeFilter">
+			<div class="input-group-append" id="button-addon4">
+				<button nbButton status="primary" (click)="previousDay()">
+					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="week-date-input form-control ml-1">
+				<div class="display-box">
+					<span *ngIf="dateRange == 'day'; else displayDateRange">
+						{{ filters.startDate | date }}
+					</span>
+					<ng-template #displayDateRange>
+						{{ filters.startDate | date }} -
+						{{ filters.endDate | date }}
+					</ng-template>
+				</div>
+				<input
+					type="text"
+					nbInput
+					placeholder="Select Date"
+					[(ngModel)]="selectedDate"
+					[nbDatepicker]="formpicker"
+				/>
+			</div>
+			<div class="input-group-append ml-1" id="button-addon4">
+				<button nbButton status="primary" (click)="nextDay()">
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+			</div>
+			<div class="input-group-append ml-1" id="button-addon4">
+				<button
+					nbButton
+					status="primary"
+					(click)="selectedDate = today"
+				>
+					Today
+				</button>
+			</div>
+			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
+		</div>
+	</div>
+	<div class="col ml-auto">
+		<div class="row align-items-end">
+			<div
+				class="col-auto ml-auto pr-1"
+				*ngIf="canChangeSelectedEmployee && hasEmployeeFilter"
+			>
+				<ga-employee-multi-select
+					class="select-box"
+					name="employeeId"
+					placeholder="All Employees"
+					[(ngModel)]="filters.employeeId"
+					[allEmployees]="employees"
+					(selectedChange)="triggerFilterChange()"
+				>
+				</ga-employee-multi-select>
+			</div>
+			<div
+				class="col-auto pl-1"
+				*ngIf="
+					hasLogTypeFilter ||
+					hasSourceFilter ||
+					hasActivityLevelFilter
+				"
+			>
+				<button
+					nbButton
+					status="primary"
+					[nbPopover]="templateRef"
+					nbPopoverPlacement="bottom"
+				>
+					Filters
+				</button>
+				<ng-template #templateRef>
+					<div class="p-3">
+						<div class="form-group" *ngIf="hasLogTypeFilter">
+							<nb-select
+								class="w-100"
+								multiple
+								placeholder="Select Log Type"
+								[(selected)]="filters.logType"
+								(selectedChange)="triggerFilterChange()"
+							>
+								<nb-option
+									*ngFor="
+										let logType of TimeLogType | keyvalue
+									"
+									[value]="logType.key"
+								>
+									{{ logType.value }}</nb-option
+								>
+							</nb-select>
+						</div>
+						<div class="form-group" *ngIf="hasSourceFilter">
+							<nb-select
+								class="w-100"
+								multiple
+								placeholder="Select Source"
+								[(selected)]="filters.source"
+								(selectedChange)="triggerFilterChange()"
+							>
+								<nb-option
+									*ngFor="
+										let source of TimeLogSourceEnum
+											| keyvalue
+									"
+									[value]="source.key"
+								>
+									{{ source.value }}</nb-option
+								>
+							</nb-select>
+						</div>
+						<div class="form-group" *ngIf="hasActivityLevelFilter">
+							<nb-select
+								class="w-100"
+								placeholder="Select Activity Level"
+								[(selected)]="filters.activityLevel"
+								(selectedChange)="triggerFilterChange()"
+							>
+								<nb-option
+									*ngFor="
+										let logType of TimeLogType | keyvalue
+									"
+									[value]="logType.key"
+								>
+									{{ logType.value }}</nb-option
+								>
+							</nb-select>
+						</div>
+					</div>
+				</ng-template>
+			</div>
+		</div>
+	</div>
+</div>
