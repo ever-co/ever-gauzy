@@ -4,6 +4,7 @@ export interface ICandidateFeedback extends IBaseEntityModel {
 	description: string;
 	candidateId?: string;
 	rating: number;
+	interviewId?: string;
 }
 
 export interface ICandidateFeedbackFindInput extends IBaseEntityModel {

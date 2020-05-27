@@ -38,6 +38,8 @@
 		"VIEW": "View",
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
+		"HIRE": "Hire",
+		"REJECT": "Reject",
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
 		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
@@ -50,6 +52,8 @@
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
+		"START_DATE": "Начална дата",
+		"END_DATE": "Крайна дата",
 		"CLIENT_NAME": "Клиентско име",
 		"NAME": "Име",
 		"VENDOR": "Доставчик",
@@ -292,7 +296,9 @@
 				"INTERVIEWERS": "Interviewers",
 				"LOCATION": "Локация",
 				"NOTE": "Note (optional)",
-				"TYPE": "Interview type"
+				"TYPE": "Interview type",
+				"CALL": "Call",
+				"MEETING": "Meeting"
 			},
 			"MEETING_AGENDA": "Agenda",
 			"MEETING_LOCATION": "Локация",
@@ -319,6 +325,13 @@
 			"SURE": "Are you sure you want to archive",
 			"RECORD": "запис",
 			"CANDIDATE": "candidate"
+		},
+		"CANDIDATE_ACTION_CONFIRMATION": {
+			"SURE": "Are you sure you want to ",
+			"RECORD": "запис",
+			"CANDIDATE": "candidate",
+			"HIRE": "hire",
+			"REJECT": "reject"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "REMOVE ALL DATA",
@@ -487,7 +500,9 @@
 			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
 			"API_KEY": "Upwork API key",
 			"SECRET": "Upwork Secret",
-			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy."
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy.",
+			"CONTRACTS": "Contracts",
+			"SYNCED_CONTRACTS": "Synced Contracts"
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -658,6 +673,7 @@
 			"DOCUMENT_NAME": "Document name",
 			"DOCUMENT": "Document",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"LEAVE_FEEDBACK": "Leave a feedback about the ",
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
 				"INTERVIEWS": "Interviews",
@@ -667,6 +683,7 @@
 				"FROM": "from",
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
+				"SCHEDULED_INTERVIEWS": "Scheduled interviews",
 				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
@@ -678,7 +695,10 @@
 				"DETAILS": "Send interview details to",
 				"NOTIFY_CANDIDATE": "Notify candidate",
 				"NOTIFY_INTERVIEWERS": "Notify interviewer(s)",
-				"INTERVIEWERS": "interviewer(s)"
+				"INTERVIEWERS": "interviewer(s)",
+				"HIRE": "Hire",
+				"POSTPONE": "Postpone",
+				"REJECT": "Reject"
 			}
 		},
 		"INTERVIEW_INFO_MODAL": {
@@ -694,7 +714,7 @@
 			"LOCATION": "Локация",
 			"NOTE": "Note",
 			"OF": "of",
-			"INTERVIEWERS_LOWER_CASE": "interviewers"
+			"INTERVIEWS_LOWER_CASE": "interviews"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Step 1",
@@ -728,6 +748,7 @@
 		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
+
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
@@ -979,7 +1000,8 @@
 		"PRODUCT_CATEGORY_DELETED": "Product category deleted",
 		"IMAGE": "Снимка",
 		"LANGUAGE": "Език (Language)",
-		"PRODUCT_VARIANT_DELETED": "Product variant deleted!"
+		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
+		"ICON": "Icon"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -1278,6 +1300,7 @@
 		},
 		"CANDIDATE": {
 			"INVALID_FORM": "Please fill the form",
+			"INVALID_FEEDBACK_INFO": "Please add feedback information",
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Please add a Skill name",
 				"INVALID_FORM": "Please fill the form",

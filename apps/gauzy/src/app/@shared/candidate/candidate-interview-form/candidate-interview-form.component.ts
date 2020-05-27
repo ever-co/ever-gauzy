@@ -3,7 +3,7 @@ import {
 	OnInit,
 	OnDestroy,
 	ChangeDetectorRef,
-	Input
+	Input,
 } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
@@ -14,7 +14,7 @@ import { EmployeesService } from '../../../@core/services';
 @Component({
 	selector: 'ga-candidate-interview-form',
 	templateUrl: 'candidate-interview-form.component.html',
-	styleUrls: ['candidate-interview-form.component.scss']
+	styleUrls: ['candidate-interview-form.component.scss'],
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	@Input() interviewers: ICandidateInterviewers[];
@@ -51,16 +51,21 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 
 	onMembersSelected(event: string[]) {
 		this.selectedEmployeeIds = event;
+		const value = this.selectedEmployeeIds[0] ? true : null;
+		this.form.patchValue({
+			valid: value,
+		});
 	}
 
 	loadFormData() {
 		this.form = this.fb.group({
-			title: [''],
+			title: ['', Validators.required],
 			startTime: [this.selectedRange.start],
 			interviewers: [this.selectedEmployeeIds],
 			endTime: [this.selectedRange.end],
 			location: [''],
-			note: ['']
+			note: [''],
+			valid: [null, Validators.required],
 		});
 	}
 
@@ -70,11 +75,8 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			this.cdRef.detectChanges();
 		} else {
 			this.form.controls['location'].clearValidators();
-			this.cdRef.detectChanges();
+			this.form.patchValue({ location: '' });
 		}
-	}
-	resetLocation() {
-		this.form.patchValue({ location: '' });
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

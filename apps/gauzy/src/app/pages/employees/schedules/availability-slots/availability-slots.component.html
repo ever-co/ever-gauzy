@@ -24,9 +24,15 @@
 </div>
 
 <div class="filters row mb-3">
-	<div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
+	<div
+		class="employee-select col-sm-3"
+		*ngIf="canChangeSelectedEmployee && _selectedOrganizationId"
+	>
 		<ga-employee-selector
-			class="header-selector employee-selector"
+			#employeeSelector
+			[skipGlobalChange]="true"
+			(selectionChanged)="onEmployeeChange($event)"
+			class="employee-selector"
 		></ga-employee-selector>
 	</div>
 </div>

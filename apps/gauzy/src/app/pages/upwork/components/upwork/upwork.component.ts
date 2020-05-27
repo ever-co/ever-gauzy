@@ -3,6 +3,8 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute } from '@angular/router';
+import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
 
 @Component({
 	selector: 'ngx-upwork',
@@ -14,13 +16,26 @@ export class UpworkComponent extends TranslationBaseComponent
 	private _ngDestroy$: Subject<void> = new Subject();
 	tabs: any[];
 
-	constructor(readonly translateService: TranslateService) {
+	constructor(
+		readonly translateService: TranslateService,
+		private _ar: ActivatedRoute,
+		private _us: UpworkStoreService
+	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this._getConfig();
 		this.loadTabs();
 		this._applyTranslationOnTabs();
+	}
+
+	private _getConfig() {
+		const integrationdId = this._ar.snapshot.params.id;
+		this._us
+			.getConfig(integrationdId)
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe();
 	}
 
 	getRoute(tabName: string) {
@@ -50,6 +65,14 @@ export class UpworkComponent extends TranslationBaseComponent
 				icon: 'flip-outline',
 				responsive: true,
 				route: this.getRoute('transactions')
+			},
+			{
+				title: this.getTranslation(
+					'INTEGRATIONS.UPWORK_PAGE.CONTRACTS'
+				),
+				icon: 'book-outline',
+				responsive: true,
+				route: this.getRoute('contracts')
 			}
 		];
 	}

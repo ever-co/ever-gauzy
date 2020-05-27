@@ -4,6 +4,7 @@ import { ProductType } from './product-type.entity';
 import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ProductTypeService } from './product-type.service';
 import { AuthGuard } from '@nestjs/passport';
+import { ParseJsonPipe } from '../shared/pipes/parse-json.pipe';
 
 @ApiTags('Product-Types')
 @UseGuards(AuthGuard('jwt'))
@@ -14,25 +15,25 @@ export class ProductTypeController extends CrudController<ProductType> {
 	}
 
 	@ApiOperation({
-		summary: 'Find all product types.'
+		summary: 'Find all product types.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found product types.',
-		type: ProductType
+		type: ProductType,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get()
 	async findAllProductTypes(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<ProductType>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations = [], findInput = null } = data;
 		return this.productTypesService.findAll({
 			where: findInput,
-			relations
+			relations,
 		});
 	}
 }

@@ -3,7 +3,7 @@ import { ViewCell } from 'ng2-smart-table';
 
 @Component({
 	selector: 'ngx-assigned-to',
-	templateUrl: './assigned-to.component.html'
+	templateUrl: './assigned-to.component.html',
 })
 export class AssignedToComponent implements ViewCell {
 	@Input()
@@ -23,8 +23,15 @@ export class AssignedToComponent implements ViewCell {
 				this.value = [...this.rowData.members];
 			} else if (this.rowData.teams && this.rowData.teams.length > 0) {
 				this.view = 'teams';
-				this.value = [...this.rowData.teams];
+				this.value = this._getTeamNames(this.rowData);
 			}
 		}
+	}
+
+	private _getTeamNames(task) {
+		if (task.teams && Array.isArray(task.teams)) {
+			return task.teams.map((team) => team.name);
+		}
+		return [];
 	}
 }
