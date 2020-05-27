@@ -1414,7 +1414,8 @@
 		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
 	},
 	"APPOINTMENTS_PAGE": {
-		"ADD_APPOINTMENT": "Add Appointment"
+		"ADD_APPOINTMENT": "Add Appointment",
+		"DURATION_ERROR": "Selected Duration is not valid"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",
@@ -1431,6 +1432,8 @@
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENTS": "Book an appointment",
 		"SELECT_EVENT_TYPES": "Please select an event type",
-		"PICK_DATETIME": "Pick a date and time"
+		"PICK_DATETIME": "Pick a date and time",
+		"DURATION": "Duration:",
+		"EVENT_TYPE": "Event Type:"
 	}
 }
