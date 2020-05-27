@@ -5,7 +5,7 @@ import {
 	ICandidateInterviewersFindInput,
 	ICandidateInterviewersCreateInput,
 	ICandidateInterviewers,
-	ICandidateInterviewersDeleteInput
+	ICandidateInterviewersDeleteInput,
 } from '@gauzy/models';
 
 @Injectable()
@@ -24,6 +24,19 @@ export class CandidateInterviewersService {
 			.toPromise();
 	}
 
+	createBulk(
+		interviewId: string,
+		employeeIds: string[]
+	): Promise<ICandidateInterviewers[]> {
+		return this.http
+			.post<ICandidateInterviewers[]>(
+				'/api/candidate-interviewers/createBulk',
+				{ interviewId, employeeIds }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAll(
 		findInput?: ICandidateInterviewersFindInput
 	): Promise<{ items: any[]; total: number }> {
@@ -32,7 +45,7 @@ export class CandidateInterviewersService {
 			.get<{ items: ICandidateInterviewers[]; total: number }>(
 				`/api/candidate-interviewers`,
 				{
-					params: { data }
+					params: { data },
 				}
 			)
 			.pipe(first())
@@ -64,7 +77,7 @@ export class CandidateInterviewersService {
 		const data = JSON.stringify({ id });
 		return this.http
 			.delete('/api/candidate-interviewers/deleteBulkByInterviewId', {
-				params: { data }
+				params: { data },
 			})
 			.pipe(first())
 			.toPromise();
@@ -77,7 +90,7 @@ export class CandidateInterviewersService {
 
 		return this.http
 			.delete('/api/candidate-interviewers/deleteBulkByEmployeeId', {
-				params: { data }
+				params: { data },
 			})
 			.pipe(first())
 			.toPromise();

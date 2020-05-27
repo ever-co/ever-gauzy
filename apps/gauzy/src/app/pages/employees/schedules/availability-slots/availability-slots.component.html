@@ -4,8 +4,8 @@
 			<h5 class="mb-3">
 				{{
 					(!recurringAvailabilityMode
-						? 'SCHEDULE.DATE_SPECIFIC_AVAILIBILITY'
-						: 'SCHEDULE.RECURRING_AVAILIBILITY'
+						? 'SCHEDULE.DATE_SPECIFIC_AVAILABILITY'
+						: 'SCHEDULE.RECURRING_AVAILABILITY'
 					) | translate
 				}}
 			</h5>
@@ -19,23 +19,20 @@
 			>
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
-			<button
-				style="margin-left: 15px;"
-				[disabled]="!dateSelected"
-				(click)="discardSelectedDates()"
-				status="warning"
-				nbButton
-			>
-				{{ 'BUTTONS.DISCARD' | translate }}
-			</button>
 		</div>
 	</div>
 </div>
 
 <div class="filters row mb-3">
-	<div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
+	<div
+		class="employee-select col-sm-3"
+		*ngIf="canChangeSelectedEmployee && _selectedOrganizationId"
+	>
 		<ga-employee-selector
-			class="header-selector employee-selector"
+			#employeeSelector
+			[skipGlobalChange]="true"
+			(selectionChanged)="onEmployeeChange($event)"
+			class="employee-selector"
 		></ga-employee-selector>
 	</div>
 </div>

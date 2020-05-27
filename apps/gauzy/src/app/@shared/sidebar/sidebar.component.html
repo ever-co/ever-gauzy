@@ -1,13 +1,11 @@
 <nb-card class="sidemenu">
 	<nb-card-body class="sidebar">
-		<button
-			class="sidebar-button"
-			(click)="addNode()"
-			status="primary"
-			nbButton
-		>
-			{{ 'BUTTONS.ADD' | translate }}
-		</button>
+		<div class="add-icon-field">
+			<h5>{{ 'HELP_PAGE.KNOWLEDGE_BASES' | translate }}</h5>
+			<nb-icon class="add-icon" icon="plus-outline" (click)="addNode()">
+			</nb-icon>
+		</div>
+
 		<div *ngIf="isVisibleAdd" class="add-base-field">
 			<input
 				type="text"
@@ -26,28 +24,36 @@
 				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 			</button>
 		</div>
-		<h5>{{ 'HELP_PAGE.KNOWLEDGE_BASES' | translate }}</h5>
 		<tree-root #tree [nodes]="nodes" [options]="options" [focused]="true">
 		</tree-root>
 	</nb-card-body>
 	<nb-card-body>
 		<button
-			*ngIf="isChosenArticle"
+			[disabled]="!isChosenArticle"
 			class="main-buttons"
 			(click)="addIcon()"
 			status="success"
 			nbButton
 		>
-			{{ 'BUTTONS.ADD_ICON' | translate }}
+			{{ 'BUTTONS.CHOOSE_ICON' | translate }}
 		</button>
 		<button
-			*ngIf="isChosenArticle"
+			[disabled]="!isChosenArticle"
 			class="main-buttons"
-			(click)="removeIcon()"
+			(click)="onEditArticle()"
 			status="warning"
 			nbButton
 		>
-			{{ 'BUTTONS.REMOVE_ICON' | translate }}
+			{{ 'BUTTONS.EDIT' | translate }}
+		</button>
+		<button
+			[disabled]="!isChosenArticle"
+			class="main-buttons"
+			(click)="onDeleteArticle()"
+			status="danger"
+			nbButton
+		>
+			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 		<button
 			*ngIf="isChosenArticle && showPrivateButton"
@@ -67,42 +73,6 @@
 		>
 			{{ 'BUTTONS.MAKE_PUBLIC' | translate }}
 		</button>
-		<button
-			*ngIf="isChosenArticle"
-			class="main-buttons"
-			(click)="onEditArticle()"
-			status="warning"
-			nbButton
-		>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			*ngIf="isChosenArticle"
-			class="main-buttons"
-			(click)="onDeleteArticle()"
-			status="danger"
-			nbButton
-		>
-			{{ 'BUTTONS.DELETE' | translate }}
-		</button>
-		<div *ngIf="isVisibleEdit" class="edit-node-field">
-			<input
-				type="text"
-				size="24"
-				ngModel
-				maxlength="18"
-				(keyup.enter)="editName($event)"
-				nbInput
-			/>
-			<button
-				class="input-button"
-				status="danger"
-				(click)="onCloseEdit()"
-				nbButton
-			>
-				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-			</button>
-		</div>
 		<div *ngIf="iconsShow && isChosenArticle">
 			<p>{{ 'HELP_PAGE.CHOSE_ICON' | translate }}</p>
 			<div class="add-icon-field">
@@ -116,17 +86,73 @@
 						{{ icon }}
 					</button>
 				</div>
+				<button
+					class="main-buttons"
+					(click)="removeIcon()"
+					status="warning"
+					nbButton
+				>
+					{{ 'BUTTONS.REMOVE' | translate }}
+				</button>
 			</div>
 		</div>
-
-		<div>
+		<div *ngIf="isChosenArticle">
 			<h5>{{ articleName }}</h5>
 		</div>
-		<div>
-			<p>
-				{{ 'HELP_PAGE.ARTICLE_CONTENT' | translate }}
-				{{ articleNameContent }}
-			</p>
+		<div *ngIf="!isVisibleEdit && showPrivateButton">
+			<h6>{{ articleDesc }}</h6>
+			<div [innerHTML]="articleData"></div>
+		</div>
+		<div *ngIf="isVisibleEdit && !showPrivateButton" class="content-card">
+			<p>Press enter to save category name</p>
+			<input
+				type="text"
+				size="24"
+				ngModel
+				maxlength="18"
+				(keyup.enter)="editNameCategory($event)"
+				nbInput
+			/>
+		</div>
+		<div *ngIf="isVisibleEdit && showPrivateButton" class="content-card">
+			<form [formGroup]="form" (ngSubmit)="submit()">
+				<input
+					formControlName="name"
+					type="text"
+					size="24"
+					maxlength="18"
+					(keyup.enter)="editName($event)"
+					nbInput
+				/>
+				<div class="edit-node-field">
+					<input
+						formControlName="desc"
+						type="text"
+						size="24"
+						maxlength="18"
+						(keyup.enter)="editDesc($event)"
+						nbInput
+					/>
+					<div class="ck-editor">
+						<ckeditor
+							[formControl]="form.controls['data']"
+							(change)="editData($event)"
+							[config]="{
+								width: '100%',
+								height: '200'
+							}"
+						></ckeditor>
+					</div>
+				</div>
+				<button
+					*ngIf="isChosenArticle"
+					class="main-buttons"
+					status="success"
+					nbButton
+				>
+					{{ 'BUTTONS.SAVE' | translate }}
+				</button>
+			</form>
 		</div>
 	</nb-card-body>
 </nb-card>

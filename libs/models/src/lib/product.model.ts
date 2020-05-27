@@ -23,6 +23,8 @@ export interface ProductFindInput {
 export interface ProductType extends IBaseEntityModel {
 	name: string;
 	organizationId?: string;
+	description: string;
+	icon: string;
 	organization: Organization;
 }
 
@@ -73,5 +75,29 @@ export interface ProductOption extends IBaseEntityModel {
 
 export enum BillingInvoicingPolicyEnum {
 	QUANTITY_ORDERED = 'Quantity ordered',
-	QUANTITY_DELIVERED = 'Quantity Delivered'
+	QUANTITY_DELIVERED = 'Quantity Delivered',
+}
+
+export enum ProductTypesIconsEnum {
+	BRIEFCASE = 'briefcase-outline',
+	CAR = 'car-outline',
+	COLOR_PALETTE = 'color-palette-outline',
+	FLASH = 'flash-outline',
+	HOME = 'home-outline',
+	GIFT = 'gift-outline',
+	HEART = 'heart-outline',
+	RADIO_BTN_OFF = 'radio-button-off-outline',
+	PIN = 'pin-outline',
+	SETTINGS = 'settings-outline',
+	STAR = 'star-outline',
+	SHOPPING_BAG = 'shopping-bag-outline',
+	SHARE = 'share-outline',
+	ACTIVITY = 'activity-outline',
+	ALERT = 'alert-triangle-outline',
+	BULB = 'bulb-outline',
+	CHECKMARK = 'checkmark-circle-outline',
+	GLOBE = 'globe-2-outline',
+	LAYERS = 'layers-outline',
+	PHONE = 'phone-outline',
+	SHOPPING_CART = 'shopping-cart-outline',
 }

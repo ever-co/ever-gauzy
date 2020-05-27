@@ -1,16 +1,36 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { ITreeOptions, TreeComponent } from 'angular-tree-component';
+import { FormGroup, FormBuilder } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { IHelpCenter } from '@gauzy/models';
+import { isEqual } from './delete-node';
+import { HelpCenterService } from '../../@core/services/help-center.service';
+import { Subject } from 'rxjs';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
-	styleUrls: ['./sidebar.component.scss']
+	styleUrls: ['./sidebar.component.scss'],
 })
-export class SidebarComponent {
+export class SidebarComponent extends TranslationBaseComponent
+	implements OnInit, OnDestroy {
+	private _ngDestroy$ = new Subject<void>();
+	constructor(
+		private readonly fb: FormBuilder,
+		private sanitizer: DomSanitizer,
+		private helpService: HelpCenterService,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
+	}
+	form: FormGroup;
 	public icons = ['🔥', '📎', '🌐', '🔎'];
 	public chosenIcon = '';
 	public articleName = 'Chose any article';
-	public articleNameContent = 'any article you will chose';
+	public articleDesc = '';
+	public articleData: SafeHtml;
 	public showPrivateButton = false;
 	public showPublicButton = false;
 	public nodeId = 0;
@@ -20,55 +40,7 @@ export class SidebarComponent {
 	public iconsShow = false;
 	public isChosenArticle = false;
 	public value = '';
-	public nodes = [
-		{
-			id: 1,
-			name: 'Knowledge base1',
-			data: '',
-			children: [
-				{ id: 2, name: 'article1.1', data: '' },
-				{ id: 3, name: 'article1.2', data: '' }
-			]
-		},
-		{
-			id: 4,
-			name: 'Knowledge base2',
-			data: '',
-			children: [
-				{ id: 5, name: 'article2.1', data: '' },
-				{
-					id: 6,
-					name: 'Base2.2',
-					data: '',
-					children: [{ id: 7, name: 'article3.1', data: '' }]
-				}
-			]
-		},
-		{
-			id: 8,
-			name: 'Knowledge base3',
-			data: '',
-			children: [
-				{ id: 9, name: 'article1.1', data: '' },
-				{ id: 10, name: 'article1.2', data: '' }
-			]
-		},
-		{
-			id: 11,
-			name: 'Knowledge base4',
-			data: '',
-			children: [
-				{ id: 12, name: 'article2.1', data: '' },
-				{
-					id: 13,
-					name: 'Base2.2',
-					data: '',
-					children: [{ id: 14, name: 'article3.1', data: '' }]
-				}
-			]
-		}
-	];
-
+	public nodes: IHelpCenter[] = [];
 	options: ITreeOptions = {
 		isExpandedField: 'expanded',
 		actionMapping: {
@@ -79,14 +51,17 @@ export class SidebarComponent {
 					if (!node.hasChildren) {
 						this.showPrivateButton = true;
 						this.showPublicButton = false;
-						this.articleNameContent = node.data.name;
+						this.articleDesc = node.data.description;
 						this.articleName = node.data.name;
+						this.articleData = node.data.data as SafeHtml;
+						this.loadFormData();
 					} else {
 						this.showPrivateButton = false;
 						this.showPublicButton = true;
+						this.articleName = 'Chose any article';
 					}
-				}
-			}
+				},
+			},
 		},
 		allowDrag: (node) => {
 			return true;
@@ -95,7 +70,7 @@ export class SidebarComponent {
 			return true;
 		},
 		animateExpand: true,
-		displayField: 'name'
+		displayField: 'name',
 	};
 
 	@ViewChild(TreeComponent)
@@ -105,15 +80,16 @@ export class SidebarComponent {
 		this.isVisibleAdd = true;
 	}
 
-	addName(event: any) {
+	async addName(event: any) {
 		this.isChosenArticle = false;
 		this.value = event.target.value;
-		this.nodes.push({
-			id: 20,
+		await this.helpService.create({
 			name: `${this.value}`,
+			description: '',
 			data: '',
-			children: []
+			children: [],
 		});
+		this.loadMenu();
 		this.tree.treeModel.update();
 		this.isVisibleAdd = false;
 	}
@@ -144,7 +120,7 @@ export class SidebarComponent {
 			someNode.name = someNode.name.replace(this.chosenIcon, icon);
 		this.tree.treeModel.update();
 		if (!someNode.children) {
-			this.articleNameContent = someNode.name;
+			this.articleDesc = someNode.description;
 			this.articleName = someNode.name;
 		}
 		this.iconsShow = false;
@@ -165,9 +141,10 @@ export class SidebarComponent {
 		}
 		this.tree.treeModel.update();
 		if (!someNode.children) {
-			this.articleNameContent = someNode.name;
+			this.articleDesc = someNode.description;
 			this.articleName = someNode.name;
 		}
+		this.iconsShow = false;
 	}
 
 	makePrivate() {
@@ -185,49 +162,61 @@ export class SidebarComponent {
 		}
 	}
 
+	editNameCategory(event: any) {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		someNode.data.name = event.target.value;
+		this.isVisibleEdit = false;
+	}
+
 	onEditArticle() {
 		this.isVisibleEdit = true;
 	}
 
-	editName(event: any) {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		someNode.data.name = event.target.value;
-		this.tree.treeModel.update();
-		if (!someNode.data.children) {
-			this.articleNameContent = event.target.value;
-			this.articleName = event.target.value;
-		}
-		this.isVisibleEdit = false;
-	}
-
-	onCloseEdit() {
-		this.isVisibleEdit = false;
-		this.value = '';
-	}
-
-	onDeleteArticle() {
-		this.isEqual(this.nodes, this.nodeId);
+	async onDeleteArticle() {
+		isEqual(this.nodes, this.nodeId);
+		await this.helpService.delete(`${this.nodeId}`);
 		this.tree.treeModel.update();
 		this.isChosenArticle = false;
 		this.articleName = 'Chose any article';
-		this.articleNameContent = 'any article you will chose';
+		this.articleDesc = 'any article you will chose';
 	}
 
-	isEqual(graph, id) {
-		const succeesCondition = (node) => node.id === id;
-		const i = graph.findIndex(succeesCondition);
-		if (i >= 0) {
-			graph.splice(i, 1);
-			return true;
+	loadFormData() {
+		this.form = this.fb.group({
+			name: [this.articleName],
+			desc: [this.articleDesc],
+			data: [this.articleData],
+		});
+	}
+
+	editData(value: string) {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		this.articleData = this.sanitizer.bypassSecurityTrustHtml(value);
+		someNode.data.data = this.articleData as string;
+	}
+
+	submit() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		someNode.data.description = this.form.controls.desc.value;
+		someNode.data.name = this.form.controls.name.value;
+		this.articleDesc = someNode.data.description;
+		this.articleName = someNode.data.name;
+		this.tree.treeModel.update();
+		this.isVisibleEdit = false;
+	}
+
+	private async loadMenu() {
+		const result = await this.helpService.getAll();
+		if (result) {
+			this.nodes = result.items;
 		}
-		for (let i = 0; i < graph.length; i++) {
-			if (graph[i].children) {
-				if (this.isEqual(graph[i].children, id)) {
-					if (graph[i].children.length === 0) {
-						delete graph[i].children;
-					}
-				}
-			}
-		}
+	}
+	ngOnInit() {
+		this.loadMenu();
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 }

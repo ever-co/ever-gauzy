@@ -7,10 +7,12 @@ import {
 	EventEmitter
 } from '@angular/core';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services/employees.service';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, filter, debounceTime } from 'rxjs/operators';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { Subject } from 'rxjs';
 import { Tag, Organization } from '@gauzy/models';
+import { ActivatedRoute } from '@angular/router';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 //TODO: Currently the whole application assumes that if employee or id is null then you need to get data for All Employees
 //That should not be the case, sometimes due to permissions like CHANGE_SELECTED_EMPLOYEE not being available
@@ -90,7 +92,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private employeesService: EmployeesService,
-		private store: Store
+		private store: Store,
+		private activatedRoute: ActivatedRoute
 	) {}
 
 	ngOnInit() {
@@ -103,6 +106,16 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 
 		this._loadEmployees();
 		this._loadEmployeeId();
+
+		this.activatedRoute.queryParams
+			.pipe(
+				debounceTime(500),
+				filter((query) => !!query.employeeId),
+				untilDestroyed(this)
+			)
+			.subscribe((query) => {
+				this.selectEmployeeById(query.employeeId);
+			});
 	}
 
 	searchEmployee(term: string, item: any) {
@@ -127,6 +140,14 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy {
 		this.selectionChanged.emit(employee);
 	}
 
+	selectEmployeeById(employeeId: string) {
+		const employeies = this.people.filter(
+			(employee: SelectedEmployee) => employeeId === employee.id
+		);
+		if (employeies.length > 0) {
+			this.selectEmployee(employeies[0]);
+		}
+	}
 	getShortenedName(firstName: string, lastName: string) {
 		if (firstName && lastName) {
 			return firstName + ' ' + lastName[0] + '.';

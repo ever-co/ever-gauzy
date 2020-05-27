@@ -5,7 +5,7 @@ import {
 	OnInit,
 	Input,
 	Output,
-	EventEmitter
+	EventEmitter,
 } from '@angular/core';
 import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
@@ -22,16 +22,16 @@ import * as moment from 'moment';
 import { Store } from '../../../../@core/services/store.service';
 
 @Component({
-	templateUrl: './manage-appointment.component.html'
+	selector: 'ga-manage-appointment',
+	templateUrl: './manage-appointment.component.html',
 })
 export class ManageAppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	employees: Employee[];
-	blockedDates: number[] = [1589308200000];
-	blockedSlots: string[] = ['14:20'];
 	@Input() employeeAppointment: EmployeeAppointment;
+	@Input() disabled: boolean;
 
 	@ViewChild('start_time')
 	@Output()
@@ -56,6 +56,10 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		this.selectedRange = {
+			start: history.state.dateStart,
+			end: history.state.dateEnd,
+		};
 		this._parseParams();
 		this._loadEmployees();
 	}
@@ -64,23 +68,23 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		this.form = this.fb.group({
 			agenda: [
 				this.employeeAppointment ? this.employeeAppointment.agenda : '',
-				Validators.required
+				Validators.required,
 			],
 			location: [
 				this.employeeAppointment
 					? this.employeeAppointment.location
-					: ''
+					: '',
 			],
 			description: [
 				this.employeeAppointment
 					? this.employeeAppointment.description
-					: ''
+					: '',
 			],
 			invitees: [
 				this.employeeAppointment
 					? this.employeeAppointment.invitees
 					: [],
-				Validators.required
+				Validators.required,
 			],
 			selectedRange: this.selectedRange,
 			bufferTime:
@@ -107,7 +111,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				this.employeeAppointment.breakTimeInMins,
 			breakStartTime:
 				this.employeeAppointment &&
-				this.employeeAppointment.breakStartTime
+				this.employeeAppointment.breakStartTime,
 		});
 	}
 
@@ -141,7 +145,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 					);
 					this.selectedRange = {
 						start: new Date(appointment.startDateTime),
-						end: new Date(appointment.endDateTime)
+						end: new Date(appointment.endDateTime),
 					};
 					this.employeeAppointment = appointment;
 				}
@@ -169,7 +173,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			),
 			employeeId: this.store.selectedEmployee
 				? this.store.selectedEmployee.id
-				: null
+				: null,
 		};
 
 		if (this.employeeAppointment) {
@@ -185,7 +189,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				for (let e of this.selectedEmployeeIds) {
 					await this.appointmentEmployeesService.add({
 						employeeId: e,
-						appointmentId: this.employeeAppointment.id
+						appointmentId: this.employeeAppointment.id,
 					});
 				}
 			}

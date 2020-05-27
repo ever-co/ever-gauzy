@@ -1,53 +1,64 @@
 .card-container {
-	display: flex;
-	flex-wrap: wrap;
+  display: flex;
+  flex-wrap: wrap;
 
-	.card-body {
-		width: 100%;
-		max-width: 300px;
-		margin: 20px;
+  .card-body {
+    width: 100%;
+    max-width: 300px;
+    margin: 20px;
 
-		.header-container {
-			text-align: center;
+    .header-container {
+      text-align: center;
 
-			.members-count {
-				font-size: 0.7em;
-				color: darkgray;
-			}
-		}
+      .members-count {
+        font-size: 0.7em;
+        color: darkgray;
+      }
+    }
 
-		.team-card {
-			display: flex;
-			flex-direction: column;
-			justify-content: space-between;
+    .team-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
 
-			.name-container {
-				display: flex;
-				display: flex;
-				align-items: center;
-				margin-bottom: 10px;
+      .name-container {
+        display: flex;
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
 
-				.image-container {
-					width: 70px;
-					height: 50px;
-					display: flex;
-					justify-content: center;
-					margin-right: 10px;
+        .image-container {
+          width: 70px;
+          height: 50px;
+          display: flex;
+          justify-content: center;
+          margin-right: 10px;
 
-					img {
-						height: 100%;
-						max-width: 70px;
-					}
-				}
-			}
+          img {
+            height: 100%;
+            max-width: 70px;
+          }
+        }
+      }
 
-			.button-container {
-				display: flex;
-				width: 160px;
-				justify-content: space-between;
-				margin-top: 15px;
-				margin-left: 9px;
-			}
-		}
-	}
+      .button-container {
+        display: flex;
+        width: 160px;
+        justify-content: space-between;
+        margin-top: 15px;
+        margin-left: 9px;
+      }
+    }
+  }
+
+  .tags {
+    position: static;
+    margin-top: 5px;
+    margin-right: 5px;
+  }
+
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+  }
 }

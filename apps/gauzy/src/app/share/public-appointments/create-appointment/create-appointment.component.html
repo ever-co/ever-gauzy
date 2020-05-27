@@ -1,0 +1,55 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>{{ 'PUBLIC_APPOINTMENTS.PICK_DATETIME' | translate }}</h4>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="row">
+			<div class="employee-info col-9" *ngIf="employee">
+				<img
+					class="employee-image"
+					[src]="employee.user.imageUrl"
+					alt="Employee Avatar"
+				/>
+				<div class="employee-details">
+					<span class="employee-name">
+						{{ employee.user.firstName }}
+						{{ employee.user.lastName }}</span
+					>
+					<div class="employee-position">
+						{{ employee.organizationPosition?.name }}
+					</div>
+					<div class="transparent">
+						<strong>{{ employee.user.email }}</strong>
+					</div>
+				</div>
+			</div>
+			<div class="col-3" *ngIf="eventType">
+				<div>
+					<div class="block-info">
+						{{ 'PUBLIC_APPOINTMENTS.EVENT_TYPE' | translate }}
+						<strong> {{ eventType.title }} </strong>
+					</div>
+				</div>
+				<div>
+					{{ 'PUBLIC_APPOINTMENTS.DURATION' | translate }}
+					<strong>
+						{{ eventType.duration }} {{ eventType.durationUnit }}
+					</strong>
+				</div>
+				<div>
+					{{ eventType.description }}
+				</div>
+			</div>
+		</div>
+		<div class="calendar" *ngIf="eventType">
+			<ga-appointment-calendar
+				#appointmentCalendar
+				[appointmentFormURL]="appointmentFormURL"
+				[selectedEventType]="eventType"
+				[showHeader]="false"
+			></ga-appointment-calendar>
+		</div>
+	</nb-card-body>
+</nb-card>

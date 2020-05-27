@@ -15,7 +15,6 @@
 		"ADD_EXISTING": "Добавить существующий",
 		"OK": "Ок",
 		"SAVE": "Сохранить",
-		"DISCARD": "Сбросить",
 		"CLEAR_ALL": "Очистить все",
 		"BACK": "Обратно",
 		"SENT": "Отправлено",
@@ -39,16 +38,23 @@
 		"VIEW": "Вид",
 		"SEND": "Отправить",
 		"ARCHIVE": "Архивировать",
+		"HIRE": "Нанять",
+		"REJECT": "Отклонить",
 		"FIND_TIME": "Время поиска",
 		"DOWNLOAD": "Скачать",
 		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний",
 		"ADD_ICON": "добавить значок",
 		"REMOVE_ICON": "удалить значок",
 		"MAKE_PRIVATE": "сделать приватным",
-		"MAKE_PUBLIC": "сделать публичным"
+		"MAKE_PUBLIC": "сделать публичным",
+		"KNOWLEDGE_BASES": "Базы знаний",
+		"SELECT": "Выбрать",
+		"EMAIL": "Эл. адрес"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
+		"START_DATE": "Дата начала",
+		"END_DATE": "Дата окончания",
 		"CLIENT_NAME": "Имя клиента",
 		"NAME": "Имя",
 		"VENDOR": "Продавец",
@@ -250,6 +256,8 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
+			"ADD_REMOVE_EMPLOYEE": "Добавить интервьюера",
+			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
 			"ADD_ORGANIZATIONS": "Добавить организации",
@@ -290,7 +298,9 @@
 				"INTERVIEWERS": "Интервьюеры",
 				"LOCATION": "Местоположение",
 				"NOTE": "Примечание (опционально)",
-				"TYPE": "Тип интервью"
+				"TYPE": "Тип интервью",
+				"CALL": "Звонок",
+				"MEETING": "Встреча"
 			},
 			"MEETING_AGENDA": "Повестка дня",
 			"MEETING_LOCATION": "Местоположение",
@@ -317,6 +327,13 @@
 			"SURE": "Вы уверены, что хотите архивировать",
 			"RECORD": "запись",
 			"CANDIDATE": "кандидат"
+		},
+		"CANDIDATE_ACTION_CONFIRMATION": {
+			"SURE": "Вы уверены, что хотите ",
+			"RECORD": "запись",
+			"CANDIDATE": "кандидат",
+			"HIRE": "нанять",
+			"REJECT": "отклонить"
 		},
 		"DELETE_CONFIRMATION": {
 			"REMOVE_ALL_DATA": "УДАЛИТЬ ВСЕ ДАННЫЕ",
@@ -485,7 +502,9 @@
 			"SUCCESSFULLY_AUTHORIZED": "Успешно авторизованы",
 			"API_KEY": "API ключ обновления",
 			"SECRET": "Секрет обхода",
-			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи."
+			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи.",
+			"CONTRACTS": "Контракты",
+			"SYNCED_CONTRACTS": "Синхронизированные контракты"
 		},
 		"COMING_SOON": "Скоро появится"
 	},
@@ -616,19 +635,6 @@
 		"NOT_STARTED": "Не начато",
 		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д."
 	},
-	"INTERVIEW_INFO_MODAL": {
-		"SCHEDULED_BY": "Запланировано на",
-		"HOURS_AGO": "час(ы) назад",
-		"MINUTES_AGO": "минут назад",
-		"DATE": "Дата",
-		"TIME": "Время",
-		"CANDIDATE": "Кандидат",
-		"INTERVIEWERS": "Интервьюеры",
-		"LOCATION": "Местоположение",
-		"NOTE": "Примечание",
-		"OF": "из",
-		"INTERVIEWERS_LOWER_CASE": "интервьюеры"
-	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
 		"ADD_CANDIDATE": "Добавить Кандидатов",
@@ -669,15 +675,20 @@
 			"DOCUMENT_NAME": "Название документа",
 			"DOCUMENT": "Документ",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"INTERVIEW_FEEDBACK": "Интервью: ",
+			"LEAVE_FEEDBACK": "Оставить отзыв о ",
+			"STATUS": "Выбранный статус: ",
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
 				"INTERVIEWS": "Интервью",
+				"INTERVIEWER": "Интервьюс: ",
 				"ADD_INTERVIEW": "Добавить интервью",
 				"ON": "вкл",
 				"TO": "Кому",
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
+				"SCHEDULED_INTERVIEWS": "Запланированные интервью",
 				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
@@ -689,8 +700,26 @@
 				"DETAILS": "Отправить данные интервью",
 				"NOTIFY_CANDIDATE": "Уведомлять кандидата",
 				"NOTIFY_INTERVIEWERS": "Уведомить интервьюера (ов)",
-				"INTERVIEWERS": "интервьюер(ы)"
+				"INTERVIEWERS": "интервьюер(ы)",
+				"HIRE": "Нанять",
+				"POSTPONE": "Отложить",
+				"REJECT": "Отклонить"
 			}
+		},
+		"INTERVIEW_INFO_MODAL": {
+			"SCHEDULED": "Запланированный",
+			"HOURS_AGO": " час(ы) назад",
+			"LESS_MINUTE": " меньше минуты назад",
+			"MINUTES_AGO": " минут назад",
+			"DAYS_AGO": " дн. назад",
+			"DATE": "Дата",
+			"TIME": "Время",
+			"CANDIDATE": "Кандидат",
+			"INTERVIEWERS": "Интервьюеры",
+			"LOCATION": "Местоположение",
+			"NOTE": "Примечание",
+			"OF": "из",
+			"INTERVIEWS_LOWER_CASE": "интервью"
 		},
 		"ADD_CANDIDATES": {
 			"STEP_1": "Шаг 1",
@@ -885,7 +914,8 @@
 		"TAGS_DELETE_TAG": "Метка удалена",
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
-		"TAGS_SELECT_DESCRIPTION": "Описание метки"
+		"TAGS_SELECT_DESCRIPTION": "Описание метки",
+		"ADD_NEW_TAG": "Добавить новый тег"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
@@ -973,7 +1003,9 @@
 		"PRODUCT_CATEGORY_SAVED": "Категория товара сохранена",
 		"PRODUCT_CATEGORY_DELETED": "Категория товара удалена",
 		"IMAGE": "Изображение",
-		"LANGUAGE": "Язык"
+		"LANGUAGE": "Язык",
+		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!",
+		"ICON": "Иконка"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -1141,12 +1173,20 @@
 			"TASK_VALUE": "Задание не может быть пустым"
 		},
 		"SEND": {
-			"CONFIRMATION": "Вы уверены, что хотите отправить этот счет на",
+			"CONFIRMATION": "Отправить этот счет",
 			"ALREADY_SENT": "Этот счет уже был отправлен на"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
 			"TO": "К"
+		},
+		"DOWNLOAD": {
+			"CONFIRMATION": "Скачать этот счет-фактуру ?",
+			"INVOICE_DOWNLOAD": "Счет загружен"
+		},
+		"EMAIL": {
+			"EMAIL_INVOICE": "Отправить этот счет по электронной почте?",
+			"EMAIL_SENT": "Отправлено E-mail"
 		}
 	},
 	"HEADER": {
@@ -1163,7 +1203,8 @@
 		"HELP": "Помогите",
 		"KNOWLEDGE_BASES": "Базы знаний",
 		"CHOSE_ICON": "Выберите значок для установки",
-		"ARTICLE_CONTENT": "Содержание статьи для"
+		"EDIT_DESCRIPTION": "редактировать описание",
+		"EDIT_NAME": "изменить имя"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
@@ -1223,7 +1264,8 @@
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
 			"PHONE_REQUIRED": "Требуется указать телефон!",
-			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!"
+			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!",
+			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1270,6 +1312,7 @@
 		},
 		"CANDIDATE": {
 			"INVALID_FORM": "Пожалуйста, заполните форму",
+			"INVALID_FEEDBACK_INFO": "Пожалуйста, добавьте информацию об отзыве",
 			"EXPERIENCE": {
 				"INVALID_CANDIDATE_NAME": "Пожалуйста, добавьте название навыка",
 				"INVALID_FORM": "Пожалуйста, заполните форму",
@@ -1344,6 +1387,10 @@
 			"EDIT_EVENT_TYPE": "Тип события отредактирован",
 			"DELETE_EVENT_TYPE": "Тип события удален",
 			"ERROR": "{{ error }}"
+		},
+		"AVAILABILITY_SLOTS": {
+			"SAVE": "Доступные слоты сохранены",
+			"ERROR": "{{ error }}"
 		}
 	},
 	"TIMER_TRACKER": {
@@ -1380,7 +1427,8 @@
 		"ENTER_POSITIVE_NUMBER": "Пожалуйста, введите положительное число!"
 	},
 	"APPOINTMENTS_PAGE": {
-		"ADD_APPOINTMENT": "Добавить Назначение"
+		"ADD_APPOINTMENT": "Добавить Назначение",
+		"DURATION_ERROR": "Выбранная длительность недопустима"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Типы событий",
@@ -1391,7 +1439,14 @@
 		"ACTIVE": "Активный"
 	},
 	"SCHEDULE": {
-		"DATE_SPECIFIC_AVAILIBILITY": "Определенная дата наличия",
-		"RECURRING_AVAILIBILITY": "Повторяющаяся доступность"
+		"DATE_SPECIFIC_AVAILABILITY": "Определенная дата наличия",
+		"RECURRING_AVAILABILITY": "Повторяющаяся доступность"
+	},
+	"PUBLIC_APPOINTMENTS": {
+		"BOOK_APPOINTMENTS": "Заказать прием",
+		"SELECT_EVENT_TYPES": "Пожалуйста, выберите тип события",
+		"PICK_DATETIME": "Выберите дату и время",
+		"DURATION": "Продолжительность:",
+		"EVENT_TYPE": "Тип события:"
 	}
 }

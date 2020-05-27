@@ -29,10 +29,9 @@
 				<div class="row">
 					<div class="col-9">
 						<ngx-timer-range-picker
+							[disabled]="disabled"
 							name="selectedRange"
 							[maxDate]="today"
-							[disabledDates]="blockedDates"
-							[blockedSlots]="blockedSlots"
 							formControlName="selectedRange"
 						>
 						</ngx-timer-range-picker>

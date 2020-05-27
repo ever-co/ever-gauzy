@@ -92,12 +92,12 @@ body {
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
     color: nb-theme(text-primary-active-color);
-    background: nb-theme(background-basic-color-1);
+    background: nb-theme(background-basic-color-3);
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
     color: nb-theme(text-primary-active-color);
-    background: nb-theme(background-basic-color-1);
+    background: nb-theme(background-basic-color-3);
   }
   .ng-value-container .ng-input input {
     background-color: nb-theme(background-basic-color-1);
@@ -121,10 +121,15 @@ body {
     background-color: nb-theme(background-basic-color-1) !important;
     color: nb-theme(text-basic-color) !important;
   }
-  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-    background-color: nb-theme(background-basic-color-1) !important;
-    color: nb-theme(text-basic-color) !important;
-  }
+
+  // .nb-theme-default .ng-dropdown-panel .ng-dropdown-panel-items .ng-option .ng-option-selected{
+  //   background-color: nb-theme(background-basic-color-2) !important;
+  // }
+
+  // .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+  //   background-color: nb-theme(background-basic-color-1) !important;
+  //   color: nb-theme(text-basic-color) !important;
+  // }
   .setting-block {
     background-color: nb-theme(background-basic-color-2) !important;
     color: nb-theme(text-basic-color) !important;

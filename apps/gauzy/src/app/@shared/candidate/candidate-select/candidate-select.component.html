@@ -2,7 +2,7 @@
 	[selected]="selectedCandidateId"
 	(selectedChange)="onMembersSelected($event)"
 	fullWidth
-	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate }}"
+	placeholder="{{ placeholder }} "
 >
 	<nb-option *ngFor="let candidate of allCandidates" [value]="candidate.id">
 		<img
@@ -10,7 +10,7 @@
 			alt="Smiley face"
 			height="40"
 			width="40"
-			style="margin-right:10px"
+			style="margin-right: 10px;"
 		/>
 		{{ candidate.user.firstName }}
 		{{ candidate.user.lastName }}

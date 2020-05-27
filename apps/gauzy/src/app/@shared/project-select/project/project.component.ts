@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { OrganizationProjects } from '@gauzy/models';
-import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from 'apps/gauzy/src/app/@core/services/organization-projects.service';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -36,8 +35,6 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 		return this.val;
 	}
 
-	private _ngDestroy$ = new Subject<void>();
-
 	constructor(private organizationProjects: OrganizationProjectsService) {}
 
 	ngOnInit() {
@@ -64,8 +61,5 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy {
 	setDisabledState(isDisabled: boolean): void {
 		this.disabled = isDisabled;
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

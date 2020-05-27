@@ -9,7 +9,7 @@ import {
 	ITenant,
 	OrganizationDepartment,
 	OrganizationPositions,
-	Tag
+	Tag,
 } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { IExperience } from './candidate-experience.model';
@@ -50,8 +50,8 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 
 export enum CandidateStatus {
 	APPLIED = 'APPLIED',
-	REJECTED = 'HIRED',
-	HIRED = 'REJECTED'
+	REJECTED = 'REJECTED',
+	HIRED = 'HIRED',
 }
 
 export interface CandidateFindInput extends IBaseEntityModel {

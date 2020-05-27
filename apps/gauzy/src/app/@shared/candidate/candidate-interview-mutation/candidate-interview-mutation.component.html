@@ -35,6 +35,9 @@
 					}}</label>
 					<ga-candidate-select
 						[allCandidates]="candidates"
+						[placeholder]="
+							'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate
+						"
 						(selectedChange)="onCandidateSelected($event)"
 						[selectedCandidateId]="selectedCandidateId"
 					>
@@ -66,7 +69,7 @@
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_2'
 						| translate
 				}}</ng-template>
-				<div class=" notification-title">
+				<div class="notification-title">
 					<strong>
 						<nb-icon
 							icon="calendar-outline"
@@ -128,7 +131,7 @@
 						</div>
 					</nb-card-body>
 				</nb-card>
-				<div class=" notification-title">
+				<div class="notification-title">
 					<strong>
 						<nb-icon
 							icon="bell-outline"

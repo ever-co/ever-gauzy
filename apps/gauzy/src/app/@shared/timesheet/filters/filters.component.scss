@@ -1,0 +1,22 @@
+:host {
+  .filters {
+    .form-control {
+      min-height: 40px;
+    }
+  }
+  .select-box {
+    display: block;
+    width: 300px;
+  }
+  .week-date-input {
+    position: relative;
+    input {
+      opacity: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  }
+}

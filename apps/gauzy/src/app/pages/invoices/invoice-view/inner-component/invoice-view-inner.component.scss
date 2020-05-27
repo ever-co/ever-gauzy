@@ -1,0 +1,16 @@
+.grid {
+  display: grid;
+  grid-template-columns: 0.4fr 0.4fr;
+
+  &-item {
+    margin: 15px;
+  }
+}
+
+.item {
+  margin: 15px;
+}
+
+.table {
+  margin-top: 50px;
+}

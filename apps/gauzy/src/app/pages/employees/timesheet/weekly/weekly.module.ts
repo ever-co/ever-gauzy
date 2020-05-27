@@ -13,6 +13,7 @@ import {
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { FormsModule } from '@angular/forms';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 
 @NgModule({
 	declarations: [WeeklyComponent],
@@ -26,7 +27,8 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 		EmployeeSelectorsModule,
 		FormsModule,
 		NbButtonModule,
-		SharedModule
+		SharedModule,
+		FiltersModule
 	]
 })
 export class WeeklyModule {}

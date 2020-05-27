@@ -1,3 +1,4 @@
+export * from './lib/help-center-menu.model';
 export * from './lib/user.model';
 export * from './lib/employee.model';
 export * from './lib/candidate-document.model';

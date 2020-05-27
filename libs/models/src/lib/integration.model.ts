@@ -1,6 +1,7 @@
 import { SafeResourceUrl } from '@angular/platform-browser';
 import { ITenant } from './tenant.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { OrganizationProjectsCreateInput } from '..';
 
 export interface IIntegrationSetting {
 	integration: IIntegrationTenant;
@@ -49,6 +50,12 @@ export interface IIntegrationType extends IBaseEntityModel {
 export interface IIntegrationFilter {
 	integrationTypeId: string;
 	searchQuery: string;
+}
+
+export interface IIntegrationMapSyncProject {
+	organizationProjectCreateInput: OrganizationProjectsCreateInput;
+	integrationId: string;
+	sourceId: string;
 }
 
 export interface IIntegrationTenantCreateDto {

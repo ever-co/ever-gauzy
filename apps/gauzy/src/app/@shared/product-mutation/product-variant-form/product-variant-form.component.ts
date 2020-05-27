@@ -16,6 +16,7 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 export class ProductVariantFormComponent extends TranslationBaseComponent
 	implements OnInit {
 	@Output() save = new EventEmitter<any>();
+	@Output() delete = new EventEmitter<any>();
 	@Output() cancel = new EventEmitter<string>();
 
 	currencies = Object.values(CurrenciesEnum);
@@ -126,5 +127,9 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 		};
 
 		this.save.emit(productVariantRequest);
+	}
+
+	onDelete() {
+		this.delete.emit(this.productVariant);
 	}
 }

@@ -24,9 +24,12 @@
 			"prefix": "gauzy",
 			"architect": {
 				"build": {
-					"builder": "@angular-devkit/build-angular:browser",
+					"builder": "@angular-builders/custom-webpack:browser",
 					"options": {
 						"aot": true,
+						"customWebpackConfig": {
+							"path": "apps/gauzy/config/custom-webpack.config.js"
+						},
 						"outputPath": "dist/apps/gauzy",
 						"index": "apps/gauzy/src/index.html",
 						"main": "apps/gauzy/src/main.ts",
@@ -86,19 +89,19 @@
 							"budgets": [
 								{
 									"type": "initial",
-									"maximumWarning": "2mb",
+									"maximumWarning": "10mb",
 									"maximumError": "20mb"
 								},
 								{
 									"type": "anyComponentStyle",
-									"maximumWarning": "6kb"
+									"maximumWarning": "100kb"
 								}
 							]
 						}
 					}
 				},
 				"serve": {
-					"builder": "@angular-devkit/build-angular:dev-server",
+					"builder": "@angular-builders/custom-webpack:dev-server",
 					"options": {
 						"browserTarget": "gauzy:build",
 						"proxyConfig": "apps/gauzy/proxy.conf.json"

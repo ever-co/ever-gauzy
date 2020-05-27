@@ -37,4 +37,11 @@ export class ProductVariantService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	delete(id: string): Promise<any> {
+		return this.http
+			.delete(`${this.PRODUCT_VARIANTS_URL}/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
 }
