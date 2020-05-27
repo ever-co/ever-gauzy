@@ -28,11 +28,12 @@
 			<div class="col-3" *ngIf="eventType">
 				<div>
 					<div class="block-info">
-						Event Type: <strong> {{ eventType.title }} </strong>
+						{{ 'PUBLIC_APPOINTMENTS.EVENT_TYPE' | translate }}
+						<strong> {{ eventType.title }} </strong>
 					</div>
 				</div>
 				<div>
-					Duration:
+					{{ 'PUBLIC_APPOINTMENTS.DURATION' | translate }}
 					<strong>
 						{{ eventType.duration }} {{ eventType.durationUnit }}
 					</strong>
@@ -42,9 +43,11 @@
 				</div>
 			</div>
 		</div>
-		<div class="calendar">
+		<div class="calendar" *ngIf="eventType">
 			<ga-appointment-calendar
 				#appointmentCalendar
+				[appointmentFormURL]="appointmentFormURL"
+				[selectedEventType]="eventType"
 				[showHeader]="false"
 			></ga-appointment-calendar>
 		</div>
