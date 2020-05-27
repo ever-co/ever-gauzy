@@ -48,7 +48,8 @@
 		"MAKE_PRIVATE": "сделать приватным",
 		"MAKE_PUBLIC": "сделать публичным",
 		"KNOWLEDGE_BASES": "Базы знаний",
-		"SELECT": "Выбрать"
+		"SELECT": "Выбрать",
+		"EMAIL": "Эл. адрес"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -255,6 +256,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
+			"ADD_REMOVE_EMPLOYEE": "Добавить интервьюера",
 			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
@@ -673,10 +675,13 @@
 			"DOCUMENT_NAME": "Название документа",
 			"DOCUMENT": "Документ",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"INTERVIEW_FEEDBACK": "Интервью: ",
 			"LEAVE_FEEDBACK": "Оставить отзыв о ",
+			"STATUS": "Выбранный статус: ",
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
 				"INTERVIEWS": "Интервью",
+				"INTERVIEWER": "Интервьюс: ",
 				"ADD_INTERVIEW": "Добавить интервью",
 				"ON": "вкл",
 				"TO": "Кому",
@@ -1168,12 +1173,20 @@
 			"TASK_VALUE": "Задание не может быть пустым"
 		},
 		"SEND": {
-			"CONFIRMATION": "Вы уверены, что хотите отправить этот счет на",
+			"CONFIRMATION": "Отправить этот счет",
 			"ALREADY_SENT": "Этот счет уже был отправлен на"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
 			"TO": "К"
+		},
+		"DOWNLOAD": {
+			"CONFIRMATION": "Скачать этот счет-фактуру ?",
+			"INVOICE_DOWNLOAD": "Счет загружен"
+		},
+		"EMAIL": {
+			"EMAIL_INVOICE": "Отправить этот счет по электронной почте?",
+			"EMAIL_SENT": "Отправлено E-mail"
 		}
 	},
 	"HEADER": {
