@@ -69,7 +69,7 @@ export class AuthService {
 		originUrl?: string
 	): Promise<{ id: string; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role']
+			relations: ['role', 'employee']
 		});
 
 		let token: string;
@@ -129,6 +129,7 @@ export class AuthService {
 		languageCode: LanguagesEnum
 	): Promise<User> {
 		let tenant = input.user.tenant;
+
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOne(
 				input.createdById,
@@ -159,7 +160,8 @@ export class AuthService {
 		this.emailService.welcomeUser(
 			input.user,
 			languageCode,
-			input.originalUrl
+			input.originalUrl,
+			input.organizationId
 		);
 
 		return user;

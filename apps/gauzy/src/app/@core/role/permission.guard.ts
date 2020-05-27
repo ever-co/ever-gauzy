@@ -19,6 +19,8 @@ export class PermissionGuard implements CanActivate {
 		route: ActivatedRouteSnapshot,
 		state: RouterStateSnapshot
 	) {
+		debugger;
+
 		const expectedPermission = route.data.expectedPermission;
 		const hasPermission = await this.authService
 			.hasPermission(expectedPermission)
