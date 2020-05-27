@@ -50,18 +50,14 @@
 						<span
 							>{{ member.employee.user.firstName }}
 							{{ member.employee.user.lastName }}
-
-							<!-- <span *ngFor="let tag of getTagsByEmployeeId(member.employee.id)">
-              {{tag.name}}
-            </span> -->
-							<div class="tags fix-everything-else">
+							<div class="tags-container">
 								<nb-badge
 									*ngFor="
 										let tag of getTagsByEmployeeId(
 											member.employee.id
 										)
 									"
-									class="color fix-everything"
+									class="tags"
 									position="centered"
 									[style.background]="tag.color"
 									text="{{ tag.name }}"

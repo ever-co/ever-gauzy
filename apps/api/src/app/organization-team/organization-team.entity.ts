@@ -18,7 +18,7 @@ export class OrganizationTeam extends Base implements IOrganizationTeam {
 	@ApiProperty()
 	@ManyToMany((type) => Tag)
 	@JoinTable({
-		name: 'tag_organizationTeams',
+		name: 'tag_organization_team',
 	})
 	tags?: Tag[];
 
