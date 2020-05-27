@@ -12,47 +12,41 @@
 		></ngx-filters>
 	</div>
 </div>
-<div class="weekly-logs">
-	<table class="table weekly-logs-table table-striped">
-		<thead>
-			<tr>
-				<th width="20%">Project</th>
-				<th class="day-col" *ngFor="let date of weekDayList">
-					{{ date | date }}
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-			<ng-template [ngIf]="weekData?.length > 0" [ngIfElse]="notFound">
-				<tr *ngFor="let day of weekData">
-					<th class="">
-						<span *ngIf="day?.project; else noProfject">{{
-							day?.project?.name
-						}}</span>
-						<ng-template #noProfject>
-							<span>No project</span>
-						</ng-template>
-					</th>
-					<td class="day-col" *ngFor="let date of weekDayList">
-						<span *ngIf="day.dates[date] > 0; else noLogsCol">
-							{{ day.dates[date] | durationFormat }}
-						</span>
-						<ng-template #noLogsCol>
-							-
-						</ng-template>
-					</td>
-				</tr>
-			</ng-template>
-			<ng-template #notFound>
-				<tr>
-					<td
-						[attr.colspan]="weekDayList.length + 1"
-						class="text-center p-5 "
-					>
-						No logs found.
-					</td>
-				</tr>
-			</ng-template>
-		</tbody>
-	</table>
+<div class="weekly-logs row-table">
+	<div
+		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
+	>
+		<div class="col-sm-3 project-name">Project</div>
+		<div class="col day-col" *ngFor="let date of weekDayList">
+			{{ date | date }}
+		</div>
+	</div>
+	<ng-template [ngIf]="weekData?.length > 0" [ngIfElse]="notFound">
+		<div
+			class="row border-bottom py-3 align-items-center"
+			*ngFor="let day of weekData"
+		>
+			<div class="col-sm-3 project-name">
+				<span *ngIf="day?.project; else noProfject">{{
+					day?.project?.name
+				}}</span>
+				<ng-template #noProfject>
+					<span>No project</span>
+				</ng-template>
+			</div>
+			<div class="col day-col" *ngFor="let date of weekDayList">
+				<span *ngIf="day.dates[date] > 0; else noLogsCol">
+					{{ day.dates[date] | durationFormat }}
+				</span>
+				<ng-template #noLogsCol>
+					-
+				</ng-template>
+			</div>
+		</div>
+	</ng-template>
+	<ng-template #notFound>
+		<div class="row font-weight-bold py-3 align-items-center">
+			<div class="col text-center">No logs found.</div>
+		</div>
+	</ng-template>
 </div>

@@ -4,7 +4,7 @@ import {
 	Input,
 	Output,
 	OnInit,
-	forwardRef
+	forwardRef,
 } from '@angular/core';
 import { Employee } from '@gauzy/models';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -12,13 +12,14 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 @Component({
 	selector: 'ga-employee-multi-select',
 	templateUrl: './employee-multi-select.component.html',
+	styleUrls: ['./employee-multi-select.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => EmployeeSelectComponent),
-			multi: true
-		}
-	]
+			multi: true,
+		},
+	],
 })
 export class EmployeeSelectComponent implements OnInit {
 	@Output() selectedChange = new EventEmitter();

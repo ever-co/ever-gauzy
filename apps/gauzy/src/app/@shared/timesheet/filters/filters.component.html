@@ -1,6 +1,6 @@
 <div class="row">
 	<div class="bulk-actions col-auto">
-		<div class="input-group" *ngIf="dateRange">
+		<div class="input-group" *ngIf="hasDateRangeFilter">
 			<div class="input-group-append" id="button-addon4">
 				<button nbButton status="primary" (click)="previousDay()">
 					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
@@ -45,7 +45,7 @@
 		<div class="row align-items-end">
 			<div
 				class="col-auto ml-auto pr-1"
-				*ngIf="canChangeSelectedEmployee"
+				*ngIf="canChangeSelectedEmployee && hasEmployeeFilter"
 			>
 				<ga-employee-multi-select
 					class="select-box"
@@ -57,7 +57,14 @@
 				>
 				</ga-employee-multi-select>
 			</div>
-			<div class="col-auto pl-1">
+			<div
+				class="col-auto pl-1"
+				*ngIf="
+					hasLogTypeFilter ||
+					hasSourceFilter ||
+					hasActivityLevelFilter
+				"
+			>
 				<button
 					nbButton
 					status="primary"
@@ -68,7 +75,7 @@
 				</button>
 				<ng-template #templateRef>
 					<div class="p-3">
-						<div class="form-group">
+						<div class="form-group" *ngIf="hasLogTypeFilter">
 							<nb-select
 								class="w-100"
 								multiple
@@ -86,7 +93,7 @@
 								>
 							</nb-select>
 						</div>
-						<div class="form-group">
+						<div class="form-group" *ngIf="hasSourceFilter">
 							<nb-select
 								class="w-100"
 								multiple
@@ -105,7 +112,7 @@
 								>
 							</nb-select>
 						</div>
-						<div class="form-group">
+						<div class="form-group" *ngIf="hasActivityLevelFilter">
 							<nb-select
 								class="w-100"
 								placeholder="Select Activity Level"

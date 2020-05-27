@@ -7,7 +7,7 @@
 <div class="filters row mb-3">
 	<div class="col">
 		<ngx-filters
-			[dateRange]="null"
+			[hasDateRangeFilter]="false"
 			(filtersChange)="filtersChange($event)"
 		></ngx-filters>
 	</div>
@@ -20,7 +20,7 @@
 		<nb-card-header>Time Log</nb-card-header>
 		<nb-card-body>
 			<div class="mb-3" *ngIf="canChangeSelectedEmployee">
-				<div class="font-weight-bold  mb-2">Employee</div>
+				<div class="font-weight-bold mb-2">Employee</div>
 				<div class="description">
 					<ngx-avatar
 						[name]="
@@ -33,13 +33,13 @@
 				</div>
 			</div>
 			<div class="mb-3">
-				<div class="font-weight-bold  mb-2">Project</div>
+				<div class="font-weight-bold mb-2">Project</div>
 				<div class="description">
 					{{ data?.project ? data?.project.name : 'No project' }}
 				</div>
 			</div>
 			<div class="mb-3">
-				<div class="font-weight-bold  mb-2">Task</div>
+				<div class="font-weight-bold mb-2">Task</div>
 				<div class="description">
 					{{ data?.task ? data?.task?.title : 'No to-do' }}
 				</div>

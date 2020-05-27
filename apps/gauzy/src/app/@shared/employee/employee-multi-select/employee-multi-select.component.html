@@ -1,20 +1,25 @@
-<nb-select
+<ng-select
 	[multiple]="multiple"
-	(selectedChange)="onMembersSelected($event)"
-	fullWidth
 	[disabled]="disabled"
+	[clearable]="true"
+	[items]="employees"
 	[(ngModel)]="employeeId"
+	bindValue="value"
+	bindLabel="label"
 	placeholder="{{ placeholder | translate }}"
+	(onChange)="onMembersSelected($event)"
+	fullWidth
 >
-	<nb-option *ngFor="let employee of employees" [value]="employee.id">
-		<img
-			src="{{ employee.user?.imageUrl }}"
-			alt="Smiley face"
-			height="40"
-			width="40"
-			style="margin-right:10px"
-		/>
-		{{ employee.user?.firstName }}
-		{{ employee.user?.lastName }}
-	</nb-option>
-</nb-select>
+	<ng-template ng-option-tmp let-item="item" let-index="index">
+		<ngx-avatar
+			[name]="item.user?.firstName + ' ' + item.user?.lastName"
+			[src]="item.user?.imageUrl"
+		>
+		</ngx-avatar>
+	</ng-template>
+	<ng-template ng-label-tmp let-item="item">
+		<span class="p-1">
+			{{ item.user?.firstName }} {{ item.user?.lastName }}
+		</span>
+	</ng-template>
+</ng-select>
