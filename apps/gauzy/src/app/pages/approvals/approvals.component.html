@@ -1,26 +1,68 @@
-<nb-card>
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<h4>{{ 'TIME_OFF_PAGE.HEADER' | translate }}</h4>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="card-row">
-			<div *ngFor="let item of listApprovals; let i = index" class="card-col">
-				<div class="req">
-					<div class="req-icon">
-						<nb-icon [icon]="item?.icon"></nb-icon>
-					</div>
-
-					<div class="req-content">
-						<div class="req-title">
-							<p>{{ item.title }}</p>
-						</div>
-
-						<div class="req-btn">
-							<button status="primary" nbButton>New Request</button>
-						</div>
-					</div>
-				</div>
-			</div>
+		<div class="main-header">
+			<h4>{{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }}</h4>
+			<button nbButton status="primary">
+				{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
+			</button>
 		</div>
+	</nb-card-header>
+	<!-- <nb-card-body>
+    <div class="card-row">
+      <div *ngFor="let item of listApprovals; let i = index" class="card-col">
+        <div class="req">
+          <div class="req-icon">
+            <nb-icon [icon]="item?.icon"></nb-icon>
+          </div>
+
+          <div class="req-content">
+            <div class="req-title">
+              <p>{{ item.title }}</p>
+            </div>
+
+            <div class="req-btn">
+              <button status="primary" nbButton>New Request</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nb-card-body> -->
+	<nb-card-body>
+		<div class="mb-3">
+			<button (click)="save()" nbButton status="success" class="mr-2">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<button
+				(click)="save()"
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="delete()"
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+
+		<ng2-smart-table
+			class="tags-table"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			style="cursor: pointer;"
+			#requestApprovalTable
+		>
+		</ng2-smart-table>
 	</nb-card-body>
 </nb-card>

@@ -853,6 +853,15 @@
 			}
 		}
 	},
+	"APPROVAL_REQUEST_PAGE": {
+		"APPROVAL_REQUEST_NAME": "Name",
+		"APPROVAL_REQUEST_TYPE": "Type",
+		"APPROVAL_REQUEST_MIN_COUNT": "Min Count",
+		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
+		"APPROVAL_REQUEST_STATUS": "Status",
+		"HEADER": "Approval Request",
+		"APPROVAL_POLICY": "Approval Policy"
+	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
 		"REQUEST_DAYS_OFF": "Request Days Off",
@@ -950,7 +959,7 @@
 		"IS_EQUIPMENT": "הוא ציוד",
 		"TRACK_INVENTORY": "עקוב אחר המלאי",
 		"ADD_OPTION": "הוסף אפשרות",
-    "EDIT_OPTION": "Edit option",
+		"EDIT_OPTION": "Edit option",
 		"INTERNATIONAL_REFERENCE": "התייחסות בינלאומית",
 		"CODE": "קוד",
 		"NOTES": "הערות",
@@ -968,7 +977,7 @@
 		"EDIT_PRODUCT_TYPE": "ערוך את סוג המוצר",
 		"ADD_PRODUCT_TYPE": "הוסף סוג מוצר",
 		"PRODUCT_TYPE_SAVED": "סוג המוצר נשמר",
-		"PRODUCT_TYPE_DELETED": "סוג המוצר נמחק"
+		"PRODUCT_TYPE_DELETED": "סוג המוצר נמחק",
 		"EDIT_PRODUCT_CATEGORY": "Edit product category",
 		"ADD_PRODUCT_CATEGORY": "Add product category",
 		"PRODUCT_CATEGORY_SAVED": "Product category saved",

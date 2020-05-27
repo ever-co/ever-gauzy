@@ -854,6 +854,15 @@
 			}
 		}
 	},
+	"APPROVAL_REQUEST_PAGE": {
+		"APPROVAL_REQUEST_NAME": "Name",
+		"APPROVAL_REQUEST_TYPE": "Type",
+		"APPROVAL_REQUEST_MIN_COUNT": "Min Count",
+		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
+		"APPROVAL_REQUEST_STATUS": "Status",
+		"HEADER": "Approval Request",
+		"APPROVAL_POLICY": "Approval Policy"
+	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
 		"REQUEST_DAYS_OFF": "Request Days Off",
