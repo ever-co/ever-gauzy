@@ -1,17 +1,22 @@
 {
-	"name": "gauzydesktop",
-	"version": "1.0.0",
-	"description": "GauzyDesktop description.",
+	"name": "gauzy-desktop",
+	"version": "0.1.0",
+	"description": "Gauzy Desktop",
+	"license": "AGPL-3.0",
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ever-co/gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/gauzy/issues"
+	},
 	"main": "index.js",
 	"author": {
-		"name": "Your name",
-		"email": "name@company.com"
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
 	},
-	"homepage": "https://nstudio.io/xplat",
-	"repository": {
-		"url": "https://github.com/nstudio/xplat"
-	},
-	"license": "MIT",
 	"build": {
 		"appId": "com.company.gauzydesktop",
 		"productName": "Gauzy Desktop",
@@ -49,7 +54,7 @@
 		"nsis": {
 			"createDesktopShortcut": "always",
 			"installerIcon": "icon.ico",
-			"artifactName": "Desktop-Setup-${version}.${ext}"
+			"artifactName": "Gauzy-${version}.${ext}"
 		},
 		"files": [
 			"./**/*",

@@ -1,18 +1,22 @@
+// Adapted from https://github.com/maximegris/angular-electron/blob/master/main.ts
+
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import * as path from 'path';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 import * as url from 'url';
-import { fork } from 'child_process';
 require(path.join(__dirname, 'api/main.js'));
-let serve;
+
+let serve: boolean;
 const args = process.argv.slice(1);
 serve = args.some((val) => val === '--serve');
 
-let win: Electron.BrowserWindow = null;
+let win: BrowserWindow = null;
 
 const getFromEnv = parseInt(process.env.ELECTRON_IS_DEV, 10) === 1;
+
 const isEnvSet = 'ELECTRON_IS_DEV' in process.env;
+
 const debugMode = isEnvSet
 	? getFromEnv
 	: process.defaultApp ||
@@ -32,8 +36,8 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	webPreferences: {
 		devTools: debugMode,
 		nodeIntegration: debugMode,
-		webSecurity: false,
-	},
+		webSecurity: false
+	}
 };
 
 /**
@@ -69,18 +73,22 @@ function createWindow() {
 	win = new BrowserWindow(mainWindowSettings);
 
 	let launchPath;
+
 	if (serve) {
 		require('electron-reload')(__dirname, {
-			electron: require(`${__dirname}/../../../node_modules/electron`),
+			electron: require(`${__dirname}/../../../node_modules/electron`)
 		});
+
 		launchPath = 'http://localhost:4200';
+
 		win.loadURL(launchPath);
 	} else {
 		launchPath = url.format({
 			pathname: path.join(__dirname, 'index.html'),
 			protocol: 'file:',
-			slashes: true,
+			slashes: true
 		});
+
 		win.loadURL(launchPath);
 	}
 
@@ -102,21 +110,15 @@ function createWindow() {
 	}
 }
 
-function apiBackgroundProcess() {
-	const serverProcess = fork(
-		path.join(__dirname, '../electron-api/main.js'),
-		['--subprocess', app.getVersion()]
-	);
-
-	serverProcess.on('message', (msg) => {
-		if (msg === 'Listening at http://localhost:3000/api') {
-			createWindow();
-		}
-	});
-}
 try {
+	// app.allowRendererProcessReuse = true;
+
+	// This method will be called when Electron has finished
+	// initialization and is ready to create browser windows.
+	// Some APIs can only be used after this event occurs.
+	// Added 5000 ms to fix the black background issue while using transparent window.
+	// More details at https://github.com/electron/electron/issues/15947
 	app.on('ready', () => {
-		// apiBackgroundProcess();
 		setTimeout(() => {
 			createWindow();
 		}, 5000);
@@ -147,6 +149,8 @@ try {
 	});
 } catch (err) {}
 
+// On OS X it is common for applications and their menu bar
+// to stay active until the user quits explicitly with Cmd + Q
 function quit() {
 	if (process.platform !== 'darwin') {
 		app.quit();
