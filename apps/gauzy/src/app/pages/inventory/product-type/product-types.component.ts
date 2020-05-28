@@ -1,19 +1,20 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ProductType, Organization } from '@gauzy/models';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Organization, ProductTypeTranslated } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first, take } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { ProductTypeMutationComponent } from '../../../@shared/product-mutation/product-type-mutation/product-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Location } from '@angular/common';
 import { IconRowComponent } from '../icon-row/icon-row.component';
 import { Store } from '../../../@core/services/store.service';
+import { Subject } from 'rxjs';
 
 export interface SelectedProductType {
-	data: ProductType;
+	data: ProductTypeTranslated;
 	isSelected: boolean;
 }
 
@@ -23,13 +24,14 @@ export interface SelectedProductType {
 	styleUrls: ['./product-types.component.scss'],
 })
 export class ProductTypesComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
-	selectedItem: ProductType;
+	selectedItem: ProductTypeTranslated;
 	selectedOrganization: Organization;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
+	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('productTypesTable', { static: true }) productTypesTable;
 
@@ -45,13 +47,26 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$.pipe(take(1)).subscribe((org) => {
-			this.selectedOrganization = org;
-			this.loadSettings();
-		});
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				this.selectedOrganization = org;
+				this.loadSettings();
+			});
+
+		this.store.preferredLanguage$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSettings();
+			});
 
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
+	}
+
+	ngOnDestroy() {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 
 	async loadSmartTable() {
@@ -85,7 +100,8 @@ export class ProductTypesComponent extends TranslationBaseComponent
 			? { organization: { id: this.selectedOrganization.id } }
 			: null;
 
-		const { items } = await this.productTypeService.getAll(
+		const { items } = await this.productTypeService.getAllTranslated(
+			this.store.preferredLanguage,
 			['organization'],
 			searchCriteria
 		);
@@ -101,9 +117,13 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	}
 
 	async save() {
+		const editProductType = this.selectedItem
+			? await this.productTypeService.getById(this.selectedItem.id)
+			: null;
+
 		const dialog = this.dialogService.open(ProductTypeMutationComponent, {
 			context: {
-				productType: this.selectedItem,
+				productType: editProductType,
 			},
 		});
 

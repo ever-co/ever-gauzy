@@ -3,11 +3,11 @@ import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
 	Product,
-	ProductType,
 	ProductCategory,
 	ProductOption,
 	ProductVariant,
 	Tag,
+	ProductTypeTranslated,
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -27,7 +27,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	activeOption: ProductOption;
 	optionMode = 'create';
 
-	productTypes: ProductType[];
+	productTypes: ProductTypeTranslated[];
 	productCategories: ProductCategory[];
 	options: Array<ProductOption> = [];
 	variants: Array<ProductVariant> = [];
@@ -78,9 +78,10 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	async loadProductTypes() {
-		const res = await this.productTypeService.getAll([], {
-			organizationId: this.store.selectedOrganization.id,
-		});
+		const res = await this.productTypeService.getAllTranslated(
+			this.store.preferredLanguage,
+			['organization']
+		);
 		this.productTypes = res.items;
 	}
 

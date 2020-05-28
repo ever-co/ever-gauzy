@@ -20,13 +20,15 @@
 				<label class="label" for="lang">
 					{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
 				</label>
-				<!-- not working yet -->
 				<nb-select
 					id="lang"
 					[placeholder]="'INVENTORY_PAGE.LANGUAGE' | translate"
 					class="d-block"
 					size="medium"
 					fullWidth="true"
+					formControlName="languageCode"
+					[selected]="selectedLanguage"
+					(selectedChange)="onLangChange($event)"
 				>
 					<nb-option *ngFor="let lang of languages" [value]="lang">
 						{{ lang }}

@@ -5,9 +5,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { ProductMutationComponent } from '../../../@shared/product-mutation/product-mutation.component';
-import { first } from 'rxjs/operators';
+import { first, take } from 'rxjs/operators';
 import { ProductService } from '../../../@core/services/product.service';
-import { Product, ProductType, ProductCategory } from '@gauzy/models';
+import { Product, ProductCategory, ProductTypeTranslated } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Router } from '@angular/router';
 import { PictureNameTagsComponent } from '../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
@@ -30,10 +30,18 @@ export class InventoryComponent extends TranslationBaseComponent
 	smartTableSource = new LocalDataSource();
 	form: FormGroup;
 	disableButton = true;
+	selectedLanguage: string;
 
 	@ViewChild('inventoryTable') inventoryTable;
 
 	ngOnInit(): void {
+		this.selectedLanguage = this.translateService.currentLang;
+		this.translateService.onLangChange
+			.pipe(take(1))
+			.subscribe((languageEvent) => {
+				this.selectedLanguage = languageEvent.lang;
+			});
+
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.loadSettings();
@@ -65,7 +73,8 @@ export class InventoryComponent extends TranslationBaseComponent
 				type: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
-					valuePrepareFunction: (type: ProductType) => type.name,
+					valuePrepareFunction: (type: ProductTypeTranslated) =>
+						type.name,
 				},
 				category: {
 					title: this.getTranslation(
@@ -139,7 +148,12 @@ export class InventoryComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedItem = null;
-		const { items } = await this.productService.getAll();
+		const { items } = await this.productService.getAll(
+			null,
+			null,
+			this.selectedLanguage
+		);
+
 		this.loading = false;
 		this.smartTableSource.load(items);
 	}

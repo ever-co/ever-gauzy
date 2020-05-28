@@ -52,6 +52,25 @@ export class ProductController extends CrudController<Product> {
 		return this.productService.findAllProducts();
 	}
 
+	@ApiOperation({
+		summary: 'Find all products translated',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found products',
+		type: Product,
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found',
+	})
+	@Get('/:langCode')
+	async findAllProductsTranslated(
+		@Param('langCode') langCode: string
+	): Promise<IPagination<Product>> {
+		return this.productService.findAllProducts(langCode);
+	}
+
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
