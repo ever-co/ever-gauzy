@@ -1,7 +1,7 @@
 import { Timesheet } from '@gauzy/models';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TimesheetCreateCommand } from '..';
-import { TimeSheetService } from '../../timesheet.service';
+import { TimeSheetService } from '../../timesheet/timesheet.service';
 import { BadRequestException } from '@nestjs/common';
 
 @CommandHandler(TimesheetCreateCommand)

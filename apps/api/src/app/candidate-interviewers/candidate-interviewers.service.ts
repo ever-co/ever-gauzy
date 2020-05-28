@@ -5,7 +5,7 @@ import { CrudService } from '../core/crud/crud.service';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
 import {
 	ICandidateInterviewersDeleteInput,
-	ICandidateInterviewersCreateInput
+	ICandidateInterviewersCreateInput,
 } from '@gauzy/models';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class CandidateInterviewersService extends CrudService<
 		return await this.repository
 			.createQueryBuilder('candidate_interviewers')
 			.where('candidate_interviewers.interviewId = :interviewId', {
-				interviewId
+				interviewId,
 			})
 			.getMany();
 	}
@@ -38,7 +38,7 @@ export class CandidateInterviewersService extends CrudService<
 		return await this.repository
 			.createQueryBuilder('candidate_interviewers')
 			.where('candidate_interviewers.employeeId = :employeeId', {
-				employeeId
+				employeeId,
 			})
 			.getMany();
 	}

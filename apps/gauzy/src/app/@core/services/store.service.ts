@@ -9,8 +9,7 @@ import {
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 import { Injectable } from '@angular/core';
-import {
-	resetStores,
+import {	
 	StoreConfig,
 	Store as AkitaStore,
 	Query
@@ -249,6 +248,7 @@ export class Store {
 	}
 
 	clear() {
-		resetStores();
+		this.appStore.reset();
+		this.persistStore.reset();		
 	}
 }

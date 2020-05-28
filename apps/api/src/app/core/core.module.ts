@@ -80,6 +80,7 @@ import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { EventType } from '../event-types/event-type.entity';
 import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
 import { ProductTypeTranslation } from '../product-type/product-type-translation.entity';
+import { HelpCenter } from '../help-center/help-center.entity';
 
 const entities = [
 	Invite,
@@ -138,6 +139,7 @@ const entities = [
 	CandidateExperience,
 	CandidateInterview,
 	CandidateInterviewers,
+	HelpCenter,
 	IntegrationSetting,
 	Integration,
 	IntegrationType,
@@ -153,7 +155,7 @@ const entities = [
 	AppointmentEmployees,
 	EventType,
 	AvailabilitySlots,
-	ProductTypeTranslation,
+	ProductTypeTranslation
 ];
 
 @Module({

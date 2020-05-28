@@ -1,0 +1,23 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{ 'INVOICES_PAGE.DOWNLOAD.CONFIRMATION' | translate }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body>
+		<ga-invoice-view-inner
+			[invoice]="invoice"
+			[client]="client"
+			[organization]="organization"
+		>
+		</ga-invoice-view-inner>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button (click)="closeDialog()" status="danger" class="mr-3" nbButton>
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button (click)="download()" status="success" nbButton>
+			{{ 'BUTTONS.DOWNLOAD' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

@@ -420,70 +420,68 @@ export const environment: IEnvironment = {
 			],
 		},
 	],
-	defaultProductCategories: [
+	defaultProductTypes: [
 		{
-			name: 'Software',
+			name: 'Physical Products',
 			description:
-				'a collection of data or computer instructions that tell the computer how to work',
-			imageUrl: 'assets/images/products/software.png',
+				'Can be touched or tangible, solid, dust or liquid state in a container.',
+			icon: ProductTypesIconsEnum.CHECKMARK,
 		},
 		{
-			name: 'Food',
+			name: 'Digital Products',
 			description:
-				'Any substance consumed to provide nutritional support for an organism',
-			imageUrl: 'assets/images/products/food.png',
+				'Any product you sell online that doesn’t have physical form or substance',
+			icon: ProductTypesIconsEnum.FLASH,
 		},
 		{
-			name: 'Transport',
+			name: 'Consumer Products',
 			description:
-				'The movement of people or goods from one place to another',
-			imageUrl: 'assets/images/products/transport.png',
+				'Final goods, are products that are bought by individuals or households for personal use.',
+			icon: ProductTypesIconsEnum.HEART,
 		},
 		{
-			name: 'Education',
+			name: 'Raw materials',
 			description:
-				'Aquisition of knowledge, skills, values, beliefs, and habits',
-			imageUrl: 'assets/images/products/education.png',
+				'Unprocessed material, or primary commodity, is a basic material that is used to produce goods',
+			icon: ProductTypesIconsEnum.SHOPPING_BAG,
 		},
 		{
-			name: 'Clothing',
-			description: 'Items worn on the body',
-			imageUrl: 'assets/images/products/clothing.png',
-		},
-		{
-			name: 'Office',
+			name: 'Supplies',
 			description:
-				'A place for commercial, professional, or bureaucratic work.',
-			imageUrl: 'assets/images/products/office.png',
+				'Items purchased and typically used up during the year.',
+			icon: ProductTypesIconsEnum.SHOPPING_CART,
 		},
 		{
-			name: 'Advertisement',
+			name: 'Experiences',
+			description: 'Knowledge or skill in a particular job or activity',
+			icon: ProductTypesIconsEnum.LAYERS,
+		},
+		{
+			name: 'Specialty Goods',
+			description: 'Have particularly unique characteristics',
+			icon: ProductTypesIconsEnum.STAR,
+		},
+		{
+			name: 'Common',
+			description: null,
+			icon: ProductTypesIconsEnum.HOME,
+		},
+		{
+			name: 'Industrial goods',
+			description: 'Bought and used for industrial and business use',
+			icon: ProductTypesIconsEnum.RADIO_BTN_OFF,
+		},
+		{
+			name: 'Amenities',
 			description:
-				'How a company encourages people to buy their products, services or ideas',
-			imageUrl: 'assets/images/products/advertisement.png',
+				'Any feature that provides comfort, convenience, or pleasure',
+			icon: ProductTypesIconsEnum.STAR,
 		},
 		{
-			name: 'Health',
+			name: 'Animals',
 			description:
-				'State of complete physical, mental, and social well-being',
-			imageUrl: 'assets/images/products/health.png',
-		},
-		{
-			name: 'Sport',
-			description: 'An activity involving physical exertion and skill',
-			imageUrl: 'assets/images/products/sport.png',
-		},
-		{
-			name: 'Furniture',
-			description:
-				'Used to make a room or building suitable for living or working in',
-			imageUrl: 'assets/images/products/furniture.png',
-		},
-		{
-			name: 'Pets',
-			description:
-				"An animal kept primarily for a person's company or entertainment rather than as a working animal",
-			imageUrl: 'assets/images/products/dog.png',
+				'Animals consume organic material, breathe oxygen, are able to move',
+			icon: ProductTypesIconsEnum.HEART,
 		},
 	],
 	sentry: {

@@ -20,7 +20,7 @@ export class ProductVariantDeleteHandler
 		const { productVariantId } = command;
 
 		const productVariant = await this.productVariantService.findOne({
-			where: { id: productVariantId }
+			where: { id: productVariantId },
 		});
 
 		const deleteRes = [
@@ -30,14 +30,14 @@ export class ProductVariantDeleteHandler
 			),
 			await this.productVariantSettingsService.delete(
 				productVariant.settings.id
-			)
+			),
 		];
 
 		return {
 			raw: deleteRes.map((res) => res.affected),
 			affected: deleteRes
 				.map((res) => (res.affected ? res.affected : 0))
-				.reduce((acc, value) => acc + value)
+				.reduce((acc, value) => acc + value),
 		};
 	}
 }

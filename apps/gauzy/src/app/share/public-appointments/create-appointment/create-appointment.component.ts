@@ -19,6 +19,7 @@ export class CreateAppointmentComponent extends TranslationBaseComponent
 	employee: Employee;
 	eventType: IEventType;
 	loading = true;
+	public appointmentFormURL: string;
 
 	@ViewChild('appointmentCalendar')
 	appointmentCalendar: AppointmentComponent;
@@ -46,6 +47,7 @@ export class CreateAppointmentComponent extends TranslationBaseComponent
 						params.eventId
 					);
 					this.loading = false;
+					this.appointmentFormURL = `/share/employee/${params.id}/create-appointment`;
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}

@@ -69,7 +69,8 @@ export class InviteAcceptEmployeeHandler
 					tenant: {
 						id: organization.tenantId
 					}
-				}
+				},
+				organizationId: input.organization.id
 			},
 			languageCode
 		);

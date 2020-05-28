@@ -1,9 +1,13 @@
-import { ICandidateInterviewers } from './../../../../../libs/models/src/lib/candidate-interviewers.model';
 import { Column, Entity, ManyToOne, JoinTable } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ICandidateInterview } from '@gauzy/models';
+import {
+	ICandidateInterview,
+	ICandidateFeedback,
+	ICandidateInterviewers
+} from '@gauzy/models';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
+import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
 
 @Entity('candidate_interview')
 export class CandidateInterview extends Base implements ICandidateInterview {
@@ -24,6 +28,13 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 		name: 'candidate_interviewers'
 	})
 	interviewers?: ICandidateInterviewers[];
+
+	@ManyToOne((type) => CandidateFeedback)
+	@JoinTable({
+		name: 'candidate_feedbacks'
+	})
+	feedbacks?: ICandidateFeedback[];
+
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	candidateId?: string;

@@ -9,67 +9,90 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="showAddCard" class="row m-0">
-			<div class="col-10 feedbacks-card">
-				<form class="col-12 form" [formGroup]="form" *ngIf="form">
-					<div formArrayName="feedbacks">
-						<div
-							*ngFor="
-								let feedback of form.controls.feedbacks
-									?.controls;
-								let i = index
-							"
-						>
-							<div [formGroupName]="i">
-								<div class="col-12 add-card-wrap ">
-									<div class="label-wrap">
-										<label
-											for="description"
-											class="label"
-											>{{
-												'FORM.LABELS.FEEDBACK_DESCRIPTION'
-													| translate
-											}}</label
-										>
-										<ga-star-rating-input
-											formControlName="rating"
-										></ga-star-rating-input>
-									</div>
+		<div *ngIf="showAddCard" class="add-card">
+			<nb-radio-group
+				class="radio-group"
+				[(ngModel)]="status"
+				*ngIf="status"
+			>
+				<!--	[ngModelOptions]="{ standalone: true }" -->
+				<nb-radio [value]="'HIRED'">
+					{{
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
+							| translate
+					}}
+					<i class="fas fa-thumbs-up success"></i>
+				</nb-radio>
+				<nb-radio [value]="'REJECTED'"
+					>{{
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
+							| translate
+					}}
+					<i class="fas error fa-thumbs-down"></i
+				></nb-radio>
+			</nb-radio-group>
+			<div class="row m-0 feedbacks-card-wrap">
+				<div class="col-10 feedbacks-card">
+					<form class="col-12 form" [formGroup]="form" *ngIf="form">
+						<div formArrayName="feedbacks">
+							<div
+								*ngFor="
+									let feedback of form.controls.feedbacks
+										?.controls;
+									let i = index
+								"
+							>
+								<div [formGroupName]="i">
+									<div class="col-12 add-card-wrap">
+										<div class="label-wrap">
+											<label
+												for="description"
+												class="label"
+												>{{
+													'FORM.LABELS.FEEDBACK_DESCRIPTION'
+														| translate
+												}}</label
+											>
+											<ga-star-rating-input
+												formControlName="rating"
+											></ga-star-rating-input>
+										</div>
 
-									<textarea
-										id="description"
-										class="description col-6"
-										nbInput
-										formControlName="description"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.FEEDBACK_DESCRIPTION'
-												| translate
-										}}"
-									>
-									</textarea>
+										<textarea
+											id="description"
+											class="description col-6"
+											nbInput
+											formControlName="description"
+											placeholder="{{
+												'FORM.PLACEHOLDERS.FEEDBACK_DESCRIPTION'
+													| translate
+											}}"
+										>
+										</textarea>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-				</form>
-			</div>
-			<div class="col-2 buttons">
-				<button
-					class="w-100 form-btn"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
-					{{ 'BUTTONS.SAVE' | translate }}
-				</button>
-				<button
-					class="w-100 form-btn"
-					(click)="cancel()"
-					nbButton
-					status="danger"
-				>
-					{{ 'BUTTONS.CANCEL' | translate }}
-				</button>
+					</form>
+				</div>
+				<div class="col-2 buttons">
+					<button
+						class="w-100 form-btn"
+						(click)="submitForm()"
+						nbButton
+						status="success"
+					>
+						{{ 'BUTTONS.SAVE' | translate }}
+					</button>
+					<button
+						class="w-100 form-btn"
+						(click)="cancel()"
+						nbButton
+						status="danger"
+					>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+				</div>
 			</div>
 		</div>
 	</nb-card-header>
@@ -86,18 +109,39 @@
 					<ga-star-rating-output
 						[rate]="feedback.rating"
 					></ga-star-rating-output>
+					<p *ngIf="feedback.interviewTitle">
+						<strong>{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW_FEEDBACK'
+								| translate
+						}}</strong>
+						{{ feedback.interviewTitle }}
+					</p>
+					<p *ngIf="feedback?.status">
+						<strong>{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.STATUS' | translate
+						}}</strong>
+						{{ feedback.status }}
+					</p>
+					<p *ngIf="feedback?.interviewer?.employeeName">
+						<strong>{{
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWER'
+								| translate
+						}}</strong>
+						{{ feedback.interviewer.employeeName }}
+					</p>
+
 					{{ feedback.description }}
 				</div>
 
 				<nb-actions class="float-right" e="medium">
 					<nb-action
 						(click)="editFeedback(i, feedback.id)"
-						class="d-inline pr-0"
+						class="d-inline pr-2"
 						icon="edit"
 					></nb-action>
 					<nb-action
 						(click)="removeFeedback(feedback.id)"
-						class="d-inline pr-0"
+						class="d-inline pl-2"
 						icon="close"
 					></nb-action>
 				</nb-actions>

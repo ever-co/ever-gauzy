@@ -1,0 +1,34 @@
+<nb-card>
+	<nb-card-body>
+		<div class="row">
+			<div class="col">
+				<label class="label">From</label>
+				<ng-select> </ng-select>
+			</div>
+			<div class="col">
+				<label class="label">To</label>
+				<ng-select> </ng-select>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<label class="label">Template/Language</label>
+				<ng-select
+					[(ngModel)]="selectedTemplateId"
+					[searchable]="true"
+					[items]="emailTemplates"
+					placeholder="Email Templates"
+					bindLabel="name"
+					bindValue="id"
+				>
+				</ng-select>
+			</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer>
+		<button nbButton status="">Cancel</button>
+		<button (click)="submitFilters()" nbButton status="success">
+			Apply
+		</button>
+	</nb-card-footer>
+</nb-card>

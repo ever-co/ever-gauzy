@@ -16,13 +16,13 @@ import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import {
 	EmployeeRecurringExpenseService,
-	EmployeeRecurringExpense
+	EmployeeRecurringExpense,
 } from '../employee-recurring-expense';
 import { EmployeeSettingService, EmployeeSetting } from '../employee-setting';
 import { Equipment, EquipmentService } from '../equipment';
 import {
 	EquipmentSharingService,
-	EquipmentSharing
+	EquipmentSharing,
 } from '../equipment-sharing';
 import { Expense } from '../expense/expense.entity';
 import { ExpenseService } from '../expense/expense.service';
@@ -75,11 +75,17 @@ import { TimeSlot } from '../timesheet/time-slot.entity';
 import { Activity } from '../timesheet/activity.entity';
 import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
-import { TimeSheetService } from '../timesheet/timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
 import { ActivityService } from '../timesheet/activity.service';
 import { ScreenShotService } from '../timesheet/screenshot.service';
 import { TimeSlotService } from '../timesheet/time-slot.service';
 import { TimeLogService } from '../timesheet/time-log/time-log.service';
+import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
+import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
+import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
+import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
+import { CandidateService } from '../candidate/candidate.service';
+import { Candidate } from '../candidate/candidate.entity';
 
 @Module({
 	imports: [
@@ -122,8 +128,11 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 			TimeSlot,
 			Activity,
 			Screenshot,
-			TimeLog
-		])
+			TimeLog,
+			AppointmentEmployees,
+			ApprovalPolicy,
+			Candidate,
+		]),
 	],
 	controllers: [ExportAllController],
 	providers: [
@@ -165,7 +174,10 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 		ActivityService,
 		ScreenShotService,
 		TimeLogService,
-		TimeSlotService
+		TimeSlotService,
+		AppointmentEmployeesService,
+		ApprovalPolicyService,
+		CandidateService,
 	],
 	exports: [
 		ExportAllService,
@@ -206,7 +218,10 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 		ActivityService,
 		ScreenShotService,
 		TimeLogService,
-		TimeSlotService
-	]
+		TimeSlotService,
+		AppointmentEmployeesService,
+		ApprovalPolicyService,
+		CandidateService,
+	],
 })
 export class ExportAllModule {}

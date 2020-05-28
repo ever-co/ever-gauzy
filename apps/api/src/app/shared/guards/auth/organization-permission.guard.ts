@@ -6,6 +6,7 @@ import { RequestContext } from '../../../core/context';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Employee } from '../../../employee/employee.entity';
 import { Repository } from 'typeorm';
+import { RolesEnum } from '@gauzy/models';
 
 @Injectable()
 export class OrganizationPermissionGuard implements CanActivate {
@@ -29,11 +30,15 @@ export class OrganizationPermissionGuard implements CanActivate {
 		} else {
 			const token = RequestContext.currentToken();
 
-			const { id, employeeId } = verify(token, env.JWT_SECRET) as {
+			const { id, employeeId, role } = verify(token, env.JWT_SECRET) as {
 				id: string;
 				role: string;
 				employeeId: string;
 			};
+
+			if (role === RolesEnum.ADMIN || role === RolesEnum.SUPER_ADMIN) {
+				return true;
+			}
 
 			const employee = await this.employeeRepository.findOne(employeeId, {
 				relations: ['organization']

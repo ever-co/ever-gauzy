@@ -5,8 +5,10 @@ import {
 	IGetTimeLogInput,
 	IManualTimeInput,
 	TimesheetStatus,
-	Timesheet
+	Timesheet,
+	IGetTimesheetInput
 } from '@gauzy/models';
+import { toParams } from 'libs/utils';
 
 @Injectable({
 	providedIn: 'root'
@@ -37,7 +39,7 @@ export class TimesheetService {
 			});
 	}
 
-	getTimeSheets(request?: IGetTimeLogInput) {
+	getTimeSheets(request?: IGetTimesheetInput) {
 		return this.http
 			.get('/api/timesheet', { params: { ...request } })
 			.toPromise()
@@ -65,8 +67,9 @@ export class TimesheetService {
 	}
 
 	getTimeLogs(request?: IGetTimeLogInput) {
+		const params = toParams(request);
 		return this.http
-			.get('/api/timesheet/time-log', { params: { ...request } })
+			.get('/api/timesheet/time-log', { params })
 			.toPromise()
 			.then((data: TimeLog[]) => {
 				return data;

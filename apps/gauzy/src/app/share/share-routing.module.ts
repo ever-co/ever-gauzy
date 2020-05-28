@@ -29,6 +29,13 @@ const routes: Routes = [
 					).then((m) => m.PublicAppointmentsModule),
 			},
 			{
+				path: 'employee/:employeeid/create-appointment',
+				loadChildren: () =>
+					import(
+						'./public-appointments/appointment-form/appointment-form.module'
+					).then((m) => m.AppointmentFormModule),
+			},
+			{
 				path: 'employee/:id/:eventId',
 				loadChildren: () =>
 					import(

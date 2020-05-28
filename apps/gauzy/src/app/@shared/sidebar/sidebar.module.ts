@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { SidebarComponent } from './sidebar.component';
 import { TreeModule } from 'angular-tree-component';
 import { CKEditorModule } from 'ng2-ckeditor';
+import { HelpCenterService } from '../../@core/services/help-center.service';
 
 @NgModule({
 	imports: [
@@ -39,6 +40,7 @@ import { CKEditorModule } from 'ng2-ckeditor';
 			},
 		}),
 	],
+	providers: [HelpCenterService],
 	declarations: [SidebarComponent],
 	exports: [SidebarComponent],
 })
