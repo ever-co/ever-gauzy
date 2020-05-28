@@ -12,12 +12,12 @@
 	{
 		"name": "Transport",
 		"description": "The movement of people or goods from one place to another",
-		"fakerImageCategory": "assets/images/products/transport.png"
+		"fakerImageCategory": "transport"
 	},
 	{
 		"name": "Education",
 		"description": "Aquisition of knowledge, skills, values, beliefs, and habits",
-		"fakerImageCategory": "transport"
+		"fakerImageCategory": "people"
 	},
 	{
 		"name": "Clothing",
