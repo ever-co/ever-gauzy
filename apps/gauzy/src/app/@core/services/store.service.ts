@@ -10,7 +10,7 @@ import { SelectedEmployee } from '../../@theme/components/header/selectors/emplo
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 import { Injectable } from '@angular/core';
 import {
-	resetStores,
+	//resetStores,
 	StoreConfig,
 	Store as AkitaStore,
 	Query
