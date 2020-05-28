@@ -24,6 +24,7 @@ import {
 	NbDatepickerModule,
 	NbActionsModule,
 	NbTabsetModule,
+	NbRadioModule,
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -121,6 +122,7 @@ const COMPONENTS = [
 		NbCheckboxModule,
 		FileUploaderModule,
 		NbTabsetModule,
+		NbRadioModule,
 		NbActionsModule,
 		TranslateModule.forChild({
 			loader: {

@@ -4,7 +4,11 @@
 	fullWidth
 	placeholder="{{ placeholder }} "
 >
-	<nb-option *ngFor="let candidate of allCandidates" [value]="candidate.id">
+	<nb-option
+		*ngFor="let candidate of allCandidates"
+		[value]="candidate.id"
+		[disabled]="disabledIds.includes(candidate.id) ? true : false"
+	>
 		<img
 			src="{{ candidate.user.imageUrl }}"
 			alt="Smiley face"

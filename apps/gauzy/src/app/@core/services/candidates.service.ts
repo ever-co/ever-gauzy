@@ -84,4 +84,12 @@ export class CandidatesService {
 			.pipe(first())
 			.toPromise();
 	}
+	setCandidateAsApplied(id: string): Promise<Candidate> {
+		return this.http
+			.put<Candidate>(`/api/candidate/${id}`, {
+				status: CandidateStatus.APPLIED,
+			})
+			.pipe(first())
+			.toPromise();
+	}
 }
