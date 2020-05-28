@@ -4,15 +4,15 @@ import {
 	Translatable as ITranslatable,
 } from '@gauzy/models';
 
-export abstract class TranslationBase<T> extends Base
-	implements ITranslation<T> {
-	reference?: ITranslatable<T>;
+export abstract class TranslationBase extends Base
+	implements ITranslation<TranslatableBase> {
+	reference: ITranslatable<TranslatableBase>;
 	languageCode: string;
 }
 
-export abstract class TranslatableBase<T> extends Base
-	implements ITranslatable<T> {
-	translations: ITranslation<T>[];
+export abstract class TranslatableBase extends Base
+	implements ITranslatable<TranslationBase> {
+	translations: ITranslation<TranslationBase>[];
 
 	translate(langCode: string): any {
 		if (!this.translations) return this;

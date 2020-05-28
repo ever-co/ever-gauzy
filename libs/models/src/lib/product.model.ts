@@ -15,7 +15,7 @@ export interface Product extends IBaseEntityModel {
 	options?: ProductOption[];
 	productTypeId: string;
 	productCategoryId: string;
-	type?: ProductType;
+	type?: ProductTypeTranslatable;
 	category?: ProductCategory;
 	tags?: Tag[];
 }
@@ -24,23 +24,23 @@ export interface ProductFindInput {
 	organizationId?: string;
 }
 
-export interface ProductType extends ITranslatable<ProductType> {
+export interface ProductTypeTranslatable
+	extends ITranslatable<ProductTypeTranslation> {
+	icon: string;
 	organizationId?: string;
-	icon: string;
-	organization: Organization;
-	translations: ProductTypeTranslation[];
+	organization?: Organization;
 }
 
-export interface ProductTypeTranslated extends ITranslatable<ProductType> {
-	icon: string;
+export interface ProductTypeTranslation
+	extends ITranslation<ProductTypeTranslatable> {
 	name: string;
 	description: string;
 }
 
-export interface ProductTypeTranslation extends ITranslation<ProductType> {
+export interface ProductTypeTranslated extends IBaseEntityModel {
+	icon: string;
 	name: string;
 	description: string;
-	reference?: ProductType;
 }
 
 export interface ProductCategory extends IBaseEntityModel {

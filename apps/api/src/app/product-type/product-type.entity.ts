@@ -11,11 +11,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum } from 'class-validator';
 import { Product } from '../product/product.entity';
 import { Organization } from '../organization/organization.entity';
-import { ProductTypeTranslation } from './product-type-translation.entity';
 import { TranslatableBase } from '../core/entities/translate-base';
+import { ProductTypeTranslation } from './product-type-translation.entity';
 
 @Entity('product_type')
-export class ProductType extends TranslatableBase<ProductType> {
+export class ProductType extends TranslatableBase {
 	@OneToMany((type) => Product, (product) => product.type)
 	products: Product[];
 

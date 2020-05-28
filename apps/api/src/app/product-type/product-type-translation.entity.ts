@@ -1,15 +1,15 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import {
 	ProductTypeTranslation as IProductTypeTranslation,
-	LanguageCodesEnum,
+	LanguagesEnum,
 } from '@gauzy/models';
-import { ProductType } from './product-type.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum } from 'class-validator';
 import { TranslationBase } from '../core/entities/translate-base';
+import { ProductType } from './product-type.entity';
 
 @Entity('product_type_translation')
-export class ProductTypeTranslation extends TranslationBase<ProductType>
+export class ProductTypeTranslation extends TranslationBase
 	implements IProductTypeTranslation {
 	@ApiProperty({ type: String })
 	@IsString()
@@ -30,8 +30,8 @@ export class ProductTypeTranslation extends TranslationBase<ProductType>
 	@JoinColumn()
 	reference: ProductType;
 
-	@ApiProperty({ type: String, enum: LanguageCodesEnum })
-	@IsEnum(LanguageCodesEnum)
+	@ApiProperty({ type: String, enum: LanguagesEnum })
+	@IsEnum(LanguagesEnum)
 	@Column({ nullable: false })
 	languageCode: string;
 }

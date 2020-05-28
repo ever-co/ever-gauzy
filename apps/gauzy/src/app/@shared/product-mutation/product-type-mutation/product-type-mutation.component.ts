@@ -2,10 +2,10 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
-	ProductType,
 	ProductTypesIconsEnum,
 	LanguagesEnum,
 	ProductTypeTranslation,
+	ProductTypeTranslatable,
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -22,7 +22,7 @@ import { takeUntil } from 'rxjs/operators';
 export class ProductTypeMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	form: FormGroup;
-	@Input() productType: ProductType;
+	@Input() productType: ProductTypeTranslatable;
 	icons = Object.values(ProductTypesIconsEnum);
 
 	selectedIcon: string = ProductTypesIconsEnum.STAR;
@@ -34,7 +34,7 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 	activeTranslation: ProductTypeTranslation;
 
 	constructor(
-		public dialogRef: NbDialogRef<ProductType>,
+		public dialogRef: NbDialogRef<ProductTypeTranslatable>,
 		readonly translationService: TranslateService,
 		private fb: FormBuilder,
 		private productTypeService: ProductTypeService,
@@ -72,7 +72,7 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 			translations: this.translations,
 		};
 
-		let productType: ProductType;
+		let productType: ProductTypeTranslatable;
 
 		try {
 			if (!this.productType) {
@@ -92,7 +92,7 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 		this.closeDialog(productType);
 	}
 
-	async closeDialog(productType?: ProductType) {
+	async closeDialog(productType?: ProductTypeTranslatable) {
 		this.dialogRef.close(productType);
 	}
 

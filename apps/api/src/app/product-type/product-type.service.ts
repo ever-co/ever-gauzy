@@ -3,7 +3,6 @@ import { CrudService, IPagination } from '../core';
 import { ProductType } from './product-type.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductTypeTranslated } from '@gauzy/models';
 
 @Injectable()
 export class ProductTypeService extends CrudService<ProductType> {
@@ -30,7 +29,7 @@ export class ProductTypeService extends CrudService<ProductType> {
 		relations?: string[],
 		findInput?: any,
 		langCode?: string
-	): Promise<IPagination<ProductTypeTranslated>> {
+	): Promise<IPagination<ProductType>> {
 		const allProductTypes = await this.productTypeRepository.find({
 			where: findInput,
 			relations,

@@ -1,5 +1,9 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import { ProductType, Organization } from '@gauzy/models';
+import {
+	ProductTypeTranslatable,
+	Organization,
+	ProductTypeTranslated,
+} from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -14,7 +18,7 @@ import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 
 export interface SelectedProductType {
-	data: ProductType;
+	data: ProductTypeTranslated;
 	isSelected: boolean;
 }
 
@@ -27,7 +31,7 @@ export class ProductTypesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
-	selectedItem: ProductType;
+	selectedItem: ProductTypeTranslated;
 	selectedOrganization: Organization;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
