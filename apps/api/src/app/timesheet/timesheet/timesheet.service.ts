@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In } from 'typeorm';
-import { CrudService } from '../core/crud/crud.service';
-import { Timesheet } from './timesheet.entity';
+import { CrudService } from '../../core/crud/crud.service';
+import { Timesheet } from '../timesheet.entity';
 import * as moment from 'moment';
 import {
 	RolesEnum,
@@ -11,7 +11,7 @@ import {
 	ISubmitTimesheetInput,
 	TimesheetStatus
 } from '@gauzy/models';
-import { RequestContext } from '../core/context';
+import { RequestContext } from '../../core/context';
 
 @Injectable()
 export class TimeSheetService extends CrudService<Timesheet> {

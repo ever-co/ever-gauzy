@@ -3,7 +3,7 @@ import { Candidate } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-candidate-multi-select',
-	templateUrl: './candidate-multi-select.component.html'
+	templateUrl: './candidate-multi-select.component.html',
 })
 export class CandidateMultiSelectComponent {
 	@Input() selectedCandidateIds: string[];

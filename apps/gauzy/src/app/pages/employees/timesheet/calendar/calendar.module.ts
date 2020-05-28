@@ -9,6 +9,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { NbDialogModule, NbCardModule, NbButtonModule } from '@nebular/theme';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
+import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 
 @NgModule({
 	declarations: [CalendarComponent],
@@ -22,7 +24,9 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 		NbDialogModule,
 		SharedModule,
 		NbCardModule,
-		NbButtonModule
+		NbButtonModule,
+		EditTimeLogModalModule,
+		FiltersModule
 	]
 })
 export class CalendarModule {}

@@ -43,12 +43,12 @@
 		"FIND_TIME": "Время поиска",
 		"DOWNLOAD": "Скачать",
 		"ADD_KNOWLEDGE_BASE": "Добавить базу знаний",
-		"ADD_ICON": "добавить значок",
-		"REMOVE_ICON": "удалить значок",
+		"CHOOSE_ICON": "Выберите иконку",
 		"MAKE_PRIVATE": "сделать приватным",
 		"MAKE_PUBLIC": "сделать публичным",
 		"KNOWLEDGE_BASES": "Базы знаний",
-		"SELECT": "Выбрать"
+		"SELECT": "Выбрать",
+		"EMAIL": "Эл. адрес"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -255,6 +255,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добавление или удаление сотрудников",
 			"ADD_REMOVE_CANDIDATE": "Добавить Кандидата",
+			"ADD_REMOVE_EMPLOYEE": "Добавить интервьюера",
 			"ADD_REMOVE_CANDIDATES": "Добавить или удалить Кандидатов",
 			"ADD_REMOVE_USERS": "Добавление и удаление пользователей",
 			"ADD_REMOVE_ORGANIZATIONS": "Добавить или удалить организации",
@@ -408,6 +409,7 @@
 		"UPWORK": "Обновления",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Время выключено",
+		"APPROVALS": "Утверждения",
 		"HELP": "Помогите",
 		"ABOUT": "О нас",
 		"ADMIN": "Администратор",
@@ -417,6 +419,7 @@
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Генеральная",
+		"EMAIL_HISTORY": "История писем",
 		"USERS": "Пользователи",
 		"ROLES": "Роли и Разрешения",
 		"DANGER_ZONE": "Опасная зона",
@@ -673,10 +676,13 @@
 			"DOCUMENT_NAME": "Название документа",
 			"DOCUMENT": "Документ",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
+			"INTERVIEW_FEEDBACK": "Интервью: ",
 			"LEAVE_FEEDBACK": "Оставить отзыв о ",
+			"STATUS": "Выбранный статус: ",
 			"INTERVIEW": {
 				"INTERVIEW": "Интервью",
 				"INTERVIEWS": "Интервью",
+				"INTERVIEWER": "Интервьюс: ",
 				"ADD_INTERVIEW": "Добавить интервью",
 				"ON": "вкл",
 				"TO": "Кому",
@@ -875,6 +881,15 @@
 				"JOB_POST_URL": "URL записи задания"
 			}
 		}
+	},
+	"APPROVAL_REQUEST_PAGE": {
+		"APPROVAL_REQUEST_NAME": "Имя",
+		"APPROVAL_REQUEST_TYPE": "Тип",
+		"APPROVAL_REQUEST_MIN_COUNT": "Минимальное количество",
+		"APPROVAL_REQUEST_APPROVAL_POLICY": "Политика одобрения",
+		"APPROVAL_REQUEST_STATUS": "Статус",
+		"HEADER": "Запрос на утверждение",
+		"APPROVAL_POLICY": "Политика одобрения"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Время выключено",
@@ -1168,12 +1183,20 @@
 			"TASK_VALUE": "Задание не может быть пустым"
 		},
 		"SEND": {
-			"CONFIRMATION": "Вы уверены, что хотите отправить этот счет на",
+			"CONFIRMATION": "Отправить этот счет",
 			"ALREADY_SENT": "Этот счет уже был отправлен на"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
 			"TO": "К"
+		},
+		"DOWNLOAD": {
+			"CONFIRMATION": "Скачать этот счет-фактуру ?",
+			"INVOICE_DOWNLOAD": "Счет загружен"
+		},
+		"EMAIL": {
+			"EMAIL_INVOICE": "Отправить этот счет по электронной почте?",
+			"EMAIL_SENT": "Отправлено E-mail"
 		}
 	},
 	"HEADER": {
@@ -1189,9 +1212,7 @@
 	"HELP_PAGE": {
 		"HELP": "Помогите",
 		"KNOWLEDGE_BASES": "Базы знаний",
-		"CHOSE_ICON": "Выберите значок для установки",
-		"EDIT_DESCRIPTION": "редактировать описание",
-		"EDIT_NAME": "изменить имя"
+		"CHOSE_ICON": "Выберите значок для установки"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "О нас"
@@ -1414,7 +1435,8 @@
 		"ENTER_POSITIVE_NUMBER": "Пожалуйста, введите положительное число!"
 	},
 	"APPOINTMENTS_PAGE": {
-		"ADD_APPOINTMENT": "Добавить Назначение"
+		"ADD_APPOINTMENT": "Добавить Назначение",
+		"DURATION_ERROR": "Выбранная длительность недопустима"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Типы событий",
@@ -1431,6 +1453,8 @@
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENTS": "Заказать прием",
 		"SELECT_EVENT_TYPES": "Пожалуйста, выберите тип события",
-		"PICK_DATETIME": "Выберите дату и время"
+		"PICK_DATETIME": "Выберите дату и время",
+		"DURATION": "Продолжительность:",
+		"EVENT_TYPE": "Тип события:"
 	}
 }

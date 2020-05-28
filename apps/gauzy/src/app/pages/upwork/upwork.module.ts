@@ -9,7 +9,7 @@ import {
 	NbIconModule,
 	NbTooltipModule,
 	NbTabsetModule,
-	NbRouteTabsetModule
+	NbRouteTabsetModule,
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -29,7 +29,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		UpworkComponent,
 		UpworkAuthorizeComponent,
 		TransactionsComponent,
-		ContractsComponent
+		ContractsComponent,
 	],
 	imports: [
 		CommonModule,
@@ -49,9 +49,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
-	]
+				deps: [HttpClient],
+			},
+		}),
+	],
 })
 export class UpworkModule {}

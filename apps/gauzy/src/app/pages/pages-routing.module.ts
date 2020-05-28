@@ -212,6 +212,13 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'approvals',
+						loadChildren: () =>
+							import('./approvals/approvals.module').then(
+								(m) => m.ApprovalsModule
+							)
+					},
+					{
 						path: 'candidates',
 						loadChildren: () =>
 							import('./candidates/candidates.module').then(

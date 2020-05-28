@@ -8,7 +8,7 @@ import { first, takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { FormGroup } from '@angular/forms';
-import { Candidate, Employee } from '@gauzy/models';
+import { Candidate, Employee, ICandidateInterview } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
@@ -21,10 +21,11 @@ import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/
 export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	interviewList: any[];
+	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: Candidate;
 	employees: Employee[];
+	interviewersNumber: number;
 	form: FormGroup;
 	interviewResult: any;
 	constructor(
@@ -142,7 +143,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 						employees.push(res);
 					}
 				}
-				item.interviewers.push(employees);
+				item.employees = employees;
 			}
 		}
 	}

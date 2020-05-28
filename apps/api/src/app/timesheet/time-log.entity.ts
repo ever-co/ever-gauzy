@@ -7,7 +7,11 @@ import {
 	AfterLoad
 } from 'typeorm';
 import { Base } from '../core/entities/base';
-import { TimeLog as ITimeLog, TimeLogType } from '@gauzy/models';
+import {
+	TimeLog as ITimeLog,
+	TimeLogType,
+	TimeLogSourceEnum
+} from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsDateString, IsEnum } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
@@ -84,6 +88,12 @@ export class TimeLog extends Base implements ITimeLog {
 	@IsString()
 	@Column({ default: TimeLogType.TRACKED })
 	logType: string;
+
+	@ApiProperty({ type: String, enum: TimeLogSourceEnum })
+	@IsEnum(TimeLogSourceEnum)
+	@IsString()
+	@Column({ default: TimeLogSourceEnum.BROWSER })
+	source: string;
 
 	@ApiProperty({ type: String })
 	@IsBoolean()

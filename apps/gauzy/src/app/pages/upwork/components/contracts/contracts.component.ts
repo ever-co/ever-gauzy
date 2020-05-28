@@ -12,7 +12,7 @@ import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-ha
 @Component({
 	selector: 'ngx-contracts',
 	templateUrl: './contracts.component.html',
-	styleUrls: ['./contracts.component.scss']
+	styleUrls: ['./contracts.component.scss'],
 })
 export class ContractsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -57,7 +57,7 @@ export class ContractsComponent extends TranslationBaseComponent
 				add: false,
 				edit: false,
 				delete: false,
-				select: true
+				select: true,
 			},
 			mode: 'external',
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
@@ -66,23 +66,23 @@ export class ContractsComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.START_DATE'),
 					type: 'custom',
 					renderComponent: DateViewComponent,
-					filter: false
+					filter: false,
 				},
 				engagement_end_date: {
 					title: this.getTranslation('SM_TABLE.END_DATE'),
 					type: 'custom',
 					renderComponent: DateViewComponent,
-					filter: false
+					filter: false,
 				},
 				job__title: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
-					type: 'string'
+					type: 'string',
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'string'
-				}
-			}
+					type: 'string',
+				},
+			},
 		};
 	}
 
