@@ -2,9 +2,6 @@ import {
 	EmployeeCreateInput as IEmployeeCreateInput,
 	PermissionsEnum,
 	LanguagesEnum,
-	Organization,
-	User,
-	Tag,
 } from '@gauzy/models';
 import {
 	Body,
@@ -21,13 +18,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
 import { AuthGuard } from '@nestjs/passport';
-import {
-	ApiOperation,
-	ApiResponse,
-	ApiTags,
-	ApiBody,
-	ApiProperty,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IPagination, getUserDummyImage } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
 import { Permissions } from '../shared/decorators/permissions';
@@ -36,27 +27,6 @@ import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { ParseJsonPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
-
-class EmployeeCreateDTO {
-	@ApiProperty()
-	user: User;
-	@ApiProperty()
-	organization: Organization;
-	@ApiProperty()
-	password?: string;
-	@ApiProperty()
-	offerDate?: Date;
-	@ApiProperty()
-	acceptDate?: Date;
-	@ApiProperty()
-	rejectDate?: Date;
-	@ApiProperty()
-	members?: Employee[];
-	@ApiProperty()
-	tags?: Tag[];
-	@ApiProperty()
-	startedWorkOn?: any;
-}
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -173,14 +143,11 @@ export class EmployeeController extends CrudController<Employee> {
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong',
 	})
-	@ApiBody({
-		type: [EmployeeCreateDTO],
-	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Post('/create')
 	async create(
-		@Body() entity: EmployeeCreateDTO,
+		@Body() entity: IEmployeeCreateInput,
 		...options: any[]
 	): Promise<Employee> {
 		return this.commandBus.execute(new EmployeeCreateCommand(entity));
