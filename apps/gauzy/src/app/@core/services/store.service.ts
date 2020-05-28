@@ -249,6 +249,8 @@ export class Store {
 	}
 
 	clear() {
-		resetStores();
+		this.appStore.reset();
+		this.persistStore.reset();
+		//resetStores();
 	}
 }
