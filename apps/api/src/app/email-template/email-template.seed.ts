@@ -15,22 +15,27 @@ import * as path from 'path';
 export const createEmailTemplates = async (
 	connection: Connection
 ): Promise<any> => {
-	const files = [];
-	const FOLDER_PATH = path.resolve(
-		'.',
-		'apps',
-		'api',
-		'src',
-		'app',
-		'core',
-		'seeds',
-		'data',
-		'default-email-templates'
-	);
+	try {
+		const files = [];
+		const FOLDER_PATH = path.resolve(
+			'.',
+			'apps',
+			'api',
+			'src',
+			'app',
+			'core',
+			'seeds',
+			'data',
+			'default-email-templates'
+		);
 
-	findInDir(FOLDER_PATH, files);
-	console.log(files);
-	await fileToTemplate(connection, files);
+		findInDir(FOLDER_PATH, files);
+		console.log(files);
+		await fileToTemplate(connection, files);
+	} catch (error) {
+		// it's not a big issue for now if we can't create email templates
+		console.error(error);
+	}
 };
 
 function findInDir(dir, fileList = []) {

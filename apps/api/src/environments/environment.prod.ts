@@ -4,20 +4,26 @@ import { IEnvironment } from './ienvironment';
 import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	LanguagesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 const databaseConfig: TypeOrmModuleOptions = {
-	type: 'sqlite', // TODO: process process.env.DB_TYPE value (we need to create different options obj depending on it)
+	type:
+		process.env.DB_TYPE && process.env.DB_TYPE === 'postgres'
+			? 'postgres'
+			: 'sqlite',
 	// host: process.env.DB_HOST || 'localhost',
 	// port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5433,
-	database: path.join(__dirname, 'gauzy.sqlite3'),
+	database:
+		process.env.DB_NAME || path.join(__dirname, '../../data/gauzy.sqlite3'), // || 'postgres'
 	// username: process.env.DB_USER || 'postgres',
-	// password: process.env.DB_PASS || '123',
+	// password: process.env.DB_PASS || 'root', // '123'
 	keepConnectionAlive: true,
 	logging: true,
-	synchronize: true,
+	synchronize: true
+
+	// uuidExtension: 'pgcrypto',
 };
 
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
@@ -31,7 +37,7 @@ export const environment: IEnvironment = {
 	envName: 'prod',
 
 	env: {
-		LOG_LEVEL: 'debug',
+		LOG_LEVEL: 'debug'
 	},
 
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
@@ -45,12 +51,12 @@ export const environment: IEnvironment = {
 		clientId: process.env.FacebookClientId || 'fakeclientid',
 		clientSecret: process.env.FacebookClientSecret || 'fakesecret',
 		oauthRedirectUri: `${process.env.host}:${process.env.port}/api/auth/facebook/callback`,
-		state: '{fbstate}',
+		state: '{fbstate}'
 	},
 
 	googleConfig: {
 		clientId: process.env.GoogleClientId || 'fakeclientid',
-		clientSecret: process.env.GoogleClientSecret || 'fakesecret',
+		clientSecret: process.env.GoogleClientSecret || 'fakesecret'
 	},
 
 	defaultOrganizations: [
@@ -58,14 +64,14 @@ export const environment: IEnvironment = {
 			name: 'Ever Technologies LTD',
 			currency: CurrenciesEnum.BGN,
 			defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-			imageUrl: 'assets/images/logos/ever-large.jpg',
+			imageUrl: 'assets/images/logos/ever-large.jpg'
 		},
 		{
 			name: 'Ever Co. Ltd',
 			currency: CurrenciesEnum.BGN,
 			defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-			imageUrl: 'assets/images/logos/ever-large.jpg',
-		},
+			imageUrl: 'assets/images/logos/ever-large.jpg'
+		}
 	],
 
 	defaultSuperAdmins: [
@@ -73,8 +79,8 @@ export const environment: IEnvironment = {
 			email: 'admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
-		},
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
 	],
 
 	defaultAdmins: [
@@ -82,8 +88,8 @@ export const environment: IEnvironment = {
 			email: 'local.admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
-		},
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
 	],
 
 	defaultEmployees: [
@@ -93,7 +99,7 @@ export const environment: IEnvironment = {
 			firstName: 'Alish',
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'blagovest@ever.co',
@@ -101,7 +107,7 @@ export const environment: IEnvironment = {
 			firstName: 'Blagovest',
 			lastName: 'Gerov',
 			imageUrl: 'assets/images/avatars/blagovest.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'elvis@ever.co',
@@ -109,7 +115,7 @@ export const environment: IEnvironment = {
 			firstName: 'Elvis',
 			lastName: 'Arabadjiiski',
 			imageUrl: 'assets/images/avatars/elvis.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'emil@ever.co',
@@ -117,7 +123,7 @@ export const environment: IEnvironment = {
 			firstName: 'Emil',
 			lastName: 'Momchilov',
 			imageUrl: 'assets/images/avatars/emil.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'boyan@ever.co',
@@ -125,7 +131,7 @@ export const environment: IEnvironment = {
 			firstName: 'Boyan',
 			lastName: 'Stanchev',
 			imageUrl: 'assets/images/avatars/boyan.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'hristo@ever.co',
@@ -133,7 +139,7 @@ export const environment: IEnvironment = {
 			firstName: 'Hristo',
 			lastName: 'Hristov',
 			imageUrl: 'assets/images/avatars/hristo.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'alex@ever.co',
@@ -141,7 +147,7 @@ export const environment: IEnvironment = {
 			firstName: 'Aleksandar',
 			lastName: 'Tasev',
 			imageUrl: 'assets/images/avatars/alexander.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'milena@ever.co',
@@ -149,7 +155,7 @@ export const environment: IEnvironment = {
 			firstName: 'Milena',
 			lastName: 'Dimova',
 			imageUrl: 'assets/images/avatars/milena.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'rachit@ever.co',
@@ -157,7 +163,7 @@ export const environment: IEnvironment = {
 			firstName: 'Rachit',
 			lastName: 'Magon',
 			imageUrl: 'assets/images/avatars/rachit.png',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'atanas@ever.co',
@@ -165,7 +171,7 @@ export const environment: IEnvironment = {
 			firstName: 'Atanas',
 			lastName: 'Yonkov',
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'dimana@ever.co',
@@ -173,8 +179,8 @@ export const environment: IEnvironment = {
 			firstName: 'Dimana',
 			lastName: 'Tsvetkova',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
-		},
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
 	],
 	defaultCandidates: [
 		{
@@ -183,8 +189,8 @@ export const environment: IEnvironment = {
 			firstName: 'Alish',
 			lastName: 'Meklyov',
 			imageUrl: 'assets/images/avatars/alish.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
-		},
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
 	],
 	defaultTeams: [
 		{
@@ -198,30 +204,30 @@ export const environment: IEnvironment = {
 				'boyan@ever.co',
 				'hristo@ever.co',
 				'alex@ever.co',
-				'milena@ever.co',
-			],
+				'milena@ever.co'
+			]
 		},
 		{
 			name: 'Candidates',
-			defaultMembers: ['alish@ever.co'],
+			defaultMembers: ['alish@ever.co']
 		},
 		{
 			name: 'Contractors',
 			defaultMembers: [
 				'rachit@ever.co',
 				'atanas@ever.co',
-				'dimana@ever.co',
-			],
-		},
+				'dimana@ever.co'
+			]
+		}
 	],
 	sentry: {
-		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
+		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
 	},
 	randomSeedConfig: {
 		tenants: 5,
 		organizationsPerTenant: 10,
 		employeesPerOrganization: 10,
-		candidatesPerOrganization: 2,
+		candidatesPerOrganization: 2
 	},
 
 	defaultHubstaffUserPass:
@@ -230,6 +236,6 @@ export const environment: IEnvironment = {
 	upworkConfig: {
 		callbackUrl:
 			process.env.UWPROK_CALLBACK_URL ||
-			'http://localhost:4200/#/pages/integrations/upwork',
-	},
+			'http://localhost:4200/#/pages/integrations/upwork'
+	}
 };
