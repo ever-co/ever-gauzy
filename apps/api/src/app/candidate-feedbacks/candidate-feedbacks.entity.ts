@@ -1,10 +1,10 @@
-import { Column, Entity, OneToOne, JoinTable, JoinColumn } from 'typeorm';
+import { Column, Entity, OneToOne, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateFeedback,
 	CandidateStatus,
-	ICandidateInterviewers,
+	ICandidateInterviewers
 } from '@gauzy/models';
 import { IsEnum, IsOptional } from 'class-validator';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
