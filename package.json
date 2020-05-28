@@ -71,7 +71,7 @@
 		"build:desktop": "npm run prepare:desktop && ng build desktop --prod --base-href ./ && ng build desktop-api --prod",
 		"build:desktop:local": "npm run build:desktop && electron dist/apps/desktop",
 		"build:desktop:linux": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder -c.electronVersion=8.3.0 build --linux",
-		"build:desktop:windows": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder build --windows",
+		"build:desktop:windows": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder -c.electronVersion=8.3.0 build --windows",
 		"build:desktop:mac": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --mac",
 		"prepare:desktop": "npm run postinstall.electron && tsc -p apps/desktop/tsconfig.json",
 		"serve:desktop.target": "nx serve desktop",
@@ -82,7 +82,7 @@
 		"build:desktop:local:quick": "electron dist/apps/desktop --prod",
 		"build:desktop:windows:quick": "cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --windows",
 		"build:sqlite:mac": "cd node_modules/sqlite3 && HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --dist-url=https://electronjs.org/headers",
-		"build:sqlite:windows": "cd node_modules/sqlite3 && HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --target_platform=win32 --dist-url=https://electronjs.org/headers",
+		"build:sqlite:windows": "cd node_modules/sqlite3 && cross-env HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --target_platform=win32 --dist-url=https://electronjs.org/headers",
 		"debug:desktop:app:mac": "lldb ./dist/apps/desktop-packages/mac/GauzyDesktop.app && run"
 	},
 	"config": {

@@ -14,9 +14,9 @@
 	"license": "MIT",
 	"build": {
 		"appId": "com.company.gauzydesktop",
-		"productName": "GauzyDesktop",
-		"copyright": "Copyright © 2018-2019 gauzy",
-		"asar": false,
+		"productName": "Gauzy Desktop",
+		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"asar": true,
 		"npmRebuild": true,
 		"directories": {
 			"buildResources": "icons",
