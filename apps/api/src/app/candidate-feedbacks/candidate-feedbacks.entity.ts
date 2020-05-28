@@ -1,8 +1,13 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToOne, JoinTable, JoinColumn } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ICandidateFeedback, CandidateStatus } from '@gauzy/models';
+import {
+	ICandidateFeedback,
+	CandidateStatus,
+	ICandidateInterviewers,
+} from '@gauzy/models';
 import { IsEnum, IsOptional } from 'class-validator';
+import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 
 @Entity('candidate_feedbacks')
 export class CandidateFeedback extends Base implements ICandidateFeedback {
@@ -27,4 +32,9 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 	@IsOptional()
 	@Column({ nullable: true })
 	status?: string;
+
+	@ApiProperty({ type: CandidateInterviewers })
+	@OneToOne((type) => CandidateInterviewers)
+	@JoinColumn()
+	interviewer?: ICandidateInterviewers;
 }

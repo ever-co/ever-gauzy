@@ -7,8 +7,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
-import { ICandidateFeedback } from '@gauzy/models';
+import {
+	ICandidateFeedback,
+	CandidateStatus,
+	ICandidateInterviewers,
+} from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
+import { CandidatesService } from 'apps/gauzy/src/app/@core/services/candidates.service';
+import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 
 @Component({
 	selector: 'ga-edit-candidate-feedbacks',
@@ -23,12 +30,19 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	feedbackList: ICandidateFeedback[] = [];
 	candidateId: string;
 	form: FormGroup;
+	status: string;
+	feedbackInterviewId: string;
+	feedbackInterviewer: ICandidateInterviewers;
+	statusHire = 0;
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
 		private readonly toastrService: NbToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
+		private employeesService: EmployeesService,
+		private candidateInterviewersService: CandidateInterviewersService,
+		private candidatesService: CandidatesService,
 		private candidateInterviewService: CandidateInterviewService
 	) {
 		super(translateService);
@@ -58,9 +72,10 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		);
 	}
 	private async loadFeedbacks() {
-		const res = await this.candidateFeedbacksService.getAll({
-			candidateId: this.candidateId,
-		});
+		const res = await this.candidateFeedbacksService.getAll(
+			['interviewer'],
+			{ candidateId: this.candidateId }
+		);
 		if (res) {
 			this.feedbackList = res.items;
 			this.loadInterviews(this.feedbackList);
@@ -75,24 +90,26 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				);
 				if (res) {
 					item.interviewTitle = res.title;
+					const result = await this.employeesService.getEmployeeById(
+						item.interviewer.employeeId,
+						['user']
+					);
+					if (result) {
+						item.interviewer.employeeName =
+							result.user.firstName + ' ' + result.user.lastName;
+					}
 				}
 			}
 		}
-	}
-	showCard() {
-		this.showAddCard = !this.showAddCard;
-		this.form.controls.feedbacks.reset();
 	}
 
 	editFeedback(index: number, id: string) {
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.feedbacks.patchValue([this.feedbackList[index]]);
 		this.feedbackId = id;
-	}
-
-	cancel() {
-		this.showAddCard = !this.showAddCard;
-		this.form.controls.feedbacks.value.length = 0;
+		this.status = this.feedbackList[index].status;
+		this.feedbackInterviewer = this.feedbackList[index].interviewer;
+		this.feedbackInterviewId = this.feedbackList[index].interviewId;
 	}
 
 	async submitForm() {
@@ -113,10 +130,16 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	async updateFeedback(formValue: ICandidateFeedback) {
 		try {
 			await this.candidateFeedbacksService.update(this.feedbackId, {
-				...formValue,
+				description: formValue.description,
+				rating: formValue.rating,
+				interviewId: this.feedbackInterviewId,
+				interviewer: this.feedbackInterviewer,
+				candidateId: this.candidateId,
+				status: this.status,
 			});
 			this.loadFeedbacks();
 			this.toastrSuccess('UPDATED');
+			this.setStatus(this.status, this.feedbackInterviewId);
 			this.showAddCard = !this.showAddCard;
 			this.form.controls.feedbacks.reset();
 		} catch (error) {
@@ -139,6 +162,43 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		}
 	}
 
+	async getStatusHire(interviewId: string) {
+		const result = await this.candidateFeedbacksService.findByInterviewId(
+			interviewId
+		);
+		if (result) {
+			for (const feedback of result) {
+				if (feedback.interviewId === interviewId) {
+					/*if (feedback.status === CandidateStatus.REJECTED) {
+						this.isRejected = true;
+					} else {
+						this.isRejected = false;
+					}*/
+					this.statusHire =
+						feedback.status === CandidateStatus.HIRED
+							? this.statusHire + 1
+							: this.statusHire;
+				}
+			}
+		}
+	}
+	async setStatus(status: string, interviewId: string) {
+		this.getStatusHire(this.feedbackInterviewId);
+		const interviewers = await this.candidateInterviewersService.findByInterviewId(
+			interviewId
+		);
+		if (status === CandidateStatus.REJECTED) {
+			await this.candidatesService.setCandidateAsRejected(
+				this.candidateId
+			);
+		} else if (interviewers && this.statusHire === interviewers.length) {
+			await this.candidatesService.setCandidateAsHired(this.candidateId);
+		} else {
+			await this.candidatesService.setCandidateAsApplied(
+				this.candidateId
+			);
+		}
+	}
 	async removeFeedback(id: string) {
 		try {
 			await this.candidateFeedbacksService.delete(id);
@@ -169,6 +229,14 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.getTranslation('NOTES.CANDIDATE.INVALID_FORM'),
 			this.getTranslation('TOASTR.MESSAGE.CANDIDATE_FEEDBACK_REQUIRED')
 		);
+	}
+	cancel() {
+		this.showAddCard = !this.showAddCard;
+		this.form.controls.feedbacks.value.length = 0;
+	}
+	showCard() {
+		this.showAddCard = !this.showAddCard;
+		this.form.controls.feedbacks.reset();
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

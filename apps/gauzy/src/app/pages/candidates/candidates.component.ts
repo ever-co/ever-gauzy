@@ -206,9 +206,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 		}
 	}
 	async getCandidateRating(id: string) {
-		const res = await this.candidateFeedbacksService.getAll({
-			candidateId: id,
-		});
+		const res = await this.candidateFeedbacksService.getAll(
+			['interviewer'],
+			{
+				candidateId: id,
+			}
+		);
 		if (res) {
 			this.candidateRating = 0;
 			for (let i = 0; i < res.total; i++) {

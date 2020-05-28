@@ -38,6 +38,7 @@ export class CandidateInterviewFeedbackComponent
 	isRejected: boolean;
 	selectedEmployeeId: string;
 	employeesForSelect: any[] = [];
+	disabledIds: string[] = [];
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: FormBuilder,
@@ -57,12 +58,14 @@ export class CandidateInterviewFeedbackComponent
 		this._initializeForm();
 		this.loadFeedbacks();
 	}
+
 	private async _initializeForm() {
 		this.form = this.fb.group({
 			description: ['', Validators.required],
 			rating: ['', Validators.required],
 		});
 	}
+
 	async loadData() {
 		const res = await this.candidateInterviewService.findById(
 			this.interviewId
@@ -86,38 +89,46 @@ export class CandidateInterviewFeedbackComponent
 			}
 		}
 	}
+
 	async loadFeedbacks() {
-		const res = await this.candidateFeedbacksService.findByInterviewId(
-			this.interviewId
+		const result = await this.candidateFeedbacksService.getAll(
+			['interviewer'],
+			{ candidateId: this.candidateId }
 		);
-		if (res) {
-			this.feedbacks = res;
-			for (const item of this.feedbacks) {
-				if (item.status === CandidateStatus.REJECTED) {
-					this.isRejected = true;
-				} else {
-					this.isRejected = false;
+		if (result) {
+			for (const feedback of result.items) {
+				if (
+					feedback.interviewId === this.interviewId &&
+					feedback.interviewer
+				) {
+					this.disabledIds.push(feedback.interviewer.employeeId);
+
+					if (feedback.status === CandidateStatus.REJECTED) {
+						this.isRejected = true;
+					} else {
+						this.isRejected = false;
+					}
+					this.statusHire =
+						feedback.status === CandidateStatus.HIRED
+							? this.statusHire + 1
+							: this.statusHire;
 				}
-				this.statusHire =
-					item.status === CandidateStatus.HIRED
-						? this.statusHire + 1
-						: this.statusHire;
 			}
 		}
 	}
+
 	async onMembersSelected(id: string) {
 		this.selectedEmployeeId = id;
-
 		for (const item of this.interviewers) {
 			if (this.selectedEmployeeId === item.employeeId) {
 				this.feedbackInterviewer = item;
 			}
 		}
 	}
+
 	async createFeedback() {
 		this.description = this.form.get('description').value;
 		this.rating = this.form.get('rating').value;
-
 		if (this.form.valid) {
 			try {
 				await this.candidateFeedbacksService.create({
@@ -153,15 +164,21 @@ export class CandidateInterviewFeedbackComponent
 			);
 		}
 	}
+
 	async setStatus(status: string) {
-		if (status === CandidateStatus.HIRED) {
-			await this.candidatesService.setCandidateAsHired(this.candidateId);
-		} else if (status === CandidateStatus.REJECTED) {
+		if (status === CandidateStatus.REJECTED) {
 			await this.candidatesService.setCandidateAsRejected(
+				this.candidateId
+			);
+		} else if (this.statusHire + 1 === this.employeesForSelect.length) {
+			await this.candidatesService.setCandidateAsHired(this.candidateId);
+		} else {
+			await this.candidatesService.setCandidateAsApplied(
 				this.candidateId
 			);
 		}
 	}
+
 	closeDialog() {
 		this.dialogRef.close();
 	}

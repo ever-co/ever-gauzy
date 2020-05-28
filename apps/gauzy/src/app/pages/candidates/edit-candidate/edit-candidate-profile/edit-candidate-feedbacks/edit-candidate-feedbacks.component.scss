@@ -49,3 +49,40 @@
   justify-content: space-between;
   align-items: center;
 }
+
+.add-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  border: none;
+}
+
+.feedbacks-card-wrap {
+  width: 100%;
+}
+
+.form-group {
+  width: 100%;
+}
+
+.radio-group {
+  flex-direction: row;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-left: 1rem;
+}
+
+.fas {
+  padding-left: 3px;
+  font-size: 15px;
+}
+
+.success {
+  color: #00d68f;
+}
+
+.error {
+  color: #ff3d71;
+}

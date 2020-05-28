@@ -19,6 +19,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum, ICandidateFeedbackCreateInput } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('candidate_feedbacks')
 @UseGuards(AuthGuard('jwt'))
@@ -45,10 +46,13 @@ export class CandidateFeedbacksController extends CrudController<
 	})
 	@Get()
 	async findFeedback(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateFeedback>> {
-		const { findInput } = JSON.parse(data);
-		return this.candidateFeedbacksService.findAll({ where: findInput });
+		const { relations = [], findInput = null } = data;
+		return this.candidateFeedbacksService.findAll({
+			where: findInput,
+			relations,
+		});
 	}
 
 	@ApiOperation({
