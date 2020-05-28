@@ -4,6 +4,7 @@
 	"useTabs": true,
 	"tabWidth": 4,
 	"arrowParens": "always",
+	"trailingComma": "none",
 	"overrides": [
 		{
 			"files": "*.scss",

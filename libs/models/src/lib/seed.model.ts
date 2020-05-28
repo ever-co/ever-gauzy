@@ -40,9 +40,3 @@ export interface IDefaultProductType {
 	description: string;
 	icon: string;
 }
-
-export interface IDefaultProductCategory {
-	name: string;
-	description: string;
-	imageUrl: string;
-}
