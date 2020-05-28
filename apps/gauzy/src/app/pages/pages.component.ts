@@ -119,6 +119,28 @@ export class PagesComponent implements OnInit, OnDestroy {
 				permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
 			},
 			children: [
+        {
+          title: 'Leads',
+          icon: 'book-open-outline',
+          link: '/pages/sales/leads',
+          hidden: false,
+          data: {
+            translated: false,
+            translationKey: 'MENU.LEADS',
+            permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW], // FIXME: Set permissions
+          }
+        },
+        {
+          title: 'Pipelines',
+          icon: 'funnel-outline',
+          link: '/pages/sales/pipelines',
+          hidden: false,
+          data: {
+            translated: false,
+            translationKey: 'MENU.PIPELINES',
+            permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW], // FIXME: Set permissions
+          }
+        },
 				{
 					title: 'Proposals',
 					icon: 'paper-plane-outline',
@@ -542,6 +564,39 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translationKey: 'MENU.GENERAL'
 					}
 				},
+        {
+          icon: 'grid-outline',
+          title: 'Configurations',
+          link: '/pages/settings/configurations',
+          data: {
+            translated: false,
+            translationKey: 'MENU.CONFIGURATIONS',
+          },
+          children: [
+            {
+              title: 'Attribute Validators',
+              icon: 'checkmark-circle-outline',
+              link: '/pages/settings/configurations/attribute-validators',
+              hidden: false,
+              data: {
+                translated: false,
+                translationKey: 'MENU.ATTRIBUTE_VALIDATORS',
+                permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW], // FIXME: Set permissions
+              }
+            },
+            {
+              icon: 'menu-2-outline',
+              title: 'Attribute Definitions',
+              link: '/pages/settings/configurations/attribute-definitions',
+              hidden: false,
+              data: {
+                translated: false,
+                translationKey: 'MENU.ATTRIBUTE_DEFINITIONS',
+                permissionKeys: [ PermissionsEnum.ORG_PROPOSALS_VIEW ], // FIXME: Set permissions
+              }
+            }
+          ],
+        },
 				{
 					title: 'Import/Export',
 					icon: 'flip-outline',
@@ -598,15 +653,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 						]
 					}
 				},
-				{
-					title: 'Danger Zone',
-					link: '/pages/settings/danger-zone',
-					icon: 'alert-triangle-outline',
-					data: {
-						translated: false,
-						translationKey: 'MENU.DANGER_ZONE'
-					}
-				}
+        {
+          title: 'Danger Zone',
+          link: '/pages/settings/danger-zone',
+          icon: 'alert-triangle-outline',
+          data: {
+            translated: false,
+            translationKey: 'MENU.DANGER_ZONE'
+          }
+        }
 			]
 		}
 	];
