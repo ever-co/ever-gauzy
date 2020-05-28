@@ -12,12 +12,17 @@ import {
 	HttpCode,
 	Post,
 	Body,
-	Put
+	Put,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiOperation,
+	ApiResponse,
+	ApiTags,
+	ApiBearerAuth,
+} from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { UUIDValidationPipe } from '../shared';
+import { UUIDValidationPipe, ParseJsonPipe } from '../shared';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
@@ -30,6 +35,7 @@ import { UserCreateInput as IUserCreateInput } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('User')
+@ApiBearerAuth()
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class UserController extends CrudController<User> {
@@ -44,18 +50,18 @@ export class UserController extends CrudController<User> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found current user',
-		type: User
+		type: User,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get('/me')
 	async findCurrentUser(@Query('data') data: string): Promise<User> {
 		const { relations } = JSON.parse(data);
 		const currentUserId = RequestContext.currentUser().id;
 		return this.userService.findOne(currentUserId, {
-			relations
+			relations,
 		});
 	}
 
@@ -63,11 +69,11 @@ export class UserController extends CrudController<User> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found user by email address',
-		type: User
+		type: User,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get('/email/:email')
 	async findByEmail(@Param('email') email: string): Promise<User> {
@@ -78,18 +84,18 @@ export class UserController extends CrudController<User> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found one record',
-		type: User
+		type: User,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get(':id')
-	async findOneById(
+	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data?: any
 	): Promise<User> {
-		const { relations } = JSON.parse(data);
+		const { relations } = data;
 		return this.userService.findOne(id, { relations });
 	}
 
@@ -97,33 +103,33 @@ export class UserController extends CrudController<User> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found users',
-		type: User
+		type: User,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get()
 	async findAllUsers(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<User>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.userService.findAll({
 			where: findInput,
-			relations
+			relations,
 		});
 	}
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
+		description: 'The record has been successfully created.' /*, type: T*/,
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
@@ -147,7 +153,7 @@ export class UserController extends CrudController<User> {
 	): Promise<any> {
 		return this.userService.create({
 			id,
-			...entity
+			...entity,
 		});
 	}
 }
