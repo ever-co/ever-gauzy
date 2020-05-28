@@ -12,13 +12,10 @@ import {
 } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
+
 const databaseConfig: TypeOrmModuleOptions = {
 
-
-
-
-
-	type: process.env.DB_TYPE || 'sqlite', // 'postgres'
+	type: (process.env.DB_TYPE && process.env.DB_TYPE === "postgres") ? 'postgres' : 'sqlite',
 	// host: process.env.DB_HOST || 'localhost',
 	// port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5433,
 	database: process.env.DB_NAME || path.join(__dirname, 'gauzy.sqlite3'), // || 'postgres'
