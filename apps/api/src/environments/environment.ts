@@ -419,71 +419,7 @@ export const environment: IEnvironment = {
 				'ckhandla94@gmail.com',
 			],
 		},
-	],
-	defaultProductTypes: [
-		{
-			name: 'Physical Products',
-			description:
-				'Can be touched or tangible, solid, dust or liquid state in a container.',
-			icon: ProductTypesIconsEnum.CHECKMARK,
-		},
-		{
-			name: 'Digital Products',
-			description:
-				'Any product you sell online that doesn’t have physical form or substance',
-			icon: ProductTypesIconsEnum.FLASH,
-		},
-		{
-			name: 'Consumer Products',
-			description:
-				'Final goods, are products that are bought by individuals or households for personal use.',
-			icon: ProductTypesIconsEnum.HEART,
-		},
-		{
-			name: 'Raw materials',
-			description:
-				'Unprocessed material, or primary commodity, is a basic material that is used to produce goods',
-			icon: ProductTypesIconsEnum.SHOPPING_BAG,
-		},
-		{
-			name: 'Supplies',
-			description:
-				'Items purchased and typically used up during the year.',
-			icon: ProductTypesIconsEnum.SHOPPING_CART,
-		},
-		{
-			name: 'Experiences',
-			description: 'Knowledge or skill in a particular job or activity',
-			icon: ProductTypesIconsEnum.LAYERS,
-		},
-		{
-			name: 'Specialty Goods',
-			description: 'Have particularly unique characteristics',
-			icon: ProductTypesIconsEnum.STAR,
-		},
-		{
-			name: 'Common',
-			description: null,
-			icon: ProductTypesIconsEnum.HOME,
-		},
-		{
-			name: 'Industrial goods',
-			description: 'Bought and used for industrial and business use',
-			icon: ProductTypesIconsEnum.RADIO_BTN_OFF,
-		},
-		{
-			name: 'Amenities',
-			description:
-				'Any feature that provides comfort, convenience, or pleasure',
-			icon: ProductTypesIconsEnum.STAR,
-		},
-		{
-			name: 'Animals',
-			description:
-				'Animals consume organic material, breathe oxygen, are able to move',
-			icon: ProductTypesIconsEnum.HEART,
-		},
-	],
+	],	
 	sentry: {
 		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
 	},
