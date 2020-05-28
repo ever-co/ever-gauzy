@@ -8,15 +8,20 @@ import { first, takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { FormGroup } from '@angular/forms';
-import { Candidate, Employee, ICandidateInterview } from '@gauzy/models';
+import {
+	Candidate,
+	ICandidateInterview,
+	ICandidateInterviewers
+} from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
+import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
 	templateUrl: './edit-candidate-interview.component.html',
-	styleUrls: ['./edit-candidate-interview.component.scss'],
+	styleUrls: ['./edit-candidate-interview.component.scss']
 })
 export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -24,7 +29,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: Candidate;
-	employees: Employee[];
+	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
 	form: FormGroup;
 	interviewResult: any;
@@ -36,7 +41,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private candidateInterviewersService: CandidateInterviewersService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private candidateFeedbacksService: CandidateFeedbacksService
 	) {
 		super(translate);
 	}
@@ -60,8 +66,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					header: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
 					),
-					selectedCandidate: this.selectedCandidate,
-				},
+					selectedCandidate: this.selectedCandidate
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -83,19 +89,27 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	}
 
 	async addInterviewFeedback(id: string) {
-		const dialog = this.dialogService.open(
-			CandidateInterviewFeedbackComponent,
-			{
-				context: {
-					candidateId: this.selectedCandidate.id,
-					interviewId: id,
-				},
-			}
+		const feedbacks = await this.candidateFeedbacksService.findByInterviewId(
+			id
 		);
-		const data = await dialog.onClose.pipe(first()).toPromise();
-		if (data) {
-			this.toastrSuccess('CREATED');
-			this.loadInterview();
+		const interviewers = await this.candidateInterviewersService.findByInterviewId(
+			id
+		);
+		if (feedbacks.length !== interviewers.length) {
+			const dialog = this.dialogService.open(
+				CandidateInterviewFeedbackComponent,
+				{
+					context: {
+						candidateId: this.selectedCandidate.id,
+						interviewId: id
+					}
+				}
+			);
+			const data = await dialog.onClose.pipe(first()).toPromise();
+			if (data) {
+				this.toastrSuccess('CREATED');
+				this.loadInterview();
+			}
 		}
 	}
 
@@ -115,8 +129,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					),
 					editData: currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: id,
-				},
+					interviewId: id
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -168,7 +182,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message,
+				error: error.error ? error.error.message : error.message
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);

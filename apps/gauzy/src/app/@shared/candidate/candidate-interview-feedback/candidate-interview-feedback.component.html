@@ -13,6 +13,7 @@
 				[placeholder]="
 					'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEE' | translate
 				"
+				[disabledIds]="disabledIds"
 				(selectedChange)="onMembersSelected($event)"
 			>
 			</ga-candidate-select>
@@ -40,13 +41,6 @@
 							}"
 						></i>
 					</nb-radio>
-
-					<nb-radio [value]="'APPLIED'" [checked]="true"
-						>{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.POSTPONE'
-								| translate
-						}}<i class="fas primary fa-clock"></i
-					></nb-radio>
 
 					<nb-radio [value]="'REJECTED'"
 						>{{
