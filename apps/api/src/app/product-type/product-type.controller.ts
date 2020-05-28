@@ -10,7 +10,7 @@ import {
 	Body,
 	HttpCode,
 	Put,
-	Param,
+	Param
 } from '@nestjs/common';
 import { ProductTypeService } from './product-type.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -26,16 +26,16 @@ export class ProductTypeController extends CrudController<ProductType> {
 	}
 
 	@ApiOperation({
-		summary: 'Find all product types.',
+		summary: 'Find all product types.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found product types.',
-		type: ProductType,
+		type: ProductType
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get()
 	async findAllProductTypes(
@@ -44,7 +44,7 @@ export class ProductTypeController extends CrudController<ProductType> {
 		const {
 			relations = [],
 			findInput = null,
-			langCode = LanguagesEnum.ENGLISH,
+			langCode = LanguagesEnum.ENGLISH
 		} = data;
 		return this.productTypesService.findAllProductTypes(
 			relations,
@@ -56,16 +56,16 @@ export class ProductTypeController extends CrudController<ProductType> {
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.',
+		description: 'The record has been successfully edited.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')

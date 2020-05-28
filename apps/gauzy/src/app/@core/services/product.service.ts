@@ -17,7 +17,7 @@ export class ProductService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: Product[] }>(`${this.PRODUCTS_URL}/${languageCode}`, {
-				params: { data },
+				params: { data }
 			})
 			.pipe(first())
 			.toPromise();

@@ -8,7 +8,7 @@ import {
 	Body,
 	Put,
 	Param,
-	Delete,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -33,16 +33,16 @@ export class CandidateFeedbacksController extends CrudController<
 		super(candidateFeedbacksService);
 	}
 	@ApiOperation({
-		summary: 'Find all candidate feedback.',
+		summary: 'Find all candidate feedback.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate feedback',
-		type: CandidateFeedback,
+		type: CandidateFeedback
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get()
 	async findFeedback(
@@ -51,21 +51,21 @@ export class CandidateFeedbacksController extends CrudController<
 		const { relations = [], findInput = null } = data;
 		return this.candidateFeedbacksService.findAll({
 			where: findInput,
-			relations,
+			relations
 		});
 	}
 
 	@ApiOperation({
-		summary: 'Find feedbacks By Interview Id.',
+		summary: 'Find feedbacks By Interview Id.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate feedbacks',
-		type: CandidateFeedback,
+		type: CandidateFeedback
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)

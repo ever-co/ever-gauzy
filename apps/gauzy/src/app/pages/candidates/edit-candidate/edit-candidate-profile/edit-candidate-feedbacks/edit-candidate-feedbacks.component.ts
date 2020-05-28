@@ -10,7 +10,7 @@ import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/can
 import {
 	ICandidateFeedback,
 	CandidateStatus,
-	ICandidateInterviewers,
+	ICandidateInterviewers
 } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -20,7 +20,7 @@ import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/
 @Component({
 	selector: 'ga-edit-candidate-feedbacks',
 	templateUrl: './edit-candidate-feedbacks.component.html',
-	styleUrls: ['./edit-candidate-feedbacks.component.scss'],
+	styleUrls: ['./edit-candidate-feedbacks.component.scss']
 })
 export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -61,13 +61,13 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 	private async _initializeForm() {
 		this.form = new FormGroup({
-			feedbacks: this.fb.array([]),
+			feedbacks: this.fb.array([])
 		});
 		const feedbackForm = this.form.controls.feedbacks as FormArray;
 		feedbackForm.push(
 			this.fb.group({
 				description: ['', Validators.required],
-				rating: ['', Validators.required],
+				rating: ['', Validators.required]
 			})
 		);
 	}
@@ -135,7 +135,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 				interviewId: this.feedbackInterviewId,
 				interviewer: this.feedbackInterviewer,
 				candidateId: this.candidateId,
-				status: this.status,
+				status: this.status
 			});
 			this.loadFeedbacks();
 			this.toastrSuccess('UPDATED');
@@ -151,7 +151,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 		try {
 			await this.candidateFeedbacksService.create({
 				...formValue,
-				candidateId: this.candidateId,
+				candidateId: this.candidateId
 			});
 			this.toastrSuccess('CREATED');
 			this.loadFeedbacks();
@@ -212,7 +212,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message,
+				error: error.error ? error.error.message : error.message
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);

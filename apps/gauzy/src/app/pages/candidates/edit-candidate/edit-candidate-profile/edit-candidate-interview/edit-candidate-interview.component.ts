@@ -11,7 +11,7 @@ import { FormGroup } from '@angular/forms';
 import {
 	Candidate,
 	ICandidateInterview,
-	ICandidateInterviewers,
+	ICandidateInterviewers
 } from '@gauzy/models';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
@@ -21,7 +21,7 @@ import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/can
 @Component({
 	selector: 'ga-edit-candidate-interview',
 	templateUrl: './edit-candidate-interview.component.html',
-	styleUrls: ['./edit-candidate-interview.component.scss'],
+	styleUrls: ['./edit-candidate-interview.component.scss']
 })
 export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -66,8 +66,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					header: this.getTranslation(
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
 					),
-					selectedCandidate: this.selectedCandidate,
-				},
+					selectedCandidate: this.selectedCandidate
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -101,8 +101,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 				{
 					context: {
 						candidateId: this.selectedCandidate.id,
-						interviewId: id,
-					},
+						interviewId: id
+					}
 				}
 			);
 			const data = await dialog.onClose.pipe(first()).toPromise();
@@ -129,8 +129,8 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 					),
 					editData: currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: id,
-				},
+					interviewId: id
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -182,7 +182,7 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-				error: error.error ? error.error.message : error.message,
+				error: error.error ? error.error.message : error.message
 			}),
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);

@@ -21,7 +21,7 @@ export interface SelectedProductType {
 @Component({
 	selector: 'ngx-product-type',
 	templateUrl: './product-types.component.html',
-	styleUrls: ['./product-types.component.scss'],
+	styleUrls: ['./product-types.component.scss']
 })
 export class ProductTypesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -78,19 +78,19 @@ export class ProductTypesComponent extends TranslationBaseComponent
 					width: '5%',
 					filter: false,
 					type: 'custom',
-					renderComponent: IconRowComponent,
+					renderComponent: IconRowComponent
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string',
-					width: '40%',
+					width: '40%'
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'string',
-					filter: false,
-				},
-			},
+					filter: false
+				}
+			}
 		};
 	}
 
@@ -123,8 +123,8 @@ export class ProductTypesComponent extends TranslationBaseComponent
 
 		const dialog = this.dialogService.open(ProductTypeMutationComponent, {
 			context: {
-				productType: editProductType,
-			},
+				productType: editProductType
+			}
 		});
 
 		const productType = await dialog.onClose.pipe(first()).toPromise();

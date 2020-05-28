@@ -1,7 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import {
 	ProductTypeTranslation as IProductTypeTranslation,
-	LanguagesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum } from 'class-validator';

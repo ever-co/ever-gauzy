@@ -2,26 +2,50 @@
 // `ng build ---prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 require('dotenv').config();
+import * as path from 'path';
 import { IEnvironment } from './ienvironment';
 import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
-	LanguagesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
-const databaseConfig: TypeOrmModuleOptions = {
-	type: 'postgres', // TODO: process process.env.DB_TYPE value (we need to create different options obj depending on it)
-	host: process.env.DB_HOST || 'localhost',
-	port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
-	database: process.env.DB_NAME || 'postgres',
-	username: process.env.DB_USER || 'postgres',
-	password: process.env.DB_PASS || 'root',
-	keepConnectionAlive: true,
-	logging: true,
-	synchronize: true,
-	uuidExtension: 'pgcrypto',
-};
+const dbType =
+	process.env.DB_TYPE && process.env.DB_TYPE === 'sqlite'
+		? 'sqlite'
+		: 'postgres';
+
+let databaseConfig: TypeOrmModuleOptions;
+
+switch (dbType) {
+	case 'postgres':
+		databaseConfig = {
+			type: dbType,
+			host: process.env.DB_HOST || 'localhost',
+			port: process.env.DB_PORT
+				? parseInt(process.env.DB_PORT, 10)
+				: 5432,
+			database: process.env.DB_NAME || 'postgres',
+			username: process.env.DB_USER || 'postgres',
+			password: process.env.DB_PASS || 'root',
+			keepConnectionAlive: true,
+			logging: true,
+			synchronize: true,
+			uuidExtension: 'pgcrypto'
+		};
+		break;
+
+	case 'sqlite':
+		databaseConfig = {
+			type: dbType,
+			database: path.join(__dirname, '../../data/gauzy.sqlite3'),
+			keepConnectionAlive: true,
+			logging: true,
+			synchronize: true
+		};
+		break;
+}
 
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
 
@@ -34,7 +58,7 @@ export const environment: IEnvironment = {
 	envName: 'dev',
 
 	env: {
-		LOG_LEVEL: 'debug',
+		LOG_LEVEL: 'debug'
 	},
 
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
@@ -48,7 +72,7 @@ export const environment: IEnvironment = {
 		clientId: process.env.FacebookClientId || 'fakeclientid',
 		clientSecret: process.env.FacebookClientSecret || 'fakesecret',
 		oauthRedirectUri: `${process.env.host}:${process.env.port}/api/auth/facebook/callback`,
-		state: '{fbstate}',
+		state: '{fbstate}'
 	},
 
 	googleConfig: {
@@ -56,7 +80,7 @@ export const environment: IEnvironment = {
 			process.env.GoogleClientId ||
 			'1061129983046-pt4tnjteh9h1phfqapqkkea03iq0s351.apps.googleusercontent.com',
 		clientSecret:
-			process.env.GoogleClientSecret || 'liU5ihpwoqnsmXJNxNjFp1yP',
+			process.env.GoogleClientSecret || 'liU5ihpwoqnsmXJNxNjFp1yP'
 	},
 
 	defaultOrganizations: [
@@ -64,14 +88,14 @@ export const environment: IEnvironment = {
 			name: 'Ever Technologies LTD',
 			currency: CurrenciesEnum.BGN,
 			defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-			imageUrl: 'assets/images/logos/ever-large.jpg',
+			imageUrl: 'assets/images/logos/ever-large.jpg'
 		},
 		{
 			name: 'Ever Co. Ltd',
 			currency: CurrenciesEnum.BGN,
 			defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
-			imageUrl: 'assets/images/logos/ever-large.jpg',
-		},
+			imageUrl: 'assets/images/logos/ever-large.jpg'
+		}
 	],
 
 	defaultSuperAdmins: [
@@ -79,8 +103,8 @@ export const environment: IEnvironment = {
 			email: 'admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
-		},
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
 	],
 
 	defaultAdmins: [
@@ -88,8 +112,8 @@ export const environment: IEnvironment = {
 			email: 'local.admin@ever.co',
 			password: 'admin',
 			imageUrl: 'assets/images/avatars/ruslan.jpg',
-			preferredLanguage: LanguagesEnum.ENGLISH,
-		},
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
 	],
 
 	defaultEmployees: [
@@ -102,7 +126,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-03-20',
 			endWork: null,
 			employeeLevel: 'D',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'blagovest@ever.co',
@@ -113,7 +137,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-03-19',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'elvis@ever.co',
@@ -124,7 +148,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-05-25',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'emil@ever.co',
@@ -135,7 +159,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-01-21',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'boyan@ever.co',
@@ -146,7 +170,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-01-21',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'hristo@ever.co',
@@ -157,7 +181,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-06-17',
 			endWork: null,
 			employeeLevel: 'B',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'alex@ever.co',
@@ -168,7 +192,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-08-01',
 			endWork: null,
 			employeeLevel: 'B',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'rachit@ever.co',
@@ -179,7 +203,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-11-27',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'atanas@ever.co',
@@ -190,7 +214,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-02-01',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'dimana@ever.co',
@@ -201,7 +225,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-11-26',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'sunko@ever.co',
@@ -212,7 +236,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-02-04',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'lubomir@ever.co',
@@ -223,7 +247,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-02-06',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'pavel@ever.co',
@@ -234,7 +258,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-03-16',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'yavor@ever.co',
@@ -245,7 +269,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-02-05',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'tsvetelina@ever.co',
@@ -256,7 +280,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-03-02',
 			endWork: null,
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'everq@ever.co',
@@ -267,7 +291,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-08-01',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'muiz@smooper.xyz',
@@ -278,7 +302,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-11-27',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'deko898@hotmail.com',
@@ -289,7 +313,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-03-07',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'ckhandla94@gmail.com',
@@ -300,7 +324,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2020-03-07',
 			endWork: null,
 			employeeLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'julia@ever.co',
@@ -311,7 +335,7 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2018-08-01',
 			endWork: null,
 			employeeLevel: 'C',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: '',
@@ -322,8 +346,8 @@ export const environment: IEnvironment = {
 			startedWorkOn: '2019-07-15',
 			endWork: '2019-10-15',
 			employeeLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
-		},
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
 	],
 	defaultCandidates: [
 		{
@@ -333,7 +357,7 @@ export const environment: IEnvironment = {
 			lastName: 'Smith',
 			imageUrl: 'assets/images/avatars/alish.jpg',
 			candidateLevel: 'D',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'jaye@ever.co',
@@ -342,7 +366,7 @@ export const environment: IEnvironment = {
 			lastName: 'Jeffreys',
 			imageUrl: 'assets/images/avatars/alexander.jpg',
 			candidateLevel: 'B',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'kasey@ever.co',
@@ -351,7 +375,7 @@ export const environment: IEnvironment = {
 			lastName: 'Kraker',
 			imageUrl: 'assets/images/avatars/rachit.png',
 			candidateLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'norris@ever.co',
@@ -360,7 +384,7 @@ export const environment: IEnvironment = {
 			lastName: 'Nesbit',
 			imageUrl: 'assets/images/avatars/atanas.jpeg',
 			candidateLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'estella@ever.co',
@@ -369,7 +393,7 @@ export const environment: IEnvironment = {
 			lastName: 'Ennis',
 			imageUrl: 'assets/images/avatars/dimana.jpeg',
 			candidateLevel: null,
-			preferredLanguage: LanguagesEnum.ENGLISH,
+			preferredLanguage: LanguagesEnum.ENGLISH
 		},
 		{
 			email: 'greg@ever.co',
@@ -378,8 +402,8 @@ export const environment: IEnvironment = {
 			lastName: 'Grise',
 			imageUrl: 'assets/images/avatars/savov.jpg',
 			candidateLevel: 'A',
-			preferredLanguage: LanguagesEnum.ENGLISH,
-		},
+			preferredLanguage: LanguagesEnum.ENGLISH
+		}
 	],
 	defaultTeams: [
 		{
@@ -401,12 +425,12 @@ export const environment: IEnvironment = {
 				'yavor@ever.co',
 				'tsvetelina@ever.co',
 				'everq@ever.co',
-				'julia@ever.co',
-			],
+				'julia@ever.co'
+			]
 		},
 		{
 			name: 'Candidates',
-			defaultMembers: ['john@ever.co'],
+			defaultMembers: ['john@ever.co']
 		},
 
 		{
@@ -416,18 +440,18 @@ export const environment: IEnvironment = {
 				'dimana@ever.co',
 				'deko898@hotmail.com',
 				'muiz@smooper.xyz',
-				'ckhandla94@gmail.com',
-			],
-		},
-	],	
+				'ckhandla94@gmail.com'
+			]
+		}
+	],
 	sentry: {
-		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292',
+		dns: 'https://19293d39eaa14d03aac4d3c156c4d30e@sentry.io/4397292'
 	},
 	randomSeedConfig: {
 		tenants: 5,
 		organizationsPerTenant: 2,
 		employeesPerOrganization: 5,
-		candidatesPerOrganization: 2,
+		candidatesPerOrganization: 2
 	},
 
 	defaultHubstaffUserPass:
@@ -436,6 +460,6 @@ export const environment: IEnvironment = {
 	upworkConfig: {
 		callbackUrl:
 			process.env.UWPROK_CALLBACK_URL ||
-			'http://localhost:4200/#/pages/integrations/upwork',
-	},
+			'http://localhost:4200/#/pages/integrations/upwork'
+	}
 };

@@ -5,7 +5,7 @@ import {
 	CandidateFindInput,
 	Candidate,
 	CandidateUpdateInput,
-	CandidateStatus,
+	CandidateStatus
 } from '@gauzy/models';
 import { Observable } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -22,7 +22,7 @@ export class CandidatesService {
 		return this.http.get<{ items: Candidate[]; total: number }>(
 			`/api/candidate`,
 			{
-				params: { data },
+				params: { data }
 			}
 		);
 	}
@@ -31,7 +31,7 @@ export class CandidatesService {
 		const data = JSON.stringify({ relations });
 		return this.http
 			.get<Candidate>(`/api/candidate/${id}`, {
-				params: { data },
+				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
@@ -71,7 +71,7 @@ export class CandidatesService {
 	setCandidateAsHired(id: string): Promise<Candidate> {
 		return this.http
 			.put<Candidate>(`/api/candidate/${id}`, {
-				status: CandidateStatus.HIRED,
+				status: CandidateStatus.HIRED
 			})
 			.pipe(first())
 			.toPromise();
@@ -79,7 +79,7 @@ export class CandidatesService {
 	setCandidateAsRejected(id: string): Promise<Candidate> {
 		return this.http
 			.put<Candidate>(`/api/candidate/${id}`, {
-				status: CandidateStatus.REJECTED,
+				status: CandidateStatus.REJECTED
 			})
 			.pipe(first())
 			.toPromise();
@@ -87,7 +87,7 @@ export class CandidatesService {
 	setCandidateAsApplied(id: string): Promise<Candidate> {
 		return this.http
 			.put<Candidate>(`/api/candidate/${id}`, {
-				status: CandidateStatus.APPLIED,
+				status: CandidateStatus.APPLIED
 			})
 			.pipe(first())
 			.toPromise();

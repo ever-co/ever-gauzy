@@ -164,12 +164,12 @@ const entities = [
 			imports: [ConfigModule],
 			useFactory: (config: ConfigService): TypeOrmModuleOptions => ({
 				...env.database,
-				entities,
+				entities
 				// subscribers,
 				// migrations,
 			}),
-			inject: [ConfigService],
-		}),
+			inject: [ConfigService]
+		})
 		/*
     TerminusModule.forRootAsync({
       // Inject the TypeOrmHealthIndicator provided by nestjs/terminus
@@ -179,7 +179,7 @@ const entities = [
     */
 	],
 	controllers: [],
-	providers: [],
+	providers: []
 })
 export class CoreModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

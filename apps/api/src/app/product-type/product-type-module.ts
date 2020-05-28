@@ -8,6 +8,6 @@ import { ProductTypeTranslation } from './product-type-translation.entity';
 @Module({
 	imports: [TypeOrmModule.forFeature([ProductType, ProductTypeTranslation])],
 	controllers: [ProductTypeController],
-	providers: [ProductTypeService],
+	providers: [ProductTypeService]
 })
 export class ProductTypesModule {}

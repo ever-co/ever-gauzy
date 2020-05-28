@@ -4,7 +4,7 @@ import {
 	OneToMany,
 	ManyToOne,
 	JoinColumn,
-	RelationId,
+	RelationId
 } from 'typeorm';
 import { ProductTypesIconsEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
@@ -40,7 +40,7 @@ export class ProductType extends TranslatableBase {
 		(productTypeTranslation) => productTypeTranslation.reference,
 		{
 			eager: true,
-			cascade: true,
+			cascade: true
 		}
 	)
 	translations: ProductTypeTranslation[];

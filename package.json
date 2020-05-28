@@ -22,7 +22,7 @@
 		"config": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn ts-node ./.scripts/configure.ts",
 		"config:dev": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config -- --environment=dev",
 		"config:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config -- --environment=prod",
-		"start": "yarn start:gauzy",
+		"start": "npm run postinstall.web && yarn start:gauzy",
 		"start:prod": "yarn start:gauzy:prod",
 		"start:gauzy": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn ng serve gauzy",
 		"start:gauzy:pm2": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run build && yarn ts-node ./apps/gauzy/src/pm2bootstrap.ts",
@@ -34,7 +34,7 @@
 		"seed:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn --cwd ./apps/api run seed:prod",
 		"bootstrap": "yarn lerna bootstrap",
 		"prebuild": "rimraf dist coverage",
-		"build": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn ng build",
+		"build": "npm run postinstall.web && cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn ng build gauzy",
 		"build:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn ng build gauzy -c=production --prod",
 		"build:prod:circle": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && yarn ng build gauzy -c=production --prod --no-progress",
 		"build:api": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn ng build api",
@@ -43,9 +43,9 @@
 		"commit": "git-cz",
 		"commit:lint": "commitlint -E HUSKY_GIT_PARAMS",
 		"semantic-release": "semantic-release",
-		"test": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn ng test",
+		"test": "npm run postinstall.web && cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn ng test",
 		"lint": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn nx lint && yarn ng lint",
-		"e2e": "cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn ng e2e",
+		"e2e": "npm run postinstall.web && cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 yarn run config:dev && yarn ng e2e",
 		"affected:apps": "nx affected:apps",
 		"affected:libs": "nx affected:libs",
 		"affected:build": "nx affected:build",
@@ -64,7 +64,26 @@
 		"help": "nx help",
 		"doc:build": "compodoc -p tsconfig.json -d dist/docs",
 		"doc:serve": "compodoc -s -d dist/docs",
-		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s"
+		"doc:build-serve": "compodoc -p tsconfig.json -d docs -s",
+		"postinstall": "install-app-deps",
+		"postinstall.electron": "node tools/electron/postinstall",
+		"postinstall.web": "node tools/web/postinstall",
+		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run prepare:desktop && ng build desktop --prod --base-href ./ && ng build desktop-api --prod",
+		"build:desktop:local": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && electron dist/apps/desktop",
+		"build:desktop:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --linux",
+		"build:desktop:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --windows",
+		"build:desktop:mac": "npm run build:desktop && cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --mac",
+		"prepare:desktop": "npm run postinstall.electron && tsc -p apps/desktop/tsconfig.json",
+		"serve:desktop.target": "nx serve desktop",
+		"serve:desktop": "wait-on http-get://localhost:4200/ && electron apps/desktop/src --serve",
+		"start:desktop": "npm run prepare:desktop && npm-run-all -p serve.electron.gauzy-desktop.target serve.electron.gauzy-desktop",
+		"start.gauzy": "npm run postinstall.web && nx serve gauzy",
+		"build:desktop:mac:quick": "cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --mac",
+		"build:desktop:local:quick": "electron dist/apps/desktop --prod",
+		"build:desktop:windows:quick": "cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --windows",
+		"build:sqlite:mac": "cd node_modules/sqlite3 && HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --dist-url=https://electronjs.org/headers",
+		"build:sqlite:windows": "cd node_modules/sqlite3 && cross-env HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --target_platform=win32 --dist-url=https://electronjs.org/headers",
+		"debug:desktop:app:mac": "lldb ./dist/apps/desktop-packages/mac/GauzyDesktop.app && run"
 	},
 	"config": {
 		"commitizen": {
@@ -108,6 +127,9 @@
 		"apps/*",
 		"tools"
 	],
+	"resolutions": {
+		"uglify-js": "npm:terser"
+	},
 	"dependencies": {
 		"@agm/core": "^1.0.0-beta.6",
 		"@akveo/ng2-completer": "^9.0.1",
@@ -212,6 +234,7 @@
 		"screenfull": "^4.2.1",
 		"smooth-scrollbar": "^8.3.1",
 		"socicon": "^3.0.5",
+		"sqlite3": "https://github.com/mapbox/node-sqlite3/tarball/master",
 		"tinymce": "^5.2.2",
 		"tslib": "^1.10.0",
 		"typeface-exo": "^0.0.61",
@@ -240,6 +263,11 @@
 		"@nrwl/nest": "^9.3.0",
 		"@nrwl/node": "^9.3.0",
 		"@nrwl/workspace": "^9.3.0",
+		"@nstudio/angular": "9.0.3",
+		"@nstudio/electron": "9.0.3",
+		"@nstudio/electron-angular": "9.0.3",
+		"@nstudio/web-angular": "^9.0.3",
+		"@nstudio/xplat": "^9.0.3",
 		"@semantic-release/changelog": "^3.0.4",
 		"@semantic-release/git": "^7.0.16",
 		"@semantic-release/github": "^5.4.3",
@@ -252,8 +280,6 @@
 		"@types/google.analytics": "^0.0.40",
 		"@types/googlemaps": "^3.36.5",
 		"@types/hammerjs": "^2.0.36",
-		"@types/jasmine": "^3.3.13",
-		"@types/jasminewd2": "^2.0.6",
 		"@types/jest": "^24.0.15",
 		"@types/leaflet": "^1.4.4",
 		"@types/moment": "^2.13.0",
@@ -261,7 +287,7 @@
 		"@types/node": "^12.11.1",
 		"@types/underscore": "^1.9.4",
 		"@types/uuid": "^3.4.4",
-    "@types/html-to-text": "5.1.0",
+		"@types/html-to-text": "5.1.0",
 		"@types/email-templates": "^7.0.1",
 		"@types/i18n": "^0.8.6",
 		"cloc": "^2.4.0",
@@ -308,6 +334,7 @@
 		"tsconfig-paths": "^3.9.0",
 		"tslint": "^6.1.2",
 		"tslint-config-prettier": "^1.18.0",
+		"tslint-language-service": "^0.9.9",
 		"webpack-bundle-analyzer": "^3.8.0",
 		"terser-webpack-plugin": "^3.0.1",
 		"terser": "^4.7.0",
@@ -317,5 +344,9 @@
 		"node": ">=10.15.0",
 		"yarn": ">=1.13.0"
 	},
-	"snyk": true
+	"snyk": true,
+	"xplat": {
+		"prefix": "gauzy",
+		"framework": "angular"
+	}
 }

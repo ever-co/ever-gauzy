@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
-	styleUrls: ['./sidebar.component.scss'],
+	styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -60,8 +60,8 @@ export class SidebarComponent extends TranslationBaseComponent
 						this.showPublicButton = true;
 						this.articleName = 'Chose any article';
 					}
-				},
-			},
+				}
+			}
 		},
 		allowDrag: (node) => {
 			return true;
@@ -70,7 +70,7 @@ export class SidebarComponent extends TranslationBaseComponent
 			return true;
 		},
 		animateExpand: true,
-		displayField: 'name',
+		displayField: 'name'
 	};
 
 	@ViewChild(TreeComponent)
@@ -87,7 +87,7 @@ export class SidebarComponent extends TranslationBaseComponent
 			name: `${this.value}`,
 			description: '',
 			data: '',
-			children: [],
+			children: []
 		});
 		this.loadMenu();
 		this.tree.treeModel.update();

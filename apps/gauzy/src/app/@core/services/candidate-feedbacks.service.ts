@@ -4,11 +4,11 @@ import { first } from 'rxjs/operators';
 import {
 	ICandidateFeedback,
 	ICandidateFeedbackFindInput,
-	ICandidateFeedbackCreateInput,
+	ICandidateFeedbackCreateInput
 } from '@gauzy/models';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class CandidateFeedbacksService {
 	constructor(private http: HttpClient) {}
@@ -31,7 +31,7 @@ export class CandidateFeedbacksService {
 			.get<{ items: ICandidateFeedback[]; total: number }>(
 				`/api/candidate-feedbacks`,
 				{
-					params: { data },
+					params: { data }
 				}
 			)
 			.pipe(first())

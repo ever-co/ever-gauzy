@@ -20,7 +20,7 @@ export interface SelectedProduct {
 @Component({
 	selector: 'ngx-inventory',
 	templateUrl: './inventory.component.html',
-	styleUrls: ['./inventory.component.scss'],
+	styleUrls: ['./inventory.component.scss']
 })
 export class InventoryComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -64,17 +64,17 @@ export class InventoryComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent,
+					renderComponent: PictureNameTagsComponent
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
-					type: 'string',
+					type: 'string'
 				},
 				type: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
 					valuePrepareFunction: (type: ProductTypeTranslated) =>
-						type.name,
+						type.name
 				},
 				category: {
 					title: this.getTranslation(
@@ -82,7 +82,7 @@ export class InventoryComponent extends TranslationBaseComponent
 					),
 					type: 'string',
 					valuePrepareFunction: (category: ProductCategory) =>
-						category.name,
+						category.name
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
@@ -90,9 +90,9 @@ export class InventoryComponent extends TranslationBaseComponent
 					filter: false,
 					valuePrepareFunction: (description: string) => {
 						return description.slice(0, 15) + '...';
-					},
-				},
-			},
+					}
+				}
+			}
 		};
 	}
 
@@ -102,13 +102,13 @@ export class InventoryComponent extends TranslationBaseComponent
 
 	manageProductCategories() {
 		this.router.navigate([
-			'/pages/organization/inventory/product-categories',
+			'/pages/organization/inventory/product-categories'
 		]);
 	}
 
 	async save() {
 		const dialog = this.dialogService.open(ProductMutationComponent, {
-			context: { product: this.selectedItem },
+			context: { product: this.selectedItem }
 		});
 
 		await dialog.onClose.pipe(first()).toPromise();

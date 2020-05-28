@@ -9,7 +9,7 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import {
 	CandidateStatus,
 	ICandidateFeedback,
-	ICandidateInterviewers,
+	ICandidateInterviewers
 } from '@gauzy/models';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
@@ -17,7 +17,7 @@ import { EmployeesService } from '../../../@core/services';
 @Component({
 	selector: 'ga-candidate-interview-feedback',
 	templateUrl: './candidate-interview-feedback.component.html',
-	styleUrls: ['./candidate-interview-feedback.component.scss'],
+	styleUrls: ['./candidate-interview-feedback.component.scss']
 })
 export class CandidateInterviewFeedbackComponent
 	extends TranslationBaseComponent
@@ -62,7 +62,7 @@ export class CandidateInterviewFeedbackComponent
 	private async _initializeForm() {
 		this.form = this.fb.group({
 			description: ['', Validators.required],
-			rating: ['', Validators.required],
+			rating: ['', Validators.required]
 		});
 	}
 
@@ -137,7 +137,7 @@ export class CandidateInterviewFeedbackComponent
 					candidateId: this.candidateId,
 					interviewId: this.interviewId,
 					interviewer: this.feedbackInterviewer,
-					status: this.status,
+					status: this.status
 				});
 				this.setStatus(this.status);
 				this.dialogRef.close();
@@ -148,9 +148,7 @@ export class CandidateInterviewFeedbackComponent
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-						error: error.error
-							? error.error.message
-							: error.message,
+						error: error.error ? error.error.message : error.message
 					}),
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);

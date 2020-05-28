@@ -23,7 +23,7 @@ export class ProductTypeService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: ProductTypeTranslatable[] }>(this.PRODUCT_TYPES_URL, {
-				params: { data },
+				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
@@ -39,7 +39,7 @@ export class ProductTypeService {
 			.get<{ items: ProductTypeTranslated[] }>(
 				`${this.PRODUCT_TYPES_URL}`,
 				{
-					params: { data },
+					params: { data }
 				}
 			)
 			.pipe(first())

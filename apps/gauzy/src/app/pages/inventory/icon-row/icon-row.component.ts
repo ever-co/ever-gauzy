@@ -25,8 +25,8 @@ import { ProductTypeTranslated } from '@gauzy/models';
 				color: #fff;
 				width: 25px;
 			}
-		`,
-	],
+		`
+	]
 })
 export class IconRowComponent implements ViewCell {
 	@Input()

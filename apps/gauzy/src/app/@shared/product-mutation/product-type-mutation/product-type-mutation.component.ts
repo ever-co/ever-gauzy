@@ -5,7 +5,7 @@ import {
 	ProductTypesIconsEnum,
 	LanguagesEnum,
 	ProductTypeTranslation,
-	ProductTypeTranslatable,
+	ProductTypeTranslatable
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from '../../../@core/services/product-type.service';
@@ -17,7 +17,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
 	selector: 'ngx-product-type-mutation',
 	templateUrl: './product-type-mutation.component.html',
-	styleUrls: ['./product-type-mutation.component.scss'],
+	styleUrls: ['./product-type-mutation.component.scss']
 })
 export class ProductTypeMutationComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -69,7 +69,7 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 		const productTypeRequest = {
 			organization: this.store.selectedOrganization,
 			icon: this.selectedIcon,
-			translations: this.translations,
+			translations: this.translations
 		};
 
 		let productType: ProductTypeTranslatable;
@@ -103,17 +103,17 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 				this.productType
 					? this.productType.organizationId
 					: this.store.selectedOrganization,
-				Validators.required,
+				Validators.required
 			],
 			name: [
 				this.activeTranslation ? this.activeTranslation['name'] : '',
-				Validators.required,
+				Validators.required
 			],
 			description: [
 				this.activeTranslation
 					? this.activeTranslation['description']
-					: null,
-			],
+					: null
+			]
 		});
 	}
 
@@ -126,7 +126,7 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 			this.activeTranslation = {
 				languageCode: this.selectedLanguage,
 				name: '',
-				description: '',
+				description: ''
 			};
 
 			this.translations.push(this.activeTranslation);
@@ -139,7 +139,7 @@ export class ProductTypeMutationComponent extends TranslationBaseComponent
 
 		this.form.patchValue({
 			name: this.activeTranslation.name,
-			description: this.activeTranslation.description,
+			description: this.activeTranslation.description
 		});
 	}
 

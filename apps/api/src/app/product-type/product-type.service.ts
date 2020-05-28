@@ -32,12 +32,12 @@ export class ProductTypeService extends CrudService<ProductType> {
 	): Promise<IPagination<ProductType>> {
 		const allProductTypes = await this.productTypeRepository.find({
 			where: findInput,
-			relations,
+			relations
 		});
 
 		return {
 			items: allProductTypes.map((type) => type.translate(langCode)),
-			total: allProductTypes.length,
+			total: allProductTypes.length
 		};
 	}
 }

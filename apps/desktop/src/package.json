@@ -1,0 +1,67 @@
+{
+	"name": "gauzy-desktop",
+	"version": "0.1.0",
+	"description": "Gauzy Desktop",
+	"license": "AGPL-3.0",
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ever-co/gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/gauzy/issues"
+	},
+	"main": "index.js",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"build": {
+		"appId": "com.company.gauzydesktop",
+		"productName": "Gauzy Desktop",
+		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"asar": true,
+		"npmRebuild": true,
+		"directories": {
+			"buildResources": "icons",
+			"output": "../desktop-packages"
+		},
+		"mac": {
+			"category": "public.app-category.developer-tools",
+			"icon": "icon.png",
+			"target": [
+				"pkg",
+				"dmg"
+			]
+		},
+		"win": {
+			"target": [
+				"nsis"
+			],
+			"icon": "icon.ico"
+		},
+		"linux": {
+			"icon": "icon.png",
+			"target": [
+				"AppImage",
+				"deb",
+				"tar.gz"
+			],
+			"synopsis": "Desktop",
+			"category": "Development"
+		},
+		"nsis": {
+			"createDesktopShortcut": "always",
+			"installerIcon": "icon.ico",
+			"artifactName": "Gauzy-${version}.${ext}"
+		},
+		"files": [
+			"./**/*",
+			"./node_modules/**/*"
+		]
+	},
+	"dependencies": {
+		"sqlite3": "https://github.com/mapbox/node-sqlite3/tarball/master"
+	}
+}

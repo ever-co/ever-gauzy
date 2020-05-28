@@ -1,7 +1,7 @@
 import { Base } from './base';
 import {
 	Translation as ITranslation,
-	Translatable as ITranslatable,
+	Translatable as ITranslatable
 } from '@gauzy/models';
 
 export abstract class TranslationBase extends Base

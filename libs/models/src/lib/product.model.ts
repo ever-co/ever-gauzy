@@ -1,7 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import {
 	Translation as ITranslation,
-	Translatable as ITranslatable,
+	Translatable as ITranslatable
 } from './translation.model';
 import { Organization } from './organization.model';
 import { Tag } from './tag-entity.model';
@@ -90,7 +90,7 @@ export interface ProductOption extends IBaseEntityModel {
 
 export enum BillingInvoicingPolicyEnum {
 	QUANTITY_ORDERED = 'Quantity ordered',
-	QUANTITY_DELIVERED = 'Quantity Delivered',
+	QUANTITY_DELIVERED = 'Quantity Delivered'
 }
 
 export enum ProductTypesIconsEnum {
@@ -114,5 +114,5 @@ export enum ProductTypesIconsEnum {
 	GLOBE = 'globe-2-outline',
 	LAYERS = 'layers-outline',
 	PHONE = 'phone-outline',
-	SHOPPING_CART = 'shopping-cart-outline',
+	SHOPPING_CART = 'shopping-cart-outline'
 }

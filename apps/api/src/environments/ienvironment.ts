@@ -9,7 +9,7 @@ import {
 	IDefaultCandidate,
 	IDefaultEmployee,
 	IDefaultProductCategory,
-	IDefaultProductType,
+	IDefaultProductType
 } from '@gauzy/models';
 import { IFacebookConfig } from './IFacebookConfig';
 import { IGoogleConfig } from './IGoogleConfig';
@@ -55,9 +55,9 @@ export interface IEnvironment {
 
 	defaultProductCategories?: IDefaultProductCategory[];
 
-  defaultProductTypes?: IDefaultProductType[];
+	defaultProductTypes?: IDefaultProductType[];
 
-  defaultTeams?: {
+	defaultTeams?: {
 		name: string;
 		defaultMembers: string[];
 	}[];

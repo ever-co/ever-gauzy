@@ -3,14 +3,14 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import { Connection } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { environment as env } from '@env-api/environment';
 import * as faker from 'faker';
 import {
 	IDefaultUser,
 	RolesEnum,
 	ISeedUsers,
-	LanguagesEnum
+	LanguagesEnum,
 } from '@gauzy/models';
 import { Role } from '../role/role.entity';
 import { User } from './user.entity';
@@ -110,23 +110,23 @@ export const createDefaultUsers = async (
 	const [
 		adminUsers,
 		defaultEmployeeUsers,
-		defaultCandidateUsers
+		defaultCandidateUsers,
 	] = await Promise.all([
 		_adminUsers,
 		_defaultEmployeeUsers,
-		_defaultCandidateUsers
+		_defaultCandidateUsers,
 	]);
 
 	await insertUsers(connection, [
 		...adminUsers,
 		...defaultEmployeeUsers,
-		...defaultCandidateUsers
+		...defaultCandidateUsers,
 	]);
 
 	return {
 		adminUsers,
 		defaultEmployeeUsers,
-		defaultCandidateUsers
+		defaultCandidateUsers,
 	};
 };
 
@@ -172,19 +172,19 @@ export const createRandomUsers = async (
 		const [adminUsers, employeeUsers, candidateUsers] = await Promise.all([
 			_adminUsers,
 			_employeeUsers,
-			_candidateUsers
+			_candidateUsers,
 		]);
 
 		await insertUsers(connection, [
 			...adminUsers,
 			...employeeUsers,
-			...candidateUsers
+			...candidateUsers,
 		]);
 
 		randomTenantUsers.set(tenant, {
 			adminUsers,
 			employeeUsers,
-			candidateUsers
+			candidateUsers,
 		});
 	}
 
@@ -274,7 +274,7 @@ const generateDefaultUser = async (
 		lastName,
 		email,
 		imageUrl,
-		preferredLanguage
+		preferredLanguage,
 	} = defaultUser;
 
 	user.email = email;

@@ -16,7 +16,7 @@ export class ProductService extends CrudService<Product> {
 	async findAllProducts(langCode?: string): Promise<IPagination<Product>> {
 		const total = await this.productRepository.count();
 		const items = await this.productRepository.find({
-			relations: ['category', 'type', 'options', 'variants', 'tags'],
+			relations: ['category', 'type', 'options', 'variants', 'tags']
 		});
 
 		if (langCode) {
