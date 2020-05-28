@@ -5,14 +5,39 @@
 			<nb-icon class="add-icon" icon="plus-outline" (click)="addNode()">
 			</nb-icon>
 		</div>
-
-		<div *ngIf="isVisibleAdd" class="add-base-field">
+		<div *ngIf="isVisibleAdd" class="add-menu">
+			<button
+				class="add-buttons"
+				status="primary"
+				(click)="showInput(1)"
+				nbButton
+			>
+				Category
+			</button>
+			<button
+				class="add-buttons"
+				status="primary"
+				(click)="showInput(2)"
+				nbButton
+			>
+				Article
+			</button>
+			<button
+				class="close-add-buttons"
+				status="danger"
+				(click)="onCloseAdding()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<div *ngIf="showArticleButton" class="add-base-field">
 			<input
 				type="text"
 				size="24"
 				ngModel
 				maxlength="18"
-				(keyup.enter)="addName($event)"
+				(keyup.enter)="addName($event, 2)"
 				nbInput
 			/>
 			<button
@@ -24,11 +49,57 @@
 				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 			</button>
 		</div>
-		<tree-root #tree [nodes]="nodes" [options]="options" [focused]="true">
+		<div *ngIf="showCategoryButton" class="add-base-field">
+			<input
+				type="text"
+				size="24"
+				ngModel
+				maxlength="18"
+				(keyup.enter)="addName($event, 1)"
+				nbInput
+			/>
+			<button
+				class="input-button"
+				status="danger"
+				(click)="onCloseInput()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<tree-root #tree [nodes]="nodes" [focused]="true">
+			<ng-template
+				#treeNodeFullTemplate
+				let-node
+				let-index="index"
+				let-templates="templates"
+			>
+				<div class="tree-node">
+					<tree-node-expander [node]="node"></tree-node-expander>
+					<div
+						class="node-content-wrapper"
+						[class.node-content-wrapper-active]="node.isActive"
+						[class.node-content-wrapper-focused]="node.isFocused"
+						(click)="onNodeClicked(node)"
+					>
+						<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+						<span
+							[class]="node.data.className"
+							[class.title]="true"
+							>{{ node.data.name }}</span
+						>
+						<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+					</div>
+					<tree-node-children
+						[node]="node"
+						[templates]="templates"
+					></tree-node-children>
+				</div>
+			</ng-template>
 		</tree-root>
 	</nb-card-body>
 	<nb-card-body>
-		<button
+		<!-- <button
 			[disabled]="!isChosenArticle"
 			class="main-buttons"
 			(click)="addIcon()"
@@ -36,7 +107,7 @@
 			nbButton
 		>
 			{{ 'BUTTONS.CHOOSE_ICON' | translate }}
-		</button>
+		</button> -->
 		<button
 			[disabled]="!isChosenArticle"
 			class="main-buttons"
@@ -114,7 +185,7 @@
 				nbInput
 			/>
 		</div>
-		<div *ngIf="isVisibleEdit && showPrivateButton" class="content-card">
+		<!-- <div *ngIf="isVisibleEdit && showPrivateButton" class="content-card">
 			<form [formGroup]="form" (ngSubmit)="submit()">
 				<input
 					formControlName="name"
@@ -153,6 +224,6 @@
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</form>
-		</div>
+		</div> -->
 	</nb-card-body>
 </nb-card>
