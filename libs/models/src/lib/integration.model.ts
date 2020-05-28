@@ -66,7 +66,7 @@ export interface IIntegrationTenantCreateDto {
 
 export enum IntegrationEnum {
 	UPWORK = 'Upwork',
-	HUBSTAFF = 'Hubstaff'
+	HUBSTAFF = 'Hubstaff',
 }
 
 export enum IntegrationEntity {
@@ -79,12 +79,12 @@ export enum IntegrationEntity {
 	USER = 'User',
 	EMPLOYEE = 'Employee',
 	TIME_LOG = 'TimeLog',
-	TIME_SLOT = 'TimeSlot'
+	TIME_SLOT = 'TimeSlot',
 }
 
 export enum IntegrationTypeGroupEnum {
 	FEATURED = 'Featured',
-	CATEGORIES = 'Categories'
+	CATEGORIES = 'Categories',
 }
 
 export enum IntegrationTypeNameEnum {
@@ -92,5 +92,5 @@ export enum IntegrationTypeNameEnum {
 	FOR_SALES_TEAMS = 'For Sales Teams',
 	CRM = 'CRM',
 	SCHEDULING = 'Scheduling',
-	TOOLS = 'Tools'
+	TOOLS = 'Tools',
 }

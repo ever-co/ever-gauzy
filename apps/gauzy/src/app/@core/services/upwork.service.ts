@@ -7,11 +7,11 @@ import {
 	IAccessToken,
 	IEngagement,
 	IUpworkApiConfig,
-	IIntegrationMap
+	IIntegrationMap,
 } from '@gauzy/models';
 
 @Injectable({
-	providedIn: 'root'
+	providedIn: 'root',
 })
 export class UpworkService {
 	constructor(private http: HttpClient) {}

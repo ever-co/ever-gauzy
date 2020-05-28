@@ -12,7 +12,7 @@ import {
 	NbTooltipModule,
 	NbDatepickerModule,
 	NbRadioModule,
-	NbSpinnerModule
+	NbSpinnerModule,
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -45,6 +45,9 @@ import { InvoiceProductsSelectorComponent } from './table-components/invoice-pro
 import { InvoicePaidComponent } from './table-components/invoice-paid.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
+import { InvoiceViewInnerComponent } from './invoice-view/inner-component/invoice-view-inner.component';
+import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -79,9 +82,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	providers: [
 		InvoicesService,
@@ -91,7 +94,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		OrganizationClientsService,
 		OrganizationProjectsService,
 		EmployeesService,
-		ProductService
+		ProductService,
 	],
 	entryComponents: [
 		InvoicesComponent,
@@ -104,7 +107,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceSendMutationComponent,
 		InvoiceViewComponent,
 		InvoiceProductsSelectorComponent,
-		InvoicePaidComponent
+		InvoicePaidComponent,
+		InvoiceEmailMutationComponent,
+		InvoiceViewInnerComponent,
+		InvoiceDownloadMutationComponent,
 	],
 	declarations: [
 		InvoicesComponent,
@@ -117,7 +123,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceSendMutationComponent,
 		InvoiceViewComponent,
 		InvoiceProductsSelectorComponent,
-		InvoicePaidComponent
-	]
+		InvoicePaidComponent,
+		InvoiceEmailMutationComponent,
+		InvoiceViewInnerComponent,
+		InvoiceDownloadMutationComponent,
+	],
 })
 export class InvoicesModule {}

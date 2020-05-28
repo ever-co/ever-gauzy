@@ -43,12 +43,12 @@
 		"FIND_TIME": "Find time",
 		"DOWNLOAD": "Download",
 		"ADD_KNOWLEDGE_BASE": "Add Knowledge Base",
-		"ADD_ICON": "add icon",
-		"REMOVE_ICON": "remove icon",
+		"CHOOSE_ICON": "Choose icon",
 		"MAKE_PRIVATE": "make private",
 		"MAKE_PUBLIC": "make public",
 		"KNOWLEDGE_BASES": "Knowledge bases",
-		"SELECT": "Select"
+		"SELECT": "Select",
+		"EMAIL": "Eлектронна поща"
 	},
 	"SM_TABLE": {
 		"DATE": "Дата",
@@ -255,6 +255,7 @@
 			"UPLOADER_DOCUMENT_PLACEHOLDER": "URL",
 			"ADD_REMOVE_EMPLOYEES": "Добави или премахни служители",
 			"ADD_REMOVE_CANDIDATE": "Add Candidate",
+			"ADD_REMOVE_EMPLOYEE": "Add Interviewer",
 			"ADD_REMOVE_CANDIDATES": "Add or Remove Candidates",
 			"ADD_REMOVE_USERS": "Add or Remove Users",
 			"ADD_REMOVE_ORGANIZATIONS": "Add or Remove Organizations",
@@ -408,6 +409,7 @@
 		"UPWORK": "Upwork",
 		"PROPOSALS": "Предложения",
 		"TIME_OFF": "Почивка",
+		"APPROVALS": "Approvals",
 		"HELP": "Помощ",
 		"ABOUT": "За нас",
 		"ADMIN": "Администратор",
@@ -417,6 +419,7 @@
 		"ORGANIZATIONS": "Организации",
 		"SETTINGS": "Настройки",
 		"GENERAL": "Основни",
+		"EMAIL_HISTORY": "Email History",
 		"USERS": "Потребители",
 		"ROLES": "Роли и Позволения",
 		"DANGER_ZONE": "Опасна Зона",
@@ -673,10 +676,13 @@
 			"DOCUMENT_NAME": "Document name",
 			"DOCUMENT": "Document",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
+			"INTERVIEW_FEEDBACK": "Interview: ",
 			"LEAVE_FEEDBACK": "Leave a feedback about the ",
+			"STATUS": "Selected status: ",
 			"INTERVIEW": {
 				"INTERVIEW": "Interview",
 				"INTERVIEWS": "Interviews",
+				"INTERVIEWER": "Interviewer: ",
 				"ADD_INTERVIEW": "Add interview",
 				"ON": "on",
 				"TO": "To",
@@ -748,7 +754,6 @@
 		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
-
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Клиент",
@@ -876,6 +881,15 @@
 				"JOB_POST_URL": "Job Post URL"
 			}
 		}
+	},
+	"APPROVAL_REQUEST_PAGE": {
+		"APPROVAL_REQUEST_NAME": "Име",
+		"APPROVAL_REQUEST_TYPE": "Тип",
+		"APPROVAL_REQUEST_MIN_COUNT": "Min Count",
+		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
+		"APPROVAL_REQUEST_STATUS": "Статус",
+		"HEADER": "Approval Request",
+		"APPROVAL_POLICY": "Approval Policy"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
@@ -1169,12 +1183,20 @@
 			"TASK_VALUE": "Task cannot be empty"
 		},
 		"SEND": {
-			"CONFIRMATION": "Are you sure you want to send this invoice to",
+			"CONFIRMATION": "Send this invoice to",
 			"ALREADY_SENT": "This invoice has already been sent to"
 		},
 		"VIEW": {
 			"FROM": "FROM",
 			"TO": "TO"
+		},
+		"DOWNLOAD": {
+			"CONFIRMATION": "Download this invoice ?",
+			"INVOICE_DOWNLOAD": "Invoice downloaded"
+		},
+		"EMAIL": {
+			"EMAIL_INVOICE": "Send this invoice by email ?",
+			"EMAIL_SENT": "Email Sent"
 		}
 	},
 	"HEADER": {
@@ -1190,9 +1212,7 @@
 	"HELP_PAGE": {
 		"HELP": "Помощ",
 		"KNOWLEDGE_BASES": "Knowledge bases",
-		"CHOSE_ICON": "Chose icon to set",
-		"EDIT_DESCRIPTION": "edit description",
-		"EDIT_NAME": "edit name"
+		"CHOSE_ICON": "Chose icon to set"
 	},
 	"ABOUT_PAGE": {
 		"ABOUT": "За нас"
@@ -1415,7 +1435,8 @@
 		"ENTER_POSITIVE_NUMBER": "Please enter positive number!"
 	},
 	"APPOINTMENTS_PAGE": {
-		"ADD_APPOINTMENT": "Add Appointment"
+		"ADD_APPOINTMENT": "Add Appointment",
+		"DURATION_ERROR": "Selected Duration is not valid"
 	},
 	"EVENT_TYPE_PAGE": {
 		"EVENT_TYPE": "Event Types",
@@ -1432,6 +1453,8 @@
 	"PUBLIC_APPOINTMENTS": {
 		"BOOK_APPOINTMENTS": "Book an appointment",
 		"SELECT_EVENT_TYPES": "Please select an event type",
-		"PICK_DATETIME": "Pick a date and time"
+		"PICK_DATETIME": "Pick a date and time",
+		"DURATION": "Duration:",
+		"EVENT_TYPE": "Event Type:"
 	}
 }

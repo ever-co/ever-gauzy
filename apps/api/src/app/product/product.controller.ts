@@ -8,7 +8,7 @@ import {
 	Param,
 	HttpCode,
 	UseGuards,
-	Delete
+	Delete,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
@@ -36,16 +36,16 @@ export class ProductController extends CrudController<Product> {
 	}
 
 	@ApiOperation({
-		summary: 'Find all products'
+		summary: 'Find all products',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found products',
-		type: Product
+		type: Product,
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@Get()
 	async findAllProducts(): Promise<IPagination<Product>> {
@@ -55,12 +55,12 @@ export class ProductController extends CrudController<Product> {
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
+		description: 'The record has been successfully created.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
@@ -72,16 +72,16 @@ export class ProductController extends CrudController<Product> {
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		description: 'The record has been successfully edited.',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+			'Invalid input, The response body may contain clues as to what went wrong',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -95,11 +95,11 @@ export class ProductController extends CrudController<Product> {
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
-		description: 'The record has been successfully deleted'
+		description: 'The record has been successfully deleted',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Record not found',
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')

@@ -10,7 +10,10 @@
 }
 
 .sidebar-button {
-  margin-bottom: 10px;
+  height: 30px;
+  width: 30px;
+  padding: 5px !important;
+  margin-left: 5px;
 }
 
 .add-base-field {
@@ -34,4 +37,15 @@
 .add-icon-field {
   flex-direction: row;
   display: flex;
+}
+
+.add-icon {
+  margin-left: 10px;
+  margin-top: 7px;
+  color: gray;
+}
+
+.ck-editor {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }

@@ -6,3 +6,8 @@ export interface EmailTemplate extends IBaseEntityModel {
 	hbs: string;
 	languageCode: string;
 }
+
+export interface EmailTemplateFindInput extends IBaseEntityModel {
+	name?: string;
+	languageCode?: string;
+}

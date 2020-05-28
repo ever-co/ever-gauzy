@@ -6,6 +6,14 @@ const routes: Routes = [
 	{
 		path: '',
 		component: DailyComponent
+	},
+	{
+		path: ':startDate',
+		component: DailyComponent
+	},
+	{
+		path: ':endDate',
+		component: DailyComponent
 	}
 ];
 
