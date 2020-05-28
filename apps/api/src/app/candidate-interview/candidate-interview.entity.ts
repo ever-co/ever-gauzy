@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateInterview,
 	ICandidateFeedback,
-	ICandidateInterviewers,
+	ICandidateInterviewers
 } from '@gauzy/models';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
@@ -25,13 +25,13 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 
 	@ManyToOne((type) => CandidateInterviewers)
 	@JoinTable({
-		name: 'candidate_interviewers',
+		name: 'candidate_interviewers'
 	})
 	interviewers?: ICandidateInterviewers[];
 
 	@ManyToOne((type) => CandidateFeedback)
 	@JoinTable({
-		name: 'candidate_feedbacks',
+		name: 'candidate_feedbacks'
 	})
 	feedbacks?: ICandidateFeedback[];
 
