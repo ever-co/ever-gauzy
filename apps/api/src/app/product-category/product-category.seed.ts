@@ -1,7 +1,8 @@
 import { Connection } from 'typeorm';
 import { Organization } from '@gauzy/models';
 import { ProductCategory } from './product-category.entity';
-import { environment as env } from '@env-api/environment';
+import * as seed from './product-types.seed.json';
+import * as faker from 'faker';
 
 export const createDefaultProductCategories = async (
 	connection: Connection,
@@ -10,11 +11,15 @@ export const createDefaultProductCategories = async (
 	const seedProductCategories = [];
 
 	organizations.forEach(async (organization) => {
-		env.defaultProductCategories.forEach((seedProductCatery) => {
+		let image = faker.image.abstract();
+		seed.forEach(async (seedProductCatery) => {
 			const newCategory = new ProductCategory();
+			image =
+				faker.image[seedProductCatery.fakerImageCategory]() ||
+				faker.image.abstract();
 			newCategory.name = seedProductCatery.name;
 			newCategory.description = seedProductCatery.description;
-			newCategory.imageUrl = seedProductCatery.imageUrl;
+			newCategory.imageUrl = image;
 			newCategory.organization = organization;
 			seedProductCategories.push(newCategory);
 		});
