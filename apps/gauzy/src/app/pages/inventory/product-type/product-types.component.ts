@@ -1,9 +1,5 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
-import {
-	ProductTypeTranslatable,
-	Organization,
-	ProductTypeTranslated,
-} from '@gauzy/models';
+import { Organization, ProductTypeTranslated } from '@gauzy/models';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';

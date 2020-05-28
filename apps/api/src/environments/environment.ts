@@ -7,7 +7,6 @@ import {
 	CurrenciesEnum,
 	DefaultValueDateTypeEnum,
 	LanguagesEnum,
-	ProductTypesIconsEnum,
 } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 

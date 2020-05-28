@@ -7,7 +7,6 @@ import {
 	ProductOption,
 	ProductVariant,
 	Tag,
-	ProductTypeTranslatable,
 	ProductTypeTranslated,
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
