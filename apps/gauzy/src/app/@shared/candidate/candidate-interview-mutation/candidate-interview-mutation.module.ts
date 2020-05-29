@@ -1,4 +1,4 @@
-import { CandidateInterviewFormComponent } from './../candidate-interview-form/candidate-interview-form.component';
+import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';

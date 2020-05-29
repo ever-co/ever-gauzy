@@ -9,9 +9,9 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
-import { EmployeesService } from '../../../@core/services';
+import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
-import { CandidateCalendarInfoComponent } from '../candidate-calendar-info/candidate-calendar-info.component';
+import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
 
 @Component({
 	selector: 'ga-candidate-interview-form',
