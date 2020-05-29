@@ -1,0 +1,116 @@
+<!-- // 0 Left selection bar outside two handles -->
+<span
+	ng5SliderElement
+	#leftOuterSelectionBar
+	class="ng5-slider-span ng5-slider-bar-wrapper ng5-slider-left-out-selection"
+>
+	<span class="ng5-slider-span ng5-slider-bar"></span>
+</span>
+<!-- // 1 Right selection bar outside two handles -->
+<span
+	ng5SliderElement
+	#rightOuterSelectionBar
+	class="ng5-slider-span ng5-slider-bar-wrapper ng5-slider-right-out-selection"
+>
+	<span class="ng5-slider-span ng5-slider-bar"></span>
+</span>
+<!-- // 2 The whole slider bar -->
+<span
+	ng5SliderElement
+	#fullBar
+	[class.ng5-slider-transparent]="fullBarTransparentClass"
+	class="ng5-slider-span ng5-slider-bar-wrapper ng5-slider-full-bar"
+>
+	<span class="ng5-slider-span ng5-slider-bar"></span>
+</span>
+<!-- // 3 Selection bar between two handles -->
+<span
+	ng5SliderElement
+	#selectionBar
+	[class.ng5-slider-draggable]="selectionBarDraggableClass"
+	class="ng5-slider-span ng5-slider-bar-wrapper ng5-slider-selection-bar"
+>
+	<span
+		class="ng5-slider-span ng5-slider-bar ng5-slider-selection"
+		[ngStyle]="barStyle"
+	></span>
+</span>
+<!-- // 4 Low slider handle -->
+<span
+	ng5SliderHandle
+	#minHandle
+	class="ng5-slider-span ng5-slider-pointer ng5-slider-pointer-min"
+	[ngStyle]="minPointerStyle"
+></span>
+<!-- // 5 High slider handle -->
+<span
+	ng5SliderHandle
+	#maxHandle
+	[style.display]="range ? 'inherit' : 'none'"
+	class="ng5-slider-span ng5-slider-pointer ng5-slider-pointer-max"
+	[ngStyle]="maxPointerStyle"
+></span>
+<!-- // 6 Floor label -->
+<span
+	ng5SliderLabel
+	#floorLabel
+	class="ng5-slider-span ng5-slider-bubble ng5-slider-limit ng5-slider-floor"
+></span>
+<!-- // 7 Ceiling label -->
+<span
+	ng5SliderLabel
+	#ceilLabel
+	class="ng5-slider-span ng5-slider-bubble ng5-slider-limit ng5-slider-ceil"
+></span>
+<!-- // 8 Label above the low slider handle -->
+<span
+	ng5SliderLabel
+	#minHandleLabel
+	class="ng5-slider-span ng5-slider-bubble ng5-slider-model-value"
+></span>
+<!-- // 9 Label above the high slider handle -->
+<span
+	ng5SliderLabel
+	#maxHandleLabel
+	class="ng5-slider-span ng5-slider-bubble ng5-slider-model-high"
+></span>
+<!-- // 10 Combined range label when the slider handles are close ex. 15 - 17 -->
+<span
+	ng5SliderLabel
+	#combinedLabel
+	class="ng5-slider-span ng5-slider-bubble ng5-slider-combined"
+></span>
+<!-- // 11 The ticks -->
+<span
+	ng5SliderElement
+	#ticksElement
+	[hidden]="!showTicks"
+	[class.ng5-slider-ticks-values-under]="ticksUnderValuesClass"
+	class="ng5-slider-ticks"
+>
+	<span
+		*ngFor="let t of ticks"
+		class="ng5-slider-tick"
+		[ngClass]="{ 'ng5-slider-selected': t.selected }"
+		[ngStyle]="t.style"
+	>
+		<ng5-slider-tooltip-wrapper
+			[template]="tooltipTemplate"
+			[tooltip]="t.tooltip"
+			[placement]="t.tooltipPlacement"
+		></ng5-slider-tooltip-wrapper>
+		<ng5-slider-tooltip-wrapper
+			*ngIf="t.value != null"
+			class="ng5-slider-span ng5-slider-tick-value"
+			[template]="tooltipTemplate"
+			[tooltip]="t.valueTooltip"
+			[placement]="t.valueTooltipPlacement"
+			[content]="t.value"
+		></ng5-slider-tooltip-wrapper>
+		<span
+			*ngIf="t.legend != null"
+			class="ng5-slider-span ng5-slider-tick-legend"
+			[innerHTML]="t.legend"
+		></span>
+	</span>
+</span>

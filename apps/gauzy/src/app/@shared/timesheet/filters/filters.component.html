@@ -41,7 +41,7 @@
 			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
 		</div>
 	</div>
-	<div class="col ml-auto">
+	<div class="col-auto ml-auto">
 		<div class="row align-items-end">
 			<div
 				class="col-auto ml-auto pr-1"
@@ -57,80 +57,66 @@
 				>
 				</ga-employee-multi-select>
 			</div>
-			<div
-				class="col-auto pl-1"
-				*ngIf="
-					hasLogTypeFilter ||
-					hasSourceFilter ||
-					hasActivityLevelFilter
-				"
-			>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasSourceFilter">
+				<nb-select
+					multiple
+					placeholder="Select Source"
+					[(selected)]="filters.source"
+					(selectedChange)="triggerFilterChange()"
+				>
+					<nb-option
+						*ngFor="let source of TimeLogSourceEnum | keyvalue"
+						[value]="source.key"
+					>
+						{{ source.value }}</nb-option
+					>
+				</nb-select>
+			</div>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasActivityLevelFilter">
 				<button
+					class="activity-level-filter"
 					nbButton
-					status="primary"
+					status="basic"
+					outline
 					[nbPopover]="templateRef"
 					nbPopoverPlacement="bottom"
 				>
-					Filters
+					Select Activity Level
+					<nb-icon icon="chevron-down-outline"></nb-icon>
 				</button>
 				<ng-template #templateRef>
-					<div class="p-3">
-						<div class="form-group" *ngIf="hasLogTypeFilter">
-							<nb-select
-								class="w-100"
-								multiple
-								placeholder="Select Log Type"
-								[(selected)]="filters.logType"
-								(selectedChange)="triggerFilterChange()"
-							>
-								<nb-option
-									*ngFor="
-										let logType of TimeLogType | keyvalue
-									"
-									[value]="logType.key"
-								>
-									{{ logType.value }}</nb-option
-								>
-							</nb-select>
-						</div>
-						<div class="form-group" *ngIf="hasSourceFilter">
-							<nb-select
-								class="w-100"
-								multiple
-								placeholder="Select Source"
-								[(selected)]="filters.source"
-								(selectedChange)="triggerFilterChange()"
-							>
-								<nb-option
-									*ngFor="
-										let source of TimeLogSourceEnum
-											| keyvalue
-									"
-									[value]="source.key"
-								>
-									{{ source.value }}</nb-option
-								>
-							</nb-select>
-						</div>
-						<div class="form-group" *ngIf="hasActivityLevelFilter">
-							<nb-select
-								class="w-100"
-								placeholder="Select Activity Level"
-								[(selected)]="filters.activityLevel"
-								(selectedChange)="triggerFilterChange()"
-							>
-								<nb-option
-									*ngFor="
-										let logType of TimeLogType | keyvalue
-									"
-									[value]="logType.key"
-								>
-									{{ logType.value }}</nb-option
-								>
-							</nb-select>
-						</div>
+					<div class="p-3 slider-dropdown">
+						<ngx-slider
+							[value]="activityLevel?.start"
+							[highValue]="activityLevel?.end"
+							(userChange)="setActivityLevel($event)"
+							[options]="sliderOptions"
+						></ngx-slider>
 					</div>
 				</ng-template>
+				<!-- <nb-select
+					placeholder="Select Activity Level"
+					[(selected)]="filters.activityLevel"
+					(selectedChange)="triggerFilterChange()"
+				>
+					<nb-option [value]=""> All </nb-option>
+					<nb-option *ngFor="let logType of TimeLogType | keyvalue" [value]="logType.key"> {{ logType.value }}</nb-option>
+				</nb-select> -->
+			</div>
+			<div class="col-auto ml-auto pr-1" *ngIf="hasLogTypeFilter">
+				<nb-select
+					multiple
+					placeholder="Select Log Type"
+					[(selected)]="filters.logType"
+					(selectedChange)="triggerFilterChange()"
+				>
+					<nb-option
+						*ngFor="let logType of TimeLogType | keyvalue"
+						[value]="logType.key"
+					>
+						{{ logType.value }}</nb-option
+					>
+				</nb-select>
 			</div>
 		</div>
 	</div>

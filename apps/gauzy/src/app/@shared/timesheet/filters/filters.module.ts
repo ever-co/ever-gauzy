@@ -10,6 +10,7 @@ import {
 	NbDatepickerModule,
 	NbIconModule
 } from '@nebular/theme';
+import { NgxSliderModule } from '../../slider/slider.module';
 
 @NgModule({
 	declarations: [FiltersComponent],
@@ -22,7 +23,8 @@ import {
 		NbPopoverModule,
 		NbSelectModule,
 		NbDatepickerModule,
-		NbIconModule
+		NbIconModule,
+		NgxSliderModule
 	]
 })
 export class FiltersModule {}

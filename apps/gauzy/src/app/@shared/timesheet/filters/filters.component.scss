@@ -1,3 +1,5 @@
+@import 'themes';
+$status: 'basic';
 :host {
   .filters {
     .form-control {
@@ -18,5 +20,63 @@
       right: 0;
       bottom: 0;
     }
+  }
+  .activity-level-filter {
+    background-color: nb-theme(select-outline-#{$status}-background-color);
+    border-color: nb-theme(select-outline-#{$status}-border-color);
+    color: nb-theme(select-outline-#{$status}-text-color);
+
+    &.placeholder {
+      color: nb-theme(select-outline-#{$status}-placeholder-text-color);
+    }
+    nb-icon {
+      color: nb-theme(select-outline-#{$status}-icon-color);
+    }
+
+    &:focus {
+      background-color: nb-theme(
+        select-outline-#{$status}-focus-background-color
+      );
+      border-color: nb-theme(select-outline-#{$status}-focus-border-color);
+    }
+    &:hover {
+      background-color: nb-theme(
+        select-outline-#{$status}-hover-background-color
+      );
+      border-color: nb-theme(select-outline-#{$status}-hover-border-color);
+    }
+
+    &[disabled] {
+      color: nb-theme(select-outline-#{$status}-disabled-text-color);
+      background-color: nb-theme(
+        select-outline-#{$status}-disabled-background-color
+      );
+      border-color: nb-theme(select-outline-#{$status}-disabled-border-color);
+
+      nb-icon {
+        color: nb-theme(select-outline-#{$status}-disabled-icon-color);
+      }
+    }
+
+    &.bottom,
+    &.top {
+      border-color: nb-theme(select-outline-#{$status}-open-border-color);
+    }
+
+    &.top {
+      border-top-color: nb-theme(
+        select-outline-#{$status}-adjacent-border-color
+      );
+    }
+    &.bottom {
+      border-bottom-color: nb-theme(
+        select-outline-#{$status}-adjacent-border-color
+      );
+    }
+  }
+}
+::ng-deep {
+  .slider-dropdown {
+    width: 300px;
   }
 }

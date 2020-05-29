@@ -99,6 +99,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 						{ organizationId: request.organizationId }
 					);
 				}
+				if (request.activityLevel) {
+					// qb.andWhere('"overall" BETWEEN :start AND :end', request.activityLevel);
+				}
 				if (request.source) {
 					if (request.source instanceof Array) {
 						qb.andWhere('"source" IN (:...source)', {
