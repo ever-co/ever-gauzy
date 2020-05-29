@@ -26,7 +26,6 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 
 	selectedVendor: IOrganizationVendor;
 	tags: Tag[] = [];
-	allVendors: any[];
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -138,7 +137,6 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 		if (res) {
 			this.vendors = res.items;
 		}
-		this.allVendors = res.items;
 	}
 
 	selectedTagsEvent(ev) {
