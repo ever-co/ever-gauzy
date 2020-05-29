@@ -9,7 +9,7 @@ import {
 	createConnection,
 	getRepository,
 	ConnectionOptions,
-	getConnection,
+	getConnection
 } from 'typeorm';
 import chalk from 'chalk';
 import { environment as env } from '@env-api/environment';
@@ -21,32 +21,32 @@ import {
 	createDefaultSuperAdminUsers,
 	createDefaultUsers,
 	createRandomSuperAdminUsers,
-	createRandomUsers,
+	createRandomUsers
 } from '../../user/user.seed';
 import { Employee } from '../../employee/employee.entity';
 import {
 	createDefaultEmployees,
-	createRandomEmployees,
+	createRandomEmployees
 } from '../../employee/employee.seed';
 import { Organization } from '../../organization/organization.entity';
 import {
 	createDefaultOrganizations,
-	createRandomOrganizations,
+	createRandomOrganizations
 } from '../../organization/organization.seed';
 import { Income } from '../../income/income.entity';
 import {
 	createDefaultIncomes,
-	createRandomIncomes,
+	createRandomIncomes
 } from '../../income/income.seed';
 import { Expense } from '../../expense/expense.entity';
 import {
 	createDefaultExpenses,
-	createRandomExpenses,
+	createRandomExpenses
 } from '../../expense/expense.seed';
 import { EmployeeSetting } from '../../employee-setting/employee-setting.entity';
 import {
 	createDefaultUsersOrganizations,
-	createRandomUsersOrganizations,
+	createRandomUsersOrganizations
 } from '../../user-organization/user-organization.seed';
 import { UserOrganization } from '../../user-organization/user-organization.entity';
 import { createCountries } from '../../country/country.seed';
@@ -58,16 +58,13 @@ import { RolePermissions } from '../../role-permissions/role-permissions.entity'
 import { createRolePermissions } from '../../role-permissions/role-permissions.seed';
 import {
 	createDefaultTenants,
-	createRandomTenants,
+	createRandomTenants
 } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
-import {
-	createEmailTemplates,
-	createDefaultEmailTemplates,
-} from '../../email-template/email-template.seed';
+import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
-	seedRandomEmploymentTypes,
+	seedRandomEmploymentTypes
 } from '../../organization/employment-types.seed';
 import { OrganizationEmploymentType } from '../../organization-employment-type/organization-employment-type.entity';
 import { Equipment } from '../../equipment';
@@ -78,7 +75,7 @@ import { createDefaultApprovalPolicyForOrg } from '../../approval-policy/approva
 import { createExpenseCategories } from '../../expense-categories/expense-categories.seed';
 import {
 	createOrganizationVendors,
-	createRandomOrganizationVendors,
+	createRandomOrganizationVendors
 } from '../../organization-vendors/organization-vendors.seed';
 import { Invoice } from '../../invoice/invoice.entity';
 import { InvoiceItem } from '../../invoice-item/invoice-item.entity';
@@ -103,7 +100,7 @@ import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import {
 	createDefaultCandidates,
-	createRandomCandidates,
+	createRandomCandidates
 } from '../../candidate/candidate.seed';
 import { CandidateSource } from '../../candidate-source/candidate-source.entity';
 import { Tag } from './../../tags/tag.entity';
@@ -122,16 +119,16 @@ import { CandidateDocument } from '../../candidate-documents/candidate-documents
 import { CandidateSkill } from '../../candidate-skill/candidate-skill.entity';
 import {
 	createCandidateSources,
-	createRandomCandidateSources,
+	createRandomCandidateSources
 } from '../../candidate-source/candidate-source.seed';
 import {
 	createCandidateDocuments,
-	createRandomCandidateDocuments,
+	createRandomCandidateDocuments
 } from '../../candidate-documents/candidate-documents.seed';
 import { CandidateFeedback } from '../../candidate-feedbacks/candidate-feedbacks.entity';
 import {
 	createCandidateFeedbacks,
-	createRandomCandidateFeedbacks,
+	createRandomCandidateFeedbacks
 } from '../../candidate-feedbacks/candidate-feedbacks.seed';
 import { createDefaultIntegrationTypes } from '../../integration/integration-type.seed';
 import { createDefaultIntegrations } from '../../integration/integration.seed';
@@ -196,7 +193,7 @@ const allEntities = [
 	ProductVariantPrice,
 	ProductOption,
 	CandidateDocument,
-	CandidateFeedback,
+	CandidateFeedback
 ];
 
 @Injectable()
@@ -219,7 +216,7 @@ export class SeedDataService {
 
 				this.connection = await createConnection({
 					...env.database,
-					entities: allEntities,
+					entities: allEntities
 				} as ConnectionOptions);
 			} catch (error) {
 				this.handleError(error, 'Unable to connect to database');
@@ -323,19 +320,19 @@ export class SeedDataService {
 		const {
 			adminUsers,
 			defaultEmployeeUsers,
-			defaultCandidateUsers,
+			defaultCandidateUsers
 		} = await createDefaultUsers(this.connection, roles, tenant);
 
 		await createDefaultUsersOrganizations(this.connection, {
 			organizations: defaultOrganizations,
-			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers],
+			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
 		});
 
 		//User level data that needs connection, tenant, organization, role, users
 		const defaultEmployees = await createDefaultEmployees(this.connection, {
 			tenant,
 			org: defaultOrganizations[0],
-			users: defaultEmployeeUsers,
+			users: defaultEmployeeUsers
 		});
 
 		const defaultCandidates = await createDefaultCandidates(
@@ -343,7 +340,7 @@ export class SeedDataService {
 			{
 				tenant,
 				org: defaultOrganizations[0],
-				users: [...defaultCandidateUsers],
+				users: [...defaultCandidateUsers]
 			}
 		);
 
@@ -360,14 +357,14 @@ export class SeedDataService {
 
 		await createDefaultIncomes(this.connection, {
 			org: defaultOrganizations[0],
-			employees: defaultEmployees,
+			employees: defaultEmployees
 		});
 
 		await createDefaultExpenses(this.connection, {
 			org: defaultOrganizations[0],
 			employees: defaultEmployees,
 			categories,
-			organizationVendors,
+			organizationVendors
 		});
 
 		await seedDefaultEmploymentTypes(
@@ -378,19 +375,17 @@ export class SeedDataService {
 
 		await createDefaultTimeOffPolicy(this.connection, {
 			org: defaultOrganizations[0],
-			employees: defaultEmployees,
+			employees: defaultEmployees
 		});
 
 		await createDefaultApprovalPolicyForOrg(this.connection, {
-			orgs: defaultOrganizations,
+			orgs: defaultOrganizations
 		});
 
 		const integrationTypes = await createDefaultIntegrationTypes(
 			this.connection
 		);
 		await createDefaultIntegrations(this.connection, integrationTypes);
-
-		await createEmailTemplates(this.connection, defaultOrganizations);
 	}
 
 	/**
@@ -503,8 +498,6 @@ export class SeedDataService {
 		);
 
 		await createSkills(this.connection);
-
-		await createEmailTemplates(this.connection, tenantOrganizationsMap);
 	}
 
 	/**
@@ -516,7 +509,7 @@ export class SeedDataService {
 			(await (await this.connection).entityMetadatas).forEach((entity) =>
 				entities.push({
 					name: entity.name,
-					tableName: entity.tableName,
+					tableName: entity.tableName
 				})
 			);
 			return entities;

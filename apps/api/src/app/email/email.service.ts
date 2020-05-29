@@ -75,11 +75,28 @@ export class EmailService extends CrudService<IEmail> {
 		render: (view, locals) => {
 			return new Promise(async (resolve, reject) => {
 				view = view.replace('\\', '/');
-				const emailTemplate = await this.emailTemplateRepository.find({
-					name: view,
-					languageCode: locals.locale || 'en',
-					organization: { id: locals.organizationId }
-				});
+				let emailTemplate: EmailTemplate[];
+				// Find email template for customized for given organization
+				const customEmailTemplate = await this.emailTemplateRepository.find(
+					{
+						name: view,
+						languageCode: locals.locale || 'en',
+						organization: { id: locals.organizationId }
+					}
+				);
+				emailTemplate = customEmailTemplate;
+				// if no email template present for given organization, use default email template
+				if (!customEmailTemplate || customEmailTemplate.length < 1) {
+					const defaultEmailTemplate = await this.emailTemplateRepository.find(
+						{
+							name: view,
+							languageCode: locals.locale || 'en',
+							organization: { id: IsNull() }
+						}
+					);
+					emailTemplate = defaultEmailTemplate;
+				}
+
 				if (!emailTemplate || emailTemplate.length < 1) {
 					return resolve('');
 				}

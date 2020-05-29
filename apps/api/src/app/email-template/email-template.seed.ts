@@ -40,31 +40,6 @@ export const createDefaultEmailTemplates = async (
 	}
 };
 
-export const createEmailTemplates = async (
-	connection: Connection,
-	organizations: Organization[] | Map<Tenant, Organization[]>
-): Promise<any> => {
-	const files = [];
-	const FOLDER_PATH = path.resolve(
-		'.',
-		'apps',
-		'api',
-		'src',
-		'app',
-		'core',
-		'seeds',
-		'data',
-		'default-email-templates'
-	);
-
-	findInDir(FOLDER_PATH, files);
-	console.log(files);
-
-	const organizationList: Organization[] = getOrganizations(organizations);
-
-	await fileToTemplate(connection, files, organizationList);
-};
-
 function findInDir(dir, fileList = []) {
 	const files = fs.readdirSync(dir);
 
@@ -80,28 +55,11 @@ function findInDir(dir, fileList = []) {
 	});
 }
 
-const fileToTemplate = async (
-	connection,
-	files,
-	organizations?: Organization[]
-) => {
-	if (organizations) {
-		// seed email templates for each organization
-		for (const organization of organizations) {
-			for (const file of files) {
-				const template = await pathToEmailTemplate(file, organization);
-				if (template && template.hbs) {
-					await insertTemplate(connection, template);
-				}
-			}
-		}
-	} else {
-		// seed default email templates
-		for (const file of files) {
-			const template = await pathToEmailTemplate(file, null);
-			if (template && template.hbs) {
-				await insertTemplate(connection, template);
-			}
+const fileToTemplate = async (connection, files) => {
+	for (const file of files) {
+		const template = await pathToEmailTemplate(file);
+		if (template && template.hbs) {
+			await insertTemplate(connection, template);
 		}
 	}
 };
@@ -119,8 +77,7 @@ const insertTemplate = async (
 };
 
 const pathToEmailTemplate = async (
-	fullPath: string,
-	organization: Organization
+	fullPath: string
 ): Promise<EmailTemplate> => {
 	try {
 		const template = new EmailTemplate();
@@ -132,7 +89,6 @@ const pathToEmailTemplate = async (
 		template.name = `${
 			templatePath[templatePath.length - 3]
 		}/${fileNameWithoutExtension}`;
-		template.organization = organization;
 		const fileContent = fs.readFileSync(fullPath, 'utf8');
 
 		switch (fileExtension) {
@@ -157,12 +113,4 @@ const pathToEmailTemplate = async (
 		console.log('Something went wrong', path, error);
 		return;
 	}
-};
-
-const getOrganizations = (
-	organizations: Organization[] | Map<Tenant, Organization[]>
-): Organization[] => {
-	return Array.isArray(organizations)
-		? organizations
-		: Array.from(organizations.values()).flat();
 };
