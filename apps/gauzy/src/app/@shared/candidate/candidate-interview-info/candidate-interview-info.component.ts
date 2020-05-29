@@ -12,7 +12,7 @@ import { first } from 'rxjs/operators';
 @Component({
 	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
-	styleUrls: ['./candidate-interview-info.component.scss'],
+	styleUrls: ['./candidate-interview-info.component.scss']
 })
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -52,8 +52,8 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 					),
 					editData: this.currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: this.currentInterview.id,
-				},
+					interviewId: this.currentInterview.id
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
