@@ -144,7 +144,7 @@ export class EmailService extends CrudService<IEmail> {
 					? (inviterUser.firstName || '') +
 					  (inviterUser.lastName || '')
 					: '',
-				organizationName: organization && organization.name,
+				organizationName: organization.name,
 				organizationId: organization.id,
 				generatedUrl:
 					originUrl +
