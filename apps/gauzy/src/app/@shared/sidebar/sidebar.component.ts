@@ -2,7 +2,7 @@ import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { TreeComponent } from 'angular-tree-component';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { helpCenterMenuList } from '@gauzy/models';
+import { helpCenterMenuList, IHelpCenter } from '@gauzy/models';
 import { isEqual } from './delete-node';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -25,8 +25,6 @@ export class SidebarComponent extends TranslationBaseComponent
 		super(translateService);
 	}
 	form: FormGroup;
-	// public icons = ['🔥', '📎', '🌐', '🔎'];
-	// public chosenIcon = '';
 	public articleName = 'Chose any article';
 	public articleDesc = '';
 	public articleData: SafeHtml;
@@ -35,48 +33,13 @@ export class SidebarComponent extends TranslationBaseComponent
 	public showArticleButton = false;
 	public showCategoryButton = false;
 	public nodeId = 0;
-	// public flag = 0;
+	public chosenCategory = false;
+	public chosenArticle = false;
 	public isVisibleAdd = false;
 	public isVisibleEdit = false;
 	public iconsShow = false;
-	public isChosenArticle = false;
-	public value = '';
+	public isChosenNode = false;
 	public nodes = helpCenterMenuList;
-	// options: ITreeOptions = {
-	// 	isExpandedField: 'expanded',
-	// 	actionMapping: {
-	// 		mouse: {
-	// 			click: (tree, node, $event) => {
-	// 				this.nodeId = node.data.id;
-	// 				this.isChosenArticle = true;
-	// 				if (node.data.flag === 'article') {
-	// 					this.articleDesc = node.data.description;
-	// 					this.articleName = node.data.name;
-	// 					this.articleData = node.data.data as SafeHtml;
-	// 					this.loadFormData();
-	// 				} else {
-	// 					this.articleName = 'Chose any article';
-	// 				}
-	// 				if (node.data.privacy === 'public') {
-	// 					this.showPrivateButton = true;
-	// 					this.showPublicButton = false;
-	// 				} else {
-	// 					this.showPrivateButton = false;
-	// 					this.showPublicButton = true;
-	// 				}
-	// 			},
-	// 		},
-	// 	},
-	// 	allowDrag: (node) => {
-	// 		return true;
-	// 	},
-	// 	allowDrop: (node) => {
-	// 		return true;
-	// 	},
-	// 	animateExpand: true,
-	// 	displayField: 'name',
-	// };
-
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
@@ -92,27 +55,28 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	addName(event: any, key: number) {
-		this.isChosenArticle = false;
-		this.value = event.target.value;
+		// this.isChosenNode = false;
 		if (key !== 1) {
 			this.nodes.push({
-				name: `${this.value}`,
+				name: `${event.target.value}`,
+				icon: 'book-open-outline',
 				flag: 'category',
-				privacy: 'public',
+				privacy: 'eye-outline',
 				children: []
 			});
 			console.log('categ');
 		} else {
 			this.nodes.push({
-				name: `${this.value}`,
+				name: `${event.target.value}`,
+				icon: 'book-open-outline',
 				flag: 'article',
-				privacy: 'public',
+				privacy: 'eye-outline',
 				description: '',
 				data: ''
 			});
 		}
 		// await this.helpService.create({
-		// 	name: `${this.value}`,
+		// 	name: `${event.target.value}`,
 		//  description: '',
 		// 	data: '',
 		// 	children: [],
@@ -125,16 +89,20 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 	onNodeClicked(node: any) {
 		this.nodeId = node.data.id;
-		this.isChosenArticle = true;
+		this.isChosenNode = true;
 		if (node.data.flag === 'article') {
 			this.articleDesc = node.data.description;
 			this.articleName = node.data.name;
 			this.articleData = node.data.data as SafeHtml;
+			this.chosenCategory = false;
+			this.chosenArticle = true;
 			this.loadFormData();
 		} else {
 			this.articleName = 'Chose any article';
+			this.chosenCategory = true;
+			this.chosenArticle = false;
 		}
-		if (node.data.privacy === 'public') {
+		if (node.data.privacy === 'eye-outline') {
 			this.showPrivateButton = true;
 			this.showPublicButton = false;
 		} else {
@@ -146,73 +114,58 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.isVisibleAdd = false;
 	}
 	onCloseInput() {
-		this.value = '';
 		this.showArticleButton = false;
 		this.showCategoryButton = false;
 	}
 
-	// addIcon() {
-	// 	this.iconsShow = true;
-	// 	this.flag = 0;
-	// 	this.chosenIcon = '';
-	// }
+	addIcon() {
+		this.iconsShow = true;
+	}
 
-	// onIconset(icon) {
-	// 	const someNode = this.tree.treeModel.getNodeById(this.nodeId).data;
-	// 	for (const i of this.icons) {
-	// 		if (someNode.name.indexOf(i) === -1) {
-	// 			this.flag += 1;
-	// 		} else {
-	// 			this.chosenIcon = i;
-	// 		}
-	// 	}
-	// 	if (this.flag === this.icons.length)
-	// 		someNode.name = `${icon} ${someNode.name}`;
-	// 	if (this.flag === this.icons.length - 1)
-	// 		someNode.name = someNode.name.replace(this.chosenIcon, icon);
-	// 	this.tree.treeModel.update();
-	// 	if (!someNode.children) {
-	// 		this.articleDesc = someNode.description;
-	// 		this.articleName = someNode.name;
-	// 	}
-	// 	this.iconsShow = false;
-	// }
+	onIconset(icon) {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		someNode.data.icon = icon;
+		this.tree.treeModel.update();
+		// if (!someNode.children) {
+		// 	this.articleDesc = someNode.description;
+		// 	this.articleName = someNode.name;
+		// }
+		this.iconsShow = false;
+	}
 
-	// removeIcon() {
-	// 	const someNode = this.tree.treeModel.getNodeById(this.nodeId).data;
-	// 	this.flag = 0;
-	// 	for (const i of this.icons) {
-	// 		if (someNode.name.indexOf(i) === -1) {
-	// 			this.flag += 1;
-	// 		} else {
-	// 			this.chosenIcon = i;
-	// 		}
-	// 	}
-	// 	if (this.flag === this.icons.length - 1) {
-	// 		someNode.name = someNode.name.slice(this.chosenIcon.length);
-	// 	}
-	// 	this.tree.treeModel.update();
-	// 	if (!someNode.children) {
-	// 		this.articleDesc = someNode.description;
-	// 		this.articleName = someNode.name;
-	// 	}
-	// 	this.iconsShow = false;
-	// }
+	onCloseIcon() {
+		this.iconsShow = false;
+	}
 
-	// makePrivate() {
-	// 	const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-	// 	someNode.hide();
-	// }
+	makePrivate() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		if (someNode.data.children) {
+			this.treeWalk(someNode.data.children, 'eye-off-outline');
+		}
+		someNode.data.privacy = 'eye-off-outline';
+		this.showPrivateButton = false;
+		this.showPublicButton = true;
+		this.tree.treeModel.update();
+	}
 
-	// makePublic() {
-	// 	const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-	// 	for (let i = 0; i < someNode.data.children.length; i++) {
-	// 		const newNode = this.tree.treeModel.getNodeById(
-	// 			someNode.data.children[i].id
-	// 		);
-	// 		newNode.show();
-	// 	}
-	// }
+	makePublic() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		if (someNode.data.children) {
+			this.treeWalk(someNode.data.children, 'eye-outline');
+		}
+		someNode.data.privacy = 'eye-outline';
+		this.showPrivateButton = true;
+		this.showPublicButton = false;
+		this.tree.treeModel.update();
+	}
+	treeWalk(nodes: IHelpCenter[], newPrivacy: string) {
+		for (let i = 0; i < nodes.length; i++) {
+			if (nodes[i].children) {
+				this.treeWalk(nodes[i].children, newPrivacy);
+			}
+			nodes[i].privacy = newPrivacy;
+		}
+	}
 
 	editNameCategory(event: any) {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
@@ -232,7 +185,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		isEqual(this.nodes, this.nodeId);
 		//await this.helpService.delete(`${this.nodeId}`);
 		this.tree.treeModel.update();
-		this.isChosenArticle = false;
+		this.isChosenNode = false;
 		this.articleName = 'Chose any article';
 	}
 

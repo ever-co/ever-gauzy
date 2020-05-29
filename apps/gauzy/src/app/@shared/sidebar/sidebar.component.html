@@ -82,13 +82,19 @@
 						[class.node-content-wrapper-focused]="node.isFocused"
 						(click)="onNodeClicked(node)"
 					>
-						<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+						<nb-icon
+							class="mr-1"
+							icon="{{ node.data.icon }}"
+						></nb-icon>
 						<span
 							[class]="node.data.className"
 							[class.title]="true"
 							>{{ node.data.name }}</span
 						>
-						<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+						<nb-icon
+							class="mr-1"
+							icon="{{ node.data.privacy }}"
+						></nb-icon>
 					</div>
 					<tree-node-children
 						[node]="node"
@@ -99,17 +105,17 @@
 		</tree-root>
 	</nb-card-body>
 	<nb-card-body>
-		<!-- <button
-			[disabled]="!isChosenArticle"
+		<button
+			[disabled]="!isChosenNode"
 			class="main-buttons"
 			(click)="addIcon()"
 			status="success"
 			nbButton
 		>
 			{{ 'BUTTONS.CHOOSE_ICON' | translate }}
-		</button> -->
+		</button>
 		<button
-			[disabled]="!isChosenArticle"
+			[disabled]="!isChosenNode"
 			class="main-buttons"
 			(click)="onEditArticle()"
 			status="warning"
@@ -118,7 +124,7 @@
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
-			[disabled]="!isChosenArticle"
+			[disabled]="!isChosenNode"
 			class="main-buttons"
 			(click)="onDeleteArticle()"
 			status="danger"
@@ -127,7 +133,7 @@
 			{{ 'BUTTONS.DELETE' | translate }}
 		</button>
 		<button
-			*ngIf="isChosenArticle && showPrivateButton"
+			*ngIf="isChosenNode && showPrivateButton"
 			class="main-buttons"
 			(click)="makePrivate()"
 			status="primary"
@@ -136,7 +142,7 @@
 			{{ 'BUTTONS.MAKE_PRIVATE' | translate }}
 		</button>
 		<button
-			*ngIf="isChosenArticle && showPublicButton"
+			*ngIf="isChosenNode && showPublicButton"
 			class="main-buttons"
 			(click)="makePublic()"
 			status="primary"
@@ -144,37 +150,43 @@
 		>
 			{{ 'BUTTONS.MAKE_PUBLIC' | translate }}
 		</button>
-		<div *ngIf="iconsShow && isChosenArticle">
+		<div *ngIf="iconsShow && isChosenNode">
 			<p>{{ 'HELP_PAGE.CHOSE_ICON' | translate }}</p>
 			<div class="add-icon-field">
-				<div *ngFor="let icon of icons">
-					<button
-						status="basic"
-						class="main-buttons"
-						(click)="onIconset(icon)"
-						nbButton
-					>
-						{{ icon }}
-					</button>
-				</div>
 				<button
 					class="main-buttons"
-					(click)="removeIcon()"
-					status="warning"
+					status="primary"
+					(click)="onIconset('book-open-outline')"
 					nbButton
 				>
-					{{ 'BUTTONS.REMOVE' | translate }}
+					<nb-icon class="mr-1" icon="book-open-outline"></nb-icon>
+				</button>
+				<button
+					class="main-buttons"
+					status="primary"
+					(click)="onIconset('alert-circle-outline')"
+					nbButton
+				>
+					<nb-icon class="mr-1" icon="alert-circle-outline"></nb-icon>
+				</button>
+				<button
+					class="main-buttons"
+					status="danger"
+					(click)="onCloseIcon()"
+					nbButton
+				>
+					<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 				</button>
 			</div>
 		</div>
-		<div *ngIf="isChosenArticle">
+		<div *ngIf="isChosenNode">
 			<h5>{{ articleName }}</h5>
 		</div>
-		<div *ngIf="!isVisibleEdit && showPrivateButton">
+		<div *ngIf="isChosenNode && !isVisibleEdit && chosenArticle">
 			<h6>{{ articleDesc }}</h6>
 			<div [innerHTML]="articleData"></div>
 		</div>
-		<div *ngIf="isVisibleEdit && !showPrivateButton" class="content-card">
+		<div *ngIf="isVisibleEdit && chosenCategory" class="content-card">
 			<p>Press enter to save category name</p>
 			<input
 				type="text"
@@ -185,7 +197,7 @@
 				nbInput
 			/>
 		</div>
-		<!-- <div *ngIf="isVisibleEdit && showPrivateButton" class="content-card">
+		<div *ngIf="isVisibleEdit && chosenArticle" class="content-card">
 			<form [formGroup]="form" (ngSubmit)="submit()">
 				<input
 					formControlName="name"
@@ -216,7 +228,7 @@
 					</div>
 				</div>
 				<button
-					*ngIf="isChosenArticle"
+					*ngIf="isChosenNode"
 					class="main-buttons"
 					status="success"
 					nbButton
@@ -224,6 +236,6 @@
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</form>
-		</div> -->
+		</div>
 	</nb-card-body>
 </nb-card>
