@@ -3,8 +3,6 @@ import { Connection } from 'typeorm';
 import { EmailTemplate } from './email-template.entity';
 import * as mjml2html from 'mjml';
 import * as path from 'path';
-import { Organization } from '../organization/organization.entity';
-import { Tenant } from '../tenant/tenant.entity';
 /**
  * Note: This seed file assumes the following directory structure in seeds/data/email/default-email-templates/ folder
  *
