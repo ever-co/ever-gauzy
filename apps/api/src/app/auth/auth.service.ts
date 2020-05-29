@@ -1,7 +1,7 @@
 import { environment as env, environment } from '@env-api/environment';
 import {
 	UserRegistrationInput as IUserRegistrationInput,
-	LanguagesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
@@ -14,7 +14,7 @@ import { UserOrganizationService } from '../user-organization/user-organization.
 
 export enum Provider {
 	GOOGLE = 'google',
-	FACEBOOK = 'facebook',
+	FACEBOOK = 'facebook'
 }
 
 @Injectable()
@@ -38,7 +38,7 @@ export class AuthService {
 		password: string
 	): Promise<{ user: User; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role', 'employee'],
+			relations: ['role', 'employee']
 		});
 
 		if (!user || !(await bcrypt.compare(password, user.hash))) {
@@ -49,7 +49,7 @@ export class AuthService {
 			{
 				id: user.id,
 				employeeId: user.employee ? user.employee.id : null,
-				role: user.role ? user.role.name : '',
+				role: user.role ? user.role.name : ''
 			},
 			env.JWT_SECRET,
 			{}
@@ -59,7 +59,7 @@ export class AuthService {
 
 		return {
 			user,
-			token,
+			token
 		};
 	}
 
@@ -81,16 +81,22 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
+				const { orgId } = await this.userOrganizationService.findOne({
+					where: {
+						user
+					}
+				});
 				this.emailService.requestPassword(
 					user,
 					url,
 					languageCode,
+					orgId,
 					originUrl
 				);
 
 				return {
 					id: user.id,
-					token,
+					token
 				};
 			}
 		} else {
@@ -134,7 +140,7 @@ export class AuthService {
 			const creatingUser = await this.userService.findOne(
 				input.createdById,
 				{
-					relations: ['tenant'],
+					relations: ['tenant']
 				}
 			);
 			tenant = creatingUser.tenant;
@@ -145,9 +151,9 @@ export class AuthService {
 			tenant,
 			...(input.password
 				? {
-						hash: await this.getPasswordHash(input.password),
+						hash: await this.getPasswordHash(input.password)
 				  }
-				: {}),
+				: {})
 		});
 
 		if (input.organizationId) {
@@ -160,8 +166,8 @@ export class AuthService {
 		this.emailService.welcomeUser(
 			input.user,
 			languageCode,
-			input.originalUrl,
-			input.organizationId
+			input.organizationId,
+			input.originalUrl
 		);
 
 		return user;
@@ -225,7 +231,7 @@ export class AuthService {
 	}> {
 		let response = {
 			success: false,
-			authData: { jwt: null, userId: null },
+			authData: { jwt: null, userId: null }
 		};
 
 		try {
@@ -261,13 +267,13 @@ export class AuthService {
 			clientId,
 			oauthRedirectUri,
 			state,
-			loginDialogUri,
+			loginDialogUri
 		} = env.facebookConfig;
 
 		const queryParams: string[] = [
 			`client_id=${clientId}`,
 			`redirect_uri=${oauthRedirectUri}`,
-			`state=${state}`,
+			`state=${state}`
 		];
 
 		const redirectUri = `${loginDialogUri}?${queryParams.join('&')}`;
@@ -280,14 +286,14 @@ export class AuthService {
 			clientId,
 			oauthRedirectUri,
 			clientSecret,
-			accessTokenUri,
+			accessTokenUri
 		} = env.facebookConfig;
 
 		const queryParams: string[] = [
 			`client_id=${clientId}`,
 			`redirect_uri=${oauthRedirectUri}`,
 			`client_secret=${clientSecret}`,
-			`code=${code}`,
+			`code=${code}`
 		];
 
 		const uri = `${accessTokenUri}?${queryParams.join('&')}`;
@@ -307,9 +313,9 @@ export class AuthService {
 				{
 					url: `${host}:${port}/api/auth/facebook/token`,
 					headers: {
-						'Content-Type': 'application/x-www-form-urlencoded',
+						'Content-Type': 'application/x-www-form-urlencoded'
 					},
-					form: { access_token },
+					form: { access_token }
 				},
 				async (error: Error, res: Response, body: any) => {
 					if (error) {

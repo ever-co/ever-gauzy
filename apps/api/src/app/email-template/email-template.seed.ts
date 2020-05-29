@@ -12,7 +12,7 @@ import * as path from 'path';
  * language-code: Is the ISO language code lik bg, en, he, ru
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
-export const createEmailTemplates = async (
+export const createDefaultEmailTemplates = async (
 	connection: Connection
 ): Promise<any> => {
 	try {
