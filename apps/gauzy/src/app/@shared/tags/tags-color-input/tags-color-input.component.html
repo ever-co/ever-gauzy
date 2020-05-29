@@ -12,6 +12,7 @@
 		[ngModel]="selectedTags"
 		[closeOnSelect]="false"
 		id="addTags"
+		placeholder="{{ 'MENU.TAGS' | translate }}"
 	>
 		<ng-template ng-option-tmp let-tag="item" let-tag$="item$">
 			<input type="checkbox" [ngModel]="tag$.selected" />

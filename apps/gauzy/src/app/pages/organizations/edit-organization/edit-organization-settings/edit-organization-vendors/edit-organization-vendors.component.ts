@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { IOrganizationVendor } from '@gauzy/models';
+import { IOrganizationVendor, Tag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationVendorsService } from 'apps/gauzy/src/app/@core/services/organization-vendors.service';
@@ -25,6 +25,8 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 	vendors: IOrganizationVendor[];
 
 	selectedVendor: IOrganizationVendor;
+	tags: Tag[] = [];
+	allVendors: any[];
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -48,6 +50,7 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 	}
 
 	showEditCard(vendor: IOrganizationVendor) {
+		this.tags = vendor.tags;
 		this.showEditDiv = true;
 		this.selectedVendor = vendor;
 	}
@@ -78,17 +81,22 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 	}
 
 	async editVendor(id: string, name: string) {
-		await this.organizationVendorsService.update(id, { name });
+		await this.organizationVendorsService.update(id, {
+			name: name,
+			tags: this.tags
+		});
 		this.loadVendors();
 		this.toastrService.success('Successfully updated');
 		this.showEditDiv = !this.showEditDiv;
+		this.tags = [];
 	}
 
 	private async addVendor(name: string) {
 		if (name) {
 			await this.organizationVendorsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tags: this.tags
 			});
 
 			this.toastrService.primary(
@@ -121,11 +129,19 @@ export class EditOrganizationVendorsComponent extends TranslationBaseComponent
 			return;
 		}
 
-		const res = await this.organizationVendorsService.getAll({
-			organizationId: this.organizationId
-		});
+		const res = await this.organizationVendorsService.getAll(
+			{
+				organizationId: this.organizationId
+			},
+			['tags']
+		);
 		if (res) {
 			this.vendors = res.items;
 		}
+		this.allVendors = res.items;
+	}
+
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }
