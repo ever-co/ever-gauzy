@@ -4,32 +4,20 @@ import {
 	OneToMany,
 	ManyToOne,
 	JoinColumn,
-	RelationId,
+	RelationId
 } from 'typeorm';
-import { Base } from '../core/entities/base';
-import {
-	ProductType as IProductType,
-	ProductTypesIconsEnum,
-} from '@gauzy/models';
+import { ProductTypesIconsEnum } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsOptional, IsEnum } from 'class-validator';
 import { Product } from '../product/product.entity';
 import { Organization } from '../organization/organization.entity';
+import { TranslatableBase } from '../core/entities/translate-base';
+import { ProductTypeTranslation } from './product-type-translation.entity';
 
 @Entity('product_type')
-export class ProductType extends Base implements IProductType {
-	@ApiProperty({ type: String })
-	@IsString()
-	@Column()
-	name: string;
-
+export class ProductType extends TranslatableBase {
 	@OneToMany((type) => Product, (product) => product.type)
 	products: Product[];
-
-	@ApiProperty({ type: String })
-	@IsOptional()
-	@Column({ nullable: true })
-	description: string;
 
 	@ApiProperty({ type: String, enum: ProductTypesIconsEnum })
 	@IsOptional()
@@ -45,4 +33,15 @@ export class ProductType extends Base implements IProductType {
 	@ManyToOne((type) => Organization, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	organization: Organization;
+
+	@ApiProperty({ type: ProductTypeTranslation, isArray: true })
+	@OneToMany(
+		(type) => ProductTypeTranslation,
+		(productTypeTranslation) => productTypeTranslation.reference,
+		{
+			eager: true,
+			cascade: true
+		}
+	)
+	translations: ProductTypeTranslation[];
 }

@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
-	styleUrls: ['./sidebar.component.scss'],
+	styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -99,7 +99,7 @@ export class SidebarComponent extends TranslationBaseComponent
 				name: `${this.value}`,
 				flag: 'category',
 				privacy: 'public',
-				children: [],
+				children: []
 			});
 			console.log('categ');
 		} else {
@@ -108,7 +108,7 @@ export class SidebarComponent extends TranslationBaseComponent
 				flag: 'article',
 				privacy: 'public',
 				description: '',
-				data: '',
+				data: ''
 			});
 		}
 		// await this.helpService.create({
@@ -240,7 +240,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.form = this.fb.group({
 			name: [this.articleName],
 			desc: [this.articleDesc],
-			data: [this.articleData],
+			data: [this.articleData]
 		});
 	}
 

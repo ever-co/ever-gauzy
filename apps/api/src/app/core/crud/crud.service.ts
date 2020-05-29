@@ -19,7 +19,7 @@ import { Base } from '../entities/base';
 import { ICrudService } from './icrud.service';
 import { IPagination } from './pagination';
 import { environment as env } from '@env-api/environment';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { ITryRequest } from './try-request';
 
 export abstract class CrudService<T extends Base> implements ICrudService<T> {

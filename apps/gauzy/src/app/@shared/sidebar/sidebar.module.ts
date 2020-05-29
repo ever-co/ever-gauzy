@@ -8,7 +8,7 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbSidebarModule,
-	NbLayoutModule,
+	NbLayoutModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpLoaderFactory } from '../../@theme/components/header/selectors/selectors.module';
@@ -36,12 +36,12 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	providers: [HelpCenterService],
 	declarations: [SidebarComponent],
-	exports: [SidebarComponent],
+	exports: [SidebarComponent]
 })
 export class SidebarModule {}

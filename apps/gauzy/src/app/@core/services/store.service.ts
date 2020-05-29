@@ -9,12 +9,7 @@ import {
 import { SelectedEmployee } from '../../@theme/components/header/selectors/employee/employee.component';
 import { ProposalViewModel } from '../../pages/proposals/proposals.component';
 import { Injectable } from '@angular/core';
-import {
-	resetStores,
-	StoreConfig,
-	Store as AkitaStore,
-	Query
-} from '@datorama/akita';
+import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 
 export interface AppState {
 	user: User;
@@ -249,6 +244,7 @@ export class Store {
 	}
 
 	clear() {
-		resetStores();
+		this.appStore.reset();
+		this.persistStore.reset();
 	}
 }

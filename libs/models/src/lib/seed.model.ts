@@ -35,6 +35,12 @@ export interface ISeedUsers {
 	candidateUsers: User[];
 }
 
+export interface IDefaultProductCategory {
+	name: string;
+	description: string;
+	imageUrl: string;
+}
+
 export interface IDefaultProductType {
 	name: string;
 	description: string;

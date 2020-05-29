@@ -8,7 +8,7 @@ import {
 	Body,
 	Put,
 	Param,
-	Delete,
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -19,6 +19,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum, ICandidateFeedbackCreateInput } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('candidate_feedbacks')
 @UseGuards(AuthGuard('jwt'))
@@ -32,36 +33,39 @@ export class CandidateFeedbacksController extends CrudController<
 		super(candidateFeedbacksService);
 	}
 	@ApiOperation({
-		summary: 'Find all candidate feedback.',
+		summary: 'Find all candidate feedback.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate feedback',
-		type: CandidateFeedback,
+		type: CandidateFeedback
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get()
 	async findFeedback(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateFeedback>> {
-		const { findInput } = JSON.parse(data);
-		return this.candidateFeedbacksService.findAll({ where: findInput });
+		const { relations = [], findInput = null } = data;
+		return this.candidateFeedbacksService.findAll({
+			where: findInput,
+			relations
+		});
 	}
 
 	@ApiOperation({
-		summary: 'Find feedbacks By Interview Id.',
+		summary: 'Find feedbacks By Interview Id.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found candidate feedbacks',
-		type: CandidateFeedback,
+		type: CandidateFeedback
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)

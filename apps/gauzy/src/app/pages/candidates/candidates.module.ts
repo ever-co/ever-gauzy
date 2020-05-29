@@ -24,6 +24,7 @@ import {
 	NbDatepickerModule,
 	NbActionsModule,
 	NbTabsetModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -94,7 +95,7 @@ const COMPONENTS = [
 	EditCandidateSkillsComponent,
 	EditCandidateEducationComponent,
 	EditCandidateExperienceFormComponent,
-	ManageCandidateInterviewsComponent,
+	ManageCandidateInterviewsComponent
 ];
 
 @NgModule({
@@ -121,13 +122,14 @@ const COMPONENTS = [
 		NbCheckboxModule,
 		FileUploaderModule,
 		NbTabsetModule,
+		NbRadioModule,
 		NbActionsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
+				deps: [HttpClient]
+			}
 		}),
 		NbSpinnerModule,
 		NbDatepickerModule,
@@ -143,13 +145,13 @@ const COMPONENTS = [
 		StarRatingOutputModule,
 		CandidateMultiSelectModule,
 		EmployeeMultiSelectModule,
-		CandidateInterviewFeedbackModule,
+		CandidateInterviewFeedbackModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
 		CandidateStatusComponent,
 		CandidateSourceComponent,
-		ManageCandidateInviteComponent,
+		ManageCandidateInviteComponent
 	],
 	providers: [
 		OrganizationsService,
@@ -157,7 +159,7 @@ const COMPONENTS = [
 		CountryService,
 		OrganizationEmploymentTypesService,
 		CandidatesService,
-		CandidateInterviewersService,
-	],
+		CandidateInterviewersService
+	]
 })
 export class CandidatesModule {}
