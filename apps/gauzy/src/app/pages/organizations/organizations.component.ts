@@ -17,6 +17,7 @@ import { OrganizationsEmployeesComponent } from './table-components/organization
 import { OrganizationsStatusComponent } from './table-components/organizations-status/organizations-status.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
+import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 
 interface SelectedRow {
 	data: Organization;
@@ -39,7 +40,8 @@ export class OrganizationsComponent extends TranslationBaseComponent
 		private employeesService: EmployeesService,
 		readonly translateService: TranslateService,
 		private errorHandler: ErrorHandlingService,
-		private store: Store
+		private store: Store,
+		private userOrganizationService: UsersOrganizationsService
 	) {
 		super(translateService);
 	}
@@ -51,6 +53,8 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	settingsSmartTable: object;
 	selectedOrganization: Organization;
 	smartTableSource = new LocalDataSource();
+
+	organizations: Organization[] = [];
 
 	loading = true;
 	hasEditPermission = false;
@@ -190,8 +194,21 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	private async _loadSmartTable() {
 		try {
-			const { items } = await this.organizationsService.getAll(['tags']);
-			for (const org of items) {
+      const extracted = [];
+			const { items } = await this.userOrganizationService.getAll(
+				['orgId'],
+				{
+					userId: this.store.userId
+				}
+			);
+
+			items.forEach((org) => {
+				extracted.push(org.orgId);
+      });
+
+      this.organizations = extracted;
+
+			for (const org of this.organizations) {
 				const data = await this.employeesService
 					.getAll([], { organization: { id: org.id } })
 					.pipe(first())
@@ -201,7 +218,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 				org.totalEmployees = activeEmployees.length;
 			}
 
-			this.smartTableSource.load(items);
+			this.smartTableSource.load(this.organizations);
 			if (this.settingsTable) {
 				this.settingsTable.grid.dataSet.willSelect = 'false';
 			}
