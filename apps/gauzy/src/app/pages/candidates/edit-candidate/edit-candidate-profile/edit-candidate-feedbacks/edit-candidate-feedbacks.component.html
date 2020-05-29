@@ -1,21 +1,34 @@
 <nb-card>
 	<nb-card-header>
-		<button
-			nbButton
-			status="success"
-			*ngIf="!showAddCard"
-			(click)="showCard()"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
-		</button>
+		<div class="main-btn" *ngIf="!showAddCard">
+			<button nbButton status="success" (click)="showCard()">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+
+			<nb-select
+				class="select"
+				placeholder="Select interview"
+				(selectedChange)="onInterviewSelected($event)"
+				[selected]="all"
+			>
+				<nb-option [value]="all">
+					All feedbacks
+				</nb-option>
+				<nb-option
+					value="{{ interview.id }}"
+					*ngFor="let interview of interviews"
+					>{{ interview.title }}</nb-option
+				>
+			</nb-select>
+		</div>
+
 		<div *ngIf="showAddCard" class="add-card">
 			<nb-radio-group
 				class="radio-group"
 				[(ngModel)]="status"
-				*ngIf="status"
+				*ngIf="feedbackInterviewId"
 			>
-				<!--	[ngModelOptions]="{ standalone: true }" -->
 				<nb-radio [value]="'HIRED'">
 					{{
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
@@ -106,29 +119,39 @@
 		<nb-card *ngFor="let feedback of feedbackList; let i = index">
 			<nb-card-body class="feedbacks-card">
 				<div class="feedbacks-line">
-					<ga-star-rating-output
-						[rate]="feedback.rating"
-					></ga-star-rating-output>
-					<p *ngIf="feedback.interviewTitle">
-						<strong>{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW_FEEDBACK'
-								| translate
-						}}</strong>
-						{{ feedback.interviewTitle }}
+					<p class="interview-title">
+						<span *ngIf="feedback.interviewTitle" class="mr-3">
+							<nb-icon
+								class="mr-1"
+								icon="people-outline"
+							></nb-icon>
+							{{ feedback.interviewTitle }}
+						</span>
+						<ga-star-rating-output
+							[rate]="feedback.rating"
+						></ga-star-rating-output>
 					</p>
-					<p *ngIf="feedback?.status">
-						<strong>{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.STATUS' | translate
-						}}</strong>
-						{{ feedback.status }}
-					</p>
-					<p *ngIf="feedback?.interviewer?.employeeName">
-						<strong>{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWER'
-								| translate
-						}}</strong>
-						{{ feedback.interviewer.employeeName }}
-					</p>
+
+					<div class="feedback-info">
+						<img
+							*ngIf="feedback?.interviewer?.employeeImageUrl"
+							class="image-small mr-2"
+							[src]="feedback?.interviewer?.employeeImageUrl"
+							alt="employee Avatar"
+						/>
+						<p *ngIf="feedback?.status" class="feedback-status">
+							<nb-icon
+								class="mr-1"
+								icon="checkmark-square-2-outline"
+							></nb-icon>
+							<span *ngIf="feedback.status === 'HIRED'"
+								>Hire</span
+							>
+							<span *ngIf="feedback.status === 'REJECTED'">
+								Reject</span
+							>
+						</p>
+					</div>
 
 					{{ feedback.description }}
 				</div>

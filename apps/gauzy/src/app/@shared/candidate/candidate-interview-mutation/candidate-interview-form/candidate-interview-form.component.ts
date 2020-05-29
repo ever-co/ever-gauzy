@@ -6,7 +6,7 @@ import {
 	Input
 } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { takeUntil, first } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
 import { EmployeesService } from '../../../../@core/services';
