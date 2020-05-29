@@ -10,7 +10,8 @@ import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/can
 import {
 	ICandidateFeedback,
 	CandidateStatus,
-	ICandidateInterviewers
+	ICandidateInterviewers,
+	ICandidateInterview
 } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -34,6 +35,8 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	feedbackInterviewId: string;
 	feedbackInterviewer: ICandidateInterviewers;
 	statusHire = 0;
+	all = 'all';
+	interviews: ICandidateInterview[] = [];
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -89,14 +92,15 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 					item.interviewId
 				);
 				if (res) {
+					this.interviews.push(res);
 					item.interviewTitle = res.title;
 					const result = await this.employeesService.getEmployeeById(
 						item.interviewer.employeeId,
 						['user']
 					);
 					if (result) {
-						item.interviewer.employeeName =
-							result.user.firstName + ' ' + result.user.lastName;
+						item.interviewer.employeeImageUrl =
+							result.user.imageUrl;
 					}
 				}
 			}
@@ -206,6 +210,12 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.loadFeedbacks();
 		} catch (error) {
 			this.toastrError(error);
+		}
+	}
+	onInterviewSelected(value: any) {
+		//TO DO
+		if (value === 'all') {
+			this.loadFeedbacks();
 		}
 	}
 
