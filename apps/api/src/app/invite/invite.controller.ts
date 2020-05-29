@@ -46,7 +46,6 @@ import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
 
 @ApiTags('Invite')
-@UseGuards(AuthGuard('jwt'))
 @Controller()
 export class InviteController {
 	constructor(
