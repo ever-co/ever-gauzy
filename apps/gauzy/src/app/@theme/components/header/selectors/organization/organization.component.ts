@@ -36,19 +36,14 @@ export class OrganizationSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	private async loadOrganizations(): Promise<void> {
-		const extracted = [];
 		const { items = [] } = await this.userOrganizationService.getAll(
-			['orgId'],
+			['organization'],
 			{
 				userId: this.store.userId
 			}
 		);
 
-		items.forEach((org) => {
-			extracted.push(org.orgId);
-		});
-
-		this.organizations = extracted;
+		this.organizations = items.map((userOrg) => userOrg.organization);
 
 		if (this.organizations.length > 0 && !this.store.selectedOrganization) {
 			// set first organizations as default

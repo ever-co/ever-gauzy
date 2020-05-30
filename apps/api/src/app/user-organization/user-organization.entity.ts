@@ -29,12 +29,19 @@ export class UserOrganization extends Base implements IUserOrganization {
 	userId: string;
 
 	@ApiProperty({ type: Organization })
+	@ManyToOne(() => Organization, { nullable: false, onDelete: 'CASCADE' })
+	@JoinColumn()
+	organization: Organization;
+
+	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'orgId' })
-	orgId: string;
+	@Column()
+	@RelationId(
+		(userOrganization: UserOrganization) => userOrganization.organization
+	)
+	organizationId: string;
 
 	@ApiProperty({ type: Boolean, default: true })
 	@Index()

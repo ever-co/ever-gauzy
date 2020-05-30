@@ -194,19 +194,16 @@ export class OrganizationsComponent extends TranslationBaseComponent
 
 	private async _loadSmartTable() {
 		try {
-      const extracted = [];
 			const { items } = await this.userOrganizationService.getAll(
-				['orgId'],
+				['organization'],
 				{
 					userId: this.store.userId
 				}
 			);
 
-			items.forEach((org) => {
-				extracted.push(org.orgId);
-      });
-
-      this.organizations = extracted;
+			this.organizations = items.map(
+				(userOrganization) => userOrganization.organization
+			);
 
 			for (const org of this.organizations) {
 				const data = await this.employeesService
