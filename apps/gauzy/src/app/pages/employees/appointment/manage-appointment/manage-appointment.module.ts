@@ -2,22 +2,16 @@ import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
-	NbAlertModule,
 	NbButtonModule,
 	NbCardModule,
-	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
-	NbSpinnerModule,
-	NbTooltipModule,
-	NbTreeGridModule,
-	NbSelectModule,
-	NbRouteTabsetModule
+	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ThemeModule } from '../../../../@theme/theme.module';
 import { ManageAppointmentRoutingModule } from './manage-appointment-routing.module';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -26,18 +20,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 @NgModule({
 	imports: [
 		ManageAppointmentRoutingModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
 		NbInputModule,
-		NbDialogModule.forChild(),
-		NbTreeGridModule,
 		NbIconModule,
-		NbTooltipModule,
 		NbSpinnerModule,
-		NbSelectModule,
-		NbAlertModule,
+		NgSelectModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -45,8 +34,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NbSpinnerModule,
-		NbRouteTabsetModule
+		NbSpinnerModule
 	],
 	declarations: [],
 	providers: []

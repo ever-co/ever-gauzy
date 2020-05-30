@@ -4,7 +4,7 @@
 			<label>{{ 'TIMER_TRACKER.DATE' | translate }}</label>
 			<input
 				type="text"
-				[attr.disabled]="disabled === true ? 'disabled' : null"
+				[attr.disabled]="disableDatePicker === true ? 'disabled' : null"
 				class="form-control"
 				autocomplete="off"
 				name="date"
@@ -26,10 +26,8 @@
 			<label>{{ 'TIMER_TRACKER.START_TIME' | translate }}</label>
 			<ga-timer-picker
 				name="start_time"
-				[disabled]="disabled"
 				[min]="minSlotStartTime"
 				[max]="maxSlotStartTime"
-				[blockedSlots]="blockedSlots"
 				(change)="chnageStartTime($event)"
 				[(ngModel)]="startTime"
 				#startTimeModel="ngModel"
@@ -41,11 +39,10 @@
 		<div class="form-group">
 			<label>{{ 'TIMER_TRACKER.END_TIME' | translate }}</label>
 			<ga-timer-picker
-				[disabled]="disabled"
+				[disabled]="disableEndPicker"
 				name="end_time"
 				[min]="minSlotEndTime"
 				[max]="maxSlotEndTime"
-				[blockedSlots]="blockedSlots"
 				[(ngModel)]="endTime"
 				#endTimeModel="ngModel"
 			></ga-timer-picker>

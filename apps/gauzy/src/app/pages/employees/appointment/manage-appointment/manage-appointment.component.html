@@ -29,9 +29,12 @@
 				<div class="row">
 					<div class="col-9">
 						<ngx-timer-range-picker
-							[disabled]="disabled"
+							[slotStartTime]="selectedRange.start"
+							[slotEndTime]="selectedRange.end"
+							[allowedDuration]="allowedDuration"
+							[disableDatePicker]="disabled"
+							[disableEndPicker]="disabled"
 							name="selectedRange"
-							[maxDate]="today"
 							formControlName="selectedRange"
 						>
 						</ngx-timer-range-picker>
@@ -156,7 +159,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="row">
+				<div class="row" *ngIf="!hidePrivateFields">
 					<div class="col-9">
 						<div class="form-group">
 							<label for="description" class="label">{{
@@ -168,6 +171,40 @@
 								(selectedChange)="onMembersSelected($event)"
 							>
 							</ga-employee-multi-select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="form-group">
+							<label for="emailsSelect" class="label">{{
+								'FORM.LABELS.EMAILS' | translate
+							}}</label>
+							<ng-select
+								id="emailsSelect"
+								class="adjust-height"
+								[items]="[]"
+								[addTag]="addTagFn"
+								[hideSelected]="true"
+								multiple="true"
+								bindLabel="emailAddress"
+								formControlName="emails"
+								placeholder="{{
+									'FORM.PLACEHOLDERS.EMAILS' | translate
+								}}"
+								notFoundText="{{
+									'FORM.PLACEHOLDERS.EMAILS' | translate
+								}}"
+								[ngClass]="{
+									'item-invalid':
+										emails.invalid &&
+										(emails.dirty || emails.touched),
+									'item-valid':
+										emails.valid &&
+										(emails.dirty || emails.touched)
+								}"
+							>
+							</ng-select>
 						</div>
 					</div>
 				</div>
