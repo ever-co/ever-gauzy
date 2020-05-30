@@ -195,7 +195,7 @@ export class OrganizationsComponent extends TranslationBaseComponent
 	private async _loadSmartTable() {
 		try {
 			const { items } = await this.userOrganizationService.getAll(
-				['organization'],
+				['organization', 'organization.tags'],
 				{
 					userId: this.store.userId
 				}
