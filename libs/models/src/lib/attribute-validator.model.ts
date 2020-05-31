@@ -9,6 +9,8 @@ export interface AttributeValidator extends BaseEntityModel, AttributeValidatorC
 
 export type AttributeValidatorFind = Partial<AttributeValidatorCreateInput>;
 
+export type AttributeValidatorUpdateInput = Partial<AttributeValidator>;
+
 export interface AttributeValidatorCreateInput
 {
   parameters?: string[];

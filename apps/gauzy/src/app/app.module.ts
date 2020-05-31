@@ -48,6 +48,7 @@ import { SharedModule } from './@shared/shared.module';
 import { HubstaffTokenInterceptor } from './@core/hubstaff-token-interceptor';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import { LanguageInterceptor } from './@core/language.interceptor';
+import { MonacoEditorModule } from 'ngx-monaco-editor';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -79,6 +80,9 @@ if (environment.SENTRY_DNS) {
 		NbDialogModule.forRoot(),
 		NbWindowModule.forRoot(),
 		NbToastrModule.forRoot(),
+    MonacoEditorModule.forRoot({
+      onMonacoLoad: () => console.log( `Loaded Monaco Editor @ ${ Date.now() }` ),
+    }),
 		NbChatModule.forRoot({
 			messageGoogleMapKey: 'AIzaSyA_wNuCzia92MAmdLRzmqitRGvCF7wCZPY'
 		}),

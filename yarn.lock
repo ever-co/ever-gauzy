@@ -17020,6 +17020,11 @@ ngx-moment@^3.5.0:
   dependencies:
     tslib "^1.9.0"
 
+ngx-monaco-editor@^9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-monaco-editor/-/ngx-monaco-editor-9.0.0.tgz#bb69784606f549e369cee3f483ecf26bab2fcc97"
+  integrity sha512-fPXT3M8W920Vs0KPMX6iA7GJYjBRnl9naug9A7D2inPPzxQGtgPZrSEatIPf37a6ir9Ts+8fwt1bTkFzfTgIpQ==
+
 ngx-page-scroll-core@^6.0.2:
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/ngx-page-scroll-core/-/ngx-page-scroll-core-6.0.2.tgz#8c9c0a1663fd1ec915168d53138a552dc21a34a3"

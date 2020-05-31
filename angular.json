@@ -42,7 +42,12 @@
 							"apps/gauzy/src/favicon.ico",
 							"apps/gauzy/src/assets",
 							"apps/gauzy/src/manifest.json",
-							"apps/gauzy/src/silent-refresh.html"
+							"apps/gauzy/src/silent-refresh.html",
+              {
+                "glob": "**/*",
+                "output": "./assets/monaco/",
+                "input": "node_modules/ngx-monaco-editor/assets/monaco"
+              }
 						],
 						"styles": [
 							"node_modules/bootstrap/dist/css/bootstrap.css",

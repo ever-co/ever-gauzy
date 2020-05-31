@@ -24,6 +24,13 @@ const routes: Routes = [
 						(m) => m.ImportExportModule
 					)
 			},
+      {
+        path: 'configurations',
+        loadChildren: () =>
+          import('./configurations/configurations.module').then(
+            ({ ConfigurationsModule }) => ConfigurationsModule
+          )
+      },
 			{
 				path: 'danger-zone',
 				component: DangerZoneComponent

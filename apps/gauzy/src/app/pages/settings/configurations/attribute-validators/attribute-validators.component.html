@@ -1,6 +1,23 @@
-- - -
-<ul>
-  <li *ngFor="let attributeValidator of attributeValidators">
-    {{ attributeValidator.reference }}
-  </li>
-</ul>
+<nb-card>
+  <nb-card-header>
+    <h4>
+      {{ 'MENU.ATTRIBUTE_VALIDATORS' | translate }}
+    </h4>
+  </nb-card-header>
+  <nb-card-body>
+    <input type="search" placeholder=":reference" nbInput fullWidth [(ngModel)]="reference" (ngModelChange)="filterByReference()">
+    <hr>
+    <nb-accordion>
+      <nb-accordion-item *ngFor="let _attributeValidator of attributeValidators" (collapsedChange)="toggleCollapse( $event, _attributeValidator )">
+        <nb-accordion-item-header>
+          {{ _attributeValidator.reference }}
+        </nb-accordion-item-header>
+        <nb-accordion-item-body *ngIf="current">
+          <ngx-monaco-editor
+            [(ngModel)]="_attributeValidator.script"
+            [options]="{ language: 'javascript', minimap: { enabled: false } }"></ngx-monaco-editor>
+        </nb-accordion-item-body>
+      </nb-accordion-item>
+    </nb-accordion>
+  </nb-card-body>
+</nb-card>
