@@ -45,7 +45,6 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		debugger;
 		this.store.userRolePermissions$
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe(() => {
