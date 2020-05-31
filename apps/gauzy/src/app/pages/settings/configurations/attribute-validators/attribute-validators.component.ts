@@ -36,37 +36,30 @@ export class AttributeValidatorsComponent implements OnInit
   {
     const validators: Record<string, Omit<AttributeValidatorCreateInput, 'reference'>> = {
       'type:string': {
-        parameters: [ 'value' ],
         description: 'Is string',
         script: 'return "string" === typeof value || value instanceof String',
       },
       'type:number': {
-        parameters: [ 'value' ],
         description: 'Is number',
         script: 'return value == +value',
       },
       'type:integer': {
-        parameters: [ 'value' ],
         description: 'Is integer',
         script: 'return value == +value && 0 === +value % 1',
       },
       'lower:than': {
-        parameters: [ 'value' ],
         description: 'Is lower than',
         script: 'return +value < this.conf',
       },
       'greater:than': {
-        parameters: [ 'value' ],
         description: 'Is greater than',
         script: 'return +value > this.conf',
       },
       'lower:than-or-equal': {
-        parameters: [ 'value' ],
         script: 'return +value <= this.conf',
         description: 'Is lower than or equal',
       },
       'greater:than-or-equal': {
-        parameters: [ 'value' ],
         description: 'Is greater or equal',
         script: 'return +value >= this.conf',
       },
