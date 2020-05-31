@@ -15,7 +15,7 @@
         <nb-accordion-item-body *ngIf="current">
           <ngx-monaco-editor
             [(ngModel)]="_attributeValidator.script"
-            [options]="{ language: 'javascript', minimap: { enabled: false } }"></ngx-monaco-editor>
+            [options]="monacoEditorConfig"></ngx-monaco-editor>
         </nb-accordion-item-body>
       </nb-accordion-item>
     </nb-accordion>

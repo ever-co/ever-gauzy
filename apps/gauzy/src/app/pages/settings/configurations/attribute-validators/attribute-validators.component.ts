@@ -18,6 +18,13 @@ export class AttributeValidatorsComponent implements OnInit
 
   public reference: string;
 
+  public readonly monacoEditorConfig = {
+    language: 'javascript',
+    minimap: {
+      enabled: false,
+    },
+  };
+
   private throttle: Record<string, any> = {};
 
   public constructor( private attributeValidatorsService: AttributeValidatorsService )
@@ -88,6 +95,6 @@ export class AttributeValidatorsComponent implements OnInit
           // FIXME after backend implementation
           .filter( ({ reference }) => 0 <= reference.indexOf( _reference ) );
       }
-    }, 700 );
+    }, 500 );
   }
 }
