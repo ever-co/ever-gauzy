@@ -20,6 +20,7 @@ export class AttributeValidatorsComponent implements OnInit
 
   public readonly monacoEditorConfig = {
     language: 'javascript',
+    theme: 'vs-dark',
     minimap: {
       enabled: false,
     },
