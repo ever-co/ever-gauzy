@@ -6,9 +6,11 @@ import { RequestApproval } from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
-import { RequestApprovalStatusTypesEnum, PermissionsEnum } from '@gauzy/models';
-import { takeUntil, first } from 'rxjs/operators';
+import { PermissionsEnum } from '@gauzy/models';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
+import { RequestApprovalStatusComponent } from './table-components/request-approval-status/request-approval-status.component';
+import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 export interface IApprovalsData {
 	icon: string;
 	title: string;
@@ -125,14 +127,15 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'
 					),
-					type: 'string',
-					filter: false,
+					type: 'custom',
+					renderComponent: ApprovalPolicyComponent,
 				},
 				status: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
 					),
-					type: 'string',
+					type: 'custom',
+					renderComponent: RequestApprovalStatusComponent,
 				},
 			},
 		};
