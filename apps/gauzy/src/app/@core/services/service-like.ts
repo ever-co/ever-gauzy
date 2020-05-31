@@ -9,7 +9,7 @@ export interface ServiceLike<E extends BaseEntityModel, CI, UI = Partial<CI>, ID
 
   create( create: CI ): Promise<E>;
 
-  update( id: ID, create: CI ): Promise<E>;
+  update( id: ID, update: UI ): Promise<E>;
 
   find( id: ID ): Promise<E>;
   find( filter?: Pick<E, Exclude<keyof E, 'id'>> ): Promise<E[]>;

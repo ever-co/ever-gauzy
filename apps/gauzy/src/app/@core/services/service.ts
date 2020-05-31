@@ -1,5 +1,6 @@
 import { ServiceLike } from './service-like';
 import { BaseEntityModel } from '@gauzy/models';
+import { deepCopy } from '@fullcalendar/angular/lib/utils';
 
 
 
@@ -47,11 +48,10 @@ export class Service<E extends BaseEntityModel, CI, UI = Partial<CI>, ID = strin
         .every( key => idOrFilter[ key ] === entry[ key ] ) );
   }
 
-  public async update( id: ID, create: CI ): Promise<E>
+  public async update( id: ID, update: UI ): Promise<E>
   {
     const entry = await this.find( id );
 
-    return Object.assign( entry, create );
+    return Object.assign( entry, update );
   }
-
 }
