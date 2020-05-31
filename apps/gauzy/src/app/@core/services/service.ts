@@ -1,6 +1,5 @@
 import { ServiceLike } from './service-like';
 import { BaseEntityModel } from '@gauzy/models';
-import { deepCopy } from '@fullcalendar/angular/lib/utils';
 
 
 
@@ -9,20 +8,28 @@ export class Service<E extends BaseEntityModel, CI, UI = Partial<CI>, ID = strin
 
   protected entries: E[] = [];
 
+  constructor()
+  {
+    console.log( '@@@', this );
+  }
+
   public async create( create: CI ): Promise<E>
   {
-    this.entries.push({
+    const entry: E = {
       id: btoa( `${ Date.now() }.${ Math.random() }` ),
       ...create,
-    } as any);
+    } as any;
 
-    return this.entries.reverse()[ 0 ];
+    this.entries.push( entry );
+
+    return entry;
   }
 
   public async delete( id: ID ): Promise<void>
   {
-    const entry = await this.find( id );
-    const index = this.entries.indexOf( entry );
+    await this.find( id );
+
+    const index = this.entries.findIndex( ( { id: _id }) => _id === id as any );
 
     this.entries.splice( index, 1 );
   }
@@ -31,27 +38,35 @@ export class Service<E extends BaseEntityModel, CI, UI = Partial<CI>, ID = strin
   public find( filter?: Pick<E, Exclude<keyof E, "id">> ): Promise<E[]>;
   public async find( idOrFilter?: ID | Pick<E, Exclude<keyof E, "id">> ): Promise<E | E[]>
   {
-    if ( void 0 === idOrFilter ) {
-      return this.entries;
-    } else if ( 'string' === typeof idOrFilter ) {
-      const entry = this.entries.find( ({ id }) => id === idOrFilter );
+    let result: E[] | E = this.entries;
 
-      if ( !entry ) {
+    if ( 'string' === typeof idOrFilter ) {
+      result = result.find( ({ id }) => id === idOrFilter );
+
+      if ( !result ) {
         throw new Error( 'Not found - { id: "' + idOrFilter + '" }' );
       }
-
-      return entry;
+    } else if ( idOrFilter ) {
+      result = result.filter( entry =>
+        Object.keys( idOrFilter )
+        .every( key => idOrFilter[ key ] === entry[ key ] ) );
     }
 
-    return this.entries.filter( entry =>
-      Object.keys( idOrFilter )
-        .every( key => idOrFilter[ key ] === entry[ key ] ) );
+    return this.clone( result );
   }
 
   public async update( id: ID, update: UI ): Promise<E>
   {
     const entry = await this.find( id );
 
-    return Object.assign( entry, update );
+    Object.assign( entry, update );
+
+    return this.clone( entry );
   }
+
+  public clone<T extends E[] | E>( entity: T ): T {
+    return [ void 0, null ].includes( entity ) ? entity
+      : JSON.parse( JSON.stringify( entity ) );
+  }
+
 }
