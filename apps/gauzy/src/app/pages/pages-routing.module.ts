@@ -255,8 +255,8 @@ const routes: Routes = [
 						path: 'email-templates',
 						loadChildren: () =>
 							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+								'./email-templates/email-templates.module'
+							).then((m) => m.EmailTemplatesModule)
 					},
 					{
 						path: 'help-center',

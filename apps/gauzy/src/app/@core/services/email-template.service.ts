@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { EmailTemplate, EmailTemplateFindInput } from '@gauzy/models';
+import {
+	EmailTemplate,
+	EmailTemplateFindInput,
+	CustomizeEmailTemplateFindInput,
+	CustomizableEmailTemplate
+} from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable({
@@ -22,6 +27,30 @@ export class EmailTemplateService {
 					params: { data }
 				}
 			)
+			.pipe(first())
+			.toPromise();
+	}
+	getTemplate(
+		findInput?: CustomizeEmailTemplateFindInput
+	): Promise<CustomizableEmailTemplate> {
+		const data = JSON.stringify({ findInput });
+
+		return this.http
+			.get<CustomizableEmailTemplate>(
+				`/api/email-template/findTemplate`,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	generateTemplatePreview(data: string): Promise<{ html: string }> {
+		return this.http
+			.post<{ html: string }>(`/api/email-template/emailPreview`, {
+				data
+			})
 			.pipe(first())
 			.toPromise();
 	}

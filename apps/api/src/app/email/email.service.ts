@@ -313,7 +313,6 @@ export class EmailService extends CrudService<IEmail> {
 		organizationId: string,
 		originUrl?: string
 	) {
-		console.log('organizationId:', organizationId);
 		const sendOptions = {
 			template: 'password',
 			message: {
