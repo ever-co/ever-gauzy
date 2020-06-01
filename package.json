@@ -215,6 +215,7 @@
 		"ng2-ckeditor": "^1.2.6",
 		"ng2-file-upload": "^1.3.0",
 		"ng2-smart-table": "^1.6.0",
+		"ng5-slider": "^1.2.4",
 		"ngx-color-picker": "^8.2.0",
 		"ngx-echarts": "^4.2.1",
 		"ngx-filepond": "^5.0.1",

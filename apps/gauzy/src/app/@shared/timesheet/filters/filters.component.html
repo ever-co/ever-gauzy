@@ -86,12 +86,12 @@
 				</button>
 				<ng-template #templateRef>
 					<div class="p-3 slider-dropdown">
-						<ngx-slider
+						<ng5-slider
 							[value]="activityLevel?.start"
 							[highValue]="activityLevel?.end"
 							(userChange)="setActivityLevel($event)"
 							[options]="sliderOptions"
-						></ngx-slider>
+						></ng5-slider>
 					</div>
 				</ng-template>
 				<!-- <nb-select

@@ -19,8 +19,7 @@ import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
-import { Options } from '../../slider/options';
-import { ChangeContext } from '../../slider/change-context';
+import { Options, ChangeContext } from 'ng5-slider';
 
 @Component({
 	selector: 'ngx-filters',
