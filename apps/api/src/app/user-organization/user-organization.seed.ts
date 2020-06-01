@@ -24,7 +24,7 @@ export const createDefaultUsersOrganizations = async (
 	defaultOrgs.forEach((org) => {
 		for (const user of defaultUsers) {
 			userOrganization = new UserOrganization();
-			userOrganization.orgId = org.id;
+			userOrganization.organizationId = org.id;
 			userOrganization.userId = user.id;
 			usersOrganizations.push(userOrganization);
 		}
@@ -67,7 +67,7 @@ export const createRandomUsersOrganizations = async (
 			userList.forEach(async (user) => {
 				if (user.id) {
 					const userOrganization = new UserOrganization();
-					userOrganization.orgId = org.id;
+					userOrganization.organizationId = org.id;
 					userOrganization.userId = user.id;
 					usersOrganizations.push(userOrganization);
 				}

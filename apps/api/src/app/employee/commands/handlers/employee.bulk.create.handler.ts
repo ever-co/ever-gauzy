@@ -34,7 +34,11 @@ export class EmployeeBulkCreateHandler
 		languageCode: LanguagesEnum
 	) {
 		employees.map((employee) =>
-			this.emailService.welcomeUser(employee.user, languageCode)
+			this.emailService.welcomeUser(
+				employee.user,
+				languageCode,
+				employee.organization.id
+			)
 		);
 	}
 

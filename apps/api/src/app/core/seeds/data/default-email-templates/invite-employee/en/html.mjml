@@ -13,7 +13,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Hi!</p>
 					<p>
-						You have been invited to {{organization}}
+						You have been invited to {{organizationName}}
 					</p>
 					<p>To accept your invitation</p>
 				</mj-text>
@@ -30,7 +30,7 @@
 						If you have any questions, you can reply to this email.
 					</p>
 					<p>Best regards,</p>
-					<p>The {{organization}} Team</p>
+					<p>The {{organizationName}} Team</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
@@ -38,11 +38,11 @@
 				></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="https://app.gauzy.co/." style="color:#598bff"
+					<a href="https://app.gauzy.co/." style="color: #598bff;"
 						>Gauzy</a
 					>
 					by
-					<a href="https://ever.co/" style="color:#598bff"
+					<a href="https://ever.co/" style="color: #598bff;"
 						>Ever Co. LTD.</a
 					>
 					All rights reserved.

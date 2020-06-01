@@ -86,3 +86,48 @@
 .error {
   color: #ff3d71;
 }
+
+.image-small {
+  max-width: 35px;
+  max-height: 35px;
+  border-radius: 13px;
+}
+
+.feedback-info {
+  flex-direction: row;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.interview-title {
+  flex-direction: row;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+
+.rating {
+  padding-left: 1rem;
+}
+
+.feedback-status {
+  flex-direction: row;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.main-btn {
+  flex-direction: row;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.select {
+  width: 20rem;
+}

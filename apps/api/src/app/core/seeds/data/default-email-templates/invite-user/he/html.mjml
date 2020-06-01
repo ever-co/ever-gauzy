@@ -13,7 +13,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>הַיי!</p>
 					<p>
-						הוזמנת ל {{organization}} כ {{role}}
+						הוזמנת ל {{organizationName}} כ {{role}}
 					</p>
 					<p>לקבל את ההזמנה שלך</p>
 				</mj-text>
@@ -28,7 +28,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>אם יש לך שאלות, תוכל לענות להודעת דוא"ל זו</p>
 					<p>כל טוב,</p>
-					<p>ה {{organization}} צוות</p>
+					<p>ה {{organizationName}} צוות</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
@@ -36,11 +36,11 @@
 				></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="https://app.gauzy.co/." style="color:#598bff"
+					<a href="https://app.gauzy.co/." style="color: #598bff;"
 						>Gauzy</a
 					>
 					by
-					<a href="https://ever.co/" style="color:#598bff"
+					<a href="https://ever.co/" style="color: #598bff;"
 						>Ever Co. LTD.</a
 					>
 					All rights reserved.

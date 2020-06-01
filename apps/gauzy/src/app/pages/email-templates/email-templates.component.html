@@ -1,0 +1,85 @@
+<form class="main-form" [formGroup]="form" *ngIf="form">
+	<nb-layout>
+		<nb-layout-header class="row">
+			<div class="col-6">
+				{{ organizationName }}
+			</div>
+
+			<div class="col-2">
+				<div class="form-group">
+					<label class="label">
+						{{ 'Language' | translate }}
+					</label>
+					<nb-select
+						class="d-block"
+						size="small"
+						formControlName="languageCode"
+						placeholder="{{ 'Language Select' | translate }}"
+						(selectedChange)="getTemplate()"
+					>
+						<nb-option
+							*ngFor="let language of languageCodes"
+							[value]="language"
+						>
+							{{
+								'USERS_PAGE.EDIT_USER.PREFERRED_LANGUAGE.' +
+									language | translate
+							}}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+			<div class="col-2">
+				<div class="form-group">
+					<label class="label">
+						{{ 'Template Name' | translate }}
+					</label>
+					<nb-select
+						class="d-block"
+						size="small"
+						formControlName="templateName"
+						placeholder="{{ 'Template Names' | translate }}"
+						(selectedChange)="getTemplate()"
+					>
+						<nb-option
+							*ngFor="let name of templateNames"
+							[value]="name"
+						>
+							{{ name }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</div>
+			<div class="col-2">
+				<button nbButton>Save</button>
+			</div>
+		</nb-layout-header>
+		<nb-layout-column class="colored-column-warning">
+			<nb-card fullWidth>
+				<nb-card-body class="example-items-col">
+					<input
+						type="text"
+						nbInput
+						fullWidth
+						fieldSize="small"
+						placeholder="Input"
+						value="{{ subject }}"
+						#subjectEditor
+					/>
+					<textarea
+						class="mjml-editor"
+						#mjmlEditor
+						nbInput
+						fullWidth
+						placeholder="Textarea"
+						>{{ template }}</textarea
+					>
+				</nb-card-body>
+			</nb-card>
+		</nb-layout-column>
+		<nb-layout-column class="colored-column-danger">
+			<div [innerHtml]="previewSubject"></div>
+			<div [innerHtml]="previewEmail"></div>
+		</nb-layout-column>
+	</nb-layout>
+</form>
