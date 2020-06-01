@@ -95,6 +95,9 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 				);
 				const user = this.store.user;
 				this.organization = this.store.selectedOrganization;
+				if (!this.organization) {
+					return;
+				}
 				const calendar = this.calendar.getApi();
 				if (
 					user &&
@@ -235,7 +238,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		return isOverflowing;
 	}
 
-	openDialog(timeLog: TimeLog | Partial<TimeLog>) {
+	openDialog(timeLog?: TimeLog | Partial<TimeLog>) {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
 			.onClose.subscribe(() => {

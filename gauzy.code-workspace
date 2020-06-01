@@ -12,6 +12,7 @@
 		"debug.node.autoAttach": "off",
 		"search.usePCRE2": true,
 		"git.ignoreLimitWarning": true,
-		"checkpoints.showActiveFileOnly": true
+		"checkpoints.showActiveFileOnly": true,
+		"deepscan.enable": true
 	}
 }

@@ -1,28 +1,20 @@
 <label class="label">{{
 	'FORM.LABELS.ADD_OR_REMOVE_EMPLOYEES' | translate
 }}</label>
-<ng-select
+
+<nb-select
 	[multiple]="multiple"
-	[disabled]="disabled"
-	[clearable]="true"
-	[items]="employees"
-	[(ngModel)]="employeeId"
-	bindValue="value"
-	bindLabel="label"
-	placeholder="{{ placeholder | translate }}"
-	(onChange)="onMembersSelected($event)"
+	(selectedChange)="onMembersSelected($event)"
 	fullWidth
+	[disabled]="disabled"
+	[(ngModel)]="employeeId"
+	placeholder="{{ placeholder | translate }}"
 >
-	<ng-template ng-option-tmp let-item="item" let-index="index">
+	<nb-option *ngFor="let employee of employees" [value]="employee.id">
 		<ngx-avatar
-			[name]="item.user?.firstName + ' ' + item.user?.lastName"
-			[src]="item.user?.imageUrl"
-		>
-		</ngx-avatar>
-	</ng-template>
-	<ng-template ng-label-tmp let-item="item">
-		<span class="p-1">
-			{{ item.user?.firstName }} {{ item.user?.lastName }}
-		</span>
-	</ng-template>
-</ng-select>
+			size="sm"
+			[src]="employee.user?.imageUrl"
+			[name]="employee.user?.name"
+		></ngx-avatar>
+	</nb-option>
+</nb-select>

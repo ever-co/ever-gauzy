@@ -19,6 +19,7 @@ import { Subject } from 'rxjs';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Store } from '../../../@core/services/store.service';
 import { EmployeesService } from '../../../@core/services/employees.service';
+import { Options, ChangeContext } from 'ng5-slider';
 
 @Component({
 	selector: 'ngx-filters',
@@ -33,7 +34,18 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 
 	@Input() dateRange: 'day' | 'week' | 'month' = 'day';
-	@Input() filters: TimeLogFilters = {};
+	private _filters: TimeLogFilters = {};
+	@Input()
+	public get filters(): TimeLogFilters {
+		return this._filters;
+	}
+	public set filters(value: TimeLogFilters) {
+		this._filters = value;
+		this.activityLevel = {
+			start: value.activityLevel.start || 0,
+			end: value.activityLevel.end || 100
+		};
+	}
 	@Output() filtersChange: EventEmitter<TimeLogFilters> = new EventEmitter();
 
 	@Input() hasDateRangeFilter = true;
@@ -42,6 +54,15 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
 
+	activityLevel = {
+		start: 0,
+		end: 100
+	};
+	sliderOptions: Partial<Options> = {
+		floor: 0,
+		ceil: 100,
+		step: 5
+	};
 	private date: Date;
 	organization: Organization;
 	employees: any;
@@ -120,6 +141,14 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			.toDate();
 	}
 
+	setActivityLevel($event: ChangeContext): void {
+		this.filters.activityLevel = {
+			start: $event.value,
+			end: $event.highValue
+		};
+		this.activityLevel = this.filters.activityLevel;
+		this.updateLogs$.next();
+	}
 	triggerFilterChange(): void {
 		this.updateLogs$.next();
 	}

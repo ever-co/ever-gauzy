@@ -58,7 +58,7 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 export function toParams(query) {
 	let params: HttpParams = new HttpParams();
 	Object.keys(query).forEach((key) => {
-		console.log(key, query[key]);
+		console.log(key, query[key], typeof query[key]);
 		if (isJsObject(query[key])) {
 			params = toSubParams(params, key, query[key]);
 		} else {
@@ -86,6 +86,7 @@ function toSubParams(params: HttpParams, key: string, object: any) {
 }
 
 export function isJsObject(object: any) {
-	const type: string = typeof object;
-	return type === 'object';
+	return (
+		object !== null && object !== undefined && typeof object === 'object'
+	);
 }

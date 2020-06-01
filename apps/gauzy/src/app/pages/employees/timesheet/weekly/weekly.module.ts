@@ -8,12 +8,14 @@ import { ShareModule } from 'apps/gauzy/src/app/share/share.module';
 import {
 	NbDatepickerModule,
 	NbIconModule,
-	NbButtonModule
+	NbButtonModule,
+	NbDialogModule
 } from '@nebular/theme';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { FormsModule } from '@angular/forms';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
+import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
 
 @NgModule({
 	declarations: [WeeklyComponent],
@@ -28,7 +30,9 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 		FormsModule,
 		NbButtonModule,
 		SharedModule,
-		FiltersModule
+		FiltersModule,
+		EditTimeLogModalModule,
+		NbDialogModule
 	]
 })
 export class WeeklyModule {}
