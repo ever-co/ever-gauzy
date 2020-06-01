@@ -8,14 +8,28 @@
     <input type="search" placeholder=":reference" nbInput fullWidth [(ngModel)]="reference" (ngModelChange)="filterByReference()">
     <hr>
     <nb-accordion>
-      <nb-accordion-item *ngFor="let _attributeValidator of attributeValidators" (collapsedChange)="toggleCollapse( $event, _attributeValidator )">
+      <nb-accordion-item *ngFor="let _attributeValidator of entries" (collapsedChange)="toggleCollapse( $event, _attributeValidator )">
         <nb-accordion-item-header>
-          {{ _attributeValidator.reference }}
+          <span [innerHTML]="_attributeValidator.reference"></span>
         </nb-accordion-item-header>
         <nb-accordion-item-body *ngIf="current">
+          <input
+            nbInput
+            fullWidth
+            type="text"
+            [required]="true"
+            (ngModelChange)="update()"
+            [(ngModel)]="_attributeValidator.reference">
+          <hr>
+          <textarea
+            nbInput
+            fullWidth
+            (ngModelChange)="update()"
+            [(ngModel)]="_attributeValidator.description"></textarea>
+          <hr>
           <ngx-monaco-editor
-            [(ngModel)]="_attributeValidator.script"
-            [options]="monacoEditorConfig"></ngx-monaco-editor>
+            [options]="monacoEditorConfig"
+            [(ngModel)]="_attributeValidator.script"></ngx-monaco-editor>
         </nb-accordion-item-body>
       </nb-accordion-item>
     </nb-accordion>

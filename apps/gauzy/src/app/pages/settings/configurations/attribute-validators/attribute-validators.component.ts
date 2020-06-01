@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AttributeValidatorsService } from '../../../../@core/services/attribute-validators.service';
 import { AttributeValidator, AttributeValidatorCreateInput } from '@gauzy/models';
-import { filter } from 'async';
 
 
 
@@ -12,7 +11,7 @@ import { filter } from 'async';
 export class AttributeValidatorsComponent implements OnInit
 {
 
-  public attributeValidators: AttributeValidator[];
+  public entries: AttributeValidator[];
 
   public current: AttributeValidator;
 
@@ -65,12 +64,12 @@ export class AttributeValidatorsComponent implements OnInit
       },
     };
 
-    Object
-      .keys( validators )
-      .forEach( key => this.attributeValidatorsService.find( key )
-          .catch( () => this.attributeValidatorsService.create({ ...validators[ key ] as any, reference: key }) ) );
+    await Promise.all( Object.keys( validators )
+      .map( key => ({ reference: key, ...validators[ key ] }) )
+      .map( validator => this.attributeValidatorsService.findByReference( validator.reference )
+        .then( ({ length }) => 0 === length && this.attributeValidatorsService.create( validator ) ) ) );
 
-    this.attributeValidators = await this.attributeValidatorsService.find();
+    this.entries = await this.attributeValidatorsService.find();
   }
 
   public toggleCollapse( isCollapsed: boolean, value: AttributeValidator ) {
@@ -78,17 +77,21 @@ export class AttributeValidatorsComponent implements OnInit
   }
 
   public filterByReference() {
-    const _reference = this.reference;
+    const _reference = this.reference || '';
 
     clearTimeout( this.throttle.filterByReference );
     this.throttle.filterByReference = setTimeout( async () => {
-      this.attributeValidators = await this.attributeValidatorsService.find();
-
-      if ( _reference ) {
-        this.attributeValidators = this.attributeValidators
-          // FIXME after backend implementation
-          .filter( ({ reference }) => 0 <= reference.indexOf( _reference ) );
-      }
+      this.entries = await this.attributeValidatorsService.findByReference( _reference );
     }, 500 );
+  }
+
+  public update() {
+    if ( !this.current ) return ;
+
+    const { current, current: { id } } = this;
+
+    clearTimeout( this.throttle.update );
+    this.throttle.update = setTimeout( () =>
+      this.attributeValidatorsService.update( id, current ), 700 );
   }
 }
