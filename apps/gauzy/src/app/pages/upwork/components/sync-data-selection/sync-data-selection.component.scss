@@ -16,6 +16,14 @@
   align-self: flex-end;
 }
 
+.employee-selector {
+  flex: 1;
+}
+
+.datepicker-wrapper {
+  width: 30%;
+}
+
 .switcher-wrapper {
   display: flex;
   flex-direction: column;
