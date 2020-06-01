@@ -50,7 +50,11 @@
 				<!-- Tags component does nothing here
 				TODO: create relationship between OrganizationDepartment and Tags in Backend.
 				-->
-				<ga-tags-color-input [selectedTags]="[]"> </ga-tags-color-input>
+				<ga-tags-color-input
+					[selectedTags]="tags"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+				>
+				</ga-tags-color-input>
 			</div>
 		</form>
 	</nb-card-body>

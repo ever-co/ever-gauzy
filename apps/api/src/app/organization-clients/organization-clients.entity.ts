@@ -27,9 +27,16 @@ import { OrganizationProjects } from '../organization-projects/organization-proj
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 import { Invoice } from '../invoice/invoice.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('organization_client')
 export class OrganizationClients extends Base implements IOrganizationClients {
+	@ApiProperty()
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_organization_client'
+	})
+	tags: Tag[];
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -108,18 +115,12 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 	readonly clientOrganizationId?: string;
 
 	@ApiPropertyOptional({ type: OrganizationProjects, isArray: true })
-	@OneToMany(
-		(type) => OrganizationProjects,
-		(projects) => projects.client
-	)
+	@OneToMany((type) => OrganizationProjects, (projects) => projects.client)
 	@JoinColumn()
 	projects?: OrganizationProjects[];
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
-	@OneToMany(
-		(type) => Invoice,
-		(invoices) => invoices.toClient
-	)
+	@OneToMany((type) => Invoice, (invoices) => invoices.toClient)
 	@JoinColumn()
 	invoices?: Invoice[];
 
