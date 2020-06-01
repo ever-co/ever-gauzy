@@ -63,14 +63,18 @@
 					*ngIf="showEditDiv && v === selectedVendor"
 					class="row align-items-end"
 				>
-					<input
-						#editInput
-						class="col-2"
-						nbInput
-						type="text"
-						[value]="selectedVendor.name"
-						fullWidth
-					/>
+					<div
+						class="col-sm-3 d-flex flex-column justify-content-end"
+					>
+						<label class="label">Name</label>
+						<input
+							#editInput
+							nbInput
+							type="text"
+							[value]="selectedVendor.name"
+							fullWidth
+						/>
+					</div>
 					<ga-tags-color-input
 						[selectedTags]="tags"
 						(selectedTagsEvent)="selectedTagsEvent($event)"

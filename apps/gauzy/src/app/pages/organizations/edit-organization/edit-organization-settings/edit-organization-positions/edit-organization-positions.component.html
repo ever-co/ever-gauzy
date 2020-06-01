@@ -9,16 +9,28 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="showAddCard" class="row m-0">
-			<input
-				#addInput
-				class="col-8"
-				nbInput
-				type="text"
-				placeholder="{{ 'FORM.PLACEHOLDERS.ADD_POSITION' | translate }}"
-				fullWidth
-			/>
-			<span class="col-2 pl-2 pr-1"
+		<div *ngIf="showAddCard" class="row">
+			<div class="col-sm-3 d-flex flex-column justify-content-end">
+				<label class="label">{{
+					'FORM.PLACEHOLDERS.ADD_POSITION' | translate
+				}}</label>
+				<input
+					#addInput
+					nbInput
+					type="text"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.ADD_POSITION' | translate
+					}}"
+					fullWidth
+				/>
+			</div>
+			<ga-tags-color-input
+				[selectedTags]="tags"
+				(selectedTagsEvent)="selectedTagsEvent($event)"
+				class="col-sm-3"
+			>
+			</ga-tags-color-input>
+			<span class="col-3" style="margin-top: 29px;"
 				><button
 					class="w-100"
 					(click)="addPosition(addInput.value)"
@@ -28,7 +40,7 @@
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
 			>
-			<span class="col-2 pl-1 pr-0"
+			<span class="col-3" style="margin-top: 29px;"
 				><button
 					class="w-100"
 					(click)="showAddCard = !showAddCard"
@@ -46,16 +58,26 @@
 
 	<nb-card *ngFor="let p of positions">
 		<nb-card-body>
-			{{ selectedPosition === p ? '' : p.name }}
-			<div *ngIf="showEditDiv && p === selectedPosition" class="row m-0">
-				<input
-					#editInput
-					class="col-8"
-					nbInput
-					type="text"
-					[value]="selectedPosition.name"
-					fullWidth
-				/>
+			<ga-notes-with-tags [rowData]="p"> </ga-notes-with-tags>
+			<div
+				*ngIf="showEditDiv && p === selectedPosition"
+				class="row align-items-end"
+			>
+				<div class="col-sm-3 d-flex flex-column justify-content-end">
+					<label class="label">Name</label>
+					<input
+						#editInput
+						nbInput
+						type="text"
+						[value]="selectedPosition.name"
+						fullWidth
+					/>
+				</div>
+				<ga-tags-color-input
+					[selectedTags]="tags"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+				>
+				</ga-tags-color-input>
 				<span class="col-2 pl-2 pr-1">
 					<button
 						class="w-100"
