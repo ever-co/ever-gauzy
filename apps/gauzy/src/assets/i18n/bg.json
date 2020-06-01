@@ -33,7 +33,7 @@
 		"REQUEST": "Request",
 		"HISTORY": "History",
 		"SYNC": "Sync",
-		"UPDATE": "Update",
+		"UPDATE": "Aктуализация",
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
 		"SEND": "Send",
@@ -198,7 +198,8 @@
 			"LOCATION": "Локация",
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
-			"DESCRIPTION": "Description"
+			"DESCRIPTION": "Description",
+			"ADD_OR_REMOVE_EMPLOYEES": "Добави или премахни служители"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",

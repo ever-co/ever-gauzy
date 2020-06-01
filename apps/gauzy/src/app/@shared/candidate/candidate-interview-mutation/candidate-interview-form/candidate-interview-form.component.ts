@@ -3,18 +3,20 @@ import {
 	OnInit,
 	OnDestroy,
 	ChangeDetectorRef,
-	Input,
+	Input
 } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
-import { EmployeesService } from '../../../@core/services';
+import { EmployeesService } from '../../../../@core/services';
+import { NbDialogService } from '@nebular/theme';
+import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
 
 @Component({
 	selector: 'ga-candidate-interview-form',
 	templateUrl: 'candidate-interview-form.component.html',
-	styleUrls: ['candidate-interview-form.component.scss'],
+	styleUrls: ['candidate-interview-form.component.scss']
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	@Input() interviewers: ICandidateInterviewers[];
@@ -29,6 +31,7 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly fb: FormBuilder,
+		private dialogService: NbDialogService,
 		private employeeService: EmployeesService,
 		private cdRef: ChangeDetectorRef
 	) {}
@@ -47,13 +50,17 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			? this.interviewers.map((item) => item.employeeId)
 			: [];
 	}
-	findTime() {} //TO DO
+	async findTime() {
+		this.dialogService.open(CandidateCalendarInfoComponent, {
+			context: {}
+		});
+	}
 
 	onMembersSelected(event: string[]) {
 		this.selectedEmployeeIds = event;
 		const value = this.selectedEmployeeIds[0] ? true : null;
 		this.form.patchValue({
-			valid: value,
+			valid: value
 		});
 	}
 
@@ -65,7 +72,7 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			endTime: [this.selectedRange.end],
 			location: [''],
 			note: [''],
-			valid: [null, Validators.required],
+			valid: [null, Validators.required]
 		});
 	}
 

@@ -71,9 +71,6 @@
 				<div class="col-sm-12">
 					<div class="form-group">
 						<ng-container *ngIf="participants === 'employees'">
-							<label class="label">{{
-								'TASKS_PAGE.TASK_MEMBERS' | translate
-							}}</label>
 							<ga-employee-multi-select
 								[selectedEmployeeIds]="selectedMembers"
 								[allEmployees]="employees"

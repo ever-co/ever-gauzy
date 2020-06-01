@@ -1,4 +1,4 @@
-import { CandidateInterviewFormComponent } from './../candidate-interview-form/candidate-interview-form.component';
+import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import {
 	Component,
 	OnInit,
@@ -6,7 +6,7 @@ import {
 	AfterViewInit,
 	OnDestroy,
 	Input,
-	ChangeDetectorRef,
+	ChangeDetectorRef
 } from '@angular/core';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
@@ -24,7 +24,7 @@ import { CandidateInterviewersService } from '../../../@core/services/candidate-
 @Component({
 	selector: 'ga-candidate-interview-mutation',
 	templateUrl: 'candidate-interview-mutation.component.html',
-	styleUrls: ['candidate-interview-mutation.component.scss'],
+	styleUrls: ['candidate-interview-mutation.component.scss']
 })
 export class CandidateInterviewMutationComponent
 	implements OnInit, AfterViewInit, OnDestroy {
@@ -61,7 +61,7 @@ export class CandidateInterviewMutationComponent
 		interviewers: null,
 		startTime: null,
 		endTime: null,
-		note: '',
+		note: ''
 	};
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
@@ -105,7 +105,7 @@ export class CandidateInterviewMutationComponent
 			location: this.form.get('location').value,
 			startTime: interviewForm.startTime,
 			endTime: interviewForm.endTime,
-			note: this.form.get('note').value,
+			note: this.form.get('note').value
 		};
 		//	if editing
 		if (interviewForm.interviewers === null) {
@@ -142,7 +142,7 @@ export class CandidateInterviewMutationComponent
 	async createInterview(interview: ICandidateInterview) {
 		interview = await this.candidateInterviewService.create({
 			...this.emptyInterview,
-			candidateId: this.selectedCandidate.id,
+			candidateId: this.selectedCandidate.id
 		});
 		this.addInterviewers(interview.id, this.selectedInterviewers);
 
@@ -159,7 +159,7 @@ export class CandidateInterviewMutationComponent
 					location: this.interview.location,
 					startTime: this.interview.startTime,
 					endTime: this.interview.endTime,
-					note: this.interview.note,
+					note: this.interview.note
 				}
 			);
 			return createdInterview;
@@ -198,7 +198,7 @@ export class CandidateInterviewMutationComponent
 			updatedInterview = await this.candidateInterviewService.update(
 				this.interviewId,
 				{
-					...this.interview,
+					...this.interview
 				}
 			);
 		} catch (error) {
@@ -214,7 +214,7 @@ export class CandidateInterviewMutationComponent
 
 	async onCandidateSelected(id: string) {
 		const candidate = await this.candidatesService.getCandidateById(id, [
-			'user',
+			'user'
 		]);
 		this.selectedCandidate = candidate;
 	}

@@ -1,44 +1,57 @@
 .card-body {
-	margin: 20px;
+  margin: 20px;
 
-	.header-container {
-		text-align: center;
-		position: relative;
-		.members-count {
-			font-size: 0.7em;
-			color: darkgray;
-		}
-	}
+  .header-container {
+    text-align: center;
+    position: relative;
+    .members-count {
+      font-size: 0.7em;
+      color: darkgray;
+    }
+  }
 
-	.team-card {
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
+  .team-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 
-		.name-container {
-			display: flex;
-			display: flex;
-			align-items: center;
-			margin-bottom: 10px;
+    .name-container {
+      display: flex;
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
 
-			.image-container {
-				width: 70px;
-				height: 50px;
-				display: flex;
+      .image-container {
+        width: 70px;
+        height: 50px;
+        display: flex;
 
-				img {
-					height: 100%;
-					max-width: 70px;
-				}
-			}
-		}
+        img {
+          height: 100%;
+          max-width: 70px;
+        }
+      }
+    }
 
-		.button-container {
-			display: flex;
-			width: 160px;
-			justify-content: space-between;
-			margin-top: 15px;
-			margin-left: 9px;
-		}
-	}
+    .button-container {
+      display: flex;
+      width: 160px;
+      justify-content: space-between;
+      margin-top: 15px;
+      margin-left: 9px;
+    }
+  }
+}
+
+.color {
+  position: static;
+  margin-top: 5px;
+  margin-right: 5px;
+  display: inline-block;
+}
+
+.tags {
+  display: flex;
+  width: 200px;
+  flex-wrap: wrap;
 }

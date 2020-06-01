@@ -4,6 +4,7 @@ import { Employee } from './employee.model';
 import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
 import { Organization } from './organization.model';
 import { User, LanguagesEnum } from './user.model';
+import { Tag } from './tag-entity.model';
 
 export interface OrganizationClients extends IBaseEntityWithMembers {
 	name: string;
@@ -23,6 +24,7 @@ export interface OrganizationClients extends IBaseEntityWithMembers {
 	clientOrganization?: Organization;
 	clientOrganizationId?: string;
 	inviteStatus?: string;
+	tags: Tag[];
 }
 
 export interface OrganizationClientsFindInput extends IBaseEntityModel {
