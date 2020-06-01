@@ -25,10 +25,7 @@ export class EmailFiltersComponent implements OnInit {
 	}
 
 	formatTemplateName(name: string, languageCode: string) {
-		const formatedName = name
-			.split('/')[0]
-			.split('-')
-			.join(' ');
+		const formatedName = name.split('/')[0].split('-').join(' ');
 		return (
 			this._toTitleCase(formatedName) +
 			' - ' +

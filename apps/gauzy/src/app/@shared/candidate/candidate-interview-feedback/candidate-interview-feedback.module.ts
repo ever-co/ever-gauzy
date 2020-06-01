@@ -7,7 +7,7 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbInputModule,
-	NbRadioModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -36,12 +36,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],
-	entryComponents: [CandidateInterviewFeedbackComponent],
+	entryComponents: [CandidateInterviewFeedbackComponent]
 })
 export class CandidateInterviewFeedbackModule {}

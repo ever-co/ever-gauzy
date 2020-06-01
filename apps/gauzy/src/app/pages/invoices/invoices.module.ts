@@ -12,7 +12,7 @@ import {
 	NbTooltipModule,
 	NbDatepickerModule,
 	NbRadioModule,
-	NbSpinnerModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -82,9 +82,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	providers: [
 		InvoicesService,
@@ -94,7 +94,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		OrganizationClientsService,
 		OrganizationProjectsService,
 		EmployeesService,
-		ProductService,
+		ProductService
 	],
 	entryComponents: [
 		InvoicesComponent,
@@ -110,7 +110,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaidComponent,
 		InvoiceEmailMutationComponent,
 		InvoiceViewInnerComponent,
-		InvoiceDownloadMutationComponent,
+		InvoiceDownloadMutationComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -126,7 +126,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoicePaidComponent,
 		InvoiceEmailMutationComponent,
 		InvoiceViewInnerComponent,
-		InvoiceDownloadMutationComponent,
-	],
+		InvoiceDownloadMutationComponent
+	]
 })
 export class InvoicesModule {}

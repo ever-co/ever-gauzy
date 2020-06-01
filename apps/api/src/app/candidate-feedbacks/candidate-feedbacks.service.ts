@@ -20,7 +20,7 @@ export class CandidateFeedbacksService extends CrudService<CandidateFeedback> {
 		return await this.repository
 			.createQueryBuilder('candidate_feedbacks')
 			.where('candidate_feedbacks.interviewId = :interviewId', {
-				interviewId,
+				interviewId
 			})
 			.getMany();
 	}

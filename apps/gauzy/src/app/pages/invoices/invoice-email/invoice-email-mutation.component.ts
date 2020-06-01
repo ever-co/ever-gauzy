@@ -11,7 +11,7 @@ import * as html2canvas from 'html2canvas';
 
 @Component({
 	selector: 'ga-invoice-email',
-	templateUrl: './invoice-email-mutation.component.html',
+	templateUrl: './invoice-email-mutation.component.html'
 })
 export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -36,7 +36,7 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 
 	initializeForm() {
 		this.form = this.fb.group({
-			email: ['', Validators.required],
+			email: ['', Validators.required]
 		});
 	}
 

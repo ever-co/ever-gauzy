@@ -4,15 +4,16 @@ import { IEngagement } from '@gauzy/models';
 import { Observable, of, EMPTY, Subject } from 'rxjs';
 import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { NbToastrService } from '@nebular/theme';
+import { NbToastrService, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { catchError, tap, takeUntil } from 'rxjs/operators';
+import { catchError, tap, takeUntil, first } from 'rxjs/operators';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
 
 @Component({
 	selector: 'ngx-contracts',
 	templateUrl: './contracts.component.html',
-	styleUrls: ['./contracts.component.scss'],
+	styleUrls: ['./contracts.component.scss']
 })
 export class ContractsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -26,7 +27,8 @@ export class ContractsComponent extends TranslationBaseComponent
 		private _us: UpworkStoreService,
 		private toastrService: NbToastrService,
 		private _ehs: ErrorHandlingService,
-		public translateService: TranslateService
+		public translateService: TranslateService,
+		private _ds: NbDialogService
 	) {
 		super(translateService);
 		this._loagContracts();
@@ -57,7 +59,7 @@ export class ContractsComponent extends TranslationBaseComponent
 				add: false,
 				edit: false,
 				delete: false,
-				select: true,
+				select: true
 			},
 			mode: 'external',
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA'),
@@ -66,23 +68,23 @@ export class ContractsComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.START_DATE'),
 					type: 'custom',
 					renderComponent: DateViewComponent,
-					filter: false,
+					filter: false
 				},
 				engagement_end_date: {
 					title: this.getTranslation('SM_TABLE.END_DATE'),
 					type: 'custom',
 					renderComponent: DateViewComponent,
-					filter: false,
+					filter: false
 				},
 				job__title: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
-					type: 'string',
+					type: 'string'
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
-					type: 'string',
-				},
-			},
+					type: 'string'
+				}
+			}
 		};
 	}
 
@@ -90,6 +92,16 @@ export class ContractsComponent extends TranslationBaseComponent
 		const selectedContracts = isSelected ? selected : null;
 		this.contractsTable.grid.dataSet.willSelect = false;
 		this.selectedContracts = selectedContracts;
+	}
+
+	async manageEntitiesSync() {
+		const dialog = this._ds.open(SyncDataSelectionComponent, {
+			context: {
+				contracts: this.selectedContracts
+			}
+		});
+
+		await dialog.onClose.pipe(first()).toPromise();
 	}
 
 	syncContracts() {

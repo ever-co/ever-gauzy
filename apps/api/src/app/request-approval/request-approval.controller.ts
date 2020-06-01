@@ -5,7 +5,7 @@ import {
 	RequestApproval as IRequestApproval,
 	PermissionsEnum,
 	RequestApprovalCreateInput as IRequestApprovalCreateInput,
-	RequestApprovalStatusTypesEnum,
+	RequestApprovalStatusTypesEnum
 } from '@gauzy/models';
 import {
 	Query,
@@ -17,7 +17,7 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	Controller,
+	Controller
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
@@ -38,11 +38,11 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
-		type: RequestApproval,
+		type: RequestApproval
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
@@ -54,7 +54,7 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 
 		return this.requestApprovalService.findAllRequestApprovals({
 			where: findInput,
-			relations,
+			relations
 		});
 	}
 
@@ -62,11 +62,11 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
-		type: RequestApproval,
+		type: RequestApproval
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_VIEW)
@@ -79,9 +79,9 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 
 		return this.requestApprovalService.findRequestApprovalsByEmployeeId({
 			where: {
-				id,
+				id
 			},
-			relations,
+			relations
 		});
 	}
 
@@ -89,11 +89,11 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
-		type: RequestApproval,
+		type: RequestApproval
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.REQUEST_APPROVAL_EDIT)
@@ -108,11 +108,11 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
-		type: RequestApproval,
+		type: RequestApproval
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
@@ -131,11 +131,11 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
-		type: RequestApproval,
+		type: RequestApproval
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
@@ -154,11 +154,11 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found policies',
-		type: RequestApproval,
+		type: RequestApproval
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)

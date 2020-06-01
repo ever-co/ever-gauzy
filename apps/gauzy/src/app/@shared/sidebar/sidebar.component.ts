@@ -185,7 +185,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.form = this.fb.group({
 			name: [this.articleName],
 			desc: [this.articleDesc],
-			data: [this.articleData],
+			data: [this.articleData]
 		});
 	}
 

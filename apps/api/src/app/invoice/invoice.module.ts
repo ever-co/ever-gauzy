@@ -11,6 +11,6 @@ import { EmailService, EmailModule } from '../email';
 	imports: [TypeOrmModule.forFeature([User, Invoice]), EmailModule],
 	controllers: [InvoiceController],
 	providers: [InvoiceService, UserService, EmailService],
-	exports: [InvoiceService, UserService],
+	exports: [InvoiceService, UserService]
 })
 export class InvoiceModule {}

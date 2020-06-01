@@ -10,7 +10,7 @@ import {
 	FindManyOptions,
 	FindOneOptions,
 	Repository,
-	UpdateResult,
+	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { mergeMap } from 'rxjs/operators';
@@ -50,12 +50,12 @@ export abstract class CrudService<T extends Base> implements ICrudService<T> {
 			);
 			return {
 				success: true,
-				record,
+				record
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error,
+				error
 			};
 		}
 	}

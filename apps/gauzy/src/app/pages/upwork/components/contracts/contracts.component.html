@@ -3,11 +3,11 @@
 		<button
 			nbButton
 			[disabled]="!selectedContracts"
-			(click)="syncContracts()"
+			(click)="manageEntitiesSync()"
 			status="primary"
 		>
 			<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-			>{{ 'BUTTONS.SYNC' | translate }}
+			>{{ 'BUTTONS.MANAGE' | translate }}
 		</button>
 	</div>
 	<ng2-smart-table

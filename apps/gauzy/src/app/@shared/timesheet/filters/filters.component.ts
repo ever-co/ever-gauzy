@@ -5,14 +5,14 @@ import {
 	Input,
 	Output,
 	EventEmitter,
-	OnDestroy,
+	OnDestroy
 } from '@angular/core';
 import {
 	TimeLogFilters,
 	TimeLogType,
 	TimeLogSourceEnum,
 	Organization,
-	PermissionsEnum,
+	PermissionsEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { Subject } from 'rxjs';
@@ -23,7 +23,7 @@ import { EmployeesService } from '../../../@core/services/employees.service';
 @Component({
 	selector: 'ngx-filters',
 	templateUrl: './filters.component.html',
-	styleUrls: ['./filters.component.scss'],
+	styleUrls: ['./filters.component.scss']
 })
 export class FiltersComponent implements OnInit, OnDestroy {
 	today: Date = new Date();

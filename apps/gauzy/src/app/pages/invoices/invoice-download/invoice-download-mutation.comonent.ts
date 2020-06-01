@@ -9,7 +9,7 @@ import * as html2canvas from 'html2canvas';
 @Component({
 	selector: 'ga-invoice-send',
 	templateUrl: './invoice-download-mutation.component.html',
-	styleUrls: ['./invoice-download-mutation.component.scss'],
+	styleUrls: ['./invoice-download-mutation.component.scss']
 })
 export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 	client: OrganizationClients;

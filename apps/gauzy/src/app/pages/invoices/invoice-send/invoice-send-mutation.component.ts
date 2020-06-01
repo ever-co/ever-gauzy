@@ -8,7 +8,7 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 @Component({
 	selector: 'ga-invoice-send',
 	templateUrl: './invoice-send-mutation.component.html',
-	styleUrls: ['./invoice-send-mutation.component.scss'],
+	styleUrls: ['./invoice-send-mutation.component.scss']
 })
 export class InvoiceSendMutationComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -39,7 +39,7 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 
 	async send() {
 		await this.invoicesService.update(this.invoice.id, {
-			sentTo: this.client.organizationId,
+			sentTo: this.client.organizationId
 		});
 		this.dialogRef.close();
 

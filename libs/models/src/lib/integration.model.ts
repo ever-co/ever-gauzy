@@ -58,6 +58,13 @@ export interface IIntegrationMapSyncProject {
 	sourceId: string;
 }
 
+export interface IIntegrationMapSyncEntityInput {
+	integrationId: string;
+	sourceId: string;
+	gauzyId: string;
+	entity: string;
+}
+
 export interface IIntegrationTenantCreateDto {
 	name: string;
 	entitySettings?: IIntegrationEntitySetting[];

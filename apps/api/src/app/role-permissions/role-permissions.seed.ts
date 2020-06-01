@@ -52,8 +52,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.INVOICES_VIEW,
 			PermissionsEnum.INVOICES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
-			PermissionsEnum.ORG_TAGS_EDIT,
-		],
+			PermissionsEnum.ORG_TAGS_EDIT
+		]
 	},
 	{
 		role: RolesEnum.ADMIN,
@@ -98,8 +98,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.INVOICES_VIEW,
 			PermissionsEnum.INVOICES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT,
-			PermissionsEnum.ORG_TAGS_EDIT,
-		],
+			PermissionsEnum.ORG_TAGS_EDIT
+		]
 	},
 	{
 		role: RolesEnum.DATA_ENTRY,
@@ -115,8 +115,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEWERS_EDIT,
 			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT,
-			PermissionsEnum.ORG_HELP_CENTER_EDIT,
-		],
+			PermissionsEnum.ORG_HELP_CENTER_EDIT
+		]
 	},
 	{
 		role: RolesEnum.EMPLOYEE,
@@ -128,8 +128,8 @@ export const defaultRolePermissions = [
 			PermissionsEnum.APPROVAL_POLICY_VIEW,
 			PermissionsEnum.REQUEST_APPROVAL_EDIT,
 			PermissionsEnum.REQUEST_APPROVAL_VIEW,
-			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
-		],
+			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT
+		]
 	},
 	{
 		role: RolesEnum.CANDIDATE,
@@ -137,9 +137,9 @@ export const defaultRolePermissions = [
 			PermissionsEnum.ADMIN_DASHBOARD_VIEW,
 			PermissionsEnum.ORG_PROPOSALS_VIEW,
 			PermissionsEnum.ORG_TIME_OFF_VIEW,
-			PermissionsEnum.ORG_TAGS_EDIT,
-		],
-	},
+			PermissionsEnum.ORG_TAGS_EDIT
+		]
+	}
 ];
 
 export const createRolePermissions = async (

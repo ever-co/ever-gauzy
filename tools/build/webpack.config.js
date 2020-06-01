@@ -43,7 +43,7 @@ module.exports = (config) => {
 		npm: 'npm',
 		fsevents: 'fsevents',
 		bcrypt: 'bcrypt',
-		sqlite3: 'commonjs sqlite3',
+		sqlite3: 'commonjs sqlite3'
 	};
 
 	return config;

@@ -17,12 +17,12 @@ export class HelpCenterController extends CrudController<HelpCenter> {
 	}
 
 	@ApiOperation({
-		summary: 'Create new category',
+		summary: 'Create new category'
 	})
 	@ApiResponse({
 		status: HttpStatus.CREATED,
 		description: 'Success Add category',
-		type: HelpCenter,
+		type: HelpCenter
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
