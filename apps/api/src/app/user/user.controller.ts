@@ -14,10 +14,15 @@ import {
 	Body,
 	Put
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiOperation,
+	ApiResponse,
+	ApiTags,
+	ApiBearerAuth
+} from '@nestjs/swagger';
 import { IPagination } from '../core';
 import { CrudController } from '../core/crud/crud.controller';
-import { UUIDValidationPipe } from '../shared';
+import { UUIDValidationPipe, ParseJsonPipe } from '../shared';
 import { User } from './user.entity';
 import { UserService } from './user.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
@@ -30,6 +35,7 @@ import { UserCreateInput as IUserCreateInput } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('User')
+@ApiBearerAuth()
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class UserController extends CrudController<User> {
@@ -85,11 +91,11 @@ export class UserController extends CrudController<User> {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findOneById(
+	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data?: any
 	): Promise<User> {
-		const { relations } = JSON.parse(data);
+		const { relations } = data;
 		return this.userService.findOne(id, { relations });
 	}
 
@@ -107,9 +113,9 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get()
 	async findAllUsers(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<User>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations, findInput } = data;
 		return this.userService.findAll({
 			where: findInput,
 			relations

@@ -19,9 +19,9 @@ import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 
 @Component({
-	selector: 'ngx-manage-candidate-interviews',
+	selector: 'ga-manage-candidate-interviews',
 	templateUrl: './manage-candidate-interviews.component.html',
-	styleUrls: ['./manage-candidate-interviews.component.scss'],
+	styleUrls: ['./manage-candidate-interviews.component.scss']
 })
 export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -70,28 +70,28 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 				const id = event.event._def.extendedProps.id;
 				this.dialogService.open(CandidateInterviewInfoComponent, {
 					context: {
-						interviewId: id,
-					},
+						interviewId: id
+					}
 				});
 			},
 			initialView: 'timeGridWeek',
 			header: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'timeGridWeek',
+				right: 'timeGridWeek'
 			},
 			themeSystem: 'bootstrap',
 			plugins: [
 				dayGridPlugin,
 				timeGrigPlugin,
 				interactionPlugin,
-				bootstrapPlugin,
+				bootstrapPlugin
 			],
 			weekends: true,
-			height: 'auto',
+			height: 'auto'
 		};
 		const res = await this.candidateInterviewService.getAll([
-			'interviewers',
+			'interviewers'
 		]);
 		if (res) {
 			this.calendarEvents = [];
@@ -103,9 +103,9 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 					candidateId: interview.candidateId,
 					id: interview.id,
 					extendedProps: {
-						id: interview.id,
+						id: interview.id
 					},
-					backgroundColor: '#36f',
+					backgroundColor: '#36f'
 				});
 			}
 			this.calendarOptions.events = this.calendarEvents;
@@ -113,7 +113,6 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	}
 
 	async onCandidateSelected(ids: string[]) {
-		console.log(this.employeeList);
 		if (!ids[0]) {
 			//if no one is selected
 			this.isCandidate = false;
@@ -184,8 +183,8 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			CandidateInterviewMutationComponent,
 			{
 				context: {
-					isCalendar: true,
-				},
+					isCalendar: true
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();

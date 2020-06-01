@@ -13,7 +13,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Здравствуйте!</p>
 					<p>
-						Вы были приглашены {{organization}}
+						Вы были приглашены {{organizationName}}
 					</p>
 					<p>Используйте кнопку ниже, чтобы зарегистрироваться:</p>
 				</mj-text>
@@ -31,7 +31,7 @@
 						с нами, ответив на это письмо.
 					</p>
 					<p>Поздравления,</p>
-					<p>Команда {{organization}}</p>
+					<p>Команда {{organizationName}}</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
@@ -39,11 +39,11 @@
 				></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="https://app.gauzy.co/." style="color:#598bff"
+					<a href="https://app.gauzy.co/." style="color: #598bff;"
 						>Gauzy</a
 					>
 					by
-					<a href="https://ever.co/" style="color:#598bff"
+					<a href="https://ever.co/" style="color: #598bff;"
 						>Ever Co. LTD.</a
 					>
 					All rights reserved.

@@ -10,9 +10,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
 import { first } from 'rxjs/operators';
 @Component({
-	selector: 'ngx-candidate-interview-info',
+	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
-	styleUrls: ['./candidate-interview-info.component.scss'],
+	styleUrls: ['./candidate-interview-info.component.scss']
 })
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -52,8 +52,8 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 					),
 					editData: this.currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: this.currentInterview.id,
-				},
+					interviewId: this.currentInterview.id
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();

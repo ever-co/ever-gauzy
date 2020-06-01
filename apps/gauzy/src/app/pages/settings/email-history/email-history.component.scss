@@ -1,0 +1,65 @@
+@import '../../../@theme/styles/themes.scss';
+
+@include nb-install-component {
+  nb-card-body {
+    padding: 0;
+  }
+
+  h2 {
+    text-align: center;
+  }
+
+  .content-container {
+    display: flex;
+
+    nb-list {
+      white-space: nowrap;
+      overflow: hidden;
+      min-width: 320px;
+      flex: none;
+      overflow-y: scroll;
+      max-height: 560px;
+
+      nb-list-item {
+        cursor: pointer;
+
+        &:first-child {
+          border-top: none;
+        }
+
+        &:hover {
+          color: #3366ff;
+        }
+
+        .email-list-item {
+          display: flex;
+          justify-content: center;
+          flex-direction: column;
+
+          span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+            width: 280px;
+          }
+        }
+      }
+    }
+
+    .email-container {
+      border-left: 1px solid nb-theme(list-item-divider-color);
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      padding: 2rem;
+
+      .email-details {
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+      }
+    }
+  }
+}

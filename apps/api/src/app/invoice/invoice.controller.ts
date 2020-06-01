@@ -11,19 +11,29 @@ import {
 	Param,
 	Body,
 	Query,
-	Get
+	Get,
+	Req
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { PermissionsEnum, Invoice as IInvoice } from '@gauzy/models';
+import {
+	PermissionsEnum,
+	Invoice as IInvoice,
+	LanguagesEnum
+} from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
+import { I18nLang } from 'nestjs-i18n';
+import { EmailService } from '../email';
 
 @ApiTags('Invoice')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class InvoiceController extends CrudController<Invoice> {
-	constructor(private invoiceService: InvoiceService) {
+	constructor(
+		private invoiceService: InvoiceService,
+		private readonly emailService: EmailService
+	) {
 		super(invoiceService);
 	}
 
@@ -74,5 +84,20 @@ export class InvoiceController extends CrudController<Invoice> {
 			id,
 			...entity
 		});
+	}
+
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(AuthGuard('jwt'), PermissionGuard)
+	@Put('email/:email')
+	async emailInvoice(
+		@Param('email') email: string,
+		@Req() request,
+		@I18nLang() languageCode: LanguagesEnum
+	): Promise<any> {
+		return this.emailService.emailInvoice(
+			languageCode,
+			email,
+			request.get('Origin')
+		);
 	}
 }

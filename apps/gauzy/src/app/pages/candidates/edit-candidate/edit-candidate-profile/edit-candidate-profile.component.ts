@@ -17,7 +17,7 @@ import { NbToastrService } from '@nebular/theme';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 
 @Component({
-	selector: 'ngx-edit-candidate-profile',
+	selector: 'ga-edit-candidate-profile',
 	templateUrl: './edit-candidate-profile.component.html',
 	styleUrls: [
 		'./edit-candidate-profile.component.scss',

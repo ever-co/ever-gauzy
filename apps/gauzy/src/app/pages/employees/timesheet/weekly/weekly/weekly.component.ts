@@ -8,13 +8,13 @@ import {
 	Organization,
 	PermissionsEnum,
 	TimeLog,
-	OrganizationProjects
+	OrganizationProjects,
+	TimeLogFilters
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { debounceTime } from 'rxjs/operators';
-import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 
 interface WeeklyDayData {
@@ -29,11 +29,7 @@ interface WeeklyDayData {
 })
 export class WeeklyComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
-	logRequest: {
-		startDate?: Date;
-		endDate?: Date;
-		employeeId?: string;
-	} = {};
+	logRequest: TimeLogFilters = {};
 	updateLogs$: Subject<any> = new Subject();
 	organization: Organization;
 	canChangeSelectedEmployee: boolean;
@@ -52,29 +48,13 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 	public set selectedDate(value: Date) {
 		this._selectedDate = value;
-		this.logRequest.startDate = moment(value)
-			.startOf('isoWeek')
-			.toDate();
-		this.logRequest.endDate = moment(value)
-			.endOf('isoWeek')
-			.toDate();
-
-		const range = {};
-		let i = 0;
-		const start = moment(this.logRequest.startDate);
-		while (start.isSameOrBefore(this.logRequest.endDate) && i < 7) {
-			const date = start.format('YYYY-MM-DD');
-			range[date] = null;
-			start.add(1, 'day');
-			i++;
-		}
-		this.weekDayList = Object.keys(range);
-
-		this.updateLogs$.next();
 	}
 
 	ngOnInit() {
-		this.selectedDate = this.today;
+		this.logRequest.startDate = moment(this.today).startOf('week').toDate();
+		this.logRequest.endDate = moment(this.today).endOf('week').toDate();
+		this.updateWeekDayList();
+
 		this.store.user$.subscribe(() => {
 			this.canChangeSelectedEmployee = this.store.hasPermission(
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -86,15 +66,6 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 				this.organization = organization;
 			});
 
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
-				if (employee) {
-					this.logRequest.employeeId = employee.id;
-					this.updateLogs$.next();
-				}
-			});
-
 		this.updateLogs$
 			.pipe(untilDestroyed(this), debounceTime(500))
 			.subscribe(() => {
@@ -104,28 +75,33 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 		this.updateLogs$.next();
 	}
 
-	async nextDay() {
-		const date = moment(this.selectedDate).add(7, 'day');
-		if (date.isAfter(this.today)) {
-			return;
+	updateWeekDayList() {
+		const range = {};
+		let i = 0;
+		const start = moment(this.logRequest.startDate);
+		while (start.isSameOrBefore(this.logRequest.endDate) && i < 7) {
+			const date = start.format('YYYY-MM-DD');
+			range[date] = null;
+			start.add(1, 'day');
+			i++;
 		}
-		this.selectedDate = date.toDate();
+		this.weekDayList = Object.keys(range);
 	}
 
-	async previousDay() {
-		this.selectedDate = moment(this.selectedDate)
-			.subtract(7, 'day')
-			.toDate();
+	filtersChange($event: TimeLogFilters) {
+		const dateChagne = $event.startDate !== this.logRequest.startDate;
+		this.logRequest = $event;
+		if (dateChagne) {
+			this.updateWeekDayList();
+		}
+		this.updateLogs$.next();
 	}
 
 	async getLogs() {
 		const { startDate, endDate, employeeId } = this.logRequest;
-		const _startDate = moment(startDate).format('YYYY-MM-DD') + ' 00:00:00';
-		const _endDate = moment(endDate).format('YYYY-MM-DD') + ' 23:59:59';
-
 		const request: IGetTimeLogInput = {
-			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
 			...(employeeId ? { employeeId } : {}),
 			organizationId: this.organization ? this.organization.id : null
 		};

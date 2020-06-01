@@ -19,6 +19,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { PermissionsEnum, ICandidateFeedbackCreateInput } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('candidate_feedbacks')
 @UseGuards(AuthGuard('jwt'))
@@ -45,10 +46,36 @@ export class CandidateFeedbacksController extends CrudController<
 	})
 	@Get()
 	async findFeedback(
-		@Query('data') data: string
+		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<CandidateFeedback>> {
-		const { findInput } = JSON.parse(data);
-		return this.candidateFeedbacksService.findAll({ where: findInput });
+		const { relations = [], findInput = null } = data;
+		return this.candidateFeedbacksService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
+	@ApiOperation({
+		summary: 'Find feedbacks By Interview Id.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found candidate feedbacks',
+		type: CandidateFeedback
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
+	@Get('getByInterviewId/:interviewId')
+	async findByInterviewId(
+		@Param('interviewId') interviewId: string
+	): Promise<CandidateFeedback[]> {
+		return this.candidateFeedbacksService.getFeedbacksByInterviewId(
+			interviewId
+		);
 	}
 
 	@UseGuards(PermissionGuard)

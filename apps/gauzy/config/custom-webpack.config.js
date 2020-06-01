@@ -2,7 +2,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 console.log('Using custom Webpack config...');
 
-function isCircleCI(){
+function isCircleCI() {
 	return process.env.CI === 'true' && process.env.CIRCLECI === 'true';
 }
 
@@ -21,7 +21,7 @@ module.exports = {
 				parallel: isCircleEnv ? 2 : true,
 				sourceMap: !isCircleEnv,
 				extractComments: !isCircleEnv
-			}),
-		],
-	},
+			})
+		]
+	}
 };

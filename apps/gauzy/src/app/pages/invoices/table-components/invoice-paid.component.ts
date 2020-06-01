@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
@@ -17,15 +17,10 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 	`,
 	styles: []
 })
-export class InvoicePaidComponent extends TranslationBaseComponent
-	implements OnInit {
+export class InvoicePaidComponent extends TranslationBaseComponent {
 	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
 	rowData: any;
-
-	ngOnInit() {
-		console.log(this.rowData);
-	}
 }

@@ -28,7 +28,7 @@ interface CandidateViewModel {
 
 @Component({
 	templateUrl: './candidates.component.html',
-	styleUrls: ['./candidates.component.scss'],
+	styleUrls: ['./candidates.component.scss']
 })
 export class CandidatesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -145,7 +145,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	}
 	edit() {
 		this.router.navigate([
-			'/pages/employees/candidates/edit/' + this.selectedCandidate.id,
+			'/pages/employees/candidates/edit/' + this.selectedCandidate.id
 		]);
 	}
 	async archive() {
@@ -157,8 +157,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 						' ' +
 						this.getTranslation(
 							'FORM.ARCHIVE_CONFIRMATION.CANDIDATE'
-						),
-				},
+						)
+				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -185,8 +185,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 			context: {
 				invitationType: InvitationTypeEnum.CANDIDATE,
 				selectedOrganizationId: this.selectedOrganizationId,
-				currentUserId: this.store.userId,
-			},
+				currentUserId: this.store.userId
+			}
 		});
 		await dialog.onClose.pipe(first()).toPromise();
 	}
@@ -199,16 +199,19 @@ export class CandidatesComponent extends TranslationBaseComponent
 	async getCandidateSource(id: string) {
 		this.candidateSource = null;
 		const res = await this.candidateSourceService.getAll({
-			candidateId: id,
+			candidateId: id
 		});
 		if (res) {
 			return (this.candidateSource = res.items[0]);
 		}
 	}
 	async getCandidateRating(id: string) {
-		const res = await this.candidateFeedbacksService.getAll({
-			candidateId: id,
-		});
+		const res = await this.candidateFeedbacksService.getAll(
+			['interviewer'],
+			{
+				candidateId: id
+			}
+		);
 		if (res) {
 			this.candidateRating = 0;
 			for (let i = 0; i < res.total; i++) {
@@ -221,7 +224,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 
 		const { items } = await this.candidatesService
 			.getAll(['user', 'source', 'tags'], {
-				organization: { id: this.selectedOrganizationId },
+				organization: { id: this.selectedOrganizationId }
 			})
 			.pipe(first())
 			.toPromise();
@@ -242,7 +245,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 				status: candidate.status,
 				isArchived: candidate.isArchived,
 				imageUrl: candidate.user.imageUrl,
-				tags: candidate.tags,
+				tags: candidate.tags
 			});
 		}
 		if (!this.includeArchived) {
@@ -271,12 +274,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row',
+					class: 'align-row'
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
-					class: 'email-column',
+					class: 'email-column'
 				},
 				source: {
 					title: this.getTranslation('SM_TABLE.SOURCE'),
@@ -284,7 +287,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 					class: 'text-center',
 					width: '200px',
 					renderComponent: CandidateSourceComponent,
-					filter: false,
+					filter: false
 				},
 
 				status: {
@@ -293,13 +296,13 @@ export class CandidatesComponent extends TranslationBaseComponent
 					class: 'text-center',
 					width: '200px',
 					renderComponent: CandidateStatusComponent,
-					filter: false,
-				},
+					filter: false
+				}
 			},
 			pager: {
 				display: true,
-				perPage: 8,
-			},
+				perPage: 8
+			}
 		};
 	}
 
@@ -312,8 +315,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.open(CandidateActionConfirmationComponent, {
 				context: {
 					recordType: this.selectedCandidate.fullName,
-					isReject: true,
-				},
+					isReject: true
+				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {
@@ -340,8 +343,8 @@ export class CandidatesComponent extends TranslationBaseComponent
 			.open(CandidateActionConfirmationComponent, {
 				context: {
 					recordType: this.selectedCandidate.fullName,
-					isReject: false,
-				},
+					isReject: false
+				}
 			})
 			.onClose.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (result) => {

@@ -7,6 +7,16 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form class="form" [formGroup]="form" *ngIf="form">
+			<ga-candidate-select
+				class="select"
+				[allCandidates]="employeesForSelect"
+				[placeholder]="
+					'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEE' | translate
+				"
+				[disabledIds]="disabledIds"
+				(selectedChange)="onMembersSelected($event)"
+			>
+			</ga-candidate-select>
 			<div class="label-wrap">
 				<ga-star-rating-input
 					formControlName="rating"
@@ -16,19 +26,23 @@
 					[ngModelOptions]="{ standalone: true }"
 					class="radio-group"
 				>
-					<nb-radio [value]="true"
+					<nb-radio [value]="'HIRED'" [disabled]="isRejected"
 						>{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
 								| translate
-						}}<i class="fas success fa-thumbs-up"></i
-					></nb-radio>
-					<nb-radio [value]="null" [checked]="true"
-						>{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.POSTPONE'
-								| translate
-						}}<i class="fas primary fa-clock"></i
-					></nb-radio>
-					<nb-radio [value]="false"
+						}}
+						<span *ngIf="interviewers?.length > 1">
+							({{ statusHire }}/{{ interviewers?.length }}) </span
+						><i
+							class="fas fa-thumbs-up"
+							[ngClass]="{
+								success: !isRejected,
+								disabled: isRejected
+							}"
+						></i>
+					</nb-radio>
+
+					<nb-radio [value]="'REJECTED'"
 						>{{
 							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT'
 								| translate

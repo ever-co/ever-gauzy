@@ -75,10 +75,12 @@ export class RequestApprovalControler extends CrudController<RequestApproval> {
 		@Param('id') id: string,
 		@Query('data') data: string
 	): Promise<IPagination<IRequestApproval>> {
-		const { relations, findInput } = JSON.parse(data);
+		const { relations } = JSON.parse(data);
 
 		return this.requestApprovalService.findRequestApprovalsByEmployeeId({
-			where: findInput,
+			where: {
+				id
+			},
 			relations
 		});
 	}

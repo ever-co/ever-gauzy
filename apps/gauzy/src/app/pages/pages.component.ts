@@ -280,6 +280,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Approvals',
+					icon: 'flip-2-outline',
+					link: '/pages/employees/approvals',
+					data: {
+						translated: false,
+						translationKey: 'MENU.APPROVALS'
+					}
+				},
+				{
 					title: 'Time Off',
 					icon: 'eye-off-2-outline',
 					link: '/pages/employees/time-off',
@@ -540,6 +549,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.GENERAL'
+					}
+				},
+				{
+					title: 'Email History',
+					icon: 'email-outline',
+					link: '/pages/settings/email-history',
+					data: {
+						translated: false,
+						translationKey: 'MENU.EMAIL_HISTORY'
+						// permissionKeys: [
+						// 	PermissionsEnum.VIEW_ALL_EMAILS
+						// ]
 					}
 				},
 				{

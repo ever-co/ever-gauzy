@@ -106,7 +106,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		this.loading = false;
 	}
 
-	async initializeForm() {
+	initializeForm() {
 		this.createInvoiceNumber();
 		this.form = this.fb.group({
 			invoiceDate: ['', Validators.required],
@@ -505,32 +505,33 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 
 	onTypeChange($event) {
 		this.invoiceType = $event;
-		if ($event === InvoiceTypeEnum.BY_EMPLOYEE_HOURS) {
-			this.isEmployeeHourTable = true;
-			this.isProjectHourTable = false;
-			this.isTaskHourTable = false;
-			this.isProductTable = false;
-		} else if ($event === InvoiceTypeEnum.BY_PROJECT_HOURS) {
-			this.isEmployeeHourTable = false;
-			this.isProjectHourTable = true;
-			this.isTaskHourTable = false;
-			this.isProductTable = false;
-		} else if ($event === InvoiceTypeEnum.BY_TASK_HOURS) {
-			this.isEmployeeHourTable = false;
-			this.isProjectHourTable = false;
-			this.isTaskHourTable = true;
-			this.isProductTable = false;
-		} else if ($event === InvoiceTypeEnum.BY_PRODUCTS) {
-			this.isEmployeeHourTable = false;
-			this.isProjectHourTable = false;
-			this.isTaskHourTable = false;
-			this.isProductTable = true;
-		} else {
-			this.isEmployeeHourTable = false;
-			this.isProjectHourTable = false;
-			this.isTaskHourTable = false;
-			this.isProductTable = false;
+
+		let isEmployeeHourTable = false;
+		let isProjectHourTable = false;
+		let isTaskHourTable = false;
+		let isProductTable = false;
+
+		switch ($event) {
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+				isEmployeeHourTable = true;
+				break;
+			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+				isProjectHourTable = true;
+				break;
+			case InvoiceTypeEnum.BY_TASK_HOURS:
+				isTaskHourTable = true;
+				break;
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				isProductTable = true;
+				break;
+			default:
+				break;
 		}
+
+		this.isEmployeeHourTable = isEmployeeHourTable;
+		this.isProjectHourTable = isProjectHourTable;
+		this.isTaskHourTable = isTaskHourTable;
+		this.isProductTable = isProductTable;
 	}
 
 	generateTable() {

@@ -51,6 +51,44 @@ jobs:
                   root: /tmp/workspace/monorepo-root
                   paths:
                       - '*'
+    build-desktop:
+        <<: *defaults
+        working_directory: /tmp/workspace/desktop
+        docker:
+            - image: circleci/node:14.3.0
+        steps:
+            - checkout
+            - run:
+                  name: 'Installing latest Yarn'
+                  command: |
+                      # remove default yarn
+                      sudo rm -rf $(dirname $(which yarn))/yarn*
+                      # download latest
+                      rm -rf ~/.yarn
+                      curl -o- -L https://yarnpkg.com/install.sh | bash
+                      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  keys:
+                      - yarn-packages-desktop-{{ checksum "yarn.lock" }}
+            - run:
+                  name: Install Dependencies
+                  command: yarn install
+            - run:
+                  name: Run Bootstrap
+                  command: yarn bootstrap
+            - run:
+                  name: Run Build
+                  command: yarn build:desktop:linux
+            - save_cache:
+                  name: Save Yarn Package Cache
+                  key: yarn-packages-desktop-{{ checksum "yarn.lock" }}
+                  paths:
+                      - ~/.cache/yarn
+            - persist_to_workspace:
+                  root: /tmp/workspace/desktop
+                  paths:
+                      - '*'
     build-api:
         <<: *defaults
         working_directory: /tmp/workspace/api
@@ -134,3 +172,4 @@ workflows:
             - build-monorepo-root
             - build-web
             - build-api
+            - build-desktop

@@ -1,7 +1,8 @@
 import { Connection } from 'typeorm';
 import { Organization } from '@gauzy/models';
 import { ProductType } from './product-type.entity';
-import { environment as env } from '@env-api/environment';
+import * as seed from './product-type.seed.json';
+import { ProductTypeTranslation } from './product-type-translation.entity';
 
 export const createDefaultProductTypes = async (
 	connection: Connection,
@@ -10,12 +11,19 @@ export const createDefaultProductTypes = async (
 	const seedProductTypes = [];
 
 	organizations.forEach(async (organization) => {
-		env.defaultProductTypes.forEach((seedProductType) => {
+		seed.forEach((seedProductType) => {
 			const newType = new ProductType();
-			newType.name = seedProductType.name;
-			newType.description = seedProductType.description;
+
 			newType.icon = seedProductType.icon;
 			newType.organization = organization;
+			newType.translations = [];
+
+			seedProductType.translations.forEach((translation) => {
+				const newTranslation = new ProductTypeTranslation();
+				Object.assign(newTranslation, translation);
+				newType.translations.push(newTranslation);
+			});
+
 			seedProductTypes.push(newType);
 		});
 	});

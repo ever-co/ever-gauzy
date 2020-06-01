@@ -40,7 +40,7 @@ import { TagService } from '../tags/tag.service';
 import { TaskService } from '../tasks/task.service';
 import { TenantService } from '../tenant/tenant.service';
 import { TimeOffPolicyService } from '../time-off-policy/time-off-policy.service';
-import { TimeSheetService } from '../timesheet/timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
 import { ActivityService } from '../timesheet/activity.service';
 import { ScreenShotService } from '../timesheet/screenshot.service';
 import { TimeSlotService } from '../timesheet/time-slot.service';
@@ -59,25 +59,25 @@ export class ExportAllService implements OnDestroy {
 		{ service: this.userService, nameFile: 'users' },
 		{
 			service: this.userOrganizationService,
-			nameFile: 'user_organization',
+			nameFile: 'user_organization'
 		},
 		{ service: this.emailService, nameFile: 'email' },
 		{ service: this.emailTemplate, nameFile: 'email_template' },
 		{ service: this.employeeService, nameFile: 'employee' },
 		{
 			service: this.employeeRecurringExpensesService,
-			nameFile: 'employee_recurring_expense',
+			nameFile: 'employee_recurring_expense'
 		},
 		{ service: this.employeeSettingService, nameFile: 'employee_setting' },
 		{ service: this.equpmentService, nameFile: 'equipment' },
 		{
 			service: this.equipmentSharingService,
-			nameFile: 'equipment_sharing',
+			nameFile: 'equipment_sharing'
 		},
 		{ service: this.expenseService, nameFile: 'expense' },
 		{
 			service: this.expenseCategoriesService,
-			nameFile: 'expense_category',
+			nameFile: 'expense_category'
 		},
 		{ service: this.incomeService, nameFile: 'income' },
 		{ service: this.inviteService, nameFile: 'invite' },
@@ -86,39 +86,39 @@ export class ExportAllService implements OnDestroy {
 		{ service: this.organizationService, nameFile: 'organization' },
 		{
 			service: this.employeeLevelService,
-			nameFile: 'organization_employee_level',
+			nameFile: 'organization_employee_level'
 		},
 		{
 			service: this.organizationClientsService,
-			nameFile: 'organization_client',
+			nameFile: 'organization_client'
 		},
 		{
 			service: this.organizationDepartmentService,
-			nameFile: 'organization_department',
+			nameFile: 'organization_department'
 		},
 		{
 			service: this.organizationEmploymentTypeService,
-			nameFile: 'organization_employment_type',
+			nameFile: 'organization_employment_type'
 		},
 		{
 			service: this.organizationPositionsService,
-			nameFile: 'organization_position',
+			nameFile: 'organization_position'
 		},
 		{
 			service: this.organizationProjectsService,
-			nameFile: 'organization_project',
+			nameFile: 'organization_project'
 		},
 		{
 			service: this.organizationRecurringExpenseService,
-			nameFile: 'organization_recurring_expense',
+			nameFile: 'organization_recurring_expense'
 		},
 		{
 			service: this.organizationTeamService,
-			nameFile: 'organization_team',
+			nameFile: 'organization_team'
 		},
 		{
 			service: this.organizationVendorsService,
-			nameFile: 'organization_vendor',
+			nameFile: 'organization_vendor'
 		},
 		{ service: this.proposalService, nameFile: 'proposal' },
 		{ service: this.roleService, nameFile: 'role' },
@@ -134,10 +134,10 @@ export class ExportAllService implements OnDestroy {
 		{ service: this.timeSlotService, nameFile: 'time_slot' },
 		{
 			service: this.appointmentEmployeeService,
-			nameFile: 'appointment_employees',
+			nameFile: 'appointment_employees'
 		},
 		{ service: this.approvalPolicyService, nameFile: 'approval_policy' },
-		{ service: this.candidateService, nameFile: 'candidate' },
+		{ service: this.candidateService, nameFile: 'candidate' }
 	];
 
 	constructor(
@@ -215,7 +215,7 @@ export class ExportAllService implements OnDestroy {
 				const output = fs.createWriteStream(`./export/${fileNameS}`);
 
 				const archive = archiver('zip', {
-					zlib: { level: 9 },
+					zlib: { level: 9 }
 				});
 
 				output.on('close', function () {
@@ -275,7 +275,7 @@ export class ExportAllService implements OnDestroy {
 
 				const csvWriter = createCsvWriter({
 					path: `./export/${id$}/csv/${this.services[service_count].nameFile}.csv`,
-					header: dataIn,
+					header: dataIn
 				});
 
 				const data = incommingData;

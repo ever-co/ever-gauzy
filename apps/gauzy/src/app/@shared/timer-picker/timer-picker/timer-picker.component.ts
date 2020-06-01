@@ -25,7 +25,6 @@ import { Organization } from '@gauzy/models';
 export class TimerPickerComponent implements OnInit {
 	private _max: string = '23:59';
 	private _min: string = '00:00';
-	_blockedSlots: string[] = [];
 	timeSlots: { value: string; label: string }[] = [];
 	organization: Organization;
 	onChange: any = () => {};
@@ -47,14 +46,6 @@ export class TimerPickerComponent implements OnInit {
 	public set max(value: string) {
 		this._max = value;
 		this.updateSlots();
-	}
-
-	@Input('blockedSlots')
-	public get blockedSlots() {
-		return this._blockedSlots;
-	}
-	public set blockedSlots(value: string[]) {
-		this._blockedSlots = value;
 	}
 
 	@Output() change: EventEmitter<string> = new EventEmitter();
@@ -83,12 +74,10 @@ export class TimerPickerComponent implements OnInit {
 
 		let times = [];
 		while (slotTime <= endTime) {
-			if (!this._blockedSlots.includes(slotTime.format('HH:mm'))) {
-				times.push({
-					value: slotTime.format('HH:mm'),
-					label: slotTime.format('hh:mm A')
-				});
-			}
+			times.push({
+				value: slotTime.format('HH:mm'),
+				label: slotTime.format('hh:mm A')
+			});
 
 			slotTime = slotTime.add(interval, 'minutes');
 		}

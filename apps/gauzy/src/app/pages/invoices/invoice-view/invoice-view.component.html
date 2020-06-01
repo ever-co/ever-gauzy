@@ -4,73 +4,14 @@
 			{{ 'INVOICES_PAGE.VIEW_INVOICE' | translate }}
 		</h3>
 	</nb-card-header>
-	<nb-card-body id="contentToConvert">
-		<div class="item">
-			{{ 'INVOICES_PAGE.INVOICE_NUMBER' | translate }}:
-			{{ invoice ? invoice.invoiceNumber : '' }}
-		</div>
-		<div class="grid">
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.VIEW.FROM' | translate }}:
-				{{ organization ? organization.name : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.VIEW.TO' | translate }}:
-				{{ client ? client.name : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE' | translate }}:
-				{{ invoice ? invoiceDate : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE' | translate }}:
-				{{ invoice ? dueDate : '' }}
-			</div>
-			<div class="grid-item">
-				{{
-					'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE' | translate
-				}}: {{ invoice ? invoice.discountValue : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.DISCOUNT_TYPE' | translate }}:
-				{{ invoice ? invoice.discountType : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.INVOICES_SELECT_TAX' | translate }}:
-				{{ invoice ? invoice.tax : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.TAX_TYPE' | translate }}:
-				{{ invoice ? invoice.taxType : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.INVOICES_SELECT_CURRENCY' | translate }}:
-				{{ invoice ? invoice.currency : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.INVOICES_SELECT_TOTAL_VALUE' | translate }}:
-				{{ invoice ? invoice.currency : '' }}
-				{{ invoice ? invoice.totalValue : '' }}
-			</div>
-			<div class="grid-item">
-				{{ 'INVOICES_PAGE.INVOICES_SELECT_PAID' | translate }}:
-				{{ invoice ? (invoice.paid ? 'Yes' : 'No') : '' }}
-			</div>
-		</div>
-		<div class="item">
-			{{ 'INVOICES_PAGE.INVOICES_SELECT_TERMS' | translate }}:
-			{{ invoice ? invoice.terms : '' }}
-		</div>
-		<div class="table">
-			<ng2-smart-table
-				*ngIf="loadTable"
-				[settings]="settingsSmartTable"
-				[source]="smartTableSource"
-				style="cursor: pointer;"
-			>
-			</ng2-smart-table>
-		</div>
-	</nb-card-body>
+	<ga-invoice-view-inner
+		id="contentToConvert"
+		*ngIf="invoice"
+		[invoice]="invoice"
+		[client]="client"
+		[organization]="organization"
+	>
+	</ga-invoice-view-inner>
 	<nb-card-footer class="text-right">
 		<button nbButton status="info" (click)="download()" class="mr-2">
 			<nb-icon class="mr-1" icon="download-outline"></nb-icon>

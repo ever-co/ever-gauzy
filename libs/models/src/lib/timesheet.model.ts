@@ -40,7 +40,7 @@ export enum TimesheetStatus {
 	PENDING = 'PENDING',
 	IN_REVIEW = 'IN_REVIEW',
 	DENIED = 'DENIED',
-	APPROVED = 'APPROVED',
+	APPROVED = 'APPROVED'
 }
 
 export interface IUpdateTimesheetStatusInput {
@@ -105,7 +105,29 @@ export interface ITimeSlotCreateInput {
 
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
-	MANUAL = 'MANUAL',
+	MANUAL = 'MANUAL'
+}
+
+export enum TimeLogSourceEnum {
+	MOBILE = 'Mobile',
+	WEB_TIMER = 'WebTimer',
+	DESKTOP = 'Desktop',
+	BROWSER = 'Browser',
+	HUBSTAFF = 'Hubstaff',
+	UPWORK = 'Upwork'
+}
+
+export interface TimeLogFilters {
+	organizationId?: string;
+	startDate?: Date;
+	endDate?: Date;
+	employeeId?: string[];
+	logType?: TimeLogType[];
+	source?: TimeLogSourceEnum[];
+	activityLevel?: {
+		start: number;
+		end: number;
+	};
 }
 
 export interface TimeSlot extends IBaseEntityModel {
@@ -149,7 +171,7 @@ export interface ICreateActivityInput {
 
 export enum ActivityType {
 	URL = 'URL',
-	APP = 'APP',
+	APP = 'APP'
 }
 
 export interface Screenshot extends IBaseEntityModel {
@@ -178,6 +200,7 @@ export interface ITimerToggleInput {
 
 export interface IManualTimeInput {
 	id?: string;
+	employeeId?: string;
 	projectId?: string;
 	taskId?: string;
 	clientId?: string;
@@ -188,12 +211,23 @@ export interface IManualTimeInput {
 	isBillable?: boolean;
 }
 
+export interface IGetTimesheetInput {
+	startDate?: string;
+	endDate?: string;
+	projectId?: string[];
+	clientId?: string[];
+	employeeId?: string | string[];
+}
+
 export interface IGetTimeLogInput {
 	timesheetId?: string;
 	startDate?: string;
 	endDate?: string;
 	projectId?: string[];
 	clientId?: string[];
-	employeeId?: string;
+	employeeId?: string | string[];
+	source?: TimeLogSourceEnum | TimeLogSourceEnum[];
+	logType?: TimeLogType | TimeLogType[];
+	activityLevel?: { start: number; end: number };
 	organizationId?: string;
 }

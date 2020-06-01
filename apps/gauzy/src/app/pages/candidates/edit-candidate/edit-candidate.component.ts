@@ -12,7 +12,7 @@ import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 
 @Component({
-	selector: 'ngx-edit-candidate',
+	selector: 'ga-edit-candidate',
 	templateUrl: './edit-candidate.component.html',
 	styleUrls: [
 		'../../organizations/edit-organization/edit-organization.component.scss',

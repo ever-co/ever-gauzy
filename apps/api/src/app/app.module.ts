@@ -1,5 +1,4 @@
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
-import { HelpCenterModule } from './../../../gauzy/src/app/pages/help-center/help-center.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
@@ -81,6 +80,7 @@ import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
 import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
+import { HelpCenterModule } from './help-center/help-center.module';
 
 @Module({
 	imports: [
@@ -201,6 +201,10 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 					{
 						path: '/email',
 						module: EmailModule
+					},
+					{
+						path: '/email-template',
+						module: EmailTemplateModule
 					},
 					{
 						path: 'time-off-policy',
@@ -349,6 +353,7 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 		RequestApprovalEmployeeModule,
 		ProposalModule,
 		EmailModule,
+		EmailTemplateModule,
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
@@ -356,7 +361,6 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 		RequestApprovalModule,
 		RolePermissionsModule,
 		TenantModule,
-		EmailTemplateModule,
 		TagModule,
 		SkillModule,
 		InvoiceModule,

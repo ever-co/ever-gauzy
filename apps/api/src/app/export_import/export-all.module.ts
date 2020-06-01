@@ -16,13 +16,13 @@ import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import {
 	EmployeeRecurringExpenseService,
-	EmployeeRecurringExpense,
+	EmployeeRecurringExpense
 } from '../employee-recurring-expense';
 import { EmployeeSettingService, EmployeeSetting } from '../employee-setting';
 import { Equipment, EquipmentService } from '../equipment';
 import {
 	EquipmentSharingService,
-	EquipmentSharing,
+	EquipmentSharing
 } from '../equipment-sharing';
 import { Expense } from '../expense/expense.entity';
 import { ExpenseService } from '../expense/expense.service';
@@ -75,7 +75,7 @@ import { TimeSlot } from '../timesheet/time-slot.entity';
 import { Activity } from '../timesheet/activity.entity';
 import { Screenshot } from '../timesheet/screenshot.entity';
 import { TimeLog } from '../timesheet/time-log.entity';
-import { TimeSheetService } from '../timesheet/timesheet.service';
+import { TimeSheetService } from '../timesheet/timesheet/timesheet.service';
 import { ActivityService } from '../timesheet/activity.service';
 import { ScreenShotService } from '../timesheet/screenshot.service';
 import { TimeSlotService } from '../timesheet/time-slot.service';
@@ -131,8 +131,8 @@ import { Candidate } from '../candidate/candidate.entity';
 			TimeLog,
 			AppointmentEmployees,
 			ApprovalPolicy,
-			Candidate,
-		]),
+			Candidate
+		])
 	],
 	controllers: [ExportAllController],
 	providers: [
@@ -177,7 +177,7 @@ import { Candidate } from '../candidate/candidate.entity';
 		TimeSlotService,
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
-		CandidateService,
+		CandidateService
 	],
 	exports: [
 		ExportAllService,
@@ -221,7 +221,7 @@ import { Candidate } from '../candidate/candidate.entity';
 		TimeSlotService,
 		AppointmentEmployeesService,
 		ApprovalPolicyService,
-		CandidateService,
-	],
+		CandidateService
+	]
 })
 export class ExportAllModule {}
