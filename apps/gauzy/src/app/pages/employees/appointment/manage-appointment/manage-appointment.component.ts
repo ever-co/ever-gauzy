@@ -1,6 +1,5 @@
 import {
 	Component,
-	ViewChild,
 	OnDestroy,
 	OnInit,
 	Input,

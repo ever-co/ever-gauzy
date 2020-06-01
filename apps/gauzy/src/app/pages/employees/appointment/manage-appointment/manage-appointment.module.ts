@@ -1,17 +1,22 @@
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
 	NbIconModule,
 	NbInputModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ManageAppointmentRoutingModule } from './manage-appointment-routing.module';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { ManageAppointmentComponent } from './manage-appointment.component';
+import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
+import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
+import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -19,13 +24,18 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		ThemeModule,
 		ManageAppointmentRoutingModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
 		NbInputModule,
+		ReactiveFormsModule,
 		NbIconModule,
 		NbSpinnerModule,
+		TimerPickerModule,
+		NbCheckboxModule,
+		SharedModule,
 		NgSelectModule,
 		TranslateModule.forChild({
 			loader: {
@@ -33,10 +43,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		}),
-		NbSpinnerModule
+		})
 	],
-	declarations: [],
+	exports: [ManageAppointmentComponent],
+	declarations: [ManageAppointmentComponent],
 	providers: []
 })
 export class ManageAppointmentModule {}

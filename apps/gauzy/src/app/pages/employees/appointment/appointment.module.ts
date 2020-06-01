@@ -14,7 +14,7 @@ import {
 	NbTreeGridModule,
 	NbSelectModule,
 	NbRouteTabsetModule,
-	NbCheckboxModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -39,37 +39,25 @@ export function HttpLoaderFactory(http: HttpClient) {
 		AppointmentRoutingModule,
 		ThemeModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
-		NbInputModule,
-		NbDialogModule.forChild(),
-		NbTreeGridModule,
 		NbIconModule,
-		NbTooltipModule,
 		NbSpinnerModule,
-		NbSelectModule,
-		NbAlertModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
+				deps: [HttpClient]
+			}
 		}),
-		NbCheckboxModule,
-		TimerPickerModule,
-		NbSpinnerModule,
-		NbRouteTabsetModule,
 		EmployeeMultiSelectModule,
-		SharedModule,
+		SharedModule
 	],
-	exports: [AppointmentComponent, ManageAppointmentComponent],
-	declarations: [AppointmentComponent, ManageAppointmentComponent],
+	exports: [AppointmentComponent],
+	declarations: [AppointmentComponent],
 	providers: [
 		EmployeeAppointmentService,
 		AppointmentEmployeesService,
-		AvailabilitySlotsService,
-	],
+		AvailabilitySlotsService
+	]
 })
 export class AppointmentModule {}
