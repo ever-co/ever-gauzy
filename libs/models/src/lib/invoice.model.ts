@@ -24,6 +24,7 @@ export interface Invoice extends IBaseEntityModel {
 	invoiceType?: string;
 	sentTo?: string;
 	tags?: Tag[];
+	isEstimate?: boolean;
 }
 
 export interface InvoiceUpdateInput {
@@ -52,6 +53,7 @@ export interface InvoiceFindInput {
 	sentTo?: string;
 	invoiceNumber?: string;
 	tags?: Tag[];
+	isEstimate?: boolean;
 }
 
 export enum InvoiceTypeEnum {
@@ -59,10 +61,10 @@ export enum InvoiceTypeEnum {
 	BY_PROJECT_HOURS = 'By Project Hours',
 	BY_TASK_HOURS = 'By Task Hours',
 	BY_PRODUCTS = 'By Products',
-	DETAILS_INVOICE_ITEMS = 'Details Invoice Items'
+	DETAILS_INVOICE_ITEMS = 'Details Invoice Items',
 }
 
 export enum DiscountTaxTypeEnum {
 	PERCENT = 'Percent',
-	FLAT_VALUE = 'Flat'
+	FLAT_VALUE = 'Flat',
 }

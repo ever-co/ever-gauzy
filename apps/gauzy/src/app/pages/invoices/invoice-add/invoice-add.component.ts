@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -80,6 +80,8 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		return this.form.get('currency');
 	}
 
+	@Input() isEstimate: boolean;
+
 	constructor(
 		private fb: FormBuilder,
 		private readonly organizationClientsService: OrganizationClientsService,
@@ -100,6 +102,9 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		if (!this.isEstimate) {
+			this.isEstimate = false;
+		}
 		this._loadOrganizationData();
 		this.initializeForm();
 		this.form.get('currency').disable();
@@ -361,6 +366,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
 				tags: this.tags,
+				isEstimate: this.isEstimate,
 			});
 
 			if (tableData[0].selectedEmployee) {
@@ -419,12 +425,19 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				}
 			}
 
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-
-			this.router.navigate(['/pages/accounting/invoices']);
+			if (this.isEstimate) {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_ESTIMATE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices/estimates']);
+			} else {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_ADD_INVOICE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices']);
+			}
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
@@ -792,7 +805,11 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	};
 
 	cancel() {
-		this.router.navigate(['/pages/accounting/invoices']);
+		if (this.isEstimate) {
+			this.router.navigate(['/pages/accounting/invoices/estimates']);
+		} else {
+			this.router.navigate(['/pages/accounting/invoices']);
+		}
 	}
 
 	_applyTranslationOnSmartTable() {

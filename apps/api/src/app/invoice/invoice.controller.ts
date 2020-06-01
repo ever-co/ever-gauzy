@@ -97,6 +97,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		return this.emailService.emailInvoice(
 			languageCode,
 			email,
+			request.body.params.isEstimate,
 			request.get('Origin')
 		);
 	}

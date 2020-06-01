@@ -32,6 +32,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 	@Input() invoice: Invoice;
 	@Input() client: OrganizationClients;
 	@Input() organization: Organization;
+	@Input() isEstimate: boolean;
 
 	constructor(
 		readonly translateService: TranslateService,

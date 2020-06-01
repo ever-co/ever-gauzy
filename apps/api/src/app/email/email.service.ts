@@ -90,11 +90,12 @@ export class EmailService extends CrudService<IEmail> {
 	emailInvoice(
 		languageCode: LanguagesEnum,
 		email: string,
+		isEstimate: boolean,
 		originUrl?: string
 	) {
 		this.email
 			.send({
-				template: 'email-invoice',
+				template: isEstimate ? 'email-estimate' : 'email-invoice',
 				message: {
 					to: `${email}`,
 					// attachments: [{

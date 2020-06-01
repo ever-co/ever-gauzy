@@ -1,7 +1,12 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h5>
-			{{ 'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate }}
+			<span *ngIf="!isEstimate">{{
+				'INVOICES_PAGE.EMAIL.EMAIL_INVOICE' | translate
+			}}</span>
+			<span *ngIf="isEstimate">{{
+				'INVOICES_PAGE.EMAIL.EMAIL_ESTIMATE' | translate
+			}}</span>
 		</h5>
 	</nb-card-header>
 	<nb-card-body>
@@ -9,6 +14,7 @@
 			[invoice]="invoice"
 			[client]="client"
 			[organization]="organization"
+			[isEstimate]="isEstimate"
 		>
 		</ga-invoice-view-inner>
 		<form [formGroup]="form" *ngIf="form">

@@ -15,6 +15,7 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 	client: OrganizationClients;
 	invoice: Invoice;
 	organization: Organization;
+	isEstimate: boolean;
 
 	constructor(
 		protected dialogRef: NbDialogRef<InvoiceDownloadMutationComponent>,
@@ -44,12 +45,22 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 				imgWidth,
 				imgHeight
 			);
-			pdf.save(`Invoice ${this.invoice.invoiceNumber}`);
+			pdf.save(
+				`${this.isEstimate ? 'Estimate' : 'Invoice'} ${
+					this.invoice.invoiceNumber
+				}`
+			);
 		});
 		this.dialogRef.close();
 
 		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'),
+			this.isEstimate
+				? this.getTranslation(
+						'INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD'
+				  )
+				: this.getTranslation(
+						'INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'
+				  ),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 	}
