@@ -21,6 +21,9 @@
 		</div>
 		<form [formGroup]="form" *ngIf="form" class="row">
 			<div class="form-group col-4">
+				<label for="name" class="label">{{
+					'FORM.PLACEHOLDERS.NAME' | translate
+				}}</label>
 				<input
 					type="text"
 					#name
@@ -28,13 +31,18 @@
 					fullWidth
 					formControlName="name"
 					placeholder="{{ 'FORM.PLACEHOLDERS.NAME' | translate }}"
+					id="name"
 				/>
 			</div>
 			<div class="form-group col-4">
+				<label for="clients" class="label">{{
+					'FORM.PLACEHOLDERS.CLIENTS' | translate
+				}}</label>
 				<nb-select
 					fullWidth
 					formControlName="client"
 					placeholder="{{ 'FORM.PLACEHOLDERS.CLIENTS' | translate }}"
+					id="clients"
 				>
 					<nb-option
 						*ngFor="let client of clients"
@@ -44,10 +52,14 @@
 				</nb-select>
 			</div>
 			<div class="form-group col-4">
+				<label for="type" class="label">{{
+					'FORM.PLACEHOLDERS.TYPE' | translate
+				}}</label>
 				<nb-select
 					fullWidth
 					placeholder="{{ 'FORM.PLACEHOLDERS.TYPE' | translate }}"
 					formControlName="type"
+					id="type"
 				>
 					<nb-option *ngFor="let type of types" [value]="type">
 						{{ 'SM_TABLE.' + type | translate }}
@@ -55,10 +67,14 @@
 				</nb-select>
 			</div>
 			<div class="form-group col-4">
+				<label for="currency" class="label">{{
+					'FORM.PLACEHOLDERS.CURRENCY' | translate
+				}}</label>
 				<nb-select
 					fullWidth
 					placeholder="{{ 'FORM.PLACEHOLDERS.CURRENCY' | translate }}"
 					formControlName="currency"
+					id="currency"
 				>
 					<nb-option
 						*ngFor="let currency of currencies"
@@ -69,6 +85,9 @@
 			</div>
 
 			<div class="form-group col-4">
+				<label for="start-date-project" class="label">{{
+					'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate
+				}}</label>
 				<input
 					[nbDatepicker]="startDate"
 					nbInput
@@ -77,10 +96,14 @@
 					placeholder="{{
 						'FORM.PLACEHOLDERS.START_DATE_PROJECT' | translate
 					}}"
+					id="start-date-project"
 				/>
 				<nb-datepicker #startDate></nb-datepicker>
 			</div>
 			<div class="form-group col-4">
+				<label for="end-date-project" class="label">{{
+					'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
+				}}</label>
 				<input
 					[nbDatepicker]="endDate"
 					nbInput
@@ -89,16 +112,28 @@
 					placeholder="{{
 						'FORM.PLACEHOLDERS.END_DATE_PROJECT' | translate
 					}}"
+					id="end-date-project"
 				/>
 				<nb-datepicker #endDate></nb-datepicker>
 			</div>
 			<div class="form-group col-4">
+				<label for="add-remove-emploees" class="label">{{
+					'FORM.LABELS.ADD_OR_REMOVE_EMPLOYEES' | translate
+				}}</label>
 				<ga-employee-multi-select
 					[selectedEmployeeIds]="selectedEmployeeIds"
 					[allEmployees]="employees"
 					(selectedChange)="onMembersSelected($event)"
+					id="add-remove-emploees"
 				>
 				</ga-employee-multi-select>
+			</div>
+			<div class="form-group col-4">
+				<ga-tags-color-input
+					[selectedTags]="tags"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+				>
+				</ga-tags-color-input>
 			</div>
 			<!-- <div class="form-group col-12">
 				<input type="checkbox"  formControlName="Private" checked="Private">Private?

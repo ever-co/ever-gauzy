@@ -7,7 +7,8 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbToastrModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -20,6 +21,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		NbBadgeModule,
 		ThemeModule,
 		NbCardModule,
 		NbButtonModule,

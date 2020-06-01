@@ -1,7 +1,19 @@
-<nb-card style="padding: 0 !important" class="card-body">
+<nb-card style="padding: 0 !important;" class="card-body">
 	<nb-card-header style="padding: 0.5rem;">
 		<div class="header-container">
-			<div>{{ entityWithMembers.name }}</div>
+			<div>
+				{{ entityWithMembers.name }}
+				<div class="tags">
+					<nb-badge
+						*ngFor="let tag of entityWithMembers?.tags"
+						class="color"
+						position="centered"
+						[style.background]="tag.color"
+						text="{{ tag.name }}"
+					>
+					</nb-badge>
+				</div>
+			</div>
 			<div class="members-count">
 				{{ 'FORM.PLACEHOLDERS.MEMBERS_COUNT' | translate }}
 				{{

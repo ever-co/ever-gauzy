@@ -198,7 +198,8 @@
 			"LOCATION": "Местоположение",
 			"NOTE": "Примечание",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
-			"DESCRIPTION": "Описание"
+			"DESCRIPTION": "Описание",
+			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
