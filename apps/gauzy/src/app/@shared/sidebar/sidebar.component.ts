@@ -1,8 +1,8 @@
+import { IHelpCenter } from '@gauzy/models';
 import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { TreeComponent } from 'angular-tree-component';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { helpCenterMenuList } from '@gauzy/models';
 import { isEqual } from './delete-node';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
+import { HelpCenterService } from '../../@core/services/help-center.service';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -23,7 +24,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private readonly fb: FormBuilder,
 		private sanitizer: DomSanitizer,
-		// private helpService: HelpCenterService,
+		private helpService: HelpCenterService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -40,7 +41,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	public isVisibleAdd = false;
 	public isVisibleEdit = false;
 	public isChosenNode = false;
-	public nodes = helpCenterMenuList;
+	public nodes: IHelpCenter[] = [];
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
@@ -55,18 +56,17 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 	}
 
-	addName(event: any, key: number) {
+	async addName(event: any, key: number) {
 		if (key !== 1) {
-			this.nodes.push({
+			await this.helpService.create({
 				name: `${event.target.value}`,
 				icon: 'book-open-outline',
 				flag: 'category',
 				privacy: 'eye-outline',
 				children: []
 			});
-			console.log('categ');
 		} else {
-			this.nodes.push({
+			await this.helpService.create({
 				name: `${event.target.value}`,
 				icon: 'book-open-outline',
 				flag: 'article',
@@ -75,13 +75,7 @@ export class SidebarComponent extends TranslationBaseComponent
 				data: ''
 			});
 		}
-		// await this.helpService.create({
-		// 	name: `${event.target.value}`,
-		//  description: '',
-		// 	data: '',
-		// 	children: [],
-		// });
-		// this.loadMenu();
+		this.loadMenu();
 		this.tree.treeModel.update();
 		this.isVisibleAdd = false;
 		this.showArticleButton = false;
@@ -150,9 +144,9 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.isVisibleEdit = true;
 	}
 
-	onDeleteArticle() {
+	async onDeleteArticle() {
 		isEqual(this.nodes, this.nodeId);
-		//await this.helpService.delete(`${this.nodeId}`);
+		await this.helpService.delete(`${this.nodeId}`);
 		this.tree.treeModel.update();
 		this.isChosenNode = false;
 		this.articleName = 'Chose any article';
@@ -190,14 +184,14 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.isVisibleEdit = false;
 	}
 
-	// private async loadMenu() {
-	// 	const result = await this.helpService.getAll();
-	// 	if (result) {
-	// 		this.nodes = result.items;
-	// 	}
-	// }
+	private async loadMenu() {
+		const result = await this.helpService.getAll();
+		if (result) {
+			this.nodes = result.items;
+		}
+	}
 	ngOnInit() {
-		// this.loadMenu();
+		this.loadMenu();
 	}
 
 	ngOnDestroy() {
