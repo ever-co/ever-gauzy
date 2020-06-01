@@ -1,0 +1,27 @@
+<nb-card>
+	<nb-card-body>
+		<div class="header">
+			<p>{{ 'HELP_PAGE.CHOSE_ICON' | translate }}</p>
+			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
+		</div>
+
+		<div class="add-icon-field">
+			<button
+				class="main-buttons"
+				status="primary"
+				(click)="onIconset('book-open-outline')"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="book-open-outline"></nb-icon>
+			</button>
+			<button
+				class="main-buttons"
+				status="primary"
+				(click)="onIconset('alert-circle-outline')"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="alert-circle-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-body>
+</nb-card>

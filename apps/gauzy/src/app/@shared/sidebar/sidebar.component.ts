@@ -2,11 +2,14 @@ import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { TreeComponent } from 'angular-tree-component';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { helpCenterMenuList, IHelpCenter } from '@gauzy/models';
+import { helpCenterMenuList } from '@gauzy/models';
 import { isEqual } from './delete-node';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { NbDialogService } from '@nebular/theme';
+import { AddIconComponent } from './add-icon/add-icon.component';
+import { first } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -17,6 +20,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
+		private dialogService: NbDialogService,
 		private readonly fb: FormBuilder,
 		private sanitizer: DomSanitizer,
 		// private helpService: HelpCenterService,
@@ -28,8 +32,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	public articleName = 'Chose any article';
 	public articleDesc = '';
 	public articleData: SafeHtml;
-	public showPrivateButton = false;
-	public showPublicButton = false;
 	public showArticleButton = false;
 	public showCategoryButton = false;
 	public nodeId = 0;
@@ -37,7 +39,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	public chosenArticle = false;
 	public isVisibleAdd = false;
 	public isVisibleEdit = false;
-	public iconsShow = false;
 	public isChosenNode = false;
 	public nodes = helpCenterMenuList;
 	@ViewChild(TreeComponent)
@@ -55,7 +56,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	addName(event: any, key: number) {
-		// this.isChosenNode = false;
 		if (key !== 1) {
 			this.nodes.push({
 				name: `${event.target.value}`,
@@ -90,24 +90,16 @@ export class SidebarComponent extends TranslationBaseComponent
 	onNodeClicked(node: any) {
 		this.nodeId = node.data.id;
 		this.isChosenNode = true;
+		this.articleName = node.data.name;
 		if (node.data.flag === 'article') {
 			this.articleDesc = node.data.description;
-			this.articleName = node.data.name;
 			this.articleData = node.data.data as SafeHtml;
 			this.chosenCategory = false;
 			this.chosenArticle = true;
 			this.loadFormData();
 		} else {
-			this.articleName = 'Chose any article';
 			this.chosenCategory = true;
 			this.chosenArticle = false;
-		}
-		if (node.data.privacy === 'eye-outline') {
-			this.showPrivateButton = true;
-			this.showPublicButton = false;
-		} else {
-			this.showPrivateButton = false;
-			this.showPublicButton = true;
 		}
 	}
 	onCloseAdding() {
@@ -118,53 +110,27 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.showCategoryButton = false;
 	}
 
-	addIcon() {
-		this.iconsShow = true;
-	}
-
-	onIconset(icon) {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		someNode.data.icon = icon;
-		this.tree.treeModel.update();
-		// if (!someNode.children) {
-		// 	this.articleDesc = someNode.description;
-		// 	this.articleName = someNode.name;
-		// }
-		this.iconsShow = false;
-	}
-
-	onCloseIcon() {
-		this.iconsShow = false;
-	}
-
-	makePrivate() {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		if (someNode.data.children) {
-			this.treeWalk(someNode.data.children, 'eye-off-outline');
+	async addIcon(node) {
+		this.onNodeClicked(node);
+		const dialog = this.dialogService.open(AddIconComponent);
+		const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
+		if (chosenIcon) {
+			const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+			someNode.data.icon = chosenIcon;
 		}
-		someNode.data.privacy = 'eye-off-outline';
-		this.showPrivateButton = false;
-		this.showPublicButton = true;
+
 		this.tree.treeModel.update();
 	}
 
-	makePublic() {
+	changePrivacy(node: any) {
+		this.onNodeClicked(node);
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		if (someNode.data.children) {
-			this.treeWalk(someNode.data.children, 'eye-outline');
+		if (someNode.data.privacy === 'eye-outline') {
+			someNode.data.privacy = 'eye-off-outline';
+		} else {
+			someNode.data.privacy = 'eye-outline';
 		}
-		someNode.data.privacy = 'eye-outline';
-		this.showPrivateButton = true;
-		this.showPublicButton = false;
 		this.tree.treeModel.update();
-	}
-	treeWalk(nodes: IHelpCenter[], newPrivacy: string) {
-		for (let i = 0; i < nodes.length; i++) {
-			if (nodes[i].children) {
-				this.treeWalk(nodes[i].children, newPrivacy);
-			}
-			nodes[i].privacy = newPrivacy;
-		}
 	}
 
 	editNameCategory(event: any) {
@@ -175,6 +141,9 @@ export class SidebarComponent extends TranslationBaseComponent
 		// 	name: `${someNode.data.name}`,
 		// });
 		// this.loadMenu();
+	}
+	onCloseEditing() {
+		this.isVisibleEdit = false;
 	}
 
 	onEditArticle() {

@@ -4,6 +4,20 @@
 			<h5>{{ 'HELP_PAGE.KNOWLEDGE_BASES' | translate }}</h5>
 			<nb-icon class="add-icon" icon="plus-outline" (click)="addNode()">
 			</nb-icon>
+			<nb-icon
+				*ngIf="isChosenNode"
+				class="add-icon"
+				icon="edit-outline"
+				(click)="onEditArticle()"
+			>
+			</nb-icon>
+			<nb-icon
+				*ngIf="isChosenNode"
+				class="add-icon"
+				icon="trash-2-outline"
+				(click)="onDeleteArticle()"
+			>
+			</nb-icon>
 		</div>
 		<div *ngIf="isVisibleAdd" class="add-menu">
 			<button
@@ -80,20 +94,22 @@
 						class="node-content-wrapper"
 						[class.node-content-wrapper-active]="node.isActive"
 						[class.node-content-wrapper-focused]="node.isFocused"
-						(click)="onNodeClicked(node)"
 					>
 						<nb-icon
 							class="mr-1"
 							icon="{{ node.data.icon }}"
+							(click)="addIcon(node)"
 						></nb-icon>
 						<span
 							[class]="node.data.className"
 							[class.title]="true"
+							(click)="onNodeClicked(node)"
 							>{{ node.data.name }}</span
 						>
 						<nb-icon
 							class="mr-1"
 							icon="{{ node.data.privacy }}"
+							(click)="changePrivacy(node)"
 						></nb-icon>
 					</div>
 					<tree-node-children
@@ -105,80 +121,6 @@
 		</tree-root>
 	</nb-card-body>
 	<nb-card-body>
-		<button
-			[disabled]="!isChosenNode"
-			class="main-buttons"
-			(click)="addIcon()"
-			status="success"
-			nbButton
-		>
-			{{ 'BUTTONS.CHOOSE_ICON' | translate }}
-		</button>
-		<button
-			[disabled]="!isChosenNode"
-			class="main-buttons"
-			(click)="onEditArticle()"
-			status="warning"
-			nbButton
-		>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			[disabled]="!isChosenNode"
-			class="main-buttons"
-			(click)="onDeleteArticle()"
-			status="danger"
-			nbButton
-		>
-			{{ 'BUTTONS.DELETE' | translate }}
-		</button>
-		<button
-			*ngIf="isChosenNode && showPrivateButton"
-			class="main-buttons"
-			(click)="makePrivate()"
-			status="primary"
-			nbButton
-		>
-			{{ 'BUTTONS.MAKE_PRIVATE' | translate }}
-		</button>
-		<button
-			*ngIf="isChosenNode && showPublicButton"
-			class="main-buttons"
-			(click)="makePublic()"
-			status="primary"
-			nbButton
-		>
-			{{ 'BUTTONS.MAKE_PUBLIC' | translate }}
-		</button>
-		<div *ngIf="iconsShow && isChosenNode">
-			<p>{{ 'HELP_PAGE.CHOSE_ICON' | translate }}</p>
-			<div class="add-icon-field">
-				<button
-					class="main-buttons"
-					status="primary"
-					(click)="onIconset('book-open-outline')"
-					nbButton
-				>
-					<nb-icon class="mr-1" icon="book-open-outline"></nb-icon>
-				</button>
-				<button
-					class="main-buttons"
-					status="primary"
-					(click)="onIconset('alert-circle-outline')"
-					nbButton
-				>
-					<nb-icon class="mr-1" icon="alert-circle-outline"></nb-icon>
-				</button>
-				<button
-					class="main-buttons"
-					status="danger"
-					(click)="onCloseIcon()"
-					nbButton
-				>
-					<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-				</button>
-			</div>
-		</div>
 		<div *ngIf="isChosenNode">
 			<h5>{{ articleName }}</h5>
 		</div>
@@ -196,6 +138,14 @@
 				(keyup.enter)="editNameCategory($event)"
 				nbInput
 			/>
+			<button
+				class="input-button"
+				status="danger"
+				(click)="onCloseEditing()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
 		</div>
 		<div *ngIf="isVisibleEdit && chosenArticle" class="content-card">
 			<form [formGroup]="form" (ngSubmit)="submit()">
