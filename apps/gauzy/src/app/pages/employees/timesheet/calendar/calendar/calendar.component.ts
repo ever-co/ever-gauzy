@@ -5,7 +5,7 @@ import {
 	ViewChild,
 	AfterViewInit,
 	OnDestroy,
-	TemplateRef,
+	TemplateRef
 } from '@angular/core';
 import { OptionsInput, EventInput } from '@fullcalendar/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -20,7 +20,7 @@ import {
 	PermissionsEnum,
 	TimeLog,
 	RolesEnum,
-	TimeLogFilters,
+	TimeLogFilters
 } from '@gauzy/models';
 import { toUTC, toLocal } from 'libs/utils';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -34,7 +34,7 @@ import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/
 @Component({
 	selector: 'ngx-calendar',
 	templateUrl: './calendar.component.html',
-	styleUrls: ['./calendar.component.scss'],
+	styleUrls: ['./calendar.component.scss']
 })
 export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
@@ -59,14 +59,14 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'dayGridMonth,timeGridWeek,timeGridDay',
+				right: 'dayGridMonth,timeGridWeek,timeGridDay'
 			},
 			themeSystem: 'bootstrap',
 			plugins: [
 				dayGridPlugin,
 				timeGrigPlugin,
 				interactionPlugin,
-				bootstrapPlugin,
+				bootstrapPlugin
 			],
 			weekends: true,
 			height: 'auto',
@@ -82,7 +82,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			eventClick: this.handleEventClick.bind(this),
 			dateClick: this.handleDateClick.bind(this),
 			eventMouseEnter: this.handleEventMouseEnter.bind(this),
-			eventMouseLeave: this.handleEventMouseLeave.bind(this),
+			eventMouseLeave: this.handleEventMouseLeave.bind(this)
 		};
 	}
 
@@ -145,7 +145,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			organizationId: this.organization.id,
 			...this.logRequest,
 			startDate: toUTC(_startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 
 		this.timesheetService.getTimeLogs(request).then((logs: TimeLog[]) => {
@@ -160,7 +160,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 						title: title,
 						start: toLocal(log.startedAt).toDate(),
 						end: toLocal(log.stoppedAt).toDate(),
-						log: log,
+						log: log
 					};
 				}
 			);
@@ -171,7 +171,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	handleEventClick({ event }) {
 		this.nbDialogService.open(this.viewLogTemplate, {
 			context: event.extendedProps.log,
-			dialogClass: 'view-log-dialog',
+			dialogClass: 'view-log-dialog'
 		});
 	}
 
@@ -184,7 +184,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		console.log('handleEventSelect', event);
 		this.openDialog({
 			startedAt: event.start,
-			stoppedAt: event.end,
+			stoppedAt: event.end
 		});
 	}
 
@@ -201,7 +201,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		console.log('handleEventDrop', event);
 		this.updateTimeLog(event.id, {
 			startedAt: event.start,
-			stoppedAt: event.end,
+			stoppedAt: event.end
 		});
 	}
 
@@ -209,7 +209,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 		console.log('handleEventResize', event);
 		this.updateTimeLog(event.id, {
 			startedAt: event.start,
-			stoppedAt: event.end,
+			stoppedAt: event.end
 		});
 	}
 	handleLoading(loading) {

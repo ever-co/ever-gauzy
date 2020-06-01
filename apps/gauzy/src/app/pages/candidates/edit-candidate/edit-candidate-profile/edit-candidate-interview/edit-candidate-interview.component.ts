@@ -161,6 +161,27 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 			}
 		}
 	}
+	isPastInterview(interview: ICandidateInterview) {
+		const now = new Date().getTime();
+		if (new Date(interview.startTime).getTime() > now) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	changeHidePastInterviews(checked: boolean) {
+		const res = [];
+		if (checked) {
+			for (const item of this.interviewList) {
+				if (!this.isPastInterview(item)) {
+					res.push(item);
+				}
+			}
+			this.interviewList = res;
+		} else {
+			this.loadInterview();
+		}
+	}
 	async removeInterview(id: string) {
 		try {
 			await this.candidateInterviewService.delete(id);
