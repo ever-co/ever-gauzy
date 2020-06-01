@@ -96,7 +96,6 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 
 	async loadInterviews(feedbackList: ICandidateFeedback[]) {
-		const allInterviewsIds = [];
 		for (const item of feedbackList) {
 			if (item.interviewId) {
 				const res = await this.candidateInterviewService.findById(
