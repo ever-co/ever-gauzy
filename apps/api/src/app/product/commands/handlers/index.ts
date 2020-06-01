@@ -5,5 +5,5 @@ import { ProductDeleteHandler } from './product.delete.handler';
 export const CommandHandlers = [
 	ProductCreateHandler,
 	ProductUpdateHandler,
-	ProductDeleteHandler,
+	ProductDeleteHandler
 ];

@@ -17,7 +17,7 @@ export class IntegrationMapSyncProjectHandler
 		const {
 			organizationProjectCreateInput,
 			integrationId,
-			sourceId,
+			sourceId
 		} = input;
 
 		const project = await this._cb.execute(
@@ -28,7 +28,7 @@ export class IntegrationMapSyncProjectHandler
 			gauzyId: project.id,
 			integrationId,
 			sourceId,
-			entity: IntegrationEntity.PROJECT,
+			entity: IntegrationEntity.PROJECT
 		});
 	}
 }

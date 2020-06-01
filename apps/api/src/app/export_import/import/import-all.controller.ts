@@ -5,7 +5,7 @@ import {
 	// Post,
 	// UseInterceptors,
 	// UploadedFiles,
-	Injectable,
+	Injectable
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OnDestroy } from '@angular/core';
@@ -23,11 +23,11 @@ export class ImportAllController implements OnDestroy {
 	@ApiOperation({ summary: 'Find all exports.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found tables',
+		description: 'Found tables'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get()
 	async importAll() {}

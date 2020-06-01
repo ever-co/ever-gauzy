@@ -14,7 +14,7 @@ export class InvoicesService {
 		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: Invoice[] }>('/api/invoices', {
-				params: { data },
+				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
@@ -31,7 +31,7 @@ export class InvoicesService {
 		const data = JSON.stringify({ relations });
 		return this.http
 			.get<Invoice>(`/api/invoices/${id}`, {
-				params: { data },
+				params: { data }
 			})
 			.pipe(first())
 			.toPromise();

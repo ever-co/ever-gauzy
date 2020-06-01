@@ -20,8 +20,8 @@ module.exports = {
 			new TerserPlugin({
 				parallel: isCircleEnv ? 2 : true,
 				sourceMap: !isCircleEnv,
-				extractComments: !isCircleEnv,
-			}),
-		],
-	},
+				extractComments: !isCircleEnv
+			})
+		]
+	}
 };

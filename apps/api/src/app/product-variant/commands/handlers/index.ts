@@ -3,5 +3,5 @@ import { ProductVariantDeleteHandler } from './product-variant.delete.handler';
 
 export const CommandHandlers = [
 	ProductVariantCreateHandler,
-	ProductVariantDeleteHandler,
+	ProductVariantDeleteHandler
 ];

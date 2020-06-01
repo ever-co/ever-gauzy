@@ -14,7 +14,7 @@ import { first } from 'rxjs/operators';
 @Component({
 	selector: 'ngx-product-mutation',
 	templateUrl: './product-mutation.component.html',
-	styleUrls: ['./product-mutation.component.scss'],
+	styleUrls: ['./product-mutation.component.scss']
 })
 export class ProductMutationComponent extends TranslationBaseComponent {
 	form: FormGroup;

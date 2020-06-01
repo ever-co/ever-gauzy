@@ -5,7 +5,7 @@ import {
 	Invoice,
 	OrganizationClients,
 	Employee,
-	Organization,
+	Organization
 } from '@gauzy/models';
 import { EmployeesService } from '../../../../@core/services/employees.service';
 import { Subject } from 'rxjs';
@@ -17,7 +17,7 @@ import { ProductService } from '../../../../@core/services/product.service';
 @Component({
 	selector: 'ga-invoice-view-inner',
 	templateUrl: './invoice-view-inner.component.html',
-	styleUrls: ['./invoice-view-inner.component.scss'],
+	styleUrls: ['./invoice-view-inner.component.scss']
 })
 export class InvoiceViewInnerComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -60,21 +60,21 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 				name: {
 					title: this.getTranslation('INVOICES_PAGE.NAME'),
 					type: 'text',
-					filter: false,
+					filter: false
 				},
 				description: {
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
 					),
 					type: 'text',
-					filter: false,
+					filter: false
 				},
 				quantity: {
 					title: this.getTranslation(
 						'INVOICES_PAGE.INVOICE_ITEM.QUANTITY'
 					),
 					type: 'text',
-					filter: false,
+					filter: false
 				},
 				price: {
 					title: this.getTranslation(
@@ -84,7 +84,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${row.price}`;
-					},
+					}
 				},
 				totalValue: {
 					title: this.getTranslation(
@@ -94,9 +94,9 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${row.price * row.quantity}`;
-					},
-				},
-			},
+					}
+				}
+			}
 		};
 	}
 
@@ -115,7 +115,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 					price: item.price,
 					totalValue: +item.totalValue,
 					name: `${employee.user.firstName} ${employee.user.lastName}`,
-					currency: this.invoice.currency,
+					currency: this.invoice.currency
 				};
 			} else if (item.projectId) {
 				const project = await this.projectService.getById(
@@ -128,7 +128,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 					totalValue: +item.totalValue,
 					id: item.id,
 					name: project.name,
-					currency: this.invoice.currency,
+					currency: this.invoice.currency
 				};
 			} else if (item.taskId) {
 				const task = await this.taskService.getById(item.taskId);
@@ -139,7 +139,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 					totalValue: +item.totalValue,
 					id: item.id,
 					name: task.title,
-					currency: this.invoice.currency,
+					currency: this.invoice.currency
 				};
 			} else if (item.productId) {
 				const product = await this.productService.getById(
@@ -152,7 +152,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 					totalValue: +item.totalValue,
 					id: item.id,
 					name: product.name,
-					currency: this.invoice.currency,
+					currency: this.invoice.currency
 				};
 			} else {
 				delete this.settingsSmartTable['columns']['name'];
@@ -162,7 +162,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
-					currency: this.invoice.currency,
+					currency: this.invoice.currency
 				};
 			}
 			items.push(data);

@@ -172,4 +172,22 @@ export class UpworkController {
 	async syncContracts(@Body() syncContractsDto: any): Promise<any> {
 		return await this._upworkService.syncContracts(syncContractsDto);
 	}
+
+	@ApiOperation({ summary: 'Sync Contracts Related Data.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Sync Contracts Related Data',
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid request',
+	})
+	@Post('sync-contracts-related-data')
+	async syncContractsRelatedData(@Body() dto): Promise<any> {
+		return await this._upworkService.syncContractsRelatedData(dto);
+	}
 }

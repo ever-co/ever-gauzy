@@ -17,7 +17,7 @@ export interface IApprovalsData {
 @Component({
 	selector: 'ngx-approvals',
 	templateUrl: './approvals.component.html',
-	styleUrls: ['./approvals.component.scss'],
+	styleUrls: ['./approvals.component.scss']
 })
 export class ApprovalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -90,7 +90,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			items = (
 				await this.approvalRequestService.getAll([
 					'approvalPolicy',
-					'employeeApprovals',
+					'employeeApprovals'
 				])
 			).items;
 		}
@@ -106,36 +106,36 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
 					),
-					type: 'string',
+					type: 'string'
 				},
 				type: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_TYPE'
 					),
 					type: 'string',
-					filter: false,
+					filter: false
 				},
 				min_count: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
 					),
 					type: 'number',
-					filter: false,
+					filter: false
 				},
 				approvalPolicy: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'
 					),
 					type: 'string',
-					filter: false,
+					filter: false
 				},
 				status: {
 					title: this.getTranslation(
 						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
 					),
-					type: 'string',
-				},
-			},
+					type: 'string'
+				}
+			}
 		};
 	}
 

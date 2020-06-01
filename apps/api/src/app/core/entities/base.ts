@@ -5,7 +5,7 @@
 import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
-	CreateDateColumn,
+	CreateDateColumn
 } from 'typeorm';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/models';
@@ -23,7 +23,7 @@ export abstract class Base implements IBaseEntityModel {
 	@ApiProperty({
 		type: 'string',
 		format: 'date-time',
-		example: '2018-11-21T06:20:32.232Z',
+		example: '2018-11-21T06:20:32.232Z'
 	})
 	@CreateDateColumn()
 	createdAt?: Date;
@@ -31,7 +31,7 @@ export abstract class Base implements IBaseEntityModel {
 	@ApiProperty({
 		type: 'string',
 		format: 'date-time',
-		example: '2018-11-21T06:20:32.232Z',
+		example: '2018-11-21T06:20:32.232Z'
 	})
 	@UpdateDateColumn()
 	updatedAt?: Date;

@@ -51,12 +51,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.logRequest.startDate = moment(this.today)
-			.startOf('week')
-			.toDate();
-		this.logRequest.endDate = moment(this.today)
-			.endOf('week')
-			.toDate();
+		this.logRequest.startDate = moment(this.today).startOf('week').toDate();
+		this.logRequest.endDate = moment(this.today).endOf('week').toDate();
 		this.updateWeekDayList();
 
 		this.store.user$.subscribe(() => {

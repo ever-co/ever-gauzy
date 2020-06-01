@@ -5,5 +5,5 @@ import { CandidateInterviewersBulkCreateHandler } from './candidate-interviewers
 export const CommandHandlers = [
 	CandidateInterviewersEmployeeBulkDeleteHandler,
 	CandidateInterviewersInterviewBulkDeleteHandler,
-	CandidateInterviewersBulkCreateHandler,
+	CandidateInterviewersBulkCreateHandler
 ];

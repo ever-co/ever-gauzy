@@ -12,7 +12,7 @@ import {
 	Body,
 	Query,
 	Get,
-	Req,
+	Req
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
@@ -20,7 +20,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import {
 	PermissionsEnum,
 	Invoice as IInvoice,
-	LanguagesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import { ParseJsonPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
@@ -47,7 +47,7 @@ export class InvoiceController extends CrudController<Invoice> {
 
 		return this.invoiceService.findAll({
 			where: findInput,
-			relations,
+			relations
 		});
 	}
 
@@ -68,7 +68,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		const { relations = [] } = data;
 
 		return this.invoiceService.findOne(id, {
-			relations,
+			relations
 		});
 	}
 
@@ -82,7 +82,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	): Promise<any> {
 		return this.invoiceService.create({
 			id,
-			...entity,
+			...entity
 		});
 	}
 

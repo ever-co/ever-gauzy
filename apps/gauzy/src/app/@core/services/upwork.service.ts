@@ -57,4 +57,11 @@ export class UpworkService {
 			syncContractsDto
 		);
 	}
+
+	syncContractsRelatedData(dto) {
+		return this.http.post<IIntegrationMap[]>(
+			`/api/integrations/upwork/sync-contracts-related-data`,
+			dto
+		);
+	}
 }

@@ -36,10 +36,7 @@ export class EmailController extends CrudController<Email> {
 
 		response.items.forEach((email) => {
 			const name = email.emailTemplate.name;
-			email.emailTemplate.name = name
-				.split('/')[0]
-				.split('-')
-				.join(' ');
+			email.emailTemplate.name = name.split('/')[0].split('-').join(' ');
 		});
 
 		return response;

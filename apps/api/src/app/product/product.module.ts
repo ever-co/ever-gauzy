@@ -26,9 +26,9 @@ import { ProductVariantPrice } from '../product-variant-price/product-variant-pr
 			User,
 			ProductVariant,
 			ProductVariantSettings,
-			ProductVariantPrice,
+			ProductVariantPrice
 		]),
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [ProductController],
 	providers: [
@@ -40,8 +40,8 @@ import { ProductVariantPrice } from '../product-variant-price/product-variant-pr
 		ProductCreateHandler,
 		ProductUpdateHandler,
 		UserService,
-		ProductDeleteHandler,
+		ProductDeleteHandler
 	],
-	exports: [ProductService],
+	exports: [ProductService]
 })
 export class ProductModule {}

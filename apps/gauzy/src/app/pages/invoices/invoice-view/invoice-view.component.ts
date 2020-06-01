@@ -13,7 +13,7 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 @Component({
 	selector: 'ga-invoice-view',
 	templateUrl: './invoice-view.component.html',
-	styleUrls: ['./invoice-view.component.scss'],
+	styleUrls: ['./invoice-view.component.scss']
 })
 export class InvoiceViewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -44,7 +44,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 
 	async getInvoice() {
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems',
+			'invoiceItems'
 		]);
 		this.invoice = invoice;
 		const client = await this.organizationClientsService.getById(

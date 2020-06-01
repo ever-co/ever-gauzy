@@ -17,8 +17,8 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 	styleUrls: [
 		'../../organizations/edit-organization/edit-organization.component.scss',
 		'../../dashboard/dashboard.component.scss',
-		'./edit-candidate.component.scss',
-	],
+		'./edit-candidate.component.scss'
+	]
 })
 export class EditCandidateComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -79,8 +79,8 @@ export class EditCandidateComponent extends TranslationBaseComponent
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
 					interviewList: this.interviewList,
-					selectedCandidate: this.selectedCandidate,
-				},
+					selectedCandidate: this.selectedCandidate
+				}
 			});
 		}
 	}
@@ -89,7 +89,7 @@ export class EditCandidateComponent extends TranslationBaseComponent
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' +
 				this.selectedCandidate.id +
-				'/profile',
+				'/profile'
 		]);
 	}
 	ngOnDestroy() {
