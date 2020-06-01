@@ -60,6 +60,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
+					title: 'Estimates',
+					icon: 'file-outline',
+					link: '/pages/accounting/invoices/estimates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ESTIMATES',
+					},
+				},
+				{
 					title: 'Recurring Invoices',
 					icon: 'flip-outline',
 					link: '/pages/accounting/recurring-invoices',
@@ -70,12 +79,21 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Recieved Invoices',
-					icon: 'bulb-outline',
-					link: '/pages/accounting/invoices/recieved-invoices',
+					title: 'Received Invoices',
+					icon: 'archive',
+					link: '/pages/accounting/invoices/received-invoices',
 					data: {
 						translated: false,
-						translationKey: 'MENU.INVOICES_RECIEVED'
+						translationKey: 'MENU.INVOICES_RECEIVED',
+					},
+				},
+				{
+					title: 'Received Estimates',
+					icon: 'archive-outline',
+					link: '/pages/accounting/invoices/received-estimates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ESTIMATES_RECEIVED',
 					}
 				},
 				{

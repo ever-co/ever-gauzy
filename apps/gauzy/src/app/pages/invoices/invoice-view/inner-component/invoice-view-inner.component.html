@@ -1,6 +1,11 @@
 <nb-card-body class="contentToConvert">
 	<div class="item">
-		{{ 'INVOICES_PAGE.INVOICE_NUMBER' | translate }}:
+		<span *ngIf="!isEstimate"
+			>{{ 'INVOICES_PAGE.INVOICE_NUMBER' | translate }}:</span
+		>
+		<span *ngIf="isEstimate"
+			>{{ 'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER' | translate }}:</span
+		>
 		{{ invoice ? invoice.invoiceNumber : '' }}
 	</div>
 	<div class="grid">
@@ -13,7 +18,16 @@
 			{{ client ? client.name : '' }}
 		</div>
 		<div class="grid-item">
-			{{ 'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE' | translate }}:
+			<span *ngIf="!isEstimate"
+				>{{
+					'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE' | translate
+				}}:</span
+			>
+			<span *ngIf="isEstimate"
+				>{{
+					'INVOICES_PAGE.ESTIMATES.ESTIMATE_DATE' | translate
+				}}:</span
+			>
 			{{ invoiceDate ? invoiceDate : '' }}
 		</div>
 		<div class="grid-item">

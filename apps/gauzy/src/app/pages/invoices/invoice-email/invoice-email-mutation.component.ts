@@ -19,6 +19,7 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 	client: OrganizationClients;
 	organization: Organization;
 	form: FormGroup;
+	isEstimate: boolean;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -48,7 +49,10 @@ export class InvoiceEmailMutationComponent extends TranslationBaseComponent
 			const contentDataURL = canvas.toDataURL('image/png');
 			const pdf = new jspdf('p', 'mm', 'a4');
 			pdf.addImage(contentDataURL, 'PNG', 0, 0, imgWidth, imgHeight);
-			this.invoicesService.sendEmail(this.form.value.email);
+			this.invoicesService.sendEmail(
+				this.form.value.email,
+				this.isEstimate
+			);
 		});
 		this.toastrService.primary(
 			this.getTranslation('INVOICES_PAGE.EMAIL.EMAIL_SENT'),

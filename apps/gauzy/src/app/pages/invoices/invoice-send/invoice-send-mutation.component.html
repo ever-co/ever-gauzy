@@ -1,7 +1,12 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
 		<h5>
-			{{ 'INVOICES_PAGE.SEND.CONFIRMATION' | translate }}
+			<span *ngIf="!isEstimate">{{
+				'INVOICES_PAGE.SEND.CONFIRMATION_INVOICE' | translate
+			}}</span>
+			<span *ngIf="isEstimate">{{
+				'INVOICES_PAGE.SEND.CONFIRMATION_ESTIMATE' | translate
+			}}</span>
 			{{ client.name }} ?
 		</h5>
 	</nb-card-header>
@@ -11,11 +16,17 @@
 				[invoice]="invoice"
 				[client]="client"
 				[organization]="organization"
+				[isEstimate]="isEstimate"
 			>
 			</ga-invoice-view-inner>
 		</span>
 		<span *ngIf="alreadySent">
-			{{ 'INVOICES_PAGE.SEND.ALREADY_SENT' | translate }}
+			<span *ngIf="!isEstimate">{{
+				'INVOICES_PAGE.SEND.ALREADY_SENT_INVOICE' | translate
+			}}</span>
+			<span *ngIf="isEstimate">{{
+				'INVOICES_PAGE.SEND.ALREADY_SENT_ESTIMATE' | translate
+			}}</span>
 			{{ client.name }}.
 		</span>
 	</nb-card-body>

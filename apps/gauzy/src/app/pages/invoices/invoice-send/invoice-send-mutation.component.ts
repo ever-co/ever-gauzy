@@ -17,6 +17,7 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 	organization: Organization;
 	alreadySent = false;
 	tags: Tag[];
+	isEstimate: boolean;
 
 	constructor(
 		protected dialogRef: NbDialogRef<InvoiceSendMutationComponent>,
@@ -44,7 +45,9 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 		this.dialogRef.close();
 
 		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.SEND_INVOICE'),
+			this.isEstimate
+				? this.getTranslation('INVOICES_PAGE.SEND_ESTIMATE')
+				: this.getTranslation('INVOICES_PAGE.SEND_INVOICE'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 	}

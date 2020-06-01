@@ -1,7 +1,10 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h3>
+		<h3 *ngIf="!isEstimate">
 			{{ 'INVOICES_PAGE.EDIT_INVOICE' | translate }}
+		</h3>
+		<h3 *ngIf="isEstimate">
+			{{ 'INVOICES_PAGE.EDIT_ESTIMATE' | translate }}
 		</h3>
 	</nb-card-header>
 
@@ -10,14 +13,31 @@
 			<div class="row">
 				<div class="col-sm-3">
 					<div class="form-group">
-						<label for="inputInvoiceNumber" class="label">{{
-							'INVOICES_PAGE.INVOICE_NUMBER' | translate
-						}}</label>
+						<label for="inputInvoiceNumber" class="label">
+							<span *ngIf="!isEstimate">{{
+								'INVOICES_PAGE.INVOICE_NUMBER' | translate
+							}}</span>
+							<span *ngIf="isEstimate">{{
+								'INVOICES_PAGE.ESTIMATE_NUMBER' | translate
+							}}</span>
+						</label>
 						<input
+							*ngIf="!isEstimate"
 							type="number"
 							nbInput
 							placeholder="{{
 								'INVOICES_PAGE.INVOICE_NUMBER' | translate
+							}}"
+							formControlName="invoiceNumber"
+							id="inputInvoiceNumber"
+							fullWidth
+						/>
+						<input
+							*ngIf="isEstimate"
+							type="number"
+							nbInput
+							placeholder="{{
+								'INVOICES_PAGE.ESTIMATE_NUMBER' | translate
 							}}"
 							formControlName="invoiceNumber"
 							id="inputInvoiceNumber"
@@ -36,17 +56,35 @@
 			<div class="row">
 				<div class="col-sm-3">
 					<div class="form-group">
-						<label for="inputInvoiceDate" class="label">{{
-							'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
-								| translate
-						}}</label>
+						<label for="inputInvoiceDate" class="label">
+							<span *ngIf="!isEstimate">{{
+								'INVOICES_PAGE.INVOICE_DATE' | translate
+							}}</span>
+							<span *ngIf="isEstimate">{{
+								'INVOICES_PAGE.ESTIMATE_DATE' | translate
+							}}</span>
+						</label>
 						<input
+							*ngIf="!isEstimate"
 							formControlName="invoiceDate"
 							type="text"
 							nbInput
 							placeholder="{{
 								'INVOICES_PAGE.INVOICES_SELECT_INVOICE_DATE'
 									| translate
+							}}"
+							[nbDatepicker]="invoiceDatePicker"
+							id="inputInvoiceDate"
+							fullWidth
+							required
+						/>
+						<input
+							*ngIf="isEstimate"
+							formControlName="invoiceDate"
+							type="text"
+							nbInput
+							placeholder="{{
+								'INVOICES_PAGE.ESTIMATE_DATE' | translate
 							}}"
 							[nbDatepicker]="invoiceDatePicker"
 							id="inputInvoiceDate"

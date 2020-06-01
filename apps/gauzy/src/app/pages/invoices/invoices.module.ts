@@ -37,7 +37,7 @@ import { InvoiceEmployeesSelectorComponent } from './table-components/invoice-em
 import { EmployeesService } from '../../@core/services/employees.service';
 import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { InvoicesRecievedComponent } from './invoices-recieved/invoices-recieved.component';
+import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 import { ProductService } from '../../@core/services/product.service';
@@ -48,6 +48,11 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceViewInnerComponent } from './invoice-view/inner-component/invoice-view-inner.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.comonent';
+import { EstimatesComponent } from './invoice-estimates/invoice-estimates.component';
+import { EstimateAddComponent } from './invoice-estimates/estimate-add/estimate-add.component';
+import { EstimateEditComponent } from './invoice-estimates/estimate-edit/estimate-edit.component';
+import { EstimatesReceivedComponent } from './invoice-estimates/estimates-received/estimates-received.component';
+import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimate-view.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -103,14 +108,19 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceProjectsSelectorComponent,
 		InvoiceEmployeesSelectorComponent,
 		InvoiceEditComponent,
-		InvoicesRecievedComponent,
+		InvoicesReceivedComponent,
 		InvoiceSendMutationComponent,
 		InvoiceViewComponent,
 		InvoiceProductsSelectorComponent,
 		InvoicePaidComponent,
 		InvoiceEmailMutationComponent,
 		InvoiceViewInnerComponent,
-		InvoiceDownloadMutationComponent
+		InvoiceDownloadMutationComponent,
+		EstimatesComponent,
+		EstimateAddComponent,
+		EstimateEditComponent,
+		EstimatesReceivedComponent,
+		EstimateViewComponent
 	],
 	declarations: [
 		InvoicesComponent,
@@ -119,14 +129,19 @@ export function HttpLoaderFactory(http: HttpClient) {
 		InvoiceProjectsSelectorComponent,
 		InvoiceEmployeesSelectorComponent,
 		InvoiceEditComponent,
-		InvoicesRecievedComponent,
+		InvoicesReceivedComponent,
 		InvoiceSendMutationComponent,
 		InvoiceViewComponent,
 		InvoiceProductsSelectorComponent,
 		InvoicePaidComponent,
 		InvoiceEmailMutationComponent,
 		InvoiceViewInnerComponent,
-		InvoiceDownloadMutationComponent
+		InvoiceDownloadMutationComponent,
+		EstimatesComponent,
+		EstimateAddComponent,
+		EstimateEditComponent,
+		EstimatesReceivedComponent,
+		EstimateViewComponent
 	]
 })
 export class InvoicesModule {}

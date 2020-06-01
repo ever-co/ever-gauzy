@@ -1,5 +1,5 @@
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
+import { OnInit, Component, OnDestroy, ViewChild, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
@@ -15,11 +15,11 @@ export interface SelectedInvoice {
 }
 
 @Component({
-	selector: 'ga-invoices-recieved',
-	templateUrl: './invoices-recieved.component.html',
-	styleUrls: ['./invoices-recieved.component.scss']
+	selector: 'ga-invoices-received',
+	templateUrl: './invoices-received.component.html',
+	styleUrls: ['./invoices-received.component.scss'],
 })
-export class InvoicesRecievedComponent extends TranslationBaseComponent
+export class InvoicesReceivedComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	loading = true;
 	private _ngDestroy$ = new Subject<void>();
@@ -28,6 +28,7 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 	selectedInvoice: Invoice;
 	disableButton = true;
 
+	@Input() isEstimate: boolean;
 	@ViewChild('invoicesTable') invoicesTable;
 
 	constructor(
@@ -40,6 +41,9 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		if (!this.isEstimate) {
+			this.isEstimate = false;
+		}
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
 		this.getInvoices();
@@ -51,7 +55,8 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 			.subscribe(async (organization) => {
 				if (organization) {
 					const invoices = await this.invoicesService.getAll([], {
-						sentTo: organization.id
+						sentTo: organization.id,
+						isEstimate: this.isEstimate,
 					});
 					this.loading = false;
 					this.smartTableSource.load(invoices.items);
@@ -60,9 +65,15 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 	}
 
 	view() {
-		this.router.navigate([
-			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
-		]);
+		if (this.isEstimate) {
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/view/${this.selectedInvoice.id}`,
+			]);
+		} else {
+			this.router.navigate([
+				`/pages/accounting/invoices/view/${this.selectedInvoice.id}`,
+			]);
+		}
 	}
 
 	loadSmartTable() {
@@ -70,22 +81,24 @@ export class InvoicesRecievedComponent extends TranslationBaseComponent
 			actions: false,
 			columns: {
 				invoiceNumber: {
-					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+					title: this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
+						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'string',
-					sortDirection: 'asc'
+					sortDirection: 'asc',
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'string',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${cell}`;
-					}
+					},
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-					type: 'string'
-				}
-			}
+					type: 'string',
+				},
+			},
 		};
 	}
 

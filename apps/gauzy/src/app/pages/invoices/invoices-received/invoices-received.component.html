@@ -1,7 +1,10 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
-		<h4>
-			{{ 'INVOICES_PAGE.RECIEVED_INVOICES' | translate }}
+		<h4 *ngIf="!isEstimate">
+			{{ 'INVOICES_PAGE.RECEIVED_INVOICES' | translate }}
+		</h4>
+		<h4 *ngIf="isEstimate">
+			{{ 'INVOICES_PAGE.RECEIVED_ESTIMATES' | translate }}
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
