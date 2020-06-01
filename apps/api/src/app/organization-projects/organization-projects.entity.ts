@@ -25,10 +25,18 @@ import {
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { Employee } from '../employee/employee.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('organization_project')
 export class OrganizationProjects extends Base
 	implements IOrganizationProjects {
+	@ApiProperty()
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_organization_project'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
@@ -43,14 +51,10 @@ export class OrganizationProjects extends Base
 	organizationId: string;
 
 	@ApiPropertyOptional({ type: OrganizationClients })
-	@ManyToOne(
-		(type) => OrganizationClients,
-		(client) => client.projects,
-		{
-			nullable: true,
-			onDelete: 'CASCADE'
-		}
-	)
+	@ManyToOne((type) => OrganizationClients, (client) => client.projects, {
+		nullable: true,
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	client?: OrganizationClients;
 
@@ -91,11 +95,9 @@ export class OrganizationProjects extends Base
 	members?: Employee[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany(
-		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.project,
-		{ onDelete: 'SET NULL' }
-	)
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.project, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 }

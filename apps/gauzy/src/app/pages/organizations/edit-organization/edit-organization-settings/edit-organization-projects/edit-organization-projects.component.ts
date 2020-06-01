@@ -136,7 +136,7 @@ export class EditOrganizationProjectsComponent extends TranslationBaseComponent
 		}
 
 		const res = await this.organizationProjectsService.getAll(
-			['client', 'members', 'members.user'],
+			['client', 'members', 'members.user', 'tags'],
 			{
 				organizationId: this.organization.id
 			}

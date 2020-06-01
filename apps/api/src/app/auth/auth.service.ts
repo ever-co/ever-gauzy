@@ -81,7 +81,9 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
-				const { orgId } = await this.userOrganizationService.findOne({
+				const {
+					organizationId
+				} = await this.userOrganizationService.findOne({
 					where: {
 						user
 					}
@@ -90,7 +92,7 @@ export class AuthService {
 					user,
 					url,
 					languageCode,
-					orgId,
+					organizationId,
 					originUrl
 				);
 

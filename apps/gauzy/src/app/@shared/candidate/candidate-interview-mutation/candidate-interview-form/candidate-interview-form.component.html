@@ -35,9 +35,6 @@
 	</ngx-timer-range-picker>
 
 	<div class="form-group">
-		<label for="note" class="label">{{
-			'FORM.LABELS.INTERVIEWERS' | translate
-		}}</label>
 		<ga-employee-multi-select
 			[allEmployees]="employees"
 			(selectedChange)="onMembersSelected($event)"

@@ -4,10 +4,18 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Employee } from '../employee/employee.entity';
+import { Tag } from '../tags/tag.entity';
 
 @Entity('organization_department')
 export class OrganizationDepartment extends Base
 	implements IOrganizationDepartment {
+	@ApiProperty()
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_organization_department'
+	})
+	tags: Tag[];
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()

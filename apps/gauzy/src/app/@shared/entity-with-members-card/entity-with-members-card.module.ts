@@ -7,12 +7,14 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbToastrModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EntityWithMembersCardComponent } from './entity-with-members-card.component';
+import { TableComponentsModule } from '../table-components/table-components.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -20,6 +22,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		TableComponentsModule,
+		NbBadgeModule,
 		ThemeModule,
 		NbCardModule,
 		NbButtonModule,
