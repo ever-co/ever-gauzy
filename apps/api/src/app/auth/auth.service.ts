@@ -4,7 +4,7 @@ import {
 	LanguagesEnum
 } from '@gauzy/models';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { get, post, Response } from 'request';
 import { EmailService } from '../email/email.service';
@@ -81,10 +81,18 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
+				const {
+					organizationId
+				} = await this.userOrganizationService.findOne({
+					where: {
+						user
+					}
+				});
 				this.emailService.requestPassword(
 					user,
 					url,
 					languageCode,
+					organizationId,
 					originUrl
 				);
 
@@ -160,8 +168,8 @@ export class AuthService {
 		this.emailService.welcomeUser(
 			input.user,
 			languageCode,
-			input.originalUrl,
-			input.organizationId
+			input.organizationId,
+			input.originalUrl
 		);
 
 		return user;

@@ -12,25 +12,30 @@ import * as path from 'path';
  * language-code: Is the ISO language code lik bg, en, he, ru
  * template-type: Can be 'html', 'subject' or 'text' but needs to only have .hbs or .mjml extension
  */
-export const createEmailTemplates = async (
+export const createDefaultEmailTemplates = async (
 	connection: Connection
 ): Promise<any> => {
-	const files = [];
-	const FOLDER_PATH = path.resolve(
-		'.',
-		'apps',
-		'api',
-		'src',
-		'app',
-		'core',
-		'seeds',
-		'data',
-		'default-email-templates'
-	);
+	try {
+		const files = [];
+		const FOLDER_PATH = path.resolve(
+			'.',
+			'apps',
+			'api',
+			'src',
+			'app',
+			'core',
+			'seeds',
+			'data',
+			'default-email-templates'
+		);
 
-	findInDir(FOLDER_PATH, files);
-	console.log(files);
-	await fileToTemplate(connection, files);
+		findInDir(FOLDER_PATH, files);
+		console.log(files);
+		await fileToTemplate(connection, files);
+	} catch (error) {
+		// it's not a big issue for now if we can't create email templates
+		console.error(error);
+	}
 };
 
 function findInDir(dir, fileList = []) {

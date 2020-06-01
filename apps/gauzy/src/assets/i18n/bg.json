@@ -33,7 +33,7 @@
 		"REQUEST": "Request",
 		"HISTORY": "History",
 		"SYNC": "Sync",
-		"UPDATE": "Update",
+		"UPDATE": "Aктуализация",
 		"AUTO_SYNC": "Auto sync",
 		"VIEW": "View",
 		"SEND": "Send",
@@ -199,7 +199,7 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
-			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees"
+			"ADD_OR_REMOVE_EMPLOYEES": "Добави или премахни служители"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",

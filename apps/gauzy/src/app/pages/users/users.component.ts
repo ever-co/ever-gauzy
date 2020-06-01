@@ -273,7 +273,7 @@ export class UsersComponent extends TranslationBaseComponent
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.tags'],
 			{
-				orgId: this.organization.id
+				organization: { id: this.organization.id }
 			}
 		);
 
@@ -338,7 +338,7 @@ export class UsersComponent extends TranslationBaseComponent
 		const { items } = await this.userOrganizationsService.getAll(
 			['user', 'user.role', 'user.tags'],
 			{
-				orgId: this.selectedOrganizationId
+				organization: { id: this.selectedOrganizationId }
 			}
 		);
 
@@ -352,8 +352,9 @@ export class UsersComponent extends TranslationBaseComponent
 					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
 			) {
 				usersVm.push({
-					fullName: `${orgUser.user.firstName || ''} ${orgUser.user
-						.lastName || ''}`,
+					fullName: `${orgUser.user.firstName || ''} ${
+						orgUser.user.lastName || ''
+					}`,
 					email: orgUser.user.email,
 					tags: orgUser.user.tags,
 					id: orgUser.id,

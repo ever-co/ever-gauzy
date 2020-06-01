@@ -36,9 +36,6 @@
 				/>
 			</div>
 			<div class="form-group col-4">
-				<label class="label">{{
-					'SM_TABLE.EMPLOYEES' | translate
-				}}</label>
 				<ga-employee-multi-select
 					[selectedEmployeeIds]="selectedEmployeeIds"
 					[allEmployees]="employees"
@@ -47,10 +44,11 @@
 				</ga-employee-multi-select>
 			</div>
 			<div class="form-group col-4">
-				<!-- Tags component does nothing here
-				TODO: create relationship between OrganizationDepartment and Tags in Backend.
-				-->
-				<ga-tags-color-input [selectedTags]="[]"> </ga-tags-color-input>
+				<ga-tags-color-input
+					[selectedTags]="tags"
+					(selectedTagsEvent)="selectedTagsEvent($event)"
+				>
+				</ga-tags-color-input>
 			</div>
 		</form>
 	</nb-card-body>
