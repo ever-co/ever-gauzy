@@ -4,7 +4,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first, take, takeUntil } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Location } from '@angular/common';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
