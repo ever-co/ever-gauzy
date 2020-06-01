@@ -72,6 +72,16 @@ export class AttributeValidatorsComponent implements OnInit
     this.entries = await this.attributeValidatorsService.find();
   }
 
+  public update() {
+    if ( !this.current ) return ;
+
+    const { current, current: { id } } = this;
+
+    clearTimeout( this.throttle.update );
+    this.throttle.update = setTimeout( () =>
+      this.attributeValidatorsService.update( id, current ), 700 );
+  }
+
   public toggleCollapse( isCollapsed: boolean, value: AttributeValidator ) {
     this.current = isCollapsed ? void 0 : value;
   }
@@ -85,13 +95,4 @@ export class AttributeValidatorsComponent implements OnInit
     }, 500 );
   }
 
-  public update() {
-    if ( !this.current ) return ;
-
-    const { current, current: { id } } = this;
-
-    clearTimeout( this.throttle.update );
-    this.throttle.update = setTimeout( () =>
-      this.attributeValidatorsService.update( id, current ), 700 );
-  }
 }
