@@ -9,7 +9,11 @@ import {
 	NbIconModule,
 	NbTooltipModule,
 	NbTabsetModule,
-	NbRouteTabsetModule
+	NbRouteTabsetModule,
+	NbToggleModule,
+	NbDatepickerModule,
+	NbCalendarKitModule,
+	NbCheckboxModule,
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -20,6 +24,8 @@ import { TransactionsComponent } from './components/transactions/transactions.co
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { ContractsComponent } from './components/contracts/contracts.component';
+import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
+import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -29,7 +35,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		UpworkComponent,
 		UpworkAuthorizeComponent,
 		TransactionsComponent,
-		ContractsComponent
+		ContractsComponent,
+		SyncDataSelectionComponent,
 	],
 	imports: [
 		CommonModule,
@@ -39,19 +46,25 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbInputModule,
 		FormsModule,
+		NbToggleModule,
 		ReactiveFormsModule,
+		NbDatepickerModule,
+		NbCalendarKitModule,
 		NbTooltipModule,
 		NbIconModule,
 		NbTabsetModule,
 		NbRouteTabsetModule,
 		TableComponentsModule,
+		EmployeeSelectorsModule,
+		NbCheckboxModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
-	]
+				deps: [HttpClient],
+			},
+		}),
+	],
+	entryComponents: [SyncDataSelectionComponent],
 })
 export class UpworkModule {}

@@ -1,0 +1,73 @@
+<nb-card class="sync-data-selection">
+	<nb-card-header>
+		{{ 'SETTINGS' | translate }}
+	</nb-card-header>
+	<nb-card-body>
+		<div
+			class="switcher-wrapper"
+			*ngIf="contractsSettings$ | async as contractsSettings"
+		>
+			<ng-container
+				*ngFor="let entity of contractsSettings.entitiesToSync"
+			>
+				<nb-toggle
+					[(checked)]="entity.sync"
+					labelPosition="start"
+					status="basic"
+					[disabled]="contractsSettings.onlyContracts"
+				>
+					{{ entity.name }}
+				</nb-toggle>
+
+				<div class="datepicker" *ngIf="entity.datePicker">
+					<ga-employee-selector
+						[skipGlobalChange]="true"
+						[showAllEmployeesOption]="false"
+						(selectionChanged)="setSelectedEmployee($event)"
+						class="employee-selector"
+					>
+					</ga-employee-selector>
+					<div>
+						<label for="dueDate" class="label">
+							{{ 'UPWORK_PAGE.SELECT_DATE' | translate }}
+						</label>
+						<input
+							type="text"
+							nbInput
+							placeholder="{{
+								'INTEGRATIONS.UPWORK_PAGE.SELECT_DATE'
+									| translate
+							}}"
+							[nbDatepicker]="taskDueDatePicker"
+							[(ngModel)]="entity.datePicker.selectedDate"
+							fullWidth
+							[disabled]="contractsSettings.onlyContracts"
+						/>
+						<nb-datepicker
+							#taskDueDatePicker
+							[max]="entity.datePicker.max"
+						></nb-datepicker>
+					</div>
+				</div>
+			</ng-container>
+			<nb-checkbox
+				class="only-contracts"
+				[(checked)]="contractsSettings.onlyContracts"
+				><strong>
+					{{
+						'INTEGRATIONS.UPWORK_PAGE.ONLY_CONTRACTS' | translate
+					}}</strong
+				></nb-checkbox
+			>
+		</div>
+	</nb-card-body>
+
+	<nb-card-footer>
+		<div class="dialog-footer">
+			<button nbButton (click)="syncData()" status="primary" class="mr-2">
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
+				>{{ 'BUTTONS.SYNC' | translate }}
+			</button>
+		</div>
+	</nb-card-footer>
+</nb-card>

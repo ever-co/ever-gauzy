@@ -27,7 +27,7 @@ export interface ITimesheetCreateInput {
 	mouse: number;
 	overall?: number;
 	startedAt: Date;
-	stoppedAt: Date;
+	stoppedAt?: Date;
 	approvedAt?: Date;
 	submittedAt?: Date;
 	lockedAt?: Date;
@@ -40,7 +40,7 @@ export enum TimesheetStatus {
 	PENDING = 'PENDING',
 	IN_REVIEW = 'IN_REVIEW',
 	DENIED = 'DENIED',
-	APPROVED = 'APPROVED'
+	APPROVED = 'APPROVED',
 }
 
 export interface IUpdateTimesheetStatusInput {
@@ -105,7 +105,7 @@ export interface ITimeSlotCreateInput {
 
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
-	MANUAL = 'MANUAL'
+	MANUAL = 'MANUAL',
 }
 
 export interface TimeSlot extends IBaseEntityModel {
@@ -149,7 +149,7 @@ export interface ICreateActivityInput {
 
 export enum ActivityType {
 	URL = 'URL',
-	APP = 'APP'
+	APP = 'APP',
 }
 
 export interface Screenshot extends IBaseEntityModel {

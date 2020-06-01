@@ -7,11 +7,11 @@ import {
 	IAccessToken,
 	IEngagement,
 	IUpworkApiConfig,
-	IIntegrationMap
+	IIntegrationMap,
 } from '@gauzy/models';
 
 @Injectable({
-	providedIn: 'root'
+	providedIn: 'root',
 })
 export class UpworkService {
 	constructor(private http: HttpClient) {}
@@ -55,6 +55,13 @@ export class UpworkService {
 		return this.http.post<IIntegrationMap[]>(
 			`/api/integrations/upwork/sync-contracts`,
 			syncContractsDto
+		);
+	}
+
+	syncContractsRelatedData(dto) {
+		return this.http.post<IIntegrationMap[]>(
+			`/api/integrations/upwork/sync-contracts-related-data`,
+			dto
 		);
 	}
 }
