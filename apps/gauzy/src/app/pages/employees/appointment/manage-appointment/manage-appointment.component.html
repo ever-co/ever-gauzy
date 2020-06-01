@@ -29,8 +29,8 @@
 				<div class="row">
 					<div class="col-9">
 						<ngx-timer-range-picker
-							[slotStartTime]="selectedRange.start"
-							[slotEndTime]="selectedRange.end"
+							[slotStartTime]="start"
+							[slotEndTime]="end"
 							[allowedDuration]="allowedDuration"
 							[disableDatePicker]="disabled"
 							[disableEndPicker]="disabled"
@@ -174,7 +174,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="row">
+				<div class="row" *ngIf="hidePrivateFields">
 					<div class="col-sm-12">
 						<div class="form-group">
 							<label for="emailsSelect" class="label">{{

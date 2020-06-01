@@ -13,7 +13,6 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { AppointmentRoutingModule } from './appointment-routing.module';
 import { AppointmentComponent } from './appointment.component';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
-import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
@@ -38,7 +37,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		EmployeeMultiSelectModule,
 		SharedModule
 	],
 	exports: [AppointmentComponent],

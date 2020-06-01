@@ -45,6 +45,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	selectedEmployeeIds: string[];
 	emailAddresses: any[] = [];
 	emails: any;
+	start: Date;
+	end: Date;
 
 	@Input('selectedRange')
 	selectedRange: { start: Date; end: Date };
@@ -64,12 +66,10 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		!this.selectedRange
-			? (this.selectedRange = {
-					start: history.state.dateStart,
-					end: history.state.dateEnd
-			  })
-			: null;
+		if (this.selectedRange) {
+			this.start = this.selectedRange.start;
+			this.end = this.selectedRange.end;
+		}
 		this._parseParams();
 		this._loadEmployees();
 	}
@@ -180,6 +180,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 						start: new Date(appointment.startDateTime),
 						end: new Date(appointment.endDateTime)
 					};
+					this.start = this.selectedRange.start;
+					this.end = this.selectedRange.end;
 					this.employeeAppointment = appointment;
 				}
 				this._initializeForm();

@@ -17,6 +17,7 @@ import { ManageAppointmentComponent } from './manage-appointment.component';
 import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
 import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/employee-multi-select/employee-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -36,6 +37,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		TimerPickerModule,
 		NbCheckboxModule,
 		SharedModule,
+		EmployeeMultiSelectModule,
 		NgSelectModule,
 		TranslateModule.forChild({
 			loader: {
