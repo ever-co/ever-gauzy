@@ -8,11 +8,6 @@ export class Service<E extends BaseEntityModel, CI, UI = Partial<CI>, ID = strin
 
   protected entries: E[] = [];
 
-  constructor()
-  {
-    console.log( '@@@', this );
-  }
-
   public async create( create: CI ): Promise<E>
   {
     const entry: E = {
