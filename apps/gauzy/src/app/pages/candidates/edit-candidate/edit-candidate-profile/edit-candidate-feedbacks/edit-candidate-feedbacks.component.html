@@ -17,7 +17,7 @@
 				</nb-option>
 				<nb-option
 					value="{{ interview.id }}"
-					*ngFor="let interview of interviews"
+					*ngFor="let interview of allInterviews"
 					>{{ interview.title }}</nb-option
 				>
 			</nb-select>
@@ -34,6 +34,10 @@
 						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE'
 							| translate
 					}}
+					<span *ngIf="interviewersHire?.length > 1">
+						({{ statusHire }}/{{ interviewersHire?.length }})
+					</span>
+
 					<i class="fas fa-thumbs-up success"></i>
 				</nb-radio>
 				<nb-radio [value]="'REJECTED'"

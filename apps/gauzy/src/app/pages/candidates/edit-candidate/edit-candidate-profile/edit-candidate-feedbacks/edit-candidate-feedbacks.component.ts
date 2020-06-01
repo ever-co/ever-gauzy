@@ -34,9 +34,10 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	status: string;
 	feedbackInterviewId: string;
 	feedbackInterviewer: ICandidateInterviewers;
-	statusHire = 0;
+	statusHire: number;
 	all = 'all';
-	interviews: ICandidateInterview[] = [];
+	interviewersHire: ICandidateInterviewers[] = [];
+	allInterviews: ICandidateInterview[] = [];
 	constructor(
 		private readonly fb: FormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
@@ -74,25 +75,34 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			})
 		);
 	}
-	private async loadFeedbacks() {
+	private async loadFeedbacks(interviewId?: string) {
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer'],
 			{ candidateId: this.candidateId }
 		);
 		if (res) {
-			this.feedbackList = res.items;
+			if (interviewId) {
+				this.feedbackList = [];
+				for (const feedback of res.items) {
+					if (feedback.interviewId === interviewId) {
+						this.feedbackList.push(feedback);
+					}
+				}
+			} else {
+				this.feedbackList = res.items;
+			}
 			this.loadInterviews(this.feedbackList);
 		}
 	}
 
 	async loadInterviews(feedbackList: ICandidateFeedback[]) {
+		const allInterviewsIds = [];
 		for (const item of feedbackList) {
 			if (item.interviewId) {
 				const res = await this.candidateInterviewService.findById(
 					item.interviewId
 				);
 				if (res) {
-					this.interviews.push(res);
 					item.interviewTitle = res.title;
 					const result = await this.employeesService.getEmployeeById(
 						item.interviewer.employeeId,
@@ -102,18 +112,28 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 						item.interviewer.employeeImageUrl =
 							result.user.imageUrl;
 					}
+					this.allInterviews.push(res); //for filter
 				}
 			}
 		}
+		const uniq = {};
+		this.allInterviews = this.allInterviews.filter(
+			(obj) => !uniq[obj.id] && (uniq[obj.id] = true)
+		);
 	}
 
-	editFeedback(index: number, id: string) {
+	async editFeedback(index: number, id: string) {
 		this.showAddCard = !this.showAddCard;
 		this.form.controls.feedbacks.patchValue([this.feedbackList[index]]);
 		this.feedbackId = id;
 		this.status = this.feedbackList[index].status;
 		this.feedbackInterviewer = this.feedbackList[index].interviewer;
 		this.feedbackInterviewId = this.feedbackList[index].interviewId;
+		const interviewers = await this.candidateInterviewersService.findByInterviewId(
+			this.feedbackInterviewId
+		);
+		this.getStatusHire(this.feedbackInterviewId);
+		this.interviewersHire = interviewers ? interviewers : null;
 	}
 
 	async submitForm() {
@@ -167,17 +187,13 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 	}
 
 	async getStatusHire(interviewId: string) {
+		this.statusHire = 0;
 		const result = await this.candidateFeedbacksService.findByInterviewId(
 			interviewId
 		);
 		if (result) {
 			for (const feedback of result) {
 				if (feedback.interviewId === interviewId) {
-					/*if (feedback.status === CandidateStatus.REJECTED) {
-						this.isRejected = true;
-					} else {
-						this.isRejected = false;
-					}*/
 					this.statusHire =
 						feedback.status === CandidateStatus.HIRED
 							? this.statusHire + 1
@@ -212,10 +228,11 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 			this.toastrError(error);
 		}
 	}
-	onInterviewSelected(value: any) {
-		//TO DO
+	async onInterviewSelected(value: any) {
 		if (value === 'all') {
 			this.loadFeedbacks();
+		} else {
+			this.loadFeedbacks(value);
 		}
 	}
 
