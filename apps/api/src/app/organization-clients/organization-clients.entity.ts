@@ -37,6 +37,7 @@ export class OrganizationClients extends Base implements IOrganizationClients {
 		name: 'tag_organization_client'
 	})
 	tags: Tag[];
+
 	@ApiProperty({ type: String })
 	@IsString()
 	@IsNotEmpty()
