@@ -35,14 +35,14 @@ export interface ISeedUsers {
 	candidateUsers: User[];
 }
 
-export interface IDefaultProductType {
-	name: string;
-	description: string;
-	icon: string;
-}
-
 export interface IDefaultProductCategory {
 	name: string;
 	description: string;
 	imageUrl: string;
+}
+
+export interface IDefaultProductType {
+	name: string;
+	description: string;
+	icon: string;
 }

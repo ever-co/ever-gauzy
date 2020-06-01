@@ -128,13 +128,13 @@ export class InviteService extends CrudService<Invite> {
 			roleId
 		);
 
+		const user = await this.userService.findOne(invitedById, {
+			relations: ['role']
+		});
+
 		if (role.name === RolesEnum.SUPER_ADMIN) {
-			const { role: inviterRole } = await this.userService.findOne(
-				invitedById,
-				{
-					relations: ['role']
-				}
-			);
+			const { role: inviterRole } = user;
+
 			if (inviterRole.name !== RolesEnum.SUPER_ADMIN)
 				throw new UnauthorizedException();
 		}
@@ -179,19 +179,19 @@ export class InviteService extends CrudService<Invite> {
 
 		const items = await this.repository.save(invites);
 		items.forEach((item) => {
-			const registerUrl = `${originUrl ||
-				env.host}/#/auth/accept-invite?email=${item.email}&token=${
-				item.token
-			}`;
+			const registerUrl = `${
+				originUrl || env.host
+			}/#/auth/accept-invite?email=${item.email}&token=${item.token}`;
 
 			if (emailInvites.inviteType.indexOf('/pages/users') > -1) {
 				this.emailService.inviteUser({
 					email: item.email,
 					role: role.name,
-					organization: organization.name,
+					organization: organization,
 					registerUrl,
 					originUrl,
-					languageCode
+					languageCode,
+					invitedBy: user
 				});
 			} else if (
 				emailInvites.inviteType.indexOf('/pages/employees') > -1
@@ -202,8 +202,9 @@ export class InviteService extends CrudService<Invite> {
 					clients,
 					departments,
 					originUrl,
-					organization: organization.name,
-					languageCode
+					organization: organization,
+					languageCode,
+					invitedBy: user
 				});
 			}
 		});

@@ -20,6 +20,8 @@ import { TaskSelectModule } from 'apps/gauzy/src/app/@shared/task-select/task-se
 import { ProjectSelectModule } from 'apps/gauzy/src/app/@shared/project-select/project-select.module';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
 import { DailyComponent } from './daily/daily.component';
+import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
+import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -40,8 +42,10 @@ import { DailyComponent } from './daily/daily.component';
 		TimerPickerModule,
 		TaskSelectModule,
 		ProjectSelectModule,
+		EditTimeLogModalModule,
 		NbIconModule,
-		EmployeeSelectorsModule
+		EmployeeSelectorsModule,
+		FiltersModule
 	]
 })
 export class DailyModule {}

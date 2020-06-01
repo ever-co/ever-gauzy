@@ -23,9 +23,10 @@ export class CandidateFeedbacksService {
 	}
 
 	getAll(
+		relations?: string[],
 		findInput?: ICandidateFeedbackFindInput
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		const data = JSON.stringify({ relations, findInput });
 		return this.http
 			.get<{ items: ICandidateFeedback[]; total: number }>(
 				`/api/candidate-feedbacks`,
@@ -37,6 +38,14 @@ export class CandidateFeedbacksService {
 			.toPromise();
 	}
 
+	findByInterviewId(interviewId: string): Promise<ICandidateFeedback[]> {
+		return this.http
+			.get<ICandidateFeedback[]>(
+				`/api/candidate-feedbacks/getByInterviewId/${interviewId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
 			.put(`/api/candidate-feedbacks/${id}`, updateInput)

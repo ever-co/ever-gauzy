@@ -21,14 +21,14 @@
 							"
 						>
 							<div [formGroupName]="i" class="documents-add-card">
-								<div class="col-12 add-card-wrapp ">
+								<div class="col-12 add-card-wrapp">
 									<label for="documentName" class="label">{{
 										'FORM.LABELS.DOCUMENT_NAME' | translate
 									}}</label>
 									<input
 										id="documentName"
 										#addInput
-										class="col-12 "
+										class="col-12"
 										nbInput
 										formControlName="name"
 										type="text"
@@ -104,12 +104,12 @@
 				<nb-actions class="float-right" e="medium">
 					<nb-action
 						(click)="editDocument(i, document.id)"
-						class="d-inline pr-0"
+						class="d-inline pr-2"
 						icon="edit"
 					></nb-action>
 					<nb-action
 						(click)="removeDocument(document.id)"
-						class="d-inline pr-0"
+						class="d-inline pr-0 pl-2"
 						icon="close"
 					></nb-action>
 				</nb-actions>

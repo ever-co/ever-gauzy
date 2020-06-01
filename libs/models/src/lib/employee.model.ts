@@ -40,6 +40,7 @@ export interface EmployeeFindInput extends IBaseEntityModel {
 	user?: UserFindInput;
 	valueDate?: Date;
 	orgId?: string;
+	tags?: Tag[];
 }
 
 export interface EmployeeUpdateInput {
@@ -71,7 +72,7 @@ export enum PayPeriodEnum {
 	BI_WEEKLY = 'BI_WEEKLY',
 	WEEKLY = 'WEEKLY',
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
-	MONTHLY = 'MONTHLY'
+	MONTHLY = 'MONTHLY',
 }
 export interface EmployeeLevel {
 	id: string;

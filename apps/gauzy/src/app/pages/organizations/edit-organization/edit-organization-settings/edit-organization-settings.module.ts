@@ -14,7 +14,8 @@ import {
 	NbSelectModule,
 	NbSpinnerModule,
 	NbTabsetModule,
-	NbToggleModule
+	NbToggleModule,
+	NbBadgeModule,
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -35,7 +36,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
 import {
 	HttpLoaderFactory,
-	ThemeModule
+	ThemeModule,
 } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationClientMutationComponent } from './edit-organization-clients/edit-organization-clients-mutation/edit-organization-clients-mutation.component';
@@ -58,9 +59,12 @@ import { TagsColorInputModule } from 'apps/gauzy/src/app/@shared/tags/tags-color
 import { EditOrganizationExpenseCategoriesComponent } from './edit-organization-expense-categories/edit-organization-expense-categories.component';
 import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
 import { InviteService } from '../../../../@core/services/invite.service';
+import { TableComponentsModule } from 'apps/gauzy/src/app/@shared/table-components/table-components.module';
 
 @NgModule({
 	imports: [
+		NbBadgeModule,
+		TableComponentsModule,
 		TagsColorInputModule,
 		ThemeModule,
 		NbCardModule,
@@ -78,8 +82,8 @@ import { InviteService } from '../../../../@core/services/invite.service';
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
+				deps: [HttpClient],
+			},
 		}),
 		Ng2SmartTableModule,
 		OrganizationsMutationModule,
@@ -95,7 +99,7 @@ import { InviteService } from '../../../../@core/services/invite.service';
 		EmployeeSelectorsModule,
 		EntityWithMembersModule,
 		EmployeeMultiSelectModule,
-		TagsColorInputModule
+		TagsColorInputModule,
 	],
 	providers: [
 		OrganizationDepartmentsService,
@@ -105,7 +109,7 @@ import { InviteService } from '../../../../@core/services/invite.service';
 		OrganizationClientsService,
 		OrganizationEditStore,
 		EmployeeStore,
-		InviteService
+		InviteService,
 	],
 	entryComponents: [InviteClientComponent],
 	declarations: [
@@ -127,7 +131,7 @@ import { InviteService } from '../../../../@core/services/invite.service';
 		EditOrganizationClientMutationComponent,
 		EditOrganizationProjectsMutationComponent,
 		EditOrganizationEmploymentTypes,
-		InviteClientComponent
-	]
+		InviteClientComponent,
+	],
 })
 export class EditOrganizationSettingsModule {}

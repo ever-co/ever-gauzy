@@ -1,0 +1,22 @@
+<nb-card class="card-calendar">
+	<nb-card-header class="card-calendar-header">
+		<h4>
+			{{
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULED_INTERVIEWS'
+					| translate
+			}}
+		</h4>
+		<nb-icon
+			icon="close-outline"
+			class="icons"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<full-calendar
+			class="calendar"
+			#calendar
+			[options]="calendarOptions"
+		></full-calendar>
+	</nb-card-body>
+</nb-card>

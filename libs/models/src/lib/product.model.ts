@@ -1,4 +1,8 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import {
+	Translation as ITranslation,
+	Translatable as ITranslatable
+} from './translation.model';
 import { Organization } from './organization.model';
 import { Tag } from './tag-entity.model';
 
@@ -11,7 +15,7 @@ export interface Product extends IBaseEntityModel {
 	options?: ProductOption[];
 	productTypeId: string;
 	productCategoryId: string;
-	type?: ProductType;
+	type?: ProductTypeTranslatable;
 	category?: ProductCategory;
 	tags?: Tag[];
 }
@@ -20,12 +24,23 @@ export interface ProductFindInput {
 	organizationId?: string;
 }
 
-export interface ProductType extends IBaseEntityModel {
-	name: string;
-	organizationId?: string;
-	description: string;
+export interface ProductTypeTranslatable
+	extends ITranslatable<ProductTypeTranslation> {
 	icon: string;
-	organization: Organization;
+	organizationId?: string;
+	organization?: Organization;
+}
+
+export interface ProductTypeTranslation
+	extends ITranslation<ProductTypeTranslatable> {
+	name: string;
+	description: string;
+}
+
+export interface ProductTypeTranslated extends IBaseEntityModel {
+	icon: string;
+	name: string;
+	description: string;
 }
 
 export interface ProductCategory extends IBaseEntityModel {
@@ -75,7 +90,7 @@ export interface ProductOption extends IBaseEntityModel {
 
 export enum BillingInvoicingPolicyEnum {
 	QUANTITY_ORDERED = 'Quantity ordered',
-	QUANTITY_DELIVERED = 'Quantity Delivered',
+	QUANTITY_DELIVERED = 'Quantity Delivered'
 }
 
 export enum ProductTypesIconsEnum {
@@ -99,5 +114,5 @@ export enum ProductTypesIconsEnum {
 	GLOBE = 'globe-2-outline',
 	LAYERS = 'layers-outline',
 	PHONE = 'phone-outline',
-	SHOPPING_CART = 'shopping-cart-outline',
+	SHOPPING_CART = 'shopping-cart-outline'
 }

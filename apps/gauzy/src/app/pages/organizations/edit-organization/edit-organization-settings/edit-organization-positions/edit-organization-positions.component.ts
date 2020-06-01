@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { OrganizationPositions } from '@gauzy/models';
+import { OrganizationPositions, Tag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { OrganizationPositionsService } from 'apps/gauzy/src/app/@core/services/organization-positions';
@@ -27,6 +27,7 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 	showEditDiv: boolean;
 
 	positionsExist: boolean;
+	tags: Tag[] = [];
 
 	constructor(
 		private readonly organizationPositionsService: OrganizationPositionsService,
@@ -65,7 +66,10 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 	}
 
 	async editPosition(id: string, name: string) {
-		await this.organizationPositionsService.update(id, { name });
+		await this.organizationPositionsService.update(id, {
+			name: name,
+			tags: this.tags
+		});
 		this.loadPositions();
 		this.toastrService.success('Successfully updated');
 		this.showEditDiv = !this.showEditDiv;
@@ -75,7 +79,8 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 		if (name) {
 			await this.organizationPositionsService.create({
 				name,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tags: this.tags
 			});
 
 			this.toastrService.primary(
@@ -109,14 +114,18 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 	}
 
 	showEditCard(position: OrganizationPositions) {
+		this.tags = position.tags;
 		this.showEditDiv = true;
 		this.selectedPosition = position;
 	}
 
 	private async loadPositions() {
-		const res = await this.organizationPositionsService.getAll({
-			organizationId: this.organizationId
-		});
+		const res = await this.organizationPositionsService.getAll(
+			{
+				organizationId: this.organizationId
+			},
+			['tags']
+		);
 		if (res) {
 			this.positions = res.items;
 
@@ -126,5 +135,9 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 				this.positionsExist = true;
 			}
 		}
+	}
+
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

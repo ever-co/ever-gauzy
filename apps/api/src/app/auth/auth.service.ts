@@ -4,7 +4,7 @@ import {
 	LanguagesEnum
 } from '@gauzy/models';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { JsonWebTokenError, sign, verify } from 'jsonwebtoken';
 import { get, post, Response } from 'request';
 import { EmailService } from '../email/email.service';
@@ -69,7 +69,7 @@ export class AuthService {
 		originUrl?: string
 	): Promise<{ id: string; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role']
+			relations: ['role', 'employee']
 		});
 
 		let token: string;
@@ -81,10 +81,18 @@ export class AuthService {
 			if (token) {
 				const url = `${env.host}:4200/#/auth/reset-password?token=${token}&id=${user.id}`;
 
+				const {
+					organizationId
+				} = await this.userOrganizationService.findOne({
+					where: {
+						user
+					}
+				});
 				this.emailService.requestPassword(
 					user,
 					url,
 					languageCode,
+					organizationId,
 					originUrl
 				);
 
@@ -129,6 +137,7 @@ export class AuthService {
 		languageCode: LanguagesEnum
 	): Promise<User> {
 		let tenant = input.user.tenant;
+
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOne(
 				input.createdById,
@@ -159,6 +168,7 @@ export class AuthService {
 		this.emailService.welcomeUser(
 			input.user,
 			languageCode,
+			input.organizationId,
 			input.originalUrl
 		);
 

@@ -1,10 +1,10 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { OrganizationTeam, Employee } from '@gauzy/models';
+import { OrganizationTeam, Employee, Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-edit-organization-teams-mutation',
 	templateUrl: './edit-organization-teams-mutation.component.html',
-	styleUrls: ['./edit-organization-teams-mutation.component.scss']
+	styleUrls: ['./edit-organization-teams-mutation.component.scss'],
 })
 export class EditOrganizationTeamsMutationComponent implements OnInit {
 	@Input()
@@ -22,6 +22,7 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	members: string[];
 	name: string;
 	selectedEmployees: string[];
+	tags: Tag[] = [];
 
 	ngOnInit() {
 		if (this.team) {
@@ -29,6 +30,7 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 				(member) => member.employeeId
 			);
 			this.name = this.team.name;
+			this.tags = this.team.tags;
 		}
 	}
 
@@ -36,9 +38,9 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 		this.addOrEditTeam.emit({
 			name: this.name,
 			members: this.members || this.selectedEmployees,
-			organizationId: this.organizationId
+			organizationId: this.organizationId,
+			tags: this.tags,
 		});
-
 		this.name = '';
 	}
 
@@ -48,5 +50,8 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 
 	cancel() {
 		this.canceled.emit();
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

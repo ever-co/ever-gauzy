@@ -4,14 +4,14 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 import {
 	ProductVariant,
 	CurrenciesEnum,
-	BillingInvoicingPolicyEnum
+	BillingInvoicingPolicyEnum,
 } from '@gauzy/models';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 
 @Component({
 	selector: 'ngx-product-variant-form',
 	templateUrl: './product-variant-form.component.html',
-	styleUrls: ['./product-variant-form.component.scss']
+	styleUrls: ['./product-variant-form.component.scss'],
 })
 export class ProductVariantFormComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -36,56 +36,56 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 		this.form = this.fb.group({
 			internationalReference: [
 				this.productVariant.internalReference || '',
-				Validators.required
+				Validators.required,
 			],
 			invoicingPolicy: [
 				this.productVariant.billingInvoicingPolicy || '',
-				Validators.required
+				Validators.required,
 			],
 			quantity: [
 				this.productVariant.quantity || 0,
-				[Validators.required, Validators.min(0)]
+				[Validators.required, Validators.min(0)],
 			],
 			taxes: [
 				this.productVariant.taxes || 0,
-				[Validators.required, Validators.min(0)]
+				[Validators.required, Validators.min(0)],
 			],
 			retailPrice: [
 				this.productVariant.price.retailPrice || 0,
-				[Validators.required, Validators.min(0)]
+				[Validators.required, Validators.min(0)],
 			],
 			retailPriceCurrency: [
 				this.productVariant.price.retailPriceCurrency ||
 					CurrenciesEnum.USD,
-				Validators.required
+				Validators.required,
 			],
 			unitCost: [
 				this.productVariant.price.unitCost || 0,
-				[Validators.required, Validators.min(0)]
+				[Validators.required, Validators.min(0)],
 			],
 			unitCostCurrency: [
 				this.productVariant.price.unitCostCurrency ||
 					CurrenciesEnum.USD,
-				Validators.required
+				Validators.required,
 			],
 			enabled: [this.productVariant.enabled || true, Validators.required],
 			isSubscription: [
-				this.productVariant.settings.isSubscription || false
+				this.productVariant.settings.isSubscription || false,
 			],
 			isPurchaseAutomatically: [
-				this.productVariant.settings.isPurchaseAutomatically || false
+				this.productVariant.settings.isPurchaseAutomatically || false,
 			],
 			canBeSold: [this.productVariant.settings.canBeSold || true],
 			canBePurchased: [
-				this.productVariant.settings.canBePurchased || true
+				this.productVariant.settings.canBePurchased || true,
 			],
 			canBeCharged: [this.productVariant.settings.canBeCharged || true],
 			canBeRented: [this.productVariant.settings.canBeRented || false],
 			trackInventory: [
-				this.productVariant.settings.trackInventory || false
+				this.productVariant.settings.trackInventory || false,
 			],
 			isEquipment: [this.productVariant.settings.isEquipment || false],
-			notes: [this.productVariant.notes || '']
+			notes: [this.productVariant.notes || ''],
 		});
 	}
 
@@ -104,14 +104,14 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 				quantity: formValue['quantity'],
 				taxes: formValue['taxes'],
 				enabled: formValue['enabled'],
-				notes: formValue['notes']
+				notes: formValue['notes'],
 			},
 			productVariantPrice: {
 				id: this.productVariant.price.id,
 				retailPrice: formValue['retailPrice'],
 				retailPriceCurrency: formValue['retailPriceCurrency'],
 				unitCost: formValue['unitCost'],
-				unitCostCurrency: formValue['unitCostCurrency']
+				unitCostCurrency: formValue['unitCostCurrency'],
 			},
 			productVariantSettings: {
 				id: this.productVariant.settings.id,
@@ -122,8 +122,8 @@ export class ProductVariantFormComponent extends TranslationBaseComponent
 				canBeCharged: formValue['canBeCharged'],
 				canBeRented: formValue['canBeRented'],
 				trackInventory: formValue['trackInventory'],
-				isEquipment: formValue['isEquipment']
-			}
+				isEquipment: formValue['isEquipment'],
+			},
 		};
 
 		this.save.emit(productVariantRequest);

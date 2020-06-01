@@ -17,7 +17,7 @@
   flex-direction: column;
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   padding-bottom: 1rem;
 }
@@ -28,6 +28,7 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  margin-top: 0.5rem;
 }
 
 #description {
@@ -55,10 +56,14 @@
   color: #00d68f;
 }
 
-.primary {
-  color: #36f;
-}
-
 .error {
   color: #ff3d71;
+}
+
+.disabled {
+  color: rgba(143, 155, 179, 0.48);
+}
+
+.select {
+  width: 100%;
 }

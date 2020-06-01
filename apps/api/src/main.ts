@@ -7,7 +7,7 @@ import { SentryService } from '@ntegral/nestjs-sentry';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
-		logger: ['error', 'warn']
+		logger: ['error', 'warn'],
 	});
 	app.useLogger(app.get(SentryService));
 	app.enableCors();
@@ -18,18 +18,18 @@ async function bootstrap() {
 	// app.use(csurf());
 
 	app.use(helmet());
+	const globalPrefix = 'api';
+	app.setGlobalPrefix(globalPrefix);
 
 	const options = new DocumentBuilder()
 		.setTitle('Gauzy API')
 		.setVersion('1.0')
+		.addBearerAuth()
 		// .setBasePath('api/')
 		.build();
 
 	const document = SwaggerModule.createDocument(app, options);
 	SwaggerModule.setup('swg', app, document);
-
-	const globalPrefix = 'api';
-	app.setGlobalPrefix(globalPrefix);
 	const port = process.env.port || 3000;
 	await app.listen(port, () => {
 		console.log(

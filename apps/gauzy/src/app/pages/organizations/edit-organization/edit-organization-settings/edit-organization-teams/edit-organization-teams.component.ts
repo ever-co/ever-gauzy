@@ -3,7 +3,8 @@ import {
 	Employee,
 	Organization,
 	OrganizationTeamCreateInput,
-	OrganizationTeam
+	OrganizationTeam,
+	Tag,
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -18,7 +19,7 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 @Component({
 	selector: 'ga-edit-org-teams',
 	templateUrl: './edit-organization-teams.component.html',
-	styleUrls: ['./edit-organization-teams.component.scss']
+	styleUrls: ['./edit-organization-teams.component.scss'],
 })
 export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -32,6 +33,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 	employees: Employee[] = [];
 	teamToEdit: OrganizationTeam;
 	loading = true;
+	tags: Tag[] = [];
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
@@ -69,7 +71,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 						this.getTranslation(
 							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
 							{
-								name: team.name
+								name: team.name,
 							}
 						),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -89,7 +91,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 						this.getTranslation(
 							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM',
 							{
-								name: team.name
+								name: team.name,
 							}
 						),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -120,8 +122,8 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Team'
-				}
+					recordType: 'Team',
+				},
 			})
 			.onClose.pipe(first())
 			.toPromise();
@@ -134,7 +136,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 					this.getTranslation(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
 						{
-							name: name
+							name: name,
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -165,28 +167,34 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		}
 
 		const { items } = await this.employeesService
-			.getAll(['user'], { organization: { id: this.organizationId } })
+			.getAll(['user', 'tags'], {
+				organization: { id: this.organizationId },
+			})
 			.pipe(first())
 			.toPromise();
-
 		this.employees = items;
+	}
+	public getTagsByEmployeeId(id: string) {
+		const employee = this.employees.find((empl) => empl.id === id);
+
+		return employee ? employee.tags : [];
 	}
 
 	private async loadTeams() {
 		if (!this.organizationId) {
 			return;
 		}
-
-		const teams = await this.organizationTeamsService.getAll(['members'], {
-			organizationId: this.organizationId
-		});
-
+		const teams = await this.organizationTeamsService.getAll(
+			['members', 'tags'],
+			{
+				organizationId: this.organizationId,
+			}
+		);
 		if (teams) {
 			this.teams = teams.items.sort(
 				(a, b) => b.members.length - a.members.length
 			);
 		}
-
 		this.loading = false;
 	}
 }

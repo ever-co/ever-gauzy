@@ -61,7 +61,7 @@ import {
 	createRandomTenants
 } from '../../tenant/tenant.seed';
 import { EmailTemplate } from '../../email-template';
-import { createEmailTemplates } from '../../email-template/email-template.seed';
+import { createDefaultEmailTemplates } from '../../email-template/email-template.seed';
 import {
 	seedDefaultEmploymentTypes,
 	seedRandomEmploymentTypes
@@ -135,6 +135,7 @@ import { createDefaultIntegrations } from '../../integration/integration.seed';
 import { EmployeeAppointment } from '../../employee-appointment/employee-appointment.entity';
 import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
 import { ProductOption } from '../../product-option/product-option.entity';
+import { HelpCenter } from '../../help-center/help-center.entity';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -185,6 +186,7 @@ const allEntities = [
 	CandidateEducation,
 	CandidateSkill,
 	CandidateExperience,
+	HelpCenter,
 	Product,
 	ProductVariant,
 	ProductVariantSettings,
@@ -260,7 +262,7 @@ export class SeedDataService {
 
 			await createCountries(this.connection);
 
-			await createEmailTemplates(this.connection);
+			await createDefaultEmailTemplates(this.connection);
 
 			await this.seedDefaultData(categories);
 
@@ -524,9 +526,7 @@ export class SeedDataService {
 		try {
 			for (const entity of entities) {
 				const repository = await getRepository(entity.name);
-				await repository.query(
-					`TRUNCATE TABLE "public"."${entity.tableName}" CASCADE;`
-				);
+				await repository.query(`DELETE FROM "${entity.tableName}";`);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

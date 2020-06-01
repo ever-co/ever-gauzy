@@ -21,6 +21,10 @@ import { NbToastrService } from '@nebular/theme';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
+import {
+	EmployeeSelectorComponent,
+	SelectedEmployee
+} from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.component';
 
 export interface IAvailabilitySlotsView {
 	id?: string;
@@ -39,7 +43,11 @@ export interface IAvailabilitySlotsView {
 })
 export class AvailabilitySlotsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
+	@ViewChild('calendar', { static: true })
+	calendar: FullCalendarComponent;
+	@ViewChild('employeeSelector')
+	employeeSelector: EmployeeSelectorComponent;
+
 	calendarComponent: FullCalendarComponent;
 	calendarEvents: EventInput[] = [];
 	calendarOptions: OptionsInput;
@@ -97,9 +105,11 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 		) {
 			this.recurringAvailabilityMode = true;
 			delete this.calendarOptions.selectAllow;
+			this.calendarOptions.dayHeaderFormat = { weekday: 'long' };
 			this.calendarOptions.headerToolbar = {
 				center: '',
-				right: ''
+				right: '',
+				left: ''
 			};
 		}
 
@@ -109,19 +119,6 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 			);
 		});
 
-		this.store.selectedEmployee$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((employee) => {
-				if (employee && employee.id) {
-					this.selectedEmployeeId = employee.id;
-					this.fetchAvailableSlots(null);
-				} else {
-					if (this._selectedOrganizationId) {
-						this.fetchAvailableSlots(true);
-					}
-				}
-			});
-
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((org) => {
@@ -130,6 +127,17 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				}
 				this.fetchAvailableSlots(true);
 			});
+	}
+
+	onEmployeeChange(selectedEmployee: SelectedEmployee) {
+		if (selectedEmployee && selectedEmployee.id) {
+			this.selectedEmployeeId = selectedEmployee.id;
+			this.fetchAvailableSlots(null);
+		} else {
+			if (this._selectedOrganizationId) {
+				this.fetchAvailableSlots(true);
+			}
+		}
 	}
 
 	getEvents(arg, callback) {
@@ -207,7 +215,8 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent
 				type: this.recurringAvailabilityMode ? 'Recurring' : 'Default',
 				organization: {
 					id: this._selectedOrganizationId
-				}
+				},
+				employeeId: null
 			};
 		} else {
 			findObj = {

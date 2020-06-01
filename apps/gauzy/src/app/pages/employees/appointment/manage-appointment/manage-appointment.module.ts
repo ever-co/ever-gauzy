@@ -1,23 +1,23 @@
 import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
-	NbAlertModule,
 	NbButtonModule,
 	NbCardModule,
-	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
 	NbSpinnerModule,
-	NbTooltipModule,
-	NbTreeGridModule,
-	NbSelectModule,
-	NbRouteTabsetModule
+	NbCheckboxModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { ThemeModule } from '../../../../@theme/theme.module';
 import { ManageAppointmentRoutingModule } from './manage-appointment-routing.module';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { ManageAppointmentComponent } from './manage-appointment.component';
+import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
+import { TimerPickerModule } from 'apps/gauzy/src/app/@shared/timer-picker/timer-picker.module';
+import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { EmployeeMultiSelectModule } from 'apps/gauzy/src/app/@shared/employee/employee-multi-select/employee-multi-select.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -25,30 +25,30 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
-		ManageAppointmentRoutingModule,
 		ThemeModule,
+		ManageAppointmentRoutingModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
 		NbInputModule,
-		NbDialogModule.forChild(),
-		NbTreeGridModule,
+		ReactiveFormsModule,
 		NbIconModule,
-		NbTooltipModule,
 		NbSpinnerModule,
-		NbSelectModule,
-		NbAlertModule,
+		TimerPickerModule,
+		NbCheckboxModule,
+		SharedModule,
+		EmployeeMultiSelectModule,
+		NgSelectModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
 			}
-		}),
-		NbSpinnerModule,
-		NbRouteTabsetModule
+		})
 	],
-	declarations: [],
+	exports: [ManageAppointmentComponent],
+	declarations: [ManageAppointmentComponent],
 	providers: []
 })
 export class ManageAppointmentModule {}

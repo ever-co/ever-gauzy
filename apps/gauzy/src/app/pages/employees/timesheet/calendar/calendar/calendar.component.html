@@ -5,10 +5,11 @@
 </div>
 
 <div class="filters row mb-3">
-	<div class="employee-select col-sm-3" *ngIf="canChangeSelectedEmployee">
-		<ga-employee-selector
-			class="header-selector employee-selector"
-		></ga-employee-selector>
+	<div class="col">
+		<ngx-filters
+			[hasDateRangeFilter]="false"
+			(filtersChange)="filtersChange($event)"
+		></ngx-filters>
 	</div>
 </div>
 
@@ -19,7 +20,7 @@
 		<nb-card-header>Time Log</nb-card-header>
 		<nb-card-body>
 			<div class="mb-3" *ngIf="canChangeSelectedEmployee">
-				<div class="font-weight-bold  mb-2">Employee</div>
+				<div class="font-weight-bold mb-2">Employee</div>
 				<div class="description">
 					<ngx-avatar
 						[name]="
@@ -32,13 +33,13 @@
 				</div>
 			</div>
 			<div class="mb-3">
-				<div class="font-weight-bold  mb-2">Project</div>
+				<div class="font-weight-bold mb-2">Project</div>
 				<div class="description">
 					{{ data?.project ? data?.project.name : 'No project' }}
 				</div>
 			</div>
 			<div class="mb-3">
-				<div class="font-weight-bold  mb-2">Task</div>
+				<div class="font-weight-bold mb-2">Task</div>
 				<div class="description">
 					{{ data?.task ? data?.task?.title : 'No to-do' }}
 				</div>
@@ -78,7 +79,12 @@
 			</div>
 		</nb-card-body>
 		<nb-card-footer>
-			<button nbButton (click)="ref.close()">Close</button>
+			<button class="mr-2" nbButton (click)="openDialog(data)">
+				Edit
+			</button>
+			<button nbButton (click)="ref.close()" status="default">
+				Close
+			</button>
 		</nb-card-footer>
 	</nb-card>
 </ng-template>

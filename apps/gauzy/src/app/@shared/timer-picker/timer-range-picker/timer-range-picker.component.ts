@@ -30,8 +30,21 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	endTime: string;
 	startTime: string;
 	date: Date;
+
+	@Input()
+	slotStartTime: Date;
+	@Input()
+	slotEndTime: Date;
+	@Input()
+	allowedDuration: number;
+	@Input()
+	disableEndPicker: boolean = false;
+	@Input()
+	disableDatePicker: boolean = false;
+
 	maxSlotStartTime: string;
 	minSlotStartTime: string;
+
 	maxSlotEndTime: string;
 	minSlotEndTime: string;
 
@@ -41,7 +54,6 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 
 	private _maxDate: Date = null;
 	private _disabledDates: number[] = [];
-	private _blockedSlots: string[] = [];
 	filter = (date) => !this._disabledDates.includes(date.getTime());
 
 	@Input('maxDate')
@@ -58,13 +70,6 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 	public set disabledDates(value: number[]) {
 		this._disabledDates = value;
-	}
-	@Input('blockedSlots')
-	public get blockedSlots() {
-		return this._blockedSlots;
-	}
-	public set blockedSlots(value: string[]) {
-		this._blockedSlots = value;
 	}
 	private _selectedRange: IDateRange;
 	public get selectedRange(): IDateRange {
@@ -92,9 +97,27 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 						' ' +
 						this.startTime
 				);
-				const end = new Date(
+				let end = new Date(
 					moment(this.date).format('YYYY-MM-DD') + ' ' + this.endTime
 				);
+
+				if (
+					this.slotStartTime &&
+					this.slotEndTime &&
+					this.allowedDuration
+				) {
+					this.minSlotStartTime = moment(this.slotStartTime)
+						.clone()
+						.format('HH:mm');
+					this.maxSlotStartTime = moment(this.slotEndTime)
+						.clone()
+						.subtract(this.allowedDuration, 'minutes')
+						.format('HH:mm');
+					this.endTime = moment(this.startTime, 'HH:mm')
+						.add(this.allowedDuration, 'minutes')
+						.format('HH:mm');
+				}
+
 				this.selectedRange = {
 					start: isNaN(start.getTime()) ? null : start,
 					end: isNaN(start.getTime()) ? null : end
@@ -143,7 +166,11 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 
 	chnageStartTime(time: string) {
-		if (time) {
+		if (this.slotStartTime && this.allowedDuration) {
+			this.endTime = moment(time, 'HH:mm')
+				.add(this.allowedDuration, 'minutes')
+				.format('HH:mm');
+		} else if (time) {
 			this.updateEndTimeSlot(time);
 			if (
 				!moment(time, 'HH:mm').isBefore(moment(this.endTime, 'HH:mm'))
@@ -159,16 +186,14 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 
 	updateEndTimeSlot(time: string) {
 		this.minSlotEndTime = moment(time, 'HH:mm')
-			.add(10, 'minutes')
+			.add(this.allowedDuration || 10, 'minutes')
 			.format('HH:mm');
 	}
 
 	writeValue(value: IDateRange) {
 		if (value) {
 			if (!value.start) {
-				value.start = moment()
-					.subtract(30, 'minutes')
-					.toDate();
+				value.start = moment().subtract(30, 'minutes').toDate();
 			}
 			if (!value.end) {
 				value.end = new Date();

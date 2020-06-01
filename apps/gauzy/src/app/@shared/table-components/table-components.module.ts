@@ -23,9 +23,9 @@ import { AssignedToComponent } from './assigned-to/assigned-to.component';
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	entryComponents: [
 		DateViewComponent,
@@ -35,7 +35,7 @@ import { AssignedToComponent } from './assigned-to/assigned-to.component';
 		TaskEstimateComponent,
 		EmployeeWithLinksComponent,
 		TaskTeamsComponent,
-		AssignedToComponent
+		AssignedToComponent,
 	],
 	declarations: [
 		DateViewComponent,
@@ -45,9 +45,9 @@ import { AssignedToComponent } from './assigned-to/assigned-to.component';
 		TaskEstimateComponent,
 		EmployeeWithLinksComponent,
 		TaskTeamsComponent,
-		AssignedToComponent
+		AssignedToComponent,
 	],
-	exports: [NotesWithTagsComponent],
-	providers: []
+	exports: [NotesWithTagsComponent, PictureNameTagsComponent],
+	providers: [],
 })
 export class TableComponentsModule {}

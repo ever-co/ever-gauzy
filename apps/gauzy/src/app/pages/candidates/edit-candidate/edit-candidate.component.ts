@@ -12,13 +12,13 @@ import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 
 @Component({
-	selector: 'ngx-edit-candidate',
+	selector: 'ga-edit-candidate',
 	templateUrl: './edit-candidate.component.html',
 	styleUrls: [
 		'../../organizations/edit-organization/edit-organization.component.scss',
 		'../../dashboard/dashboard.component.scss',
-		'./edit-candidate.component.scss'
-	]
+		'./edit-candidate.component.scss',
+	],
 })
 export class EditCandidateComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -79,8 +79,8 @@ export class EditCandidateComponent extends TranslationBaseComponent
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
 					interviewList: this.interviewList,
-					selectedCandidate: this.selectedCandidate
-				}
+					selectedCandidate: this.selectedCandidate,
+				},
 			});
 		}
 	}
@@ -89,7 +89,7 @@ export class EditCandidateComponent extends TranslationBaseComponent
 		this.router.navigate([
 			'/pages/employees/candidates/edit/' +
 				this.selectedCandidate.id +
-				'/profile'
+				'/profile',
 		]);
 	}
 	ngOnDestroy() {

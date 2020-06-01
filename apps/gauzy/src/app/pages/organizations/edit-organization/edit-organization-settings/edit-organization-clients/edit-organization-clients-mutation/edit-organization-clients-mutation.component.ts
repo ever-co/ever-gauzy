@@ -3,7 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	Employee,
 	OrganizationClients,
-	OrganizationProjects
+	OrganizationProjects,
+	Tag
 } from '@gauzy/models';
 
 @Component({
@@ -29,6 +30,7 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 	members: string[];
 	selectedEmployeeIds: string[];
 	allProjects: OrganizationProjects[] = [];
+	tags: Tag[] = [];
 
 	constructor(private readonly fb: FormBuilder) {}
 
@@ -50,6 +52,7 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 		}
 
 		this.form = this.fb.group({
+			tags: [this.client ? (this.tags = this.client.tags) : ''],
 			name: [this.client ? this.client.name : '', Validators.required],
 			primaryEmail: [
 				this.client ? this.client.primaryEmail : '',
@@ -79,6 +82,7 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 	async submitForm() {
 		if (this.form.valid) {
 			this.addOrEditClient.emit({
+				tags: this.tags,
 				id: this.client ? this.client.id : undefined,
 				organizationId: this.organizationId,
 				name: this.form.value['name'],
@@ -107,5 +111,8 @@ export class EditOrganizationClientMutationComponent implements OnInit {
 				selectProjects: []
 			});
 		}
+	}
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

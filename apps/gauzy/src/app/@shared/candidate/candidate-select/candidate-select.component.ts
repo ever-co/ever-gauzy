@@ -7,10 +7,11 @@ import { Candidate } from '@gauzy/models';
 })
 export class CandidateSelectComponent {
 	@Input() selectedCandidateId: string;
+	@Input() placeholder: string;
+	@Input() disabledIds: string[];
 	@Input() allCandidates: Candidate[];
 
 	@Output() selectedChange = new EventEmitter();
-
 	constructor() {}
 
 	onMembersSelected(selectEvent: any): void {

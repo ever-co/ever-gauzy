@@ -18,13 +18,13 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
+				deps: [HttpClient],
+			},
+		}),
 	],
 	declarations: [CandidateMultiSelectComponent],
 	entryComponents: [CandidateMultiSelectComponent],
 	exports: [CandidateMultiSelectComponent],
-	providers: []
+	providers: [],
 })
 export class CandidateMultiSelectModule {}

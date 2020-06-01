@@ -1,6 +1,5 @@
 import {
 	Component,
-	ViewChild,
 	OnDestroy,
 	OnInit,
 	Input,
@@ -8,7 +7,12 @@ import {
 	EventEmitter
 } from '@angular/core';
 import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import {
+	FormGroup,
+	FormBuilder,
+	Validators,
+	AbstractControl
+} from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil, first } from 'rxjs/operators';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -22,6 +26,7 @@ import * as moment from 'moment';
 import { Store } from '../../../../@core/services/store.service';
 
 @Component({
+	selector: 'ga-manage-appointment',
 	templateUrl: './manage-appointment.component.html'
 })
 export class ManageAppointmentComponent extends TranslationBaseComponent
@@ -29,16 +34,21 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	employees: Employee[];
-	blockedDates: number[] = [1589308200000];
-	blockedSlots: string[] = ['14:20'];
 	@Input() employeeAppointment: EmployeeAppointment;
+	@Input() disabled: boolean;
+	@Input() allowedDuration: number;
+	@Input() hidePrivateFields: boolean = false;
 
-	@ViewChild('start_time')
-	@Output()
-	save = new EventEmitter<EmployeeAppointment>();
+	@Output() save = new EventEmitter<EmployeeAppointment>();
 	@Output() cancel = new EventEmitter<string>();
 
 	selectedEmployeeIds: string[];
+	emailAddresses: any[] = [];
+	emails: any;
+	start: Date;
+	end: Date;
+
+	@Input('selectedRange')
 	selectedRange: { start: Date; end: Date };
 
 	constructor(
@@ -56,12 +66,37 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
+		if (this.selectedRange) {
+			this.start = this.selectedRange.start;
+			this.end = this.selectedRange.end;
+		}
 		this._parseParams();
 		this._loadEmployees();
 	}
 
+	EmailListValidator(
+		control: AbstractControl
+	): { [key: string]: boolean } | null {
+		const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+		const invalid = (control.value || []).find((tag) => {
+			return !emailPattern.test(tag.emailAddress || '');
+		});
+		return invalid ? { emails: invalid } : null;
+	}
+
+	addTagFn(emailAddress) {
+		return { emailAddress: emailAddress, tag: true };
+	}
+
 	private _initializeForm() {
 		this.form = this.fb.group({
+			emails: [
+				'',
+				Validators.compose([
+					Validators.required,
+					this.EmailListValidator
+				])
+			],
 			agenda: [
 				this.employeeAppointment ? this.employeeAppointment.agenda : '',
 				Validators.required
@@ -109,6 +144,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				this.employeeAppointment &&
 				this.employeeAppointment.breakStartTime
 		});
+
+		this.emails = this.form.get('emails');
 	}
 
 	private _loadEmployees() {
@@ -143,6 +180,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 						start: new Date(appointment.startDateTime),
 						end: new Date(appointment.endDateTime)
 					};
+					this.start = this.selectedRange.start;
+					this.end = this.selectedRange.end;
 					this.employeeAppointment = appointment;
 				}
 				this._initializeForm();

@@ -1,5 +1,4 @@
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
-import { HelpCenterModule } from './../../../gauzy/src/app/pages/help-center/help-center.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
@@ -81,6 +80,7 @@ import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
 import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
+import { HelpCenterModule } from './help-center/help-center.module';
 
 @Module({
 	imports: [
@@ -94,35 +94,35 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 					{ path: '/candidate', module: CandidateModule },
 					{
 						path: '/candidate-educations',
-						module: CandidateEducationModule
+						module: CandidateEducationModule,
 					},
 					{
 						path: '/candidate-documents',
-						module: CandidateDocumentsModule
+						module: CandidateDocumentsModule,
 					},
 					{
 						path: '/candidate-feedbacks',
-						module: CandidateFeedbacksModule
+						module: CandidateFeedbacksModule,
 					},
 					{
 						path: '/candidate-interview',
-						module: CandidateInterviewModule
+						module: CandidateInterviewModule,
 					},
 					{
 						path: '/candidate-interviewers',
-						module: CandidateInterviewersModule
+						module: CandidateInterviewersModule,
 					},
 					{
 						path: '/candidate-experience',
-						module: CandidateExperienceModule
+						module: CandidateExperienceModule,
 					},
 					{
 						path: '/candidate-skills',
-						module: CandidateSkillModule
+						module: CandidateSkillModule,
 					},
 					{
 						path: '/candidate-source',
-						module: CandidateSourceModule
+						module: CandidateSourceModule,
 					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
@@ -136,182 +136,186 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 
 					{
 						path: '/employee-settings',
-						module: EmployeeSettingModule
+						module: EmployeeSettingModule,
 					},
 					{
 						path: '/employee-statistics',
-						module: EmployeeStatisticsModule
+						module: EmployeeStatisticsModule,
 					},
 					{
 						path: '/employee-appointment',
-						module: EmployeeAppointmentModule
+						module: EmployeeAppointmentModule,
 					},
 					{
 						path: '/appointment-employees',
-						module: AppointmentEmployeesModule
+						module: AppointmentEmployeesModule,
 					},
 					{
 						path: '/user-organization',
-						module: UserOrganizationModule
+						module: UserOrganizationModule,
 					},
 					{
 						path: '/organization-department',
-						module: OrganizationDepartmentModule
+						module: OrganizationDepartmentModule,
 					},
 					{
 						path: '/organization-clients',
-						module: OrganizationClientsModule
+						module: OrganizationClientsModule,
 					},
 					{
 						path: '/organization-positions',
-						module: OrganizationPositionsModule
+						module: OrganizationPositionsModule,
 					},
 					{
 						path: '/organization-projects',
-						module: OrganizationProjectsModule
+						module: OrganizationProjectsModule,
 					},
 					{
 						path: '/organization-vendors',
-						module: OrganizationVendorsModule
+						module: OrganizationVendorsModule,
 					},
 					{
 						path: '/organization-recurring-expense',
-						module: OrganizationRecurringExpenseModule
+						module: OrganizationRecurringExpenseModule,
 					},
 					{
 						path: '/employee-recurring-expense',
-						module: EmployeeRecurringExpenseModule
+						module: EmployeeRecurringExpenseModule,
 					},
 					{
 						path: '/organization-team',
-						module: OrganizationTeamModule
+						module: OrganizationTeamModule,
 					},
 					{
 						path: '/proposal',
-						module: ProposalModule
+						module: ProposalModule,
 					},
 					{
 						path: '/country',
-						module: CountryModule
+						module: CountryModule,
 					},
 					{
 						path: '/invite',
-						module: InviteModule
+						module: InviteModule,
 					},
 					{
 						path: '/email',
-						module: EmailModule
+						module: EmailModule,
+					},
+					{
+						path: '/email-template',
+						module: EmailTemplateModule
 					},
 					{
 						path: 'time-off-policy',
-						module: TimeOffPolicyModule
+						module: TimeOffPolicyModule,
 					},
 					{
 						path: '/approval-policy',
-						module: ApprovalPolicyModule
+						module: ApprovalPolicyModule,
 					},
 					{
 						path: '/request-approval',
-						module: RequestApprovalModule
+						module: RequestApprovalModule,
 					},
 					{
 						path: 'role-permissions',
-						module: RolePermissionsModule
+						module: RolePermissionsModule,
 					},
 					{
 						path: '/tenant',
-						module: TenantModule
+						module: TenantModule,
 					},
 					{
 						path: '/tags',
-						module: TagModule
+						module: TagModule,
 					},
 					{
 						path: '/skills',
-						module: SkillModule
+						module: SkillModule,
 					},
 					{
 						path: '/tasks',
-						module: TaskModule
+						module: TaskModule,
 					},
 					{
 						path: '/equipment-sharing',
-						module: EquipmentSharingModule
+						module: EquipmentSharingModule,
 					},
 					{
 						path: '/organization-employment-type',
-						module: OrganizationEmploymentTypeModule
+						module: OrganizationEmploymentTypeModule,
 					},
 					{
 						path: '/expense-categories',
-						module: ExpenseCategoriesModule
+						module: ExpenseCategoriesModule,
 					},
 					{
 						path: '/timesheet',
-						module: TimesheetModule
+						module: TimesheetModule,
 					},
 					{
 						path: '/integrations/upwork',
-						module: UpworkModule
+						module: UpworkModule,
 					},
 					{
 						path: '/integrations/hubstaff',
-						module: HubstaffModule
+						module: HubstaffModule,
 					},
 					{
 						path: '/integration-tenant',
-						module: IntegrationTenantModule
+						module: IntegrationTenantModule,
 					},
 					{
 						path: '/integration-entity-setting',
-						module: IntegrationEntitySettingModule
+						module: IntegrationEntitySettingModule,
 					},
 					{
 						path: '/integration',
-						module: IntegrationModule
+						module: IntegrationModule,
 					},
 					{
 						path: '/invoices',
-						module: InvoiceModule
+						module: InvoiceModule,
 					},
 					{
 						path: '/invoice-item',
-						module: InvoiceItemModule
+						module: InvoiceItemModule,
 					},
 					{
 						path: '/products',
-						module: ProductModule
+						module: ProductModule,
 					},
 					{
 						path: '/product-categories',
-						module: ProductCategoriesModule
+						module: ProductCategoriesModule,
 					},
 					{
 						path: '/product-types',
-						module: ProductTypesModule
+						module: ProductTypesModule,
 					},
 					{
 						path: '/product-variant-prices',
-						module: ProductVariantPriceModule
+						module: ProductVariantPriceModule,
 					},
 					{
 						path: '/product-variants',
-						module: ProductVariantModule
+						module: ProductVariantModule,
 					},
 					{
 						path: '/product-variant-settings',
-						module: ProductVariantSettingsModule
+						module: ProductVariantSettingsModule,
 					},
 					{
 						path: '/event-type',
-						module: EventTypeModule
+						module: EventTypeModule,
 					},
 					{
 						path: '/availability-slots',
-						module: AvailabilitySlotsModule
-					}
-				]
-			}
+						module: AvailabilitySlotsModule,
+					},
+				],
+			},
 		]),
 		CoreModule,
 		AuthModule,
@@ -349,6 +353,7 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 		RequestApprovalEmployeeModule,
 		ProposalModule,
 		EmailModule,
+		EmailTemplateModule,
 		CountryModule,
 		InviteModule,
 		TimeOffPolicyModule,
@@ -356,7 +361,6 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 		RequestApprovalModule,
 		RolePermissionsModule,
 		TenantModule,
-		EmailTemplateModule,
 		TagModule,
 		SkillModule,
 		InvoiceModule,
@@ -373,8 +377,8 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 							? 'production'
 							: 'development', //production, development
 						//release: null, // must create a release in sentry.io dashboard
-						logLevel: LogLevel.Error
-					})
+						logLevel: LogLevel.Error,
+					}),
 			  ]
 			: []),
 		HelpCenterModule,
@@ -403,13 +407,13 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 			parser: I18nJsonParser,
 			parserOptions: {
 				path: path.join(__dirname, '/assets/i18n/'),
-				watch: !environment.production
+				watch: !environment.production,
 			},
-			resolvers: [new HeaderResolver(['language'])]
-		})
+			resolvers: [new HeaderResolver(['language'])],
+		}),
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
-	exports: []
+	exports: [],
 })
 export class AppModule {}

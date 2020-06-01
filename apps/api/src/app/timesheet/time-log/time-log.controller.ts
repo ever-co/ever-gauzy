@@ -23,6 +23,7 @@ import { TimeLogService } from './time-log.service';
 import { Permissions } from '../../shared/decorators/permissions';
 import { OrganizationPermissionGuard } from '../../shared/guards/auth/organization-permission.guard';
 import { UserRole } from '../../shared/decorators/roles';
+import { RequestContext } from '../../core/context';
 
 @ApiTags('TimeLog')
 @UseGuards(AuthGuard('jwt'))
@@ -57,7 +58,22 @@ export class TimeLogController {
 	@Post('/')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(OrganizationPermissionsEnum.ALLOW_MANUAL_TIME)
-	async addManualTime(@Body() entity: IManualTimeInput): Promise<TimeLog> {
+	async addManualTime(
+		@Body() entity: IManualTimeInput,
+		@UserRole() roles: RolesEnum
+	): Promise<TimeLog> {
+		let employeeId: string;
+		if (roles === RolesEnum.ADMIN) {
+			if (entity.employeeId) {
+				employeeId = entity.employeeId;
+			}
+		}
+		if (!employeeId) {
+			const user = RequestContext.currentUser();
+			employeeId = user.employeeId;
+		}
+		entity.employeeId = employeeId;
+
 		return this.timeLogService.addManualTime(entity);
 	}
 
