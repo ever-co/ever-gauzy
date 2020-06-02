@@ -15,7 +15,7 @@ import {
 	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule,
-	NbBadgeModule,
+	NbBadgeModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -36,7 +36,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
 import {
 	HttpLoaderFactory,
-	ThemeModule,
+	ThemeModule
 } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationClientMutationComponent } from './edit-organization-clients/edit-organization-clients-mutation/edit-organization-clients-mutation.component';
@@ -60,6 +60,7 @@ import { EditOrganizationExpenseCategoriesComponent } from './edit-organization-
 import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
 import { InviteService } from '../../../../@core/services/invite.service';
 import { TableComponentsModule } from 'apps/gauzy/src/app/@shared/table-components/table-components.module';
+import { EditOrganizationEmployeeLevelComponent } from './edit-organization-employee-levels/edit-organization-employee-level.component';
 
 @NgModule({
 	imports: [
@@ -82,8 +83,8 @@ import { TableComponentsModule } from 'apps/gauzy/src/app/@shared/table-componen
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
+				deps: [HttpClient]
+			}
 		}),
 		Ng2SmartTableModule,
 		OrganizationsMutationModule,
@@ -99,7 +100,7 @@ import { TableComponentsModule } from 'apps/gauzy/src/app/@shared/table-componen
 		EmployeeSelectorsModule,
 		EntityWithMembersModule,
 		EmployeeMultiSelectModule,
-		TagsColorInputModule,
+		TagsColorInputModule
 	],
 	providers: [
 		OrganizationDepartmentsService,
@@ -109,7 +110,7 @@ import { TableComponentsModule } from 'apps/gauzy/src/app/@shared/table-componen
 		OrganizationClientsService,
 		OrganizationEditStore,
 		EmployeeStore,
-		InviteService,
+		InviteService
 	],
 	entryComponents: [InviteClientComponent],
 	declarations: [
@@ -132,6 +133,7 @@ import { TableComponentsModule } from 'apps/gauzy/src/app/@shared/table-componen
 		EditOrganizationProjectsMutationComponent,
 		EditOrganizationEmploymentTypes,
 		InviteClientComponent,
-	],
+		EditOrganizationEmployeeLevelComponent
+	]
 })
 export class EditOrganizationSettingsModule {}

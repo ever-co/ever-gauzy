@@ -61,13 +61,13 @@ export class Product extends Base implements IProduct {
 	@RelationId((product: Product) => product.category)
 	productCategoryId: string;
 
-	@ManyToOne(() => ProductType)
+	@ManyToOne(() => ProductType, { onDelete: 'SET NULL' })
 	@JoinColumn()
 	type: ProductType;
 
-	@ManyToOne((category) => ProductCategory)
+	@ManyToOne(() => ProductCategory, { onDelete: 'SET NULL' })
 	@JoinColumn()
-	category?: ProductCategory;
+	category: ProductCategory;
 
 	@OneToMany(
 		(type) => ProductOption,
@@ -76,11 +76,9 @@ export class Product extends Base implements IProduct {
 	options: ProductOption[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany(
-		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.product,
-		{ onDelete: 'SET NULL' }
-	)
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.product, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 }

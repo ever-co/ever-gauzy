@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { EmployeeLevelInput } from '@gauzy/models';
+import { EmployeeLevelInput, Tag } from '@gauzy/models';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,6 +24,7 @@ export class EditOrganizationEmployeeLevelComponent
 
 	employeeLevels: EmployeeLevelInput[] = [];
 	selectedEmployeeLevel: EmployeeLevelInput;
+	tags: Tag[] = [];
 
 	constructor(
 		private readonly employeeLevelService: EmployeeLevelService,
@@ -47,7 +48,8 @@ export class EditOrganizationEmployeeLevelComponent
 
 	private async loadEmployeeLevels() {
 		const { items } = await this.employeeLevelService.getAll(
-			this.organizationId
+			this.organizationId,
+			['tags']
 		);
 
 		if (items) {
@@ -59,7 +61,8 @@ export class EditOrganizationEmployeeLevelComponent
 		if (level) {
 			await this.employeeLevelService.create({
 				level,
-				organizationId: this.organizationId
+				organizationId: this.organizationId,
+				tags: this.tags
 			});
 
 			this.toastrService.primary(
@@ -89,7 +92,8 @@ export class EditOrganizationEmployeeLevelComponent
 	async editEmployeeLevel(id: string, employeeLevelName: string) {
 		const employeeLevel = {
 			level: employeeLevelName,
-			organizationId: this.organizationId
+			organizationId: this.organizationId,
+			tags: this.tags
 		};
 		await this.employeeLevelService.update(id, employeeLevel);
 
@@ -118,6 +122,7 @@ export class EditOrganizationEmployeeLevelComponent
 	}
 
 	showEditCard(employeeLevel: EmployeeLevelInput) {
+		this.tags = employeeLevel.tags;
 		this.showEditDiv = true;
 		this.selectedEmployeeLevel = employeeLevel;
 	}
@@ -125,5 +130,9 @@ export class EditOrganizationEmployeeLevelComponent
 	cancel() {
 		this.showEditDiv = !this.showEditDiv;
 		this.selectedEmployeeLevel = null;
+	}
+
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

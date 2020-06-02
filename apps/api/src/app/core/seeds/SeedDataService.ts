@@ -137,6 +137,7 @@ import { AppointmentEmployees } from '../../appointment-employees/appointment-em
 import { ProductOption } from '../../product-option/product-option.entity';
 import { HelpCenter } from '../../help-center/help-center.entity';
 import { createHelpCenter } from '../../help-center/help-center.seed';
+import { createDefaultProducts } from '../../product/product.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -312,6 +313,8 @@ export class SeedDataService {
 		);
 
 		await createDefaultProductTypes(this.connection, defaultOrganizations);
+
+		await createDefaultProducts(this.connection);
 
 		const organizationVendors = await createOrganizationVendors(
 			this.connection,

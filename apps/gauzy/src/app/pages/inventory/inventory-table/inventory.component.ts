@@ -7,7 +7,11 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { ProductMutationComponent } from '../../../@shared/product-mutation/product-mutation.component';
 import { first, take } from 'rxjs/operators';
 import { ProductService } from '../../../@core/services/product.service';
-import { Product, ProductCategory, ProductTypeTranslated } from '@gauzy/models';
+import {
+	Product,
+	ProductTypeTranslated,
+	ProductCategoryTranslated
+} from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Router } from '@angular/router';
 import { PictureNameTagsComponent } from '../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
@@ -74,15 +78,16 @@ export class InventoryComponent extends TranslationBaseComponent
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
 					valuePrepareFunction: (type: ProductTypeTranslated) =>
-						type.name
+						type ? type.name : ''
 				},
 				category: {
 					title: this.getTranslation(
 						'INVENTORY_PAGE.PRODUCT_CATEGORY'
 					),
 					type: 'string',
-					valuePrepareFunction: (category: ProductCategory) =>
-						category.name
+					valuePrepareFunction: (
+						category: ProductCategoryTranslated
+					) => (category ? category.name : '')
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
