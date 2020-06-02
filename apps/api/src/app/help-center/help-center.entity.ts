@@ -22,11 +22,11 @@ export class HelpCenter extends Base implements IHelpCenter {
 	privacy: string;
 
 	@ApiProperty({ type: String })
-	@Column()
+	@Column({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: String })
-	@Column()
+	@Column({ nullable: true })
 	data?: string;
 
 	@OneToMany((type) => HelpCenter, (children) => children.children)

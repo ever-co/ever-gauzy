@@ -136,6 +136,7 @@ import { EmployeeAppointment } from '../../employee-appointment/employee-appoint
 import { AppointmentEmployees } from '../../appointment-employees/appointment-employees.entity';
 import { ProductOption } from '../../product-option/product-option.entity';
 import { HelpCenter } from '../../help-center/help-center.entity';
+import { createHelpCenter } from '../../help-center/help-center.seed';
 
 const allEntities = [
 	TimeOffPolicy,
@@ -327,6 +328,8 @@ export class SeedDataService {
 			organizations: defaultOrganizations,
 			users: [...defaultEmployeeUsers, ...adminUsers, ...superAdminUsers]
 		});
+
+		await createHelpCenter(this.connection);
 
 		//User level data that needs connection, tenant, organization, role, users
 		const defaultEmployees = await createDefaultEmployees(this.connection, {

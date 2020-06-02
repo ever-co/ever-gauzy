@@ -2,41 +2,64 @@ import { HelpCenter } from './help-center.entity';
 import { IHelpCenter } from '@gauzy/models';
 import { Connection } from 'typeorm';
 
-const helpCenterMenuList: IHelpCenter[] = [];
+const helpCenterMenuList: IHelpCenter[] = [
+	{
+		name: 'Knowledge base1',
+		icon: 'book-open-outline',
+		flag: 'category',
+		privacy: 'eye-outline',
+		children: [
+			{
+				name: 'article1.1',
+				icon: 'alert-circle-outline',
+				flag: 'article',
+				privacy: 'eye-outline',
+				description: 'desc1111',
+				data: 'aaaaaa'
+			},
+			{
+				name: 'article1.2',
+				icon: 'book-open-outline',
+				flag: 'article',
+				privacy: 'eye-off-outline',
+				description: 'desc122222',
+				data: 'bbbbbb'
+			}
+		]
+	},
+	{
+		name: 'Knowledge base2',
+		icon: 'book-open-outline',
+		flag: 'category',
+		privacy: 'eye-off-outline',
+		children: []
+	},
+	{
+		flag: 'article',
+		icon: 'book-open-outline',
+		privacy: 'eye-off-outline',
+		name: 'article2.1',
+		description: 'desc1',
+		data: 'aaaaa'
+	}
+];
 
 export const createHelpCenter = async (
 	connection: Connection
 ): Promise<IHelpCenter[]> => {
-	// try {
-	// 	await treeWalk(connection, helpCenterMenuList);
-	// } catch (e) {
-	// 	console.log(e);
-	// }
+	// let defaultChildren: IHelpCenter[] = [];
 	for (let i = 0; i < helpCenterMenuList.length; i++) {
 		await insertHelpCenter(connection, helpCenterMenuList[i]);
+		// if (helpCenterMenuList[i].children) {
+		// 	helpCenterMenuList[i].children.forEach((child) => {
+		// 		defaultChildren = [...defaultChildren, { ...child }];
+		// 	});
+		// 	insertChildren(connection, defaultChildren);
+		// }
 	}
+
 	return helpCenterMenuList;
 };
-
-// async function treeWalk(helpCenterMenuList: IHelpCenter[]) {
-// 	for (let i = 0; i < helpCenterMenuList.length; i++) {
-// 		await insertHelpCenter(this.connection, helpCenterMenuList[i]);
-// 		if (this.helpCenterMenuList[i].children) {
-// 			treeWalk(helpCenterMenuList[i].children);
-// 		}
-// 	}
-// }
-// const treeWalk = async (
-// 	connection: Connection,
-// 	helpCenterMenuList: IHelpCenter[]
-// ): Promise<void> => {
-// 	for (let i = 0; i < helpCenterMenuList.length; i++) {
-// 		await insertHelpCenter(this.connection, helpCenterMenuList[i]);
-// 		if (this.helpCenterMenuList[i].children) {
-// 			await treeWalk(helpCenterMenuList[i].children);
-// 		}
-// 	}
-// };
 
 const insertHelpCenter = async (
 	connection: Connection,
@@ -50,71 +73,14 @@ const insertHelpCenter = async (
 		.execute();
 };
 
-// export const createHelpCenter = async (
+// const insertChildren = async (
 // 	connection: Connection,
-// 	sidebars: IHelpCenter[]
-// ): Promise<HelpCenter[]> => {
-// 	let defaultHelpCenterMenu = [];
-
-// 	sidebars.forEach((sidebar) => {
-// 		const menus = helpCenterMenuList.map((menu) => ({
-// 			description: menu.description,
-//             name: menu.name,
-//             data: menu.data,
-//             children: menu.children
-// 		}));
-
-// 		defaultHelpCenterMenu = [
-// 			...defaultHelpCenterMenu,
-// 			...menus
-// 		];
-// 	});
-
-// 	insertHelpCenter(connection, defaultHelpCenterMenu);
-
-// 	return defaultHelpCenterMenu;
-// };
-
-// export const createRandomHelpCenter = async (
-// 	connection: Connection,
-// 	tenants: Tenant[],
-// 	tenantHelpCenterMap: Map<Tenant, IHelpCenter[]>
-// ): Promise<Map<IHelpCenter, HelpCenter[]>> => {
-// 	let helpMenus = [];
-// 	const helpCenterMenuMap: Map<
-//         IHelpCenter,
-// 		HelpCenter[]
-// 	> = new Map();
-
-// 	(tenants || []).forEach((tenant) => {
-// 		const sidebars = tenantHelpCenterMap.get(tenant);
-
-// 		(sidebars || []).forEach((sidebar) => {
-// 			const menus = helpCenterMenuList.map((menu) => ({
-// 			    description: menu.description,
-//                 name: menu.name,
-//                 data: menu.data,
-//                 children: menu.children
-// 			}));
-
-// 			helpCenterMenuMap.set(sidebar, menus);
-// 			helpMenus = [...helpMenus, ...menus];
-// 		});
-// 	});
-
-// 	await insertHelpCenter(connection, helpMenus);
-
-// 	return helpCenterMenuMap;
-// };
-
-// const insertHelpCenter = async (
-// 	connection: Connection,
-// 	helpMenus: HelpCenter[]
-// ) => {
+// 	nodes: HelpCenter[]
+// ): Promise<void> => {
 // 	await connection
 // 		.createQueryBuilder()
 // 		.insert()
 // 		.into(HelpCenter)
-// 		.values(helpMenus)
+// 		.values(nodes)
 // 		.execute();
 // };

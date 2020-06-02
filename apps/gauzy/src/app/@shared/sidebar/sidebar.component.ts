@@ -111,12 +111,15 @@ export class SidebarComponent extends TranslationBaseComponent
 		if (chosenIcon) {
 			const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 			someNode.data.icon = chosenIcon;
+			await this.helpService.update(someNode.data.id, {
+				icon: `${someNode.data.icon}`
+			});
 		}
 
 		this.tree.treeModel.update();
 	}
 
-	changePrivacy(node: any) {
+	async changePrivacy(node: any) {
 		this.onNodeClicked(node);
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		if (someNode.data.privacy === 'eye-outline') {
@@ -124,17 +127,20 @@ export class SidebarComponent extends TranslationBaseComponent
 		} else {
 			someNode.data.privacy = 'eye-outline';
 		}
+		await this.helpService.update(someNode.data.id, {
+			privacy: `${someNode.data.privacy}`
+		});
 		this.tree.treeModel.update();
 	}
 
-	editNameCategory(event: any) {
+	async editNameCategory(event: any) {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		someNode.data.name = event.target.value;
 		this.isVisibleEdit = false;
-		// await this.helpService.update({
-		// 	name: `${someNode.data.name}`,
-		// });
-		// this.loadMenu();
+		await this.helpService.update(someNode.data.id, {
+			name: `${someNode.data.name}`
+		});
+		this.loadMenu();
 	}
 	onCloseEditing() {
 		this.isVisibleEdit = false;
@@ -163,24 +169,21 @@ export class SidebarComponent extends TranslationBaseComponent
 	editData(value: string) {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		this.articleData = this.sanitizer.bypassSecurityTrustHtml(value);
-		someNode.data.data = this.articleData as string;
-		// await this.helpService.update({
-		// 	data: `${someNode.data.data}`,
-		// });
-		// this.loadMenu();
+		someNode.data.data = this.articleData;
 	}
 
-	submit() {
+	async submit() {
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		someNode.data.description = this.form.controls.desc.value;
 		someNode.data.name = this.form.controls.name.value;
 		this.articleDesc = someNode.data.description;
 		this.articleName = someNode.data.name;
-		// await this.helpService.update({
-		// 	name: `${someNode.data.name}`,
-		// 	description: `${someNode.data.description}`,
-		// });
-		// this.loadMenu();
+		await this.helpService.update(someNode.data.id, {
+			name: `${someNode.data.name}`,
+			description: `${someNode.data.description}`,
+			data: `${someNode.data.data}`
+		});
+		this.loadMenu();
 		this.isVisibleEdit = false;
 	}
 

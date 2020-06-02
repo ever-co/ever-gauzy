@@ -149,6 +149,7 @@
 		</div>
 		<div *ngIf="isVisibleEdit && chosenArticle" class="content-card">
 			<form [formGroup]="form" (ngSubmit)="submit()">
+				<p>Name of the article:</p>
 				<input
 					formControlName="name"
 					type="text"
@@ -158,6 +159,7 @@
 					nbInput
 				/>
 				<div class="edit-node-field">
+					<p>Description:</p>
 					<input
 						formControlName="desc"
 						type="text"
@@ -166,6 +168,7 @@
 						(keyup.enter)="editDesc($event)"
 						nbInput
 					/>
+					<p>Article text:</p>
 					<div class="ck-editor">
 						<ckeditor
 							[formControl]="form.controls['data']"
