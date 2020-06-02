@@ -6,7 +6,7 @@ import {
 	Input
 } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { Employee, IDateRange, ICandidateInterviewers } from '@gauzy/models';
 import { EmployeesService } from '../../../../@core/services';
@@ -20,7 +20,7 @@ import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/ca
 })
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	@Input() interviewers: ICandidateInterviewers[];
-
+	@Input() isCalendar: boolean;
 	form: any;
 	employees: Employee[];
 	employeeIds: string[];
@@ -51,9 +51,11 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 			: [];
 	}
 	async findTime() {
-		this.dialogService.open(CandidateCalendarInfoComponent, {
-			context: {}
-		});
+		const dialog = this.dialogService.open(CandidateCalendarInfoComponent);
+		const data = await dialog.onClose.pipe(first()).toPromise();
+		if (data) {
+			this.selectedRange = { start: data.startTime, end: data.endTime };
+		}
 	}
 
 	onMembersSelected(event: string[]) {

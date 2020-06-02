@@ -1,6 +1,11 @@
 <form class="form" [formGroup]="form" *ngIf="form">
 	<div class="form-group title-wrap">
-		<div class="input-title">
+		<div
+			[ngClass]="{
+				'title-width': isCalendar,
+				'title-width-small': !isCalendar
+			}"
+		>
 			<label for="inputTitle" class="label">{{
 				'FORM.LABELS.TITLE' | translate
 			}}</label>
@@ -8,6 +13,10 @@
 				nbInput
 				type="text"
 				id="inputTitle"
+				[ngClass]="{
+					'title-width': !isCalendar,
+					'title-width-small': isCalendar
+				}"
 				fullWidth
 				placeholder="{{
 					'FORM.PLACEHOLDERS.ADD_INTERVIEW.TITLE' | translate
@@ -16,6 +25,7 @@
 			/>
 		</div>
 		<button
+			*ngIf="!isCalendar"
 			status="success"
 			class="button"
 			nbButton

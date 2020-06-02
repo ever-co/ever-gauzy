@@ -18,6 +18,8 @@ export class CandidateCalendarInfoComponent implements OnInit {
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;
 	calendarEvents: EventInput[] = [];
+	eventStartTime: Date;
+	eventEndTime: Date;
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateCalendarInfoComponent>,
 		private candidateInterviewService: CandidateInterviewService
@@ -43,13 +45,10 @@ export class CandidateCalendarInfoComponent implements OnInit {
 			],
 			weekends: true,
 			height: 'auto',
-			editable: true,
 			selectable: true,
 			selectAllow: ({ start, end }) =>
 				moment(start).isSame(moment(end), 'day'),
-			eventDrop: this.handleEventDrop.bind(this),
 			select: this.handleEventSelect.bind(this),
-			eventClick: this.handleEventClick.bind(this),
 			dateClick: this.handleDateClick.bind(this),
 			eventMouseEnter: this.handleEventMouseEnter.bind(this),
 			eventMouseLeave: this.handleEventMouseLeave.bind(this)
@@ -75,18 +74,23 @@ export class CandidateCalendarInfoComponent implements OnInit {
 			this.calendarOptions.events = this.calendarEvents;
 		}
 	}
-	handleEventClick({ event }) {
-		//  event.extendedProps.log,
+	continue() {
+		this.dialogRef.close({
+			startTime: this.eventStartTime,
+			endTime: this.eventEndTime
+		});
 	}
-
 	handleDateClick(event) {
-		//this.calendar.getApi().changeView('timeGridWeek', event.date);
+		if (event.view.type === 'dayGridMonth') {
+			this.calendarComponent
+				.getApi()
+				.changeView('timeGridWeek', event.date);
+		}
 	}
 
 	handleEventSelect(event) {
-		//  event.start,
-		//  event.end
-		//
+		this.eventStartTime = event.start;
+		this.eventEndTime = event.end;
 	}
 
 	handleEventMouseEnter({ el }) {
@@ -97,8 +101,6 @@ export class CandidateCalendarInfoComponent implements OnInit {
 	handleEventMouseLeave({ el }) {
 		el.removeAttribute('style');
 	}
-
-	handleEventDrop({ event }) {}
 
 	hasOverflow(el: HTMLElement) {
 		if (!el) {

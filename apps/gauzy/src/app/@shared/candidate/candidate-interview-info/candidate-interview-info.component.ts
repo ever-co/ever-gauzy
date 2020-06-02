@@ -159,6 +159,14 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 				);
 		}
 	}
+	isPastInterview(interview: ICandidateInterview) {
+		const now = new Date().getTime();
+		if (interview && new Date(interview.startTime).getTime() > now) {
+			return false;
+		} else {
+			return true;
+		}
+	}
 	private toastrSuccess(text: string) {
 		this.toastrService.success(
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
