@@ -15,6 +15,5 @@ export interface OrganizationTeamFindInput extends IBaseEntityModel {
 export interface OrganizationTeamCreateInput {
 	name: string;
 	organizationId: string;
-	members?: string[];
-	managers?: string[];
+	members?: OrganizationTeamEmployee[];
 }
