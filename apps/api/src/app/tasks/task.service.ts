@@ -1,14 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './task.entity';
 import { Repository } from 'typeorm';
 import { CrudService } from '../core';
+import { EmployeeService } from '../employee/employee.service';
+import { RoleService } from '../role/role.service';
+import { RequestContext } from '../core/context';
 
 @Injectable()
 export class TaskService extends CrudService<Task> {
 	constructor(
 		@InjectRepository(Task)
-		private readonly taskRepository: Repository<Task>
+		private readonly taskRepository: Repository<Task>,
+		private readonly employeeService: EmployeeService,
+		private readonly roleService: RoleService
 	) {
 		super(taskRepository);
 	}
@@ -97,6 +102,46 @@ export class TaskService extends CrudService<Task> {
 				.setParameter('employeeId', employeeId)
 				.getMany();
 			return { items, total: items.length };
+		}
+	}
+
+	async findTeamTasks(employeeId) {
+		// If user is not an employee, then this will return 404
+		let employee: any = { id: undefined };
+		let role;
+		try {
+			employee = await this.employeeService.findOne({
+				where: {
+					user: { id: RequestContext.currentUser().id }
+				}
+			});
+		} catch (e) {}
+
+		try {
+			const roleId = RequestContext.currentUser().roleId;
+			if (roleId) {
+				role = await this.roleService.findOne(roleId);
+			}
+		} catch (e) {}
+
+		// selected user not passed
+		if (employeeId) {
+			if (role.name === 'ADMIN' || role.name === 'SUPER_ADMIN') {
+				return this.getTeamTasks(employeeId);
+			} else if (employee.id === employeeId) {
+				return this.getTeamTasks(employeeId);
+			} else {
+				throw new HttpException(
+					'Unauthorized',
+					HttpStatus.UNAUTHORIZED
+				);
+			}
+		} else {
+			if (role.name === 'ADMIN' || role.name === 'SUPER_ADMIN') {
+				return this.getTeamTasks();
+			} else {
+				return this.getTeamTasks(employee.id);
+			}
 		}
 	}
 }

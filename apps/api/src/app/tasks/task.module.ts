@@ -20,9 +20,8 @@ import { Role } from '../role/role.entity';
 			OrganizationProjects,
 			User,
 			Employee,
-			Role,
-		]),
-		CqrsModule,
+			Role
+		])
 	],
 	controllers: [TaskController],
 	providers: [
@@ -30,8 +29,8 @@ import { Role } from '../role/role.entity';
 		EmployeeService,
 		RoleService,
 		...CommandHandlers,
-		UserService,
+		UserService
 	],
-	exports: [TaskService],
+	exports: [TaskService]
 })
 export class TaskModule {}

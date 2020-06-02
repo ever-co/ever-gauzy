@@ -21,7 +21,7 @@ import { SelectedEmployee } from 'apps/gauzy/src/app/@theme/components/header/se
 @Component({
 	selector: 'ngx-team-task',
 	templateUrl: './team-task.component.html',
-	styleUrls: ['./team-task.component.scss'],
+	styleUrls: ['./team-task.component.scss']
 })
 export class TaskComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -81,19 +81,19 @@ export class TaskComponent extends TranslationBaseComponent
 				title: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_TITLE'),
 					type: 'string',
-					width: '10%',
+					width: '10%'
 				},
 				description: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_DESCRIPTION'),
 					type: 'custom',
 					filter: false,
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent,
+					renderComponent: NotesWithTagsComponent
 				},
 				projectName: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'string',
-					filter: false,
+					filter: false
 				},
 				assignTo: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
@@ -106,38 +106,38 @@ export class TaskComponent extends TranslationBaseComponent
 								if (team) {
 									return {
 										title: team.name,
-										value: team.name,
+										value: team.name
 									};
 								}
-							}),
-						},
+							})
+						}
 					},
-					renderComponent: AssignedToComponent,
+					renderComponent: AssignedToComponent
 				},
 				estimate: {
 					title: this.getTranslation('TASKS_PAGE.ESTIMATE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: TaskEstimateComponent,
+					renderComponent: TaskEstimateComponent
 				},
 				dueDate: {
 					title: this.getTranslation('TASKS_PAGE.DUE_DATE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent,
+					renderComponent: DateViewComponent
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'string',
-					filter: false,
-				},
-			},
+					filter: false
+				}
+			}
 		};
 	}
 
 	async createTaskDialog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
-			context: {},
+			context: {}
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -173,6 +173,7 @@ export class TaskComponent extends TranslationBaseComponent
 			).items.filter((org) => {
 				return org.organizationId === organizationId;
 			});
+			console.log('test', this.teams);
 			this._loadTableSettings();
 		}
 	}
@@ -180,8 +181,8 @@ export class TaskComponent extends TranslationBaseComponent
 	async editTaskDIalog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask,
-			},
+				selectedTask: this.selectedTask
+			}
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -198,7 +199,7 @@ export class TaskComponent extends TranslationBaseComponent
 
 			this._store.editTask({
 				...data,
-				id: this.selectedTask.id,
+				id: this.selectedTask.id
 			});
 			this.selectTask({ isSelected: false, data: null });
 		}
@@ -207,8 +208,8 @@ export class TaskComponent extends TranslationBaseComponent
 	async duplicateTaskDIalog() {
 		const dialog = this.dialogService.open(TaskDialogComponent, {
 			context: {
-				selectedTask: this.selectedTask,
-			},
+				selectedTask: this.selectedTask
+			}
 		});
 
 		const data = await dialog.onClose.pipe(first()).toPromise();
