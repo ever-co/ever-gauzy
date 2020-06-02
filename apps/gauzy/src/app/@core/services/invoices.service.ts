@@ -68,7 +68,7 @@ export class InvoicesService {
 	sendEmail(email: String, isEstimate: boolean): Promise<any> {
 		return this.http
 			.put<any>(`/api/invoices/email/${email}`, {
-				params: { isEstimate },
+				params: { isEstimate }
 			})
 			.pipe(first())
 			.toPromise();

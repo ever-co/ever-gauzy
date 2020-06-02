@@ -13,7 +13,7 @@ import {
 	NbToggleModule,
 	NbDatepickerModule,
 	NbCalendarKitModule,
-	NbCheckboxModule,
+	NbCheckboxModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -36,7 +36,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		UpworkAuthorizeComponent,
 		TransactionsComponent,
 		ContractsComponent,
-		SyncDataSelectionComponent,
+		SyncDataSelectionComponent
 	],
 	imports: [
 		CommonModule,
@@ -61,10 +61,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
-	entryComponents: [SyncDataSelectionComponent],
+	entryComponents: [SyncDataSelectionComponent]
 })
 export class UpworkModule {}

@@ -61,10 +61,10 @@ export enum InvoiceTypeEnum {
 	BY_PROJECT_HOURS = 'By Project Hours',
 	BY_TASK_HOURS = 'By Task Hours',
 	BY_PRODUCTS = 'By Products',
-	DETAILS_INVOICE_ITEMS = 'Details Invoice Items',
+	DETAILS_INVOICE_ITEMS = 'Details Invoice Items'
 }
 
 export enum DiscountTaxTypeEnum {
 	PERCENT = 'Percent',
-	FLAT_VALUE = 'Flat',
+	FLAT_VALUE = 'Flat'
 }

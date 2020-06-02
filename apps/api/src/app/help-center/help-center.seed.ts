@@ -1,138 +1,86 @@
-// import { HelpCenter } from './help-center.entity';
-// import { IHelpCenter } from '@gauzy/models';
-// import { Connection } from 'typeorm';
-// import { Tenant } from '../tenant/tenant.entity';
-// const helpCenterMenuList: IHelpCenter[] = [
-// 	{
-// 		id: '1',
-// 		name: '🔥Knowledge base1',
-// 		description: 'desc1',
-// 		data: '',
-// 		children: [
-// 			{
-// 				id: '2',
-// 				name: '📎article1.1',
-// 				description: 'desc1111',
-// 				data: 'aaaaaa',
-// 			},
-// 			{
-// 				id: '3',
-// 				name: '🌐article1.2',
-// 				description: 'desc122222',
-// 				data: 'bbbbbb',
-// 			},
-// 		],
-// 	},
-// 	{
-// 		id: '4',
-// 		name: 'Knowledge base2',
-// 		description: 'desc1',
-// 		data: '',
-// 		children: [
-// 			{ id: '5', name: 'article2.1', description: 'desc1', data: '' },
-// 			{
-// 				id: '6',
-// 				name: 'Base2.2',
-// 				description: 'desc1',
-// 				data: '',
-// 				children: [
-// 					{
-// 						id: '7',
-// 						name: 'article3.1',
-// 						description: 'desc1',
-// 						data: '',
-// 					},
-// 				],
-// 			},
-// 		],
-// 	},
-// 	{
-// 		id: '8',
-// 		name: 'Knowledge base3',
-// 		description: 'desc1',
-// 		data: '',
-// 		children: [
-// 			{ id: '9', name: 'article1.1', description: 'desc1', data: '' },
-// 			{ id: '10', name: 'article1.2', description: 'desc1', data: '' },
-// 		],
-// 	},
-// 	{
-// 		id: '11',
-// 		name: 'Knowledge base4',
-// 		description: 'desc1',
-// 		data: '',
-// 		children: [
-// 			{ id: '12', name: 'article2.1', description: 'desc1', data: '' },
-// 			{
-// 				id: '13',
-// 				name: 'Base2.2',
-// 				description: 'desc1',
-// 				data: '',
-// 				children: [
-// 					{
-// 						id: '14',
-// 						name: 'article3.1',
-// 						description: 'desc1',
-// 						data: '',
-// 					},
-// 				],
-// 			},
-// 		],
-// 	},
-// ];
-// export const createHelpCenterMenu = async (
+import { HelpCenter } from './help-center.entity';
+import { IHelpCenter } from '@gauzy/models';
+import { Connection } from 'typeorm';
+
+const helpCenterMenuList: IHelpCenter[] = [
+	{
+		name: 'Knowledge base1',
+		icon: 'book-open-outline',
+		flag: 'category',
+		privacy: 'eye-outline',
+		children: [
+			{
+				name: 'article1.1',
+				icon: 'alert-circle-outline',
+				flag: 'article',
+				privacy: 'eye-outline',
+				description: 'desc1111',
+				data: 'aaaaaa'
+			},
+			{
+				name: 'article1.2',
+				icon: 'book-open-outline',
+				flag: 'article',
+				privacy: 'eye-off-outline',
+				description: 'desc122222',
+				data: 'bbbbbb'
+			}
+		]
+	},
+	{
+		name: 'Knowledge base2',
+		icon: 'book-open-outline',
+		flag: 'category',
+		privacy: 'eye-off-outline',
+		children: []
+	},
+	{
+		flag: 'article',
+		icon: 'book-open-outline',
+		privacy: 'eye-off-outline',
+		name: 'article2.1',
+		description: 'desc1',
+		data: 'aaaaa'
+	}
+];
+
+export const createHelpCenter = async (
+	connection: Connection
+): Promise<IHelpCenter[]> => {
+	// let defaultChildren: IHelpCenter[] = [];
+	for (let i = 0; i < helpCenterMenuList.length; i++) {
+		await insertHelpCenter(connection, helpCenterMenuList[i]);
+		// if (helpCenterMenuList[i].children) {
+		// 	helpCenterMenuList[i].children.forEach((child) => {
+		// 		defaultChildren = [...defaultChildren, { ...child }];
+		// 	});
+		// 	insertChildren(connection, defaultChildren);
+		// }
+	}
+
+	return helpCenterMenuList;
+};
+
+const insertHelpCenter = async (
+	connection: Connection,
+	node: HelpCenter
+): Promise<void> => {
+	await connection
+		.createQueryBuilder()
+		.insert()
+		.into(HelpCenter)
+		.values(node)
+		.execute();
+};
+
+// const insertChildren = async (
 // 	connection: Connection,
-// 	candidates: Candidate[]
-// ): Promise<HelpCenter[]> => {
-// 	let defaultHelpCenterMenu = [];
-
-// 	candidates.forEach((candidate) => {
-// 		const menus = helpCenterMenuList.map((menu) => ({
-// 			name: menu.name,
-// 		}));
-
-// 		defaultHelpCenterMenu = [...defaultHelpCenterMenu, ...menus];
-// 	});
-
-// 	insertHelpCenterMenu(connection, defaultHelpCenterMenu);
-
-// 	return defaultHelpCenterMenu;
-// };
-
-// export const createRandomHelpCenter = async (
-// 	connection: Connection,
-// 	tenants: Tenant[],
-// 	tenantHelpCenterMap: Map<Tenant, Candidate[]>
-// ): Promise<Map<Candidate, HelpCenter[]>> => {
-// 	let helpCenter = [];
-// 	const helpCenterMap: Map<Candidate, HelpCenter[]> = new Map();
-
-// 	(tenants || []).forEach((tenant) => {
-// 		const candidates = tenantHelpCenterMap.get(tenant);
-
-// 		(candidates || []).forEach((candidate) => {
-// 			const menus = helpCenterMenuList.map((menu) => ({
-// 				name: menu.name,
-// 			}));
-
-// 			helpCenterMap.set(candidate, menus);
-// 			helpCenter = [...helpCenter, ...menus];
-// 		});
-// 	});
-
-// 	await insertHelpCenterMenu(connection, helpCenter);
-
-// 	return helpCenterMap;
-// };
-
-// const insertHelpCenterMenu = async (
-// 	connection: Connection,
-// 	helpCenter: HelpCenter[]
-// ) => {
+// 	nodes: HelpCenter[]
+// ): Promise<void> => {
 // 	await connection
 // 		.createQueryBuilder()
 // 		.insert()
 // 		.into(HelpCenter)
-// 		.values(helpCenter)
+// 		.values(nodes)
 // 		.execute();
 // };

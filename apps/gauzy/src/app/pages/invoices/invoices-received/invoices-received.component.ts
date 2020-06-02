@@ -17,7 +17,7 @@ export interface SelectedInvoice {
 @Component({
 	selector: 'ga-invoices-received',
 	templateUrl: './invoices-received.component.html',
-	styleUrls: ['./invoices-received.component.scss'],
+	styleUrls: ['./invoices-received.component.scss']
 })
 export class InvoicesReceivedComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -56,7 +56,7 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 				if (organization) {
 					const invoices = await this.invoicesService.getAll([], {
 						sentTo: organization.id,
-						isEstimate: this.isEstimate,
+						isEstimate: this.isEstimate
 					});
 					this.loading = false;
 					this.smartTableSource.load(invoices.items);
@@ -67,11 +67,11 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 	view() {
 		if (this.isEstimate) {
 			this.router.navigate([
-				`/pages/accounting/invoices/estimates/view/${this.selectedInvoice.id}`,
+				`/pages/accounting/invoices/estimates/view/${this.selectedInvoice.id}`
 			]);
 		} else {
 			this.router.navigate([
-				`/pages/accounting/invoices/view/${this.selectedInvoice.id}`,
+				`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
 			]);
 		}
 	}
@@ -85,20 +85,20 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'string',
-					sortDirection: 'asc',
+					sortDirection: 'asc'
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'string',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${cell}`;
-					},
+					}
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-					type: 'string',
-				},
-			},
+					type: 'string'
+				}
+			}
 		};
 	}
 

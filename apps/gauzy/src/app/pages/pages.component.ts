@@ -65,8 +65,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/accounting/invoices/estimates',
 					data: {
 						translated: false,
-						translationKey: 'MENU.ESTIMATES',
-					},
+						translationKey: 'MENU.ESTIMATES'
+					}
 				},
 				{
 					title: 'Recurring Invoices',
@@ -84,8 +84,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/accounting/invoices/received-invoices',
 					data: {
 						translated: false,
-						translationKey: 'MENU.INVOICES_RECEIVED',
-					},
+						translationKey: 'MENU.INVOICES_RECEIVED'
+					}
 				},
 				{
 					title: 'Received Estimates',
@@ -93,7 +93,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/accounting/invoices/received-estimates',
 					data: {
 						translated: false,
-						translationKey: 'MENU.ESTIMATES_RECEIVED',
+						translationKey: 'MENU.ESTIMATES_RECEIVED'
 					}
 				},
 				{

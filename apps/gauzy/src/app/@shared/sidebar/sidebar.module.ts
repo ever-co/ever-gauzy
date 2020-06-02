@@ -1,3 +1,4 @@
+import { AddIconModule } from './add-icon/add-icon.module';
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -20,6 +21,7 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 
 @NgModule({
 	imports: [
+		AddIconModule,
 		CKEditorModule,
 		TreeModule.forRoot(),
 		ThemeModule,
