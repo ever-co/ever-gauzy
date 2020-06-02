@@ -68,8 +68,8 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		if (
 			team.name &&
 			team.name.trim().length &&
-			((team.members && team.members.length) ||
-				(team.managers && team.managers.length))
+			team.members &&
+			team.members.length
 		) {
 			if (this.teamToEdit) {
 				try {

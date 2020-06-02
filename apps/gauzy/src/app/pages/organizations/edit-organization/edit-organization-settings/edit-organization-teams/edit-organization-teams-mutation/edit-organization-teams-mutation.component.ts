@@ -1,5 +1,9 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { OrganizationTeam, Employee } from '@gauzy/models';
+import {
+	OrganizationTeam,
+	Employee,
+	OrganizationTeamEmployee
+} from '@gauzy/models';
 
 @Component({
 	selector: 'ngx-edit-organization-teams-mutation',
@@ -26,6 +30,7 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	name: string;
 	selectedEmployees: string[];
 	selectedManagers: string[];
+	teamEmployees: OrganizationTeamEmployee[] = [];
 
 	ngOnInit() {
 		if (this.team) {
@@ -40,14 +45,49 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 	}
 
 	addOrEditTeams() {
+		this.members = this.members || this.selectedEmployees;
+		this.managers = this.managers || this.selectedManagers;
+
+		if (
+			this.managers &&
+			this.managers.length &&
+			this.members &&
+			this.members.length
+		)
+			this.managers.forEach(
+				(manager) =>
+					(this.members = this.members.filter(
+						(member) => member !== manager
+					))
+			);
+
+		if (this.members && this.members.length) {
+			this.members.forEach((member) => {
+				const teamEmployee: OrganizationTeamEmployee = {
+					employeeId: member
+				};
+				this.teamEmployees.push(teamEmployee);
+			});
+		}
+
+		if (this.managers && this.managers.length) {
+			this.managers.forEach((manager) => {
+				const teamEmployee: OrganizationTeamEmployee = {
+					employeeId: manager,
+					roleId: this.managerId
+				};
+				this.teamEmployees.push(teamEmployee);
+			});
+		}
+
 		this.addOrEditTeam.emit({
 			name: this.name,
-			members: this.members || this.selectedEmployees,
-			managers: this.managers || this.selectedManagers,
-			organizationId: this.organizationId
+			organizationId: this.organizationId,
+			members: this.teamEmployees
 		});
 
 		this.name = '';
+		this.teamEmployees = [];
 	}
 
 	onMembersSelected(members: string[]) {
