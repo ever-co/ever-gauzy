@@ -696,6 +696,8 @@
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
 				"SCHEDULED_INTERVIEWS": "Запланированные интервью",
+				"CONTINUE_WITH": "Продолжить с ",
+				"PAST_DATE": "Вы выбрали день в прошлом",
 				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
