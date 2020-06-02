@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ProductCategory } from '@gauzy/models';
+import {
+	ProductCategoryTranslatable,
+	ProductCategoryTranslated
+} from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable()
@@ -9,22 +12,37 @@ export class ProductCategoryService {
 
 	constructor(private http: HttpClient) {}
 
-	getAll(
-		relations?: string[],
-		findInput?: any
-	): Promise<{ items: ProductCategory[] }> {
-		const data = JSON.stringify({ relations, findInput });
+	getById(id: string): Promise<ProductCategoryTranslatable> {
 		return this.http
-			.get<{ items: ProductCategory[] }>(this.PRODUCT_CATEGORY_URL, {
-				params: { data }
-			})
+			.get<ProductCategoryTranslatable>(
+				`${this.PRODUCT_CATEGORY_URL}/${id}`
+			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	create(productTypeRequest: ProductCategory): Promise<ProductCategory> {
+	getAll(
+		langCode: string,
+		relations?: string[],
+		findInput?: any
+	): Promise<{ items: ProductCategoryTranslated[] }> {
+		const data = JSON.stringify({ relations, findInput, langCode });
 		return this.http
-			.post<ProductCategory>(
+			.get<{ items: ProductCategoryTranslated[] }>(
+				this.PRODUCT_CATEGORY_URL,
+				{
+					params: { data }
+				}
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	create(
+		productTypeRequest: ProductCategoryTranslatable
+	): Promise<ProductCategoryTranslatable> {
+		return this.http
+			.post<ProductCategoryTranslatable>(
 				`${this.PRODUCT_CATEGORY_URL}`,
 				productTypeRequest
 			)
@@ -32,9 +50,11 @@ export class ProductCategoryService {
 			.toPromise();
 	}
 
-	update(productTypeRequest: ProductCategory): Promise<ProductCategory> {
+	update(
+		productTypeRequest: ProductCategoryTranslatable
+	): Promise<ProductCategoryTranslatable> {
 		return this.http
-			.put<ProductCategory>(
+			.put<ProductCategoryTranslatable>(
 				`${this.PRODUCT_CATEGORY_URL}/${productTypeRequest.id}`,
 				productTypeRequest
 			)
@@ -42,9 +62,11 @@ export class ProductCategoryService {
 			.toPromise();
 	}
 
-	delete(id: string): Promise<ProductCategory> {
+	delete(id: string): Promise<ProductCategoryTranslatable> {
 		return this.http
-			.delete<ProductCategory>(`${this.PRODUCT_CATEGORY_URL}/${id}`)
+			.delete<ProductCategoryTranslatable>(
+				`${this.PRODUCT_CATEGORY_URL}/${id}`
+			)
 			.pipe(first())
 			.toPromise();
 	}
