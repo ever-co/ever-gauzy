@@ -198,7 +198,8 @@
 			"LOCATION": "Location",
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
-			"DESCRIPTION": "Description"
+			"DESCRIPTION": "Description",
+			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -505,7 +506,10 @@
 			"SECRET": "Upwork Secret",
 			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy.",
 			"CONTRACTS": "Contracts",
-			"SYNCED_CONTRACTS": "Synced Contracts"
+			"SYNCED_CONTRACTS": "Synced Contracts",
+			"SELECT_DATE": "Select Date",
+			"ONLY_CONTRACTS": "Only Contracts",
+			"CONTRACTS_RELATED_DATA": "Synced Contracts related entities"
 		},
 		"COMING_SOON": "Coming soon"
 	},
@@ -684,6 +688,7 @@
 				"INTERVIEWS": "Interviews",
 				"INTERVIEWER": "Interviewer: ",
 				"ADD_INTERVIEW": "Add interview",
+				"HIDE_PAST": "Hide past interviews",
 				"ON": "on",
 				"TO": "To",
 				"FROM": "from",

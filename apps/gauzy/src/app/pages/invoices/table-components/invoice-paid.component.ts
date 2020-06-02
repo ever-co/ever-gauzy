@@ -15,7 +15,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 			</div>
 		</div>
 	`,
-	styles: [],
+	styles: []
 })
 export class InvoicePaidComponent extends TranslationBaseComponent {
 	constructor(readonly translateService: TranslateService) {

@@ -10,6 +10,6 @@ import { Module } from '@nestjs/common';
 	imports: [TypeOrmModule.forFeature([HelpCenter, User])],
 	providers: [HelpCenterService, UserService],
 	controllers: [HelpCenterController],
-	exports: [HelpCenterService],
+	exports: [HelpCenterService]
 })
 export class HelpCenterModule {}

@@ -1,7 +1,7 @@
 import {
 	EmployeeCreateInput as IEmployeeCreateInput,
 	PermissionsEnum,
-	LanguagesEnum,
+	LanguagesEnum
 } from '@gauzy/models';
 import {
 	Body,
@@ -13,7 +13,7 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EmployeeCreateCommand, EmployeeBulkCreateCommand } from './commands';
@@ -42,16 +42,16 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.',
+		description: 'The record has been successfully edited.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -64,7 +64,7 @@ export class EmployeeController extends CrudController<Employee> {
 		try {
 			return this.employeeService.create({
 				id,
-				...entity,
+				...entity
 			});
 		} catch (error) {
 			console.log(error);
@@ -76,11 +76,11 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found employees in the tenant',
-		type: Employee,
+		type: Employee
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get()
 	async findAllEmployees(
@@ -94,11 +94,11 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found working employees',
-		type: Employee,
+		type: Employee
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get('/working')
 	async findAllWorkingEmployees(
@@ -116,11 +116,11 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found employee in the same tenant',
-		type: Employee,
+		type: Employee
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get(':id')
 	async findById(
@@ -129,19 +129,19 @@ export class EmployeeController extends CrudController<Employee> {
 	): Promise<Employee> {
 		const { relations = [] } = data;
 		return this.employeeService.findOne(id, {
-			relations,
+			relations
 		});
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/,
+		description: 'The record has been successfully created.' /*, type: T*/
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
@@ -156,12 +156,12 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Create records in Bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Records have been successfully created.' /*, type: T*/,
+		description: 'Records have been successfully created.' /*, type: T*/
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)

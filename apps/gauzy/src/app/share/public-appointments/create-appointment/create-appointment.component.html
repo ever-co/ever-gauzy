@@ -43,9 +43,10 @@
 				</div>
 			</div>
 		</div>
-		<div class="calendar" *ngIf="eventType">
+		<div class="calendar" *ngIf="eventType && employee">
 			<ga-appointment-calendar
 				#appointmentCalendar
+				[employee]="employee"
 				[appointmentFormURL]="appointmentFormURL"
 				[selectedEventType]="eventType"
 				[showHeader]="false"

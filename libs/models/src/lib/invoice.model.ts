@@ -24,6 +24,7 @@ export interface Invoice extends IBaseEntityModel {
 	invoiceType?: string;
 	sentTo?: string;
 	tags?: Tag[];
+	isEstimate?: boolean;
 }
 
 export interface InvoiceUpdateInput {
@@ -52,6 +53,7 @@ export interface InvoiceFindInput {
 	sentTo?: string;
 	invoiceNumber?: string;
 	tags?: Tag[];
+	isEstimate?: boolean;
 }
 
 export enum InvoiceTypeEnum {

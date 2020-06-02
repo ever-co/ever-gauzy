@@ -6,7 +6,8 @@ import {
 	Organization,
 	OrganizationClients,
 	OrganizationProjects,
-	ProjectTypeEnum
+	ProjectTypeEnum,
+	Tag
 } from '@gauzy/models';
 
 @Component({
@@ -35,6 +36,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 	currencies: string[] = Object.values(CurrenciesEnum);
 	defaultCurrency: string;
 	public: boolean = true;
+	tags: Tag[] = [];
 
 	constructor(private readonly fb: FormBuilder) {}
 
@@ -56,6 +58,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 		this.defaultCurrency = this.organization.currency || 'USD';
 
 		this.form = this.fb.group({
+			tags: [this.project ? (this.tags = this.project.tags) : ''],
 			public: this.project ? this.project.public : this.public,
 			name: [this.project ? this.project.name : ''],
 			client: [
@@ -92,6 +95,7 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 	async submitForm() {
 		if (this.form.valid) {
 			this.addOrEditProject.emit({
+				tags: this.tags,
 				public: this.form.value['public'],
 				id: this.project ? this.project.id : undefined,
 				organizationId: this.organization.id,
@@ -111,5 +115,9 @@ export class EditOrganizationProjectsMutationComponent implements OnInit {
 			this.selectedEmployeeIds = [];
 			this.members = [];
 		}
+	}
+
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }

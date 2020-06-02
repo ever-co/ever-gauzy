@@ -7,7 +7,12 @@ import { ShareModule } from 'apps/gauzy/src/app/share/share.module';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { TranslateModule } from '@ngx-translate/core';
 import { EmployeeSelectorsModule } from 'apps/gauzy/src/app/@theme/components/header/selectors/employee/employee.module';
-import { NbDialogModule, NbCardModule, NbButtonModule } from '@nebular/theme';
+import {
+	NbDialogModule,
+	NbCardModule,
+	NbButtonModule,
+	NbIconModule
+} from '@nebular/theme';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
 import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filters.module';
@@ -26,7 +31,8 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 		NbCardModule,
 		NbButtonModule,
 		EditTimeLogModalModule,
-		FiltersModule
+		FiltersModule,
+		NbIconModule
 	]
 })
 export class CalendarModule {}

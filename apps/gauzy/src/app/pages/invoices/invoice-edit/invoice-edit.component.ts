@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
@@ -88,6 +88,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		return this.form.get('currency');
 	}
 	private _ngDestroy$ = new Subject<void>();
+
+	@Input() isEstimate: boolean;
 
 	ngOnInit() {
 		this.store.userRolePermissions$
@@ -548,12 +550,19 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				}
 			}
 
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_INVOICE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-
-			this.router.navigate(['/pages/accounting/invoices']);
+			if (this.isEstimate) {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_ESTIMATE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices/estimates']);
+			} else {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_INVOICE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices']);
+			}
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
@@ -776,7 +785,11 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	cancel() {
-		this.router.navigate(['/pages/accounting/invoices']);
+		if (this.isEstimate) {
+			this.router.navigate(['/pages/accounting/invoices/estimates']);
+		} else {
+			this.router.navigate(['/pages/accounting/invoices']);
+		}
 	}
 	selectedTagsEvent(currentTagSelection: Tag[]) {
 		this.tags = currentTagSelection;

@@ -91,6 +91,11 @@ export class Invoice extends Base implements IInvoice {
 	@Column({ nullable: true })
 	emailSent: boolean;
 
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	isEstimate?: boolean;
+
 	@ApiProperty({ type: String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
 	@Column({ nullable: true })
@@ -136,11 +141,9 @@ export class Invoice extends Base implements IInvoice {
 	toClient?: OrganizationClients;
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany(
-		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.invoice,
-		{ onDelete: 'SET NULL' }
-	)
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 }

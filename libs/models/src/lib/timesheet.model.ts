@@ -27,7 +27,7 @@ export interface ITimesheetCreateInput {
 	mouse: number;
 	overall?: number;
 	startedAt: Date;
-	stoppedAt: Date;
+	stoppedAt?: Date;
 	approvedAt?: Date;
 	submittedAt?: Date;
 	lockedAt?: Date;

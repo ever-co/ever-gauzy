@@ -1,4 +1,13 @@
-import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	HttpStatus,
+	Query,
+	UseGuards,
+	Put,
+	Param,
+	Body
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { OrganizationPositionsService } from './organization-positions.service';
@@ -34,8 +43,23 @@ export class OrganizationPositionsController extends CrudController<
 	async findAllEmployees(
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationPositions>> {
-		const { findInput } = JSON.parse(data);
+		const { relations, findInput } = JSON.parse(data);
 
-		return this.organizationPositionsService.findAll({ where: findInput });
+		return this.organizationPositionsService.findAll({
+			where: findInput,
+			relations
+		});
+	}
+
+	@Put(':id')
+	async updateOrganizationTeam(
+		@Param('id') id: string,
+		@Body() entity: OrganizationPositions,
+		...options: any[]
+	): Promise<OrganizationPositions> {
+		return this.organizationPositionsService.create({
+			id,
+			...entity
+		});
 	}
 }

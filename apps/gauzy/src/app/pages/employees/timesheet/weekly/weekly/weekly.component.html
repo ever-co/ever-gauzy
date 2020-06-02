@@ -1,7 +1,12 @@
-<div class="header">
-	<h5 class="mb-3">
+<div class="header row">
+	<h5 class="mb-3 col">
 		{{ 'TIMESHEET.WEEKLY' | translate }}
 	</h5>
+	<div class="col-auto">
+		<button nbButton status="primary" (click)="openAddEdit()">
+			<nb-icon icon="plus-outline"></nb-icon> Add Time
+		</button>
+	</div>
 </div>
 
 <div class="filters row mb-3">

@@ -198,7 +198,8 @@
 			"LOCATION": "Местоположение",
 			"NOTE": "Примечание",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
-			"DESCRIPTION": "Описание"
+			"DESCRIPTION": "Описание",
+			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -505,7 +506,10 @@
 			"SECRET": "Секрет обхода",
 			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи.",
 			"CONTRACTS": "Контракты",
-			"SYNCED_CONTRACTS": "Синхронизированные контракты"
+			"SYNCED_CONTRACTS": "Синхронизированные контракты",
+			"SELECT_DATE": "Выберите дату",
+			"ONLY_CONTRACTS": "Только контракты",
+			"CONTRACTS_RELATED_DATA": "Синхронизированные Контракты"
 		},
 		"COMING_SOON": "Скоро появится"
 	},
@@ -684,6 +688,7 @@
 				"INTERVIEWS": "Интервью",
 				"INTERVIEWER": "Интервьюс: ",
 				"ADD_INTERVIEW": "Добавить интервью",
+				"HIDE_PAST": "Скрыть прошлые интервью",
 				"ON": "вкл",
 				"TO": "Кому",
 				"FROM": "от",

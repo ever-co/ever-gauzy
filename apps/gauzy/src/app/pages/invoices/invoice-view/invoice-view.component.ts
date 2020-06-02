@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -13,7 +13,7 @@ import { OrganizationsService } from '../../../@core/services/organizations.serv
 @Component({
 	selector: 'ga-invoice-view',
 	templateUrl: './invoice-view.component.html',
-	styleUrls: ['./invoice-view.component.scss'],
+	styleUrls: ['./invoice-view.component.scss']
 })
 export class InvoiceViewComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -22,6 +22,8 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 	client: OrganizationClients;
 	organization: Organization;
 	private _ngDestroy$ = new Subject<void>();
+
+	@Input() isEstimate: boolean;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -42,7 +44,7 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 
 	async getInvoice() {
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
-			'invoiceItems',
+			'invoiceItems'
 		]);
 		this.invoice = invoice;
 		const client = await this.organizationClientsService.getById(
@@ -70,7 +72,11 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 				imgWidth,
 				imgHeight
 			);
-			pdf.save(`Invoice ${this.invoice.invoiceNumber}`);
+			pdf.save(
+				`${this.isEstimate ? 'Estimate' : 'Invoice'} ${
+					this.invoice.invoiceNumber
+				}`
+			);
 		});
 	}
 

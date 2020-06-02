@@ -3,7 +3,7 @@
 		<h4>{{ mode == 'update' ? 'Edit' : 'Add' }} time logs</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<form #f="ngForm">
+		<form #f="ngForm" ngForm>
 			<div class="form-group" *ngIf="!employeeId">
 				<ga-employee-multi-select
 					name="employeeId"

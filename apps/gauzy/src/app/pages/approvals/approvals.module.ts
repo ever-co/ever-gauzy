@@ -14,7 +14,7 @@ import {
 	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule,
-	NbRadioModule,
+	NbRadioModule
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -49,12 +49,12 @@ export function HttpLoaderFactory(http: HttpClient) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
-		}),
+				deps: [HttpClient]
+			}
+		})
 	],
 	declarations: [ApprovalsComponent],
 	entryComponents: [],
-	providers: [RequestApprovalService],
+	providers: [RequestApprovalService]
 })
 export class ApprovalsModule {}

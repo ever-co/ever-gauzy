@@ -1,7 +1,10 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex">
-		<h3>
+		<h3 *ngIf="!isEstimate">
 			{{ 'INVOICES_PAGE.VIEW_INVOICE' | translate }}
+		</h3>
+		<h3 *ngIf="isEstimate">
+			{{ 'INVOICES_PAGE.VIEW_ESTIMATE' | translate }}
 		</h3>
 	</nb-card-header>
 	<ga-invoice-view-inner
@@ -10,6 +13,7 @@
 		[invoice]="invoice"
 		[client]="client"
 		[organization]="organization"
+		[isEstimate]="isEstimate"
 	>
 	</ga-invoice-view-inner>
 	<nb-card-footer class="text-right">

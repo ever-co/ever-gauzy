@@ -1,3 +1,8 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<ga-manage-appointment [disabled]="true"></ga-manage-appointment>
+	<ga-manage-appointment
+		[selectedRange]="selectedRange"
+		[hidePrivateFields]="true"
+		[allowedDuration]="allowedDuration"
+		[disabled]="true"
+	></ga-manage-appointment>
 </nb-card>

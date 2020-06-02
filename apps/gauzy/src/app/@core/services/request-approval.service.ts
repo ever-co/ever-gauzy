@@ -17,7 +17,7 @@ export class RequestApprovalService {
 
 		return this.http
 			.get<{ items: RequestApproval[] }>(`${this.REQUETS_APPROVAL_URL}`, {
-				params: { data },
+				params: { data }
 			})
 			.pipe(first())
 			.toPromise();
@@ -33,7 +33,7 @@ export class RequestApprovalService {
 			.get<{ items: RequestApproval[] }>(
 				`${this.REQUETS_APPROVAL_URL}/employee/${id}`,
 				{
-					params: { data },
+					params: { data }
 				}
 			)
 			.pipe(first())

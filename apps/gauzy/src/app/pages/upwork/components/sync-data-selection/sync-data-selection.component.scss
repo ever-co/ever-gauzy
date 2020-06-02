@@ -1,0 +1,76 @@
+.sync-data-selection {
+  // width: 400px;
+}
+
+.datepicker {
+  margin-bottom: 15px;
+  display: flex;
+}
+
+.employee-selector {
+  align-self: flex-end;
+  margin-right: 20px;
+}
+
+.only-contracts {
+  align-self: flex-end;
+}
+
+.employee-selector {
+  flex: 1;
+}
+
+.datepicker-wrapper {
+  width: 30%;
+}
+
+.switcher-wrapper {
+  display: flex;
+  flex-direction: column;
+  // width: 200px;
+
+  nb-toggle {
+    display: flex;
+    ::ng-deep .toggle-label {
+      display: flex;
+      justify-content: space-between;
+      flex-grow: 1;
+    }
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tied-entities-wrapper {
+  padding-left: 15px;
+}
+
+.visible {
+  height: 50px;
+  transition: 0.2s all ease-in-out;
+}
+
+.not-visible {
+  transition: 0.2s all ease-in-out;
+  height: 0px;
+  visibility: hidden;
+}
+
+.tied-entity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.entity-more-options {
+  display: flex;
+  align-items: center;
+  margin-left: -20px;
+
+  .label {
+    margin: 0 5px 0 0;
+  }
+}
