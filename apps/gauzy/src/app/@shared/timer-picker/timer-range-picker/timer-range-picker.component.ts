@@ -53,6 +53,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	@ViewChild('endTimeModel') endTimeModel: NgModel;
 
 	private _maxDate: Date = null;
+	private _minDate: Date = null;
 	private _disabledDates: number[] = [];
 	filter = (date) => !this._disabledDates.includes(date.getTime());
 
@@ -62,6 +63,15 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	}
 	public set maxDate(value: Date) {
 		this._maxDate = value;
+		this.updateTimePickerLimit(value);
+	}
+
+	@Input('minDate')
+	public get minDate(): Date {
+		return this._minDate;
+	}
+	public set minDate(value: Date) {
+		this._minDate = value;
 		this.updateTimePickerLimit(value);
 	}
 	@Input('disabledDates')

@@ -48,6 +48,12 @@
 .icons {
   margin-right: 10px;
   color: grey !important;
+  pointer-events: visible;
+}
+
+.disabled {
+  color: rgba(143, 155, 179, 0.48) !important;
+  pointer-events: none;
 }
 
 .interview-info {

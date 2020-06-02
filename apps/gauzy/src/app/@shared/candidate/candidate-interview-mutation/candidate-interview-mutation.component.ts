@@ -1,3 +1,4 @@
+import { IDateRange } from './../../../../../../../libs/models/src/lib/timesheet.model';
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import {
 	Component,
@@ -14,7 +15,7 @@ import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
@@ -32,6 +33,8 @@ export class CandidateInterviewMutationComponent
 	@Input() selectedCandidate: Candidate = null;
 	@Input() interviewId = null;
 	@Input() isCalendar: boolean;
+	@Input() selectedRangeCalendar: IDateRange;
+
 	@Input() header: string;
 
 	@ViewChild('stepper')
@@ -74,13 +77,12 @@ export class CandidateInterviewMutationComponent
 		private candidateInterviewersService: CandidateInterviewersService
 	) {}
 
-	ngOnInit() {
-		this.candidatesService
+	async ngOnInit() {
+		const { items } = await this.candidatesService
 			.getAll(['user'])
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidates) => {
-				this.candidates = candidates.items;
-			});
+			.pipe(first())
+			.toPromise();
+		this.candidates = items;
 	}
 
 	async ngAfterViewInit() {
@@ -92,6 +94,10 @@ export class CandidateInterviewMutationComponent
 			this.cdRef.detectChanges();
 			this.candidateInterviewForm.selectedRange.end = this.editData.endTime;
 			this.candidateInterviewForm.selectedRange.start = this.editData.startTime;
+		}
+		if (this.selectedRangeCalendar) {
+			this.candidateInterviewForm.selectedRange.end = this.selectedRangeCalendar.end;
+			this.candidateInterviewForm.selectedRange.start = this.selectedRangeCalendar.start;
 		}
 	}
 

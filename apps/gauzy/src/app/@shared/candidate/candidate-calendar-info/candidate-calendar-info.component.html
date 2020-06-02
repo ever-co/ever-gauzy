@@ -19,4 +19,33 @@
 			[options]="calendarOptions"
 		></full-calendar>
 	</nb-card-body>
+	<div class="button">
+		<button nbButton status="danger" (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			nbButton
+			status="success"
+			[disabled]="!eventStartTime || isPast"
+			(click)="continue()"
+		>
+			<span *ngIf="!isPast">
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CONTINUE_WITH'
+						| translate
+				}}<span *ngIf="eventStartTime">
+					: {{ eventStartTime | date: 'mediumDate' }},
+					{{ eventStartTime | date: 'shortTime' }}-{{
+						eventEndTime | date: 'shortTime'
+					}}
+				</span>
+			</span>
+			<span *ngIf="isPast"
+				>{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PAST_DATE'
+						| translate
+				}}
+			</span>
+		</button>
+	</div>
 </nb-card>
