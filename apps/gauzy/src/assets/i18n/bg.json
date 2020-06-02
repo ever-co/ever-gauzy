@@ -454,7 +454,8 @@
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
 		"RECURRING_INVOICES": "Recurring Invoices",
-		"INVOICES_RECIEVED": "Recieved Invoices",
+		"INVOICES_RECEIVED": "Received Invoices",
+		"ESTIMATES_RECEIVED": "Received Estimates",
 		"ESTIMATES": "Estimates",
 		"MY_TASKS": "My Tasks",
 		"TEAM_TASKS": "Team's Tasks",
@@ -1124,12 +1125,18 @@
 	"INVOICES_PAGE": {
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
+		"ESTIMATE_NUMBER": "Estimate Number",
+		"ESTIMATE_DATE": "Estimate Date",
 		"TOTAL_VALUE": "Total Value",
 		"PAID_STATUS": "Paid Status",
 		"INVOICES_ADD_INVOICE": "Invoice Added",
+		"INVOICES_ADD_ESTIMATE": "Estimated Added",
 		"INVOICES_EDIT_INVOICE": "Invoice Edited",
+		"INVOICES_EDIT_ESTIMATE": "Estimate Edited",
 		"INVOICES_DUPLICATE_INVOICE": "Invoice Duplicated",
+		"INVOICES_DUPLICATE_ESTIMATE": "Estimate Duplicated",
 		"INVOICES_DELETE_INVOICE": "Invoice Deleted",
+		"INVOICES_DELETE_ESTIMATE": "Estimate Deleted",
 		"INVOICES_SELECT_INVOICE_DATE": "Invoice Date",
 		"INVOICES_SELECT_DUE_DATE": "Due Date",
 		"INVOICES_SELECT_CURRENCY": "Валута",
@@ -1140,8 +1147,11 @@
 		"INVOICES_SELECT_TOTAL_VALUE": "Total Value",
 		"INVOICES_SELECT_CLIENT": "Клиент",
 		"ADD_INVOICE": "Add Invoice",
+		"ADD_ESTIMATE": "Add Estimate",
 		"EDIT_INVOICE": "Edit Invoice",
+		"EDIT_ESTIMATE": "Edit Estimate",
 		"VIEW_INVOICE": "View Invoice",
+		"VIEW_ESTIMATE": "View Estimate",
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_PROJECT": "Select Project",
 		"SELECT_TASK": "Select Task",
@@ -1157,16 +1167,21 @@
 		"NAME": "Име",
 		"PAID": "Paid",
 		"NOT_PAID": "Not Paid",
-		"RECIEVED_INVOICES": "Recieved Invoices",
+		"RECEIVED_INVOICES": "Received Invoices",
+		"RECEIVED_ESTIMATES": "Received Estimates",
 		"SEND_INVOICE": "Invoice Sent",
+		"SEND_ESTIMATE": "Estimate Sent",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Invoice Type",
+			"ESTIMATE_TYPE": "Estimate Type",
 			"GENERATE_INVOICE_ITEMS": "Generate Invoice Items",
+			"GENERATE_ESTIMATE_ITEMS": "Generate Estimate Items",
 			"BY_EMPLOYEE_HOURS": "By Employee Hours",
 			"BY_PROJECT_HOURS": "By Project Hours",
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
-			"DETAILS_INVOICE_ITEMS": "Details Invoice Items"
+			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
+			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
@@ -1188,20 +1203,30 @@
 			"TASK_VALUE": "Task cannot be empty"
 		},
 		"SEND": {
-			"CONFIRMATION": "Send this invoice to",
-			"ALREADY_SENT": "This invoice has already been sent to"
+			"CONFIRMATION_INVOICE": "Send this invoice to",
+			"CONFIRMATION_ESTIMATE": "Send this estimate to",
+			"ALREADY_SENT_INVOICE": "This invoice has already been sent to",
+			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to"
 		},
 		"VIEW": {
 			"FROM": "FROM",
 			"TO": "TO"
 		},
 		"DOWNLOAD": {
-			"CONFIRMATION": "Download this invoice ?",
-			"INVOICE_DOWNLOAD": "Invoice downloaded"
+			"CONFIRMATION_INVOICE": "Download this invoice ?",
+			"CONFIRMATION_ESTIMATE": "Download this estimate ?",
+			"INVOICE_DOWNLOAD": "Invoice downloaded",
+			"ESTIMATE_DOWNLOAD": "Estimate downloaded"
 		},
 		"EMAIL": {
 			"EMAIL_INVOICE": "Send this invoice by email ?",
+			"EMAIL_ESTIMATE": "Send this estimate by email ?",
 			"EMAIL_SENT": "Email Sent"
+		},
+		"ESTIMATES": {
+			"HEADER": "Estimates",
+			"ESTIMATE_NUMBER": "Estimate Number",
+			"ESTIMATE_DATE": "Estimate Date"
 		}
 	},
 	"HEADER": {
