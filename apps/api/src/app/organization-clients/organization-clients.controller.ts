@@ -70,7 +70,6 @@ export class OrganizationClientsController extends CrudController<
 		@Query('data') data: string
 	): Promise<IPagination<OrganizationClients>> {
 		const { relations, findInput } = JSON.parse(data);
-
 		return this.organizationClientsService.findAll({
 			where: findInput,
 			relations
