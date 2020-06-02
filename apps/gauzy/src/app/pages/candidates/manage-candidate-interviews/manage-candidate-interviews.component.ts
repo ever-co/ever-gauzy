@@ -2,7 +2,7 @@ import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { OptionsInput, EventInput } from '@fullcalendar/core';
+import { OptionsInput, EventInput, disableCursor } from '@fullcalendar/core';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -191,6 +191,9 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			CandidateInterviewMutationComponent,
 			{
 				context: {
+					header: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
+					),
 					isCalendar: true,
 					selectedRangeCalendar: selectedRange
 				}
@@ -214,7 +217,12 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	}
 
 	handleEventSelect(event) {
-		this.add({ start: event.start, end: event.end });
+		const now = new Date().getTime();
+		if (now < event.start.getTime()) {
+			this.add({ start: event.start, end: event.end });
+		} else {
+			disableCursor();
+		}
 	}
 
 	handleEventMouseEnter({ el }) {
@@ -232,8 +240,10 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 		}
 		const curOverflow = el.style ? el.style.overflow : 'hidden';
 
-		if (!curOverflow || curOverflow === 'visible')
+		if (!curOverflow || curOverflow === 'visible') {
 			el.style.overflow = 'hidden';
+			el.style.backgroundColor = '#3366ff';
+		}
 
 		const isOverflowing =
 			el.clientWidth < el.scrollWidth ||

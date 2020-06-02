@@ -26,17 +26,24 @@
 		<button
 			nbButton
 			status="success"
-			[disabled]="!eventStartTime"
+			[disabled]="!eventStartTime || isPast"
 			(click)="continue()"
 		>
-			{{
-				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CONTINUE_WITH'
-					| translate
-			}}
-			<span *ngIf="eventStartTime">
-				: {{ eventStartTime | date: 'mediumDate' }},
-				{{ eventStartTime | date: 'shortTime' }}-{{
-					eventEndTime | date: 'shortTime'
+			<span *ngIf="!isPast">
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CONTINUE_WITH'
+						| translate
+				}}<span *ngIf="eventStartTime">
+					: {{ eventStartTime | date: 'mediumDate' }},
+					{{ eventStartTime | date: 'shortTime' }}-{{
+						eventEndTime | date: 'shortTime'
+					}}
+				</span>
+			</span>
+			<span *ngIf="isPast"
+				>{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PAST_DATE'
+						| translate
 				}}
 			</span>
 		</button>

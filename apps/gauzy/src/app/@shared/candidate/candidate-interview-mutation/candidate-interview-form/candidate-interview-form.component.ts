@@ -21,6 +21,7 @@ import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/ca
 export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	@Input() interviewers: ICandidateInterviewers[];
 	@Input() isCalendar: boolean;
+	yesterday = new Date();
 	form: any;
 	employees: Employee[];
 	employeeIds: string[];
@@ -37,6 +38,7 @@ export class CandidateInterviewFormComponent implements OnInit, OnDestroy {
 	) {}
 
 	ngOnInit() {
+		this.yesterday.setDate(this.yesterday.getDate() - 1);
 		this.loadFormData();
 		this.employeeService
 			.getAll(['user'])

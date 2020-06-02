@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { OptionsInput, EventInput } from '@fullcalendar/core';
+import { OptionsInput, EventInput, disableCursor } from '@fullcalendar/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -20,6 +20,8 @@ export class CandidateCalendarInfoComponent implements OnInit {
 	calendarEvents: EventInput[] = [];
 	eventStartTime: Date;
 	eventEndTime: Date;
+	isPast = false;
+
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateCalendarInfoComponent>,
 		private candidateInterviewService: CandidateInterviewService
@@ -50,8 +52,8 @@ export class CandidateCalendarInfoComponent implements OnInit {
 				moment(start).isSame(moment(end), 'day'),
 			select: this.handleEventSelect.bind(this),
 			dateClick: this.handleDateClick.bind(this),
-			eventMouseEnter: this.handleEventMouseEnter.bind(this),
-			eventMouseLeave: this.handleEventMouseLeave.bind(this)
+			eventMouseEnter: this.handleEventMouseEnter.bind(this)
+			// eventMouseLeave: this.handleEventMouseLeave.bind(this),
 		};
 		const res = await this.candidateInterviewService.getAll([
 			'interviewers'
@@ -89,8 +91,15 @@ export class CandidateCalendarInfoComponent implements OnInit {
 	}
 
 	handleEventSelect(event) {
-		this.eventStartTime = event.start;
-		this.eventEndTime = event.end;
+		const now = new Date().getTime();
+		if (now < event.start.getTime()) {
+			this.eventStartTime = event.start;
+			this.eventEndTime = event.end;
+			this.isPast = false;
+		} else {
+			disableCursor();
+			this.isPast = true;
+		}
 	}
 
 	handleEventMouseEnter({ el }) {
@@ -108,8 +117,10 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		}
 		const curOverflow = el.style ? el.style.overflow : 'hidden';
 
-		if (!curOverflow || curOverflow === 'visible')
+		if (!curOverflow || curOverflow === 'visible') {
 			el.style.overflow = 'hidden';
+			el.style.backgroundColor = '#3366ff';
+		}
 
 		const isOverflowing =
 			el.clientWidth < el.scrollWidth ||
@@ -118,10 +129,9 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		if (el.style) {
 			el.style.overflow = curOverflow;
 		}
-
 		return isOverflowing;
 	}
-
+	handleDisableCursor() {}
 	closeDialog() {
 		this.dialogRef.close();
 	}

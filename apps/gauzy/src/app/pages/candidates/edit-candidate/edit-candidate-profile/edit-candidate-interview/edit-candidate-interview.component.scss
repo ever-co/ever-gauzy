@@ -1,5 +1,5 @@
 .interviews-line {
-  margin: 0.2rem 0 0.2rem 0.5rem;
+  margin: 0.2rem 0 0.2rem 0.2rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -51,12 +51,12 @@
 }
 .ribbon {
   position: absolute;
-  left: -5px;
+  left: -6px;
   top: -5px;
   z-index: 1;
   overflow: hidden;
-  width: 75px;
-  height: 75px;
+  width: 55px;
+  height: 55px;
   text-align: right;
 }
 .ribbon span {
@@ -68,13 +68,13 @@
   line-height: 20px;
   transform: rotate(-45deg);
   -webkit-transform: rotate(-45deg);
-  width: 100px;
+  width: 76px;
   display: block;
   background: linear-gradient(#b6bac9 0%, #808080 100%);
   box-shadow: 0 3px 10px -5px rgba(0, 0, 0, 1);
   position: absolute;
-  top: 19px;
-  left: -21px;
+  top: 10px;
+  left: -18px;
 }
 .ribbon span::before {
   content: '';
