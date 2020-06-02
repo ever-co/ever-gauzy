@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { OptionsInput, EventInput } from '@fullcalendar/core';
+import { OptionsInput, EventInput, disableCursor } from '@fullcalendar/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -18,6 +18,10 @@ export class CandidateCalendarInfoComponent implements OnInit {
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: OptionsInput;
 	calendarEvents: EventInput[] = [];
+	eventStartTime: Date;
+	eventEndTime: Date;
+	isPast = false;
+
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateCalendarInfoComponent>,
 		private candidateInterviewService: CandidateInterviewService
@@ -43,16 +47,13 @@ export class CandidateCalendarInfoComponent implements OnInit {
 			],
 			weekends: true,
 			height: 'auto',
-			editable: true,
 			selectable: true,
 			selectAllow: ({ start, end }) =>
 				moment(start).isSame(moment(end), 'day'),
-			eventDrop: this.handleEventDrop.bind(this),
 			select: this.handleEventSelect.bind(this),
-			eventClick: this.handleEventClick.bind(this),
 			dateClick: this.handleDateClick.bind(this),
-			eventMouseEnter: this.handleEventMouseEnter.bind(this),
-			eventMouseLeave: this.handleEventMouseLeave.bind(this)
+			eventMouseEnter: this.handleEventMouseEnter.bind(this)
+			// eventMouseLeave: this.handleEventMouseLeave.bind(this),
 		};
 		const res = await this.candidateInterviewService.getAll([
 			'interviewers'
@@ -75,18 +76,30 @@ export class CandidateCalendarInfoComponent implements OnInit {
 			this.calendarOptions.events = this.calendarEvents;
 		}
 	}
-	handleEventClick({ event }) {
-		//  event.extendedProps.log,
+	continue() {
+		this.dialogRef.close({
+			startTime: this.eventStartTime,
+			endTime: this.eventEndTime
+		});
 	}
-
 	handleDateClick(event) {
-		//this.calendar.getApi().changeView('timeGridWeek', event.date);
+		if (event.view.type === 'dayGridMonth') {
+			this.calendarComponent
+				.getApi()
+				.changeView('timeGridWeek', event.date);
+		}
 	}
 
 	handleEventSelect(event) {
-		//  event.start,
-		//  event.end
-		//
+		const now = new Date().getTime();
+		if (now < event.start.getTime()) {
+			this.eventStartTime = event.start;
+			this.eventEndTime = event.end;
+			this.isPast = false;
+		} else {
+			disableCursor();
+			this.isPast = true;
+		}
 	}
 
 	handleEventMouseEnter({ el }) {
@@ -98,16 +111,16 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		el.removeAttribute('style');
 	}
 
-	handleEventDrop({ event }) {}
-
 	hasOverflow(el: HTMLElement) {
 		if (!el) {
 			return;
 		}
 		const curOverflow = el.style ? el.style.overflow : 'hidden';
 
-		if (!curOverflow || curOverflow === 'visible')
+		if (!curOverflow || curOverflow === 'visible') {
 			el.style.overflow = 'hidden';
+			el.style.backgroundColor = '#3366ff';
+		}
 
 		const isOverflowing =
 			el.clientWidth < el.scrollWidth ||
@@ -116,10 +129,9 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		if (el.style) {
 			el.style.overflow = curOverflow;
 		}
-
 		return isOverflowing;
 	}
-
+	handleDisableCursor() {}
 	closeDialog() {
 		this.dialogRef.close();
 	}

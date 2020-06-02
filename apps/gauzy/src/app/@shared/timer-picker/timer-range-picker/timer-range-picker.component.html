@@ -1,7 +1,7 @@
 <div class="row">
 	<div class="col-12">
 		<div class="form-group">
-			<label>{{ 'TIMER_TRACKER.DATE' | translate }}</label>
+			<label class="label"> {{ 'TIMER_TRACKER.DATE' | translate }}</label>
 			<input
 				type="text"
 				[attr.disabled]="disableDatePicker === true ? 'disabled' : null"
@@ -16,6 +16,7 @@
 			<nb-datepicker
 				[filter]="filter"
 				[max]="maxDate"
+				[min]="minDate"
 				(dateChange)="updateTimePickerLimit($event)"
 				#datepicker
 			></nb-datepicker>
@@ -23,7 +24,9 @@
 	</div>
 	<div class="col">
 		<div class="form-group">
-			<label>{{ 'TIMER_TRACKER.START_TIME' | translate }}</label>
+			<label class="label">{{
+				'TIMER_TRACKER.START_TIME' | translate
+			}}</label>
 			<ga-timer-picker
 				name="start_time"
 				[min]="minSlotStartTime"
@@ -37,7 +40,9 @@
 	</div>
 	<div class="col">
 		<div class="form-group">
-			<label>{{ 'TIMER_TRACKER.END_TIME' | translate }}</label>
+			<label class="label">{{
+				'TIMER_TRACKER.END_TIME' | translate
+			}}</label>
 			<ga-timer-picker
 				[disabled]="disableEndPicker"
 				name="end_time"
