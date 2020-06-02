@@ -37,12 +37,11 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 		organizationTeam.name = entity.name;
 		organizationTeam.organizationId = entity.organizationId;
 
-		let members: string[];
-		if (entity.members && entity.managers) {
-			members = [...new Set([...entity.members, ...entity.managers])];
-		} else {
-			members = entity.members || entity.managers;
-		}
+		const members: string[] = [];
+
+		entity.members.forEach((member) => {
+			members.push(member.employeeId);
+		});
 
 		const employees = await this.employeeRepository.findByIds(members, {
 			relations: ['user']
@@ -57,7 +56,11 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 			const teamEmployee = new OrganizationTeamEmployee();
 			teamEmployee.employeeId = employee.id;
 			teamEmployee.employee = employee;
-			if (entity.managers && entity.managers.includes(employee.id)) {
+
+			const member = entity.members.find(
+				(m) => m.employeeId === employee.id
+			);
+			if (member.roleId === managerRole.id) {
 				teamEmployee.roleId = managerRole.id;
 				teamEmployee.role = managerRole;
 			}
@@ -79,12 +82,11 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 			organizationTeam.name = entity.name;
 			organizationTeam.organizationId = entity.organizationId;
 
-			let members: string[];
-			if (entity.members && entity.managers) {
-				members = [...new Set([...entity.members, ...entity.managers])];
-			} else {
-				members = entity.members || entity.managers;
-			}
+			const members: string[] = [];
+
+			entity.members.forEach((member) => {
+				members.push(member.employeeId);
+			});
 
 			const employees = await this.employeeRepository.findByIds(members, {
 				relations: ['user']
@@ -99,7 +101,11 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 				const teamEmployee = new OrganizationTeamEmployee();
 				teamEmployee.employeeId = employee.id;
 				teamEmployee.employee = employee;
-				if (entity.managers && entity.managers.includes(employee.id)) {
+
+				const member = entity.members.find(
+					(m) => m.employeeId === employee.id
+				);
+				if (member.roleId === managerRole.id) {
 					teamEmployee.roleId = managerRole.id;
 					teamEmployee.role = managerRole;
 				}
