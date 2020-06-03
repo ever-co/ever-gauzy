@@ -401,7 +401,8 @@
 		"EDIT_EVENT_TYPE": " Edit Event Type"
 	},
 	"MENU": {
-		"DASHBOARD": "Dashboard",
+    "PIPELINES": "Pipelines",
+    "DASHBOARD": "Dashboard",
 		"APPOINTMENTS": "Appointments",
 		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
