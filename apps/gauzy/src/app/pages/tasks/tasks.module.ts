@@ -26,12 +26,19 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
+import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task-dialog.component';
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
 }
 
 @NgModule({
-	declarations: [TaskComponent, TaskDialogComponent],
+	declarations: [
+		TaskComponent,
+		TaskDialogComponent,
+		MyTaskDialogComponent,
+		TeamTaskDialogComponent
+	],
 	imports: [
 		NbBadgeModule,
 		TableComponentsModule,
@@ -62,6 +69,10 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		EmployeeMultiSelectModule
 	],
-	entryComponents: [TaskDialogComponent]
+	entryComponents: [
+		TaskDialogComponent,
+		MyTaskDialogComponent,
+		TeamTaskDialogComponent
+	]
 })
 export class TasksModule {}

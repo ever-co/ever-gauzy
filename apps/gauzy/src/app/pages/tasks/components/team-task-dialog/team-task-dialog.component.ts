@@ -33,7 +33,7 @@ const initialTaskValue = {
 	templateUrl: './team-task-dialog.component.html',
 	styleUrls: ['./team-task-dialog.component.scss']
 })
-export class TaskDialogComponent extends TranslationBaseComponent
+export class TeamTaskDialogComponent extends TranslationBaseComponent
 	implements OnInit {
 	form: FormGroup;
 	selectedTaskId: string;
@@ -48,7 +48,7 @@ export class TaskDialogComponent extends TranslationBaseComponent
 	tags: Tag[] = [];
 
 	constructor(
-		public dialogRef: NbDialogRef<TaskDialogComponent>,
+		public dialogRef: NbDialogRef<TeamTaskDialogComponent>,
 		private fb: FormBuilder,
 		private store: Store,
 		private _organizationsStore: Store,
