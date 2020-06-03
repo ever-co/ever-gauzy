@@ -8,6 +8,35 @@
 
 .feedbacks-line {
   margin: 0.2rem 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.top-blocks {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+  width: 98%;
+}
+
+.block {
+  border: 0.0625rem solid #e4e9f2;
+  padding: 0.5rem;
+  width: 12rem;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bottom-block {
+  width: 98%;
+  padding: 0.5rem 0.35rem 0 0.35rem;
 }
 
 .feedbacks-add-card {
@@ -101,14 +130,6 @@
   margin-bottom: 0.5rem;
 }
 
-.interview-title {
-  flex-direction: row;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-bottom: 0.2rem;
-}
-
 .rating {
   padding-left: 1rem;
 }
@@ -142,4 +163,8 @@
 
 .disabled {
   color: rgba(143, 155, 179, 0.48);
+}
+
+.center {
+  text-align: center;
 }

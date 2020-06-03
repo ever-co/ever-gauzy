@@ -1,4 +1,4 @@
-<form class="form" [formGroup]="form" *ngIf="form">
+<form class="form" [formGroup]="form">
 	<div class="form-group title-wrap">
 		<div
 			[ngClass]="{
@@ -43,7 +43,6 @@
 		[(ngModel)]="selectedRange"
 	>
 	</ngx-timer-range-picker>
-
 	<div class="form-group">
 		<ga-employee-multi-select
 			[allEmployees]="employees"

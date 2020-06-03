@@ -123,41 +123,57 @@
 		<nb-card *ngFor="let feedback of feedbackList; let i = index">
 			<nb-card-body class="feedbacks-card">
 				<div class="feedbacks-line">
-					<p class="interview-title">
-						<span *ngIf="feedback.interviewTitle" class="mr-3">
-							<nb-icon
-								class="mr-1"
-								icon="people-outline"
-							></nb-icon>
-							{{ feedback.interviewTitle }}
-						</span>
-						<ga-star-rating-output
-							[rate]="feedback.rating"
-						></ga-star-rating-output>
-					</p>
-
-					<div class="feedback-info">
-						<img
-							*ngIf="feedback?.interviewer?.employeeImageUrl"
-							class="image-small mr-2"
-							[src]="feedback?.interviewer?.employeeImageUrl"
-							alt="employee Avatar"
-						/>
-						<p *ngIf="feedback?.status" class="feedback-status">
-							<nb-icon
-								class="mr-1"
-								icon="checkmark-square-2-outline"
-							></nb-icon>
-							<span *ngIf="feedback.status === 'HIRED'"
-								>Hire</span
-							>
-							<span *ngIf="feedback.status === 'REJECTED'">
-								Reject</span
-							>
-						</p>
+					<div class="top-blocks">
+						<div class="block" *ngIf="feedback?.interviewTitle">
+							<strong>Interview</strong>
+							<span class="center">
+								{{ feedback.interviewTitle }}
+							</span>
+						</div>
+						<div class="block" *ngIf="feedback?.interviewer">
+							<strong>Interviewer</strong>
+							<img
+								nbTooltip=" {{
+									feedback?.interviewer?.employeeName
+								}}"
+								nbTooltipPlacement="top"
+								*ngIf="feedback?.interviewer?.employeeImageUrl"
+								class="image-small mr-2"
+								[src]="feedback?.interviewer?.employeeImageUrl"
+								alt="employee Avatar"
+							/>
+						</div>
+						<div class="block" *ngIf="feedback?.status">
+							<strong>Status</strong>
+							<p class="feedback-status">
+								<span *ngIf="feedback.status === 'HIRED'">
+									<nb-icon
+										class="mr-1 success"
+										icon="checkmark-square-2-outline"
+									></nb-icon>
+									Hire</span
+								>
+								<span *ngIf="feedback.status === 'REJECTED'">
+									<nb-icon
+										class="mr-1 error"
+										icon="close-square-outline"
+									></nb-icon>
+									Reject</span
+								>
+							</p>
+						</div>
+						<div class="block">
+							<strong>Rating</strong>
+							<ga-star-rating-output
+								[rate]="feedback.rating"
+							></ga-star-rating-output>
+						</div>
 					</div>
 
-					{{ feedback.description }}
+					<div class="bottom-block">
+						<strong>Description: </strong>
+						{{ feedback.description }}
+					</div>
 				</div>
 
 				<nb-actions class="float-right" e="medium">
