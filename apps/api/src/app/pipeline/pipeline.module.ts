@@ -12,7 +12,7 @@ import { Pipeline } from './pipeline.entity';
     TypeOrmModule.forFeature([
       Pipeline,
     ]),
-    // AuthModule,
+    AuthModule,
   ],
   controllers: [
     PipelineController,

@@ -7,7 +7,7 @@ import { PipelineService } from './pipeline.service';
 
 @Controller()
 @ApiTags('Pipeline')
-// @UseGuards( AuthGuard( 'jwt' ) )
+@UseGuards( AuthGuard( 'jwt' ) )
 export class PipelineController extends CrudController<Pipeline> {
 	public constructor(pipelineService: PipelineService) {
 		super(pipelineService);
