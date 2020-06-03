@@ -65,10 +65,19 @@ export class InvoicesService {
 			.toPromise();
 	}
 
-	sendEmail(email: String, isEstimate: boolean): Promise<any> {
+	sendEmail(
+		email: string,
+		base64: string,
+		invoiceNumber: number,
+		isEstimate: boolean
+	): Promise<any> {
 		return this.http
 			.put<any>(`/api/invoices/email/${email}`, {
-				params: { isEstimate },
+				params: {
+					isEstimate,
+					base64,
+					invoiceNumber
+				}
 			})
 			.pipe(first())
 			.toPromise();

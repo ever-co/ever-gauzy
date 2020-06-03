@@ -112,6 +112,8 @@ export class EmailService extends CrudService<IEmail> {
 	emailInvoice(
 		languageCode: LanguagesEnum,
 		email: string,
+		base64: string,
+		invoiceNumber: number,
 		isEstimate: boolean,
 		originUrl?: string
 	) {
@@ -119,10 +121,16 @@ export class EmailService extends CrudService<IEmail> {
 			.send({
 				template: isEstimate ? 'email-estimate' : 'email-invoice',
 				message: {
-					to: `${email}`
-					// attachments: [{
-					// 	filename: 'Invoice.pdf'
-					// }]
+					to: `${email}`,
+					attachments: [
+						{
+							filename: `${
+								isEstimate ? 'Estimate' : 'Invoice'
+							}-${invoiceNumber}.pdf`,
+							content: base64,
+							encoding: 'base64'
+						}
+					]
 				},
 				locals: {
 					locale: languageCode,
@@ -131,7 +139,9 @@ export class EmailService extends CrudService<IEmail> {
 			})
 			.then((res) => {
 				this.createEmailRecord({
-					templateName: 'email-invoice',
+					templateName: isEstimate
+						? 'email-estimate'
+						: 'email-invoice',
 					email,
 					languageCode,
 					message: res.originalMessage

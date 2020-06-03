@@ -227,6 +227,7 @@
 		"nodemailer-handlebars": "^1.0.0",
 		"normalize.css": "^8.0.1",
 		"pace-js": "^1.0.2",
+		"pdfmake": "^0.1.65",
 		"pm2": "^4.2.3",
 		"pug": "^2.0.4",
 		"reflect-metadata": "^0.1.13",

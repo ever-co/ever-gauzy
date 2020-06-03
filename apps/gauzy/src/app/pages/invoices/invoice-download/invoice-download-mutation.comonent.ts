@@ -2,9 +2,19 @@ import { Component } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { OrganizationClients, Invoice, Organization } from '@gauzy/models';
-import * as jspdf from 'jspdf';
-import * as html2canvas from 'html2canvas';
+import {
+	OrganizationClients,
+	Invoice,
+	Organization,
+	InvoiceTypeEnum
+} from '@gauzy/models';
+import * as pdfMake from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { EmployeesService } from '../../../@core/services';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { TasksService } from '../../../@core/services/tasks.service';
+import { ProductService } from '../../../@core/services/product.service';
+import { generatePdf } from '../../../@shared/invoice/generate-pdf';
 
 @Component({
 	selector: 'ga-invoice-send',
@@ -16,11 +26,16 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 	invoice: Invoice;
 	organization: Organization;
 	isEstimate: boolean;
+	tableBody: any;
 
 	constructor(
 		protected dialogRef: NbDialogRef<InvoiceDownloadMutationComponent>,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private employeeService: EmployeesService,
+		private projectService: OrganizationProjectsService,
+		private taskService: TasksService,
+		private productService: ProductService
 	) {
 		super(translateService);
 	}
@@ -29,28 +44,43 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 		this.dialogRef.close();
 	}
 
-	download() {
-		const data = document.getElementsByClassName('contentToConvert')[0];
-		(html2canvas as any)(data).then((canvas) => {
-			const imgWidth = 102;
-			const imgHeight = (canvas.height * imgWidth) / canvas.width;
-			const contentDataURL = canvas.toDataURL('image/png');
-			const pdf = new jspdf('p', 'mm', 'a4');
-			const position = 0;
-			pdf.addImage(
-				contentDataURL,
-				'PNG',
-				0,
-				position,
-				imgWidth,
-				imgHeight
-			);
-			pdf.save(
-				`${this.isEstimate ? 'Estimate' : 'Invoice'} ${
+	async download() {
+		pdfMake.vfs = pdfFonts.pdfMake.vfs;
+		let docDefinition;
+		let service;
+
+		switch (this.invoice.invoiceType) {
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+				service = this.employeeService;
+				break;
+			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+				service = this.projectService;
+				break;
+			case InvoiceTypeEnum.BY_TASK_HOURS:
+				service = this.taskService;
+				break;
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				service = this.productService;
+				break;
+			default:
+				break;
+		}
+
+		docDefinition = await generatePdf(
+			this.invoice,
+			this.organization,
+			this.client,
+			service
+		);
+
+		pdfMake
+			.createPdf(docDefinition)
+			.download(
+				`${this.isEstimate ? 'Estimate' : 'Invoice'}-${
 					this.invoice.invoiceNumber
-				}`
+				}.pdf`
 			);
-		});
+
 		this.dialogRef.close();
 
 		this.toastrService.primary(
