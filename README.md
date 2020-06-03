@@ -1,5 +1,3 @@
-#### !!! Hiring: remote TypeScript / NestJS / Angular developers. Send CV to jobs@ever.co !!!
-
 # Gauzy Platform
 
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/gauzy)
@@ -191,4 +189,6 @@ All other brand and product names are trademarks, registered trademarks or servi
 [![Greenkeeper badge](https://badges.greenkeeper.io/ever-co/gauzy.svg)](https://greenkeeper.io)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fgauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
 
-#### !!! Hiring: remote TypeScript / NestJS / Angular developers. Send CV to jobs@ever.co !!!
+## P.S.
+- If you interested to run on-demand (delivery) or digital marketplace business, check open-source [Ever Platform](https://github.com/ever-co/ever)
+- [We are Hiring: remote TypeScript / NestJS / Angular developers](https://github.com/ever-co/jobs#available-positions)

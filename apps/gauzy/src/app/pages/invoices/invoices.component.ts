@@ -211,7 +211,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 									client: client,
 									invoice: this.selectedInvoice,
 									organization: org,
-									isEstimate: this.isEstimate,
+									isEstimate: this.isEstimate
 								}
 							}
 						);

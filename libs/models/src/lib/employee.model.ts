@@ -72,16 +72,18 @@ export enum PayPeriodEnum {
 	BI_WEEKLY = 'BI_WEEKLY',
 	WEEKLY = 'WEEKLY',
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
-	MONTHLY = 'MONTHLY',
+	MONTHLY = 'MONTHLY'
 }
 export interface EmployeeLevel {
 	id: string;
 	level: string;
 	organizationId: string;
+	tag?: Tag[];
 }
 
 export interface EmployeeLevelInput {
 	id?: string;
 	level: string;
 	organizationId: string;
+	tags?: Tag[];
 }

@@ -20,9 +20,9 @@ export class HelpCenterService {
 			.pipe(first())
 			.toPromise();
 	}
-	update(updateInput: any): Promise<any> {
+	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put('/api/help-center', updateInput)
+			.put(`/api/help-center/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

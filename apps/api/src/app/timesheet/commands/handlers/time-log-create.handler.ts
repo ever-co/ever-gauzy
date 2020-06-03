@@ -19,7 +19,7 @@ export class TimeLogCreateHandler
 				projectId,
 				logType,
 				startedAt,
-				timesheetId,
+				timesheetId
 			} = input;
 
 			return await this._timeLogService.create({
@@ -28,7 +28,7 @@ export class TimeLogCreateHandler
 				logType,
 				startedAt,
 				timesheetId,
-				stoppedAt: moment(startedAt).add(duration, 'seconds').toDate(),
+				stoppedAt: moment(startedAt).add(duration, 'seconds').toDate()
 			});
 		} catch (error) {
 			throw new BadRequestException('Cannot create time log');

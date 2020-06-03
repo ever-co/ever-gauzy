@@ -11,7 +11,7 @@ import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-ha
 @Component({
 	selector: 'ngx-sync-data-selection',
 	templateUrl: './sync-data-selection.component.html',
-	styleUrls: ['./sync-data-selection.component.scss'],
+	styleUrls: ['./sync-data-selection.component.scss']
 })
 export class SyncDataSelectionComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {

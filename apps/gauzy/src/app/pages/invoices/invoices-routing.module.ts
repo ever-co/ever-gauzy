@@ -14,48 +14,48 @@ import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimat
 const routes: Routes = [
 	{
 		path: '',
-		component: InvoicesComponent,
+		component: InvoicesComponent
 	},
 	{
 		path: 'add',
-		component: InvoiceAddComponent,
+		component: InvoiceAddComponent
 	},
 	{
 		path: 'edit/:id',
-		component: InvoiceEditComponent,
+		component: InvoiceEditComponent
 	},
 	{
 		path: 'received-invoices',
-		component: InvoicesReceivedComponent,
+		component: InvoicesReceivedComponent
 	},
 	{
 		path: 'view/:id',
-		component: InvoiceViewComponent,
+		component: InvoiceViewComponent
 	},
 	{
 		path: 'estimates',
-		component: EstimatesComponent,
+		component: EstimatesComponent
 	},
 	{
 		path: 'estimates/add',
-		component: EstimateAddComponent,
+		component: EstimateAddComponent
 	},
 	{
 		path: 'estimates/edit/:id',
-		component: EstimateEditComponent,
+		component: EstimateEditComponent
 	},
 	{
 		path: 'received-estimates',
-		component: EstimatesReceivedComponent,
+		component: EstimatesReceivedComponent
 	},
 	{
 		path: 'estimates/view/:id',
-		component: EstimateViewComponent,
-	},
+		component: EstimateViewComponent
+	}
 ];
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
-	exports: [RouterModule],
+	exports: [RouterModule]
 })
 export class InvoicesRoutingModule {}

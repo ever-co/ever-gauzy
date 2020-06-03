@@ -8,6 +8,7 @@
 	<div *ngIf="rowData.title">{{ rowData.title }}</div>
 	<div *ngIf="rowData.jobTitle">{{ rowData.jobTitle }}</div>
 	<div *ngIf="rowData.name">{{ rowData.name }}</div>
+	<div *ngIf="rowData.level">{{ rowData.level }}</div>
 	<div class="tags">
 		<nb-badge
 			*ngFor="let tag of rowData?.tags"

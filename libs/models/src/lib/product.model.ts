@@ -16,7 +16,7 @@ export interface Product extends IBaseEntityModel {
 	productTypeId: string;
 	productCategoryId: string;
 	type?: ProductTypeTranslatable;
-	category?: ProductCategory;
+	category?: ProductCategoryTranslatable;
 	tags?: Tag[];
 }
 
@@ -43,12 +43,23 @@ export interface ProductTypeTranslated extends IBaseEntityModel {
 	description: string;
 }
 
-export interface ProductCategory extends IBaseEntityModel {
-	name: string;
-	organizationId?: string;
-	description: string;
+export interface ProductCategoryTranslatable
+	extends ITranslatable<ProductCategoryTranslation> {
 	imageUrl: string;
-	organization: Organization;
+	organizationId?: string;
+	organization?: Organization;
+}
+
+export interface ProductCategoryTranslation
+	extends ITranslation<ProductCategoryTranslatable> {
+	name: string;
+	description: string;
+}
+
+export interface ProductCategoryTranslated extends IBaseEntityModel {
+	imageUrl: string;
+	name: string;
+	description: string;
 }
 
 export interface ProductVariant extends IBaseEntityModel {
