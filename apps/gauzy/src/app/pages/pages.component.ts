@@ -188,7 +188,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translated: false,
 						translationKey: 'MENU.PAYMENTS'
 					}
-				}
+				},
+        {
+          title: 'Pipelines',
+          icon: 'funnel-outline',
+          link: '/pages/sales/pipelines',
+          hidden: false,
+          data: {
+            translated: false,
+            translationKey: 'MENU.PIPELINES',
+            permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
+          }
+        },
 			]
 		},
 		{
