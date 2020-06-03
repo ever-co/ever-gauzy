@@ -81,6 +81,7 @@ import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 import { HelpCenterModule } from './help-center/help-center.module';
+import { PipelineModule } from './pipeline/pipeline.module';
 
 @Module({
 	imports: [
@@ -313,6 +314,10 @@ import { HelpCenterModule } from './help-center/help-center.module';
 					{
 						path: '/availability-slots',
 						module: AvailabilitySlotsModule
+					},
+					{
+						path: '/pipelines',
+						module: PipelineModule
 					}
 				]
 			}
@@ -368,6 +373,7 @@ import { HelpCenterModule } from './help-center/help-center.module';
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,
+		PipelineModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
