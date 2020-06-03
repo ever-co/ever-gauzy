@@ -16,9 +16,9 @@ import { CommonModule } from '@angular/common';
   ],
   imports: [
     PipelinesRouting,
-    NbCardModule,
     TranslateModule,
     NbSelectModule,
+    NbCardModule,
     CommonModule,
   ],
 })

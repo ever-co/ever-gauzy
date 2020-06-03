@@ -11,8 +11,8 @@ import { Injectable } from '@angular/core';
 @Injectable()
 export class PipelinesService extends Service<
 	Pipeline,
-	PipelineCreateInput,
-	PipelineFindInput
+  PipelineFindInput,
+	PipelineCreateInput
 > {
 	public constructor(protected store: Store, protected http: HttpClient) {
 		super({ http, basePath: '/api/pipelines' });

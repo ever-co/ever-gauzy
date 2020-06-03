@@ -65,3 +65,5 @@ export * from './lib/translation.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
+
+export * from './lib/pipeline.model';
