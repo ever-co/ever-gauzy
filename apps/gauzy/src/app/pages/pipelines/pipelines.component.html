@@ -1,3 +1,12 @@
 <nb-card>
-  - - -
+  <nb-card-header>
+    <h4 [innerHTML]="'PIPELINES_PAGE.HEADER' | translate"></h4>
+  </nb-card-header>
+  <nb-card-body>
+    <nb-select [(selected)]="userOrganization" [placeholder]="'PIPELINES_PAGE.SELECT_ORGANIZATION' | translate">
+      <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization" [style.whiteSpace]="'pre'">
+        {{ userOrganization.organization.name }}
+      </nb-option>
+    </nb-select>
+  </nb-card-body>
 </nb-card>

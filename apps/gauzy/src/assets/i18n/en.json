@@ -1491,5 +1491,9 @@
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:"
-	}
+	},
+  "PIPELINES_PAGE": {
+    "HEADER": "Pipelines",
+    "SELECT_ORGANIZATION":  "Organization"
+  }
 }

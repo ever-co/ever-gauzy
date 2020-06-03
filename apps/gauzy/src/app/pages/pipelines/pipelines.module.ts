@@ -1,7 +1,9 @@
 import { NgModule } from '@angular/core';
 import { PipelinesComponent } from './pipelines.component';
-import { NbCardModule } from '@nebular/theme';
+import { NbCardModule, NbSelectModule } from '@nebular/theme';
 import { PipelinesRouting } from './pipelines.routing';
+import { TranslateModule } from '@ngx-translate/core';
+import { CommonModule } from '@angular/common';
 
 
 
@@ -15,6 +17,9 @@ import { PipelinesRouting } from './pipelines.routing';
   imports: [
     PipelinesRouting,
     NbCardModule,
+    TranslateModule,
+    NbSelectModule,
+    CommonModule,
   ],
 })
 export class PipelinesModule
