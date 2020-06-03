@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { UserOrganization } from '@gauzy/models';
+import { Pipeline, UserOrganization } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
+import { PipelinesService } from '../../@core/services/pipelines.service';
 
 
 
@@ -16,8 +17,13 @@ export class PipelinesComponent implements OnInit
 
   public userOrganization: UserOrganization;
 
+  public pipelines: Pipeline[];
+
+  public pipeline: Pipeline;
+
   public constructor(
     private store: Store,
+    private pipelinesService: PipelinesService,
     private usersOrganizationsService: UsersOrganizationsService)
   {
   }
@@ -29,9 +35,17 @@ export class PipelinesComponent implements OnInit
         userId: this.store.userId,
       })
       .then( ({ items }) => {
-        this.userOrganizations = items;
         this.userOrganization = items[0];
+        this.userOrganizations = items;
+        this.updatePipelines();
       });
+  }
+
+  public updatePipelines(): void {
+    if ( !this.userOrganization?.id ) return;
+    this.pipelinesService.find( [], {
+      organizationId: this.userOrganization?.organization?.id,
+    }).then( items => this.pipelines = items );
   }
 
 }

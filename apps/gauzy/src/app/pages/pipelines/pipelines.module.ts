@@ -4,6 +4,7 @@ import { NbCardModule, NbSelectModule } from '@nebular/theme';
 import { PipelinesRouting } from './pipelines.routing';
 import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
+import { PipelinesService } from '../../@core/services/pipelines.service';
 
 
 
@@ -13,6 +14,9 @@ import { CommonModule } from '@angular/common';
   ],
   exports: [
     PipelinesComponent,
+  ],
+  providers: [
+    PipelinesService,
   ],
   imports: [
     PipelinesRouting,
