@@ -22,6 +22,6 @@
     </nb-actions>
     <hr>
 
-    <ng2-smart-table [settings]="{ columns: { ID: { title: 'ID' }, name: { title: 'NAME' } } }" [source]="pipelines"></ng2-smart-table>
+    <ng2-smart-table [settings]="{ actions: false, columns: { name: { editor: false, title: 'PIPELINES_PAGE.PIPELINE_NAME' | translate } } }" [source]="pipelines"></ng2-smart-table>
   </nb-card-body>
 </nb-card>
