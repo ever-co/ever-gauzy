@@ -6,14 +6,15 @@ import {
 	Tag,
 	ProductTypeTranslated,
 	IVariantOptionCombination,
-	ProductCategoryTranslated
+	ProductCategoryTranslated,
+	ProductVariant
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from 'apps/gauzy/src/app/@core/services/product-type.service';
 import { ProductCategoryService } from 'apps/gauzy/src/app/@core/services/product-category.service';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject, BehaviorSubject } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
 import { Location } from '@angular/common';
@@ -40,7 +41,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	deletedOptions: Array<ProductOption> = [];
 
 	optionsCombinations: Array<IVariantOptionCombination> = [];
-	variants$: BehaviorSubject<any[]> = new BehaviorSubject([]);
+	variants$: BehaviorSubject<ProductVariant[]> = new BehaviorSubject([]);
 
 	languages: Array<string>;
 	tags: Tag[] = [];
@@ -56,6 +57,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 		private productCategoryService: ProductCategoryService,
 		private route: ActivatedRoute,
 		private location: Location,
+		private router: Router,
 		private toastrService: NbToastrService,
 		private productVariantService: ProductVariantService
 	) {
@@ -63,14 +65,13 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.loadProductTypes();
-		this.loadProductCategories();
 
 		this.route.params
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe(async (params) => {
 				this.inventoryItem = params.id
-					? await this.productService.getById(params.id)
+					? await this.productService.getById(params.id,
+						['category', 'type', 'options', 'variants', 'tags'])
 					: null;
 
 				this.variants$.next(
@@ -84,7 +85,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 				this._initializeForm();
 
-				console.log(this.inventoryItem, 'on init');
 			});
 
 		this.store.selectedOrganization$
@@ -92,7 +92,8 @@ export class ProductFormComponent extends TranslationBaseComponent
 			.subscribe((organization) => {
 				if (organization) {
 					this.selectedOrganizationId = organization.id;
-					//tstodo
+					this.loadProductTypes();
+					this.loadProductCategories();
 				}
 			});
 
@@ -186,6 +187,11 @@ export class ProductFormComponent extends TranslationBaseComponent
 				);
 
 				this.variants$.next(this.inventoryItem.variants);
+
+				this.router.navigate([
+					`/pages/organization/inventory/edit/${this.inventoryItem.id}`
+				]);
+
 			} else {
 				this.inventoryItem = await this.productService.update(
 					productRequest
@@ -213,7 +219,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	// tstodo
-	handleImageUploadError(event: any) {}
+	handleImageUploadError(event: any) { }
 
 	onCancel() {
 		this.location.back();

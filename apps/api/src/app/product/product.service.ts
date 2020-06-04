@@ -36,6 +36,10 @@ export class ProductService extends CrudService<Product> {
 		return { items, total };
 	}
 
+	async findById(id: string, options: any): Promise<Product> {
+		return await this.productRepository.findOne(id, options);
+	}
+
 	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
 		return await this.productRepository.save(productRequest);
 	}

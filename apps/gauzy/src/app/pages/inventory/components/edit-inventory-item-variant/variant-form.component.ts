@@ -12,7 +12,7 @@ import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product
 import { ProductVariantPriceService } from 'apps/gauzy/src/app/@core/services/product-variant-price.service';
 import { ProductVariantSettingsService } from 'apps/gauzy/src/app/@core/services/product-variant-settings.service';
 import { Subject } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
 
@@ -63,8 +63,6 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 							params.itemVariantId
 					  )
 					: null;
-
-				console.log(this.itemVariant);
 
 				this._initializeForm();
 			});
@@ -213,6 +211,8 @@ export class InventoryVariantFormComponent extends TranslationBaseComponent
 				this.getTranslation('INVENTORY_PAGE.PRODUCT_VARIANT_SAVED'),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
+
+			this.location.back();
 		} catch {
 			this.toastrService.danger(
 				this.getTranslation('TOASTR.TITLE.ERROR'),

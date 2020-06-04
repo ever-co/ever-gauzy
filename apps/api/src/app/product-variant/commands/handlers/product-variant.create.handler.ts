@@ -22,10 +22,10 @@ export class ProductVariantCreateHandler
 	): Promise<ProductVariant[]> {
 		const variantCreateInput: IVariantCreateInput = command.productInput;
 
-		const product = await this.productService.findOne({
-			id: variantCreateInput.product.id,
-			relations: ['options']
-		});
+		const product = await this.productService.findById(
+			variantCreateInput.product.id,
+			{ relations: ['options'] }
+		);
 		const productOptions = product.options;
 		const optionCombinations = variantCreateInput.optionCombinations;
 

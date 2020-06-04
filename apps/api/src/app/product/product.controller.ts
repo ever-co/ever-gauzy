@@ -8,7 +8,8 @@ import {
 	Param,
 	HttpCode,
 	UseGuards,
-	Delete
+	Delete,
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
@@ -23,6 +24,7 @@ import { PermissionsEnum, IProductCreateInput } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { ProductDeleteCommand } from './commands';
 import { DeleteResult } from 'typeorm';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Product')
 @UseGuards(AuthGuard('jwt'))
@@ -33,6 +35,27 @@ export class ProductController extends CrudController<Product> {
 		private commandBus: CommandBus
 	) {
 		super(productService);
+	}
+	@ApiOperation({ summary: 'Find Product by id ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get(':id')
+	async findById(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Product> {
+		const { relations = [] } = data;
+
+		return this.productService.findById(id, {
+			relations
+		});
 	}
 
 	@ApiOperation({

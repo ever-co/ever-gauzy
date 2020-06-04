@@ -1,19 +1,20 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { ProductCategory, Organization } from '@gauzy/models';
+import { ProductCategoryTranslated, Organization } from '@gauzy/models';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { LocalDataSource } from 'ng2-smart-table';
+import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { first, take } from 'rxjs/operators';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { Location } from '@angular/common';
-import { ProductCategoryService } from '../../../../@core/services/product-category.service';
-import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation/product-category-mutation/product-category-mutation.component';
+import { ProductCategoryService } from 'apps/gauzy/src/app/@core/services/product-category.service';
+import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { takeUntil, first } from 'rxjs/operators';
 import { ImageRowComponent } from '../table-components/image-row.component';
-import { Store } from '../../../../@core/services/store.service';
+import { ProductCategoryMutationComponent } from 'apps/gauzy/src/app/@shared/product-mutation/product-category-mutation/product-category-mutation.component';
+import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { Location } from '@angular/common';
 
 export interface SelectedProductCategory {
-	data: ProductCategory;
+	data: ProductCategoryTranslated;
 	isSelected: boolean;
 }
 
@@ -23,13 +24,15 @@ export interface SelectedProductCategory {
 	styleUrls: ['./product-categories.component.scss']
 })
 export class ProductCategoriesComponent extends TranslationBaseComponent
-	implements OnInit {
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading = true;
-	selectedItem: ProductCategory;
+	selectedItem: ProductCategoryTranslated;
 	selectedOrganization: Organization;
 	smartTableSource = new LocalDataSource();
 	disableButton = true;
+
+	private _ngDestroy$ = new Subject<void>();
 
 	@ViewChild('productCategoriesTable', { static: true })
 	productCategoriesTable;
@@ -46,13 +49,26 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$.pipe(take(1)).subscribe((org) => {
-			this.selectedOrganization = org;
-			this.loadSettings();
-		});
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				this.selectedOrganization = org;
+				this.loadSettings();
+			});
+
+		this.store.preferredLanguage$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(() => {
+				this.loadSettings();
+			});
 
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
+	}
+
+	ngOnDestroy(): void {
+		this._ngDestroy$.next();
+		this._ngDestroy$.complete();
 	}
 
 	async loadSmartTable() {
@@ -87,6 +103,7 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 			: null;
 
 		const { items } = await this.productCategoryService.getAll(
+			this.store.preferredLanguage,
 			['organization'],
 			searchCriteria
 		);
@@ -102,11 +119,15 @@ export class ProductCategoriesComponent extends TranslationBaseComponent
 	}
 
 	async save() {
+		const editProductCategory = this.selectedItem
+			? await this.productCategoryService.getById(this.selectedItem.id)
+			: null;
+
 		const dialog = this.dialogService.open(
 			ProductCategoryMutationComponent,
 			{
 				context: {
-					productCategory: this.selectedItem
+					productCategory: editProductCategory
 				}
 			}
 		);

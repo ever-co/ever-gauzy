@@ -26,7 +26,7 @@ export interface IProductCreateInput {
 	enabled: boolean;
 	code: string;
 	type?: ProductTypeTranslatable;
-	category?: ProductCategory;
+	category?: ProductCategoryTranslatable;
 	tags?: Tag[];
 	optionCreateInputs?: ProductOption[];
 	optionDeleteInputs?: ProductOption[];
@@ -34,6 +34,7 @@ export interface IProductCreateInput {
 
 export interface ProductFindInput {
 	organizationId?: string;
+	id?: string;
 }
 
 export interface ProductTypeTranslatable

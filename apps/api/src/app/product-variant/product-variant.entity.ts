@@ -58,7 +58,7 @@ export class ProductVariant extends Base implements IProductVariant {
 	@Column({ default: true })
 	enabled: boolean;
 
-	@ManyToMany(() => ProductOption)
+	@ManyToMany(() => ProductOption, { eager: true })
 	@JoinTable()
 	options: ProductOption[];
 

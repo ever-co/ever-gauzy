@@ -3,6 +3,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductCategory } from './product-category.entity';
 import { Repository } from 'typeorm';
+import { ProductCategoryTranslated } from '@gauzy/models';
 
 @Injectable()
 export class ProductCategoryService extends CrudService<ProductCategory> {
@@ -29,14 +30,16 @@ export class ProductCategoryService extends CrudService<ProductCategory> {
 		relations?: string[],
 		findInput?: any,
 		langCode?: string
-	): Promise<IPagination<ProductCategory>> {
+	): Promise<IPagination<ProductCategory | ProductCategoryTranslated>> {
 		const allProductCategories = await this.productCategoryRepository.find({
 			where: findInput,
 			relations
 		});
 
 		return {
-			items: allProductCategories.map((type) => type.translate(langCode)),
+			items: allProductCategories.map((category) =>
+				category.translate(langCode)
+			),
 			total: allProductCategories.length
 		};
 	}
