@@ -1,4 +1,3 @@
-import { IDateRange } from './../../../../../../../libs/models/src/lib/timesheet.model';
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import {
 	Component,
@@ -10,12 +9,17 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
-import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
+import {
+	Candidate,
+	ICandidateInterview,
+	Employee,
+	IDateRange
+} from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { first } from 'rxjs/operators';
+import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
@@ -113,6 +117,7 @@ export class CandidateInterviewMutationComponent
 			endTime: interviewForm.endTime,
 			note: this.form.get('note').value
 		};
+
 		//	if editing
 		if (interviewForm.interviewers === null) {
 			interviewForm.interviewers = this.candidateInterviewForm.employeeIds;
