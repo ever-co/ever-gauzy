@@ -12,12 +12,12 @@
         </nb-select>
       </nb-action>
       <nb-action>
-        <input nbInput [(ngModel)]="createInput.name" (ngModelChange)="filterPipelines()" [placeholder]="'PIPELINES_PAGE.NEW_PIPELINE' | translate" type="text">
-      </nb-action>
-      <nb-action *ngIf="canCreate">
-        <button nbButton status="control" (click)="createPipeline()">
-          <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
-        </button>
+        <nb-form-field>
+          <input [(ngModel)]="createInput.name" (ngModelChange)="filterPipelines()"
+                 [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate" nbInput shape="round" type="text">
+          <nb-icon [icon]="canCreate ? 'plus-circle-outline': 'search-outline'"
+                   pack="eva" nbSuffix (click)="canCreate && createPipeline()"></nb-icon>
+        </nb-form-field>
       </nb-action>
     </nb-actions>
     <hr>

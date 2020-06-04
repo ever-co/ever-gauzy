@@ -1494,8 +1494,7 @@
 	},
   "PIPELINES_PAGE": {
     "HEADER": "Pipelines",
-    "NEW_PIPELINE": "New Pipeline",
-    "PIPELINE_NAME": "Pipeline Name",
-    "SELECT_ORGANIZATION":  "Organization"
+    "SELECT_ORGANIZATION":  "Organization",
+    "FILTER_OR_CREATE": "Filter or Create"
   }
 }

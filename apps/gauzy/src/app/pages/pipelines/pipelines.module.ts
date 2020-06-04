@@ -40,6 +40,7 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
     NbCardModule,
     NbIconModule,
     FormsModule,
+    NbFormFieldModule,
   ],
 })
 export class PipelinesModule
