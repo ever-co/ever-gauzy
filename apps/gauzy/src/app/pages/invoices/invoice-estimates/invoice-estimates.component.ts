@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
 	selector: 'ga-estimates',
 	templateUrl: './invoice-estimates.component.html',
-	styleUrls: ['./invoice-estimates.component.scss'],
+	styleUrls: ['./invoice-estimates.component.scss']
 })
 export class EstimatesComponent extends TranslationBaseComponent
 	implements OnInit {

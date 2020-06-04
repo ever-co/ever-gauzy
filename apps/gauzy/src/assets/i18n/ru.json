@@ -454,7 +454,8 @@
 		"INVOICES": "Счета",
 		"ORGANIZATION": "Организация",
 		"RECURRING_INVOICES": "Повторяющиеся счета",
-		"INVOICES_RECIEVED": "Полученные счета",
+		"INVOICES_RECEIVED": "Полученные счета",
+		"ESTIMATES_RECEIVED": "Полученные оценки",
 		"ESTIMATES": "Оценки",
 		"MY_TASKS": "Мои задачи",
 		"TEAM_TASKS": "Задачи команды",
@@ -695,6 +696,8 @@
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
 				"SCHEDULED_INTERVIEWS": "Запланированные интервью",
+				"CONTINUE_WITH": "Продолжить с ",
+				"PAST_DATE": "Вы выбрали день в прошлом",
 				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
@@ -1124,12 +1127,18 @@
 	"INVOICES_PAGE": {
 		"HEADER": "Счета",
 		"INVOICE_NUMBER": "Номер счёта",
+		"ESTIMATE_NUMBER": "Расчетный номер",
+		"ESTIMATE_DATE": "Предполагаемая дата",
 		"TOTAL_VALUE": "Общая стоимость",
 		"PAID_STATUS": "Оплаченный статус",
 		"INVOICES_ADD_INVOICE": "Счет добавлен",
+		"INVOICES_ADD_ESTIMATE": "Приблизительно Добавлено",
 		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_EDIT_ESTIMATE": "Отредактировано",
 		"INVOICES_DUPLICATE_INVOICE": "Счет скопирован",
+		"INVOICES_DUPLICATE_ESTIMATE": "Дублирование",
 		"INVOICES_DELETE_INVOICE": "Счет удален",
+		"INVOICES_DELETE_ESTIMATE": "Рассчитать Удаленные",
 		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
 		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
 		"INVOICES_SELECT_CURRENCY": "Валюта",
@@ -1140,8 +1149,11 @@
 		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
 		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
+		"ADD_ESTIMATE": "Добавить оценку",
 		"EDIT_INVOICE": "Изменить счет",
+		"EDIT_ESTIMATE": "Изменить оценку",
 		"VIEW_INVOICE": "Просмотр счета",
+		"VIEW_ESTIMATE": "Посмотреть оценку",
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
@@ -1157,16 +1169,21 @@
 		"NAME": "Имя",
 		"PAID": "Оплачено",
 		"NOT_PAID": "Не оплачено",
-		"RECIEVED_INVOICES": "Полученные счета",
+		"RECEIVED_INVOICES": "Полученные счета",
+		"RECEIVED_ESTIMATES": "Полученные оценки",
 		"SEND_INVOICE": "Счет отправлен",
+		"SEND_ESTIMATE": "Послано",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
+			"ESTIMATE_TYPE": "Тип оценки",
 			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
+			"GENERATE_ESTIMATE_ITEMS": "Сгенерировать оценку предметов",
 			"BY_EMPLOYEE_HOURS": "По часам сотрудника",
 			"BY_PROJECT_HOURS": "По часам проекта",
 			"BY_TASK_HOURS": "По часам задания",
 			"BY_PRODUCTS": "По товарам",
-			"DETAILS_INVOICE_ITEMS": "Детали накладной"
+			"DETAILS_INVOICE_ITEMS": "Детали накладной",
+			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",
@@ -1188,20 +1205,30 @@
 			"TASK_VALUE": "Задание не может быть пустым"
 		},
 		"SEND": {
-			"CONFIRMATION": "Отправить этот счет",
-			"ALREADY_SENT": "Этот счет уже был отправлен на"
+			"CONFIRMATION_INVOICE": "Отправить этот счет",
+			"CONFIRMATION_ESTIMATE": "Отправить эту оценку",
+			"ALREADY_SENT_INVOICE": "Этот счет уже был отправлен на",
+			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
 			"TO": "К"
 		},
 		"DOWNLOAD": {
-			"CONFIRMATION": "Скачать этот счет-фактуру ?",
-			"INVOICE_DOWNLOAD": "Счет загружен"
+			"CONFIRMATION_INVOICE": "Скачать этот счет-фактуру ?",
+			"CONFIRMATION_ESTIMATE": "Скачать эту оценку?",
+			"INVOICE_DOWNLOAD": "Счет загружен",
+			"ESTIMATE_DOWNLOAD": "Оценочные загруженные"
 		},
 		"EMAIL": {
 			"EMAIL_INVOICE": "Отправить этот счет по электронной почте?",
+			"EMAIL_ESTIMATE": "Отправить эту оценку по электронной почте?",
 			"EMAIL_SENT": "Отправлено E-mail"
+		},
+		"ESTIMATES": {
+			"HEADER": "Оценки",
+			"ESTIMATE_NUMBER": "Расчетный номер",
+			"ESTIMATE_DATE": "Предполагаемая дата"
 		}
 	},
 	"HEADER": {

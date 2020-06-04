@@ -20,8 +20,15 @@ export class ProductService extends CrudService<Product> {
 		});
 
 		if (langCode) {
+			//tstodo write method
 			items.forEach((product) => {
-				product.type = product.type.translate(langCode);
+				if (product.type) {
+					product.type = product.type.translate(langCode);
+				}
+
+				if (product.category) {
+					product.category = product.category.translate(langCode);
+				}
 			});
 		}
 

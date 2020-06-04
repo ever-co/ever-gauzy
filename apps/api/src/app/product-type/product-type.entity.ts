@@ -16,14 +16,14 @@ import { ProductTypeTranslation } from './product-type-translation.entity';
 
 @Entity('product_type')
 export class ProductType extends TranslatableBase {
-	@OneToMany((type) => Product, (product) => product.type)
-	products: Product[];
-
 	@ApiProperty({ type: String, enum: ProductTypesIconsEnum })
 	@IsOptional()
 	@IsEnum(ProductTypesIconsEnum)
 	@Column({ nullable: true })
 	icon: string;
+
+	@OneToMany((type) => Product, (product) => product.type)
+	products: Product[];
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((productType: ProductType) => productType.organization)

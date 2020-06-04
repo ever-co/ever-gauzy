@@ -3,5 +3,5 @@ import { IntegrationMapSyncEntityHandler } from './integration-map.sync-entity.h
 
 export const CommandHandlers = [
 	IntegrationMapSyncProjectHandler,
-	IntegrationMapSyncEntityHandler,
+	IntegrationMapSyncEntityHandler
 ];

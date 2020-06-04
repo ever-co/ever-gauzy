@@ -1,11 +1,10 @@
 .calendar {
-  height: 45rem;
+  height: 43rem;
 }
 
 .card-calendar {
   max-width: 75rem;
   overflow-y: scroll;
-  padding-bottom: 2rem;
 }
 
 .icons {
@@ -18,4 +17,13 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+}
+
+.button {
+  padding: 0 5rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
 }

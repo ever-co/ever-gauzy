@@ -81,6 +81,7 @@ import { EventType } from '../event-types/event-type.entity';
 import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
 import { ProductTypeTranslation } from '../product-type/product-type-translation.entity';
 import { HelpCenter } from '../help-center/help-center.entity';
+import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
 
 const entities = [
 	Invite,
@@ -155,7 +156,8 @@ const entities = [
 	AppointmentEmployees,
 	EventType,
 	AvailabilitySlots,
-	ProductTypeTranslation
+	ProductTypeTranslation,
+	ProductCategoryTranslation
 ];
 
 @Module({

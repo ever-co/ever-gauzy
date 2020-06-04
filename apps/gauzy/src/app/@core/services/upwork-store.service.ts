@@ -14,15 +14,15 @@ const contractSettings = {
 			sync: true,
 			datePicker: {
 				max: new Date(),
-				selectedDate: new Date(),
-			},
-		},
+				selectedDate: new Date()
+			}
+		}
 	],
-	onlyContracts: false,
+	onlyContracts: false
 };
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class UpworkStoreService {
 	private _config$: BehaviorSubject<IUpworkApiConfig> = new BehaviorSubject(
@@ -75,7 +75,7 @@ export class UpworkStoreService {
 			integrationId,
 			organizationId,
 			contracts,
-			employeeId: this.employeeId,
+			employeeId: this.employeeId
 		});
 	}
 
@@ -100,7 +100,7 @@ export class UpworkStoreService {
 			contracts,
 			entitiesToSync,
 			config,
-			employeeId: this.employeeId,
+			employeeId: this.employeeId
 		});
 	}
 

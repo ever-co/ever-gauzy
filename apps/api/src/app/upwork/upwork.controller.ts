@@ -8,7 +8,7 @@ import {
 	UseGuards,
 	Get,
 	Query,
-	Param,
+	Param
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -22,7 +22,7 @@ import {
 	IGetWorkDiaryDto,
 	IGetContractsDto,
 	IEngagement,
-	IUpworkApiConfig,
+	IUpworkApiConfig
 } from '@gauzy/models';
 
 @UseGuards(AuthGuard('jwt'))
@@ -36,15 +36,15 @@ export class UpworkController {
 	@ApiOperation({ summary: 'Upload Upwork transaction.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Uploaded transaction',
+		description: 'Uploaded transaction'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Freelancer not found',
+		description: 'Freelancer not found'
 	})
 	@Post('/transactions')
 	@UseInterceptors(FileInterceptor('file'))
@@ -58,15 +58,15 @@ export class UpworkController {
 	@ApiOperation({ summary: 'Authorize Upwork.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Authorized Upwork',
+		description: 'Authorized Upwork'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Cannot Authorize',
+		description: 'Cannot Authorize'
 	})
 	@Post('/token-secret-pair')
 	async getAccessTokenSecretPair(
@@ -78,15 +78,15 @@ export class UpworkController {
 	@ApiOperation({ summary: 'Get Access Token.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Get Access Token',
+		description: 'Get Access Token'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request',
+		description: 'Invalid request'
 	})
 	@Post('/access-token')
 	async getAccessToken(
@@ -98,15 +98,15 @@ export class UpworkController {
 	@ApiOperation({ summary: 'Get Work Diary.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Get Work Diary',
+		description: 'Get Work Diary'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request',
+		description: 'Invalid request'
 	})
 	@Get('work-diary')
 	async getWorkDiary(@Query('data') data: string): Promise<any> {
@@ -117,15 +117,15 @@ export class UpworkController {
 	@ApiOperation({ summary: 'Get Contracts.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Get Contracts',
+		description: 'Get Contracts'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request',
+		description: 'Invalid request'
 	})
 	@Get('freelancer-contracts')
 	async getContracts(@Query('data') data: string): Promise<IEngagement[]> {
@@ -138,15 +138,15 @@ export class UpworkController {
 	@ApiOperation({ summary: 'Get Config.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Get Config',
+		description: 'Get Config'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request',
+		description: 'Invalid request'
 	})
 	@Get('config/:integrationId')
 	async getConfig(
@@ -158,15 +158,15 @@ export class UpworkController {
 	@ApiOperation({ summary: 'Sync Contracts.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Sync Contracts',
+		description: 'Sync Contracts'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request',
+		description: 'Invalid request'
 	})
 	@Post('sync-contracts')
 	async syncContracts(@Body() syncContractsDto: any): Promise<any> {
@@ -176,15 +176,15 @@ export class UpworkController {
 	@ApiOperation({ summary: 'Sync Contracts Related Data.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Sync Contracts Related Data',
+		description: 'Sync Contracts Related Data'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request',
+		description: 'Invalid request'
 	})
 	@Post('sync-contracts-related-data')
 	async syncContractsRelatedData(@Body() dto): Promise<any> {
