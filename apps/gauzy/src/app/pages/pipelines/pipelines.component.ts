@@ -92,7 +92,10 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
 
     this.pipelinesService
       .find( [], { organizationId })
-      .then( ({ items }) => this.pipelines.load( items ) );
+      .then( ({ items }) => {
+        this.pipelines.load( items );
+        this.filterPipelines();
+      });
   }
 
   public createPipeline() {

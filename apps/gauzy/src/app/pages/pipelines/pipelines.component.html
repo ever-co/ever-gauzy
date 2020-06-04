@@ -14,8 +14,8 @@
         </nb-action>
         <nb-action>
           <nb-form-field>
-            <input formControlName="name" nbInput shape="round" type="text"
-                   [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate">
+            <input [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate"
+                   (ngModelChange)="filterPipelines()" formControlName="name" nbInput shape="round" type="text">
             <nb-icon [icon]="pipelineForm.valid ? 'plus-circle-outline' : 'search-outline'"
                      pack="eva" nbSuffix (click)="pipelineForm.valid && createPipeline()"></nb-icon>
           </nb-form-field>
