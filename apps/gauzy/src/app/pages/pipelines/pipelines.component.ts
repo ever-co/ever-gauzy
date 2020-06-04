@@ -3,6 +3,7 @@ import { UsersOrganizationsService } from '../../@core/services/users-organizati
 import { Pipeline, PipelineCreateInput, UserOrganization } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
+import { LocalDataSource } from 'ng2-smart-table';
 
 
 
@@ -13,11 +14,11 @@ import { PipelinesService } from '../../@core/services/pipelines.service';
 export class PipelinesComponent implements OnInit
 {
 
+  public pipelines = new LocalDataSource( [] as Pipeline[] );
+
   public createInput: PipelineCreateInput = {} as any;
 
   public userOrganizations: UserOrganization[];
-
-  public pipelines: Pipeline[];
 
   public isCreating = false;
 
@@ -51,7 +52,7 @@ export class PipelinesComponent implements OnInit
 
     this.pipelinesService
       .find( [], { organizationId })
-      .then( ({ items }) => this.pipelines = items );
+      .then( ({ items }) => this.pipelines.load( items ) );
   }
 
   public createPipeline() {
@@ -59,7 +60,10 @@ export class PipelinesComponent implements OnInit
     this.pipelinesService
       .create( this.createInput )
       .then( () => this.updatePipelines() )
-      .finally( () => this.isCreating = false );
+      .finally( () => {
+        this.isCreating = false;
+        this.updatePipelines();
+      });
   }
 
 }
