@@ -51,6 +51,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       columns: {
         name: {
           editor: false,
+          filter: false,
           title: this.getTranslation( 'PIPELINES_PAGE.PIPELINE_NAME' ),
         },
       },
