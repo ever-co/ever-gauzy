@@ -1,18 +1,12 @@
-import {
-	Component,
-	OnInit,
-	Output,
-	EventEmitter,
-	OnDestroy
-} from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import {
 	Product,
-	ProductCategory,
 	ProductOption,
 	Tag,
 	ProductTypeTranslated,
-	IVariantOptionCombination
+	IVariantOptionCombination,
+	ProductCategoryTranslated
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from 'apps/gauzy/src/app/@core/services/product-type.service';
@@ -40,23 +34,18 @@ export class ProductFormComponent extends TranslationBaseComponent
 	hoverState: boolean;
 	selectedOrganizationId = '';
 	productTypes: ProductTypeTranslated[];
-	productCategories: ProductCategory[];
+	productCategories: ProductCategoryTranslated[];
 
 	options: Array<ProductOption> = [];
 	deletedOptions: Array<ProductOption> = [];
-	//tstodo
-	variantCreateInputs: Array<IVariantOptionCombination> = [];
+
+	optionsCombinations: Array<IVariantOptionCombination> = [];
 	variants$: BehaviorSubject<any[]> = new BehaviorSubject([]);
 
 	languages: Array<string>;
-
-	// variantSuggestions: Array<any> = [];
 	tags: Tag[] = [];
 
 	private ngDestroy$ = new Subject<void>();
-
-	@Output() save = new EventEmitter<Product>();
-	@Output() cancel = new EventEmitter<string>();
 
 	constructor(
 		readonly translationService: TranslateService,
@@ -192,7 +181,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 				this.inventoryItem.variants = await this.productVariantService.createProductVariants(
 					{
 						product: this.inventoryItem,
-						optionCombinations: this.variantCreateInputs
+						optionCombinations: this.optionsCombinations
 					}
 				);
 
@@ -233,10 +222,10 @@ export class ProductFormComponent extends TranslationBaseComponent
 	selectedTagsEvent(currentSelection: Tag[]) {
 		this.form.get('tags').setValue(currentSelection);
 	}
-	//tstodo
-	onVariantCreateInputsUpdate(
-		variantCreateInputs: IVariantOptionCombination[]
+
+	onOptionCombinationsInputsUpdate(
+		optionsCombinations: IVariantOptionCombination[]
 	) {
-		this.variantCreateInputs = variantCreateInputs;
+		this.optionsCombinations = optionsCombinations;
 	}
 }
