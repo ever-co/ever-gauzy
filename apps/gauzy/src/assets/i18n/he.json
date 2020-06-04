@@ -1029,7 +1029,11 @@
 		"IMAGE": "תמונה",
 		"LANGUAGE": "Language",
 		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
-		"ICON": "Icon"
+		"ICON": "Icon",
+		"ADD_VARIANT": "Add variant",
+		"EDIT_VARIANT": "Edit variant",
+		"NO_OPTIONS_LABEL": "(no options)",
+		"OPTIONS": "Options"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -1497,6 +1501,7 @@
 		"SELECT_EVENT_TYPES": "Please select an event type",
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
-		"EVENT_TYPE": "Event Type:"
+		"EVENT_TYPE": "Event Type:",
+		"CONFIRM_APPOINTMENT": "Appointment confirmation page"
 	}
 }
