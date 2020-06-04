@@ -1494,6 +1494,7 @@
 	},
   "PIPELINES_PAGE": {
     "HEADER": "Pipelines",
+    "NEW_PIPELINE": "New Pipeline",
     "SELECT_ORGANIZATION":  "Organization"
   }
 }

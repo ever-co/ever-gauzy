@@ -21,16 +21,18 @@ export abstract class Service<BE extends BaseEntityModel, FI = Partial<BE>, CI =
   }
 
   public create( data: CI ): Promise<BE> {
-    return this.http.post<BE>( this.basePath, data ).toPromise();
+    return this.http.post<BE>( this.basePath, data )
+      .pipe( first() )
+      .toPromise();
   }
 
-  public find(): Promise<BE[]>;
+  public find<L extends { items: BE[], total: number }>(): Promise<L>;
   public find( id: string ): Promise<BE>;
-  public find( relations: string[], data: FI ): Promise<BE[]>;
-  public find( idOrRelations?: string | string[], data?: FI ): Promise<BE | BE[]> {
+  public find<L extends { items: BE[], total: number }>( relations: string[], data: FI ): Promise<L>;
+  public find<LBE extends { items: BE[], total: number }>( idOrRelations?: string | string[], data?: FI ): Promise<BE | LBE> {
     if ( !arguments.length ) {
       return this.http
-        .get<BE[]>( this.basePath ).toPromise();
+        .get<LBE>( this.basePath ).toPromise();
     } else if ( 'string' === typeof idOrRelations ) {
       return this.http
         .get<BE>( `${ this.basePath }/${ idOrRelations }` )
@@ -38,7 +40,7 @@ export abstract class Service<BE extends BaseEntityModel, FI = Partial<BE>, CI =
     }
 
     return this.http
-      .get<BE[]>( this.basePath, {
+      .get<LBE>( this.basePath, {
         params: {
           data: JSON.stringify({
             idOrRelations,
