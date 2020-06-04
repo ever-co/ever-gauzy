@@ -80,9 +80,11 @@ export class TaskComponent extends TranslationBaseComponent
 	setView() {
 		const pathName = window.location.href;
 		if (pathName.indexOf('tasks/me') !== -1) {
+			this._myTaskStore.fetchTasks();
 			this.view = 'my-tasks';
 		} else if (pathName.indexOf('tasks/team') !== -1) {
 			this.view = 'team-tasks';
+			this._teamTaskStore.fetchTasks();
 			// load teams for the select box of teams column
 			this.loadTeams();
 			this._organizationsStore.selectedEmployee$.subscribe(
@@ -254,7 +256,9 @@ export class TaskComponent extends TranslationBaseComponent
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
-				context: {}
+				context: {
+					selectedTask: this.selectedTask
+				}
 			});
 		}
 		if (dialog) {
@@ -298,7 +302,9 @@ export class TaskComponent extends TranslationBaseComponent
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
-				context: {}
+				context: {
+					selectedTask: this.selectedTask
+				}
 			});
 		}
 		if (dialog) {

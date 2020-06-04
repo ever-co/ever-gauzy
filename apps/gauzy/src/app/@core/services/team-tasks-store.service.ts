@@ -5,7 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { TasksService } from './tasks.service';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class TeamTasksStoreService {
 	private _tasks$: BehaviorSubject<Task[]> = new BehaviorSubject([]);
@@ -20,11 +20,7 @@ export class TeamTasksStoreService {
 		return this._tasks$.getValue();
 	}
 
-	constructor(private _taskService: TasksService) {
-		if (!this.tasks.length) {
-			this.fetchTasks();
-		}
-	}
+	constructor(private _taskService: TasksService) {}
 
 	fetchTasks(employeeId = '') {
 		this._taskService
@@ -38,7 +34,7 @@ export class TeamTasksStoreService {
 			...task,
 			projectName: task.project ? task.project.name : undefined,
 			employees: task.members ? task.members : undefined,
-			assignTo: this._getTeamNames(task),
+			assignTo: this._getTeamNames(task)
 		}));
 	}
 
