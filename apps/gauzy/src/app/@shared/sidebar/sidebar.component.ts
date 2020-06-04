@@ -1,6 +1,11 @@
 import { IHelpCenter } from '@gauzy/models';
 import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
-import { TreeComponent } from 'angular-tree-component';
+import {
+	TreeComponent,
+	ITreeOptions,
+	TreeModel,
+	TreeNode
+} from 'angular-tree-component';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isEqual } from './delete-node';
@@ -42,8 +47,53 @@ export class SidebarComponent extends TranslationBaseComponent
 	public isVisibleEdit = false;
 	public isChosenNode = false;
 	public nodes: IHelpCenter[] = [];
+	options: ITreeOptions = {
+		// allowDrag: (node) => node.isLeaf,
+		allowDrag: true,
+		allowDrop: (el, { parent, index }) => {
+			if (parent.data.flag === 'article') {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	};
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
+
+	async onMoveNode($event) {
+		const movedNode = $event.node;
+		await this.helpService.delete(`${movedNode.id}`);
+		// await this.helpService.update($event.to.parent.id, {
+		// 	children: []
+		// });
+		// if (movedNode.flag === 'category') {
+		// 	await this.helpService.create({
+		// 		name: `${movedNode.name}`,
+		// 		icon: `${movedNode.icon}`,
+		// 		flag: 'category',
+		// 		privacy: `${movedNode.privacy}`,
+		// 		children: movedNode.children
+		// 	});
+		// } else {
+		// 	await this.helpService.create({
+		// 		name: `${movedNode.name}`,
+		// 		icon: `${movedNode.icon}`,
+		// 		flag: 'article',
+		// 		privacy: `${movedNode.privacy}`,
+		// 		description: `${movedNode.description}`,
+		// 		data: `${movedNode.data}`
+		// 	});
+		// }
+		// console.log(
+		// 	'Moved',
+		// 	movedNode,
+		// 	'to',
+		// 	$event.to.parent.name,
+		// 	'to',
+		// 	$event.to.index
+		// );
+	}
 
 	addNode() {
 		this.isVisibleAdd = true;

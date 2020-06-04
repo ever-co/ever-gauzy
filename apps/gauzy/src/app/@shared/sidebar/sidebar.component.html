@@ -1,7 +1,7 @@
 <nb-card class="sidemenu">
 	<nb-card-body class="sidebar">
 		<div class="add-icon-field">
-			<h5>{{ 'HELP_PAGE.KNOWLEDGE_BASES' | translate }}</h5>
+			<h6>{{ 'HELP_PAGE.KNOWLEDGE_BASES' | translate }}</h6>
 			<nb-icon class="add-icon" icon="plus-outline" (click)="addNode()">
 			</nb-icon>
 			<nb-icon
@@ -81,42 +81,30 @@
 				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 			</button>
 		</div>
-		<tree-root #tree [nodes]="nodes" [focused]="true">
-			<ng-template
-				#treeNodeFullTemplate
-				let-node
-				let-index="index"
-				let-templates="templates"
-			>
-				<div class="tree-node">
-					<tree-node-expander [node]="node"></tree-node-expander>
-					<div
-						class="node-content-wrapper"
-						[class.node-content-wrapper-active]="node.isActive"
-						[class.node-content-wrapper-focused]="node.isFocused"
-					>
-						<nb-icon
-							class="mr-1"
-							icon="{{ node.data.icon }}"
-							(click)="addIcon(node)"
-						></nb-icon>
-						<span
-							[class]="node.data.className"
-							[class.title]="true"
-							(click)="onNodeClicked(node)"
-							>{{ node.data.name }}</span
-						>
-						<nb-icon
-							class="mr-1"
-							icon="{{ node.data.privacy }}"
-							(click)="changePrivacy(node)"
-						></nb-icon>
-					</div>
-					<tree-node-children
-						[node]="node"
-						[templates]="templates"
-					></tree-node-children>
-				</div>
+		<tree-root
+			#tree
+			[focused]="true"
+			[nodes]="nodes"
+			[options]="options"
+			(moveNode)="onMoveNode($event)"
+		>
+			<ng-template #treeNodeTemplate let-node let-index="index">
+				<nb-icon
+					class="mr-1"
+					icon="{{ node.data.icon }}"
+					(click)="addIcon(node)"
+				></nb-icon>
+				<span
+					[class]="node.data.className"
+					[class.title]="true"
+					(click)="onNodeClicked(node)"
+					>{{ node.data.name }}</span
+				>
+				<nb-icon
+					class="mr-1"
+					icon="{{ node.data.privacy }}"
+					(click)="changePrivacy(node)"
+				></nb-icon>
 			</ng-template>
 		</tree-root>
 	</nb-card-body>

@@ -29,9 +29,25 @@ export class HelpCenter extends Base implements IHelpCenter {
 	@Column({ nullable: true })
 	data?: string;
 
-	@OneToMany((type) => HelpCenter, (children) => children.children)
+	// @ManyToOne((type) => HelpCenterChildren, , {
+	// 	cascade: true,
+	// 	nullable: true
+	// })
+	// @JoinTable({
+	// 	name: 'help_center_children'
+	// })
+	// documents: IHelpCenter[];
+
+	@OneToMany((type) => HelpCenter, (children) => children.children, {
+		cascade: true,
+		nullable: true
+	})
 	parent?: IHelpCenter;
 
 	@ManyToOne((type) => HelpCenter, (children) => children.parent)
 	children?: IHelpCenter[];
+
+	// insert() {
+	// 	this.children;
+	// }
 }
