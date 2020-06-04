@@ -1,11 +1,6 @@
 import { IHelpCenter } from '@gauzy/models';
 import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
-import {
-	TreeComponent,
-	ITreeOptions,
-	TreeModel,
-	TreeNode
-} from 'angular-tree-component';
+import { TreeComponent, ITreeOptions } from 'angular-tree-component';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isEqual } from './delete-node';
