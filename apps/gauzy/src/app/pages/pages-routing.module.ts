@@ -106,15 +106,15 @@ const routes: Routes = [
 					{
 						path: 'me',
 						loadChildren: () =>
-							import('./my-tasks/my-tasks.module').then(
-								(m) => m.MyTasksModule
+							import('./tasks/tasks.module').then(
+								(m) => m.TasksModule
 							)
 					},
 					{
 						path: 'team',
 						loadChildren: () =>
-							import('./team-tasks/team-tasks.module').then(
-								(m) => m.TeamTasksModule
+							import('./tasks/tasks.module').then(
+								(m) => m.TasksModule
 							)
 					}
 				]

@@ -1191,7 +1191,11 @@
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
-			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items"
+			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
+			"SELECT_INVOICE_TYPE": "Select an invoice type",
+			"SELECT_PROJECTS": "Select projects",
+			"SELECT_TASKS": "Select tasks",
+			"SELECT_PRODUCTS": "Select products"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",

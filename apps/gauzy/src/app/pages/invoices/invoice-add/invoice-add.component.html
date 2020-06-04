@@ -293,6 +293,12 @@
 			<div class="row">
 				<div class="col-sm-3">
 					<div class="form-group">
+						<label class="label">
+							{{
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_INVOICE_TYPE'
+									| translate
+							}}
+						</label>
 						<nb-select
 							*ngIf="!isEstimate"
 							(selectedChange)="onTypeChange($event)"
@@ -388,11 +394,18 @@
 				</div>
 				<div class="col-sm-3" *ngIf="isProjectHourTable">
 					<div class="form-group">
+						<label class="label">
+							{{
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
+									| translate
+							}}
+						</label>
 						<ng-select
 							[(items)]="projects"
 							bindName="name"
 							placeholder="{{
-								'INVOICES_PAGE.SELECT_PROJECT' | translate
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_PROJECTS'
+									| translate
 							}}"
 							formControlName="project"
 							id="inputProject"
@@ -416,11 +429,18 @@
 				</div>
 				<div class="col-sm-3" *ngIf="isTaskHourTable">
 					<div class="form-group">
+						<label class="label">
+							{{
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_TASKS'
+									| translate
+							}}
+						</label>
 						<ng-select
 							[(items)]="tasks"
 							bindName="title"
 							placeholder="{{
-								'INVOICES_PAGE.SELECT_TASK' | translate
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_TASKS'
+									| translate
 							}}"
 							formControlName="task"
 							id="inputTask"
@@ -444,11 +464,18 @@
 				</div>
 				<div class="col-sm-3" *ngIf="isProductTable">
 					<div class="form-group">
+						<label class="label">
+							{{
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_PRODUCTS'
+									| translate
+							}}
+						</label>
 						<ng-select
 							[(items)]="products"
 							bindName="name"
 							placeholder="{{
-								'INVOICES_PAGE.SELECT_PRODUCT' | translate
+								'INVOICES_PAGE.INVOICE_TYPE.SELECT_PRODUCTS'
+									| translate
 							}}"
 							formControlName="product"
 							id="inputProduct"

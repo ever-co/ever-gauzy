@@ -6,7 +6,15 @@
 >
 	<nb-card-header>
 		<h4>
-			{{ 'TASKS_PAGE.HEADER' | translate }}
+			<ng-container *ngIf="isTasksPage()">
+				{{ 'TASKS_PAGE.HEADER' | translate }}
+			</ng-container>
+			<ng-container *ngIf="isMyTasksPage()">
+				{{ 'TASKS_PAGE.MY_TASK_HEADER' | translate }}
+			</ng-container>
+			<ng-container *ngIf="isTeamTaskPage()">
+				{{ 'TASKS_PAGE.TEAM_TASKS_HEADER' | translate }}
+			</ng-container>
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
@@ -51,14 +59,35 @@
 				{{ 'BUTTONS.DELETE' | translate }}
 			</button>
 		</div>
-
-		<ng2-smart-table
-			[settings]="settingsSmartTable"
-			[source]="tasks$ | async"
-			(userRowSelect)="selectTask($event)"
-			style="cursor: pointer;"
-			#tasksTable
-		>
-		</ng2-smart-table>
+		<ng-container *ngIf="isTasksPage()">
+			<ng2-smart-table
+				[settings]="settingsSmartTable"
+				[source]="tasks$ | async"
+				(userRowSelect)="selectTask($event)"
+				style="cursor: pointer;"
+				#tasksTable
+			>
+			</ng2-smart-table>
+		</ng-container>
+		<ng-container *ngIf="isMyTasksPage()">
+			<ng2-smart-table
+				[settings]="settingsSmartTable"
+				[source]="myTasks$ | async"
+				(userRowSelect)="selectTask($event)"
+				style="cursor: pointer;"
+				#tasksTable
+			>
+			</ng2-smart-table>
+		</ng-container>
+		<ng-container *ngIf="isTeamTaskPage()">
+			<ng2-smart-table
+				[settings]="settingsSmartTable"
+				[source]="teamTasks$ | async"
+				(userRowSelect)="selectTask($event)"
+				style="cursor: pointer;"
+				#tasksTable
+			>
+			</ng2-smart-table>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
