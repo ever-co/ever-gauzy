@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { Pipeline, PipelineCreateInput, UserOrganization } from '@gauzy/models';
+import { Pipeline, PipelineCreateInput, SmartTableSettings, UserOrganization } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 
 
 
@@ -11,12 +13,14 @@ import { LocalDataSource } from 'ng2-smart-table';
   templateUrl: './pipelines.component.html',
   selector: 'ga-pipelines',
 })
-export class PipelinesComponent implements OnInit
+export class PipelinesComponent extends TranslationBaseComponent implements OnInit
 {
 
   public pipelines = new LocalDataSource( [] as Pipeline[] );
 
   public createInput: PipelineCreateInput = {} as any;
+
+  public smartTableSettings: SmartTableSettings;
 
   public userOrganizations: UserOrganization[];
 
@@ -24,14 +28,17 @@ export class PipelinesComponent implements OnInit
 
   public constructor(
     private store: Store,
+    translateService: TranslateService,
     private pipelinesService: PipelinesService,
     private usersOrganizationsService: UsersOrganizationsService)
   {
+    super( translateService );
   }
 
   public ngOnInit()
   {
     const { userId } = this.store;
+
     this.usersOrganizationsService
       .getAll( [ 'organization' ], { userId })
       .then( ({ items }) => {
@@ -39,6 +46,15 @@ export class PipelinesComponent implements OnInit
         this.userOrganizations = items;
         this.updatePipelines();
       });
+    this.smartTableSettings = {
+      actions: false,
+      columns: {
+        name: {
+          editor: false,
+          title: this.getTranslation( 'PIPELINES_PAGE.PIPELINE_NAME' ),
+        },
+      },
+    };
   }
 
   public get canCreate(): boolean {
