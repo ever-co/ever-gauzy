@@ -20,11 +20,7 @@ export class MyTasksStoreService {
 		return this._myTasks$.getValue();
 	}
 
-	constructor(private _taskService: TasksService) {
-		if (!this.myTasks.length) {
-			this.fetchTasks();
-		}
-	}
+	constructor(private _taskService: TasksService) {}
 
 	fetchTasks() {
 		this._taskService

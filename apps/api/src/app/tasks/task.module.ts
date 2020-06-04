@@ -5,7 +5,6 @@ import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { CommandHandlers } from './commands/handlers';
-import { CqrsModule } from '@nestjs/cqrs';
 import { UserService } from '../user/user.service';
 import { User } from '../user/user.entity';
 import { Employee } from '../employee/employee.entity';
@@ -20,9 +19,8 @@ import { Role } from '../role/role.entity';
 			OrganizationProjects,
 			User,
 			Employee,
-			Role,
-		]),
-		CqrsModule,
+			Role
+		])
 	],
 	controllers: [TaskController],
 	providers: [
@@ -30,8 +28,8 @@ import { Role } from '../role/role.entity';
 		EmployeeService,
 		RoleService,
 		...CommandHandlers,
-		UserService,
+		UserService
 	],
-	exports: [TaskService],
+	exports: [TaskService]
 })
 export class TaskModule {}

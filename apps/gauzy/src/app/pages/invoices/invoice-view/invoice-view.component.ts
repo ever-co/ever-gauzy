@@ -3,12 +3,23 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { Invoice, OrganizationClients, Organization } from '@gauzy/models';
+import {
+	Invoice,
+	OrganizationClients,
+	Organization,
+	InvoiceTypeEnum
+} from '@gauzy/models';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
 import { Subject } from 'rxjs';
-import * as jspdf from 'jspdf';
-import * as html2canvas from 'html2canvas';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
+import * as pdfMake from 'pdfmake/build/pdfmake';
+import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { generatePdf } from '../../../@shared/invoice/generate-pdf';
+import { NbToastrService } from '@nebular/theme';
+import { EmployeesService } from '../../../@core/services';
+import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
+import { TasksService } from '../../../@core/services/tasks.service';
+import { ProductService } from '../../../@core/services/product.service';
 
 @Component({
 	selector: 'ga-invoice-view',
@@ -30,7 +41,12 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 		private route: ActivatedRoute,
 		private invoicesService: InvoicesService,
 		private organizationClientsService: OrganizationClientsService,
-		private organizationService: OrganizationsService
+		private organizationService: OrganizationsService,
+		private toastrService: NbToastrService,
+		private employeeService: EmployeesService,
+		private projectService: OrganizationProjectsService,
+		private taskService: TasksService,
+		private productService: ProductService
 	) {
 		super(translateService);
 	}
@@ -56,28 +72,53 @@ export class InvoiceViewComponent extends TranslationBaseComponent
 			.subscribe((org) => (this.organization = org));
 	}
 
-	download() {
-		const data = document.getElementById('contentToConvert');
-		(html2canvas as any)(data).then((canvas) => {
-			const imgWidth = 208;
-			const imgHeight = (canvas.height * imgWidth) / canvas.width;
-			const contentDataURL = canvas.toDataURL('image/png');
-			const pdf = new jspdf('l', 'mm', 'a4');
-			const position = 0;
-			pdf.addImage(
-				contentDataURL,
-				'PNG',
-				0,
-				position,
-				imgWidth,
-				imgHeight
-			);
-			pdf.save(
-				`${this.isEstimate ? 'Estimate' : 'Invoice'} ${
+	async download() {
+		pdfMake.vfs = pdfFonts.pdfMake.vfs;
+		let docDefinition;
+		let service;
+
+		switch (this.invoice.invoiceType) {
+			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
+				service = this.employeeService;
+				break;
+			case InvoiceTypeEnum.BY_PROJECT_HOURS:
+				service = this.projectService;
+				break;
+			case InvoiceTypeEnum.BY_TASK_HOURS:
+				service = this.taskService;
+				break;
+			case InvoiceTypeEnum.BY_PRODUCTS:
+				service = this.productService;
+				break;
+			default:
+				break;
+		}
+
+		docDefinition = await generatePdf(
+			this.invoice,
+			this.organization,
+			this.client,
+			service
+		);
+
+		pdfMake
+			.createPdf(docDefinition)
+			.download(
+				`${this.isEstimate ? 'Estimate' : 'Invoice'}-${
 					this.invoice.invoiceNumber
-				}`
+				}.pdf`
 			);
-		});
+
+		this.toastrService.primary(
+			this.isEstimate
+				? this.getTranslation(
+						'INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD'
+				  )
+				: this.getTranslation(
+						'INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'
+				  ),
+			this.getTranslation('TOASTR.TITLE.SUCCESS')
+		);
 	}
 
 	ngOnDestroy() {
