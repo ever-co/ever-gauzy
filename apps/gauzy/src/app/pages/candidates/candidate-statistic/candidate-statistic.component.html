@@ -1,0 +1,13 @@
+<nb-card>
+	<nb-card-header>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+		<h4>
+			{{ 'CANDIDATES_PAGE.STATISTIC.CANDIDATE_STATISTICS' | translate }}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<ga-candidate-rating-chart
+			[candidates]="candidates"
+		></ga-candidate-rating-chart>
+	</nb-card-body>
+</nb-card>

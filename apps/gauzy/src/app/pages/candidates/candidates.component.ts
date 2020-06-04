@@ -9,7 +9,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
 import { CandidatesService } from '../../@core/services/candidates.service';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
-import { NbToastrService, NbDialogService } from '@nebular/theme';
+import { NbToastrService, NbDialogService, NbMenuItem } from '@nebular/theme';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
@@ -53,6 +53,7 @@ export class CandidatesComponent extends TranslationBaseComponent
 	organizationInvitesAllowed = false;
 
 	@ViewChild('candidatesTable') candidatesTable;
+	supportContextMenu: NbMenuItem[];
 
 	constructor(
 		private candidatesService: CandidatesService,
@@ -105,6 +106,29 @@ export class CandidatesComponent extends TranslationBaseComponent
 					this.add();
 				}
 			});
+		this.supportContextMenu = [
+			{
+				title: this.getTranslation('CONTEXT_MENU.MANAGE_INTERVIEWS'),
+				icon: 'people-outline',
+				link: 'pages/employees/candidates/interviews'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.MANAGE_INVITES'),
+				icon: 'email-outline',
+				link: 'pages/employees/candidates/invites'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.CANDIDATE_STATISTIC'),
+				icon: 'bar-chart-outline',
+				link: 'pages/employees/candidates/statistic'
+			}
+			// TO DO
+			// {
+			// 	title: this.getTranslation('CONTEXT_MENU.'),
+			// 	icon: 'options-2-outline'
+			// 	 link: 'pages/employees/candidates/'
+			// }
+		];
 	}
 
 	selectCandidateTmp(ev: {
