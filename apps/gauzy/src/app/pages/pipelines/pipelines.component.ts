@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { Pipeline, PipelineCreateInput, SmartTableSettings, UserOrganization } from '@gauzy/models';
+import { Pipeline, SmartTableSettings, UserOrganization } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -19,15 +19,13 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
 
   public pipelines = new LocalDataSource( [] as Pipeline[] );
 
-  // public createInput: PipelineCreateInput = {} as any;
-
   public smartTableSettings: SmartTableSettings;
 
   public userOrganizations: UserOrganization[];
 
   public pipelineForm: FormGroup;
 
-  // public isCreating = false;
+  public isCreating = false;
 
   public constructor(
     private store: Store,
@@ -42,8 +40,14 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   public ngOnInit()
   {
     this.pipelineForm = this.fb.group({
+      name: [ '', [ Validators.required, () => {
+        const { organizationId, name } =
+          this.pipelineForm?.value || {};
+        const { isCreating } = this;
+
+        return name && !isCreating && organizationId ? null : { 'incomplete': true };
+      }] ],
       organizationId: [ '', Validators.required ],
-      name: [ '', Validators.required ],
       id: [ '' ],
     });
 
@@ -70,12 +74,6 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     };
   }
 
-  // public get canCreate(): boolean {
-  //   return !(this.isCreating
-  //     || !this.createInput.name
-  //     || !this.createInput.organizationId);
-  // }
-
   public filterPipelines() {
     const { name: search } = this.pipelineForm.value;
 
@@ -98,16 +96,23 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       });
   }
 
-  public createPipeline() {
-    // this.isCreating = true;
-    // this.pipelinesService
-    //   .create( this.createInput )
-    //   .then( () => this.updatePipelines() )
-    //   .finally( () => {
-    //     delete this.createInput.name;
-    //     this.isCreating = false;
-    //     this.updatePipelines();
-    //   });
+  public save() {
+    if ( !this.pipelineForm.valid ) return ;
+
+    const { id, name, organizationId } = this.pipelineForm.value;
+
+    this.isCreating = true;
+    Promise.resolve(
+      !id ? this.pipelinesService.create({ name, organizationId })
+        : this.pipelinesService.update( id, { name, organizationId })
+    ).then( () => this.updatePipelines() )
+      .finally( () => {
+        this.pipelineForm.patchValue({
+          name: '',
+        });
+        this.isCreating = false;
+        this.updatePipelines();
+      });
   }
 
 }

@@ -14,14 +14,15 @@
         </nb-action>
         <nb-action>
           <nb-form-field>
-            <input [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate"
-                   (ngModelChange)="filterPipelines()" formControlName="name" nbInput shape="round" type="text">
+            <input [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate" nbInput
+                   (ngModelChange)="filterPipelines()" formControlName="name" shape="round" type="text">
             <nb-icon [icon]="pipelineForm.valid ? 'plus-circle-outline' : 'search-outline'"
-                     pack="eva" nbSuffix (click)="pipelineForm.valid && createPipeline()"></nb-icon>
+                     pack="eva" nbSuffix (click)="save()" style="cursor: pointer"></nb-icon>
           </nb-form-field>
         </nb-action>
       </nb-actions>
     </form>
+    <br>
 
     <ng2-smart-table [settings]="smartTableSettings" [source]="pipelines"></ng2-smart-table>
   </nb-card-body>
