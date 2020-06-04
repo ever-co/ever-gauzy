@@ -50,8 +50,8 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       actions: false,
       columns: {
         name: {
-          editor: false,
           filter: false,
+          editor: false,
           title: this.getTranslation( 'PIPELINES_PAGE.PIPELINE_NAME' ),
         },
       },
@@ -62,6 +62,17 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     return !(this.isCreating
       || !this.createInput.name
       || !this.createInput.organizationId);
+  }
+
+  public filterPipelines() {
+    const { name: search } = this.createInput;
+
+    this.pipelines.setFilter([
+      {
+        field: 'name',
+        search,
+      },
+    ]);
   }
 
   public updatePipelines(): void {

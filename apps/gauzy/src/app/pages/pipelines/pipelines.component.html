@@ -12,7 +12,7 @@
         </nb-select>
       </nb-action>
       <nb-action>
-        <input nbInput [(ngModel)]="createInput.name" [placeholder]="'PIPELINES_PAGE.NEW_PIPELINE' | translate" type="text">
+        <input nbInput [(ngModel)]="createInput.name" (ngModelChange)="filterPipelines()" [placeholder]="'PIPELINES_PAGE.NEW_PIPELINE' | translate" type="text">
       </nb-action>
       <nb-action *ngIf="canCreate">
         <button nbButton status="control" (click)="createPipeline()">

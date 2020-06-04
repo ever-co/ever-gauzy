@@ -216,6 +216,10 @@ export interface SmartTableSettings
     /**
      * Default: -
      */
+    filterFunction?: Function;
+    /**
+     * Default: -
+     */
     compareFunction?: Function;
     /**
      * Default: null
