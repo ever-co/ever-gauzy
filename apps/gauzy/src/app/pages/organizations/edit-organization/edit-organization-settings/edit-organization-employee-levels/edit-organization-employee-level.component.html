@@ -11,14 +11,14 @@
 		</button>
 		<div *ngIf="showAddCard" class="row">
 			<div class="col-sm-3 d-flex flex-column justify-content-end">
-				<label class="label" for="add-vendor"
-					>Add level of employee</label
-				>
+				<label class="label" for="add-vendor">{{
+					'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
+				}}</label>
 				<input
 					#addInput
 					nbInput
 					type="text"
-					placeholder="Add Level of Employee"
+					[placeholder]="'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate"
 				/>
 			</div>
 			<ga-tags-color-input
@@ -51,7 +51,9 @@
 	</nb-card-header>
 	<nb-card-body *ngIf="employeeLevels?.length">
 		<div class="ml-3 mb-4">
-			<strong>Employee Levels</strong>
+			<strong>{{
+				'ORGANIZATIONS_PAGE.LEVEL_OF_EMPLOYEE' | translate
+			}}</strong>
 		</div>
 
 		<nb-card *ngFor="let e of employeeLevels">
@@ -63,7 +65,9 @@
 					class="row m-0"
 				>
 					<div class="col-3 d-flex flex-column justify-content-end">
-						<label class="label">Level</label>
+						<label class="label">{{
+							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
+						}}</label>
 						<input nbInput type="text" #level [value]="e.level" />
 					</div>
 					<ga-tags-color-input

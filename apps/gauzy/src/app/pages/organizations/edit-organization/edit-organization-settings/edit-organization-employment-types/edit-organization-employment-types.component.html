@@ -12,7 +12,7 @@
 		<div *ngIf="showAddCard" class="row">
 			<div class="col-sm-3 d-flex flex-column justify-content-end">
 				<label class="label">{{
-					'FORM.PLACEHOLDERS.EMPLOYMENT_TYPES' | translate
+					'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME' | translate
 				}}</label>
 				<input
 					#addInput
@@ -20,7 +20,7 @@
 					type="text"
 					(keyup)="onKeyEnter($event)"
 					placeholder="{{
-						'FORM.PLACEHOLDERS.EMPLOYMENT_TYPES' | translate
+						'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME' | translate
 					}}"
 				/>
 			</div>
@@ -66,7 +66,10 @@
 				</ga-notes-with-tags>
 				<div *ngIf="showEditDiv" class="row m-0">
 					<div class="col-3 d-flex flex-column justify-content-end">
-						<label class="label">Name</label>
+						<label class="label">{{
+							'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME'
+								| translate
+						}}</label>
 						<input
 							#editInput
 							nbInput

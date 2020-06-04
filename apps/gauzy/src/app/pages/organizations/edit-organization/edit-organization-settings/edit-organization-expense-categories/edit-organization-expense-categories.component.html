@@ -12,14 +12,14 @@
 		<div *ngIf="showAddCard" class="row">
 			<div class="col-sm-3 d-flex flex-column justify-content-end">
 				<label class="label">{{
-					'FORM.PLACEHOLDERS.ADD_EXPENSE_CATEGORY' | translate
+					'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
 				}}</label>
 				<input
 					#addInput
 					nbInput
 					type="text"
 					placeholder="{{
-						'FORM.PLACEHOLDERS.ADD_EXPENSE_CATEGORY' | translate
+						'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
 					}}"
 				/>
 			</div>
@@ -52,7 +52,11 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="expenseCategories?.length">
-		<div class="ml-3 mb-4"><strong>Expense name</strong></div>
+		<div class="ml-3 mb-4">
+			<strong>{{
+				'ORGANIZATIONS_PAGE.EXPENSE_CATEGORIES' | translate
+			}}</strong>
+		</div>
 
 		<nb-card *ngFor="let v of expenseCategories">
 			<nb-card-body>
@@ -63,7 +67,9 @@
 					class="row m-0"
 				>
 					<div class="col-3 d-flex flex-column justify-content-end">
-						<label class="label">Name</label>
+						<label class="label">{{
+							'ORGANIZATIONS_PAGE.EXPENSE_NAME' | translate
+						}}</label>
 						<input
 							#editInput
 							nbInput

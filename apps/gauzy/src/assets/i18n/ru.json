@@ -762,6 +762,12 @@
 		"EMPLOYMENT_TYPES": "Типы занятости",
 		"INVITE_CLIENT": "Пригласить клиента",
 		"EMAIL_INVITE": "Приглашение",
+		"ADD_LEVEL_OF_EMPLOYEE": "Добавить уровень сотрудника",
+		"LEVEL_OF_EMPLOYEE": "Уровни сотрудников",
+		"VENDOR_NAME": "Название поставщика",
+		"LEVEL_NAME": "Имя уровня",
+		"EXPENSE_NAME": "Название счета",
+		"EMPLOYMENT_TYPE_NAME": "Название типа занятости",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
