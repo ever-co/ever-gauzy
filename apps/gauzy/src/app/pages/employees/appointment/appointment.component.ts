@@ -158,11 +158,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 		if (this.employee && this.employee.id) {
 			const findObj = {
 				employee: {
-					id: this.store.selectedEmployee
-						? this.store.selectedEmployee.id
-						: this.employee
-						? this.employee.id
-						: null
+					id: this.employee.id
 				}
 			};
 
