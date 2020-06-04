@@ -73,6 +73,7 @@ export class EditOrganizationPositionsComponent extends TranslationBaseComponent
 		this.loadPositions();
 		this.toastrService.success('Successfully updated');
 		this.showEditDiv = !this.showEditDiv;
+		this.tags = [];
 	}
 
 	private async addPosition(name: string) {
