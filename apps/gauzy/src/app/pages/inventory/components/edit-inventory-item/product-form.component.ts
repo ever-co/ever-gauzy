@@ -65,13 +65,17 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-
 		this.route.params
 			.pipe(takeUntil(this.ngDestroy$))
 			.subscribe(async (params) => {
 				this.inventoryItem = params.id
-					? await this.productService.getById(params.id,
-						['category', 'type', 'options', 'variants', 'tags'])
+					? await this.productService.getById(params.id, [
+							'category',
+							'type',
+							'options',
+							'variants',
+							'tags'
+					  ])
 					: null;
 
 				this.variants$.next(
@@ -84,7 +88,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 				this.tags = this.inventoryItem ? this.inventoryItem.tags : [];
 
 				this._initializeForm();
-
 			});
 
 		this.store.selectedOrganization$
@@ -191,7 +194,6 @@ export class ProductFormComponent extends TranslationBaseComponent
 				this.router.navigate([
 					`/pages/organization/inventory/edit/${this.inventoryItem.id}`
 				]);
-
 			} else {
 				this.inventoryItem = await this.productService.update(
 					productRequest
@@ -219,7 +221,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	// tstodo
-	handleImageUploadError(event: any) { }
+	handleImageUploadError(event: any) {}
 
 	onCancel() {
 		this.location.back();
