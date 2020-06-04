@@ -61,6 +61,7 @@ export class PipelinesComponent implements OnInit
       .create( this.createInput )
       .then( () => this.updatePipelines() )
       .finally( () => {
+        delete this.createInput.name;
         this.isCreating = false;
         this.updatePipelines();
       });
