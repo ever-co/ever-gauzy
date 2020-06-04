@@ -1183,7 +1183,11 @@
 			"BY_TASK_HOURS": "По часам задания",
 			"BY_PRODUCTS": "По товарам",
 			"DETAILS_INVOICE_ITEMS": "Детали накладной",
-			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов"
+			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов",
+			"SELECT_INVOICE_TYPE": "Выберите тип счета",
+			"SELECT_PROJECTS": "Выберите проекты",
+			"SELECT_TASKS": "Выберите задачи",
+			"SELECT_PRODUCTS": "Выберите товары"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",
