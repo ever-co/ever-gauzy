@@ -1025,7 +1025,11 @@
 		"IMAGE": "Image",
 		"LANGUAGE": "Language",
 		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
-		"ICON": "Icon"
+		"ICON": "Icon",
+		"ADD_VARIANT": "Add variant",
+		"EDIT_VARIANT": "Edit variant",
+		"NO_OPTIONS_LABEL": "(no options)",
+		"OPTIONS": "Options"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",

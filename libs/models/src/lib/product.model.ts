@@ -20,6 +20,18 @@ export interface Product extends IBaseEntityModel {
 	tags?: Tag[];
 }
 
+export interface IProductCreateInput {
+	name: string;
+	description: string;
+	enabled: boolean;
+	code: string;
+	type?: ProductTypeTranslatable;
+	category?: ProductCategory;
+	tags?: Tag[];
+	optionCreateInputs?: ProductOption[];
+	optionDeleteInputs?: ProductOption[];
+}
+
 export interface ProductFindInput {
 	organizationId?: string;
 }
@@ -76,6 +88,15 @@ export interface ProductVariant extends IBaseEntityModel {
 	product?: Product;
 }
 
+export interface IVariantCreateInput {
+	product: Product;
+	optionCombinations: IVariantOptionCombination[];
+}
+
+export interface IVariantOptionCombination {
+	options: string[];
+}
+
 export interface ProductVariantPrice extends IBaseEntityModel {
 	unitCost: number;
 	unitCostCurrency: string;
@@ -97,6 +118,7 @@ export interface ProductVariantSettings extends IBaseEntityModel {
 export interface ProductOption extends IBaseEntityModel {
 	name: string;
 	code: string;
+	product?: Product;
 }
 
 export enum BillingInvoicingPolicyEnum {

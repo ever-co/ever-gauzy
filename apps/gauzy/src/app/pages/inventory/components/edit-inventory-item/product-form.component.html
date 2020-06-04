@@ -1,0 +1,479 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<div class="navigate">
+			<button (click)="onCancel()" nbButton status="primary" class="mr-4">
+				<nb-icon icon="arrow-back-outline"></nb-icon>
+			</button>
+		</div>
+		<h5>
+			{{
+				(inventoryItem
+					? 'INVENTORY_PAGE.EDIT_INVENTORY_ITEM'
+					: 'INVENTORY_PAGE.ADD_INVENTORY_ITEM'
+				) | translate
+			}}
+		</h5>
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="onCancel()"
+		></nb-icon>
+	</nb-card-header>
+	<div class="card-container">
+		<nb-card-body>
+			<div class="row">
+				<div class="col-md-3">
+					<div class="product-container">
+						<div class="product-photo">
+							<ngx-image-uploader
+								(changeHoverState)="hoverState = $event"
+								(uploadedImageUrl)="
+									form.get('imageUrl').setValue($event)
+								"
+								(uploadImageError)="
+									handleImageUploadError($event)
+								"
+							></ngx-image-uploader>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								xmlns:xlink="http://www.w3.org/1999/xlink"
+								width="68"
+								height="68"
+								viewBox="0 0 68 68"
+								[ngStyle]="{
+									opacity: hoverState ? '1' : '0.3'
+								}"
+							>
+								<defs>
+									<path
+										id="a"
+										d="M28.667 31.333a2 2 0 1 0-.002-4.001 2 2 0 0 0 .002 4.001m13.333 12H26.748l9.34-7.793c.328-.279.923-.277 1.244-.001l6.001 5.12V42c0 .736-.597 1.333-1.333 1.333M26 24.667h16c.736 0 1.333.597 1.333 1.333v11.152l-4.27-3.643c-1.32-1.122-3.386-1.122-4.694-.008l-9.702 8.096V26c0-.736.597-1.333 1.333-1.333M42 22H26c-2.205 0-4 1.795-4 4v16c0 2.205 1.795 4 4 4h16c2.205 0 4-1.795 4-4V26c0-2.205-1.795-4-4-4"
+									/>
+								</defs>
+								<g fill="none" fill-rule="evenodd">
+									<circle
+										cx="34"
+										cy="34"
+										r="34"
+										fill="#0091FF"
+										opacity=".3"
+									/>
+									<circle
+										cx="34"
+										cy="34"
+										r="26"
+										fill="#0091FF"
+										opacity=".9"
+									/>
+									<use
+										fill="#FFF"
+										fill-rule="nonzero"
+										xlink:href="#a"
+									/>
+								</g>
+							</svg>
+							<div
+								class="image-overlay"
+								[ngStyle]="{
+									opacity: hoverState ? '0.2' : '0'
+								}"
+							></div>
+
+							<img
+								*ngIf="!!form"
+								[src]="
+									'https://afostats.imagead.net/uploads/afo/no_img.png'
+								"
+								alt="Product Item Photo"
+								(mouseenter)="hoverState = true"
+								(mouseleave)="hoverState = false"
+							/>
+						</div>
+						<!-- <nb-badge
+							status="danger"
+							style="position: relative; margin-top: 20px;"
+							[text]="'USERS_PAGE.ROLE.' + roleName | translate"
+							position="bottom-left"
+						></nb-badge> -->
+					</div>
+				</div>
+				<div class="col-md-9">
+					<nb-tabset>
+						<nb-tab tabTitle="Main">
+							<div class="">
+								<form
+									[formGroup]="form"
+									*ngIf="form"
+									class="mb-4"
+								>
+									<div class="form-group">
+										<div class="form-group mb-3">
+											<label class="label" for="lang">
+												{{
+													'INVENTORY_PAGE.LANGUAGE'
+														| translate
+												}}
+											</label>
+											<nb-select
+												id="lang"
+												[placeholder]="
+													'INVENTORY_PAGE.LANGUAGE'
+														| translate
+												"
+												class="d-block"
+												size="medium"
+												fullWidth="true"
+											>
+												<nb-option
+													*ngFor="
+														let lang of languages
+													"
+													[value]="lang"
+												>
+													{{ lang }}
+												</nb-option>
+											</nb-select>
+										</div>
+										<div class="row">
+											<div class="col-sm-6 mb-4">
+												<label
+													class="label"
+													for="nameInput"
+												>
+													{{
+														'INVENTORY_PAGE.NAME'
+															| translate
+													}}
+												</label>
+												<input
+													fullWidth
+													id="nameInput"
+													type="text"
+													nbInput
+													formControlName="name"
+													[placeholder]="
+														'INVENTORY_PAGE.NAME'
+															| translate
+													"
+													[ngClass]="{
+														'status-danger':
+															form.controls[
+																'name'
+															].invalid &&
+															form.controls[
+																'name'
+															].touched
+													}"
+												/>
+												<div
+													*ngIf="
+														form.controls['name']
+															.errors &&
+														form.controls['name']
+															.touched
+													"
+												>
+													<div
+														class="text-danger"
+														*ngIf="
+															form.controls[
+																'name'
+															].errors.required
+														"
+													>
+														{{
+															'VALIDATION.FIELD_REQUIRED'
+																| translate
+														}}
+													</div>
+												</div>
+											</div>
+											<div class="col-sm-6 mb-4">
+												<label
+													class="label"
+													for="codeInput"
+												>
+													{{
+														'INVENTORY_PAGE.CODE'
+															| translate
+													}}
+												</label>
+												<input
+													fullWidth
+													id="codeInput"
+													type="text"
+													nbInput
+													formControlName="code"
+													[placeholder]="
+														'INVENTORY_PAGE.CODE'
+															| translate
+													"
+													[ngClass]="{
+														'status-danger':
+															form.controls[
+																'code'
+															].invalid &&
+															form.controls[
+																'code'
+															].touched
+													}"
+												/>
+												<div
+													*ngIf="
+														form.controls['code']
+															.errors &&
+														form.controls['code']
+															.touched
+													"
+												>
+													<div
+														class="text-danger"
+														*ngIf="
+															form.controls[
+																'code'
+															].errors.required
+														"
+													>
+														{{
+															'VALIDATION.FIELD_REQUIRED'
+																| translate
+														}}
+													</div>
+												</div>
+											</div>
+										</div>
+										<div
+											class="row"
+											*ngIf="
+												productTypes &&
+												productCategories
+											"
+										>
+											<div class="col-sm-6 mb-4">
+												<label
+													class="label"
+													for="productTypeId"
+												>
+													{{
+														'INVENTORY_PAGE.PRODUCT_TYPE'
+															| translate
+													}}
+												</label>
+												<nb-select
+													id="productTypeId"
+													formControlName="productTypeId"
+													fullWidth
+													[placeholder]="
+														'INVENTORY_PAGE.PRODUCT_TYPE'
+															| translate
+													"
+													[ngClass]="{
+														'status-danger':
+															form.controls[
+																'productTypeId'
+															].invalid &&
+															form.controls[
+																'productTypeId'
+															].touched
+													}"
+												>
+													<nb-option
+														*ngFor="
+															let productType of productTypes
+														"
+														[value]="productType.id"
+													>
+														{{
+															productType.name
+														}}</nb-option
+													>
+												</nb-select>
+												<div
+													*ngIf="
+														form.controls[
+															'productTypeId'
+														].errors &&
+														form.controls[
+															'productTypeId'
+														].touched
+													"
+												>
+													<div
+														class="text-danger"
+														*ngIf="
+															form.controls[
+																'productTypeId'
+															].errors.required
+														"
+													>
+														{{
+															'VALIDATION.FIELD_REQUIRED'
+																| translate
+														}}
+													</div>
+												</div>
+											</div>
+											<div class="col-sm-6 mb-4">
+												<label
+													class="label"
+													for="productCategoryId"
+												>
+													{{
+														'INVENTORY_PAGE.PRODUCT_CATEGORY'
+															| translate
+													}}
+												</label>
+												<nb-select
+													id="productCategoryId"
+													formControlName="productCategoryId"
+													fullWidth
+													[placeholder]="
+														'INVENTORY_PAGE.PRODUCT_CATEGORY'
+															| translate
+													"
+													[ngClass]="{
+														'status-danger':
+															form.controls[
+																'productCategoryId'
+															].invalid &&
+															form.controls[
+																'productCategoryId'
+															].touched
+													}"
+												>
+													<nb-option
+														*ngFor="
+															let productCategory of productCategories
+														"
+														[value]="
+															productCategory.id
+														"
+														>{{
+															productCategory.name
+														}}</nb-option
+													>
+												</nb-select>
+												<div
+													*ngIf="
+														form.controls[
+															'productCategoryId'
+														].errors &&
+														form.controls[
+															'productCategoryId'
+														].touched
+													"
+												>
+													<div
+														class="text-danger"
+														*ngIf="
+															form.controls[
+																'productCategoryId'
+															].errors.required
+														"
+													>
+														{{
+															'VALIDATION.FIELD_REQUIRED'
+																| translate
+														}}
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="col-sm-12 mb-4">
+												<label
+													class="label"
+													for="description"
+												>
+													{{
+														'INVENTORY_PAGE.DESCRIPTION'
+															| translate
+													}}
+												</label>
+												<textarea
+													formControlName="description"
+													nbInput
+													fullWidth
+													id="description"
+													[placeholder]="
+														'INVENTORY_PAGE.DESCRIPTION'
+															| translate
+													"
+													[ngClass]="{
+														'status-danger':
+															form.controls[
+																'description'
+															].invalid &&
+															form.controls[
+																'description'
+															].touched
+													}"
+												>
+												</textarea>
+											</div>
+										</div>
+
+										<div class="row">
+											<div class="col-sm-12 mb-4">
+												<nb-checkbox
+													formControlName="enabled"
+												>
+													<span>{{
+														'INVENTORY_PAGE.ENABLED'
+															| translate
+													}}</span>
+												</nb-checkbox>
+											</div>
+										</div>
+									</div>
+								</form>
+							</div>
+						</nb-tab>
+						<nb-tab tabTitle="Tags & Options">
+							<div class="row mb-4">
+								<div class="col-sm-12">
+									<ga-tags-color-input
+										[selectedTags]="tags"
+										(selectedTagsEvent)="
+											selectedTagsEvent($event)
+										"
+									>
+									</ga-tags-color-input>
+								</div>
+							</div>
+							<ngx-options-form
+								[options]="options"
+								(optionsUpdated)="onOptionsUpdated($event)"
+								(optionDeleted)="onOptionDeleted($event)"
+							>
+							</ngx-options-form>
+							<ngx-variant-form
+								[options]="options"
+								(variantCreateInputsUpdated)="
+									onVariantCreateInputsUpdate($event)
+								"
+							></ngx-variant-form>
+						</nb-tab>
+						<nb-tab tabTitle="Variants">
+							<ngx-variant-table [variants$]="variants$">
+							</ngx-variant-table>
+						</nb-tab>
+					</nb-tabset>
+				</div>
+			</div>
+		</nb-card-body>
+		<nb-card-footer class="text-right">
+			<button (click)="onCancel()" status="warning" class="mr-3" nbButton>
+				{{ 'BUTTONS.CLOSE' | translate }}
+			</button>
+			<button
+				status="success"
+				[disabled]="form && form.invalid"
+				nbButton
+				(click)="onSaveRequest()"
+			>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</nb-card-footer>
+	</div>
+</nb-card>

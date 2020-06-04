@@ -5,7 +5,9 @@ import {
 	ManyToOne,
 	OneToOne,
 	RelationId,
-	JoinColumn
+	JoinColumn,
+	ManyToMany,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -49,14 +51,15 @@ export class ProductVariant extends Base implements IProductVariant {
 
 	@ApiProperty({ type: String })
 	@IsString()
-	@Column()
+	@Column({ nullable: true })
 	internalReference: string;
 
 	@ApiPropertyOptional({ type: Boolean })
 	@Column({ default: true })
 	enabled: boolean;
 
-	// @OneToMany(() => ProductOption, productOption => productOption.variant)
+	@ManyToMany(() => ProductOption)
+	@JoinTable()
 	options: ProductOption[];
 
 	@OneToOne(
@@ -81,11 +84,9 @@ export class ProductVariant extends Base implements IProductVariant {
 	@JoinColumn()
 	price: ProductVariantPrice;
 
-	@ManyToOne(
-		() => Product,
-		(product) => product.variants,
-		{ onDelete: 'CASCADE' }
-	)
+	@ManyToOne(() => Product, (product) => product.variants, {
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	product: Product;
 }

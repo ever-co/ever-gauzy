@@ -19,7 +19,7 @@ import { ProductCreateCommand } from './commands/product.create.command';
 import { ProductUpdateCommand } from './commands/product.update.command';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, IProductCreateInput } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { ProductDeleteCommand } from './commands';
 import { DeleteResult } from 'typeorm';
@@ -64,7 +64,7 @@ export class ProductController extends CrudController<Product> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('/:langCode')
+	@Get('local/:langCode')
 	async findAllProductsTranslated(
 		@Param('langCode') langCode: string
 	): Promise<IPagination<Product>> {
@@ -84,7 +84,10 @@ export class ProductController extends CrudController<Product> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('/create')
-	async createProduct(@Body() entity: Product, ...options: any[]) {
+	async createProduct(
+		@Body() entity: IProductCreateInput,
+		...options: any[]
+	) {
 		return this.commandBus.execute(new ProductCreateCommand(entity));
 	}
 
@@ -106,7 +109,7 @@ export class ProductController extends CrudController<Product> {
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: Product
+		@Body() entity: IProductCreateInput
 	): Promise<any> {
 		return this.commandBus.execute(new ProductUpdateCommand(id, entity));
 	}
