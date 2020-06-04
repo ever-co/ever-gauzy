@@ -209,7 +209,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 					' ' +
 					this.form.get('breakStartTime').value
 			),
-			employeeId: this.store.selectedEmployee
+			employeeId: this.employee
+				? this.employee.id
+				: this.store.selectedEmployee
 				? this.store.selectedEmployee.id
 				: null
 		};
