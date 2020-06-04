@@ -741,6 +741,9 @@
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
+		},
+		"STATISTIC": {
+			"CANDIDATE_STATISTICS": "Candidate statistics"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1091,7 +1094,10 @@
 		"ADD_EMPLOYEE": "Add Employee",
 		"CHAT": "Support Chat",
 		"FAQ": "FAQ",
-		"HELP": "Help"
+		"HELP": "Help",
+		"MANAGE_INTERVIEWS": "Manage interviews",
+		"MANAGE_INVITES": "Manage invites",
+		"CANDIDATE_STATISTIC": "Candidate statistic"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
