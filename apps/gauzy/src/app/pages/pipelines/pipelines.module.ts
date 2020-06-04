@@ -14,6 +14,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { FormsModule } from '@angular/forms';
+import { Ng2SmartTableModule } from 'ng2-smart-table';
 
 
 
@@ -28,15 +29,16 @@ import { FormsModule } from '@angular/forms';
     PipelinesService,
   ],
   imports: [
+    Ng2SmartTableModule,
     PipelinesRouting,
     TranslateModule,
-    NbSelectModule,
-    NbCardModule,
-    CommonModule,
-    NbInputModule,
-    NbButtonModule,
-    NbIconModule,
     NbActionsModule,
+    NbSelectModule,
+    NbButtonModule,
+    NbInputModule,
+    CommonModule,
+    NbCardModule,
+    NbIconModule,
     FormsModule,
   ],
 })

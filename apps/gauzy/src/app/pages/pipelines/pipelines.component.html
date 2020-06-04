@@ -20,7 +20,8 @@
         </button>
       </nb-action>
     </nb-actions>
+    <hr>
+
+    <ng2-smart-table [settings]="{ columns: { ID: { title: 'ID' }, name: { title: 'NAME' } } }" [source]="pipelines"></ng2-smart-table>
   </nb-card-body>
 </nb-card>
-<pre>{{ pipelines | json }}</pre>
-<pre>{{ createInput | json }}</pre>
