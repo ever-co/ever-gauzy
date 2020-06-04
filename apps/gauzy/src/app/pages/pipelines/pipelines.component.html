@@ -3,24 +3,25 @@
     <h4 [innerHTML]="'PIPELINES_PAGE.HEADER' | translate"></h4>
   </nb-card-header>
   <nb-card-body>
-    <nb-actions>
-      <nb-action>
-        <nb-select [(selected)]="createInput.organizationId" (selectedChange)="updatePipelines()" [placeholder]="'PIPELINES_PAGE.SELECT_ORGANIZATION' | translate">
-          <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization.organization.id" [style.whiteSpace]="'pre'">
-            {{ userOrganization.organization.name }}
-          </nb-option>
-        </nb-select>
-      </nb-action>
-      <nb-action>
-        <nb-form-field>
-          <input [(ngModel)]="createInput.name" (ngModelChange)="filterPipelines()"
-                 [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate" nbInput shape="round" type="text">
-          <nb-icon [icon]="canCreate ? 'plus-circle-outline': 'search-outline'"
-                   pack="eva" nbSuffix (click)="canCreate && createPipeline()"></nb-icon>
-        </nb-form-field>
-      </nb-action>
-    </nb-actions>
-    <hr>
+    <form [formGroup]="pipelineForm">
+      <nb-actions>
+        <nb-action>
+          <nb-select formControlName="organizationId" (selectedChange)="updatePipelines()" [placeholder]="'PIPELINES_PAGE.SELECT_ORGANIZATION' | translate">
+            <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization.organization.id" [style.whiteSpace]="'pre'">
+              {{ userOrganization.organization.name }}
+            </nb-option>
+          </nb-select>
+        </nb-action>
+        <nb-action>
+          <nb-form-field>
+            <input formControlName="name" nbInput shape="round" type="text"
+                   [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate">
+            <nb-icon [icon]="pipelineForm.valid ? 'plus-circle-outline' : 'search-outline'"
+                     pack="eva" nbSuffix (click)="pipelineForm.valid && createPipeline()"></nb-icon>
+          </nb-form-field>
+        </nb-action>
+      </nb-actions>
+    </form>
 
     <ng2-smart-table [settings]="smartTableSettings" [source]="pipelines"></ng2-smart-table>
   </nb-card-body>

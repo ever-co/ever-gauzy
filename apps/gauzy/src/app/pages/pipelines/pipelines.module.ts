@@ -13,8 +13,9 @@ import { PipelinesRouting } from './pipelines.routing';
 import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { PipelinesService } from '../../@core/services/pipelines.service';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { BrowserModule } from '@angular/platform-browser';
 
 
 
@@ -29,7 +30,9 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
     PipelinesService,
   ],
   imports: [
+    ReactiveFormsModule,
     Ng2SmartTableModule,
+    NbFormFieldModule,
     PipelinesRouting,
     TranslateModule,
     NbActionsModule,
@@ -40,7 +43,6 @@ import { Ng2SmartTableModule } from 'ng2-smart-table';
     NbCardModule,
     NbIconModule,
     FormsModule,
-    NbFormFieldModule,
   ],
 })
 export class PipelinesModule
