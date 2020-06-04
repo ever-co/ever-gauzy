@@ -121,7 +121,6 @@ export class CandidateCalendarInfoComponent implements OnInit {
 
 		if (!curOverflow || curOverflow === 'visible') {
 			el.style.overflow = 'hidden';
-			el.style.backgroundColor = '#3366ff';
 		}
 
 		const isOverflowing =

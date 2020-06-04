@@ -242,7 +242,6 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 
 		if (!curOverflow || curOverflow === 'visible') {
 			el.style.overflow = 'hidden';
-			el.style.backgroundColor = '#3366ff';
 		}
 
 		const isOverflowing =
