@@ -12,7 +12,8 @@ export class ExpenseCategory extends Base implements IExpenseCategory {
 	@JoinTable({
 		name: 'tag_organization_expense_categories'
 	})
-	tags: Tag[];
+	tags?: Tag[];
+
 	@ApiProperty({ type: String })
 	@IsNumber()
 	@IsNotEmpty()
