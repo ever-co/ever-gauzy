@@ -9,19 +9,28 @@
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
-		<div *ngIf="showAddCard" class="row m-0">
-			<input
-				#addInput
-				class="col-8"
-				nbInput
-				type="text"
-				(keyup)="onKeyEnter($event)"
-				placeholder="{{
+		<div *ngIf="showAddCard" class="row">
+			<div class="col-sm-3 d-flex flex-column justify-content-end">
+				<label class="label">{{
 					'FORM.PLACEHOLDERS.EMPLOYMENT_TYPES' | translate
-				}}"
-				fullWidth
-			/>
-			<span class="col-2 pl-2 pr-1"
+				}}</label>
+				<input
+					#addInput
+					nbInput
+					type="text"
+					(keyup)="onKeyEnter($event)"
+					placeholder="{{
+						'FORM.PLACEHOLDERS.EMPLOYMENT_TYPES' | translate
+					}}"
+				/>
+			</div>
+			<ga-tags-color-input
+				[selectedTags]="tags"
+				(selectedTagsEvent)="selectedTagsEvent($event)"
+				class="col-sm-3"
+			>
+			</ga-tags-color-input>
+			<span class="col-sm-3" style="margin-top: 29px;"
 				><button
 					class="w-100"
 					(click)="addEmploymentType(addInput.value)"
@@ -31,7 +40,7 @@
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button></span
 			>
-			<span class="col-2 pl-1 pr-0"
+			<span class="col-sm-3" style="margin-top: 29px;"
 				><button
 					class="w-100"
 					(click)="showAddCard = !showAddCard"
@@ -53,8 +62,64 @@
 
 		<nb-card *ngFor="let employmentType of organizationEmploymentTypes">
 			<nb-card-body>
-				{{ employmentType['name'] }}
-				<nb-actions class="float-right" e="medium">
+				<ga-notes-with-tags [rowData]="employmentType">
+				</ga-notes-with-tags>
+				<div *ngIf="showEditDiv" class="row m-0">
+					<div class="col-3 d-flex flex-column justify-content-end">
+						<label class="label">Name</label>
+						<input
+							#editInput
+							nbInput
+							type="text"
+							[value]="employmentType.name"
+						/>
+					</div>
+					<ga-tags-color-input
+						class="col-3"
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+					>
+					</ga-tags-color-input>
+					<span
+						class="col-2 pl-2 pr-1 d-flex flex-column justify-content-end"
+					>
+						<button
+							class="w-100"
+							(click)="
+								editOrgEmplType(
+									employmentType['id'],
+									employmentType['name']
+								)
+							"
+							nbButton
+							status="success"
+						>
+							Update
+						</button></span
+					>
+					<span
+						class="col-2 pl-1 pr-0 d-flex flex-column justify-content-end"
+					>
+						<button
+							class="w-100"
+							(click)="cancel()"
+							nbButton
+							status="danger"
+						>
+							{{ 'BUTTONS.CANCEL' | translate }}
+						</button></span
+					>
+				</div>
+				<nb-actions
+					class="float-right"
+					e="medium"
+					*ngIf="employmentType !== selectedOrgEmplType"
+				>
+					<nb-action
+						(click)="showEditCard(employmentType)"
+						class="d-inline pr-0"
+						icon="edit"
+					></nb-action>
 					<nb-action
 						(click)="
 							deleteEmploymentType(

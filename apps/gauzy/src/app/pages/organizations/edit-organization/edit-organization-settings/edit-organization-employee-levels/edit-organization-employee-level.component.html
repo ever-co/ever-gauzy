@@ -19,7 +19,6 @@
 					nbInput
 					type="text"
 					placeholder="Add Level of Employee"
-					fullWidth
 				/>
 			</div>
 			<ga-tags-color-input
@@ -65,15 +64,10 @@
 				>
 					<div class="col-3 d-flex flex-column justify-content-end">
 						<label class="label">Level</label>
-						<input
-							nbInput
-							type="text"
-							#level
-							[value]="e.level"
-							fullWidth
-						/>
+						<input nbInput type="text" #level [value]="e.level" />
 					</div>
 					<ga-tags-color-input
+						class="col-3"
 						[selectedTags]="tags"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
 					>

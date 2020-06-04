@@ -9,6 +9,7 @@ import { takeUntil } from 'rxjs/operators';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { OrganizationExpenseCategoriesService } from 'apps/gauzy/src/app/@core/services/organization-expense-categories.service';
+import { Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-org-expense-categories',
@@ -26,6 +27,7 @@ export class EditOrganizationExpenseCategoriesComponent
 	expenseCategories: IOrganizationExpenseCategory[];
 
 	selectedExpenseCategory: IOrganizationExpenseCategory;
+	tags: Tag[] = [];
 
 	constructor(
 		private readonly organizationExpenseCategoryService: OrganizationExpenseCategoriesService,
@@ -51,6 +53,7 @@ export class EditOrganizationExpenseCategoriesComponent
 	showEditCard(expenseCategory: IOrganizationExpenseCategory) {
 		this.showEditDiv = true;
 		this.selectedExpenseCategory = expenseCategory;
+		this.tags = expenseCategory.tags;
 	}
 
 	cancel() {
@@ -79,17 +82,26 @@ export class EditOrganizationExpenseCategoriesComponent
 	}
 
 	async editCategory(id: string, name: string) {
-		await this.organizationExpenseCategoryService.update(id, { name });
+		const expenseCategory = {
+			name: name,
+			tags: this.tags
+		};
+		await this.organizationExpenseCategoryService.update(
+			id,
+			expenseCategory
+		);
 		this.loadCategories();
 		this.toastrService.success('Successfully updated');
 		this.showEditDiv = !this.showEditDiv;
+		this.tags = [];
 	}
 
 	private async addCategory(name: string) {
 		if (name) {
 			await this.organizationExpenseCategoryService.create({
 				name,
-				organizationId: this.expenseCategoryId
+				organizationId: this.expenseCategoryId,
+				tags: this.tags
 			});
 
 			this.toastrService.primary(
@@ -122,11 +134,18 @@ export class EditOrganizationExpenseCategoriesComponent
 			return;
 		}
 
-		const res = await this.organizationExpenseCategoryService.getAll({
-			organizationId: this.expenseCategoryId
-		});
+		const res = await this.organizationExpenseCategoryService.getAll(
+			{
+				organizationId: this.expenseCategoryId
+			},
+			['tags']
+		);
 		if (res) {
 			this.expenseCategories = res.items;
 		}
+	}
+
+	selectedTagsEvent(ev) {
+		this.tags = ev;
 	}
 }
