@@ -1029,7 +1029,11 @@
 		"IMAGE": "Изображение",
 		"LANGUAGE": "Язык",
 		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!",
-		"ICON": "Иконка"
+		"ICON": "Иконка",
+		"ADD_VARIANT": "Добавить вариант",
+		"EDIT_VARIANT": "Изменить вариант",
+		"NO_OPTIONS_LABEL": "(нет опций)",
+		"OPTIONS": "Варианты"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -1497,6 +1501,7 @@
 		"SELECT_EVENT_TYPES": "Пожалуйста, выберите тип события",
 		"PICK_DATETIME": "Выберите дату и время",
 		"DURATION": "Продолжительность:",
-		"EVENT_TYPE": "Тип события:"
+		"EVENT_TYPE": "Тип события:",
+		"CONFIRM_APPOINTMENT": "Страница подтверждения назначения"
 	}
 }
