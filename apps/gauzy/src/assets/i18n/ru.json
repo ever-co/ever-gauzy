@@ -696,7 +696,7 @@
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
 				"SCHEDULED_INTERVIEWS": "Запланированные интервью",
-				"CONTINUE_WITH": "Продолжить с ",
+				"CONTINUE": "Продолжить ",
 				"PAST_DATE": "Вы выбрали день в прошлом",
 				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
@@ -762,6 +762,12 @@
 		"EMPLOYMENT_TYPES": "Типы занятости",
 		"INVITE_CLIENT": "Пригласить клиента",
 		"EMAIL_INVITE": "Приглашение",
+		"ADD_LEVEL_OF_EMPLOYEE": "Добавить уровень сотрудника",
+		"LEVEL_OF_EMPLOYEE": "Уровни сотрудников",
+		"VENDOR_NAME": "Имя поставщика",
+		"LEVEL_NAME": "Название уровня",
+		"EXPENSE_NAME": "Имя Расхода",
+		"EMPLOYMENT_TYPE_NAME": "Название типа занятости",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -1183,7 +1189,11 @@
 			"BY_TASK_HOURS": "По часам задания",
 			"BY_PRODUCTS": "По товарам",
 			"DETAILS_INVOICE_ITEMS": "Детали накладной",
-			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов"
+			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов",
+			"SELECT_INVOICE_TYPE": "Выберите тип счета",
+			"SELECT_PROJECTS": "Выберите проекты",
+			"SELECT_TASKS": "Выберите задачи",
+			"SELECT_PRODUCTS": "Выберите товары"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",

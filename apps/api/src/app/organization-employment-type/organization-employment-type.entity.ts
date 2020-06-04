@@ -3,10 +3,19 @@ import { IsNotEmpty } from 'class-validator';
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Employee } from '../employee/employee.entity';
+import { Tag } from '../tags/tag.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('organization_employment_type')
 export class OrganizationEmploymentType extends Base
 	implements IOrganizationEmploymentType {
+	@ApiProperty()
+	@ManyToMany((type) => Tag)
+	@JoinTable({
+		name: 'tag_organization_employment_types'
+	})
+	tags: Tag[];
+
 	@Column()
 	name: string;
 

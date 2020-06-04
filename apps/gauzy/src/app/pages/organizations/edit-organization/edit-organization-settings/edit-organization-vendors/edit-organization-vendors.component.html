@@ -12,7 +12,7 @@
 		<div *ngIf="showAddCard" class="row">
 			<div class="col-sm-3 d-flex flex-column justify-content-end">
 				<label class="label" for="add-vendor">{{
-					'FORM.PLACEHOLDERS.ADD_VENDOR' | translate
+					'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
 				}}</label>
 				<input
 					#addInput
@@ -20,7 +20,7 @@
 					type="text"
 					style="max-width: none;"
 					placeholder="{{
-						'FORM.PLACEHOLDERS.ADD_VENDOR' | translate
+						'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
 					}}"
 					id="add-vendor"
 				/>
@@ -54,7 +54,9 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body *ngIf="vendors?.length">
-		<div class="ml-3 mb-4"><strong>Vendor name</strong></div>
+		<div class="ml-3 mb-4">
+			<strong>{{ 'ORGANIZATIONS_PAGE.VENDORS' | translate }}</strong>
+		</div>
 
 		<nb-card *ngFor="let v of vendors">
 			<nb-card-body>
@@ -66,7 +68,9 @@
 					<div
 						class="col-sm-3 d-flex flex-column justify-content-end"
 					>
-						<label class="label">Name</label>
+						<label class="label">{{
+							'ORGANIZATIONS_PAGE.VENDOR_NAME' | translate
+						}}</label>
 						<input
 							#editInput
 							nbInput

@@ -31,9 +31,13 @@
 		>
 			<span *ngIf="!isPast">
 				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CONTINUE_WITH'
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CONTINUE'
 						| translate
 				}}<span *ngIf="eventStartTime">
+					{{
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH'
+							| translate
+					}}
 					: {{ eventStartTime | date: 'mediumDate' }},
 					{{ eventStartTime | date: 'shortTime' }}-{{
 						eventEndTime | date: 'shortTime'

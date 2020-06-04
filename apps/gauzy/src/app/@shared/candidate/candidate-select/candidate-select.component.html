@@ -9,14 +9,10 @@
 		[value]="candidate.id"
 		[disabled]="disabledIds?.includes(candidate.id) ? true : false"
 	>
-		<img
-			src="{{ candidate.user.imageUrl }}"
-			alt="Smiley face"
-			height="40"
-			width="40"
-			style="margin-right: 10px;"
-		/>
-		{{ candidate.user.firstName }}
-		{{ candidate.user.lastName }}
+		<ngx-avatar
+			size="sm"
+			[src]="candidate.user?.imageUrl"
+			[name]="candidate.user?.name"
+		></ngx-avatar>
 	</nb-option>
 </nb-select>

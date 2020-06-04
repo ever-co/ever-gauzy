@@ -21,6 +21,8 @@ export class CandidateCalendarInfoComponent implements OnInit {
 	eventStartTime: Date;
 	eventEndTime: Date;
 	isPast = false;
+	titleText: string;
+	employeeNames: string;
 
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateCalendarInfoComponent>,
@@ -52,8 +54,8 @@ export class CandidateCalendarInfoComponent implements OnInit {
 				moment(start).isSame(moment(end), 'day'),
 			select: this.handleEventSelect.bind(this),
 			dateClick: this.handleDateClick.bind(this),
-			eventMouseEnter: this.handleEventMouseEnter.bind(this)
-			// eventMouseLeave: this.handleEventMouseLeave.bind(this),
+			eventMouseEnter: this.handleEventMouseEnter.bind(this),
+			eventMouseLeave: this.handleEventMouseLeave.bind(this)
 		};
 		const res = await this.candidateInterviewService.getAll([
 			'interviewers'
@@ -119,7 +121,6 @@ export class CandidateCalendarInfoComponent implements OnInit {
 
 		if (!curOverflow || curOverflow === 'visible') {
 			el.style.overflow = 'hidden';
-			el.style.backgroundColor = '#3366ff';
 		}
 
 		const isOverflowing =

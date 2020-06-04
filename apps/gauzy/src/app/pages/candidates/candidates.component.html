@@ -59,7 +59,9 @@
 			</button>
 			<button
 				nbButton
-				[disabled]="!selectedCandidate"
+				[disabled]="
+					!selectedCandidate || selectedCandidate?.status === 'HIRED'
+				"
 				(click)="hire()"
 				status="success"
 				class="mr-2"
@@ -69,7 +71,10 @@
 			</button>
 			<button
 				nbButton
-				[disabled]="!selectedCandidate"
+				[disabled]="
+					!selectedCandidate ||
+					selectedCandidate?.status === 'REJECTED'
+				"
 				(click)="reject()"
 				status="danger"
 				class="mr-2"

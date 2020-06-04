@@ -696,7 +696,7 @@
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
 				"SCHEDULED_INTERVIEWS": "Scheduled interviews",
-				"CONTINUE_WITH": "Continue with ",
+				"CONTINUE": "Continue ",
 				"PAST_DATE": "You have chosen a day in the past",
 				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
@@ -762,6 +762,12 @@
 		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
+		"ADD_LEVEL_OF_EMPLOYEE": "Add level of employee",
+		"LEVEL_OF_EMPLOYEE": "Employee Levels",
+		"VENDOR_NAME": "Vendor name",
+		"LEVEL_NAME": "Level name",
+		"EXPENSE_NAME": "Expense name",
+		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "לקוחות",
@@ -1183,7 +1189,11 @@
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
-			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items"
+			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
+			"SELECT_INVOICE_TYPE": "Select an invoice type",
+			"SELECT_PROJECTS": "Select projects",
+			"SELECT_TASKS": "Select tasks",
+			"SELECT_PRODUCTS": "Select products"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",

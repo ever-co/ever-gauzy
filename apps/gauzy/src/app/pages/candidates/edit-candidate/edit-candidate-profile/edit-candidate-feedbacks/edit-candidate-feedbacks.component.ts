@@ -110,6 +110,7 @@ export class EditCandidateFeedbacksComponent extends TranslationBaseComponent
 					if (result) {
 						item.interviewer.employeeImageUrl =
 							result.user.imageUrl;
+						item.interviewer.employeeName = result.user.name;
 					}
 					this.allInterviews.push(res); //for filter
 				}
