@@ -1503,6 +1503,7 @@
 		"SELECT_EVENT_TYPES": "Please select an event type",
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
-		"EVENT_TYPE": "Event Type:"
+		"EVENT_TYPE": "Event Type:",
+		"CONFIRM_APPOINTMENT": "Appointment confirmation page"
 	}
 }

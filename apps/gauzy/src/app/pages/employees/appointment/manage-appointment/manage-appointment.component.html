@@ -166,6 +166,7 @@
 								'FORM.LABELS.MEETING_INVITEES' | translate
 							}}</label>
 							<ga-employee-multi-select
+								[label]="false"
 								[selectedEmployeeIds]="selectedEmployeeIds"
 								[allEmployees]="employees"
 								(selectedChange)="onMembersSelected($event)"

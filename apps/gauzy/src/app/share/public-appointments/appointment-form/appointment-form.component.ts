@@ -3,7 +3,9 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { IEventType } from '@gauzy/models';
+import { IEventType, Employee } from '@gauzy/models';
+import { takeUntil } from 'rxjs/operators';
+import { EmployeesService } from '../../../@core/services';
 
 @Component({
 	templateUrl: './appointment-form.component.html'
@@ -15,10 +17,12 @@ export class AppointmentFormComponent extends TranslationBaseComponent
 	selectedRange: { start: Date; end: Date };
 	selectedEventType: IEventType;
 	allowedDuration: Number;
+	employee: Employee;
 
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
+		private employeeService: EmployeesService,
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -30,18 +34,32 @@ export class AppointmentFormComponent extends TranslationBaseComponent
 			end: history.state.dateEnd
 		};
 
-		this.selectedEventType = history.state.selectedEventType;
+		this.route.params
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(async (params) => {
+				try {
+					this.employee = await this.employeeService.getEmployeeById(
+						params.employeeid,
+						['user']
+					);
 
-		if (this.selectedEventType) {
-			this.allowedDuration =
-				this.selectedEventType.durationUnit === 'Day(s)'
-					? this.selectedEventType.duration * 24 * 60
-					: this.selectedEventType.durationUnit === 'Hour(s)'
-					? this.selectedEventType.duration * 60
-					: this.selectedEventType.duration * 1;
-		} else {
-			history.go(-1);
-		}
+					this.selectedEventType = history.state.selectedEventType;
+
+					if (this.selectedEventType) {
+						this.allowedDuration =
+							this.selectedEventType.durationUnit === 'Day(s)'
+								? this.selectedEventType.duration * 24 * 60
+								: this.selectedEventType.durationUnit ===
+								  'Hour(s)'
+								? this.selectedEventType.duration * 60
+								: this.selectedEventType.duration * 1;
+					} else {
+						history.go(-1);
+					}
+				} catch (error) {
+					await this.router.navigate(['/share/404']);
+				}
+			});
 	}
 
 	ngOnDestroy() {

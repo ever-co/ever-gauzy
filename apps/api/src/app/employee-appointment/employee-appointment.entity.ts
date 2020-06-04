@@ -87,12 +87,15 @@ export class EmployeeAppointment extends Base implements IEmployeeAppointment {
 	@Column({ nullable: true })
 	breakStartTime?: Date;
 
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	emails?: string;
+
 	@ApiProperty({ type: AppointmentEmployees, isArray: true })
-	@OneToMany(
-		(type) => AppointmentEmployees,
-		(entity) => entity.employeeId,
-		{ onDelete: 'SET NULL' }
-	)
+	@OneToMany((type) => AppointmentEmployees, (entity) => entity.employeeId, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invitees: AppointmentEmployees[];
 }
