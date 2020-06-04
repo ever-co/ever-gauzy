@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { ProductMutationComponent } from './product-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import {
 	NbRadioModule,
@@ -16,11 +15,9 @@ import { HttpLoaderFactory } from '../../@theme/components/header/selectors/empl
 import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
-import { ProductFormComponent } from './product-form/product-form.component';
 import { ProductCategoryService } from '../../@core/services/product-category.service';
 import { ProductService } from '../../@core/services/product.service';
 import { ProductTypeService } from '../../@core/services/product-type.service';
-import { ProductVariantFormComponent } from './product-variant-form/product-variant-form.component';
 import { ProductVariantService } from '../../@core/services/product-variant.service';
 import { ProductVariantSettingsService } from '../../@core/services/product-variant-settings.service';
 import { ProductVariantPriceService } from '../../@core/services/product-variant-price.service';
@@ -33,9 +30,6 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 
 @NgModule({
 	declarations: [
-		ProductMutationComponent,
-		ProductFormComponent,
-		ProductVariantFormComponent,
 		ProductTypeMutationComponent,
 		ProductCategoryMutationComponent
 	],

@@ -8,7 +8,8 @@ import {
 	Param,
 	HttpCode,
 	UseGuards,
-	Delete
+	Delete,
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController, IPagination } from '../core';
@@ -19,10 +20,11 @@ import { ProductCreateCommand } from './commands/product.create.command';
 import { ProductUpdateCommand } from './commands/product.update.command';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
-import { PermissionsEnum } from '@gauzy/models';
+import { PermissionsEnum, IProductCreateInput } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { ProductDeleteCommand } from './commands';
 import { DeleteResult } from 'typeorm';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('Product')
 @UseGuards(AuthGuard('jwt'))
@@ -33,6 +35,27 @@ export class ProductController extends CrudController<Product> {
 		private commandBus: CommandBus
 	) {
 		super(productService);
+	}
+	@ApiOperation({ summary: 'Find Product by id ' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found one record',
+		type: Product
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get(':id')
+	async findById(
+		@Param('id') id: string,
+		@Query('data', ParseJsonPipe) data?: any
+	): Promise<Product> {
+		const { relations = [] } = data;
+
+		return this.productService.findById(id, {
+			relations
+		});
 	}
 
 	@ApiOperation({
@@ -64,7 +87,7 @@ export class ProductController extends CrudController<Product> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('/:langCode')
+	@Get('local/:langCode')
 	async findAllProductsTranslated(
 		@Param('langCode') langCode: string
 	): Promise<IPagination<Product>> {
@@ -84,7 +107,10 @@ export class ProductController extends CrudController<Product> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
 	@Post('/create')
-	async createProduct(@Body() entity: Product, ...options: any[]) {
+	async createProduct(
+		@Body() entity: IProductCreateInput,
+		...options: any[]
+	) {
 		return this.commandBus.execute(new ProductCreateCommand(entity));
 	}
 
@@ -106,7 +132,7 @@ export class ProductController extends CrudController<Product> {
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: Product
+		@Body() entity: IProductCreateInput
 	): Promise<any> {
 		return this.commandBus.execute(new ProductUpdateCommand(id, entity));
 	}

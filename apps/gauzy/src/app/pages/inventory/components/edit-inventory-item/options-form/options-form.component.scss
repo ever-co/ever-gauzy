@@ -1,11 +1,6 @@
-.d-bottom {
-  display: flex;
-  align-items: flex-end;
-  align-content: flex-end;
-}
-
 .options-wrap {
   display: flex;
+  min-height: 20px;
 }
 
 .option-delete {
@@ -35,8 +30,11 @@
   cursor: pointer;
 }
 
-.text-danger {
-  max-width: 100%;
-  font-size: 12px;
-  margin-top: 5px;
+.d-bottom {
+  display: flex;
+  align-items: flex-end;
+}
+
+.width-100 {
+  width: 100%;
 }

@@ -25,6 +25,7 @@ import { ProductVariantDeleteHandler } from './commands/handlers/product-variant
 	],
 	controllers: [ProductVariantController],
 	providers: [
+		ProductService,
 		ProductVariantService,
 		ProductVariantCreateHandler,
 		ProductVariantDeleteHandler,
