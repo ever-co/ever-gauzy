@@ -1,10 +1,19 @@
 import { NgModule } from '@angular/core';
 import { PipelinesComponent } from './pipelines.component';
-import { NbCardModule, NbSelectModule } from '@nebular/theme';
+import {
+  NbActionsModule,
+  NbButtonModule,
+  NbCardModule,
+  NbFormFieldModule,
+  NbIconModule,
+  NbInputModule,
+  NbSelectModule,
+} from '@nebular/theme';
 import { PipelinesRouting } from './pipelines.routing';
 import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { PipelinesService } from '../../@core/services/pipelines.service';
+import { FormsModule } from '@angular/forms';
 
 
 
@@ -24,6 +33,11 @@ import { PipelinesService } from '../../@core/services/pipelines.service';
     NbSelectModule,
     NbCardModule,
     CommonModule,
+    NbInputModule,
+    NbButtonModule,
+    NbIconModule,
+    NbActionsModule,
+    FormsModule,
   ],
 })
 export class PipelinesModule

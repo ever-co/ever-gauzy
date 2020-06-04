@@ -3,11 +3,24 @@
     <h4 [innerHTML]="'PIPELINES_PAGE.HEADER' | translate"></h4>
   </nb-card-header>
   <nb-card-body>
-    <nb-select [(selected)]="userOrganization" (selectedChange)="updatePipelines()" [placeholder]="'PIPELINES_PAGE.SELECT_ORGANIZATION' | translate">
-      <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization" [style.whiteSpace]="'pre'">
-        {{ userOrganization.organization.name }}
-      </nb-option>
-    </nb-select>
+    <nb-actions>
+      <nb-action>
+        <nb-select [(selected)]="createInput.organizationId" (selectedChange)="updatePipelines()" [placeholder]="'PIPELINES_PAGE.SELECT_ORGANIZATION' | translate">
+          <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization.organization.id" [style.whiteSpace]="'pre'">
+            {{ userOrganization.organization.name }}
+          </nb-option>
+        </nb-select>
+      </nb-action>
+      <nb-action>
+        <input nbInput [(ngModel)]="createInput.name" [placeholder]="'PIPELINES_PAGE.NEW_PIPELINE' | translate" type="text">
+      </nb-action>
+      <nb-action *ngIf="canCreate">
+        <button nbButton status="control" (click)="createPipeline()">
+          <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
+        </button>
+      </nb-action>
+    </nb-actions>
   </nb-card-body>
 </nb-card>
 <pre>{{ pipelines | json }}</pre>
+<pre>{{ createInput | json }}</pre>

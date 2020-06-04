@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { Pipeline, UserOrganization } from '@gauzy/models';
+import { Pipeline, PipelineCreateInput, UserOrganization } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 
@@ -13,13 +13,13 @@ import { PipelinesService } from '../../@core/services/pipelines.service';
 export class PipelinesComponent implements OnInit
 {
 
-  public userOrganizations: UserOrganization[];
+  public createInput: PipelineCreateInput = {} as any;
 
-  public userOrganization: UserOrganization;
+  public userOrganizations: UserOrganization[];
 
   public pipelines: Pipeline[];
 
-  public pipeline: Pipeline;
+  public isCreating = false;
 
   public constructor(
     private store: Store,
@@ -30,22 +30,36 @@ export class PipelinesComponent implements OnInit
 
   public ngOnInit()
   {
+    const { userId } = this.store;
     this.usersOrganizationsService
-      .getAll( [ 'organization' ], {
-        userId: this.store.userId,
-      })
+      .getAll( [ 'organization' ], { userId })
       .then( ({ items }) => {
-        this.userOrganization = items[0];
+        this.createInput.organizationId = items[0]?.organization?.id;
         this.userOrganizations = items;
         this.updatePipelines();
       });
   }
 
+  public get canCreate(): boolean {
+    return !(this.isCreating
+      || !this.createInput.name
+      || !this.createInput.organizationId);
+  }
+
   public updatePipelines(): void {
-    if ( !this.userOrganization?.id ) return;
-    this.pipelinesService.find( [], {
-      organizationId: this.userOrganization?.organization?.id,
-    }).then( items => this.pipelines = items );
+    const { organizationId } = this.createInput;
+
+    this.pipelinesService
+      .find( [], { organizationId })
+      .then( ({ items }) => this.pipelines = items );
+  }
+
+  public createPipeline() {
+    this.isCreating = true;
+    this.pipelinesService
+      .create( this.createInput )
+      .then( () => this.updatePipelines() )
+      .finally( () => this.isCreating = false );
   }
 
 }
