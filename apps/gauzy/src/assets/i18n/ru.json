@@ -739,6 +739,9 @@
 			"FINISHED_ADDING": "Я добавил все текущие Кандидаты",
 			"NEXT": "Следующий",
 			"PREVIOUS": "Предыдущий"
+		},
+		"STATISTIC": {
+			"CANDIDATE_STATISTICS": "Статистика Кандидатов"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1099,7 +1102,10 @@
 		"ADD_EMPLOYEE": "Добавить сотрудника",
 		"CHAT": "Чат поддержки",
 		"FAQ": "ЧаВо",
-		"HELP": "Помогите"
+		"HELP": "Помогите",
+		"MANAGE_INTERVIEWS": "Управление собеседованиями",
+		"MANAGE_INVITES": "Управление приглашениями",
+		"CANDIDATE_STATISTIC": "Статистика Кандидата"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",

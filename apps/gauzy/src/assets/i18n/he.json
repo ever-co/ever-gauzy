@@ -739,6 +739,9 @@
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
+		},
+		"STATISTIC": {
+			"CANDIDATE_STATISTICS": "Candidate statistics"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1099,7 +1102,10 @@
 		"ADD_EMPLOYEE": "הוסף עובד",
 		"CHAT": "Чат с нас",
 		"FAQ": "Въпроси и Отговори",
-		"HELP": "עזרה"
+		"HELP": "עזרה",
+		"MANAGE_INTERVIEWS": "Manage interviews",
+		"MANAGE_INVITES": "Manage invites",
+		"CANDIDATE_STATISTIC": "Candidate statistic"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "שם פרטי",
