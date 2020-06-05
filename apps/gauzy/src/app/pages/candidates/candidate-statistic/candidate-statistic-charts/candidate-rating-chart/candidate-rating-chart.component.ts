@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -18,8 +18,7 @@ import { Candidate } from '@gauzy/models';
 		></chart>
 	`
 })
-export class CandidateRatingChartComponent
-	implements OnInit, OnDestroy, OnChanges {
+export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
 	@Input() candidates: Candidate[];
@@ -32,10 +31,6 @@ export class CandidateRatingChartComponent
 
 	ngOnInit() {
 		this.loadData();
-		this.loadChart();
-	}
-
-	ngOnChanges() {
 		this.loadChart();
 	}
 
