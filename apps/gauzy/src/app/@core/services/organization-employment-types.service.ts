@@ -42,4 +42,11 @@ export class OrganizationEmploymentTypesService {
 			.pipe(first())
 			.toPromise();
 	}
+
+	editEmploymentType(id: string, updateInput: any): Promise<any> {
+		return this.http
+			.put(`/api/organization-employment-type/${id}`, updateInput)
+			.pipe(first())
+			.toPromise();
+	}
 }

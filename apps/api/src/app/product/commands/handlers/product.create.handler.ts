@@ -16,16 +16,22 @@ export class ProductCreateHandler
 	public async execute(command?: ProductCreateCommand): Promise<Product> {
 		const { productInput } = command;
 
-		const product = await this.productService.create(productInput);
+		const optionsCreate = productInput.optionCreateInputs.map(
+			(optionInput) => {
+				const option = new ProductOption();
+				option.name = optionInput.name;
+				option.code = optionInput.code;
+				return option;
+			}
+		);
 
-		const optionsInput = productInput.options.map((optionInput) => {
-			const option = new ProductOption();
-			Object.assign(option, { ...optionInput, product });
+		const savedOptions = await this.productOptionService.createBulk(
+			optionsCreate
+		);
 
-			return option;
-		});
+		productInput['options'] = savedOptions;
 
-		await this.productOptionService.createBulk(optionsInput);
+		const product = await this.productService.saveProduct(productInput);
 
 		return product;
 	}

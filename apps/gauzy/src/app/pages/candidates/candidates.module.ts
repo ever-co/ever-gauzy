@@ -24,7 +24,9 @@ import {
 	NbDatepickerModule,
 	NbActionsModule,
 	NbTabsetModule,
-	NbRadioModule
+	NbRadioModule,
+	NbMenuModule,
+	NbContextMenuModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -69,6 +71,10 @@ import { CandidateInterviewersService } from '../../@core/services/candidate-int
 import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-multi-select/candidate-multi-select.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.module';
+import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
+import { ChartModule } from 'angular2-chartjs';
+import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-rating-chart/candidate-rating-chart.component';
+import { InterviewerAssessmentChartComponent } from './candidate-statistic/candidate-statistic-charts/interviewer-assessment-chart/interviewer-assessment-chart.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -92,10 +98,13 @@ const COMPONENTS = [
 	EditCandidateTasksComponent,
 	EditCandidateInterviewComponent,
 	ManageCandidateInviteComponent,
+	CandidateStatisticComponent,
 	EditCandidateSkillsComponent,
 	EditCandidateEducationComponent,
 	EditCandidateExperienceFormComponent,
-	ManageCandidateInterviewsComponent
+	ManageCandidateInterviewsComponent,
+	CandidateRatingChartComponent,
+	InterviewerAssessmentChartComponent
 ];
 
 @NgModule({
@@ -103,6 +112,7 @@ const COMPONENTS = [
 		FullCalendarModule,
 		TableComponentsModule,
 		SharedModule,
+		ChartModule,
 		CandidatesRoutingModule,
 		ThemeModule,
 		NbCardModule,
@@ -141,6 +151,9 @@ const COMPONENTS = [
 		InviteTableModule,
 		EmployeeLocationModule,
 		EmployeeRatesModule,
+		NbMenuModule,
+		NbContextMenuModule,
+		NbActionsModule,
 		StarRatingInputModule,
 		StarRatingOutputModule,
 		CandidateMultiSelectModule,

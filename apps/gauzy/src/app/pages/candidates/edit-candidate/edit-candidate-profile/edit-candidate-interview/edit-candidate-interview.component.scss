@@ -14,12 +14,18 @@
   align-items: center;
 }
 
+.image-wrap {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .candidate-image-small {
   max-width: 35px;
   max-height: 35px;
   border-radius: 13px;
-  margin-right: 4px;
-  margin-left: 4px;
+  margin: 4px;
 }
 
 .disabled {

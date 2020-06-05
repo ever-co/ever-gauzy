@@ -3,6 +3,7 @@ import { CrudService, IPagination } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
+import { IProductCreateInput } from '@gauzy/models';
 
 @Injectable()
 export class ProductService extends CrudService<Product> {
@@ -35,7 +36,11 @@ export class ProductService extends CrudService<Product> {
 		return { items, total };
 	}
 
-	async saveProduct(productRequest: Product): Promise<Product> {
+	async findById(id: string, options: any): Promise<Product> {
+		return await this.productRepository.findOne(id, options);
+	}
+
+	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
 		return await this.productRepository.save(productRequest);
 	}
 }

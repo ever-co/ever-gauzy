@@ -401,8 +401,8 @@
 		"EDIT_EVENT_TYPE": " Edit Event Type"
 	},
 	"MENU": {
-    "PIPELINES": "Pipelines",
-    "DASHBOARD": "Dashboard",
+		"PIPELINES": "Pipelines",
+		"DASHBOARD": "Dashboard",
 		"APPOINTMENTS": "Appointments",
 		"EVENT_TYPES": "Event Types",
 		"ACCOUNTING": "Accounting",
@@ -699,7 +699,7 @@
 				"WITH": "with",
 				"SCHEDULE_INTERVIEW": "Schedule interview",
 				"SCHEDULED_INTERVIEWS": "Scheduled interviews",
-				"CONTINUE_WITH": "Continue with ",
+				"CONTINUE": "Continue ",
 				"PAST_DATE": "You have chosen a day in the past",
 				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
@@ -742,6 +742,11 @@
 			"FINISHED_ADDING": "I’ve Added All Current Candidates",
 			"NEXT": "Next",
 			"PREVIOUS": "Previous"
+		},
+		"STATISTIC": {
+			"CANDIDATE_STATISTICS": "Candidate statistics",
+			"CANDIDATE_RATING": "Candidate rating",
+			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -765,6 +770,12 @@
 		"EMPLOYMENT_TYPES": "Employment Types",
 		"INVITE_CLIENT": "Invite Client",
 		"EMAIL_INVITE": "Email Invite",
+		"ADD_LEVEL_OF_EMPLOYEE": "Add level of employee",
+		"LEVEL_OF_EMPLOYEE": "Employee Levels",
+		"VENDOR_NAME": "Vendor name",
+		"LEVEL_NAME": "Level name",
+		"EXPENSE_NAME": "Expense name",
+		"EMPLOYMENT_TYPE_NAME": "Employment type name",
 		"EDIT": {
 			"HEADER": "Manage",
 			"CLIENT": "Client",
@@ -1026,7 +1037,11 @@
 		"IMAGE": "Image",
 		"LANGUAGE": "Language",
 		"PRODUCT_VARIANT_DELETED": "Product variant deleted!",
-		"ICON": "Icon"
+		"ICON": "Icon",
+		"ADD_VARIANT": "Add variant",
+		"EDIT_VARIANT": "Edit variant",
+		"NO_OPTIONS_LABEL": "(no options)",
+		"OPTIONS": "Options"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Tasks",
@@ -1092,7 +1107,10 @@
 		"ADD_EMPLOYEE": "Add Employee",
 		"CHAT": "Support Chat",
 		"FAQ": "FAQ",
-		"HELP": "Help"
+		"HELP": "Help",
+		"MANAGE_INTERVIEWS": "Manage interviews",
+		"MANAGE_INVITES": "Manage invites",
+		"CANDIDATE_STATISTIC": "Candidate statistic"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
@@ -1186,7 +1204,11 @@
 			"BY_TASK_HOURS": "By Task Hours",
 			"BY_PRODUCTS": "By Products",
 			"DETAILS_INVOICE_ITEMS": "Details Invoice Items",
-			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items"
+			"DETAILS_ESTIMATE_ITEMS": "Details Estimate Items",
+			"SELECT_INVOICE_TYPE": "Select an invoice type",
+			"SELECT_PROJECTS": "Select projects",
+			"SELECT_TASKS": "Select tasks",
+			"SELECT_PRODUCTS": "Select products"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Item Number",
@@ -1490,11 +1512,12 @@
 		"SELECT_EVENT_TYPES": "Please select an event type",
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
-		"EVENT_TYPE": "Event Type:"
+		"EVENT_TYPE": "Event Type:",
+		"CONFIRM_APPOINTMENT": "Appointment confirmation page"
 	},
-  "PIPELINES_PAGE": {
-    "HEADER": "Pipelines",
-    "SELECT_ORGANIZATION":  "Organization",
-    "FILTER_OR_CREATE": "Filter or Create"
-  }
+	"PIPELINES_PAGE": {
+		"HEADER": "Pipelines",
+		"SELECT_ORGANIZATION": "Organization",
+		"FILTER_OR_CREATE": "Filter or Create"
+	}
 }

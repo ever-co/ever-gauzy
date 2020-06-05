@@ -1,0 +1,44 @@
+<div class="row d-bottom mb-5">
+	<div class="col-sm-9">
+		<label class="label" for="addVariant">
+			{{ 'INVENTORY_PAGE.ADD_VARIANT' | translate }}
+		</label>
+		<ng-select
+			id="addVariant"
+			[multiple]="true"
+			[closeOnSelect]="false"
+			[searchable]="false"
+			[notFoundText]="'INVENTORY_PAGE.NO_OPTIONS_LABEL' | translate"
+			[placeholder]="'INVENTORY_PAGE.ADD_VARIANT' | translate"
+			[(ngModel)]="editVariantCreateInput.options"
+			(change)="onSelectOption($event)"
+		>
+			<ng-option *ngFor="let option of options" [value]="option.name">{{
+				option.name
+			}}</ng-option>
+		</ng-select>
+	</div>
+	<div class="col-sm-3">
+		<button
+			class="width-100"
+			status="success"
+			nbButton
+			(click)="onSaveVariant()"
+		>
+			{{ 'INVENTORY_PAGE.ADD_VARIANT' | translate }}
+		</button>
+	</div>
+</div>
+<div class="row">
+	<div class="col-sm-12 variants-container">
+		<button
+			class="mr-2 btn-variant"
+			nbButton
+			*ngFor="let productVariant of variantCreateInputs"
+			(click)="onEditProductVariant(productVariant)"
+		>
+			<nb-icon icon="edit-outline"></nb-icon>
+			{{ getVariantDisplayName(productVariant) }}
+		</button>
+	</div>
+</div>

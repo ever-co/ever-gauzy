@@ -25,7 +25,7 @@ export class Product extends Base implements IProduct {
 	@JoinTable({
 		name: 'tag_product'
 	})
-	tags: Tag[];
+	tags?: Tag[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -49,7 +49,7 @@ export class Product extends Base implements IProduct {
 	@OneToMany(
 		() => ProductVariant,
 		(productVariant) => productVariant.product,
-		{ onDelete: 'CASCADE' }
+		{ onDelete: 'CASCADE', eager: true }
 	)
 	variants: ProductVariant[];
 
@@ -71,7 +71,8 @@ export class Product extends Base implements IProduct {
 
 	@OneToMany(
 		(type) => ProductOption,
-		(productOption) => productOption.product
+		(productOption) => productOption.product,
+		{ eager: true }
 	)
 	options: ProductOption[];
 
