@@ -74,6 +74,7 @@ import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candid
 import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
 import { ChartModule } from 'angular2-chartjs';
 import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-rating-chart/candidate-rating-chart.component';
+import { InterviewerAssessmentChartComponent } from './candidate-statistic/candidate-statistic-charts/interviewer-assessment-chart/interviewer-assessment-chart.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -102,7 +103,8 @@ const COMPONENTS = [
 	EditCandidateEducationComponent,
 	EditCandidateExperienceFormComponent,
 	ManageCandidateInterviewsComponent,
-	CandidateRatingChartComponent
+	CandidateRatingChartComponent,
+	InterviewerAssessmentChartComponent
 ];
 
 @NgModule({

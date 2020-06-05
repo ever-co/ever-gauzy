@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -7,83 +7,57 @@ import { Candidate } from '@gauzy/models';
 @Component({
 	selector: 'ga-candidate-rating-chart',
 	template: `
+		<h6>
+			{{ 'CANDIDATES_PAGE.STATISTIC.CANDIDATE_RATING' | translate }}
+		</h6>
 		<chart
-			style="height: 500px; width: 500px;"
+			style="height: 400px; width: 100%;"
 			type="bar"
 			[data]="data"
 			[options]="options"
 		></chart>
 	`
 })
-export class CandidateRatingChartComponent
-	implements OnInit, OnDestroy, OnChanges {
-	labels: string[];
-	rating: number[];
+export class CandidateRatingChartComponent implements OnInit, OnDestroy {
+	labels: string[] = [];
+	rating: number[] = [];
 	@Input() candidates: Candidate[];
 	data: any;
 	options: any;
-	data1 = 20;
-	data2 = 30;
+	backgroundColor: string[] = [];
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(private themeService: NbThemeService) {}
 
 	ngOnInit() {
-		this._LoadChart();
+		this.loadData();
+		this.loadChart();
 	}
 
-	ngOnChanges() {
-		this._LoadChart();
-	}
-
-	private _LoadChart() {
+	private loadChart() {
 		this.themeService
 			.getJsTheme()
 			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((config) => {
+			.subscribe(() => {
 				(this.data = {
-					// labels: this.labels,
-					labels: [
-						'Red',
-						'Blue',
-						'Yellow',
-						'Green',
-						'Purple',
-						'Orange'
-					],
+					labels: this.labels,
 					datasets: [
 						{
-							label: '# of Votes',
-							// data: this.rating,
-							data: [12, 19, 3, 5, 2, 3],
-							backgroundColor: [
-								'rgba(255, 99, 132, 0.2)',
-								'rgba(54, 162, 235, 0.2)',
-								'rgba(255, 206, 86, 0.2)',
-								'rgba(75, 192, 192, 0.2)',
-								'rgba(153, 102, 255, 0.2)',
-								'rgba(255, 159, 64, 0.2)'
-							],
-							borderColor: [
-								'rgba(255, 99, 132, 1)',
-								'rgba(54, 162, 235, 1)',
-								'rgba(255, 206, 86, 1)',
-								'rgba(75, 192, 192, 1)',
-								'rgba(153, 102, 255, 1)',
-								'rgba(255, 159, 64, 1)'
-							],
-							borderWidth: 1
+							maxBarThickness: 150,
+							label: 'Candidate rating',
+							data: this.rating,
+							backgroundColor: this.backgroundColor
 						}
 					]
 				}),
 					(this.options = {
-						// responsive: true,
+						responsive: true,
 						maintainAspectRatio: false,
-						// elements: {
-						// 	rectangle: {
-						// 		borderWidth: 2
-						// 	}
-						// },
+						elements: {
+							rectangle: {
+								borderWidth: 2
+							}
+						},
 						scales: {
 							yAxes: [
 								{
@@ -92,16 +66,23 @@ export class CandidateRatingChartComponent
 									}
 								}
 							]
-						},
-						legend: {
-							position: 'right'
 						}
 					});
 			});
-		// console.log(this.data.datasets.data);
 	}
 
-	// async _loadData() {}
+	async loadData() {
+		for (let i = 0; i < this.candidates.length; i++) {
+			this.labels.push(this.candidates[i].user.name);
+			this.rating.push(this.candidates[i].rating);
+
+			const color =
+				i % 2 === 0
+					? 'rgba(89, 139, 255, 0.2)'
+					: 'rgba(0, 214, 143, 0.2)';
+			this.backgroundColor.push(color);
+		}
+	}
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();
