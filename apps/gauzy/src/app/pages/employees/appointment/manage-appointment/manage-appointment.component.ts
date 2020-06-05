@@ -27,13 +27,15 @@ import { Store } from '../../../../@core/services/store.service';
 
 @Component({
 	selector: 'ga-manage-appointment',
-	templateUrl: './manage-appointment.component.html'
+	templateUrl: './manage-appointment.component.html',
+	styleUrls: ['./manage-appointment.component.scss']
 })
 export class ManageAppointmentComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	form: FormGroup;
 	employees: Employee[];
+	@Input() employee: Employee;
 	@Input() employeeAppointment: EmployeeAppointment;
 	@Input() disabled: boolean;
 	@Input() allowedDuration: number;
@@ -190,6 +192,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 
 	async onSaveRequest() {
 		const employeeAppointmentRequest = {
+			emails: this.emails.value,
 			agenda: this.form.get('agenda').value,
 			location: this.form.get('location').value,
 			description: this.form.get('description').value,
@@ -206,7 +209,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 					' ' +
 					this.form.get('breakStartTime').value
 			),
-			employeeId: this.store.selectedEmployee
+			employeeId: this.employee
+				? this.employee.id
+				: this.store.selectedEmployee
 				? this.store.selectedEmployee.id
 				: null
 		};
@@ -235,7 +240,11 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 		}
 
 		this.toastrService.primary(this.getTranslation('TOASTR.TITLE.SUCCESS'));
-		this.router.navigate(['/pages/employees/appointments']);
+		this.employee
+			? this.router.navigate([
+					`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`
+			  ])
+			: this.router.navigate(['/pages/employees/appointments']);
 	}
 
 	onMembersSelected(ev) {

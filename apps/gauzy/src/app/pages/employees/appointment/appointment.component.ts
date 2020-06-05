@@ -70,6 +70,7 @@ export class AppointmentComponent extends TranslationBaseComponent
 	slots: IAvailabilitySlots[];
 	dateSpecificSlots: IAvailabilitySlots[];
 	recurringSlots: IAvailabilitySlots[];
+	appointments: EmployeeAppointment[];
 	timeOff: TimeOff[] = [
 		{
 			start: new Date(
@@ -100,21 +101,21 @@ export class AppointmentComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService
 	) {
 		super(translateService);
-		this._loadAppointments();
 
 		this.calendarOptions = {
 			eventClick: (event) => {
 				let eventObject = event.event;
-				this.router.navigate(
-					[this.appointmentFormURL || this.getRoute('manage')],
-					{
-						state: {
-							dateStart: eventObject.start,
-							dateEnd: eventObject.end,
-							selectedEventType: this.selectedEventType
+				eventObject.extendedProps['type'] !== 'BookedSlot' &&
+					this.router.navigate(
+						[this.appointmentFormURL || this.getRoute('manage')],
+						{
+							state: {
+								dateStart: eventObject.start,
+								dateEnd: eventObject.end,
+								selectedEventType: this.selectedEventType
+							}
 						}
-					}
-				);
+					);
 			},
 			events: this.getEvents.bind(this),
 			initialView: 'timeGridWeek',
@@ -155,7 +156,27 @@ export class AppointmentComponent extends TranslationBaseComponent
 			});
 
 		if (this.employee && this.employee.id) {
-			this._fetchAvailableSlots();
+			const findObj = {
+				employee: {
+					id: this.employee.id
+				}
+			};
+
+			this.employeeAppointmentService
+				.getAll(['employee', 'employee.user'], findObj)
+				.pipe(takeUntil(this._ngDestroy$))
+				.subscribe((appointments) => {
+					this.appointments = appointments.items;
+					for (let appointment of this.appointments) {
+						this.checkAndAddEventToCalendar(
+							moment(appointment.startDateTime).utc().format(),
+							moment(appointment.endDateTime).utc().format(),
+							appointment.id,
+							'BookedSlot'
+						);
+					}
+					this._fetchAvailableSlots();
+				});
 		}
 	}
 
@@ -165,23 +186,6 @@ export class AppointmentComponent extends TranslationBaseComponent
 
 	getRoute(name: string) {
 		return `/pages/employees/appointments/${name}`;
-	}
-
-	private _loadAppointments() {
-		const findObj = {
-			employee: {
-				id: this.store.selectedEmployee
-					? this.store.selectedEmployee.id
-					: null
-			}
-		};
-
-		this.employeeAppointmentService
-			.getAll(['employee', 'employee.user'], findObj)
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((appointments) => {
-				console.log(appointments);
-			});
 	}
 
 	private async _fetchAvailableSlots() {
@@ -234,27 +238,14 @@ export class AppointmentComponent extends TranslationBaseComponent
 				moment(o.startTime).format('MMM Do YY') ===
 				moment(date).format('MMM Do YY')
 		);
+
 		if (slot) {
-			!this.calendarEvents.find(
-				(o) =>
-					new Date(o.start.toString()).getTime() ===
-					new Date(slot.startTime).getTime()
-			) &&
-				moment(slot.endTime).diff(moment(slot.startTime), 'minutes') >
-					this.allowedDuration &&
-				this.calendarEvents.push({
-					start: new Date(slot.startTime),
-					end: new Date(slot.endTime),
-					extendedProps: {
-						id: slot.id,
-						type: 'AvailabilitySlot'
-					},
-					backgroundColor: 'green'
-				});
 			foundDateSpecificSlot = true;
+			this.getAvailabilitySlots(slot);
 		}
 
-		if (foundDateSpecificSlot) return;
+		if (foundDateSpecificSlot)
+			return this.calendarComponent.getApi().refetchEvents();
 
 		for (const slot of this.recurringSlots) {
 			const startDay = moment(slot.startTime).day();
@@ -278,24 +269,119 @@ export class AppointmentComponent extends TranslationBaseComponent
 			slot.startTime = new Date(eventStartDate.format());
 			slot.endTime = new Date(eventEndDate.format());
 
-			!this.calendarEvents.find(
-				(o) =>
-					new Date(o.start.toString()).getTime() ===
-					new Date(slot.startTime).getTime()
-			) &&
-				eventEndDate.diff(eventStartDate, 'minutes') >
-					this.allowedDuration &&
-				this.calendarEvents.push({
-					start: slot.startTime,
-					end: slot.endTime,
-					extendedProps: {
-						id: slot.id,
-						type: 'AvailabilitySlot'
-					},
-					backgroundColor: 'green'
-				});
+			this.getAvailabilitySlots(slot);
 		}
 		this.calendarComponent.getApi().refetchEvents();
+	}
+
+	checkAndAddEventToCalendar(
+		startTime: string,
+		endTime: string,
+		id: string,
+		type: string
+	) {
+		const durationCheck = type === 'AvailabilitySlot' ? true : false;
+		!this.calendarEvents.find(
+			(o) =>
+				new Date(o.start.toString()).getTime() ===
+					new Date(startTime).getTime() &&
+				new Date(o.end.toString()).getTime() ===
+					new Date(endTime).getTime()
+		) &&
+			(!durationCheck ||
+				moment(endTime).diff(moment(startTime), 'minutes') >=
+					this.allowedDuration) &&
+			this.calendarEvents.push({
+				start: new Date(startTime),
+				end: new Date(endTime),
+				extendedProps: {
+					id: id,
+					type: type
+				},
+				backgroundColor: durationCheck ? 'green' : 'red'
+			});
+	}
+
+	getAvailabilitySlots(slot: IAvailabilitySlots) {
+		const appointmentsOnDay = this.appointments
+			.filter(
+				(o) =>
+					moment(o.startDateTime)
+						.utc()
+						.isSame(moment(slot.startTime).utc()) ||
+					moment(o.startDateTime)
+						.utc()
+						.isBetween(
+							moment(slot.startTime).utc(),
+							moment(slot.endTime).utc()
+						)
+			)
+			.sort((a, b) =>
+				moment(a.startDateTime)
+					.utc()
+					.isBefore(moment(b.startDateTime).utc())
+					? -1
+					: 1
+			);
+
+		for (let index = 0; index < appointmentsOnDay.length; index++) {
+			const appointmentOne = appointmentsOnDay[index];
+			const appointmentTwo = appointmentsOnDay[index + 1];
+			if (
+				moment(appointmentOne.startDateTime)
+					.utc()
+					.isSame(moment(slot.startTime).utc()) &&
+				(!appointmentTwo ||
+					moment(appointmentTwo.startDateTime)
+						.utc()
+						.isAfter(moment(appointmentOne.endDateTime).utc()))
+			) {
+				this.checkAndAddEventToCalendar(
+					moment(appointmentOne.endDateTime).utc().format(),
+					moment(
+						(appointmentTwo && appointmentTwo.startDateTime) ||
+							slot.endTime
+					)
+						.utc()
+						.format(),
+					slot.id,
+					'AvailabilitySlot'
+				);
+			} else if (
+				moment(appointmentOne.startDateTime)
+					.utc()
+					.isAfter(moment(slot.startTime).utc())
+			) {
+				const prevAppointment = appointmentsOnDay[index - 1];
+				this.checkAndAddEventToCalendar(
+					moment(
+						(prevAppointment && prevAppointment.endDateTime) ||
+							slot.startTime
+					)
+						.utc()
+						.format(),
+					moment(appointmentOne.startDateTime).utc().format(),
+					slot.id,
+					'AvailabilitySlot'
+				);
+				if (!appointmentTwo) {
+					this.checkAndAddEventToCalendar(
+						moment(appointmentOne.endDateTime).utc().format(),
+						moment(slot.endTime).utc().format(),
+						slot.id,
+						'AvailabilitySlot'
+					);
+				}
+			}
+		}
+
+		appointmentsOnDay.length === 0 &&
+			this.checkAndAddEventToCalendar(
+				moment(slot.startTime).utc().format(),
+				moment(slot.endTime).utc().format(),
+				slot.id,
+				'AvailabilitySlot'
+			);
 	}
 
 	private _prepareEvent(appointment: EmployeeAppointment) {

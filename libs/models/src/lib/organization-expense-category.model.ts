@@ -1,8 +1,10 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import { Tag } from '..';
 
 export interface IOrganizationExpenseCategory extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
+	tags: Tag[];
 }
 
 export interface IOrganizationExpenseCategoryFindInput
@@ -14,6 +16,7 @@ export interface IOrganizationExpenseCategoryFindInput
 export interface IOrganizationExpenseCategoryCreateInput {
 	name: string;
 	organizationId: string;
+	tags: Tag[];
 }
 
 export enum OrganizationExpenseCategoryEnum {
