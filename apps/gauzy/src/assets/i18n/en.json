@@ -745,7 +745,7 @@
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
-			"INTERVIEWER_ASSESSMENT": "An interview candidate rating from an interviewers"
+			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {

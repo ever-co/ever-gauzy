@@ -5,11 +5,12 @@ import { takeUntil } from 'rxjs/operators';
 import { Candidate, ICandidateInterview } from '@gauzy/models';
 import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 
 @Component({
 	selector: 'ga-interviewer-assessment-chart',
 	template: `
-		<h6>
+		<h6 style="  margin: 2rem 0 0 0 ;">
 			{{ 'CANDIDATES_PAGE.STATISTIC.INTERVIEWER_ASSESSMENT' | translate }}
 		</h6>
 		<nb-select
@@ -48,21 +49,21 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 	currentInterview: ICandidateInterview;
 	backgroundColor: string[] = [];
 	private _ngDestroy$ = new Subject<void>();
-
 	constructor(
 		private themeService: NbThemeService,
 		private candidateFeedbacksService: CandidateFeedbacksService,
-		private candidateInterviewService: CandidateInterviewService
+		private candidateInterviewService: CandidateInterviewService,
+		private employeesService: EmployeesService
 	) {}
 
 	ngOnInit() {
 		this.loadData();
 		this.loadChart();
 	}
-
 	async onInterviewSelected(interview: ICandidateInterview) {
-		console.log(interview);
 		this.currentInterview = interview;
+		this.rating = [];
+		this.labels = [];
 		const res = await this.candidateFeedbacksService.getAll(
 			['interviewer'],
 			{
@@ -70,12 +71,20 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 			}
 		);
 		if (res) {
-			console.log(res);
-			const feedbacks = res.items.filter((item) => item.interviewId);
-			for (let item of feedbacks) {
-				console.log(item);
+			const feedbacks = res.items.filter(
+				(item) => item.interviewId && item.interviewId === interview.id
+			);
+			for (const item of feedbacks) {
+				this.rating.push(item.rating);
+				const employee = await this.employeesService.getEmployeeById(
+					item.interviewer.employeeId,
+					['user']
+				);
+				if (employee) {
+					this.labels.push(employee.user.name);
+				}
 			}
-			console.log('feedbacks', feedbacks);
+			this.loadChart();
 		}
 	}
 	private loadChart() {
@@ -84,12 +93,13 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
 				(this.data = {
-					labels: ['111', '22', '333'],
+					labels: this.labels,
 					datasets: [
 						{
-							label: 'Interview 1',
+							maxBarThickness: 150,
+							label: 'Candidate rating per interview',
 							backgroundColor: this.backgroundColor,
-							data: [3, 4, 8]
+							data: this.rating
 						}
 					]
 				}),
@@ -124,10 +134,9 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 			const color =
 				i % 2 === 0
 					? 'rgba(153, 102, 255, 0.2)'
-					: 'rgba(75, 192, 192, 0.2)';
+					: 'rgba(255, 159, 64, 0.2)';
 			this.backgroundColor.push(color);
 		}
-		// console.log('111', this.candidates);
 	}
 
 	ngOnDestroy() {
@@ -135,9 +144,3 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 		this._ngDestroy$.complete();
 	}
 }
-// 'rgba(255, 99, 132, 0.2)',
-// 	'rgba(54, 162, 235, 0.2)',
-// 		'rgba(255, 206, 86, 0.2)',
-// 		'rgba(75, 192, 192, 0.2)',
-// 		'rgba(153, 102, 255, 0.2)',
-// 		'rgba(255, 159, 64, 0.2)'

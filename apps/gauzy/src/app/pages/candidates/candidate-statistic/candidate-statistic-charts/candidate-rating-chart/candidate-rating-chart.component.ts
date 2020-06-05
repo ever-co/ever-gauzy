@@ -48,7 +48,8 @@ export class CandidateRatingChartComponent
 					labels: this.labels,
 					datasets: [
 						{
-							label: 'Rating',
+							maxBarThickness: 150,
+							label: 'Candidate rating',
 							data: this.rating,
 							backgroundColor: this.backgroundColor
 						}
