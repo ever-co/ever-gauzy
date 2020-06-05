@@ -103,6 +103,7 @@ export class EditOrganizationEmployeeLevelComponent
 		);
 		this.cancel();
 		this.loadEmployeeLevels();
+		this.tags = [];
 	}
 
 	async removeEmployeeLevel(id: string, name: string) {

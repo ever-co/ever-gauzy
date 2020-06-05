@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ProductVariant, Product } from '@gauzy/models';
+import { ProductVariant, IVariantCreateInput } from '@gauzy/models';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 
@@ -16,11 +16,13 @@ export class ProductVariantService {
 			.toPromise();
 	}
 
-	createProductVariants(product: Product): Promise<ProductVariant[]> {
+	createProductVariants(
+		variantCreateInput: IVariantCreateInput
+	): Promise<ProductVariant[]> {
 		return this.http
 			.post<ProductVariant[]>(
 				`${this.PRODUCT_VARIANTS_URL}/create-variants`,
-				product
+				variantCreateInput
 			)
 			.pipe(first())
 			.toPromise();

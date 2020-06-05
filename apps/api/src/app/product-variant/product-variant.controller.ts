@@ -22,6 +22,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Product } from '../product/product.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { DeleteResult } from 'typeorm';
+import { IVariantCreateInput } from '@gauzy/models';
 
 @ApiTags('ProductVariant')
 @UseGuards(AuthGuard('jwt'))
@@ -48,7 +49,7 @@ export class ProductVariantController extends CrudController<ProductVariant> {
 	// @UseGuards(PermissionGuard)
 	@Post('/create-variants')
 	async createProductVariants(
-		@Body() entity: Product,
+		@Body() entity: IVariantCreateInput,
 		...options: any[]
 	): Promise<ProductVariant[]> {
 		return this.commandBus.execute(new ProductVariantCreateCommand(entity));

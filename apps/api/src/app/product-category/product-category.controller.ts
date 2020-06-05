@@ -15,7 +15,7 @@ import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
 import { AuthGuard } from '@nestjs/passport';
 import { ParseJsonPipe } from '../shared';
-import { LanguagesEnum } from '@gauzy/models';
+import { LanguagesEnum, ProductCategoryTranslated } from '@gauzy/models';
 
 @ApiTags('Product-Categories')
 @UseGuards(AuthGuard('jwt'))
@@ -42,7 +42,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	@Get()
 	async findAllProductCategories(
 		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ProductCategory>> {
+	): Promise<IPagination<ProductCategory | ProductCategoryTranslated>> {
 		const {
 			relations = [],
 			findInput = null,

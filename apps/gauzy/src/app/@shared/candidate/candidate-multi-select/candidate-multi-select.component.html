@@ -6,14 +6,10 @@
 	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATES' | translate }}"
 >
 	<nb-option *ngFor="let candidate of allCandidates" [value]="candidate.id">
-		<img
-			src="{{ candidate.user.imageUrl }}"
-			alt="Smiley face"
-			height="40"
-			width="40"
-			style="margin-right: 10px;"
-		/>
-		{{ candidate.user.firstName }}
-		{{ candidate.user.lastName }}
+		<ngx-avatar
+			size="sm"
+			[src]="candidate.user?.imageUrl"
+			[name]="candidate.user?.name"
+		></ngx-avatar>
 	</nb-option>
 </nb-select>
