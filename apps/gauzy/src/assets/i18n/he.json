@@ -741,7 +741,9 @@
 			"PREVIOUS": "Previous"
 		},
 		"STATISTIC": {
-			"CANDIDATE_STATISTICS": "Candidate statistics"
+			"CANDIDATE_STATISTICS": "Candidate statistics",
+			"CANDIDATE_RATING": "Candidate rating",
+			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
