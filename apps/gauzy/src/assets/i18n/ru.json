@@ -741,7 +741,9 @@
 			"PREVIOUS": "Предыдущий"
 		},
 		"STATISTIC": {
-			"CANDIDATE_STATISTICS": "Статистика Кандидатов"
+			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
+			"CANDIDATE_RATING": "Рейтинг Кандидата",
+			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
