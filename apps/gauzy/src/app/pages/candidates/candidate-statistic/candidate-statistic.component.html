@@ -7,7 +7,12 @@
 	</nb-card-header>
 	<nb-card-body>
 		<ga-candidate-rating-chart
+			*ngIf="candidates"
 			[candidates]="candidates"
 		></ga-candidate-rating-chart>
+		<ga-interviewer-assessment-chart
+			*ngIf="candidates"
+			[candidates]="candidates"
+		></ga-interviewer-assessment-chart>
 	</nb-card-body>
 </nb-card>

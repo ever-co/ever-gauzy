@@ -17,9 +17,10 @@ export class CandidateStatisticComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	candidateRating: number;
-	candidates: Candidate[];
+	public candidates: Candidate[] = null;
 	public names: string[] = [];
 	rating: number[] = [];
+
 	constructor(
 		private candidatesService: CandidatesService,
 		private translate: TranslateService,
@@ -30,46 +31,34 @@ export class CandidateStatisticComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
-		this.getData();
+		this.loadData();
 	}
-	async getData() {
+
+	async loadData() {
 		const { items } = await this.candidatesService
-			.getAll(['user'])
+			.getAll(['user', 'interview', 'feedbacks'])
 			.pipe(first())
 			.toPromise();
 		if (items) {
-			this.candidates = items;
-			for (const candidate of this.candidates) {
-				// this.getCandidateRating(candidate.id);
-				const res = await this.candidateFeedbacksService.getAll(
+			for (const candidate of items) {
+				const feedbacks = await this.candidateFeedbacksService.getAll(
 					['interviewer'],
 					{
 						candidateId: candidate.id
 					}
 				);
-				if (res) {
+				if (feedbacks) {
 					this.candidateRating = 0;
-					for (let i = 0; i < res.total; i++) {
-						candidate.rating += +res.items[i].rating / res.total;
+					for (let i = 0; i < feedbacks.total; i++) {
+						candidate.rating +=
+							+feedbacks.items[i].rating / feedbacks.total;
 					}
 				}
 			}
+			this.candidates = items;
+			// console.log(this.candidates);
 		}
 	}
-	// async getCandidateRating(id: string) {
-	// 	const res = await this.candidateFeedbacksService.getAll(
-	// 		['interviewer'],
-	// 		{
-	// 			candidateId: id
-	// 		}
-	// 	);
-	// 	if (res) {
-	// 		this.candidateRating = 0;
-	// 		for (let i = 0; i < res.total; i++) {
-	// 			this.candidateRating += +res.items[i].rating / res.total;
-	// 		}
-	// 	}
-	// }
 
 	ngOnDestroy() {
 		this._ngDestroy$.next();
