@@ -15,10 +15,14 @@
         <nb-action>
           <nb-form-field>
             <input [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate" nbInput
-                   (ngModelChange)="filterPipelines()" formControlName="name" shape="round" type="text">
-            <nb-icon [icon]="pipelineForm.valid ? 'plus-circle-outline' : 'search-outline'"
-                     pack="eva" nbSuffix (click)="save()" style="cursor: pointer"></nb-icon>
+                   (ngModelChange)="filterPipelines()" formControlName="name" type="text">
+            <nb-icon *ngIf="!pipelineForm.valid" icon="search-outline" pack="eva" nbSuffix></nb-icon>
           </nb-form-field>
+        </nb-action>
+        <nb-action *ngIf="pipelineForm.valid">
+          <button type="submit" nbButton style="cursor: pointer" (click)="save()">
+            <nb-icon [icon]="pipelineForm.value?.id ? 'edit-outline' : 'plus-circle-outline'" pack="eva"></nb-icon>
+          </button>
         </nb-action>
       </nb-actions>
     </form>
