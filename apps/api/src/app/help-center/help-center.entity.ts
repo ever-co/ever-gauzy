@@ -22,6 +22,14 @@ export class HelpCenter extends Base implements IHelpCenter {
 	privacy: string;
 
 	@ApiProperty({ type: String })
+	@Column()
+	language: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	color: string;
+
+	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	description?: string;
 

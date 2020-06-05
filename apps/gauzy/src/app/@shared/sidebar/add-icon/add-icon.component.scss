@@ -1,7 +1,15 @@
 .main-buttons {
   margin: 10px;
+  background-color: #3366ff !important;
+  border-color: #3366ff !important;
+  color: #ffffff !important;
 }
-
+.main-buttons:focus {
+  box-shadow: none !important;
+  background-color: #3366ff !important;
+  border-color: #3366ff !important;
+  color: #ffffff !important;
+}
 .header {
   display: flex;
   flex-direction: row;

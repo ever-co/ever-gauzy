@@ -33,6 +33,10 @@ export class SidebarComponent extends TranslationBaseComponent
 	public articleName = 'Chose any article';
 	public articleDesc = '';
 	public articleData: SafeHtml;
+	public languages = ['en', 'ru', 'he', 'bg'];
+	public colors = ['black', 'blue'];
+	public selectedLang = '';
+	public selectedColor = '';
 	public showArticleButton = false;
 	public showCategoryButton = false;
 	public nodeId = 0;
@@ -59,6 +63,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	async onMoveNode($event) {
 		const movedNode = $event.node;
 		await this.helpService.delete(`${movedNode.id}`);
+
 		// await this.helpService.update($event.to.parent.id, {
 		// 	children: []
 		// });
@@ -108,6 +113,8 @@ export class SidebarComponent extends TranslationBaseComponent
 				icon: 'book-open-outline',
 				flag: 'category',
 				privacy: 'eye-outline',
+				language: 'en',
+				color: 'black',
 				children: []
 			});
 		} else {
@@ -117,6 +124,8 @@ export class SidebarComponent extends TranslationBaseComponent
 				flag: 'article',
 				privacy: 'eye-outline',
 				description: '',
+				language: 'en',
+				color: 'black',
 				data: ''
 			});
 		}
@@ -130,9 +139,14 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.nodeId = node.data.id;
 		this.isChosenNode = true;
 		this.articleName = node.data.name;
+		this.selectedLang = node.data.language;
+		this.selectedColor = node.data.color;
 		if (node.data.flag === 'article') {
 			this.articleDesc = node.data.description;
-			this.articleData = node.data.data as SafeHtml;
+			this.articleData = this.sanitizer.bypassSecurityTrustHtml(
+				node.data.data
+			);
+			console.log(typeof this.articleData);
 			this.chosenCategory = false;
 			this.chosenArticle = true;
 			this.loadFormData();
@@ -167,11 +181,10 @@ export class SidebarComponent extends TranslationBaseComponent
 	async changePrivacy(node: any) {
 		this.onNodeClicked(node);
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		if (someNode.data.privacy === 'eye-outline') {
-			someNode.data.privacy = 'eye-off-outline';
-		} else {
-			someNode.data.privacy = 'eye-outline';
-		}
+		someNode.data.privacy =
+			someNode.data.privacy === 'eye-outline'
+				? 'eye-off-outline'
+				: 'eye-outline';
 		await this.helpService.update(someNode.data.id, {
 			privacy: `${someNode.data.privacy}`
 		});
@@ -183,7 +196,9 @@ export class SidebarComponent extends TranslationBaseComponent
 		someNode.data.name = event.target.value;
 		this.isVisibleEdit = false;
 		await this.helpService.update(someNode.data.id, {
-			name: `${someNode.data.name}`
+			name: `${someNode.data.name}`,
+			language: this.selectedLang,
+			color: this.selectedColor
 		});
 		this.loadMenu();
 	}
@@ -204,17 +219,16 @@ export class SidebarComponent extends TranslationBaseComponent
 	}
 
 	loadFormData() {
+		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		this.form = this.fb.group({
 			name: [this.articleName],
 			desc: [this.articleDesc],
-			data: [this.articleData]
+			data: [someNode.data.data]
 		});
 	}
 
 	editData(value: string) {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
 		this.articleData = this.sanitizer.bypassSecurityTrustHtml(value);
-		someNode.data.data = this.articleData;
 	}
 
 	async submit() {
@@ -223,10 +237,13 @@ export class SidebarComponent extends TranslationBaseComponent
 		someNode.data.name = this.form.controls.name.value;
 		this.articleDesc = someNode.data.description;
 		this.articleName = someNode.data.name;
+		console.log('!!!!!!!!!!!!', someNode.data.data);
 		await this.helpService.update(someNode.data.id, {
 			name: `${someNode.data.name}`,
 			description: `${someNode.data.description}`,
-			data: `${someNode.data.data}`
+			data: this.articleData.toString(),
+			language: this.selectedLang,
+			color: this.selectedColor
 		});
 		this.loadMenu();
 		this.isVisibleEdit = false;

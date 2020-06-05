@@ -88,23 +88,27 @@
 			[options]="options"
 			(moveNode)="onMoveNode($event)"
 		>
-			<ng-template #treeNodeTemplate let-node let-index="index">
-				<nb-icon
-					class="mr-1"
-					icon="{{ node.data.icon }}"
-					(click)="addIcon(node)"
-				></nb-icon>
-				<span
-					[class]="node.data.className"
-					[class.title]="true"
-					(click)="onNodeClicked(node)"
-					>{{ node.data.name }}</span
-				>
-				<nb-icon
-					class="mr-1"
-					icon="{{ node.data.privacy }}"
-					(click)="changePrivacy(node)"
-				></nb-icon>
+			<ng-template
+				#treeNodeTemplate
+				let-node
+				let-index="index"
+				class="tree"
+			>
+				<div [ngClass]="{ blue: node.data.color === 'blue' }">
+					<nb-icon
+						icon="{{ node.data.icon }}"
+						class="icons"
+						(click)="addIcon(node)"
+					></nb-icon>
+					<span class="text" (click)="onNodeClicked(node)">{{
+						node.data.name
+					}}</span>
+					<nb-icon
+						class="icons"
+						icon="{{ node.data.privacy }}"
+						(click)="changePrivacy(node)"
+					></nb-icon>
+				</div>
 			</ng-template>
 		</tree-root>
 	</nb-card-body>
@@ -115,6 +119,29 @@
 		<div *ngIf="isChosenNode && !isVisibleEdit && chosenArticle">
 			<h6>{{ articleDesc }}</h6>
 			<div [innerHTML]="articleData"></div>
+		</div>
+		<div class="add-icon-field" *ngIf="isVisibleEdit">
+			<div>
+				<nb-select
+					class="main-buttons"
+					placeholder="Select Language"
+					[(selected)]="selectedLang"
+				>
+					<nb-option *ngFor="let lang of languages" [value]="lang">{{
+						lang
+					}}</nb-option>
+				</nb-select>
+			</div>
+
+			<nb-select
+				class="main-buttons"
+				placeholder="Select Color"
+				[(selected)]="selectedColor"
+			>
+				<nb-option *ngFor="let color of colors" [value]="color">{{
+					color
+				}}</nb-option>
+			</nb-select>
 		</div>
 		<div *ngIf="isVisibleEdit && chosenCategory" class="content-card">
 			<p>Press enter to save category name</p>
@@ -143,7 +170,6 @@
 					type="text"
 					size="24"
 					maxlength="18"
-					(keyup.enter)="editName($event)"
 					nbInput
 				/>
 				<div class="edit-node-field">
@@ -153,7 +179,6 @@
 						type="text"
 						size="24"
 						maxlength="18"
-						(keyup.enter)="editDesc($event)"
 						nbInput
 					/>
 					<p>Article text:</p>

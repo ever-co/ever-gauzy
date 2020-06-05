@@ -8,6 +8,8 @@ const helpCenterMenuList: IHelpCenter[] = [
 		icon: 'book-open-outline',
 		flag: 'category',
 		privacy: 'eye-outline',
+		language: 'en',
+		color: 'blue',
 		children: [
 			{
 				name: 'Cookies',
@@ -15,7 +17,9 @@ const helpCenterMenuList: IHelpCenter[] = [
 				flag: 'article',
 				privacy: 'eye-outline',
 				description: 'Information',
-				data: 'Cookies and Similar Technologies Information'
+				data: 'Cookies and Similar Technologies Information',
+				language: 'en',
+				color: 'black'
 			},
 			{
 				name: 'Device',
@@ -23,7 +27,9 @@ const helpCenterMenuList: IHelpCenter[] = [
 				flag: 'article',
 				privacy: 'eye-off-outline',
 				description: 'Device Information',
-				data: 'We may collect certain information about your device'
+				data: 'We may collect certain information about your device',
+				language: 'en',
+				color: 'black'
 			}
 		]
 	},
@@ -32,6 +38,8 @@ const helpCenterMenuList: IHelpCenter[] = [
 		icon: 'book-open-outline',
 		flag: 'category',
 		privacy: 'eye-off-outline',
+		language: 'en',
+		color: 'blue',
 		children: [
 			{
 				name: 'Cookies',
@@ -39,7 +47,9 @@ const helpCenterMenuList: IHelpCenter[] = [
 				flag: 'article',
 				privacy: 'eye-outline',
 				description: 'Information',
-				data: 'Cookies and Similar Technologies Information'
+				data: 'Cookies and Similar Technologies Information',
+				language: 'en',
+				color: 'black'
 			}
 		]
 	},
@@ -49,7 +59,9 @@ const helpCenterMenuList: IHelpCenter[] = [
 		privacy: 'eye-off-outline',
 		name: 'Privacy',
 		description: 'Gauzy Privacy Statement',
-		data: 'Usage Information'
+		data: 'Usage Information',
+		language: 'en',
+		color: 'black'
 	}
 ];
 
@@ -81,7 +93,10 @@ export const createHelpCenter = async (
 			helpCenterMenuList[i].children.forEach((child) => {
 				defaultChildren = [...defaultChildren, { ...child }];
 			});
-			insertChildren(connection, defaultChildren);
+			defaultChildren.forEach(async (item) => {
+				helpCenterMenuList[i].children.push(item);
+			});
+			insertChildren(connection, helpCenterMenuList[i]);
 		}
 	}
 
@@ -102,14 +117,12 @@ const insertHelpCenter = async (
 
 const insertChildren = async (
 	connection: Connection,
-	nodes: IHelpCenter[]
+	node: IHelpCenter
 ): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(HelpCenter)
-		.values(nodes)
-		.execute();
+	// nodes.forEach(async (item) => {
+	// 	parent.children.push(item);
+	// });
+	await connection.manager.save(node);
 };
 
 // const insertChildren = async (
