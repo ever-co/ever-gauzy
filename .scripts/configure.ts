@@ -21,8 +21,8 @@ import { ElectronService } from 'ngx-electron';
 let API_BASE_URL = '';
 try {
 	const el: ElectronService = new ElectronService()
-	let xx = el.remote.getGlobal('variableGlobal')
-	API_BASE_URL = xx.API_BASE_URL
+	let variableGlobal = el.remote.getGlobal('variableGlobal')
+	API_BASE_URL = variableGlobal.API_BASE_URL
 } catch(e) {
 }
 export const environment: Environment = {

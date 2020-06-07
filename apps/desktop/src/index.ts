@@ -200,7 +200,6 @@ try {
 				startServer(configParsed);
 			}
 		} catch (e) {
-			console.log('e', e);
 			createSetupWindow();
 		}
 
@@ -214,11 +213,6 @@ try {
 			};
 			startServer(arg);
 		});
-
-		// setTimeout(() => {
-		// 	let dow = remote.getCurrentWebContents()
-		// 	dow.delete()
-		// }, 10000);
 	});
 
 	app.on('window-all-closed', quit);
