@@ -142,18 +142,19 @@ function startServer(value) {
 		process.env.DB_PASS = value.dbPassword;
 	}
 	if (value.isLocalServer) {
+		process.env.port = value.port;
 		require(path.join(__dirname, 'api/main.js'));
 	}
 	try {
 		mkdirSync(path.join(__dirname, '../data'));
+	} catch (error) {}
+	try {
 		const configContent = `serverUrl=${value.serverUrl};isSetup=1;db=${value.db};dbHost=${value.dbHost};dbPort=${value.dbPort};dbName=${value.dbName};dbUsername=${value.dbUsername};dbPassword=${value.dbPassword};isLocalServer=${value.isLocalServer};port=${value.port}`;
 		writeFileSync(
 			path.join(__dirname, '../data/config.txt'),
 			configContent
 		);
-	} catch (error) {
-		console.log('xx', error);
-	}
+	} catch (error) {}
 
 	if (!value.isSetup) win.close();
 	setTimeout(() => {
