@@ -6,7 +6,10 @@ import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
+import { first } from 'rxjs/operators';
 
 
 
@@ -17,65 +20,70 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 export class PipelinesComponent extends TranslationBaseComponent implements OnInit
 {
 
+  public smartTableSettings: SmartTableSettings = {
+    actions: false,
+    columns: {
+      name: {
+        filter: false,
+        editor: false,
+        title: this.getTranslation( 'PIPELINES_PAGE.PIPELINE_NAME' ),
+      },
+    },
+  };
   public pipelines = new LocalDataSource( [] as Pipeline[] );
-
-  public smartTableSettings: SmartTableSettings;
-
   public userOrganizations: UserOrganization[];
-
-  public pipelineForm: FormGroup;
-
-  public isCreating = false;
+  public organizationId: string;
+  public pipeline: Pipeline;
+  public name: string;
 
   public constructor(
-    private store: Store,
-    private fb: FormBuilder,
-    translateService: TranslateService,
+    private usersOrganizationsService: UsersOrganizationsService,
     private pipelinesService: PipelinesService,
-    private usersOrganizationsService: UsersOrganizationsService)
+    private nbToastrService: NbToastrService,
+    private dialogService: NbDialogService,
+    translateService: TranslateService,
+    private fb: FormBuilder,
+    private store: Store )
   {
     super( translateService );
   }
 
-  public ngOnInit()
+  public async ngOnInit(): Promise<void>
   {
-    this.pipelineForm = this.fb.group({
-      name: [ '', [ Validators.required, () => {
-        const { organizationId, name } =
-          this.pipelineForm?.value || {};
-        const { isCreating } = this;
+    await this.updateUserOrganizations();
+    await this.updatePipelines();
+  }
 
-        return name && !isCreating && organizationId ? null : { 'incomplete': true };
-      }] ],
-      organizationId: [ '', Validators.required ],
-      id: [ '' ],
-    });
-
+  public async updateUserOrganizations(): Promise<void> {
     const { userId } = this.store;
 
-    this.usersOrganizationsService
+    await this.usersOrganizationsService
       .getAll( [ 'organization' ], { userId })
       .then( ({ items }) => {
-        this.pipelineForm.patchValue({
-          organizationId: items[0]?.organization?.id,
-        });
         this.userOrganizations = items;
         this.updatePipelines();
       });
-    this.smartTableSettings = {
-      actions: false,
-      columns: {
-        name: {
-          filter: false,
-          editor: false,
-          title: this.getTranslation( 'PIPELINES_PAGE.PIPELINE_NAME' ),
-        },
-      },
-    };
   }
 
-  public filterPipelines() {
-    const { name: search } = this.pipelineForm.value;
+  public async updatePipelines(): Promise<void> {
+    const { organizationId } = this;
+
+    await this.pipelinesService
+      .find( [], { organizationId })
+      .then( ({ items }) => {
+        this.pipelines.load( items );
+        this.filterPipelines();
+      });
+  }
+
+  public deletePipeline(): void {
+    this.pipelinesService
+      .delete( this.pipeline.id )
+      .then( () => this.updateUserOrganizations() );
+  }
+
+  public filterPipelines(): void {
+    const { name: search = '' } = this;
 
     this.pipelines.setFilter([
       {
@@ -85,34 +93,20 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     ]);
   }
 
-  public updatePipelines(): void {
-    const { organizationId } = this.pipelineForm.value;
+  public async gotoForm( context: Record<any, any> ): Promise<void> {
+    const dialogRef = this.dialogService.open( PipelineFormComponent, {
+      context,
+    });
+    const data = await dialogRef.onClose.pipe( first() ).toPromise();
+    const { id } = context;
 
-    this.pipelinesService
-      .find( [], { organizationId })
-      .then( ({ items }) => {
-        this.pipelines.load( items );
-        this.filterPipelines();
-      });
-  }
-
-  public save() {
-    if ( !this.pipelineForm.valid ) return ;
-
-    const { id, name, organizationId } = this.pipelineForm.value;
-
-    this.isCreating = true;
-    Promise.resolve(
-      !id ? this.pipelinesService.create({ name, organizationId })
-        : this.pipelinesService.update( id, { name, organizationId })
-    ).then( () => this.updatePipelines() )
-      .finally( () => {
-        this.pipelineForm.patchValue({
-          name: '',
-        });
-        this.isCreating = false;
-        this.updatePipelines();
-      });
+    if ( data ) {
+      this.nbToastrService.success(
+        this.getTranslation( 'TOASTR.TITLE.SUCCESS' ),
+        this.getTranslation( `TOASTR.MESSAGE.PIPELINE_${ id ? 'UPDATE' : 'CREATE' }` ) );
+      await this.updateUserOrganizations();
+      await this.updatePipelines();
+    }
   }
 
 }

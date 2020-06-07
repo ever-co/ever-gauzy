@@ -4,6 +4,7 @@ import {
   NbActionsModule,
   NbButtonModule,
   NbCardModule,
+  NbDialogModule,
   NbFormFieldModule,
   NbIconModule,
   NbInputModule,
@@ -15,29 +16,32 @@ import { CommonModule } from '@angular/common';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
-import { BrowserModule } from '@angular/platform-browser';
+import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 
 
 
 @NgModule( {
   declarations: [
+    PipelineFormComponent,
     PipelinesComponent,
   ],
   exports: [
+    PipelineFormComponent,
     PipelinesComponent,
   ],
   providers: [
     PipelinesService,
   ],
   imports: [
+    NbDialogModule.forChild(),
     ReactiveFormsModule,
     Ng2SmartTableModule,
     NbFormFieldModule,
     PipelinesRouting,
     TranslateModule,
     NbActionsModule,
-    NbSelectModule,
     NbButtonModule,
+    NbSelectModule,
     NbInputModule,
     CommonModule,
     NbCardModule,

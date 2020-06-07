@@ -1,0 +1,35 @@
+<form [formGroup]="form" (ngSubmit)="persist()">
+  <nb-card>
+    <nb-card-header>
+      <h4 *ngIf="pipeline?.id" [innerHTML]="'PIPELINES_PAGE.HEADER_FORM_EDIT' | translate"></h4>
+      <h4 *ngIf="!pipeline?.id" [innerHTML]="'PIPELINES_PAGE.HEADER_FORM_CREATE' | translate"></h4>
+    </nb-card-header>
+    <nb-card-body>
+      <nb-form-field>
+        <nb-select formControlName="organizationId" [placeholder]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate">
+          <nb-option [value]="undefined" [innerHTML]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate"></nb-option>
+          <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization.organization.id">
+            {{ userOrganization.organization.name }}
+          </nb-option>
+        </nb-select>
+      </nb-form-field>
+
+      <br>
+      <nb-form-field>
+        <input type="text" nbInput formControlName="name" [placeholder]="'FORM.PLACEHOLDERS.NAME' | translate">
+      </nb-form-field>
+    </nb-card-body>
+    <nb-card-footer>
+      <button *ngIf="pipeline?.id" type="submit" nbButton status="info">
+        <nb-icon pack="eva" icon="edit-outline"></nb-icon>
+        <span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
+      </button>
+      <button *ngIf="!pipeline?.id" type="submit" nbButton status="primary">
+        <nb-icon pack="eva" icon="plus-circle-outline"></nb-icon>
+        <span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
+      </button>
+    </nb-card-footer>
+  </nb-card>
+
+  <pre>{{ form.value | json }}</pre>
+</form>

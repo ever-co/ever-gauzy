@@ -3,31 +3,39 @@
     <h4 [innerHTML]="'PIPELINES_PAGE.HEADER' | translate"></h4>
   </nb-card-header>
   <nb-card-body>
-    <form [formGroup]="pipelineForm">
-      <nb-actions>
-        <nb-action>
-          <nb-select formControlName="organizationId" (selectedChange)="updatePipelines()" [placeholder]="'PIPELINES_PAGE.SELECT_ORGANIZATION' | translate">
-            <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization.organization.id" [style.whiteSpace]="'pre'">
-              {{ userOrganization.organization.name }}
-            </nb-option>
-          </nb-select>
-        </nb-action>
-        <nb-action>
-          <nb-form-field>
-            <input [placeholder]="'PIPELINES_PAGE.FILTER_OR_CREATE' | translate" nbInput
-                   (ngModelChange)="filterPipelines()" formControlName="name" type="text">
-            <nb-icon *ngIf="!pipelineForm.valid" icon="search-outline" pack="eva" nbSuffix></nb-icon>
-          </nb-form-field>
-        </nb-action>
-        <nb-action *ngIf="pipelineForm.valid">
-          <button type="submit" nbButton style="cursor: pointer" (click)="save()">
-            <nb-icon [icon]="pipelineForm.value?.id ? 'edit-outline' : 'plus-circle-outline'" pack="eva"></nb-icon>
-          </button>
-        </nb-action>
-      </nb-actions>
-    </form>
-    <br>
+    <nb-actions>
+      <nb-action>
+        <nb-select [(ngModel)]="organizationId" (selectedChange)="updatePipelines()" [placeholder]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate">
+          <nb-option [value]="undefined" [innerHTML]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate"></nb-option>
+          <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization.organization.id" [style.whiteSpace]="'pre'">
+            {{ userOrganization.organization.name }}
+          </nb-option>
+        </nb-select>
+      </nb-action>
+      <nb-action>
+        <nb-form-field>
+          <input nbInput [(ngModel)]="name" (ngModelChange)="filterPipelines()" [placeholder]="'FORM.FILTER' | translate" type="text">
+          <nb-icon icon="search-outline" pack="eva" nbSuffix></nb-icon>
+        </nb-form-field>
+      </nb-action>
+      <nb-action>
+        <button type="button" nbButton status="primary" (click)="gotoForm({ pipeline: { name: name, organizationId: organizationId } })" style="cursor: pointer">
+          <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
+        </button>
+      </nb-action>
+      <nb-action *ngIf="pipeline">
+        <button type="button" nbButton status="info" (click)="gotoForm({ pipeline: pipeline })" style="cursor: pointer">
+          <nb-icon icon="edit-outline" pack="eva"></nb-icon>
+        </button>
+      </nb-action>
+      <nb-action *ngIf="pipeline">
+        <button type="button" nbButton status="danger" (click)="deletePipeline()" style="cursor: pointer">
+          <nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
+        </button>
+      </nb-action>
+    </nb-actions>
 
-    <ng2-smart-table [settings]="smartTableSettings" [source]="pipelines"></ng2-smart-table>
+    <br>
+    <ng2-smart-table [settings]="smartTableSettings" [source]="pipelines" (rowSelect)="pipeline = $event.data"></ng2-smart-table>
   </nb-card-body>
 </nb-card>

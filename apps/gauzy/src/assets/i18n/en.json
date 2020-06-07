@@ -118,10 +118,11 @@
 	},
 	"FORM": {
 		"USERNAME": "Username",
-		"EMAIL": "Email",
-		"PASSWORD": "Password",
+    "PASSWORD": "Password",
 		"CONFIRM": "Confirm",
-		"LABELS": {
+    "FILTER": "Filter",
+    "EMAIL": "Email",
+    "LABELS": {
 			"NAME": "Name",
 			"FIRST_NAME": "First Name (optional)",
 			"LAST_NAME": "Last Name (optional)",
@@ -275,6 +276,7 @@
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
+      "ORGANIZATION": "Select Organization",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
@@ -1516,8 +1518,8 @@
 		"CONFIRM_APPOINTMENT": "Appointment confirmation page"
 	},
 	"PIPELINES_PAGE": {
-		"HEADER": "Pipelines",
-		"SELECT_ORGANIZATION": "Organization",
-		"FILTER_OR_CREATE": "Filter or Create"
+    "HEADER": "Pipelines",
+    "HEADER_FORM_EDIT": "Edit Pipeline",
+    "HEADER_FORM_CREATE": "Create Pipeline"
 	}
 }
