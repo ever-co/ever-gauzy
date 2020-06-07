@@ -2,10 +2,13 @@
 
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import * as path from 'path';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 import * as url from 'url';
-require(path.join(__dirname, 'api/main.js'));
+
+// console.log(process.env)
+// require(path.join(__dirname, 'api/main.js'));
 
 let serve: boolean;
 const args = process.argv.slice(1);
@@ -34,7 +37,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	// to hide title bar, uncomment:
 	// titleBarStyle: 'hidden',
 	webPreferences: {
-		devTools: debugMode,
+		devTools: true,
 		nodeIntegration: debugMode,
 		webSecurity: false
 	}
@@ -57,7 +60,8 @@ function initMainListener() {
  */
 function createWindow() {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
-
+	mainWindowSettings.frame = true;
+	mainWindowSettings.webPreferences.nodeIntegration = true;
 	if (debugMode) {
 		process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
@@ -110,6 +114,66 @@ function createWindow() {
 	}
 }
 
+function createSetupWindow() {
+	const sizes = screen.getPrimaryDisplay().workAreaSize;
+	mainWindowSettings.width = 800;
+	mainWindowSettings.height = 600;
+	mainWindowSettings.frame = false;
+	mainWindowSettings.webPreferences.nodeIntegration = true;
+	win = new BrowserWindow(mainWindowSettings);
+	const launchPath = url.format({
+		pathname: path.join(__dirname, 'setup.html'),
+		protocol: 'file:',
+		slashes: true
+	});
+
+	win.loadURL(launchPath);
+}
+
+function startServer(value) {
+	if (value.db === 'sqlite') {
+		process.env.DB_TYPE = 'sqlite';
+	} else {
+		process.env.DB_TYPE = 'postgres';
+		process.env.DB_HOST = value.dbHost;
+		process.env.DB_PORT = value.dbPort;
+		process.env.DB_NAME = value.dbName;
+		process.env.DB_USER = value.dbUsername;
+		process.env.DB_PASS = value.dbPassword;
+	}
+	if (value.isLocalServer) {
+		require(path.join(__dirname, 'api/main.js'));
+	}
+	try {
+		mkdirSync(path.join(__dirname, '../data'));
+		const configContent = `serverUrl=${value.serverUrl};isSetup=1;db=${value.db};dbHost=${value.dbHost};dbPort=${value.dbPort};dbName=${value.dbName};dbUsername=${value.dbUsername};dbPassword=${value.dbPassword};isLocalServer=${value.isLocalServer};port=${value.port}`;
+		writeFileSync(
+			path.join(__dirname, '../data/config.txt'),
+			configContent
+		);
+	} catch (error) {
+		console.log('xx', error);
+	}
+
+	if (!value.isSetup) win.close();
+	setTimeout(() => {
+		createWindow();
+	}, 5000);
+
+	return true;
+}
+
+function parseConfig(txt) {
+	const conf: any = {};
+	txt.split(';').forEach((item) => {
+		const configItem = item.split('=');
+		conf[configItem[0]] =
+			configItem[1] === 'undefined' ? null : configItem[1];
+	});
+	console.log(conf);
+	return conf;
+}
+
 try {
 	// app.allowRendererProcessReuse = true;
 
@@ -119,9 +183,42 @@ try {
 	// Added 5000 ms to fix the black background issue while using transparent window.
 	// More details at https://github.com/electron/electron/issues/15947
 	app.on('ready', () => {
-		setTimeout(() => {
-			createWindow();
-		}, 5000);
+		try {
+			const getConfig = readFileSync(
+				path.join(__dirname, '../data/config.txt'),
+				'utf8'
+			);
+			const configParsed = parseConfig(getConfig);
+			if (configParsed.isSetup) {
+				global.variableGlobal = {
+					API_BASE_URL: configParsed.serverUrl
+						? configParsed.serverUrl
+						: configParsed.port
+						? `http://localhost:${configParsed.port}`
+						: 'http://localhost:3000'
+				};
+				startServer(configParsed);
+			}
+		} catch (e) {
+			console.log('e', e);
+			createSetupWindow();
+		}
+
+		ipcMain.on('go', (event, arg) => {
+			global.variableGlobal = {
+				API_BASE_URL: arg.serverUrl
+					? arg.serverUrl
+					: arg.port
+					? `http://localhost:${arg.port}`
+					: 'http://localhost:3000'
+			};
+			startServer(arg);
+		});
+
+		// setTimeout(() => {
+		// 	let dow = remote.getCurrentWebContents()
+		// 	dow.delete()
+		// }, 10000);
 	});
 
 	app.on('window-all-closed', quit);

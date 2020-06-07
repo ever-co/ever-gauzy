@@ -48,6 +48,7 @@ import { SharedModule } from './@shared/shared.module';
 import { HubstaffTokenInterceptor } from './@core/hubstaff-token-interceptor';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import { LanguageInterceptor } from './@core/language.interceptor';
+import { NgxElectronModule } from 'ngx-electron';
 
 export const cloudinary = {
 	Cloudinary: CloudinaryCore
@@ -94,7 +95,8 @@ if (environment.SENTRY_DNS) {
 		FileUploadModule,
 		TimeTrackerModule.forRoot(),
 		environment.production ? [] : AkitaNgDevtools,
-		SharedModule.forRoot()
+		SharedModule.forRoot(),
+		NgxElectronModule
 	],
 	bootstrap: [AppComponent],
 	providers: [
