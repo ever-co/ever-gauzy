@@ -3,12 +3,18 @@
 		<nb-card-header>
 			<div class="row">
 				<div class="col-6">
-					<h4>Email Templates for {{ organizationName }}</h4>
+					<h4>
+						{{
+							'EMAIL_TEMPLATES_PAGE.HEADER'
+								| translate
+									: { organizationName: organizationName }
+						}}
+					</h4>
 				</div>
 
 				<div class="col-2 select-block">
 					<label class="label" for="languageCode">
-						{{ 'Language' | translate }}
+						{{ 'EMAIL_TEMPLATES_PAGE.LABELS.LANGUAGE' | translate }}
 					</label>
 					<nb-select
 						id="languageCode"
@@ -22,7 +28,7 @@
 							[value]="language"
 						>
 							{{
-								'USERS_PAGE.EDIT_USER.PREFERRED_LANGUAGE.' +
+								'EMAIL_TEMPLATES_PAGE.LANGUAGE_CODES.' +
 									language | translate
 							}}
 						</nb-option>
@@ -30,7 +36,10 @@
 				</div>
 				<div class="col-2 select-block">
 					<label class="label" for="templateName">
-						{{ 'Template Name' | translate }}
+						{{
+							'EMAIL_TEMPLATES_PAGE.LABELS.TEMPLATE_NAME'
+								| translate
+						}}
 					</label>
 					<nb-select
 						id="templateName"
@@ -44,7 +53,10 @@
 							*ngFor="let name of templateNames"
 							[value]="name"
 						>
-							{{ name }}
+							{{
+								'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' + name
+									| translate
+							}}
 						</nb-option>
 					</nb-select>
 				</div>
@@ -55,7 +67,7 @@
 						nbButton
 						status="success"
 					>
-						{{ 'PROFILE_PAGE.SAVE' | translate }}
+						{{ 'EMAIL_TEMPLATES_PAGE.SAVE' | translate }}
 					</button>
 				</div>
 			</div>
@@ -66,9 +78,12 @@
 					<nb-card>
 						<nb-card-body>
 							<div class="form-group">
-								<label class="label" for="subject"
-									>Subject</label
-								>
+								<label class="label" for="subject">
+									{{
+										'EMAIL_TEMPLATES_PAGE.LABELS.SUBJECT'
+											| translate
+									}}
+								</label>
 								<ace-editor
 									id="subject"
 									#subjectEditor
@@ -80,9 +95,12 @@
 								</ace-editor>
 							</div>
 							<div class="form-group">
-								<label class="label" for="email"
-									>Email Body</label
-								>
+								<label class="label" for="email">
+									{{
+										'EMAIL_TEMPLATES_PAGE.LABELS.EMAIL_BODY'
+											| translate
+									}}
+								</label>
 								<ace-editor
 									#emailEditor
 									id="email"
@@ -102,7 +120,10 @@
 						<nb-card-body>
 							<div class="form-group">
 								<label class="label" for="previewSubject"
-									>Subject Preview
+									>{{
+										'EMAIL_TEMPLATES_PAGE.LABELS.SUBJECT_PREVIEW'
+											| translate
+									}}
 								</label>
 								<div
 									id="previewSubject"
@@ -111,7 +132,10 @@
 							</div>
 							<div class="form-group">
 								<label class="label" for="previewEmail"
-									>Email Preview
+									>{{
+										'EMAIL_TEMPLATES_PAGE.LABELS.EMAIL_PREVIEW'
+											| translate
+									}}
 								</label>
 								<div
 									id="previewEmail"

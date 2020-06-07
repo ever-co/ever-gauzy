@@ -172,7 +172,10 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 			});
 			this.toastrService.primary(
 				this.getTranslation('TOASTR.MESSAGE.EMAIL_TEMPLATE_SAVED', {
-					templateName: this.form.get('name').value
+					templateName: this.getTranslation(
+						'EMAIL_TEMPLATES_PAGE.TEMPLATE_NAMES.' +
+							this.form.get('name').value
+					)
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
