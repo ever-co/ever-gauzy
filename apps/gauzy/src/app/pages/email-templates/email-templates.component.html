@@ -1,20 +1,20 @@
 <form class="main-form" [formGroup]="form" *ngIf="form">
-	<nb-layout>
-		<nb-layout-header class="row">
-			<div class="col-6">
-				{{ organizationName }}
-			</div>
+	<nb-card>
+		<nb-card-header>
+			<div class="row">
+				<div class="col-6">
+					<h4>Email Templates for {{ organizationName }}</h4>
+				</div>
 
-			<div class="col-2">
-				<div class="form-group">
-					<label class="label">
+				<div class="col-2 select-block">
+					<label class="label" for="languageCode">
 						{{ 'Language' | translate }}
 					</label>
 					<nb-select
+						id="languageCode"
 						class="d-block"
 						size="small"
 						formControlName="languageCode"
-						placeholder="{{ 'Language Select' | translate }}"
 						(selectedChange)="getTemplate()"
 					>
 						<nb-option
@@ -28,16 +28,15 @@
 						</nb-option>
 					</nb-select>
 				</div>
-			</div>
-			<div class="col-2">
-				<div class="form-group">
-					<label class="label">
+				<div class="col-2 select-block">
+					<label class="label" for="templateName">
 						{{ 'Template Name' | translate }}
 					</label>
 					<nb-select
+						id="templateName"
 						class="d-block"
 						size="small"
-						formControlName="templateName"
+						formControlName="name"
 						placeholder="{{ 'Template Names' | translate }}"
 						(selectedChange)="getTemplate()"
 					>
@@ -49,46 +48,80 @@
 						</nb-option>
 					</nb-select>
 				</div>
-			</div>
-			<div class="col-2">
-				<button
-					[disabled]="form.invalid"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
-					{{ 'PROFILE_PAGE.SAVE' | translate }}
-				</button>
-			</div>
-		</nb-layout-header>
-		<nb-layout-column class="colored-column-warning">
-			<nb-card fullWidth>
-				<nb-card-body class="example-items-col">
-					<input
-						type="text"
-						nbInput
-						fullWidth
-						fieldSize="small"
-						placeholder="Input"
-						value="{{ subject }}"
-						#subjectEditor
-						formControlName="subject"
-					/>
-					<textarea
-						class="mjml-editor"
-						#mjmlEditor
-						nbInput
-						fullWidth
-						placeholder="Textarea"
-						formControlName="mjml"
-						>{{ template }}</textarea
+				<div class="col-2 template-save">
+					<button
+						[disabled]="form.invalid"
+						(click)="submitForm()"
+						nbButton
+						status="success"
 					>
-				</nb-card-body>
-			</nb-card>
-		</nb-layout-column>
-		<nb-layout-column class="colored-column-danger">
-			<div [innerHtml]="previewSubject"></div>
-			<div [innerHtml]="previewEmail"></div>
-		</nb-layout-column>
-	</nb-layout>
+						{{ 'PROFILE_PAGE.SAVE' | translate }}
+					</button>
+				</div>
+			</div>
+		</nb-card-header>
+		<nb-card-body>
+			<nb-layout>
+				<nb-layout-column class="email-template-column">
+					<nb-card>
+						<nb-card-body>
+							<div class="form-group">
+								<label class="label" for="subject"
+									>Subject</label
+								>
+								<ace-editor
+									id="subject"
+									#subjectEditor
+									style="height: 10vh; font-size: medium;"
+									[durationBeforeCallback]="400"
+									[mode]="'handlebars'"
+									(textChange)="onSubjectChange($event)"
+								>
+								</ace-editor>
+							</div>
+							<div class="form-group">
+								<label class="label" for="email"
+									>Email Body</label
+								>
+								<ace-editor
+									#emailEditor
+									id="email"
+									[mode]="'handlebars'"
+									style="height: 80vh; font-size: medium;"
+									[durationBeforeCallback]="400"
+									(textChange)="onEmailChange($event)"
+								>
+								</ace-editor>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</nb-layout-column>
+				<!-- Live Preview column -->
+				<nb-layout-column class="email-template-column">
+					<nb-card>
+						<nb-card-body>
+							<div class="form-group">
+								<label class="label" for="previewSubject"
+									>Subject Preview
+								</label>
+								<div
+									id="previewSubject"
+									[innerHtml]="previewSubject"
+								></div>
+							</div>
+							<div class="form-group">
+								<label class="label" for="previewEmail"
+									>Email Preview
+								</label>
+								<div
+									id="previewEmail"
+									[innerHtml]="previewEmail"
+								></div>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</nb-layout-column>
+			</nb-layout>
+		</nb-card-body>
+	</nb-card>
 </form>

@@ -1,28 +1,26 @@
 import {
+	AfterViewInit,
 	Component,
-	ElementRef,
 	OnDestroy,
 	OnInit,
 	SecurityContext,
-	ViewChild,
-	AfterViewInit
+	ViewChild
 } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EmailTemplateNameEnum, LanguagesEnum } from '@gauzy/models';
+import { NbThemeService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { fromEvent, Subject } from 'rxjs';
-import {
-	debounceTime,
-	distinctUntilChanged,
-	map,
-	takeUntil
-} from 'rxjs/operators';
+import 'brace';
+import 'brace/ext/language_tools';
+import 'brace/mode/handlebars';
+import 'brace/theme/sqlserver';
+import 'brace/theme/tomorrow_night';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { NbToastrService } from '@nebular/theme';
-
 @Component({
 	templateUrl: './email-templates.component.html',
 	styleUrls: ['./email-templates.component.scss']
@@ -37,11 +35,9 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 	organizationId: string;
 	form: FormGroup;
 
-	@ViewChild('mjmlEditor', { read: ElementRef }) mjmlEditor: ElementRef;
-	@ViewChild('subjectEditor', { read: ElementRef }) subjectEditor: ElementRef;
+	@ViewChild('subjectEditor') subjectEditor;
+	@ViewChild('emailEditor') emailEditor;
 
-	name: EmailTemplateNameEnum = EmailTemplateNameEnum.INVITE_USER;
-	languageCode: LanguagesEnum = LanguagesEnum.ENGLISH;
 	languageCodes: string[] = Object.values(LanguagesEnum);
 	templateNames: string[] = Object.values(EmailTemplateNameEnum);
 
@@ -51,7 +47,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 		private store: Store,
 		private fb: FormBuilder,
 		private toastrService: NbToastrService,
-		private emailTemplateService: EmailTemplateService
+		private emailTemplateService: EmailTemplateService,
+		private themeService: NbThemeService
 	) {
 		super(translateService);
 	}
@@ -66,46 +63,46 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 					this.getTemplate();
 				}
 			});
+
 		this._initializeForm();
 	}
 
 	ngAfterViewInit() {
-		fromEvent(this.mjmlEditor.nativeElement, 'keyup')
-			.pipe(
-				takeUntil(this._ngDestroy$),
-				map((event: any) => event.target.value),
-				debounceTime(500),
-				distinctUntilChanged()
-			)
-			.subscribe(async (text) => {
-				const {
-					html
-				} = await this.emailTemplateService.generateTemplatePreview(
-					text
-				);
-				this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(
-					html
-				);
-			});
+		this.themeService
+			.getJsTheme()
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe(
+				({
+					name
+				}: {
+					name: 'dark' | 'cosmic' | 'corporate' | 'default';
+				}) => {
+					switch (name) {
+						case 'dark':
+						case 'cosmic':
+							this.emailEditor.setTheme('tomorrow_night');
+							this.subjectEditor.setTheme('tomorrow_night');
+							break;
+						default:
+							this.emailEditor.setTheme('sqlserver');
+							this.subjectEditor.setTheme('sqlserver');
+							break;
+					}
+				}
+			);
 
-		fromEvent(this.subjectEditor.nativeElement, 'keyup')
-			.pipe(
-				takeUntil(this._ngDestroy$),
-				map((event: any) => event.target.value),
-				debounceTime(500),
-				distinctUntilChanged()
-			)
-			.subscribe(async (text) => {
-				const {
-					html
-				} = await this.emailTemplateService.generateTemplatePreview(
-					text
-				);
-				this.previewSubject = this.sanitizer.sanitize(
-					SecurityContext.HTML,
-					html
-				);
-			});
+		const editorOptions = {
+			enableBasicAutocompletion: true,
+			enableLiveAutocompletion: true,
+			printMargin: false,
+			showLineNumbers: true,
+			tabSize: 2
+		};
+
+		this.emailEditor.getEditor().setOptions(editorOptions);
+		this.subjectEditor
+			.getEditor()
+			.setOptions({ ...editorOptions, maxLines: 2 });
 		this.getTemplate();
 	}
 
@@ -113,7 +110,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 		const result = this.form
 			? await this.emailTemplateService.getTemplate({
 					languageCode: this.form.get('languageCode').value,
-					name: this.form.get('templateName').value,
+					name: this.form.get('name').value,
 					organizationId: this.organizationId
 			  })
 			: await this.emailTemplateService.getTemplate({
@@ -121,8 +118,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 					name: EmailTemplateNameEnum.WELCOME_USER,
 					organizationId: this.organizationId
 			  });
-		this.form.get('mjml').setValue(result.template);
-		this.form.get('subject').setValue(result.subject);
+		this.emailEditor.value = result.template;
+		this.subjectEditor.value = result.subject;
 
 		const {
 			html: email
@@ -135,24 +132,47 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 			result.subject
 		);
 		this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(email);
+
 		this.previewSubject = this.sanitizer.sanitize(
 			SecurityContext.HTML,
 			subject
 		);
 	}
 
+	private _initializeForm() {
+		this.form = this.fb.group({
+			name: [EmailTemplateNameEnum.PASSWORD_RESET],
+			languageCode: [LanguagesEnum.ENGLISH],
+			subject: ['', [Validators.required, Validators.maxLength(60)]],
+			mjml: ['', Validators.required]
+		});
+	}
+
+	async onSubjectChange(code: string) {
+		this.form.get('subject').setValue(code);
+		const {
+			html
+		} = await this.emailTemplateService.generateTemplatePreview(code);
+		this.previewSubject = this.sanitizer.bypassSecurityTrustHtml(html);
+	}
+
+	async onEmailChange(code: string) {
+		this.form.get('mjml').setValue(code);
+		const {
+			html
+		} = await this.emailTemplateService.generateTemplatePreview(code);
+		this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(html);
+	}
+
 	async submitForm() {
 		try {
 			await this.emailTemplateService.saveEmailTemplate({
-				languageCode: this.form.get('languageCode').value,
-				mjml: this.form.get('mjml').value,
-				name: this.form.get('templateName').value,
-				organizationId: this.organizationId,
-				subject: this.form.get('subject').value
+				...this.form.value,
+				organizationId: this.organizationId
 			});
 			this.toastrService.primary(
 				this.getTranslation('TOASTR.MESSAGE.EMAIL_TEMPLATE_SAVED', {
-					templateName: this.form.get('templateName').value
+					templateName: this.form.get('name').value
 				}),
 				this.getTranslation('TOASTR.TITLE.SUCCESS')
 			);
@@ -163,16 +183,6 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 			);
 		}
 	}
-
-	private _initializeForm() {
-		this.form = this.fb.group({
-			templateName: [EmailTemplateNameEnum.PASSWORD_RESET],
-			languageCode: [LanguagesEnum.ENGLISH],
-			subject: [],
-			mjml: []
-		});
-	}
-
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

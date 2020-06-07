@@ -19,7 +19,8 @@ export enum EmailTemplateNameEnum {
 	INVITE_ORGANIZATION_CLIENT = 'invite-organization-client',
 	INVITE_EMPLOYEE = 'invite-employee',
 	INVITE_USER = 'invite-user',
-	EMAIL_INVOICE = 'email-invoice'
+	EMAIL_INVOICE = 'email-invoice',
+	EMAIL_ESTIMATE = 'email-estimate'
 }
 
 export interface ICustomizeEmailTemplateFindInput {
