@@ -1329,7 +1329,8 @@
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
-			"SOMETHING_BAD_HAPPENED": "Something bad happened!"
+			"SOMETHING_BAD_HAPPENED": "Something bad happened!",
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1513,5 +1514,32 @@
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:",
 		"CONFIRM_APPOINTMENT": "Appointment confirmation page"
+	},
+	"EMAIL_TEMPLATES_PAGE": {
+		"HEADER": "Email Templates for {{ organizationName }}",
+		"SAVE": "Save",
+		"LABELS": {
+			"LANGUAGE": "Language",
+			"TEMPLATE_NAME": "Template Name",
+			"SUBJECT": "Subject",
+			"EMAIL_BODY": "Email Body",
+			"EMAIL_PREVIEW": "Email Preview",
+			"SUBJECT_PREVIEW": "Subject Preview"
+		},
+		"TEMPLATE_NAMES": {
+			"password": "Password Reset",
+			"welcome-user": "Welcome User",
+			"invite-organization-client": "Invite Organization Client",
+			"email-estimate": "Email Estimate",
+			"email-invoice": "Email Invoice",
+			"invite-employee": "Invite Employee",
+			"invite-user": "Invite User"
+		},
+		"LANGUAGE_CODES": {
+			"en": "English",
+			"ru": "Russian",
+			"he": "Hebrew",
+			"bg": "Bulgarian"
+		}
 	}
 }
