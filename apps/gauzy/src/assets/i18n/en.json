@@ -1329,7 +1329,8 @@
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
-			"SOMETHING_BAD_HAPPENED": "Something bad happened!"
+			"SOMETHING_BAD_HAPPENED": "Something bad happened!",
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully"
 		}
 	},
 	"ACCEPT_INVITE": {

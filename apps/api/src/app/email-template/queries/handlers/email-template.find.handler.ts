@@ -2,7 +2,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { EmailTemplateService } from '../../email-template.service';
 import { FindEmailTemplateQuery } from '../email-template.find.query';
 import {
-	CustomizableEmailTemplate,
+	ICustomizableEmailTemplate,
 	LanguagesEnum,
 	EmailTemplateNameEnum,
 	EmailTemplate
@@ -16,12 +16,12 @@ export class FindEmailTemplateHandler
 
 	public async execute(
 		command: FindEmailTemplateQuery
-	): Promise<CustomizableEmailTemplate> {
+	): Promise<ICustomizableEmailTemplate> {
 		const {
 			input: { languageCode, name, organizationId }
 		} = command;
 
-		const emailTemplate: CustomizableEmailTemplate = {
+		const emailTemplate: ICustomizableEmailTemplate = {
 			subject: '',
 			template: ''
 		};
@@ -44,7 +44,7 @@ export class FindEmailTemplateHandler
 		let template = '';
 
 		const {
-			success,
+			success: found,
 			record
 		}: {
 			success: boolean;
@@ -55,7 +55,7 @@ export class FindEmailTemplateHandler
 			organization: { id: organizationId }
 		});
 
-		if (success) {
+		if (found) {
 			subject = record.hbs;
 			template = record.mjml;
 		} else {

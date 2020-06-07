@@ -21,6 +21,7 @@ import {
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { Store } from '../../@core/services/store.service';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { NbToastrService } from '@nebular/theme';
 
 @Component({
 	templateUrl: './email-templates.component.html',
@@ -39,9 +40,6 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 	@ViewChild('mjmlEditor', { read: ElementRef }) mjmlEditor: ElementRef;
 	@ViewChild('subjectEditor', { read: ElementRef }) subjectEditor: ElementRef;
 
-	subject = '';
-	template = '';
-
 	name: EmailTemplateNameEnum = EmailTemplateNameEnum.INVITE_USER;
 	languageCode: LanguagesEnum = LanguagesEnum.ENGLISH;
 	languageCodes: string[] = Object.values(LanguagesEnum);
@@ -52,6 +50,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 		private sanitizer: DomSanitizer,
 		private store: Store,
 		private fb: FormBuilder,
+		private toastrService: NbToastrService,
 		private emailTemplateService: EmailTemplateService
 	) {
 		super(translateService);
@@ -111,24 +110,29 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 	}
 
 	async getTemplate() {
-		console.log('changed');
-		const result = await this.emailTemplateService.getTemplate({
-			languageCode: this.form.get('languageCode').value,
-			name: this.form.get('templateName').value,
-			organizationId: this.organizationId
-		});
-		this.subject = result.subject;
-		this.template = result.template;
+		const result = this.form
+			? await this.emailTemplateService.getTemplate({
+					languageCode: this.form.get('languageCode').value,
+					name: this.form.get('templateName').value,
+					organizationId: this.organizationId
+			  })
+			: await this.emailTemplateService.getTemplate({
+					languageCode: LanguagesEnum.ENGLISH,
+					name: EmailTemplateNameEnum.WELCOME_USER,
+					organizationId: this.organizationId
+			  });
+		this.form.get('mjml').setValue(result.template);
+		this.form.get('subject').setValue(result.subject);
 
 		const {
 			html: email
 		} = await this.emailTemplateService.generateTemplatePreview(
-			this.template
+			result.template
 		);
 		const {
 			html: subject
 		} = await this.emailTemplateService.generateTemplatePreview(
-			this.subject
+			result.subject
 		);
 		this.previewEmail = this.sanitizer.bypassSecurityTrustHtml(email);
 		this.previewSubject = this.sanitizer.sanitize(
@@ -137,12 +141,35 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 		);
 	}
 
+	async submitForm() {
+		try {
+			await this.emailTemplateService.saveEmailTemplate({
+				languageCode: this.form.get('languageCode').value,
+				mjml: this.form.get('mjml').value,
+				name: this.form.get('templateName').value,
+				organizationId: this.organizationId,
+				subject: this.form.get('subject').value
+			});
+			this.toastrService.primary(
+				this.getTranslation('TOASTR.MESSAGE.EMAIL_TEMPLATE_SAVED', {
+					templateName: this.form.get('templateName').value
+				}),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+		} catch ({ error }) {
+			this.toastrService.danger(
+				error.message || error,
+				this.getTranslation('TOASTR.TITLE.ERROR')
+			);
+		}
+	}
+
 	private _initializeForm() {
 		this.form = this.fb.group({
-			templateName: [EmailTemplateNameEnum.WELCOME_USER],
+			templateName: [EmailTemplateNameEnum.PASSWORD_RESET],
 			languageCode: [LanguagesEnum.ENGLISH],
-			subject: [this.subject],
-			mjml: [this.template]
+			subject: [],
+			mjml: []
 		});
 	}
 
