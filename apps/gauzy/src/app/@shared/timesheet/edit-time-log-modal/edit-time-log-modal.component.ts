@@ -8,6 +8,8 @@ import { Store } from '../../../@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { ToastrService } from '../../../@core/services/toastr.service';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { EmployeesService } from '../../../@core/services';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ngx-edit-time-log-modal',
@@ -29,6 +31,7 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 
 	employeeId: string;
 	employee: SelectedEmployee;
+	employees: import('/Users/chetan/Documents/projects/upwork/ever-co/gauzy/libs/models/src/index').Employee[];
 
 	@Input()
 	public set timeLog(value: TimeLog | Partial<TimeLog>) {
@@ -45,14 +48,23 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 		private timesheetService: TimesheetService,
 		private toastrService: ToastrService,
 		private store: Store,
+		private employeesService: EmployeesService,
 		private dialogRef: NbDialogRef<EditTimeLogModalComponent>
-	) {}
+	) {
+		const munutes = moment().get('minutes');
+		const roundTime = moment().subtract(munutes - (munutes % 10));
+		this.selectedRange = {
+			end: roundTime.toDate(),
+			start: roundTime.subtract(1, 'hour').toDate()
+		};
+	}
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: Organization) => {
 				this.organization = organization;
+				this.loadEmployees();
 			});
 
 		this.store.selectedEmployee$
@@ -100,6 +112,15 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			.catch((error) => {
 				this.toastrService.error(error);
 			});
+	}
+
+	private async loadEmployees(): Promise<void> {
+		const { items = [] } = await this.employeesService.getWorking(
+			this.organization.id,
+			this.selectedRange.start,
+			true
+		);
+		this.employees = items;
 	}
 
 	ngOnDestroy(): void {}
