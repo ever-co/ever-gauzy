@@ -3,6 +3,7 @@ import { EmployeeAppointment } from './employee-appointment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { IEmployeeAppointmentCreateInput } from '@gauzy/models';
 
 @Injectable()
 export class EmployeeAppointmentService extends CrudService<
@@ -27,7 +28,7 @@ export class EmployeeAppointmentService extends CrudService<
 	}
 
 	async saveAppointment(
-		employeeAppointmentRequest: EmployeeAppointment
+		employeeAppointmentRequest: IEmployeeAppointmentCreateInput
 	): Promise<EmployeeAppointment> {
 		return await this.employeeAppointmentRepository.save(
 			employeeAppointmentRequest

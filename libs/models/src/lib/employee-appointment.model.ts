@@ -18,6 +18,7 @@ export interface EmployeeAppointment extends IBaseEntityModel {
 	breakStartTime?: Date;
 	invitees?: AppointmentEmployees[];
 	organizationId: string;
+	emails?: string;
 	organization: Organization;
 }
 
@@ -39,5 +40,6 @@ export interface IEmployeeAppointmentCreateInput {
 	breakTimeInMins?: Number;
 	breakStartTime?: Date;
 	organizationId?: string;
+	emails?: string;
 	invitees?: AppointmentEmployees[];
 }
