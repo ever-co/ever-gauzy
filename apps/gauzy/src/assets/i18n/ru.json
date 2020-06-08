@@ -1511,7 +1511,11 @@
 		"PICK_DATETIME": "Выберите дату и время",
 		"DURATION": "Продолжительность:",
 		"EVENT_TYPE": "Тип события:",
-		"CONFIRM_APPOINTMENT": "Страница подтверждения назначения"
+		"CONFIRM_APPOINTMENT": "Назначение подтверждено",
+		"DETAILS": "Детали бронирования",
+		"PARTICIPANTS": "Email участника",
+		"HOST": "Хост",
+		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания."
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны писем для {{ organizationName }}",
