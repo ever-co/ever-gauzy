@@ -46,6 +46,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 
 	selectedEmployeeIds: string[];
 	emailAddresses: any[] = [];
+	_selectedOrganizationId: string;
 	emails: any;
 	start: Date;
 	end: Date;
@@ -72,6 +73,15 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			this.start = this.selectedRange.start;
 			this.end = this.selectedRange.end;
 		}
+
+		this.store.selectedOrganization$
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((org) => {
+				if (org) {
+					this._selectedOrganizationId = org.id;
+				}
+			});
+
 		this._parseParams();
 		this._loadEmployees();
 	}
@@ -192,7 +202,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 
 	async onSaveRequest() {
 		const employeeAppointmentRequest = {
-			emails: this.emails.value,
+			emails: this.emails.value
+				.map((email) => email.emailAddress)
+				.join(', '),
 			agenda: this.form.get('agenda').value,
 			location: this.form.get('location').value,
 			description: this.form.get('description').value,
@@ -213,14 +225,11 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 				? this.employee.id
 				: this.store.selectedEmployee
 				? this.store.selectedEmployee.id
-				: null
+				: null,
+			organizationId: this._selectedOrganizationId
 		};
 
-		if (this.employeeAppointment) {
-			employeeAppointmentRequest['id'] = this.employeeAppointment.id;
-		}
-
-		if (!employeeAppointmentRequest['id']) {
+		if (!this.employeeAppointment) {
 			this.employeeAppointment = await this.employeeAppointmentService.create(
 				employeeAppointmentRequest
 			);
@@ -235,6 +244,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent
 			}
 		} else {
 			this.employeeAppointment = await this.employeeAppointmentService.update(
+				this.employeeAppointment.id,
 				employeeAppointmentRequest
 			);
 		}

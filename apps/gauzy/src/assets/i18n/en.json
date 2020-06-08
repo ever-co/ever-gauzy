@@ -1513,7 +1513,11 @@
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:",
-		"CONFIRM_APPOINTMENT": "Appointment confirmation page"
+		"CONFIRM_APPOINTMENT": "Appointment confirmed",
+		"DETAILS": "Booking Details",
+		"PARTICIPANTS": "Participant Emails",
+		"HOST": "Host",
+		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Email Templates for {{ organizationName }}",
