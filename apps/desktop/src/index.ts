@@ -169,7 +169,9 @@ function parseConfig(txt) {
 	txt.split(';').forEach((item) => {
 		const configItem = item.split('=');
 		conf[configItem[0]] =
-			configItem[1] === 'undefined' ? null : configItem[1];
+			configItem[1] === 'undefined' || configItem[1] === 'null'
+				? null
+				: configItem[1];
 	});
 	console.log(conf);
 	return conf;
