@@ -10,6 +10,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 		privacy: 'eye-outline',
 		language: 'en',
 		color: 'blue',
+		index: 0,
 		children: [
 			{
 				name: 'Cookies',
@@ -19,7 +20,8 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Information',
 				data: 'Cookies and Similar Technologies Information',
 				language: 'en',
-				color: 'black'
+				color: 'black',
+				index: 0
 			},
 			{
 				name: 'Device',
@@ -29,7 +31,8 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Device Information',
 				data: 'We may collect certain information about your device',
 				language: 'en',
-				color: 'black'
+				color: 'black',
+				index: 1
 			}
 		]
 	},
@@ -40,6 +43,7 @@ const helpCenterMenuList: IHelpCenter[] = [
 		privacy: 'eye-off-outline',
 		language: 'en',
 		color: 'blue',
+		index: 1,
 		children: [
 			{
 				name: 'Cookies',
@@ -49,7 +53,8 @@ const helpCenterMenuList: IHelpCenter[] = [
 				description: 'Information',
 				data: 'Cookies and Similar Technologies Information',
 				language: 'en',
-				color: 'black'
+				color: 'black',
+				index: 0
 			}
 		]
 	},
@@ -61,79 +66,32 @@ const helpCenterMenuList: IHelpCenter[] = [
 		description: 'Gauzy Privacy Statement',
 		data: 'Usage Information',
 		language: 'en',
-		color: 'black'
+		color: 'black',
+		index: 2
 	}
 ];
 
 export const createHelpCenter = async (
 	connection: Connection
-
-	// children?: IHelpCenter[]
 ): Promise<IHelpCenter[]> => {
-	// const items =
-	// 	children && children.length > 0
-	// 		? children
-	// 		: !children
-	// 		? helpCenterMenuList
-	// 		: null;
-	// items.forEach(async (hs: IHelpCenter) => {
-	// 	await insertHelpCenter(connection, hs);
-	// 	if (hs.children) {
-	// 		await createHelpCenter(
-	// 			connection,
-	// 			hs.children.map((child) => child) || []
-	// 		);
-	// 	}
-	// });
-
-	let defaultChildren: IHelpCenter[] = [];
-	for (let i = 0; i < helpCenterMenuList.length; i++) {
-		await insertHelpCenter(connection, helpCenterMenuList[i]);
-		if (helpCenterMenuList[i].children) {
-			helpCenterMenuList[i].children.forEach((child) => {
-				defaultChildren = [...defaultChildren, { ...child }];
-			});
-			defaultChildren.forEach(async (item) => {
-				helpCenterMenuList[i].children.push(item);
-			});
-			insertChildren(connection, helpCenterMenuList[i]);
-		}
+	for (const node of helpCenterMenuList) {
+		const entity = await createEntity(connection, node);
+		await save(connection, entity);
 	}
 
 	return helpCenterMenuList;
 };
 
-const insertHelpCenter = async (
+const save = async (
 	connection: Connection,
 	node: IHelpCenter
 ): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(HelpCenter)
-		.values(node)
-		.execute();
-};
-
-const insertChildren = async (
-	connection: Connection,
-	node: IHelpCenter
-): Promise<void> => {
-	// nodes.forEach(async (item) => {
-	// 	parent.children.push(item);
-	// });
 	await connection.manager.save(node);
 };
 
-// const insertChildren = async (
-// 	connection: Connection,
-// 	node: HelpCenter,
-// 	nodes: HelpCenter[]
-// ): Promise<void> => {
-// 	await connection
-// 		.createQueryBuilder()
-// 		.insert()
-// 		.into(HelpCenter)
-// 		.values(nodes)
-// 		.execute();
-// };
+const createEntity = async (connection: Connection, node: IHelpCenter) => {
+	if (!node) {
+		return;
+	}
+	return connection.manager.create(HelpCenter, node);
+};

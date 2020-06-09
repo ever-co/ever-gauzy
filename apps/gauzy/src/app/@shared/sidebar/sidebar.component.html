@@ -118,7 +118,7 @@
 		</div>
 		<div *ngIf="isChosenNode && !isVisibleEdit && chosenArticle">
 			<h6>{{ articleDesc }}</h6>
-			<div [innerHTML]="articleData"></div>
+			<div [innerHtml]="articleData"></div>
 		</div>
 		<div class="add-icon-field" *ngIf="isVisibleEdit">
 			<div>
@@ -144,7 +144,7 @@
 			</nb-select>
 		</div>
 		<div *ngIf="isVisibleEdit && chosenCategory" class="content-card">
-			<p>Press enter to save category name</p>
+			<p class="label">Press enter to save category name</p>
 			<input
 				type="text"
 				size="24"
@@ -162,9 +162,9 @@
 				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 			</button>
 		</div>
-		<div *ngIf="isVisibleEdit && chosenArticle" class="content-card">
+		<div *ngIf="isVisibleEdit && chosenArticle">
 			<form [formGroup]="form" (ngSubmit)="submit()">
-				<p>Name of the article:</p>
+				<p class="label">Name of the article:</p>
 				<input
 					formControlName="name"
 					type="text"
@@ -173,7 +173,7 @@
 					nbInput
 				/>
 				<div class="edit-node-field">
-					<p>Description:</p>
+					<p class="label">Description:</p>
 					<input
 						formControlName="desc"
 						type="text"
@@ -181,7 +181,7 @@
 						maxlength="18"
 						nbInput
 					/>
-					<p>Article text:</p>
+					<p class="label">Article text:</p>
 					<div class="ck-editor">
 						<ckeditor
 							[formControl]="form.controls['data']"

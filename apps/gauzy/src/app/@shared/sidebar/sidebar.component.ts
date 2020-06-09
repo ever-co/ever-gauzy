@@ -47,7 +47,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	public isChosenNode = false;
 	public nodes: IHelpCenter[] = [];
 	options: ITreeOptions = {
-		// allowDrag: (node) => node.isLeaf,
 		allowDrag: true,
 		allowDrop: (el, { parent, index }) => {
 			if (parent.data.flag === 'article') {
@@ -62,37 +61,10 @@ export class SidebarComponent extends TranslationBaseComponent
 
 	async onMoveNode($event) {
 		const movedNode = $event.node;
-		await this.helpService.delete(`${movedNode.id}`);
-
-		// await this.helpService.update($event.to.parent.id, {
-		// 	children: []
-		// });
-		// if (movedNode.flag === 'category') {
-		// 	await this.helpService.create({
-		// 		name: `${movedNode.name}`,
-		// 		icon: `${movedNode.icon}`,
-		// 		flag: 'category',
-		// 		privacy: `${movedNode.privacy}`,
-		// 		children: movedNode.children
-		// 	});
-		// } else {
-		// 	await this.helpService.create({
-		// 		name: `${movedNode.name}`,
-		// 		icon: `${movedNode.icon}`,
-		// 		flag: 'article',
-		// 		privacy: `${movedNode.privacy}`,
-		// 		description: `${movedNode.description}`,
-		// 		data: `${movedNode.data}`
-		// 	});
-		// }
-		// console.log(
-		// 	'Moved',
-		// 	movedNode,
-		// 	'to',
-		// 	$event.to.parent.name,
-		// 	'to',
-		// 	$event.to.index
-		// );
+		await this.helpService.update(movedNode.id, {
+			parent: $event.to.parent,
+			index: $event.to.index
+		});
 	}
 
 	addNode() {
@@ -115,6 +87,7 @@ export class SidebarComponent extends TranslationBaseComponent
 				privacy: 'eye-outline',
 				language: 'en',
 				color: 'black',
+				index: 0,
 				children: []
 			});
 		} else {
@@ -126,6 +99,7 @@ export class SidebarComponent extends TranslationBaseComponent
 				description: '',
 				language: 'en',
 				color: 'black',
+				index: 0,
 				data: ''
 			});
 		}
@@ -144,12 +118,11 @@ export class SidebarComponent extends TranslationBaseComponent
 		if (node.data.flag === 'article') {
 			this.articleDesc = node.data.description;
 			this.articleData = this.sanitizer.bypassSecurityTrustHtml(
-				node.data.data
+				node.data.data.toString()
 			);
-			console.log(typeof this.articleData);
 			this.chosenCategory = false;
 			this.chosenArticle = true;
-			this.loadFormData();
+			this.loadFormData(node.data);
 		} else {
 			this.chosenCategory = true;
 			this.chosenArticle = false;
@@ -218,12 +191,11 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.articleName = 'Chose any article';
 	}
 
-	loadFormData() {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		this.form = this.fb.group({
-			name: [this.articleName],
-			desc: [this.articleDesc],
-			data: [someNode.data.data]
+	loadFormData(data) {
+		this.form.patchValue({
+			name: data.name,
+			desc: data.description,
+			data: data.data.toString()
 		});
 	}
 
@@ -237,7 +209,6 @@ export class SidebarComponent extends TranslationBaseComponent
 		someNode.data.name = this.form.controls.name.value;
 		this.articleDesc = someNode.data.description;
 		this.articleName = someNode.data.name;
-		console.log('!!!!!!!!!!!!', someNode.data.data);
 		await this.helpService.update(someNode.data.id, {
 			name: `${someNode.data.name}`,
 			description: `${someNode.data.description}`,
@@ -249,14 +220,21 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.isVisibleEdit = false;
 	}
 
-	private async loadMenu() {
-		const result = await this.helpService.getAll();
+	async loadMenu() {
+		const result = await this.helpService.getAll(['parent', 'children']);
+		let tempNodes: IHelpCenter[] = [];
 		if (result) {
-			this.nodes = result.items;
+			tempNodes = result.items;
+			this.nodes = tempNodes.filter((item) => item.parent === null);
 		}
 	}
 	ngOnInit() {
 		this.loadMenu();
+		this.form = this.fb.group({
+			name: [''],
+			desc: [''],
+			data: ['']
+		});
 	}
 
 	ngOnDestroy() {
