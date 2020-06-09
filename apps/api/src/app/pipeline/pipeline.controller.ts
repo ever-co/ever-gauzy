@@ -1,4 +1,4 @@
-import { CrudController, IPagination, PaginationParams } from '../core/crud';
+import { CrudController, IPagination } from '../core/crud';
 import { Pipeline } from './pipeline.entity';
 import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
