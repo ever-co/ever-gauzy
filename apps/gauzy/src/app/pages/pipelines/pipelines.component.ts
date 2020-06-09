@@ -50,6 +50,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   {
     await this.updateUserOrganizations();
     await this.updatePipelines();
+    this.organizationId = this.store?.selectedOrganization?.id;
   }
 
   public async updateUserOrganizations(): Promise<void> {
