@@ -90,7 +90,7 @@ export class Invoice extends Base implements IInvoice {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
-	emailSent: boolean;
+	emailSent?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
