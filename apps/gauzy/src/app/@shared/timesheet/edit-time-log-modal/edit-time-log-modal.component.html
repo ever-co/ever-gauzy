@@ -10,7 +10,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<form #f="ngForm" ngForm>
-			<div class="form-group" *ngIf="!addEditRequest.employeeId">
+			<div class="form-group" *ngIf="canSelectEmployee">
 				<ga-employee-multi-select
 					name="employeeId"
 					[multiple]="false"
@@ -124,9 +124,10 @@
 					(click)="addTime(f)"
 				>
 					{{
-						mode == 'create'
+						(mode == 'create'
 							? 'TIMESHEET.ADD_TIME'
-							: ('TIMESHEET.UPDATE_TIME' | translate)
+							: 'TIMESHEET.UPDATE_TIME'
+						) | translate
 					}}
 				</button>
 				<button nbButton status="default" (click)="close()">

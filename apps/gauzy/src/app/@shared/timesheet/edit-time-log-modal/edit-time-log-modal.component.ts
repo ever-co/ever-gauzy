@@ -1,5 +1,11 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { IDateRange, Organization, TimeLog } from '@gauzy/models';
+import {
+	IDateRange,
+	Organization,
+	TimeLog,
+	Employee,
+	PermissionsEnum
+} from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { TimesheetService } from '../timesheet.service';
 import { NgForm } from '@angular/forms';
@@ -19,6 +25,7 @@ import * as moment from 'moment';
 export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
+	canSelectEmployee: boolean;
 
 	addEditRequest: any = {
 		isBillable: true,
@@ -29,9 +36,8 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	selectedRange: IDateRange = { start: null, end: null };
 	organization: Organization;
 
-	employeeId: string;
 	employee: SelectedEmployee;
-	employees: import('/Users/chetan/Documents/projects/upwork/ever-co/gauzy/libs/models/src/index').Employee[];
+	employees: Employee[];
 
 	@Input()
 	public set timeLog(value: TimeLog | Partial<TimeLog>) {
@@ -66,6 +72,12 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 				this.organization = organization;
 				this.loadEmployees();
 			});
+
+		this.store.user$.pipe(untilDestroyed(this)).subscribe(() => {
+			this.canSelectEmployee = this.store.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			);
+		});
 
 		this.store.selectedEmployee$
 			.pipe(untilDestroyed(this))

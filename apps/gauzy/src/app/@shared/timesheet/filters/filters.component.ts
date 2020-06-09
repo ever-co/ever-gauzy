@@ -125,6 +125,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 					this.loadEmployees();
 				}
 			});
+		this.updateLogs$.next();
 	}
 
 	async nextDay() {
