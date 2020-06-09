@@ -1,3 +1,12 @@
-.mjml-editor {
-  min-height: 90vh;
+.main-form {
+  .template-save {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  nb-layout {
+    nb-layout-column.email-template-column {
+      padding: 0;
+    }
+  }
 }

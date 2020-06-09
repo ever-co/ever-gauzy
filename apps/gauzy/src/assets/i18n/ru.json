@@ -741,7 +741,9 @@
 			"PREVIOUS": "Предыдущий"
 		},
 		"STATISTIC": {
-			"CANDIDATE_STATISTICS": "Статистика Кандидатов"
+			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
+			"CANDIDATE_RATING": "Рейтинг Кандидата",
+			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1325,7 +1327,8 @@
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
 			"PHONE_REQUIRED": "Требуется указать телефон!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!",
-			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!"
+			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!",
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} шаблон письма успешно сохранен"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1508,6 +1511,37 @@
 		"PICK_DATETIME": "Выберите дату и время",
 		"DURATION": "Продолжительность:",
 		"EVENT_TYPE": "Тип события:",
-		"CONFIRM_APPOINTMENT": "Страница подтверждения назначения"
+		"CONFIRM_APPOINTMENT": "Назначение подтверждено",
+		"DETAILS": "Детали бронирования",
+		"PARTICIPANTS": "Email участника",
+		"HOST": "Хост",
+		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания."
+	},
+	"EMAIL_TEMPLATES_PAGE": {
+		"HEADER": "Шаблоны писем для {{ organizationName }}",
+		"SAVE": "Сохранить",
+		"LABELS": {
+			"LANGUAGE": "Язык",
+			"TEMPLATE_NAME": "Название шаблона",
+			"SUBJECT": "Тема",
+			"EMAIL_BODY": "Тело письма",
+			"EMAIL_PREVIEW": "Предварительный просмотр E-mail",
+			"SUBJECT_PREVIEW": "Предпросмотр темы"
+		},
+		"TEMPLATE_NAMES": {
+			"password": "Сброс пароля",
+			"welcome-user": "Приветствуем пользователя",
+			"invite-organization-client": "Пригласить клиента организации",
+			"email-estimate": "Почтовый расчет",
+			"email-invoice": "Email Счет",
+			"invite-employee": "Пригласить сотрудника",
+			"invite-user": "Пригласить пользователя"
+		},
+		"LANGUAGE_CODES": {
+			"en": "Russian",
+			"ru": "Русский",
+			"he": "Иврит",
+			"bg": "Болгарский"
+		}
 	}
 }

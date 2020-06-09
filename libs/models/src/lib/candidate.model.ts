@@ -1,3 +1,4 @@
+import { ICandidateInterview } from './candidate-interview.model';
 import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
 import { Organization, OrganizationFindInput } from './organization.model';
@@ -9,7 +10,7 @@ import {
 	ITenant,
 	OrganizationDepartment,
 	OrganizationPositions,
-	Tag,
+	Tag
 } from '@gauzy/models';
 import { OrganizationEmploymentType } from './organization-employment-type.model';
 import { IExperience } from './candidate-experience.model';
@@ -46,12 +47,13 @@ export interface Candidate extends IBaseEntityModel, ILocation {
 	feedbacks?: ICandidateFeedback[];
 	rating?: number;
 	isArchived?: boolean;
+	interview?: ICandidateInterview[];
 }
 
 export enum CandidateStatus {
 	APPLIED = 'APPLIED',
 	REJECTED = 'REJECTED',
-	HIRED = 'HIRED',
+	HIRED = 'HIRED'
 }
 
 export interface CandidateFindInput extends IBaseEntityModel {
