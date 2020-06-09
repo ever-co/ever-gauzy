@@ -18,8 +18,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 
-
-
 @NgModule( {
   declarations: [
     PipelineFormComponent,

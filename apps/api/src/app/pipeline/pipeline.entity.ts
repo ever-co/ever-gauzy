@@ -5,8 +5,6 @@ import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-
-
 @Entity( 'pipelines' )
 export class Pipeline extends Base implements IPipeline
 {

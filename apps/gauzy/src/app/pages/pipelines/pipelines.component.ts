@@ -11,8 +11,6 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { first } from 'rxjs/operators';
 
-
-
 @Component({
   templateUrl: './pipelines.component.html',
   selector: 'ga-pipelines',

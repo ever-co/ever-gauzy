@@ -5,8 +5,6 @@ import { PipelineService } from './pipeline.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Pipeline } from './pipeline.entity';
 
-
-
 @Module({
   imports: [
     TypeOrmModule.forFeature([

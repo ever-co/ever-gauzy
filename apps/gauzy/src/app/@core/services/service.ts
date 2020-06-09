@@ -2,8 +2,6 @@ import { BaseEntityModel } from '@gauzy/models';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 
-
-
 export abstract class Service<BE extends BaseEntityModel, FI = Partial<BE>, CI = Partial<BE>>
 {
 

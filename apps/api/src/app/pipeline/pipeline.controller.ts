@@ -6,8 +6,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { PipelineService } from './pipeline.service';
 import { ParseJsonPipe } from '../shared/pipes';
 
-
-
 @Controller()
 @ApiTags('Pipeline')
 @UseGuards( AuthGuard( 'jwt' ) )

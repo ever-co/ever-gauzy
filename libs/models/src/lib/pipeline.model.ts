@@ -1,7 +1,5 @@
 import { BaseEntityModel, Organization } from '@gauzy/models';
 
-
-
 export interface Pipeline extends BaseEntityModel, PipelineCreateInput
 {
   organization: Organization;
