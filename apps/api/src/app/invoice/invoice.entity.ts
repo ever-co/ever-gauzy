@@ -38,7 +38,7 @@ export class Invoice extends Base implements IInvoice {
 	@JoinTable({
 		name: 'tag_invoice'
 	})
-	tags: Tag[];
+	tags?: Tag[];
 
 	@ApiProperty({ type: Date })
 	@IsDate()
