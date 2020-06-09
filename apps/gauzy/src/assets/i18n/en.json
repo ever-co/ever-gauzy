@@ -747,7 +747,9 @@
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
-			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview"
+			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
+      "NO_DATA": "No data yet ",
+			"SELECT_INTERVIEW": "Select an interview"
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Candidates criterions",

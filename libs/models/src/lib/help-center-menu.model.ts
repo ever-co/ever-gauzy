@@ -5,7 +5,11 @@ export interface IHelpCenter extends IBaseEntityModel {
 	icon: string;
 	flag: string;
 	privacy: string;
+	language: string;
+	color: string;
 	description?: string;
 	data?: string;
+	index: number;
 	children?: IHelpCenter[];
+	parent?: IHelpCenter;
 }

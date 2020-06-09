@@ -4,83 +4,94 @@ import { Connection } from 'typeorm';
 
 const helpCenterMenuList: IHelpCenter[] = [
 	{
-		name: 'Knowledge base1',
+		name: 'Gauzy Platform',
 		icon: 'book-open-outline',
 		flag: 'category',
 		privacy: 'eye-outline',
+		language: 'en',
+		color: 'blue',
+		index: 0,
 		children: [
 			{
-				name: 'article1.1',
+				name: 'Cookies',
 				icon: 'alert-circle-outline',
 				flag: 'article',
 				privacy: 'eye-outline',
-				description: 'desc1111',
-				data: 'aaaaaa'
+				description: 'Information',
+				data: 'Cookies and Similar Technologies Information',
+				language: 'en',
+				color: 'black',
+				index: 0
 			},
 			{
-				name: 'article1.2',
+				name: 'Device',
 				icon: 'book-open-outline',
 				flag: 'article',
 				privacy: 'eye-off-outline',
-				description: 'desc122222',
-				data: 'bbbbbb'
+				description: 'Device Information',
+				data: 'We may collect certain information about your device',
+				language: 'en',
+				color: 'black',
+				index: 1
 			}
 		]
 	},
 	{
-		name: 'Knowledge base2',
+		name: 'Ever Platform',
 		icon: 'book-open-outline',
 		flag: 'category',
 		privacy: 'eye-off-outline',
-		children: []
+		language: 'en',
+		color: 'blue',
+		index: 1,
+		children: [
+			{
+				name: 'Cookies',
+				icon: 'alert-circle-outline',
+				flag: 'article',
+				privacy: 'eye-outline',
+				description: 'Information',
+				data: 'Cookies and Similar Technologies Information',
+				language: 'en',
+				color: 'black',
+				index: 0
+			}
+		]
 	},
 	{
 		flag: 'article',
 		icon: 'book-open-outline',
 		privacy: 'eye-off-outline',
-		name: 'article2.1',
-		description: 'desc1',
-		data: 'aaaaa'
+		name: 'Privacy',
+		description: 'Gauzy Privacy Statement',
+		data: 'Usage Information',
+		language: 'en',
+		color: 'black',
+		index: 2
 	}
 ];
 
 export const createHelpCenter = async (
 	connection: Connection
 ): Promise<IHelpCenter[]> => {
-	// let defaultChildren: IHelpCenter[] = [];
-	for (let i = 0; i < helpCenterMenuList.length; i++) {
-		await insertHelpCenter(connection, helpCenterMenuList[i]);
-		// if (helpCenterMenuList[i].children) {
-		// 	helpCenterMenuList[i].children.forEach((child) => {
-		// 		defaultChildren = [...defaultChildren, { ...child }];
-		// 	});
-		// 	insertChildren(connection, defaultChildren);
-		// }
+	for (const node of helpCenterMenuList) {
+		const entity = await createEntity(connection, node);
+		await save(connection, entity);
 	}
 
 	return helpCenterMenuList;
 };
 
-const insertHelpCenter = async (
+const save = async (
 	connection: Connection,
-	node: HelpCenter
+	node: IHelpCenter
 ): Promise<void> => {
-	await connection
-		.createQueryBuilder()
-		.insert()
-		.into(HelpCenter)
-		.values(node)
-		.execute();
+	await connection.manager.save(node);
 };
 
-// const insertChildren = async (
-// 	connection: Connection,
-// 	nodes: HelpCenter[]
-// ): Promise<void> => {
-// 	await connection
-// 		.createQueryBuilder()
-// 		.insert()
-// 		.into(HelpCenter)
-// 		.values(nodes)
-// 		.execute();
-// };
+const createEntity = async (connection: Connection, node: IHelpCenter) => {
+	if (!node) {
+		return;
+	}
+	return connection.manager.create(HelpCenter, node);
+};
