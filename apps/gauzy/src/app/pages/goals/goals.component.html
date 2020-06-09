@@ -1,0 +1,52 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>
+				{{ 'GOALS_PAGE.HEADER' | translate }} {{ organizationName }}
+			</h4>
+			<button nbButton status="primary" (click)="createObjective()">
+				{{ 'BUTTONS.ADD_NEW' | translate }}
+			</button>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-accordion>
+			<nb-accordion-item expanded="true">
+				<nb-accordion-item-header status="primary"
+					>Goal Name
+					<nb-actions class="ml-auto mr-3 mt-1 float-right">
+						<nb-action
+							icon="eye"
+							(click)="openGoalDetials()"
+						></nb-action>
+					</nb-actions>
+					<!-- <nb-icon class="ml-auto mr-3 mt-1 float-right" icon="eye" status="primary" (click)="addKeyResult()"></nb-icon> -->
+				</nb-accordion-item-header>
+				<nb-accordion-item-body>
+					Key Result
+					<nb-actions class="ml-auto float-right">
+						<nb-action
+							icon="eye"
+							(click)="addKeyResult()"
+						></nb-action>
+						<nb-action
+							icon="plus-circle"
+							(click)="addKeyResult()"
+						></nb-action>
+					</nb-actions>
+				</nb-accordion-item-body>
+				<nb-accordion-item-body>
+					<nb-actions size="medium">
+						<nb-action
+							icon="plus-circle"
+							status="primary"
+							title="Add new key result"
+							(click)="addKeyResult()"
+						></nb-action>
+						<nb-action>Add new key result</nb-action>
+					</nb-actions>
+				</nb-accordion-item-body>
+			</nb-accordion-item>
+		</nb-accordion>
+	</nb-card-body>
+</nb-card>

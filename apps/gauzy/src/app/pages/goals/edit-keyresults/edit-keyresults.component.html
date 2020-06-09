@@ -1,0 +1,120 @@
+<nb-card style="max-width: 600px;">
+	<nb-card-header>
+		Add Key Result
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<form [formGroup]="keyResultsForm">
+			<label for="key-result-title" class="label"> Name </label>
+			<input
+				type="text"
+				id="key-result-title"
+				nbInput
+				fullWidth
+				formControlName="name"
+				placeholder="Key Result Name. eg. Add Metadata to improve SEO"
+			/>
+
+			<label for="key-result-description" class="label mt-3">
+				Description
+			</label>
+			<textarea
+				id="key-result-description"
+				nbInput
+				fullWidth
+				formControlName="description"
+				placeholder="Key Result Description."
+			></textarea>
+
+			<label for="key-result-owner" class="label mt-3"> Owner </label>
+			<ga-employee-multi-select
+				[multiple]="false"
+				[allEmployees]="employees"
+				[label]="false"
+				(selectedChange)="test($event, 'owner')"
+				id="key-result-owner"
+				placeholder="Owner"
+				class="header-selector employee-selector"
+			></ga-employee-multi-select>
+
+			<label for="key-result-Lead" class="label mt-3"> Lead </label>
+			<ga-employee-multi-select
+				[multiple]="false"
+				[allEmployees]="employees"
+				[label]="false"
+				(selectedChange)="test($event, 'lead')"
+				id="key-result-Lead"
+				placeholder="Lead"
+				class="header-selector employee-selector"
+			></ga-employee-multi-select>
+
+			<label for="key-result-deadline" class="label mt-3">
+				Deadline
+			</label>
+			<nb-select
+				id="key-result-deadline"
+				fullWidth
+				formControlName="deadline"
+			>
+				<nb-option value="no-custom-deadline"
+					>No Custom Deadline</nb-option
+				>
+				<nb-option value="hard-deadline">Hard deadline</nb-option>
+				<nb-option value="hard-soft-deadline"
+					>Hard and soft deadline</nb-option
+				>
+			</nb-select>
+			<div class="row mt-3">
+				<div
+					class="col-md-6"
+					*ngIf="
+						keyResultsForm.value.deadline == 'hard-soft-deadline'
+					"
+				>
+					<label for="soft-deadline" class="label">
+						Soft Deadline
+					</label>
+					<input
+						nbInput
+						id="soft-deadline"
+						fullWidth
+						placeholder="Soft Deadline"
+						[nbDatepicker]="softDeadlinePicker"
+						formControlName="softDeadline"
+					/>
+					<nb-datepicker #softDeadlinePicker></nb-datepicker>
+				</div>
+				<div
+					class="col-md-6"
+					*ngIf="
+						keyResultsForm.value.deadline == 'hard-soft-deadline' ||
+						keyResultsForm.value.deadline == 'hard-deadline'
+					"
+				>
+					<label for="hard-deadline" class="label">
+						Hard Deadline
+					</label>
+					<input
+						nbInput
+						id="hard-deadline"
+						fullWidth
+						placeholder="Hard Picker"
+						[nbDatepicker]="hardDeadlinePicker"
+						formControlName="hardDeadline"
+					/>
+					<nb-datepicker #hardDeadlinePicker></nb-datepicker>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
+		<button nbButton status="success" (click)="saveKeyResult()">
+			Save
+		</button>
+	</nb-card-footer>
+</nb-card>

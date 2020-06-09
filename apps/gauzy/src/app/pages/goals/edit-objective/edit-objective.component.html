@@ -1,0 +1,78 @@
+<nb-card>
+	<nb-card-header>
+		Add Objective
+		<nb-icon
+			class="ml-auto mt-1 close"
+			icon="close-outline"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+
+	<nb-card-body>
+		<form [formGroup]="objectiveForm">
+			<label for="objective-title" class="label"> Name </label>
+			<input
+				type="text"
+				id="objective-title"
+				nbInput
+				fullWidth
+				formControlName="name"
+				placeholder="Objective Name. eg. Improve Website SEO"
+			/>
+
+			<label for="objective-description" class="label mt-3">
+				Description
+			</label>
+			<textarea
+				id="objective-description"
+				nbInput
+				fullWidth
+				formControlName="description"
+				placeholder="Objective Description."
+			></textarea>
+
+			<label for="objective-owner" class="label mt-3"> Owner </label>
+			<ga-employee-multi-select
+				[multiple]="false"
+				[allEmployees]="employees"
+				[label]="false"
+				(selectedChange)="test($event, 'owner')"
+				id="key-result-owner"
+				placeholder="Owner"
+				class="header-selector employee-selector"
+			></ga-employee-multi-select>
+
+			<label for="objective-Lead" class="label mt-3"> Lead </label>
+			<ga-employee-multi-select
+				[multiple]="false"
+				[allEmployees]="employees"
+				[label]="false"
+				(selectedChange)="test($event, 'lead')"
+				id="key-result-Lead"
+				placeholder="Lead"
+				class="header-selector employee-selector"
+			></ga-employee-multi-select>
+
+			<label for="objective-deadline" class="label mt-3">
+				Deadline
+			</label>
+			<nb-select
+				id="objective-deadline"
+				formControlName="deadline"
+				placeholder="Deadline"
+				fullWidth
+				selected="0"
+			>
+				<nb-option value="Monthly">Monthly</nb-option>
+				<nb-option value="Quarterly">Quarterly</nb-option>
+				<nb-option value="Annual">Annual</nb-option>
+			</nb-select>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
+		<button nbButton status="success" (click)="saveObjective()">
+			Save
+		</button>
+	</nb-card-footer>
+</nb-card>
