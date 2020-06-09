@@ -5,17 +5,6 @@
   <nb-card-body>
     <nb-actions>
       <nb-action>
-        <nb-select [(ngModel)]="organizationId" (selectedChange)="updatePipelines()"
-                   [placeholder]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate" [style.whiteSpace]="'pre'">
-          <nb-option [innerHTML]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate" [style.whiteSpace]="'pre'" ></nb-option>
-          <nb-option *ngFor="let userOrganization of userOrganizations"
-                     [innerHTML]="userOrganization.organization.name"
-                     [value]="userOrganization.organization.id"
-                     [style.whiteSpace]="'pre'"
-          ></nb-option>
-        </nb-select>
-      </nb-action>
-      <nb-action>
         <nb-form-field>
           <input
             [placeholder]="'FORM.FILTER' | translate"
@@ -28,7 +17,7 @@
         </nb-form-field>
       </nb-action>
       <nb-action>
-        <button (click)="gotoForm({ pipeline: { name: name, organizationId: organizationId } })"
+        <button (click)="createPipeline()"
                 style="cursor: pointer"
                 status="primary"
                 type="button"
@@ -39,7 +28,7 @@
         </button>
       </nb-action>
       <nb-action *ngIf="pipeline">
-        <button (click)="gotoForm({ pipeline: pipeline })"
+        <button (click)="editPipeline()"
                 style="cursor: pointer"
                 status="info"
                 type="button"

@@ -50,7 +50,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   {
     await this.updateUserOrganizations();
     await this.updatePipelines();
-    this.organizationId = this.store?.selectedOrganization?.id;
+    this.updateOrganization();
   }
 
   public async updateUserOrganizations(): Promise<void> {
@@ -60,6 +60,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       .getAll( [ 'organization' ], { userId })
       .then( ({ items }) => {
         this.userOrganizations = items;
+        this.updateOrganization();
         this.updatePipelines();
       });
   }
@@ -76,10 +77,8 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       });
   }
 
-  public deletePipeline(): void {
-    this.pipelinesService
-      .delete( this.pipeline.id )
-      .then( () => this.updateUserOrganizations() );
+  public updateOrganization(): void {
+    this.organizationId = this.store.selectedOrganization?.id;
   }
 
   public filterPipelines(): void {
@@ -93,7 +92,31 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     ]);
   }
 
-  public async gotoForm( context: Record<any, any> ): Promise<void> {
+  public deletePipeline(): void {
+    this.pipelinesService
+      .delete( this.pipeline.id )
+      .then( () => this.updateUserOrganizations() );
+  }
+
+  public async createPipeline(): Promise<void> {
+    this.updateOrganization();
+
+    const { name, organizationId } = this;
+
+    await this.goto({ pipeline: { name, organizationId } });
+    delete this.name;
+  }
+
+  public async editPipeline(): Promise<void> {
+    this.updateOrganization();
+
+    const { pipeline } = this;
+
+    await this.goto({ pipeline });
+    delete this.name;
+  }
+
+  private async goto( context: Record<any, any> ): Promise<void> {
     const dialogRef = this.dialogService.open( PipelineFormComponent, {
       context,
     });
