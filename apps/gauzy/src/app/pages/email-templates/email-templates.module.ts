@@ -20,6 +20,7 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
+import { AceEditorModule } from 'ng2-ace-editor';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -48,7 +49,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 				deps: [HttpClient]
 			}
 		}),
-		NbSpinnerModule
+		NbSpinnerModule,
+		AceEditorModule
 	],
 	providers: [EmailTemplateService],
 	entryComponents: [EmailTemplatesComponent],

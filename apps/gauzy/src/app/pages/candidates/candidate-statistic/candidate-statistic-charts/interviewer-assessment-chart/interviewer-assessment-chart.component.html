@@ -1,0 +1,36 @@
+<h6 class="title">
+	{{ 'CANDIDATES_PAGE.STATISTIC.INTERVIEWER_ASSESSMENT' | translate }}
+</h6>
+<nb-select
+	placeholder="Select an interview"
+	class="select"
+	(selectedChange)="onInterviewSelected($event)"
+>
+	<nb-option-group
+		*ngFor="let candidate of candidates"
+		title="{{ candidate.user.name }}"
+	>
+		<nb-option
+			*ngFor="let interview of candidate.interview"
+			[value]="interview"
+		>
+			{{ interview.title }}
+		</nb-option>
+	</nb-option-group>
+</nb-select>
+<div *ngIf="!currentInterview" class="no-data">
+	<nb-icon icon="info-outline" class="no-data-icon"></nb-icon>
+	<span class="no-data-text">{{
+		'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
+	}}</span>
+	<span class="no-data-text">
+		{{ 'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW' | translate }}
+	</span>
+</div>
+<chart
+	*ngIf="currentInterview"
+	style="height: 400px; width: 100%;"
+	type="bar"
+	[data]="data"
+	[options]="options"
+></chart>

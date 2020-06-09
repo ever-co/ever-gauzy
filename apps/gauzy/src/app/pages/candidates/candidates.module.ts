@@ -1,3 +1,4 @@
+import { CandidatePersonalQualitiesService } from './../../@core/services/candidate-personal-qualities.service';
 import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
 import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
 import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';
@@ -74,6 +75,8 @@ import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candid
 import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
 import { ChartModule } from 'angular2-chartjs';
 import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-rating-chart/candidate-rating-chart.component';
+import { InterviewerAssessmentChartComponent } from './candidate-statistic/candidate-statistic-charts/interviewer-assessment-chart/interviewer-assessment-chart.component';
+import { CandidateCriterionsComponent } from './candidate-criterions/candidate-criterions.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -102,7 +105,9 @@ const COMPONENTS = [
 	EditCandidateEducationComponent,
 	EditCandidateExperienceFormComponent,
 	ManageCandidateInterviewsComponent,
-	CandidateRatingChartComponent
+	CandidateRatingChartComponent,
+	InterviewerAssessmentChartComponent,
+	CandidateCriterionsComponent
 ];
 
 @NgModule({
@@ -170,7 +175,8 @@ const COMPONENTS = [
 		CountryService,
 		OrganizationEmploymentTypesService,
 		CandidatesService,
-		CandidateInterviewersService
+		CandidateInterviewersService,
+		CandidatePersonalQualitiesService
 	]
 })
 export class CandidatesModule {}

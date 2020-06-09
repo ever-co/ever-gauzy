@@ -19,6 +19,7 @@ import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-pro
 import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/edit-candidate-feedbacks.component';
 import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
 import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
+import { CandidateCriterionsComponent } from './candidate-criterions/candidate-criterions.component';
 
 const routes: Routes = [
 	{
@@ -102,6 +103,10 @@ const routes: Routes = [
 	{
 		path: 'statistic',
 		component: CandidateStatisticComponent
+	},
+	{
+		path: 'criterions',
+		component: CandidateCriterionsComponent
 	}
 ];
 

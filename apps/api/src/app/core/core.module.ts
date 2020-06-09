@@ -83,6 +83,7 @@ import { ProductTypeTranslation } from '../product-type/product-type-translation
 import { HelpCenter } from '../help-center/help-center.entity';
 import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
 import { Payment } from '../payment/payment.entity';
+import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
 
 const entities = [
 	Invite,
@@ -141,6 +142,7 @@ const entities = [
 	CandidateExperience,
 	CandidateInterview,
 	CandidateInterviewers,
+	CandidatePersonalQualities,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,

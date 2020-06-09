@@ -19,23 +19,23 @@ export enum EmailTemplateNameEnum {
 	INVITE_ORGANIZATION_CLIENT = 'invite-organization-client',
 	INVITE_EMPLOYEE = 'invite-employee',
 	INVITE_USER = 'invite-user',
-	EMAIL_INVOICE = 'email-invoice'
+	EMAIL_INVOICE = 'email-invoice',
+	EMAIL_ESTIMATE = 'email-estimate'
 }
 
-export interface CustomizeEmailTemplateFindInput {
+export interface ICustomizeEmailTemplateFindInput {
 	name: EmailTemplateNameEnum;
 	languageCode: LanguagesEnum;
 	organizationId: string;
 }
 
-export interface CustomizableEmailTemplate {
+export interface ICustomizableEmailTemplate {
 	template: string;
 	subject: string;
-	params?: EmailTemplateOptions;
 }
 
-export interface EmailTemplateOptions {
-	organizationName?: string;
-	email?: string;
-	host?: string;
+export interface IEmailTemplateSaveInput
+	extends ICustomizeEmailTemplateFindInput {
+	mjml: string;
+	subject: string;
 }

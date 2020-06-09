@@ -82,6 +82,7 @@ import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 import { HelpCenterModule } from './help-center/help-center.module';
 import { PaymentModule } from './payment/payment.module';
+import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
 
 @Module({
 	imports: [
@@ -124,6 +125,10 @@ import { PaymentModule } from './payment/payment.module';
 					{
 						path: '/candidate-source',
 						module: CandidateSourceModule
+					},
+					{
+						path: '/candidate-personal-qualities',
+						module: CandidatePersonalQualitiesModule
 					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
@@ -335,6 +340,7 @@ import { PaymentModule } from './payment/payment.module';
 		CandidateFeedbacksModule,
 		CandidateInterviewModule,
 		CandidateInterviewersModule,
+		CandidatePersonalQualitiesModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
