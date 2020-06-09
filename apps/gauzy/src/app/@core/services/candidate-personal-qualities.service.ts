@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { first } from 'rxjs/operators';
 import {
-	ICandidatePersonalQualitiesFindInput,
 	ICandidatePersonalQualities,
 	ICandidatePersonalQualitiesCreateInput
 } from '@gauzy/models';

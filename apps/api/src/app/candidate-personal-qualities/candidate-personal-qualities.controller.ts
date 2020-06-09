@@ -1,17 +1,13 @@
 import {
 	Controller,
-	HttpStatus,
-	Get,
-	Query,
 	UseGuards,
 	Post,
 	Body,
 	Delete,
 	Param
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
-import { IPagination } from '../core';
 import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from '../shared/guards/auth/role.guard';
 import { Roles } from '../shared/decorators/roles';
