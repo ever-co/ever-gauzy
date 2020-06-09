@@ -1,0 +1,45 @@
+.date-and-value {
+  display: flex;
+  flex-direction: column;
+
+  & div {
+    margin: 20px 0;
+  }
+}
+
+.info-container {
+  display: flex;
+}
+
+.buttons {
+  margin: 20px 0;
+}
+
+.total-paid-label {
+  margin-top: 20px;
+  margin-left: 20%;
+}
+
+.progress-bar {
+  background-color: #edf1f7;
+  height: 30px;
+  width: 450px;
+  border-radius: 3px;
+  margin-top: 35px;
+}
+
+.progress-bar-inner {
+  display: block;
+  height: 30px;
+  background-color: #2ce69b;
+  border-radius: 3px;
+  position: relative;
+}
+
+.paid-percent {
+  position: absolute;
+  z-index: 1;
+  margin-left: 1%;
+  color: #000000;
+  font-weight: bold;
+}

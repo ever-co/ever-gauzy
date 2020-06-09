@@ -24,13 +24,15 @@ import {
 	ManyToMany,
 	JoinTable,
 	OneToOne,
-	AfterLoad
+	AfterLoad,
+	OneToMany
 } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { Role } from '../role/role.entity';
 import { Tenant } from '../tenant/tenant.entity';
 import { Tag } from '../tags/tag.entity';
 import { Employee } from '../employee/employee.entity';
+import { Payment } from '../payment/payment.entity';
 
 @Entity('user')
 export class User extends Base implements IUser {
@@ -110,6 +112,17 @@ export class User extends Base implements IUser {
 	@IsOptional()
 	@Column({ length: 500, nullable: true })
 	imageUrl?: string;
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payments) => payments.recordedBy)
+	@JoinColumn()
+	payments?: Payment[];
+
+	@ApiPropertyOptional({ type: String })
+	@IsString()
+	@IsOptional()
+	@Column({ nullable: true })
+	paymentsId?: string;
 
 	@ApiProperty({ type: String, enum: LanguagesEnum })
 	@IsEnum(LanguagesEnum)
