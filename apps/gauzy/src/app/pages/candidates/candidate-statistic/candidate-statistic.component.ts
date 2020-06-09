@@ -7,8 +7,7 @@ import { first } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-candidate-statistic',
-	templateUrl: './candidate-statistic.component.html',
-	styleUrls: ['./candidate-statistic.component.scss']
+	templateUrl: './candidate-statistic.component.html'
 })
 export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();

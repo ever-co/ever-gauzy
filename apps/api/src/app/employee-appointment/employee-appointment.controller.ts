@@ -19,6 +19,8 @@ import { EmployeeAppointmentCreateCommand } from './commands/employee-appointmen
 import { EmployeeAppointmentUpdateCommand } from './commands/employee-appointment.update.command';
 import { AuthGuard } from '@nestjs/passport';
 import { UUIDValidationPipe } from '../shared';
+import { I18nLang } from 'nestjs-i18n';
+import { LanguagesEnum, IEmployeeAppointmentCreateInput } from '@gauzy/models';
 
 @ApiTags('employee_appointment')
 @UseGuards(AuthGuard('jwt'))
@@ -69,11 +71,12 @@ export class EmployeeAppointmentController extends CrudController<
 	})
 	@Post('/create')
 	async createEmployeeAppointment(
-		@Body() entity: EmployeeAppointment,
+		@Body() entity: IEmployeeAppointmentCreateInput,
+		@I18nLang() languageCode: LanguagesEnum,
 		...options: any[]
 	) {
 		return this.commandBus.execute(
-			new EmployeeAppointmentCreateCommand(entity)
+			new EmployeeAppointmentCreateCommand(entity, languageCode)
 		);
 	}
 
@@ -95,7 +98,7 @@ export class EmployeeAppointmentController extends CrudController<
 	@Put(':id')
 	async update(
 		@Param('id') id: string,
-		@Body() entity: EmployeeAppointment
+		@Body() entity: IEmployeeAppointmentCreateInput
 	): Promise<any> {
 		return this.commandBus.execute(
 			new EmployeeAppointmentUpdateCommand(id, entity)

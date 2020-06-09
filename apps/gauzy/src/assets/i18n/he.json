@@ -747,7 +747,9 @@
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
-			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview"
+			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
+			"NO_DATA": "No data yet ",
+			"SELECT_INTERVIEW": "Select an interview"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1331,7 +1333,8 @@
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
-			"SOMETHING_BAD_HAPPENED": "Something bad happened!"
+			"SOMETHING_BAD_HAPPENED": "Something bad happened!",
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1514,6 +1517,37 @@
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:",
-		"CONFIRM_APPOINTMENT": "Appointment confirmation page"
+		"CONFIRM_APPOINTMENT": "Appointment confirmed",
+		"DETAILS": "Booking Details",
+		"PARTICIPANTS": "Participant Emails",
+		"HOST": "Host",
+		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
+	},
+	"EMAIL_TEMPLATES_PAGE": {
+		"HEADER": "Email Templates for {{ organizationName }}",
+		"SAVE": "לשמור",
+		"LABELS": {
+			"LANGUAGE": "Language",
+			"TEMPLATE_NAME": "Template Name",
+			"SUBJECT": "Subject",
+			"EMAIL_BODY": "Email Body",
+			"EMAIL_PREVIEW": "Email Preview",
+			"SUBJECT_PREVIEW": "Subject Preview"
+		},
+		"TEMPLATE_NAMES": {
+			"password": "Password Reset",
+			"welcome-user": "Welcome User",
+			"invite-organization-client": "Invite Organization Client",
+			"email-estimate": "Email Estimate",
+			"email-invoice": "Email Invoice",
+			"invite-employee": "Invite Employee",
+			"invite-user": "Invite User"
+		},
+		"LANGUAGE_CODES": {
+			"en": "English",
+			"ru": "Russian",
+			"he": "Hebrew",
+			"bg": "Bulgarian"
+		}
 	}
 }
