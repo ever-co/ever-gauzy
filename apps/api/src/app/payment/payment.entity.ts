@@ -80,7 +80,7 @@ export class Payment extends Base implements IPayment {
 	@ApiProperty({ type: Tenant })
 	@ManyToOne(() => Tenant, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
-	tenant: Tenant;
+	tenant?: Tenant;
 
 	@ApiProperty({ type: String, readOnly: true })
 	@RelationId((payment: Payment) => payment.tenant)
@@ -90,5 +90,5 @@ export class Payment extends Base implements IPayment {
 	@JoinTable({
 		name: 'tag_payment'
 	})
-	tags: Tag[];
+	tags?: Tag[];
 }
