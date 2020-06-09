@@ -1,12 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { Pipeline, UserOrganization } from '@gauzy/models';
-import { Store } from '../../@core/services/store.service';
+import { Pipeline } from '@gauzy/models';
+import { AppStore } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import { FormBuilder } from '@angular/forms';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { first } from 'rxjs/operators';
@@ -15,7 +14,7 @@ import { first } from 'rxjs/operators';
   templateUrl: './pipelines.component.html',
   selector: 'ga-pipelines',
 })
-export class PipelinesComponent extends TranslationBaseComponent implements OnInit
+export class PipelinesComponent extends TranslationBaseComponent implements OnDestroy
 {
 
   public smartTableSettings = {
@@ -29,10 +28,11 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     },
   };
   public pipelines = new LocalDataSource( [] as Pipeline[] );
-  public userOrganizations: UserOrganization[];
   public organizationId: string;
   public pipeline: Pipeline;
   public name: string;
+
+  private readonly $akitaPreUpdate: AppStore[ 'akitaPreUpdate' ];
 
   public constructor(
     private usersOrganizationsService: UsersOrganizationsService,
@@ -40,29 +40,24 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     private nbToastrService: NbToastrService,
     private dialogService: NbDialogService,
     translateService: TranslateService,
-    private fb: FormBuilder,
-    private store: Store )
+    private appStore: AppStore )
   {
     super( translateService );
-  }
-
-  public async ngOnInit(): Promise<void>
-  {
-    await this.updateUserOrganizations();
-    await this.updatePipelines();
-    this.updateOrganization();
-  }
-
-  public async updateUserOrganizations(): Promise<void> {
-    const { userId } = this.store;
-
-    await this.usersOrganizationsService
-      .getAll( [ 'organization' ], { userId })
-      .then( ({ items }) => {
-        this.userOrganizations = items;
-        this.updateOrganization();
+    this.$akitaPreUpdate = appStore.akitaPreUpdate;
+    appStore.akitaPreUpdate = ( previous, next ) => {
+      if ( previous.selectedOrganization !== next.selectedOrganization ) {
+        this.organizationId = next.selectedOrganization?.id;
+        // noinspection JSIgnoredPromiseFromCall
         this.updatePipelines();
-      });
+      }
+
+      return this.$akitaPreUpdate( previous, next );
+    };
+  }
+
+  public async ngOnDestroy(): Promise<void>
+  {
+    this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
   }
 
   public async updatePipelines(): Promise<void> {
@@ -77,10 +72,6 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       });
   }
 
-  public updateOrganization(): void {
-    this.organizationId = this.store.selectedOrganization?.id;
-  }
-
   public filterPipelines(): void {
     const { name: search = '' } = this;
 
@@ -92,15 +83,12 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     ]);
   }
 
-  public deletePipeline(): void {
-    this.pipelinesService
-      .delete( this.pipeline.id )
-      .then( () => this.updateUserOrganizations() );
+  public async deletePipeline(): Promise<void> {
+    await this.pipelinesService.delete( this.pipeline.id );
+    await this.updatePipelines();
   }
 
   public async createPipeline(): Promise<void> {
-    this.updateOrganization();
-
     const { name, organizationId } = this;
 
     await this.goto({ pipeline: { name, organizationId } });
@@ -108,8 +96,6 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   }
 
   public async editPipeline(): Promise<void> {
-    this.updateOrganization();
-
     const { pipeline } = this;
 
     await this.goto({ pipeline });
@@ -127,7 +113,6 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       this.nbToastrService.success(
         this.getTranslation( 'TOASTR.TITLE.SUCCESS' ),
         this.getTranslation( `TOASTR.MESSAGE.PIPELINE_${ id ? 'UPDATE' : 'CREATE' }` ) );
-      await this.updateUserOrganizations();
       await this.updatePipelines();
     }
   }
