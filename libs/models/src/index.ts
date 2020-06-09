@@ -67,4 +67,3 @@ export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
 
 export * from './lib/pipeline.model';
-export * from './lib/smart-table-settings';
