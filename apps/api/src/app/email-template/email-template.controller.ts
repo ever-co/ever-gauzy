@@ -1,9 +1,10 @@
 import {
-	CustomizableEmailTemplate,
-	CustomizeEmailTemplateFindInput
+	ICustomizableEmailTemplate,
+	ICustomizeEmailTemplateFindInput,
+	IEmailTemplateSaveInput
 } from '@gauzy/models';
 import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import { QueryBus, CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
 import { EmailTemplate } from './email-template.entity';
@@ -12,13 +13,15 @@ import {
 	EmailTemplateGeneratePreviewQuery,
 	FindEmailTemplateQuery
 } from './queries';
+import { EmailTemplateSaveCommand } from './commands';
 
 @ApiTags('EmailTemplate')
 @Controller()
 export class EmailTemplateController extends CrudController<EmailTemplate> {
 	constructor(
 		private readonly emailTemplateService: EmailTemplateService,
-		private readonly queryBus: QueryBus
+		private readonly queryBus: QueryBus,
+		private readonly commandBus: CommandBus
 	) {
 		super(emailTemplateService);
 	}
@@ -39,10 +42,10 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	@Get('findTemplate')
 	async findEmailTemplate(
 		@Query('data') data: string
-	): Promise<CustomizableEmailTemplate> {
+	): Promise<ICustomizableEmailTemplate> {
 		const {
 			findInput
-		}: { findInput: CustomizeEmailTemplateFindInput } = JSON.parse(data);
+		}: { findInput: ICustomizeEmailTemplateFindInput } = JSON.parse(data);
 		return this.queryBus.execute(new FindEmailTemplateQuery(findInput));
 	}
 
@@ -57,9 +60,24 @@ export class EmailTemplateController extends CrudController<EmailTemplate> {
 	@Post('emailPreview')
 	async generateEmailPreview(
 		@Body('data') data: string
-	): Promise<CustomizableEmailTemplate> {
+	): Promise<ICustomizableEmailTemplate> {
 		return this.queryBus.execute(
 			new EmailTemplateGeneratePreviewQuery(data)
 		);
+	}
+
+	@ApiOperation({
+		summary: 'Convert mjml or handlebar text to html'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'mjml or handlebar text converted to html',
+		type: EmailTemplate
+	})
+	@Post('saveTemplate')
+	async saveEmailTemplate(
+		@Body('data') data: IEmailTemplateSaveInput
+	): Promise<EmailTemplate> {
+		return this.commandBus.execute(new EmailTemplateSaveCommand(data));
 	}
 }

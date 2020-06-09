@@ -1,6 +1,7 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { AppointmentEmployees } from './appointment-employees.model';
 import { Employee, EmployeeFindInput } from './employee.model';
+import { Organization } from './organization.model';
 
 export interface EmployeeAppointment extends IBaseEntityModel {
 	employee?: Employee;
@@ -16,6 +17,9 @@ export interface EmployeeAppointment extends IBaseEntityModel {
 	breakTimeInMins?: Number;
 	breakStartTime?: Date;
 	invitees?: AppointmentEmployees[];
+	organizationId: string;
+	emails?: string;
+	organization: Organization;
 }
 
 export interface IEmployeeAppointmentFindInput extends IBaseEntityModel {
@@ -35,5 +39,7 @@ export interface IEmployeeAppointmentCreateInput {
 	bufferTimeInMins?: Number;
 	breakTimeInMins?: Number;
 	breakStartTime?: Date;
+	organizationId?: string;
+	emails?: string;
 	invitees?: AppointmentEmployees[];
 }

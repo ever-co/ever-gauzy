@@ -1,10 +1,11 @@
 import { ICommand } from '@nestjs/cqrs';
-import { EmployeeAppointment } from '../employee-appointment.entity';
+import { LanguagesEnum, IEmployeeAppointmentCreateInput } from '@gauzy/models';
 
 export class EmployeeAppointmentCreateCommand implements ICommand {
 	static readonly type = '[EmployeeAppointment] Register';
 
 	constructor(
-		public readonly employeeAppointmentInput: EmployeeAppointment
+		public readonly employeeAppointmentInput: IEmployeeAppointmentCreateInput,
+		public readonly languageCode: LanguagesEnum
 	) {}
 }

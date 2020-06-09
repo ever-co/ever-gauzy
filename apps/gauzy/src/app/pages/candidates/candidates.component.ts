@@ -121,13 +121,12 @@ export class CandidatesComponent extends TranslationBaseComponent
 				title: this.getTranslation('CONTEXT_MENU.CANDIDATE_STATISTIC'),
 				icon: 'bar-chart-outline',
 				link: 'pages/employees/candidates/statistic'
+			},
+			{
+				title: this.getTranslation('CONTEXT_MENU.CANDIDATE_CRITERIONS'),
+				icon: 'options-2-outline',
+				link: 'pages/employees/candidates/criterions'
 			}
-			// TO DO
-			// {
-			// 	title: this.getTranslation('CONTEXT_MENU.'),
-			// 	icon: 'options-2-outline'
-			// 	 link: 'pages/employees/candidates/'
-			// }
 		];
 	}
 

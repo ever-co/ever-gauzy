@@ -9,7 +9,7 @@ import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
-import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
 import { environment as env } from '@env-api/environment';
@@ -83,6 +83,7 @@ import { ProductTypeTranslation } from '../product-type/product-type-translation
 import { HelpCenter } from '../help-center/help-center.entity';
 import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
 import { Pipeline } from '../pipeline/pipeline.entity';
+import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
 
 const entities = [
 	Invite,
@@ -141,6 +142,7 @@ const entities = [
 	CandidateExperience,
 	CandidateInterview,
 	CandidateInterviewers,
+	CandidatePersonalQualities,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,
@@ -159,7 +161,7 @@ const entities = [
 	AvailabilitySlots,
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
-  Pipeline,
+	Pipeline
 ];
 
 @Module({

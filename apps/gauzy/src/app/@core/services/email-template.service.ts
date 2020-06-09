@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import {
 	EmailTemplate,
 	EmailTemplateFindInput,
-	CustomizeEmailTemplateFindInput,
-	CustomizableEmailTemplate
+	ICustomizeEmailTemplateFindInput,
+	ICustomizableEmailTemplate,
+	IEmailTemplateSaveInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -31,12 +32,12 @@ export class EmailTemplateService {
 			.toPromise();
 	}
 	getTemplate(
-		findInput?: CustomizeEmailTemplateFindInput
-	): Promise<CustomizableEmailTemplate> {
+		findInput?: ICustomizeEmailTemplateFindInput
+	): Promise<ICustomizableEmailTemplate> {
 		const data = JSON.stringify({ findInput });
 
 		return this.http
-			.get<CustomizableEmailTemplate>(
+			.get<ICustomizableEmailTemplate>(
 				`/api/email-template/findTemplate`,
 				{
 					params: { data }
@@ -49,6 +50,15 @@ export class EmailTemplateService {
 	generateTemplatePreview(data: string): Promise<{ html: string }> {
 		return this.http
 			.post<{ html: string }>(`/api/email-template/emailPreview`, {
+				data
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	saveEmailTemplate(data: IEmailTemplateSaveInput): Promise<EmailTemplate> {
+		return this.http
+			.post<EmailTemplate>(`/api/email-template/saveTemplate`, {
 				data
 			})
 			.pipe(first())
