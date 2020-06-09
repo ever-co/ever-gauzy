@@ -6,11 +6,19 @@
     </nb-card-header>
     <nb-card-body>
       <nb-form-field>
-        <nb-select formControlName="organizationId" [placeholder]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate">
-          <nb-option [value]="undefined" [innerHTML]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate"></nb-option>
-          <nb-option *ngFor="let userOrganization of userOrganizations" [value]="userOrganization.organization.id">
-            {{ userOrganization.organization.name }}
-          </nb-option>
+        <nb-select [placeholder]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate"
+                   formControlName="organizationId"
+                   [style.whiteSpace]="'pre'"
+        >
+          <nb-option [innerHTML]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate"
+                     [style.whiteSpace]="'pre'"
+                     [value]="undefined"
+          ></nb-option>
+          <nb-option *ngFor="let userOrganization of userOrganizations"
+                     [innerHTML]="userOrganization.organization.name"
+                     [value]="userOrganization.organization.id"
+                     [style.whiteSpace]="'pre'"
+          ></nb-option>
         </nb-select>
       </nb-form-field>
 
@@ -20,16 +28,14 @@
       </nb-form-field>
     </nb-card-body>
     <nb-card-footer>
-      <button *ngIf="pipeline?.id" type="submit" nbButton status="info">
+      <button *ngIf="pipeline?.id" type="submit" nbButton status="info" [disabled]="!form.valid">
         <nb-icon pack="eva" icon="edit-outline"></nb-icon>
         <span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
       </button>
-      <button *ngIf="!pipeline?.id" type="submit" nbButton status="primary">
+      <button *ngIf="!pipeline?.id" type="submit" nbButton status="primary" [disabled]="!form.valid">
         <nb-icon pack="eva" icon="plus-circle-outline"></nb-icon>
         <span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
       </button>
     </nb-card-footer>
   </nb-card>
-
-  <pre>{{ form.value | json }}</pre>
 </form>
