@@ -221,6 +221,8 @@
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "Add vendor",
 			"ADD_SKILL": "Add skill",
+			"ADD_CANDIDATE_QUALITY": "Add personal quality",
+			"ADD_TECHNOLOGY": "Add technology",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Clients",
 			"START_DATE_PROJECT": "Project Start Date (optional)",
@@ -746,6 +748,11 @@
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
 			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview"
+		},
+		"CRITERIONS": {
+			"CANDIDATE_CRITERIONS": "Candidates criterions",
+			"TECHNOLOGY_STACK": "Technology Stack",
+			"PERSONAL_QUALITIES": "Personal Qualities"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1109,7 +1116,8 @@
 		"HELP": "Help",
 		"MANAGE_INTERVIEWS": "Manage interviews",
 		"MANAGE_INVITES": "Manage invites",
-		"CANDIDATE_STATISTIC": "Candidate statistic"
+		"CANDIDATE_STATISTIC": "Candidates statistic",
+		"CANDIDATE_CRITERIONS": "Candidates criterions"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
