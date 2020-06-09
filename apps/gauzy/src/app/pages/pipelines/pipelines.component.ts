@@ -66,7 +66,8 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   }
 
   public async updatePipelines(): Promise<void> {
-    const { organizationId } = this;
+    const { organizationId: value } = this;
+    const organizationId = value || void 0;
 
     await this.pipelinesService
       .find( [], { organizationId })

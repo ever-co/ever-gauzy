@@ -7,10 +7,7 @@
       <nb-action>
         <nb-select [(ngModel)]="organizationId" (selectedChange)="updatePipelines()"
                    [placeholder]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate" [style.whiteSpace]="'pre'">
-          <nb-option [innerHTML]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate"
-                     [style.whiteSpace]="'pre'"
-                     [value]="undefined"
-          ></nb-option>
+          <nb-option [innerHTML]="'FORM.PLACEHOLDERS.ORGANIZATION' | translate" [style.whiteSpace]="'pre'" ></nb-option>
           <nb-option *ngFor="let userOrganization of userOrganizations"
                      [innerHTML]="userOrganization.organization.name"
                      [value]="userOrganization.organization.id"
