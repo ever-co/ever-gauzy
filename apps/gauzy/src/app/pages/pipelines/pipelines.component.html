@@ -35,6 +35,7 @@
                 nbButton
         >
           <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
+          <span [innerHTML]="'BUTTONS.ADD' | translate"></span>
         </button>
       </nb-action>
       <nb-action *ngIf="pipeline">
@@ -45,6 +46,7 @@
                 nbButton
         >
           <nb-icon icon="edit-outline" pack="eva"></nb-icon>
+          <span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
         </button>
       </nb-action>
       <nb-action *ngIf="pipeline">
