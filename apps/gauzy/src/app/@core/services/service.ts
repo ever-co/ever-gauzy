@@ -28,8 +28,8 @@ export abstract class Service<BE extends BaseEntityModel, FI = Partial<BE>, CI =
 
   public find<L extends { items: BE[], total: number }>(): Promise<L>;
   public find( id: string ): Promise<BE>;
-  public find<L extends { items: BE[], total: number }>( relations: string[], data: FI ): Promise<L>;
-  public find<LBE extends { items: BE[], total: number }>( idOrRelations?: string | string[], data?: FI ): Promise<BE | LBE> {
+  public find<L extends { items: BE[], total: number }>( relations: string[], filter: FI ): Promise<L>;
+  public find<LBE extends { items: BE[], total: number }>( idOrRelations?: string | string[], filter?: FI ): Promise<BE | LBE> {
     if ( !arguments.length ) {
       return this.http
         .get<LBE>( this.basePath ).toPromise();
@@ -43,8 +43,8 @@ export abstract class Service<BE extends BaseEntityModel, FI = Partial<BE>, CI =
       .get<LBE>( this.basePath, {
         params: {
           data: JSON.stringify({
-            idOrRelations,
-            data,
+            relations: idOrRelations,
+            filter,
           }),
         },
       })
