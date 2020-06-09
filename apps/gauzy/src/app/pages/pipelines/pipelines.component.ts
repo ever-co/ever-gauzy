@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { Pipeline, SmartTableSettings, UserOrganization } from '@gauzy/models';
+import { Pipeline, UserOrganization } from '@gauzy/models';
 import { Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -20,13 +20,13 @@ import { first } from 'rxjs/operators';
 export class PipelinesComponent extends TranslationBaseComponent implements OnInit
 {
 
-  public smartTableSettings: SmartTableSettings = {
+  public smartTableSettings = {
     actions: false,
     columns: {
       name: {
         filter: false,
         editor: false,
-        title: this.getTranslation( 'PIPELINES_PAGE.PIPELINE_NAME' ),
+        title: this.getTranslation( 'SM_TABLE.NAME' ),
       },
     },
   };
