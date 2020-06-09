@@ -743,7 +743,9 @@
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
 			"CANDIDATE_RATING": "Рейтинг Кандидата",
-			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью"
+			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью",
+			"NO_DATA": "Пока нет данных ",
+			"SELECT_INTERVIEW": "Выберите интервью"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
