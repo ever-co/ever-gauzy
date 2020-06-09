@@ -6,7 +6,7 @@ import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tag } from './tag-entity.model';
 import { Employee } from './employee.model';
-import { ITenant } from '@gauzy/models';
+import { ITenant, Payment } from '@gauzy/models';
 
 export interface User extends IBaseEntityModel {
 	thirdPartyId?: string;
@@ -24,6 +24,8 @@ export interface User extends IBaseEntityModel {
 	tenant: ITenant;
 	tags: Tag[];
 	preferredLanguage?: string;
+	payments?: Payment[];
+	paymentsId?: string;
 }
 
 export interface UserFindInput extends IBaseEntityModel {

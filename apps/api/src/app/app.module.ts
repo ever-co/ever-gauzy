@@ -81,6 +81,7 @@ import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 import { HelpCenterModule } from './help-center/help-center.module';
+import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
 
 @Module({
@@ -318,6 +319,10 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 					{
 						path: '/availability-slots',
 						module: AvailabilitySlotsModule
+					},
+					{
+						path: '/payments',
+						module: PaymentModule
 					}
 				]
 			}
@@ -371,6 +376,7 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 		SkillModule,
 		InvoiceModule,
 		InvoiceItemModule,
+		PaymentModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,
