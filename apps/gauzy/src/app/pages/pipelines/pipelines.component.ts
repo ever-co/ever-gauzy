@@ -84,14 +84,16 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   }
 
   public filterPipelines(): void {
-    const { name: search = '' } = this;
+    setTimeout( () => {
+      const { name: search = '' } = this;
 
-    this.pipelines.setFilter([
-      {
-        field: 'name',
-        search,
-      },
-    ]);
+      this.pipelines.setFilter([
+        {
+          field: 'name',
+          search,
+        },
+      ]);
+    });
   }
 
   public async deletePipeline(): Promise<void> {
