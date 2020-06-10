@@ -362,8 +362,13 @@
 		"SHORT_DESCRIPTION": "Краткое описание",
 		"OVERVIEW": "Общий обзор",
 		"COMPANY_NAME": "Название компании",
+		"NAME": "Имя",
+		"YEAR": "Год",
 		"BANNER": "Баннер",
+		"SIZE": "Размер",
 		"YEAR_FOUNDED": "Дата создания",
+		"COMPANY_SIZE": "Размер компании",
+		"CLIENT_FOCUS": "Фокус клиента",
 		"DUPLICATE": "Duplicate",
 		"DATE": "Дата",
 		"PICK_DATE": "Выбрать дату",
@@ -399,7 +404,16 @@
 		"NEW_EXPENSE_VALUE": "Новое значение расхода",
 		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д.",
 		"ADD_EVENT_TYPE": "Добавить тип события",
-		"EDIT_EVENT_TYPE": " Изменить тип события"
+		"EDIT_EVENT_TYPE": " Изменить тип события",
+		"AWARDS": "Награды",
+		"LEVEL": "Уровень",
+		"LANGUAGES": "Языки",
+		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Общий доход за месяц",
+		"PROFITS": "Прибыль",
+		"BONUSES_PAID": "Бонусы выплачены",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего отработано часов (над гаузи)",
+		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
+		"PROJECTS_COUNT": "Количество проектов"
 	},
 	"MENU": {
 		"DASHBOARD": "Приборная доска",
@@ -450,6 +464,8 @@
 			"DOWNLOAD_TEMPLATES": "Скачать шаблоны"
 		},
 		"TAGS": "Теги",
+		"LANGUAGE": "Язык",
+		"LANGUAGES": "Языки",
 		"EQUIPMENT": "Оборудование",
 		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
 		"TASKS": "Задачи",
@@ -958,6 +974,10 @@
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
 	},
+	"LANGUAGE_PAGE": {
+		"HEADER": "Языки",
+		"ADD_NEW_LANGUAGE": "Добавить новый язык"
+	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
 		"ADD_EQUIPMENT": "Добавить снаряжение",
@@ -1339,6 +1359,8 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Требуется название и год поставщика",
+			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Требуется название языка и уровень",
 			"CANDIDATE_SKILL_REQUIRED": "Требуется название навыка",
 			"CANDIDATE_EDIT_CREATED": "Успешно создано",
 			"CANDIDATE_EDIT_UPDATED": "Успешно обновлено",
@@ -1465,6 +1487,16 @@
 				"UPDATE_EMPLOYMENT_TYPE": "Занятость {{ name }} была обновлена",
 				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
 				"DELETE_EMPLOYMENT_TYPE": "Тип занятости удален для {{ name }}"
+			},
+			"EDIT_ORGANIZATIONS_AWARDS": {
+				"ADD_AWARD": "Новая награда {{ name }} успешно добавлена!",
+				"INVALID_AWARD_NAME_YEAR": "Пожалуйста, проверьте имя и год для получения награды",
+				"REMOVE_AWARD": "Награда {{ name }} успешно удалена!"
+			},
+			"EDIT_ORGANIZATIONS_LANGUAGES": {
+				"ADD_LANGUAGE": "Новый язык {{ name }} успешно добавлен!",
+				"INVALID_LANGUAGE_NAME_LEVEL": "Пожалуйста, проверьте имя и уровень для ввода языка",
+				"REMOVE_LANGUAGE": "Язык {{ name }} успешно удален!"
 			}
 		},
 		"DANGER_ZONE": {
