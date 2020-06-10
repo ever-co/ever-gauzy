@@ -20,6 +20,10 @@ export class Pipeline extends Base implements IPipeline
   @Column()
   public organizationId: string;
 
+  @Column({ nullable: true, type: 'text' })
+  @IsString()
+  public description: string;
+
   @IsString()
   @Column()
   public name: string;

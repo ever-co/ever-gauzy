@@ -108,6 +108,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+    "NO_RESULT": "No Result",
 
 		"REGION": {
 			"BG": "Български (България)",

@@ -3,6 +3,7 @@ import { BaseEntityModel, Organization } from '@gauzy/models';
 export interface Pipeline extends BaseEntityModel, PipelineCreateInput
 {
   organization: Organization;
+  description: string;
 }
 
 export interface PipelineFindInput
@@ -13,5 +14,6 @@ export interface PipelineFindInput
 export interface PipelineCreateInput
 {
   organizationId: string;
+  description?: string;
   name: string;
 }

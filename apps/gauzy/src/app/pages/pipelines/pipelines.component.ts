@@ -19,11 +19,17 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
 
   public smartTableSettings = {
     actions: false,
+    noDataMessage: this.getTranslation( 'SM_TABLE.NO_RESULT' ),
     columns: {
       name: {
         filter: false,
         editor: false,
         title: this.getTranslation( 'SM_TABLE.NAME' ),
+      },
+      description: {
+        filter: false,
+        editor: false,
+        title: this.getTranslation( 'SM_TABLE.DESCRIPTION' ),
       },
     },
   };

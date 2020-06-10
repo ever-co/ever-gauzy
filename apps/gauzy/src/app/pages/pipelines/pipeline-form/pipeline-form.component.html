@@ -6,7 +6,12 @@
     </nb-card-header>
     <nb-card-body>
       <nb-form-field>
-        <input type="text" nbInput formControlName="name" [placeholder]="'FORM.PLACEHOLDERS.NAME' | translate">
+        <input type="text" nbInput formControlName="name" fullWidth [placeholder]="'FORM.PLACEHOLDERS.NAME' | translate">
+      </nb-form-field>
+
+      <br>
+      <nb-form-field>
+        <textarea nbInput formControlName="description" fullWidth [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"></textarea>
       </nb-form-field>
     </nb-card-body>
     <nb-card-footer>

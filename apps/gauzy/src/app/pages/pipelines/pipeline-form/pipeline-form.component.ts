@@ -40,6 +40,7 @@ export class PipelineFormComponent implements OnInit
       ...this.pipeline?.id ? { id: [ this.pipeline.id || '', Validators.required ] } : {},
       organizationId: [ this.pipeline?.organizationId || '', Validators.required ],
       name: [ this.pipeline?.name || '', Validators.required ],
+      description: [ this.pipeline.description ],
     });
   }
 
