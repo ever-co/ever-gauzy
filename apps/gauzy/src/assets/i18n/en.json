@@ -363,8 +363,13 @@
 		"SHORT_DESCRIPTION": "Short Description",
 		"OVERVIEW": "Overview",
 		"COMPANY_NAME": "Company Name",
+		"NAME": "Name",
+		"YEAR": "Year",
 		"BANNER": "Banner",
+		"SIZE": "Size",
 		"YEAR_FOUNDED": "Year Founded",
+		"COMPANY_SIZE": "Company Size",
+		"CLIENT_FOCUS": "Client Focus",
 		"DUPLICATE": "Duplicate",
 		"DATE": "Date",
 		"PICK_DATE": "Pick a Date",
@@ -400,7 +405,16 @@
 		"NEW_EXPENSE_VALUE": "New Expense Value",
 		"OFFICIAL_NAME": "This name would be used in tax invoices etc.",
 		"ADD_EVENT_TYPE": "Add Event Type",
-		"EDIT_EVENT_TYPE": " Edit Event Type"
+		"EDIT_EVENT_TYPE": " Edit Event Type",
+		"AWARDS": "Awards",
+		"LEVEL": "Level",
+		"LANGUAGES": "Languages",
+		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Total Income/Monthly Income",
+		"PROFITS": "Profits",
+		"BONUSES_PAID": "Bonuses Paid",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked (over Gauzy of course)",
+		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
+		"PROJECTS_COUNT": "Projects Count"
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
@@ -451,6 +465,8 @@
 			"DOWNLOAD_TEMPLATES": "Download templates"
 		},
 		"TAGS": "Tags",
+		"LANGUAGE": "Language",
+		"LANGUAGES": "Languages",
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"TASKS": "Tasks",
@@ -960,6 +976,10 @@
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
 	},
+	"LANGUAGE_PAGE": {
+		"HEADER": "Languages",
+		"ADD_NEW_LANGUAGE": "Add new Language"
+	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
 		"ADD_EQUIPMENT": "Add Equipment",
@@ -1341,6 +1361,8 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendor name and year are required",
+			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Language name and level are required",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
 			"CANDIDATE_EDIT_CREATED": "Successfully created",
 			"CANDIDATE_EDIT_UPDATED": "Successfully updated",
@@ -1467,6 +1489,16 @@
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
 				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
+			},
+			"EDIT_ORGANIZATIONS_AWARDS": {
+				"ADD_AWARD": "New award {{ name }} successfully added!",
+				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
+				"REMOVE_AWARD": "Award {{ name }} successfully removed!"
+			},
+			"EDIT_ORGANIZATIONS_LANGUAGES": {
+				"ADD_LANGUAGE": "New language {{ name }} successfully added!",
+				"INVALID_LANGUAGE_NAME_LEVEL": "Please check the Name and Level for Language input",
+				"REMOVE_LANGUAGE": "Language {{ name }} successfully removed!"
 			}
 		},
 		"DANGER_ZONE": {
