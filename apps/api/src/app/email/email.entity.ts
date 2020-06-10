@@ -13,7 +13,7 @@ import { Base } from '../core/entities/base';
 import { EmailTemplate } from '../email-template/email-template.entity';
 import { User } from '../user/user.entity';
 
-@Entity('email-sent')
+@Entity('email_sent')
 export class Email extends Base implements IEmail {
 	@ApiProperty({ type: EmailTemplate })
 	@ManyToOne((type) => EmailTemplate, {

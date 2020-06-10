@@ -22,7 +22,7 @@ import { Organization } from '../organization/organization.entity';
 import { Employee } from '../employee/employee.entity';
 import { Tag } from '../tags/tag.entity';
 
-@Entity('eventType')
+@Entity('event_type')
 export class EventType extends Base implements IEventType {
 	@ApiProperty({ type: Tag })
 	@ManyToMany((type) => Tag)

@@ -1,10 +1,10 @@
 import { Base } from '../core/entities/base';
-import { Entity, Column, Unique } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { Tag as ITag } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('tag')
-@Unique(['name'])
 export class Tag extends Base implements ITag {
 	@ApiProperty({ type: String })
 	@Column()
@@ -17,4 +17,8 @@ export class Tag extends Base implements ITag {
 	@ApiProperty({ type: String })
 	@Column()
 	color?: string;
+
+	@ApiProperty()
+	@ManyToOne((type) => Organization)
+	organization?: Organization;
 }

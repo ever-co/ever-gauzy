@@ -14,6 +14,30 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<div class="form-group">
+						<label for="inputPaymentDate" class="label">
+							{{
+								'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
+									| translate
+							}}
+						</label>
+						<input
+							nbInput
+							placeholder="{{
+								'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
+									| translate
+							}}"
+							[nbDatepicker]="paymentDatePicker"
+							formControlName="paymentDate"
+							id="inputPaymentDate"
+							fullWidth
+						/>
+						<nb-datepicker #paymentDatePicker></nb-datepicker>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
 						<label for="inputAmount" class="label">
 							<span>{{
 								'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate
@@ -55,34 +79,12 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6">
-					<div class="form-group">
-						<label for="inputPaymentDate" class="label">
-							{{
-								'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
-									| translate
-							}}
-						</label>
-						<input
-							nbInput
-							placeholder="{{
-								'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
-									| translate
-							}}"
-							[nbDatepicker]="paymentDatePicker"
-							formControlName="paymentDate"
-							id="inputPaymentDate"
-							fullWidth
-						/>
-						<nb-datepicker #paymentDatePicker></nb-datepicker>
-					</div>
-				</div>
-				<div class="col-sm-6">
+				<div class="col-sm-12">
 					<div class="form-group">
 						<label for="inputNote" class="label">
 							{{ 'INVOICES_PAGE.PAYMENTS.NOTE' | translate }}
 						</label>
-						<input
+						<textarea
 							nbInput
 							placeholder="{{
 								'INVOICES_PAGE.PAYMENTS.NOTE' | translate
@@ -90,7 +92,8 @@
 							formControlName="note"
 							id="inputNote"
 							fullWidth
-						/>
+						>
+						</textarea>
 					</div>
 				</div>
 			</div>
@@ -107,7 +110,7 @@
 			[disabled]="form.invalid"
 			nbButton
 		>
-			{{ 'BUTTONS.ADD' | translate }}
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 		<button
 			*ngIf="payment"
@@ -116,7 +119,7 @@
 			[disabled]="form.invalid"
 			nbButton
 		>
-			{{ 'BUTTONS.EDIT' | translate }}
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>
