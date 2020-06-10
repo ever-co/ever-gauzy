@@ -1156,6 +1156,7 @@
 		"HEADER": "Счета",
 		"INVOICE_NUMBER": "Номер счёта",
 		"ESTIMATE_NUMBER": "Расчетный номер",
+		"INVOICE_DATE": "Дата Счета",
 		"ESTIMATE_DATE": "Предполагаемая дата",
 		"TOTAL_VALUE": "Общая стоимость",
 		"PAID_STATUS": "Оплаченный статус",
@@ -1261,6 +1262,22 @@
 			"HEADER": "Оценки",
 			"ESTIMATE_NUMBER": "Расчетный номер",
 			"ESTIMATE_DATE": "Предполагаемая дата"
+		},
+		"PAYMENTS": {
+			"HEADER": "Платежи",
+			"TOTAL_VALUE": "Общая стоимость счета",
+			"RECORD_PAYMENT": "Запись Оплата",
+			"EDIT_PAYMENT": "Редактировать платеж",
+			"DELETE_PAYMENT": "Удалить платеж",
+			"TOTAL_PAID": "Всего оплачено",
+			"PAID": "Оплачено",
+			"PAYMENT_DATE": "Дата оплаты",
+			"AMOUNT": "Количество",
+			"RECORDED_BY": "Записано",
+			"NOTE": "Примечание",
+			"PAYMENT_ADD": "Платёж добавлен",
+			"PAYMENT_EDIT": "Оплата изменена",
+			"PAYMENT_DELETE": "Платёж удален"
 		}
 	},
 	"HEADER": {
