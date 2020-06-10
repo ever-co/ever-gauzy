@@ -1,8 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { LanguagesService } from '../../../@core/services/languages.service';
-import { Language, Tag } from '@gauzy/models';
+import { Language } from '@gauzy/models';
 import { getContrastColor } from 'libs/utils';
-import { TagsService } from '../../../@core/services/tags.service';
 
 @Component({
 	selector: 'ngx-language-input',
@@ -22,7 +21,6 @@ export class LanguageInputComponent implements OnInit {
 	constructor(private readonly languagesService: LanguagesService) {}
 
 	async onChange(currentSelection: Language) {
-		// console.log(currentSelection);
 		this.selectedLanguageEvent.emit(currentSelection);
 	}
 
@@ -47,9 +45,5 @@ export class LanguageInputComponent implements OnInit {
 	async getAllLanguages() {
 		const { items } = await this.languagesService.getAllLanguages();
 		this.languages = items;
-	}
-
-	backgroundContrast(bgColor: string) {
-		return getContrastColor(bgColor);
 	}
 }

@@ -3,9 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import {
 	OrganizationLanguagesCreateInput,
 	OrganizationLanguages,
-	OrganizationLanguagesFindInput,
-	EmployeeFindInput,
-	Employee
+	OrganizationLanguagesFindInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
