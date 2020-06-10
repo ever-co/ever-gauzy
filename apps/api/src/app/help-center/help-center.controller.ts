@@ -1,12 +1,21 @@
 import { IHelpCenter, PermissionsEnum } from '@gauzy/models';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, HttpStatus, Post, Body, UseGuards } from '@nestjs/common';
-import { CrudController } from '../core';
+import {
+	Controller,
+	HttpStatus,
+	Post,
+	Body,
+	UseGuards,
+	Get,
+	Query
+} from '@nestjs/common';
+import { CrudController, IPagination } from '../core';
 import { HelpCenterService } from './help-center.service';
 import { HelpCenter } from './help-center.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
+import { ParseJsonPipe } from '../shared';
 
 @ApiTags('help_center_menu')
 @UseGuards(AuthGuard('jwt'))
@@ -14,6 +23,27 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 export class HelpCenterController extends CrudController<HelpCenter> {
 	constructor(private readonly helpCenterService: HelpCenterService) {
 		super(helpCenterService);
+	}
+	@ApiOperation({
+		summary: 'Find all menus.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found tree',
+		type: HelpCenter
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@Get()
+	async findMenu(
+		@Query('data', ParseJsonPipe) data: any
+	): Promise<IPagination<HelpCenter>> {
+		const { relations = [] } = data;
+		return this.helpCenterService.findAll({
+			relations
+		});
 	}
 
 	@ApiOperation({

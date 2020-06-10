@@ -10,6 +10,9 @@ export * from './lib/candidate-skill.model';
 export * from './lib/candidate-feedback.model';
 export * from './lib/candidate-interview.model';
 export * from './lib/candidate-source.model';
+export * from './lib/candidate-personal-qualities.model';
+export * from './lib/candidate-criterions.model';
+export * from './lib/candidate-technologies.model';
 export * from './lib/organization.model';
 export * from './lib/income.model';
 export * from './lib/proposal.model';
@@ -65,6 +68,7 @@ export * from './lib/availability-slots.model';
 export * from './lib/translation.model';
 export * from './lib/language.model';
 export * from './lib/organization-languages.model';
+export * from './lib/payment.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

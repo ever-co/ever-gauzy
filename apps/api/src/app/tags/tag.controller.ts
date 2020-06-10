@@ -1,6 +1,14 @@
-import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	Param,
+	Post,
+	Body,
+	UseGuards,
+	Query
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CrudController } from '../core';
+import { CrudController, IPagination } from '../core';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
@@ -23,5 +31,11 @@ export class TagController extends CrudController<Tag> {
 	@Post()
 	async createRecord(@Body() entity: Tag): Promise<any> {
 		return this.tagService.create(entity);
+	}
+
+	@Get()
+	async getAllTags(@Query('data') data: string): Promise<IPagination<Tag>> {
+		const { relations, findInput } = JSON.parse(data);
+		return this.tagService.findAll({ where: findInput, relations });
 	}
 }

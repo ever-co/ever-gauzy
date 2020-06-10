@@ -220,6 +220,8 @@
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
 			"ADD_SKILL": "Добавить навык",
+			"ADD_CANDIDATE_QUALITY": "Добавить персональное качество",
+			"ADD_TECHNOLOGY": "Добавить технологию",
 			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
@@ -743,7 +745,14 @@
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
 			"CANDIDATE_RATING": "Рейтинг Кандидата",
-			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью"
+			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью",
+			"NO_DATA": "Пока нет данных ",
+			"SELECT_INTERVIEW": "Выберите интервью"
+		},
+		"CRITERIONS": {
+			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
+			"TECHNOLOGY_STACK": "Стек технологий",
+			"PERSONAL_QUALITIES": "Личные качества"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1107,7 +1116,8 @@
 		"HELP": "Помогите",
 		"MANAGE_INTERVIEWS": "Управление собеседованиями",
 		"MANAGE_INVITES": "Управление приглашениями",
-		"CANDIDATE_STATISTIC": "Статистика Кандидата"
+		"CANDIDATE_STATISTIC": "Статистика Кандидатов",
+		"CANDIDATE_CRITERIONS": "Кандидаты критерии"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",
@@ -1146,6 +1156,7 @@
 		"HEADER": "Счета",
 		"INVOICE_NUMBER": "Номер счёта",
 		"ESTIMATE_NUMBER": "Расчетный номер",
+		"INVOICE_DATE": "Дата Счета",
 		"ESTIMATE_DATE": "Предполагаемая дата",
 		"TOTAL_VALUE": "Общая стоимость",
 		"PAID_STATUS": "Оплаченный статус",
@@ -1251,6 +1262,22 @@
 			"HEADER": "Оценки",
 			"ESTIMATE_NUMBER": "Расчетный номер",
 			"ESTIMATE_DATE": "Предполагаемая дата"
+		},
+		"PAYMENTS": {
+			"HEADER": "Платежи",
+			"TOTAL_VALUE": "Общая стоимость счета",
+			"RECORD_PAYMENT": "Запись Оплата",
+			"EDIT_PAYMENT": "Редактировать платеж",
+			"DELETE_PAYMENT": "Удалить платеж",
+			"TOTAL_PAID": "Всего оплачено",
+			"PAID": "Оплачено",
+			"PAYMENT_DATE": "Дата оплаты",
+			"AMOUNT": "Количество",
+			"RECORDED_BY": "Записано",
+			"NOTE": "Примечание",
+			"PAYMENT_ADD": "Платёж добавлен",
+			"PAYMENT_EDIT": "Оплата изменена",
+			"PAYMENT_DELETE": "Платёж удален"
 		}
 	},
 	"HEADER": {
@@ -1327,7 +1354,8 @@
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
 			"PHONE_REQUIRED": "Требуется указать телефон!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!",
-			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!"
+			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!",
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} шаблон письма успешно сохранен"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1510,6 +1538,37 @@
 		"PICK_DATETIME": "Выберите дату и время",
 		"DURATION": "Продолжительность:",
 		"EVENT_TYPE": "Тип события:",
-		"CONFIRM_APPOINTMENT": "Страница подтверждения назначения"
+		"CONFIRM_APPOINTMENT": "Назначение подтверждено",
+		"DETAILS": "Детали бронирования",
+		"PARTICIPANTS": "Email участника",
+		"HOST": "Хост",
+		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания."
+	},
+	"EMAIL_TEMPLATES_PAGE": {
+		"HEADER": "Шаблоны писем для {{ organizationName }}",
+		"SAVE": "Сохранить",
+		"LABELS": {
+			"LANGUAGE": "Язык",
+			"TEMPLATE_NAME": "Название шаблона",
+			"SUBJECT": "Тема",
+			"EMAIL_BODY": "Тело письма",
+			"EMAIL_PREVIEW": "Предварительный просмотр E-mail",
+			"SUBJECT_PREVIEW": "Предпросмотр темы"
+		},
+		"TEMPLATE_NAMES": {
+			"password": "Сброс пароля",
+			"welcome-user": "Приветствуем пользователя",
+			"invite-organization-client": "Пригласить клиента организации",
+			"email-estimate": "Почтовый расчет",
+			"email-invoice": "Email Счет",
+			"invite-employee": "Пригласить сотрудника",
+			"invite-user": "Пригласить пользователя"
+		},
+		"LANGUAGE_CODES": {
+			"en": "Russian",
+			"ru": "Русский",
+			"he": "Иврит",
+			"bg": "Болгарский"
+		}
 	}
 }

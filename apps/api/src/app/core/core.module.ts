@@ -85,6 +85,8 @@ import { AvailabilitySlots } from '../availability-slots/availability-slots.enti
 import { ProductTypeTranslation } from '../product-type/product-type-translation.entity';
 import { HelpCenter } from '../help-center/help-center.entity';
 import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
+import { Payment } from '../payment/payment.entity';
+import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
 
 const entities = [
 	Invite,
@@ -146,6 +148,7 @@ const entities = [
 	CandidateExperience,
 	CandidateInterview,
 	CandidateInterviewers,
+	CandidatePersonalQualities,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,
@@ -163,7 +166,8 @@ const entities = [
 	EventType,
 	AvailabilitySlots,
 	ProductTypeTranslation,
-	ProductCategoryTranslation
+	ProductCategoryTranslation,
+	Payment
 ];
 
 @Module({

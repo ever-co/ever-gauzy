@@ -396,6 +396,47 @@ export class EmailService extends CrudService<IEmail> {
 		return this.emailRepository.save(emailEntity);
 	}
 
+	async sendAppointmentMail(
+		email: string,
+		languageCode: LanguagesEnum,
+		organizationId?: string,
+		originUrl?: string
+	) {
+		const sendOptions = {
+			template: 'email-appointment',
+			message: {
+				to: email
+			},
+			locals: {
+				locale: languageCode,
+				email: email,
+				host: originUrl || environment.host,
+				organizationId: organizationId ? organizationId : IsNull()
+			}
+		};
+
+		let organization: Organization;
+
+		if (organizationId) {
+			organization = await this.organizationRepository.findOne(
+				organizationId
+			);
+		}
+
+		this.email
+			.send(sendOptions)
+			.then((res) => {
+				this.createEmailRecord({
+					templateName: sendOptions.template,
+					email: email,
+					languageCode,
+					message: res.originalMessage,
+					organization
+				});
+			})
+			.catch(console.error);
+	}
+
 	// tested e-mail send functionality
 	async nodemailerSendEmail(user: User, url: string) {
 		const testAccount = await nodemailer.createTestAccount();
