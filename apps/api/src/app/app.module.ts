@@ -4,6 +4,7 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
 import { SkillModule } from './skills/skill.module';
+import { LanguageModule } from './language/language.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
@@ -30,6 +31,8 @@ import { OrganizationProjectsModule } from './organization-projects/organization
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
 import { OrganizationTeamModule } from './organization-team/organization-team.module';
 import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
+import { OrganizationAwardsModule } from './organization-awards/organization-awards.module';
+import { OrganizationLanguagesModule } from './organization-languages/organization-languages.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { InviteModule } from './invite/invite.module';
@@ -82,6 +85,7 @@ import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 import { HelpCenterModule } from './help-center/help-center.module';
 import { PipelineModule } from './pipeline/pipeline.module';
+import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
 
 @Module({
@@ -173,6 +177,14 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 						module: OrganizationPositionsModule
 					},
 					{
+						path: '/organization-awards',
+						module: OrganizationAwardsModule
+					},
+					{
+						path: '/organization-languages',
+						module: OrganizationLanguagesModule
+					},
+					{
 						path: '/organization-projects',
 						module: OrganizationProjectsModule
 					},
@@ -239,6 +251,10 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 					{
 						path: '/skills',
 						module: SkillModule
+					},
+					{
+						path: '/languages',
+						module: LanguageModule
 					},
 					{
 						path: '/tasks',
@@ -323,6 +339,10 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 					{
 						path: '/pipelines',
 						module: PipelineModule
+					},
+					{
+						path: '/payments',
+						module: PaymentModule
 					}
 				]
 			}
@@ -358,6 +378,8 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 		OrganizationPositionsModule,
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
+		OrganizationAwardsModule,
+		OrganizationLanguagesModule,
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
@@ -374,8 +396,10 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 		TenantModule,
 		TagModule,
 		SkillModule,
+		LanguageModule,
 		InvoiceModule,
 		InvoiceItemModule,
+		PaymentModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,

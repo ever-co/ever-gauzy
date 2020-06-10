@@ -16,6 +16,7 @@ import { environment as env } from '@env-api/environment';
 import { Role } from '../../role/role.entity';
 import { createRoles } from '../../role/role.seed';
 import { createSkills } from '../../skills/skill.seed';
+import { createLanguages } from '../../language/language.seed';
 import { User } from '../../user/user.entity';
 import {
 	createDefaultSuperAdminUsers,
@@ -96,6 +97,8 @@ import { TimeSlot } from '../../timesheet/time-slot.entity';
 import { Timesheet } from '../../timesheet/timesheet.entity';
 import { OrganizationRecurringExpense } from '../../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationPositions } from '../../organization-positions/organization-positions.entity';
+import { OrganizationAwards } from '../../organization-awards/organization-awards.entity';
+import { OrganizationLanguages } from '../../organization-languages/organization-languages.entity';
 import { Email } from '../../email/email.entity';
 import { Candidate } from '../../candidate/candidate.entity';
 import {
@@ -105,6 +108,7 @@ import {
 import { CandidateSource } from '../../candidate-source/candidate-source.entity';
 import { Tag } from './../../tags/tag.entity';
 import { Skill } from './../../skills/skill.entity';
+import { Language } from './../../language/language.entity';
 import { Tenant } from './../../tenant/tenant.entity';
 import { ProductCategory } from '../../product-category/product-category.entity';
 import { createDefaultProductCategories } from '../../product-category/product-category.seed';
@@ -164,6 +168,8 @@ const allEntities = [
 	OrganizationDepartment,
 	OrganizationPositions,
 	OrganizationProjects,
+	OrganizationAwards,
+	OrganizationLanguages,
 	Task,
 	Screenshot,
 	Activity,
@@ -177,6 +183,7 @@ const allEntities = [
 	EmailTemplate,
 	Tag,
 	Skill,
+	Language,
 	OrganizationEmploymentType,
 	Equipment,
 	EmployeeLevel,
@@ -504,6 +511,7 @@ export class SeedDataService {
 		);
 
 		await createSkills(this.connection);
+		await createLanguages(this.connection);
 	}
 
 	/**
