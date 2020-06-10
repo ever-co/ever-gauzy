@@ -15,7 +15,7 @@ import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 import { Employee } from '../employee/employee.entity';
 import { Organization } from '../organization/organization.entity';
 
-@Entity('time-off-policy')
+@Entity('time_off_policy')
 export class TimeOffPolicy extends Base implements ITimeOffPolicy {
 	@ApiProperty({ type: String })
 	@IsString()
