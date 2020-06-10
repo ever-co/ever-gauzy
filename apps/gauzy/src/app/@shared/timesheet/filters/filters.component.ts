@@ -34,7 +34,12 @@ export class FiltersComponent implements OnInit, OnDestroy {
 	updateLogs$: Subject<any> = new Subject();
 
 	@Input() dateRange: 'day' | 'week' | 'month' = 'day';
-	private _filters: TimeLogFilters = {};
+	private _filters: TimeLogFilters = {
+		employeeId: [],
+		source: [],
+		logType: []
+	};
+
 	@Input()
 	public get filters(): TimeLogFilters {
 		return this._filters;
