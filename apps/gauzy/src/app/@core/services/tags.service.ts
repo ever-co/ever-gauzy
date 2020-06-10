@@ -21,18 +21,22 @@ export class TagsService {
 			.toPromise();
 	}
 
-	getAllTags(): Promise<{ items: Tag[] }> {
+	getAllTags(
+		relations?: string[],
+		findInput?: Tag
+	): Promise<{ items: Tag[] }> {
+		const data = JSON.stringify({ relations, findInput });
+
 		return this.http
-			.get<{ items: Tag[] }>(`/api/tags`)
+			.get<{ items: Tag[] }>(`/api/tags`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/tags/${id}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.delete(`/api/tags/${id}`).pipe(first()).toPromise();
 	}
 
 	update(id: string, updateInput: Tag) {
