@@ -37,10 +37,10 @@ export class PipelineFormComponent implements OnInit
       .getAll( [ 'organization' ], { userId } )
       .then( ( { items } ) => this.userOrganizations = items );
     this.form = this.fb.group({
-      ...this.pipeline?.id ? { id: [ this.pipeline.id || '', Validators.required ] } : {},
+      ...this.pipeline?.id ? { id: [ this.pipeline?.id || '', Validators.required ] } : {},
       organizationId: [ this.pipeline?.organizationId || '', Validators.required ],
       name: [ this.pipeline?.name || '', Validators.required ],
-      description: [ this.pipeline.description ],
+      description: [ this.pipeline?.description ],
     });
   }
 
