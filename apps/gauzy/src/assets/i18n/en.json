@@ -1357,7 +1357,14 @@
 			"PHONE_REQUIRED": "Phone is required!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
 			"SOMETHING_BAD_HAPPENED": "Something bad happened!",
-			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully"
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully",
+			"DELETED": "Successfully deleted",
+			"MOVED_ARTICLE": "Article has been moved",
+			"MOVED_CATEGORY": "Category has been moved",
+			"CREATED_ARTICLE": "Article has been created",
+			"CREATED_CATEGORY": "Category has been created",
+			"EDITED_ARTICLE": "Article has been edited",
+			"EDITED_CATEGORY": "Category has been edited"
 		}
 	},
 	"ACCEPT_INVITE": {

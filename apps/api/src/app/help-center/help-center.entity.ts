@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IHelpCenter } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 
-@Entity('help_center_menu')
+@Entity('knowledge_base')
 export class HelpCenter extends Base implements IHelpCenter {
 	@ApiProperty({ type: String })
 	@Column()
