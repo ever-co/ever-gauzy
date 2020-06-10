@@ -12,8 +12,6 @@ import {
 	NbDialogModule,
 	NbIconModule,
 	NbSelectModule,
-	NbCalendarModule,
-	NbCalendarRangeModule,
 	NbDatepickerModule,
 	NbActionsModule,
 	NbTabsetModule,

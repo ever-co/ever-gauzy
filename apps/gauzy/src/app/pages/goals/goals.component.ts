@@ -74,6 +74,12 @@ export class GoalsComponent extends TranslationBaseComponent
 		const dialog = this.dialogService.open(GoalDetailsComponent, {
 			hasScroll: true
 		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		console.log(response);
+		if (response) {
+			this.toastrService.primary('Objective added', 'Success');
+			this.loadPage();
+		}
 	}
 
 	ngOnDestroy() {
