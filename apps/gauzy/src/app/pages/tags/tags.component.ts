@@ -5,7 +5,7 @@ import { LocalDataSource } from 'ng2-smart-table';
 import { TagsService } from '../../@core/services/tags.service';
 import { Tag, Organization } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { first, takeUntil } from 'rxjs/operators';
+import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';

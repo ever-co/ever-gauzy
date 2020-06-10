@@ -1,5 +1,5 @@
 import { Base } from '../core/entities/base';
-import { Entity, Column, Unique, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne } from 'typeorm';
 import { Tag as ITag } from '@gauzy/models';
 import { ApiProperty } from '@nestjs/swagger';
 import { Organization } from '../organization/organization.entity';
