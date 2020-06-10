@@ -14,7 +14,7 @@ import { Subject } from 'rxjs';
 export class EditObjectiveComponent implements OnInit, OnDestroy {
 	objectiveForm: FormGroup;
 	employees: Employee[];
-	data: Goals
+	data: Goals;
 	private _ngDestroy$ = new Subject<void>();
 
 	constructor(
@@ -37,8 +37,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			.subscribe((employees) => {
 				this.employees = employees.items;
 			});
-		if(!!this.data){
-			this.objectiveForm.patchValue(this.data)
+		if (!!this.data) {
+			this.objectiveForm.patchValue(this.data);
 		}
 	}
 

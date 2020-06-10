@@ -28,8 +28,8 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 			name: ['', Validators.required],
 			description: [''],
 			type: ['', Validators.required],
-			targetValue: [ null , Validators.required],
-			initialValue: [ null , Validators.required],
+			targetValue: [null, Validators.required],
+			initialValue: [null, Validators.required],
 			owner: ['', Validators.required],
 			lead: [''],
 			deadline: ['No Custom Deadline', Validators.required],
@@ -41,9 +41,9 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;
-		});
-		if(!!this.data){
-			this.keyResultsForm.patchValue(this.data)
+			});
+		if (!!this.data) {
+			this.keyResultsForm.patchValue(this.data);
 		}
 	}
 
@@ -60,7 +60,7 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 		this.closeDialog({
 			...this.keyResultsForm.value,
 			update: null
-			});
+		});
 	}
 
 	closeDialog(data = null) {

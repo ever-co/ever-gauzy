@@ -20,11 +20,14 @@ export class GoalDetailsComponent implements OnInit {
 	constructor(
 		private dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private employeeService: EmployeesService
-	) { }
+	) {}
 
 	async ngOnInit() {
 		console.log(this.name);
-		const employee = await this.employeeService.getEmployeeById(this.owner, ['user']);
+		const employee = await this.employeeService.getEmployeeById(
+			this.owner,
+			['user']
+		);
 		console.log(employee);
 		this.src = employee.user.imageUrl;
 		this.ownerName = employee.user.name;

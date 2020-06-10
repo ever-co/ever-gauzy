@@ -74,7 +74,12 @@
 	</nb-card-body>
 	<nb-card-footer>
 		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
-		<button nbButton [disabled]="!objectiveForm.valid" status="success" (click)="saveObjective()">
+		<button
+			nbButton
+			[disabled]="!objectiveForm.valid"
+			status="success"
+			(click)="saveObjective()"
+		>
 			Save
 		</button>
 	</nb-card-footer>

@@ -4,16 +4,23 @@
 			<h4>
 				{{ 'GOALS_PAGE.HEADER' | translate }} {{ organizationName }}
 			</h4>
-			<button nbButton status="primary" (click)="createObjective(null,null)">
+			<button
+				nbButton
+				status="primary"
+				(click)="createObjective(null, null)"
+			>
 				{{ 'BUTTONS.ADD_NEW' | translate }}
 			</button>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<nb-accordion class="mb-3" *ngFor="let goal of goals; let index = index">
+		<nb-accordion
+			class="mb-3"
+			*ngFor="let goal of goals; let index = index"
+		>
 			<nb-accordion-item expanded="true">
 				<nb-accordion-item-header status="primary"
-					>{{goal.name}}
+					>{{ goal.name }}
 					<nb-actions class="ml-auto mr-3 mt-1 float-right">
 						<nb-action
 							icon="eye"
@@ -26,13 +33,15 @@
 					</nb-actions>
 					<!-- <nb-icon class="ml-auto mr-3 mt-1 float-right" icon="eye" status="primary" (click)="addKeyResult()"></nb-icon> -->
 				</nb-accordion-item-header>
-				<nb-accordion-item-body *ngFor="let keyResult of goal.keyResults">
-					{{keyResult.name}}
+				<nb-accordion-item-body
+					*ngFor="let keyResult of goal.keyResults"
+				>
+					{{ keyResult.name }}
 					<nb-actions class="ml-auto float-right">
 						<nb-action
 							icon="edit"
 							(click)="addKeyResult(index, keyResult)"
-						></nb-action>						
+						></nb-action>
 					</nb-actions>
 				</nb-accordion-item-body>
 				<nb-accordion-item-body>
