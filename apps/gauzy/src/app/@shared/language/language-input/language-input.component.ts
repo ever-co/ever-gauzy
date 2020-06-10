@@ -1,7 +1,6 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { Language } from '@gauzy/models';
-import { getContrastColor } from 'libs/utils';
 
 @Component({
 	selector: 'ngx-language-input',
