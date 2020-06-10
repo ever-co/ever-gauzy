@@ -3,6 +3,7 @@ import { Organization } from './organization.model';
 import { OrganizationClients } from './organization-clients.model';
 import { InvoiceItem } from './invoice-item.model';
 import { Tag } from './tag-entity.model';
+import { Payment } from './payment.model';
 
 export interface Invoice extends IBaseEntityModel {
 	invoiceDate: Date;
@@ -26,6 +27,7 @@ export interface Invoice extends IBaseEntityModel {
 	tags?: Tag[];
 	isEstimate?: boolean;
 	emailSent?: boolean;
+	payments?: Payment[];
 }
 
 export interface InvoiceUpdateInput {

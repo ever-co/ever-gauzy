@@ -153,5 +153,5 @@ export class Invoice extends Base implements IInvoice {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
-	payments?: InvoiceItem[];
+	payments?: Payment[];
 }
