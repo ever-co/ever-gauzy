@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card size="large">
 	<nb-card-header>
 		Add Objective
 		<nb-icon
@@ -35,8 +35,9 @@
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
+				[selectedEmployeeIds]="objectiveForm.value.owner"
 				[label]="false"
-				(selectedChange)="test($event, 'owner')"
+				(selectedChange)="selectEmployee($event, 'owner')"
 				id="key-result-owner"
 				placeholder="Owner"
 				class="header-selector employee-selector"
@@ -46,8 +47,9 @@
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
+				[selectedEmployeeIds]="objectiveForm.value.lead"
 				[label]="false"
-				(selectedChange)="test($event, 'lead')"
+				(selectedChange)="selectEmployee($event, 'lead')"
 				id="key-result-Lead"
 				placeholder="Lead"
 				class="header-selector employee-selector"
@@ -63,15 +65,16 @@
 				fullWidth
 				selected="0"
 			>
-				<nb-option value="Monthly">Monthly</nb-option>
-				<nb-option value="Quarterly">Quarterly</nb-option>
-				<nb-option value="Annual">Annual</nb-option>
+				<nb-option value="Q2-2020">Q2-2020</nb-option>
+				<nb-option value="Q3-2020">Q3-2020</nb-option>
+				<nb-option value="Q4-2020">Q4-2020</nb-option>
+				<nb-option value="Annual-2020">Annual-2020</nb-option>
 			</nb-select>
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
 		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
-		<button nbButton status="success" (click)="saveObjective()">
+		<button nbButton [disabled]="!objectiveForm.valid" status="success" (click)="saveObjective()">
 			Save
 		</button>
 	</nb-card-footer>

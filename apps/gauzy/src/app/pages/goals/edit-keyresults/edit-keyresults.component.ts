@@ -4,7 +4,7 @@ import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { Employee } from '@gauzy/models';
+import { Employee, KeyResult } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-keyresults',
@@ -14,6 +14,7 @@ import { Employee } from '@gauzy/models';
 export class EditKeyresultsComponent implements OnInit, OnDestroy {
 	employees: Employee[];
 	keyResultsForm: FormGroup;
+	data: KeyResult;
 	showAllEmployees = false;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
@@ -26,21 +27,27 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 		this.keyResultsForm = this.fb.group({
 			name: ['', Validators.required],
 			description: [''],
+			type: ['', Validators.required],
+			targetValue: [ null , Validators.required],
+			initialValue: [ null , Validators.required],
 			owner: ['', Validators.required],
 			lead: [''],
-			deadline: ['no-custom-deadline', Validators.required],
-			softDeadline: [new Date()],
-			hardDeadline: [new Date()]
+			deadline: ['No Custom Deadline', Validators.required],
+			softDeadline: [null],
+			hardDeadline: [null]
 		});
 		this.employeeService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((employees) => {
 				this.employees = employees.items;
-			});
+		});
+		if(!!this.data){
+			this.keyResultsForm.patchValue(this.data)
+		}
 	}
 
-	test(event, control) {
+	selectEmployee(event, control) {
 		if (control == 'lead') {
 			this.keyResultsForm.patchValue({ lead: event });
 		} else {
@@ -50,7 +57,10 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 	}
 
 	saveKeyResult() {
-		this.closeDialog(this.keyResultsForm);
+		this.closeDialog({
+			...this.keyResultsForm.value,
+			update: null
+			});
 	}
 
 	closeDialog(data = null) {

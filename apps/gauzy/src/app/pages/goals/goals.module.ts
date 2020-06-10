@@ -15,7 +15,8 @@ import {
 	NbDatepickerModule,
 	NbActionsModule,
 	NbTabsetModule,
-	NbLayoutModule
+	NbLayoutModule,
+	NbProgressBarModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -26,6 +27,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
+import { SharedModule } from '../../@shared/shared.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -53,6 +55,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		NbTabsetModule,
 		NbLayoutModule,
+		NbProgressBarModule,
+		SharedModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {

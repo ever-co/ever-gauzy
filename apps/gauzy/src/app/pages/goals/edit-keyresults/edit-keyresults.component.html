@@ -1,4 +1,4 @@
-<nb-card style="max-width: 600px;">
+<nb-card size="large">
 	<nb-card-header>
 		Add Key Result
 		<nb-icon
@@ -20,7 +20,7 @@
 			/>
 
 			<label for="key-result-description" class="label mt-3">
-				Description
+				Description (optional)
 			</label>
 			<textarea
 				id="key-result-description"
@@ -30,23 +30,81 @@
 				placeholder="Key Result Description."
 			></textarea>
 
+			<label for="key-result-type" class="label mt-3">
+				Key result Type
+			</label>
+			<nb-select
+				id="key-result-type"
+				fullWidth
+				formControlName="type"
+				>
+				<nb-option value="Number">Number</nb-option>
+				<nb-option value="True/False">True/False</nb-option>
+				<nb-option value="Currency">Currency</nb-option>
+				<nb-option value="Tasks">Tasks</nb-option>
+			</nb-select>
+
+			<div class="row">
+				<div class="col-md-6">
+					<label
+					*ngIf="keyResultsForm.value.type == 'Number' || keyResultsForm.value.type == 'Currency'"
+					for="initial-value"
+					class="label">
+					Initial value
+				  </label>
+				  <input
+					  type="number"
+					  id="initial-value"
+					  *ngIf="keyResultsForm.value.type == 'Number' || keyResultsForm.value.type == 'Currency'"
+					  nbInput
+					  fullWidth
+					  formControlName="initialValue"
+					  placeholder="Start"
+				  />
+				</div>
+
+				<div class="col-md-6">
+					<label
+					*ngIf="keyResultsForm.value.type == 'Number' || keyResultsForm.value.type == 'Currency'" 
+					for="target-value" 
+					class="label"> 
+					Target value 
+				</label>
+				<input
+					type="number"
+					id="target-value"
+					*ngIf="keyResultsForm.value.type == 'Number' || keyResultsForm.value.type == 'Currency'"
+					nbInput
+					fullWidth
+					formControlName="targetValue"
+					placeholder="Target"
+				/>
+	
+
+				</div>
+			</div>
+			
+
+		
 			<label for="key-result-owner" class="label mt-3"> Owner </label>
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
+				[selectedEmployeeIds]="keyResultsForm.value.owner"
 				[label]="false"
-				(selectedChange)="test($event, 'owner')"
+				(selectedChange)="selectEmployee($event, 'owner')"
 				id="key-result-owner"
 				placeholder="Owner"
 				class="header-selector employee-selector"
 			></ga-employee-multi-select>
 
-			<label for="key-result-Lead" class="label mt-3"> Lead </label>
+			<label for="key-result-Lead" class="label mt-3"> Lead (optional)</label>
 			<ga-employee-multi-select
 				[multiple]="false"
 				[allEmployees]="employees"
+				[selectedEmployeeIds]="keyResultsForm.value.lead"
 				[label]="false"
-				(selectedChange)="test($event, 'lead')"
+				(selectedChange)="selectEmployee($event, 'lead')"
 				id="key-result-Lead"
 				placeholder="Lead"
 				class="header-selector employee-selector"
@@ -60,11 +118,11 @@
 				fullWidth
 				formControlName="deadline"
 			>
-				<nb-option value="no-custom-deadline"
+				<nb-option value="No Custom Deadline"
 					>No Custom Deadline</nb-option
 				>
-				<nb-option value="hard-deadline">Hard deadline</nb-option>
-				<nb-option value="hard-soft-deadline"
+				<nb-option value="Hard deadline">Hard deadline</nb-option>
+				<nb-option value="Hard and soft deadline"
 					>Hard and soft deadline</nb-option
 				>
 			</nb-select>
@@ -72,7 +130,7 @@
 				<div
 					class="col-md-6"
 					*ngIf="
-						keyResultsForm.value.deadline == 'hard-soft-deadline'
+						keyResultsForm.value.deadline == 'Hard and soft deadline'
 					"
 				>
 					<label for="soft-deadline" class="label">
@@ -86,13 +144,16 @@
 						[nbDatepicker]="softDeadlinePicker"
 						formControlName="softDeadline"
 					/>
-					<nb-datepicker #softDeadlinePicker></nb-datepicker>
+					<nb-datepicker 
+						#softDeadlinePicker
+						[max]="keyResultsForm.value.hardDeadline?keyResultsForm.value.hardDeadline:null"
+						></nb-datepicker>
 				</div>
 				<div
 					class="col-md-6"
 					*ngIf="
-						keyResultsForm.value.deadline == 'hard-soft-deadline' ||
-						keyResultsForm.value.deadline == 'hard-deadline'
+						keyResultsForm.value.deadline == 'Hard and soft deadline' ||
+						keyResultsForm.value.deadline == 'Hard deadline'
 					"
 				>
 					<label for="hard-deadline" class="label">
@@ -106,14 +167,17 @@
 						[nbDatepicker]="hardDeadlinePicker"
 						formControlName="hardDeadline"
 					/>
-					<nb-datepicker #hardDeadlinePicker></nb-datepicker>
+					<nb-datepicker 
+						#hardDeadlinePicker
+						[min]="keyResultsForm.value.softDeadline?keyResultsForm.value.softDeadline:null"
+					></nb-datepicker>
 				</div>
 			</div>
 		</form>
 	</nb-card-body>
 	<nb-card-footer>
 		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
-		<button nbButton status="success" (click)="saveKeyResult()">
+		<button [disabled]="!keyResultsForm.valid" nbButton status="success" (click)="saveKeyResult()">
 			Save
 		</button>
 	</nb-card-footer>
