@@ -17,7 +17,7 @@ import { Permissions } from '../shared/decorators/permissions';
 import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { ParseJsonPipe } from '../shared';
 
-@ApiTags('help_center_menu')
+@ApiTags('knowledge_base')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class HelpCenterController extends CrudController<HelpCenter> {
