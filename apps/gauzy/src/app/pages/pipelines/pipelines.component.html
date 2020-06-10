@@ -3,56 +3,48 @@
     <h4 [innerHTML]="'PIPELINES_PAGE.HEADER' | translate"></h4>
   </nb-card-header>
   <nb-card-body>
-    <nb-actions>
-      <nb-action>
-        <nb-form-field>
-          <input
-            [placeholder]="'FORM.FILTER' | translate"
-            (ngModelChange)="filterPipelines()"
-            [(ngModel)]="name"
-            type="text"
-            nbInput
-          >
-          <nb-icon icon="search-outline" pack="eva" nbSuffix></nb-icon>
-        </nb-form-field>
-      </nb-action>
-      <nb-action>
-        <button (click)="createPipeline()"
-                style="cursor: pointer"
-                status="primary"
-                type="button"
-                nbButton
-        >
-          <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
-          <span [innerHTML]="'BUTTONS.ADD' | translate"></span>
-        </button>
-      </nb-action>
-      <nb-action *ngIf="pipeline">
-        <button (click)="editPipeline()"
-                style="cursor: pointer"
-                status="info"
-                type="button"
-                nbButton
-        >
-          <nb-icon icon="edit-outline" pack="eva"></nb-icon>
-          <span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
-        </button>
-      </nb-action>
-      <nb-action *ngIf="pipeline">
-        <button
-          (click)="deletePipeline()"
-          style="cursor: pointer"
-          status="danger"
-          type="button"
-          nbButton
-        >
-          <nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
-          <span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
-        </button>
-      </nb-action>
-    </nb-actions>
+    <div class="btn-container mb-3">
+      <button (click)="createPipeline()"
+              style="cursor: pointer"
+              status="success"
+              type="button"
+              class="mr-2"
+              nbButton
+      >
+        <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
+        <span [innerHTML]="'BUTTONS.ADD' | translate"></span>
+      </button>
+      <button *ngIf="pipeline" (click)="editPipeline()"
+              style="cursor: pointer"
+              status="info"
+              type="button"
+              class="mr-2"
+              nbButton
+      >
+        <nb-icon icon="edit-outline" pack="eva"></nb-icon>
+        <span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
+      </button>
+      <button
+        *ngIf="pipeline"
+        (click)="deletePipeline()"
+        style="cursor: pointer"
+        status="danger"
+        type="button"
+        class="mr-2"
+        nbButton
+      >
+        <nb-icon icon="trash-2-outline" pack="eva"></nb-icon>
+        <span [innerHTML]="'BUTTONS.DELETE' | translate"></span>
+      </button>
+      <input
+        [placeholder]="'FORM.FILTER' | translate"
+        (ngModelChange)="filterPipelines()"
+        [(ngModel)]="name"
+        type="text"
+        nbInput
+      >
+    </div>
 
-    <br>
     <ng2-smart-table
       (rowSelect)="pipeline = $event.data"
       [settings]="smartTableSettings"
