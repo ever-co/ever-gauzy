@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { PipelinesComponent } from './pipelines.component';
 import {
-  NbActionsModule,
   NbButtonModule,
   NbCardModule,
   NbDialogModule,
@@ -37,7 +36,6 @@ import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
     NbFormFieldModule,
     PipelinesRouting,
     TranslateModule,
-    NbActionsModule,
     NbButtonModule,
     NbSelectModule,
     NbInputModule,
