@@ -1,7 +1,7 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { Pipeline } from '@gauzy/models';
-import { AppStore } from '../../@core/services/store.service';
+import { AppStore, Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,7 +14,7 @@ import { first } from 'rxjs/operators';
   templateUrl: './pipelines.component.html',
   selector: 'ga-pipelines',
 })
-export class PipelinesComponent extends TranslationBaseComponent implements OnDestroy
+export class PipelinesComponent extends TranslationBaseComponent implements OnInit, OnDestroy
 {
 
   public smartTableSettings = {
@@ -40,7 +40,8 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnDe
     private nbToastrService: NbToastrService,
     private dialogService: NbDialogService,
     translateService: TranslateService,
-    private appStore: AppStore )
+    private appStore: AppStore,
+    private store: Store )
   {
     super( translateService );
     this.$akitaPreUpdate = appStore.akitaPreUpdate;
@@ -55,7 +56,17 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnDe
     };
   }
 
-  public async ngOnDestroy(): Promise<void>
+  public ngOnInit(): void
+  {
+    if ( ! this.organizationId ) {
+      setTimeout(  async () => {
+        this.organizationId = this.store.selectedOrganization?.id;
+        await this.updatePipelines();
+      })
+    }
+  }
+
+  public ngOnDestroy(): void
   {
     this.appStore.akitaPreUpdate = this.$akitaPreUpdate;
   }
