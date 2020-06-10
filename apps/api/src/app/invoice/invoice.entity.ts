@@ -28,6 +28,7 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
+import { Payment } from '../payment/payment.entity';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])
@@ -37,7 +38,7 @@ export class Invoice extends Base implements IInvoice {
 	@JoinTable({
 		name: 'tag_invoice'
 	})
-	tags: Tag[];
+	tags?: Tag[];
 
 	@ApiProperty({ type: Date })
 	@IsDate()
@@ -89,7 +90,7 @@ export class Invoice extends Base implements IInvoice {
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
 	@Column({ nullable: true })
-	emailSent: boolean;
+	emailSent?: boolean;
 
 	@ApiProperty({ type: Boolean })
 	@IsBoolean()
@@ -146,4 +147,11 @@ export class Invoice extends Base implements IInvoice {
 	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payment) => payment.invoice, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: InvoiceItem[];
 }

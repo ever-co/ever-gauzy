@@ -220,6 +220,8 @@
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
 			"ADD_SKILL": "Добавить навык",
+			"ADD_CANDIDATE_QUALITY": "Добавить персональное качество",
+			"ADD_TECHNOLOGY": "Добавить технологию",
 			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
@@ -747,6 +749,11 @@
 			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью",
 			"NO_DATA": "Пока нет данных ",
 			"SELECT_INTERVIEW": "Выберите интервью"
+		},
+		"CRITERIONS": {
+			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
+			"TECHNOLOGY_STACK": "Стек технологий",
+			"PERSONAL_QUALITIES": "Личные качества"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -1110,7 +1117,8 @@
 		"HELP": "Помогите",
 		"MANAGE_INTERVIEWS": "Управление собеседованиями",
 		"MANAGE_INVITES": "Управление приглашениями",
-		"CANDIDATE_STATISTIC": "Статистика Кандидата"
+		"CANDIDATE_STATISTIC": "Статистика Кандидатов",
+		"CANDIDATE_CRITERIONS": "Кандидаты критерии"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",

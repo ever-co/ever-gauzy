@@ -65,6 +65,7 @@ export * from './lib/event-type.model';
 export * from './lib/upwork.model';
 export * from './lib/availability-slots.model';
 export * from './lib/translation.model';
+export * from './lib/payment.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

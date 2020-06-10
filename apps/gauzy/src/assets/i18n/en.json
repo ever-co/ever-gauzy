@@ -751,7 +751,7 @@
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
 			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
-      "NO_DATA": "No data yet ",
+			"NO_DATA": "No data yet ",
 			"SELECT_INTERVIEW": "Select an interview"
 		},
 		"CRITERIONS": {
@@ -1161,6 +1161,7 @@
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
+		"INVOICE_DATE": "Invoice Date",
 		"ESTIMATE_DATE": "Estimate Date",
 		"TOTAL_VALUE": "Total Value",
 		"PAID_STATUS": "Paid Status",
@@ -1266,6 +1267,22 @@
 			"HEADER": "Estimates",
 			"ESTIMATE_NUMBER": "Estimate Number",
 			"ESTIMATE_DATE": "Estimate Date"
+		},
+		"PAYMENTS": {
+			"HEADER": "Payments",
+			"TOTAL_VALUE": "Total Invoice Value",
+			"RECORD_PAYMENT": "Record Payment",
+			"EDIT_PAYMENT": "Edit Payment",
+			"DELETE_PAYMENT": "Delete Payment",
+			"TOTAL_PAID": "Total Paid",
+			"PAID": "Paid",
+			"PAYMENT_DATE": "Payment Date",
+			"AMOUNT": "Amount",
+			"RECORDED_BY": "Recorded By",
+			"NOTE": "Note",
+			"PAYMENT_ADD": "Payment Added",
+			"PAYMENT_EDIT": "Payment Edited",
+			"PAYMENT_DELETE": "Payment Deleted"
 		}
 	},
 	"HEADER": {

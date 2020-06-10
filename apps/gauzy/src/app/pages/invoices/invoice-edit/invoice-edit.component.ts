@@ -144,7 +144,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
 			terms: [''],
-			paid: [''],
 			client: ['', Validators.required],
 			currency: ['', Validators.required],
 			discountType: ['', Validators.required],
@@ -160,7 +159,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.form.get('discountValue').setValue(invoice.discountValue);
 		this.form.get('tax').setValue(invoice.tax);
 		this.form.get('terms').setValue(invoice.terms);
-		this.form.get('paid').setValue(invoice.paid);
 		this.form.get('discountType').setValue(invoice.discountType);
 		this.form.get('taxType').setValue(invoice.taxType);
 		this.invoiceLoaded = true;
@@ -440,7 +438,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				tax: invoiceData.tax,
 				taxType: invoiceData.taxType,
 				terms: invoiceData.terms,
-				paid: invoiceData.paid,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
 				clientId: invoiceData.client.id,
@@ -791,6 +788,13 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 			this.router.navigate(['/pages/accounting/invoices']);
 		}
 	}
+
+	payments() {
+		this.router.navigate([
+			`/pages/accounting/invoices/payments/${this.invoice.id}`
+		]);
+	}
+
 	selectedTagsEvent(currentTagSelection: Tag[]) {
 		this.tags = currentTagSelection;
 	}
