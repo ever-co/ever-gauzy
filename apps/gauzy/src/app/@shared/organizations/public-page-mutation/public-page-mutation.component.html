@@ -13,9 +13,13 @@
 	<nb-card-body class="body">
 		<form [formGroup]="form" *ngIf="form">
 			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-sm-6">
 					<div class="form-group">
+						<label for="addCompanyName">{{
+							'POP_UPS.COMPANY_NAME' | translate
+						}}</label>
 						<input
+							id="addCompanyName"
 							nbInput
 							type="text"
 							fullWidth
@@ -34,12 +38,13 @@
 						/>
 					</div>
 				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-sm-6">
 					<div class="form-group">
+						<label for="yearFounded">{{
+							'POP_UPS.YEAR_FOUNDED' | translate
+						}}</label>
 						<input
+							id="yearFounded"
 							nbInput
 							type="text"
 							fullWidth
@@ -59,6 +64,74 @@
 						/>
 					</div>
 				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="companySize">{{
+							'POP_UPS.COMPANY_SIZE' | translate
+						}}</label>
+						<input
+							id="companySize"
+							nbInput
+							type="number"
+							fullWidth
+							placeholder="{{ 'POP_UPS.SIZE' | translate }}"
+							formControlName="size"
+							[ngClass]="{
+								'status-danger':
+									size?.invalid &&
+									(size.dirty || size.touched),
+								'status-success':
+									size?.valid && (size.dirty || size.touched)
+							}"
+							autocomplete="off"
+						/>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="addClientFocus">{{
+							'POP_UPS.CLIENT_FOCUS' | translate
+						}}</label>
+						<ng-select
+							[items]="client_focus"
+							[multiple]="true"
+							[(ngModel)]="selectedClientFocus"
+							[closeOnSelect]="true"
+							id="addClientFocus"
+							(change)="selectedClientFocusHandler($event)"
+							[ngModelOptions]="{ standalone: true }"
+							placeholder=""
+						>
+							<ng-template
+								ng-label-tmp
+								let-item="item"
+								let-clear="clear"
+							>
+								<span class="ng-value-label">
+									<nb-badge
+										style="position: static !important;"
+										width="20px"
+										height="20px"
+										text="{{ item }}"
+									></nb-badge
+								></span>
+								<span
+									class="ng-value-icon right"
+									(click)="clear(item)"
+									aria-hidden="true"
+									>×</span
+								>
+							</ng-template>
+						</ng-select>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12"></div>
 			</div>
 
 			<div class="row">
@@ -86,6 +159,103 @@
 
 			<div class="row">
 				<div class="col-sm-12">
+					<span class="heading_title">{{
+						'POP_UPS.AWARDS' | translate
+					}}</span>
+					<button
+						*ngIf="!showAddAward"
+						(click)="showAddAward = !showAddAward"
+						nbButton
+						status="success"
+						class="add_new"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					</button>
+					<div class="row" *ngIf="showAddAward">
+						<div
+							class="col-sm-4 d-flex flex-column justify-content-end"
+						>
+							<label class="label">{{
+								'POP_UPS.NAME' | translate
+							}}</label>
+							<input
+								#addInputName
+								nbInput
+								class="input_name"
+								type="text"
+								placeholder="{{ 'POP_UPS.NAME' | translate }}"
+								fullWidth
+							/>
+						</div>
+						<div class="col d-flex flex-column justify-content-end">
+							<label class="label">{{
+								'POP_UPS.YEAR' | translate
+							}}</label>
+							<input
+								#addInputYear
+								nbInput
+								class="input_year"
+								type="number"
+								placeholder="{{ 'POP_UPS.YEAR' | translate }}"
+								fullWidth
+							/>
+						</div>
+
+						<span class="col" style="margin-top: 29px;">
+							<button
+								class="w-100"
+								(click)="
+									addAward(
+										addInputName.value,
+										addInputYear.value
+									)
+								"
+								nbButton
+								status="success"
+							>
+								{{ 'BUTTONS.SAVE' | translate }}
+							</button></span
+						>
+						<span class="col" style="margin-top: 29px;"
+							><button
+								class="w-100"
+								(click)="showAddAward = !showAddAward"
+								nbButton
+								status="danger"
+							>
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button></span
+						>
+					</div>
+					<div class="row" *ngIf="awardExist">
+						<div class="col">
+							<nb-list class="block_style">
+								<nb-list-item
+									*ngFor="let a of awards"
+									class="item"
+								>
+									<span
+										class="award_title"
+										[textContent]="
+											a.name + ' (' + a.year + ')'
+										"
+									></span>
+									<nb-actions class="float-left" e="medium">
+										<nb-action
+											(click)="removeAward(a.id)"
+											class="d-inline pr-0 block_style"
+											icon="close"
+										></nb-action>
+									</nb-actions>
+								</nb-list-item>
+							</nb-list>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-sm-12">
 					<div class="form-group">
 						<ngx-skills-input
 							[form]="form"
@@ -101,8 +271,109 @@
 
 			<div class="row">
 				<div class="col">
+					<span class="heading_title">{{
+						'POP_UPS.LANGUAGES' | translate
+					}}</span>
+					<button
+						*ngIf="!showAddLanguage"
+						(click)="showAddLanguage = !showAddLanguage"
+						nbButton
+						status="success"
+						class="add_new"
+					>
+						<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+					</button>
+					<div class="row" *ngIf="showAddLanguage">
+						<div
+							class="col-sm-4 d-flex flex-column justify-content-end"
+						>
+							<label class="label">{{
+								'POP_UPS.NAME' | translate
+							}}</label>
+							<ngx-language-input
+								(selectedLanguageEvent)="
+									selectedLanguageHandler($event)
+								"
+							></ngx-language-input>
+						</div>
+						<div class="col d-flex flex-column justify-content-end">
+							<label class="label">{{
+								'POP_UPS.LEVEL' | translate
+							}}</label>
+							<input
+								#addInputLevel
+								nbInput
+								type="number"
+								class="input_level"
+								maxlength="100"
+								placeholder="{{ 'POP_UPS.LEVEL' | translate }}"
+								fullWidth
+							/>
+						</div>
+
+						<span class="col" style="margin-top: 29px;">
+							<button
+								class="w-100"
+								(click)="
+									addLanguage(
+										selectedLanguage,
+										addInputLevel.value,
+										organization,
+										selectedLanguage.name
+									)
+								"
+								nbButton
+								status="success"
+							>
+								{{ 'BUTTONS.SAVE' | translate }}
+							</button>
+						</span>
+						<span class="col" style="margin-top: 29px;">
+							<button
+								class="w-100"
+								(click)="showAddLanguage = !showAddLanguage"
+								nbButton
+								status="danger"
+							>
+								{{ 'BUTTONS.CANCEL' | translate }}
+							</button>
+						</span>
+					</div>
+					<div class="row" *ngIf="languageExist">
+						<div class="col">
+							<nb-list class="block_style">
+								<nb-list-item
+									*ngFor="let l of organization_languages"
+									class="item"
+								>
+									<span
+										class="award_title"
+										[textContent]="
+											l.name + ' (' + l.level + ')'
+										"
+									></span>
+									<nb-actions class="float-left" e="medium">
+										<nb-action
+											(click)="removeLanguage(l.id)"
+											class="d-inline pr-0 block_style"
+											icon="close"
+										></nb-action>
+									</nb-actions>
+								</nb-list-item>
+							</nb-list>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col">
 					<div class="form-group">
+						<label for="shortDescription">{{
+							'POP_UPS.SHORT_DESCRIPTION' | translate
+						}}</label>
 						<textarea
+							id="shortDescription"
 							nbInput
 							fullWidth
 							placeholder="{{
@@ -129,7 +400,11 @@
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
+						<label for="companyOverview">{{
+							'POP_UPS.OVERVIEW' | translate
+						}}</label>
 						<textarea
+							id="companyOverview"
 							nbInput
 							fullWidth
 							placeholder="{{ 'POP_UPS.OVERVIEW' | translate }}"
@@ -145,6 +420,90 @@
 							}"
 						>
 						</textarea>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="check" for="showIncome">{{
+							'POP_UPS.TOTAL_INCOME_OR_MONTHLY_INCOME' | translate
+						}}</label>
+						<nb-toggle
+							id="showIncome"
+							[(checked)]="organization.show_income"
+							(change)="changeShowIncome('show_income')"
+						>
+						</nb-toggle>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="check" for="showProfits">{{
+							'POP_UPS.PROFITS' | translate
+						}}</label>
+						<nb-toggle
+							id="showProfits"
+							[(checked)]="organization.show_profits"
+							(change)="changeShowIncome('show_profits')"
+						>
+						</nb-toggle>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="check" for="showBusinessPaid">{{
+							'POP_UPS.BONUSES_PAID' | translate
+						}}</label>
+						<nb-toggle
+							id="showBusinessPaid"
+							[(checked)]="organization.show_business_paid"
+							(change)="changeShowIncome('show_business_paid')"
+						>
+						</nb-toggle>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="check" for="showTotalHours">{{
+							'POP_UPS.TOTAL_HOURS_WORKED_OVER_GAUZY' | translate
+						}}</label>
+						<nb-toggle
+							id="showTotalHours"
+							[(checked)]="organization.show_total_hours"
+							(change)="changeShowIncome('show_total_hours')"
+						>
+						</nb-toggle>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="check" for="showMinimumProjectSize">{{
+							'POP_UPS.MINIMUM_PROJECT_SIZE' | translate
+						}}</label>
+						<nb-toggle
+							id="showMinimumProjectSize"
+							[(checked)]="organization.show_minimum_project_size"
+							(change)="
+								changeShowIncome('show_minimum_project_size')
+							"
+						>
+						</nb-toggle>
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="form-group">
+						<label class="check" for="showProjectsCount">{{
+							'POP_UPS.PROJECTS_COUNT' | translate
+						}}</label>
+						<nb-toggle
+							id="showProjectsCount"
+							[(checked)]="organization.show_projects_count"
+							(change)="changeShowIncome('show_projects_count')"
+						>
+						</nb-toggle>
 					</div>
 				</div>
 			</div>

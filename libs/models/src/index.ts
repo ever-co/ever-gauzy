@@ -25,6 +25,7 @@ export * from './lib/organization-vendors.model';
 export * from './lib/organization-team-model';
 export * from './lib/organization-team-employee-model';
 export * from './lib/organization-recurring-expense.model';
+export * from './lib/organization-awards.model';
 export * from './lib/employee-recurring-expense.model';
 export * from './lib/country.model';
 export * from './lib/invite.model';
@@ -62,6 +63,8 @@ export * from './lib/event-type.model';
 export * from './lib/upwork.model';
 export * from './lib/availability-slots.model';
 export * from './lib/translation.model';
+export * from './lib/language.model';
+export * from './lib/organization-languages.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';

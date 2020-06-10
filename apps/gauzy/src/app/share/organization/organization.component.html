@@ -102,30 +102,107 @@
 				<div class="org-head-right-sec">
 					<h4 class="org-name" [textContent]="organization.name"></h4>
 					<div class="org-year-found">
-						Year Founded:
-						<span
-							class="year-found"
-							[textContent]="organization.founded"
-						></span>
+						<h5
+							*ngIf="organization.founded"
+							class="org-title"
+							[textContent]="
+								'Year Founded: ' + organization.founded
+							"
+						></h5>
+					</div>
+					<div class="org-size">
+						<h5
+							*ngIf="organization.founded"
+							class="org-title"
+							[textContent]="'Company Size: ' + organization.size"
+						></h5>
 					</div>
 					<div
-						class="org-banner"
-						[textContent]="organization.banner"
-					></div>
+						class="org-client-focus"
+						*ngIf="organization.client_focus"
+					>
+						<h5 class="org-title">
+							Client Focus:
+							<span
+								class="client-focus"
+								[textContent]="
+									organization.client_focus.replace(',', ', ')
+								"
+							></span>
+						</h5>
+					</div>
 				</div>
 			</div>
-			<div class="org-details">
-				<p
-					class="short_description"
-					[textContent]="organization.short_description"
-				></p>
-				<div class="org-skills">
-					Company Skills: <span class="skills"></span>
+			<div class="section_block"></div>
+			<div class="row" *ngIf="languageExist">
+				<div class="col">
+					<div class="org-year-found">
+						<h5 class="org-title">Languages</h5>
+						<nb-list class="block_style">
+							<nb-list-item
+								*ngFor="let l of organization_languages"
+								class="item"
+							>
+								<span
+									class="award_title"
+									[textContent]="
+										l.name + ' (' + l.level + ')'
+									"
+								></span>
+							</nb-list-item>
+						</nb-list>
+					</div>
 				</div>
-				<div
-					class="org-overview"
-					[textContent]="organization.overview"
-				></div>
+			</div>
+			<div class="row" *ngIf="awardExist">
+				<div class="col">
+					<h5 class="org-title">Awards</h5>
+					<nb-list class="block_style">
+						<nb-list-item *ngFor="let a of awards" class="item">
+							<span
+								class="award_title"
+								[textContent]="a.name + ' (' + a.year + ')'"
+							></span>
+						</nb-list-item>
+					</nb-list>
+				</div>
+			</div>
+			<div class="row" *ngIf="organization.skills">
+				<div class="col">
+					<div class="org-skills">
+						<h5 class="org-title">Company Skills</h5>
+						<span class="skills"></span>
+					</div>
+				</div>
+			</div>
+
+			<div class="row" *ngIf="organization.banner">
+				<div class="col">
+					<p
+						class="org-banner"
+						[textContent]="organization.banner"
+					></p>
+				</div>
+			</div>
+
+			<div class="row" *ngIf="organization.overview">
+				<div class="col">
+					<p
+						class="org-overview"
+						[textContent]="organization.overview"
+					></p>
+				</div>
+			</div>
+
+			<div class="row" *ngIf="organization.short_description">
+				<div class="col">
+					<div class="org-details">
+						<p
+							class="short_description"
+							[textContent]="organization.short_description"
+						></p>
+					</div>
+				</div>
 			</div>
 		</div>
 	</nb-card-body>
