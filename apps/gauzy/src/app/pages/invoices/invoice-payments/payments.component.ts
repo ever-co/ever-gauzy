@@ -177,7 +177,11 @@ export class PaymentsComponent extends TranslationBaseComponent
 					),
 					type: 'text',
 					valuePrepareFunction: (cell, row) => {
-						return `${cell.firstName} ${cell.lastName}`;
+						if (cell.firstName && cell.lastName) {
+							return `${cell.firstName} ${cell.lastName}`;
+						} else {
+							return ``;
+						}
 					}
 				},
 				note: {
