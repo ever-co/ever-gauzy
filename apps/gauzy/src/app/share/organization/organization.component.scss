@@ -97,6 +97,7 @@
       }
     }
   }
+
   .org-details {
     width: 100%;
     display: block;
@@ -132,11 +133,11 @@ h5.org-title span.client-focus {
   display: block;
 }
 
-nb-list.block_style {
+.nb_list.block_style {
   display: block;
 }
 
-nb-list-item.item {
+.nb_list_item.item {
   border: none !important;
   float: left;
   padding-left: 0;

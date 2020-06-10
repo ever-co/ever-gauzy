@@ -26,17 +26,17 @@
     width: 220px;
   }
 
-  nb-list.block_style {
+  .nb_list.block_style {
     display: block;
   }
 
-  nb-list-item.item {
+  .nb_list_item.item {
     border: none !important;
     float: left;
     padding-left: 0;
   }
 
-  nb-action.block_style {
+  .nb_action.block_style {
     padding: 2px 5px !important;
   }
 
@@ -58,7 +58,7 @@
     margin-right: 10px;
   }
 
-  nb-toggle {
+  .nb_toggle {
     clear: both;
     display: block;
   }

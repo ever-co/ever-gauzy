@@ -138,10 +138,10 @@
 				<div class="col">
 					<div class="org-year-found">
 						<h5 class="org-title">Languages</h5>
-						<nb-list class="block_style">
+						<nb-list class="nb_list block_style">
 							<nb-list-item
 								*ngFor="let l of organization_languages"
-								class="item"
+								class="nb_list_item item"
 							>
 								<span
 									class="award_title"
@@ -157,8 +157,11 @@
 			<div class="row" *ngIf="awardExist">
 				<div class="col">
 					<h5 class="org-title">Awards</h5>
-					<nb-list class="block_style">
-						<nb-list-item *ngFor="let a of awards" class="item">
+					<nb-list class="nb_list block_style">
+						<nb-list-item
+							*ngFor="let a of awards"
+							class="nb_list_item item"
+						>
 							<span
 								class="award_title"
 								[textContent]="a.name + ' (' + a.year + ')'"

@@ -229,10 +229,10 @@
 					</div>
 					<div class="row" *ngIf="awardExist">
 						<div class="col">
-							<nb-list class="block_style">
+							<nb-list class="nb_list block_style">
 								<nb-list-item
 									*ngFor="let a of awards"
-									class="item"
+									class="nb_list_item item"
 								>
 									<span
 										class="award_title"
@@ -240,7 +240,10 @@
 											a.name + ' (' + a.year + ')'
 										"
 									></span>
-									<nb-actions class="float-left" e="medium">
+									<nb-actions
+										class="nb_action float-left"
+										e="medium"
+									>
 										<nb-action
 											(click)="removeAward(a.id)"
 											class="d-inline pr-0 block_style"
@@ -341,10 +344,10 @@
 					</div>
 					<div class="row" *ngIf="languageExist">
 						<div class="col">
-							<nb-list class="block_style">
+							<nb-list class="nb_list block_style">
 								<nb-list-item
 									*ngFor="let l of organization_languages"
-									class="item"
+									class="nb_list_item item"
 								>
 									<span
 										class="award_title"
@@ -352,7 +355,10 @@
 											l.name + ' (' + l.level + ')'
 										"
 									></span>
-									<nb-actions class="float-left" e="medium">
+									<nb-actions
+										class="nb_action float-left"
+										e="medium"
+									>
 										<nb-action
 											(click)="removeLanguage(l.id)"
 											class="d-inline pr-0 block_style"
@@ -430,6 +436,7 @@
 							'POP_UPS.TOTAL_INCOME_OR_MONTHLY_INCOME' | translate
 						}}</label>
 						<nb-toggle
+							class="nb_toggle"
 							id="showIncome"
 							[(checked)]="organization.show_income"
 							(change)="changeShowIncome('show_income')"
@@ -443,6 +450,7 @@
 							'POP_UPS.PROFITS' | translate
 						}}</label>
 						<nb-toggle
+							class="nb_toggle"
 							id="showProfits"
 							[(checked)]="organization.show_profits"
 							(change)="changeShowIncome('show_profits')"
@@ -456,6 +464,7 @@
 							'POP_UPS.BONUSES_PAID' | translate
 						}}</label>
 						<nb-toggle
+							class="nb_toggle"
 							id="showBusinessPaid"
 							[(checked)]="organization.show_business_paid"
 							(change)="changeShowIncome('show_business_paid')"
@@ -471,6 +480,7 @@
 							'POP_UPS.TOTAL_HOURS_WORKED_OVER_GAUZY' | translate
 						}}</label>
 						<nb-toggle
+							class="nb_toggle"
 							id="showTotalHours"
 							[(checked)]="organization.show_total_hours"
 							(change)="changeShowIncome('show_total_hours')"
@@ -484,6 +494,7 @@
 							'POP_UPS.MINIMUM_PROJECT_SIZE' | translate
 						}}</label>
 						<nb-toggle
+							class="nb_toggle"
 							id="showMinimumProjectSize"
 							[(checked)]="organization.show_minimum_project_size"
 							(change)="
@@ -499,6 +510,7 @@
 							'POP_UPS.PROJECTS_COUNT' | translate
 						}}</label>
 						<nb-toggle
+							class="nb_toggle"
 							id="showProjectsCount"
 							[(checked)]="organization.show_projects_count"
 							(change)="changeShowIncome('show_projects_count')"
