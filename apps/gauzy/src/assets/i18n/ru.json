@@ -1377,7 +1377,14 @@
 			"PHONE_REQUIRED": "Требуется указать телефон!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!",
 			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!",
-			"EMAIL_TEMPLATE_SAVED": "{{templateName}} шаблон письма успешно сохранен"
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} шаблон письма успешно сохранен",
+			"DELETED": "Успешно удален",
+			"MOVED_ARTICLE": "Статья была перемещена",
+			"MOVED_CATEGORY": "Категория была перемещена",
+			"CREATED_ARTICLE": "Статья создана",
+			"CREATED_CATEGORY": "Категория создана",
+			"EDITED_ARTICLE": "Статья была отредактирована",
+			"EDITED_CATEGORY": "Категория была отредактирована"
 		}
 	},
 	"ACCEPT_INVITE": {
