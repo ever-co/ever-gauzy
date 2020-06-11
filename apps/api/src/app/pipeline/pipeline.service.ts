@@ -27,14 +27,15 @@ export class PipelineService extends CrudService<Pipeline>
       name,
     }) );
     const { id: pipelineId } = pipeline;
+    let index = 0;
 
     // Persist pipeline stages
     if ( entity.stages?.length ) {
-      for ( const { name, index, description } of entity.stages ) {
+      for ( const { name, description } of entity.stages ) {
         await manager.save( manager.create( Stage, {
+          index: ++index,
           description,
           pipelineId,
-          index,
           name,
         }) );
       }
