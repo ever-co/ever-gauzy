@@ -11,6 +11,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
 import { HelpCenterService } from '../../@core/services/help-center.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -26,7 +27,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		private readonly toastrService: NbToastrService,
 		private sanitizer: DomSanitizer,
 		private helpService: HelpCenterService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -62,53 +64,46 @@ export class SidebarComponent extends TranslationBaseComponent
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
-	async onMoveNode($event) {
-		// console.log($event.node.id);
-		for (const node of this.tempNodes) {
-			// console.log(node.id);
-			if (node.id === $event.node.id) {
-				// console.log(node);
-				// 	if (!$event.to.parent.virtual) {
-				// 		await this.helpService.update(node.id, {
-				// 			parent: $event.to.parent,
-				// 			index: $event.to.index
-				// 		});
-				// 	} else {
-				// 		await this.helpService.update(node.id, {
-				// 			// parent: null,
-				// 			index: $event.to.index
-				// 		});
-				// 	}
-				// if (node.children.length !== 0)
-				// 	await this.helpService.update(node.id, {
-				// 		children: node.children
-				// 	});
-			}
-			// if (node.parent.id === $event.to.parent) {
-			// 	console.log('child');
-			// }
+	async updateIndexes(
+		oldChildren: IHelpCenter[],
+		newChildren: IHelpCenter[]
+	) {
+		try {
+			await this.helpService.createBulk(oldChildren, newChildren);
+		} catch (error) {
+			this.errorHandler.handleError(error);
 		}
-		// const movedNode = $event.node;
-		// console.log(movedNode);
-		// if (!$event.to.parent.virtual) {
-		// 	await this.helpService.update(movedNode.id, {
-		// 		parent: $event.to.parent,
-		// 		index: $event.to.index
-		// 	});
-		// } else {
-		// 	await this.helpService.update(movedNode.id, {
-		// 		index: $event.to.index
-		// 	});
-		// }
-
-		// if ($event.node.children)
-		// 	await this.helpService.update(movedNode.id, {
-		// 		children: $event.node.children
-		// 	});
+	}
+	async onMoveNode($event) {
+		console.log($event);
+		this.updateIndexes(
+			$event.from.parent.children,
+			$event.to.parent.children
+		);
+		for (const node of this.tempNodes) {
+			// await this.helpService.update(node.id, {
+			// 	index: $event.to.parent,
+			// });
+			if (node.id === $event.node.id) {
+				console.log('moved noda');
+				if (!$event.to.parent.virtual) {
+					await this.helpService.update(node.id, {
+						parent: $event.to.parent
+					});
+				} else {
+					await this.helpService.update(node.id, {
+						parent: null
+					});
+				}
+				if (node.children.length !== 0) {
+					this.toastrSuccess('MOVED_CATEGORY');
+				} else {
+					this.toastrSuccess('MOVED_ARTICLE');
+				}
+			}
+		}
 		this.loadMenu();
 		this.tree.treeModel.update();
-		this.toastrSuccess('MOVED_ARTICLE');
-		this.toastrSuccess('MOVED_CATEGORY');
 	}
 	addNode() {
 		this.isVisibleAdd = true;
@@ -155,7 +150,6 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.showCategoryButton = false;
 	}
 	onNodeClicked(node: any) {
-		console.log(node.data.index);
 		this.nodeId = node.data.id;
 		this.isChosenNode = true;
 		this.articleName = node.data.name;
@@ -274,6 +268,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		const result = await this.helpService.getAll(['parent', 'children']);
 		if (result) {
 			this.tempNodes = result.items;
+			for (const node of this.tempNodes)
+				console.log(node.name, node.index);
 			this.nodes = this.tempNodes.filter((item) => item.parent === null);
 			this.sortMenu(this.nodes);
 		}

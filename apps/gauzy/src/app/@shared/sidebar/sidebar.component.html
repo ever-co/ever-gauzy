@@ -113,15 +113,9 @@
 		</tree-root>
 	</nb-card-body>
 	<nb-card-body>
-		<div *ngIf="isChosenNode">
-			<h5>{{ articleName }}</h5>
-		</div>
-		<div *ngIf="isChosenNode && !isVisibleEdit && chosenArticle">
-			<h6>{{ articleDesc }}</h6>
-			<div [innerHtml]="articleData"></div>
-		</div>
-		<div class="add-icon-field" *ngIf="isVisibleEdit">
-			<div>
+		<div *ngIf="isChosenNode" class="edit-field">
+			<h4>{{ articleName }}</h4>
+			<div *ngIf="isVisibleEdit" class="edit-field">
 				<nb-select
 					class="main-buttons"
 					placeholder="Select Language"
@@ -131,17 +125,19 @@
 						lang
 					}}</nb-option>
 				</nb-select>
+				<nb-select
+					placeholder="Select Color"
+					[(selected)]="selectedColor"
+				>
+					<nb-option *ngFor="let color of colors" [value]="color">{{
+						color
+					}}</nb-option>
+				</nb-select>
 			</div>
-
-			<nb-select
-				class="main-buttons"
-				placeholder="Select Color"
-				[(selected)]="selectedColor"
-			>
-				<nb-option *ngFor="let color of colors" [value]="color">{{
-					color
-				}}</nb-option>
-			</nb-select>
+		</div>
+		<div *ngIf="isChosenNode && !isVisibleEdit && chosenArticle">
+			<h6>{{ articleDesc }}</h6>
+			<div [innerHtml]="articleData"></div>
 		</div>
 		<div *ngIf="isVisibleEdit && chosenCategory" class="content-card">
 			<p class="label">Press enter to save category name</p>
@@ -164,23 +160,30 @@
 		</div>
 		<div *ngIf="isVisibleEdit && chosenArticle">
 			<form [formGroup]="form" (ngSubmit)="submit()">
-				<p class="label">Name of the article:</p>
-				<input
-					formControlName="name"
-					type="text"
-					size="24"
-					maxlength="18"
-					nbInput
-				/>
+				<div class="edit-field">
+					<div>
+						<p class="label">Name of the article:</p>
+						<input
+							formControlName="name"
+							type="text"
+							size="24"
+							maxlength="18"
+							nbInput
+						/>
+					</div>
+					<div>
+						<p class="label">Description:</p>
+						<input
+							formControlName="desc"
+							type="text"
+							size="30"
+							maxlength="26"
+							nbInput
+						/>
+					</div>
+				</div>
+
 				<div class="edit-node-field">
-					<p class="label">Description:</p>
-					<input
-						formControlName="desc"
-						type="text"
-						size="24"
-						maxlength="18"
-						nbInput
-					/>
 					<p class="label">Article text:</p>
 					<div class="ck-editor">
 						<ckeditor

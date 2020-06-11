@@ -17,6 +17,7 @@
 }
 
 .add-base-field {
+  display: flex;
   flex-direction: row;
 }
 
@@ -46,6 +47,12 @@
   font-size: 1.1rem;
 }
 .add-icon-field {
+  flex-direction: row;
+  display: flex;
+}
+
+.edit-field {
+  justify-content: space-between;
   flex-direction: row;
   display: flex;
 }

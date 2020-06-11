@@ -33,6 +33,17 @@ const helpCenterMenuList: IHelpCenter[] = [
 				language: 'en',
 				color: 'black',
 				index: 1
+			},
+			{
+				flag: 'article',
+				icon: 'book-open-outline',
+				privacy: 'eye-off-outline',
+				name: 'Privacy',
+				description: 'Gauzy Privacy Statement',
+				data: 'Usage Information',
+				language: 'en',
+				color: 'black',
+				index: 2
 			}
 		]
 	},
