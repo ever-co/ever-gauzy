@@ -1,13 +1,17 @@
 import { Base } from '../core/entities/base';
 import { Pipeline as IPipeline } from '@gauzy/models';
 import { Organization } from '../organization/organization.entity';
-import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Stage } from '../stage/stage.entity';
 
 @Entity( 'pipeline' )
 export class Pipeline extends Base implements IPipeline
 {
+  @OneToMany( () => Stage, ({ pipeline }) => pipeline )
+  @ApiProperty({ type: Stage })
+  public stages: Stage[];
 
   @ManyToOne( () => Organization )
   @ApiProperty({ type: Organization })
