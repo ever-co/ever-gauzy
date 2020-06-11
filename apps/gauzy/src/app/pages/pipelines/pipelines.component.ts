@@ -9,6 +9,7 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { first } from 'rxjs/operators';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
   templateUrl: './pipelines.component.html',
@@ -103,8 +104,16 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   }
 
   public async deletePipeline(): Promise<void> {
-    await this.pipelinesService.delete( this.pipeline.id );
-    await this.updatePipelines();
+    const canProceed: 'ok' = await this.dialogService.open( DeleteConfirmationComponent, {
+      context: {
+        recordType: this.getTranslation( 'PIPELINES_PAGE.SINGULAR', this.pipeline ),
+      },
+    }).onClose.toPromise();
+
+    if ( 'ok' === canProceed ) {
+      await this.pipelinesService.delete( this.pipeline.id );
+      await this.updatePipelines();
+    }
   }
 
   public async createPipeline(): Promise<void> {
@@ -131,7 +140,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     if ( data ) {
       this.nbToastrService.success(
         this.getTranslation( 'TOASTR.TITLE.SUCCESS' ),
-        this.getTranslation( `TOASTR.MESSAGE.PIPELINE_${ id ? 'UPDATE' : 'CREATE' }` ) );
+        this.getTranslation( `TOASTR.MESSAGE.PIPELINE_${ id ? 'UPDATED' : 'CREATED' }` ) );
       await this.updatePipelines();
     }
   }

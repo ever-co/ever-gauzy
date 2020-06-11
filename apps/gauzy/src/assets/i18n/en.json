@@ -1390,8 +1390,10 @@
 			"CREATED_ARTICLE": "Article has been created",
 			"CREATED_CATEGORY": "Category has been created",
 			"EDITED_ARTICLE": "Article has been edited",
-			"EDITED_CATEGORY": "Category has been edited"
-		}
+			"EDITED_CATEGORY": "Category has been edited",
+      "PIPELINE_CREATED": "Pipeline has been created",
+      "PIPELINE_UPDATED": "Pipeline has been updated"
+    }
 	},
 	"ACCEPT_INVITE": {
 		"ACCEPT_INVITE_FORM": {
@@ -1617,8 +1619,9 @@
 		}
 	},
 	"PIPELINES_PAGE": {
-		"HEADER": "Pipelines",
+    "HEADER": "Pipelines",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
-		"HEADER_FORM_CREATE": "Create Pipeline"
-	}
+    "HEADER_FORM_CREATE": "Create Pipeline",
+    "RECORD_TYPE": "pipeline \"{{ name }}\""
+  }
 }
