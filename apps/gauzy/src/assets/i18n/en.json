@@ -1302,6 +1302,9 @@
 			"PAYMENT_DELETE": "Payment Deleted"
 		}
 	},
+	"PAYMENTS_PAGE": {
+		"HEADER": "Payments"
+	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",

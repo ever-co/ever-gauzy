@@ -10,7 +10,7 @@ import { EstimateAddComponent } from './invoice-estimates/estimate-add/estimate-
 import { EstimateEditComponent } from './invoice-estimates/estimate-edit/estimate-edit.component';
 import { EstimatesReceivedComponent } from './invoice-estimates/estimates-received/estimates-received.component';
 import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimate-view.component';
-import { PaymentsComponent } from './invoice-payments/payments.component';
+import { InvoicePaymentsComponent } from './invoice-payments/payments.component';
 
 const routes: Routes = [
 	{
@@ -55,7 +55,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'payments/:id',
-		component: PaymentsComponent
+		component: InvoicePaymentsComponent
 	}
 ];
 
