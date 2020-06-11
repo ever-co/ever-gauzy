@@ -969,7 +969,8 @@
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
 		"TAGS_SELECT_DESCRIPTION": "Описание метки",
-		"ADD_NEW_TAG": "Добавить новый тег"
+		"ADD_NEW_TAG": "Добавить новый тег",
+		"TENANT_LEVEL": "Уровень арендатора"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"

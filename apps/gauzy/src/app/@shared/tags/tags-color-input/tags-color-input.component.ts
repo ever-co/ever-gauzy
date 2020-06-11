@@ -69,11 +69,11 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	}
 
 	async getAllTags() {
-		const { items } = await this.tagsService.getAllTags(['organization']);
-		const filteredItems = items.filter(
-			(data) => data.organization.id === this.selectedOrganization.id
+		const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
+			this.selectedOrganization.id,
+			['organization']
 		);
-		this.tags = filteredItems;
+		this.tags = tagsByOrgLevel;
 	}
 
 	backgroundContrast(bgColor: string) {

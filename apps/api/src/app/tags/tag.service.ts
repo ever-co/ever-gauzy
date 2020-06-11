@@ -3,6 +3,7 @@ import { Tag } from './tag.entity';
 import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Organization } from '@gauzy/models';
 
 @Injectable()
 export class TagService extends CrudService<Tag> {
@@ -21,5 +22,20 @@ export class TagService extends CrudService<Tag> {
 			});
 		const item = await query.getOne();
 		return item;
+	}
+
+	async findTagsByOrgLevel(relations: any, orgId: any): Promise<any> {
+		const allTags = await this.repository.find({
+			where: [{ organization: orgId }],
+			relations: relations
+		});
+		return allTags;
+	}
+	async findTagsByTenantLevel(relations: any, tenantId: any): Promise<any> {
+		const allTags = await this.repository.find({
+			where: [{ tenant: tenantId }],
+			relations: relations
+		});
+		return allTags;
 	}
 }

@@ -966,10 +966,11 @@
 		"TAGS_ADD_TAG": "Tag added",
 		"TAGS_EDIT_TAG": "Tag edited",
 		"TAGS_DELETE_TAG": "Tag deleted",
-		"TAGS_SELECT_NAME": "Tag name",
-		"TAGS_SELECT_COLOR": "Tag color",
-		"TAGS_SELECT_DESCRIPTION": "Tag description",
-		"ADD_NEW_TAG": "Add new Tag"
+		"TAGS_SELECT_NAME": "Име на таг",
+		"TAGS_SELECT_COLOR": "Цвят на тага",
+		"TAGS_SELECT_DESCRIPTION": "Описание на тага",
+		"ADD_NEW_TAG": "Add new Tag",
+		"TENANT_LEVEL": "Ниво на наемател"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"

@@ -957,19 +957,20 @@
 		}
 	},
 	"TAGS_PAGE": {
-		"HEADER": "Tags",
-		"ADD_TAGS": "Add Tags",
-		"EDIT_TAGS": "Edit Tags",
+		"HEADER": "תגיות",
+		"ADD_TAGS": "הוסף תגיות",
+		"EDIT_TAGS": "ערוך תגיות",
 		"TAGS_NAME": "שם",
-		"TAGS_DESCRIPTION": "Description",
-		"TAGS_COLOR": "Color",
-		"TAGS_ADD_TAG": "Tag added",
-		"TAGS_EDIT_TAG": "Tag edited",
-		"TAGS_DELETE_TAG": "Tag deleted",
-		"TAGS_SELECT_NAME": "Tag name",
-		"TAGS_SELECT_COLOR": "Tag color",
-		"TAGS_SELECT_DESCRIPTION": "Tag description",
-		"ADD_NEW_TAG": "Add new Tag"
+		"TAGS_DESCRIPTION": "תיאור",
+		"TAGS_COLOR": "צבע",
+		"TAGS_ADD_TAG": "התג נוסף",
+		"TAGS_EDIT_TAG": "התג נערך",
+		"TAGS_DELETE_TAG": "התג נמחק",
+		"TAGS_SELECT_NAME": "תג שם",
+		"TAGS_SELECT_COLOR": "צבע תג",
+		"TAGS_SELECT_DESCRIPTION": "תיאור התג",
+		"ADD_NEW_TAG": "הוסף תג חדש",
+		"TENANT_LEVEL": "רמת דייר"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
