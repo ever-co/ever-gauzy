@@ -15,7 +15,7 @@ import { RolesEnum } from '@gauzy/models';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
 import { CandidatePersonalQualitiesService } from './candidate-personal-qualities.service';
 
-@ApiTags('candidate_personal_qualities')
+@ApiTags('candidate_personal_quality')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidatePersonalQualitiesController extends CrudController<

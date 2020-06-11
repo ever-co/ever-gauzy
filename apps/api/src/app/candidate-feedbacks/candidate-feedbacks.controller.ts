@@ -21,7 +21,7 @@ import { PermissionsEnum, ICandidateFeedbackCreateInput } from '@gauzy/models';
 import { Permissions } from '../shared/decorators/permissions';
 import { ParseJsonPipe } from '../shared';
 
-@ApiTags('candidate_feedbacks')
+@ApiTags('candidate_feedback')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateFeedbacksController extends CrudController<

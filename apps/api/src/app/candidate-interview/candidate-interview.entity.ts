@@ -25,13 +25,13 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 
 	@ManyToOne((type) => CandidateInterviewers)
 	@JoinTable({
-		name: 'candidate_interviewers'
+		name: 'candidate_interviewer'
 	})
 	interviewers?: ICandidateInterviewers[];
 
 	@ManyToOne((type) => CandidateFeedback)
 	@JoinTable({
-		name: 'candidate_feedbacks'
+		name: 'candidate_feedback'
 	})
 	feedbacks?: ICandidateFeedback[];
 
