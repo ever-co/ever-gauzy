@@ -106,7 +106,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
   public async deletePipeline(): Promise<void> {
     const canProceed: 'ok' = await this.dialogService.open( DeleteConfirmationComponent, {
       context: {
-        recordType: this.getTranslation( 'PIPELINES_PAGE.SINGULAR', this.pipeline ),
+        recordType: this.getTranslation( 'PIPELINES_PAGE.RECORD_TYPE', this.pipeline ),
       },
     }).onClose.toPromise();
 
