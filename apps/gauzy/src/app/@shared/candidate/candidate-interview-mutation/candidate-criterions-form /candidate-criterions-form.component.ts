@@ -38,24 +38,22 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	checkedTechnologies(value: ICandidateTechnologies) {
+	checkedTechnologies(value: string) {
 		if (!this.selectedTechnologies.includes(value)) {
 			this.selectedTechnologies.push(value);
 		} else {
 			this.selectedTechnologies.splice(
-				this.selectedTechnologies.findIndex(
-					(item) => item.name === value
-				),
+				this.selectedTechnologies.findIndex((item) => item === value),
 				1
 			);
 		}
 	}
-	checkedQualities(value: ICandidatePersonalQualities) {
+	checkedQualities(value: string) {
 		if (!this.selectedQualities.includes(value)) {
 			this.selectedQualities.push(value);
 		} else {
 			this.selectedQualities.splice(
-				this.selectedQualities.findIndex((item) => item.name === value),
+				this.selectedQualities.findIndex((item) => item === value),
 				1
 			);
 		}
@@ -63,11 +61,15 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 	private async loadCriterions() {
 		const technologies = await this.candidateTechnologiesService.getAll();
 		if (technologies) {
-			this.technologiesList = technologies.items;
+			this.technologiesList = technologies.items.filter(
+				(item) => !item.interviewId
+			);
 		}
 		const qualities = await this.candidatePersonalQualitiesService.getAll();
 		if (qualities) {
-			this.personalQualitiesList = qualities.items;
+			this.personalQualitiesList = qualities.items.filter(
+				(item) => !item.interviewId
+			);
 		}
 	}
 

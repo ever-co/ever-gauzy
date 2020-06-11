@@ -162,10 +162,6 @@ export class CandidateInterviewMutationComponent
 		const interviewers = await this.candidateInterviewersService.findByInterviewId(
 			interview.id
 		);
-		// const criterions = await this.candidateCriterionsService.findById(
-		// 	interview.id
-		// );
-		// console.log(criterions);
 		try {
 			const createdInterview = await this.candidateInterviewService.update(
 				interview.id,
@@ -175,7 +171,9 @@ export class CandidateInterviewMutationComponent
 					location: this.interview.location,
 					startTime: this.interview.startTime,
 					endTime: this.interview.endTime,
-					// criterions:
+					// TO DO
+					// technologies:
+					// personalQualities:
 					note: this.interview.note
 				}
 			);
@@ -198,12 +196,11 @@ export class CandidateInterviewMutationComponent
 	async addCriterions(interviewId: string) {
 		this.candidateCriterionsForm.loadFormData();
 		const criterionsForm = this.candidateCriterionsForm.form.value;
-		//criterionsForm.selectedTechnologies
-		//criterionsForm.selectedQualities
-		// for (const item of criterionsForm.selectedTechnologies) {
-		// 	// await this.candidateTechnologiesService.create({ item.name, interviewId});
-		console.log(criterionsForm.selectedTechnologies);
-		// }
+		// TO DO criterionsForm.selectedQualities
+		await this.candidateTechnologiesService.createBulk(
+			interviewId,
+			criterionsForm.selectedTechnologies
+		);
 	}
 	async editInterview() {
 		let deletedIds = [];

@@ -22,6 +22,19 @@ export class CandidateTechnologiesService {
 			.toPromise();
 	}
 
+	createBulk(
+		interviewId: string,
+		technologies: string[]
+	): Promise<ICandidateTechnologies[]> {
+		return this.http
+			.post<ICandidateTechnologies[]>(
+				'/api/candidate-technologies/createBulk',
+				{ interviewId, technologies }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAll(): Promise<{ items: any[]; total: number }> {
 		return this.http
 			.get<{ items: ICandidateTechnologies[]; total: number }>(
@@ -41,6 +54,16 @@ export class CandidateTechnologiesService {
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/candidate-technologies/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+
+	deleteBulk(id: string): Promise<any> {
+		const data = JSON.stringify({ id });
+		return this.http
+			.delete('/api/candidate-technologies/deleteBulk', {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
