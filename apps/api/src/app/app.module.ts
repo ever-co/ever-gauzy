@@ -86,6 +86,7 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 import { HelpCenterModule } from './help-center/help-center.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
+import { GoalModule } from './goal/goal.module';
 
 @Module({
 	imports: [

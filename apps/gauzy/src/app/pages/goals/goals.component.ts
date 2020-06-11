@@ -130,6 +130,11 @@ export class GoalsComponent extends TranslationBaseComponent
 				goal: data
 			}
 		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (response) {
+			this.toastrService.primary('Goal updated', 'Success');
+			this.loadPage();
+		}
 	}
 
 	async keyResultUpdate(index, selectedkeyResult) {
