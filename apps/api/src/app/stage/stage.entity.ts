@@ -9,7 +9,7 @@ import { Pipeline } from '../pipeline/pipeline.entity';
 export class Stage extends Base implements IStage
 {
 
-  @ManyToOne( () => Pipeline )
+  @ManyToOne( () => Pipeline, { onDelete: 'CASCADE' })
   @ApiProperty({ type: Pipeline })
   @JoinColumn()
   public pipeline: Pipeline;
