@@ -22,9 +22,11 @@ import { CandidateInterviewMutationComponent } from './candidate-interview-mutat
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
-import { CandidateEmailModule } from '../candidate-email/candidate-email.module';
 import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
 import { CandidateCalendarInfoModule } from '../candidate-calendar-info/candidate-calendar-info.module';
+import { CandidateCriterionsFormComponent } from './candidate-criterions-form /candidate-criterions-form.component';
+import { CandidateNotificationFormComponent } from './candidate-notification-form /candidate-notification-form.component';
+import { CandidateEmailComponent } from './candidate-notification-form /candidate-email/candidate-email.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -48,7 +50,6 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbStepperModule,
 		NbTooltipModule,
 		TimerPickerModule,
-		CandidateEmailModule,
 		EmployeeMultiSelectModule,
 		CandidateSelectModule,
 		CandidateCalendarInfoModule,
@@ -62,15 +63,24 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	exports: [
 		CandidateInterviewMutationComponent,
-		CandidateInterviewFormComponent
+		CandidateInterviewFormComponent,
+		CandidateCriterionsFormComponent,
+		CandidateNotificationFormComponent,
+		CandidateEmailComponent
 	],
 	declarations: [
 		CandidateInterviewMutationComponent,
-		CandidateInterviewFormComponent
+		CandidateInterviewFormComponent,
+		CandidateCriterionsFormComponent,
+		CandidateNotificationFormComponent,
+		CandidateEmailComponent
 	],
 	entryComponents: [
 		CandidateInterviewMutationComponent,
-		CandidateInterviewFormComponent
+		CandidateInterviewFormComponent,
+		CandidateCriterionsFormComponent,
+		CandidateNotificationFormComponent,
+		CandidateEmailComponent
 	]
 })
 export class CandidateInterviewMutationModule {}

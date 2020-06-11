@@ -721,6 +721,7 @@
 				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
+				"STEP_3": "Step 3",
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "Save",
@@ -770,7 +771,8 @@
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Candidates criterions",
 			"TECHNOLOGY_STACK": "Technology Stack",
-			"PERSONAL_QUALITIES": "Personal Qualities"
+			"PERSONAL_QUALITIES": "Personal Qualities",
+			"CHOOSE_CRITERIONS": "Choose criterions for candidate"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {

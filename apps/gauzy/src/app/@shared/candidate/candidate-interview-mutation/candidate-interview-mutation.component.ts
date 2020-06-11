@@ -23,8 +23,8 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
-import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
+import { CandidateCriterionsFormComponent } from './candidate-criterions-form /candidate-criterions-form.component';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -44,14 +44,14 @@ export class CandidateInterviewMutationComponent
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
+	@ViewChild('candidateCriterionsForm')
+	candidateCriterionsForm: CandidateCriterionsFormComponent;
+
 	@ViewChild('candidateInterviewForm')
 	candidateInterviewForm: CandidateInterviewFormComponent;
 
-	@ViewChild('emailCandidateForm')
-	emailCandidateForm: CandidateEmailComponent;
-
-	@ViewChild('emailInterviewerForm')
-	emailInterviewerForm: CandidateEmailComponent;
+	@ViewChild('candidateNotificationForm')
+	candidateNotificationForm: CandidateInterviewFormComponent;
 
 	form: FormGroup;
 	candidateForm: FormGroup;
@@ -61,8 +61,6 @@ export class CandidateInterviewMutationComponent
 	employees: Employee[] = [];
 	candidates: Candidate[] = [];
 	selectedInterviewers: string[];
-	isCandidateNotification = false;
-	isInterviewerNotification = false;
 	emptyInterview = {
 		title: '',
 		interviewers: null,
@@ -139,7 +137,6 @@ export class CandidateInterviewMutationComponent
 
 	async save() {
 		this.employees = [];
-		this.notification();
 		const interview: ICandidateInterview = null;
 		let createdInterview = null;
 		if (this.interviewId !== null) {
@@ -230,15 +227,6 @@ export class CandidateInterviewMutationComponent
 		this.selectedCandidate = candidate;
 	}
 
-	notification() {
-		if (this.emailCandidateForm) {
-			this.emailCandidateForm.loadFormData();
-		}
-		if (this.emailInterviewerForm) {
-			this.emailInterviewerForm.loadFormData();
-		}
-	}
-
 	closeDialog(interview: ICandidateInterview = null) {
 		this.dialogRef.close(interview);
 	}
@@ -246,17 +234,7 @@ export class CandidateInterviewMutationComponent
 	previous() {
 		this.candidateInterviewForm.form.patchValue(this.interview);
 		this.candidateInterviewForm.form.patchValue({ valid: true });
-		this.isCandidateNotification = false;
-		this.isInterviewerNotification = false;
 		this.employees = [];
-	}
-
-	checkedCandidate(checked: boolean) {
-		this.isCandidateNotification = checked;
-	}
-
-	checkedInterviewer(checked: boolean) {
-		this.isInterviewerNotification = checked;
 	}
 
 	ngOnDestroy() {

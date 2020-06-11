@@ -31,29 +31,6 @@
   align-items: center;
 }
 
-.summary-content,
-.notify-checkboxes {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.summary-content-text {
-  margin-right: 5rem;
-}
-
-.notify-checkboxes-card {
-  width: 48%;
-  margin-bottom: 1rem;
-}
-
-.notification-title {
-  color: #8f9bb3;
-  font-size: 15px;
-  padding: 0 0 5px 5px;
-}
-
 .title-icon {
   color: #8f9bb3 !important;
   font-size: 16px;
