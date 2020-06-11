@@ -25,6 +25,7 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form /candidate-criterions-form.component';
+import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -61,11 +62,13 @@ export class CandidateInterviewMutationComponent
 	employees: Employee[] = [];
 	candidates: Candidate[] = [];
 	selectedInterviewers: string[];
+	criterionsId = null;
 	emptyInterview = {
 		title: '',
 		interviewers: null,
 		startTime: null,
 		endTime: null,
+		criterions: null,
 		note: ''
 	};
 	constructor(
@@ -76,7 +79,8 @@ export class CandidateInterviewMutationComponent
 		private candidateInterviewService: CandidateInterviewService,
 		protected candidatesService: CandidatesService,
 		private errorHandler: ErrorHandlingService,
-		private candidateInterviewersService: CandidateInterviewersService
+		private candidateInterviewersService: CandidateInterviewersService,
+		private candidateTechnologiesService: CandidateTechnologiesService
 	) {}
 
 	async ngOnInit() {
@@ -153,11 +157,15 @@ export class CandidateInterviewMutationComponent
 			candidateId: this.selectedCandidate.id
 		});
 		this.addInterviewers(interview.id, this.selectedInterviewers);
-
+		this.addCriterions(interview.id);
 		//find interviewers for this interview
 		const interviewers = await this.candidateInterviewersService.findByInterviewId(
 			interview.id
 		);
+		// const criterions = await this.candidateCriterionsService.findById(
+		// 	interview.id
+		// );
+		// console.log(criterions);
 		try {
 			const createdInterview = await this.candidateInterviewService.update(
 				interview.id,
@@ -167,6 +175,7 @@ export class CandidateInterviewMutationComponent
 					location: this.interview.location,
 					startTime: this.interview.startTime,
 					endTime: this.interview.endTime,
+					// criterions:
 					note: this.interview.note
 				}
 			);
@@ -186,7 +195,16 @@ export class CandidateInterviewMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	}
-
+	async addCriterions(interviewId: string) {
+		this.candidateCriterionsForm.loadFormData();
+		const criterionsForm = this.candidateCriterionsForm.form.value;
+		//criterionsForm.selectedTechnologies
+		//criterionsForm.selectedQualities
+		// for (const item of criterionsForm.selectedTechnologies) {
+		// 	// await this.candidateTechnologiesService.create({ item.name, interviewId});
+		console.log(criterionsForm.selectedTechnologies);
+		// }
+	}
 	async editInterview() {
 		let deletedIds = [];
 		let newIds = [];

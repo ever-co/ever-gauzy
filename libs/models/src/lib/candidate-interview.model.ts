@@ -1,11 +1,11 @@
+import { ICandidatePersonalQualities } from './candidate-personal-qualities.model';
 import { Employee } from './employee.model';
 import {
 	ICandidateFeedback,
 	ICandidateInterviewers,
-	ICandidateCriterion
+	ICandidateTechnologies
 } from '@gauzy/models';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-
 export interface ICandidateInterview extends IBaseEntityModel {
 	title: string;
 	candidateId?: string;
@@ -16,7 +16,8 @@ export interface ICandidateInterview extends IBaseEntityModel {
 	note?: string;
 	feedbacks?: ICandidateFeedback[];
 	employees?: Employee[];
-	criterions?: ICandidateCriterion;
+	technologies?: ICandidateTechnologies[];
+	personalQualities?: ICandidatePersonalQualities[];
 }
 
 export interface ICandidateInterviewFindInput extends IBaseEntityModel {
@@ -28,7 +29,8 @@ export interface ICandidateInterviewFindInput extends IBaseEntityModel {
 	endTime?: Date;
 	note?: string;
 	feedbacks?: ICandidateFeedback[];
-	criterions?: ICandidateCriterion;
+	technologies?: ICandidateTechnologies[];
+	personalQualities?: ICandidatePersonalQualities[];
 }
 
 export interface ICandidateInterviewCreateInput {
@@ -40,5 +42,6 @@ export interface ICandidateInterviewCreateInput {
 	startTime: Date;
 	endTime: Date;
 	feedbacks?: ICandidateFeedback[];
-	criterions?: ICandidateCriterion;
+	technologies?: ICandidateTechnologies[];
+	personalQualities?: ICandidatePersonalQualities[];
 }

@@ -1,10 +1,14 @@
+import { CandidatePersonalQualities } from './../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { CandidateTechnologies } from './../candidate-technologies/candidate-technologies.entity';
 import { Column, Entity, ManyToOne, JoinTable } from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateInterview,
 	ICandidateFeedback,
-	ICandidateInterviewers
+	ICandidateInterviewers,
+	ICandidateTechnologies,
+	ICandidatePersonalQualities
 } from '@gauzy/models';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 import { CandidateFeedback } from '../candidate-feedbacks/candidate-feedbacks.entity';
@@ -47,9 +51,15 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@Column()
 	note?: string;
 
-	// @OneToOne((type) => CandidateInterviewers)
-	// @JoinTable({
-	// 	name: 'candidate_criterions'
-	// })
-	// criterions?: ICandidateCriterions;
+	@ManyToOne((type) => CandidateTechnologies)
+	@JoinTable({
+		name: 'candidate_technology'
+	})
+	technologies?: ICandidateTechnologies[];
+
+	@ManyToOne((type) => CandidatePersonalQualities)
+	@JoinTable({
+		name: 'candidate_personal_quality'
+	})
+	personalQualities?: ICandidatePersonalQualities[];
 }

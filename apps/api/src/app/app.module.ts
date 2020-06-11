@@ -86,7 +86,6 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 import { HelpCenterModule } from './help-center/help-center.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
-import { CandidateCriterionsModule } from './candidate-criterions/candidate-criterions.module';
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
 
 @Module({
@@ -138,10 +137,6 @@ import { CandidateTechnologiesModule } from './candidate-technologies/candidate-
 					{
 						path: '/candidate-technologies',
 						module: CandidateTechnologiesModule
-					},
-					{
-						path: '/candidate-criterions',
-						module: CandidateCriterionsModule
 					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
@@ -367,7 +362,6 @@ import { CandidateTechnologiesModule } from './candidate-technologies/candidate-
 		CandidateInterviewersModule,
 		CandidatePersonalQualitiesModule,
 		CandidateTechnologiesModule,
-		CandidateCriterionsModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
