@@ -2,7 +2,6 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 import { OnInit, Component, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'ng2-smart-table';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { PaymentService } from '../../@core/services/payment.service';
 import { Store } from '../../@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
