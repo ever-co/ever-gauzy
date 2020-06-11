@@ -3,7 +3,6 @@ import { Tag } from './tag.entity';
 import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Organization } from '@gauzy/models';
 
 @Injectable()
 export class TagService extends CrudService<Tag> {
