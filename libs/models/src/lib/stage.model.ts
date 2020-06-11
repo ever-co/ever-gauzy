@@ -4,6 +4,7 @@ export interface Stage extends BaseEntityModel, StageUpdateInput
 {
   description: string;
   pipeline: Pipeline;
+  index: number;
 }
 
 export type StageFindInput = Pick<Stage, 'id' | 'name'>
@@ -16,6 +17,5 @@ export interface StageCreateInput
 {
   description?: string;
   pipelineId?: string;
-  index: number;
   name: string;
 }
