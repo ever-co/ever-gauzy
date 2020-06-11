@@ -1,21 +1,71 @@
 .main {
-	.body {
-		width: 505px;
-	}
+  .body {
+    width: 890px;
+    max-width: 100%;
+  }
 
-	.close {
-		cursor: pointer;
-	}
+  .close {
+    cursor: pointer;
+  }
 
-	.notes {
-		height: 198px;
-	}
+  .notes {
+    height: 198px;
+  }
 
-	nb-card-header .employees {
-		margin-left: 20px;
-		padding-left: 20px;
-		border-left: 1px solid #edf1f7;
+  label,
+  label.label {
+    color: #222b45;
+    font-size: 15px;
+    font-weight: 700;
+  }
 
-		width: 220px;
-	}
+  nb-card-header .employees {
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 1px solid #edf1f7;
+    width: 220px;
+  }
+
+  .nb_list.block_style {
+    display: block;
+  }
+
+  .nb_list_item.item {
+    border: none !important;
+    float: left;
+    padding-left: 0;
+  }
+
+  .nb_action.block_style {
+    padding: 2px 5px !important;
+  }
+
+  button.add_new {
+    border-radius: 50% !important;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    padding-right: 4px !important;
+    margin: 0 !important;
+  }
+
+  span.heading_title {
+    color: #222b45;
+    font-family: Open Sans, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1rem;
+    margin-right: 10px;
+  }
+
+  .nb_toggle {
+    clear: both;
+    display: block;
+  }
+
+  input.input_year,
+  input.input_name,
+  input.input_level {
+    padding: 0.4375rem 0.56rem !important;
+  }
 }
