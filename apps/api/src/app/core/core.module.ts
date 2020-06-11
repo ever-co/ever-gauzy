@@ -88,6 +88,7 @@ import { ProductCategoryTranslation } from '../product-category/product-category
 import { Pipeline } from '../pipeline/pipeline.entity';
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { Stage } from '../stage/stage.entity';
 
 const entities = [
 	Invite,
@@ -169,7 +170,8 @@ const entities = [
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
 	Pipeline,
-	Payment
+	Payment,
+  Stage,
 ];
 
 @Module({

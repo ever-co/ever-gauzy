@@ -87,6 +87,7 @@ import { HelpCenterModule } from './help-center/help-center.module';
 import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
+import { StageModule } from './stage/stage.module';
 
 @Module({
 	imports: [
@@ -404,6 +405,7 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 		EventTypeModule,
 		AvailabilitySlotsModule,
 		PipelineModule,
+    StageModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
