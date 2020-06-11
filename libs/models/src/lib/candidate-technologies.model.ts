@@ -8,6 +8,6 @@ export interface ICandidateTechnologiesFindInput extends IBaseEntityModel {
 	name?: string;
 }
 
-export interface ICandidateTechnologiesVendorCreateInput {
+export interface ICandidateTechnologiesCreateInput {
 	name: string;
 }

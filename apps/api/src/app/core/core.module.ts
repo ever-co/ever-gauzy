@@ -87,6 +87,8 @@ import { HelpCenter } from '../help-center/help-center.entity';
 import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
+import { CandidateCriterions } from '../candidate-criterions/candidate-criterions.entity';
 
 const entities = [
 	Invite,
@@ -149,6 +151,8 @@ const entities = [
 	CandidateInterview,
 	CandidateInterviewers,
 	CandidatePersonalQualities,
+	CandidateTechnologies,
+	CandidateCriterions,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,

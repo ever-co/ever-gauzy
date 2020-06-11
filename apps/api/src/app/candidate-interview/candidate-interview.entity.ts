@@ -46,4 +46,10 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@ApiProperty({ type: String })
 	@Column()
 	note?: string;
+
+	// @OneToOne((type) => CandidateInterviewers)
+	// @JoinTable({
+	// 	name: 'candidate_criterions'
+	// })
+	// criterions?: ICandidateCriterions;
 }

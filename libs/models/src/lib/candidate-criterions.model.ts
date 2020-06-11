@@ -5,17 +5,17 @@ import { ICandidatePersonalQualities } from './candidate-personal-qualities.mode
 export interface ICandidateCriterion extends IBaseEntityModel {
 	technologies: ICandidateTechnologies[];
 	personalQualities: ICandidatePersonalQualities[];
-	organizationId: string;
+	interviewId: string;
 }
 
 export interface ICandidateCriterionFindInput extends IBaseEntityModel {
 	technologies: ICandidateTechnologies[];
 	personalQualities: ICandidatePersonalQualities[];
-	organizationId?: string;
+	interviewId?: string;
 }
 
 export interface ICandidateCriterionCreateInput {
 	technologies: ICandidateTechnologies[];
 	personalQualities: ICandidatePersonalQualities[];
-	organizationId: string;
+	interviewId: string;
 }
