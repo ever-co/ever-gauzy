@@ -323,6 +323,10 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 					{
 						path: '/payments',
 						module: PaymentModule
+					},
+					{
+						path: '/goals',
+						module: GoalModule
 					}
 				]
 			}
@@ -422,7 +426,8 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
-		})
+		}),
+		GoalModule
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

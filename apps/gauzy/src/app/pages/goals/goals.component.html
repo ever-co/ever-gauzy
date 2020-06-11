@@ -31,13 +31,16 @@
 							(click)="createObjective(goal, index)"
 						></nb-action>
 					</nb-actions>
-					<!-- <nb-icon class="ml-auto mr-3 mt-1 float-right" icon="eye" status="primary" (click)="addKeyResult()"></nb-icon> -->
 				</nb-accordion-item-header>
 				<nb-accordion-item-body
 					*ngFor="let keyResult of goal.keyResults"
 				>
 					{{ keyResult.name }}
 					<nb-actions class="ml-auto float-right">
+						<nb-action
+							icon="eye"
+							(click)="keyResultUpdate(index, keyResult)"
+						></nb-action>
 						<nb-action
 							icon="edit"
 							(click)="addKeyResult(index, keyResult)"

@@ -84,6 +84,7 @@ import { HelpCenter } from '../help-center/help-center.entity';
 import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { Goal } from '../goal/goal.entity';
 
 const entities = [
 	Invite,
@@ -121,6 +122,7 @@ const entities = [
 	EquipmentSharing,
 	EmployeeLevel,
 	Task,
+	Goal,
 	TimeSlot,
 	Timesheet,
 	TimeLog,

@@ -28,8 +28,8 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 			name: ['', Validators.required],
 			description: [''],
 			type: ['', Validators.required],
-			targetValue: [null, Validators.required],
-			initialValue: [null, Validators.required],
+			targetValue: [null],
+			initialValue: [null],
 			owner: ['', Validators.required],
 			lead: [''],
 			deadline: ['No Custom Deadline', Validators.required],
@@ -59,7 +59,11 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 	saveKeyResult() {
 		this.closeDialog({
 			...this.keyResultsForm.value,
-			update: null
+			update: this.data.update
+				? this.data.update
+				: this.keyResultsForm.value.initialValue,
+			status: this.data.status ? this.data.status : 'none',
+			progress: this.data.progress ? this.data.progress : 0
 		});
 	}
 

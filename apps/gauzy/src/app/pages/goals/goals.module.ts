@@ -16,7 +16,8 @@ import {
 	NbActionsModule,
 	NbTabsetModule,
 	NbLayoutModule,
-	NbProgressBarModule
+	NbProgressBarModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
@@ -28,6 +29,8 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
 import { SharedModule } from '../../@shared/shared.module';
+import { KeyresultDetailsComponent } from './keyresult-details/keyresult-details.component';
+import { KeyresultUpdateComponent } from './keyresult-update/keyresult-update.component';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -38,7 +41,9 @@ export function HttpLoaderFactory(http: HttpClient) {
 		GoalsComponent,
 		EditObjectiveComponent,
 		EditKeyresultsComponent,
-		GoalDetailsComponent
+		GoalDetailsComponent,
+		KeyresultDetailsComponent,
+		KeyresultUpdateComponent
 	],
 	imports: [
 		CommonModule,
@@ -55,6 +60,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbDatepickerModule,
 		NbTabsetModule,
 		NbLayoutModule,
+		NbToggleModule,
 		NbProgressBarModule,
 		SharedModule,
 		NbDialogModule.forChild(),

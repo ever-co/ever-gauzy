@@ -1,7 +1,7 @@
 <nb-card size="giant" class="min-width-800">
 	<nb-card-header>
 		<div class="main-header">
-			<h4>{{ name }}</h4>
+			<h4>{{ goal.name }}</h4>
 			<nb-icon
 				class="ml-auto mt-1 close"
 				icon="close-outline"
@@ -11,11 +11,13 @@
 		<div class="row mt-3">
 			<ngx-avatar class="ml-3" size="sm" [src]="src" [name]="ownerName">
 			</ngx-avatar>
-			<span class="ml-3 mt-1">Session: {{ deadline }}</span>
+			<span class="ml-3 mt-1">Session: {{ goal.deadline }}</span>
 		</div>
 		<div class="row mt-3">
 			<p class="ml-3">
-				{{ description != '' ? description : 'No Description' }}
+				{{
+					goal.description != '' ? goal.description : 'No Description'
+				}}
 			</p>
 		</div>
 		<div class="row mt-3 text-center">
@@ -23,16 +25,16 @@
 			<div class="col-md-8">
 				<nb-progress-bar
 					class="ml-3"
-					[value]="progress"
+					[value]="goal.progress"
 					[status]="
-						progress < 50
+						goal.progress < 50
 							? 'warning'
-							: progress < 75
+							: goal.progress < 75
 							? 'info'
 							: 'success'
 					"
 					size="small"
-					>{{ progress }}%
+					>{{ goal.progress }}%
 				</nb-progress-bar>
 			</div>
 		</div>
@@ -40,7 +42,7 @@
 	<nb-card-body>
 		<nb-tabset fullWidth>
 			<nb-tab tabTitle="Key Results">
-				<nb-card *ngFor="let keyResult of keyResults">
+				<nb-card *ngFor="let keyResult of goal.keyResults">
 					<nb-card-header>
 						<div class="row">
 							<div class="col-md-8">
@@ -65,7 +67,10 @@
 							</div>
 							<div class="col-md-2">
 								<nb-actions>
-									<nb-action icon="eye"></nb-action>
+									<nb-action
+										(click)="keyResultUpdate(keyResult)"
+										icon="eye"
+									></nb-action>
 								</nb-actions>
 							</div>
 						</div>

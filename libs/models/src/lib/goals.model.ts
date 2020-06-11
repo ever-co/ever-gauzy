@@ -25,4 +25,5 @@ export interface KeyResult {
 	deadline: string;
 	hardDeadline?: Date;
 	softDeadline?: Date;
+	status: string;
 }
