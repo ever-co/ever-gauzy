@@ -5,6 +5,7 @@ import { TagsService } from '../../@core/services/tags.service';
 import { Tag } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { Store } from '../../@core/services/store.service';
 
 @Component({
 	selector: 'ngx-tags-mutation',
@@ -23,7 +24,8 @@ export class TagsMutationComponent extends TranslationBaseComponent
 		protected dialogRef: NbDialogRef<TagsMutationComponent>,
 		private tagsService: TagsService,
 		private fb: FormBuilder,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private store: Store
 	) {
 		super(translateService);
 	}
@@ -37,7 +39,8 @@ export class TagsMutationComponent extends TranslationBaseComponent
 			Object.assign({
 				name: this.form.value.name,
 				description: this.form.value.description,
-				color: this.color
+				color: this.color,
+				organization: this.store.selectedOrganization
 			})
 		);
 		this.closeDialog(tag);
@@ -48,7 +51,8 @@ export class TagsMutationComponent extends TranslationBaseComponent
 			Object.assign({
 				name: this.form.value.name,
 				description: this.form.value.description,
-				color: this.color
+				color: this.color,
+				organization: this.store.selectedOrganization
 			})
 		);
 		this.closeDialog(tag);

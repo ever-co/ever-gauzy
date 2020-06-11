@@ -1,0 +1,85 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h3>
+			{{ 'INVOICES_PAGE.PAYMENTS.HEADER' | translate }}
+		</h3>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<div class="info-container">
+			<div class="date-and-value">
+				<div>
+					{{ 'INVOICES_PAGE.INVOICES_SELECT_DUE_DATE' | translate }}:
+					{{ invoice ? invoice.dueDate.toString().slice(0, 10) : '' }}
+				</div>
+				<div>
+					{{ 'INVOICES_PAGE.PAYMENTS.TOTAL_VALUE' | translate }}:
+					{{
+						invoice
+							? invoice.totalValue + ' ' + invoice.currency
+							: ''
+					}}
+				</div>
+			</div>
+			<div class="total-paid-label">
+				{{ 'INVOICES_PAGE.PAYMENTS.TOTAL_PAID' | translate }}:
+				{{ totalPaid ? totalPaid : 0 }}
+				{{ invoice ? invoice.currency : '' }}
+				<span>
+					<div class="progress-bar-container">
+						<div class="progress-bar">
+							<div class="paid-percent">
+								{{ barWidth }}%
+								{{ 'INVOICES_PAGE.PAYMENTS.PAID' | translate }}
+							</div>
+							<span
+								id="progress-bar-inner"
+								class="progress-bar-inner"
+								style="width: 0%;"
+							></span>
+						</div>
+					</div>
+				</span>
+			</div>
+		</div>
+		<div class="mb-3 buttons">
+			<button
+				class="mr-2"
+				status="success"
+				(click)="recordPayment()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+				{{ 'INVOICES_PAGE.PAYMENTS.RECORD_PAYMENT' | translate }}
+			</button>
+			<button
+				class="mr-2"
+				status="info"
+				(click)="editPayment()"
+				[disabled]="disableButton"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'INVOICES_PAGE.PAYMENTS.EDIT_PAYMENT' | translate }}
+			</button>
+			<button
+				class="mr-2"
+				status="danger"
+				(click)="deletePayment()"
+				[disabled]="disableButton"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'INVOICES_PAGE.PAYMENTS.DELETE_PAYMENT' | translate }}
+			</button>
+		</div>
+		<ng2-smart-table
+			class="tags-table"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			(userRowSelect)="selectPayment($event)"
+			style="cursor: pointer;"
+			#paymentsTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>

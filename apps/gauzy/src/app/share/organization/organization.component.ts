@@ -5,11 +5,18 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { EmployeesService } from '../../@core/services';
 import { TranslateService } from '@ngx-translate/core';
-import { Organization, PermissionsEnum } from '@gauzy/models';
+import {
+	Organization,
+	OrganizationAwards,
+	OrganizationLanguages,
+	PermissionsEnum
+} from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { first, takeUntil } from 'rxjs/operators';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
+import { OrganizationLanguagesService } from '../../@core/services/organization-languages.service';
+import { OrganizationAwardsService } from '../../@core/services/organization-awards.service';
 
 @Component({
 	selector: 'ngx-organization',
@@ -22,9 +29,13 @@ export class OrganizationComponent extends TranslationBaseComponent
 	hasEditPermission = false;
 	private _ngDestroy$ = new Subject<void>();
 
+	organization_languages: OrganizationLanguages[];
+	awards: OrganizationAwards[];
 	loading = true;
 	imageUrl: string;
 	hoverState: boolean;
+	languageExist: boolean;
+	awardExist: boolean;
 	imageUpdateButton: boolean = false;
 
 	constructor(
@@ -33,6 +44,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 		private organizationsService: OrganizationsService,
 		private toastrService: NbToastrService,
 		private employeesService: EmployeesService,
+		private organization_language_service: OrganizationLanguagesService,
+		private organizationAwardsService: OrganizationAwardsService,
 		private store: Store,
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService
@@ -67,10 +80,50 @@ export class OrganizationComponent extends TranslationBaseComponent
 						.pipe(first())
 						.toPromise();
 					this.imageUrl = this.organization.imageUrl;
+
+					this.reloadPageData();
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}
 			});
+	}
+
+	private async loadLanguages() {
+		const res = await this.organization_language_service.getAll(
+			{
+				organizationId: this.organization.id
+			},
+			['language']
+		);
+		if (res) {
+			this.organization_languages = res.items;
+
+			if (this.organization_languages.length <= 0) {
+				this.languageExist = false;
+			} else {
+				this.languageExist = true;
+			}
+		}
+	}
+
+	private async loadAwards() {
+		const res = await this.organizationAwardsService.getAll({
+			organizationId: this.organization.id
+		});
+		if (res) {
+			this.awards = res.items;
+
+			if (this.awards.length <= 0) {
+				this.awardExist = false;
+			} else {
+				this.awardExist = true;
+			}
+		}
+	}
+
+	private reloadPageData() {
+		this.loadAwards();
+		this.loadLanguages();
 	}
 
 	async saveImage(organization: any) {
@@ -97,6 +150,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 						result
 					);
 					Object.assign(this.organization, result);
+					this.reloadPageData();
 					this.toastrService.primary(
 						this.organization.name + ' page is updated.',
 						'Success'

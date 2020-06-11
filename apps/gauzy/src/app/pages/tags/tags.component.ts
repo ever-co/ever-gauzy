@@ -3,13 +3,15 @@ import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.componen
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TagsService } from '../../@core/services/tags.service';
-import { Tag } from '@gauzy/models';
+import { Tag, Organization } from '@gauzy/models';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
 import { FormGroup } from '@angular/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '../../@core/services/store.service';
+import { Subscription } from 'rxjs';
 
 export interface SelectedTag {
 	data: Tag;
@@ -31,6 +33,8 @@ export class TagsComponent extends TranslationBaseComponent
 	form: FormGroup;
 	data: SelectedTag;
 	disableButton = true;
+	private selectedOrganization: Organization;
+	private subscribeTakingSelectedOrganziation: Subscription;
 
 	@ViewChild('tagsTable') tagsTable;
 
@@ -38,15 +42,22 @@ export class TagsComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private tagsService: TagsService,
 		readonly translateService: TranslateService,
-		private toastrService: NbToastrService
+		private toastrService: NbToastrService,
+		private store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
+		this.subscribeTakingSelectedOrganziation = this.store.selectedOrganization$.subscribe(
+			(org) => {
+				this.selectedOrganization = org;
+				this.loadSettings();
+			}
+		);
+
 		this.loadSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.loadSettings();
 	}
 
 	async selectTag(data) {
@@ -134,11 +145,18 @@ export class TagsComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedTag = null;
-		const { items } = await this.tagsService.getAllTags();
-		this.smartTableSource.load(items);
+		const { items } = await this.tagsService.getAllTags(['organization']);
+
+		const filteredItems = items.filter(
+			(data) => data.organization.id === this.selectedOrganization.id
+		);
+
+		this.smartTableSource.load(filteredItems);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		this.subscribeTakingSelectedOrganziation.unsubscribe();
+	}
 
 	_applyTranslationOnSmartTable() {
 		this.translateService.onLangChange.subscribe(() => {

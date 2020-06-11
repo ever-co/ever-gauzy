@@ -125,7 +125,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				0,
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
-			paid: [''],
+			// paid: [''],
 			tax: [
 				0,
 				Validators.compose([Validators.required, Validators.min(0)])
@@ -360,7 +360,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				tax: invoiceData.tax,
 				taxType: invoiceData.taxType,
 				terms: invoiceData.terms,
-				paid: invoiceData.paid,
+				paid: false,
 				totalValue: +this.total.toFixed(2),
 				clientId: invoiceData.client.id,
 				organizationId: this.organization.id,

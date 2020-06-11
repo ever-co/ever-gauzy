@@ -312,7 +312,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 				if (org) {
 					this.selectedInvoice = null;
 					const { items } = await this.invoicesService.getAll(
-						['invoiceItems', 'tags'],
+						['invoiceItems', 'tags', 'payments'],
 						{
 							organizationId: org.id,
 							isEstimate: this.isEstimate
@@ -347,14 +347,14 @@ export class InvoicesComponent extends TranslationBaseComponent
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '40%',
+					width: '30%',
 					renderComponent: NotesWithTagsComponent
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'text',
 					filter: false,
-					width: '40%',
+					width: '30%',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
 					}
@@ -364,7 +364,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					type: 'custom',
 					renderComponent: InvoicePaidComponent,
 					filter: false,
-					width: '15%'
+					width: '40%'
 				}
 			}
 		};

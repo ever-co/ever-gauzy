@@ -1,13 +1,13 @@
 import { IHelpCenter } from '@gauzy/models';
 import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
-import { TreeComponent } from 'angular-tree-component';
+import { TreeComponent, ITreeOptions } from 'angular-tree-component';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isEqual } from './delete-node';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
 import { HelpCenterService } from '../../@core/services/help-center.service';
@@ -23,6 +23,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	constructor(
 		private dialogService: NbDialogService,
 		private readonly fb: FormBuilder,
+		private readonly toastrService: NbToastrService,
 		private sanitizer: DomSanitizer,
 		private helpService: HelpCenterService,
 		readonly translateService: TranslateService
@@ -33,6 +34,12 @@ export class SidebarComponent extends TranslationBaseComponent
 	public articleName = 'Chose any article';
 	public articleDesc = '';
 	public articleData: SafeHtml;
+	public tempData: string;
+	public tempNodes: IHelpCenter[] = [];
+	public languages = ['en', 'ru', 'he', 'bg'];
+	public colors = ['black', 'blue'];
+	public selectedLang = '';
+	public selectedColor = '';
 	public showArticleButton = false;
 	public showCategoryButton = false;
 	public nodeId = 0;
@@ -42,9 +49,67 @@ export class SidebarComponent extends TranslationBaseComponent
 	public isVisibleEdit = false;
 	public isChosenNode = false;
 	public nodes: IHelpCenter[] = [];
+	options: ITreeOptions = {
+		allowDrag: true,
+		allowDrop: (el, { parent, index }) => {
+			if (parent.data.flag === 'article') {
+				return false;
+			} else {
+				return true;
+			}
+		}
+	};
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
 
+	async onMoveNode($event) {
+		// console.log($event.node.id);
+		for (const node of this.tempNodes) {
+			// console.log(node.id);
+			if (node.id === $event.node.id) {
+				// console.log(node);
+				// 	if (!$event.to.parent.virtual) {
+				// 		await this.helpService.update(node.id, {
+				// 			parent: $event.to.parent,
+				// 			index: $event.to.index
+				// 		});
+				// 	} else {
+				// 		await this.helpService.update(node.id, {
+				// 			// parent: null,
+				// 			index: $event.to.index
+				// 		});
+				// 	}
+				// if (node.children.length !== 0)
+				// 	await this.helpService.update(node.id, {
+				// 		children: node.children
+				// 	});
+			}
+			// if (node.parent.id === $event.to.parent) {
+			// 	console.log('child');
+			// }
+		}
+		// const movedNode = $event.node;
+		// console.log(movedNode);
+		// if (!$event.to.parent.virtual) {
+		// 	await this.helpService.update(movedNode.id, {
+		// 		parent: $event.to.parent,
+		// 		index: $event.to.index
+		// 	});
+		// } else {
+		// 	await this.helpService.update(movedNode.id, {
+		// 		index: $event.to.index
+		// 	});
+		// }
+
+		// if ($event.node.children)
+		// 	await this.helpService.update(movedNode.id, {
+		// 		children: $event.node.children
+		// 	});
+		this.loadMenu();
+		this.tree.treeModel.update();
+		this.toastrSuccess('MOVED_ARTICLE');
+		this.toastrSuccess('MOVED_CATEGORY');
+	}
 	addNode() {
 		this.isVisibleAdd = true;
 	}
@@ -63,8 +128,12 @@ export class SidebarComponent extends TranslationBaseComponent
 				icon: 'book-open-outline',
 				flag: 'category',
 				privacy: 'eye-outline',
+				language: 'en',
+				color: 'black',
+				index: this.nodes.length,
 				children: []
 			});
+			this.toastrSuccess('CREATED_CATEGORY');
 		} else {
 			await this.helpService.create({
 				name: `${event.target.value}`,
@@ -72,8 +141,12 @@ export class SidebarComponent extends TranslationBaseComponent
 				flag: 'article',
 				privacy: 'eye-outline',
 				description: '',
+				language: 'en',
+				color: 'black',
+				index: this.nodes.length,
 				data: ''
 			});
+			this.toastrSuccess('CREATED_ARTICLE');
 		}
 		this.loadMenu();
 		this.tree.treeModel.update();
@@ -82,15 +155,20 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.showCategoryButton = false;
 	}
 	onNodeClicked(node: any) {
+		console.log(node.data.index);
 		this.nodeId = node.data.id;
 		this.isChosenNode = true;
 		this.articleName = node.data.name;
+		this.selectedLang = node.data.language;
+		this.selectedColor = node.data.color;
 		if (node.data.flag === 'article') {
 			this.articleDesc = node.data.description;
-			this.articleData = node.data.data as SafeHtml;
+			this.articleData = this.sanitizer.bypassSecurityTrustHtml(
+				`${node.data.data}`
+			);
 			this.chosenCategory = false;
 			this.chosenArticle = true;
-			this.loadFormData();
+			this.loadFormData(node.data);
 		} else {
 			this.chosenCategory = true;
 			this.chosenArticle = false;
@@ -122,11 +200,10 @@ export class SidebarComponent extends TranslationBaseComponent
 	async changePrivacy(node: any) {
 		this.onNodeClicked(node);
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		if (someNode.data.privacy === 'eye-outline') {
-			someNode.data.privacy = 'eye-off-outline';
-		} else {
-			someNode.data.privacy = 'eye-outline';
-		}
+		someNode.data.privacy =
+			someNode.data.privacy === 'eye-outline'
+				? 'eye-off-outline'
+				: 'eye-outline';
 		await this.helpService.update(someNode.data.id, {
 			privacy: `${someNode.data.privacy}`
 		});
@@ -138,9 +215,12 @@ export class SidebarComponent extends TranslationBaseComponent
 		someNode.data.name = event.target.value;
 		this.isVisibleEdit = false;
 		await this.helpService.update(someNode.data.id, {
-			name: `${someNode.data.name}`
+			name: `${someNode.data.name}`,
+			language: this.selectedLang,
+			color: this.selectedColor
 		});
 		this.loadMenu();
+		this.toastrSuccess('EDITED_CATEGORY');
 	}
 	onCloseEditing() {
 		this.isVisibleEdit = false;
@@ -156,20 +236,19 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.tree.treeModel.update();
 		this.isChosenNode = false;
 		this.articleName = 'Chose any article';
+		this.toastrSuccess('DELETED');
 	}
 
-	loadFormData() {
-		this.form = this.fb.group({
-			name: [this.articleName],
-			desc: [this.articleDesc],
-			data: [this.articleData]
+	loadFormData(data) {
+		this.form.patchValue({
+			name: data.name,
+			desc: data.description,
+			data: data.data.toString()
 		});
 	}
 
 	editData(value: string) {
-		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		this.articleData = this.sanitizer.bypassSecurityTrustHtml(value);
-		someNode.data.data = this.articleData;
+		this.tempData = value;
 	}
 
 	async submit() {
@@ -178,23 +257,51 @@ export class SidebarComponent extends TranslationBaseComponent
 		someNode.data.name = this.form.controls.name.value;
 		this.articleDesc = someNode.data.description;
 		this.articleName = someNode.data.name;
+		this.articleData = this.tempData;
 		await this.helpService.update(someNode.data.id, {
 			name: `${someNode.data.name}`,
 			description: `${someNode.data.description}`,
-			data: `${someNode.data.data}`
+			data: this.tempData,
+			language: this.selectedLang,
+			color: this.selectedColor
 		});
+		this.toastrSuccess('EDITED_ARTICLE');
 		this.loadMenu();
 		this.isVisibleEdit = false;
 	}
 
-	private async loadMenu() {
-		const result = await this.helpService.getAll();
+	async loadMenu() {
+		const result = await this.helpService.getAll(['parent', 'children']);
 		if (result) {
-			this.nodes = result.items;
+			this.tempNodes = result.items;
+			this.nodes = this.tempNodes.filter((item) => item.parent === null);
+			this.sortMenu(this.nodes);
 		}
 	}
+
+	sortMenu(nodes) {
+		for (const node of nodes) {
+			if (node.children) {
+				this.sortMenu(node.children);
+			}
+			nodes.sort((a, b) => a.index - b.index);
+		}
+	}
+
+	private toastrSuccess(text: string) {
+		this.toastrService.success(
+			this.getTranslation('TOASTR.TITLE.SUCCESS'),
+			this.getTranslation(`TOASTR.MESSAGE.${text}`)
+		);
+	}
+
 	ngOnInit() {
 		this.loadMenu();
+		this.form = this.fb.group({
+			name: [''],
+			desc: [''],
+			data: ['']
+		});
 	}
 
 	ngOnDestroy() {
