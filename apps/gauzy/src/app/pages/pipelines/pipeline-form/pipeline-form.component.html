@@ -14,7 +14,7 @@
         <textarea nbInput formControlName="description" fullWidth [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"></textarea>
       </nb-form-field>
     </nb-card-body>
-    <nb-card-footer>
+    <nb-card-footer class="text-right">
       <button *ngIf="pipeline?.id" type="submit" nbButton status="info" [disabled]="!form.valid">
         <nb-icon pack="eva" icon="edit-outline"></nb-icon>
         <span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
