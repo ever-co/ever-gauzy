@@ -27,7 +27,7 @@ export class Stage extends Base implements IStage
 
   @ApiProperty({ type: Number, minimum: 1 })
   @Column({ type: 'int' })
-  @Min( 0 )
+  @Min( 1 )
   @IsNotEmpty()
   @IsNumber()
   public index: number;
