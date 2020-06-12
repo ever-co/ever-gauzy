@@ -20,7 +20,7 @@ export class KeyresultUpdateComponent implements OnInit {
 		console.log(this.keyResult);
 		this.keyresultUpdateForm = this.fb.group({
 			newValueNumber: [null],
-			newValueBoolean: [false],
+			newValueBoolean: [0],
 			newStatus: ['none']
 		});
 		this.keyresultUpdateForm.patchValue({
@@ -35,12 +35,13 @@ export class KeyresultUpdateComponent implements OnInit {
 			});
 		} else if (this.keyResult.type === 'True/False') {
 			this.keyresultUpdateForm.patchValue({
-				newValueBoolean: this.keyResult.update
+				newValueBoolean: this.keyResult.update === 1 ? true : false
 			});
 		}
 	}
 
 	closeDialog() {
+		console.log(this.keyresultUpdateForm.value);
 		this.dialogRef.close();
 	}
 
@@ -56,11 +57,13 @@ export class KeyresultUpdateComponent implements OnInit {
 			const updateDiff =
 				this.keyresultUpdateForm.value.newValueNumber -
 				this.keyResult.initialValue;
-			this.keyResult.progress =
-				(Math.abs(updateDiff) / Math.abs(diff)) * 100;
+			this.keyResult.progress = Math.round(
+				(Math.abs(updateDiff) / Math.abs(diff)) * 100
+			);
 		} else if (this.keyResult.type === 'True/False') {
-			this.keyResult.update = this.keyresultUpdateForm.value.newValueBoolean;
-			this.keyResult.progress = this.keyResult.update === false ? 0 : 100;
+			this.keyResult.update =
+				this.keyresultUpdateForm.value.newValueBoolean === true ? 1 : 0;
+			this.keyResult.progress = this.keyResult.update === 0 ? 0 : 100;
 		}
 		this.keyResult.status = this.keyresultUpdateForm.value.newStatus;
 		this.dialogRef.close(this.keyResult);

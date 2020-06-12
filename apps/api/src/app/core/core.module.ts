@@ -88,6 +88,7 @@ import { ProductCategoryTranslation } from '../product-category/product-category
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
 import { Goal } from '../goal/goal.entity';
+import { KeyResult } from '../keyresult/keyresult.entity';
 
 const entities = [
 	Invite,
@@ -129,6 +130,7 @@ const entities = [
 	EmployeeLevel,
 	Task,
 	Goal,
+	KeyResult,
 	TimeSlot,
 	Timesheet,
 	TimeLog,

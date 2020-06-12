@@ -87,6 +87,7 @@ import { HelpCenterModule } from './help-center/help-center.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
 import { GoalModule } from './goal/goal.module';
+import { KeyResultModule } from './keyresult/keyresult.module';
 
 @Module({
 	imports: [
@@ -343,6 +344,10 @@ import { GoalModule } from './goal/goal.module';
 					{
 						path: '/goals',
 						module: GoalModule
+					},
+					{
+						path: '/key-results',
+						module: KeyResultModule
 					}
 				]
 			}
@@ -400,6 +405,8 @@ import { GoalModule } from './goal/goal.module';
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		GoalModule,
+		KeyResultModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,
@@ -445,8 +452,7 @@ import { GoalModule } from './goal/goal.module';
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
-		}),
-		GoalModule
+		})
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],

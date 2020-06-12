@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { Goals } from '@gauzy/models';
+import { Goals, KeyResult } from '@gauzy/models';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { KeyresultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
+import { KeyresultService } from '../../../@core/services/keyresult.service';
 
 @Component({
 	selector: 'ga-goal-details',
@@ -17,7 +18,8 @@ export class GoalDetailsComponent implements OnInit {
 	constructor(
 		private dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private employeeService: EmployeesService,
-		private dialogService: NbDialogService
+		private dialogService: NbDialogService,
+		private keyResultService: KeyresultService
 	) {}
 
 	async ngOnInit() {
@@ -38,10 +40,7 @@ export class GoalDetailsComponent implements OnInit {
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			const keyResultIndex = this.goal.keyResults.findIndex(
-				(element) => element.name === selectedkeyResult.name
-			);
-			this.goal.keyResults[keyResultIndex] = response;
+			await this.keyResultService.update(selectedkeyResult.id, response);
 			const keyResNumber = this.goal.keyResults.length * 100;
 			this.goal.progress = this.calculateGoalProgress(
 				keyResNumber,
@@ -52,7 +51,10 @@ export class GoalDetailsComponent implements OnInit {
 
 	calculateGoalProgress(totalCount, keyResults) {
 		console.table(keyResults);
-		const progressTotal = keyResults.reduce((a, b) => a + b.progress, 0);
+		const progressTotal = keyResults.reduce(
+			(a: number, b: KeyResult) => a + b.progress,
+			0
+		);
 		console.log((progressTotal / totalCount) * 100);
 		return (progressTotal / totalCount) * 100;
 	}

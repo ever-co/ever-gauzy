@@ -14,6 +14,12 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
+		<div class="row tex-center p-5" *ngIf="noGoals == true">
+			<p>
+				You haven't created any Objectives yet. Click Add New to create
+				one.
+			</p>
+		</div>
 		<nb-accordion
 			class="mb-3"
 			*ngFor="let goal of goals; let index = index"

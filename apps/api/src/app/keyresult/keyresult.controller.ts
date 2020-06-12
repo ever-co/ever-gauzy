@@ -10,37 +10,38 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { GoalService } from './goal.service';
-import { Goal } from './goal.entity';
+import { KeyResult } from './keyresult.entity';
 import { CrudController } from '../core';
 import { AuthGuard } from '@nestjs/passport';
+import { KeyResultService } from './keyresult.service';
 
-@ApiTags('Goals')
+@ApiTags('KeyResults')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
-export class GoalController extends CrudController<Goal> {
-	constructor(private readonly goalService: GoalService) {
-		super(goalService);
+export class KeyResultController extends CrudController<KeyResult> {
+	constructor(private readonly keyResultService: KeyResultService) {
+		super(keyResultService);
 	}
 
-	@ApiOperation({ summary: 'Find all Goals.' })
+	@ApiOperation({ summary: 'Find all keyresults.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found goals',
-		type: Goal
+		description: 'Found keyresults',
+		type: KeyResult
 	})
 	@Post('/create')
-	async createGoal(@Body() entity: Goal): Promise<any> {
-		return this.goalService.create(entity);
+	async createKeyResult(@Body() entity: KeyResult): Promise<any> {
+		console.log('hello');
+		return this.keyResultService.create(entity);
 	}
 
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('all')
-	async getAll() {
-		return this.goalService.findAll();
+	@Get(':id')
+	async getAll(@Param('id') findInput: string) {
+		return this.keyResultService.findAll({ where: { goalId: findInput } });
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -59,11 +60,14 @@ export class GoalController extends CrudController<Goal> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(@Param('id') id: string, @Body() entity: Goal): Promise<Goal> {
+	async update(
+		@Param('id') id: string,
+		@Body() entity: KeyResult
+	): Promise<KeyResult> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		try {
-			return this.goalService.create({
+			return this.keyResultService.create({
 				id,
 				...entity
 			});

@@ -1,6 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import {
+	FormGroup,
+	FormBuilder,
+	Validators,
+	FormControl
+} from '@angular/forms';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -16,6 +21,7 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 	keyResultsForm: FormGroup;
 	data: KeyResult;
 	showAllEmployees = false;
+	softDeadline: FormControl;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyresultsComponent>,
@@ -29,13 +35,14 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 			description: [''],
 			type: ['', Validators.required],
 			targetValue: [null],
-			initialValue: [null],
+			initialValue: [0],
 			owner: ['', Validators.required],
 			lead: [''],
 			deadline: ['No Custom Deadline', Validators.required],
 			softDeadline: [null],
 			hardDeadline: [null]
 		});
+
 		this.employeeService
 			.getAll(['user'])
 			.pipe(takeUntil(this._ngDestroy$))
@@ -48,7 +55,7 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 	}
 
 	selectEmployee(event, control) {
-		if (control == 'lead') {
+		if (control === 'lead') {
 			this.keyResultsForm.patchValue({ lead: event });
 		} else {
 			this.keyResultsForm.patchValue({ owner: event });
@@ -57,14 +64,23 @@ export class EditKeyresultsComponent implements OnInit, OnDestroy {
 	}
 
 	saveKeyResult() {
-		this.closeDialog({
-			...this.keyResultsForm.value,
-			update: this.data.update
-				? this.data.update
-				: this.keyResultsForm.value.initialValue,
-			status: this.data.status ? this.data.status : 'none',
-			progress: this.data.progress ? this.data.progress : 0
-		});
+		if (!!this.data) {
+			this.closeDialog({
+				...this.keyResultsForm.value,
+				update: this.data.update
+					? this.data.update
+					: this.keyResultsForm.value.initialValue,
+				status: this.data.status ? this.data.status : 'none',
+				progress: this.data.progress ? this.data.progress : 0
+			});
+		} else {
+			this.closeDialog({
+				...this.keyResultsForm.value,
+				update: this.keyResultsForm.value.initialValue,
+				status: 'none',
+				progress: 0
+			});
+		}
 	}
 
 	closeDialog(data = null) {
