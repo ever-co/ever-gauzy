@@ -14,7 +14,7 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	async findOneByName(name: string): Promise<Tag> {
-		const query = await this.repository
+		const query = await this.tagRepository
 			.createQueryBuilder('tag')
 			.where('"tag"."name" = :name', {
 				name
@@ -24,14 +24,14 @@ export class TagService extends CrudService<Tag> {
 	}
 
 	async findTagsByOrgLevel(relations: any, orgId: any): Promise<any> {
-		const allTags = await this.repository.find({
+		const allTags = await this.tagRepository.find({
 			where: [{ organization: orgId }],
 			relations: relations
 		});
 		return allTags;
 	}
 	async findTagsByTenantLevel(relations: any, tenantId: any): Promise<any> {
-		const allTags = await this.repository.find({
+		const allTags = await this.tagRepository.find({
 			where: [{ tenant: tenantId }],
 			relations: relations
 		});
