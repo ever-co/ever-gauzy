@@ -56,6 +56,7 @@ import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimat
 import { PaymentsComponent } from './invoice-payments/payments.component';
 import { PaymentService } from '../../@core/services/payment.service';
 import { PaymentMutationComponent } from './invoice-payments/payment-mutation/payment-mutation.component';
+import { TasksStoreService } from '../../@core/services/tasks-store.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -103,7 +104,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		OrganizationProjectsService,
 		EmployeesService,
 		ProductService,
-		PaymentService
+		PaymentService,
+		TasksStoreService
 	],
 	entryComponents: [
 		InvoicesComponent,
