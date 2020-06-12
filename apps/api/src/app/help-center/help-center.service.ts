@@ -21,4 +21,15 @@ export class HelpCenterService extends CrudService<HelpCenter> {
 			.createQueryBuilder('knowledge_base')
 			.getMany();
 	}
+	// TODO
+	// async getInterviewersByInterviewId(
+	// 	interviewId: string
+	// ): Promise<CandidateInterviewers[]> {
+	// 	return await this.repository
+	// 		.createQueryBuilder('candidate_interviewers')
+	// 		.where('candidate_interviewers.interviewId = :interviewId', {
+	// 			interviewId
+	// 		})
+	// 		.getMany();
+	// }
 }

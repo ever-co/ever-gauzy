@@ -1,6 +1,6 @@
 import { IHelpCenter } from '@gauzy/models';
 
-export function isEqual(graph: IHelpCenter[], id: number) {
+export function isEqual(graph: IHelpCenter[], id: string) {
 	const succeesCondition = (node) => node.id === id;
 	const i = graph.findIndex(succeesCondition);
 	if (i >= 0) {

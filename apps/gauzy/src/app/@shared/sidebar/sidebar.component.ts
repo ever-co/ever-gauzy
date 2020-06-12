@@ -44,7 +44,7 @@ export class SidebarComponent extends TranslationBaseComponent
 	public selectedColor = '';
 	public showArticleButton = false;
 	public showCategoryButton = false;
-	public nodeId = 0;
+	public nodeId = '';
 	public chosenCategory = false;
 	public chosenArticle = false;
 	public isVisibleAdd = false;
@@ -75,26 +75,21 @@ export class SidebarComponent extends TranslationBaseComponent
 		}
 	}
 	async onMoveNode($event) {
-		console.log($event);
 		this.updateIndexes(
 			$event.from.parent.children,
 			$event.to.parent.children
 		);
 		for (const node of this.tempNodes) {
-			// await this.helpService.update(node.id, {
-			// 	index: $event.to.parent,
-			// });
 			if (node.id === $event.node.id) {
-				console.log('moved noda');
-				if (!$event.to.parent.virtual) {
-					await this.helpService.update(node.id, {
-						parent: $event.to.parent
-					});
-				} else {
-					await this.helpService.update(node.id, {
-						parent: null
-					});
-				}
+				// if (!$event.to.parent.virtual) {
+				// 	await this.helpService.update(node.id, {
+				// 		parent: $event.to.parent
+				// 	});
+				// } else {
+				// 	await this.helpService.update(node.id, {
+				// 		parent: null
+				// 	});
+				// }
 				if (node.children.length !== 0) {
 					this.toastrSuccess('MOVED_CATEGORY');
 				} else {
@@ -102,7 +97,7 @@ export class SidebarComponent extends TranslationBaseComponent
 				}
 			}
 		}
-		this.loadMenu();
+		// this.loadMenu();
 		this.tree.treeModel.update();
 	}
 	addNode() {
@@ -150,19 +145,20 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.showCategoryButton = false;
 	}
 	onNodeClicked(node: any) {
-		this.nodeId = node.data.id;
+		// console.log(node);
+		this.nodeId = node.id.toString();
 		this.isChosenNode = true;
-		this.articleName = node.data.name;
-		this.selectedLang = node.data.language;
-		this.selectedColor = node.data.color;
-		if (node.data.flag === 'article') {
-			this.articleDesc = node.data.description;
+		this.articleName = node.name;
+		this.selectedLang = node.language;
+		this.selectedColor = node.color;
+		if (node.flag === 'article') {
+			this.articleDesc = node.description;
 			this.articleData = this.sanitizer.bypassSecurityTrustHtml(
-				`${node.data.data}`
+				`${node.data}`
 			);
 			this.chosenCategory = false;
 			this.chosenArticle = true;
-			this.loadFormData(node.data);
+			this.loadFormData(node);
 		} else {
 			this.chosenCategory = true;
 			this.chosenArticle = false;
@@ -233,6 +229,59 @@ export class SidebarComponent extends TranslationBaseComponent
 		this.toastrSuccess('DELETED');
 	}
 
+	prevArticle() {
+		for (const node of this.tempNodes)
+			if (node.id === this.nodeId.toString()) {
+				// TODO this.onNodeClicked(node);
+				const childNodes = this.tempNodes.filter(
+					(item) =>
+						((item.parent &&
+							node.parent &&
+							item.parent.id === node.parent.id) ||
+							(item.parent === null && node.parent === null)) &&
+						item.flag === 'article'
+				);
+				childNodes.forEach((child) => {
+					if (child.index === node.index - 1) {
+						this.nodeId = child.id;
+						this.articleName = child.name;
+						this.selectedLang = child.language;
+						this.selectedColor = child.color;
+						this.articleDesc = child.description;
+						this.articleData = this.sanitizer.bypassSecurityTrustHtml(
+							`${child.data}`
+						);
+					}
+				});
+			}
+	}
+
+	nextArticle() {
+		for (const node of this.tempNodes)
+			if (node.id === this.nodeId.toString()) {
+				const childNodes = this.tempNodes.filter(
+					(item) =>
+						((item.parent &&
+							node.parent &&
+							item.parent.id === node.parent.id) ||
+							(item.parent === null && node.parent === null)) &&
+						item.flag === 'article'
+				);
+				childNodes.forEach((child) => {
+					if (child.index === node.index + 1) {
+						this.nodeId = child.id;
+						this.articleName = child.name;
+						this.selectedLang = child.language;
+						this.selectedColor = child.color;
+						this.articleDesc = child.description;
+						this.articleData = this.sanitizer.bypassSecurityTrustHtml(
+							`${child.data}`
+						);
+					}
+				});
+			}
+	}
+
 	loadFormData(data) {
 		this.form.patchValue({
 			name: data.name,
@@ -268,8 +317,6 @@ export class SidebarComponent extends TranslationBaseComponent
 		const result = await this.helpService.getAll(['parent', 'children']);
 		if (result) {
 			this.tempNodes = result.items;
-			for (const node of this.tempNodes)
-				console.log(node.name, node.index);
 			this.nodes = this.tempNodes.filter((item) => item.parent === null);
 			this.sortMenu(this.nodes);
 		}

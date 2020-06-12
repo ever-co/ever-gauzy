@@ -1,8 +1,9 @@
 @import '~angular-tree-component/dist/angular-tree-component.css';
 
 .sidemenu {
+  display: flex;
   flex-direction: row;
-  min-height: 800px;
+  min-height: 690px;
 }
 
 .sidebar {
@@ -76,4 +77,29 @@
 
 .close-add-buttons {
   margin-bottom: 5px;
+}
+
+.footer-field {
+  justify-content: space-between;
+  flex-direction: row;
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.data {
+  height: 82%;
+}
+
+.footer-buttons {
+  background-color: white !important;
+  border-color: white !important;
+  color: grey !important;
+}
+
+.footer-buttons:focus {
+  box-shadow: none !important;
+  background-color: white !important;
+  border-color: white !important;
+  color: grey !important;
 }
