@@ -66,7 +66,6 @@ export class CandidateTechnologiesController extends CrudController<
 	@Delete('deleteBulk')
 	async deleteBulk(@Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { id = null } = data;
-		console.log('00000000', id);
 		return this.commandBus.execute(
 			new CandidateTechnologiesBulkDeleteCommand(id)
 		);

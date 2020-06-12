@@ -211,7 +211,6 @@ export class CandidateInterviewMutationComponent
 			interviewId,
 			criterionsForm.selectedQualities
 		);
-		// console.log(res);
 	}
 	async editInterview() {
 		let deletedIds = [];

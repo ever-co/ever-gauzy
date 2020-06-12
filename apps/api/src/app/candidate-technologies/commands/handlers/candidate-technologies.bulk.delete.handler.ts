@@ -13,7 +13,6 @@ export class CandidateTechnologiesBulkDeleteHandler
 		command: CandidateTechnologiesBulkDeleteCommand
 	): Promise<any> {
 		const { id } = command;
-		console.log('Handler !!!!!!!!', id);
 		const technologies = await this.candidateTechnologiesService.getTechnologiesByInterviewId(
 			id
 		);

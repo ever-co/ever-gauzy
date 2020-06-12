@@ -58,13 +58,12 @@ export class CandidatePersonalQualitiesService {
 			.toPromise();
 	}
 	deleteBulkPersonalQualities(id: string): Promise<any> {
-		console.log(id);
 		return this.http
 			.delete(
-				'/api/candidate-personal-qualities/deleteBulkPersonalQualities'
-				// {
-				// 	params: { id }
-				// }
+				'/api/candidate-personal-qualities/deleteBulkPersonalQualities',
+				{
+					params: { id }
+				}
 			)
 			.pipe(first())
 			.toPromise();
