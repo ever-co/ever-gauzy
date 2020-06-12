@@ -37,7 +37,7 @@ const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 	// to hide title bar, uncomment:
 	// titleBarStyle: 'hidden',
 	webPreferences: {
-		devTools: true,
+		devTools: debugMode,
 		nodeIntegration: debugMode,
 		webSecurity: false
 	}
@@ -115,7 +115,6 @@ function createWindow() {
 }
 
 function createSetupWindow() {
-	const sizes = screen.getPrimaryDisplay().workAreaSize;
 	mainWindowSettings.width = 800;
 	mainWindowSettings.height = 600;
 	mainWindowSettings.frame = false;
