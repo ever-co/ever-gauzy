@@ -24,6 +24,7 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 		AddIconModule,
 		CKEditorModule,
 		TreeModule.forRoot(),
+		NbSelectModule,
 		ThemeModule,
 		FormsModule,
 		NbCardModule,

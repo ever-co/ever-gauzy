@@ -9,35 +9,8 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 
 @Component({
 	selector: 'ga-interviewer-assessment-chart',
-	template: `
-		<h6 style="  margin: 2rem 0 0 0 ;">
-			{{ 'CANDIDATES_PAGE.STATISTIC.INTERVIEWER_ASSESSMENT' | translate }}
-		</h6>
-		<nb-select
-			placeholder="Select an interview"
-			style=" width: 100%; margin: 2rem 0;"
-			(selectedChange)="onInterviewSelected($event)"
-		>
-			<nb-option-group
-				*ngFor="let candidate of candidates"
-				title="{{ candidate.user.name }}"
-			>
-				<nb-option
-					*ngFor="let interview of candidate.interview"
-					[value]="interview"
-				>
-					{{ interview.title }}
-				</nb-option>
-			</nb-option-group>
-		</nb-select>
-
-		<chart
-			style="height: 400px; width: 100%;"
-			type="bar"
-			[data]="data"
-			[options]="options"
-		></chart>
-	`
+	templateUrl: './interviewer-assessment-chart.component.html',
+	styleUrls: ['./interviewer-assessment-chart.component.scss']
 })
 export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
@@ -97,7 +70,7 @@ export class InterviewerAssessmentChartComponent implements OnInit, OnDestroy {
 					datasets: [
 						{
 							maxBarThickness: 150,
-							label: 'Candidate rating per interview',
+							label: 'Assessments from interviewers',
 							backgroundColor: this.backgroundColor,
 							data: this.rating
 						}

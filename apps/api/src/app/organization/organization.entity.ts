@@ -41,10 +41,7 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	tags: Tag[];
 
 	@ApiPropertyOptional({ type: Invoice, isArray: true })
-	@OneToMany(
-		(type) => Invoice,
-		(invoices) => invoices.fromOrganization
-	)
+	@OneToMany((type) => Invoice, (invoices) => invoices.fromOrganization)
 	@JoinColumn()
 	invoices?: Invoice[];
 
@@ -69,12 +66,26 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@Column({ nullable: true })
 	banner: string;
 
+	@ApiProperty({ type: String, maxLength: 4 })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	size: string;
+
 	@ApiProperty({ type: String, maxLength: 600 })
 	@IsString()
 	@Index()
 	@IsOptional()
 	@Column({ nullable: true })
 	short_description: string;
+
+	@ApiProperty({ type: String })
+	@IsString()
+	@Index()
+	@IsOptional()
+	@Column({ nullable: true })
+	client_focus: string;
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -183,6 +194,36 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@IsBoolean()
 	@Column({ nullable: true })
 	invitesAllowed?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_income?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_profits?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_business_paid?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_total_hours?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_minimum_project_size?: boolean;
+
+	@ApiProperty({ type: Boolean })
+	@IsBoolean()
+	@Column({ nullable: true })
+	show_projects_count?: boolean;
 
 	@ApiProperty({ type: Number })
 	@IsNumber()

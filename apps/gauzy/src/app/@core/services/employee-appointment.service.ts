@@ -33,9 +33,7 @@ export class EmployeeAppointmentService {
 		);
 	}
 
-	create(
-		employeeAppointment: EmployeeAppointment
-	): Promise<EmployeeAppointment> {
+	create(employeeAppointment: IEmployeeAppointmentCreateInput): Promise<any> {
 		return this.http
 			.post<IEmployeeAppointmentCreateInput>(
 				`${this.EMPLOYEE_APPOINTMENT_URL}/create`,
@@ -46,11 +44,12 @@ export class EmployeeAppointmentService {
 	}
 
 	update(
-		employeeAppointment: EmployeeAppointment
-	): Promise<EmployeeAppointment> {
+		id: string,
+		employeeAppointment: IEmployeeAppointmentCreateInput
+	): Promise<any> {
 		return this.http
 			.put<EmployeeAppointment>(
-				`${this.EMPLOYEE_APPOINTMENT_URL}/${employeeAppointment.id}`,
+				`${this.EMPLOYEE_APPOINTMENT_URL}/${id}`,
 				employeeAppointment
 			)
 			.pipe(first())

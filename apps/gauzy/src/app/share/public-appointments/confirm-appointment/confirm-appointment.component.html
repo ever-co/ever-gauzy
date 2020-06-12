@@ -1,7 +1,58 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
 		<div class="main-header">
-			<h4>{{ 'PUBLIC_APPOINTMENTS.CONFIRM_APPOINTMENT' | translate }}</h4>
+			<h4>
+				{{ 'PUBLIC_APPOINTMENTS.CONFIRM_APPOINTMENT' | translate }}
+				<nb-icon
+					icon="checkmark-circle-2-outline"
+					class="icons"
+				></nb-icon>
+			</h4>
 		</div>
 	</nb-card-header>
+	<nb-card-body *ngIf="appointment && employee">
+		<nb-card class="p-3">
+			<h6>
+				{{ 'PUBLIC_APPOINTMENTS.DETAILS' | translate }}
+				<nb-icon icon="calendar-outline" class="icons"></nb-icon>
+			</h6>
+			<div class="p-2">
+				<strong>{{ 'PUBLIC_APPOINTMENTS.HOST' | translate }}: </strong
+				><span
+					>{{ employee.user.name }} ({{ employee.user.email }})</span
+				>
+			</div>
+			<div class="p-2">
+				<strong>{{ 'FORM.LABELS.MEETING_AGENDA' | translate }}: </strong
+				><span>{{ appointment.agenda }}</span>
+			</div>
+			<div class="p-2" *ngIf="appointment.description">
+				<strong
+					>{{ 'FORM.LABELS.MEETING_DESCRIPTION' | translate }}:
+				</strong>
+				<span>{{ appointment.description }}</span>
+			</div>
+			<div class="p-2">
+				<strong
+					>{{ 'PUBLIC_APPOINTMENTS.PARTICIPANTS' | translate }}:
+				</strong>
+				<span>{{ appointment.emails }}</span>
+			</div>
+			<div class="p-2">
+				<strong
+					>{{ 'FORM.LABELS.MEETING_LOCATION' | translate }}:
+				</strong>
+				<span>{{ appointment.location }}</span>
+			</div>
+			<div class="p-2">
+				<strong>{{ 'FORM.LABELS.DURATION' | translate }}: </strong>
+				<span>{{ duration }}</span>
+			</div>
+		</nb-card>
+		<nb-card>
+			<div class="p-3 caption-2">
+				<span>{{ 'PUBLIC_APPOINTMENTS.EMAIL_SENT' | translate }} </span>
+			</div>
+		</nb-card>
+	</nb-card-body>
 </nb-card>

@@ -6,6 +6,11 @@
 		<h3 *ngIf="isEstimate">
 			{{ 'INVOICES_PAGE.EDIT_ESTIMATE' | translate }}
 		</h3>
+		<div *ngIf="!isEstimate" class="payment-button">
+			<button status="info" (click)="payments()" nbButton>
+				Payments
+			</button>
+		</div>
 	</nb-card-header>
 
 	<nb-card-body class="body">
@@ -267,17 +272,6 @@
 							id="inputTerms"
 							fullWidth
 						></textarea>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-sm-12">
-					<div class="form-group">
-						<nb-checkbox formControlName="paid">
-							<span style="margin: 0 auto;">{{
-								'INVOICES_PAGE.INVOICES_SELECT_PAID' | translate
-							}}</span>
-						</nb-checkbox>
 					</div>
 				</div>
 			</div>

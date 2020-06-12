@@ -221,6 +221,8 @@
 			"ADD_POSITION": "Add position",
 			"ADD_VENDOR": "Add vendor",
 			"ADD_SKILL": "Add skill",
+			"ADD_CANDIDATE_QUALITY": "Add personal quality",
+			"ADD_TECHNOLOGY": "Add technology",
 			"ADD_EXPENSE_CATEGORY": "Add expense category",
 			"CLIENTS": "Clients",
 			"START_DATE_PROJECT": "Project Start Date (optional)",
@@ -361,8 +363,13 @@
 		"SHORT_DESCRIPTION": "Short Description",
 		"OVERVIEW": "Overview",
 		"COMPANY_NAME": "Company Name",
+		"NAME": "Name",
+		"YEAR": "Year",
 		"BANNER": "Banner",
+		"SIZE": "Size",
 		"YEAR_FOUNDED": "Year Founded",
+		"COMPANY_SIZE": "Company Size",
+		"CLIENT_FOCUS": "Client Focus",
 		"DUPLICATE": "Duplicate",
 		"DATE": "Date",
 		"PICK_DATE": "Pick a Date",
@@ -398,7 +405,16 @@
 		"NEW_EXPENSE_VALUE": "New Expense Value",
 		"OFFICIAL_NAME": "This name would be used in tax invoices etc.",
 		"ADD_EVENT_TYPE": "Add Event Type",
-		"EDIT_EVENT_TYPE": " Edit Event Type"
+		"EDIT_EVENT_TYPE": " Edit Event Type",
+		"AWARDS": "Awards",
+		"LEVEL": "Level",
+		"LANGUAGES": "Languages",
+		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Total Income/Monthly Income",
+		"PROFITS": "Profits",
+		"BONUSES_PAID": "Bonuses Paid",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked (over Gauzy of course)",
+		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
+		"PROJECTS_COUNT": "Projects Count"
 	},
 	"MENU": {
 		"DASHBOARD": "Dashboard",
@@ -449,6 +465,8 @@
 			"DOWNLOAD_TEMPLATES": "Download templates"
 		},
 		"TAGS": "Tags",
+		"LANGUAGE": "Language",
+		"LANGUAGES": "Languages",
 		"EQUIPMENT": "Equipment",
 		"EQUIPMENT_SHARING": "Equipment Sharing",
 		"TASKS": "Tasks",
@@ -745,7 +763,14 @@
 		"STATISTIC": {
 			"CANDIDATE_STATISTICS": "Candidate statistics",
 			"CANDIDATE_RATING": "Candidate rating",
-			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview"
+			"INTERVIEWER_ASSESSMENT": "Candidate rating per interview",
+			"NO_DATA": "No data yet ",
+			"SELECT_INTERVIEW": "Select an interview"
+		},
+		"CRITERIONS": {
+			"CANDIDATE_CRITERIONS": "Candidates criterions",
+			"TECHNOLOGY_STACK": "Technology Stack",
+			"PERSONAL_QUALITIES": "Personal Qualities"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -951,6 +976,10 @@
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
 	},
+	"LANGUAGE_PAGE": {
+		"HEADER": "Languages",
+		"ADD_NEW_LANGUAGE": "Add new Language"
+	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
 		"ADD_EQUIPMENT": "Add Equipment",
@@ -1109,7 +1138,8 @@
 		"HELP": "Help",
 		"MANAGE_INTERVIEWS": "Manage interviews",
 		"MANAGE_INVITES": "Manage invites",
-		"CANDIDATE_STATISTIC": "Candidate statistic"
+		"CANDIDATE_STATISTIC": "Candidates statistic",
+		"CANDIDATE_CRITERIONS": "Candidates criterions"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
@@ -1148,6 +1178,7 @@
 		"HEADER": "Invoices",
 		"INVOICE_NUMBER": "Invoice Number",
 		"ESTIMATE_NUMBER": "Estimate Number",
+		"INVOICE_DATE": "Invoice Date",
 		"ESTIMATE_DATE": "Estimate Date",
 		"TOTAL_VALUE": "Total Value",
 		"PAID_STATUS": "Paid Status",
@@ -1253,6 +1284,22 @@
 			"HEADER": "Estimates",
 			"ESTIMATE_NUMBER": "Estimate Number",
 			"ESTIMATE_DATE": "Estimate Date"
+		},
+		"PAYMENTS": {
+			"HEADER": "Payments",
+			"TOTAL_VALUE": "Total Invoice Value",
+			"RECORD_PAYMENT": "Record Payment",
+			"EDIT_PAYMENT": "Edit Payment",
+			"DELETE_PAYMENT": "Delete Payment",
+			"TOTAL_PAID": "Total Paid",
+			"PAID": "Paid",
+			"PAYMENT_DATE": "Payment Date",
+			"AMOUNT": "Amount",
+			"RECORDED_BY": "Recorded By",
+			"NOTE": "Note",
+			"PAYMENT_ADD": "Payment Added",
+			"PAYMENT_EDIT": "Payment Edited",
+			"PAYMENT_DELETE": "Payment Deleted"
 		}
 	},
 	"HEADER": {
@@ -1314,6 +1361,8 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Employment type name is required",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Department name is required",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Vendor name and year are required",
+			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Language name and level are required",
 			"CANDIDATE_SKILL_REQUIRED": "Skill name is required",
 			"CANDIDATE_EDIT_CREATED": "Successfully created",
 			"CANDIDATE_EDIT_UPDATED": "Successfully updated",
@@ -1329,7 +1378,15 @@
 			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PHONE_REQUIRED": "Phone is required!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Phone should only contain numbers!",
-			"SOMETHING_BAD_HAPPENED": "Something bad happened!"
+			"SOMETHING_BAD_HAPPENED": "Something bad happened!",
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} Email template saved successfully",
+			"DELETED": "Successfully deleted",
+			"MOVED_ARTICLE": "Article has been moved",
+			"MOVED_CATEGORY": "Category has been moved",
+			"CREATED_ARTICLE": "Article has been created",
+			"CREATED_CATEGORY": "Category has been created",
+			"EDITED_ARTICLE": "Article has been edited",
+			"EDITED_CATEGORY": "Category has been edited"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1439,6 +1496,16 @@
 				"UPDATE_EMPLOYMENT_TYPE": "Employment type {{ name }} has been updated",
 				"INVALID_EMPLOYMENT_TYPE": "Please check the Name for Employment type input",
 				"DELETE_EMPLOYMENT_TYPE": "Employment type deleted for {{ name }}"
+			},
+			"EDIT_ORGANIZATIONS_AWARDS": {
+				"ADD_AWARD": "New award {{ name }} successfully added!",
+				"INVALID_AWARD_NAME_YEAR": "Please check the Name and Year for Award input",
+				"REMOVE_AWARD": "Award {{ name }} successfully removed!"
+			},
+			"EDIT_ORGANIZATIONS_LANGUAGES": {
+				"ADD_LANGUAGE": "New language {{ name }} successfully added!",
+				"INVALID_LANGUAGE_NAME_LEVEL": "Please check the Name and Level for Language input",
+				"REMOVE_LANGUAGE": "Language {{ name }} successfully removed!"
 			}
 		},
 		"DANGER_ZONE": {
@@ -1512,6 +1579,37 @@
 		"PICK_DATETIME": "Pick a date and time",
 		"DURATION": "Duration:",
 		"EVENT_TYPE": "Event Type:",
-		"CONFIRM_APPOINTMENT": "Appointment confirmation page"
+		"CONFIRM_APPOINTMENT": "Appointment confirmed",
+		"DETAILS": "Booking Details",
+		"PARTICIPANTS": "Participant Emails",
+		"HOST": "Host",
+		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting."
+	},
+	"EMAIL_TEMPLATES_PAGE": {
+		"HEADER": "Email Templates for {{ organizationName }}",
+		"SAVE": "Save",
+		"LABELS": {
+			"LANGUAGE": "Language",
+			"TEMPLATE_NAME": "Template Name",
+			"SUBJECT": "Subject",
+			"EMAIL_BODY": "Email Body",
+			"EMAIL_PREVIEW": "Email Preview",
+			"SUBJECT_PREVIEW": "Subject Preview"
+		},
+		"TEMPLATE_NAMES": {
+			"password": "Password Reset",
+			"welcome-user": "Welcome User",
+			"invite-organization-client": "Invite Organization Client",
+			"email-estimate": "Email Estimate",
+			"email-invoice": "Email Invoice",
+			"invite-employee": "Invite Employee",
+			"invite-user": "Invite User"
+		},
+		"LANGUAGE_CODES": {
+			"en": "English",
+			"ru": "Russian",
+			"he": "Hebrew",
+			"bg": "Bulgarian"
+		}
 	}
 }

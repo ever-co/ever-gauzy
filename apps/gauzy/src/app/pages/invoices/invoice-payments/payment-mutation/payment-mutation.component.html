@@ -1,0 +1,125 @@
+<nb-card class="main">
+	<nb-card-header class="d-flex">
+		<h5>
+			{{
+				(payment
+					? 'INVOICES_PAGE.PAYMENTS.EDIT_PAYMENT'
+					: 'INVOICES_PAGE.PAYMENTS.RECORD_PAYMENT'
+				) | translate
+			}}
+		</h5>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form">
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputPaymentDate" class="label">
+							{{
+								'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
+									| translate
+							}}
+						</label>
+						<input
+							nbInput
+							placeholder="{{
+								'INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'
+									| translate
+							}}"
+							[nbDatepicker]="paymentDatePicker"
+							formControlName="paymentDate"
+							id="inputPaymentDate"
+							fullWidth
+						/>
+						<nb-datepicker #paymentDatePicker></nb-datepicker>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputAmount" class="label">
+							<span>{{
+								'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate
+							}}</span>
+						</label>
+						<input
+							type="number"
+							nbInput
+							placeholder="{{
+								'INVOICES_PAGE.PAYMENTS.AMOUNT' | translate
+							}}"
+							formControlName="amount"
+							id="inputAmount"
+							fullWidth
+						/>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label for="inputCurrency" class="label">
+							{{
+								'INVOICES_PAGE.INVOICES_SELECT_CURRENCY'
+									| translate
+							}}
+						</label>
+						<nb-select
+							class="d-block"
+							formControlName="currency"
+							fullWidth
+						>
+							<nb-option
+								*ngFor="let currency of currencies"
+								value="{{ currency }}"
+							>
+								{{ currency }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label for="inputNote" class="label">
+							{{ 'INVOICES_PAGE.PAYMENTS.NOTE' | translate }}
+						</label>
+						<textarea
+							nbInput
+							placeholder="{{
+								'INVOICES_PAGE.PAYMENTS.NOTE' | translate
+							}}"
+							formControlName="note"
+							id="inputNote"
+							fullWidth
+						>
+						</textarea>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-right">
+		<button status="danger" class="mr-3" nbButton (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			*ngIf="!payment"
+			(click)="addPayment()"
+			status="success"
+			[disabled]="form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+		<button
+			*ngIf="payment"
+			(click)="editPayment()"
+			status="success"
+			[disabled]="form.invalid"
+			nbButton
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
