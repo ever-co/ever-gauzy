@@ -13,4 +13,8 @@ export class CandidatePersonalQualities extends Base
 	@ApiProperty({ type: String })
 	@Column({ nullable: true })
 	interviewId?: string;
+
+	@ApiProperty({ type: Number })
+	@Column({ nullable: true, type: 'numeric' })
+	rating?: number;
 }

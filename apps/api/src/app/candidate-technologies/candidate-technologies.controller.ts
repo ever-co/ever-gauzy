@@ -49,16 +49,8 @@ export class CandidateTechnologiesController extends CrudController<
 		return this.candidateTechnologiesService.delete(id);
 	}
 
-	@ApiOperation({ summary: 'Create Technologies in Bulk' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Technologies have been successfully created.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Post('createBulk')
 	async createBulk(@Body() input: any): Promise<ICandidateTechnologies[]> {
 		const { interviewId = null, technologies = [] } = input;
@@ -70,21 +62,12 @@ export class CandidateTechnologiesController extends CrudController<
 		);
 	}
 
-	@ApiOperation({
-		summary: 'Delete Technologies By Interview Id.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Deleted candidate Technologies',
-		type: CandidateTechnologies
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Delete('deleteBulk')
 	async deleteBulk(@Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { id = null } = data;
+		console.log('00000000', id);
 		return this.commandBus.execute(
 			new CandidateTechnologiesBulkDeleteCommand(id)
 		);

@@ -52,7 +52,9 @@ export class CandidatePersonalQualitiesComponent
 	private async loadQualities() {
 		const res = await this.candidatePersonalQualitiesService.getAll();
 		if (res) {
-			this.personalQualitiesList = res.items;
+			this.personalQualitiesList = res.items.filter(
+				(item) => !item.interviewId
+			);
 		}
 	}
 	async save() {

@@ -22,6 +22,19 @@ export class CandidatePersonalQualitiesService {
 			.toPromise();
 	}
 
+	createBulk(
+		interviewId: string,
+		personalQualities: string[]
+	): Promise<ICandidatePersonalQualities[]> {
+		return this.http
+			.post<ICandidatePersonalQualities[]>(
+				'/api/candidate-personal-qualities/createBulk',
+				{ interviewId, personalQualities }
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	getAll(): Promise<{ items: any[]; total: number }> {
 		return this.http
 			.get<{ items: ICandidatePersonalQualities[]; total: number }>(
@@ -41,6 +54,18 @@ export class CandidatePersonalQualitiesService {
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/candidate-personal-qualities/${id}`)
+			.pipe(first())
+			.toPromise();
+	}
+	deleteBulkPersonalQualities(id: string): Promise<any> {
+		console.log(id);
+		return this.http
+			.delete(
+				'/api/candidate-personal-qualities/deleteBulkPersonalQualities'
+				// {
+				// 	params: { id }
+				// }
+			)
 			.pipe(first())
 			.toPromise();
 	}

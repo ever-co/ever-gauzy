@@ -50,7 +50,9 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent
 	private async loadTechnologies() {
 		const res = await this.candidateTechnologiesService.getAll();
 		if (res) {
-			this.technologiesList = res.items;
+			this.technologiesList = res.items.filter(
+				(item) => !item.interviewId
+			);
 		}
 	}
 	async save() {

@@ -13,7 +13,9 @@ import {
 	Candidate,
 	ICandidateInterview,
 	Employee,
-	IDateRange
+	IDateRange,
+	ICandidatePersonalQualities,
+	ICandidateTechnologies
 } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
@@ -26,6 +28,7 @@ import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form /candidate-criterions-form.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
+import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -71,6 +74,8 @@ export class CandidateInterviewMutationComponent
 		criterions: null,
 		note: ''
 	};
+	personalQualities: ICandidatePersonalQualities[] = null;
+	technologies: ICandidateTechnologies[];
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
 		protected employeesService: EmployeesService,
@@ -80,7 +85,8 @@ export class CandidateInterviewMutationComponent
 		protected candidatesService: CandidatesService,
 		private errorHandler: ErrorHandlingService,
 		private candidateInterviewersService: CandidateInterviewersService,
-		private candidateTechnologiesService: CandidateTechnologiesService
+		private candidateTechnologiesService: CandidateTechnologiesService,
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
 	) {}
 
 	async ngOnInit() {
@@ -173,7 +179,7 @@ export class CandidateInterviewMutationComponent
 					endTime: this.interview.endTime,
 					// TO DO
 					// technologies:
-					// personalQualities:
+					personalQualities: this.personalQualities,
 					note: this.interview.note
 				}
 			);
@@ -196,11 +202,16 @@ export class CandidateInterviewMutationComponent
 	async addCriterions(interviewId: string) {
 		this.candidateCriterionsForm.loadFormData();
 		const criterionsForm = this.candidateCriterionsForm.form.value;
-		// TO DO criterionsForm.selectedQualities
+		// TO DO
 		await this.candidateTechnologiesService.createBulk(
 			interviewId,
 			criterionsForm.selectedTechnologies
 		);
+		this.personalQualities = await this.candidatePersonalQualitiesService.createBulk(
+			interviewId,
+			criterionsForm.selectedQualities
+		);
+		// console.log(res);
 	}
 	async editInterview() {
 		let deletedIds = [];
