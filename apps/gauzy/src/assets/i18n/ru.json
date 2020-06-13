@@ -483,7 +483,7 @@
 		"EMAIL_TEMPLATES": "Шаблоны писем",
 		"HELP_CENTER": "Центр поддержки",
 		"REPORTS": "Отчёты",
-		"GOALS": "Цели",
+		"GOALS": "Голы",
 		"TIME_REPORTS": "Отчеты по времени",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
 		"PAYMENT_GATEWAYS": "Платежные шлюзы",
@@ -723,6 +723,7 @@
 				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
+				"STEP_3": "Шаг3",
 				"NEXT": "Следующий",
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
@@ -771,8 +772,10 @@
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
+			"RATE_CANDIDATE_BY_CRITERIONS": "Оценить кандидата по критериям",
 			"TECHNOLOGY_STACK": "Стек технологий",
-			"PERSONAL_QUALITIES": "Личные качества"
+			"PERSONAL_QUALITIES": "Личные качества",
+			"CHOOSE_CRITERIONS": "Выберите критерии для кандидата"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -974,7 +977,7 @@
 		"TAGS_SELECT_COLOR": "Цвет тега",
 		"TAGS_SELECT_DESCRIPTION": "Описание метки",
 		"ADD_NEW_TAG": "Добавить новый тег",
-		"TENANT_LEVEL": "Уровень арендатора"
+		"TENANT_LEVEL": "Уровень владельца"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
