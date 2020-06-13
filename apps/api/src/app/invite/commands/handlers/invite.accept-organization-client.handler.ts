@@ -62,7 +62,7 @@ export class InviteAcceptOrganizationClientHandler
 		this.rolePermissionService.updateRoles(tenant, role);
 
 		// 4. Create user account for client and link role, tenant and organization
-		const client = await this.authService.register(
+		await this.authService.register(
 			{
 				user: { ...user, tenant, role },
 				password,
