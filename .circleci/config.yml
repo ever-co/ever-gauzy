@@ -21,20 +21,7 @@ jobs:
         machine:
             image: ubuntu-1604:202004-01            
         working_directory: /tmp/workspace/sonarqube        
-        description: Check Code Quality with SonarQube
-        parameters:
-            sonar_server_url:
-                type: string
-                description: "URL of your SonarQube server. e.g.: http://my.sonarqube,server:9000"
-                default: "$SONAR_SERVER"
-            sonar_login:
-                description: "Authentication key (sonar.login paramter) to access SonarQube and perform analysis"
-                type: string
-                default: "$SONAR_TOKEN"
-            sonar_sources:
-                description: "Where the files are located?"
-                type: string
-                default: "$SONAR_SOURCES"
+        description: Check Code Quality with SonarQube        
         steps:
             - checkout
             - run:
@@ -47,9 +34,10 @@ jobs:
                 name: Run Sonarscanner
                 command: |
                     export SONAR_SCANNER_OPTS="-Xmx2048m"
-                    eval ./sonar-scanner-4.3.0.2102/bin/sonar-scanner -Dsonar.host.url=<< parameters.sonar_server_url >> \
-                    -Dsonar.sources=<< parameters.sonar_sources >> \
-                    -Dsonar.login=<< parameters.sonar_login >>
+                    eval ./sonar-scanner-4.3.0.2102/bin/sonar-scanner -Dsonar.host.url=$SONAR_SERVER \
+                    -Dsonar.projectKey=gauzy \
+                    -Dsonar.sources=. \
+                    -Dsonar.login=$SONAR_TOKEN
     build-monorepo-root:
         <<: *defaults
         working_directory: /tmp/workspace/monorepo-root
