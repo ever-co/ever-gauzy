@@ -108,6 +108,7 @@
 		"APPLIED": "Применяется",
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
+		"NO_RESULT": "Нет результатов",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "Русский (Соединенные Штаты)",
@@ -117,9 +118,10 @@
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
-		"EMAIL": "Эл. адрес",
 		"PASSWORD": "Пароль",
 		"CONFIRM": "Подтвердить",
+		"FILTER": "Фильтр",
+		"EMAIL": "Эл. адрес",
 		"LABELS": {
 			"NAME": "Имя",
 			"FIRST_NAME": "Имя (необязательно)",
@@ -276,6 +278,7 @@
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации",
 			"ORGANIZATIONS": "Выберите организации",
+			"ORGANIZATION": "Выберите организацию",
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
@@ -416,6 +419,7 @@
 		"PROJECTS_COUNT": "Количество проектов"
 	},
 	"MENU": {
+		"PIPELINES": "Трубопроводы",
 		"DASHBOARD": "Приборная доска",
 		"APPOINTMENTS": "Назначения",
 		"EVENT_TYPES": "Типы событий",
@@ -1395,7 +1399,9 @@
 			"CREATED_ARTICLE": "Статья создана",
 			"CREATED_CATEGORY": "Категория создана",
 			"EDITED_ARTICLE": "Статья была отредактирована",
-			"EDITED_CATEGORY": "Категория была отредактирована"
+			"EDITED_CATEGORY": "Категория была отредактирована",
+			"PIPELINE_CREATED": "Конвейер создан",
+			"PIPELINE_UPDATED": "Конвейер обновлен"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1637,5 +1643,11 @@
 			"he": "Иврит",
 			"bg": "Болгарский"
 		}
+	},
+	"PIPELINES_PAGE": {
+		"HEADER": "Трубопроводы",
+		"HEADER_FORM_EDIT": "Изменить конвейер",
+		"HEADER_FORM_CREATE": "Создать конвейер",
+		"RECORD_TYPE": "конвейер \"{{ name }}\""
 	}
 }
