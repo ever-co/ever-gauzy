@@ -483,6 +483,7 @@
 		"EMAIL_TEMPLATES": "Email Templates",
 		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
+		"GOALS": "Goals",
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
@@ -658,6 +659,9 @@
 		},
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+	},
+	"GOALS_PAGE": {
+		"HEADER": "All Objectives for "
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
@@ -1300,6 +1304,9 @@
 			"PAYMENT_DELETE": "Payment Deleted"
 		}
 	},
+	"PAYMENTS_PAGE": {
+		"HEADER": "Payments"
+	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
@@ -1538,6 +1545,7 @@
 		"ADD_TIME_SUCCESS": "Time Successfully added"
 	},
 	"TIMESHEET": {
+		"TODAY": "Днес",
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
 		"CALENDAR": "Calendar",
@@ -1545,7 +1553,23 @@
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
-		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit"
+		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit",
+		"SELECT_EMPLOYEE": "Select Employee",
+		"ALL_EMPLOYEE": "Всички служители",
+		"SELECT_SOURCE": "Select Source",
+		"SELECT_ACTIVITY_LEVEL": "Select Activity Level",
+		"SELECT_LOG_TYPE": "Select Log Type",
+		"ADD_TIME_LOGS": "Add Time Logs",
+		"EDIT_TIME_LOGS": "Edit Time Logs",
+		"ADD_TIME": "Add Time",
+		"UPDATE_TIME": "Update Time",
+		"CLOSE": "Затвори",
+		"VALIDATION": {
+			"DESCRIPTION": "Description is required",
+			"TASK": "Please selct task",
+			"PROJECT": "Please selct project",
+			"EMPLOYEE": "Please selct employee"
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
