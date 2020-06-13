@@ -16,6 +16,38 @@ defaults: &defaults
     working_directory: /tmp/workspace
 
 jobs:
+    sonarqube:
+        <<: *defaults
+        working_directory: /tmp/workspace/sonarqube
+        description: Check Code Quality with SonarQube
+        parameters:
+            sonar_server_url:
+                type: string
+                description: "URL of your SonarQube server. e.g.: http://my.sonarqube,server:9000"
+                default: "$SONAR_SERVER"
+            sonar_login:
+                description: "Authentication key (sonar.login paramter) to access SonarQube and perform analysis"
+                type: string
+                default: "$SONAR_TOKEN"
+            sonar_sources:
+                description: "Where the files are located?"
+                type: string
+                default: "$SONAR_SOURCES"
+        steps:
+            - checkout
+            - run:
+                name: Install Sonarqube scanner
+                command: |
+                    wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102.zip
+                    unzip sonar-scanner-cli-4.3.0.2102.zip
+        
+            - run:
+                name: Run Sonarscanner
+                command: |
+                    export SONAR_SCANNER_OPTS="-Xmx2048m"
+                    eval ./sonar-scanner-4.3.0.2102/bin/sonar-scanner -Dsonar.host.url=<< parameters.sonar_server_url >> \
+                    -Dsonar.sources=<< parameters.sonar_sources >> \
+                    -Dsonar.login=<< parameters.sonar_login >>
     build-monorepo-root:
         <<: *defaults
         working_directory: /tmp/workspace/monorepo-root
@@ -169,6 +201,7 @@ workflows:
     version: 2
     build_and_test:
         jobs:
+            - sonarqube
             - build-monorepo-root
             - build-web
             - build-api
