@@ -1,7 +1,8 @@
 import { environment as env, environment } from '@env-api/environment';
 import {
 	UserRegistrationInput as IUserRegistrationInput,
-	LanguagesEnum
+	LanguagesEnum,
+	RolePermissions
 } from '@gauzy/models';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
@@ -38,22 +39,33 @@ export class AuthService {
 		password: string
 	): Promise<{ user: User; token: string } | null> {
 		const user = await this.userService.findOne(findObj, {
-			relations: ['role', 'employee']
+			relations: ['role', 'role.rolePermissions', 'employee']
 		});
 
 		if (!user || !(await bcrypt.compare(password, user.hash))) {
 			return null;
 		}
 
-		const token = sign(
-			{
-				id: user.id,
-				employeeId: user.employee ? user.employee.id : null,
-				role: user.role ? user.role.name : ''
-			},
-			env.JWT_SECRET,
-			{}
-		); // Never expires
+		const tokenData: any = {
+			id: user.id,
+			employeeId: user.employee ? user.employee.id : null
+		};
+
+		if (user.role) {
+			tokenData.role = user.role.name;
+			if (user.role.rolePermissions) {
+				tokenData.permissions = user.role.rolePermissions.map(
+					(rolePermission: RolePermissions) =>
+						rolePermission.permission
+				);
+			} else {
+				tokenData.permissions = null;
+			}
+		} else {
+			tokenData.role = null;
+		}
+
+		const token = sign(tokenData, env.JWT_SECRET, {}); // Never expires
 
 		delete user.hash;
 

@@ -13,7 +13,9 @@ import {
 	Candidate,
 	ICandidateInterview,
 	Employee,
-	IDateRange
+	IDateRange,
+	ICandidatePersonalQualities,
+	ICandidateTechnologies
 } from '@gauzy/models';
 import { Store } from '../../../@core/services/store.service';
 import { FormGroup } from '@angular/forms';
@@ -23,8 +25,10 @@ import { ErrorHandlingService } from '../../../@core/services/error-handling.ser
 import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
-import { CandidateEmailComponent } from '../candidate-email/candidate-email.component';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
+import { CandidateCriterionsFormComponent } from './candidate-criterions-form /candidate-criterions-form.component';
+import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
+import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
 
 @Component({
 	selector: 'ga-candidate-interview-mutation',
@@ -44,14 +48,14 @@ export class CandidateInterviewMutationComponent
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
+	@ViewChild('candidateCriterionsForm')
+	candidateCriterionsForm: CandidateCriterionsFormComponent;
+
 	@ViewChild('candidateInterviewForm')
 	candidateInterviewForm: CandidateInterviewFormComponent;
 
-	@ViewChild('emailCandidateForm')
-	emailCandidateForm: CandidateEmailComponent;
-
-	@ViewChild('emailInterviewerForm')
-	emailInterviewerForm: CandidateEmailComponent;
+	@ViewChild('candidateNotificationForm')
+	candidateNotificationForm: CandidateInterviewFormComponent;
 
 	form: FormGroup;
 	candidateForm: FormGroup;
@@ -61,15 +65,17 @@ export class CandidateInterviewMutationComponent
 	employees: Employee[] = [];
 	candidates: Candidate[] = [];
 	selectedInterviewers: string[];
-	isCandidateNotification = false;
-	isInterviewerNotification = false;
+	criterionsId = null;
 	emptyInterview = {
 		title: '',
 		interviewers: null,
 		startTime: null,
 		endTime: null,
+		criterions: null,
 		note: ''
 	};
+	personalQualities: ICandidatePersonalQualities[] = null;
+	technologies: ICandidateTechnologies[];
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewMutationComponent>,
 		protected employeesService: EmployeesService,
@@ -78,7 +84,9 @@ export class CandidateInterviewMutationComponent
 		private candidateInterviewService: CandidateInterviewService,
 		protected candidatesService: CandidatesService,
 		private errorHandler: ErrorHandlingService,
-		private candidateInterviewersService: CandidateInterviewersService
+		private candidateInterviewersService: CandidateInterviewersService,
+		private candidateTechnologiesService: CandidateTechnologiesService,
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
 	) {}
 
 	async ngOnInit() {
@@ -139,7 +147,6 @@ export class CandidateInterviewMutationComponent
 
 	async save() {
 		this.employees = [];
-		this.notification();
 		const interview: ICandidateInterview = null;
 		let createdInterview = null;
 		if (this.interviewId !== null) {
@@ -156,7 +163,7 @@ export class CandidateInterviewMutationComponent
 			candidateId: this.selectedCandidate.id
 		});
 		this.addInterviewers(interview.id, this.selectedInterviewers);
-
+		this.addCriterions(interview.id);
 		//find interviewers for this interview
 		const interviewers = await this.candidateInterviewersService.findByInterviewId(
 			interview.id
@@ -170,6 +177,9 @@ export class CandidateInterviewMutationComponent
 					location: this.interview.location,
 					startTime: this.interview.startTime,
 					endTime: this.interview.endTime,
+					// TO DO
+					// technologies:
+					personalQualities: this.personalQualities,
 					note: this.interview.note
 				}
 			);
@@ -189,7 +199,19 @@ export class CandidateInterviewMutationComponent
 			this.errorHandler.handleError(error);
 		}
 	}
-
+	async addCriterions(interviewId: string) {
+		this.candidateCriterionsForm.loadFormData();
+		const criterionsForm = this.candidateCriterionsForm.form.value;
+		// TO DO
+		await this.candidateTechnologiesService.createBulk(
+			interviewId,
+			criterionsForm.selectedTechnologies
+		);
+		this.personalQualities = await this.candidatePersonalQualitiesService.createBulk(
+			interviewId,
+			criterionsForm.selectedQualities
+		);
+	}
 	async editInterview() {
 		let deletedIds = [];
 		let newIds = [];
@@ -230,15 +252,6 @@ export class CandidateInterviewMutationComponent
 		this.selectedCandidate = candidate;
 	}
 
-	notification() {
-		if (this.emailCandidateForm) {
-			this.emailCandidateForm.loadFormData();
-		}
-		if (this.emailInterviewerForm) {
-			this.emailInterviewerForm.loadFormData();
-		}
-	}
-
 	closeDialog(interview: ICandidateInterview = null) {
 		this.dialogRef.close(interview);
 	}
@@ -246,17 +259,7 @@ export class CandidateInterviewMutationComponent
 	previous() {
 		this.candidateInterviewForm.form.patchValue(this.interview);
 		this.candidateInterviewForm.form.patchValue({ valid: true });
-		this.isCandidateNotification = false;
-		this.isInterviewerNotification = false;
 		this.employees = [];
-	}
-
-	checkedCandidate(checked: boolean) {
-		this.isCandidateNotification = checked;
-	}
-
-	checkedInterviewer(checked: boolean) {
-		this.isInterviewerNotification = checked;
 	}
 
 	ngOnDestroy() {

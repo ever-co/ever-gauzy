@@ -67,3 +67,30 @@
 .select {
   width: 100%;
 }
+
+.form-block {
+  width: 50%;
+  padding: 1rem;
+}
+
+.form-blocks {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+.form-title {
+  color: #8f9bb3;
+  font-size: 15px;
+  padding: 0 0 5px 5px;
+}
+
+.criterion {
+  border: 1px #e4e9f2 solid;
+  margin: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}

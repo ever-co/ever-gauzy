@@ -11,6 +11,7 @@ import {
 	NbIconModule
 } from '@nebular/theme';
 import { Ng5SliderModule } from 'ng5-slider';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
 	declarations: [FiltersComponent],
@@ -24,7 +25,8 @@ import { Ng5SliderModule } from 'ng5-slider';
 		NbSelectModule,
 		NbDatepickerModule,
 		NbIconModule,
-		Ng5SliderModule
+		Ng5SliderModule,
+		TranslateModule
 	]
 })
 export class FiltersModule {}

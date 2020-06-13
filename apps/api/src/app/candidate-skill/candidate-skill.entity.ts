@@ -4,7 +4,7 @@ import { Base } from '../core/entities/base';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ISkill } from '@gauzy/models';
 
-@Entity('candidate_skills')
+@Entity('candidate_skill')
 export class CandidateSkill extends Base implements ISkill {
 	@ApiProperty({ type: String })
 	@Column()

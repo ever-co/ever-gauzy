@@ -65,7 +65,7 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 
 	@ManyToOne((type) => CandidateSkill)
 	@JoinTable({
-		name: 'candidate_skills'
+		name: 'candidate_skill'
 	})
 	skills: ISkill[];
 
@@ -80,13 +80,13 @@ export class Candidate extends TenantLocationBase implements ICandidate {
 
 	@ManyToOne((type) => CandidateDocument)
 	@JoinTable({
-		name: 'candidate_documents'
+		name: 'candidate_document'
 	})
 	documents: ICandidateDocument[];
 
 	@ManyToOne((type) => CandidateFeedback)
 	@JoinTable({
-		name: 'candidate_feedbacks'
+		name: 'candidate_feedback'
 	})
 	feedbacks?: ICandidateFeedback[];
 

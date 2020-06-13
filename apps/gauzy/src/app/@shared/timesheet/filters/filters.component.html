@@ -35,7 +35,7 @@
 					status="primary"
 					(click)="selectedDate = today"
 				>
-					Today
+					{{ 'TIMESHEET.TODAY' | translate }}
 				</button>
 			</div>
 			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
@@ -50,7 +50,7 @@
 				<ga-employee-multi-select
 					class="select-box"
 					name="employeeId"
-					placeholder="All Employees"
+					[placeholder]="'TIMESHEET.ALL_EMPLOYEE' | translate"
 					[(ngModel)]="filters.employeeId"
 					[allEmployees]="employees"
 					(selectedChange)="triggerFilterChange()"
@@ -60,7 +60,7 @@
 			<div class="col-auto ml-auto pr-1" *ngIf="hasSourceFilter">
 				<nb-select
 					multiple
-					placeholder="Select Source"
+					[placeholder]="'TIMESHEET.SELECT_SOURCE' | translate"
 					[(selected)]="filters.source"
 					(selectedChange)="triggerFilterChange()"
 				>
@@ -81,7 +81,7 @@
 					[nbPopover]="templateRef"
 					nbPopoverPlacement="bottom"
 				>
-					Select Activity Level
+					{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
 					<nb-icon icon="chevron-down-outline"></nb-icon>
 				</button>
 				<ng-template #templateRef>
@@ -106,7 +106,7 @@
 			<div class="col-auto ml-auto pr-1" *ngIf="hasLogTypeFilter">
 				<nb-select
 					multiple
-					placeholder="Select Log Type"
+					[placeholder]="'TIMESHEET.SELECT_LOG_TYPE' | translate"
 					[(selected)]="filters.logType"
 					(selectedChange)="triggerFilterChange()"
 				>

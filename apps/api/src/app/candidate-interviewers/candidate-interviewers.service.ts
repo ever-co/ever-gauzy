@@ -25,8 +25,8 @@ export class CandidateInterviewersService extends CrudService<
 		interviewId: string
 	): Promise<CandidateInterviewers[]> {
 		return await this.repository
-			.createQueryBuilder('candidate_interviewers')
-			.where('candidate_interviewers.interviewId = :interviewId', {
+			.createQueryBuilder('candidate_interviewer')
+			.where('candidate_interviewer.interviewId = :interviewId', {
 				interviewId
 			})
 			.getMany();
@@ -36,8 +36,8 @@ export class CandidateInterviewersService extends CrudService<
 		employeeId: ICandidateInterviewersDeleteInput
 	): Promise<any> {
 		return await this.repository
-			.createQueryBuilder('candidate_interviewers')
-			.where('candidate_interviewers.employeeId = :employeeId', {
+			.createQueryBuilder('candidate_interviewer')
+			.where('candidate_interviewer.employeeId = :employeeId', {
 				employeeId
 			})
 			.getMany();

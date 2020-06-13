@@ -84,6 +84,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization: Organization) => {
 				this.organization = organization;
+				this.updateLogs$.next();
 			});
 
 		this.updateLogs$

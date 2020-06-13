@@ -9,11 +9,15 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import {
 	CandidateStatus,
 	ICandidateFeedback,
-	ICandidateInterviewers
+	ICandidateInterviewers,
+	ICandidateTechnologies,
+	ICandidatePersonalQualities
 } from '@gauzy/models';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { EmployeesService } from '../../../@core/services';
+import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
+import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
 @Component({
 	selector: 'ga-candidate-interview-feedback',
 	templateUrl: './candidate-interview-feedback.component.html',
@@ -39,6 +43,8 @@ export class CandidateInterviewFeedbackComponent
 	selectedEmployeeId: string;
 	employeesForSelect: any[] = [];
 	disabledIds: string[] = [];
+	technologiesList: ICandidateTechnologies[];
+	personalQualitiesList: ICandidatePersonalQualities[];
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: FormBuilder,
@@ -48,7 +54,9 @@ export class CandidateInterviewFeedbackComponent
 		private candidateInterviewService: CandidateInterviewService,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
 		private candidateInterviewersService: CandidateInterviewersService,
-		private employeesService: EmployeesService
+		private employeesService: EmployeesService,
+		private candidateTechnologiesService: CandidateTechnologiesService,
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
 	) {
 		super(translateService);
 	}
@@ -57,6 +65,7 @@ export class CandidateInterviewFeedbackComponent
 		this.loadData();
 		this._initializeForm();
 		this.loadFeedbacks();
+		this.loadCriterions();
 	}
 
 	private async _initializeForm() {
@@ -176,7 +185,20 @@ export class CandidateInterviewFeedbackComponent
 			);
 		}
 	}
-
+	private async loadCriterions() {
+		const technologies = await this.candidateTechnologiesService.getAll();
+		if (technologies) {
+			this.technologiesList = technologies.items.filter(
+				(item) => !item.interviewId
+			);
+		}
+		const qualities = await this.candidatePersonalQualitiesService.getAll();
+		if (qualities) {
+			this.personalQualitiesList = qualities.items.filter(
+				(item) => !item.interviewId
+			);
+		}
+	}
 	closeDialog() {
 		this.dialogRef.close();
 	}

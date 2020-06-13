@@ -3,7 +3,7 @@ import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ICandidateDocument } from '@gauzy/models';
 
-@Entity('candidate_documents')
+@Entity('candidate_document')
 export class CandidateDocument extends Base implements ICandidateDocument {
 	@ApiProperty({ type: String })
 	@Column()
