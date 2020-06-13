@@ -79,11 +79,12 @@ import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
 import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
 import { RequestApprovalModule } from './request-approval/request-approval.module';
 import * as path from 'path';
-import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
+import { HeaderResolver, I18nJsonParser, I18nModule } from 'nestjs-i18n';
 import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 import { HelpCenterModule } from './help-center/help-center.module';
+import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
@@ -343,6 +344,10 @@ import { KeyResultModule } from './keyresult/keyresult.module';
 						module: AvailabilitySlotsModule
 					},
 					{
+						path: '/pipelines',
+						module: PipelineModule
+					},
+					{
 						path: '/payments',
 						module: PaymentModule
 					},
@@ -416,6 +421,7 @@ import { KeyResultModule } from './keyresult/keyresult.module';
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,
+		PipelineModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({

@@ -108,6 +108,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+		"NO_RESULT": "No Result",
 
 		"REGION": {
 			"BG": "Български (България)",
@@ -118,9 +119,10 @@
 	},
 	"FORM": {
 		"USERNAME": "Username",
-		"EMAIL": "Email",
 		"PASSWORD": "Password",
 		"CONFIRM": "Confirm",
+		"FILTER": "Filter",
+		"EMAIL": "Email",
 		"LABELS": {
 			"NAME": "Name",
 			"FIRST_NAME": "First Name (optional)",
@@ -277,6 +279,7 @@
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
+			"ORGANIZATION": "Select Organization",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
@@ -417,6 +420,7 @@
 		"PROJECTS_COUNT": "Projects Count"
 	},
 	"MENU": {
+		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Dashboard",
 		"APPOINTMENTS": "Appointments",
 		"EVENT_TYPES": "Event Types",
@@ -1396,8 +1400,10 @@
 			"CREATED_ARTICLE": "Article has been created",
 			"CREATED_CATEGORY": "Category has been created",
 			"EDITED_ARTICLE": "Article has been edited",
-			"EDITED_CATEGORY": "Category has been edited"
-		}
+			"EDITED_CATEGORY": "Category has been edited",
+      "PIPELINE_CREATED": "Pipeline has been created",
+      "PIPELINE_UPDATED": "Pipeline has been updated"
+    }
 	},
 	"ACCEPT_INVITE": {
 		"ACCEPT_INVITE_FORM": {
@@ -1638,5 +1644,11 @@
 			"he": "Hebrew",
 			"bg": "Bulgarian"
 		}
-	}
+	},
+	"PIPELINES_PAGE": {
+    "HEADER": "Pipelines",
+		"HEADER_FORM_EDIT": "Edit Pipeline",
+    "HEADER_FORM_CREATE": "Create Pipeline",
+    "RECORD_TYPE": "pipeline \"{{ name }}\""
+  }
 }

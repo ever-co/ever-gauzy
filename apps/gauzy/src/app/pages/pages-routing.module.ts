@@ -156,6 +156,13 @@ const routes: Routes = [
 							import(
 								'./work-in-progress/work-in-progress.module'
 							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'pipelines',
+						loadChildren: () =>
+							import('./pipelines/pipelines.module').then(
+								({ PipelinesModule }) => PipelinesModule
+							)
 					}
 				]
 			},
