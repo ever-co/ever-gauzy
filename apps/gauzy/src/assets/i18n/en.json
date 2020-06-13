@@ -1543,6 +1543,7 @@
 		"ADD_TIME_SUCCESS": "Time Successfully added"
 	},
 	"TIMESHEET": {
+		"TODAY": "Today",
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
 		"CALENDAR": "Calendar",
@@ -1550,7 +1551,23 @@
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
-		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit"
+		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit",
+		"SELECT_EMPLOYEE": "Select Employee",
+		"ALL_EMPLOYEE": "All Employees",
+		"SELECT_SOURCE": "Select Source",
+		"SELECT_ACTIVITY_LEVEL": "Select Activity Level",
+		"SELECT_LOG_TYPE": "Select Log Type",
+		"ADD_TIME_LOGS": "Add Time Logs",
+		"EDIT_TIME_LOGS": "Edit Time Logs",
+		"ADD_TIME": "Add Time",
+		"UPDATE_TIME": "Update Time",
+		"CLOSE": "Close",
+		"VALIDATION": {
+			"DESCRIPTION": "Description is required",
+			"TASK": "Please selct task",
+			"PROJECT": "Please selct project",
+			"EMPLOYEE": "Please selct employee"
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
