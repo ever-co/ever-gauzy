@@ -23,22 +23,25 @@ jobs:
         <<: *defaults
         machine:
             image: ubuntu-1604:202004-01
-        working_directory: /tmp/workspace/sonarqube        
-        description: Check Code Quality with SonarQube        
+        working_directory: /tmp/workspace/sonarqube-root
+        description: Check Code Quality with SonarQube
         steps:
             - checkout
             - node/install:
                 install-yarn: true
                 node-version: latest
+            - restore_cache:
+                    name: Restore Yarn Package Cache
+                    keys:
+                        - yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
             - run:
-                name: install global TypeScript
-                command: npm install typescript@3.8.3
+                    name: Install Dependencies
+                    command: yarn install
             - run:
                 name: Install Sonarqube scanner
                 command: |
                     wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102.zip
                     unzip sonar-scanner-cli-4.3.0.2102.zip
-        
             - run:
                 name: Run Sonarscanner
                 command: |
@@ -47,6 +50,15 @@ jobs:
                     -Dsonar.projectKey=gauzy \
                     -Dsonar.sources=. \
                     -Dsonar.login=$SONAR_TOKEN
+            - save_cache:
+                name: Save Yarn Package Cache
+                key: yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
+                paths:
+                    - ~/.cache/yarn
+            - persist_to_workspace:
+                root: /tmp/workspace/sonarqube-root
+                paths:
+                    - '*'
     build-monorepo-root:
         <<: *defaults
         working_directory: /tmp/workspace/monorepo-root
