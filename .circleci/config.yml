@@ -1,5 +1,8 @@
 version: 2.1    
 
+orbs:
+    node: circleci/node@3.0.0
+
 aliases:
     - &install-chrome
       name: Install Chrome
@@ -19,11 +22,17 @@ jobs:
     sonarqube:
         <<: *defaults
         machine:
-            image: ubuntu-1604:202004-01            
+            image: ubuntu-1604:202004-01
         working_directory: /tmp/workspace/sonarqube        
         description: Check Code Quality with SonarQube        
         steps:
             - checkout
+            - node/install:
+                install-yarn: true
+                node-version: latest
+            - run:
+                name: install global TypeScript
+                command: npm install -g typescript@3.8.3                   
             - run:
                 name: Install Sonarqube scanner
                 command: |
