@@ -16,13 +16,12 @@ import {
 	TimeLog,
 	IGetTimeLogInput,
 	OrganizationPermissionsEnum,
-	RolesEnum
+	PermissionsEnum
 } from '@gauzy/models';
 import { AuthGuard } from '@nestjs/passport';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from '../../shared/decorators/permissions';
 import { OrganizationPermissionGuard } from '../../shared/guards/auth/organization-permission.guard';
-import { UserRole } from '../../shared/decorators/roles';
 import { RequestContext } from '../../core/context';
 
 @ApiTags('TimeLog')
@@ -38,11 +37,8 @@ export class TimeLogController {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/')
-	async getLogs(
-		@Query() entity: IGetTimeLogInput,
-		@UserRole() roles: RolesEnum
-	): Promise<TimeLog[]> {
-		return this.timeLogService.getTimeLogs(entity, roles);
+	async getLogs(@Query() entity: IGetTimeLogInput): Promise<TimeLog[]> {
+		return this.timeLogService.getTimeLogs(entity);
 	}
 
 	@ApiOperation({ summary: 'Add manual time' })
@@ -58,12 +54,13 @@ export class TimeLogController {
 	@Post('/')
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(OrganizationPermissionsEnum.ALLOW_MANUAL_TIME)
-	async addManualTime(
-		@Body() entity: IManualTimeInput,
-		@UserRole() roles: RolesEnum
-	): Promise<TimeLog> {
+	async addManualTime(@Body() entity: IManualTimeInput): Promise<TimeLog> {
 		let employeeId: string;
-		if (roles === RolesEnum.ADMIN) {
+		if (
+			RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
 			if (entity.employeeId) {
 				employeeId = entity.employeeId;
 			}

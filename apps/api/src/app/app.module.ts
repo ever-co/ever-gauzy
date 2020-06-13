@@ -87,6 +87,8 @@ import { HelpCenterModule } from './help-center/help-center.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
 import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
+import { GoalModule } from './goal/goal.module';
+import { KeyResultModule } from './keyresult/keyresult.module';
 
 @Module({
 	imports: [
@@ -343,6 +345,14 @@ import { CandidateTechnologiesModule } from './candidate-technologies/candidate-
 					{
 						path: '/payments',
 						module: PaymentModule
+					},
+					{
+						path: '/goals',
+						module: GoalModule
+					},
+					{
+						path: '/key-results',
+						module: KeyResultModule
 					}
 				]
 			}
@@ -401,6 +411,8 @@ import { CandidateTechnologiesModule } from './candidate-technologies/candidate-
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		GoalModule,
+		KeyResultModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,

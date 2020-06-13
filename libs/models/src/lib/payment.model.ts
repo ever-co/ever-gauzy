@@ -29,4 +29,5 @@ export interface PaymentUpdateInput {
 
 export interface PaymentFindInput {
 	invoiceId?: string;
+	organizationId?: string;
 }

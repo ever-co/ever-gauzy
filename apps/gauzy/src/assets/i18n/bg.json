@@ -483,6 +483,7 @@
 		"EMAIL_TEMPLATES": "Email Templates",
 		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
+		"GOALS": "Цели",
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
@@ -658,6 +659,9 @@
 		},
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+	},
+	"GOALS_PAGE": {
+		"HEADER": "Всички цели за "
 	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
