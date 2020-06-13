@@ -61,12 +61,6 @@ export interface OrganizationClientsInviteInput extends IBaseEntityModel {
 	originalUrl?: string;
 	inviterUser?: User;
 }
-
-export interface LinkClientOrganizationInviteInput {
-	organizationId: string;
-	inviteId: string;
-}
-
 export interface IOrganizationClientRegistrationInput {
 	user: User;
 	password: string;
