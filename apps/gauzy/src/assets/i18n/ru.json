@@ -1412,8 +1412,12 @@
 			"REPEAT_PASSWORD": "Повторите пароль",
 			"AGREE_TO": "Согласен с",
 			"TERMS_AND_CONDITIONS": "Условия использования",
+			"ADD_ORGANIZATION": "Добавить организацию",
 			"COMPLETE_REGISTRATION": "Завершить регистрацию"
-		}
+		},
+		"INVALID_INVITE": "Вы ввели неправильный URL или приглашение истекло",
+		"HEADING": "Принять приглашение к {{ organizationName }}",
+		"SUB_HEADING": "Завершите регистрацию {{ email }}"
 	},
 	"NOTES": {
 		"INCOME": {

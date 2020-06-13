@@ -1412,8 +1412,12 @@
 			"REPEAT_PASSWORD": "Repeat Password",
 			"AGREE_TO": "Agree to",
 			"TERMS_AND_CONDITIONS": "Terms & Conditions",
+			"ADD_ORGANIZATION": "Add Organization",
 			"COMPLETE_REGISTRATION": "Complete Registration"
-		}
+		},
+		"INVALID_INVITE": "Either you entered an incorrect URL or the invitation has expired",
+		"HEADING": "Accept Invitation to {{ organizationName }}",
+		"SUB_HEADING": "Complete your registration {{ email }}"
 	},
 	"NOTES": {
 		"INCOME": {
