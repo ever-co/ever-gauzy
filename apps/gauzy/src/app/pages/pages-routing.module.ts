@@ -275,6 +275,32 @@ const routes: Routes = [
 				]
 			},
 			{
+				path: 'goals',
+				children: [
+					{
+						path: '',
+						loadChildren: () =>
+							import('./goals/goals.module').then(
+								(m) => m.GoalsModule
+							)
+					},
+					{
+						path: 'reports',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'settings',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					}
+				]
+			},
+			{
 				path: 'reports',
 				children: [
 					{

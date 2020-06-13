@@ -86,6 +86,8 @@ import { AvailabilitySlotsModule } from './availability-slots/availability-slots
 import { HelpCenterModule } from './help-center/help-center.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
+import { GoalModule } from './goal/goal.module';
+import { KeyResultModule } from './keyresult/keyresult.module';
 
 @Module({
 	imports: [
@@ -338,6 +340,14 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 					{
 						path: '/payments',
 						module: PaymentModule
+					},
+					{
+						path: '/goals',
+						module: GoalModule
+					},
+					{
+						path: '/key-results',
+						module: KeyResultModule
 					}
 				]
 			}
@@ -395,6 +405,8 @@ import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		GoalModule,
+		KeyResultModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,

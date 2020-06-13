@@ -477,6 +477,43 @@ export class PagesComponent implements OnInit, OnDestroy {
 			]
 		},
 		{
+			title: 'Goals',
+			icon: 'flag-outline',
+			data: {
+				translated: false,
+				translationKey: 'MENU.GOALS'
+			},
+			children: [
+				{
+					title: 'Manage',
+					link: '/pages/goals',
+					icon: 'list-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.MANAGE'
+					}
+				},
+				{
+					title: 'Report',
+					link: '/pages/goals/reports',
+					icon: 'file-text-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.REPORTS'
+					}
+				},
+				{
+					title: 'Settings',
+					link: '/pages/goals/settings',
+					icon: 'settings-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.SETTINGS'
+					}
+				}
+			]
+		},
+		{
 			title: 'Reports',
 			icon: 'file-text-outline',
 			link: '/pages/reports',
