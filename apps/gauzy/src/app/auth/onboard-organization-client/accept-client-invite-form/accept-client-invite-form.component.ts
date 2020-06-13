@@ -12,11 +12,17 @@ import {
 	FormGroup,
 	Validators
 } from '@angular/forms';
-import { Invite, UserRegistrationInput, Tag, ITenant } from '@gauzy/models';
-import { InviteService } from 'apps/gauzy/src/app/@core/services/invite.service';
-import { RoleService } from 'apps/gauzy/src/app/@core/services/role.service';
+import {
+	Invite,
+	IOrganizationClientRegistrationInput,
+	ITenant,
+	OrganizationCreateInput,
+	Tag
+} from '@gauzy/models';
+import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { first, takeUntil } from 'rxjs/operators';
+import { OrganizationsMutationComponent } from '../../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 
 @Component({
 	selector: 'ga-accept-client-invite-form',
@@ -30,9 +36,7 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 	invitation: Invite;
 
 	@Output()
-	submitForm: EventEmitter<UserRegistrationInput> = new EventEmitter<
-		UserRegistrationInput
-	>();
+	submitForm = new EventEmitter<IOrganizationClientRegistrationInput>();
 
 	//Fields for the form
 	form: FormGroup;
@@ -43,7 +47,10 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 	tenant: ITenant;
 	tags: Tag[];
 
+	organizationCreateInput: OrganizationCreateInput;
+
 	matchPassword: boolean;
+	addedOrganization: boolean;
 	repeatPasswordErrorMsg: string;
 
 	private validations = {
@@ -79,8 +86,7 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly fb: FormBuilder,
-		private readonly inviteService: InviteService,
-		private readonly roleService: RoleService
+		private readonly dialogService: NbDialogService
 	) {}
 
 	ngOnInit(): void {
@@ -131,28 +137,31 @@ export class AcceptClientInviteFormComponent implements OnInit, OnDestroy {
 		this.validations.repeatPasswordControl();
 	}
 
-	saveInvites() {
-		if (this.form.valid) {
+	async addClientOrganization() {
+		this.organizationCreateInput = await this.dialogService
+			.open(OrganizationsMutationComponent)
+			.onClose.pipe(first())
+			.toPromise();
+		this.addedOrganization = !!this.organizationCreateInput;
+	}
+
+	createClient() {
+		if (this.form.valid && this.addedOrganization) {
 			this.submitForm.emit({
 				user: {
 					firstName: this.fullName.value
-						? this.fullName.value
-								.split(' ')
-								.slice(0, -1)
-								.join(' ')
+						? this.fullName.value.split(' ').slice(0, -1).join(' ')
 						: null,
 					lastName: this.fullName.value
-						? this.fullName.value
-								.split(' ')
-								.slice(-1)
-								.join(' ')
+						? this.fullName.value.split(' ').slice(-1).join(' ')
 						: null,
 					email: this.invitation.email,
 					role: this.invitation.role,
 					tenant: this.tenant,
 					tags: this.tags
 				},
-				password: this.password.value
+				password: this.password.value,
+				clientOrganization: this.organizationCreateInput
 			});
 		}
 	}

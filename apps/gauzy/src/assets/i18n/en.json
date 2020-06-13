@@ -1401,9 +1401,9 @@
 			"CREATED_CATEGORY": "Category has been created",
 			"EDITED_ARTICLE": "Article has been edited",
 			"EDITED_CATEGORY": "Category has been edited",
-      "PIPELINE_CREATED": "Pipeline has been created",
-      "PIPELINE_UPDATED": "Pipeline has been updated"
-    }
+			"PIPELINE_CREATED": "Pipeline has been created",
+			"PIPELINE_UPDATED": "Pipeline has been updated"
+		}
 	},
 	"ACCEPT_INVITE": {
 		"ACCEPT_INVITE_FORM": {
@@ -1413,8 +1413,12 @@
 			"REPEAT_PASSWORD": "Repeat Password",
 			"AGREE_TO": "Agree to",
 			"TERMS_AND_CONDITIONS": "Terms & Conditions",
+			"ADD_ORGANIZATION": "Add Organization",
 			"COMPLETE_REGISTRATION": "Complete Registration"
-		}
+		},
+		"INVALID_INVITE": "Either you entered an incorrect URL or the invitation has expired",
+		"HEADING": "Accept Invitation to {{ organizationName }}",
+		"SUB_HEADING": "Complete your registration {{ email }}"
 	},
 	"NOTES": {
 		"INCOME": {
@@ -1646,9 +1650,9 @@
 		}
 	},
 	"PIPELINES_PAGE": {
-    "HEADER": "Pipelines",
+		"HEADER": "Pipelines",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
-    "HEADER_FORM_CREATE": "Create Pipeline",
-    "RECORD_TYPE": "pipeline \"{{ name }}\""
-  }
+		"HEADER_FORM_CREATE": "Create Pipeline",
+		"RECORD_TYPE": "pipeline \"{{ name }}\""
+	}
 }

@@ -3,20 +3,29 @@
 		<div class="register-header" *ngIf="inviteLoadErrorMessage">
 			<h1>{{ inviteLoadErrorMessage }}</h1>
 			<span>
-				<!-- TODO translate -->
-				Either you entered an incorrect URL or the invitation has
-				expired.
+				{{ 'ACCEPT_INVITE.INVALID_INVITE' | translate }}
 			</span>
 		</div>
 		<div *ngIf="!inviteLoadErrorMessage">
 			<div class="register-header mb-2">
 				<h1>
-					Accept Invitation to {{ invitation?.organization?.name }}
+					{{
+						'ACCEPT_INVITE.HEADING'
+							| translate
+								: {
+										organizationName:
+											invitation?.organization?.name
+								  }
+					}}
 				</h1>
-				<span>Complete your registration {{ invitation?.email }}</span>
+				<span>
+					{{
+						'ACCEPT_INVITE.SUB_HEADING'
+							| translate: { email: invitation?.email }
+					}}
+				</span>
 			</div>
 			<ga-accept-client-invite-form
-				*ngIf="!signedUp"
 				[invitation]="invitation"
 				(submitForm)="submitForm($event)"
 			></ga-accept-client-invite-form>

@@ -9,7 +9,8 @@ import {
 	IInviteAcceptInput,
 	IInviteResendInput,
 	OrganizationClients,
-	LinkClientOrganizationInviteInput
+	LinkClientOrganizationInviteInput,
+	IOrganizationClientAcceptInviteInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -88,10 +89,7 @@ export class InviteService {
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/invite/${id}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.delete(`/api/invite/${id}`).pipe(first()).toPromise();
 	}
 
 	inviteOrganizationClient(
@@ -102,6 +100,15 @@ export class InviteService {
 				`/api/invite/organization-client/${organizationClientId}`,
 				{}
 			)
+			.pipe(first())
+			.toPromise();
+	}
+
+	acceptOrganizationClientInvite(
+		acceptInviteInput: IOrganizationClientAcceptInviteInput
+	) {
+		return this.http
+			.post(`/api/invite/client`, acceptInviteInput)
 			.pipe(first())
 			.toPromise();
 	}
