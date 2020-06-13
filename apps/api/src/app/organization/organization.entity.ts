@@ -30,6 +30,7 @@ import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
 import { Invoice } from '../invoice/invoice.entity';
 import { TenantLocationBase } from '../core/entities/tenant-location-base';
+import { Payment } from '../payment/payment.entity';
 
 @Entity('organization')
 export class Organization extends TenantLocationBase implements IOrganization {
@@ -309,4 +310,11 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@IsOptional()
 	@Column({ nullable: true })
 	organizationId?: string;
+
+	@ApiPropertyOptional({ type: Payment, isArray: true })
+	@OneToMany((type) => Payment, (payment) => payment.organization, {
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	payments?: Payment[];
 }

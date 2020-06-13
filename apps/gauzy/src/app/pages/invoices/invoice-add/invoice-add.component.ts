@@ -363,6 +363,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 				paid: false,
 				totalValue: +this.total.toFixed(2),
 				clientId: invoiceData.client.id,
+				fromOrganization: this.organization,
 				organizationId: this.organization.id,
 				invoiceType: this.selectedInvoiceType,
 				tags: this.tags,

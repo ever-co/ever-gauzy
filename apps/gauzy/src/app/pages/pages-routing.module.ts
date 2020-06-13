@@ -68,9 +68,9 @@ const routes: Routes = [
 					{
 						path: 'payments',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./payments/payments.module').then(
+								(m) => m.PaymentsModule
+							)
 					}
 				]
 			},
