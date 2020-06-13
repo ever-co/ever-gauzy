@@ -9,7 +9,7 @@ import {
 import { IsEnum, IsOptional } from 'class-validator';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
 
-@Entity('candidate_feedbacks')
+@Entity('candidate_feedback')
 export class CandidateFeedback extends Base implements ICandidateFeedback {
 	@ApiProperty({ type: String })
 	@Column()

@@ -77,6 +77,9 @@ import { ChartModule } from 'angular2-chartjs';
 import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-rating-chart/candidate-rating-chart.component';
 import { InterviewerAssessmentChartComponent } from './candidate-statistic/candidate-statistic-charts/interviewer-assessment-chart/interviewer-assessment-chart.component';
 import { CandidateCriterionsComponent } from './candidate-criterions/candidate-criterions.component';
+import { CandidatePersonalQualitiesComponent } from './candidate-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
+import { CandidateTechnologiesComponent } from './candidate-criterions/candidate-technologies/candidate-technologies.component';
+import { CandidateTechnologiesService } from '../../@core/services/candidate-technologies.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -107,7 +110,9 @@ const COMPONENTS = [
 	ManageCandidateInterviewsComponent,
 	CandidateRatingChartComponent,
 	InterviewerAssessmentChartComponent,
-	CandidateCriterionsComponent
+	CandidateCriterionsComponent,
+	CandidateTechnologiesComponent,
+	CandidatePersonalQualitiesComponent
 ];
 
 @NgModule({
@@ -176,7 +181,8 @@ const COMPONENTS = [
 		OrganizationEmploymentTypesService,
 		CandidatesService,
 		CandidateInterviewersService,
-		CandidatePersonalQualitiesService
+		CandidatePersonalQualitiesService,
+		CandidateTechnologiesService
 	]
 })
 export class CandidatesModule {}

@@ -18,8 +18,8 @@ export class CandidateFeedbacksService extends CrudService<CandidateFeedback> {
 		interviewId: string
 	): Promise<CandidateFeedback[]> {
 		return await this.repository
-			.createQueryBuilder('candidate_feedbacks')
-			.where('candidate_feedbacks.interviewId = :interviewId', {
+			.createQueryBuilder('candidate_feedback')
+			.where('candidate_feedback.interviewId = :interviewId', {
 				interviewId
 			})
 			.getMany();

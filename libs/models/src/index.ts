@@ -11,7 +11,6 @@ export * from './lib/candidate-feedback.model';
 export * from './lib/candidate-interview.model';
 export * from './lib/candidate-source.model';
 export * from './lib/candidate-personal-qualities.model';
-export * from './lib/candidate-criterions.model';
 export * from './lib/candidate-technologies.model';
 export * from './lib/organization.model';
 export * from './lib/income.model';
