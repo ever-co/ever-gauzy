@@ -723,6 +723,7 @@
 				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
+				"STEP_3": "Step 3",
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "Запази",
@@ -771,8 +772,10 @@
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Candidates criterions",
+			"RATE_CANDIDATE_BY_CRITERIONS": "Rate candidate by criterions",
 			"TECHNOLOGY_STACK": "Technology Stack",
-			"PERSONAL_QUALITIES": "Personal Qualities"
+			"PERSONAL_QUALITIES": "Personal Qualities",
+			"CHOOSE_CRITERIONS": "Choose criterions for candidate"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -970,11 +973,11 @@
 		"TAGS_ADD_TAG": "Tag added",
 		"TAGS_EDIT_TAG": "Tag edited",
 		"TAGS_DELETE_TAG": "Tag deleted",
-		"TAGS_SELECT_NAME": "Име на таг",
-		"TAGS_SELECT_COLOR": "Цвят на тага",
-		"TAGS_SELECT_DESCRIPTION": "Описание на тага",
+		"TAGS_SELECT_NAME": "Tag name",
+		"TAGS_SELECT_COLOR": "Tag color",
+		"TAGS_SELECT_DESCRIPTION": "Tag description",
 		"ADD_NEW_TAG": "Add new Tag",
-		"TENANT_LEVEL": "Ниво на наемател"
+		"TENANT_LEVEL": "Tenant level"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
