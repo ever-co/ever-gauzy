@@ -32,7 +32,7 @@ jobs:
                 node-version: latest
             - run:
                 name: install global TypeScript
-                command: npm install -g typescript@3.8.3                   
+                command: npm install typescript@3.8.3
             - run:
                 name: Install Sonarqube scanner
                 command: |
