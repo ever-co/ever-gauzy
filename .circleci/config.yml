@@ -1,4 +1,4 @@
-version: 2.1
+version: 2.1    
 
 aliases:
     - &install-chrome
@@ -18,7 +18,9 @@ defaults: &defaults
 jobs:
     sonarqube:
         <<: *defaults
-        working_directory: /tmp/workspace/sonarqube
+        machine:
+            image: ubuntu-1604:202004-01            
+        working_directory: /tmp/workspace/sonarqube        
         description: Check Code Quality with SonarQube
         parameters:
             sonar_server_url:
