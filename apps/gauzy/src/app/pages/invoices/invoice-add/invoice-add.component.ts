@@ -24,17 +24,17 @@ import { InvoiceItemService } from '../../../@core/services/invoice-item.service
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceTasksSelectorComponent } from '../table-components/invoice-tasks-selector.component';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
-import { Subject } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbToastrService } from '@nebular/theme';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { TasksService } from '../../../@core/services/tasks.service';
 import { InvoiceProjectsSelectorComponent } from '../table-components/invoice-project-selector.component';
 import { InvoiceEmployeesSelectorComponent } from '../table-components/invoice-employees-selector.component';
 import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
 import { EmployeesService } from '../../../@core/services';
 import { ProductService } from '../../../@core/services/product.service';
 import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
+import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 
 @Component({
 	selector: 'ga-invoice-add',
@@ -54,6 +54,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 	generatedTask: string;
 	organization: Organization;
 	selectedTasks: Task[];
+	observableTasks: Observable<Task[]>;
 	tasks: Task[];
 	client: OrganizationClients;
 	clients: OrganizationClients[];
@@ -93,12 +94,13 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 		private organizationsService: OrganizationsService,
 		private organizationProjectsService: OrganizationProjectsService,
 		private invoiceItemService: InvoiceItemService,
-		private tasksService: TasksService,
+		private tasksStore: TasksStoreService,
 		private errorHandler: ErrorHandlingService,
 		private employeeService: EmployeesService,
 		private productService: ProductService
 	) {
 		super(translateService);
+		this.observableTasks = this.tasksStore.tasks$;
 	}
 
 	ngOnInit() {
@@ -501,13 +503,10 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						this.clients = res.items;
 					}
 
-					this.tasksService
-						.getAllTasks({
-							organizationId: organization.id
-						})
-						.subscribe((data) => {
-							this.tasks = data.items;
-						});
+					this.tasksStore.fetchTasks();
+					this.observableTasks.subscribe((data) => {
+						this.tasks = data;
+					});
 
 					const products = await this.productService.getAll([], {
 						organizationId: organization.id
@@ -593,6 +592,7 @@ export class InvoiceAddComponent extends TranslationBaseComponent
 						price: fakePrice,
 						quantity: fakeQuantity,
 						task: task,
+						allTasks: this.tasks,
 						totalValue: fakePrice * fakeQuantity
 					};
 					fakeData.push(data);
