@@ -9,7 +9,7 @@ import { PermissionGuard } from '../shared/guards/auth/permission.guard';
 import { Permissions } from '../shared/decorators/permissions';
 import { PermissionsEnum } from '@gauzy/models';
 
-@ApiTags('candidate_documents')
+@ApiTags('candidate_document')
 @UseGuards(AuthGuard('jwt'))
 @Controller()
 export class CandidateDocumentsController extends CrudController<

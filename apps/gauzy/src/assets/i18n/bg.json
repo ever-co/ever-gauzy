@@ -108,6 +108,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+		"NO_RESULT": "No Result",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "English (United States)",
@@ -117,9 +118,10 @@
 	},
 	"FORM": {
 		"USERNAME": "Потребителско име",
-		"EMAIL": "Eлектронна поща",
 		"PASSWORD": "Парола",
 		"CONFIRM": "Потвърждение",
+		"FILTER": "Filter",
+		"EMAIL": "Eлектронна поща",
 		"LABELS": {
 			"NAME": "Име",
 			"FIRST_NAME": "Име (незадължително)",
@@ -276,6 +278,7 @@
 			"EMPLOYMENT_TYPES": "Employment Type",
 			"REGISTRATION_DATE": "Organization Registration Date",
 			"ORGANIZATIONS": "Choose Organizations",
+			"ORGANIZATION": "Select Organization",
 			"DOCUMENT_NAME": "Document name",
 			"FEEDBACK_DESCRIPTION": "Feedback description",
 			"PREFERRED_LANGUAGE": "Preferred Language",
@@ -416,6 +419,7 @@
 		"PROJECTS_COUNT": "Projects Count"
 	},
 	"MENU": {
+		"PIPELINES": "Pipelines",
 		"DASHBOARD": "Табло",
 		"APPOINTMENTS": "Appointments",
 		"EVENT_TYPES": "Event Types",
@@ -483,6 +487,7 @@
 		"EMAIL_TEMPLATES": "Email Templates",
 		"HELP_CENTER": "Help Center",
 		"REPORTS": "Reports",
+		"GOALS": "Goals",
 		"TIME_REPORTS": "Time Reports",
 		"ACCOUNTING_REPORTS": "Accounting Reports",
 		"PAYMENT_GATEWAYS": "Payment Gateways",
@@ -659,6 +664,9 @@
 		"NOT_STARTED": "Not Started",
 		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
 	},
+	"GOALS_PAGE": {
+		"HEADER": "All Objectives for "
+	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Manage Candidates for ",
 		"ADD_CANDIDATE": "Add Candidates",
@@ -719,6 +727,7 @@
 				"EDIT_INTERVIEW": "Edit interview",
 				"STEP_1": "Step 1",
 				"STEP_2": "Step 2",
+				"STEP_3": "Step 3",
 				"NEXT": "Next",
 				"PREVIOUS": "Previous",
 				"SAVE": "Запази",
@@ -767,8 +776,10 @@
 		},
 		"CRITERIONS": {
 			"CANDIDATE_CRITERIONS": "Candidates criterions",
+			"RATE_CANDIDATE_BY_CRITERIONS": "Rate candidate by criterions",
 			"TECHNOLOGY_STACK": "Technology Stack",
-			"PERSONAL_QUALITIES": "Personal Qualities"
+			"PERSONAL_QUALITIES": "Personal Qualities",
+			"CHOOSE_CRITERIONS": "Choose criterions for candidate"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -969,7 +980,8 @@
 		"TAGS_SELECT_NAME": "Tag name",
 		"TAGS_SELECT_COLOR": "Tag color",
 		"TAGS_SELECT_DESCRIPTION": "Tag description",
-		"ADD_NEW_TAG": "Add new Tag"
+		"ADD_NEW_TAG": "Add new Tag",
+		"TENANT_LEVEL": "Tenant level"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Skills"
@@ -1300,6 +1312,9 @@
 			"PAYMENT_DELETE": "Payment Deleted"
 		}
 	},
+	"PAYMENTS_PAGE": {
+		"HEADER": "Payments"
+	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Select Employee",
 		"SELECT_A_DATE": "Select A date",
@@ -1384,7 +1399,9 @@
 			"CREATED_ARTICLE": "Article has been created",
 			"CREATED_CATEGORY": "Category has been created",
 			"EDITED_ARTICLE": "Article has been edited",
-			"EDITED_CATEGORY": "Category has been edited"
+			"EDITED_CATEGORY": "Category has been edited",
+			"PIPELINE_CREATED": "Pipeline has been created",
+			"PIPELINE_UPDATED": "Pipeline has been updated"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1395,8 +1412,12 @@
 			"REPEAT_PASSWORD": "Repeat Password",
 			"AGREE_TO": "Agree to",
 			"TERMS_AND_CONDITIONS": "Terms & Conditions",
+			"ADD_ORGANIZATION": "Add Organization",
 			"COMPLETE_REGISTRATION": "Complete Registration"
-		}
+		},
+		"INVALID_INVITE": "Either you entered an incorrect URL or the invitation has expired",
+		"HEADING": "Accept Invitation to {{ organizationName }}",
+		"SUB_HEADING": "Complete your registration {{ email }}"
 	},
 	"NOTES": {
 		"INCOME": {
@@ -1538,6 +1559,7 @@
 		"ADD_TIME_SUCCESS": "Time Successfully added"
 	},
 	"TIMESHEET": {
+		"TODAY": "Днес",
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
 		"CALENDAR": "Calendar",
@@ -1545,7 +1567,23 @@
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submited",
-		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit"
+		"UNSUBMIT_SUCCESS": "Timesheet Successfully Unsubmit",
+		"SELECT_EMPLOYEE": "Select Employee",
+		"ALL_EMPLOYEE": "Всички служители",
+		"SELECT_SOURCE": "Select Source",
+		"SELECT_ACTIVITY_LEVEL": "Select Activity Level",
+		"SELECT_LOG_TYPE": "Select Log Type",
+		"ADD_TIME_LOGS": "Add Time Logs",
+		"EDIT_TIME_LOGS": "Edit Time Logs",
+		"ADD_TIME": "Add Time",
+		"UPDATE_TIME": "Update Time",
+		"CLOSE": "Затвори",
+		"VALIDATION": {
+			"DESCRIPTION": "Description is required",
+			"TASK": "Please selct task",
+			"PROJECT": "Please selct project",
+			"EMPLOYEE": "Please selct employee"
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Let's create your first organization",
@@ -1609,5 +1647,11 @@
 			"he": "Иврит",
 			"bg": "Български"
 		}
+	},
+	"PIPELINES_PAGE": {
+		"HEADER": "Pipelines",
+		"HEADER_FORM_EDIT": "Edit Pipeline",
+		"HEADER_FORM_CREATE": "Create Pipeline",
+		"RECORD_TYPE": "pipeline \"{{ name }}\""
 	}
 }

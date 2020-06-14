@@ -188,7 +188,18 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translated: false,
 						translationKey: 'MENU.PAYMENTS'
 					}
-				}
+				},
+        {
+          title: 'Pipelines',
+          icon: 'funnel-outline',
+          link: '/pages/sales/pipelines',
+          hidden: false,
+          data: {
+            translated: false,
+            translationKey: 'MENU.PIPELINES',
+            permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
+          }
+        },
 			]
 		},
 		{
@@ -472,6 +483,43 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.HELP_CENTER'
+					}
+				}
+			]
+		},
+		{
+			title: 'Goals',
+			icon: 'flag-outline',
+			data: {
+				translated: false,
+				translationKey: 'MENU.GOALS'
+			},
+			children: [
+				{
+					title: 'Manage',
+					link: '/pages/goals',
+					icon: 'list-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.MANAGE'
+					}
+				},
+				{
+					title: 'Report',
+					link: '/pages/goals/reports',
+					icon: 'file-text-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.REPORTS'
+					}
+				},
+				{
+					title: 'Settings',
+					link: '/pages/goals/settings',
+					icon: 'settings-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.SETTINGS'
 					}
 				}
 			]

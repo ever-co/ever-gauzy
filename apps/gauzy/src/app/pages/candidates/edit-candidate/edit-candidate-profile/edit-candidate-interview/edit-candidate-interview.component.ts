@@ -17,6 +17,8 @@ import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
 import { CandidateInterviewFeedbackComponent } from 'apps/gauzy/src/app/@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
+import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 
 @Component({
 	selector: 'ga-edit-candidate-interview',
@@ -42,7 +44,9 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		private candidateStore: CandidateStore,
 		private candidateInterviewersService: CandidateInterviewersService,
 		private toastrService: NbToastrService,
-		private candidateFeedbacksService: CandidateFeedbacksService
+		private candidateFeedbacksService: CandidateFeedbacksService,
+		private candidateTechnologiesService: CandidateTechnologiesService,
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
 	) {
 		super(translate);
 	}
@@ -186,6 +190,11 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		try {
 			await this.candidateInterviewService.delete(id);
 			await this.candidateInterviewersService.deleteBulkByInterviewId(id);
+			// await this.candidateTechnologiesService.deleteBulk(id);
+			// await this.candidatePersonalQualitiesService.deleteBulkPersonalQualities(
+			// 	id
+			// );
+
 			this.toastrSuccess('DELETED');
 			this.loadInterview();
 		} catch (error) {

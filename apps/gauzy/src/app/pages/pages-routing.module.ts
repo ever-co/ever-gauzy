@@ -68,9 +68,9 @@ const routes: Routes = [
 					{
 						path: 'payments',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./payments/payments.module').then(
+								(m) => m.PaymentsModule
+							)
 					}
 				]
 			},
@@ -156,6 +156,13 @@ const routes: Routes = [
 							import(
 								'./work-in-progress/work-in-progress.module'
 							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'pipelines',
+						loadChildren: () =>
+							import('./pipelines/pipelines.module').then(
+								({ PipelinesModule }) => PipelinesModule
+							)
 					}
 				]
 			},
@@ -271,6 +278,32 @@ const routes: Routes = [
 							import(
 								'./equipment-sharing/equipment-sharing.module'
 							).then((m) => m.EquipmentSharingModule)
+					}
+				]
+			},
+			{
+				path: 'goals',
+				children: [
+					{
+						path: '',
+						loadChildren: () =>
+							import('./goals/goals.module').then(
+								(m) => m.GoalsModule
+							)
+					},
+					{
+						path: 'reports',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'settings',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
 					}
 				]
 			},

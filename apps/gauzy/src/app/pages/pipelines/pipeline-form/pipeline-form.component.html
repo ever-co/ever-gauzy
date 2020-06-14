@@ -1,0 +1,28 @@
+<form [formGroup]="form" (ngSubmit)="persist()">
+  <nb-card>
+    <nb-card-header>
+      <h4 *ngIf="pipeline?.id" [innerHTML]="'PIPELINES_PAGE.HEADER_FORM_EDIT' | translate"></h4>
+      <h4 *ngIf="!pipeline?.id" [innerHTML]="'PIPELINES_PAGE.HEADER_FORM_CREATE' | translate"></h4>
+    </nb-card-header>
+    <nb-card-body>
+      <nb-form-field>
+        <input type="text" nbInput formControlName="name" fullWidth [placeholder]="'FORM.PLACEHOLDERS.NAME' | translate">
+      </nb-form-field>
+
+      <br>
+      <nb-form-field>
+        <textarea nbInput formControlName="description" fullWidth [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"></textarea>
+      </nb-form-field>
+    </nb-card-body>
+    <nb-card-footer class="text-right">
+      <button *ngIf="pipeline?.id" type="submit" nbButton status="info" [disabled]="!form.valid">
+        <nb-icon pack="eva" icon="edit-outline"></nb-icon>
+        <span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
+      </button>
+      <button *ngIf="!pipeline?.id" type="submit" nbButton status="primary" [disabled]="!form.valid">
+        <nb-icon pack="eva" icon="plus-circle-outline"></nb-icon>
+        <span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
+      </button>
+    </nb-card-footer>
+  </nb-card>
+</form>
