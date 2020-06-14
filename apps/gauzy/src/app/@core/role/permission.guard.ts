@@ -3,7 +3,7 @@ import {
 	ActivatedRouteSnapshot,
 	CanActivate,
 	Router,
-	RouterStateSnapshot
+	RouterStateSnapshot,
 } from '@angular/router';
 import { first } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
@@ -19,8 +19,6 @@ export class PermissionGuard implements CanActivate {
 		route: ActivatedRouteSnapshot,
 		state: RouterStateSnapshot
 	) {
-		debugger;
-
 		const expectedPermission = route.data.expectedPermission;
 		const hasPermission = await this.authService
 			.hasPermission(expectedPermission)

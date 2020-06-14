@@ -7,13 +7,20 @@ import { RequestApprovalService } from '../../@core/services/request-approval.se
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/models';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, first } from 'rxjs/operators';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { RequestApprovalStatusComponent } from './table-components/request-approval-status/request-approval-status.component';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
+import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
 export interface IApprovalsData {
 	icon: string;
 	title: string;
+}
+
+export interface SelectedRequestApproval {
+	data: RequestApproval;
+	isSelected: false;
 }
 
 @Component({
@@ -25,7 +32,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
 	public loading = true;
-	public selectedApprovalRequest: RequestApproval;
+	public selectedRequestApproval: RequestApproval;
 	public listApprovals: IApprovalsData[] = [];
 	public disableButton = true;
 	public smartTableSource = new LocalDataSource();
@@ -41,6 +48,8 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private approvalRequestService: RequestApprovalService,
 		private store: Store,
+		private dialogService: NbDialogService,
+		private toastrService: NbToastrService,
 		private router: Router
 	) {
 		super(translateService);
@@ -68,6 +77,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 			.subscribe((org) => {
 				if (org) {
 					this.selectedOrganizationId = org.id;
+					this.loadSettings();
 				}
 			});
 
@@ -77,8 +87,18 @@ export class ApprovalsComponent extends TranslationBaseComponent
 		// this.initListApprovals();
 	}
 
+	async selectRequestApproval($event: SelectedRequestApproval) {
+		if ($event.isSelected) {
+			this.selectedRequestApproval = $event.data;
+			this.disableButton = false;
+			this.requestApprovalTable.grid.dataSet.willSelect = false;
+		} else {
+			this.disableButton = true;
+		}
+	}
+
 	async loadSettings() {
-		this.selectedApprovalRequest = null;
+		this.selectedRequestApproval = null;
 		let items = [];
 		if (this.selectedEmployeeId) {
 			items = (
@@ -129,6 +149,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					),
 					type: 'custom',
 					renderComponent: ApprovalPolicyComponent,
+					filter: false,
 				},
 				status: {
 					title: this.getTranslation(
@@ -136,6 +157,7 @@ export class ApprovalsComponent extends TranslationBaseComponent
 					),
 					type: 'custom',
 					renderComponent: RequestApprovalStatusComponent,
+					filter: false,
 				},
 			},
 		};
@@ -184,7 +206,35 @@ export class ApprovalsComponent extends TranslationBaseComponent
 	//   ]
 	// }
 
-	async save() {}
+	manageAppropvalPolicy() {
+		this.router.navigate(['/pages/organization/approval-policy']);
+	}
+
+	async save() {
+		const dialog = this.dialogService.open(
+			RequestApprovalMutationComponent,
+			{
+				context: {
+					requestApproval: this.selectedRequestApproval,
+				},
+			}
+		);
+		const requestApproval = await dialog.onClose.pipe(first()).toPromise();
+
+		this.selectedRequestApproval = null;
+		this.disableButton = true;
+
+		if (requestApproval) {
+			this.toastrService.primary(
+				this.getTranslation(
+					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_SAVED'
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+		}
+
+		this.loadSettings();
+	}
 
 	async delete() {}
 
