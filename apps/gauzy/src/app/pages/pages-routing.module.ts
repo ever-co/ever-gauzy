@@ -273,6 +273,13 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'approval-policy',
+						loadChildren: () =>
+							import(
+								'./approval-policy/approval-policy.module'
+							).then((m) => m.ApprovalPolicyModule)
+					},
+					{
 						path: 'equipment-sharing',
 						loadChildren: () =>
 							import(
