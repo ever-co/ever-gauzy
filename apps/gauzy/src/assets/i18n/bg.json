@@ -201,7 +201,9 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
-			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees"
+			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
+			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
+			"ADD_REMOVE_MEMBERS": "Add or Remove Members"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -230,6 +232,7 @@
 			"END_DATE_PROJECT": "Край на проекта (опция)",
 			"TEAM_NAME": "Име на отбора",
 			"ADD_REMOVE_MEMBERS": "Добавяне или премахване на членове",
+			"ADD_REMOVE_MANAGERS": "Add or Remove Team Managers",
 			"MEMBERS_COUNT": "Брой членове",
 			"OFFICIAL_NAME": "Добави официално име",
 			"PROFILE_LINK": "Enter Profile Link",
@@ -852,6 +855,10 @@
 				"REQUIRE_PROJECT": "Require Project",
 				"REQUIRE_TASK": "Require Task",
 				"REQUIRE_CLIENT": "Require Client"
+			},
+			"TEAMS_PAGE": {
+				"MANAGERS": "Managers",
+				"MEMBERS": "Members"
 			}
 		},
 		"PERMISSIONS": {
@@ -946,6 +953,7 @@
 		"CHOOSE_POLICIES": "Choose policies/s",
 		"HEADER": "Approval Request",
 		"APPROVAL_POLICY": "Approval Policy",
+		"CHOOSE_POLICIES": "Choose policies",
 		"APPROVAL_REQUEST_EDITED": "Request edited",
 		"APPROVAL_REQUEST_DELETED": "Request deleted",
 		"APPROVAL_REQUEST_ADDED": "Request added",
