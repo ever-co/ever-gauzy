@@ -179,10 +179,9 @@ export class InviteService extends CrudService<Invite> {
 
 		const items = await this.repository.save(invites);
 		items.forEach((item) => {
-			const registerUrl = `${originUrl ||
-				env.host}/#/auth/accept-invite?email=${item.email}&token=${
-				item.token
-			}`;
+			const registerUrl = `${
+				originUrl || env.host
+			}/#/auth/accept-invite?email=${item.email}&token=${item.token}`;
 
 			if (emailInvites.inviteType.indexOf('/pages/users') > -1) {
 				this.emailService.inviteUser({

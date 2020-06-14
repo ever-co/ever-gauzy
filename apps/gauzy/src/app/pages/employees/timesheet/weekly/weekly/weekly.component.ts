@@ -16,6 +16,8 @@ import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { debounceTime } from 'rxjs/operators';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
+import { NbDialogService } from '@nebular/theme';
+import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 
 interface WeeklyDayData {
 	project?: OrganizationProjects;
@@ -39,6 +41,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private timesheetService: TimesheetService,
+		private nbDialogService: NbDialogService,
 		private store: Store
 	) {}
 
@@ -51,12 +54,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.logRequest.startDate = moment(this.today)
-			.startOf('week')
-			.toDate();
-		this.logRequest.endDate = moment(this.today)
-			.endOf('week')
-			.toDate();
+		this.logRequest.startDate = moment(this.today).startOf('week').toDate();
+		this.logRequest.endDate = moment(this.today).endOf('week').toDate();
 		this.updateWeekDayList();
 
 		this.store.user$.subscribe(() => {
@@ -138,6 +137,14 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 				})
 				.value();
 		});
+	}
+
+	openAddEdit(timeLog?: TimeLog) {
+		this.nbDialogService
+			.open(EditTimeLogModalComponent, { context: { timeLog } })
+			.onClose.subscribe(() => {
+				this.updateLogs$.next();
+			});
 	}
 
 	ngOnDestroy(): void {}

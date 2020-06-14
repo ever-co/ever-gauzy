@@ -4,6 +4,7 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { InvoiceItemModule } from './invoice-item/invoice-item.module';
 import { TagModule } from './tags/tag.module';
 import { SkillModule } from './skills/skill.module';
+import { LanguageModule } from './language/language.module';
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
 import { AppController } from './app.controller';
@@ -30,6 +31,8 @@ import { OrganizationProjectsModule } from './organization-projects/organization
 import { OrganizationVendorsModule } from './organization-vendors/organization-vendors.module';
 import { OrganizationTeamModule } from './organization-team/organization-team.module';
 import { OrganizationTeamEmployeeModule } from './organization-team-employee/organization-team-employee.module';
+import { OrganizationAwardsModule } from './organization-awards/organization-awards.module';
+import { OrganizationLanguagesModule } from './organization-languages/organization-languages.module';
 import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { InviteModule } from './invite/invite.module';
@@ -76,11 +79,17 @@ import { ApprovalPolicyModule } from './approval-policy/approval-policy.module';
 import { RequestApprovalEmployeeModule } from './request-approval-employee/request-approval-employee.module';
 import { RequestApprovalModule } from './request-approval/request-approval.module';
 import * as path from 'path';
-import { I18nModule, I18nJsonParser, HeaderResolver } from 'nestjs-i18n';
+import { HeaderResolver, I18nJsonParser, I18nModule } from 'nestjs-i18n';
 import { LanguagesEnum } from '@gauzy/models';
 import { EventTypeModule } from './event-types/event-type.module';
 import { AvailabilitySlotsModule } from './availability-slots/availability-slots.module';
 import { HelpCenterModule } from './help-center/help-center.module';
+import { PipelineModule } from './pipeline/pipeline.module';
+import { PaymentModule } from './payment/payment.module';
+import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
+import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
+import { GoalModule } from './goal/goal.module';
+import { KeyResultModule } from './keyresult/keyresult.module';
 
 @Module({
 	imports: [
@@ -94,35 +103,43 @@ import { HelpCenterModule } from './help-center/help-center.module';
 					{ path: '/candidate', module: CandidateModule },
 					{
 						path: '/candidate-educations',
-						module: CandidateEducationModule,
+						module: CandidateEducationModule
 					},
 					{
 						path: '/candidate-documents',
-						module: CandidateDocumentsModule,
+						module: CandidateDocumentsModule
 					},
 					{
 						path: '/candidate-feedbacks',
-						module: CandidateFeedbacksModule,
+						module: CandidateFeedbacksModule
 					},
 					{
 						path: '/candidate-interview',
-						module: CandidateInterviewModule,
+						module: CandidateInterviewModule
 					},
 					{
 						path: '/candidate-interviewers',
-						module: CandidateInterviewersModule,
+						module: CandidateInterviewersModule
 					},
 					{
 						path: '/candidate-experience',
-						module: CandidateExperienceModule,
+						module: CandidateExperienceModule
 					},
 					{
 						path: '/candidate-skills',
-						module: CandidateSkillModule,
+						module: CandidateSkillModule
 					},
 					{
 						path: '/candidate-source',
-						module: CandidateSourceModule,
+						module: CandidateSourceModule
+					},
+					{
+						path: '/candidate-personal-qualities',
+						module: CandidatePersonalQualitiesModule
+					},
+					{
+						path: '/candidate-technologies',
+						module: CandidateTechnologiesModule
 					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
@@ -136,71 +153,79 @@ import { HelpCenterModule } from './help-center/help-center.module';
 
 					{
 						path: '/employee-settings',
-						module: EmployeeSettingModule,
+						module: EmployeeSettingModule
 					},
 					{
 						path: '/employee-statistics',
-						module: EmployeeStatisticsModule,
+						module: EmployeeStatisticsModule
 					},
 					{
 						path: '/employee-appointment',
-						module: EmployeeAppointmentModule,
+						module: EmployeeAppointmentModule
 					},
 					{
 						path: '/appointment-employees',
-						module: AppointmentEmployeesModule,
+						module: AppointmentEmployeesModule
 					},
 					{
 						path: '/user-organization',
-						module: UserOrganizationModule,
+						module: UserOrganizationModule
 					},
 					{
 						path: '/organization-department',
-						module: OrganizationDepartmentModule,
+						module: OrganizationDepartmentModule
 					},
 					{
 						path: '/organization-clients',
-						module: OrganizationClientsModule,
+						module: OrganizationClientsModule
 					},
 					{
 						path: '/organization-positions',
-						module: OrganizationPositionsModule,
+						module: OrganizationPositionsModule
+					},
+					{
+						path: '/organization-awards',
+						module: OrganizationAwardsModule
+					},
+					{
+						path: '/organization-languages',
+						module: OrganizationLanguagesModule
 					},
 					{
 						path: '/organization-projects',
-						module: OrganizationProjectsModule,
+						module: OrganizationProjectsModule
 					},
 					{
 						path: '/organization-vendors',
-						module: OrganizationVendorsModule,
+						module: OrganizationVendorsModule
 					},
 					{
 						path: '/organization-recurring-expense',
-						module: OrganizationRecurringExpenseModule,
+						module: OrganizationRecurringExpenseModule
 					},
 					{
 						path: '/employee-recurring-expense',
-						module: EmployeeRecurringExpenseModule,
+						module: EmployeeRecurringExpenseModule
 					},
 					{
 						path: '/organization-team',
-						module: OrganizationTeamModule,
+						module: OrganizationTeamModule
 					},
 					{
 						path: '/proposal',
-						module: ProposalModule,
+						module: ProposalModule
 					},
 					{
 						path: '/country',
-						module: CountryModule,
+						module: CountryModule
 					},
 					{
 						path: '/invite',
-						module: InviteModule,
+						module: InviteModule
 					},
 					{
 						path: '/email',
-						module: EmailModule,
+						module: EmailModule
 					},
 					{
 						path: '/email-template',
@@ -208,114 +233,134 @@ import { HelpCenterModule } from './help-center/help-center.module';
 					},
 					{
 						path: 'time-off-policy',
-						module: TimeOffPolicyModule,
+						module: TimeOffPolicyModule
 					},
 					{
 						path: '/approval-policy',
-						module: ApprovalPolicyModule,
+						module: ApprovalPolicyModule
 					},
 					{
 						path: '/request-approval',
-						module: RequestApprovalModule,
+						module: RequestApprovalModule
 					},
 					{
 						path: 'role-permissions',
-						module: RolePermissionsModule,
+						module: RolePermissionsModule
 					},
 					{
 						path: '/tenant',
-						module: TenantModule,
+						module: TenantModule
 					},
 					{
 						path: '/tags',
-						module: TagModule,
+						module: TagModule
 					},
 					{
 						path: '/skills',
-						module: SkillModule,
+						module: SkillModule
+					},
+					{
+						path: '/languages',
+						module: LanguageModule
 					},
 					{
 						path: '/tasks',
-						module: TaskModule,
+						module: TaskModule
 					},
 					{
 						path: '/equipment-sharing',
-						module: EquipmentSharingModule,
+						module: EquipmentSharingModule
 					},
 					{
 						path: '/organization-employment-type',
-						module: OrganizationEmploymentTypeModule,
+						module: OrganizationEmploymentTypeModule
 					},
 					{
 						path: '/expense-categories',
-						module: ExpenseCategoriesModule,
+						module: ExpenseCategoriesModule
 					},
 					{
 						path: '/timesheet',
-						module: TimesheetModule,
+						module: TimesheetModule
 					},
 					{
 						path: '/integrations/upwork',
-						module: UpworkModule,
+						module: UpworkModule
 					},
 					{
 						path: '/integrations/hubstaff',
-						module: HubstaffModule,
+						module: HubstaffModule
 					},
 					{
 						path: '/integration-tenant',
-						module: IntegrationTenantModule,
+						module: IntegrationTenantModule
 					},
 					{
 						path: '/integration-entity-setting',
-						module: IntegrationEntitySettingModule,
+						module: IntegrationEntitySettingModule
 					},
 					{
 						path: '/integration',
-						module: IntegrationModule,
+						module: IntegrationModule
 					},
 					{
 						path: '/invoices',
-						module: InvoiceModule,
+						module: InvoiceModule
 					},
 					{
 						path: '/invoice-item',
-						module: InvoiceItemModule,
+						module: InvoiceItemModule
 					},
 					{
 						path: '/products',
-						module: ProductModule,
+						module: ProductModule
 					},
 					{
 						path: '/product-categories',
-						module: ProductCategoriesModule,
+						module: ProductCategoriesModule
 					},
 					{
 						path: '/product-types',
-						module: ProductTypesModule,
+						module: ProductTypesModule
 					},
 					{
 						path: '/product-variant-prices',
-						module: ProductVariantPriceModule,
+						module: ProductVariantPriceModule
 					},
 					{
 						path: '/product-variants',
-						module: ProductVariantModule,
+						module: ProductVariantModule
 					},
 					{
 						path: '/product-variant-settings',
-						module: ProductVariantSettingsModule,
+						module: ProductVariantSettingsModule
 					},
 					{
 						path: '/event-type',
-						module: EventTypeModule,
+						module: EventTypeModule
 					},
 					{
 						path: '/availability-slots',
-						module: AvailabilitySlotsModule,
+						module: AvailabilitySlotsModule
 					},
-				],
-			},
+					{
+						path: '/pipelines',
+						module: PipelineModule
+					},
+					{
+						path: '/payments',
+						module: PaymentModule
+					},
+					{
+						path: '/goals',
+						module: GoalModule
+					},
+					{
+						path: '/key-results',
+						module: KeyResultModule
+					}
+				]
+			}
 		]),
 		CoreModule,
 		AuthModule,
@@ -330,6 +375,8 @@ import { HelpCenterModule } from './help-center/help-center.module';
 		CandidateFeedbacksModule,
 		CandidateInterviewModule,
 		CandidateInterviewersModule,
+		CandidatePersonalQualitiesModule,
+		CandidateTechnologiesModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
@@ -347,6 +394,8 @@ import { HelpCenterModule } from './help-center/help-center.module';
 		OrganizationPositionsModule,
 		OrganizationProjectsModule,
 		OrganizationVendorsModule,
+		OrganizationAwardsModule,
+		OrganizationLanguagesModule,
 		EmployeeRecurringExpenseModule,
 		OrganizationTeamModule,
 		OrganizationTeamEmployeeModule,
@@ -363,11 +412,16 @@ import { HelpCenterModule } from './help-center/help-center.module';
 		TenantModule,
 		TagModule,
 		SkillModule,
+		LanguageModule,
 		InvoiceModule,
 		InvoiceItemModule,
+		PaymentModule,
+		GoalModule,
+		KeyResultModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,
+		PipelineModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({
@@ -377,8 +431,8 @@ import { HelpCenterModule } from './help-center/help-center.module';
 							? 'production'
 							: 'development', //production, development
 						//release: null, // must create a release in sentry.io dashboard
-						logLevel: LogLevel.Error,
-					}),
+						logLevel: LogLevel.Error
+					})
 			  ]
 			: []),
 		HelpCenterModule,
@@ -407,13 +461,13 @@ import { HelpCenterModule } from './help-center/help-center.module';
 			parser: I18nJsonParser,
 			parserOptions: {
 				path: path.join(__dirname, '/assets/i18n/'),
-				watch: !environment.production,
+				watch: !environment.production
 			},
-			resolvers: [new HeaderResolver(['language'])],
-		}),
+			resolvers: [new HeaderResolver(['language'])]
+		})
 	],
 	controllers: [AppController],
 	providers: [AppService, SeedDataService],
-	exports: [],
+	exports: []
 })
 export class AppModule {}

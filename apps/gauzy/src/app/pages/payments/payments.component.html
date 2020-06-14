@@ -1,0 +1,14 @@
+<nb-card>
+	<nb-card-header>
+		<h4>{{ 'PAYMENTS_PAGE.HEADER' | translate }}</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<ng2-smart-table
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			style="cursor: pointer;"
+			#paymentsTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>

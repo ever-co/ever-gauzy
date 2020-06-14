@@ -2,7 +2,7 @@ import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { OptionsInput, EventInput } from '@fullcalendar/core';
+import { OptionsInput, EventInput, disableCursor } from '@fullcalendar/core';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -14,14 +14,15 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { first, takeUntil } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
-import { Candidate, Employee } from '@gauzy/models';
+import { Candidate, Employee, IDateRange } from '@gauzy/models';
 import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ga-manage-candidate-interviews',
 	templateUrl: './manage-candidate-interviews.component.html',
-	styleUrls: ['./manage-candidate-interviews.component.scss'],
+	styleUrls: ['./manage-candidate-interviews.component.scss']
 })
 export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -70,28 +71,35 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 				const id = event.event._def.extendedProps.id;
 				this.dialogService.open(CandidateInterviewInfoComponent, {
 					context: {
-						interviewId: id,
-					},
+						interviewId: id
+					}
 				});
 			},
 			initialView: 'timeGridWeek',
-			header: {
+			headerToolbar: {
 				left: 'prev,next today',
 				center: 'title',
-				right: 'timeGridWeek',
+				right: 'dayGridMonth,timeGridWeek,timeGridDay'
 			},
 			themeSystem: 'bootstrap',
 			plugins: [
 				dayGridPlugin,
 				timeGrigPlugin,
 				interactionPlugin,
-				bootstrapPlugin,
+				bootstrapPlugin
 			],
 			weekends: true,
 			height: 'auto',
+			selectable: true,
+			selectAllow: ({ start, end }) =>
+				moment(start).isSame(moment(end), 'day'),
+			select: this.handleEventSelect.bind(this),
+			dateClick: this.handleDateClick.bind(this),
+			eventMouseEnter: this.handleEventMouseEnter.bind(this),
+			eventMouseLeave: this.handleEventMouseLeave.bind(this)
 		};
 		const res = await this.candidateInterviewService.getAll([
-			'interviewers',
+			'interviewers'
 		]);
 		if (res) {
 			this.calendarEvents = [];
@@ -103,9 +111,9 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 					candidateId: interview.candidateId,
 					id: interview.id,
 					extendedProps: {
-						id: interview.id,
+						id: interview.id
 					},
-					backgroundColor: '#36f',
+					backgroundColor: '#36f'
 				});
 			}
 			this.calendarOptions.events = this.calendarEvents;
@@ -178,13 +186,17 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			);
 		}
 	}
-	async add() {
+	async add(selectedRange?: IDateRange) {
 		const dialog = this.dialogService.open(
 			CandidateInterviewMutationComponent,
 			{
 				context: {
+					header: this.getTranslation(
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
+					),
 					isCalendar: true,
-				},
+					selectedRangeCalendar: selectedRange
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -195,6 +207,52 @@ export class ManageCandidateInterviewsComponent extends TranslationBaseComponent
 			);
 			this.loadInterviews();
 		}
+	}
+	handleDateClick(event) {
+		if (event.view.type === 'dayGridMonth') {
+			this.calendarComponent
+				.getApi()
+				.changeView('timeGridWeek', event.date);
+		}
+	}
+
+	handleEventSelect(event) {
+		const now = new Date().getTime();
+		if (now < event.start.getTime()) {
+			this.add({ start: event.start, end: event.end });
+		} else {
+			disableCursor();
+		}
+	}
+
+	handleEventMouseEnter({ el }) {
+		if (this.hasOverflow(el.querySelector('.fc-event-main'))) {
+			el.style.position = 'unset';
+		}
+	}
+	handleEventMouseLeave({ el }) {
+		el.removeAttribute('style');
+	}
+
+	hasOverflow(el: HTMLElement) {
+		if (!el) {
+			return;
+		}
+		const curOverflow = el.style ? el.style.overflow : 'hidden';
+
+		if (!curOverflow || curOverflow === 'visible') {
+			el.style.overflow = 'hidden';
+		}
+
+		const isOverflowing =
+			el.clientWidth < el.scrollWidth ||
+			el.clientHeight < el.scrollHeight;
+
+		if (el.style) {
+			el.style.overflow = curOverflow;
+		}
+
+		return isOverflowing;
 	}
 
 	ngOnDestroy() {

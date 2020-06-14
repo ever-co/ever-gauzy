@@ -12,7 +12,7 @@ import { first } from 'rxjs/operators';
 @Component({
 	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
-	styleUrls: ['./candidate-interview-info.component.scss'],
+	styleUrls: ['./candidate-interview-info.component.scss']
 })
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -52,8 +52,8 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 					),
 					editData: this.currentInterview,
 					selectedCandidate: this.selectedCandidate,
-					interviewId: this.currentInterview.id,
-				},
+					interviewId: this.currentInterview.id
+				}
 			}
 		);
 		const data = await dialog.onClose.pipe(first()).toPromise();
@@ -157,6 +157,14 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent
 				this.getTranslation(
 					'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.DAYS_AGO'
 				);
+		}
+	}
+	isPastInterview(interview: ICandidateInterview) {
+		const now = new Date().getTime();
+		if (interview && new Date(interview.startTime).getTime() > now) {
+			return false;
+		} else {
+			return true;
 		}
 	}
 	private toastrSuccess(text: string) {

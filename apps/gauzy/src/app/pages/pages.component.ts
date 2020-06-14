@@ -17,7 +17,7 @@ import { SelectorService } from '../@core/utils/selector.service';
 			<nb-menu [items]="menu"></nb-menu>
 			<router-outlet></router-outlet>
 		</ngx-one-column-layout>
-	`,
+	`
 })
 export class PagesComponent implements OnInit, OnDestroy {
 	basicMenu: NbMenuItem[];
@@ -35,15 +35,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 			home: true,
 			data: {
 				translated: false,
-				translationKey: 'MENU.DASHBOARD',
-			},
+				translationKey: 'MENU.DASHBOARD'
+			}
 		},
 		{
 			title: 'Accounting',
 			icon: 'credit-card-outline',
 			data: {
 				translated: false,
-				translationKey: 'MENU.ACCOUNTING',
+				translationKey: 'MENU.ACCOUNTING'
 			},
 			children: [
 				{
@@ -54,10 +54,19 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translated: false,
 						permissionKeys: [
 							PermissionsEnum.ALL_ORG_VIEW,
-							PermissionsEnum.INVOICES_VIEW,
+							PermissionsEnum.INVOICES_VIEW
 						],
-						translationKey: 'MENU.INVOICES',
-					},
+						translationKey: 'MENU.INVOICES'
+					}
+				},
+				{
+					title: 'Estimates',
+					icon: 'file-outline',
+					link: '/pages/accounting/invoices/estimates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ESTIMATES'
+					}
 				},
 				{
 					title: 'Recurring Invoices',
@@ -66,17 +75,26 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						permissionKeys: [PermissionsEnum.INVOICES_VIEW],
-						translationKey: 'MENU.RECURRING_INVOICES',
-					},
+						translationKey: 'MENU.RECURRING_INVOICES'
+					}
 				},
 				{
-					title: 'Recieved Invoices',
-					icon: 'bulb-outline',
-					link: '/pages/accounting/invoices/recieved-invoices',
+					title: 'Received Invoices',
+					icon: 'archive',
+					link: '/pages/accounting/invoices/received-invoices',
 					data: {
 						translated: false,
-						translationKey: 'MENU.INVOICES_RECIEVED',
-					},
+						translationKey: 'MENU.INVOICES_RECEIVED'
+					}
+				},
+				{
+					title: 'Received Estimates',
+					icon: 'archive-outline',
+					link: '/pages/accounting/invoices/received-estimates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ESTIMATES_RECEIVED'
+					}
 				},
 				{
 					title: 'Income',
@@ -85,8 +103,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.INCOME',
-						permissionKeys: [PermissionsEnum.ORG_INCOMES_VIEW],
-					},
+						permissionKeys: [PermissionsEnum.ORG_INCOMES_VIEW]
+					}
 				},
 				{
 					title: 'Expenses',
@@ -95,8 +113,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.EXPENSES',
-						permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
-					},
+						permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW]
+					}
 				},
 				{
 					title: 'Payments',
@@ -104,10 +122,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/accounting/payments',
 					data: {
 						translated: false,
-						translationKey: 'MENU.PAYMENTS',
-					},
-				},
-			],
+						translationKey: 'MENU.PAYMENTS'
+					}
+				}
+			]
 		},
 		{
 			title: 'Sales',
@@ -116,7 +134,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			data: {
 				translated: false,
 				translationKey: 'MENU.SALES',
-				permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW],
+				permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
 			},
 			children: [
 				{
@@ -127,8 +145,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.PROPOSALS',
-						permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW],
-					},
+						permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
+					}
 				},
 				{
 					title: 'Estimates',
@@ -136,8 +154,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/sales/estimates',
 					data: {
 						translated: false,
-						translationKey: 'MENU.ESTIMATES',
-					},
+						translationKey: 'MENU.ESTIMATES'
+					}
 				},
 				{
 					title: 'Invoices',
@@ -147,10 +165,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translated: false,
 						permissionKeys: [
 							PermissionsEnum.ALL_ORG_VIEW,
-							PermissionsEnum.INVOICES_VIEW,
+							PermissionsEnum.INVOICES_VIEW
 						],
-						translationKey: 'MENU.INVOICES',
-					},
+						translationKey: 'MENU.INVOICES'
+					}
 				},
 				{
 					title: 'Recurring Invoices',
@@ -159,8 +177,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						permissionKeys: [PermissionsEnum.INVOICES_VIEW],
-						translationKey: 'MENU.RECURRING_INVOICES',
-					},
+						translationKey: 'MENU.RECURRING_INVOICES'
+					}
 				},
 				{
 					title: 'Payments',
@@ -168,10 +186,21 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/sales/payments',
 					data: {
 						translated: false,
-						translationKey: 'MENU.PAYMENTS',
-					},
+						translationKey: 'MENU.PAYMENTS'
+					}
 				},
-			],
+				{
+					title: 'Pipelines',
+					icon: 'funnel-outline',
+					link: '/pages/sales/pipelines',
+					hidden: false,
+					data: {
+						translated: false,
+						translationKey: 'MENU.PIPELINES',
+						permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
+					}
+				}
+			]
 		},
 		{
 			title: 'Tasks',
@@ -179,7 +208,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/tasks',
 			data: {
 				translated: false,
-				translationKey: 'MENU.TASKS',
+				translationKey: 'MENU.TASKS'
 			},
 			children: [
 				{
@@ -188,8 +217,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/tasks/dashboard',
 					data: {
 						translated: false,
-						translationKey: 'MENU.DASHBOARD',
-					},
+						translationKey: 'MENU.DASHBOARD'
+					}
 				},
 				{
 					title: 'My Tasks',
@@ -197,8 +226,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/tasks/me',
 					data: {
 						translated: false,
-						translationKey: 'MENU.MY_TASKS',
-					},
+						translationKey: 'MENU.MY_TASKS'
+					}
 				},
 				{
 					title: "Team's Tasks",
@@ -206,10 +235,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/tasks/team',
 					data: {
 						translated: false,
-						translationKey: 'MENU.TEAM_TASKS',
-					},
-				},
-			],
+						translationKey: 'MENU.TEAM_TASKS'
+					}
+				}
+			]
 		},
 		{
 			title: 'Employees',
@@ -219,8 +248,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translationKey: 'MENU.EMPLOYEES',
 				permissionKeys: [
 					PermissionsEnum.ORG_EMPLOYEES_VIEW,
-					PermissionsEnum.ORG_EXPENSES_EDIT,
-				],
+					PermissionsEnum.ORG_EXPENSES_EDIT
+				]
 			},
 			children: [
 				{
@@ -229,8 +258,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/employees',
 					data: {
 						translated: false,
-						translationKey: 'MENU.MANAGE',
-					},
+						translationKey: 'MENU.MANAGE'
+					}
 				},
 				{
 					title: 'Activity',
@@ -238,8 +267,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/employees/activity',
 					data: {
 						translated: false,
-						translationKey: 'MENU.ACTIVITY',
-					},
+						translationKey: 'MENU.ACTIVITY'
+					}
 				},
 				{
 					title: 'Timesheets',
@@ -247,8 +276,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/employees/timesheets',
 					data: {
 						translated: false,
-						translationKey: 'MENU.TIMESHEETS',
-					},
+						translationKey: 'MENU.TIMESHEETS'
+					}
 				},
 				{
 					title: 'Schedules',
@@ -256,8 +285,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/employees/schedules',
 					data: {
 						translated: false,
-						translationKey: 'MENU.SCHEDULES',
-					},
+						translationKey: 'MENU.SCHEDULES'
+					}
 				},
 				{
 					title: 'Appointments',
@@ -266,8 +295,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					pathMatch: 'prefix',
 					data: {
 						translated: false,
-						translationKey: 'MENU.APPOINTMENTS',
-					},
+						translationKey: 'MENU.APPOINTMENTS'
+					}
 				},
 				{
 					title: 'Event Types',
@@ -276,8 +305,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					pathMatch: 'prefix',
 					data: {
 						translated: false,
-						translationKey: 'MENU.EVENT_TYPES',
-					},
+						translationKey: 'MENU.EVENT_TYPES'
+					}
 				},
 				{
 					title: 'Approvals',
@@ -285,8 +314,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/employees/approvals',
 					data: {
 						translated: false,
-						translationKey: 'MENU.APPROVALS',
-					},
+						translationKey: 'MENU.APPROVALS'
+					}
 				},
 				{
 					title: 'Time Off',
@@ -295,8 +324,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.TIME_OFF',
-						permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW],
-					},
+						permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW]
+					}
 				},
 				{
 					title: 'Candidates',
@@ -304,10 +333,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/employees/candidates',
 					data: {
 						translated: false,
-						translationKey: 'MENU.CANDIDATES',
-					},
-				},
-			],
+						translationKey: 'MENU.CANDIDATES'
+					}
+				}
+			]
 		},
 		{
 			title: 'Organization',
@@ -315,7 +344,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			data: {
 				translated: false,
 				translationKey: 'MENU.ORGANIZATION',
-				withOrganizationShortcuts: true,
+				withOrganizationShortcuts: true
 			},
 			children: [
 				{
@@ -327,8 +356,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
 						urlPostfix: '',
-						translationKey: 'MENU.MANAGE',
-					},
+						translationKey: 'MENU.MANAGE'
+					}
 				},
 				{
 					title: 'Equipment',
@@ -337,8 +366,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
-						translationKey: 'MENU.EQUIPMENT',
-					},
+						translationKey: 'MENU.EQUIPMENT'
+					}
 				},
 				{
 					title: 'Inventory',
@@ -347,8 +376,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						// permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
-						translationKey: 'MENU.INVENTORY',
-					},
+						translationKey: 'MENU.INVENTORY'
+					}
 				},
 				{
 					title: 'Tags',
@@ -356,9 +385,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/organization/tags',
 					data: {
 						translated: false,
-						translationKey: 'MENU.TAGS',
+						translationKey: 'MENU.TAGS'
 						//   permissionKeys: [],
-					},
+					}
 				},
 				{
 					title: 'Clients',
@@ -370,8 +399,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
 						urlPostfix: '/settings/clients',
-						translationKey: 'ORGANIZATIONS_PAGE.CLIENTS',
-					},
+						translationKey: 'ORGANIZATIONS_PAGE.CLIENTS'
+					}
 				},
 				{
 					title: 'Vendors',
@@ -383,8 +412,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
 						urlPostfix: '/settings/vendors',
-						translationKey: 'ORGANIZATIONS_PAGE.VENDORS',
-					},
+						translationKey: 'ORGANIZATIONS_PAGE.VENDORS'
+					}
 				},
 				{
 					title: 'Projects',
@@ -396,8 +425,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
 						urlPostfix: '/settings/projects',
-						translationKey: 'ORGANIZATIONS_PAGE.PROJECTS',
-					},
+						translationKey: 'ORGANIZATIONS_PAGE.PROJECTS'
+					}
 				},
 				{
 					title: 'Positions',
@@ -409,8 +438,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
 						urlPostfix: '/settings/positions',
-						translationKey: 'ORGANIZATIONS_PAGE.POSITIONS',
-					},
+						translationKey: 'ORGANIZATIONS_PAGE.POSITIONS'
+					}
 				},
 				{
 					title: 'Departments',
@@ -422,8 +451,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
 						urlPostfix: '/settings/departments',
-						translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS',
-					},
+						translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS'
+					}
 				},
 				{
 					title: 'Teams',
@@ -435,8 +464,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 						permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 						urlPrefix: `/pages/organizations/edit/`,
 						urlPostfix: '/settings/teams',
-						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS',
-					},
+						translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS'
+					}
 				},
 				{
 					title: 'Email Templates',
@@ -444,8 +473,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/organization/email-templates',
 					data: {
 						translated: false,
-						translationKey: 'MENU.EMAIL_TEMPLATES',
-					},
+						translationKey: 'MENU.EMAIL_TEMPLATES'
+					}
 				},
 				{
 					title: 'Help Center',
@@ -453,10 +482,47 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/organization/help-center',
 					data: {
 						translated: false,
-						translationKey: 'MENU.HELP_CENTER',
-					},
+						translationKey: 'MENU.HELP_CENTER'
+					}
+				}
+			]
+		},
+		{
+			title: 'Goals',
+			icon: 'flag-outline',
+			data: {
+				translated: false,
+				translationKey: 'MENU.GOALS'
+			},
+			children: [
+				{
+					title: 'Manage',
+					link: '/pages/goals',
+					icon: 'list-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.MANAGE'
+					}
 				},
-			],
+				{
+					title: 'Report',
+					link: '/pages/goals/reports',
+					icon: 'file-text-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.REPORTS'
+					}
+				},
+				{
+					title: 'Settings',
+					link: '/pages/goals/settings',
+					icon: 'settings-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.SETTINGS'
+					}
+				}
+			]
 		},
 		{
 			title: 'Reports',
@@ -464,7 +530,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 			link: '/pages/reports',
 			data: {
 				translated: false,
-				translationKey: 'MENU.REPORTS',
+				translationKey: 'MENU.REPORTS'
 			},
 			children: [
 				{
@@ -473,8 +539,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'clock-outline',
 					data: {
 						translated: false,
-						translationKey: 'MENU.TIME_REPORTS',
-					},
+						translationKey: 'MENU.TIME_REPORTS'
+					}
 				},
 				{
 					title: 'Accounting Reports',
@@ -482,10 +548,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'credit-card-outline',
 					data: {
 						translated: false,
-						translationKey: 'MENU.ACCOUNTING_REPORTS',
-					},
-				},
-			],
+						translationKey: 'MENU.ACCOUNTING_REPORTS'
+					}
+				}
+			]
 		},
 		{
 			title: 'Admin',
@@ -496,10 +562,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 					PermissionsEnum.ORG_EMPLOYEES_VIEW,
 					PermissionsEnum.ORG_USERS_VIEW,
 					PermissionsEnum.ALL_ORG_EDIT,
-					PermissionsEnum.ALL_ORG_VIEW,
+					PermissionsEnum.ALL_ORG_VIEW
 				],
-				translationKey: 'MENU.ADMIN',
-			},
+				translationKey: 'MENU.ADMIN'
+			}
 		},
 		{
 			title: 'Users',
@@ -508,8 +574,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 			data: {
 				translated: false,
 				permissionKeys: [PermissionsEnum.ORG_USERS_VIEW],
-				translationKey: 'MENU.USERS',
-			},
+				translationKey: 'MENU.USERS'
+			}
 		},
 		{
 			title: 'Organizations',
@@ -519,10 +585,10 @@ export class PagesComponent implements OnInit, OnDestroy {
 				translated: false,
 				permissionKeys: [
 					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_EXPENSES_EDIT,
+					PermissionsEnum.ORG_EXPENSES_EDIT
 				],
-				translationKey: 'MENU.ORGANIZATIONS',
-			},
+				translationKey: 'MENU.ORGANIZATIONS'
+			}
 		},
 		{
 			title: 'Integrations',
@@ -531,15 +597,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 			pathMatch: 'prefix',
 			data: {
 				translated: false,
-				translationKey: 'MENU.INTEGRATIONS',
-			},
+				translationKey: 'MENU.INTEGRATIONS'
+			}
 		},
 		{
 			title: 'Settings',
 			icon: 'settings-outline',
 			data: {
 				translated: false,
-				translationKey: 'MENU.SETTINGS',
+				translationKey: 'MENU.SETTINGS'
 			},
 			children: [
 				{
@@ -548,8 +614,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 					link: '/pages/settings/general',
 					data: {
 						translated: false,
-						translationKey: 'MENU.GENERAL',
-					},
+						translationKey: 'MENU.GENERAL'
+					}
 				},
 				{
 					title: 'Email History',
@@ -568,7 +634,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'flip-outline',
 					data: {
 						translated: false,
-						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT',
+						translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT'
 					},
 					children: [
 						{
@@ -577,8 +643,8 @@ export class PagesComponent implements OnInit, OnDestroy {
 							link: '/pages/settings/import-export/export',
 							data: {
 								translated: false,
-								translationKey: 'MENU.IMPORT_EXPORT.EXPORT',
-							},
+								translationKey: 'MENU.IMPORT_EXPORT.EXPORT'
+							}
 						},
 						{
 							title: 'Import',
@@ -586,26 +652,26 @@ export class PagesComponent implements OnInit, OnDestroy {
 							link: '/pages/settings/import-export/import',
 							data: {
 								translated: false,
-								translationKey: 'MENU.IMPORT_EXPORT.IMPORT',
-							},
-						},
-					],
+								translationKey: 'MENU.IMPORT_EXPORT.IMPORT'
+							}
+						}
+					]
 				},
 				{
 					title: 'Payment Gateways',
 					icon: 'credit-card-outline',
 					data: {
 						translated: false,
-						translationKey: 'MENU.PAYMENT_GATEWAYS',
-					},
+						translationKey: 'MENU.PAYMENT_GATEWAYS'
+					}
 				},
 				{
 					title: 'Custom SMTP',
 					icon: 'at-outline',
 					data: {
 						translated: false,
-						translationKey: 'MENU.CUSTOM_SMTP',
-					},
+						translationKey: 'MENU.CUSTOM_SMTP'
+					}
 				},
 				{
 					title: 'Roles & Permissions',
@@ -615,9 +681,9 @@ export class PagesComponent implements OnInit, OnDestroy {
 						translated: false,
 						translationKey: 'MENU.ROLES',
 						permissionKeys: [
-							PermissionsEnum.CHANGE_ROLES_PERMISSIONS,
-						],
-					},
+							PermissionsEnum.CHANGE_ROLES_PERMISSIONS
+						]
+					}
 				},
 				{
 					title: 'Danger Zone',
@@ -625,11 +691,11 @@ export class PagesComponent implements OnInit, OnDestroy {
 					icon: 'alert-triangle-outline',
 					data: {
 						translated: false,
-						translationKey: 'MENU.DANGER_ZONE',
-					},
-				},
-			],
-		},
+						translationKey: 'MENU.DANGER_ZONE'
+					}
+				}
+			]
+		}
 	];
 	menu: NbMenuItem[] = this.MENU_ITEMS;
 

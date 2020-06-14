@@ -3,7 +3,7 @@
 // Copyright (c) 2019 Alexi Taylor
 
 import { Connection } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { environment as env } from '@env-api/environment';
 import * as faker from 'faker';
 import {

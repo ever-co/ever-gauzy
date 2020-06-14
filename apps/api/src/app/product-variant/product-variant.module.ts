@@ -19,19 +19,20 @@ import { ProductVariantDeleteHandler } from './commands/handlers/product-variant
 			ProductVariant,
 			ProductVariantPrice,
 			ProductVariantSettings,
-			Product,
+			Product
 		]),
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [ProductVariantController],
 	providers: [
+		ProductService,
 		ProductVariantService,
 		ProductVariantCreateHandler,
 		ProductVariantDeleteHandler,
 		ProductVariantPriceService,
 		ProductVariantSettingService,
-		ProductService,
+		ProductService
 	],
-	exports: [ProductVariantService],
+	exports: [ProductVariantService]
 })
 export class ProductVariantModule {}

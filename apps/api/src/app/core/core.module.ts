@@ -9,7 +9,8 @@ import { Invoice } from '../invoice/invoice.entity';
 import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
-import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
+import { Language } from '../language/language.entity';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
 import { environment as env } from '@env-api/environment';
@@ -31,6 +32,8 @@ import { OrganizationVendor } from '../organization-vendors/organization-vendors
 import { OrganizationProjects } from '../organization-projects/organization-projects.entity';
 import { OrganizationTeam } from '../organization-team/organization-team.entity';
 import { OrganizationTeamEmployee } from '../organization-team-employee/organization-team-employee.entity';
+import { OrganizationAwards } from '../organization-awards/organization-awards.entity';
+import { OrganizationLanguages } from '../organization-languages/organization-languages.entity';
 import { Proposal } from '../proposal/proposal.entity';
 import { Country } from '../country/country.entity';
 import { Invite } from '../invite/invite.entity';
@@ -79,7 +82,15 @@ import { RequestApprovalEmployee } from '../request-approval-employee/request-ap
 import { ApprovalPolicy } from '../approval-policy/approval-policy.entity';
 import { EventType } from '../event-types/event-type.entity';
 import { AvailabilitySlots } from '../availability-slots/availability-slots.entity';
+import { ProductTypeTranslation } from '../product-type/product-type-translation.entity';
 import { HelpCenter } from '../help-center/help-center.entity';
+import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
+import { Pipeline } from '../pipeline/pipeline.entity';
+import { Payment } from '../payment/payment.entity';
+import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
+import { Goal } from '../goal/goal.entity';
+import { KeyResult } from '../keyresult/keyresult.entity';
 
 const entities = [
 	Invite,
@@ -101,6 +112,8 @@ const entities = [
 	EmployeeRecurringExpense,
 	OrganizationTeam,
 	OrganizationTeamEmployee,
+	OrganizationAwards,
+	OrganizationLanguages,
 	Proposal,
 	Country,
 	Email,
@@ -110,6 +123,7 @@ const entities = [
 	EmailTemplate,
 	Tag,
 	Skill,
+	Language,
 	Invoice,
 	InvoiceItem,
 	OrganizationEmploymentType,
@@ -117,6 +131,8 @@ const entities = [
 	EquipmentSharing,
 	EmployeeLevel,
 	Task,
+	Goal,
+	KeyResult,
 	TimeSlot,
 	Timesheet,
 	TimeLog,
@@ -138,6 +154,8 @@ const entities = [
 	CandidateExperience,
 	CandidateInterview,
 	CandidateInterviewers,
+	CandidatePersonalQualities,
+	CandidateTechnologies,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,
@@ -154,6 +172,10 @@ const entities = [
 	AppointmentEmployees,
 	EventType,
 	AvailabilitySlots,
+	ProductTypeTranslation,
+	ProductCategoryTranslation,
+	Pipeline,
+	Payment
 ];
 
 @Module({
@@ -162,12 +184,12 @@ const entities = [
 			imports: [ConfigModule],
 			useFactory: (config: ConfigService): TypeOrmModuleOptions => ({
 				...env.database,
-				entities,
+				entities
 				// subscribers,
 				// migrations,
 			}),
-			inject: [ConfigService],
-		}),
+			inject: [ConfigService]
+		})
 		/*
     TerminusModule.forRootAsync({
       // Inject the TypeOrmHealthIndicator provided by nestjs/terminus
@@ -177,7 +199,7 @@ const entities = [
     */
 	],
 	controllers: [],
-	providers: [],
+	providers: []
 })
 export class CoreModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

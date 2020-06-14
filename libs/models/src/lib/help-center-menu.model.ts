@@ -1,9 +1,15 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 
 export interface IHelpCenter extends IBaseEntityModel {
-	id?: string;
 	name: string;
+	icon: string;
+	flag: string;
+	privacy: string;
+	language: string;
+	color: string;
 	description?: string;
 	data?: string;
+	index: number;
 	children?: IHelpCenter[];
+	parent?: IHelpCenter;
 }

@@ -21,18 +21,22 @@ export class TagsService {
 			.toPromise();
 	}
 
-	getAllTags(): Promise<{ items: Tag[] }> {
+	getAllTags(
+		relations?: string[],
+		findInput?: Tag
+	): Promise<{ items: Tag[] }> {
+		const data = JSON.stringify({ relations, findInput });
+
 		return this.http
-			.get<{ items: Tag[] }>(`/api/tags`)
+			.get<{ items: Tag[] }>(`/api/tags`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
 
 	delete(id: string): Promise<any> {
-		return this.http
-			.delete(`/api/tags/${id}`)
-			.pipe(first())
-			.toPromise();
+		return this.http.delete(`/api/tags/${id}`).pipe(first()).toPromise();
 	}
 
 	update(id: string, updateInput: Tag) {
@@ -44,6 +48,26 @@ export class TagsService {
 	findByName(name: string): Promise<{ item: Tag }> {
 		return this.http
 			.get<{ item: Tag }>(`/api/tags/getByName/${name}`)
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllTagsByOrgLevel(orgId: any, relations?: string[]): Promise<any> {
+		const data = JSON.stringify({ relations, orgId });
+		return this.http
+			.get<any>(`/api/tags/getByOrgId/`, {
+				params: { data }
+			})
+			.pipe(first())
+			.toPromise();
+	}
+
+	getAllTagsByTenantLevel(tenantId: any, relations?: string[]): Promise<any> {
+		const data = JSON.stringify({ relations, tenantId });
+		return this.http
+			.get<any>(`/api/tags/getByTenantId/`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}

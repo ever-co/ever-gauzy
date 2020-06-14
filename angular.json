@@ -5,7 +5,7 @@
 			"typescriptMismatch": false,
 			"versionMismatch": false
 		},
-		"defaultCollection": "@nrwl/angular",
+		"defaultCollection": "@nstudio/xplat",
 		"packageManager": "yarn",
 		"analytics": false
 	},
@@ -83,6 +83,7 @@
 							"extractCss": true,
 							"namedChunks": false,
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
+							"aot": true,
 							"extractLicenses": false,
 							"vendorChunk": false,
 							"buildOptimizer": false,
@@ -273,6 +274,144 @@
 					"options": {
 						"jestConfig": "libs/api-interface/jest.config.js",
 						"tsConfig": "libs/api-interface/tsconfig.spec.json"
+					}
+				}
+			}
+		},
+		"desktop": {
+			"projectType": "application",
+			"schematics": {
+				"@nrwl/workspace:component": {
+					"style": "scss"
+				}
+			},
+			"root": "apps/gauzy",
+			"sourceRoot": "apps/gauzy/src",
+			"prefix": "gauzy",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:browser",
+					"options": {
+						"outputPath": "dist/apps/desktop",
+						"index": "apps/gauzy/src/index.html",
+						"main": "apps/gauzy/src/main.ts",
+						"polyfills": "apps/gauzy/src/polyfills.ts",
+						"tsConfig": "apps/gauzy/tsconfig.app.json",
+						"stylePreprocessorOptions": {
+							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+						},
+						"assets": [
+							"apps/gauzy/src/favicon.ico",
+							"apps/gauzy/src/assets",
+							"apps/gauzy/src/manifest.json",
+							"apps/gauzy/src/silent-refresh.html",
+							{
+								"glob": "**/*",
+								"input": "apps/desktop/src/",
+								"ignore": ["**/*.ts"],
+								"output": ""
+							}
+						],
+						"styles": [
+							"node_modules/bootstrap/dist/css/bootstrap.css",
+							"node_modules/typeface-exo/index.css",
+							"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+							"node_modules/ionicons/dist/scss/ionicons.scss",
+							"node_modules/@fortawesome/fontawesome-free/css/all.css",
+							"node_modules/socicon/css/socicon.css",
+							"node_modules/nebular-icons/scss/nebular-icons.scss",
+							"node_modules/angular-tree-component/dist/angular-tree-component.css",
+							"node_modules/pace-js/templates/pace-theme-flash.tmpl.css",
+							"node_modules/leaflet/dist/leaflet.css",
+							"apps/gauzy/src/app/@theme/styles/styles.scss"
+						],
+						"scripts": [
+							"node_modules/pace-js/pace.min.js",
+							"node_modules/tinymce/tinymce.min.js",
+							"node_modules/tinymce/plugins/link/plugin.min.js",
+							"node_modules/tinymce/plugins/paste/plugin.min.js",
+							"node_modules/tinymce/plugins/table/plugin.min.js",
+							"node_modules/echarts/dist/echarts.min.js",
+							"node_modules/echarts/dist/extension/bmap.min.js",
+							"node_modules/chart.js/dist/Chart.min.js"
+						]
+					},
+					"configurations": {
+						"production": {
+							"fileReplacements": [
+								{
+									"replace": "apps/gauzy/src/environments/environment.ts",
+									"with": "apps/gauzy/src/environments/environment.prod.ts"
+								}
+							],
+							"optimization": true,
+							"outputHashing": "all",
+							"serviceWorker": true,
+							"sourceMap": false,
+							"extractCss": true,
+							"namedChunks": false,
+							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
+							"aot": true,
+							"extractLicenses": false,
+							"vendorChunk": false,
+							"buildOptimizer": false,
+							"budgets": [
+								{
+									"type": "initial",
+									"maximumWarning": "2mb",
+									"maximumError": "20mb"
+								}
+							]
+						}
+					}
+				},
+				"serve": {
+					"builder": "@angular-devkit/build-angular:dev-server",
+					"options": {
+						"browserTarget": "desktop:build",
+						"proxyConfig": "apps/gauzy/proxy.conf.json"
+					},
+					"configurations": {
+						"production": {
+							"browserTarget": "desktop:build:production",
+							"proxyConfig": "apps/gauzy/proxy.prod.conf.json"
+						}
+					}
+				}
+			}
+		},
+		"desktop-api": {
+			"root": "apps/api",
+			"sourceRoot": "apps/api/src",
+			"projectType": "application",
+			"prefix": "api",
+			"schematics": {},
+			"architect": {
+				"build": {
+					"builder": "@nrwl/node:build",
+					"options": {
+						"webpackConfig": "tools/build/webpack.config.js",
+						"outputPath": "dist/apps/desktop/api",
+						"main": "apps/api/src/main.ts",
+						"showCircularDependencies": false,
+						"sourceMap": true,
+						"maxWorkers": 4,
+						"tsConfig": "apps/api/tsconfig.app.json",
+						"assets": ["apps/api/src/assets"]
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": true,
+							"inspect": false,
+							"sourceMap": false,
+							"fileReplacements": [
+								{
+									"replace": "apps/api/src/environments/environment.ts",
+									"with": "apps/api/src/environments/environment.prod.ts"
+								}
+							]
+						}
 					}
 				}
 			}

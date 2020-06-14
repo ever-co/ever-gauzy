@@ -16,7 +16,7 @@ export class ProductVariantService extends CrudService<ProductVariant> {
 	async findAllProductVariants(): Promise<IPagination<ProductVariant>> {
 		const total = await this.productVariantRepository.count();
 		const items = await this.productVariantRepository.find({
-			relations: ['settings', 'price'],
+			relations: ['settings', 'price']
 		});
 
 		return { items, total };

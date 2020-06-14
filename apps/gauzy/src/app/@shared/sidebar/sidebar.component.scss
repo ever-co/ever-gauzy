@@ -34,6 +34,17 @@
   margin-top: 10px;
 }
 
+.blue {
+  color: blue;
+}
+
+.icons {
+  font-size: 1.05rem;
+}
+
+.text {
+  font-size: 1.1rem;
+}
 .add-icon-field {
   flex-direction: row;
   display: flex;
@@ -41,11 +52,21 @@
 
 .add-icon {
   margin-left: 10px;
-  margin-top: 7px;
+  margin-top: 2px;
   color: gray;
 }
 
 .ck-editor {
   margin-top: 10px;
   margin-bottom: 10px;
+}
+
+.add-buttons {
+  margin-right: 5px;
+  margin-bottom: 5px;
+  max-width: 92px;
+}
+
+.close-add-buttons {
+  margin-bottom: 5px;
 }

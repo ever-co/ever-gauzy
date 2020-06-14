@@ -22,7 +22,6 @@
 						<label class="label" for="lang">
 							{{ 'INVENTORY_PAGE.LANGUAGE' | translate }}
 						</label>
-						<!-- not working yet -->
 						<nb-select
 							id="lang"
 							[placeholder]="
@@ -31,6 +30,8 @@
 							class="d-block"
 							size="medium"
 							fullWidth="true"
+							[selected]="selectedLanguage"
+							(selectedChange)="onLangChange($event)"
 						>
 							<nb-option
 								*ngFor="let lang of languages"

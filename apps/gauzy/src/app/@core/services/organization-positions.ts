@@ -26,9 +26,10 @@ export class OrganizationPositionsService {
 	}
 
 	getAll(
-		findInput?: OrganizationPositionsFindInput
+		findInput?: OrganizationPositionsFindInput,
+		relations?: string[]
 	): Promise<{ items: any[]; total: number }> {
-		const data = JSON.stringify({ findInput });
+		const data = JSON.stringify({ relations, findInput });
 
 		return this.http
 			.get<{ items: OrganizationPositions[]; total: number }>(

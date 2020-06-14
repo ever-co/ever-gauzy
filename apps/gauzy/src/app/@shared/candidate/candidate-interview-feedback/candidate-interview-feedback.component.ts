@@ -10,14 +10,18 @@ import {
 	CandidateStatus,
 	ICandidateFeedback,
 	ICandidateInterviewers,
+	ICandidateTechnologies,
+	ICandidatePersonalQualities
 } from '@gauzy/models';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { EmployeesService } from '../../../@core/services';
+import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
+import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
 @Component({
 	selector: 'ga-candidate-interview-feedback',
 	templateUrl: './candidate-interview-feedback.component.html',
-	styleUrls: ['./candidate-interview-feedback.component.scss'],
+	styleUrls: ['./candidate-interview-feedback.component.scss']
 })
 export class CandidateInterviewFeedbackComponent
 	extends TranslationBaseComponent
@@ -38,6 +42,9 @@ export class CandidateInterviewFeedbackComponent
 	isRejected: boolean;
 	selectedEmployeeId: string;
 	employeesForSelect: any[] = [];
+	disabledIds: string[] = [];
+	technologiesList: ICandidateTechnologies[];
+	personalQualitiesList: ICandidatePersonalQualities[];
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: FormBuilder,
@@ -47,7 +54,9 @@ export class CandidateInterviewFeedbackComponent
 		private candidateInterviewService: CandidateInterviewService,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
 		private candidateInterviewersService: CandidateInterviewersService,
-		private employeesService: EmployeesService
+		private employeesService: EmployeesService,
+		private candidateTechnologiesService: CandidateTechnologiesService,
+		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService
 	) {
 		super(translateService);
 	}
@@ -56,13 +65,16 @@ export class CandidateInterviewFeedbackComponent
 		this.loadData();
 		this._initializeForm();
 		this.loadFeedbacks();
+		this.loadCriterions();
 	}
+
 	private async _initializeForm() {
 		this.form = this.fb.group({
 			description: ['', Validators.required],
-			rating: ['', Validators.required],
+			rating: ['', Validators.required]
 		});
 	}
+
 	async loadData() {
 		const res = await this.candidateInterviewService.findById(
 			this.interviewId
@@ -86,38 +98,46 @@ export class CandidateInterviewFeedbackComponent
 			}
 		}
 	}
+
 	async loadFeedbacks() {
-		const res = await this.candidateFeedbacksService.findByInterviewId(
-			this.interviewId
+		const result = await this.candidateFeedbacksService.getAll(
+			['interviewer'],
+			{ candidateId: this.candidateId }
 		);
-		if (res) {
-			this.feedbacks = res;
-			for (const item of this.feedbacks) {
-				if (item.status === CandidateStatus.REJECTED) {
-					this.isRejected = true;
-				} else {
-					this.isRejected = false;
+		if (result) {
+			for (const feedback of result.items) {
+				if (
+					feedback.interviewId === this.interviewId &&
+					feedback.interviewer
+				) {
+					this.disabledIds.push(feedback.interviewer.employeeId);
+
+					if (feedback.status === CandidateStatus.REJECTED) {
+						this.isRejected = true;
+					} else {
+						this.isRejected = false;
+					}
+					this.statusHire =
+						feedback.status === CandidateStatus.HIRED
+							? this.statusHire + 1
+							: this.statusHire;
 				}
-				this.statusHire =
-					item.status === CandidateStatus.HIRED
-						? this.statusHire + 1
-						: this.statusHire;
 			}
 		}
 	}
+
 	async onMembersSelected(id: string) {
 		this.selectedEmployeeId = id;
-
 		for (const item of this.interviewers) {
 			if (this.selectedEmployeeId === item.employeeId) {
 				this.feedbackInterviewer = item;
 			}
 		}
 	}
+
 	async createFeedback() {
 		this.description = this.form.get('description').value;
 		this.rating = this.form.get('rating').value;
-
 		if (this.form.valid) {
 			try {
 				await this.candidateFeedbacksService.create({
@@ -126,7 +146,7 @@ export class CandidateInterviewFeedbackComponent
 					candidateId: this.candidateId,
 					interviewId: this.interviewId,
 					interviewer: this.feedbackInterviewer,
-					status: this.status,
+					status: this.status
 				});
 				this.setStatus(this.status);
 				this.dialogRef.close();
@@ -137,9 +157,7 @@ export class CandidateInterviewFeedbackComponent
 			} catch (error) {
 				this.toastrService.danger(
 					this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
-						error: error.error
-							? error.error.message
-							: error.message,
+						error: error.error ? error.error.message : error.message
 					}),
 					this.getTranslation('TOASTR.TITLE.ERROR')
 				);
@@ -153,12 +171,31 @@ export class CandidateInterviewFeedbackComponent
 			);
 		}
 	}
+
 	async setStatus(status: string) {
-		if (status === CandidateStatus.HIRED) {
-			await this.candidatesService.setCandidateAsHired(this.candidateId);
-		} else if (status === CandidateStatus.REJECTED) {
+		if (status === CandidateStatus.REJECTED) {
 			await this.candidatesService.setCandidateAsRejected(
 				this.candidateId
+			);
+		} else if (this.statusHire + 1 === this.employeesForSelect.length) {
+			await this.candidatesService.setCandidateAsHired(this.candidateId);
+		} else {
+			await this.candidatesService.setCandidateAsApplied(
+				this.candidateId
+			);
+		}
+	}
+	private async loadCriterions() {
+		const technologies = await this.candidateTechnologiesService.getAll();
+		if (technologies) {
+			this.technologiesList = technologies.items.filter(
+				(item) => !item.interviewId
+			);
+		}
+		const qualities = await this.candidatePersonalQualitiesService.getAll();
+		if (qualities) {
+			this.personalQualitiesList = qualities.items.filter(
+				(item) => !item.interviewId
 			);
 		}
 	}

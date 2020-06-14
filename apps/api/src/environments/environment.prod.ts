@@ -1,4 +1,5 @@
 require('dotenv').config();
+import * as path from 'path';
 import { IEnvironment } from './ienvironment';
 import {
 	CurrenciesEnum,
@@ -7,18 +8,41 @@ import {
 } from '@gauzy/models';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
-const databaseConfig: TypeOrmModuleOptions = {
-	type: 'postgres', // TODO: process process.env.DB_TYPE value (we need to create different options obj depending on it)
-	host: process.env.DB_HOST || 'db',
-	port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
-	database: process.env.DB_NAME || 'postgres',
-	username: process.env.DB_USER || 'postgres',
-	password: process.env.DB_PASS || 'root',
-	keepConnectionAlive: true,
-	logging: true,
-	synchronize: true,
-	uuidExtension: 'pgcrypto'
-};
+const dbType =
+	process.env.DB_TYPE && process.env.DB_TYPE === 'sqlite'
+		? 'sqlite'
+		: 'postgres';
+
+let databaseConfig: TypeOrmModuleOptions;
+
+switch (dbType) {
+	case 'postgres':
+		databaseConfig = {
+			type: dbType,
+			host: process.env.DB_HOST || 'localhost',
+			port: process.env.DB_PORT
+				? parseInt(process.env.DB_PORT, 10)
+				: 5432,
+			database: process.env.DB_NAME || 'postgres',
+			username: process.env.DB_USER || 'postgres',
+			password: process.env.DB_PASS || 'root',
+			keepConnectionAlive: true,
+			logging: true,
+			synchronize: true,
+			uuidExtension: 'pgcrypto'
+		};
+		break;
+
+	case 'sqlite':
+		databaseConfig = {
+			type: dbType,
+			database: path.join(__dirname, '../../data/gauzy.sqlite3'),
+			keepConnectionAlive: true,
+			logging: true,
+			synchronize: true
+		};
+		break;
+}
 
 console.log(`DB Config: ${JSON.stringify(databaseConfig)}`);
 

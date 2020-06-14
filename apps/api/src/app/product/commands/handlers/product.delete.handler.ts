@@ -23,7 +23,7 @@ export class ProductDeleteHandler
 
 		const product = await this.productService.findOne({
 			where: { id: productId },
-			relations: ['variants'],
+			relations: ['variants']
 		});
 
 		const settingsToDelete = [];
@@ -42,7 +42,7 @@ export class ProductDeleteHandler
 				settingsToDelete
 			),
 			await this.productVariantPricesService.deleteMany(pricesToDelete),
-			await this.productService.delete(product.id),
+			await this.productService.delete(product.id)
 		];
 
 		return {
@@ -55,7 +55,7 @@ export class ProductDeleteHandler
 						return res.affected ? res.affected : 0;
 					}
 				})
-				.reduce((acc, value) => acc + value),
+				.reduce((acc, value) => acc + value)
 		};
 	}
 }

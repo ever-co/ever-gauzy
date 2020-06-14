@@ -18,6 +18,7 @@ import {
 import { Base } from '../core/entities/base';
 import { AppointmentEmployees } from '../appointment-employees/appointment-employees.entity';
 import { Employee } from '../employee/employee.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('employee_appointment')
 export class EmployeeAppointment extends Base implements IEmployeeAppointment {
@@ -87,12 +88,24 @@ export class EmployeeAppointment extends Base implements IEmployeeAppointment {
 	@Column({ nullable: true })
 	breakStartTime?: Date;
 
+	@ApiProperty({ type: String })
+	@IsString()
+	@Column({ nullable: true })
+	emails?: string;
+
+	@ApiProperty({ type: Organization })
+	@ManyToOne((type) => Organization, { nullable: false, onDelete: 'CASCADE' })
+	@JoinColumn()
+	organization: Organization;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((appointment: EmployeeAppointment) => appointment.organization)
+	readonly organizationId: string;
+
 	@ApiProperty({ type: AppointmentEmployees, isArray: true })
-	@OneToMany(
-		(type) => AppointmentEmployees,
-		(entity) => entity.employeeId,
-		{ onDelete: 'SET NULL' }
-	)
+	@OneToMany((type) => AppointmentEmployees, (entity) => entity.employeeId, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invitees: AppointmentEmployees[];
 }

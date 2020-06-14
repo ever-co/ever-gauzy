@@ -108,6 +108,7 @@
 		"APPLIED": "Применяется",
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
+		"NO_RESULT": "Нет результатов",
 		"REGION": {
 			"BG": "Български (България)",
 			"EN": "Русский (Соединенные Штаты)",
@@ -117,9 +118,10 @@
 	},
 	"FORM": {
 		"USERNAME": "Имя пользователя",
-		"EMAIL": "Эл. адрес",
 		"PASSWORD": "Пароль",
 		"CONFIRM": "Подтвердить",
+		"FILTER": "Фильтр",
+		"EMAIL": "Эл. адрес",
 		"LABELS": {
 			"NAME": "Имя",
 			"FIRST_NAME": "Имя (необязательно)",
@@ -198,7 +200,8 @@
 			"LOCATION": "Местоположение",
 			"NOTE": "Примечание",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
-			"DESCRIPTION": "Описание"
+			"DESCRIPTION": "Описание",
+			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -219,6 +222,8 @@
 			"ADD_POSITION": "Добавить позицию",
 			"ADD_VENDOR": "Добавить поставщика",
 			"ADD_SKILL": "Добавить навык",
+			"ADD_CANDIDATE_QUALITY": "Добавить персональное качество",
+			"ADD_TECHNOLOGY": "Добавить технологию",
 			"ADD_EXPENSE_CATEGORY": "Добавить категорию расходов",
 			"CLIENTS": "Клиенты",
 			"START_DATE_PROJECT": "Дата начала (необязательно)",
@@ -273,6 +278,7 @@
 			"EMPLOYMENT_TYPES": "Тип занятости",
 			"REGISTRATION_DATE": "Дата регистрации организации",
 			"ORGANIZATIONS": "Выберите организации",
+			"ORGANIZATION": "Выберите организацию",
 			"DOCUMENT_NAME": "Название документа",
 			"FEEDBACK_DESCRIPTION": "Описание отзыва",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
@@ -359,8 +365,13 @@
 		"SHORT_DESCRIPTION": "Краткое описание",
 		"OVERVIEW": "Общий обзор",
 		"COMPANY_NAME": "Название компании",
+		"NAME": "Имя",
+		"YEAR": "Год",
 		"BANNER": "Баннер",
+		"SIZE": "Размер",
 		"YEAR_FOUNDED": "Дата создания",
+		"COMPANY_SIZE": "Размер компании",
+		"CLIENT_FOCUS": "Фокус клиента",
 		"DUPLICATE": "Duplicate",
 		"DATE": "Дата",
 		"PICK_DATE": "Выбрать дату",
@@ -396,9 +407,19 @@
 		"NEW_EXPENSE_VALUE": "Новое значение расхода",
 		"OFFICIAL_NAME": "Это название будет использоваться в налоговых счетах и т.д.",
 		"ADD_EVENT_TYPE": "Добавить тип события",
-		"EDIT_EVENT_TYPE": " Изменить тип события"
+		"EDIT_EVENT_TYPE": " Изменить тип события",
+		"AWARDS": "Награды",
+		"LEVEL": "Уровень",
+		"LANGUAGES": "Языки",
+		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Общий доход за месяц",
+		"PROFITS": "Прибыль",
+		"BONUSES_PAID": "Бонусы выплачены",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего отработано часов (над гаузи)",
+		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
+		"PROJECTS_COUNT": "Количество проектов"
 	},
 	"MENU": {
+		"PIPELINES": "Трубопроводы",
 		"DASHBOARD": "Приборная доска",
 		"APPOINTMENTS": "Назначения",
 		"EVENT_TYPES": "Типы событий",
@@ -447,13 +468,16 @@
 			"DOWNLOAD_TEMPLATES": "Скачать шаблоны"
 		},
 		"TAGS": "Теги",
+		"LANGUAGE": "Язык",
+		"LANGUAGES": "Языки",
 		"EQUIPMENT": "Оборудование",
 		"EQUIPMENT_SHARING": "Совместное использование снаряжения",
 		"TASKS": "Задачи",
 		"INVOICES": "Счета",
 		"ORGANIZATION": "Организация",
 		"RECURRING_INVOICES": "Повторяющиеся счета",
-		"INVOICES_RECIEVED": "Полученные счета",
+		"INVOICES_RECEIVED": "Полученные счета",
+		"ESTIMATES_RECEIVED": "Полученные оценки",
 		"ESTIMATES": "Оценки",
 		"MY_TASKS": "Мои задачи",
 		"TEAM_TASKS": "Задачи команды",
@@ -463,6 +487,7 @@
 		"EMAIL_TEMPLATES": "Шаблоны писем",
 		"HELP_CENTER": "Центр поддержки",
 		"REPORTS": "Отчёты",
+		"GOALS": "Голы",
 		"TIME_REPORTS": "Отчеты по времени",
 		"ACCOUNTING_REPORTS": "Бухгалтерские отчеты",
 		"PAYMENT_GATEWAYS": "Платежные шлюзы",
@@ -505,7 +530,10 @@
 			"SECRET": "Секрет обхода",
 			"NEXT_STEP_INFO": "Далее вы будете приняты к Upwork для предоставления разрешения Гаузи.",
 			"CONTRACTS": "Контракты",
-			"SYNCED_CONTRACTS": "Синхронизированные контракты"
+			"SYNCED_CONTRACTS": "Синхронизированные контракты",
+			"SELECT_DATE": "Выберите дату",
+			"ONLY_CONTRACTS": "Только контракты",
+			"CONTRACTS_RELATED_DATA": "Синхронизированные Контракты"
 		},
 		"COMING_SOON": "Скоро появится"
 	},
@@ -636,6 +664,9 @@
 		"NOT_STARTED": "Не начато",
 		"NOT_STARTED_HELP": "Для этого сотрудника начатая работа на дату не установлена. Сотрудник не будет учтен в счетах, разделении расходов и т.д."
 	},
+	"GOALS_PAGE": {
+		"HEADER": "Все цели для "
+	},
 	"CANDIDATES_PAGE": {
 		"HEADER": "Управление Кандидатами для ",
 		"ADD_CANDIDATE": "Добавить Кандидатов",
@@ -684,15 +715,19 @@
 				"INTERVIEWS": "Интервью",
 				"INTERVIEWER": "Интервьюс: ",
 				"ADD_INTERVIEW": "Добавить интервью",
+				"HIDE_PAST": "Скрыть прошлые интервью",
 				"ON": "вкл",
 				"TO": "Кому",
 				"FROM": "от",
 				"WITH": "с",
 				"SCHEDULE_INTERVIEW": "Запланировать интервью",
 				"SCHEDULED_INTERVIEWS": "Запланированные интервью",
+				"CONTINUE": "Продолжить ",
+				"PAST_DATE": "Вы выбрали день в прошлом",
 				"EDIT_INTERVIEW": "Редактировать интервью",
 				"STEP_1": "Шаг 1",
 				"STEP_2": "Шаг2",
+				"STEP_3": "Шаг3",
 				"NEXT": "Следующий",
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
@@ -731,6 +766,20 @@
 			"FINISHED_ADDING": "Я добавил все текущие Кандидаты",
 			"NEXT": "Следующий",
 			"PREVIOUS": "Предыдущий"
+		},
+		"STATISTIC": {
+			"CANDIDATE_STATISTICS": "Статистика Кандидатов",
+			"CANDIDATE_RATING": "Рейтинг Кандидата",
+			"INTERVIEWER_ASSESSMENT": "Рейтинг кандидата на интервью",
+			"NO_DATA": "Пока нет данных ",
+			"SELECT_INTERVIEW": "Выберите интервью"
+		},
+		"CRITERIONS": {
+			"CANDIDATE_CRITERIONS": "Кандидаты критерии",
+			"RATE_CANDIDATE_BY_CRITERIONS": "Оценить кандидата по критериям",
+			"TECHNOLOGY_STACK": "Стек технологий",
+			"PERSONAL_QUALITIES": "Личные качества",
+			"CHOOSE_CRITERIONS": "Выберите критерии для кандидата"
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
@@ -754,6 +803,12 @@
 		"EMPLOYMENT_TYPES": "Типы занятости",
 		"INVITE_CLIENT": "Пригласить клиента",
 		"EMAIL_INVITE": "Приглашение",
+		"ADD_LEVEL_OF_EMPLOYEE": "Добавить уровень сотрудника",
+		"LEVEL_OF_EMPLOYEE": "Уровни сотрудников",
+		"VENDOR_NAME": "Имя поставщика",
+		"LEVEL_NAME": "Название уровня",
+		"EXPENSE_NAME": "Имя Расхода",
+		"EMPLOYMENT_TYPE_NAME": "Название типа занятости",
 		"EDIT": {
 			"HEADER": "Управление",
 			"CLIENT": "Kлиент",
@@ -925,10 +980,15 @@
 		"TAGS_SELECT_NAME": "Имя тега",
 		"TAGS_SELECT_COLOR": "Цвет тега",
 		"TAGS_SELECT_DESCRIPTION": "Описание метки",
-		"ADD_NEW_TAG": "Добавить новый тег"
+		"ADD_NEW_TAG": "Добавить новый тег",
+		"TENANT_LEVEL": "Уровень владельца"
 	},
 	"SKILLS_PAGE": {
 		"HEADER": "Навыки"
+	},
+	"LANGUAGE_PAGE": {
+		"HEADER": "Языки",
+		"ADD_NEW_LANGUAGE": "Добавить новый язык"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
@@ -1015,7 +1075,11 @@
 		"IMAGE": "Изображение",
 		"LANGUAGE": "Язык",
 		"PRODUCT_VARIANT_DELETED": "Вариант товара удален!",
-		"ICON": "Иконка"
+		"ICON": "Иконка",
+		"ADD_VARIANT": "Добавить вариант",
+		"EDIT_VARIANT": "Изменить вариант",
+		"NO_OPTIONS_LABEL": "(нет опций)",
+		"OPTIONS": "Варианты"
 	},
 	"TASKS_PAGE": {
 		"HEADER": "Задачи",
@@ -1081,7 +1145,11 @@
 		"ADD_EMPLOYEE": "Добавить сотрудника",
 		"CHAT": "Чат поддержки",
 		"FAQ": "ЧаВо",
-		"HELP": "Помогите"
+		"HELP": "Помогите",
+		"MANAGE_INTERVIEWS": "Управление собеседованиями",
+		"MANAGE_INVITES": "Управление приглашениями",
+		"CANDIDATE_STATISTIC": "Статистика Кандидатов",
+		"CANDIDATE_CRITERIONS": "Кандидаты критерии"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",
@@ -1119,12 +1187,19 @@
 	"INVOICES_PAGE": {
 		"HEADER": "Счета",
 		"INVOICE_NUMBER": "Номер счёта",
+		"ESTIMATE_NUMBER": "Расчетный номер",
+		"INVOICE_DATE": "Дата Счета",
+		"ESTIMATE_DATE": "Предполагаемая дата",
 		"TOTAL_VALUE": "Общая стоимость",
 		"PAID_STATUS": "Оплаченный статус",
 		"INVOICES_ADD_INVOICE": "Счет добавлен",
+		"INVOICES_ADD_ESTIMATE": "Приблизительно Добавлено",
 		"INVOICES_EDIT_INVOICE": "Счет отредактирован",
+		"INVOICES_EDIT_ESTIMATE": "Отредактировано",
 		"INVOICES_DUPLICATE_INVOICE": "Счет скопирован",
+		"INVOICES_DUPLICATE_ESTIMATE": "Дублирование",
 		"INVOICES_DELETE_INVOICE": "Счет удален",
+		"INVOICES_DELETE_ESTIMATE": "Рассчитать Удаленные",
 		"INVOICES_SELECT_INVOICE_DATE": "Дата Счета",
 		"INVOICES_SELECT_DUE_DATE": "Срок сдачи",
 		"INVOICES_SELECT_CURRENCY": "Валюта",
@@ -1135,8 +1210,11 @@
 		"INVOICES_SELECT_TOTAL_VALUE": "Общая стоимость",
 		"INVOICES_SELECT_CLIENT": "Kлиент",
 		"ADD_INVOICE": "Добавить счет",
+		"ADD_ESTIMATE": "Добавить оценку",
 		"EDIT_INVOICE": "Изменить счет",
+		"EDIT_ESTIMATE": "Изменить оценку",
 		"VIEW_INVOICE": "Просмотр счета",
+		"VIEW_ESTIMATE": "Посмотреть оценку",
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
 		"SELECT_PROJECT": "Выбрать проект",
 		"SELECT_TASK": "Выберите задачу",
@@ -1152,16 +1230,25 @@
 		"NAME": "Имя",
 		"PAID": "Оплачено",
 		"NOT_PAID": "Не оплачено",
-		"RECIEVED_INVOICES": "Полученные счета",
+		"RECEIVED_INVOICES": "Полученные счета",
+		"RECEIVED_ESTIMATES": "Полученные оценки",
 		"SEND_INVOICE": "Счет отправлен",
+		"SEND_ESTIMATE": "Послано",
 		"INVOICE_TYPE": {
 			"INVOICE_TYPE": "Тип счета",
+			"ESTIMATE_TYPE": "Тип оценки",
 			"GENERATE_INVOICE_ITEMS": "Сгенерировать накладные элементы",
+			"GENERATE_ESTIMATE_ITEMS": "Сгенерировать оценку предметов",
 			"BY_EMPLOYEE_HOURS": "По часам сотрудника",
 			"BY_PROJECT_HOURS": "По часам проекта",
 			"BY_TASK_HOURS": "По часам задания",
 			"BY_PRODUCTS": "По товарам",
-			"DETAILS_INVOICE_ITEMS": "Детали накладной"
+			"DETAILS_INVOICE_ITEMS": "Детали накладной",
+			"DETAILS_ESTIMATE_ITEMS": "Детали оценки элементов",
+			"SELECT_INVOICE_TYPE": "Выберите тип счета",
+			"SELECT_PROJECTS": "Выберите проекты",
+			"SELECT_TASKS": "Выберите задачи",
+			"SELECT_PRODUCTS": "Выберите товары"
 		},
 		"INVOICE_ITEM": {
 			"ITEM_NUMBER": "Номер предмета",
@@ -1183,21 +1270,50 @@
 			"TASK_VALUE": "Задание не может быть пустым"
 		},
 		"SEND": {
-			"CONFIRMATION": "Отправить этот счет",
-			"ALREADY_SENT": "Этот счет уже был отправлен на"
+			"CONFIRMATION_INVOICE": "Отправить этот счет",
+			"CONFIRMATION_ESTIMATE": "Отправить эту оценку",
+			"ALREADY_SENT_INVOICE": "Этот счет уже был отправлен на",
+			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
 			"TO": "К"
 		},
 		"DOWNLOAD": {
-			"CONFIRMATION": "Скачать этот счет-фактуру ?",
-			"INVOICE_DOWNLOAD": "Счет загружен"
+			"CONFIRMATION_INVOICE": "Скачать этот счет-фактуру ?",
+			"CONFIRMATION_ESTIMATE": "Скачать эту оценку?",
+			"INVOICE_DOWNLOAD": "Счет загружен",
+			"ESTIMATE_DOWNLOAD": "Оценочные загруженные"
 		},
 		"EMAIL": {
 			"EMAIL_INVOICE": "Отправить этот счет по электронной почте?",
+			"EMAIL_ESTIMATE": "Отправить эту оценку по электронной почте?",
 			"EMAIL_SENT": "Отправлено E-mail"
+		},
+		"ESTIMATES": {
+			"HEADER": "Оценки",
+			"ESTIMATE_NUMBER": "Расчетный номер",
+			"ESTIMATE_DATE": "Предполагаемая дата"
+		},
+		"PAYMENTS": {
+			"HEADER": "Платежи",
+			"TOTAL_VALUE": "Общая стоимость счета",
+			"RECORD_PAYMENT": "Запись Оплата",
+			"EDIT_PAYMENT": "Редактировать платеж",
+			"DELETE_PAYMENT": "Удалить платеж",
+			"TOTAL_PAID": "Всего оплачено",
+			"PAID": "Оплачено",
+			"PAYMENT_DATE": "Дата оплаты",
+			"AMOUNT": "Количество",
+			"RECORDED_BY": "Записано",
+			"NOTE": "Примечание",
+			"PAYMENT_ADD": "Платёж добавлен",
+			"PAYMENT_EDIT": "Оплата изменена",
+			"PAYMENT_DELETE": "Платёж удален"
 		}
+	},
+	"PAYMENTS_PAGE": {
+		"HEADER": "Платежи"
 	},
 	"HEADER": {
 		"SELECT_EMPLOYEE": "Выбрать сотрудника",
@@ -1258,6 +1374,8 @@
 			"NEW_ORGANIZATION_INVALID_EMPLOYMENT_TYPE": "Требуется название типа занятости",
 			"NEW_ORGANIZATION_DEPARTMENT_INVALID_NAME": "Требуется название департамента",
 			"NEW_ORGANIZATION_CLIENT_INVALID_DATA": "Invalid input",
+			"NEW_ORGANIZATION_AWARD_INVALID_NAME": "Требуется название и год поставщика",
+			"NEW_ORGANIZATION_LANGUAGE_INVALID_NAME": "Требуется название языка и уровень",
 			"CANDIDATE_SKILL_REQUIRED": "Требуется название навыка",
 			"CANDIDATE_EDIT_CREATED": "Успешно создано",
 			"CANDIDATE_EDIT_UPDATED": "Успешно обновлено",
@@ -1273,7 +1391,17 @@
 			"EMAIL_SHOULD_BE_REAL": "Email должен быть настоящим адресом!",
 			"PHONE_REQUIRED": "Требуется указать телефон!",
 			"PHONE_CONTAINS_ONLY_NUMBERS": "Телефон должен содержать только цифры!",
-			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!"
+			"SOMETHING_BAD_HAPPENED": "Произошла ошибка!",
+			"EMAIL_TEMPLATE_SAVED": "{{templateName}} шаблон письма успешно сохранен",
+			"DELETED": "Успешно удален",
+			"MOVED_ARTICLE": "Статья была перемещена",
+			"MOVED_CATEGORY": "Категория была перемещена",
+			"CREATED_ARTICLE": "Статья создана",
+			"CREATED_CATEGORY": "Категория создана",
+			"EDITED_ARTICLE": "Статья была отредактирована",
+			"EDITED_CATEGORY": "Категория была отредактирована",
+			"PIPELINE_CREATED": "Конвейер создан",
+			"PIPELINE_UPDATED": "Конвейер обновлен"
 		}
 	},
 	"ACCEPT_INVITE": {
@@ -1284,8 +1412,12 @@
 			"REPEAT_PASSWORD": "Повторите пароль",
 			"AGREE_TO": "Согласен с",
 			"TERMS_AND_CONDITIONS": "Условия использования",
+			"ADD_ORGANIZATION": "Добавить организацию",
 			"COMPLETE_REGISTRATION": "Завершить регистрацию"
-		}
+		},
+		"INVALID_INVITE": "Вы ввели неправильный URL или приглашение истекло",
+		"HEADING": "Принять приглашение к {{ organizationName }}",
+		"SUB_HEADING": "Завершите регистрацию {{ email }}"
 	},
 	"NOTES": {
 		"INCOME": {
@@ -1383,6 +1515,16 @@
 				"UPDATE_EMPLOYMENT_TYPE": "Занятость {{ name }} была обновлена",
 				"INVALID_EMPLOYMENT_TYPE": "Пожалуйста, проверьте входные данные по типу занятости",
 				"DELETE_EMPLOYMENT_TYPE": "Тип занятости удален для {{ name }}"
+			},
+			"EDIT_ORGANIZATIONS_AWARDS": {
+				"ADD_AWARD": "Новая награда {{ name }} успешно добавлена!",
+				"INVALID_AWARD_NAME_YEAR": "Пожалуйста, проверьте имя и год для получения награды",
+				"REMOVE_AWARD": "Награда {{ name }} успешно удалена!"
+			},
+			"EDIT_ORGANIZATIONS_LANGUAGES": {
+				"ADD_LANGUAGE": "Новый язык {{ name }} успешно добавлен!",
+				"INVALID_LANGUAGE_NAME_LEVEL": "Пожалуйста, проверьте имя и уровень для ввода языка",
+				"REMOVE_LANGUAGE": "Язык {{ name }} успешно удален!"
 			}
 		},
 		"DANGER_ZONE": {
@@ -1417,6 +1559,7 @@
 		"ADD_TIME_SUCCESS": "Время успешно добавлено"
 	},
 	"TIMESHEET": {
+		"TODAY": "Сегодня",
 		"DAILY": "Ежедневно",
 		"WEEKLY": "Еженедельно",
 		"CALENDAR": "Календарь",
@@ -1424,7 +1567,23 @@
 		"APPROVE_SUCCESS": "Сроки успешно утверждены",
 		"DENIED_SUCCESS": "Таблица времени успешно отклонена",
 		"SUBMIT_SUCCESS": "Сроки успешно отправлены",
-		"UNSUBMIT_SUCCESS": "Таблица времени успешно отменена"
+		"UNSUBMIT_SUCCESS": "Таблица времени успешно отменена",
+		"SELECT_EMPLOYEE": "Выбрать сотрудника",
+		"ALL_EMPLOYEE": "Все сотрудники",
+		"SELECT_SOURCE": "Выберите источник",
+		"SELECT_ACTIVITY_LEVEL": "Выберите уровень активности",
+		"SELECT_LOG_TYPE": "Выберите тип журнала",
+		"ADD_TIME_LOGS": "Добавить журнал времени",
+		"EDIT_TIME_LOGS": "Редактировать журналы времени",
+		"ADD_TIME": "Добавить время",
+		"UPDATE_TIME": "Время обновления",
+		"CLOSE": "Закрыть",
+		"VALIDATION": {
+			"DESCRIPTION": "Описание обязательно",
+			"TASK": "Пожалуйста, выберите задачу",
+			"PROJECT": "Пожалуйста, выберите проект",
+			"EMPLOYEE": "Пожалуйста, выберите сотрудника"
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
@@ -1455,6 +1614,44 @@
 		"SELECT_EVENT_TYPES": "Пожалуйста, выберите тип события",
 		"PICK_DATETIME": "Выберите дату и время",
 		"DURATION": "Продолжительность:",
-		"EVENT_TYPE": "Тип события:"
+		"EVENT_TYPE": "Тип события:",
+		"CONFIRM_APPOINTMENT": "Назначение подтверждено",
+		"DETAILS": "Детали бронирования",
+		"PARTICIPANTS": "Email участника",
+		"HOST": "Хост",
+		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания."
+	},
+	"EMAIL_TEMPLATES_PAGE": {
+		"HEADER": "Шаблоны писем для {{ organizationName }}",
+		"SAVE": "Сохранить",
+		"LABELS": {
+			"LANGUAGE": "Язык",
+			"TEMPLATE_NAME": "Название шаблона",
+			"SUBJECT": "Тема",
+			"EMAIL_BODY": "Тело письма",
+			"EMAIL_PREVIEW": "Предварительный просмотр E-mail",
+			"SUBJECT_PREVIEW": "Предпросмотр темы"
+		},
+		"TEMPLATE_NAMES": {
+			"password": "Сброс пароля",
+			"welcome-user": "Приветствуем пользователя",
+			"invite-organization-client": "Пригласить клиента организации",
+			"email-estimate": "Почтовый расчет",
+			"email-invoice": "Email Счет",
+			"invite-employee": "Пригласить сотрудника",
+			"invite-user": "Пригласить пользователя"
+		},
+		"LANGUAGE_CODES": {
+			"en": "Russian",
+			"ru": "Русский",
+			"he": "Иврит",
+			"bg": "Болгарский"
+		}
+	},
+	"PIPELINES_PAGE": {
+		"HEADER": "Трубопроводы",
+		"HEADER_FORM_EDIT": "Изменить конвейер",
+		"HEADER_FORM_CREATE": "Создать конвейер",
+		"RECORD_TYPE": "конвейер \"{{ name }}\""
 	}
 }

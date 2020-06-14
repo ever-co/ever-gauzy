@@ -14,15 +14,19 @@ export class HelpCenterService {
 			.toPromise();
 	}
 
-	getAll(): Promise<{ items: any[]; total: number }> {
+	getAll(relations?: string[]): Promise<{ items: any[]; total: number }> {
+		const data = JSON.stringify({ relations });
 		return this.http
-			.get<{ items: IHelpCenter[]; total: number }>(`/api/help-center`)
+			.get<{ items: IHelpCenter[]; total: number }>(`/api/help-center`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
-	update(updateInput: any): Promise<any> {
+
+	update(id: string, updateInput: any): Promise<any> {
 		return this.http
-			.put('/api/help-center', updateInput)
+			.put(`/api/help-center/${id}`, updateInput)
 			.pipe(first())
 			.toPromise();
 	}

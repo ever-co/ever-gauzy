@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, Input } from '@angular/core';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { LocalDataSource } from 'ng2-smart-table';
 import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
@@ -27,7 +27,7 @@ export interface SelectedInvoice {
 @Component({
 	selector: 'ngx-invoices',
 	templateUrl: './invoices.component.html',
-	styleUrls: ['./invoices.component.scss'],
+	styleUrls: ['./invoices.component.scss']
 })
 export class InvoicesComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -42,6 +42,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 	tags: Tag[];
 
 	private _ngDestroy$ = new Subject<void>();
+
+	@Input() isEstimate: boolean;
 
 	@ViewChild('invoicesTable') invoicesTable;
 
@@ -60,6 +62,9 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit() {
+		if (!this.isEstimate) {
+			this.isEstimate = false;
+		}
 		this.store.userRolePermissions$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(() => {
@@ -73,13 +78,23 @@ export class InvoicesComponent extends TranslationBaseComponent
 	}
 
 	add() {
-		this.router.navigate(['/pages/accounting/invoices/add']);
+		if (this.isEstimate) {
+			this.router.navigate(['/pages/accounting/invoices/estimates/add']);
+		} else {
+			this.router.navigate(['/pages/accounting/invoices/add']);
+		}
 	}
 
 	edit() {
-		this.router.navigate([
-			`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`,
-		]);
+		if (this.isEstimate) {
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/edit/${this.selectedInvoice.id}`
+			]);
+		} else {
+			this.router.navigate([
+				`/pages/accounting/invoices/edit/${this.selectedInvoice.id}`
+			]);
+		}
 	}
 
 	async duplicate() {
@@ -100,6 +115,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 			organizationId: this.selectedInvoice.organizationId,
 			invoiceType: this.selectedInvoice.invoiceType,
 			tags: this.selectedInvoice.tags,
+			isEstimate: this.isEstimate
 		});
 
 		if (this.selectedInvoice.invoiceItems[0].employeeId) {
@@ -110,7 +126,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					employeeId: item.employeeId,
+					employeeId: item.employeeId
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].projectId) {
@@ -121,7 +137,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					projectId: item.projectId,
+					projectId: item.projectId
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].taskId) {
@@ -132,7 +148,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					taskId: item.taskId,
+					taskId: item.taskId
 				});
 			}
 		} else if (this.selectedInvoice.invoiceItems[0].productId) {
@@ -143,7 +159,7 @@ export class InvoicesComponent extends TranslationBaseComponent
 					quantity: item.quantity,
 					totalValue: item.totalValue,
 					invoiceId: createdInvoice.id,
-					productId: item.productId,
+					productId: item.productId
 				});
 			}
 		} else {
@@ -153,19 +169,30 @@ export class InvoicesComponent extends TranslationBaseComponent
 					price: item.price,
 					quantity: item.quantity,
 					totalValue: item.totalValue,
-					invoiceId: createdInvoice.id,
+					invoiceId: createdInvoice.id
 				});
 			}
 		}
 
-		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'),
-			this.getTranslation('TOASTR.TITLE.SUCCESS')
-		);
-
-		this.router.navigate([
-			`/pages/accounting/invoices/edit/${createdInvoice.id}`,
-		]);
+		if (this.isEstimate) {
+			this.toastrService.primary(
+				this.getTranslation(
+					'INVOICES_PAGE.INVOICES_DUPLICATE_ESTIMATE'
+				),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.router.navigate([
+				`/pages/accounting/invoices/estimates/edit/${createdInvoice.id}`
+			]);
+		} else {
+			this.toastrService.primary(
+				this.getTranslation('INVOICES_PAGE.INVOICES_DUPLICATE_INVOICE'),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+			this.router.navigate([
+				`/pages/accounting/invoices/edit/${createdInvoice.id}`
+			]);
+		}
 	}
 
 	download() {
@@ -184,7 +211,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 									client: client,
 									invoice: this.selectedInvoice,
 									organization: org,
-								},
+									isEstimate: this.isEstimate
+								}
 							}
 						);
 					}
@@ -206,7 +234,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 								client: client,
 								invoice: this.selectedInvoice,
 								organization: org,
-							},
+								isEstimate: this.isEstimate
+							}
 						});
 					}
 				});
@@ -228,17 +257,29 @@ export class InvoicesComponent extends TranslationBaseComponent
 			}
 
 			this.loadSettings();
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.INVOICES_DELETE_INVOICE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
+
+			if (this.isEstimate) {
+				this.toastrService.primary(
+					this.getTranslation(
+						'INVOICES_PAGE.INVOICES_DELETE_ESTIMATE'
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			} else {
+				this.toastrService.primary(
+					this.getTranslation(
+						'INVOICES_PAGE.INVOICES_DELETE_INVOICE'
+					),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+			}
 		}
 		this.disableButton = true;
 	}
 
 	view() {
 		this.router.navigate([
-			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`,
+			`/pages/accounting/invoices/view/${this.selectedInvoice.id}`
 		]);
 	}
 
@@ -256,7 +297,8 @@ export class InvoicesComponent extends TranslationBaseComponent
 								client: client,
 								invoice: this.selectedInvoice,
 								organization: org,
-							},
+								isEstimate: this.isEstimate
+							}
 						});
 					}
 				});
@@ -270,9 +312,10 @@ export class InvoicesComponent extends TranslationBaseComponent
 				if (org) {
 					this.selectedInvoice = null;
 					const { items } = await this.invoicesService.getAll(
-						['invoiceItems', 'tags'],
+						['invoiceItems', 'tags', 'payments'],
 						{
 							organizationId: org.id,
+							isEstimate: this.isEstimate
 						}
 					);
 					this.invoices = items;
@@ -297,29 +340,33 @@ export class InvoicesComponent extends TranslationBaseComponent
 			actions: false,
 			columns: {
 				invoiceNumber: {
-					title: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+					title: this.isEstimate
+						? this.getTranslation(
+								'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER'
+						  )
+						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
-					width: '40%',
-					renderComponent: NotesWithTagsComponent,
+					width: '30%',
+					renderComponent: NotesWithTagsComponent
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'text',
 					filter: false,
-					width: '40%',
+					width: '30%',
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${parseFloat(cell).toFixed(2)}`;
-					},
+					}
 				},
 				paid: {
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 					type: 'custom',
 					renderComponent: InvoicePaidComponent,
 					filter: false,
-					width: '15%',
-				},
-			},
+					width: '40%'
+				}
+			}
 		};
 	}
 

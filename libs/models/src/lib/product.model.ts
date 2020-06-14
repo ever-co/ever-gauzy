@@ -1,4 +1,8 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
+import {
+	Translation as ITranslation,
+	Translatable as ITranslatable
+} from './translation.model';
 import { Organization } from './organization.model';
 import { Tag } from './tag-entity.model';
 
@@ -11,29 +15,64 @@ export interface Product extends IBaseEntityModel {
 	options?: ProductOption[];
 	productTypeId: string;
 	productCategoryId: string;
-	type?: ProductType;
-	category?: ProductCategory;
+	type?: ProductTypeTranslatable;
+	category?: ProductCategoryTranslatable;
 	tags?: Tag[];
+}
+
+export interface IProductCreateInput {
+	name: string;
+	description: string;
+	enabled: boolean;
+	code: string;
+	type?: ProductTypeTranslatable;
+	category?: ProductCategoryTranslatable;
+	tags?: Tag[];
+	optionCreateInputs?: ProductOption[];
+	optionDeleteInputs?: ProductOption[];
 }
 
 export interface ProductFindInput {
 	organizationId?: string;
+	id?: string;
 }
 
-export interface ProductType extends IBaseEntityModel {
-	name: string;
-	organizationId?: string;
-	description: string;
+export interface ProductTypeTranslatable
+	extends ITranslatable<ProductTypeTranslation> {
 	icon: string;
-	organization: Organization;
+	organizationId?: string;
+	organization?: Organization;
 }
 
-export interface ProductCategory extends IBaseEntityModel {
+export interface ProductTypeTranslation
+	extends ITranslation<ProductTypeTranslatable> {
 	name: string;
-	organizationId?: string;
 	description: string;
+}
+
+export interface ProductTypeTranslated extends IBaseEntityModel {
+	icon: string;
+	name: string;
+	description: string;
+}
+
+export interface ProductCategoryTranslatable
+	extends ITranslatable<ProductCategoryTranslation> {
 	imageUrl: string;
-	organization: Organization;
+	organizationId?: string;
+	organization?: Organization;
+}
+
+export interface ProductCategoryTranslation
+	extends ITranslation<ProductCategoryTranslatable> {
+	name: string;
+	description: string;
+}
+
+export interface ProductCategoryTranslated extends IBaseEntityModel {
+	imageUrl: string;
+	name: string;
+	description: string;
 }
 
 export interface ProductVariant extends IBaseEntityModel {
@@ -48,6 +87,15 @@ export interface ProductVariant extends IBaseEntityModel {
 	options: ProductOption[];
 	settings: ProductVariantSettings;
 	product?: Product;
+}
+
+export interface IVariantCreateInput {
+	product: Product;
+	optionCombinations: IVariantOptionCombination[];
+}
+
+export interface IVariantOptionCombination {
+	options: string[];
 }
 
 export interface ProductVariantPrice extends IBaseEntityModel {
@@ -71,11 +119,12 @@ export interface ProductVariantSettings extends IBaseEntityModel {
 export interface ProductOption extends IBaseEntityModel {
 	name: string;
 	code: string;
+	product?: Product;
 }
 
 export enum BillingInvoicingPolicyEnum {
 	QUANTITY_ORDERED = 'Quantity ordered',
-	QUANTITY_DELIVERED = 'Quantity Delivered',
+	QUANTITY_DELIVERED = 'Quantity Delivered'
 }
 
 export enum ProductTypesIconsEnum {
@@ -99,5 +148,5 @@ export enum ProductTypesIconsEnum {
 	GLOBE = 'globe-2-outline',
 	LAYERS = 'layers-outline',
 	PHONE = 'phone-outline',
-	SHOPPING_CART = 'shopping-cart-outline',
+	SHOPPING_CART = 'shopping-cart-outline'
 }

@@ -1,0 +1,18 @@
+.main-buttons {
+  margin: 10px;
+  background-color: #36f !important;
+  border-color: #36f !important;
+  color: #fff !important;
+}
+
+.main-buttons:focus {
+  box-shadow: none !important;
+  background-color: #36f !important;
+  border-color: #36f !important;
+  color: #fff !important;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+}

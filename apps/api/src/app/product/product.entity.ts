@@ -25,7 +25,7 @@ export class Product extends Base implements IProduct {
 	@JoinTable({
 		name: 'tag_product'
 	})
-	tags: Tag[];
+	tags?: Tag[];
 
 	@ApiProperty({ type: String })
 	@IsString()
@@ -49,7 +49,7 @@ export class Product extends Base implements IProduct {
 	@OneToMany(
 		() => ProductVariant,
 		(productVariant) => productVariant.product,
-		{ onDelete: 'CASCADE' }
+		{ onDelete: 'CASCADE', eager: true }
 	)
 	variants: ProductVariant[];
 
@@ -61,26 +61,25 @@ export class Product extends Base implements IProduct {
 	@RelationId((product: Product) => product.category)
 	productCategoryId: string;
 
-	@ManyToOne(() => ProductType)
+	@ManyToOne(() => ProductType, { onDelete: 'SET NULL' })
 	@JoinColumn()
 	type: ProductType;
 
-	@ManyToOne((category) => ProductCategory)
+	@ManyToOne(() => ProductCategory, { onDelete: 'SET NULL' })
 	@JoinColumn()
-	category?: ProductCategory;
+	category: ProductCategory;
 
 	@OneToMany(
 		(type) => ProductOption,
-		(productOption) => productOption.product
+		(productOption) => productOption.product,
+		{ eager: true }
 	)
 	options: ProductOption[];
 
 	@ApiPropertyOptional({ type: InvoiceItem, isArray: true })
-	@OneToMany(
-		(type) => InvoiceItem,
-		(invoiceItem) => invoiceItem.product,
-		{ onDelete: 'SET NULL' }
-	)
+	@OneToMany((type) => InvoiceItem, (invoiceItem) => invoiceItem.product, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invoiceItems?: InvoiceItem[];
 }

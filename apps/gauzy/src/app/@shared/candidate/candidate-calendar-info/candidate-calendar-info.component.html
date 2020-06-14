@@ -1,0 +1,55 @@
+<nb-card class="card-calendar">
+	<nb-card-header class="card-calendar-header">
+		<h4>
+			{{
+				'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULED_INTERVIEWS'
+					| translate
+			}}
+		</h4>
+		<nb-icon
+			icon="close-outline"
+			class="icons"
+			(click)="closeDialog()"
+		></nb-icon>
+	</nb-card-header>
+	<nb-card-body>
+		<full-calendar
+			class="calendar"
+			#calendar
+			[options]="calendarOptions"
+		></full-calendar>
+	</nb-card-body>
+	<div class="button">
+		<button nbButton status="danger" (click)="closeDialog()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			nbButton
+			status="success"
+			[disabled]="!eventStartTime || isPast"
+			(click)="continue()"
+		>
+			<span *ngIf="!isPast">
+				{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CONTINUE'
+						| translate
+				}}<span *ngIf="eventStartTime">
+					{{
+						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH'
+							| translate
+					}}
+					: {{ eventStartTime | date: 'mediumDate' }},
+					{{ eventStartTime | date: 'shortTime' }}-{{
+						eventEndTime | date: 'shortTime'
+					}}
+				</span>
+			</span>
+			<span *ngIf="isPast"
+				>{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PAST_DATE'
+						| translate
+				}}
+			</span>
+		</button>
+	</div>
+</nb-card>

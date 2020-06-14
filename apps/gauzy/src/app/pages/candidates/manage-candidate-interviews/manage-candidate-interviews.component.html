@@ -1,5 +1,6 @@
 <nb-card>
 	<nb-card-header>
+		<ngx-back-navigation class="d-block navigation"></ngx-back-navigation>
 		<div class="main-header">
 			<h4>
 				{{
@@ -11,6 +12,7 @@
 				<ga-employee-multi-select
 					class="multi-select"
 					[allEmployees]="employees"
+					[label]="false"
 					(selectedChange)="onEmployeeSelected($event)"
 				>
 				</ga-employee-multi-select>

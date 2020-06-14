@@ -3,6 +3,7 @@ import { CrudService, IPagination } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
+import { IProductCreateInput } from '@gauzy/models';
 
 @Injectable()
 export class ProductService extends CrudService<Product> {
@@ -13,16 +14,33 @@ export class ProductService extends CrudService<Product> {
 		super(productRepository);
 	}
 
-	async findAllProducts(): Promise<IPagination<Product>> {
+	async findAllProducts(langCode?: string): Promise<IPagination<Product>> {
 		const total = await this.productRepository.count();
 		const items = await this.productRepository.find({
 			relations: ['category', 'type', 'options', 'variants', 'tags']
 		});
 
+		if (langCode) {
+			//tstodo write method
+			items.forEach((product) => {
+				if (product.type) {
+					product.type = product.type.translate(langCode);
+				}
+
+				if (product.category) {
+					product.category = product.category.translate(langCode);
+				}
+			});
+		}
+
 		return { items, total };
 	}
 
-	async saveProduct(productRequest: Product): Promise<Product> {
+	async findById(id: string, options: any): Promise<Product> {
+		return await this.productRepository.findOne(id, options);
+	}
+
+	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
 		return await this.productRepository.save(productRequest);
 	}
 }

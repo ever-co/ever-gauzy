@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IHelpCenter } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 
-@Entity('help_center_menu')
+@Entity('knowledge_base')
 export class HelpCenter extends Base implements IHelpCenter {
 	@ApiProperty({ type: String })
 	@Column()
@@ -11,15 +11,45 @@ export class HelpCenter extends Base implements IHelpCenter {
 
 	@ApiProperty({ type: String })
 	@Column()
-	description?: string;
+	flag: string;
 
 	@ApiProperty({ type: String })
 	@Column()
+	icon: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	privacy: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	language: string;
+
+	@ApiProperty({ type: String })
+	@Column()
+	color: string;
+
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
+	description?: string;
+
+	@ApiProperty({ type: String })
+	@Column({ nullable: true })
 	data?: string;
 
-	@OneToMany((type) => HelpCenter, (children) => children.children)
+	@ApiProperty({ type: Number })
+	@Column({ nullable: true })
+	index: number;
+
+	@ManyToOne((type) => HelpCenter, (children) => children.children, {
+		cascade: ['insert'],
+		nullable: true
+	})
 	parent?: IHelpCenter;
 
-	@ManyToOne((type) => HelpCenter, (children) => children.parent)
+	@OneToMany((type) => HelpCenter, (children) => children.parent, {
+		cascade: ['insert'],
+		nullable: true
+	})
 	children?: IHelpCenter[];
 }

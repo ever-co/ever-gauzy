@@ -1,18 +1,57 @@
 <nb-card class="sidemenu">
 	<nb-card-body class="sidebar">
 		<div class="add-icon-field">
-			<h5>{{ 'HELP_PAGE.KNOWLEDGE_BASES' | translate }}</h5>
+			<h6>{{ 'HELP_PAGE.KNOWLEDGE_BASES' | translate }}</h6>
 			<nb-icon class="add-icon" icon="plus-outline" (click)="addNode()">
 			</nb-icon>
+			<nb-icon
+				*ngIf="isChosenNode"
+				class="add-icon"
+				icon="edit-outline"
+				(click)="onEditArticle()"
+			>
+			</nb-icon>
+			<nb-icon
+				*ngIf="isChosenNode"
+				class="add-icon"
+				icon="trash-2-outline"
+				(click)="onDeleteArticle()"
+			>
+			</nb-icon>
 		</div>
-
-		<div *ngIf="isVisibleAdd" class="add-base-field">
+		<div *ngIf="isVisibleAdd" class="add-menu">
+			<button
+				class="add-buttons"
+				status="primary"
+				(click)="showInput(1)"
+				nbButton
+			>
+				Category
+			</button>
+			<button
+				class="add-buttons"
+				status="primary"
+				(click)="showInput(2)"
+				nbButton
+			>
+				Article
+			</button>
+			<button
+				class="close-add-buttons"
+				status="danger"
+				(click)="onCloseAdding()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<div *ngIf="showArticleButton" class="add-base-field">
 			<input
 				type="text"
 				size="24"
 				ngModel
 				maxlength="18"
-				(keyup.enter)="addName($event)"
+				(keyup.enter)="addName($event, 2)"
 				nbInput
 			/>
 			<button
@@ -24,87 +63,88 @@
 				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
 			</button>
 		</div>
-		<tree-root #tree [nodes]="nodes" [options]="options" [focused]="true">
+		<div *ngIf="showCategoryButton" class="add-base-field">
+			<input
+				type="text"
+				size="24"
+				ngModel
+				maxlength="18"
+				(keyup.enter)="addName($event, 1)"
+				nbInput
+			/>
+			<button
+				class="input-button"
+				status="danger"
+				(click)="onCloseInput()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<tree-root
+			#tree
+			[focused]="true"
+			[nodes]="nodes"
+			[options]="options"
+			(moveNode)="onMoveNode($event)"
+		>
+			<ng-template
+				#treeNodeTemplate
+				let-node
+				let-index="index"
+				class="tree"
+			>
+				<div [ngClass]="{ blue: node.data.color === 'blue' }">
+					<nb-icon
+						icon="{{ node.data.icon }}"
+						class="icons"
+						(click)="addIcon(node)"
+					></nb-icon>
+					<span class="text" (click)="onNodeClicked(node)">{{
+						node.data.name
+					}}</span>
+					<nb-icon
+						class="icons"
+						icon="{{ node.data.privacy }}"
+						(click)="changePrivacy(node)"
+					></nb-icon>
+				</div>
+			</ng-template>
 		</tree-root>
 	</nb-card-body>
 	<nb-card-body>
-		<button
-			[disabled]="!isChosenArticle"
-			class="main-buttons"
-			(click)="addIcon()"
-			status="success"
-			nbButton
-		>
-			{{ 'BUTTONS.CHOOSE_ICON' | translate }}
-		</button>
-		<button
-			[disabled]="!isChosenArticle"
-			class="main-buttons"
-			(click)="onEditArticle()"
-			status="warning"
-			nbButton
-		>
-			{{ 'BUTTONS.EDIT' | translate }}
-		</button>
-		<button
-			[disabled]="!isChosenArticle"
-			class="main-buttons"
-			(click)="onDeleteArticle()"
-			status="danger"
-			nbButton
-		>
-			{{ 'BUTTONS.DELETE' | translate }}
-		</button>
-		<button
-			*ngIf="isChosenArticle && showPrivateButton"
-			class="main-buttons"
-			(click)="makePrivate()"
-			status="primary"
-			nbButton
-		>
-			{{ 'BUTTONS.MAKE_PRIVATE' | translate }}
-		</button>
-		<button
-			*ngIf="isChosenArticle && showPublicButton"
-			class="main-buttons"
-			(click)="makePublic()"
-			status="primary"
-			nbButton
-		>
-			{{ 'BUTTONS.MAKE_PUBLIC' | translate }}
-		</button>
-		<div *ngIf="iconsShow && isChosenArticle">
-			<p>{{ 'HELP_PAGE.CHOSE_ICON' | translate }}</p>
-			<div class="add-icon-field">
-				<div *ngFor="let icon of icons">
-					<button
-						status="basic"
-						class="main-buttons"
-						(click)="onIconset(icon)"
-						nbButton
-					>
-						{{ icon }}
-					</button>
-				</div>
-				<button
-					class="main-buttons"
-					(click)="removeIcon()"
-					status="warning"
-					nbButton
-				>
-					{{ 'BUTTONS.REMOVE' | translate }}
-				</button>
-			</div>
-		</div>
-		<div *ngIf="isChosenArticle">
+		<div *ngIf="isChosenNode">
 			<h5>{{ articleName }}</h5>
 		</div>
-		<div *ngIf="!isVisibleEdit && showPrivateButton">
+		<div *ngIf="isChosenNode && !isVisibleEdit && chosenArticle">
 			<h6>{{ articleDesc }}</h6>
-			<div [innerHTML]="articleData"></div>
+			<div [innerHtml]="articleData"></div>
 		</div>
-		<div *ngIf="isVisibleEdit && !showPrivateButton" class="content-card">
-			<p>Press enter to save category name</p>
+		<div class="add-icon-field" *ngIf="isVisibleEdit">
+			<div>
+				<nb-select
+					class="main-buttons"
+					placeholder="Select Language"
+					[(selected)]="selectedLang"
+				>
+					<nb-option *ngFor="let lang of languages" [value]="lang">{{
+						lang
+					}}</nb-option>
+				</nb-select>
+			</div>
+
+			<nb-select
+				class="main-buttons"
+				placeholder="Select Color"
+				[(selected)]="selectedColor"
+			>
+				<nb-option *ngFor="let color of colors" [value]="color">{{
+					color
+				}}</nb-option>
+			</nb-select>
+		</div>
+		<div *ngIf="isVisibleEdit && chosenCategory" class="content-card">
+			<p class="label">Press enter to save category name</p>
 			<input
 				type="text"
 				size="24"
@@ -113,26 +153,35 @@
 				(keyup.enter)="editNameCategory($event)"
 				nbInput
 			/>
+			<button
+				class="input-button"
+				status="danger"
+				(click)="onCloseEditing()"
+				nbButton
+			>
+				<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+			</button>
 		</div>
-		<div *ngIf="isVisibleEdit && showPrivateButton" class="content-card">
+		<div *ngIf="isVisibleEdit && chosenArticle">
 			<form [formGroup]="form" (ngSubmit)="submit()">
+				<p class="label">Name of the article:</p>
 				<input
 					formControlName="name"
 					type="text"
 					size="24"
 					maxlength="18"
-					(keyup.enter)="editName($event)"
 					nbInput
 				/>
 				<div class="edit-node-field">
+					<p class="label">Description:</p>
 					<input
 						formControlName="desc"
 						type="text"
 						size="24"
 						maxlength="18"
-						(keyup.enter)="editDesc($event)"
 						nbInput
 					/>
+					<p class="label">Article text:</p>
 					<div class="ck-editor">
 						<ckeditor
 							[formControl]="form.controls['data']"
@@ -145,7 +194,7 @@
 					</div>
 				</div>
 				<button
-					*ngIf="isChosenArticle"
+					*ngIf="isChosenNode"
 					class="main-buttons"
 					status="success"
 					nbButton

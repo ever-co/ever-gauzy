@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import {
 	IAvailabilitySlots,
 	IAvailabilitySlotsCreateInput,
-	IAvailabilitySlotsFindInput,
+	IAvailabilitySlotsFindInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
@@ -42,7 +42,7 @@ export class AvailabilitySlotsService {
 			.get<{ items: IAvailabilitySlots[]; total: number }>(
 				this.AVAILABILITY_SLOTS_BASE_URI,
 				{
-					params: { data },
+					params: { data }
 				}
 			)
 			.pipe(first())

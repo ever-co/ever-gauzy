@@ -9,7 +9,7 @@ import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-sto
 @Component({
 	selector: 'ngx-upwork',
 	templateUrl: './upwork.component.html',
-	styleUrls: ['./upwork.component.scss'],
+	styleUrls: ['./upwork.component.scss']
 })
 export class UpworkComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
@@ -50,13 +50,13 @@ export class UpworkComponent extends TranslationBaseComponent
 				),
 				icon: 'trending-up-outline',
 				responsive: true,
-				route: this.getRoute('activities'),
+				route: this.getRoute('activities')
 			},
 			{
 				title: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.REPORTS'),
 				icon: 'file-text-outline',
 				responsive: true,
-				route: this.getRoute('reports'),
+				route: this.getRoute('reports')
 			},
 			{
 				title: this.getTranslation(
@@ -64,7 +64,7 @@ export class UpworkComponent extends TranslationBaseComponent
 				),
 				icon: 'flip-outline',
 				responsive: true,
-				route: this.getRoute('transactions'),
+				route: this.getRoute('transactions')
 			},
 			{
 				title: this.getTranslation(
@@ -72,8 +72,8 @@ export class UpworkComponent extends TranslationBaseComponent
 				),
 				icon: 'book-outline',
 				responsive: true,
-				route: this.getRoute('contracts'),
-			},
+				route: this.getRoute('contracts')
+			}
 		];
 	}
 

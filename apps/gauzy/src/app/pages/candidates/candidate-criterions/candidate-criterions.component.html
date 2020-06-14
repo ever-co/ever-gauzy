@@ -1,0 +1,18 @@
+<nb-card>
+	<nb-card-header>
+		<ngx-back-navigation class="d-block"></ngx-back-navigation>
+		<h4>
+			{{ 'CANDIDATES_PAGE.CRITERIONS.CANDIDATE_CRITERIONS' | translate }}
+		</h4>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="add-criterion">
+			<ga-candidate-technologies
+				class="add-criterion-card"
+			></ga-candidate-technologies>
+			<ga-candidate-personal-qualities
+				class="add-criterion-card"
+			></ga-candidate-personal-qualities>
+		</div>
+	</nb-card-body>
+</nb-card>

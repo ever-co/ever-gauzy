@@ -2,15 +2,15 @@ import {
 	Controller,
 	HttpStatus,
 	Get,
-	Post,
-	UseInterceptors,
-	UploadedFiles,
+	// Post,
+	// UseInterceptors,
+	// UploadedFiles,
 	Injectable
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OnDestroy } from '@angular/core';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+// import { FilesInterceptor } from '@nestjs/platform-express';
+// import { diskStorage } from 'multer';
 import { ImportAllService } from '.';
 
 @Injectable()
@@ -31,18 +31,18 @@ export class ImportAllController implements OnDestroy {
 	})
 	@Get()
 	async importAll() {}
-	@Post()
-	@UseInterceptors(
-		FilesInterceptor('file', 1, {
-			storage: diskStorage({
-				destination: './import',
-				filename: (rq, file, cb) => {
-					cb(null, 'export.zip');
-				}
-			})
-		})
-	)
-	async uploadFile(@UploadedFiles() file) {}
+	// @Post()
+	// @UseInterceptors(
+	// 	FilesInterceptor('file', 1, {
+	// 		storage: diskStorage({
+	// 			destination: './import',
+	// 			filename: (rq, file, cb) => {
+	// 				cb(null, 'export.zip');
+	// 			}
+	// 		})
+	// 	})
+	// )
+	// async uploadFile(@UploadedFiles() file) {}
 
 	ngOnDestroy() {}
 }

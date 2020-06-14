@@ -8,7 +8,7 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 @Component({
 	selector: 'ga-invoice-send',
 	templateUrl: './invoice-send-mutation.component.html',
-	styleUrls: ['./invoice-send-mutation.component.scss'],
+	styleUrls: ['./invoice-send-mutation.component.scss']
 })
 export class InvoiceSendMutationComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -17,6 +17,7 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 	organization: Organization;
 	alreadySent = false;
 	tags: Tag[];
+	isEstimate: boolean;
 
 	constructor(
 		protected dialogRef: NbDialogRef<InvoiceSendMutationComponent>,
@@ -39,12 +40,14 @@ export class InvoiceSendMutationComponent extends TranslationBaseComponent
 
 	async send() {
 		await this.invoicesService.update(this.invoice.id, {
-			sentTo: this.client.organizationId,
+			sentTo: this.client.organizationId
 		});
 		this.dialogRef.close();
 
 		this.toastrService.primary(
-			this.getTranslation('INVOICES_PAGE.SEND_INVOICE'),
+			this.isEstimate
+				? this.getTranslation('INVOICES_PAGE.SEND_ESTIMATE')
+				: this.getTranslation('INVOICES_PAGE.SEND_INVOICE'),
 			this.getTranslation('TOASTR.TITLE.SUCCESS')
 		);
 	}

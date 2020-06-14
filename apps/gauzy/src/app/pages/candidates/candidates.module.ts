@@ -1,3 +1,4 @@
+import { CandidatePersonalQualitiesService } from './../../@core/services/candidate-personal-qualities.service';
 import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
 import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
 import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';
@@ -24,6 +25,9 @@ import {
 	NbDatepickerModule,
 	NbActionsModule,
 	NbTabsetModule,
+	NbRadioModule,
+	NbMenuModule,
+	NbContextMenuModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
@@ -68,6 +72,14 @@ import { CandidateInterviewersService } from '../../@core/services/candidate-int
 import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-multi-select/candidate-multi-select.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.module';
+import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
+import { ChartModule } from 'angular2-chartjs';
+import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/candidate-rating-chart/candidate-rating-chart.component';
+import { InterviewerAssessmentChartComponent } from './candidate-statistic/candidate-statistic-charts/interviewer-assessment-chart/interviewer-assessment-chart.component';
+import { CandidateCriterionsComponent } from './candidate-criterions/candidate-criterions.component';
+import { CandidatePersonalQualitiesComponent } from './candidate-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
+import { CandidateTechnologiesComponent } from './candidate-criterions/candidate-technologies/candidate-technologies.component';
+import { CandidateTechnologiesService } from '../../@core/services/candidate-technologies.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -91,10 +103,16 @@ const COMPONENTS = [
 	EditCandidateTasksComponent,
 	EditCandidateInterviewComponent,
 	ManageCandidateInviteComponent,
+	CandidateStatisticComponent,
 	EditCandidateSkillsComponent,
 	EditCandidateEducationComponent,
 	EditCandidateExperienceFormComponent,
 	ManageCandidateInterviewsComponent,
+	CandidateRatingChartComponent,
+	InterviewerAssessmentChartComponent,
+	CandidateCriterionsComponent,
+	CandidateTechnologiesComponent,
+	CandidatePersonalQualitiesComponent
 ];
 
 @NgModule({
@@ -102,6 +120,7 @@ const COMPONENTS = [
 		FullCalendarModule,
 		TableComponentsModule,
 		SharedModule,
+		ChartModule,
 		CandidatesRoutingModule,
 		ThemeModule,
 		NbCardModule,
@@ -121,13 +140,14 @@ const COMPONENTS = [
 		NbCheckboxModule,
 		FileUploaderModule,
 		NbTabsetModule,
+		NbRadioModule,
 		NbActionsModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
+				deps: [HttpClient]
+			}
 		}),
 		NbSpinnerModule,
 		NbDatepickerModule,
@@ -139,17 +159,20 @@ const COMPONENTS = [
 		InviteTableModule,
 		EmployeeLocationModule,
 		EmployeeRatesModule,
+		NbMenuModule,
+		NbContextMenuModule,
+		NbActionsModule,
 		StarRatingInputModule,
 		StarRatingOutputModule,
 		CandidateMultiSelectModule,
 		EmployeeMultiSelectModule,
-		CandidateInterviewFeedbackModule,
+		CandidateInterviewFeedbackModule
 	],
 	declarations: [...COMPONENTS],
 	entryComponents: [
 		CandidateStatusComponent,
 		CandidateSourceComponent,
-		ManageCandidateInviteComponent,
+		ManageCandidateInviteComponent
 	],
 	providers: [
 		OrganizationsService,
@@ -158,6 +181,8 @@ const COMPONENTS = [
 		OrganizationEmploymentTypesService,
 		CandidatesService,
 		CandidateInterviewersService,
-	],
+		CandidatePersonalQualitiesService,
+		CandidateTechnologiesService
+	]
 })
 export class CandidatesModule {}

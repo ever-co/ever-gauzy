@@ -4,7 +4,7 @@ import { Base } from '../core/entities/base';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IEducation } from '@gauzy/models';
 
-@Entity('candidate_educations')
+@Entity('candidate_education')
 export class CandidateEducation extends Base implements IEducation {
 	@ApiProperty({ type: String })
 	@Column()

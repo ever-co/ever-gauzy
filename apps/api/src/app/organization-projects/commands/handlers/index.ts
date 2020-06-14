@@ -3,5 +3,5 @@ import { OrganizationProjectCreateHandler } from './organization-project.create.
 
 export const CommandHandlers = [
 	OrganizationProjectEditByEmployeeHandler,
-	OrganizationProjectCreateHandler,
+	OrganizationProjectCreateHandler
 ];

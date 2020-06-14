@@ -2,8 +2,9 @@ import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { OrganizationProjects } from './organization-projects.model';
 import { Employee } from './employee.model';
 import { BaseEntityWithMembers as IBaseEntityWithMembers } from './entity-with-members.model';
-import { Organization } from './organization.model';
+import { Organization, OrganizationCreateInput } from './organization.model';
 import { User, LanguagesEnum } from './user.model';
+import { Tag } from './tag-entity.model';
 
 export interface OrganizationClients extends IBaseEntityWithMembers {
 	name: string;
@@ -23,6 +24,7 @@ export interface OrganizationClients extends IBaseEntityWithMembers {
 	clientOrganization?: Organization;
 	clientOrganizationId?: string;
 	inviteStatus?: string;
+	tags: Tag[];
 }
 
 export interface OrganizationClientsFindInput extends IBaseEntityModel {
@@ -59,10 +61,15 @@ export interface OrganizationClientsInviteInput extends IBaseEntityModel {
 	originalUrl?: string;
 	inviterUser?: User;
 }
-
-export interface LinkClientOrganizationInviteInput {
-	organizationId: string;
+export interface IOrganizationClientRegistrationInput {
+	user: User;
+	password: string;
+	clientOrganization: OrganizationCreateInput;
+}
+export interface IOrganizationClientAcceptInviteInput
+	extends IOrganizationClientRegistrationInput {
 	inviteId: string;
+	originalUrl?: string;
 }
 
 export enum ClientOrganizationInviteStatus {

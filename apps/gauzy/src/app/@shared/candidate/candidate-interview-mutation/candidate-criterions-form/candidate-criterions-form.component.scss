@@ -1,0 +1,27 @@
+.form {
+  width: 45rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  padding-bottom: 1rem;
+
+  &-block {
+    width: 48%;
+    border: 1px #e4e9f2 solid;
+    padding: 1rem;
+  }
+
+  &-blocks {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+  }
+
+  &-title {
+    color: #8f9bb3;
+    font-size: 15px;
+    padding: 0 0 5px 5px;
+  }
+}

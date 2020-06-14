@@ -18,8 +18,16 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	totalEmployees?: number;
 	status?: string;
 	imageUrl?: string;
+	size: string;
 	banner: string;
 	short_description: string;
+	client_focus: string;
+	show_income?: boolean;
+	show_profits?: boolean;
+	show_business_paid?: boolean;
+	show_total_hours?: boolean;
+	show_minimum_project_size?: boolean;
+	show_projects_count?: boolean;
 	overview: string;
 	founded: string;
 	skills: Skill[];
@@ -70,6 +78,13 @@ export interface OrganizationCreateInput extends ILocation {
 	valueDate?: Date;
 	imageUrl: string;
 	currency: CurrenciesEnum;
+	client_focus: string;
+	show_income?: boolean;
+	show_profits?: boolean;
+	show_business_paid?: boolean;
+	show_total_hours?: boolean;
+	show_minimum_project_size?: boolean;
+	show_projects_count?: boolean;
 	defaultValueDateType: DefaultValueDateTypeEnum;
 	dateFormat?: string;
 	timeZone?: string;
@@ -143,6 +158,13 @@ export enum WeekDaysEnum {
 export enum BonusTypeEnum {
 	PROFIT_BASED_BONUS = 'PROFIT_BASED_BONUS',
 	REVENUE_BASED_BONUS = 'REVENUE_BASED_BONUS'
+}
+
+export enum ClientFocusEnum {
+	VERY_SMALL_BUSINESSES = 'Very Small Businesses',
+	SMALL_BUSINESSES = 'Small Businesses',
+	MEDIUM_BUSINESSES = 'Medium Businesses',
+	LARGE_BUSINESSES = 'Large Businesses'
 }
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;

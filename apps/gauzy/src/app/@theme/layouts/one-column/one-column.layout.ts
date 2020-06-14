@@ -100,7 +100,7 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit {
 				items: userOrg
 			} = await this.usersOrganizationsService.getAll([], { userId: id });
 			const org = await this.organizationsService
-				.getById(userOrg[0].orgId)
+				.getById(userOrg[0].organizationId)
 				.pipe(first())
 				.toPromise();
 			this.store.selectedOrganization = org;

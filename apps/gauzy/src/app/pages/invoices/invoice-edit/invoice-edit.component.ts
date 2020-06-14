@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
@@ -14,12 +14,13 @@ import {
 	PermissionsEnum,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
-	Tag
+	Tag,
+	Task
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
-import { Subject } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
@@ -33,6 +34,7 @@ import { EmployeesService } from '../../../@core/services';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
 import { ProductService } from '../../../@core/services/product.service';
+import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 
 @Component({
 	selector: 'ga-invoice-edit',
@@ -55,9 +57,11 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
-		private productService: ProductService
+		private productService: ProductService,
+		private tasksStore: TasksStoreService
 	) {
 		super(translate);
+		this.observableTasks = this.tasksStore.tasks$;
 		this.initializeForm();
 	}
 
@@ -81,6 +85,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	dueDate: Date;
 	hasInvoiceEditPermission: boolean;
 	tags: Tag[] = [];
+	tasks: Task[];
+	observableTasks: Observable<Task[]>;
 
 	subtotal = 0;
 	total = 0;
@@ -88,6 +94,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		return this.form.get('currency');
 	}
 	private _ngDestroy$ = new Subject<void>();
+
+	@Input() isEstimate: boolean;
 
 	ngOnInit() {
 		this.store.userRolePermissions$
@@ -142,7 +150,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				Validators.compose([Validators.required, Validators.min(0)])
 			],
 			terms: [''],
-			paid: [''],
 			client: ['', Validators.required],
 			currency: ['', Validators.required],
 			discountType: ['', Validators.required],
@@ -158,7 +165,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		this.form.get('discountValue').setValue(invoice.discountValue);
 		this.form.get('tax').setValue(invoice.tax);
 		this.form.get('terms').setValue(invoice.terms);
-		this.form.get('paid').setValue(invoice.paid);
 		this.form.get('discountType').setValue(invoice.discountType);
 		this.form.get('taxType').setValue(invoice.taxType);
 		this.invoiceLoaded = true;
@@ -339,6 +345,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 						this.currency.setValue(orgData.currency);
 					}
 
+					this.observableTasks.subscribe((data) => {
+						this.tasks = data;
+					});
+
 					const res = await this.organizationClientsService.getAll(
 						['projects'],
 						{
@@ -438,7 +448,6 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				tax: invoiceData.tax,
 				taxType: invoiceData.taxType,
 				terms: invoiceData.terms,
-				paid: invoiceData.paid,
 				totalValue: +this.total.toFixed(2),
 				invoiceType: this.invoice.invoiceType,
 				clientId: invoiceData.client.id,
@@ -548,12 +557,19 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 				}
 			}
 
-			this.toastrService.primary(
-				this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_INVOICE'),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-
-			this.router.navigate(['/pages/accounting/invoices']);
+			if (this.isEstimate) {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_ESTIMATE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices/estimates']);
+			} else {
+				this.toastrService.primary(
+					this.getTranslation('INVOICES_PAGE.INVOICES_EDIT_INVOICE'),
+					this.getTranslation('TOASTR.TITLE.SUCCESS')
+				);
+				this.router.navigate(['/pages/accounting/invoices']);
+			}
 		} else {
 			this.toastrService.danger(
 				this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.NO_ITEMS'),
@@ -596,7 +612,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
-					task: task
+					task: task,
+					allTasks: this.tasks
 				};
 			} else if (item.productId) {
 				const product = await this.productService.getById(
@@ -776,8 +793,19 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	}
 
 	cancel() {
-		this.router.navigate(['/pages/accounting/invoices']);
+		if (this.isEstimate) {
+			this.router.navigate(['/pages/accounting/invoices/estimates']);
+		} else {
+			this.router.navigate(['/pages/accounting/invoices']);
+		}
 	}
+
+	payments() {
+		this.router.navigate([
+			`/pages/accounting/invoices/payments/${this.invoice.id}`
+		]);
+	}
+
 	selectedTagsEvent(currentTagSelection: Tag[]) {
 		this.tags = currentTagSelection;
 	}
