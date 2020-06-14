@@ -2,13 +2,12 @@
 
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import * as path from 'path';
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 import * as url from 'url';
+const Store = require('electron-store');
 
-// console.log(process.env)
-// require(path.join(__dirname, 'api/main.js'));
+const store = new Store();
 
 let serve: boolean;
 const args = process.argv.slice(1);
@@ -121,7 +120,7 @@ function createSetupWindow() {
 	mainWindowSettings.webPreferences.nodeIntegration = true;
 	win = new BrowserWindow(mainWindowSettings);
 	const launchPath = url.format({
-		pathname: path.join(__dirname, 'setup.html'),
+		pathname: path.join(__dirname, 'ui/index.html'),
 		protocol: 'file:',
 		slashes: true
 	});
@@ -144,36 +143,23 @@ function startServer(value) {
 		process.env.port = value.port;
 		require(path.join(__dirname, 'api/main.js'));
 	}
+
 	try {
-		mkdirSync(path.join(__dirname, '../data'));
-	} catch (error) {}
-	try {
-		const configContent = `serverUrl=${value.serverUrl};isSetup=1;db=${value.db};dbHost=${value.dbHost};dbPort=${value.dbPort};dbName=${value.dbName};dbUsername=${value.dbUsername};dbPassword=${value.dbPassword};isLocalServer=${value.isLocalServer};port=${value.port}`;
-		writeFileSync(
-			path.join(__dirname, '../data/config.txt'),
-			configContent
-		);
+		const config: any = {
+			...value,
+			isSetup: true
+		};
+		store.set({
+			configs: config
+		});
 	} catch (error) {}
 
-	if (!value.isSetup) win.close();
 	setTimeout(() => {
+		if (!value.isSetup) win.close();
 		createWindow();
 	}, 5000);
 
 	return true;
-}
-
-function parseConfig(txt) {
-	const conf: any = {};
-	txt.split(';').forEach((item) => {
-		const configItem = item.split('=');
-		conf[configItem[0]] =
-			configItem[1] === 'undefined' || configItem[1] === 'null'
-				? null
-				: configItem[1];
-	});
-	console.log(conf);
-	return conf;
 }
 
 try {
@@ -186,20 +172,17 @@ try {
 	// More details at https://github.com/electron/electron/issues/15947
 	app.on('ready', () => {
 		try {
-			const getConfig = readFileSync(
-				path.join(__dirname, '../data/config.txt'),
-				'utf8'
-			);
-			const configParsed = parseConfig(getConfig);
-			if (configParsed.isSetup) {
+			const configs: any = store.get('configs');
+			console.log('config', configs);
+			if (configs.isSetup) {
 				global.variableGlobal = {
-					API_BASE_URL: configParsed.serverUrl
-						? configParsed.serverUrl
-						: configParsed.port
-						? `http://localhost:${configParsed.port}`
+					API_BASE_URL: configs.serverUrl
+						? configs.serverUrl
+						: configs.port
+						? `http://localhost:${configs.port}`
 						: 'http://localhost:3000'
 				};
-				startServer(configParsed);
+				startServer(configs);
 			}
 		} catch (e) {
 			createSetupWindow();

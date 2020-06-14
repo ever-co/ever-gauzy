@@ -68,7 +68,7 @@
 		"postinstall": "install-app-deps",
 		"postinstall.electron": "node tools/electron/postinstall",
 		"postinstall.web": "node tools/web/postinstall",
-		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run prepare:desktop && ng build desktop --prod --base-href ./ && ng build desktop-api --prod",
+		"build:desktop": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run prepare:desktop && ng build desktop --prod --base-href ./ && ng build desktop-api --prod && npm run build:desktop:ui",
 		"build:desktop:local": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && electron dist/apps/desktop",
 		"build:desktop:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --linux",
 		"build:desktop:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 yarn run config:prod && npm run build:desktop && cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --windows",
@@ -83,7 +83,9 @@
 		"build:desktop:windows:quick": "cd dist/apps/desktop && npx electron-builder@22.6.1 -c.electronVersion=8.3.0 build --windows",
 		"build:sqlite:mac": "cd node_modules/sqlite3 && HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --dist-url=https://electronjs.org/headers",
 		"build:sqlite:windows": "cd node_modules/sqlite3 && cross-env HOME=~/.electron-gyp node-pre-gyp rebuild --target=8.3.0 --arch=x64 --target_platform=win32 --dist-url=https://electronjs.org/headers",
-		"debug:desktop:app:mac": "lldb ./dist/apps/desktop-packages/mac/GauzyDesktop.app && run"
+		"debug:desktop:app:mac": "lldb ./dist/apps/desktop-packages/mac/GauzyDesktop.app && run",
+		"start:desktop:ui": "npm run postinstall.web && cross-env NODE_ENV=development NODE_OPTIONS=--max_old_space_size=4096 && yarn ng serve desktop-ui",
+		"build:desktop:ui": "cross-env NODE_ENV=production NODE_OPTIONS=--max_old_space_size=4096 && ng build desktop-ui --prod --base-href"
 	},
 	"config": {
 		"commitizen": {
@@ -271,7 +273,7 @@
 		"@nstudio/angular": "9.0.3",
 		"@nstudio/electron": "9.0.3",
 		"@nstudio/electron-angular": "9.0.3",
-		"@nstudio/web-angular": "^9.0.3",
+		"@nstudio/web-angular": "9.0.3",
 		"@nstudio/xplat": "^9.0.3",
 		"@semantic-release/changelog": "^3.0.4",
 		"@semantic-release/git": "^7.0.16",
@@ -343,7 +345,8 @@
 		"tslint-config-prettier": "^1.18.0",
 		"tslint-language-service": "^0.9.9",
 		"typescript": "~3.8.3",
-		"webpack-bundle-analyzer": "^3.8.0"
+		"webpack-bundle-analyzer": "^3.8.0",
+		"@nstudio/web": "9.0.3"
 	},
 	"engines": {
 		"node": ">=10.15.0",

@@ -1,0 +1,9 @@
+@import '~@nebular/theme/styles/prebuilt/default';
+@import '~@nebular/theme/styles/globals';
+@import '~@nebular/bootstrap/styles/globals';
+
+@include nb-install() {
+  @include nb-theme-global();
+  @include nb-theme-global();
+  @include nb-bootstrap-global();
+}
