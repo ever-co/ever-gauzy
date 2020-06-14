@@ -5,7 +5,7 @@ export interface ApprovalPolicy extends IBaseEntityModel {
 	tenantId?: string;
 	name?: string;
 	type?: number;
-	description: string;
+	description?: string;
 }
 
 export interface ApprovalPolicyCreateInput extends IBaseEntityModel {
@@ -33,7 +33,7 @@ export interface ApprovalPolicyFindInput extends IBaseEntityModel {
 }
 
 export enum ApprovalPolicyTypesEnum {
-	TIMEO_OFF = 1,
+	TIME_OFF = 1,
 	EQUIPMENT_SHARING = 2,
 	BUSINESS_TRIP = 3
 }

@@ -19,7 +19,7 @@
     .team-card {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      padding: 0.5rem;
 
       .name-container {
         display: flex;
@@ -40,14 +40,12 @@
           }
         }
       }
+    }
 
-      .button-container {
-        display: flex;
-        width: 160px;
-        justify-content: space-between;
-        margin-top: 15px;
-        margin-left: 9px;
-      }
+    .button-container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: auto;
     }
   }
 

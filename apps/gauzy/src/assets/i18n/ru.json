@@ -952,8 +952,8 @@
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Запрос на утверждение",
 		"APPROVAL_POLICY": "Политика одобрения",
-		"CHOOSE_POLICIES": "Выбрать политики/с"
-	},
+		"CHOOSE_POLICIES": "Выбрать политики"
+  },
 	"TIME_OFF_PAGE": {
 		"HEADER": "Время выключено",
 		"REQUEST_DAYS_OFF": "Запросить выходные",

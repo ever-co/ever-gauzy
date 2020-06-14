@@ -202,7 +202,9 @@
 			"NOTE": "Note",
 			"PREFERRED_LANGUAGE": "Preferred Language",
 			"DESCRIPTION": "Description",
-			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees"
+			"ADD_OR_REMOVE_EMPLOYEES": "Add or remove employees",
+			"ADD_REMOVE_MANAGERS": "Add or Remove Managers",
+			"ADD_REMOVE_MEMBERS": "Add or Remove Members"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -231,6 +233,7 @@
 			"END_DATE_PROJECT": "Project End Date (optional)",
 			"TEAM_NAME": "Team Name",
 			"ADD_REMOVE_MEMBERS": "Add or Remove Team Members",
+			"ADD_REMOVE_MANAGERS": "Add or Remove Team Managers",
 			"MEMBERS_COUNT": "Members count",
 			"OFFICIAL_NAME": "Enter Official Name",
 			"PROFILE_LINK": "Enter Profile Link",
@@ -853,6 +856,10 @@
 				"REQUIRE_PROJECT": "Require Project",
 				"REQUIRE_TASK": "Require Task",
 				"REQUIRE_CLIENT": "Require Client"
+			},
+			"TEAMS_PAGE": {
+				"MANAGERS": "Managers",
+				"MEMBERS": "Members"
 			}
 		},
 		"PERMISSIONS": {
@@ -945,7 +952,8 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "Status",
 		"HEADER": "Approval Request",
-		"APPROVAL_POLICY": "Approval Policy"
+		"APPROVAL_POLICY": "Approval Policy",
+		"CHOOSE_POLICIES": "Choose policies/s"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
