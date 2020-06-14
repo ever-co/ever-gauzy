@@ -6,6 +6,7 @@ export interface OrganizationTeam extends IBaseEntityModel {
 	name: string;
 	organizationId: string;
 	members?: OrganizationTeamEmployee[];
+	managers?: OrganizationTeamEmployee[];
 	tags?: Tag[];
 }
 

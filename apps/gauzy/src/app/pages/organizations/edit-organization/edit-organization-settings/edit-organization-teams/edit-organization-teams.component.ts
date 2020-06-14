@@ -4,7 +4,8 @@ import {
 	Organization,
 	OrganizationTeamCreateInput,
 	OrganizationTeam,
-	Tag
+	Tag,
+	RolesEnum
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -184,14 +185,22 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		if (!this.organizationId) {
 			return;
 		}
-		const teams = await this.organizationTeamsService.getAll(
+		const { items: teams } = await this.organizationTeamsService.getAll(
 			['members', 'tags', 'members.role'],
 			{
 				organizationId: this.organizationId
 			}
 		);
 		if (teams) {
-			this.teams = teams.items.sort(
+			teams.forEach((team: OrganizationTeam) => {
+				team.managers = team.members.filter(
+					(member) =>
+						member.role && member.role.name === RolesEnum.MANAGER
+				);
+				team.members = team.members.filter((member) => !member.role);
+			});
+
+			this.teams = teams.sort(
 				(a, b) => b.members.length - a.members.length
 			);
 		}

@@ -28,15 +28,12 @@ export class EditOrganizationTeamsMutationComponent implements OnInit {
 
 	ngOnInit() {
 		if (this.team) {
-			this.selectedEmployees = this.team.members
-				.filter((member) => !member.role)
-				.map((member) => member.employeeId);
-			this.selectedManagers = this.team.members
-				.filter(
-					(member) =>
-						member.role && member.role.name === RolesEnum.MANAGER
-				)
-				.map((member) => member.employeeId);
+			this.selectedEmployees = this.team.members.map(
+				(member) => member.employeeId
+			);
+			this.selectedManagers = this.team.managers.map(
+				(member) => member.employeeId
+			);
 			this.name = this.team.name;
 			this.tags = this.team.tags;
 		}
