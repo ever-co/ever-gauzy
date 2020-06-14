@@ -48,6 +48,7 @@ import { TimeLogService } from '../timesheet/time-log/time-log.service';
 import { AppointmentEmployeesService } from '../appointment-employees/appointment-employees.service';
 import { ApprovalPolicyService } from '../approval-policy/approval-policy.service';
 import { CandidateService } from '../candidate/candidate.service';
+import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 
 @Injectable()
 export class ExportAllService implements OnDestroy {
@@ -166,6 +167,7 @@ export class ExportAllService implements OnDestroy {
 		private organizationProjectsService: OrganizationProjectsService,
 		private organizationRecurringExpenseService: OrganizationRecurringExpenseService,
 		private organizationTeamService: OrganizationTeamService,
+		private organizationTeamEmployeeService: OrganizationTeamEmployeeService,
 		private organizationVendorsService: OrganizationVendorsService,
 		private proposalService: ProposalService,
 		private roleService: RoleService,
