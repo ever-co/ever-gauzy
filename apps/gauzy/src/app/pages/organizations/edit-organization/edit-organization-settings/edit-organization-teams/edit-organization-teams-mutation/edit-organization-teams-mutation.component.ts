@@ -1,5 +1,5 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { OrganizationTeam, Employee, Tag, RolesEnum } from '@gauzy/models';
+import { OrganizationTeam, Employee, Tag } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-edit-organization-teams-mutation',

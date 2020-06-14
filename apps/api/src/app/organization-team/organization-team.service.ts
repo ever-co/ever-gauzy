@@ -94,7 +94,7 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 		entity: IOrganizationTeamCreateInput
 	): Promise<OrganizationTeam | UpdateResult> {
 		const {
-			tags,
+			// tags,
 			name,
 			organizationId,
 			members: memberIds,
