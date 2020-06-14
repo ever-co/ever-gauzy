@@ -18,11 +18,11 @@ import {
 } from '@nebular/theme';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
-import { ApprovalsComponent } from './approvals.component';
+import { ApprovalPolicyComponent } from './approval-policy.component';
 import { SharedModule } from '../../@shared/shared.module';
-import { ApprovalsRoutingModule } from './approvals-routing.module';
-import { RequestApprovalService } from '../../@core/services/request-approval.service';
-import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
+import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
+import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
+import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -45,8 +45,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		Ng2SmartTableModule,
 		NbTooltipModule,
 		NbRadioModule,
-		ApprovalsRoutingModule,
-		RequestApprovalMutationModule,
+		ApprovalPolicyMutationModule,
+		ApprovalPolicyRoutingModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,
@@ -55,8 +55,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 			}
 		})
 	],
-	declarations: [ApprovalsComponent],
+	declarations: [ApprovalPolicyComponent],
 	entryComponents: [],
-	providers: [RequestApprovalService]
+	providers: [ApprovalPolicyService]
 })
-export class ApprovalsModule {}
+export class ApprovalPolicyModule {}

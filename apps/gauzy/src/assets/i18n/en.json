@@ -952,7 +952,8 @@
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "Status",
 		"HEADER": "Approval Request",
-		"APPROVAL_POLICY": "Approval Policy"
+		"APPROVAL_POLICY": "Approval Policy",
+		"CHOOSE_POLICIES": "Choose policies/s"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",

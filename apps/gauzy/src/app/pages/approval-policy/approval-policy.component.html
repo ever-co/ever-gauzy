@@ -1,33 +1,10 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
 		<div class="main-header">
-			<h4>{{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }}</h4>
-			<button nbButton status="primary" (click)="manageAppropvalPolicy()">
-				{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
-			</button>
+			<h4>{{ 'APPROVAL_POLICY_PAGE.HEADER' | translate }}</h4>
 		</div>
 	</nb-card-header>
-	<!-- <nb-card-body>
-    <div class="card-row">
-      <div *ngFor="let item of listApprovals; let i = index" class="card-col">
-        <div class="req">
-          <div class="req-icon">
-            <nb-icon [icon]="item?.icon"></nb-icon>
-          </div>
 
-          <div class="req-content">
-            <div class="req-title">
-              <p>{{ item.title }}</p>
-            </div>
-
-            <div class="req-btn">
-              <button status="primary" nbButton>New Request</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </nb-card-body> -->
 	<nb-card-body>
 		<div class="mb-3">
 			<button (click)="save()" nbButton status="success" class="mr-2">
@@ -58,11 +35,11 @@
 
 		<ng2-smart-table
 			class="tags-table"
-			(userRowSelect)="selectRequestApproval($event)"
+			(userRowSelect)="selectApprovalPolicy($event)"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			style="cursor: pointer;"
-			#requestApprovalTable
+			#approvalPolicyTable
 		>
 		</ng2-smart-table>
 	</nb-card-body>
