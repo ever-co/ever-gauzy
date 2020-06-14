@@ -201,7 +201,9 @@
 			"NOTE": "Примечание",
 			"PREFERRED_LANGUAGE": "Предпочитаемый язык",
 			"DESCRIPTION": "Описание",
-			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников"
+			"ADD_OR_REMOVE_EMPLOYEES": "Добавить или удалить сотрудников",
+			"ADD_REMOVE_MANAGERS": "Добавление и удаление менеджеров",
+			"ADD_REMOVE_MEMBERS": "Добавить или удалить участников"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -230,6 +232,7 @@
 			"END_DATE_PROJECT": "Дата окончания (необязательно)",
 			"TEAM_NAME": "Имя команды",
 			"ADD_REMOVE_MEMBERS": "Добавление или удаление членов команды",
+			"ADD_REMOVE_MANAGERS": "Добавление и удаление менеджеров команды",
 			"MEMBERS_COUNT": "Количество участников",
 			"OFFICIAL_NAME": "Введите официальное имя",
 			"PROFILE_LINK": "Введите ссылку на профиль",
@@ -852,6 +855,10 @@
 				"REQUIRE_PROJECT": "Требовать проект",
 				"REQUIRE_TASK": "Требовать задание",
 				"REQUIRE_CLIENT": "Требовать клиента"
+			},
+			"TEAMS_PAGE": {
+				"MANAGERS": "Менеджеры",
+				"MEMBERS": "Члены Комитета"
 			}
 		},
 		"PERMISSIONS": {
