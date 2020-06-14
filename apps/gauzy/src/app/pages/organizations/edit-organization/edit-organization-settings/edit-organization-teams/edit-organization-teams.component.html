@@ -10,14 +10,14 @@
 			>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 
-		<ngx-edit-organization-teams-mutation
+		<ga-edit-organization-teams-mutation
 			*ngIf="showAddCard"
 			[employees]="employees"
 			[organizationId]="organizationId"
 			[team]="teamToEdit"
 			(canceled)="cancel()"
 			(addOrEditTeam)="addOrEditTeam($event)"
-		></ngx-edit-organization-teams-mutation>
+		></ga-edit-organization-teams-mutation>
 	</nb-card-header>
 	<nb-card-body class="card-container" *ngIf="teams">
 		<nb-card

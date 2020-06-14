@@ -4,7 +4,7 @@ import {
 	Organization,
 	OrganizationTeamCreateInput,
 	OrganizationTeam,
-	Tag,
+	Tag
 } from '@gauzy/models';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EmployeesService } from 'apps/gauzy/src/app/@core/services';
@@ -19,7 +19,7 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 @Component({
 	selector: 'ga-edit-org-teams',
 	templateUrl: './edit-organization-teams.component.html',
-	styleUrls: ['./edit-organization-teams.component.scss'],
+	styleUrls: ['./edit-organization-teams.component.scss']
 })
 export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -71,7 +71,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 						this.getTranslation(
 							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.EDIT_EXISTING_TEAM',
 							{
-								name: team.name,
+								name: team.name
 							}
 						),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -91,7 +91,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 						this.getTranslation(
 							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM',
 							{
-								name: team.name,
+								name: team.name
 							}
 						),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -122,8 +122,8 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		const result = await this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: 'Team',
-				},
+					recordType: 'Team'
+				}
 			})
 			.onClose.pipe(first())
 			.toPromise();
@@ -136,7 +136,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 					this.getTranslation(
 						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.REMOVE_TEAM',
 						{
-							name: name,
+							name: name
 						}
 					),
 					this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -168,7 +168,7 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 
 		const { items } = await this.employeesService
 			.getAll(['user', 'tags'], {
-				organization: { id: this.organizationId },
+				organization: { id: this.organizationId }
 			})
 			.pipe(first())
 			.toPromise();
@@ -180,14 +180,14 @@ export class EditOrganizationTeamsComponent extends TranslationBaseComponent
 		return employee ? employee.tags : [];
 	}
 
-	private async loadTeams() {
+	async loadTeams() {
 		if (!this.organizationId) {
 			return;
 		}
 		const teams = await this.organizationTeamsService.getAll(
-			['members', 'tags'],
+			['members', 'tags', 'members.role'],
 			{
-				organizationId: this.organizationId,
+				organizationId: this.organizationId
 			}
 		);
 		if (teams) {

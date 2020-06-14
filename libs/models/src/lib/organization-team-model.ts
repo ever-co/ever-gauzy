@@ -1,5 +1,4 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-// import { Employee } from './employee.model';
 import { OrganizationTeamEmployee } from './organization-team-employee-model';
 import { Tag } from '..';
 
@@ -20,5 +19,6 @@ export interface OrganizationTeamCreateInput {
 	name: string;
 	organizationId: string;
 	members?: string[];
+	managers?: string[];
 	tags?: Tag[];
 }
