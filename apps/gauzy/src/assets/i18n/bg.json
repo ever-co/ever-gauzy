@@ -943,8 +943,13 @@
 		"APPROVAL_REQUEST_MIN_COUNT": "Min Count",
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "Статус",
+		"CHOOSE_POLICIES": "Choose policies/s",
 		"HEADER": "Approval Request",
-		"APPROVAL_POLICY": "Approval Policy"
+		"APPROVAL_POLICY": "Approval Policy",
+		"APPROVAL_REQUEST_EDITED": "Request edited",
+		"APPROVAL_REQUEST_DELETED": "Request deleted",
+		"APPROVAL_REQUEST_ADDED": "Request added",
+		"APPROVAL_REQUEST_SAVED": "Request saved"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",
