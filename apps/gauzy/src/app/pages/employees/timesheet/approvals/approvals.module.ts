@@ -13,7 +13,8 @@ import {
 	NbContextMenuModule,
 	NbIconModule,
 	NbDialogModule,
-	NbPopoverModule
+	NbPopoverModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
@@ -48,7 +49,8 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 		EmployeeSelectorsModule,
 		NbPopoverModule,
 		MomentModule,
-		FiltersModule
+		FiltersModule,
+		NbSpinnerModule
 	]
 })
 export class ApprovalsModule {}

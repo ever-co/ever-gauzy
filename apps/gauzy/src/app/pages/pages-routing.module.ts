@@ -153,9 +153,9 @@ const routes: Routes = [
 					{
 						path: 'payments',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./payments/payments.module').then(
+								(m) => m.PaymentsModule
+							)
 					},
 					{
 						path: 'pipelines',
@@ -257,13 +257,6 @@ const routes: Routes = [
 							import('./tags/tags.module').then(
 								(m) => m.TagsModule
 							)
-					},
-					{
-						path: 'email-templates',
-						loadChildren: () =>
-							import(
-								'./email-templates/email-templates.module'
-							).then((m) => m.EmailTemplatesModule)
 					},
 					{
 						path: 'help-center',

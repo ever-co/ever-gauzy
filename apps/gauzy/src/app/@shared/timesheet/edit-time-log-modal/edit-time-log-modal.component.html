@@ -1,19 +1,21 @@
-<nb-card>
-	<nb-card-header class="header">
-		<h4>
-			{{
-				mode == 'update'
-					? 'TIMESHEET.ADD_TIME_LOGS'
-					: ('TIMESHEET.EDIT_TIME_LOGS' | translate)
-			}}
-		</h4>
-	</nb-card-header>
-	<nb-card-body>
-		<form #f="ngForm" ngForm>
+<form #f="ngForm" ngForm>
+	<nb-card>
+		<nb-card-header class="header">
+			<h4>
+				{{
+					(mode == 'update'
+						? 'TIMESHEET.EDIT_TIME_LOGS'
+						: 'TIMESHEET.ADD_TIME_LOGS'
+					) | translate
+				}}
+			</h4>
+		</nb-card-header>
+		<nb-card-body>
 			<div class="form-group" *ngIf="canSelectEmployee">
 				<ga-employee-multi-select
 					name="employeeId"
 					[multiple]="false"
+					label="TIMESHEET.SELECT_EMPLOYEE"
 					[placeholder]="'TIMESHEET.SELECT_EMPLOYEE' | translate"
 					#employeeInput="ngModel"
 					[(ngModel)]="addEditRequest.employeeId"
@@ -36,7 +38,7 @@
 					<div class="col-12">
 						<ngx-timer-range-picker
 							name="selectedRange"
-							[maxDate]="today"
+							[maxDate]="futureDateAllowed ? null : today"
 							[(ngModel)]="selectedRange"
 						>
 						</ngx-timer-range-picker>
@@ -116,24 +118,28 @@
 				</div>
 			</div>
 
-			<div class="form-group">
-				<button
-					nbButton
-					status="primary"
-					class="mr-2"
-					(click)="addTime(f)"
-				>
-					{{
-						(mode == 'create'
-							? 'TIMESHEET.ADD_TIME'
-							: 'TIMESHEET.UPDATE_TIME'
-						) | translate
-					}}
-				</button>
-				<button nbButton status="default" (click)="close()">
-					{{ 'TIMESHEET.CLOSE' | translate }}
-				</button>
-			</div>
-		</form>
-	</nb-card-body>
-</nb-card>
+			<div class="form-group"></div>
+		</nb-card-body>
+		<nb-card-footer>
+			<button
+				nbButton
+				status="primary"
+				class="mr-2"
+				(click)="addTime(f)"
+				[nbSpinner]="loading"
+				[disabled]="loading"
+				nbSpinnerStatus="primary"
+			>
+				{{
+					(mode == 'create'
+						? 'TIMESHEET.ADD_TIME'
+						: 'TIMESHEET.UPDATE_TIME'
+					) | translate
+				}}
+			</button>
+			<button nbButton status="default" (click)="close()">
+				{{ 'TIMESHEET.CLOSE' | translate }}
+			</button>
+		</nb-card-footer>
+	</nb-card>
+</form>

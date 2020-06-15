@@ -19,8 +19,12 @@
 		></ga-employee-selector>
 	</div> -->
 </div>
-
-<div class="log-container">
+<div
+	class="log-container"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
 	<div class="bulk-actions row">
 		<div class="bulk-actions mb-3 col-sm-3">
 			<button
