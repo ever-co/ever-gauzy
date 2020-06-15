@@ -11,7 +11,8 @@ import {
 	NbCardModule,
 	NbCheckboxModule,
 	NbButtonModule,
-	NbDialogModule
+	NbDialogModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 
@@ -31,7 +32,8 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 		NbButtonModule,
 		NbDialogModule.forChild(),
 		NbCheckboxModule,
-		EmployeeMultiSelectModule
+		EmployeeMultiSelectModule,
+		NbSpinnerModule
 	]
 })
 export class EditTimeLogModalModule {}

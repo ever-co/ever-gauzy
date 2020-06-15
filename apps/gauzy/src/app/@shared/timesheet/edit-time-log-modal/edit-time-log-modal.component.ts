@@ -4,7 +4,8 @@ import {
 	Organization,
 	TimeLog,
 	Employee,
-	PermissionsEnum
+	PermissionsEnum,
+	IManualTimeInput
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
 import { TimesheetService } from '../timesheet.service';
@@ -16,6 +17,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 import { SelectedEmployee } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { EmployeesService } from '../../../@core/services';
 import * as moment from 'moment';
+import * as _ from 'underscore';
 
 @Component({
 	selector: 'ngx-edit-time-log-modal',
@@ -26,8 +28,9 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
 	canSelectEmployee: boolean;
+	loading: boolean;
 
-	addEditRequest: any = {
+	addEditRequest: IManualTimeInput = {
 		isBillable: true,
 		projectId: null,
 		taskId: null,
@@ -38,16 +41,31 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 
 	employee: SelectedEmployee;
 	employees: Employee[];
+	futureDateAllowed: boolean;
 
 	@Input()
 	public set timeLog(value: TimeLog | Partial<TimeLog>) {
-		const timeLog = Object.assign({}, value);
+		this.addEditRequest = _.pick(
+			value,
+			'id',
+			'isBillable',
+			'employeeId',
+			'projectId',
+			'clientId',
+			'taskId',
+			'description',
+			'startedAt',
+			'stoppedAt',
+			'tags'
+		);
 		this.selectedRange = {
-			start: timeLog.startedAt,
-			end: timeLog.stoppedAt
+			start: this.addEditRequest.startedAt,
+			end: this.addEditRequest.stoppedAt
 		};
-		this.addEditRequest = timeLog;
-		this.mode = timeLog.id ? 'update' : 'create';
+		this.mode = value && value.id ? 'update' : 'create';
+		if (this.store.selectedEmployee && this.mode === 'create') {
+			this.addEditRequest.employeeId = this.store.selectedEmployee.id;
+		}
 	}
 
 	constructor(
@@ -70,6 +88,7 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			.pipe(untilDestroyed(this))
 			.subscribe((organization: Organization) => {
 				this.organization = organization;
+				this.futureDateAllowed = this.organization.futureDateAllowed;
 				this.loadEmployees();
 			});
 
@@ -79,12 +98,14 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			);
 		});
 
-		this.store.selectedEmployee$
-			.pipe(untilDestroyed(this))
-			.subscribe((employee: SelectedEmployee) => {
-				this.employee = employee;
-				this.addEditRequest.employeeId = employee.id;
-			});
+		// this.store.selectedEmployee
+		// 	.pipe(untilDestroyed(this))
+		// 	.subscribe((employee: SelectedEmployee) => {
+		// 		if (this.mode === 'update'){
+		// 			this.employee = employee;
+		// 			this.addEditRequest.employeeId = employee.id;
+		// 		}
+		// 	});
 	}
 
 	close() {
@@ -107,7 +128,7 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			taskId: this.addEditRequest.taskId,
 			description: this.addEditRequest.description
 		};
-
+		this.loading = true;
 		(this.addEditRequest.id
 			? this.timesheetService.updateTime(
 					this.addEditRequest.id,
@@ -123,7 +144,8 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 			})
 			.catch((error) => {
 				this.toastrService.error(error);
-			});
+			})
+			.finally(() => (this.loading = false));
 	}
 
 	private async loadEmployees(): Promise<void> {

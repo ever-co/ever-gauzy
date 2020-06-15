@@ -1,4 +1,3 @@
-// tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import * as moment from 'moment';
@@ -38,6 +37,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 
 	weekData: WeeklyDayData[] = [];
 	weekDayList: string[] = [];
+	loading: boolean;
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -109,34 +109,39 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 			organizationId: this.organization ? this.organization.id : null
 		};
 
-		this.timesheetService.getTimeLogs(request).then((logs: TimeLog[]) => {
-			this.weekData = _.chain(logs)
-				.groupBy('projectId')
-				.map((logs: TimeLog[], _projectId) => {
-					const byDate = _.chain(logs)
-						.groupBy((log) =>
-							moment(log.startedAt).format('YYYY-MM-DD')
-						)
-						.mapObject((logs: TimeLog[]) => {
-							const sum = logs.reduce(
-								(iteratee: any, log: any) => {
-									return iteratee + log.duration;
-								},
-								0
-							);
-							return sum;
-						})
-						.value();
+		this.loading = true;
+		this.timesheetService
+			.getTimeLogs(request)
+			.then((logs: TimeLog[]) => {
+				this.weekData = _.chain(logs)
+					.groupBy('projectId')
+					.map((logs: TimeLog[], _projectId) => {
+						const byDate = _.chain(logs)
+							.groupBy((log) =>
+								moment(log.startedAt).format('YYYY-MM-DD')
+							)
+							.mapObject((logs: TimeLog[]) => {
+								const sum = logs.reduce(
+									(iteratee: any, log: any) => {
+										return iteratee + log.duration;
+									},
+									0
+								);
+								return sum;
+							})
+							.value();
 
-					const project = logs.length > 0 ? logs[0].project : null;
-					const dates: any = {};
-					this.weekDayList.forEach((date) => {
-						dates[date] = byDate[date] || 0;
-					});
-					return { project, dates };
-				})
-				.value();
-		});
+						const project =
+							logs.length > 0 ? logs[0].project : null;
+						const dates: any = {};
+						this.weekDayList.forEach((date) => {
+							dates[date] = byDate[date] || 0;
+						});
+						return { project, dates };
+					})
+					.value();
+			})
+			.finally(() => (this.loading = false));
 	}
 
 	openAddEdit(timeLog?: TimeLog) {

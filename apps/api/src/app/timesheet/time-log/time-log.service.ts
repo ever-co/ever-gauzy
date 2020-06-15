@@ -12,13 +12,14 @@ import {
 	TimeLogType,
 	IManualTimeInput,
 	IGetTimeLogInput,
-	RolesEnum,
 	PermissionsEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
 import { TimeSheetService } from '../timesheet/timesheet.service';
 import { TimeSlotService } from '../time-slot.service';
+import { Organization } from '../../organization/organization.entity';
+import { Employee } from '../../employee/employee.entity';
 
 @Injectable()
 export class TimeLogService extends CrudService<TimeLog> {
@@ -30,7 +31,10 @@ export class TimeLogService extends CrudService<TimeLog> {
 		private readonly timeSlotService: TimeSlotService,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>
+		private readonly timeLogRepository: Repository<TimeLog>,
+
+		@InjectRepository(Employee)
+		private readonly employeeRepository: Repository<Employee>
 	) {
 		super(timeLogRepository);
 	}
@@ -140,7 +144,22 @@ export class TimeLogService extends CrudService<TimeLog> {
 	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
 		if (!request.startedAt || !request.stoppedAt) {
 			throw new BadRequestException(
-				'Please select valid Date start and end time'
+				'Please select valid Date, start time and end time'
+			);
+		}
+
+		const employee = await this.employeeRepository.findOne(
+			request.employeeId,
+			{ relations: ['organization'] }
+		);
+		const isDateAllow = this.allowDate(
+			request.startedAt,
+			request.startedAt,
+			employee.organization
+		);
+		if (!isDateAllow) {
+			throw new BadRequestException(
+				'Please select valid Date, start time and end time'
 			);
 		}
 
@@ -195,6 +214,21 @@ export class TimeLogService extends CrudService<TimeLog> {
 				'Please select valid Date start and end time'
 			);
 		}
+		const employee = await this.employeeRepository.findOne(
+			request.employeeId,
+			{ relations: ['organization'] }
+		);
+		const isDateAllow = this.allowDate(
+			request.startedAt,
+			request.startedAt,
+			employee.organization
+		);
+		if (!isDateAllow) {
+			throw new BadRequestException(
+				'Please select valid Date start and end time'
+			);
+		}
+
 		const timeLog = await this.timeLogRepository.findOne(request.id);
 
 		const confict = await this.checkConfictTime(
@@ -295,6 +329,16 @@ export class TimeLogService extends CrudService<TimeLog> {
 			{ deletedAt: new Date() }
 		);
 		return true;
+	}
+
+	private allowDate(start: Date, end: Date, organization: Organization) {
+		if (moment(start).isBefore(moment(end))) {
+			return false;
+		}
+		if (organization.futureDateAllowed) {
+			return true;
+		}
+		return moment(end).isSameOrBefore(moment());
 	}
 
 	private async checkConfictTime(

@@ -25,7 +25,7 @@ export class EmployeeSelectComponent implements OnInit {
 	@Output() selectedChange = new EventEmitter();
 
 	@Input() multiple = true;
-	@Input() label = true;
+	@Input() label = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
 	@Input() disabled = false;
 	@Input() placeholder = 'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEES';
 
