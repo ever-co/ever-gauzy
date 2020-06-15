@@ -1,6 +1,12 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import { FormBuilder, Validators } from '@angular/forms';
+import {
+	FormBuilder,
+	Validators,
+	FormArray,
+	FormControl,
+	FormGroup
+} from '@angular/forms';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -45,6 +51,7 @@ export class CandidateInterviewFeedbackComponent
 	disabledIds: string[] = [];
 	technologiesList: ICandidateTechnologies[];
 	personalQualitiesList: ICandidatePersonalQualities[];
+	technologiesForm: any;
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: FormBuilder,
@@ -60,19 +67,30 @@ export class CandidateInterviewFeedbackComponent
 	) {
 		super(translateService);
 	}
-
-	async ngOnInit() {
+	arrayItems = ['123', '321'];
+	ngOnInit() {
 		this.loadData();
+		this.loadCriterions();
 		this._initializeForm();
 		this.loadFeedbacks();
-		this.loadCriterions();
 	}
 
-	private async _initializeForm() {
+	private _initializeForm() {
 		this.form = this.fb.group({
 			description: ['', Validators.required],
-			rating: ['', Validators.required]
+			rating: ['', Validators.required],
+			// technologies: this.fb.array([]),
+			demoArray: this.fb.array([['123'], ['321']]),
+			personalQualities: this.fb.array([])
 		});
+		this.form.valueChanges.subscribe((item) => console.log(item));
+		const personalQualitiesForm = this.form.controls
+			.personalQualities as FormArray;
+		personalQualitiesForm.push(
+			this.fb.group({
+				rating: ['', Validators.required]
+			})
+		);
 	}
 
 	async loadData() {
@@ -138,6 +156,7 @@ export class CandidateInterviewFeedbackComponent
 	async createFeedback() {
 		this.description = this.form.get('description').value;
 		this.rating = this.form.get('rating').value;
+		console.log(this.form);
 		if (this.form.valid) {
 			try {
 				await this.candidateFeedbacksService.create({
@@ -198,6 +217,18 @@ export class CandidateInterviewFeedbackComponent
 				(item) => !item.interviewId
 			);
 		}
+		// this.technologiesForm = this.form.controls.technologies as FormArray;
+		// this.technologiesList.forEach((item, index) => {
+		// 	this.technologiesForm.push(
+		// 		this.fb.group(['', Validators.required])
+		// 	);
+		// });
+
+		// technologiesForm.push(
+		// 	this.fb.group({
+		// 		rating: ['', Validators.required]
+		// 	})
+		// );
 	}
 	closeDialog() {
 		this.dialogRef.close();

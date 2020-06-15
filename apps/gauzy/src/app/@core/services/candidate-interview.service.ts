@@ -38,9 +38,12 @@ export class CandidateInterviewService {
 			.toPromise();
 	}
 
-	findById(id: string): Promise<ICandidateInterview> {
+	findById(id: string, relations?: string[]): Promise<ICandidateInterview> {
+		const data = JSON.stringify({ relations });
 		return this.http
-			.get<ICandidateInterview>(`/api/candidate-interview/${id}`)
+			.get<ICandidateInterview>(`/api/candidate-interview/${id}`, {
+				params: { data }
+			})
 			.pipe(first())
 			.toPromise();
 	}
