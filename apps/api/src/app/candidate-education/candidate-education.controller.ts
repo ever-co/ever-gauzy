@@ -5,7 +5,7 @@ import { CrudController } from '../core/crud/crud.controller';
 import { CandidateEducation } from './candidate-education.entity';
 import { IPagination } from '../core';
 
-@ApiTags('candidate_educations')
+@ApiTags('candidate_education')
 @Controller()
 export class CandidateEducationController extends CrudController<
 	CandidateEducation

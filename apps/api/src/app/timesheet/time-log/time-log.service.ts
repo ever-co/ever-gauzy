@@ -12,7 +12,8 @@ import {
 	TimeLogType,
 	IManualTimeInput,
 	IGetTimeLogInput,
-	RolesEnum
+	RolesEnum,
+	PermissionsEnum
 } from '@gauzy/models';
 import * as moment from 'moment';
 import { CrudService } from '../../core';
@@ -34,9 +35,14 @@ export class TimeLogService extends CrudService<TimeLog> {
 		super(timeLogRepository);
 	}
 
-	async getTimeLogs(request: IGetTimeLogInput, role?: RolesEnum) {
+	async getTimeLogs(request: IGetTimeLogInput) {
 		let employeeId: string | string[];
-		if (role === RolesEnum.ADMIN) {
+
+		if (
+			RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
 			if (request.employeeId) {
 				employeeId = request.employeeId;
 			}
@@ -56,7 +62,9 @@ export class TimeLogService extends CrudService<TimeLog> {
 				'project',
 				'task',
 				'client',
-				...(role === RolesEnum.ADMIN
+				...(RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)
 					? ['employee', 'employee.organization', 'employee.user']
 					: [])
 			],

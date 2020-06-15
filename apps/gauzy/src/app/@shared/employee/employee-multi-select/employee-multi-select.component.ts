@@ -47,7 +47,7 @@ export class EmployeeSelectComponent implements OnInit {
 	public set selectedEmployeeIds(value: string[] | string) {
 		this.employeeId = value;
 	}
-	val: string[] | string;
+	val: string[] | string = null;
 	onChange: any = () => {};
 	onTouched: any = () => {};
 

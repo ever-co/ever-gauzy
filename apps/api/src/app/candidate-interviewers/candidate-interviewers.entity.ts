@@ -3,7 +3,7 @@ import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateInterviewers } from '@gauzy/models';
 
-@Entity('candidate_interviewers')
+@Entity('candidate_interviewer')
 export class CandidateInterviewers extends Base
 	implements ICandidateInterviewers {
 	@ApiProperty({ type: String })

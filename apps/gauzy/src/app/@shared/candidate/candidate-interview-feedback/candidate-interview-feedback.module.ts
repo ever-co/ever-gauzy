@@ -14,6 +14,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CandidateInterviewFeedbackComponent } from './candidate-interview-feedback.component';
 import { StarRatingInputModule } from '../../star-rating/star-rating-input/star-rating-input.module';
 import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
+import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
+import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -42,6 +44,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],
-	entryComponents: [CandidateInterviewFeedbackComponent]
+	entryComponents: [CandidateInterviewFeedbackComponent],
+	providers: [CandidateTechnologiesService, CandidatePersonalQualitiesService]
 })
 export class CandidateInterviewFeedbackModule {}

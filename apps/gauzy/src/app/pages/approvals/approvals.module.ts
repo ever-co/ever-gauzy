@@ -22,6 +22,7 @@ import { ApprovalsComponent } from './approvals.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
+import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -35,7 +36,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbButtonModule,
 		NbCardModule,
 		NbCheckboxModule,
-		NbDialogModule,
+		NbDialogModule.forChild(),
 		NbIconModule,
 		NbInputModule,
 		NbRouteTabsetModule,
@@ -45,6 +46,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbTooltipModule,
 		NbRadioModule,
 		ApprovalsRoutingModule,
+		RequestApprovalMutationModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

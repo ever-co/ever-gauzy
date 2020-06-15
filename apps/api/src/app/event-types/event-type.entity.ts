@@ -6,7 +6,7 @@ import {
 	RelationId,
 	JoinColumn,
 	ManyToMany,
-	JoinTable,
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -14,7 +14,7 @@ import {
 	IsString,
 	IsNumber,
 	IsOptional,
-	IsBoolean,
+	IsBoolean
 } from 'class-validator';
 import { Base } from '../core/entities/base';
 import { IEventType } from '@gauzy/models';

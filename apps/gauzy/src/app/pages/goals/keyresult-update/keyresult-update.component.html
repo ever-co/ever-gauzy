@@ -1,0 +1,94 @@
+<nb-card size="large" class="max-width-500">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>Update Key Result</h4>
+			<nb-icon
+				class="ml-auto mt-1 close"
+				icon="close-outline"
+				(click)="closeDialog()"
+			></nb-icon>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<h6>{{ keyResult.name }}</h6>
+		<div *ngIf="keyResult.type == 'Number'" class="row">
+			<div class="row p-4">
+				<div class="col-md-6">
+					<p>
+						<span class="font-weight-bold mr-2">Start:</span
+						><span>{{ keyResult.initialValue }}</span>
+					</p>
+				</div>
+				<div class="col-md-6">
+					<p>
+						<span class="font-weight-bold mr-2">Target:</span
+						><span>{{ keyResult.targetValue }}</span>
+					</p>
+				</div>
+			</div>
+		</div>
+		<form [formGroup]="keyresultUpdateForm">
+			<label for="updated-value" class="label">
+				Updated Value
+			</label>
+			<input
+				*ngIf="keyResult.type == 'Number'"
+				type="number"
+				id="updated-value"
+				nbInput
+				[min]="keyResult.initialValue"
+				[max]="keyResult.targetValue"
+				fullWidth
+				formControlName="newValueNumber"
+			/>
+			<div class="row">
+				<!-- <label class="label">
+                    Update Status
+                </label> -->
+				<nb-toggle
+					id="updated-value"
+					class="row ml-3"
+					*ngIf="keyResult.type == 'True/False'"
+					formControlName="newValueBoolean"
+					status="primary"
+				>
+					Mark as complete
+				</nb-toggle>
+			</div>
+
+			<label for="updated-value-status" class="label mt-3">
+				Status
+			</label>
+			<nb-select
+				id="updated-value-status"
+				filled
+				[status]="
+					keyresultUpdateForm.value.newStatus == 'on track'
+						? 'success'
+						: keyresultUpdateForm.value.newStatus ==
+						  'needs attention'
+						? 'warning'
+						: 'danger'
+				"
+				fullWidth
+				formControlName="newStatus"
+			>
+				<nb-option value="on track">on track</nb-option>
+				<nb-option value="needs attention">needs attention</nb-option>
+				<nb-option value="off track">off track</nb-option>
+				<nb-option value="none">none</nb-option>
+			</nb-select>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-3" nbButton (click)="closeDialog()">Cancel</button>
+		<button
+			[disabled]="!keyresultUpdateForm.valid"
+			nbButton
+			status="success"
+			(click)="updateKeyResult()"
+		>
+			Update
+		</button>
+	</nb-card-footer>
+</nb-card>

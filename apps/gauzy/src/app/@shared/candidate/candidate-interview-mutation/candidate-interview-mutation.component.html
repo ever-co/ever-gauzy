@@ -65,153 +65,50 @@
 					</button>
 				</div>
 			</nb-step>
+
 			<nb-step [label]="step2">
 				<ng-template #step2>{{
 					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_2'
 						| translate
 				}}</ng-template>
-				<div class="notification-title">
-					<strong>
-						<nb-icon
-							icon="calendar-outline"
-							class="title-icon"
-						></nb-icon>
+
+				<ga-candidate-criterions-form #candidateCriterionsForm>
+				</ga-candidate-criterions-form>
+
+				<div class="button-container">
+					<button
+						status="primary"
+						(click)="previous()"
+						nbButton
+						nbStepperPrevious
+					>
 						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SUMMARY'
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS'
 								| translate
 						}}
-					</strong>
-				</div>
-
-				<nb-card class="summary">
-					<nb-card-body class="summary-content">
-						<div class="summary-content-text">
-							<strong> {{ interview?.title }} </strong>
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON'
-									| translate
-							}}
-							<strong
-								>{{
-									interview?.startTime | date: 'fullDate'
-								}} </strong
-							>{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.FROM'
-									| translate
-							}}
-							<strong>{{
-								interview?.startTime | date: 'shortTime'
-							}}</strong
-							>-
-							<strong>{{
-								interview?.endTime | date: 'shortTime'
-							}}</strong>
-							{{
-								'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.WITH'
-									| translate
-							}}
-							<strong>
-								{{ selectedCandidate?.user.firstName }}
-								{{ selectedCandidate?.user.lastName }}</strong
-							>
-						</div>
-
-						<div class="employeeName">
-							<span
-								*ngFor="let employee of employees"
-								nbTooltip=" {{ employee?.user.firstName }}
-							{{ employee?.user.lastName }}"
-								nbTooltipPlacement="top"
-							>
-								<img
-									class="candidate-image-small"
-									[src]="employee?.user.imageUrl"
-									alt="employee Avatar"
-								/>
-							</span>
-						</div>
-					</nb-card-body>
-				</nb-card>
-				<div class="notification-title">
-					<strong>
-						<nb-icon
-							icon="bell-outline"
-							class="title-icon"
-						></nb-icon>
+					</button>
+					<button status="success" nbButton nbStepperNext>
 						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EMAIL_NOTIFICATION'
+							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
 								| translate
 						}}
-					</strong>
+					</button>
 				</div>
+			</nb-step>
 
-				<div class="notify-checkboxes">
-					<nb-card class="notify-checkboxes-card">
-						<nb-card-body>
-							<nb-checkbox
-								(checkedChange)="checkedCandidate($event)"
-								[checked]="isCandidateNotification"
-								><strong
-									>{{
-										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NOTIFY_CANDIDATE'
-											| translate
-									}}
-								</strong>
-							</nb-checkbox>
-							<div class="label">
-								{{
-									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.DETAILS'
-										| translate
-								}}
-								{{ selectedCandidate?.user.firstName }}
-								{{ selectedCandidate?.user.lastName }}
-							</div>
-						</nb-card-body>
-					</nb-card>
-					<nb-card class="notify-checkboxes-card">
-						<nb-card-body>
-							<nb-checkbox
-								(checkedChange)="checkedInterviewer($event)"
-								[checked]="isInterviewerNotification"
-								><strong>
-									{{
-										'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NOTIFY_INTERVIEWERS'
-											| translate
-									}}</strong
-								></nb-checkbox
-							>
-							<div class="label">
-								{{
-									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.DETAILS'
-										| translate
-								}}
-								<strong>
-									{{ employees.length }}
-								</strong>
-								{{
-									'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEWERS'
-										| translate
-								}}
-							</div>
-						</nb-card-body>
-					</nb-card>
-				</div>
+			<nb-step [label]="step3">
+				<ng-template #step3>{{
+					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_3'
+						| translate
+				}}</ng-template>
 
-				<ga-candidate-email
-					[isCandidate]="true"
-					[templateData]="interview"
+				<ga-candidate-notification-form
+					#candidateNotificationForm
+					[interview]="interview"
 					[employees]="employees"
 					[selectedCandidate]="selectedCandidate"
-					#emailCandidateForm
-					*ngIf="isCandidateNotification"
-				></ga-candidate-email>
-				<ga-candidate-email
-					[templateData]="interview"
-					[employees]="employees"
-					[selectedCandidate]="selectedCandidate"
-					#emailInterviewerForm
-					*ngIf="isInterviewerNotification"
-				></ga-candidate-email>
+				>
+				</ga-candidate-notification-form>
 
 				<div class="button-container">
 					<button
