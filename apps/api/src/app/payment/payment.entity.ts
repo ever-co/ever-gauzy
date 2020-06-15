@@ -21,6 +21,7 @@ import { Tenant } from '../tenant/tenant.entity';
 import { Tag } from '../tags/tag.entity';
 import { User } from '../user/user.entity';
 import { Invoice } from '../invoice/invoice.entity';
+import { Organization } from '../organization/organization.entity';
 
 @Entity('payment')
 export class Payment extends Base implements IPayment {
@@ -36,6 +37,17 @@ export class Payment extends Base implements IPayment {
 	})
 	@JoinColumn()
 	invoice?: Invoice;
+
+	@ApiPropertyOptional({ type: Organization })
+	@ManyToOne(
+		(type) => Organization,
+		(organization) => organization.payments,
+		{
+			onDelete: 'SET NULL'
+		}
+	)
+	@JoinColumn()
+	organization?: Organization;
 
 	@ApiPropertyOptional({ type: String })
 	@IsString()

@@ -5,11 +5,11 @@ import { CrudService } from '../../core/crud/crud.service';
 import { Timesheet } from '../timesheet.entity';
 import * as moment from 'moment';
 import {
-	RolesEnum,
 	IUpdateTimesheetStatusInput,
 	IGetTimeSheetInput,
 	ISubmitTimesheetInput,
-	TimesheetStatus
+	TimesheetStatus,
+	PermissionsEnum
 } from '@gauzy/models';
 import { RequestContext } from '../../core/context';
 
@@ -81,14 +81,18 @@ export class TimeSheetService extends CrudService<Timesheet> {
 		return timesheet;
 	}
 
-	async getTimeSheets(request: IGetTimeSheetInput, role?: RolesEnum) {
+	async getTimeSheets(request: IGetTimeSheetInput) {
 		let employeeId: string;
 		const startDate = moment(request.startDate).format(
 			'YYYY-MM-DD HH:mm:ss'
 		);
 		const endDate = moment(request.endDate).format('YYYY-MM-DD HH:mm:ss');
 
-		if (role === RolesEnum.ADMIN) {
+		if (
+			RequestContext.hasPermission(
+				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+			)
+		) {
 			if (request.employeeId) {
 				employeeId = request.employeeId;
 			}
@@ -105,7 +109,9 @@ export class TimeSheetService extends CrudService<Timesheet> {
 				}
 			},
 			relations: [
-				...(role === RolesEnum.ADMIN
+				...(RequestContext.hasPermission(
+					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+				)
 					? ['employee', 'employee.organization', 'employee.user']
 					: [])
 			],

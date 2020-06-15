@@ -26,7 +26,7 @@ import { Subject } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
-import { CandidateCriterionsFormComponent } from './candidate-criterions-form /candidate-criterions-form.component';
+import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
 

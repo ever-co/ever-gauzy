@@ -68,6 +68,9 @@ export * from './lib/translation.model';
 export * from './lib/language.model';
 export * from './lib/organization-languages.model';
 export * from './lib/payment.model';
+export * from './lib/goals.model';
 
 export { Role, RolesEnum } from './lib/role.model';
 export { BaseEntityModel } from './lib/base-entity.model';
+
+export * from './lib/pipeline.model';

@@ -56,6 +56,18 @@
 				</div>
 			</div>
 			<div class="row">
+				<div class="col">
+					<div class="form-group">
+						<nb-checkbox
+							formControlName="isTenantLevel"
+							(checkedChange)="isChecked($event)"
+						>
+							{{ 'TAGS_PAGE.TENANT_LEVEL' | translate }}
+						</nb-checkbox>
+					</div>
+				</div>
+			</div>
+			<div class="row">
 				<div class="col-sm-12">
 					<div class="form-group">
 						<label for="inputDescription" class="label">{{

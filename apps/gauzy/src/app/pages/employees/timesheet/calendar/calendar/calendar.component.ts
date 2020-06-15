@@ -47,6 +47,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	canChangeSelectedEmployee: boolean;
 	employeeId: string;
 	loading: boolean;
+	futureDateAllowed: boolean;
 	logRequest: TimeLogFilters = {};
 
 	constructor(
@@ -72,10 +73,8 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			height: 'auto',
 			editable: true,
 			selectable: true,
-			selectAllow: ({ start, end }) =>
-				moment(start).isSame(moment(end), 'day'),
+			selectAllow: this.selectAllow.bind(this),
 			events: this.getEvents.bind(this),
-			loading: this.handleLoading.bind(this),
 			eventDrop: this.handleEventDrop.bind(this),
 			eventResize: this.handleEventResize.bind(this),
 			select: this.handleEventSelect.bind(this),
@@ -98,6 +97,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 				if (!this.organization) {
 					return;
 				}
+				this.futureDateAllowed = this.organization.futureDateAllowed;
 				const calendar = this.calendar.getApi();
 				if (
 					user &&
@@ -151,24 +151,37 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 			endDate: toUTC(_endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
 
-		this.timesheetService.getTimeLogs(request).then((logs: TimeLog[]) => {
-			const events = logs.map(
-				(log: TimeLog): EventInput => {
-					const title = log.project ? log.project.name : 'No project';
-					// if (this.canChangeSelectedEmployee){
-					// 	title += ` (${log.employee.user.firstName} ${log.employee.user.lastName})`
-					// }
-					return {
-						id: log.id,
-						title: title,
-						start: toLocal(log.startedAt).toDate(),
-						end: toLocal(log.stoppedAt).toDate(),
-						log: log
-					};
-				}
-			);
-			callback(events);
-		});
+		this.loading = true;
+		this.timesheetService
+			.getTimeLogs(request)
+			.then((logs: TimeLog[]) => {
+				const events = logs.map(
+					(log: TimeLog): EventInput => {
+						const title = log.project
+							? log.project.name
+							: 'No project';
+						// if (this.canChangeSelectedEmployee){
+						// 	title += ` (${log.employee.user.firstName} ${log.employee.user.lastName})`
+						// }
+						return {
+							id: log.id,
+							title: title,
+							start: toLocal(log.startedAt).toDate(),
+							end: toLocal(log.stoppedAt).toDate(),
+							log: log
+						};
+					}
+				);
+				callback(events);
+			})
+			.finally(() => (this.loading = false));
+	}
+
+	selectAllow({ start, end }) {
+		const isOneDay = moment(start).isSame(moment(end), 'day');
+		return this.futureDateAllowed
+			? isOneDay
+			: isOneDay && moment(end).isSameOrBefore(moment());
 	}
 
 	handleEventClick({ event }) {
@@ -179,12 +192,10 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	handleDateClick(event) {
-		console.log('handleDateClick', event);
 		this.calendar.getApi().changeView('timeGridWeek', event.date);
 	}
 
 	handleEventSelect(event) {
-		console.log('handleEventSelect', event);
 		this.openDialog({
 			startedAt: event.start,
 			stoppedAt: event.end
@@ -201,7 +212,6 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	handleEventDrop({ event }) {
-		console.log('handleEventDrop', event);
 		this.updateTimeLog(event.id, {
 			startedAt: event.start,
 			stoppedAt: event.end
@@ -209,15 +219,12 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	handleEventResize({ event }) {
-		console.log('handleEventResize', event);
 		this.updateTimeLog(event.id, {
 			startedAt: event.start,
 			stoppedAt: event.end
 		});
 	}
-	handleLoading(loading) {
-		this.loading = loading;
-	}
+
 	hasOverflow(el: HTMLElement) {
 		if (!el) {
 			return;

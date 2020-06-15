@@ -47,6 +47,24 @@ export class PagesComponent implements OnInit, OnDestroy {
 			},
 			children: [
 				{
+					title: 'Estimates',
+					icon: 'file-outline',
+					link: '/pages/accounting/invoices/estimates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ESTIMATES'
+					}
+				},
+				{
+					title: 'Estimates Received',
+					icon: 'archive-outline',
+					link: '/pages/accounting/invoices/received-estimates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.ESTIMATES_RECEIVED'
+					}
+				},
+				{
 					title: 'Invoices',
 					icon: 'file-text-outline',
 					link: '/pages/accounting/invoices',
@@ -60,16 +78,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Estimates',
-					icon: 'file-outline',
-					link: '/pages/accounting/invoices/estimates',
-					data: {
-						translated: false,
-						translationKey: 'MENU.ESTIMATES'
-					}
-				},
-				{
-					title: 'Recurring Invoices',
+					title: 'Invoices Recurring',
 					icon: 'flip-outline',
 					link: '/pages/accounting/recurring-invoices',
 					data: {
@@ -79,21 +88,12 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Received Invoices',
+					title: 'Invoices Received',
 					icon: 'archive',
 					link: '/pages/accounting/invoices/received-invoices',
 					data: {
 						translated: false,
 						translationKey: 'MENU.INVOICES_RECEIVED'
-					}
-				},
-				{
-					title: 'Received Estimates',
-					icon: 'archive-outline',
-					link: '/pages/accounting/invoices/received-estimates',
-					data: {
-						translated: false,
-						translationKey: 'MENU.ESTIMATES_RECEIVED'
 					}
 				},
 				{
@@ -151,7 +151,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 				{
 					title: 'Estimates',
 					icon: 'file-outline',
-					link: '/pages/sales/estimates',
+					link: '/pages/sales/invoices/estimates',
 					data: {
 						translated: false,
 						translationKey: 'MENU.ESTIMATES'
@@ -171,7 +171,7 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Recurring Invoices',
+					title: 'Invoices Recurring',
 					icon: 'flip-outline',
 					link: '/pages/sales/recurring-invoices',
 					data: {
@@ -187,6 +187,17 @@ export class PagesComponent implements OnInit, OnDestroy {
 					data: {
 						translated: false,
 						translationKey: 'MENU.PAYMENTS'
+					}
+				},
+				{
+					title: 'Pipelines',
+					icon: 'funnel-outline',
+					link: '/pages/sales/pipelines',
+					hidden: false,
+					data: {
+						translated: false,
+						translationKey: 'MENU.PIPELINES',
+						permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW]
 					}
 				}
 			]
@@ -457,21 +468,49 @@ export class PagesComponent implements OnInit, OnDestroy {
 					}
 				},
 				{
-					title: 'Email Templates',
-					icon: 'email-outline',
-					link: '/pages/organization/email-templates',
-					data: {
-						translated: false,
-						translationKey: 'MENU.EMAIL_TEMPLATES'
-					}
-				},
-				{
 					title: 'Help Center',
 					icon: 'question-mark-circle-outline',
 					link: '/pages/organization/help-center',
 					data: {
 						translated: false,
 						translationKey: 'MENU.HELP_CENTER'
+					}
+				}
+			]
+		},
+		{
+			title: 'Goals',
+			icon: 'flag-outline',
+			data: {
+				translated: false,
+				translationKey: 'MENU.GOALS'
+			},
+			children: [
+				{
+					title: 'Manage',
+					link: '/pages/goals',
+					icon: 'list-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.MANAGE'
+					}
+				},
+				{
+					title: 'Report',
+					link: '/pages/goals/reports',
+					icon: 'file-text-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.REPORTS'
+					}
+				},
+				{
+					title: 'Settings',
+					link: '/pages/goals/settings',
+					icon: 'settings-outline',
+					data: {
+						translated: false,
+						translationKey: 'MENU.SETTINGS'
 					}
 				}
 			]
@@ -579,6 +618,15 @@ export class PagesComponent implements OnInit, OnDestroy {
 						// permissionKeys: [
 						// 	PermissionsEnum.VIEW_ALL_EMAILS
 						// ]
+					}
+				},
+				{
+					title: 'Email Templates',
+					icon: 'email-outline',
+					link: '/pages/settings/email-templates',
+					data: {
+						translated: false,
+						translationKey: 'MENU.EMAIL_TEMPLATES'
 					}
 				},
 				{

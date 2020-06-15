@@ -20,6 +20,7 @@ import {
 } from '@gauzy/models';
 import { OrganizationTeam } from './organization-team.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { UpdateResult } from 'typeorm';
 
 @ApiTags('Organization-Teams')
 @UseGuards(AuthGuard('jwt'))
@@ -95,7 +96,7 @@ export class OrganizationTeamController extends CrudController<
 		@Param('id') id: string,
 		@Body() entity: IOrganizationTeamCreateInput,
 		...options: any[]
-	): Promise<OrganizationTeam> {
+	): Promise<OrganizationTeam | UpdateResult> {
 		return this.organizationTeamService.updateOrgTeam(id, entity);
 	}
 

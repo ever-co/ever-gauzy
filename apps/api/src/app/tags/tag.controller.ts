@@ -38,4 +38,15 @@ export class TagController extends CrudController<Tag> {
 		const { relations, findInput } = JSON.parse(data);
 		return this.tagService.findAll({ where: findInput, relations });
 	}
+
+	@Get('getByOrgId')
+	async getAllTagsByOrgLevel(@Query('data') data: any): Promise<any> {
+		const { relations, orgId } = JSON.parse(data);
+		return this.tagService.findTagsByOrgLevel(relations, orgId);
+	}
+	@Get('getByTenantId')
+	async getAllTagsByTenantLevel(@Query('data') data: any): Promise<any> {
+		const { relations, tenantId } = JSON.parse(data);
+		return this.tagService.findTagsByTenantLevel(relations, tenantId);
+	}
 }

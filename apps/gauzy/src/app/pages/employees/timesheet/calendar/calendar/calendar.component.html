@@ -18,7 +18,13 @@
 	</div>
 </div>
 
-<full-calendar #calendar [options]="calendarOptions"></full-calendar>
+<full-calendar
+	#calendar
+	[options]="calendarOptions"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+></full-calendar>
 
 <ng-template #viewLogTemplate let-data let-ref="dialogRef">
 	<nb-card>
