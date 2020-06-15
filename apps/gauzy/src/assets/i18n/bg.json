@@ -478,9 +478,9 @@
 		"TASKS": "Tasks",
 		"INVOICES": "Invoices",
 		"ORGANIZATION": "Organization",
-		"RECURRING_INVOICES": "Recurring Invoices",
-		"INVOICES_RECEIVED": "Received Invoices",
-		"ESTIMATES_RECEIVED": "Received Estimates",
+		"RECURRING_INVOICES": "Invoices Recurring",
+		"INVOICES_RECEIVED": "Invoices Received",
+		"ESTIMATES_RECEIVED": "Estimates Received",
 		"ESTIMATES": "Estimates",
 		"MY_TASKS": "My Tasks",
 		"TEAM_TASKS": "Team's Tasks",
@@ -950,14 +950,9 @@
 		"APPROVAL_REQUEST_MIN_COUNT": "Min Count",
 		"APPROVAL_REQUEST_APPROVAL_POLICY": "Approval Policy",
 		"APPROVAL_REQUEST_STATUS": "Статус",
-		"CHOOSE_POLICIES": "Choose policies/s",
 		"HEADER": "Approval Request",
 		"APPROVAL_POLICY": "Approval Policy",
-		"CHOOSE_POLICIES": "Choose policies",
-		"APPROVAL_REQUEST_EDITED": "Request edited",
-		"APPROVAL_REQUEST_DELETED": "Request deleted",
-		"APPROVAL_REQUEST_ADDED": "Request added",
-		"APPROVAL_REQUEST_SAVED": "Request saved"
+		"CHOOSE_POLICIES": "Choose policies/s"
 	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Time Off",

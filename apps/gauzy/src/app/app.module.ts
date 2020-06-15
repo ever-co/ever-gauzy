@@ -56,7 +56,7 @@ export const cloudinary = {
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http);
 }
-if (environment.SENTRY_DNS) {
+if (environment.SENTRY_DNS && environment.production) {
 	Sentry.init({
 		dsn: environment.SENTRY_DNS,
 		environment: environment.production ? 'production' : 'development'
@@ -129,6 +129,10 @@ if (environment.SENTRY_DNS) {
 			useFactory: serverConnectionFactory,
 			deps: [ServerConnectionService, Store],
 			multi: true
+		},
+		{
+			provide: ErrorHandler,
+			useClass: SentryErrorHandler
 		},
 		AppModuleGuard
 	]

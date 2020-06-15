@@ -4,6 +4,7 @@ import { EditRolesPermissionsComponent } from './edit-roles-permissions/edit-rol
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { SettingsComponent } from './settings.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
+import { EmailTemplatesComponent } from '../email-templates/email-templates.component';
 
 const routes: Routes = [
 	{
@@ -32,6 +33,10 @@ const routes: Routes = [
 			{
 				path: 'danger-zone',
 				component: DangerZoneComponent
+			},
+			{
+				path: 'email-templates',
+				component: EmailTemplatesComponent
 			}
 		]
 	}
