@@ -31,17 +31,20 @@ export class PipelineFormComponent implements OnInit
 
   public ngOnInit(): void
   {
+    const { id } = this.pipeline;
     const { userId } = this.store;
 
     this.usersOrganizationsService
       .getAll( [ 'organization' ], { userId } )
       .then( ( { items } ) => this.userOrganizations = items );
     this.form = this.fb.group({
-      ...this.pipeline?.id ? { id: [ this.pipeline?.id || '', Validators.required ] } : {},
-      organizationId: [ this.pipeline?.organizationId || '', Validators.required ],
-      name: [ this.pipeline?.name || '', Validators.required ],
-      description: [ this.pipeline?.description ],
+      organizationId: [ this.pipeline.organizationId || '', Validators.required ],
+      name: [ this.pipeline.name || '', Validators.required ],
+      ...id ? { id: [ id, Validators.required ] } : {},
+      description: [ this.pipeline.description ],
+      stages: this.fb.array([]),
     });
+    setTimeout( () => this.form.controls.stages.setValue( this.pipeline.stages || [] ), 3E3 );
   }
 
   public persist(): void {

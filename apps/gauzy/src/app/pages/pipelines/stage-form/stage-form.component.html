@@ -1,0 +1,43 @@
+<nb-card>
+  <nb-card-header>
+    <span>{{ 'PIPELINES_PAGE.HEADER_STAGES' | translate }}</span>
+    <button nbButton type="button" size="tiny" style="float: right" (click)="isAdding = true; pushNewStage({ name: '' } );">
+      <nb-icon pack="eva" status="success" icon="plus-circle-outline"></nb-icon>
+    </button>
+  </nb-card-header>
+  <nb-card-body>
+    <nb-accordion>
+      <nb-accordion-item *ngFor="let stage of control.controls; let i = index" [formGroup]="stage" [expanded]="isAdding && control.length - 1 === i">
+        <nb-accordion-item-header>
+          <button *ngIf="!(isAdding && control.length - 1 === i)" (click)="control.removeAt( i )" nbButton size="tiny" status="warning" type="button">
+            <nb-icon pack="eva" icon="trash-2-outline"></nb-icon>
+          </button>
+          <span class="ml-2">
+            {{ stage.value.name }}
+          </span>
+        </nb-accordion-item-header>
+        <nb-accordion-item-body>
+          <nb-form-field>
+            <input nbInput fullWidth formControlName="name" type="text" [placeholder]="'FORM.PLACEHOLDERS.NAME' | translate">
+          </nb-form-field>
+
+          <br>
+          <nb-form-field>
+            <textarea nbInput fullWidth formControlName="description" [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"></textarea>
+          </nb-form-field>
+
+          <div *ngIf="isAdding && control.length - 1 === i" class="text-right">
+            <button nbButton size="small" status="success" type="button" [disabled]="stage.invalid" class="mr-2" (click)="isAdding = false">
+              <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
+              <span [innerHTML]="'BUTTONS.ADD' | translate"></span>
+            </button>
+            <button nbButton size="small" status="basic" type="button" (click)="isAdding = false; control.removeAt( i )">
+              <nb-icon icon="close-outline" pack="eva"></nb-icon>
+              <span [innerHTML]="'BUTTONS.CLOSE' | translate"></span>
+            </button>
+          </div>
+        </nb-accordion-item-body>
+      </nb-accordion-item>
+    </nb-accordion>
+  </nb-card-body>
+</nb-card>

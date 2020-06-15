@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { PipelinesComponent } from './pipelines.component';
 import {
+  NbAccordionModule,
   NbButtonModule,
   NbCardModule,
   NbDialogModule,
@@ -16,15 +17,18 @@ import { PipelinesService } from '../../@core/services/pipelines.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Ng2SmartTableModule } from 'ng2-smart-table';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
+import { StageFormComponent } from './stage-form/stage-form.component';
 
 @NgModule( {
   declarations: [
     PipelineFormComponent,
     PipelinesComponent,
+    StageFormComponent,
   ],
   exports: [
     PipelineFormComponent,
     PipelinesComponent,
+    StageFormComponent,
   ],
   providers: [
     PipelinesService,
@@ -33,6 +37,7 @@ import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
     NbDialogModule.forChild(),
     ReactiveFormsModule,
     Ng2SmartTableModule,
+    NbAccordionModule,
     NbFormFieldModule,
     PipelinesRouting,
     TranslateModule,

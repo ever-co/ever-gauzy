@@ -83,7 +83,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     const organizationId = value || void 0;
 
     await this.pipelinesService
-      .find( [], { organizationId })
+      .find( [ 'stages' ], { organizationId })
       .then( ({ items }) => {
         this.pipelines.load( items );
         this.filterPipelines();

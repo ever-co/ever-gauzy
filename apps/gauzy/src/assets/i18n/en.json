@@ -1620,6 +1620,7 @@
 	},
 	"PIPELINES_PAGE": {
     "HEADER": "Pipelines",
+    "HEADER_STAGES": "Stages",
 		"HEADER_FORM_EDIT": "Edit Pipeline",
     "HEADER_FORM_CREATE": "Create Pipeline",
     "RECORD_TYPE": "pipeline \"{{ name }}\""
