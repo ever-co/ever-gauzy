@@ -51,6 +51,15 @@ export class CandidateTechnologiesService {
 			.toPromise();
 	}
 
+	findByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
+		return this.http
+			.get<ICandidateTechnologies[]>(
+				`/api/candidate-technologies/getByInterviewId/${interviewId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	delete(id: string): Promise<any> {
 		return this.http
 			.delete(`/api/candidate-technologies/${id}`)

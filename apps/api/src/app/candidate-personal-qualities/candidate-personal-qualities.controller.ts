@@ -6,7 +6,8 @@ import {
 	Delete,
 	Param,
 	Query,
-	HttpStatus
+	HttpStatus,
+	Get
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -64,6 +65,17 @@ export class CandidatePersonalQualitiesController extends CrudController<
 				interviewId,
 				personalQualities
 			)
+		);
+	}
+
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Get('getByInterviewId/:interviewId')
+	async findByInterviewId(
+		@Param('interviewId') interviewId: string
+	): Promise<ICandidatePersonalQualities[]> {
+		return this.candidatePersonalQualitiesService.getPersonalQualitiesByInterviewId(
+			interviewId
 		);
 	}
 

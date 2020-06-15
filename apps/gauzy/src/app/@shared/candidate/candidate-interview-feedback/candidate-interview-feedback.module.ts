@@ -7,7 +7,8 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbInputModule,
-	NbRadioModule
+	NbRadioModule,
+	NbAccordionModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -34,6 +35,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbIconModule,
 		StarRatingInputModule,
 		CandidateSelectModule,
+		NbAccordionModule,
 		TranslateModule.forChild({
 			loader: {
 				provide: TranslateLoader,

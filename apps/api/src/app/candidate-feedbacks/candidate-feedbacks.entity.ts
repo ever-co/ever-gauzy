@@ -1,13 +1,24 @@
-import { Column, Entity, OneToOne, JoinColumn } from 'typeorm';
+import {
+	Column,
+	Entity,
+	OneToOne,
+	JoinColumn,
+	ManyToOne,
+	JoinTable
+} from 'typeorm';
 import { Base } from '../core/entities/base';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateFeedback,
 	CandidateStatus,
-	ICandidateInterviewers
+	ICandidateInterviewers,
+	ICandidatePersonalQualities,
+	ICandidateTechnologies
 } from '@gauzy/models';
 import { IsEnum, IsOptional } from 'class-validator';
 import { CandidateInterviewers } from '../candidate-interviewers/candidate-interviewers.entity';
+import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
+import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
 
 @Entity('candidate_feedback')
 export class CandidateFeedback extends Base implements ICandidateFeedback {
@@ -37,4 +48,16 @@ export class CandidateFeedback extends Base implements ICandidateFeedback {
 	@OneToOne((type) => CandidateInterviewers)
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
+
+	@ManyToOne((type) => CandidateTechnologies, { cascade: true })
+	@JoinTable({
+		name: 'candidate_technology'
+	})
+	technologies?: ICandidateTechnologies[];
+
+	@ManyToOne((type) => CandidatePersonalQualities, { cascade: true })
+	@JoinTable({
+		name: 'candidate_personal_quality'
+	})
+	personalQualities?: ICandidatePersonalQualities[];
 }

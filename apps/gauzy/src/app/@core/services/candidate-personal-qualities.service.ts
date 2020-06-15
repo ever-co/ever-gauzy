@@ -44,6 +44,17 @@ export class CandidatePersonalQualitiesService {
 			.toPromise();
 	}
 
+	findByInterviewId(
+		interviewId: string
+	): Promise<ICandidatePersonalQualities[]> {
+		return this.http
+			.get<ICandidatePersonalQualities[]>(
+				`/api/candidate-personal-qualities/getByInterviewId/${interviewId}`
+			)
+			.pipe(first())
+			.toPromise();
+	}
+
 	update(id: string, updateInput: any): Promise<any> {
 		return this.http
 			.put(`/api/candidate-personal-qualities/${id}`, updateInput)

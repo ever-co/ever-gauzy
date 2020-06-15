@@ -27,13 +27,13 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@Column({ nullable: true })
 	endTime: Date;
 
-	@ManyToOne((type) => CandidateInterviewers)
+	@ManyToOne((type) => CandidateInterviewers, { cascade: true })
 	@JoinTable({
 		name: 'candidate_interviewer'
 	})
 	interviewers?: ICandidateInterviewers[];
 
-	@ManyToOne((type) => CandidateFeedback)
+	@ManyToOne((type) => CandidateFeedback, { cascade: true })
 	@JoinTable({
 		name: 'candidate_feedback'
 	})
@@ -51,13 +51,13 @@ export class CandidateInterview extends Base implements ICandidateInterview {
 	@Column()
 	note?: string;
 
-	@ManyToOne((type) => CandidateTechnologies)
+	@ManyToOne((type) => CandidateTechnologies, { cascade: true })
 	@JoinTable({
 		name: 'candidate_technology'
 	})
 	technologies?: ICandidateTechnologies[];
 
-	@ManyToOne((type) => CandidatePersonalQualities)
+	@ManyToOne((type) => CandidatePersonalQualities, { cascade: true })
 	@JoinTable({
 		name: 'candidate_personal_quality'
 	})
