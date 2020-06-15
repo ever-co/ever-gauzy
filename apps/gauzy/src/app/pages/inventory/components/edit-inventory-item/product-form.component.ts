@@ -7,7 +7,8 @@ import {
 	ProductTypeTranslated,
 	IVariantOptionCombination,
 	ProductCategoryTranslated,
-	ProductVariant
+	ProductVariant,
+	LanguagesEnum
 } from '@gauzy/models';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductTypeService } from 'apps/gauzy/src/app/@core/services/product-type.service';
@@ -119,6 +120,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 				this.inventoryItem ? this.inventoryItem.code : '',
 				Validators.required
 			],
+			imageUrl: [this.inventoryItem ? this.inventoryItem.imageUrl : null],
 			productTypeId: [
 				this.inventoryItem ? this.inventoryItem.productTypeId : '',
 				Validators.required
@@ -135,20 +137,27 @@ export class ProductFormComponent extends TranslationBaseComponent
 	}
 
 	async loadProductTypes() {
+		const searchCriteria = this.selectedOrganizationId
+			? { organization: { id: this.selectedOrganizationId } }
+			: null;
+
 		const res = await this.productTypeService.getAllTranslated(
-			this.store.preferredLanguage,
-			['organization']
+			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
+			[],
+			searchCriteria
 		);
 		this.productTypes = res.items;
 	}
 
 	async loadProductCategories() {
-		const res = await this.productCategoryService.getAll(
-			this.store.preferredLanguage,
+		const searchCriteria = this.selectedOrganizationId
+			? { organization: { id: this.selectedOrganizationId } }
+			: null;
+
+		const res = await this.productCategoryService.getAllTranslated(
+			this.store.preferredLanguage || LanguagesEnum.ENGLISH,
 			[],
-			{
-				organizationId: this.selectedOrganizationId
-			}
+			searchCriteria
 		);
 		this.productCategories = res.items;
 	}
@@ -158,6 +167,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 			tags: this.form.get('tags').value,
 			name: this.form.get('name').value,
 			code: this.form.get('code').value,
+			imageUrl: this.form.get('imageUrl').value,
 			productTypeId: this.form.get('productTypeId').value,
 			productCategoryId: this.form.get('productCategoryId').value,
 			enabled: this.form.get('enabled').value,
@@ -181,24 +191,31 @@ export class ProductFormComponent extends TranslationBaseComponent
 				this.inventoryItem = await this.productService.create(
 					productRequest
 				);
-
-				this.inventoryItem.variants = await this.productVariantService.createProductVariants(
-					{
-						product: this.inventoryItem,
-						optionCombinations: this.optionsCombinations
-					}
-				);
-
-				this.variants$.next(this.inventoryItem.variants);
-
-				this.router.navigate([
-					`/pages/organization/inventory/edit/${this.inventoryItem.id}`
-				]);
 			} else {
 				this.inventoryItem = await this.productService.update(
 					productRequest
 				);
 			}
+
+			if (!this.inventoryItem.variants) {
+				this.inventoryItem.variants = [];
+			}
+
+			this.inventoryItem.variants.push(
+				...(await this.productVariantService.createProductVariants({
+					product: this.inventoryItem,
+					optionCombinations: this.optionsCombinations
+				}))
+			);
+
+			//tstodo
+			console.log(this.inventoryItem.variants);
+
+			this.variants$.next(this.inventoryItem.variants);
+
+			this.router.navigate([
+				`/pages/organization/inventory/edit/${this.inventoryItem.id}`
+			]);
 
 			this.toastrService.success(
 				this.getTranslation('TOASTR.TITLE.SUCCESS'),
@@ -220,8 +237,12 @@ export class ProductFormComponent extends TranslationBaseComponent
 		this.deletedOptions.push(option);
 	}
 
-	// tstodo
-	handleImageUploadError(event: any) {}
+	handleImageUploadError(error: any) {
+		this.toastrService.danger(
+			error.error.message || error.message,
+			'Error'
+		);
+	}
 
 	onCancel() {
 		this.location.back();

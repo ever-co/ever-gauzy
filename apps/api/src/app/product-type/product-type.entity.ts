@@ -35,15 +35,6 @@ export class ProductType extends TranslatableBase {
 	@JoinColumn()
 	organization: Organization;
 
-	@OneToMany(
-		(type) => ProductOption,
-		(productOption) => productOption.product,
-		{
-			eager: true
-		}
-	)
-	options?: ProductOption[];
-
 	@ApiProperty({ type: ProductTypeTranslation, isArray: true })
 	@OneToMany(
 		(type) => ProductTypeTranslation,

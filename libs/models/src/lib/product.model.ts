@@ -5,12 +5,14 @@ import {
 } from './translation.model';
 import { Organization } from './organization.model';
 import { Tag } from './tag-entity.model';
+import { InvoiceItem } from './invoice-item.model';
 
 export interface Product extends IBaseEntityModel {
 	name: string;
 	description: string;
 	enabled: boolean;
 	code: string;
+	imageUrl: string;
 	variants?: ProductVariant[];
 	options?: ProductOption[];
 	productTypeId: string;
@@ -18,6 +20,7 @@ export interface Product extends IBaseEntityModel {
 	type?: ProductTypeTranslatable;
 	category?: ProductCategoryTranslatable;
 	tags?: Tag[];
+	invoiceItems?: InvoiceItem[];
 }
 
 export interface IProductCreateInput {
@@ -25,6 +28,7 @@ export interface IProductCreateInput {
 	description: string;
 	enabled: boolean;
 	code: string;
+	imageUrl: string;
 	type?: ProductTypeTranslatable;
 	category?: ProductCategoryTranslatable;
 	tags?: Tag[];
@@ -42,6 +46,7 @@ export interface ProductTypeTranslatable
 	icon: string;
 	organizationId?: string;
 	organization?: Organization;
+	products?: Product[];
 }
 
 export interface ProductTypeTranslation
@@ -61,6 +66,7 @@ export interface ProductCategoryTranslatable
 	imageUrl: string;
 	organizationId?: string;
 	organization?: Organization;
+	products?: Product[];
 }
 
 export interface ProductCategoryTranslation
@@ -103,6 +109,7 @@ export interface ProductVariantPrice extends IBaseEntityModel {
 	unitCostCurrency: string;
 	retailPrice: number;
 	retailPriceCurrency: string;
+	productVariant: ProductVariant;
 }
 
 export interface ProductVariantSettings extends IBaseEntityModel {
@@ -114,6 +121,7 @@ export interface ProductVariantSettings extends IBaseEntityModel {
 	canBeRented: boolean;
 	isEquipment: boolean;
 	trackInventory: boolean;
+	productVariant: ProductVariant;
 }
 
 export interface ProductOption extends IBaseEntityModel {
