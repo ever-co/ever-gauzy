@@ -479,7 +479,7 @@
 		"INVOICES": "Счета",
 		"ORGANIZATION": "Организация",
 		"RECURRING_INVOICES": "Повторяющиеся счета",
-		"INVOICES_RECEIVED": "Полученные счета",
+		"INVOICES_RECEIVED": "Получены счета",
 		"ESTIMATES_RECEIVED": "Полученные оценки",
 		"ESTIMATES": "Оценки",
 		"MY_TASKS": "Мои задачи",
@@ -952,8 +952,8 @@
 		"APPROVAL_REQUEST_STATUS": "Статус",
 		"HEADER": "Запрос на утверждение",
 		"APPROVAL_POLICY": "Политика одобрения",
-		"CHOOSE_POLICIES": "Выбрать политики"
-  },
+		"CHOOSE_POLICIES": "Выбрать политики/с"
+	},
 	"TIME_OFF_PAGE": {
 		"HEADER": "Время выключено",
 		"REQUEST_DAYS_OFF": "Запросить выходные",
