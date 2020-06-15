@@ -1,12 +1,6 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
-import {
-	FormBuilder,
-	Validators,
-	FormArray,
-	FormControl,
-	FormGroup
-} from '@angular/forms';
+import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
