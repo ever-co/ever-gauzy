@@ -17,7 +17,12 @@
 		></ngx-filters>
 	</div>
 </div>
-<div class="weekly-logs row-table">
+<div
+	class="weekly-logs row-table"
+	[nbSpinner]="loading"
+	nbSpinnerSize="giant"
+	nbSpinnerStatus="primary"
+>
 	<div
 		class="row border-bottom border-top py-3 font-weight-bold align-items-center"
 	>

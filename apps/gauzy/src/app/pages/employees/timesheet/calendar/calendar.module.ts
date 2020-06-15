@@ -11,7 +11,8 @@ import {
 	NbDialogModule,
 	NbCardModule,
 	NbButtonModule,
-	NbIconModule
+	NbIconModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { EditTimeLogModalModule } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
@@ -32,7 +33,8 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 		NbButtonModule,
 		EditTimeLogModalModule,
 		FiltersModule,
-		NbIconModule
+		NbIconModule,
+		NbSpinnerModule
 	]
 })
 export class CalendarModule {}
