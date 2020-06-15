@@ -41,7 +41,10 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@Get(':id')
 	async getAll(@Param('id') findInput: string) {
-		return this.keyResultService.findAll({ where: { goalId: findInput } });
+		return this.keyResultService.findAll({
+			where: { goal_id: findInput },
+			relations: ['goal']
+		});
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })

@@ -1,18 +1,15 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
 import { KeyResult as IKeyResult } from '@gauzy/models';
 import { Base } from '../core/entities/base';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
+import { Goal } from '../goal/goal.entity';
 
 @Entity('key_result')
 export class KeyResult extends Base implements IKeyResult {
 	@ApiProperty({ type: String })
 	@Column()
 	name: string;
-
-	@ApiProperty({ type: String })
-	@Column()
-	goalId: string;
 
 	@ApiProperty({ type: String })
 	@Column()
@@ -68,4 +65,14 @@ export class KeyResult extends Base implements IKeyResult {
 	@Column()
 	@IsOptional()
 	status?: string;
+
+	@ApiProperty({ type: Goal })
+	@ManyToOne((type) => Goal, (goal) => goal.keyResults)
+	@JoinColumn({ name: 'goal_id' })
+	goal: Goal;
+
+	@ApiProperty({ type: String, readOnly: true })
+	@RelationId((keyresult: KeyResult) => keyresult.goal)
+	@Column({ nullable: true })
+	readonly goal_id?: string;
 }

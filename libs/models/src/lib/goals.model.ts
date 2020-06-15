@@ -14,7 +14,6 @@ export interface Goals extends IBaseEntityModel {
 
 export interface KeyResult {
 	id?: string;
-	goalId: string;
 	name: string;
 	description?: string;
 	type: string;
@@ -28,8 +27,9 @@ export interface KeyResult {
 	hardDeadline?: Date;
 	softDeadline?: Date;
 	status?: string;
+	goal_id?: string;
 }
 
 export interface GetKeyResultOptions {
-	goalId?: string;
+	goal_id?: string;
 }

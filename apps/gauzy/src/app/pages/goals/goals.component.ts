@@ -13,6 +13,8 @@ import { SelectedEmployee } from '../../@theme/components/header/selectors/emplo
 import { KeyresultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { GoalService } from '../../@core/services/goal.service';
 import { KeyresultService } from '../../@core/services/keyresult.service';
+import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { KeyresultDetailsComponent } from './keyresult-details/keyresult-details.component';
 
 @Component({
 	selector: 'ga-goals',
@@ -36,32 +38,13 @@ export class GoalsComponent extends TranslationBaseComponent
 		private dialogService: NbDialogService,
 		private toastrService: NbToastrService,
 		private goalService: GoalService,
+		private errorHandler: ErrorHandlingService,
 		private keyResultService: KeyresultService
 	) {
 		super(translate);
 	}
 
 	async ngOnInit() {
-		this.goalService
-			.getAllGoals()
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((goals) => {
-				if (goals.items.length > 0) {
-					this.noGoals = false;
-				}
-				this.goals = goals.items;
-				this.goals.forEach(async (goal, index) => {
-					await this.keyResultService
-						.getAllKeyResults(goal.id)
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe((val) => {
-							if (!!val.items) {
-								this.goals[index].keyResults = val.items;
-							}
-						});
-				});
-			});
-
 		this.store.selectedOrganization$
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((organization) => {
@@ -73,9 +56,22 @@ export class GoalsComponent extends TranslationBaseComponent
 	}
 
 	private async loadPage() {
-		const { name } = this.store.selectedOrganization;
+		const { name } = this.store.selectedOrganization
+			? this.store.selectedOrganization
+			: { name: 'new' };
 		this.loading = false;
 		this.organizationName = name;
+
+		this.goalService
+			.getAllGoals()
+			.pipe(takeUntil(this._ngDestroy$))
+			.subscribe((goals) => {
+				if (goals.items.length > 0) {
+					this.noGoals = false;
+				}
+				console.log(goals.items);
+				this.goals = goals.items;
+			});
 	}
 
 	async addKeyResult(index, keyResult) {
@@ -89,11 +85,23 @@ export class GoalsComponent extends TranslationBaseComponent
 		if (response) {
 			const data = {
 				...response,
-				goalId: this.goals[index].id
+				goal_id: this.goals[index].id
 			};
-			this.keyResultService.createKeyResult(data);
-			this.toastrService.primary('key result added', 'Success');
-			this.loadPage();
+			try {
+				await this.keyResultService
+					.createKeyResult(data)
+					.pipe(takeUntil(this._ngDestroy$))
+					.subscribe(async (val) => {
+						console.log(val);
+						this.toastrService.primary(
+							'key result added',
+							'Success'
+						);
+						this.loadPage();
+					});
+			} catch (error) {
+				this.errorHandler.handleError(error);
+			}
 		}
 	}
 
@@ -138,10 +146,21 @@ export class GoalsComponent extends TranslationBaseComponent
 					progress: 0
 				};
 				console.table(data);
-				await this.goalService.createGoal(data);
-				this.toastrService.primary('Objective added', 'Success');
+				try {
+					await this.goalService
+						.createGoal(data)
+						.pipe(takeUntil(this._ngDestroy$))
+						.subscribe(async (val) => {
+							await this.goalService.getAllGoals();
+							this.toastrService.primary(
+								'Objective added',
+								'Success'
+							);
+						});
+				} catch (error) {
+					this.errorHandler.handleError(error);
+				}
 			}
-			await this.goalService.getAllGoals();
 			this.loadPage();
 		}
 	}
@@ -158,6 +177,20 @@ export class GoalsComponent extends TranslationBaseComponent
 			await this.goalService.update(response.id, response);
 			this.toastrService.primary('Goal updated', 'Success');
 			this.loadPage();
+		}
+	}
+
+	async openKeyResultDetails(index, selectedkeyResult) {
+		const dialog = this.dialogService.open(KeyresultDetailsComponent, {
+			hasScroll: true,
+			context: {
+				keyResult: selectedkeyResult,
+				owner: this.goals[index].owner
+			}
+		});
+		const response = await dialog.onClose.pipe(first()).toPromise();
+		if (!!response) {
+			console.log(response);
 		}
 	}
 

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
+import { KeyResult } from '@gauzy/models';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -10,6 +11,7 @@ import { EmployeesService } from '../../../@core/services';
 export class KeyresultDetailsComponent implements OnInit {
 	owner: string;
 	src: string;
+	keyResult: KeyResult;
 	ownerName: string;
 	constructor(
 		private dialogRef: NbDialogRef<KeyresultDetailsComponent>,
