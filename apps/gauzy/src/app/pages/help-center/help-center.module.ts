@@ -1,3 +1,4 @@
+import { AddArticleModule } from './add-article/add-article.module';
 import { SidebarModule } from './../../@shared/sidebar/sidebar.module';
 import { HttpClient } from '@angular/common/http';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -20,6 +21,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 
 @NgModule({
 	imports: [
+		AddArticleModule,
 		HelpCenterRoutingModule,
 		ThemeModule,
 		UserFormsModule,

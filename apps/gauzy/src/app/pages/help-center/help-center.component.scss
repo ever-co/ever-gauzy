@@ -1,3 +1,38 @@
-.card {
+.global {
+  display: flex;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 85%;
+  margin-left: 5px;
+}
+
+.header {
+  display: flex;
   flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: 1px;
+  height: 60px;
+  background-color: #fafafa;
+}
+
+.cards {
+  padding-left: 10px;
+  padding-top: 8px;
+  height: 100px;
+  margin-bottom: 10px;
+}
+
+.user-info {
+  padding-right: 100px;
+  display: flex;
+  flex-direction: row;
+}
+
+.create-at {
+  margin-left: 100px;
 }

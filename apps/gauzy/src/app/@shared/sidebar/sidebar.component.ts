@@ -12,6 +12,7 @@ import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
+import { AddBaseComponent } from './add-base/add-base.component';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -38,10 +39,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	public articleData: SafeHtml;
 	public tempData: string;
 	public tempNodes: IHelpCenter[] = [];
-	public languages = ['en', 'ru', 'he', 'bg'];
-	public colors = ['black', 'blue'];
-	public selectedLang = '';
-	public selectedColor = '';
 	public showArticleButton = false;
 	public showCategoryButton = false;
 	public nodeId = '';
@@ -100,57 +97,66 @@ export class SidebarComponent extends TranslationBaseComponent
 		// this.loadMenu();
 		this.tree.treeModel.update();
 	}
-	addNode() {
-		this.isVisibleAdd = true;
-	}
-	showInput(key: number) {
-		if (key === 1) {
-			this.showArticleButton = true;
-		} else {
-			this.showCategoryButton = true;
-		}
-	}
+	async addNode() {
+		const dialog = this.dialogService.open(AddBaseComponent);
+		const chosenIcon = await dialog.onClose.pipe(first()).toPromise();
+		// if (chosenIcon) {
+		// 	const someNode = this.tree.treeModel.getNodeById(this.nodeId);
+		// 	someNode.data.icon = chosenIcon;
+		// 	await this.helpService.update(someNode.data.id, {
+		// 		icon: `${someNode.data.icon}`
+		// 	});
+		// }
 
-	async addName(event: any, key: number) {
-		if (key !== 1) {
-			await this.helpService.create({
-				name: `${event.target.value}`,
-				icon: 'book-open-outline',
-				flag: 'category',
-				privacy: 'eye-outline',
-				language: 'en',
-				color: 'black',
-				index: this.nodes.length,
-				children: []
-			});
-			this.toastrSuccess('CREATED_CATEGORY');
-		} else {
-			await this.helpService.create({
-				name: `${event.target.value}`,
-				icon: 'book-open-outline',
-				flag: 'article',
-				privacy: 'eye-outline',
-				description: '',
-				language: 'en',
-				color: 'black',
-				index: this.nodes.length,
-				data: ''
-			});
-			this.toastrSuccess('CREATED_ARTICLE');
-		}
-		this.loadMenu();
-		this.tree.treeModel.update();
-		this.isVisibleAdd = false;
-		this.showArticleButton = false;
-		this.showCategoryButton = false;
+		// this.tree.treeModel.update();
+		// this.isVisibleAdd = true;
 	}
+	// showInput(key: number) {
+	// 	if (key === 1) {
+	// 		this.showArticleButton = true;
+	// 	} else {
+	// 		this.showCategoryButton = true;
+	// 	}
+	// }
+
+	// async addName(event: any, key: number) {
+	// 	if (key !== 1) {
+	// 		await this.helpService.create({
+	// 			name: `${event.target.value}`,
+	// 			icon: 'book-open-outline',
+	// 			flag: 'category',
+	// 			privacy: 'eye-outline',
+	// 			language: 'en',
+	// 			color: 'black',
+	// 			index: this.nodes.length,
+	// 			children: []
+	// 		});
+	// 		this.toastrSuccess('CREATED_CATEGORY');
+	// 	} else {
+	// 		await this.helpService.create({
+	// 			name: `${event.target.value}`,
+	// 			icon: 'book-open-outline',
+	// 			flag: 'article',
+	// 			privacy: 'eye-outline',
+	// 			description: '',
+	// 			language: 'en',
+	// 			color: 'black',
+	// 			index: this.nodes.length,
+	// 			data: ''
+	// 		});
+	// 		this.toastrSuccess('CREATED_ARTICLE');
+	// 	}
+	// 	this.loadMenu();
+	// 	this.tree.treeModel.update();
+	// 	this.isVisibleAdd = false;
+	// 	this.showArticleButton = false;
+	// 	this.showCategoryButton = false;
+	// }
 	onNodeClicked(node: any) {
-		// console.log(node);
+		console.log(node);
 		this.nodeId = node.id.toString();
 		this.isChosenNode = true;
 		this.articleName = node.name;
-		this.selectedLang = node.language;
-		this.selectedColor = node.color;
 		if (node.flag === 'article') {
 			this.articleDesc = node.description;
 			this.articleData = this.sanitizer.bypassSecurityTrustHtml(
@@ -183,7 +189,6 @@ export class SidebarComponent extends TranslationBaseComponent
 				icon: `${someNode.data.icon}`
 			});
 		}
-
 		this.tree.treeModel.update();
 	}
 
@@ -205,9 +210,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		someNode.data.name = event.target.value;
 		this.isVisibleEdit = false;
 		await this.helpService.update(someNode.data.id, {
-			name: `${someNode.data.name}`,
-			language: this.selectedLang,
-			color: this.selectedColor
+			name: `${someNode.data.name}`
 		});
 		this.loadMenu();
 		this.toastrSuccess('EDITED_CATEGORY');
@@ -233,6 +236,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		for (const node of this.tempNodes)
 			if (node.id === this.nodeId.toString()) {
 				// TODO this.onNodeClicked(node);
+				const oldIndex = node.index;
+				console.log(oldIndex);
 				const childNodes = this.tempNodes.filter(
 					(item) =>
 						((item.parent &&
@@ -241,16 +246,17 @@ export class SidebarComponent extends TranslationBaseComponent
 							(item.parent === null && node.parent === null)) &&
 						item.flag === 'article'
 				);
+				console.log(childNodes);
 				childNodes.forEach((child) => {
 					if (child.index === node.index - 1) {
+						console.log(node);
 						this.nodeId = child.id;
 						this.articleName = child.name;
-						this.selectedLang = child.language;
-						this.selectedColor = child.color;
 						this.articleDesc = child.description;
 						this.articleData = this.sanitizer.bypassSecurityTrustHtml(
 							`${child.data}`
 						);
+						this.loadFormData(child);
 					}
 				});
 			}
@@ -271,12 +277,11 @@ export class SidebarComponent extends TranslationBaseComponent
 					if (child.index === node.index + 1) {
 						this.nodeId = child.id;
 						this.articleName = child.name;
-						this.selectedLang = child.language;
-						this.selectedColor = child.color;
 						this.articleDesc = child.description;
 						this.articleData = this.sanitizer.bypassSecurityTrustHtml(
 							`${child.data}`
 						);
+						this.loadFormData(child);
 					}
 				});
 			}
@@ -304,9 +309,7 @@ export class SidebarComponent extends TranslationBaseComponent
 		await this.helpService.update(someNode.data.id, {
 			name: `${someNode.data.name}`,
 			description: `${someNode.data.description}`,
-			data: this.tempData,
-			language: this.selectedLang,
-			color: this.selectedColor
+			data: this.tempData
 		});
 		this.toastrSuccess('EDITED_ARTICLE');
 		this.loadMenu();

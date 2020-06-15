@@ -1,3 +1,4 @@
+import { AddBaseModule } from './add-base/add-base.module';
 import { AddIconModule } from './add-icon/add-icon.module';
 import { NgModule } from '@angular/core';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -21,6 +22,7 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 
 @NgModule({
 	imports: [
+		AddBaseModule,
 		AddIconModule,
 		CKEditorModule,
 		TreeModule.forRoot(),
@@ -32,7 +34,6 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
-		NbSelectModule,
 		NbLayoutModule,
 		NbSidebarModule.forRoot(),
 		TranslateModule.forChild({
