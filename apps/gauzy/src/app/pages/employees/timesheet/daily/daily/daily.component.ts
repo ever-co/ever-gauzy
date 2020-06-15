@@ -55,6 +55,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 	logRequest: TimeLogFilters = {};
 
 	updateLogs$: Subject<any> = new Subject();
+	loading: boolean;
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -120,7 +121,7 @@ export class DailyComponent implements OnInit, OnDestroy {
 		// 	queryParams: request,
 		// 	queryParamsHandling: 'merge'
 		// });
-
+		this.loading = true;
 		this.timeLogs = await this.timesheetService
 			.getTimeLogs(request)
 			.then((logs) => {
@@ -131,7 +132,8 @@ export class DailyComponent implements OnInit, OnDestroy {
 				}
 				logs.forEach((log) => (this.selectedIds[log.id] = false));
 				return logs;
-			});
+			})
+			.finally(() => (this.loading = false));
 	}
 
 	toggleCheckbox(event: any, type?: any) {
