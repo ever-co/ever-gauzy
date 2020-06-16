@@ -75,13 +75,13 @@ export class PipelineService extends CrudService<Pipeline> {
 				select: ['id']
 			})
 			.then((stages) => {
-				const requestStageIds = updatedStages?.map(({ id }) => id);
+				const requestStageIds = updatedStages.map(({ id }) => id);
 
 				return stages.filter(({ id }) => !requestStageIds.includes(id));
 			});
 		const createdStages = partialEntity.stages?.filter(
 			(stage) => !updatedStages.includes(stage)
-		);
+		) || [];
 		const pipeline = await manager.findOne(Pipeline, id as any);
 		const _pipeline = { ...partialEntity };
 

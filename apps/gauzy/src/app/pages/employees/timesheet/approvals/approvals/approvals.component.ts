@@ -1,22 +1,18 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import {
-	IGetTimeLogInput,
-	Organization,
-	IDateRange,
-	PermissionsEnum,
-	TimesheetStatus,
-	Timesheet,
-	TimeLogFilters
+  IDateRange,
+  IGetTimeLogInput,
+  Organization,
+  PermissionsEnum,
+  TimeLogFilters,
+  Timesheet,
+  TimesheetStatus,
 } from '@gauzy/models';
 import { toUTC } from 'libs/utils';
-import {
-	NbCheckboxComponent,
-	NbDialogRef,
-	NbMenuService
-} from '@nebular/theme';
+import { NbCheckboxComponent, NbDialogRef, NbMenuService } from '@nebular/theme';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { filter, map, debounceTime } from 'rxjs/operators';
+import { debounceTime, filter, map } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Router } from '@angular/router';
