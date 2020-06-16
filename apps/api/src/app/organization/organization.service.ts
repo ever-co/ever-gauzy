@@ -18,12 +18,14 @@ export class OrganizationService extends TenantAwareCrudService<Organization> {
 	 */
 	public async findByPublicLink(
 		profile_link: string,
-		select: string
+		select?: string,
+		relation?: string
 	): Promise<Organization> {
 		const findObj: FindOneOptions<Organization> = {};
 
 		if (select) {
 			findObj['select'] = JSON.parse(select);
+			findObj['relations'] = JSON.parse(relation);
 		}
 
 		return await this.organizationRepository.findOne(

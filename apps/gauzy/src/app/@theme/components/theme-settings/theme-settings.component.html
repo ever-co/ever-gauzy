@@ -18,6 +18,7 @@
 	<h6 class="title-uppercase">{{ 'SETTINGS_MENU.LANGUAGE' | translate }}</h6>
 	<div class="settings-row theme-button">
 		<nb-select
+			*ngIf="languages.length"
 			[(selected)]="currentLang"
 			placeholder="{{ languages[0].name | translate }}"
 			(selectedChange)="switchLanguage()"
