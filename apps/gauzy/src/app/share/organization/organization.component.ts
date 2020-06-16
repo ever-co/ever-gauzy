@@ -82,14 +82,10 @@ export class OrganizationComponent extends TranslationBaseComponent
 						.pipe(first())
 						.toPromise();
 					this.imageUrl = this.organization.imageUrl;
-					if (!!this.organization) {
-						this.reloadPageData();
-						if (
-							typeof this.organization.totalEmployees !== 'number'
-						) {
-							this.loadEmployeesCount();
-						}
+					if (typeof this.organization.totalEmployees !== 'number') {
+						this.loadEmployeesCount();
 					}
+					this.reloadPageData();
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}
