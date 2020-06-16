@@ -897,6 +897,14 @@
 			"SUPER_ADMIN_EDIT": "Редактировать Супер Администратора",
 			"INVOICES_VIEW": "Просмотр счетов",
 			"INVOICES_EDIT": "Редактировать счета",
+			"APPROVALS_POLICY_EDIT": "Редактировать политику одобрения",
+			"APPROVALS_POLICY_VIEW": "Просмотр политики одобрения",
+			"REQUEST_APPROVAL_EDIT": "Редактировать запрос на утверждение",
+			"REQUEST_APPROVAL_VIEW": "Просмотр запроса на утверждение",
+			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Создать/редактировать интервьюера",
+			"VIEW_ALL_EMAILS": "Посмотреть все письма",
+			"ORG_HELP_CENTER_EDIT": "Редактировать справочный центр организации",
+			"PUBLIC_PAGE_EDIT": "Редактирование публичной страницы",
 			"GROUPS": {
 				"GENERAL": "Генеральная",
 				"ADMINISTRATION": "Администрация"
