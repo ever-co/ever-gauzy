@@ -1,7 +1,3 @@
-// Modified code from https://github.com/xmlking/ngx-starter-kit.
-// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
-// Copyright (c) 2018 Sumanth Chinthagunta
-
 import { Role } from './role.model';
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
 import { Tag } from './tag-entity.model';
@@ -39,7 +35,7 @@ export interface UserFindInput extends IBaseEntityModel {
 	hash?: string;
 	imageUrl?: string;
 	tags?: Tag[];
-	preferredLanguage?: LanguagesEnum;
+	preferredLanguage?: string;
 }
 
 export interface UserRegistrationInput {
@@ -60,7 +56,7 @@ export interface UserCreateInput {
 	hash?: string;
 	imageUrl?: string;
 	tags?: Tag[];
-	preferredLanguage?: LanguagesEnum;
+	preferredLanguage?: string;
 }
 
 export interface UserUpdateInput {
@@ -72,7 +68,7 @@ export interface UserUpdateInput {
 	roleId?: string;
 	hash?: string;
 	imageUrl?: string;
-	preferredLanguage?: LanguagesEnum;
+	preferredLanguage?: string;
 }
 
 export enum LanguagesEnum {

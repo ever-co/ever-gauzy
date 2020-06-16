@@ -17,6 +17,9 @@
     color: #222b45;
     font-size: 15px;
     font-weight: 700;
+    display: block;
+    float: left;
+    padding-top: 5px;
   }
 
   nb-card-header .employees {
@@ -59,13 +62,31 @@
   }
 
   .nb_toggle {
-    clear: both;
     display: block;
+    float: right;
   }
 
   input.input_year,
   input.input_name,
   input.input_level {
     padding: 0.4375rem 0.56rem !important;
+  }
+
+  .tab_sections *:focus {
+    outline: none !important;
+  }
+
+  .tab_sections {
+    min-height: 265px !important;
+  }
+
+  .tab_sections .form-group.extra_padding {
+    margin-bottom: 4rem;
+  }
+
+  .tab_sections .tab_min_height {
+    height: 150px;
+    position: relative;
+    clear: both;
   }
 }

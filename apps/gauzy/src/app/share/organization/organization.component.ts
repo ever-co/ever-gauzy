@@ -17,6 +17,7 @@ import { first, takeUntil } from 'rxjs/operators';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
 import { OrganizationLanguagesService } from '../../@core/services/organization-languages.service';
 import { OrganizationAwardsService } from '../../@core/services/organization-awards.service';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'ngx-organization',
@@ -37,6 +38,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	languageExist: boolean;
 	awardExist: boolean;
 	imageUpdateButton: boolean = false;
+	moment = moment;
 
 	constructor(
 		private route: ActivatedRoute,
@@ -76,16 +78,33 @@ export class OrganizationComponent extends TranslationBaseComponent
 
 				try {
 					this.organization = await this.organizationsService
-						.getByProfileLink(profileLink)
+						.getByProfileLink(profileLink, null, ['skills'])
 						.pipe(first())
 						.toPromise();
 					this.imageUrl = this.organization.imageUrl;
-
+					if (
+						this.organization &&
+						typeof this.organization.totalEmployees !== 'number'
+					) {
+						this.loadEmployeesCount();
+					}
 					this.reloadPageData();
 				} catch (error) {
 					await this.router.navigate(['/share/404']);
 				}
 			});
+	}
+
+	private async loadEmployeesCount() {
+		const { total } = await this.employeesService
+			.getAll([], {
+				organization: {
+					id: this.organization.id
+				}
+			})
+			.pipe(first())
+			.toPromise();
+		this.organization.totalEmployees = total;
 	}
 
 	private async loadLanguages() {

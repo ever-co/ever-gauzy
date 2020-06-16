@@ -1,9 +1,6 @@
 import { BaseEntityModel as IBaseEntityModel } from './base-entity.model';
-
-import { Tag } from './tag-entity.model';
-import { Skill } from './skill-entity.model';
 import { Location as ILocation } from './location.model';
-import { ITenant } from '@gauzy/models';
+import { ITenant, Tag, Skill } from '@gauzy/models';
 
 export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'allowManualTime',
@@ -18,7 +15,6 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	totalEmployees?: number;
 	status?: string;
 	imageUrl?: string;
-	size: string;
 	banner: string;
 	short_description: string;
 	client_focus: string;
@@ -29,7 +25,6 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	show_minimum_project_size?: boolean;
 	show_projects_count?: boolean;
 	overview: string;
-	founded: string;
 	skills: Skill[];
 	currency: string;
 	isActive: boolean;
