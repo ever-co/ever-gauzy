@@ -1,7 +1,17 @@
 import { Base } from '../core/entities/base';
 import { Pipeline as IPipeline } from '@gauzy/models';
 import { Organization } from '../organization/organization.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import {
+  AfterInsert,
+  AfterLoad,
+  AfterUpdate,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  RelationId,
+} from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Stage } from '../stage/stage.entity';
@@ -35,5 +45,14 @@ export class Pipeline extends Base implements IPipeline
   @IsString()
   @Column()
   public name: string;
+
+  @AfterLoad()
+  @AfterInsert()
+  @AfterUpdate()
+  private [ Symbol() as any ](): void {
+    if ( this.stages ) {
+      this.stages = this.stages.sort( ({ index: a }, { index: b }) => a - b );
+    }
+  }
 
 }
