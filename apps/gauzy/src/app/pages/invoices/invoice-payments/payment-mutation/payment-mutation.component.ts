@@ -77,6 +77,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 			currency: this.currency.value,
 			invoice: this.invoice,
 			invoiceId: this.invoice.id,
+			organization: this.invoice.fromOrganization,
 			organizationId: this.invoice.organizationId,
 			recordedBy: this.store.user,
 			userId: this.store.userId

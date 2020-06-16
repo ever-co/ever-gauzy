@@ -68,9 +68,9 @@ const routes: Routes = [
 					{
 						path: 'payments',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./payments/payments.module').then(
+								(m) => m.PaymentsModule
+							)
 					}
 				]
 			},
@@ -153,9 +153,16 @@ const routes: Routes = [
 					{
 						path: 'payments',
 						loadChildren: () =>
-							import(
-								'./work-in-progress/work-in-progress.module'
-							).then((m) => m.WorkInProgressModule)
+							import('./payments/payments.module').then(
+								(m) => m.PaymentsModule
+							)
+					},
+					{
+						path: 'pipelines',
+						loadChildren: () =>
+							import('./pipelines/pipelines.module').then(
+								({ PipelinesModule }) => PipelinesModule
+							)
 					}
 				]
 			},
@@ -252,13 +259,6 @@ const routes: Routes = [
 							)
 					},
 					{
-						path: 'email-templates',
-						loadChildren: () =>
-							import(
-								'./email-templates/email-templates.module'
-							).then((m) => m.EmailTemplatesModule)
-					},
-					{
 						path: 'help-center',
 						loadChildren: () =>
 							import('./help-center/help-center.module').then(
@@ -266,11 +266,44 @@ const routes: Routes = [
 							)
 					},
 					{
+						path: 'approval-policy',
+						loadChildren: () =>
+							import(
+								'./approval-policy/approval-policy.module'
+							).then((m) => m.ApprovalPolicyModule)
+					},
+					{
 						path: 'equipment-sharing',
 						loadChildren: () =>
 							import(
 								'./equipment-sharing/equipment-sharing.module'
 							).then((m) => m.EquipmentSharingModule)
+					}
+				]
+			},
+			{
+				path: 'goals',
+				children: [
+					{
+						path: '',
+						loadChildren: () =>
+							import('./goals/goals.module').then(
+								(m) => m.GoalsModule
+							)
+					},
+					{
+						path: 'reports',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
+					},
+					{
+						path: 'settings',
+						loadChildren: () =>
+							import(
+								'./work-in-progress/work-in-progress.module'
+							).then((m) => m.WorkInProgressModule)
 					}
 				]
 			},

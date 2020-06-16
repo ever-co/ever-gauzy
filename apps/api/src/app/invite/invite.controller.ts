@@ -5,8 +5,8 @@ import {
 	IInviteAcceptInput,
 	IInviteResendInput,
 	PermissionsEnum,
-	LinkClientOrganizationInviteInput,
-	LanguagesEnum
+	LanguagesEnum,
+	IOrganizationClientAcceptInviteInput
 } from '@gauzy/models';
 import {
 	BadRequestException,
@@ -41,9 +41,9 @@ import { InviteResendCommand } from './commands/invite.resend.command';
 import { Permissions } from './../shared/decorators/permissions';
 import { PermissionGuard } from './../shared/guards/auth/permission.guard';
 import { OrganizationClients } from '../organization-clients/organization-clients.entity';
-import { InviteLinkOrganizationClientsCommand } from './commands/invite.link-organization-clients.command';
 import { Request } from 'express';
 import { I18nLang } from 'nestjs-i18n';
+import { InviteAcceptOrganizationClientCommand } from './commands/invite.accept-organization-client.command';
 
 @ApiTags('Invite')
 @Controller()
@@ -174,6 +174,28 @@ export class InviteController {
 		);
 	}
 
+	@ApiOperation({ summary: 'Accept organization client invite.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description:
+			'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@Post('client')
+	async acceptOrganizationClientInvite(
+		@Body() input: IOrganizationClientAcceptInviteInput,
+		@Req() request: Request,
+		@I18nLang() languageCode: LanguagesEnum
+	): Promise<any> {
+		input.originalUrl = request.get('Origin');
+		return this.commandBus.execute(
+			new InviteAcceptOrganizationClientCommand(input, languageCode)
+		);
+	}
+
 	@ApiOperation({ summary: 'Resend invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -246,30 +268,6 @@ export class InviteController {
 				inviterUser: request.user,
 				languageCode
 			})
-		);
-	}
-
-	@ApiOperation({ summary: 'Update an existing record' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Put('link-organization-client')
-	async linkInviteClient(
-		@Body() input: LinkClientOrganizationInviteInput
-	): Promise<OrganizationClients> {
-		return this.commandBus.execute(
-			new InviteLinkOrganizationClientsCommand(input)
 		);
 	}
 }

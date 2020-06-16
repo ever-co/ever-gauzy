@@ -77,6 +77,11 @@ export interface TimeLog extends IBaseEntityModel {
 	description?: string;
 	duration: number;
 	isBillable: boolean;
+	employeeId?: string;
+	projectId?: string;
+	clientId?: string;
+	taskId?: string;
+	tags?: string[];
 }
 
 export interface ITimeLogCreateInput {

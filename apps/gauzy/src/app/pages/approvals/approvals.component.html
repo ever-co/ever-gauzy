@@ -2,7 +2,7 @@
 	<nb-card-header>
 		<div class="main-header">
 			<h4>{{ 'APPROVAL_REQUEST_PAGE.HEADER' | translate }}</h4>
-			<button nbButton status="primary">
+			<button nbButton status="primary" (click)="manageAppropvalPolicy()">
 				{{ 'APPROVAL_REQUEST_PAGE.APPROVAL_POLICY' | translate }}
 			</button>
 		</div>
@@ -58,6 +58,7 @@
 
 		<ng2-smart-table
 			class="tags-table"
+			(userRowSelect)="selectRequestApproval($event)"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			style="cursor: pointer;"

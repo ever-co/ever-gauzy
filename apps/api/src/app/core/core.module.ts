@@ -10,7 +10,7 @@ import { InvoiceItem } from '../invoice-item/invoice-item.entity';
 import { Tag } from '../tags/tag.entity';
 import { Skill } from '../skills/skill.entity';
 import { Language } from '../language/language.entity';
-import { NestModule, Module, MiddlewareConsumer } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '../config';
 import { environment as env } from '@env-api/environment';
@@ -85,8 +85,12 @@ import { AvailabilitySlots } from '../availability-slots/availability-slots.enti
 import { ProductTypeTranslation } from '../product-type/product-type-translation.entity';
 import { HelpCenter } from '../help-center/help-center.entity';
 import { ProductCategoryTranslation } from '../product-category/product-category-translation.entity';
+import { Pipeline } from '../pipeline/pipeline.entity';
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
+import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
+import { Goal } from '../goal/goal.entity';
+import { KeyResult } from '../keyresult/keyresult.entity';
 
 const entities = [
 	Invite,
@@ -127,6 +131,8 @@ const entities = [
 	EquipmentSharing,
 	EmployeeLevel,
 	Task,
+	Goal,
+	KeyResult,
 	TimeSlot,
 	Timesheet,
 	TimeLog,
@@ -149,6 +155,7 @@ const entities = [
 	CandidateInterview,
 	CandidateInterviewers,
 	CandidatePersonalQualities,
+	CandidateTechnologies,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,
@@ -167,6 +174,7 @@ const entities = [
 	AvailabilitySlots,
 	ProductTypeTranslation,
 	ProductCategoryTranslation,
+	Pipeline,
 	Payment
 ];
 

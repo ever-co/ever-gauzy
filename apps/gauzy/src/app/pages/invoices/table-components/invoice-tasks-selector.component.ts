@@ -1,10 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TasksService } from '../../../@core/services/tasks.service';
 import { Task } from '@gauzy/models';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core/services/store.service';
-import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -35,11 +32,7 @@ export class InvoiceTasksSelectorComponent extends TranslationBaseComponent
 	task: Task;
 	private _ngDestroy$ = new Subject<void>();
 
-	constructor(
-		private tasksService: TasksService,
-		readonly translateService: TranslateService,
-		private store: Store
-	) {
+	constructor(readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -47,24 +40,8 @@ export class InvoiceTasksSelectorComponent extends TranslationBaseComponent
 	rowData: any;
 
 	ngOnInit() {
-		this.getTasks();
+		this.tasks = this.rowData.allTasks;
 		this.task = this.rowData.task ? this.rowData.task : null;
-	}
-
-	private async getTasks() {
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization) => {
-				if (organization) {
-					this.tasksService
-						.getAllTasks({
-							organizationId: organization.id
-						})
-						.subscribe((data) => {
-							this.tasks = data.items;
-						});
-				}
-			});
 	}
 
 	selectTask($event) {

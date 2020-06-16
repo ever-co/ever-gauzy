@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Candidate, ICandidateInterview, Employee } from '@gauzy/models';
 import { FormGroup, FormBuilder } from '@angular/forms';
-import { CandidatesService } from '../../../@core/services/candidates.service';
+import { CandidatesService } from '../../../../../@core/services/candidates.service';
 
 @Component({
 	selector: 'ga-candidate-email',

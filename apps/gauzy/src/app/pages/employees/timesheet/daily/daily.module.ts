@@ -10,7 +10,8 @@ import {
 	NbDatepickerModule,
 	NbContextMenuModule,
 	NbIconModule,
-	NbDialogModule
+	NbDialogModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
@@ -45,7 +46,8 @@ import { FiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/filters/filt
 		EditTimeLogModalModule,
 		NbIconModule,
 		EmployeeSelectorsModule,
-		FiltersModule
+		FiltersModule,
+		NbSpinnerModule
 	]
 })
 export class DailyModule {}

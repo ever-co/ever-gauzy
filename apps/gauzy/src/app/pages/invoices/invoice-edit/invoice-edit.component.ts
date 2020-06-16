@@ -14,12 +14,13 @@ import {
 	PermissionsEnum,
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
-	Tag
+	Tag,
+	Task
 } from '@gauzy/models';
 import { takeUntil, first } from 'rxjs/operators';
 import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { OrganizationClientsService } from '../../../@core/services/organization-clients.service ';
-import { Subject } from 'rxjs';
+import { Subject, Observable } from 'rxjs';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { InvoiceItemService } from '../../../@core/services/invoice-item.service';
@@ -33,6 +34,7 @@ import { EmployeesService } from '../../../@core/services';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { InvoiceProductsSelectorComponent } from '../table-components/invoice-product-selector.component';
 import { ProductService } from '../../../@core/services/product.service';
+import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 
 @Component({
 	selector: 'ga-invoice-edit',
@@ -55,9 +57,11 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 		private employeeService: EmployeesService,
 		private projectService: OrganizationProjectsService,
 		private taskService: TasksService,
-		private productService: ProductService
+		private productService: ProductService,
+		private tasksStore: TasksStoreService
 	) {
 		super(translate);
+		this.observableTasks = this.tasksStore.tasks$;
 		this.initializeForm();
 	}
 
@@ -81,6 +85,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 	dueDate: Date;
 	hasInvoiceEditPermission: boolean;
 	tags: Tag[] = [];
+	tasks: Task[];
+	observableTasks: Observable<Task[]>;
 
 	subtotal = 0;
 	total = 0;
@@ -338,6 +344,10 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					if (orgData && this.currency) {
 						this.currency.setValue(orgData.currency);
 					}
+
+					this.observableTasks.subscribe((data) => {
+						this.tasks = data;
+					});
 
 					const res = await this.organizationClientsService.getAll(
 						['projects'],
@@ -602,7 +612,8 @@ export class InvoiceEditComponent extends TranslationBaseComponent
 					price: item.price,
 					totalValue: +item.totalValue,
 					id: item.id,
-					task: task
+					task: task,
+					allTasks: this.tasks
 				};
 			} else if (item.productId) {
 				const product = await this.productService.getById(

@@ -58,14 +58,12 @@ export function toFormData(obj: any, form?: any, namespace?: any) {
 export function toParams(query) {
 	let params: HttpParams = new HttpParams();
 	Object.keys(query).forEach((key) => {
-		console.log(key, query[key], typeof query[key]);
 		if (isJsObject(query[key])) {
 			params = toSubParams(params, key, query[key]);
 		} else {
 			params = params.append(key.toString(), query[key]);
 		}
 	});
-	console.log(params);
 	return params;
 }
 

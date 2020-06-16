@@ -1,0 +1,106 @@
+<nb-card size="giant" class="min-width-800">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>{{ goal.name }}</h4>
+			<nb-icon
+				class="ml-auto mt-1 close"
+				icon="close-outline"
+				(click)="closeDialog()"
+			></nb-icon>
+		</div>
+		<div class="row mt-3">
+			<ngx-avatar class="ml-3" size="sm" [src]="src" [name]="ownerName">
+			</ngx-avatar>
+			<span class="ml-3 mt-1">Session: {{ goal.deadline }}</span>
+		</div>
+		<div class="row mt-3">
+			<p class="ml-3">
+				{{
+					goal.description != '' ? goal.description : 'No Description'
+				}}
+			</p>
+		</div>
+		<div class="row mt-3 text-center">
+			<p class="ml-3">Progress</p>
+			<div class="col-md-8">
+				<nb-progress-bar
+					class="ml-3"
+					[value]="goal.progress"
+					[status]="
+						goal.progress < 50
+							? 'warning'
+							: goal.progress < 75
+							? 'info'
+							: 'success'
+					"
+					size="small"
+					>{{ goal.progress }}%
+				</nb-progress-bar>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-tabset fullWidth>
+			<nb-tab tabTitle="Key Results">
+				<nb-card *ngFor="let keyResult of goal.keyResults">
+					<nb-card-header>
+						<div class="row">
+							<div class="col-md-8">
+								<span class="p-1 flex-fill">{{
+									keyResult.name
+								}}</span>
+							</div>
+							<div class="col-md-2">
+								<nb-progress-bar
+									class="mt-1"
+									[status]="
+										keyResult.progress < 50
+											? 'warning'
+											: keyResult.progress < 75
+											? 'info'
+											: 'success'
+									"
+									[value]="keyResult.progress"
+									size="tiny"
+									>{{ keyResult.progress }}%</nb-progress-bar
+								>
+							</div>
+							<div class="col-md-2">
+								<nb-actions>
+									<nb-action
+										(click)="keyResultUpdate(keyResult)"
+										icon="eye"
+									></nb-action>
+								</nb-actions>
+							</div>
+						</div>
+					</nb-card-header>
+				</nb-card>
+			</nb-tab>
+			<nb-tab tabTitle="Updates">
+				<nb-card>
+					<nb-card-header>
+						<div class="main-header">
+							<h6>Updates</h6>
+							<button nbButton status="primary">
+								{{ 'BUTTONS.ADD_NEW' | translate }}
+							</button>
+						</div>
+					</nb-card-header>
+				</nb-card>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+	<nb-card-footer>
+		<nb-card>
+			<nb-card-header>
+				<div class="main-header">
+					<h6>Comments</h6>
+					<button nbButton status="primary">
+						{{ 'BUTTONS.ADD_NEW' | translate }}
+					</button>
+				</div>
+			</nb-card-header>
+		</nb-card>
+	</nb-card-footer>
+</nb-card>

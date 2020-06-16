@@ -1,0 +1,33 @@
+<form class="form">
+	<strong class="form-title">
+		<nb-icon icon="funnel-outline" class="title-icon"></nb-icon
+		>{{
+			'CANDIDATES_PAGE.CRITERIONS.CHOOSE_CRITERIONS' | translate
+		}}</strong
+	>
+	<div class="form-blocks">
+		<div class="form-block">
+			<div class="label mb-2">
+				{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
+			</div>
+			<div *ngFor="let technology of technologiesList">
+				<nb-checkbox
+					(checkedChange)="checkedTechnologies(technology.name)"
+					>{{ technology.name }}</nb-checkbox
+				>
+			</div>
+		</div>
+		<div class="form-block">
+			<div class="label mb-2">
+				{{
+					'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate
+				}}
+			</div>
+			<div *ngFor="let quality of personalQualitiesList">
+				<nb-checkbox (checkedChange)="checkedQualities(quality.name)">{{
+					quality.name
+				}}</nb-checkbox>
+			</div>
+		</div>
+	</div>
+</form>

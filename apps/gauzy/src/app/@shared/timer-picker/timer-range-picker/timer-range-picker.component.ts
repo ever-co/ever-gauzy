@@ -25,37 +25,15 @@ import { debounceTime } from 'rxjs/operators';
 	]
 })
 export class TimerRangePickerComponent implements OnInit, AfterViewInit {
-	onChange: any = () => {};
-	onTouched: any = () => {};
-	endTime: string;
-	startTime: string;
-	date: Date;
-
-	@Input()
-	slotStartTime: Date;
-	@Input()
-	slotEndTime: Date;
-	@Input()
-	allowedDuration: number;
-	@Input()
-	disableEndPicker: boolean = false;
-	@Input()
-	disableDatePicker: boolean = false;
-
-	maxSlotStartTime: string;
-	minSlotStartTime: string;
-
-	maxSlotEndTime: string;
-	minSlotEndTime: string;
-
-	@ViewChild('dateModel') dateModel: NgModel;
-	@ViewChild('startTimeModel') startTimeModel: NgModel;
-	@ViewChild('endTimeModel') endTimeModel: NgModel;
-
 	private _maxDate: Date = null;
 	private _minDate: Date = null;
 	private _disabledDates: number[] = [];
-	filter = (date) => !this._disabledDates.includes(date.getTime());
+
+	@Input() slotStartTime: Date;
+	@Input() slotEndTime: Date;
+	@Input() allowedDuration: number;
+	@Input() disableEndPicker = false;
+	@Input() disableDatePicker = false;
 
 	@Input('maxDate')
 	public get maxDate(): Date {
@@ -74,6 +52,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		this._minDate = value;
 		this.updateTimePickerLimit(value);
 	}
+
 	@Input('disabledDates')
 	public get disabledDates() {
 		return this._disabledDates;
@@ -81,6 +60,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 	public set disabledDates(value: number[]) {
 		this._disabledDates = value;
 	}
+
 	private _selectedRange: IDateRange;
 	public get selectedRange(): IDateRange {
 		return this._selectedRange;
@@ -90,7 +70,22 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 		this.onChange(value);
 	}
 
+	@ViewChild('dateModel') dateModel: NgModel;
+	@ViewChild('startTimeModel') startTimeModel: NgModel;
+	@ViewChild('endTimeModel') endTimeModel: NgModel;
+	endTime: string;
+	startTime: string;
+	date: Date;
+	maxSlotStartTime: string;
+	minSlotStartTime: string;
+	maxSlotEndTime: string;
+	minSlotEndTime: string;
+
 	constructor() {}
+
+	onChange: any = () => {};
+	onTouched: any = () => {};
+	filter = (date) => !this._disabledDates.includes(date.getTime());
 
 	ngOnInit() {}
 
@@ -107,7 +102,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 						' ' +
 						this.startTime
 				);
-				let end = new Date(
+				const end = new Date(
 					moment(this.date).format('YYYY-MM-DD') + ' ' + this.endTime
 				);
 
@@ -209,14 +204,14 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 				value.end = new Date();
 			}
 
-			let start = moment(value.start);
+			const start = moment(value.start);
 			this.date = start.toDate();
 
 			let hour = start.get('hour');
 			let minute = start.get('minute') - (start.minutes() % 10);
 			this.startTime = `${hour}:${minute}`;
 
-			let end = moment(value.end);
+			const end = moment(value.end);
 			hour = end.get('hour');
 			minute = end.get('minute') - (end.minutes() % 10);
 			this.endTime = `${hour}:${minute}`;
@@ -225,6 +220,7 @@ export class TimerRangePickerComponent implements OnInit, AfterViewInit {
 
 		//this.updateTimePickerLimit(value.start)-
 	}
+
 	registerOnChange(fn: (rating: number) => void): void {
 		this.onChange = fn;
 	}

@@ -1,4 +1,3 @@
-// tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {
 	IGetTimeLogInput,
@@ -33,7 +32,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	today: Date = new Date();
 	checkboxAll = false;
 	selectedIds: any = {};
-	private _selectedDate: Date;
 	@ViewChild('checkAllCheckbox')
 	checkAllCheckbox: NbCheckboxComponent;
 	organization: Organization;
@@ -59,6 +57,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 	logRequest: TimeLogFilters = {};
 
 	updateLogs$: Subject<any> = new Subject();
+	loading: boolean;
 
 	constructor(
 		private timesheetService: TimesheetService,
@@ -116,6 +115,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 		};
+		this.loading = true;
 		this.timeSheets = await this.timesheetService
 			.getTimeSheets(request)
 			.then((logs) => {
@@ -126,7 +126,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 				}
 				logs.forEach((log) => (this.selectedIds[log.id] = false));
 				return logs;
-			});
+			})
+			.finally(() => (this.loading = false));
 	}
 
 	toggleCheckbox(event: any, type?: any) {

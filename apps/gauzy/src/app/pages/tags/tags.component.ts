@@ -145,13 +145,20 @@ export class TagsComponent extends TranslationBaseComponent
 
 	async loadSettings() {
 		this.selectedTag = null;
-		const { items } = await this.tagsService.getAllTags(['organization']);
 
-		const filteredItems = items.filter(
-			(data) => data.organization.id === this.selectedOrganization.id
-		);
+		if (this.selectedOrganization) {
+			const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
+				this.selectedOrganization.id,
+				['organization']
+			);
+			const tagsByTenantLevel = await this.tagsService.getAllTagsByTenantLevel(
+				this.selectedOrganization.tenantId,
+				['tenant']
+			);
+			const AllTags = tagsByOrgLevel.concat(tagsByTenantLevel);
 
-		this.smartTableSource.load(filteredItems);
+			this.smartTableSource.load(AllTags);
+		}
 	}
 
 	ngOnDestroy() {

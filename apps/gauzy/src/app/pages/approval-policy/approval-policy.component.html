@@ -1,0 +1,46 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<div class="main-header">
+			<h4>{{ 'APPROVAL_POLICY_PAGE.HEADER' | translate }}</h4>
+		</div>
+	</nb-card-header>
+
+	<nb-card-body>
+		<div class="mb-3">
+			<button (click)="save()" nbButton status="success" class="mr-2">
+				<nb-icon class="mr-1" icon="plus-outline"></nb-icon
+				>{{ 'BUTTONS.ADD' | translate }}
+			</button>
+			<button
+				(click)="save()"
+				nbButton
+				status="info"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				(click)="delete()"
+				nbButton
+				status="danger"
+				class="mr-2"
+				[disabled]="disableButton"
+			>
+				<nb-icon class="mr-1" icon="archive-outline"> </nb-icon>
+				{{ 'BUTTONS.DELETE' | translate }}
+			</button>
+		</div>
+
+		<ng2-smart-table
+			class="tags-table"
+			(userRowSelect)="selectApprovalPolicy($event)"
+			[settings]="settingsSmartTable"
+			[source]="smartTableSource"
+			style="cursor: pointer;"
+			#approvalPolicyTable
+		>
+		</ng2-smart-table>
+	</nb-card-body>
+</nb-card>
