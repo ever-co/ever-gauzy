@@ -167,7 +167,6 @@ export class TagsComponent extends TranslationBaseComponent
 				const result = await this.tagsService.getTagUsageCount(orgId);
 				allTags = result.concat(tagsByTenantLevel);
 
-				console.warn(result);
 				this.smartTableSource.load(allTags);
 			} else if (tagsByTenantLevel.length > 0) {
 				this.smartTableSource.load(tagsByTenantLevel);
