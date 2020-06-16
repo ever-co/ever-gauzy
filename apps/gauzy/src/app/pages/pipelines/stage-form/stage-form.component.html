@@ -9,7 +9,7 @@
     <nb-accordion>
       <nb-accordion-item *ngFor="let stage of control.controls; let i = index" [formGroup]="stage" [expanded]="isAdding && control.length - 1 === i">
         <nb-accordion-item-header>
-          <button *ngIf="!(isAdding && control.length - 1 === i)" (click)="control.removeAt( i )" nbButton size="tiny" status="warning" type="button">
+          <button nbButton size="tiny" status="warning" type="button" (click)="isAdding && control.length - 1 === i && (isAdding = false); control.removeAt( i )">
             <nb-icon pack="eva" icon="trash-2-outline"></nb-icon>
           </button>
           <span class="ml-2">
@@ -25,13 +25,6 @@
           <nb-form-field>
             <textarea nbInput fullWidth formControlName="description" [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"></textarea>
           </nb-form-field>
-
-          <div *ngIf="isAdding && control.length - 1 === i" class="text-right">
-            <button nbButton size="small" status="basic" type="button" (click)="isAdding = false; control.removeAt( i )">
-              <nb-icon icon="close-outline" pack="eva"></nb-icon>
-              <span [innerHTML]="'BUTTONS.CANCEL' | translate"></span>
-            </button>
-          </div>
         </nb-accordion-item-body>
       </nb-accordion-item>
     </nb-accordion>
