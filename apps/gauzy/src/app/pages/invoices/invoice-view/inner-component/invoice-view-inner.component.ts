@@ -1,12 +1,7 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	Invoice,
-	OrganizationClients,
-	Employee,
-	Organization
-} from '@gauzy/models';
+import { Invoice, Employee } from '@gauzy/models';
 import { EmployeesService } from '../../../../@core/services/employees.service';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
@@ -30,8 +25,6 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 	private _ngDestroy$ = new Subject<void>();
 
 	@Input() invoice: Invoice;
-	@Input() client: OrganizationClients;
-	@Input() organization: Organization;
 	@Input() isEstimate: boolean;
 
 	constructor(
@@ -107,8 +100,10 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 			if (item.employeeId) {
 				const employee = await this.employeeService.getEmployeeById(
 					item.employeeId,
-					['user']
+					['user'],
+					false
 				);
+				console.log(employee);
 				data = {
 					description: item.description,
 					quantity: item.quantity,

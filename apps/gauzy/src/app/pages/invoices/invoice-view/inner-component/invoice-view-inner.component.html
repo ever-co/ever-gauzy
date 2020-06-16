@@ -11,11 +11,11 @@
 	<div class="grid">
 		<div class="grid-item">
 			{{ 'INVOICES_PAGE.VIEW.FROM' | translate }}:
-			{{ organization ? organization.name : '' }}
+			{{ invoice ? invoice.fromOrganization.name : '' }}
 		</div>
 		<div class="grid-item">
 			{{ 'INVOICES_PAGE.VIEW.TO' | translate }}:
-			{{ client ? client.name : '' }}
+			{{ invoice ? invoice.toClient.name : '' }}
 		</div>
 		<div class="grid-item">
 			<span *ngIf="!isEstimate"

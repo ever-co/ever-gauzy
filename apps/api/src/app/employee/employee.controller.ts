@@ -27,6 +27,7 @@ import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { ParseJsonPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
+import { EmployeeNonTenantAwareService } from './employee-non-tenant-aware.service';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -34,6 +35,7 @@ import { I18nLang } from 'nestjs-i18n';
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
 		private readonly employeeService: EmployeeService,
+		private readonly employeeNonTenantAwareService: EmployeeNonTenantAwareService,
 		private readonly commandBus: CommandBus
 	) {
 		super(employeeService);
@@ -127,10 +129,17 @@ export class EmployeeController extends CrudController<Employee> {
 		@Param('id') id: string,
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<Employee> {
-		const { relations = [] } = data;
-		return this.employeeService.findOne(id, {
-			relations
-		});
+		const { relations = [], useTenant } = data;
+
+		if (useTenant) {
+			return this.employeeService.findOne(id, {
+				relations
+			});
+		} else {
+			return this.employeeNonTenantAwareService.findOne(id, {
+				relations
+			});
+		}
 	}
 
 	@ApiOperation({ summary: 'Create new record' })
