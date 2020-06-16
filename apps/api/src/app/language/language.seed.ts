@@ -5,18 +5,18 @@ export const createLanguages = async (
 	connection: Connection
 ): Promise<Language[]> => {
 	const languages: Language[] = [];
-	const languageNames = [
-		'English',
-		'Bengali',
-		'Bulgarian',
-		'Hindi',
-		'Urdu',
-		'Italian'
+	const languageItems = [
+		{ name: 'English', code: 'en', is_system: true },
+		{ name: 'Bulgarian', code: 'bg', is_system: true },
+		{ name: 'Hebrew', code: 'he', is_system: true },
+		{ name: 'Russian', code: 'ru', is_system: true }
 	];
 
-	for (const name of languageNames) {
+	for (const item of languageItems) {
 		const language = new Language();
-		language.name = name;
+		language.name = item.name;
+		language.code = item.code;
+		language.is_system = item.is_system || false;
 		language.description = '';
 		language.color = '#479bfa';
 		languages.push(language);

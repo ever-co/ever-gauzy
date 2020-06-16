@@ -232,12 +232,12 @@ export class Store {
 		});
 	}
 
-	get preferredLanguage(): LanguagesEnum | null {
+	get preferredLanguage(): any | null {
 		const { preferredLanguage } = this.persistQuery.getValue();
 		return preferredLanguage;
 	}
 
-	set preferredLanguage(preferredLanguage: LanguagesEnum) {
+	set preferredLanguage(preferredLanguage) {
 		this.persistStore.update({
 			preferredLanguage: preferredLanguage
 		});

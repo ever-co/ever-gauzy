@@ -92,6 +92,7 @@ import { CandidateTechnologies } from '../candidate-technologies/candidate-techn
 import { Goal } from '../goal/goal.entity';
 import { KeyResult } from '../keyresult/keyresult.entity';
 import { KeyResultUpdate } from '../keyresult-update/keyresult-update.entity';
+import { CandidateCriterionsRating } from '../candidate-criterions-rating/candidate-criterion-rating.entity';
 
 const entities = [
 	Invite,
@@ -158,6 +159,7 @@ const entities = [
 	CandidateInterviewers,
 	CandidatePersonalQualities,
 	CandidateTechnologies,
+	CandidateCriterionsRating,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,

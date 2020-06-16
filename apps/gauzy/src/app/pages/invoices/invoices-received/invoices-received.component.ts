@@ -8,6 +8,7 @@ import { InvoicesService } from '../../../@core/services/invoices.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Invoice } from '@gauzy/models';
 import { Router } from '@angular/router';
+import { InvoicePaidComponent } from '../table-components/invoice-paid.component';
 
 export interface SelectedInvoice {
 	data: Invoice;
@@ -54,10 +55,13 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe(async (organization) => {
 				if (organization) {
-					const invoices = await this.invoicesService.getAll([], {
-						sentTo: organization.id,
-						isEstimate: this.isEstimate
-					});
+					const invoices = await this.invoicesService.getAll(
+						['payments'],
+						{
+							sentTo: organization.id,
+							isEstimate: this.isEstimate
+						}
+					);
 					this.loading = false;
 					this.smartTableSource.load(invoices.items);
 				}
@@ -93,13 +97,18 @@ export class InvoicesReceivedComponent extends TranslationBaseComponent
 					valuePrepareFunction: (cell, row) => {
 						return `${row.currency} ${cell}`;
 					}
-				},
-				paid: {
-					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
-					type: 'string'
 				}
 			}
 		};
+		if (!this.isEstimate) {
+			this.settingsSmartTable['columns']['paid'] = {
+				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
+				type: 'custom',
+				renderComponent: InvoicePaidComponent,
+				filter: false,
+				width: '33%'
+			};
+		}
 	}
 
 	selectInvoice($event: SelectedInvoice) {

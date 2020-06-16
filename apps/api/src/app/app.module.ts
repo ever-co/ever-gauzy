@@ -91,6 +91,7 @@ import { CandidateTechnologiesModule } from './candidate-technologies/candidate-
 import { GoalModule } from './goal/goal.module';
 import { KeyResultModule } from './keyresult/keyresult.module';
 import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.module';
+import { CandidateCriterionsRatingModule } from './candidate-criterions-rating/candidate-criterion-rating.module';
 
 @Module({
 	imports: [
@@ -141,6 +142,10 @@ import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.modul
 					{
 						path: '/candidate-technologies',
 						module: CandidateTechnologiesModule
+					},
+					{
+						path: '/candidate-criterions-rating',
+						module: CandidateCriterionsRatingModule
 					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
@@ -382,6 +387,7 @@ import { KeyResultUpdateModule } from './keyresult-update/keyresult-update.modul
 		CandidateInterviewersModule,
 		CandidatePersonalQualitiesModule,
 		CandidateTechnologiesModule,
+		CandidateCriterionsRatingModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
