@@ -6,8 +6,8 @@ import { RequestApproval } from '@gauzy/models';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource } from 'ng2-smart-table';
 import { Subject } from 'rxjs';
-import { RequestApprovalStatusTypesEnum, PermissionsEnum } from '@gauzy/models';
-import { takeUntil, first } from 'rxjs/operators';
+import { PermissionsEnum } from '@gauzy/models';
+import { takeUntil } from 'rxjs/operators';
 import { Store } from '../../@core/services/store.service';
 export interface IApprovalsData {
 	icon: string;
