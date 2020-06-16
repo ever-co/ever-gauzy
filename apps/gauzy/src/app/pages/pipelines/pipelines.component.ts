@@ -135,7 +135,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
       context,
     });
     const data = await dialogRef.onClose.pipe( first() ).toPromise();
-    const { id } = context;
+    const { pipeline: { id } } = context;
 
     if ( data ) {
       this.nbToastrService.success(
