@@ -4,7 +4,8 @@
   </nb-card-header>
   <nb-card-body>
     <div class="btn-container mb-3">
-      <button (click)="createPipeline()"
+      <button *ngIf="CAN_EDIT_SALES_PIPELINES"
+              (click)="createPipeline()"
               style="cursor: pointer"
               status="success"
               type="button"
@@ -14,7 +15,7 @@
         <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
         <span [innerHTML]="'BUTTONS.ADD' | translate"></span>
       </button>
-      <button *ngIf="pipeline" (click)="editPipeline()"
+      <button *ngIf="CAN_EDIT_SALES_PIPELINES && pipeline" (click)="editPipeline()"
               style="cursor: pointer"
               status="info"
               type="button"
@@ -25,7 +26,7 @@
         <span [innerHTML]="'BUTTONS.EDIT' | translate"></span>
       </button>
       <button
-        *ngIf="pipeline"
+        *ngIf="CAN_EDIT_SALES_PIPELINES && pipeline"
         (click)="deletePipeline()"
         style="cursor: pointer"
         status="danger"

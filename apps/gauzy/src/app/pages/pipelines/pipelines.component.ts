@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
-import { Pipeline } from '@gauzy/models';
+import { PermissionsEnum, Pipeline } from '@gauzy/models';
 import { AppStore, Store } from '../../@core/services/store.service';
 import { PipelinesService } from '../../@core/services/pipelines.service';
 import { LocalDataSource } from 'ng2-smart-table';
@@ -10,6 +10,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { first } from 'rxjs/operators';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { AuthService } from '../../@core/services/auth.service';
 
 @Component({
   templateUrl: './pipelines.component.html',
@@ -35,6 +36,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     },
   };
   public pipelines = new LocalDataSource( [] as Pipeline[] );
+  public CAN_EDIT_SALES_PIPELINES = false;
   public organizationId: string;
   public pipeline: Pipeline;
   public name: string;
@@ -47,6 +49,7 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     private nbToastrService: NbToastrService,
     private dialogService: NbDialogService,
     translateService: TranslateService,
+    private authService: AuthService,
     private appStore: AppStore,
     private store: Store )
   {
@@ -63,8 +66,10 @@ export class PipelinesComponent extends TranslationBaseComponent implements OnIn
     };
   }
 
-  public ngOnInit(): void
+  public async ngOnInit(): Promise<void>
   {
+    this.CAN_EDIT_SALES_PIPELINES = await this.authService
+      .hasPermission( PermissionsEnum.EDIT_SALES_PIPELINES ).toPromise();
     if ( ! this.organizationId ) {
       setTimeout(  async () => {
         this.organizationId = this.store.selectedOrganization?.id;

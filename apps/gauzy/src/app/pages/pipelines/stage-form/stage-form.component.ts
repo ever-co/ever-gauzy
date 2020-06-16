@@ -20,8 +20,8 @@ export class StageFormComponent implements OnInit
   public isAdding = false;
 
   public constructor(
-    private fb: FormBuilder,
-    private readonly controlContainer: ControlContainer )
+    private readonly controlContainer: ControlContainer,
+    private fb: FormBuilder )
   {
   }
 
