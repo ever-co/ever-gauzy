@@ -99,7 +99,6 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 		const res = await this.languagesService.getSystemLanguages();
 		this.supportedLanguages = res.items.map((item) => item.code);
 		this.languages = res.items.map((item) => {
-			this.languagesEnum[item.name.toUpperCase()] = item.code;
 			return {
 				value: item.code,
 				name: 'SETTINGS_MENU.' + item.name.toUpperCase()
@@ -112,7 +111,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	}
 
 	switchLanguage() {
-		if (this.currentLang === this.languagesEnum['HEBREW']) {
+		if (this.currentLang === LanguagesEnum['HEBREW']) {
 			this.directionService.setDirection(NbLayoutDirection.RTL);
 		} else {
 			this.directionService.setDirection(NbLayoutDirection.LTR);
