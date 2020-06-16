@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { Invoice, Employee } from '@gauzy/models';
+
 import { EmployeesService } from '../../../../@core/services/employees.service';
 import { Subject } from 'rxjs';
 import { OrganizationProjectsService } from '../../../../@core/services/organization-projects.service';
@@ -103,7 +104,6 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent
 					['user'],
 					false
 				);
-				console.log(employee);
 				data = {
 					description: item.description,
 					quantity: item.quantity,

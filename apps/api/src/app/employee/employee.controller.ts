@@ -27,7 +27,6 @@ import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
 import { ParseJsonPipe } from '../shared';
 import { I18nLang } from 'nestjs-i18n';
-import { EmployeeNonTenantAwareService } from './employee-non-tenant-aware.service';
 
 @ApiTags('Employee')
 @UseGuards(AuthGuard('jwt'))
@@ -35,7 +34,6 @@ import { EmployeeNonTenantAwareService } from './employee-non-tenant-aware.servi
 export class EmployeeController extends CrudController<Employee> {
 	constructor(
 		private readonly employeeService: EmployeeService,
-		private readonly employeeNonTenantAwareService: EmployeeNonTenantAwareService,
 		private readonly commandBus: CommandBus
 	) {
 		super(employeeService);
@@ -136,7 +134,7 @@ export class EmployeeController extends CrudController<Employee> {
 				relations
 			});
 		} else {
-			return this.employeeNonTenantAwareService.findOne(id, {
+			return this.employeeService.findWithoutTennant(id, {
 				relations
 			});
 		}

@@ -10,7 +10,6 @@ import { EmployeeService } from './employee.service';
 import { AuthService } from '../auth/auth.service';
 import { EmailService, EmailModule } from '../email';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
-import { EmployeeNonTenantAwareService } from './employee-non-tenant-aware.service';
 
 @Module({
 	imports: [
@@ -22,7 +21,6 @@ import { EmployeeNonTenantAwareService } from './employee-non-tenant-aware.servi
 	controllers: [EmployeeController],
 	providers: [
 		EmployeeService,
-		EmployeeNonTenantAwareService,
 		UserService,
 		AuthService,
 		EmailService,
