@@ -31,6 +31,8 @@ import { GoalDetailsComponent } from './goal-details/goal-details.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { KeyresultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyresultUpdateComponent } from './keyresult-update/keyresult-update.component';
+import { KeyresultProgressChartComponent } from './keyresult-progress-chart/keyresult-progress-chart.component';
+import { ChartModule } from 'angular2-chartjs';
 
 export function HttpLoaderFactory(http: HttpClient) {
 	return new TranslateHttpLoader(http, './assets/i18n/', '.json');
@@ -43,7 +45,8 @@ export function HttpLoaderFactory(http: HttpClient) {
 		EditKeyresultsComponent,
 		GoalDetailsComponent,
 		KeyresultDetailsComponent,
-		KeyresultUpdateComponent
+		KeyresultUpdateComponent,
+		KeyresultProgressChartComponent
 	],
 	imports: [
 		CommonModule,
@@ -63,6 +66,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 		NbToggleModule,
 		NbProgressBarModule,
 		SharedModule,
+		ChartModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild({
 			loader: {
