@@ -6,7 +6,8 @@ import {
 	Delete,
 	Param,
 	Query,
-	Get
+	Get,
+	Put
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CrudController } from '../core/crud/crud.controller';
@@ -20,7 +21,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ParseJsonPipe } from '../shared';
 import {
 	CandidateTechnologiesBulkCreateCommand,
-	CandidateTechnologiesBulkDeleteCommand
+	CandidateTechnologiesBulkDeleteCommand,
+	CandidateTechnologiesBulkUpdateCommand
 } from './commands';
 @ApiTags('candidate_technology')
 @UseGuards(AuthGuard('jwt'))
@@ -59,6 +61,17 @@ export class CandidateTechnologiesController extends CrudController<
 				interviewId,
 				technologies
 			)
+		);
+	}
+
+	@UseGuards(RoleGuard)
+	@Roles(RolesEnum.CANDIDATE, RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
+	@Put('updateBulk')
+	async updateBulk(
+		@Body() technologies: ICandidateTechnologies[]
+	): Promise<ICandidateTechnologies[]> {
+		return this.commandBus.execute(
+			new CandidateTechnologiesBulkUpdateCommand(technologies)
 		);
 	}
 
