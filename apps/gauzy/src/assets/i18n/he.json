@@ -417,9 +417,12 @@
 		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Total Income/Monthly Income",
 		"PROFITS": "Profits",
 		"BONUSES_PAID": "Bonuses Paid",
-		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked (over Gauzy of course)",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked over Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
-		"PROJECTS_COUNT": "Projects Count"
+		"PROJECTS_COUNT": "Projects Count",
+		"DETAILS": "Details",
+		"SKILLS": "Skills",
+		"PRIVACY": "Privacy"
 	},
 	"MENU": {
 		"PIPELINES": "Pipelines",
@@ -913,6 +916,11 @@
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:"
 		}
 	},
+	"PUBLIC_PAGE": {
+		"LANGUAGES": "Languages",
+		"AWARDS": "Awards",
+		"COMPANY_SKILLS": "Company Skills"
+	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Proposals Management Page",
 		"STATISTICS": "Statistics",
@@ -1005,6 +1013,11 @@
 	"LANGUAGE_PAGE": {
 		"HEADER": "Languages",
 		"ADD_NEW_LANGUAGE": "Add new Language"
+	},
+	"LANGUAGE_LEVELS": {
+		"CONVERSATIONAL": "Conversational",
+		"NATIVE": "Native",
+		"FLUENT": "Fluent"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Equipment",
@@ -1289,7 +1302,8 @@
 			"CONFIRMATION_INVOICE": "Send this invoice to",
 			"CONFIRMATION_ESTIMATE": "Send this estimate to",
 			"ALREADY_SENT_INVOICE": "This invoice has already been sent to",
-			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to"
+			"ALREADY_SENT_ESTIMATE": "This estimate has already been sent to",
+			"NOT_LINKED": "Client does not have an organization"
 		},
 		"VIEW": {
 			"FROM": "FROM",
