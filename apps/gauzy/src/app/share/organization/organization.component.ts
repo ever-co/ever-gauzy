@@ -84,7 +84,10 @@ export class OrganizationComponent extends TranslationBaseComponent
 					this.imageUrl = this.organization.imageUrl;
 					if (
 						this.organization &&
-						!this.organization.totalEmployees
+						!(
+							this.organization.totalEmployees &&
+							typeof this.organization.totalEmployees === 'number'
+						)
 					) {
 						this.loadEmployeesCount();
 					}
