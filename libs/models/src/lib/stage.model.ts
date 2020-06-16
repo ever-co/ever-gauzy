@@ -10,7 +10,8 @@ export interface Stage extends BaseEntityModel, StageUpdateInput
 export type StageFindInput = Pick<Stage, 'id' | 'name'>
 
 export interface StageUpdateInput extends StageCreateInput {
-  pipelineId: string;
+  pipelineId?: string;
+  id?: string;
 }
 
 export interface StageCreateInput

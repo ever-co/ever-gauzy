@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ControlContainer, FormArray, FormBuilder, Validators } from '@angular/forms';
-import { StageCreateInput } from '@gauzy/models';
+import { StageUpdateInput } from '@gauzy/models';
 
 @Component({
   templateUrl: './stage-form.component.html',
@@ -10,7 +10,7 @@ export class StageFormComponent implements OnInit
 {
 
   @Input( 'values' )
-  public stages: StageCreateInput[];
+  public stages: StageUpdateInput[];
 
   @Input()
   public pipelineId: string;
@@ -28,14 +28,15 @@ export class StageFormComponent implements OnInit
   public ngOnInit(): void
   {
     this.control = this.controlContainer.control as FormArray;
-    this.stages?.forEach( ({ name, description }) => this.pushNewStage({ name, description }) );
+    this.stages?.forEach( ({ id, name, description }) => this.pushNewStage({ id, name, description }) );
   }
 
-  public pushNewStage({ name, description }: Omit<StageCreateInput, 'pipelineId'> = {} as any ): void {
+  public pushNewStage({ id, name, description }: Omit<StageUpdateInput, 'pipelineId'> = {} as any ): void {
     const { pipelineId } = this;
 
     this.control.push( this.fb.group({
       ...pipelineId ? { pipelineId: [ pipelineId, Validators.required ] } : {},
+      ...id ? { id: [ id, Validators.required ] } : {},
       name: [ name, Validators.required ],
       description: [ description ],
     }) );
