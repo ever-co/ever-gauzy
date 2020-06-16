@@ -14,57 +14,91 @@
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
 		</div>
-		<form class="row">
-			<div class="form-group col-4">
-				<label class="label">{{
-					'FORM.PLACEHOLDERS.TEAM_NAME' | translate
-				}}</label>
-				<input
-					type="text"
-					[(ngModel)]="name"
-					[ngModelOptions]="{ standalone: true }"
-					nbInput
-					fullWidth
-					placeholder="{{
+		<form>
+			<div class="row">
+				<div class="form-group col-6">
+					<label class="label">{{
 						'FORM.PLACEHOLDERS.TEAM_NAME' | translate
-					}}"
-				/>
-			</div>
-			<div class="form-group col-4">
-				<label class="label">{{
-					'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate
-				}}</label>
-				<nb-select
-					multiple
-					[selected]="selectedEmployees"
-					(selectedChange)="onMembersSelected($event)"
-					fullWidth
-					placeholder="{{
-						'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate
-					}}"
-				>
-					<nb-option
-						*ngFor="let employee of employees"
-						[value]="employee.id"
+					}}</label>
+					<input
+						type="text"
+						[(ngModel)]="name"
+						[ngModelOptions]="{ standalone: true }"
+						nbInput
+						fullWidth
+						placeholder="{{
+							'FORM.PLACEHOLDERS.TEAM_NAME' | translate
+						}}"
+					/>
+				</div>
+				<div class="form-group col-6">
+					<ga-tags-color-input
+						[selectedTags]="tags"
+						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isTenantLevel]="true"
 					>
-						<img
-							src="{{ employee.user.imageUrl }}"
-							alt="Smiley face"
-							height="40"
-							width="40"
-							style="margin-right: 10px;"
-						/>
-						{{ employee.user.firstName }}
-						{{ employee.user.lastName }}</nb-option
-					>
-				</nb-select>
+					</ga-tags-color-input>
+				</div>
 			</div>
-			<div class="form-group col-4">
-				<ga-tags-color-input
-					[selectedTags]="tags"
-					(selectedTagsEvent)="selectedTagsEvent($event)"
-				>
-				</ga-tags-color-input>
+			<div class="row">
+				<div class="form-group col-6">
+					<label class="label">{{
+						'FORM.LABELS.ADD_REMOVE_MEMBERS' | translate
+					}}</label>
+					<nb-select
+						multiple
+						[selected]="selectedEmployees"
+						(selectedChange)="onMembersSelected($event)"
+						fullWidth
+						placeholder="{{
+							'FORM.PLACEHOLDERS.ADD_REMOVE_MEMBERS' | translate
+						}}"
+					>
+						<nb-option
+							*ngFor="let employee of employees"
+							[value]="employee.id"
+						>
+							<img
+								src="{{ employee.user.imageUrl }}"
+								alt="Smiley face"
+								height="40"
+								width="40"
+								style="margin-right: 10px;"
+							/>
+							{{ employee.user.firstName }}
+							{{ employee.user.lastName }}</nb-option
+						>
+					</nb-select>
+				</div>
+				<div class="form-group col-6">
+					<label class="label">{{
+						'FORM.LABELS.ADD_REMOVE_MANAGERS' | translate
+					}}</label>
+					<nb-select
+						multiple
+						[selected]="selectedManagers"
+						(selectedChange)="onManagersSelected($event)"
+						fullWidth
+						placeholder="{{
+							'FORM.PLACEHOLDERS.ADD_REMOVE_MANAGERS' | translate
+						}}"
+					>
+						<nb-option
+							*ngFor="let manager of employees"
+							[value]="manager.id"
+						>
+							<img
+								src="{{ manager.user.imageUrl }}"
+								alt="Smiley face"
+								height="40"
+								width="40"
+								style="margin-right: 10px;"
+							/>
+							{{ manager.user.firstName }}
+							{{ manager.user.lastName }}</nb-option
+						>
+					</nb-select>
+				</div>
 			</div>
 		</form>
 	</nb-card-body>

@@ -25,6 +25,10 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { Role } from '../role/role.entity';
 import { RoleService } from '../role/role.service';
+import { TenantService } from '../tenant/tenant.service';
+import { Tenant } from '../tenant/tenant.entity';
+import { RolePermissionsService } from '../role-permissions/role-permissions.service';
+import { RolePermissions } from '../role-permissions/role-permissions.entity';
 
 @Module({
 	imports: [
@@ -37,7 +41,9 @@ import { RoleService } from '../role/role.service';
 			OrganizationProjects,
 			OrganizationClients,
 			OrganizationDepartment,
-			Organization
+			Organization,
+			Tenant,
+			RolePermissions
 		]),
 		SharedModule,
 		CqrsModule,
@@ -56,7 +62,9 @@ import { RoleService } from '../role/role.service';
 		OrganizationProjectsService,
 		OrganizationClientsService,
 		OrganizationDepartmentService,
-		OrganizationService
+		OrganizationService,
+		TenantService,
+		RolePermissionsService
 	],
 	exports: [InviteService]
 })

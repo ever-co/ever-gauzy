@@ -23,6 +23,12 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	private selectedOrganization: Organization;
 	private subscribeTakingSelectedOrganziation: Subscription;
 
+	@Input('isOrgLevel')
+	isOrgLevel: boolean = false;
+
+	@Input('isTenantLevel')
+	isTenantLevel: boolean = false;
+
 	@Input('selectedTags')
 	selectedTags: Tag[];
 
@@ -50,14 +56,14 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 			description: '',
 			organization: this.selectedOrganization
 		};
-		console.warn(newTag);
+
 		this.loading = true;
 		const tag = await this.tagsService.insertTag(newTag);
 		this.loading = false;
 		return tag;
 	};
 
-	async ngOnInit() {
+	ngOnInit() {
 		this.subscribeTakingSelectedOrganziation = this.store.selectedOrganization$.subscribe(
 			(org) => {
 				this.selectedOrganization = org;
@@ -69,11 +75,22 @@ export class TagsColorInputComponent implements OnInit, OnDestroy {
 	}
 
 	async getAllTags() {
-		const { items } = await this.tagsService.getAllTags(['organization']);
-		const filteredItems = items.filter(
-			(data) => data.organization.id === this.selectedOrganization.id
-		);
-		this.tags = filteredItems;
+		if (this.selectedOrganization) {
+			if (this.isOrgLevel) {
+				const tagsByOrgLevel = await this.tagsService.getAllTagsByOrgLevel(
+					this.selectedOrganization.id,
+					['organization']
+				);
+				this.tags = tagsByOrgLevel;
+			}
+			if (this.isTenantLevel) {
+				const tagsByTenantLevel = await this.tagsService.getAllTagsByTenantLevel(
+					this.selectedOrganization.tenantId,
+					['tenant']
+				);
+				this.tags = tagsByTenantLevel;
+			}
+		}
 	}
 
 	backgroundContrast(bgColor: string) {

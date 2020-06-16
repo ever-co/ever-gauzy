@@ -88,6 +88,9 @@ import { PipelineModule } from './pipeline/pipeline.module';
 import { PaymentModule } from './payment/payment.module';
 import { CandidatePersonalQualitiesModule } from './candidate-personal-qualities/candidate-personal-qualities.module';
 import { StageModule } from './stage/stage.module';
+import { CandidateTechnologiesModule } from './candidate-technologies/candidate-technologies.module';
+import { GoalModule } from './goal/goal.module';
+import { KeyResultModule } from './keyresult/keyresult.module';
 
 @Module({
 	imports: [
@@ -134,6 +137,10 @@ import { StageModule } from './stage/stage.module';
 					{
 						path: '/candidate-personal-qualities',
 						module: CandidatePersonalQualitiesModule
+					},
+					{
+						path: '/candidate-technologies',
+						module: CandidateTechnologiesModule
 					},
 					{ path: '/download', module: ExportAllModule },
 					{ path: '/import', module: ImportAllModule },
@@ -344,6 +351,14 @@ import { StageModule } from './stage/stage.module';
 					{
 						path: '/payments',
 						module: PaymentModule
+					},
+					{
+						path: '/goals',
+						module: GoalModule
+					},
+					{
+						path: '/key-results',
+						module: KeyResultModule
 					}
 				]
 			}
@@ -362,6 +377,7 @@ import { StageModule } from './stage/stage.module';
 		CandidateInterviewModule,
 		CandidateInterviewersModule,
 		CandidatePersonalQualitiesModule,
+		CandidateTechnologiesModule,
 		ExportAllModule,
 		ImportAllModule,
 		EmployeeSettingModule,
@@ -401,11 +417,13 @@ import { StageModule } from './stage/stage.module';
 		InvoiceModule,
 		InvoiceItemModule,
 		PaymentModule,
+		GoalModule,
+		KeyResultModule,
 		EmployeeLevelModule,
 		EventTypeModule,
 		AvailabilitySlotsModule,
 		PipelineModule,
-    StageModule,
+		StageModule,
 		...(environment.sentry
 			? [
 					SentryModule.forRoot({

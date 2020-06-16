@@ -12,6 +12,7 @@ $status: 'basic';
   }
   .week-date-input {
     position: relative;
+    overflow: hidden;
     input {
       opacity: 0;
       position: absolute;

@@ -3,12 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import {
 	OrganizationTeam,
 	OrganizationTeamFindInput,
-	OrganizationTeamCreateInput,
+	OrganizationTeamCreateInput
 } from '@gauzy/models';
 import { first } from 'rxjs/operators';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class OrganizationTeamsService {
 	constructor(private http: HttpClient) {}
@@ -42,14 +42,14 @@ export class OrganizationTeamsService {
 			.get<{ items: OrganizationTeam[]; total: number }>(
 				`/api/organization-team`,
 				{
-					params: { data },
+					params: { data }
 				}
 			)
 			.pipe(first())
 			.toPromise();
 	}
 
-	update(id: string, updateInput: any): Promise<any> {
+	update(id: string, updateInput: OrganizationTeamCreateInput): Promise<any> {
 		return this.http
 			.put(`/api/organization-team/${id}`, updateInput)
 			.pipe(first())
@@ -74,7 +74,7 @@ export class OrganizationTeamsService {
 			.get<{ items: OrganizationTeam[]; total: number }>(
 				`/api/organization-team/me`,
 				{
-					params: { data },
+					params: { data }
 				}
 			)
 			.pipe(first())

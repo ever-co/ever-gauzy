@@ -5,11 +5,12 @@ import {
 	HttpStatus
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions } from 'typeorm';
+import { Repository, FindManyOptions, UpdateResult } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import {
 	OrganizationTeamCreateInput as IOrganizationTeamCreateInput,
-	OrganizationTeam as IOrganizationTeam
+	OrganizationTeam as IOrganizationTeam,
+	RolesEnum
 } from '@gauzy/models';
 import { IPagination } from '../core';
 import { Employee } from '../employee/employee.entity';
@@ -19,6 +20,8 @@ import { OrganizationTeamEmployee } from '../organization-team-employee/organiza
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
 import { EmployeeService } from '../employee/employee.service';
+import { OrganizationService } from '../organization/organization.service';
+import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 
 @Injectable()
 export class OrganizationTeamService extends CrudService<OrganizationTeam> {
@@ -32,7 +35,9 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
 		private readonly employeeService: EmployeeService,
-		private readonly roleService: RoleService
+		private readonly roleService: RoleService,
+		private readonly organizationService: OrganizationService,
+		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService
 	) {
 		super(organizationTeamRepository);
 	}
@@ -40,58 +45,88 @@ export class OrganizationTeamService extends CrudService<OrganizationTeam> {
 	async createOrgTeam(
 		entity: IOrganizationTeamCreateInput
 	): Promise<OrganizationTeam> {
-		const organizationTeam = new OrganizationTeam();
-		organizationTeam.name = entity.name;
-		organizationTeam.organizationId = entity.organizationId;
-		organizationTeam.tags = entity.tags;
-
-		const employees = await this.employeeRepository.findByIds(
-			entity.members,
-			{
-				relations: ['user', 'tags']
-			}
-		);
-
-		const teamEmployees: OrganizationTeamEmployee[] = [];
-		employees.forEach((employee) => {
-			const teamEmployee = new OrganizationTeamEmployee();
-			teamEmployee.employeeId = employee.id;
-			teamEmployee.employee = employee;
-			teamEmployees.push(teamEmployee);
-		});
-		organizationTeam.members = teamEmployees;
-
-		return this.organizationTeamRepository.save(organizationTeam);
-	}
-
-	async updateOrgTeam(
-		id: string,
-		entity: IOrganizationTeamCreateInput
-	): Promise<OrganizationTeam> {
+		const {
+			tags,
+			name,
+			organizationId,
+			members: memberIds,
+			managers: managerIds
+		} = entity;
 		try {
-			await this.organizationTeamRepository.delete(id);
+			const { tenantId } = await this.organizationService.findOne(
+				organizationId
+			);
 
-			const organizationTeam = new OrganizationTeam();
-			organizationTeam.name = entity.name;
-			organizationTeam.organizationId = entity.organizationId;
-			organizationTeam.tags = entity.tags;
+			const role = await this.roleService.findOne({
+				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
+			});
 			const employees = await this.employeeRepository.findByIds(
-				entity.members,
+				[...memberIds, ...managerIds],
 				{
-					relations: ['user', 'tags']
+					relations: ['user']
 				}
 			);
 
 			const teamEmployees: OrganizationTeamEmployee[] = [];
 			employees.forEach((employee) => {
 				const teamEmployee = new OrganizationTeamEmployee();
-				teamEmployee.employeeId = employee.id;
 				teamEmployee.employee = employee;
+				teamEmployee.employeeId = employee.id;
+				teamEmployee.role = managerIds.includes(employee.id)
+					? role
+					: null;
 				teamEmployees.push(teamEmployee);
 			});
-			organizationTeam.members = teamEmployees;
+			return this.create({
+				tags,
+				organizationId,
+				name,
+				members: teamEmployees
+			});
+		} catch (error) {
+			console.error(error);
+			throw new BadRequestException('Failed to create a team');
+		}
+	}
 
-			return this.organizationTeamRepository.save(organizationTeam);
+	async updateOrgTeam(
+		id: string,
+		entity: IOrganizationTeamCreateInput
+	): Promise<OrganizationTeam | UpdateResult> {
+		const {
+			// tags,
+			name,
+			organizationId,
+			members: memberIds,
+			managers: managerIds
+		} = entity;
+		try {
+			const { tenantId } = await this.organizationService.findOne(
+				organizationId
+			);
+
+			const role = await this.roleService.findOne({
+				where: { tenant: { id: tenantId }, name: RolesEnum.MANAGER }
+			});
+			const employees = await this.employeeRepository.findByIds(
+				[...memberIds, ...managerIds],
+				{
+					relations: ['user']
+				}
+			);
+
+			// Update nested entity
+			await this.organizationTeamEmployeeService.updateOrganizationTeam(
+				id,
+				employees,
+				role,
+				managerIds,
+				memberIds
+			);
+
+			// TODO: Update tags
+
+			return this.update(id, { name });
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

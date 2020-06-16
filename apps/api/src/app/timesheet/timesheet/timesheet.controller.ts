@@ -13,12 +13,10 @@ import { TimeSheetService } from './timesheet.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import {
-	RolesEnum,
 	IUpdateTimesheetStatusInput,
 	IGetTimeSheetInput,
 	ISubmitTimesheetInput
 } from '@gauzy/models';
-import { UserRole } from '../../shared/decorators/roles';
 
 @ApiTags('TimeSheet')
 @UseGuards(AuthGuard('jwt'))
@@ -41,11 +39,8 @@ export class TimeSheetController extends CrudController<Timesheet> {
 	@Get('/')
 	// @UseGuards(OrganizationPermissionGuard)
 	// @Permissions(OrganizationPermissionsEnum.ALLOW_MODIFY_TIME)
-	async get(
-		@Query() entity: IGetTimeSheetInput,
-		@UserRole() roles: RolesEnum
-	): Promise<any> {
-		return this.timeSheetService.getTimeSheets(entity, roles);
+	async get(@Query() entity: IGetTimeSheetInput): Promise<any> {
+		return this.timeSheetService.getTimeSheets(entity);
 	}
 
 	@ApiOperation({ summary: 'Update timesheet' })

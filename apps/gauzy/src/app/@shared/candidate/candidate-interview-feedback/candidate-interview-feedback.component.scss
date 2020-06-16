@@ -32,7 +32,7 @@
 }
 
 #description {
-  min-height: 15rem;
+  min-height: 10rem;
   margin-top: 0.5rem;
 }
 
@@ -66,4 +66,47 @@
 
 .select {
   width: 100%;
+}
+
+.form-block {
+  width: 50%;
+}
+
+.form-blocks {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.form-title {
+  color: #8f9bb3;
+  font-size: 15px;
+  padding: 0 0 5px 5px;
+}
+
+.criterion {
+  border: 1px #e4e9f2 solid;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+}
+
+.accordion {
+  min-width: 47rem;
+  margin-top: 0.75rem;
+  box-shadow: none;
+  border: 1px #e4e9f2 solid;
+
+  &-title {
+    background-color: #f7f9fc;
+    border-color: #e4e9f2;
+    color: #8f9bb3;
+    font-weight: 400;
+    padding: 7px 18px;
+  }
 }

@@ -27,6 +27,7 @@
 			<ga-tags-color-input
 				[selectedTags]="tags"
 				(selectedTagsEvent)="selectedTagsEvent($event)"
+				[isTenantLevel]="true"
 				class="col-sm-3"
 			>
 			</ga-tags-color-input>
@@ -81,6 +82,7 @@
 						class="col-3"
 						[selectedTags]="tags"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
+						[isTenantLevel]="true"
 					>
 					</ga-tags-color-input>
 					<span

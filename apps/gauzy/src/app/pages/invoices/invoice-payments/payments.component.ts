@@ -21,7 +21,7 @@ export interface SelectedPayment {
 	templateUrl: './payments.component.html',
 	styleUrls: ['./payments.component.scss']
 })
-export class PaymentsComponent extends TranslationBaseComponent
+export class InvoicePaymentsComponent extends TranslationBaseComponent
 	implements OnInit {
 	constructor(
 		private route: ActivatedRoute,
@@ -64,7 +64,8 @@ export class PaymentsComponent extends TranslationBaseComponent
 	async getInvoice() {
 		const invoice = await this.invoicesService.getById(this.invoiceId, [
 			'invoiceItems',
-			'tags'
+			'tags',
+			'fromOrganization'
 		]);
 		this.invoice = invoice;
 		this.invoiceItems = this.invoice.invoiceItems;

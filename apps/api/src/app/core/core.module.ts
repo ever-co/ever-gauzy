@@ -89,6 +89,9 @@ import { Pipeline } from '../pipeline/pipeline.entity';
 import { Payment } from '../payment/payment.entity';
 import { CandidatePersonalQualities } from '../candidate-personal-qualities/candidate-personal-qualities.entity';
 import { Stage } from '../stage/stage.entity';
+import { CandidateTechnologies } from '../candidate-technologies/candidate-technologies.entity';
+import { Goal } from '../goal/goal.entity';
+import { KeyResult } from '../keyresult/keyresult.entity';
 
 const entities = [
 	Invite,
@@ -129,6 +132,8 @@ const entities = [
 	EquipmentSharing,
 	EmployeeLevel,
 	Task,
+	Goal,
+	KeyResult,
 	TimeSlot,
 	Timesheet,
 	TimeLog,
@@ -151,6 +156,7 @@ const entities = [
 	CandidateInterview,
 	CandidateInterviewers,
 	CandidatePersonalQualities,
+	CandidateTechnologies,
 	HelpCenter,
 	IntegrationSetting,
 	Integration,
@@ -171,7 +177,8 @@ const entities = [
 	ProductCategoryTranslation,
 	Pipeline,
 	Payment,
-  Stage,
+	Stage,
+	Payment
 ];
 
 @Module({
