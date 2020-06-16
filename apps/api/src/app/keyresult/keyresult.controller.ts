@@ -23,38 +23,47 @@ export class KeyResultController extends CrudController<KeyResult> {
 		super(keyResultService);
 	}
 
-	@ApiOperation({ summary: 'Find all keyresults.' })
+	@ApiOperation({ summary: 'Create a key result' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found keyresults',
+		description: 'Key Result Created',
 		type: KeyResult
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Key Result not found'
 	})
 	@Post('/create')
 	async createKeyResult(@Body() entity: KeyResult): Promise<any> {
-		console.log('hello');
 		return this.keyResultService.create(entity);
 	}
 
+	@ApiOperation({ summary: 'Get key result by ID' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found Key Result',
+		type: KeyResult
+	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Key Result not found'
 	})
 	@Get(':id')
 	async getAll(@Param('id') findInput: string) {
 		return this.keyResultService.findAll({
-			where: { goal_id: findInput },
-			relations: ['goal']
+			where: { id: findInput },
+			relations: ['updates']
 		});
 	}
 
-	@ApiOperation({ summary: 'Update an existing record' })
+	@ApiOperation({ summary: 'Update an existing keyresult' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully edited.'
+		description: 'The keyresult has been successfully edited.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Key Result not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,

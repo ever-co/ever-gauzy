@@ -4,7 +4,6 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { KeyresultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { first } from 'rxjs/operators';
-import { KeyresultService } from '../../../@core/services/keyresult.service';
 
 @Component({
 	selector: 'ga-goal-details',
@@ -18,8 +17,7 @@ export class GoalDetailsComponent implements OnInit {
 	constructor(
 		private dialogRef: NbDialogRef<GoalDetailsComponent>,
 		private employeeService: EmployeesService,
-		private dialogService: NbDialogService,
-		private keyResultService: KeyresultService
+		private dialogService: NbDialogService
 	) {}
 
 	async ngOnInit() {
@@ -40,7 +38,6 @@ export class GoalDetailsComponent implements OnInit {
 		});
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
-			await this.keyResultService.update(selectedkeyResult.id, response);
 			const keyResNumber = this.goal.keyResults.length * 100;
 			this.goal.progress = this.calculateGoalProgress(
 				keyResNumber,

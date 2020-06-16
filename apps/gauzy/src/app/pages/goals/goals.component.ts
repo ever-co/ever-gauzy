@@ -61,17 +61,13 @@ export class GoalsComponent extends TranslationBaseComponent
 			: { name: 'new' };
 		this.loading = false;
 		this.organizationName = name;
-
-		this.goalService
-			.getAllGoals()
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((goals) => {
-				if (goals.items.length > 0) {
-					this.noGoals = false;
-				}
-				console.log(goals.items);
-				this.goals = goals.items;
-			});
+		this.goalService.getAllGoals().then((goals) => {
+			if (goals.items.length > 0) {
+				this.noGoals = false;
+			}
+			console.log(goals.items);
+			this.goals = goals.items;
+		});
 	}
 
 	async addKeyResult(index, keyResult) {
@@ -87,28 +83,16 @@ export class GoalsComponent extends TranslationBaseComponent
 				...response,
 				goal_id: this.goals[index].id
 			};
-			try {
-				await this.keyResultService
-					.createKeyResult(data)
-					.pipe(takeUntil(this._ngDestroy$))
-					.subscribe(async (val) => {
-						console.log(val);
-						this.toastrService.primary(
-							'key result added',
-							'Success'
-						);
-						this.loadPage();
-					});
-			} catch (error) {
-				this.errorHandler.handleError(error);
-			}
+			await this.keyResultService.createKeyResult(data).then((val) => {
+				if (val) {
+					this.loadPage();
+				}
+			});
 		}
 	}
 
 	calculateGoalProgress(totalCount, keyResults) {
-		console.table(keyResults);
 		const progressTotal = keyResults.reduce((a, b) => a + b.progress, 0);
-		console.log((progressTotal / totalCount) * 100);
 		return Math.round((progressTotal / totalCount) * 100);
 	}
 
@@ -149,8 +133,7 @@ export class GoalsComponent extends TranslationBaseComponent
 				try {
 					await this.goalService
 						.createGoal(data)
-						.pipe(takeUntil(this._ngDestroy$))
-						.subscribe(async (val) => {
+						.then(async (val) => {
 							await this.goalService.getAllGoals();
 							this.toastrService.primary(
 								'Objective added',
@@ -191,6 +174,17 @@ export class GoalsComponent extends TranslationBaseComponent
 		const response = await dialog.onClose.pipe(first()).toPromise();
 		if (!!response) {
 			console.log(response);
+			const keyResNumber = this.goals[index].keyResults.length * 100;
+			this.goals[index].progress = this.calculateGoalProgress(
+				keyResNumber,
+				this.goals[index].keyResults
+			);
+			await this.goalService.update(
+				this.goals[index].id,
+				this.goals[index]
+			);
+			this.toastrService.primary('Key Result updated', 'Success');
+			this.loadPage();
 		}
 	}
 
@@ -214,7 +208,12 @@ export class GoalsComponent extends TranslationBaseComponent
 				keyResNumber,
 				this.goals[index].keyResults
 			);
-			this.goalService.update(this.goals[index].id, this.goals[index]);
+			await this.goalService.update(
+				this.goals[index].id,
+				this.goals[index]
+			);
+			this.toastrService.primary('Key Result updated', 'Success');
+			this.loadPage();
 		}
 	}
 
