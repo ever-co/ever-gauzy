@@ -12,7 +12,7 @@ export interface Organization extends IBaseEntityModel, ILocation {
 	name: string;
 	profile_link: string;
 	valueDate?: Date;
-	totalEmployees?: number;
+	totalEmployees: number;
 	status?: string;
 	imageUrl?: string;
 	banner: string;
