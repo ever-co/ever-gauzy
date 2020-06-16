@@ -16,7 +16,7 @@
   justify-content: space-between;
   padding: 10px;
   margin-bottom: 1px;
-  height: 60px;
+  height: 55px;
   background-color: #fafafa;
 }
 
@@ -25,6 +25,9 @@
   padding-top: 8px;
   height: 100px;
   margin-bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .user-info {
@@ -35,4 +38,26 @@
 
 .create-at {
   margin-left: 100px;
+}
+
+.articles {
+  margin-left: 10px;
+  margin-right: 10px;
+  color: gray;
+}
+
+.header-article {
+  display: flex;
+  flex-direction: row;
+}
+
+.cards:hover .edit-icon {
+  display: inline-block;
+}
+
+.edit-icon {
+  margin-top: 27px;
+  margin-right: 25px;
+  font-size: 24px;
+  display: none;
 }

@@ -129,11 +129,26 @@
 									(click)="changePrivacy(node)"
 								></nb-icon>
 							</div>
-							<nb-icon
-								class="icons"
-								icon="settings-2-outline"
-								(click)="changePrivacy(node)"
-							></nb-icon>
+							<div>
+								<nb-action
+									*ngIf="node.data.flag === 'base'"
+									icon="settings-2-outline"
+									class="toggle-layout"
+									[nbContextMenu]="settingsContextMenu"
+								></nb-action>
+								<nb-icon
+									*ngIf="node.data.flag === 'category'"
+									class="edit-icons"
+									icon="edit-outline"
+									(click)="editCategory()"
+								></nb-icon>
+								<nb-icon
+									*ngIf="node.data.flag === 'category'"
+									class="edit-icons"
+									icon="trash-2-outline"
+									(click)="deleteCategory()"
+								></nb-icon>
+							</div>
 						</div>
 					</ng-template>
 				</tree-root>

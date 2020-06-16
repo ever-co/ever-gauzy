@@ -7,12 +7,21 @@ import { isEqual } from './delete-node';
 import { Subject } from 'rxjs';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
+import {
+	NbDialogService,
+	NbToastrService,
+	NbMenuItem,
+	NbMenuService
+} from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { first } from 'rxjs/operators';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { AddBaseComponent } from './add-base/add-base.component';
+import { EditBaseComponent } from './edit-base/edit-base.component';
+import { AddCategoryComponent } from './add-category/add-category.component';
+import { EditCategoryComponent } from './edit-category/edit-category.component';
+import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 
 @Component({
 	selector: 'ga-sidebar',
@@ -29,7 +38,8 @@ export class SidebarComponent extends TranslationBaseComponent
 		private sanitizer: DomSanitizer,
 		private helpService: HelpCenterService,
 		readonly translateService: TranslateService,
-		private errorHandler: ErrorHandlingService
+		private errorHandler: ErrorHandlingService,
+		private nbMenuService: NbMenuService
 	) {
 		super(translateService);
 	}
@@ -47,7 +57,9 @@ export class SidebarComponent extends TranslationBaseComponent
 	public isVisibleAdd = false;
 	public isVisibleEdit = false;
 	public isChosenNode = false;
+	public isLoadBase = false;
 	public nodes: IHelpCenter[] = [];
+	settingsContextMenu: NbMenuItem[];
 	options: ITreeOptions = {
 		allowDrag: true,
 		allowDrop: (el, { parent, index }) => {
@@ -60,6 +72,37 @@ export class SidebarComponent extends TranslationBaseComponent
 	};
 	@ViewChild(TreeComponent)
 	private tree: TreeComponent;
+
+	ngOnInit() {
+		this.loadMenu();
+		this.form = this.fb.group({
+			name: [''],
+			desc: [''],
+			data: ['']
+		});
+		this.settingsContextMenu = [
+			{
+				title: 'Edit Knowledge Base'
+			},
+			{
+				title: 'Add Category'
+			}
+		];
+		this.nbMenuService.onItemClick().subscribe((elem) => {
+			if (elem.item.title === 'Edit Knowledge Base')
+				this.dialogService.open(EditBaseComponent);
+			if (elem.item.title === 'Add Category')
+				this.dialogService.open(AddCategoryComponent);
+		});
+	}
+
+	editCategory() {
+		this.dialogService.open(EditCategoryComponent);
+	}
+
+	deleteCategory() {
+		this.dialogService.open(DeleteCategoryComponent);
+	}
 
 	async updateIndexes(
 		oldChildren: IHelpCenter[],
@@ -153,7 +196,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	// 	this.showCategoryButton = false;
 	// }
 	onNodeClicked(node: any) {
-		console.log(node);
 		this.nodeId = node.id.toString();
 		this.isChosenNode = true;
 		this.articleName = node.name;
@@ -235,9 +277,6 @@ export class SidebarComponent extends TranslationBaseComponent
 	prevArticle() {
 		for (const node of this.tempNodes)
 			if (node.id === this.nodeId.toString()) {
-				// TODO this.onNodeClicked(node);
-				const oldIndex = node.index;
-				console.log(oldIndex);
 				const childNodes = this.tempNodes.filter(
 					(item) =>
 						((item.parent &&
@@ -246,10 +285,8 @@ export class SidebarComponent extends TranslationBaseComponent
 							(item.parent === null && node.parent === null)) &&
 						item.flag === 'article'
 				);
-				console.log(childNodes);
 				childNodes.forEach((child) => {
 					if (child.index === node.index - 1) {
-						console.log(node);
 						this.nodeId = child.id;
 						this.articleName = child.name;
 						this.articleDesc = child.description;
@@ -339,15 +376,6 @@ export class SidebarComponent extends TranslationBaseComponent
 			this.getTranslation('TOASTR.TITLE.SUCCESS'),
 			this.getTranslation(`TOASTR.MESSAGE.${text}`)
 		);
-	}
-
-	ngOnInit() {
-		this.loadMenu();
-		this.form = this.fb.group({
-			name: [''],
-			desc: [''],
-			data: ['']
-		});
 	}
 
 	ngOnDestroy() {

@@ -1,0 +1,40 @@
+<nb-card class="main">
+	<nb-card-body>
+		<div class="header">
+			<h6>Manage Knowledge Base</h6>
+			<nb-icon icon="close-outline" (click)="closeDialog()"></nb-icon>
+		</div>
+		<br />
+		<div class="select">
+			<nb-select
+				class="main-buttons"
+				placeholder="Select Language"
+				[(selected)]="selectedLang"
+			>
+				<nb-option *ngFor="let lang of languages" [value]="lang">{{
+					lang
+				}}</nb-option>
+			</nb-select>
+			<nb-select placeholder="Select Color" [(selected)]="selectedColor">
+				<nb-option *ngFor="let color of colors" [value]="color">{{
+					color
+				}}</nb-option>
+			</nb-select>
+		</div>
+		<p class="label">Title:</p>
+		<input
+			class="main-buttons"
+			type="text"
+			size="24"
+			maxlength="18"
+			nbInput
+		/>
+		<p class="label">Description:</p>
+		<input type="text" size="24" maxlength="18" nbInput />
+		<div class="save-button">
+			<button status="success" nbButton>
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</div>
+	</nb-card-body>
+</nb-card>
