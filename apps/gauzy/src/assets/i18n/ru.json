@@ -417,9 +417,12 @@
 		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Общий доход за месяц",
 		"PROFITS": "Прибыль",
 		"BONUSES_PAID": "Бонусы выплачены",
-		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего отработано часов (над гаузи)",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Всего часов работы над Gauzy",
 		"MINIMUM_PROJECT_SIZE": "Минимальный размер проекта",
-		"PROJECTS_COUNT": "Количество проектов"
+		"PROJECTS_COUNT": "Количество проектов",
+		"DETAILS": "Детали",
+		"SKILLS": "Навыки",
+		"PRIVACY": "Приватность"
 	},
 	"MENU": {
 		"PIPELINES": "Трубопроводы",
@@ -913,6 +916,11 @@
 			"INSUFFICIENT": "У вас нет достаточных разрешений. Следующие разрешения отсутствуют:"
 		}
 	},
+	"PUBLIC_PAGE": {
+		"LANGUAGES": "Языки",
+		"AWARDS": "Награды",
+		"COMPANY_SKILLS": "Навыки компании"
+	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Страница управления предложениями",
 		"STATISTICS": "Статистика",
@@ -1005,6 +1013,11 @@
 	"LANGUAGE_PAGE": {
 		"HEADER": "Языки",
 		"ADD_NEW_LANGUAGE": "Добавить новый язык"
+	},
+	"LANGUAGE_LEVELS": {
+		"CONVERSATIONAL": "Разговор",
+		"NATIVE": "Родной",
+		"FLUENT": "Флейтент"
 	},
 	"EQUIPMENT_PAGE": {
 		"HEADER": "Оборудование",
@@ -1289,7 +1302,8 @@
 			"CONFIRMATION_INVOICE": "Отправить этот счет",
 			"CONFIRMATION_ESTIMATE": "Отправить эту оценку",
 			"ALREADY_SENT_INVOICE": "Этот счет уже был отправлен на",
-			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена"
+			"ALREADY_SENT_ESTIMATE": "Эта оценка уже была отправлена",
+			"NOT_LINKED": "Клиент не имеет организации"
 		},
 		"VIEW": {
 			"FROM": "ИЗ",
