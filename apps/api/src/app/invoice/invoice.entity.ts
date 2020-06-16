@@ -34,7 +34,7 @@ import { Payment } from '../payment/payment.entity';
 @Unique(['invoiceNumber'])
 export class Invoice extends Base implements IInvoice {
 	@ApiProperty({ type: Tag })
-	@ManyToMany((type) => Tag)
+	@ManyToMany((type) => Tag, (tag) => tag.invoice)
 	@JoinTable({
 		name: 'tag_invoice'
 	})

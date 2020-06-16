@@ -49,4 +49,10 @@ export class TagController extends CrudController<Tag> {
 		const { relations, tenantId } = JSON.parse(data);
 		return this.tagService.findTagsByTenantLevel(relations, tenantId);
 	}
+
+	@Get(`getTagUsageCount`)
+	async getTagUsageCount(@Query('data') data: any): Promise<any> {
+		const { orgId } = JSON.parse(data);
+		return this.tagService.getTagUsageCount(orgId);
+	}
 }

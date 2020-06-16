@@ -37,4 +37,53 @@ export class TagService extends CrudService<Tag> {
 		});
 		return allTags;
 	}
+
+	async getTagUsageCount(orgId: any): Promise<any> {
+		const allTagsInOrg = await this.tagRepository
+			.createQueryBuilder('tag')
+			.select('*')
+			.where('tag.organization = :organizationId', {
+				organizationId: orgId
+			})
+			.getRawMany();
+
+		const allTagsIds = [];
+		allTagsInOrg.forEach((tag) => allTagsIds.push(tag.id));
+
+		const tagCounterAllRelations = await this.tagRepository
+			.createQueryBuilder('tag')
+			.leftJoinAndSelect('tag.candidate', 'candidate')
+			.leftJoinAndSelect('tag.employee', 'employee')
+			.leftJoinAndSelect('tag.equipment', 'equipment')
+			.leftJoinAndSelect('tag.eventType', 'eventType')
+			.leftJoinAndSelect('tag.income', 'income')
+			.leftJoinAndSelect('tag.expense', 'expense')
+			.leftJoinAndSelect('tag.invoice', 'invoice')
+			.where('tag.id IN (:...id)', { id: allTagsIds })
+			.getMany();
+
+		let tagWithCounter = {};
+		const tagsWithCounter = [];
+
+		for (
+			let arrayIndex = 0;
+			arrayIndex < allTagsInOrg.length;
+			arrayIndex++
+		) {
+			tagWithCounter = [];
+			tagWithCounter = {
+				...tagCounterAllRelations[arrayIndex],
+				counter:
+					tagCounterAllRelations[arrayIndex].candidate.length +
+					tagCounterAllRelations[arrayIndex].employee.length +
+					tagCounterAllRelations[arrayIndex].equipment.length +
+					tagCounterAllRelations[arrayIndex].eventType.length +
+					tagCounterAllRelations[arrayIndex].income.length +
+					tagCounterAllRelations[arrayIndex].invoice.length
+			};
+			tagsWithCounter.push(tagWithCounter);
+		}
+
+		return tagsWithCounter;
+	}
 }
