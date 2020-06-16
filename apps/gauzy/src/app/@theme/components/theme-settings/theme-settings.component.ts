@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { User } from '@gauzy/models';
+import { LanguagesEnum, User } from '@gauzy/models';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { UsersService } from '../../../@core/services';
 
@@ -41,7 +41,7 @@ export class ThemeSettingsComponent implements OnInit, OnDestroy {
 	languagesEnum = {};
 
 	currentTheme = 'default';
-	currentLang = 'en';
+	currentLang: string = LanguagesEnum.ENGLISH;
 
 	supportedLanguages = [];
 	currentUser: User;
