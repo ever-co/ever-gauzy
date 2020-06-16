@@ -897,6 +897,14 @@
 			"SUPER_ADMIN_EDIT": "Edit Super Admin Users",
 			"INVOICES_VIEW": "View Invoices",
 			"INVOICES_EDIT": "Edit Invoices",
+			"APPROVALS_POLICY_EDIT": "Edit Approvals Policy",
+			"APPROVALS_POLICY_VIEW": "View Approvals Policy",
+			"REQUEST_APPROVAL_EDIT": "Edit Approval Request",
+			"REQUEST_APPROVAL_VIEW": "View Approval Request",
+			"ORG_CANDIDATES_INTERVIEWERS_EDIT": "Create/Edit Interviewers",
+			"VIEW_ALL_EMAILS": "View All Emails",
+			"ORG_HELP_CENTER_EDIT": "Edit Organization Help Center",
+			"PUBLIC_PAGE_EDIT": "Public Page Edit",
 			"GROUPS": {
 				"GENERAL": "Основни",
 				"ADMINISTRATION": "Администрация"
