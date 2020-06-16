@@ -25,10 +25,17 @@
 			</div>
 		</div>
 	</nb-card-body>
-	<nb-card-footer>
-		<button nbButton status="">Cancel</button>
-		<button (click)="submitFilters()" nbButton status="success">
-			Apply
+	<nb-card-footer class="text-right">
+		<button nbButton class="mr-3" status="danger" (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			class="mr-3"
+			(click)="submitFilters()"
+			nbButton
+			status="success"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
 </nb-card>

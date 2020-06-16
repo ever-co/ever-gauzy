@@ -177,8 +177,7 @@ export class CandidateInterviewMutationComponent
 					location: this.interview.location,
 					startTime: this.interview.startTime,
 					endTime: this.interview.endTime,
-					// TO DO
-					// technologies:
+					technologies: this.technologies,
 					personalQualities: this.personalQualities,
 					note: this.interview.note
 				}
@@ -202,8 +201,7 @@ export class CandidateInterviewMutationComponent
 	async addCriterions(interviewId: string) {
 		this.candidateCriterionsForm.loadFormData();
 		const criterionsForm = this.candidateCriterionsForm.form.value;
-		// TO DO
-		await this.candidateTechnologiesService.createBulk(
+		this.technologies = await this.candidateTechnologiesService.createBulk(
 			interviewId,
 			criterionsForm.selectedTechnologies
 		);
