@@ -69,7 +69,6 @@ export class Organization extends TenantLocationBase implements IOrganization {
 	@ApiProperty({ type: Number, maxLength: 4 })
 	@IsString()
 	@Index()
-	@IsOptional()
 	@Column({ nullable: true })
 	totalEmployees: number;
 
