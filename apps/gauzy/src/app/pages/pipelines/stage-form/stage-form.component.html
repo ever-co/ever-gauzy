@@ -27,10 +27,6 @@
           </nb-form-field>
 
           <div *ngIf="isAdding && control.length - 1 === i" class="text-right">
-            <button nbButton size="small" status="success" type="button" [disabled]="stage.invalid" class="mr-2" (click)="isAdding = false">
-              <nb-icon icon="plus-circle-outline" pack="eva"></nb-icon>
-              <span [innerHTML]="'BUTTONS.ADD' | translate"></span>
-            </button>
             <button nbButton size="small" status="basic" type="button" (click)="isAdding = false; control.removeAt( i )">
               <nb-icon icon="close-outline" pack="eva"></nb-icon>
               <span [innerHTML]="'BUTTONS.CANCEL' | translate"></span>
