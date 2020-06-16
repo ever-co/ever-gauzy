@@ -121,7 +121,14 @@ export class EditCandidateInterviewComponent extends TranslationBaseComponent
 		const currentInterview = await this.candidateInterviewService.findById(
 			id
 		);
+		// TO DO
 		currentInterview.interviewers = await this.candidateInterviewersService.findByInterviewId(
+			id
+		);
+		currentInterview.personalQualities = await this.candidatePersonalQualitiesService.findByInterviewId(
+			id
+		);
+		currentInterview.technologies = await this.candidateTechnologiesService.findByInterviewId(
 			id
 		);
 		const dialog = this.dialogService.open(
