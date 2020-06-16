@@ -39,6 +39,7 @@ export class FiltersComponent implements OnInit, OnDestroy {
 		source: [],
 		logType: []
 	};
+	futureDateAllowed: boolean;
 
 	@Input()
 	public get filters(): TimeLogFilters {
@@ -127,15 +128,24 @@ export class FiltersComponent implements OnInit, OnDestroy {
 			.subscribe((organization: Organization) => {
 				if (organization) {
 					this.organization = organization;
+					this.futureDateAllowed = organization.futureDateAllowed;
 					this.loadEmployees();
 				}
 			});
 		this.updateLogs$.next();
 	}
 
+	isNextDisabled() {
+		return this.futureDateAllowed
+			? false
+			: moment(this.selectedDate).isSameOrAfter(moment(), 'day');
+	}
+	isTodayDisabled() {
+		return moment(this.selectedDate).isSame(moment(), 'day');
+	}
 	async nextDay() {
 		const date = moment(this.selectedDate).add(1, this.dateRange);
-		if (date.isAfter(this.today)) {
+		if (!this.futureDateAllowed && date.isAfter(this.today)) {
 			return;
 		}
 		this.selectedDate = date.toDate();

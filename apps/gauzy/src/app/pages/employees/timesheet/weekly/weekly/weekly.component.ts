@@ -17,6 +17,7 @@ import { debounceTime } from 'rxjs/operators';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
+import { ViewTimeLogComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log/view-time-log.component';
 
 interface WeeklyDayData {
 	project?: OrganizationProjects;
@@ -38,12 +39,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	weekData: WeeklyDayData[] = [];
 	weekDayList: string[] = [];
 	loading: boolean;
-
-	constructor(
-		private timesheetService: TimesheetService,
-		private nbDialogService: NbDialogService,
-		private store: Store
-	) {}
+	viewTimeLogComponent = ViewTimeLogComponent;
 
 	private _selectedDate: Date = new Date();
 	public get selectedDate(): Date {
@@ -52,6 +48,18 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	public set selectedDate(value: Date) {
 		this._selectedDate = value;
 	}
+
+	constructor(
+		private timesheetService: TimesheetService,
+		private nbDialogService: NbDialogService,
+		private store: Store
+	) {}
+
+	addTimeCallback = (data) => {
+		if (data) {
+			this.updateLogs$.next();
+		}
+	};
 
 	ngOnInit() {
 		this.logRequest.startDate = moment(this.today).startOf('week').toDate();
@@ -92,11 +100,11 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	}
 
 	filtersChange($event: TimeLogFilters) {
-		const dateChagne = $event.startDate !== this.logRequest.startDate;
+		// const dateChagne = $event.startDate !== this.logRequest.startDate;
 		this.logRequest = $event;
-		if (dateChagne) {
-			this.updateWeekDayList();
-		}
+		// if (dateChagne) {
+		this.updateWeekDayList();
+		//}
 		this.updateLogs$.next();
 	}
 
@@ -127,7 +135,7 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 									},
 									0
 								);
-								return sum;
+								return { sum, logs };
 							})
 							.value();
 
@@ -140,6 +148,8 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 						return { project, dates };
 					})
 					.value();
+
+				console.log(this.weekData);
 			})
 			.finally(() => (this.loading = false));
 	}
@@ -147,8 +157,35 @@ export class WeeklyComponent implements OnInit, OnDestroy {
 	openAddEdit(timeLog?: TimeLog) {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose.subscribe(() => {
-				this.updateLogs$.next();
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
+			});
+	}
+
+	openAddByDateProject(date, projectId) {
+		const minutes = moment().minutes();
+		const stoppedAt = new Date(
+			moment(date).format('YYYY-MM-DD') +
+				' ' +
+				moment()
+					.set('minutes', minutes - (minutes % 10))
+					.format('HH:mm')
+		);
+		const startedAt = moment(stoppedAt).subtract('1', 'hour').toDate();
+		this.nbDialogService
+			.open(EditTimeLogModalComponent, {
+				context: {
+					timeLog: { startedAt, stoppedAt, projectId: projectId }
+				}
+			})
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
 			});
 	}
 

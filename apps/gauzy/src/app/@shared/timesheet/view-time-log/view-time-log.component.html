@@ -1,0 +1,41 @@
+<div class="p-3 time-log-view-contiainer">
+	<h6>Time logs</h6>
+	<nb-list class="time-span">
+		<nb-list-item
+			*ngFor="let timelog of timelogs"
+			class="row align-items-center"
+			(click)="viewLog(timelog)"
+		>
+			<div class="time-log-content col">
+				<nb-user
+					[name]="timelog.employee?.user?.name"
+					title="{{
+						timelog.startedAt | utcToLocal | timeFormat: true
+					}} -  {{
+						timelog.stoppedAt | utcToLocal | timeFormat: true
+					}} ({{ timelog.duration | durationFormat }})"
+					[picture]="timelog.employee?.user?.imageUrl"
+				>
+				</nb-user>
+			</div>
+			<div class="time-log-action col-auto">
+				<button
+					nbButton
+					ghost
+					status="primary"
+					(click)="openEdit($event, timelog)"
+				>
+					<nb-icon icon="edit"></nb-icon>
+				</button>
+			</div>
+		</nb-list-item>
+	</nb-list>
+	<button
+		nbButton
+		class="w-100 mt-3"
+		status="primary"
+		(click)="openAddByDateProject($event)"
+	>
+		Add Time
+	</button>
+</div>

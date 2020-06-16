@@ -104,7 +104,9 @@ export class EmployeeController extends CrudController<Employee> {
 	async findAllWorkingEmployees(
 		@Query('data') data: string
 	): Promise<IPagination<Employee>> {
-		const { organizationId, forMonth, withUser } = JSON.parse(data);
+		const { organizationId, forMonth = new Date(), withUser } = JSON.parse(
+			data
+		);
 		return this.employeeService.findWorkingEmployees(
 			organizationId,
 			new Date(forMonth),

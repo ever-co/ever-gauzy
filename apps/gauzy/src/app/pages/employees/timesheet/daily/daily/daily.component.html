@@ -79,17 +79,17 @@
 				></nb-checkbox>
 			</div>
 			<div class="col project-name">
-				<span *ngIf="log?.task; else noProfject">{{
-					log?.project?.name
-				}}</span>
+				<span *ngIf="log?.task; else noProfject">
+					{{ log?.project?.name }}
+				</span>
 				<ng-template #noProfject>
 					<span>No project</span>
 				</ng-template>
 				<div class="mt-2 small">
 					<span *ngIf="log?.task; else noToDo">
 						<strong>TO-DO : </strong>
-						{{ log?.task?.title }}</span
-					>
+						{{ log?.task?.title }}
+					</span>
 					<ng-template #noToDo>
 						<span>No to-do</span>
 					</ng-template>
@@ -98,11 +98,7 @@
 			<div class="col employee-name" *ngIf="canChangeSelectedEmployee">
 				<div class="name-container">
 					<ngx-avatar
-						[name]="
-							log?.employee?.user?.firstName +
-							' ' +
-							log?.employee?.user?.lastName
-						"
+						[name]="log?.employee?.user?.name"
 						[src]="log?.employee?.user?.imageUrl"
 					></ngx-avatar>
 				</div>
@@ -110,15 +106,16 @@
 			<div class="col">{{ log.logType }}</div>
 			<div class="col">{{ log.duration | durationFormat }}</div>
 			<div class="col">
-				<span class="start-timer">{{
-					log.startedAt | utcToLocal | timeFormat: true
-				}}</span>
+				<span class="start-timer">
+					{{ log.startedAt | utcToLocal | timeFormat: true }}
+				</span>
 				-
 				<span
 					class="end-timer"
 					*ngIf="log.stoppedAt; else runningTimer"
-					>{{ log.stoppedAt | utcToLocal | timeFormat: true }}</span
 				>
+					{{ log.stoppedAt | utcToLocal | timeFormat: true }}
+				</span>
 				<ng-template #runningTimer>
 					<span class="running-timer"> Till now </span>
 				</ng-template>

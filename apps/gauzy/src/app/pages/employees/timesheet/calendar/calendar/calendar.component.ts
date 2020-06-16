@@ -30,6 +30,7 @@ import { debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
+import { ViewTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/view-time-log-modal/view-time-log-modal/view-time-log-modal.component';
 
 @Component({
 	selector: 'ngx-calendar',
@@ -185,7 +186,7 @@ export class CalendarComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	handleEventClick({ event }) {
-		this.nbDialogService.open(this.viewLogTemplate, {
+		this.nbDialogService.open(ViewTimeLogModalComponent, {
 			context: event.extendedProps.log,
 			dialogClass: 'view-log-dialog'
 		});

@@ -25,12 +25,18 @@
 				/>
 			</div>
 			<div class="input-group-append ml-1" id="button-addon4">
-				<button nbButton status="primary" (click)="nextDay()">
+				<button
+					nbButton
+					status="primary"
+					(click)="nextDay()"
+					[disabled]="isNextDisabled()"
+				>
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 				</button>
 			</div>
 			<div class="input-group-append ml-1" id="button-addon4">
 				<button
+					[disabled]="isTodayDisabled()"
 					nbButton
 					status="primary"
 					(click)="selectedDate = today"
@@ -38,7 +44,10 @@
 					{{ 'TIMESHEET.TODAY' | translate }}
 				</button>
 			</div>
-			<nb-datepicker #formpicker [max]="today"></nb-datepicker>
+			<nb-datepicker
+				#formpicker
+				[max]="futureDateAllowed ? null : today"
+			></nb-datepicker>
 		</div>
 	</div>
 	<div class="col-auto ml-auto">

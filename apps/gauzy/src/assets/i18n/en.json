@@ -1596,6 +1596,7 @@
 		"EDIT_TIME_LOGS": "Edit Time Logs",
 		"ADD_TIME": "Add Time",
 		"UPDATE_TIME": "Update Time",
+		"EDIT": "Edit",
 		"CLOSE": "Close",
 		"VALIDATION": {
 			"DESCRIPTION": "Description is required",

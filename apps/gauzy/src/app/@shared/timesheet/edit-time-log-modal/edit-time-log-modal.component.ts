@@ -97,15 +97,6 @@ export class EditTimeLogModalComponent implements OnInit, OnDestroy {
 				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 			);
 		});
-
-		// this.store.selectedEmployee
-		// 	.pipe(untilDestroyed(this))
-		// 	.subscribe((employee: SelectedEmployee) => {
-		// 		if (this.mode === 'update'){
-		// 			this.employee = employee;
-		// 			this.addEditRequest.employeeId = employee.id;
-		// 		}
-		// 	});
 	}
 
 	close() {

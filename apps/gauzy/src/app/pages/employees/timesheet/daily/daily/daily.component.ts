@@ -21,6 +21,7 @@ import { Subject } from 'rxjs/internal/Subject';
 import { TimesheetService } from 'apps/gauzy/src/app/@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from 'apps/gauzy/src/app/@shared/timesheet/edit-time-log-modal/edit-time-log-modal.component';
 import { Router } from '@angular/router';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 
 @Component({
 	selector: 'ngx-daily',
@@ -175,22 +176,29 @@ export class DailyComponent implements OnInit, OnDestroy {
 	openAdd() {
 		this.dialogService
 			.open(EditTimeLogModalComponent)
-			.onClose.subscribe(() => {
-				this.updateLogs$.next();
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
 			});
 	}
 	openEdit(timeLog: TimeLog) {
 		this.dialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose.subscribe(() => {
-				this.updateLogs$.next();
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((data) => {
+				if (data) {
+					this.updateLogs$.next();
+				}
 			});
 	}
 
 	onDeleteConfirm(log) {
 		this.dialogService
 			.open(DeleteConfirmationComponent)
-			.onClose.subscribe((type) => {
+			.onClose.pipe(untilDestroyed(this))
+			.subscribe((type) => {
 				if (type === 'ok') {
 					this.timesheetService.deleteLogs(log.id).then(() => {
 						const index = this.timeLogs.indexOf(log);
@@ -204,7 +212,8 @@ export class DailyComponent implements OnInit, OnDestroy {
 		if (action === 'Delete') {
 			this.dialogService
 				.open(DeleteConfirmationComponent)
-				.onClose.subscribe((type) => {
+				.onClose.pipe(untilDestroyed(this))
+				.subscribe((type) => {
 					if (type === 'ok') {
 						const logIds = [];
 						for (const key in this.selectedIds) {

@@ -1,0 +1,66 @@
+<nb-card class="view-log-dialog">
+	<nb-card-header>Time Log</nb-card-header>
+	<nb-card-body>
+		<div class="mb-3" *ngIf="canSelectEmployee">
+			<div class="font-weight-bold mb-2">Employee</div>
+			<div class="description">
+				<ngx-avatar
+					[name]="timeLog?.employee?.user?.name"
+					[src]="timeLog?.employee?.user?.imageUrl"
+				></ngx-avatar>
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">Project</div>
+			<div class="description">
+				{{ timeLog?.project ? timeLog?.project.name : 'No project' }}
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">Task</div>
+			<div class="description">
+				{{ timeLog?.task ? timeLog?.task?.title : 'No to-do' }}
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">Log Type</div>
+			<div class="description">{{ timeLog?.logType }}</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">Time</div>
+			<div class="description">
+				<span class="start-timer">
+					{{ timeLog?.startedAt | utcToLocal | timeFormat: true }}
+				</span>
+				-
+				<span
+					class="end-timer"
+					*ngIf="timeLog?.stoppedAt; else runningTimer"
+				>
+					{{ timeLog?.stoppedAt | utcToLocal | timeFormat: true }}
+				</span>
+				<ng-template #runningTimer>
+					<span class="running-timer"> Till now </span>
+				</ng-template>
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">Dueration</div>
+			<div class="description">
+				{{ timeLog?.duration | durationFormat }}
+			</div>
+		</div>
+		<div class="mb-3">
+			<div class="font-weight-bold mb-2">Description</div>
+			<div class="description">{{ timeLog?.description }}</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-2" nbButton status="primary" (click)="openDialog()">
+			{{ 'TIMESHEET.EDIT' | translate }}
+		</button>
+		<button nbButton (click)="close()">
+			{{ 'TIMESHEET.CLOSE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>
